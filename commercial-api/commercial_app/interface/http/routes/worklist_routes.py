@@ -83,6 +83,47 @@ def get_my_worklist(
         return fail("Erro interno ao carregar worklist.", 500, operation_id="get_my_worklist")
 
 
+@me_router.get("/worklist/done", operation_id="get_my_completed_worklist")
+@require_any_permission(*COMMERCIAL_WORKLIST_PERMISSIONS)
+def get_my_completed_worklist(
+    request: Request,
+    scope: str = Query("mine", description="mine | team (team exige manage de carteiras)"),
+    assignee_user_id: str | None = Query(
+        None,
+        description="Filtra responsável na fila da equipe (somente scope=team).",
+    ),
+    limit: int = Query(50, ge=1, le=100, description="Máximo de tarefas concluídas."),
+):
+    try:
+        user_id = _user_id(request)
+        if not user_id:
+            return fail("Usuário não identificado.", 401, operation_id="get_my_completed_worklist")
+        normalized = (scope or "mine").strip().lower()
+        data = _use_case().get_completed_worklist(
+            user_id=user_id,
+            scope="team" if normalized == "team" else "mine",
+            assignee_user_id=assignee_user_id,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+            limit=limit,
+        )
+        return ok(
+            data,
+            message="Tarefas concluídas carregadas.",
+            operation_id="get_my_completed_worklist",
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="get_my_completed_worklist")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="get_my_completed_worklist")
+    except Exception:
+        logger.exception("get_my_completed_worklist_failed")
+        return fail(
+            "Erro interno ao carregar tarefas concluídas.",
+            500,
+            operation_id="get_my_completed_worklist",
+        )
+
+
 @tasks_router.get("", operation_id="list_tasks")
 @require_any_permission(*COMMERCIAL_WORKLIST_PERMISSIONS)
 def list_tasks(

@@ -79,7 +79,7 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | **Anexo** | Prévia no card; gestão em Nova/Editar | `/attachments` + volume | **P2 entregue** |
 | **Editar tarefa** | Form colapsável (campos + anexos + responsável) | `PATCH /tasks/{id}` | Entregue ago/2026 |
 | **Realtime worklist** | WS invalida fila + toast in-app (Meu dia / Início) | `GET /commercial/realtime/ws` | Entregue ago/2026 |
-| **Tarefas concluídas na UI** | Não (somem da fila) | Persistidas `status=done` | **Correção futura** — § 3.1 |
+| **Tarefas concluídas na UI** | Chip **Concluídas** (somente leitura) | `GET /me/worklist/done` | **Entregue ago/2026** |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |
 | Lembrete / recorrência | Não | — | Mercado sim |
 | Convidados / local / calendário busy | Não | — | Pipedrive meetings |
@@ -131,27 +131,20 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 | Sequências / cadências | HubSpot Sequences | Spec P2 em API-ROUTES |
 | **Realtime worklist (WS)** | HubSpot live board | **Entregue ago/2026** — invalidação + refetch Meu dia/Início |
 
-### 3.1 Correção futura — tarefas concluídas “somem” da UI
+### 3.1 Tarefas concluídas na UI (entregue ago/2026)
 
-**Comportamento atual (esperado no MVP, ruim de UX):** ao **Concluir**, a tarefa some da fila Meu dia. O usuário não vê histórico de feitos no próprio Meu dia.
+**Antes:** ao **Concluir**, a tarefa sumia da fila Meu dia (só restava no banco / activity da conta).
 
-**Para onde vão (não se perdem):**
+**Agora:**
 
-| Camada | O que acontece |
+| Camada | Comportamento |
 |--------|----------------|
-| Banco `commercial.tasks` | `status` passa a `done`; `completed_at` preenchido; registro permanece |
-| Worklist `GET /me/worklist` | Só lista `status=open` → concluídas **não** entram nos buckets |
-| Conta 360 / activities | Activity `system` “Tarefa concluída: …” no histórico do cliente (quando houver vínculo) |
-| UI Meu dia | Sem aba/filtro “Concluídas” → percepção de que “sumiu” |
+| Banco `commercial.tasks` | `status=done`; `completed_at` preenchido |
+| Worklist aberta `GET /me/worklist` | Só `status=open` (atrasadas / hoje / depois) |
+| Histórico `GET /me/worklist/done` | Até 100 concluídas, `completed_at` DESC; `scope=mine\|team` |
+| UI Meu dia | Chip **Concluídas**; cards somente leitura (Abrir conta + anexos em prévia) |
 
-**Quando redesenhar a página Meu dia**, escolher uma destas (ou combinação):
-
-1. Chip/filtro **Concluídas** (hoje / 7 dias / período) na mesma página.
-2. Seção colapsável **Concluídas recentemente** sob a fila aberta.
-3. Deep link Conta 360 → timeline (já parcialmente coberto por activities).
-4. `GET /tasks?status=done` (ou worklist `include=done`) + paginação — evita carregar histórico eterno na fila operacional.
-
-Não implementar agora: deixar explícito na próxima alteração de layout do Meu dia.
+Deep link: `?bucket=done`. Filtro por período (hoje / 7 dias) permanece backlog opcional.
 
 ---
 

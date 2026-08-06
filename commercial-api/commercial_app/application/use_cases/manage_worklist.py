@@ -207,6 +207,80 @@ class ManageWorklistUseCase:
         payload["scope"] = "mine"
         return payload
 
+    def get_completed_worklist(
+        self,
+        *,
+        user_id: str,
+        scope: WorklistScope = "mine",
+        assignee_user_id: str | None = None,
+        actor_is_portfolio_manager: bool = False,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """Lista tarefas concluídas (status=done), mais recentes primeiro."""
+        normalized_scope: WorklistScope = "team" if scope == "team" else "mine"
+        filter_assignee = (assignee_user_id or "").strip() or None
+        capped = max(1, min(int(limit or 50), 100))
+
+        if normalized_scope == "team":
+            if not actor_is_portfolio_manager:
+                raise PermissionError("Sem permissão para ver a fila da equipe.")
+            team_ids = sorted(self.team_user_ids())
+            if not team_ids:
+                done_tasks: list[CommercialTask] = []
+            elif filter_assignee:
+                if filter_assignee not in team_ids:
+                    raise ValueError("Filtro de responsável fora da equipe.")
+                done_tasks = list(
+                    self._tasks.list_for_assignee(
+                        assignee_user_id=filter_assignee,
+                        status="done",
+                        limit=capped,
+                    )
+                )
+            else:
+                done_tasks = list(
+                    self._tasks.list_for_assignees(
+                        assignee_user_ids=team_ids,
+                        status="done",
+                        limit=capped,
+                    )
+                )
+            counts = self._attachment_counts(done_tasks)
+            items = []
+            for task in done_tasks:
+                payload = task.to_dict()
+                payload["attachment_count"] = int(counts.get(str(task.id), 0))
+                payload["bucket"] = "done"
+                items.append(payload)
+            return {
+                "items": items,
+                "count": len(items),
+                "scope": "team",
+                "team_user_ids": team_ids,
+                "limit": capped,
+            }
+
+        done_tasks = list(
+            self._tasks.list_for_assignee(
+                assignee_user_id=user_id,
+                status="done",
+                limit=capped,
+            )
+        )
+        counts = self._attachment_counts(done_tasks)
+        items = []
+        for task in done_tasks:
+            payload = task.to_dict()
+            payload["attachment_count"] = int(counts.get(str(task.id), 0))
+            payload["bucket"] = "done"
+            items.append(payload)
+        return {
+            "items": items,
+            "count": len(items),
+            "scope": "mine",
+            "limit": capped,
+        }
+
     def list_tasks(self, *, user_id: str, status: str | None = "open") -> list[CommercialTask]:
         return list(self._tasks.list_for_assignee(assignee_user_id=user_id, status=status))
 

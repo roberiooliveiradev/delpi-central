@@ -11,7 +11,7 @@ import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 
 type TaskDetailCardProps = {
   task: CommercialTaskDto;
-  tone: "danger" | "warning" | "neutral";
+  tone: "danger" | "warning" | "neutral" | "success";
   typeLabel: string;
   priorityLabel: string;
   assigneeLabel?: string | null;
@@ -20,6 +20,8 @@ type TaskDetailCardProps = {
   canManage: boolean;
   /** Só o criador edita; assignee de tarefa atribuída não. */
   canEdit: boolean;
+  /** Concluídas: só leitura (sem Editar / Adiar / Concluir). */
+  readOnly?: boolean;
   onEdit: () => void;
   onComplete: () => void;
   onDefer: () => void;
@@ -28,14 +30,16 @@ type TaskDetailCardProps = {
   notifyError: (message: string) => void;
   notifySuccess: (message: string) => void;
   formatDue: (dueAt?: string | null) => string;
+  formatCompleted?: (completedAt?: string | null) => string;
 };
 
 function toneBadge(tone: TaskDetailCardProps["tone"]): {
   label: string;
-  variant: "danger" | "warning" | "info";
+  variant: "danger" | "warning" | "info" | "success";
 } {
   if (tone === "danger") return { label: "Atrasada", variant: "danger" };
   if (tone === "warning") return { label: "Hoje", variant: "warning" };
+  if (tone === "success") return { label: "Concluída", variant: "success" };
   return { label: "Depois", variant: "info" };
 }
 
@@ -48,6 +52,7 @@ export function TaskDetailCard({
   assignedByLabel,
   canManage,
   canEdit,
+  readOnly = false,
   onEdit,
   onComplete,
   onDefer,
@@ -56,12 +61,25 @@ export function TaskDetailCard({
   notifyError,
   notifySuccess,
   formatDue,
+  formatCompleted,
 }: TaskDetailCardProps) {
   const note = (task.description ?? "").trim();
   const badge = toneBadge(tone);
   const attachmentCount = task.attachment_count ?? 0;
+  const completedLabel =
+    formatCompleted?.(task.completed_at) ??
+    (task.completed_at ? formatDue(task.completed_at) : "—");
 
   const fields = [
+    ...(readOnly
+      ? [
+          {
+            label: "Concluída em",
+            value: completedLabel,
+            hint: CM_HELP.myDay.taskCompletedAt,
+          },
+        ]
+      : []),
     { label: "Prazo", value: formatDue(task.due_at), hint: CM_HELP.myDay.taskDue },
     { label: "Prioridade", value: priorityLabel, hint: CM_HELP.myDay.taskPriority },
     { label: "Tipo", value: typeLabel, hint: CM_HELP.myDay.taskType },
@@ -94,14 +112,21 @@ export function TaskDetailCard({
     },
   ];
 
+  const hintParts = [
+    readOnly ? `Concluída ${completedLabel}` : formatDue(task.due_at),
+    priorityLabel,
+    typeLabel,
+  ];
+  if (attachmentCount > 0) {
+    hintParts.push(
+      `${attachmentCount} anexo${attachmentCount === 1 ? "" : "s"}`,
+    );
+  }
+
   return (
     <CommercialDetailCard
       title={task.title}
-      hint={`${formatDue(task.due_at)} · ${priorityLabel} · ${typeLabel}${
-        attachmentCount > 0
-          ? ` · ${attachmentCount} anexo${attachmentCount === 1 ? "" : "s"}`
-          : ""
-      }`}
+      hint={hintParts.join(" · ")}
       titleHint={CM_HELP.myDay.worklist}
       className={`cm-task-detail-card cm-task-detail-card--${tone}`}
       icon={
@@ -113,12 +138,12 @@ export function TaskDetailCard({
       }
       headerActions={
         <div className="cm-task-detail-card__actions">
-          {canEdit ? (
+          {!readOnly && canEdit ? (
             <ActionButton variant="ghost" onClick={onEdit}>
               Editar
             </ActionButton>
           ) : null}
-          {canManage ? (
+          {!readOnly && canManage ? (
             <ActionButton variant="ghost" onClick={onDefer}>
               Adiar +1 dia
             </ActionButton>
@@ -128,7 +153,7 @@ export function TaskDetailCard({
               Abrir conta
             </ActionButton>
           ) : null}
-          {canManage ? (
+          {!readOnly && canManage ? (
             <ActionButton variant="primary" onClick={onComplete}>
               Concluir
             </ActionButton>

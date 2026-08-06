@@ -85,20 +85,24 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             clauses.append("due_at IS NOT NULL AND due_at >= %s")
             params.append(due_after)
         params.append(max(1, min(limit, 200)))
-        rows = self.fetch_all(
-            f"""
-            SELECT {_TASK_COLUMNS}
-              FROM commercial.tasks
-             WHERE {" AND ".join(clauses)}
-             ORDER BY
-               CASE priority
+        order_sql = (
+            "completed_at DESC NULLS LAST, updated_at DESC"
+            if status == "done"
+            else """CASE priority
                  WHEN 'critical' THEN 0
                  WHEN 'high' THEN 1
                  WHEN 'normal' THEN 2
                  ELSE 3
                END,
                due_at ASC NULLS LAST,
-               created_at ASC
+               created_at ASC"""
+        )
+        rows = self.fetch_all(
+            f"""
+            SELECT {_TASK_COLUMNS}
+              FROM commercial.tasks
+             WHERE {" AND ".join(clauses)}
+             ORDER BY {order_sql}
              LIMIT %s
             """,
             tuple(params),
@@ -121,20 +125,24 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             clauses.append("status = %s")
             params.append(status)
         params.append(max(1, min(limit, 500)))
-        rows = self.fetch_all(
-            f"""
-            SELECT {_TASK_COLUMNS}
-              FROM commercial.tasks
-             WHERE {" AND ".join(clauses)}
-             ORDER BY
-               CASE priority
+        order_sql = (
+            "completed_at DESC NULLS LAST, updated_at DESC"
+            if status == "done"
+            else """CASE priority
                  WHEN 'critical' THEN 0
                  WHEN 'high' THEN 1
                  WHEN 'normal' THEN 2
                  ELSE 3
                END,
                due_at ASC NULLS LAST,
-               created_at ASC
+               created_at ASC"""
+        )
+        rows = self.fetch_all(
+            f"""
+            SELECT {_TASK_COLUMNS}
+              FROM commercial.tasks
+             WHERE {" AND ".join(clauses)}
+             ORDER BY {order_sql}
              LIMIT %s
             """,
             tuple(params),

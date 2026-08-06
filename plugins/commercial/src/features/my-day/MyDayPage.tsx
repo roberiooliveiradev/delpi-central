@@ -11,6 +11,7 @@ import {
   completeTask,
   createTask,
   deferTask,
+  getCompletedWorklist,
   getMyWorklist,
   updateTask,
   type CommercialTaskDto,
@@ -56,7 +57,7 @@ type MyDayPageProps = {
   basePath: string;
 };
 
-type BucketKey = "overdue" | "today" | "later";
+type BucketKey = "overdue" | "today" | "later" | "done";
 type TypeFilter = "all" | string;
 type TaskFormMode = "closed" | "create" | "edit";
 
@@ -101,6 +102,10 @@ const BUCKET_META: Record<
     label: "Depois",
     emptyHint: "Sem tarefas futuras — agende o próximo contato.",
   },
+  done: {
+    label: "Concluídas",
+    emptyHint: "Nenhuma tarefa concluída neste escopo ainda.",
+  },
 };
 
 const cmEmptyCompactClassNames = {
@@ -121,7 +126,10 @@ function readCreateTaskDeepLink(): {
   const params = new URLSearchParams(window.location.search);
   const rawBucket = (params.get("bucket") ?? "").trim().toLowerCase();
   const bucket: BucketKey | null =
-    rawBucket === "overdue" || rawBucket === "today" || rawBucket === "later"
+    rawBucket === "overdue" ||
+    rawBucket === "today" ||
+    rawBucket === "later" ||
+    rawBucket === "done"
       ? rawBucket
       : null;
   return {
@@ -160,9 +168,10 @@ function formatDue(dueAt?: string | null): string {
   }
 }
 
-function toneForBucket(bucket: BucketKey): "danger" | "warning" | "neutral" {
+function toneForBucket(bucket: BucketKey): "danger" | "warning" | "neutral" | "success" {
   if (bucket === "overdue") return "danger";
   if (bucket === "today") return "warning";
+  if (bucket === "done") return "success";
   return "neutral";
 }
 
@@ -211,6 +220,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<WorklistData | null>(null);
+  const [doneItems, setDoneItems] = useState<CommercialTaskDto[]>([]);
+  const [doneCount, setDoneCount] = useState(0);
   const [workScope, setWorkScope] = useState<WorklistScope>("mine");
   const [teamAssigneeFilter, setTeamAssigneeFilter] = useState("");
   const [bucket, setBucket] = useState<BucketKey>("overdue");
@@ -247,8 +258,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         if (task.created_by_user_id) ids.push(task.created_by_user_id);
       }
     }
+    for (const task of doneItems) {
+      if (task.assignee_user_id) ids.push(task.assignee_user_id);
+      if (task.created_by_user_id) ids.push(task.created_by_user_id);
+    }
     return ids;
-  }, [activeSellers, data, myPortfolio?.user_id]);
+  }, [activeSellers, data, doneItems, myPortfolio?.user_id]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
 
   const sellerNameByUserId = useMemo(() => {
@@ -364,30 +379,44 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   }, [canManageFollowups, resetTaskFormFields, scrollToTaskForm]);
 
   const reload = useCallback(
-    async (signal?: AbortSignal) => {
+    async (signal?: AbortSignal, options?: { preferBucket?: BucketKey | null }) => {
       setLoading(true);
       setError(null);
+      const scope = isAdmin && workScope === "team" ? "team" : "mine";
+      const assigneeUserId =
+        isAdmin && workScope === "team" && teamAssigneeFilter
+          ? teamAssigneeFilter
+          : null;
       try {
-        const wl = await getMyWorklist({
-          scope: isAdmin && workScope === "team" ? "team" : "mine",
-          assigneeUserId:
-            isAdmin && workScope === "team" && teamAssigneeFilter
-              ? teamAssigneeFilter
-              : null,
-          signal,
-        });
+        const [wl, done] = await Promise.all([
+          getMyWorklist({ scope, assigneeUserId, signal }),
+          getCompletedWorklist({ scope, assigneeUserId, signal }),
+        ]);
+        if (signal?.aborted) return;
         setData(wl);
-        const pinned = deepLinkBucketRef.current;
+        setDoneItems(done.items ?? []);
+        setDoneCount(done.count ?? done.items?.length ?? 0);
+        const pinned = options?.preferBucket ?? deepLinkBucketRef.current;
         if (pinned) {
           setBucket(pinned);
           deepLinkBucketRef.current = null;
-        } else if (wl.counts.overdue > 0) setBucket("overdue");
-        else if (wl.counts.today > 0) setBucket("today");
-        else setBucket("later");
+        } else {
+          setBucket((current) => {
+            if (current === "done") return "done";
+            if (wl.counts.overdue > 0) return "overdue";
+            if (wl.counts.today > 0) return "today";
+            if (wl.counts.later > 0) return "later";
+            return current === "overdue" || current === "today" || current === "later"
+              ? current
+              : "later";
+          });
+        }
       } catch (err: unknown) {
         if (signal?.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
         setData(null);
+        setDoneItems([]);
+        setDoneCount(0);
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
@@ -416,23 +445,33 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     overdue: data?.counts.overdue ?? 0,
     today: data?.counts.today ?? 0,
     later: data?.counts.later ?? 0,
+    done: doneCount,
   };
   const openTotal = counts.overdue + counts.today + counts.later;
   const hero = heroCopy(counts);
 
   const items = useMemo(() => {
+    if (bucket === "done") {
+      if (typeFilter === "all") return doneItems;
+      return doneItems.filter((task) => (task.task_type || "follow_up") === typeFilter);
+    }
     if (!data) return [] as CommercialTaskDto[];
     const bucketItems = data[bucket] ?? [];
     if (typeFilter === "all") return bucketItems;
     return bucketItems.filter((task) => (task.task_type || "follow_up") === typeFilter);
-  }, [bucket, data, typeFilter]);
+  }, [bucket, data, doneItems, typeFilter]);
 
   const typeFilterChips = useMemo(() => {
-    const source = data ? [...data.overdue, ...data.today, ...data.later] : [];
-    const counts = new Map<string, number>();
+    const source =
+      bucket === "done"
+        ? doneItems
+        : data
+          ? [...data.overdue, ...data.today, ...data.later]
+          : [];
+    const typeCounts = new Map<string, number>();
     for (const task of source) {
       const key = task.task_type || "follow_up";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      typeCounts.set(key, (typeCounts.get(key) ?? 0) + 1);
     }
     const chips = [
       {
@@ -443,7 +482,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       },
     ];
     for (const option of TASK_TYPE_OPTIONS) {
-      const count = counts.get(option.value) ?? 0;
+      const count = typeCounts.get(option.value) ?? 0;
       if (count === 0 && typeFilter !== option.value) continue;
       chips.push({
         id: option.value,
@@ -453,7 +492,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       });
     }
     return chips;
-  }, [data, typeFilter]);
+  }, [bucket, data, doneItems, typeFilter]);
 
   const onComplete = async (taskId: string) => {
     if (!canManageFollowups) return;
@@ -577,6 +616,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       ["overdue", counts.overdue] as const,
       ["today", counts.today] as const,
       ["later", counts.later] as const,
+      ["done", counts.done] as const,
     ] as const
   ).map(([id, count]) => ({
     id,
@@ -642,7 +682,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
       <SectionCard
         title="Fila"
-        subtitle="Atrasadas → hoje → depois (padrão CRM)."
+        subtitle="Atrasadas → hoje → depois → concluídas."
         hint={CM_HELP.myDay.worklist}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
@@ -731,7 +771,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     : "Tente outro tipo ou crie uma tarefa com este tipo."
                 }
               >
-                {canManageFollowups ? (
+                {canManageFollowups && bucket !== "done" ? (
                   <ActionButton variant="primary" onClick={openCreateForm}>
                     Nova tarefa
                   </ActionButton>
@@ -755,8 +795,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     createdBy && createdBy !== assignee
                       ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
                       : null;
+                  const readOnly = bucket === "done";
                   const canEdit =
-                    canManageFollowups && Boolean(me) && createdBy === me;
+                    !readOnly && canManageFollowups && Boolean(me) && createdBy === me;
                   return (
                     <TaskDetailCard
                       key={task.id}
@@ -768,6 +809,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       assignedByLabel={assignedByLabel}
                       canManage={canManageFollowups}
                       canEdit={canEdit}
+                      readOnly={readOnly}
                       formatDue={formatDue}
                       onEdit={() => openEditForm(task)}
                       onComplete={() => void onComplete(task.id)}

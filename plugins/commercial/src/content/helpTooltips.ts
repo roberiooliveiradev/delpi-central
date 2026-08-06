@@ -31,7 +31,7 @@ export const CM_HELP = {
   },
   myDay: {
     worklist:
-      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Filtre por tipo; notas aparecem na linha (HubSpot/Pipedrive).",
+      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois → concluídas. Filtre por tipo; notas aparecem na linha (HubSpot/Pipedrive).",
     scopeMine: "Só tarefas atribuídas a você.",
     scopeTeam:
       "Fila de todos os vendedores com carteira ativa (gestão). Opcional: filtrar por responsável.",
@@ -39,11 +39,14 @@ export const CM_HELP = {
     bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
     bucketLater: "Tarefas com prazo futuro.",
+    bucketDone:
+      "Histórico das tarefas já concluídas (mais recentes primeiro). Somente leitura — sem editar, adiar ou concluir de novo.",
     typeFilter: "Filtra a fila pelo tipo de atividade (padrão Pipedrive/HubSpot).",
     newTask:
       "Cria follow-up com prazo (fim do dia). Gestores podem atribuir a outro vendedor da equipe.",
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
+    taskCompletedAt: "Quando a tarefa foi marcada como concluída.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligar, e-mail, visita ou to-do — alinhado a HubSpot/Pipedrive.",
     taskAssignee:

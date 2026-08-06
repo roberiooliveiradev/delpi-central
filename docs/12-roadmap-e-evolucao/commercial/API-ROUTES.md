@@ -72,6 +72,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 |--------|------|-------------|------|-----------|--------|-------|-----|
 | GET | `/me/summary` | `get_my_commercial_summary` | F2b/F5 | `commercial.home.view` | `commercial_summary` | `composite_analysis` | WF-01 |
 | GET | `/me/worklist` | `get_my_worklist` | F5 | `commercial.worklist.view` | `worklist` | `paged_list` | WF-06 · query `scope=mine\|team`, `assignee_user_id` (team) |
+| GET | `/me/worklist/done` | `get_my_completed_worklist` | F5 | `commercial.worklist.view` | `worklist` | `paged_list` | Concluídas · `scope`, `assignee_user_id`, `limit` (1–100) |
 | GET | `/me/seller-portfolio` | `get_my_seller_portfolio` | F2 | `commercial.accounts.view` | `seller_portfolio` | `scalar` | WF-03 |
 
 > `get_my_seller_portfolio` também em `/seller-portfolios/me` (alias canônico § 3.3).

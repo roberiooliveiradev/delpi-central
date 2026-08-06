@@ -37,6 +37,11 @@ class InMemoryTaskRepo:
             if due_after is not None and (task.due_at is None or task.due_at < due_after):
                 continue
             out.append(task)
+        if status == "done":
+            out.sort(
+                key=lambda t: t.completed_at or t.updated_at,
+                reverse=True,
+            )
         return out[:limit]
 
     def list_for_assignees(
@@ -52,6 +57,11 @@ class InMemoryTaskRepo:
             for task in self.items.values()
             if task.assignee_user_id in allowed and (not status or task.status == status)
         ]
+        if status == "done":
+            out.sort(
+                key=lambda t: t.completed_at or t.updated_at,
+                reverse=True,
+            )
         return out[:limit]
 
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
@@ -481,6 +491,50 @@ def test_team_worklist_requires_manager():
     )
     with pytest.raises(PermissionError):
         uc.get_worklist(user_id="u1", scope="team", actor_is_portfolio_manager=False)
+
+
+def test_get_completed_worklist_mine_and_team():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["manager", "seller-a", "seller-b"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+    now = datetime.now(timezone.utc)
+    open_task = uc.create_task(
+        user_id="seller-a",
+        data=CreateTaskInput(title="Ainda aberta", due_at=now),
+    )
+    done = uc.create_task(
+        user_id="seller-a",
+        data=CreateTaskInput(title="Já feita", due_at=now),
+    )
+    uc.complete_task(user_id="seller-a", task_id=done.id)
+
+    mine = uc.get_completed_worklist(user_id="seller-a")
+    assert mine["scope"] == "mine"
+    assert mine["count"] == 1
+    assert mine["items"][0]["title"] == "Já feita"
+    assert mine["items"][0]["status"] == "done"
+    assert mine["items"][0]["bucket"] == "done"
+    assert str(open_task.id) not in {item["id"] for item in mine["items"]}
+
+    team = uc.get_completed_worklist(
+        user_id="manager",
+        scope="team",
+        actor_is_portfolio_manager=True,
+    )
+    assert team["scope"] == "team"
+    assert team["count"] == 1
+
+    with pytest.raises(PermissionError):
+        uc.get_completed_worklist(
+            user_id="seller-a",
+            scope="team",
+            actor_is_portfolio_manager=False,
+        )
 
 
 def test_permissions_helpers():

@@ -34,6 +34,14 @@ export type WorklistData = {
   team_user_ids?: string[];
 };
 
+export type CompletedWorklistData = {
+  items: CommercialTaskDto[];
+  count: number;
+  scope?: WorklistScope | string;
+  team_user_ids?: string[];
+  limit?: number;
+};
+
 export type CommercialActivityDto = {
   id: string;
   activity_type: string;
@@ -62,6 +70,26 @@ export async function getMyWorklist(
     { signal: options?.signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar Meu dia.");
+}
+
+export async function getCompletedWorklist(
+  options?: {
+    scope?: WorklistScope;
+    assigneeUserId?: string | null;
+    limit?: number;
+    signal?: AbortSignal;
+  },
+): Promise<CompletedWorklistData> {
+  const params = new URLSearchParams();
+  if (options?.scope === "team") params.set("scope", "team");
+  if (options?.assigneeUserId) params.set("assignee_user_id", options.assigneeUserId);
+  if (options?.limit != null) params.set("limit", String(options.limit));
+  const query = params.toString();
+  const response = await httpGet<ApiSuccessResponse<CompletedWorklistData>>(
+    commercialApiUrl(`/me/worklist/done${query ? `?${query}` : ""}`),
+    { signal: options?.signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar tarefas concluídas.");
 }
 
 export async function createTask(
