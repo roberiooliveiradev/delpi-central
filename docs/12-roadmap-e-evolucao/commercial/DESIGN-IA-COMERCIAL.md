@@ -1,9 +1,11 @@
 # Design / IA — Portal Comercial (Wave G / G+)
 
-> **Status:** Wave G+ (shell UnderlineNav, Home hero, Meu dia CRM) · ago/2026  
+> **Status:** Wave G+ P0+P1 concluídos no código · ago/2026  
 > **Produto:** Portal Comercial · `id` `commercial` · `/apps/commercial`  
 > **UI kit:** `@delpi/plugin-ui` · prefixo MFE `cm-` · root `.dashboard-commercial`  
 > **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) (WF-00, WF-01R, WF-06R) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
+
+O Portal Comercial é o hub operacional da carteira: Início, Meu dia, pedidos em aberto, Conta 360 e admin de carteiras.
 
 ## Princípios de informação (Overview → Focus → Detail → Action)
 
@@ -67,10 +69,10 @@ Início → Meu dia → Pedidos em aberto → Minha carteira → Conta → Carte
 
 ## Fases Wave G+
 
-| Fase | Entrega |
-|------|---------|
-| **P0** | Shell UnderlineNav, Meu dia form, Home hero operacional, forms críticos, 403 |
-| **P1** | Follow-up Conta, Adiar/Abrir, KPIs gestão, forms restantes, ops/visual QA |
+| Fase | Entrega | Código |
+|------|---------|--------|
+| **P0** | Shell UnderlineNav, Meu dia form, Home hero operacional, forms críticos, 403 | Entregue |
+| **P1** | Follow-up Conta, Adiar/Abrir/tipo, KPIs gestão, forms restantes, ops/visual QA | Entregue |
 
 ## Fora desta wave
 

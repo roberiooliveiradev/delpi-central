@@ -9,7 +9,7 @@
 | **F2** | Portfolios + avatars | `concluído` |
 | **F2b** | MFE paridade (scaffold) | `concluído` |
 | **F2b harden** | UX real + clients + scope | `concluído` (ago/2026 — port PVA completo) |
-| **Wave G** | Shell/IA, Home, Meu dia, worklist, timeline Conta 360 | `concluído c/ gaps` (matriz abaixo; sem F2c) |
+| Wave G | Shell/IA, Home, Meu dia, worklist, timeline Conta 360 | **concluído Wave G+** (P0+P1; sem F2c) |
 | **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops) |
 | **F2c** | Depreciar PVA | **pendente** — após homologação Comercial/QA |
 
@@ -46,19 +46,19 @@ Homologação: [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · Perfis: [PERF
 | **G1** Shell + nav por objeto + ScopeChipBar | **Feito** | `PluginShell.tsx` |
 | **G1** Remover CSS espelho kit no MFE | **Dívida** | Overrides `.delpi-ui-*` legados PVA em `customers.css` / `responsive.css` (pré-Wave G) |
 | **G2** Home vendedor (AlertQueue + atalhos ≤2 cliques) | **Feito** | `HomePage.tsx` |
-| **G2** Home gestão (ROL/OTD/equipe api-delpi) | **Parcial** | Deep links dashboard; **sem** cards KPI gestão / tabela equipe |
+| **G2** Home gestão (ROL/OTD/equipe api-delpi) | **Feito** | `commercialKpisApi.ts` + painel Gestão na `HomePage` (allSettled) |
 | **G3** Timeline conta + deep links propostas/dashboard | **Feito** | `CustomerActivityTimelinePanel.tsx` |
 | **G4** Migration M2 parcial `tasks`/`activities` | **Feito** | `V003__tasks_activities.sql` |
-| **G4** API worklist/tasks/activities | **Feito** | MVP: list/create/complete + worklist buckets; sem PATCH/reassign/defer |
-| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Manifest + capabilities em `/seller-portfolios/me` |
+| **G4** API worklist/tasks/activities | **Feito** | list/create/complete/**defer** + worklist buckets; sem reassign multi-user |
+| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Form prazo/prioridade/cliente/tipo; Adiar; Conta→follow-up |
 | **G5** Manifest capacidades (sem persona) | **Feito** | Sem `commercial.home.view` — Home usa `accounts.view` |
 | **G5** `PERFIS-E-PERMISSOES.md` | **Feito** | Papéis sugeridos Minha Delpi |
-| Docs DESIGN-IA / HOMOLOGAÇÃO / README | **Feito** | |
-| Wireframes **WF-01R…05R, 11–12** detalhados | **Parcial** | IA em DESIGN-IA; WIREFRAMES ainda nos IDs WF-01…10 (+ Meu dia) |
+| Docs DESIGN-IA / HOMOLOGAÇÃO / README | **Feito** | Wave G+ P0/P1 |
+| Wireframes **WF-00 / 01R / 06R** | **Feito** | `WIREFRAMES.md` + DESIGN-IA |
 | Playbook §9 → link perfis | **Pendente doc** | Catálogo longo ainda; Wave G ativa em PERFIS |
-| Catálogo `plugin-ui` docs | **Pendente doc** | Componentes exportados; entrada no catalog a completar |
+| Catálogo `plugin-ui` docs | **Parcial** | `UnderlineNav` no kit; entrada no catalog a completar |
 | Testes unit worklist + smoke remotes | **Feito** | Ver HOMOLOGACAO-WAVE-G |
-| Testes HTTP 403 RBAC worklist | **Pendente** | Só use case in-memory hoje |
+| Testes HTTP 403 RBAC worklist | **Feito** | `test_worklist_routes_rbac.py` (+ defer) |
 | **Fora:** F2c, prospects, pipeline, forecast, F3–F4 | **Fora** | Intencional |
 
 **Não inclui F2c** (ocultar PVA).
@@ -73,6 +73,7 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] F1 health + compose
 - [x] F2 migrations + dual-read + transfer audit
 - [x] F2b harden — paridade UX open-orders/carteira com PVA
-- [x] Wave G — worklist / Meu dia / RBAC por capacidade
+- [x] Wave G / G+ — worklist / Meu dia / RBAC / Home gestão / Conta follow-up
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
+- [ ] Homologação assinada Wave G+ ([HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md))
 - [ ] F2c flip menu + redirects

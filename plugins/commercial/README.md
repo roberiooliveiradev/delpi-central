@@ -1,16 +1,16 @@
 # Portal Comercial
 
-Microfrontend federado do domínio comercial — paridade F2b com o Portal do Vendedor (`pedidos-venda-abertos`).
+Microfrontend federado do domínio comercial — paridade F2b com o Portal do Vendedor (`pedidos-venda-abertos`) + **Wave G+** (UnderlineNav, Meu dia CRM, Home gestão).
 
 ## Rotas UI
 
 | Rota | Descrição |
 |------|-----------|
-| `/apps/commercial` | Início — overview + alertas (Wave G) |
-| `/apps/commercial/my-day` | Meu dia — worklist / follow-ups |
+| `/apps/commercial` | Início — hero + alertas + KPIs (+ gestão admin) |
+| `/apps/commercial/my-day` | Meu dia — worklist / follow-ups (`?createTask=1&customer_code=&customer_store=`) |
 | `/apps/commercial/open-orders` | Pedidos de venda em aberto (TOTVS) |
 | `/apps/commercial/customers` | Minha carteira de clientes |
-| `/apps/commercial/customers/:codigo/:loja` | Detalhe do cliente (timeline de atividades) |
+| `/apps/commercial/customers/:codigo/:loja` | Conta 360 (+ Agendar follow-up) |
 | `/apps/commercial/seller-portfolios` | Administração de carteiras |
 
 ## APIs

@@ -1,12 +1,12 @@
 # Homologação — Wave G / G+ (Portal Comercial)
 
-> UI Overview + Meu dia CRM + shell UnderlineNav + Home hero · **sem F2c**  
+> UI Overview + Meu dia CRM + shell UnderlineNav + Home hero/gestão · **sem F2c**  
 > Docs: [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [WIREFRAMES.md](./WIREFRAMES.md) (WF-00 / 01R / 06R)
 
 ## Pré-requisitos (gate ops)
 
-- [ ] Manifest registrado no Core (`register-manifest.sh`)
-- [ ] Papel **Comercial — Vendedor** criado com codes do doc de perfis
+- [ ] Manifest registrado no Core (`plugins/commercial/scripts/register-manifest.sh`)
+- [ ] Papel **Comercial — Vendedor** criado com codes do [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
 - [ ] Migration `V003__tasks_activities` aplicada (`commercial.schema_migrations`)
 - [ ] Rebuild: `plugin-ui` → `commercial` → `commercial-api` (script sequencial)
 
@@ -29,19 +29,21 @@
 
 | # | Caso | Resultado |
 |---|------|-----------|
-| 11 | Conta 360: **Agendar follow-up** pré-preenche cliente no Meu dia | |
-| 12 | Meu dia: Adiar + Abrir conta; tipo Ligar/To-do | |
-| 13 | Home gestão (admin): KPIs ROL/OTD/conversão + tabela equipe | |
-| 14 | Forms billing/admin com plugin-ui | |
-| 15 | Visual QA claro/escuro + mobile no shell e Home | |
+| 11 | Conta 360: **Agendar follow-up** pré-preenche cliente no Meu dia (`?createTask=1&customer_*`) | |
+| 12 | Home AlertQueue vazia: CTA **Criar follow-up** abre Meu dia com form em destaque | |
+| 13 | Meu dia: **Adiar +1 dia** + **Abrir conta**; tipo Ligar / Follow-up / To-do | |
+| 14 | Home gestão (admin): KPIs ROL / conversão / OTD + tabela equipe (`allSettled`) | |
+| 15 | Forms billing / charts / transferência com plugin-ui (`Commercial*`) | |
+| 16 | Visual QA claro/escuro + mobile ≤768 no shell e Home | |
+| 17 | Gate ops: manifest + papel Vendedor conferidos | |
 
 ## Testes automatizados (dev)
 
 | Pacote | Comando | Resultado |
 |--------|---------|-----------|
-| commercial-api | `pytest tests/test_worklist_*.py tests/test_health.py tests/test_auth_required.py -q` | **11 passed** (06/08/2026) |
-| plugin-ui | `npm test -- --run src/components/layout/UnderlineNav.test.tsx` | **2 passed** |
-| commercial MFE | `node --test src/features/my-day/myDayDueDate.test.mjs` + `tsc -b` | **ok** |
+| commercial-api | `pytest tests/test_worklist_*.py tests/test_health.py tests/test_auth_required.py -q` | **13 passed** (06/08/2026 P1) |
+| plugin-ui | `npm test -- --run src/components/layout/UnderlineNav.test.tsx` | **2 passed** (P0) |
+| commercial MFE | `node --test src/features/my-day/myDayDueDate.test.mjs` + `tsc --noEmit` | **ok** |
 
 ## Smoke pós-rebuild
 
@@ -51,7 +53,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/apps/commercial/asset
 curl -sS http://localhost/apps/commercial-api/health
 ```
 
-**Rebuild Wave G+ P0 (06/08/2026):** `plugin-ui` → `commercial` → `commercial-api` via `up-dev-sequential.sh` — remotes `200`, health `online`, pytest **11 passed**.
+**Rebuild Wave G+ P0 (06/08/2026):** `plugin-ui` → `commercial` → `commercial-api` via `up-dev-sequential.sh` — remotes `200`, health `online`, pytest worklist/RBAC **11 passed**.
+
+**Rebuild Wave G+ P1 (06/08/2026):** mesmo script sequencial — remotes `200`, health `online`, pytest **13 passed** (inclui defer + RBAC).
 
 ## Gaps / backlog explícito
 
@@ -59,7 +63,7 @@ curl -sS http://localhost/apps/commercial-api/health
 |-----|------------|------|
 | F2c / SavedViewChips / purge CSS espelho | Baixa | Fora desta wave |
 | Start tasks HubSpot / auto-tasks pedidos | Média | Wave futura |
-| Manifest + papel Vendedor | Ops | Gate acima |
+| Manifest + papel Vendedor | Ops | Gate acima — checklist item 17 |
 
 ## Assinatura
 

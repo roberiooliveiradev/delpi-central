@@ -1,6 +1,6 @@
 # Portal Comercial — documentação
 
-> **Status:** playbook oficial + F0–F2b harden + **Wave G** (shell/IA, Meu dia, worklist) em `main`; F2c pendente de homologação  
+> **Status:** playbook oficial + F0–F2b harden + **Wave G+** (UnderlineNav, Home hero/gestão, Meu dia CRM) em `main`; F2c pendente de homologação  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
@@ -14,10 +14,10 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A U
 | Documento | Conteúdo |
 |-----------|----------|
 | **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
-| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2c + Wave G |
+| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2c + Wave G+ |
 | **[DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)** | Design de IA embarcada no Portal Comercial |
 | **[PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)** | Papéis Minha Delpi × permission codes (Wave G) |
-| **[HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md)** | Checklist / smoke Wave G |
+| **[HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md)** | Checklist / smoke Wave G+ (P0 + P1) |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
 | **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Ocultar PVA + redirects (após homologação) |
 | **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) |
@@ -35,7 +35,7 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A U
 |---------|--------|
 | `commercial-api/` (health, JWT, portfolios, avatars, proxy search/enrich) | **Entregue** |
 | `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
-| Wave G — Meu dia / worklist / tasks / activities + shell UI | **Entregue** (M2 parcial `V003`) |
+| Wave G+ — Meu dia CRM / Conta follow-up / Home gestão / UnderlineNav | **Entregue** (P0+P1; M2 parcial `V003`) |
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
 | Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |
