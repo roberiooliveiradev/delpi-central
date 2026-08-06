@@ -1,6 +1,6 @@
 # ADR-002 — Deprecar pedidos-venda-abertos (F2c)
 
-- **Status:** Aceito e **executado** (ago/2026) — flip de menu + redirects no gateway
+- **Status:** Aceito — execução do flip **somente** após paridade UX completa (rollback ago/2026)
 - **Contexto:** Portal Comercial (`plugins/commercial` + `commercial-api`) entrega paridade do Portal do Vendedor
 
 ## Decisão

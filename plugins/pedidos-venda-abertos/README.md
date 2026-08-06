@@ -2,7 +2,7 @@
 
 Microfrontend (Module Federation) para consulta de pedidos de venda em aberto via **api-delpi**.
 
-> **Depreciado (F2c):** [Portal Comercial](../../docs/12-roadmap-e-evolucao/commercial/README.md) — menu oculto; redirects no gateway.
+> **Ativo (coexiste):** [Portal Comercial](../../docs/12-roadmap-e-evolucao/commercial/README.md) — F2c revertido até paridade UX.
 
 Documentação: [docs/12-roadmap-e-evolucao/pedidos-venda-abertos/](../../docs/12-roadmap-e-evolucao/pedidos-venda-abertos/)
 

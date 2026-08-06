@@ -69,8 +69,8 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 
 | Data | Ambiente | Responsável | Resultado | Observações |
 |------|----------|-------------|-----------|-------------|
-| 2026-08-06 | local/dev | Engenharia (execução plano F2c) | ✅ cutover técnico | Redirects 302 validados; PVA `showInMenu:false` re-registrado; Comercial/QA formal pode complementar se necessário |
-| | prod | | | Após `up-prod-sequential --build gateway` + `TOKEN=… register-manifest` PVA |
+| 2026-08-06 | local/dev | Engenharia | ❌ F2c prematuro — rollback | Commercial open-orders sem paridade UX (KPIs/Excel/previsão OP); PVA restaurado no menu |
+| 2026-08-06 | local/dev | Engenharia (plano F2c) | revertido | Cutover técnico desfeito até fechar gap |
 
 ---
 
