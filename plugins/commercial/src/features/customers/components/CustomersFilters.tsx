@@ -1,7 +1,7 @@
-import { Search, X } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../../../content/helpTooltips";
+import { CommercialSelectField, CommercialTextField } from "../../../app/commercialUi";
 import type { CustomerAttentionFilter } from "../types/customerSummary";
 
 type CustomersFiltersProps = {
@@ -29,64 +29,33 @@ export function CustomersFilters({
 }: CustomersFiltersProps) {
   return (
     <section className="pva-customers-toolbar" aria-label="Busca e filtros de clientes">
-      <div className="pva-customers-toolbar__search-row">
-        <div className="pva-search">
-          <Search size={18} className="pva-search__icon" aria-hidden="true" />
-          <label className="visually-hidden" htmlFor="pva-customers-search">
-            Buscar cliente
-          </label>
-          <input
-            id="pva-customers-search"
-            className="pva-search__input"
-            type="search"
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Buscar por código, loja, nome ou pedido"
-            autoComplete="off"
-            title={CM_HELP.customers.filterSearch}
-          />
-          {search.trim() ? (
-            <button
-              type="button"
-              className="pva-search__clear"
-              onClick={() => onSearchChange("")}
-              aria-label="Limpar busca"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-        <HelpTooltip
-          content={CM_HELP.customers.filterSearch}
-          ariaLabel="Ajuda: Buscar cliente"
-          placement="bottom"
+      <div className="pva-customers-toolbar__search-row cm-form-grid">
+        <CommercialTextField
+          label="Buscar cliente"
+          hint={CM_HELP.customers.filterSearch}
+          type="search"
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Código, loja, nome ou pedido"
         />
-        <label className="pva-customers-toolbar__select-wrap">
-          <span className="visually-hidden">Situação</span>
-          <select
-            className="pva-customers-toolbar__select"
-            value={filter}
-            title={CM_HELP.customers.filterSituation}
-            onChange={(event) =>
-              onFilterChange(event.target.value as CustomerAttentionFilter)
-            }
-          >
-            {FILTER_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <HelpTooltip
-            content={CM_HELP.customers.filterSituation}
-            ariaLabel="Ajuda: Situação"
-            placement="bottom"
-          />
-        </label>
+        <CommercialSelectField
+          label="Situação"
+          hint={CM_HELP.customers.filterSituation}
+          options={FILTER_OPTIONS}
+          value={filter}
+          onChange={(value) => onFilterChange(value as CustomerAttentionFilter)}
+          allowEmpty={false}
+        />
         {hasActiveFilters ? (
-          <button type="button" className="pva-btn pva-btn--secondary" onClick={onReset}>
-            Limpar filtros
-          </button>
+          <div className="cm-form-grid__actions">
+            <ActionButton variant="ghost" onClick={onReset}>
+              Limpar filtros
+            </ActionButton>
+            <HelpTooltip
+              content={CM_HELP.customers.filterSituation}
+              ariaLabel="Ajuda: filtros da carteira"
+            />
+          </div>
         ) : null}
       </div>
     </section>
