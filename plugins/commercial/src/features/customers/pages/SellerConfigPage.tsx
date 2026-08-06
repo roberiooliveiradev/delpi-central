@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
+import { CommercialSelectField } from "../../../app/commercialUi";
 import {
   addSellerCustomer,
   createSellerPortfolio,
@@ -557,21 +558,17 @@ export function SellerConfigPage({ basePath }: ConfigPageProps) {
                     Selecione os clientes e o vendedor de destino. Os escolhidos saem desta
                     carteira e entram na do destino.
                   </p>
-                  <label className="pva-seller-scope">
-                    <span className="pva-seller-scope__label">Vendedor destino</span>
-                    <select
-                      className="pva-seller-scope__select"
-                      value={transferTargetId}
-                      disabled={busy}
-                      onChange={(event) => setTransferTargetId(event.target.value)}
-                    >
-                      {transferTargets.map((seller) => (
-                        <option key={seller.id} value={seller.id}>
-                          {seller.display_name} ({seller.customer_count})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <CommercialSelectField
+                    label="Vendedor destino"
+                    options={transferTargets.map((seller) => ({
+                      value: seller.id,
+                      label: `${seller.display_name} (${seller.customer_count})`,
+                    }))}
+                    value={transferTargetId}
+                    onChange={setTransferTargetId}
+                    allowEmpty={false}
+                    disabled={busy}
+                  />
                   <div className="pva-config-transfer__toolbar">
                     <button
                       type="button"

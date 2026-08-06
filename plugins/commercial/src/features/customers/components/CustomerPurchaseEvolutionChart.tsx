@@ -10,8 +10,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
+import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/index";
 
+import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import type { PurchaseEvolutionPoint } from "../hooks/useCustomerPurchaseEvolution";
@@ -73,30 +74,32 @@ export function CustomerPurchaseEvolutionChart({
       classNames={CHART_CLASSES}
       className="pva-purchase-evolution"
       headerActions={
-        <label className="pva-purchase-evolution__filter">
-          <span className="visually-hidden">Período</span>
-          <select
-            className="pva-customers-toolbar__select pva-purchase-evolution__select"
-            value="12"
-            disabled
-          >
-            <option value="12">Últimos 12 meses</option>
-          </select>
-        </label>
+        <CommercialSelectField
+          label="Período"
+          options={[{ value: "12", label: "Últimos 12 meses" }]}
+          value="12"
+          onChange={() => undefined}
+          allowEmpty={false}
+          disabled
+        />
       }
     >
       {error ? (
-        <p className="pva-billing-series-chart__empty" role="alert">
-          {error}
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage={error}
+          role="alert"
+        />
       ) : loading && !hasValues ? (
-        <p className="pva-billing-series-chart__empty" aria-busy="true">
-          Carregando evolução…
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage="Carregando evolução…"
+        />
       ) : !hasValues ? (
-        <p className="pva-billing-series-chart__empty">
-          Sem faturamento registrado nos últimos 24 meses para este cliente.
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage="Sem faturamento registrado nos últimos 24 meses para este cliente."
+        />
       ) : (
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <ComposedChart

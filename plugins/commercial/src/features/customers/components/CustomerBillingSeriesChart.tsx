@@ -8,8 +8,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
+import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/index";
 
+import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import {
@@ -93,37 +94,43 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
       classNames={CHART_CLASSES}
       className="pva-billing-series-chart"
       headerActions={
-        <label className="pva-billing-series-chart__filter">
-          <span className="visually-hidden">Filtrar por cliente</span>
-          <select
-            className="pva-customers-toolbar__select pva-billing-series-chart__select"
-            value={selectedKey}
-            onChange={(event) => setSelectedKey(event.target.value)}
-            disabled={loading && customerOptions.length === 0}
-          >
-            <option value={BILLING_SERIES_ALL_KEY}>Todos os clientes</option>
-            {customerOptions.map((customer) => (
-              <option key={customer.key} value={customer.key}>
-                {customer.nome} ({customer.codigo}/{customer.loja})
-              </option>
-            ))}
-          </select>
-        </label>
+        <CommercialSelectField
+          label="Cliente"
+          options={[
+            { value: BILLING_SERIES_ALL_KEY, label: "Todos os clientes" },
+            ...customerOptions.map((customer) => ({
+              value: customer.key,
+              label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
+            })),
+          ]}
+          value={selectedKey}
+          onChange={setSelectedKey}
+          allowEmpty={false}
+          searchable={customerOptions.length > 8}
+          disabled={loading && customerOptions.length === 0}
+        />
       }
     >
       {error ? (
-        <p className="pva-billing-series-chart__empty" role="alert">
-          {error}
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage={error}
+          role="alert"
+        />
       ) : loading && !hasValues ? (
-        <p className="pva-billing-series-chart__empty" aria-busy="true">
-          Carregando faturamento…
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage="Carregando faturamento…"
+        />
       ) : !hasValues ? (
-        <p className="pva-billing-series-chart__empty">
-          Sem faturamento registrado nos últimos 12 meses
-          {selectedKey === BILLING_SERIES_ALL_KEY ? " para a carteira" : " para este cliente"}.
-        </p>
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage={
+            selectedKey === BILLING_SERIES_ALL_KEY
+              ? "Sem faturamento registrado nos últimos 12 meses para a carteira."
+              : "Sem faturamento registrado nos últimos 12 meses para este cliente."
+          }
+        />
       ) : (
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <AreaChart

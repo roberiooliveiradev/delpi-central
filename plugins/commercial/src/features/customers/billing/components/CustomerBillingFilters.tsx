@@ -1,5 +1,9 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
 
+import {
+  CommercialSelectField,
+  CommercialTextField,
+} from "../../../../app/commercialUi";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
   CustomerBillingPeriodPreset,
@@ -29,6 +33,12 @@ const PRESETS: { id: CustomerBillingPeriodPreset; label: string }[] = [
   { id: "custom", label: "Personalizado" },
 ];
 
+const SITUATION_OPTIONS = [
+  { value: "all", label: "Todas" },
+  { value: "emitted", label: "Emitidas" },
+  { value: "return", label: "Devoluções" },
+] as const;
+
 export function CustomerBillingFilters({
   preset,
   startDate,
@@ -56,76 +66,51 @@ export function CustomerBillingFilters({
         />
       </p>
 
-      <div className="pva-billing-filters__presets" role="group" aria-label="Período">
+      <div className="cm-nav-row" role="group" aria-label="Período">
         {PRESETS.map((item) => (
-          <button
+          <ActionButton
             key={item.id}
-            type="button"
-            className={
-              preset === item.id
-                ? "pva-customers-filters__chip pva-customers-filters__chip--active"
-                : "pva-customers-filters__chip"
-            }
+            variant={preset === item.id ? "primary" : "ghost"}
             aria-pressed={preset === item.id}
             disabled={disabled}
             onClick={() => onPresetChange(item.id)}
           >
             {item.label}
-          </button>
+          </ActionButton>
         ))}
       </div>
 
-      <div className="pva-billing-filters__dates">
-        <label className="pva-customers-filters__label" htmlFor="pva-billing-start">
-          Data inicial
-          <input
-            id="pva-billing-start"
-            type="date"
-            className="pva-input"
-            value={startDate}
-            disabled={disabled}
-            onChange={(event) => onStartDateChange(event.target.value)}
-          />
-        </label>
-        <label className="pva-customers-filters__label" htmlFor="pva-billing-end">
-          Data final
-          <input
-            id="pva-billing-end"
-            type="date"
-            className="pva-input"
-            value={endDate}
-            disabled={disabled}
-            onChange={(event) => onEndDateChange(event.target.value)}
-          />
-        </label>
-        <label className="pva-customers-filters__label" htmlFor="pva-billing-situation">
-          Situação
-          <select
-            id="pva-billing-situation"
-            className="pva-input"
-            value={situation}
-            disabled={disabled}
-            onChange={(event) =>
-              onSituationChange(event.target.value as CustomerBillingSituationFilter)
-            }
-          >
-            <option value="all">Todas</option>
-            <option value="emitted">Emitidas</option>
-            <option value="return">Devoluções</option>
-          </select>
-        </label>
-        <label className="pva-customers-filters__label" htmlFor="pva-billing-search">
-          Busca
-          <input
-            id="pva-billing-search"
-            type="search"
-            className="pva-input"
-            placeholder="Nota, série, pedido ou produto"
-            value={search}
-            disabled={disabled}
-            onChange={(event) => onSearchChange(event.target.value)}
-          />
-        </label>
+      <div className="cm-form-grid pva-billing-filters__dates">
+        <CommercialTextField
+          label="Data inicial"
+          type="date"
+          value={startDate}
+          onChange={onStartDateChange}
+          disabled={disabled}
+        />
+        <CommercialTextField
+          label="Data final"
+          type="date"
+          value={endDate}
+          onChange={onEndDateChange}
+          disabled={disabled}
+        />
+        <CommercialSelectField
+          label="Situação"
+          options={[...SITUATION_OPTIONS]}
+          value={situation}
+          onChange={(value) => onSituationChange(value as CustomerBillingSituationFilter)}
+          allowEmpty={false}
+          disabled={disabled}
+        />
+        <CommercialTextField
+          label="Busca"
+          type="search"
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Nota, série, pedido ou produto"
+          disabled={disabled}
+        />
       </div>
 
       {validationError ? (
