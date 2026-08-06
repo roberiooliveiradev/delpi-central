@@ -71,7 +71,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | Method | Path | operationId | Fase | Permissão | entity | shape | WF |
 |--------|------|-------------|------|-----------|--------|-------|-----|
 | GET | `/me/summary` | `get_my_commercial_summary` | F2b/F5 | `commercial.home.view` | `commercial_summary` | `composite_analysis` | WF-01 |
-| GET | `/me/worklist` | `get_my_worklist` | F5 | `commercial.worklist.view` | `worklist` | `paged_list` | WF-06 |
+| GET | `/me/worklist` | `get_my_worklist` | F5 | `commercial.worklist.view` | `worklist` | `paged_list` | WF-06 · query `scope=mine\|team`, `assignee_user_id` (team) |
 | GET | `/me/seller-portfolio` | `get_my_seller_portfolio` | F2 | `commercial.accounts.view` | `seller_portfolio` | `scalar` | WF-03 |
 
 > `get_my_seller_portfolio` também em `/seller-portfolios/me` (alias canônico § 3.3).
@@ -128,10 +128,10 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | GET | `/tasks/{id}` | `get_task` | F5 | view/manage | `task` | `scalar` | WF-06 |
 | PATCH | `/tasks/{id}` | `update_task` | F5 | manage | `task` | `scalar` | WF-06 |
 | POST | `/tasks/{id}/complete` | `complete_task` | F5 | manage | `task` | `scalar` | WF-06 |
-| POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | manage / team | `task` | `scalar` | WF-06 · **spec; não no código Wave G+** — backlog P1 [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
+| POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | `seller-portfolios.manage` + carteira ativa destino | `task` | `scalar` | WF-06 · **P1 entregue** [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | POST | `/tasks/{id}/defer` | `defer_task` | F5 | manage | `task` | `scalar` | WF-06 |
 
-`create_task` aceita `description` (Observação). Meu dia Wave G+ **não** envia o campo pela UI — P0 em UX-E-TASKS-EVOLUTION. Anexos: § attachments + `persistent-upload-storage` (P2).
+`create_task` aceita `description` (Observação) e `assignee_user_id` (P1 — gestão). Worklist: `scope=team` + `assignee_user_id` opcional. Anexos: § attachments + `persistent-upload-storage` (P2).
 
 ### 3.7 Activities (F5)
 

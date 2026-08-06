@@ -11,8 +11,10 @@ import {
   createTask,
   deferTask,
   getMyWorklist,
+  reassignTask,
   type CommercialTaskDto,
   type WorklistData,
+  type WorklistScope,
 } from "../../api/worklistApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
@@ -193,10 +195,12 @@ function heroCopy(counts: { overdue: number; today: number; later: number }): {
 }
 
 export function MyDayPage({ basePath }: MyDayPageProps) {
-  const { canManageFollowups, myPortfolio } = usePortfolioScope();
+  const { canManageFollowups, isAdmin, myPortfolio, sellers } = usePortfolioScope();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<WorklistData | null>(null);
+  const [workScope, setWorkScope] = useState<WorklistScope>("mine");
+  const [teamAssigneeFilter, setTeamAssigneeFilter] = useState("");
   const [bucket, setBucket] = useState<BucketKey>("overdue");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -204,20 +208,50 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [priority, setPriority] = useState("normal");
   const [taskType, setTaskType] = useState("follow_up");
   const [customerKey, setCustomerKey] = useState("");
+  const [assigneeUserId, setAssigneeUserId] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [highlightCreateForm, setHighlightCreateForm] = useState(false);
+  const [reassignTaskId, setReassignTaskId] = useState<string | null>(null);
+  const [reassignTargetUserId, setReassignTargetUserId] = useState("");
+  const [reassigning, setReassigning] = useState(false);
   const createFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
+  const activeSellers = useMemo(
+    () => sellers.filter((seller) => seller.active && seller.user_id.trim()),
+    [sellers],
+  );
+
+  const sellerNameByUserId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const seller of activeSellers) {
+      map.set(seller.user_id, seller.display_name.trim() || seller.user_id);
+    }
+    return map;
+  }, [activeSellers]);
+
+  const sellerOptions = useMemo(
+    () =>
+      activeSellers.map((seller) => ({
+        value: seller.user_id,
+        label: seller.display_name.trim() || seller.user_id,
+      })),
+    [activeSellers],
+  );
+
   const customerOptions = useMemo(() => {
-    const rows = myPortfolio?.customers ?? [];
+    const portfolio =
+      isAdmin && assigneeUserId
+        ? activeSellers.find((seller) => seller.user_id === assigneeUserId) ?? myPortfolio
+        : myPortfolio;
+    const rows = portfolio?.customers ?? [];
     return rows.map((c) => ({
       value: `${c.customer_code}|${c.customer_store}`,
       label: `${c.customer_name?.trim() || "Cliente"} (${c.customer_code}/${c.customer_store})`,
     }));
-  }, [myPortfolio]);
+  }, [activeSellers, assigneeUserId, isAdmin, myPortfolio]);
 
   const focusCreateForm = useCallback(() => {
     setHighlightCreateForm(true);
@@ -244,27 +278,44 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     return undefined;
   }, [canManageFollowups, focusCreateForm]);
 
-  const reload = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const wl = await getMyWorklist(signal);
-      setData(wl);
-      const pinned = deepLinkBucketRef.current;
-      if (pinned) {
-        setBucket(pinned);
-        deepLinkBucketRef.current = null;
-      } else if (wl.counts.overdue > 0) setBucket("overdue");
-      else if (wl.counts.today > 0) setBucket("today");
-      else setBucket("later");
-    } catch (err: unknown) {
-      if (signal?.aborted) return;
-      setError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
-      setData(null);
-    } finally {
-      if (!signal?.aborted) setLoading(false);
+  const reload = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const wl = await getMyWorklist({
+          scope: isAdmin && workScope === "team" ? "team" : "mine",
+          assigneeUserId:
+            isAdmin && workScope === "team" && teamAssigneeFilter
+              ? teamAssigneeFilter
+              : null,
+          signal,
+        });
+        setData(wl);
+        const pinned = deepLinkBucketRef.current;
+        if (pinned) {
+          setBucket(pinned);
+          deepLinkBucketRef.current = null;
+        } else if (wl.counts.overdue > 0) setBucket("overdue");
+        else if (wl.counts.today > 0) setBucket("today");
+        else setBucket("later");
+      } catch (err: unknown) {
+        if (signal?.aborted) return;
+        setError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
+        setData(null);
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [isAdmin, teamAssigneeFilter, workScope],
+  );
+
+  useEffect(() => {
+    if (!isAdmin && workScope === "team") {
+      setWorkScope("mine");
+      setTeamAssigneeFilter("");
     }
-  }, []);
+  }, [isAdmin, workScope]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -337,6 +388,22 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }
   };
 
+  const onReassign = async () => {
+    if (!isAdmin || !reassignTaskId || !reassignTargetUserId) return;
+    setReassigning(true);
+    setActionError(null);
+    try {
+      await reassignTask(reassignTaskId, reassignTargetUserId);
+      setReassignTaskId(null);
+      setReassignTargetUserId("");
+      await reload();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Falha ao reatribuir.");
+    } finally {
+      setReassigning(false);
+    }
+  };
+
   const onCreate = async () => {
     if (!canManageFollowups) return;
     const trimmed = title.trim();
@@ -354,6 +421,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         due_at: dueDateInputToIsoEod(dueDate),
         customer_code: customer?.code ?? null,
         customer_store: customer?.store ?? null,
+        assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
       });
       setTitle("");
       setDescription("");
@@ -361,6 +429,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setPriority("normal");
       setTaskType("follow_up");
       setCustomerKey("");
+      setAssigneeUserId("");
       setHighlightCreateForm(false);
       await reload();
     } catch (err: unknown) {
@@ -369,6 +438,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setCreating(false);
     }
   };
+
+  const scopeChips = [
+    {
+      id: "mine",
+      label: "Minhas",
+      active: workScope === "mine",
+      onSelect: () => {
+        setWorkScope("mine");
+        setTeamAssigneeFilter("");
+      },
+    },
+    {
+      id: "team",
+      label: "Equipe",
+      active: workScope === "team",
+      onSelect: () => setWorkScope("team"),
+    },
+  ];
 
   const bucketChips = (
     [
@@ -391,8 +478,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         title={loading ? "Carregando fila…" : hero.title}
         description={
           loading
-            ? "Buscando follow-ups e tarefas atribuídas a você."
-            : hero.description
+            ? workScope === "team"
+              ? "Buscando follow-ups da equipe…"
+              : "Buscando follow-ups e tarefas atribuídas a você."
+            : workScope === "team"
+              ? `${hero.description} Visão da equipe.`
+              : hero.description
         }
         badge={
           !loading && counts.overdue > 0 ? (
@@ -447,6 +538,34 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         }
       >
         <div className="cm-my-day-toolbar">
+          {isAdmin ? (
+            <CommercialScopeChipBar
+              label={
+                <CommercialTitleWithHelp
+                  title="Escopo"
+                  hint={
+                    workScope === "team" ? CM_HELP.myDay.scopeTeam : CM_HELP.myDay.scopeMine
+                  }
+                />
+              }
+              aria-label="Escopo da worklist"
+              chips={scopeChips}
+            />
+          ) : null}
+          {isAdmin && workScope === "team" && sellerOptions.length > 0 ? (
+            <div className="cm-my-day-toolbar__filter">
+              <CommercialSelectField
+                label="Responsável"
+                hint={CM_HELP.myDay.teamAssigneeFilter}
+                options={sellerOptions}
+                value={teamAssigneeFilter}
+                onChange={setTeamAssigneeFilter}
+                allowEmpty
+                emptyLabel="Toda a equipe"
+                searchable={sellerOptions.length > 8}
+              />
+            </div>
+          ) : null}
           <CommercialScopeChipBar
             label="Fila"
             aria-label="Filas do Meu dia"
@@ -466,6 +585,38 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           ) : null}
         </div>
 
+        {reassignTaskId ? (
+          <div className="cm-my-day-reassign" role="region" aria-label="Reatribuir tarefa">
+            <CommercialSelectField
+              label="Novo responsável"
+              hint={CM_HELP.myDay.reassignTask}
+              options={sellerOptions}
+              value={reassignTargetUserId}
+              onChange={setReassignTargetUserId}
+              allowEmpty={false}
+              searchable={sellerOptions.length > 8}
+            />
+            <div className="cm-my-day-form__actions">
+              <ActionButton
+                variant="ghost"
+                onClick={() => {
+                  setReassignTaskId(null);
+                  setReassignTargetUserId("");
+                }}
+              >
+                Cancelar
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                disabled={reassigning || !reassignTargetUserId}
+                onClick={() => void onReassign()}
+              >
+                {reassigning ? "Reatribuindo…" : "Confirmar reatribução"}
+              </ActionButton>
+            </div>
+          </div>
+        ) : null}
+
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
@@ -479,7 +630,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         ) : null}
 
         {!loading && !error ? (
-          <CommercialViewTransition transitionKey={`bucket-${bucket}-${typeFilter}`} tone="panel">
+          <CommercialViewTransition
+            transitionKey={`scope-${workScope}-${teamAssigneeFilter}-bucket-${bucket}-${typeFilter}`}
+            tone="panel"
+          >
             {items.length === 0 ? (
               <EmptyState
                 classNames={cmEmptyCompactClassNames}
@@ -507,13 +661,18 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
                   const priorityLabel =
                     PRIORITY_LABELS[task.priority] ?? task.priority;
+                  const assigneeLabel =
+                    workScope === "team"
+                      ? sellerNameByUserId.get(task.assignee_user_id) ??
+                        task.assignee_user_id
+                      : null;
                   return (
                   <CommercialWorklistItem
                     key={task.id}
                     title={task.title}
                     meta={`${formatDue(task.due_at)} · ${priorityLabel}${
                       typeLabel ? ` · ${typeLabel}` : ""
-                    }${
+                    }${assigneeLabel ? ` · ${assigneeLabel}` : ""}${
                       task.customer_code
                         ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
                         : ""
@@ -539,6 +698,16 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     onTertiaryAction={
                       canManageFollowups ? () => void onDefer(task) : undefined
                     }
+                    quaternaryActionLabel={isAdmin ? "Reatribuir" : undefined}
+                    onQuaternaryAction={
+                      isAdmin
+                        ? () => {
+                            setReassignTaskId(task.id);
+                            setReassignTargetUserId(task.assignee_user_id);
+                            setActionError(null);
+                          }
+                        : undefined
+                    }
                   />
                   );
                 })}
@@ -560,7 +729,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             subtitle={
               highlightCreateForm
                 ? "Cliente ou ação pré-preenchidos — confirme prazo, título e observação."
-                : "Título, prazo, tipo, cliente e observação — padrão HubSpot/Pipedrive."
+                : isAdmin
+                  ? "Título, prazo, tipo, responsável, cliente e observação."
+                  : "Título, prazo, tipo, cliente e observação — padrão HubSpot/Pipedrive."
             }
             hint={CM_HELP.myDay.newTask}
             classNames={cmSectionCardClassNames}
@@ -610,6 +781,21 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 onChange={setTaskType}
                 allowEmpty={false}
               />
+              {isAdmin && sellerOptions.length > 0 ? (
+                <CommercialSelectField
+                  label="Responsável"
+                  hint={CM_HELP.myDay.taskAssignee}
+                  options={sellerOptions}
+                  value={assigneeUserId}
+                  onChange={(value) => {
+                    setAssigneeUserId(value);
+                    setCustomerKey("");
+                  }}
+                  allowEmpty
+                  emptyLabel="Eu (padrão)"
+                  searchable={sellerOptions.length > 8}
+                />
+              ) : null}
               <CommercialSelectField
                 label="Cliente"
                 hint={CM_HELP.myDay.taskCustomer}

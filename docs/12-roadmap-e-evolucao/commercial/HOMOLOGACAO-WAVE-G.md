@@ -32,6 +32,7 @@
 | 11 | Conta 360: **Agendar follow-up** pré-preenche cliente no Meu dia (`?createTask=1&customer_*`) | |
 | 12 | Home AlertQueue vazia: CTA **Criar follow-up** abre Meu dia com form em destaque | |
 | 13 | Meu dia: **Adiar +1 dia** + **Abrir conta**; tipo Ligar / Follow-up / To-do | |
+| 13b | Tasks P1: admin cria com **Responsável**; chips **Minhas/Equipe**; **Reatribuir** | |
 | 14 | Home gestão (admin): KPIs ROL / conversão / OTD + tabela equipe (`allSettled`) | |
 | 15 | Forms billing / charts / transferência com plugin-ui (`Commercial*`) | |
 | 16 | Visual QA claro/escuro + mobile ≤768 no shell e Home | |
@@ -64,11 +65,13 @@ curl -sS http://localhost/apps/commercial-api/health
 | F2c / SavedViewChips / purge CSS espelho | Baixa | Fora desta wave |
 | Observação (`description`) na UI do Meu dia | — | **Feito** P0 (ago/2026) |
 | Filtro por tipo + tipos e-mail/visita | — | **Feito** P0 |
-| Responsável / reassign multi-user | Média (P1) | Spec `reassign_task`; MVP = sempre self |
+| Responsável / reassign multi-user | — | **Feito** P1 (ago/2026): create assignee + `reassign` + `scope=team` |
 | Anexos em tarefa | Média (P2) | Spec attachments + volume Compose |
 | Reminder / checklist / recorrência | Baixa (P3) | Paridade CRM |
 | Start tasks HubSpot / auto-tasks pedidos | Média | Wave futura (P3) |
 | Manifest + papel Vendedor | Ops | Gate acima — checklist item 17 |
+
+**Rebuild Tasks P1 (ago/2026):** `plugin-ui` → `commercial` → `commercial-api` via `up-dev-sequential.sh` — pytest worklist **15 passed**.
 
 UX polish Home/Meu dia (ago/2026) documentado em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 — não bloqueia assinatura Wave G+.
 

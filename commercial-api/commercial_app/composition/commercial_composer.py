@@ -125,5 +125,6 @@ def build_manage_worklist_use_case() -> ManageWorklistUseCase:
             task_repository=build_task_repository(),
             activity_repository=build_activity_repository(),
             audit_repository=build_audit_log_repository(),
+            portfolio_repository=build_seller_portfolio_repository(),
         )
     return _worklist_use_case

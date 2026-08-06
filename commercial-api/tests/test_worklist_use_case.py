@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Sequence
 from uuid import UUID, uuid4
 
+import pytest
+
 from commercial_app.application.use_cases.manage_worklist import (
     CreateTaskInput,
     ManageWorklistUseCase,
@@ -35,6 +37,21 @@ class InMemoryTaskRepo:
             if due_after is not None and (task.due_at is None or task.due_at < due_after):
                 continue
             out.append(task)
+        return out[:limit]
+
+    def list_for_assignees(
+        self,
+        *,
+        assignee_user_ids: Sequence[str],
+        status: str | None = "open",
+        limit: int = 200,
+    ) -> Sequence[CommercialTask]:
+        allowed = set(assignee_user_ids)
+        out = [
+            task
+            for task in self.items.values()
+            if task.assignee_user_id in allowed and (not status or task.status == status)
+        ]
         return out[:limit]
 
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
@@ -73,9 +90,9 @@ class InMemoryTaskRepo:
         self.items[task.id] = task
         return task
 
-    def complete(self, *, task_id: UUID, actor_user_id: str) -> CommercialTask | None:
+    def complete(self, *, task_id: UUID) -> CommercialTask | None:
         task = self.items.get(task_id)
-        if task is None or task.assignee_user_id != actor_user_id or task.status != "open":
+        if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
         done = CommercialTask(
@@ -97,15 +114,9 @@ class InMemoryTaskRepo:
         self.items[task.id] = done
         return done
 
-    def update_due_at(
-        self,
-        *,
-        task_id: UUID,
-        actor_user_id: str,
-        due_at: datetime,
-    ) -> CommercialTask | None:
+    def update_due_at(self, *, task_id: UUID, due_at: datetime) -> CommercialTask | None:
         task = self.items.get(task_id)
-        if task is None or task.assignee_user_id != actor_user_id or task.status != "open":
+        if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
         updated = CommercialTask(
@@ -118,6 +129,30 @@ class InMemoryTaskRepo:
             due_at=due_at,
             completed_at=task.completed_at,
             assignee_user_id=task.assignee_user_id,
+            created_by_user_id=task.created_by_user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            created_at=task.created_at,
+            updated_at=now,
+        )
+        self.items[task.id] = updated
+        return updated
+
+    def reassign(self, *, task_id: UUID, new_assignee_user_id: str) -> CommercialTask | None:
+        task = self.items.get(task_id)
+        if task is None or task.status != "open":
+            return None
+        now = datetime.now(timezone.utc)
+        updated = CommercialTask(
+            id=task.id,
+            title=task.title,
+            description=task.description,
+            task_type=task.task_type,
+            status=task.status,
+            priority=task.priority,
+            due_at=task.due_at,
+            completed_at=task.completed_at,
+            assignee_user_id=new_assignee_user_id,
             created_by_user_id=task.created_by_user_id,
             customer_code=task.customer_code,
             customer_store=task.customer_store,
@@ -172,6 +207,21 @@ class InMemoryActivityRepo:
         )
         self.items.append(activity)
         return activity
+
+
+class FakePortfolio:
+    def __init__(self, user_id: str, display_name: str = "Seller") -> None:
+        self.user_id = user_id
+        self.display_name = display_name
+        self.active = True
+
+
+class InMemoryPortfolioRepo:
+    def __init__(self, user_ids: Sequence[str]) -> None:
+        self._ids = list(user_ids)
+
+    def list_portfolios(self, *, active_only: bool = False) -> list[FakePortfolio]:
+        return [FakePortfolio(uid) for uid in self._ids]
 
 
 def test_worklist_buckets_and_complete():
@@ -237,7 +287,12 @@ def test_create_task_persists_description_in_worklist_and_activity():
 
     wl = uc.get_worklist(user_id="u1")
     matched = next(
-        (item for bucket in ("overdue", "today", "later") for item in wl[bucket] if item["id"] == str(created.id)),
+        (
+            item
+            for bucket in ("overdue", "today", "later")
+            for item in wl[bucket]
+            if item["id"] == str(created.id)
+        ),
         None,
     )
     assert matched is not None
@@ -246,6 +301,69 @@ def test_create_task_persists_description_in_worklist_and_activity():
         a.task_id == created.id and a.body == "Confirmar NF e prazo de entrega"
         for a in activities.items
     )
+
+
+def test_create_and_reassign_team_task():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["manager", "seller-a", "seller-b"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+
+    created = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(title="Para A", assignee_user_id="seller-a"),
+        actor_is_portfolio_manager=True,
+    )
+    assert created.assignee_user_id == "seller-a"
+
+    with pytest.raises(PermissionError):
+        uc.create_task(
+            user_id="seller-a",
+            data=CreateTaskInput(title="Hack", assignee_user_id="seller-b"),
+            actor_is_portfolio_manager=False,
+        )
+
+    reassigned = uc.reassign_task(
+        user_id="manager",
+        task_id=created.id,
+        new_assignee_user_id="seller-b",
+        actor_is_portfolio_manager=True,
+    )
+    assert reassigned.assignee_user_id == "seller-b"
+
+    team_wl = uc.get_worklist(
+        user_id="manager",
+        scope="team",
+        actor_is_portfolio_manager=True,
+    )
+    assert team_wl["scope"] == "team"
+    assert team_wl["counts"]["open"] == 1
+    assert any(item["assignee_user_id"] == "seller-b" for item in team_wl["later"] + team_wl["today"] + team_wl["overdue"])
+
+    filtered = uc.get_worklist(
+        user_id="manager",
+        scope="team",
+        assignee_user_id="seller-b",
+        actor_is_portfolio_manager=True,
+    )
+    assert filtered["counts"]["open"] == 1
+
+
+def test_team_worklist_requires_manager():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["u1", "u2"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+    with pytest.raises(PermissionError):
+        uc.get_worklist(user_id="u1", scope="team", actor_is_portfolio_manager=False)
 
 
 def test_permissions_helpers():

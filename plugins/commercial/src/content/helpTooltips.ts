@@ -32,20 +32,29 @@ export const CM_HELP = {
   myDay: {
     worklist:
       "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Filtre por tipo; notas aparecem na linha (HubSpot/Pipedrive).",
+    scopeMine: "Só tarefas atribuídas a você.",
+    scopeTeam:
+      "Fila de todos os vendedores com carteira ativa (gestão). Opcional: filtrar por responsável.",
+    teamAssigneeFilter: "Restringe a fila da equipe a um vendedor com carteira ativa.",
     bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
     bucketLater: "Tarefas com prazo futuro.",
     typeFilter: "Filtra a fila pelo tipo de atividade (padrão Pipedrive/HubSpot).",
     newTask:
-      "Cria follow-up atribuído a você. Prazo padrão = hoje (fim do dia). Inclua observação e cliente quando possível.",
+      "Cria follow-up com prazo (fim do dia). Gestores podem atribuir a outro vendedor da equipe.",
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligar, e-mail, visita ou to-do — alinhado a HubSpot/Pipedrive.",
-    taskCustomer: "Cliente da sua carteira — abre atalho Abrir conta na linha da tarefa.",
+    taskAssignee:
+      "Responsável com carteira ativa. Vazio = você. Só gestores atribuem a outro vendedor.",
+    taskCustomer:
+      "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
       "Observação interna (notes). Aparece na fila e no histórico da conta — não é e-mail ao cliente.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
+    reassignTask:
+      "Troca o responsável (só gestão). Destino deve ter carteira ativa no Comercial.",
   },
   openOrders: {
     page:

@@ -15,6 +15,10 @@ class CreateTaskBody(BaseModel):
     due_at: datetime | None = None
     customer_code: str | None = None
     customer_store: str | None = None
+    assignee_user_id: str | None = Field(
+        default=None,
+        description="Responsável (sub Minha Delpi). Default = caller. Outro usuário exige manage de carteiras.",
+    )
 
 
 class CreateActivityBody(BaseModel):
@@ -31,3 +35,7 @@ class DeferTaskBody(BaseModel):
     """Adia a tarefa para a data/hora informada (padrão CRM)."""
 
     due_at: datetime
+
+
+class ReassignTaskBody(BaseModel):
+    assignee_user_id: str = Field(..., min_length=1, max_length=200)

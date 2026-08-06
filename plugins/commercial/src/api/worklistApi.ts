@@ -16,6 +16,8 @@ export type CommercialTaskDto = {
   bucket?: "overdue" | "today" | "later" | string;
 };
 
+export type WorklistScope = "mine" | "team";
+
 export type WorklistData = {
   overdue: CommercialTaskDto[];
   today: CommercialTaskDto[];
@@ -26,6 +28,8 @@ export type WorklistData = {
     later: number;
     open: number;
   };
+  scope?: WorklistScope | string;
+  team_user_ids?: string[];
 };
 
 export type CommercialActivityDto = {
@@ -40,10 +44,20 @@ export type CommercialActivityDto = {
   task_id?: string | null;
 };
 
-export async function getMyWorklist(signal?: AbortSignal): Promise<WorklistData> {
+export async function getMyWorklist(
+  options?: {
+    scope?: WorklistScope;
+    assigneeUserId?: string | null;
+    signal?: AbortSignal;
+  },
+): Promise<WorklistData> {
+  const params = new URLSearchParams();
+  if (options?.scope === "team") params.set("scope", "team");
+  if (options?.assigneeUserId) params.set("assignee_user_id", options.assigneeUserId);
+  const query = params.toString();
   const response = await httpGet<ApiSuccessResponse<WorklistData>>(
-    commercialApiUrl("/me/worklist"),
-    { signal },
+    commercialApiUrl(`/me/worklist${query ? `?${query}` : ""}`),
+    { signal: options?.signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar Meu dia.");
 }
@@ -57,6 +71,7 @@ export async function createTask(
     due_at?: string | null;
     customer_code?: string | null;
     customer_store?: string | null;
+    assignee_user_id?: string | null;
   },
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {
@@ -88,6 +103,19 @@ export async function deferTask(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao adiar tarefa.");
+}
+
+export async function reassignTask(
+  taskId: string,
+  assigneeUserId: string,
+  signal?: AbortSignal,
+): Promise<CommercialTaskDto> {
+  const response = await httpPost<ApiSuccessResponse<CommercialTaskDto>>(
+    commercialApiUrl(`/tasks/${encodeURIComponent(taskId)}/reassign`),
+    { assignee_user_id: assigneeUserId },
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao reatribuir tarefa.");
 }
 
 export async function listCustomerActivities(

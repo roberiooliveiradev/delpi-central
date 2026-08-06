@@ -83,6 +83,7 @@ def test_create_task_403_without_followups_manage():
         due_at=None,
         customer_code=None,
         customer_store=None,
+        assignee_user_id=None,
     )
     response = worklist_routes.create_task(request, body)
     assert response.status_code == 403
@@ -127,7 +128,7 @@ def test_get_my_worklist_200_with_worklist_view(monkeypatch: pytest.MonkeyPatch)
         lambda _req: "user-rbac-test",
     )
 
-    response = worklist_routes.get_my_worklist(request)
+    response = worklist_routes.get_my_worklist(request, scope="mine", assignee_user_id=None)
     assert response.status_code == 200
     fake_uc.get_worklist.assert_called_once()
 
@@ -149,7 +150,42 @@ def test_create_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
         due_at=None,
         customer_code=None,
         customer_store=None,
+        assignee_user_id=None,
     )
     response = worklist_routes.create_task(request, body)
     assert response.status_code == 200
     fake_uc.create_task.assert_called_once()
+
+
+def test_reassign_task_403_without_followups_manage():
+    request = _request("/tasks/x/reassign", method="POST")
+    request.state.user = _User(["commercial.worklist.view"])
+    body = SimpleNamespace(assignee_user_id="other")
+    response = worklist_routes.reassign_task(
+        request,
+        task_id=UUID("00000000-0000-0000-0000-000000000001"),
+        body=body,
+    )
+    assert response.status_code == 403
+
+
+def test_reassign_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
+    request = _request("/tasks/x/reassign", method="POST")
+    request.state.user = _User(
+        ["commercial.followups.manage", "commercial.seller-portfolios.manage"]
+    )
+
+    fake_uc = MagicMock()
+    fake_uc.reassign_task.return_value = _sample_task()
+    monkeypatch.setattr(worklist_routes, "_use_case", lambda: fake_uc)
+    monkeypatch.setattr(worklist_routes, "_user_id", lambda _req: "user-rbac-test")
+    monkeypatch.setattr(worklist_routes, "_is_portfolio_manager", lambda _req: True)
+
+    body = SimpleNamespace(assignee_user_id="seller-b")
+    response = worklist_routes.reassign_task(
+        request,
+        task_id=UUID("00000000-0000-0000-0000-000000000099"),
+        body=body,
+    )
+    assert response.status_code == 200
+    fake_uc.reassign_task.assert_called_once()

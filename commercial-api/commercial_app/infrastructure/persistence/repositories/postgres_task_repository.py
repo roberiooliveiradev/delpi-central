@@ -105,6 +105,42 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return [task for row in rows if (task := _row_task(row)) is not None]
 
+    def list_for_assignees(
+        self,
+        *,
+        assignee_user_ids: Sequence[str],
+        status: str | None = "open",
+        limit: int = 200,
+    ) -> Sequence[CommercialTask]:
+        ids = [str(item).strip() for item in assignee_user_ids if str(item).strip()]
+        if not ids:
+            return []
+        clauses = ["deleted_at IS NULL", "assignee_user_id = ANY(%s)"]
+        params: list[Any] = [ids]
+        if status:
+            clauses.append("status = %s")
+            params.append(status)
+        params.append(max(1, min(limit, 500)))
+        rows = self.fetch_all(
+            f"""
+            SELECT {_TASK_COLUMNS}
+              FROM commercial.tasks
+             WHERE {" AND ".join(clauses)}
+             ORDER BY
+               CASE priority
+                 WHEN 'critical' THEN 0
+                 WHEN 'high' THEN 1
+                 WHEN 'normal' THEN 2
+                 ELSE 3
+               END,
+               due_at ASC NULLS LAST,
+               created_at ASC
+             LIMIT %s
+            """,
+            tuple(params),
+        )
+        return [task for row in rows if (task := _row_task(row)) is not None]
+
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         row = self.fetch_one(
             f"""
@@ -154,7 +190,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             raise RuntimeError("Falha ao criar tarefa.")
         return task
 
-    def complete(self, *, task_id: UUID, actor_user_id: str) -> CommercialTask | None:
+    def complete(self, *, task_id: UUID) -> CommercialTask | None:
         row = self.execute_returning_one(
             f"""
             UPDATE commercial.tasks
@@ -163,11 +199,10 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                    updated_at = NOW()
              WHERE id = %s
                AND deleted_at IS NULL
-               AND assignee_user_id = %s
                AND status = 'open'
          RETURNING {_TASK_COLUMNS}
             """,
-            (str(task_id), actor_user_id),
+            (str(task_id),),
         )
         return _row_task(row)
 
@@ -175,7 +210,6 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         self,
         *,
         task_id: UUID,
-        actor_user_id: str,
         due_at: datetime,
     ) -> CommercialTask | None:
         row = self.execute_returning_one(
@@ -185,11 +219,30 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                    updated_at = NOW()
              WHERE id = %s
                AND deleted_at IS NULL
-               AND assignee_user_id = %s
                AND status = 'open'
          RETURNING {_TASK_COLUMNS}
             """,
-            (due_at, str(task_id), actor_user_id),
+            (due_at, str(task_id)),
+        )
+        return _row_task(row)
+
+    def reassign(
+        self,
+        *,
+        task_id: UUID,
+        new_assignee_user_id: str,
+    ) -> CommercialTask | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.tasks
+               SET assignee_user_id = %s,
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+               AND status = 'open'
+         RETURNING {_TASK_COLUMNS}
+            """,
+            (new_assignee_user_id, str(task_id)),
         )
         return _row_task(row)
 

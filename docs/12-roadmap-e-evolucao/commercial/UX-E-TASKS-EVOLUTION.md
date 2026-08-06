@@ -1,6 +1,6 @@
 # Portal Comercial — UX polish e evolução de tarefas (ago/2026)
 
-> **Status:** UX Home + Meu dia + Carteiras **entregues** · **Tasks P0 (Observação + filtro tipo) entregue** · P1–P3 backlog  
+> **Status:** UX Home + Meu dia + Carteiras **entregues** · **Tasks P0 + P1 entregues** · P2–P3 backlog  
 > **Relacionados:** [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) · [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · [DATA-MODEL.md](./DATA-MODEL.md) § 4.1 · [API-ROUTES.md](./API-ROUTES.md) § 3.6 / attachments
 
 Documento canônico das **melhorias de UI** pós–Wave G+ e do **roadmap de tarefas/follow-ups** alinhado ao mercado (HubSpot / Pipedrive / Salesforce).
@@ -62,7 +62,7 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 
 ## 2. Tarefas / Meu dia — o que existe hoje (MVP)
 
-**Decisão Wave G+:** Meu dia = **fila do próprio usuário** (activity queue própria), não CRM de equipe completo.
+**Wave G+:** Meu dia = fila do próprio usuário. **P1 (gestão):** chips Minhas / Equipe + responsável / reassign.
 
 | Capacidade | UI Meu dia | API / banco | Nota |
 |------------|------------|-------------|------|
@@ -70,8 +70,9 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | Concluir / Adiar +1 dia | Sim | Sim | |
 | Deep link Conta → form | Sim | — | `?createTask=1&customer_*` |
 | Buckets atrasadas / hoje / depois | Sim | worklist | |
-| **Responsável** | Sempre **você** | `assignee_user_id` = caller na create | Sem picker |
-| **Reatribuir** | Não | Spec `POST /tasks/{id}/reassign` | Não implementado no código Wave G |
+| **Responsável** | Picker (gestão) / self (vendedor) | `assignee_user_id` no create | **P1 entregue** |
+| **Reatribuir** | Sim (gestão) | `POST /tasks/{id}/reassign` | **P1 entregue** |
+| Fila equipe | Chips Minhas / Equipe + filtro responsável | `GET /me/worklist?scope=team` | **P1 entregue** |
 | **Observação / description** | Sim (form + fila) | Coluna + create + activity body | **P0 entregue** |
 | Filtro por tipo | Sim | Client-side na worklist | Padrão Pipedrive/HubSpot |
 | Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
@@ -97,12 +98,14 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 - Create grava nota no histórico de atividade da conta.
 - Teste: `test_create_task_persists_description_in_worklist_and_activity`.
 
-### P1 — Responsável / equipe
+### P1 — Responsável / equipe (entregue ago/2026)
 
-- Picker **Responsável** (default = eu; opções = usuários da equipe / carteiras geridas).
-- Implementar `reassign_task` + listagem “tarefas da equipe” (gestão) se permissão.
-- RBAC: `followups.manage` + escopo de equipe; não permitir reassign sem manage.
-- Atualizar worklist: “Minhas” vs “Equipe” (chip) para supervisor.
+- Picker **Responsável** no create (default = eu; opções = carteiras ativas).
+- `POST /tasks/{id}/reassign` + UI **Reatribuir** (só gestão / `seller-portfolios.manage`).
+- Worklist `scope=mine|team` + filtro `assignee_user_id`; chips Minhas / Equipe no Meu dia.
+- Complete/defer: assignee **ou** gestor da equipe do assignee.
+- Destino de create/reassign deve ter carteira ativa.
+- Testes: `test_create_and_reassign_team_task`, RBAC `reassign_task_*`.
 
 ### P2 — Anexos
 

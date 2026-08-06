@@ -22,6 +22,16 @@ class TaskRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_for_assignees(
+        self,
+        *,
+        assignee_user_ids: Sequence[str],
+        status: str | None = "open",
+        limit: int = 200,
+    ) -> Sequence[CommercialTask]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         raise NotImplementedError
 
@@ -42,7 +52,8 @@ class TaskRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def complete(self, *, task_id: UUID, actor_user_id: str) -> CommercialTask | None:
+    def complete(self, *, task_id: UUID) -> CommercialTask | None:
+        """Marca tarefa aberta como concluída (autorização no use case)."""
         raise NotImplementedError
 
     @abstractmethod
@@ -50,9 +61,19 @@ class TaskRepositoryPort(ABC):
         self,
         *,
         task_id: UUID,
-        actor_user_id: str,
         due_at: datetime,
     ) -> CommercialTask | None:
+        """Atualiza prazo de tarefa aberta (autorização no use case)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def reassign(
+        self,
+        *,
+        task_id: UUID,
+        new_assignee_user_id: str,
+    ) -> CommercialTask | None:
+        """Reatribui tarefa aberta (autorização no use case)."""
         raise NotImplementedError
 
 

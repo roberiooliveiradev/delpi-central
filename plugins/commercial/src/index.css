@@ -158,6 +158,27 @@
   margin-bottom: 4px;
 }
 
+.dashboard-commercial .cm-my-day-toolbar__filter {
+  max-width: 320px;
+}
+
+.dashboard-commercial .cm-my-day-reassign {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--cm-border, #d0d7de) 80%, transparent);
+  background: color-mix(in srgb, var(--cm-surface-muted, #f6f8fa) 70%, transparent);
+}
+
+.dashboard-commercial .cm-my-day-reassign .cm-my-day-form__actions {
+  margin: 0;
+  padding-top: 0;
+  gap: 8px;
+}
+
 .dashboard-commercial .cm-my-day-list {
   display: flex;
   flex-direction: column;

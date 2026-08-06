@@ -10,18 +10,20 @@ from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_FOLLOWUPS_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
     COMMERCIAL_WORKLIST_PERMISSIONS,
+    can_manage_portfolios,
 )
 from commercial_app.application.use_cases.manage_worklist import (
     CreateActivityInput,
     CreateTaskInput,
 )
 from commercial_app.composition.commercial_composer import build_manage_worklist_use_case
-from commercial_app.core.auth_actor import actor_sub_from_request
+from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
 from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateActivityBody,
     CreateTaskBody,
     DeferTaskBody,
+    ReassignTaskBody,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,15 +41,36 @@ def _use_case():
     return build_manage_worklist_use_case()
 
 
+def _is_portfolio_manager(request: Request) -> bool:
+    return can_manage_portfolios(current_user_from_request(request))
+
+
 @me_router.get("/worklist", operation_id="get_my_worklist")
 @require_any_permission(*COMMERCIAL_WORKLIST_PERMISSIONS)
-def get_my_worklist(request: Request):
+def get_my_worklist(
+    request: Request,
+    scope: str = Query("mine", description="mine | team (team exige manage de carteiras)"),
+    assignee_user_id: str | None = Query(
+        None,
+        description="Filtra responsável na fila da equipe (somente scope=team).",
+    ),
+):
     try:
         user_id = _user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="get_my_worklist")
-        data = _use_case().get_worklist(user_id=user_id)
+        normalized = (scope or "mine").strip().lower()
+        data = _use_case().get_worklist(
+            user_id=user_id,
+            scope="team" if normalized == "team" else "mine",
+            assignee_user_id=assignee_user_id,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
         return ok(data, message="Worklist carregada.", operation_id="get_my_worklist")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="get_my_worklist")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="get_my_worklist")
     except Exception:
         logger.exception("get_my_worklist_failed")
         return fail("Erro interno ao carregar worklist.", 500, operation_id="get_my_worklist")
@@ -91,9 +114,13 @@ def create_task(request: Request, body: CreateTaskBody):
                 due_at=body.due_at,
                 customer_code=body.customer_code,
                 customer_store=body.customer_store,
+                assignee_user_id=body.assignee_user_id,
             ),
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="create_task")
     except ValueError as exc:
         return fail(str(exc), 422, operation_id="create_task")
     except Exception:
@@ -108,8 +135,14 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
         user_id = _user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="complete_task")
-        task = _use_case().complete_task(user_id=user_id, task_id=task_id)
+        task = _use_case().complete_task(
+            user_id=user_id,
+            task_id=task_id,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="complete_task")
     except LookupError as exc:
         return fail(str(exc), 404, operation_id="complete_task")
     except Exception:
@@ -124,8 +157,15 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
         user_id = _user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="defer_task")
-        task = _use_case().defer_task(user_id=user_id, task_id=task_id, due_at=body.due_at)
+        task = _use_case().defer_task(
+            user_id=user_id,
+            task_id=task_id,
+            due_at=body.due_at,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
         return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="defer_task")
     except LookupError as exc:
         return fail(str(exc), 404, operation_id="defer_task")
     except ValueError as exc:
@@ -133,6 +173,31 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
     except Exception:
         logger.exception("defer_task_failed")
         return fail("Erro interno ao adiar tarefa.", 500, operation_id="defer_task")
+
+
+@tasks_router.post("/{task_id}/reassign", operation_id="reassign_task")
+@require_any_permission(*COMMERCIAL_FOLLOWUPS_PERMISSIONS)
+def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTaskBody = ...):
+    try:
+        user_id = _user_id(request)
+        if not user_id:
+            return fail("Usuário não identificado.", 401, operation_id="reassign_task")
+        task = _use_case().reassign_task(
+            user_id=user_id,
+            task_id=task_id,
+            new_assignee_user_id=body.assignee_user_id,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
+        return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="reassign_task")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="reassign_task")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="reassign_task")
+    except Exception:
+        logger.exception("reassign_task_failed")
+        return fail("Erro interno ao reatribuir tarefa.", 500, operation_id="reassign_task")
 
 
 @activities_router.post("", operation_id="create_activity")

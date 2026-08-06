@@ -7,12 +7,13 @@ from uuid import UUID
 
 from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
+from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
 from commercial_app.domain.ports.task_repository_port import (
     ActivityRepositoryPort,
     TaskRepositoryPort,
 )
 
-WorklistBucket = Literal["overdue", "today", "later", "open"]
+WorklistScope = Literal["mine", "team"]
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class CreateTaskInput:
     due_at: datetime | None = None
     customer_code: str | None = None
     customer_store: str | None = None
+    assignee_user_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,39 @@ def _end_of_today_utc() -> datetime:
     return _start_of_today_utc().replace(hour=23, minute=59, second=59, microsecond=999999)
 
 
+def _bucket_tasks(open_tasks: list[CommercialTask]) -> dict[str, Any]:
+    start = _start_of_today_utc()
+    end = _end_of_today_utc()
+    overdue: list[dict[str, Any]] = []
+    today: list[dict[str, Any]] = []
+    later: list[dict[str, Any]] = []
+    for task in open_tasks:
+        payload = task.to_dict()
+        due = task.due_at
+        if due is not None and due.tzinfo is None:
+            due = due.replace(tzinfo=timezone.utc)
+        if due is not None and due < start:
+            payload["bucket"] = "overdue"
+            overdue.append(payload)
+        elif due is not None and due <= end:
+            payload["bucket"] = "today"
+            today.append(payload)
+        else:
+            payload["bucket"] = "later"
+            later.append(payload)
+    return {
+        "overdue": overdue,
+        "today": today,
+        "later": later,
+        "counts": {
+            "overdue": len(overdue),
+            "today": len(today),
+            "later": len(later),
+            "open": len(open_tasks),
+        },
+    }
+
+
 class ManageWorklistUseCase:
     def __init__(
         self,
@@ -53,61 +88,116 @@ class ManageWorklistUseCase:
         task_repository: TaskRepositoryPort,
         activity_repository: ActivityRepositoryPort,
         audit_repository: AuditLogRepositoryPort | None = None,
+        portfolio_repository: SellerPortfolioRepositoryPort | None = None,
     ) -> None:
         self._tasks = task_repository
         self._activities = activity_repository
         self._audit = audit_repository
+        self._portfolios = portfolio_repository
 
-    def get_worklist(self, *, user_id: str) -> dict[str, Any]:
-        open_tasks = list(self._tasks.list_for_assignee(assignee_user_id=user_id, status="open"))
-        start = _start_of_today_utc()
-        end = _end_of_today_utc()
-        overdue: list[dict[str, Any]] = []
-        today: list[dict[str, Any]] = []
-        later: list[dict[str, Any]] = []
-        for task in open_tasks:
-            payload = task.to_dict()
-            due = task.due_at
-            if due is not None and due.tzinfo is None:
-                due = due.replace(tzinfo=timezone.utc)
-            if due is not None and due < start:
-                payload["bucket"] = "overdue"
-                overdue.append(payload)
-            elif due is not None and due <= end:
-                payload["bucket"] = "today"
-                today.append(payload)
-            else:
-                payload["bucket"] = "later"
-                later.append(payload)
+    def team_user_ids(self) -> set[str]:
+        if self._portfolios is None:
+            return set()
         return {
-            "overdue": overdue,
-            "today": today,
-            "later": later,
-            "counts": {
-                "overdue": len(overdue),
-                "today": len(today),
-                "later": len(later),
-                "open": len(open_tasks),
-            },
+            str(item.user_id).strip()
+            for item in self._portfolios.list_portfolios(active_only=True)
+            if str(item.user_id or "").strip()
         }
+
+    def _assert_team_member(self, user_id: str) -> None:
+        team = self.team_user_ids()
+        if user_id not in team:
+            raise ValueError("Responsável deve ter carteira ativa no Comercial.")
+
+    def _can_act_on_task(
+        self,
+        *,
+        task: CommercialTask,
+        actor_user_id: str,
+        actor_is_portfolio_manager: bool,
+    ) -> bool:
+        if task.assignee_user_id == actor_user_id:
+            return True
+        if not actor_is_portfolio_manager:
+            return False
+        return task.assignee_user_id in self.team_user_ids()
+
+    def get_worklist(
+        self,
+        *,
+        user_id: str,
+        scope: WorklistScope = "mine",
+        assignee_user_id: str | None = None,
+        actor_is_portfolio_manager: bool = False,
+    ) -> dict[str, Any]:
+        normalized_scope: WorklistScope = "team" if scope == "team" else "mine"
+        filter_assignee = (assignee_user_id or "").strip() or None
+
+        if normalized_scope == "team":
+            if not actor_is_portfolio_manager:
+                raise PermissionError("Sem permissão para ver a fila da equipe.")
+            team_ids = sorted(self.team_user_ids())
+            if not team_ids:
+                open_tasks: list[CommercialTask] = []
+            elif filter_assignee:
+                if filter_assignee not in team_ids:
+                    raise ValueError("Filtro de responsável fora da equipe.")
+                open_tasks = list(
+                    self._tasks.list_for_assignee(
+                        assignee_user_id=filter_assignee,
+                        status="open",
+                        limit=200,
+                    )
+                )
+            else:
+                open_tasks = list(
+                    self._tasks.list_for_assignees(
+                        assignee_user_ids=team_ids,
+                        status="open",
+                        limit=500,
+                    )
+                )
+            payload = _bucket_tasks(open_tasks)
+            payload["scope"] = "team"
+            payload["team_user_ids"] = team_ids
+            return payload
+
+        open_tasks = list(
+            self._tasks.list_for_assignee(assignee_user_id=user_id, status="open", limit=200)
+        )
+        payload = _bucket_tasks(open_tasks)
+        payload["scope"] = "mine"
+        return payload
 
     def list_tasks(self, *, user_id: str, status: str | None = "open") -> list[CommercialTask]:
         return list(self._tasks.list_for_assignee(assignee_user_id=user_id, status=status))
 
-    def create_task(self, *, user_id: str, data: CreateTaskInput) -> CommercialTask:
+    def create_task(
+        self,
+        *,
+        user_id: str,
+        data: CreateTaskInput,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
         title = (data.title or "").strip()
         if not title:
             raise ValueError("Título da tarefa é obrigatório.")
         task_type = (data.task_type or "follow_up").strip() or "follow_up"
         priority = (data.priority or "normal").strip() or "normal"
         description = (data.description or "").strip() or None
+        assignee = (data.assignee_user_id or user_id).strip() or user_id
+        if assignee != user_id:
+            if not actor_is_portfolio_manager:
+                raise PermissionError("Sem permissão para atribuir tarefa a outro usuário.")
+            self._assert_team_member(assignee)
+
         task = self._tasks.create(
             title=title,
             description=description,
             task_type=task_type,
             priority=priority,
             due_at=data.due_at,
-            assignee_user_id=user_id,
+            assignee_user_id=assignee,
             created_by_user_id=user_id,
             customer_code=(data.customer_code or None),
             customer_store=(data.customer_store or None),
@@ -118,7 +208,7 @@ class ManageWorklistUseCase:
                 action="commercial.task.created",
                 entity_type="task",
                 entity_id=str(task.id),
-                payload={"title": task.title},
+                payload={"title": task.title, "assignee_user_id": task.assignee_user_id},
             )
         self._activities.create(
             activity_type="system",
@@ -132,8 +222,23 @@ class ManageWorklistUseCase:
         )
         return task
 
-    def complete_task(self, *, user_id: str, task_id: UUID) -> CommercialTask:
-        task = self._tasks.complete(task_id=task_id, actor_user_id=user_id)
+    def complete_task(
+        self,
+        *,
+        user_id: str,
+        task_id: UUID,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
+        existing = self._tasks.get_by_id(task_id)
+        if existing is None or existing.status != "open":
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if not self._can_act_on_task(
+            task=existing,
+            actor_user_id=user_id,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        ):
+            raise PermissionError("Sem permissão para concluir esta tarefa.")
+        task = self._tasks.complete(task_id=task_id)
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if self._audit:
@@ -156,12 +261,26 @@ class ManageWorklistUseCase:
         )
         return task
 
-    def defer_task(self, *, user_id: str, task_id: UUID, due_at: datetime) -> CommercialTask:
+    def defer_task(
+        self,
+        *,
+        user_id: str,
+        task_id: UUID,
+        due_at: datetime,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
         if due_at.tzinfo is None:
             due_at = due_at.replace(tzinfo=timezone.utc)
-        task = self._tasks.update_due_at(
-            task_id=task_id, actor_user_id=user_id, due_at=due_at
-        )
+        existing = self._tasks.get_by_id(task_id)
+        if existing is None or existing.status != "open":
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if not self._can_act_on_task(
+            task=existing,
+            actor_user_id=user_id,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        ):
+            raise PermissionError("Sem permissão para adiar esta tarefa.")
+        task = self._tasks.update_due_at(task_id=task_id, due_at=due_at)
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if self._audit:
@@ -176,6 +295,56 @@ class ManageWorklistUseCase:
             activity_type="system",
             subject=f"Tarefa adiada: {task.title}",
             body=None,
+            occurred_at=None,
+            actor_user_id=user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            task_id=task.id,
+        )
+        return task
+
+    def reassign_task(
+        self,
+        *,
+        user_id: str,
+        task_id: UUID,
+        new_assignee_user_id: str,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
+        new_assignee = (new_assignee_user_id or "").strip()
+        if not new_assignee:
+            raise ValueError("Informe o novo responsável.")
+        existing = self._tasks.get_by_id(task_id)
+        if existing is None or existing.status != "open":
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if not actor_is_portfolio_manager:
+            raise PermissionError("Sem permissão para reatribuir tarefas.")
+        self._assert_team_member(new_assignee)
+        if existing.assignee_user_id == new_assignee:
+            return existing
+
+        # Gestor só reatribui tarefas da equipe (inclui as próprias)
+        if existing.assignee_user_id not in self.team_user_ids():
+            raise PermissionError("Tarefa fora do escopo da equipe.")
+
+        task = self._tasks.reassign(task_id=task_id, new_assignee_user_id=new_assignee)
+        if task is None:
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if self._audit:
+            self._audit.append(
+                actor_user_id=user_id,
+                action="commercial.task.reassigned",
+                entity_type="task",
+                entity_id=str(task.id),
+                payload={
+                    "from_assignee_user_id": existing.assignee_user_id,
+                    "to_assignee_user_id": new_assignee,
+                },
+            )
+        self._activities.create(
+            activity_type="system",
+            subject=f"Tarefa reatribuída: {task.title}",
+            body=f"De {existing.assignee_user_id} para {new_assignee}",
             occurred_at=None,
             actor_user_id=user_id,
             customer_code=task.customer_code,
