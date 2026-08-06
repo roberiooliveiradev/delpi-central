@@ -25,6 +25,8 @@ def test_summary_use_case_builds_distribution() -> None:
     assert result["orders_without_plan"] == 25
     assert result["products_without_plan"] == 10
     assert result["distribution"][0]["status"] == "with_plan"
+    assert result["distribution"][0]["label"] == "Com inspeção"
     assert result["distribution"][0]["count"] == 75
     assert result["distribution"][1]["status"] == "without_plan"
+    assert result["distribution"][1]["label"] == "Sem inspeção"
     assert result["distribution"][1]["count"] == 25

@@ -2656,35 +2656,35 @@
       "operationId": "get_process_inspection_plans_summary",
       "path": "/process-inspection-plans/summary",
       "method": "GET",
-      "tag": "Process inspection plans",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_orders_without_plan",
       "path": "/process-inspection-plans/orders-without-plan",
       "method": "GET",
-      "tag": "Process inspection plans",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_products_without_plan",
       "path": "/process-inspection-plans/products-without-plan",
       "method": "GET",
-      "tag": "Process inspection plans",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_products",
       "path": "/process-inspection-plans/products",
       "method": "GET",
-      "tag": "Process inspection plans",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_product",
       "path": "/process-inspection-plans/products/{code}",
       "method": "GET",
-      "tag": "Process inspection plans",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     }
   ]

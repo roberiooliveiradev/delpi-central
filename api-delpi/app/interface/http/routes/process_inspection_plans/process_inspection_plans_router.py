@@ -25,45 +25,47 @@ from app.utils.logger import log_error
 
 router = APIRouter(
     prefix="/process-inspection-plans",
-    tags=["Process inspection plans"],
+    tags=["Planos de inspeção de processo"],
 )
 
+# meta.fields em pt-BR — consumo TV/chat (kpi_field_labels / picker de campo).
 _SUMMARY_FIELDS = {
-    "products_without_plan": "Products without inspection plan",
-    "orders_without_plan": "Open production orders without plan",
-    "total_open_orders": "Total open production orders",
-    "orders_with_plan": "Open production orders with plan",
-    "registered_pct": "Percentage of open orders with plan",
+    "products_without_plan": "Produtos sem plano de inspeção",
+    "orders_without_plan": "OPs abertas sem plano",
+    "total_open_orders": "Total de OPs abertas",
+    "orders_with_plan": "OPs abertas com plano",
+    "registered_pct": "% de inspeções cadastradas",
+    "distribution": "Distribuição de ordens",
 }
 
 _ORDER_FIELDS = {
-    "branch": "Branch",
-    "product_code": "Product code",
-    "product_description": "Product description",
-    "production_order": "Production order",
-    "observation": "Quality observation",
+    "branch": "Filial",
+    "product_code": "Produto",
+    "product_description": "Descrição do produto",
+    "production_order": "OP",
+    "observation": "Observação",
 }
 
 _PRODUCT_WITHOUT_FIELDS = {
-    "product_code": "Product code",
-    "product_description": "Product description",
-    "open_orders_count": "Open production orders count",
+    "product_code": "Produto",
+    "product_description": "Descrição do produto",
+    "open_orders_count": "Qtd. de OPs abertas",
 }
 
 _PRODUCT_WITH_FIELDS = {
-    "product_code": "Product code",
-    "product_description": "Product description",
-    "revision": "Active inspection revision",
-    "description": "Plan description",
-    "inspection_type": "Inspection type",
-    "created_at": "Created at",
-    "start_date": "Start date",
+    "product_code": "Produto",
+    "product_description": "Descrição do produto",
+    "revision": "Revisão ativa",
+    "description": "Descrição do plano",
+    "inspection_type": "Tipo de inspeção",
+    "created_at": "Data de cadastro",
+    "start_date": "Data de início",
 }
 
 _PRODUCT_DETAIL_FIELDS = {
-    "product_code": "Product code",
-    "include_bom": "Include BOM components",
-    "total": "Inspection node count",
+    "product_code": "Produto",
+    "include_bom": "Incluir estrutura (BOM)",
+    "total": "Qtd. de nós de inspeção",
 }
 
 
@@ -238,7 +240,7 @@ def get_process_inspection_plans_product_route(
             sections=[
                 {
                     "key": "items",
-                    "label": "Inspection plan nodes",
+                    "label": "Nós do plano de inspeção",
                     "shape": "list",
                 }
             ],

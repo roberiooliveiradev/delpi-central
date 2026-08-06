@@ -33,10 +33,10 @@ def test_process_inspection_plans_summary_returns_meta(mock_build, _mock_branch)
         "total_open_orders": 448,
         "orders_with_plan": 385,
         "registered_pct": 85.94,
-        "distribution": [
-            {"status": "with_plan", "label": "with_plan", "count": 385, "pct": 85.94},
-            {"status": "without_plan", "label": "without_plan", "count": 63, "pct": 14.06},
-        ],
+                        "distribution": [
+                            {"status": "with_plan", "label": "Com inspeção", "count": 385, "pct": 85.94},
+                            {"status": "without_plan", "label": "Sem inspeção", "count": 63, "pct": 14.06},
+                        ],
     }
     mock_use_case = MagicMock()
     mock_use_case.execute.return_value = mock_result

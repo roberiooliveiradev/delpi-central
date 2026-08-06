@@ -36,13 +36,13 @@ class GetProcessInspectionPlansSummaryUseCase:
         distribution = [
             {
                 "status": "with_plan",
-                "label": "with_plan",
+                "label": "Com inspeção",
                 "count": with_plan,
                 "pct": round((with_plan / total) * 100, 2) if total else 0.0,
             },
             {
                 "status": "without_plan",
-                "label": "without_plan",
+                "label": "Sem inspeção",
                 "count": without,
                 "pct": round((without / total) * 100, 2) if total else 0.0,
             },
