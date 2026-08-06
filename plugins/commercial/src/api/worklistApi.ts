@@ -1,5 +1,5 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
-import { commercialApiUrl, httpGet, httpPost } from "./httpClient";
+import { commercialApiUrl, httpGet, httpPatch, httpPost } from "./httpClient";
 
 export type CommercialTaskDto = {
   id: string;
@@ -82,6 +82,28 @@ export async function createTask(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao criar tarefa.");
+}
+
+export async function updateTask(
+  taskId: string,
+  body: {
+    title: string;
+    description?: string | null;
+    task_type?: string;
+    priority?: string;
+    due_at?: string | null;
+    customer_code?: string | null;
+    customer_store?: string | null;
+    assignee_user_id?: string | null;
+  },
+  signal?: AbortSignal,
+): Promise<CommercialTaskDto> {
+  const response = await httpPatch<ApiSuccessResponse<CommercialTaskDto>>(
+    commercialApiUrl(`/tasks/${encodeURIComponent(taskId)}`),
+    body,
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao atualizar tarefa.");
 }
 
 export async function completeTask(taskId: string, signal?: AbortSignal): Promise<CommercialTaskDto> {

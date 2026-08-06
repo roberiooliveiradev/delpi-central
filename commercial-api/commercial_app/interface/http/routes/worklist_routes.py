@@ -15,6 +15,7 @@ from commercial_app.application.security.commercial_permissions import (
 from commercial_app.application.use_cases.manage_worklist import (
     CreateActivityInput,
     CreateTaskInput,
+    UpdateTaskInput,
 )
 from commercial_app.composition.commercial_composer import build_manage_worklist_use_case
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
@@ -24,6 +25,7 @@ from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateTaskBody,
     DeferTaskBody,
     ReassignTaskBody,
+    UpdateTaskBody,
 )
 
 logger = logging.getLogger(__name__)
@@ -126,6 +128,40 @@ def create_task(request: Request, body: CreateTaskBody):
     except Exception:
         logger.exception("create_task_failed")
         return fail("Erro interno ao criar tarefa.", 500, operation_id="create_task")
+
+
+@tasks_router.patch("/{task_id}", operation_id="update_task")
+@require_any_permission(*COMMERCIAL_FOLLOWUPS_PERMISSIONS)
+def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBody = ...):
+    try:
+        user_id = _user_id(request)
+        if not user_id:
+            return fail("Usuário não identificado.", 401, operation_id="update_task")
+        task = _use_case().update_task(
+            user_id=user_id,
+            task_id=task_id,
+            data=UpdateTaskInput(
+                title=body.title,
+                description=body.description,
+                task_type=body.task_type,
+                priority=body.priority,
+                due_at=body.due_at,
+                customer_code=body.customer_code,
+                customer_store=body.customer_store,
+                assignee_user_id=body.assignee_user_id,
+            ),
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
+        return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="update_task")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="update_task")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="update_task")
+    except Exception:
+        logger.exception("update_task_failed")
+        return fail("Erro interno ao atualizar tarefa.", 500, operation_id="update_task")
 
 
 @tasks_router.post("/{task_id}/complete", operation_id="complete_task")

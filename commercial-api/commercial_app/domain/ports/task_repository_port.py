@@ -76,6 +76,23 @@ class TaskRepositoryPort(ABC):
         """Reatribui tarefa aberta (autorização no use case)."""
         raise NotImplementedError
 
+    @abstractmethod
+    def update(
+        self,
+        *,
+        task_id: UUID,
+        title: str,
+        description: str | None,
+        task_type: str,
+        priority: str,
+        due_at: datetime | None,
+        customer_code: str | None,
+        customer_store: str | None,
+        assignee_user_id: str,
+    ) -> CommercialTask | None:
+        """Atualiza campos de tarefa aberta (autorização no use case)."""
+        raise NotImplementedError
+
 
 class ActivityRepositoryPort(ABC):
     @abstractmethod

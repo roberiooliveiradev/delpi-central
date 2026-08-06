@@ -21,6 +21,20 @@ class CreateTaskBody(BaseModel):
     )
 
 
+class UpdateTaskBody(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: str | None = None
+    task_type: Literal["follow_up", "call", "todo", "email", "visit", "internal", "other"] = "follow_up"
+    priority: Literal["low", "normal", "high", "critical"] = "normal"
+    due_at: datetime | None = None
+    customer_code: str | None = None
+    customer_store: str | None = None
+    assignee_user_id: str | None = Field(
+        default=None,
+        description="Novo responsável (opcional). Troca exige manage de carteiras.",
+    )
+
+
 class CreateActivityBody(BaseModel):
     activity_type: Literal["call", "email", "meeting", "visit", "note", "system"]
     subject: str | None = None

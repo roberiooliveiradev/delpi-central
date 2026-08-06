@@ -162,6 +162,42 @@ class InMemoryTaskRepo:
         self.items[task.id] = updated
         return updated
 
+    def update(
+        self,
+        *,
+        task_id: UUID,
+        title: str,
+        description: str | None,
+        task_type: str,
+        priority: str,
+        due_at: datetime | None,
+        customer_code: str | None,
+        customer_store: str | None,
+        assignee_user_id: str,
+    ) -> CommercialTask | None:
+        task = self.items.get(task_id)
+        if task is None or task.status != "open":
+            return None
+        now = datetime.now(timezone.utc)
+        updated = CommercialTask(
+            id=task.id,
+            title=title,
+            description=description,
+            task_type=task_type,
+            status=task.status,
+            priority=priority,
+            due_at=due_at,
+            completed_at=task.completed_at,
+            assignee_user_id=assignee_user_id,
+            created_by_user_id=task.created_by_user_id,
+            customer_code=customer_code,
+            customer_store=customer_store,
+            created_at=task.created_at,
+            updated_at=now,
+        )
+        self.items[task.id] = updated
+        return updated
+
 
 class InMemoryActivityRepo:
     def __init__(self) -> None:
@@ -351,6 +387,66 @@ def test_create_and_reassign_team_task():
         actor_is_portfolio_manager=True,
     )
     assert filtered["counts"]["open"] == 1
+
+
+def test_update_task_fields_and_permission():
+    from commercial_app.application.use_cases.manage_worklist import UpdateTaskInput
+
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["seller-a", "seller-b"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+    now = datetime.now(timezone.utc)
+    created = uc.create_task(
+        user_id="seller-a",
+        data=CreateTaskInput(title="Original", due_at=now, priority="normal"),
+    )
+    updated = uc.update_task(
+        user_id="seller-a",
+        task_id=created.id,
+        data=UpdateTaskInput(
+            title="Atualizada",
+            description="Nova nota",
+            task_type="call",
+            priority="high",
+            due_at=now + timedelta(days=2),
+            customer_code="C001",
+            customer_store="01",
+        ),
+    )
+    assert updated.title == "Atualizada"
+    assert updated.description == "Nova nota"
+    assert updated.task_type == "call"
+    assert updated.priority == "high"
+    assert updated.customer_code == "C001"
+    assert any(
+        a.task_id == created.id and "atualizada" in (a.subject or "").lower()
+        for a in activities.items
+    )
+
+    with pytest.raises(PermissionError):
+        uc.update_task(
+            user_id="seller-b",
+            task_id=created.id,
+            data=UpdateTaskInput(title="Hack"),
+            actor_is_portfolio_manager=False,
+        )
+
+    as_manager = uc.update_task(
+        user_id="manager",
+        task_id=created.id,
+        data=UpdateTaskInput(
+            title="Gestor editou",
+            assignee_user_id="seller-b",
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    assert as_manager.title == "Gestor editou"
+    assert as_manager.assignee_user_id == "seller-b"
 
 
 def test_team_worklist_requires_manager():

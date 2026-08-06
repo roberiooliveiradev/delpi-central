@@ -220,6 +220,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "MultiSelectField"),
   vc("forms", "ReadOnlyField"),
   vc("forms", "FileDropzone"),
+  vc("forms", "AttachmentFileList"),
   vc("forms", "FilterCheckboxField"),
   vc("forms", "FormFieldShell"),
   vc("forms", "FormSelectControl"),

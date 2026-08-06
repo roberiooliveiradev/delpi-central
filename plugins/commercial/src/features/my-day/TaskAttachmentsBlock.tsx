@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActionButton } from "@delpi/plugin-ui/index";
 
 import {
   deleteAttachment,
@@ -8,11 +7,21 @@ import {
   uploadTaskAttachment,
   type CommercialAttachmentDto,
 } from "../../api/attachmentsApi";
+import {
+  CommercialAttachmentFileList,
+  CommercialFileDropzone,
+} from "../../app/commercialUi";
+import {
+  TaskAttachmentPreviewModal,
+  type TaskAttachmentPreviewTarget,
+} from "./TaskAttachmentPreviewModal";
 
 type TaskAttachmentsBlockProps = {
   taskId: string;
   initialCount?: number;
   canManage: boolean;
+  /** Sem SectionCard — corpo do DetailCard da tarefa. */
+  embedded?: boolean;
   onChanged?: () => void;
   notifyError: (message: string) => void;
   notifySuccess: (message: string) => void;
@@ -24,24 +33,30 @@ function formatBytes(value: number): string {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const ATTACH_ACCEPT =
+  ".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain";
+
 export function TaskAttachmentsBlock({
   taskId,
   initialCount = 0,
   canManage,
+  embedded = false,
   onChanged,
   notifyError,
   notifySuccess,
 }: TaskAttachmentsBlockProps) {
-  const [open, setOpen] = useState(initialCount > 0);
   const [items, setItems] = useState<CommercialAttachmentDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<TaskAttachmentPreviewTarget>(null);
+  const [loadedOnce, setLoadedOnce] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       const next = await listTaskAttachments(taskId);
       setItems(next);
+      setLoadedOnce(true);
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao listar anexos.");
       setItems([]);
@@ -51,18 +66,16 @@ export function TaskAttachmentsBlock({
   }, [notifyError, taskId]);
 
   useEffect(() => {
-    if (!open) return;
     void reload();
-  }, [open, reload]);
+  }, [reload]);
 
-  const onUpload = async (fileList: FileList | null) => {
-    const file = fileList?.[0];
+  const onUpload = async (files: File[]) => {
+    const file = files[0];
     if (!file || !canManage) return;
     setBusyId("upload");
     try {
       await uploadTaskAttachment(taskId, file);
       notifySuccess("Anexo enviado.");
-      setOpen(true);
       await reload();
       onChanged?.();
     } catch (err: unknown) {
@@ -72,14 +85,14 @@ export function TaskAttachmentsBlock({
     }
   };
 
-  const onDownload = async (item: CommercialAttachmentDto) => {
+  const onDownload = async (item: { id: string; fileName: string }) => {
     setBusyId(item.id);
     try {
       const blob = await downloadAttachmentBlob(item.id);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = item.file_name;
+      anchor.download = item.fileName;
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
@@ -89,7 +102,7 @@ export function TaskAttachmentsBlock({
     }
   };
 
-  const onDelete = async (item: CommercialAttachmentDto) => {
+  const onDelete = async (item: { id: string }) => {
     if (!canManage) return;
     setBusyId(item.id);
     try {
@@ -104,67 +117,59 @@ export function TaskAttachmentsBlock({
     }
   };
 
-  const countLabel = open ? items.length : initialCount;
+  const onOpen = (item: { id: string; fileName: string }) => {
+    const full = items.find((row) => row.id === item.id);
+    setPreview({
+      kind: "remote",
+      id: item.id,
+      fileName: item.fileName,
+      contentType: full?.content_type,
+      byteSize: full?.byte_size,
+    });
+  };
+
+  const count = loadedOnce ? items.length : initialCount;
+  const heading = count > 0 ? `Arquivos anexados (${count})` : "Arquivos anexados";
 
   return (
-    <div className="cm-task-attachments">
-      <div className="cm-task-attachments__toolbar">
-        <ActionButton variant="ghost" onClick={() => setOpen((value) => !value)}>
-          {open ? "Ocultar anexos" : `Anexos${countLabel > 0 ? ` (${countLabel})` : ""}`}
-        </ActionButton>
+    <>
+      <div className={embedded ? "cm-my-day-attachments" : "cm-my-day-attachments"}>
+        <h3 className="cm-my-day-attachments__title">{heading}</h3>
         {canManage ? (
-          <label className="cm-task-attachments__upload">
-            <input
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain"
-              disabled={busyId === "upload"}
-              onChange={(event) => {
-                void onUpload(event.target.files);
-                event.target.value = "";
-              }}
-            />
-            <span>{busyId === "upload" ? "Enviando…" : "Anexar arquivo"}</span>
-          </label>
+          <CommercialFileDropzone
+            multiple={false}
+            accept={ATTACH_ACCEPT}
+            busy={busyId === "upload"}
+            disabled={busyId === "upload"}
+            onFilesSelected={(files) => void onUpload(files)}
+            labels={{
+              title: busyId === "upload" ? "Enviando…" : "Arraste ou clique para anexar",
+              hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB",
+            }}
+          />
+        ) : null}
+        {loading && !loadedOnce ? <p className="cm-hint-text">Carregando anexos…</p> : null}
+        {loadedOnce || !loading ? (
+          <CommercialAttachmentFileList
+            items={items.map((item) => ({
+              id: item.id,
+              fileName: item.file_name,
+              detail: formatBytes(item.byte_size),
+              busy: busyId === item.id,
+            }))}
+            emptyMessage="Nenhum arquivo anexado nesta tarefa."
+            onOpen={onOpen}
+            onDownload={(item) => void onDownload(item)}
+            onRemove={canManage ? (item) => void onDelete(item) : undefined}
+            canRemove={canManage}
+          />
         ) : null}
       </div>
-      {open ? (
-        <div className="cm-task-attachments__body" aria-live="polite">
-          {loading ? <p className="cm-hint-text">Carregando anexos…</p> : null}
-          {!loading && items.length === 0 ? (
-            <p className="cm-hint-text">Nenhum anexo nesta tarefa.</p>
-          ) : null}
-          {!loading && items.length > 0 ? (
-            <ul className="cm-task-attachments__list">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <div className="cm-task-attachments__meta">
-                    <strong>{item.file_name}</strong>
-                    <span>{formatBytes(item.byte_size)}</span>
-                  </div>
-                  <div className="cm-row-actions">
-                    <ActionButton
-                      variant="ghost"
-                      disabled={busyId === item.id}
-                      onClick={() => void onDownload(item)}
-                    >
-                      Baixar
-                    </ActionButton>
-                    {canManage ? (
-                      <ActionButton
-                        variant="ghost"
-                        disabled={busyId === item.id}
-                        onClick={() => void onDelete(item)}
-                      >
-                        Remover
-                      </ActionButton>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
+      <TaskAttachmentPreviewModal
+        target={preview}
+        open={Boolean(preview)}
+        onClose={() => setPreview(null)}
+      />
+    </>
   );
 }

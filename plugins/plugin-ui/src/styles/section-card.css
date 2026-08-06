@@ -47,3 +47,29 @@
   gap: 6px;
   flex-wrap: wrap;
 }
+
+.delpi-ui-section-card__collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  cursor: pointer;
+}
+
+.delpi-ui-section-card__collapse-toggle:hover {
+  color: var(--delpi-ui-text, #111111);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-section-card--collapsed .delpi-ui-section-card__header {
+  margin-bottom: 0;
+}
+
+.delpi-ui-section-card__body {
+  min-width: 0;
+}

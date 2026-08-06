@@ -164,15 +164,18 @@
   max-width: 320px;
 }
 
+.dashboard-commercial .cm-my-day-queue-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .dashboard-commercial .cm-my-day-reassign {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 8px 0 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--cm-border, #d0d7de) 80%, transparent);
-  background: color-mix(in srgb, var(--cm-surface-muted, #f6f8fa) 70%, transparent);
+  min-width: 0;
 }
 
 .dashboard-commercial .cm-my-day-reassign .cm-my-day-form__actions {
@@ -184,98 +187,29 @@
 .dashboard-commercial .cm-my-day-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   min-width: 0;
 }
 
-.dashboard-commercial .cm-my-day-list__item {
+.dashboard-commercial .cm-my-day-attachments {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+  min-width: 0;
 }
 
-.dashboard-commercial .cm-task-attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0 4px 4px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--cm-border) 85%, transparent);
-  background: color-mix(in srgb, var(--cm-surface-muted) 70%, transparent);
-}
-
-.dashboard-commercial .cm-task-attachments__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-}
-
-.dashboard-commercial .cm-task-attachments__upload {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 13px;
+.dashboard-commercial .cm-my-day-attachments__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--cm-text);
 }
 
-.dashboard-commercial .cm-task-attachments__upload input[type="file"] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  overflow: hidden;
-}
-
-.dashboard-commercial .cm-task-attachments__upload--field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  width: 100%;
-}
-
-.dashboard-commercial .cm-task-attachments__upload--field .cm-field-label-text {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.dashboard-commercial .cm-task-attachments__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-commercial .cm-task-attachments__list > li {
-  display: flex;
+.dashboard-commercial .cm-task-detail-card__actions {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-}
-
-.dashboard-commercial .cm-task-attachments__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dashboard-commercial .cm-task-attachments__meta strong {
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dashboard-commercial .cm-task-attachments__meta span {
-  font-size: 12px;
-  color: var(--cm-text-muted);
+  gap: 8px;
 }
 
 .dashboard-commercial .cm-my-day-form {
@@ -290,16 +224,13 @@
 }
 
 .dashboard-commercial .cm-my-day-form__actions {
+  grid-column: 1 / -1;
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   min-height: 44px;
   padding-top: 4px;
-}
-
-.dashboard-commercial .cm-my-day-create--focus {
-  border-radius: 16px;
-  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 55%, transparent);
-  outline-offset: 4px;
 }
 
 /* Carteiras (admin) */

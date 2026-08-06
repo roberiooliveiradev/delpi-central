@@ -44,6 +44,16 @@ export {
   type FileDropzoneLabels,
   type FileDropzoneProps,
 } from "./FileDropzone";
+export {
+  AttachmentFileList,
+  attachmentFileListBemClasses,
+  createDashboardAttachmentFileList,
+  type AttachmentFileListClassNames,
+  type AttachmentFileListItem,
+  type AttachmentFileListLabels,
+  type AttachmentFileListProps,
+  type DashboardAttachmentFileListProps,
+} from "./AttachmentFileList";
 
 export {
   SelectControl,

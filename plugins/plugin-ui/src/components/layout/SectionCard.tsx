@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass } from "../../utils/delpiUiClass";
@@ -10,10 +11,14 @@ export type SectionCardClassNames = {
   titleWithHelp: string;
   subtitle: string;
   actions: string;
+  body?: string;
+  collapseToggle?: string;
 };
 
 export type SectionCardLabels = {
   titleHelpAriaLabel: (title: string) => string;
+  expandAriaLabel?: (title: string) => string;
+  collapseAriaLabel?: (title: string) => string;
 };
 
 export type SectionCardProps = {
@@ -25,6 +30,13 @@ export type SectionCardProps = {
   className?: string;
   classNames: SectionCardClassNames;
   labels: SectionCardLabels;
+  /** Quando true, o corpo pode ser ocultado pelo toggle no header. */
+  collapsible?: boolean;
+  /** Estado inicial (não controlado). Default: true (aberto). */
+  defaultOpen?: boolean;
+  /** Controle externo do aberto/fechado. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function sectionCardPacBemClasses(prefix: string): SectionCardClassNames {
@@ -38,6 +50,8 @@ export function sectionCardPacBemClasses(prefix: string): SectionCardClassNames 
     titleWithHelp: pair(`${prefix}-title-with-help`, `${ui}__title-with-help`),
     subtitle: pair(`${prefix}-muted ${prefix}-section-subtitle`, `${ui}__subtitle`),
     actions: pair(`${section}__actions`, `${ui}__actions`),
+    body: pair(`${section}__body`, `${ui}__body`),
+    collapseToggle: pair(`${section}__collapse-toggle`, `${ui}__collapse-toggle`),
   };
 }
 
@@ -52,6 +66,8 @@ export function sectionCardKaizenBemClasses(prefix: string): SectionCardClassNam
     titleWithHelp: pair(`${prefix}-title-with-help`, `${ui}__title-with-help`),
     subtitle: pair(`${section}__desc`, `${ui}__subtitle`),
     actions: pair(`${section}__actions`, `${ui}__actions`),
+    body: pair(`${section}__body`, `${ui}__body`),
+    collapseToggle: pair(`${section}__collapse-toggle`, `${ui}__collapse-toggle`),
   };
 }
 
@@ -64,8 +80,33 @@ export function SectionCard({
   className,
   classNames,
   labels,
+  collapsible = false,
+  defaultOpen = true,
+  open: openProp,
+  onOpenChange,
 }: SectionCardProps) {
-  const sectionClass = [classNames.section, className].filter(Boolean).join(" ");
+  const bodyId = useId();
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isControlled = openProp !== undefined;
+  const isOpen = isControlled ? Boolean(openProp) : uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
+
+  const sectionClass = [
+    classNames.section,
+    collapsible && !isOpen ? "delpi-ui-section-card--collapsed" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const expandLabel =
+    labels.expandAriaLabel?.(title) ?? `Expandir seção ${title}`;
+  const collapseLabel =
+    labels.collapseAriaLabel?.(title) ?? `Recolher seção ${title}`;
 
   return (
     <section className={sectionClass}>
@@ -81,13 +122,40 @@ export function SectionCard({
                   ariaLabel={labels.titleHelpAriaLabel(title)}
                 />
               ) : null}
+              {collapsible ? (
+                <button
+                  key="collapse"
+                  type="button"
+                  className={classNames.collapseToggle}
+                  aria-expanded={isOpen}
+                  aria-controls={bodyId}
+                  aria-label={isOpen ? collapseLabel : expandLabel}
+                  onClick={() => setOpen(!isOpen)}
+                >
+                  {isOpen ? (
+                    <ChevronUp size={18} strokeWidth={2} aria-hidden />
+                  ) : (
+                    <ChevronDown size={18} strokeWidth={2} aria-hidden />
+                  )}
+                </button>
+              ) : null}
             </span>
           </h2>
-          {subtitle ? <p className={classNames.subtitle}>{subtitle}</p> : null}
+          {subtitle && isOpen ? <p className={classNames.subtitle}>{subtitle}</p> : null}
         </div>
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
-      {children}
+      {collapsible ? (
+        isOpen ? (
+          <div id={bodyId} className={classNames.body}>
+            {children}
+          </div>
+        ) : (
+          <div id={bodyId} className={classNames.body} hidden />
+        )
+      ) : (
+        children
+      )}
     </section>
   );
 }

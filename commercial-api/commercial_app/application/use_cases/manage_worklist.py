@@ -30,6 +30,18 @@ class CreateTaskInput:
 
 
 @dataclass(frozen=True)
+class UpdateTaskInput:
+    title: str
+    description: str | None = None
+    task_type: str = "follow_up"
+    priority: str = "normal"
+    due_at: datetime | None = None
+    customer_code: str | None = None
+    customer_store: str | None = None
+    assignee_user_id: str | None = None
+
+
+@dataclass(frozen=True)
 class CreateActivityInput:
     activity_type: str
     subject: str | None = None
@@ -235,6 +247,86 @@ class ManageWorklistUseCase:
         self._activities.create(
             activity_type="system",
             subject=f"Tarefa criada: {task.title}",
+            body=description,
+            occurred_at=None,
+            actor_user_id=user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            task_id=task.id,
+        )
+        return task
+
+    def update_task(
+        self,
+        *,
+        user_id: str,
+        task_id: UUID,
+        data: UpdateTaskInput,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
+        existing = self._tasks.get_by_id(task_id)
+        if existing is None or existing.status != "open":
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if not self._can_act_on_task(
+            task=existing,
+            actor_user_id=user_id,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        ):
+            raise PermissionError("Sem permissão para editar esta tarefa.")
+
+        title = (data.title or "").strip()
+        if not title:
+            raise ValueError("Título da tarefa é obrigatório.")
+        task_type = (data.task_type or existing.task_type or "follow_up").strip() or "follow_up"
+        priority = (data.priority or existing.priority or "normal").strip() or "normal"
+        description = (data.description or "").strip() or None
+        due_at = data.due_at
+        if due_at is not None and due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=timezone.utc)
+
+        assignee = (data.assignee_user_id or existing.assignee_user_id).strip() or existing.assignee_user_id
+        if assignee != existing.assignee_user_id:
+            if not actor_is_portfolio_manager:
+                raise PermissionError("Sem permissão para reatribuir ao editar.")
+            self._assert_team_member(assignee)
+
+        customer_code = (data.customer_code or "").strip() or None
+        customer_store = (data.customer_store or "").strip() or None
+        if customer_code and not customer_store:
+            raise ValueError("Informe a loja do cliente junto com o código.")
+        if customer_store and not customer_code:
+            raise ValueError("Informe o código do cliente junto com a loja.")
+
+        task = self._tasks.update(
+            task_id=task_id,
+            title=title,
+            description=description,
+            task_type=task_type,
+            priority=priority,
+            due_at=due_at,
+            customer_code=customer_code,
+            customer_store=customer_store,
+            assignee_user_id=assignee,
+        )
+        if task is None:
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+
+        if self._audit:
+            self._audit.append(
+                actor_user_id=user_id,
+                action="commercial.task.updated",
+                entity_type="task",
+                entity_id=str(task.id),
+                payload={
+                    "title": task.title,
+                    "assignee_user_id": task.assignee_user_id,
+                    "priority": task.priority,
+                    "task_type": task.task_type,
+                },
+            )
+        self._activities.create(
+            activity_type="system",
+            subject=f"Tarefa atualizada: {task.title}",
             body=description,
             occurred_at=None,
             actor_user_id=user_id,

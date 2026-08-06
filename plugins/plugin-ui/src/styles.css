@@ -23,6 +23,8 @@
 @import "./styles/kpi-card.css";
 @import "./styles/card-shell.css";
 @import "./styles/section-card.css";
+@import "./styles/file-dropzone.css";
+@import "./styles/attachment-file-list.css";
 @import "./styles/departmental-kpi.css";
 @import "./styles/analytics-kpi.css";
 @import "./styles/chart-card.css";

@@ -1,6 +1,8 @@
 import { Upload } from "lucide-react";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+
 export type FileDropzoneClassNames = {
   root: string;
   rootActive: string;
@@ -10,6 +12,8 @@ export type FileDropzoneClassNames = {
   icon: string;
   title: string;
   hint: string;
+  field?: string;
+  fieldLabel?: string;
 };
 
 export type FileDropzoneLabels = {
@@ -42,16 +46,24 @@ export type FileDropzoneProps = {
   hideInput?: boolean;
 };
 
-export function fileDropzoneBemClasses(prefix: string, block = "evidence-dropzone"): FileDropzoneClassNames {
+export function fileDropzoneBemClasses(
+  prefix: string,
+  block = "evidence-dropzone",
+): FileDropzoneClassNames {
   const zone = `${prefix}-${block}`;
+  const ui = "delpi-ui-file-dropzone";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    root: zone,
-    rootActive: `${zone} ${zone}--active`,
-    rootDisabled: `${zone} ${zone}--disabled`,
-    input: `${zone}__input`,
-    icon: `${zone}__icon`,
-    title: `${zone}__title`,
-    hint: `${zone}__hint`,
+    root: pair(zone, ui),
+    rootActive: pair(`${zone} ${zone}--active`, `${ui} ${ui}--active`),
+    rootDisabled: pair(`${zone} ${zone}--disabled`, `${ui} ${ui}--disabled`),
+    rootBusy: pair(`${zone} ${zone}--busy`, `${ui} ${ui}--busy`),
+    input: pair(`${zone}__input`, `${ui}__input`),
+    icon: pair(`${zone}__icon`, `${ui}__icon`),
+    title: pair(`${zone}__title`, `${ui}__title`),
+    hint: pair(`${zone}__hint`, `${ui}__hint`),
+    field: pair(`${zone}__field`, `${ui}__field`),
+    fieldLabel: pair(`${zone}__field-label`, `${ui}__field-label`),
   };
 }
 
@@ -160,6 +172,8 @@ export function FileDropzone({
     rootClass = classNames.rootBusy;
   } else if (resolvedDragOver) {
     rootClass = classNames.rootActive;
+  } else if (busy) {
+    rootClass = withBemModifier(classNames.root, "busy");
   }
 
   if (className) {
@@ -231,20 +245,29 @@ export function FileDropzone({
   }
 
   return (
-    <div className={fieldRootClassName}>
-      <span className={fieldLabelClassName}>{fieldLabel}</span>
+    <div className={fieldRootClassName ?? classNames.field}>
+      <span className={fieldLabelClassName ?? classNames.fieldLabel}>{fieldLabel}</span>
       {content}
     </div>
   );
 }
 
-export type DashboardFileDropzoneProps = Omit<FileDropzoneProps, "classNames" | "labels">;
+export type DashboardFileDropzoneProps = Omit<FileDropzoneProps, "classNames" | "labels"> & {
+  labels?: Partial<FileDropzoneLabels>;
+};
 
 export function createDashboardFileDropzone(config: {
   classNames: FileDropzoneClassNames;
   labels: FileDropzoneLabels;
 }) {
   return function DashboardFileDropzone(props: DashboardFileDropzoneProps) {
-    return <FileDropzone classNames={config.classNames} labels={config.labels} {...props} />;
+    const { labels: labelOverrides, ...rest } = props;
+    return (
+      <FileDropzone
+        classNames={config.classNames}
+        labels={{ ...config.labels, ...labelOverrides }}
+        {...rest}
+      />
+    );
   };
 }

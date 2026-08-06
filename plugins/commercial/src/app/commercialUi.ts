@@ -1,6 +1,9 @@
 import {
   createDashboardAlertQueue,
+  createDashboardAttachmentFileList,
+  createDashboardDetailCard,
   createDashboardDetailFieldGrid,
+  createDashboardFileDropzone,
   createDashboardFiltersKit,
   createDashboardLoadingActivityCard,
   createDashboardMultiSelectField,
@@ -16,8 +19,11 @@ import {
   createInitialsAvatar,
   createTimeline,
   createDashboardUnderlineNav,
+  attachmentFileListBemClasses,
   dataTableBemClasses,
+  detailCardRichBemClasses,
   emptyStateCardBemClasses,
+  fileDropzoneBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
@@ -58,7 +64,27 @@ export const cmUnderlineNavClassNames = underlineNavBemClasses(UI_PREFIX);
 
 export const cmSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+  expandAriaLabel: (title: string) => `Expandir ${title}`,
+  collapseAriaLabel: (title: string) => `Recolher ${title}`,
 };
+
+export const CommercialFileDropzone = createDashboardFileDropzone({
+  classNames: fileDropzoneBemClasses(UI_PREFIX, "file-dropzone"),
+  labels: {
+    title: "Arraste um arquivo ou clique para selecionar",
+    hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB",
+  },
+});
+
+export const CommercialAttachmentFileList = createDashboardAttachmentFileList({
+  classNames: attachmentFileListBemClasses(UI_PREFIX),
+  labels: {
+    open: "Abrir",
+    download: "Baixar",
+    remove: "Remover",
+    empty: "Nenhum anexo nesta tarefa.",
+  },
+});
 
 export const CommercialTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),
@@ -132,6 +158,13 @@ export const CommercialDetailFieldGrid = createDashboardDetailFieldGrid({
   prefix: UI_PREFIX,
   labels: {
     fieldHelpAriaLabel: (label: string) => `Ajuda: ${label}`,
+  },
+});
+
+export const CommercialDetailCard = createDashboardDetailCard({
+  classNames: detailCardRichBemClasses(UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
   },
 });
 

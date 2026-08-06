@@ -53,7 +53,9 @@ export const CM_HELP = {
     taskDescription:
       "Observação interna (notes). Aparece na fila e no histórico da conta — não é e-mail ao cliente.",
     taskAttachment:
-      "Anexo opcional na criação (PDF/imagem/Office). Também dá para anexar depois na linha da tarefa.",
+      "Use a área de anexar e a lista abaixo (Abrir / Baixar / Remover). Pré-visualização no modal do kit.",
+    editTask:
+      "Altera título, observação, prazo, tipo, prioridade e cliente. Gestores podem trocar o responsável.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
     reassignTask:
       "Troca o responsável (só gestão). Destino deve ter carteira ativa no Comercial.",

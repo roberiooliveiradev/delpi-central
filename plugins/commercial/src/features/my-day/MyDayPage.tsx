@@ -12,6 +12,7 @@ import {
   deferTask,
   getMyWorklist,
   reassignTask,
+  updateTask,
   type CommercialTaskDto,
   type WorklistData,
   type WorklistScope,
@@ -26,6 +27,8 @@ import {
   cmSectionCardClassNames,
   cmSectionLabels,
   cmStatusBadgeClassNames,
+  CommercialAttachmentFileList,
+  CommercialFileDropzone,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialScopeChipBar,
@@ -34,11 +37,19 @@ import {
   CommercialTextField,
   CommercialTitleWithHelp,
   CommercialViewTransition,
-  CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
-import { deferDueAtOneDay, dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
-import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
+import {
+  deferDueAtOneDay,
+  dueDateInputToIsoEod,
+  isoToLocalDateInput,
+  localDateInputValue,
+} from "./myDayDueDate";
+import {
+  TaskAttachmentPreviewModal,
+  type TaskAttachmentPreviewTarget,
+} from "./TaskAttachmentPreviewModal";
+import { TaskDetailCard } from "./TaskDetailCard";
 
 type MyDayPageProps = {
   basePath: string;
@@ -46,6 +57,7 @@ type MyDayPageProps = {
 
 type BucketKey = "overdue" | "today" | "later";
 type TypeFilter = "all" | string;
+type TaskFormMode = "closed" | "create" | "edit";
 
 const PRIORITY_LABELS: Record<string, string> = {
   low: "Baixa",
@@ -133,12 +145,6 @@ function clearCreateTaskQueryFromUrl(): void {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function truncateNote(text: string, max = 160): string {
-  const normalized = text.replace(/\s+/g, " ").trim();
-  if (normalized.length <= max) return normalized;
-  return `${normalized.slice(0, max - 1).trimEnd()}…`;
-}
-
 function formatDue(dueAt?: string | null): string {
   if (!dueAt) return "Sem prazo";
   try {
@@ -216,12 +222,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [assigneeUserId, setAssigneeUserId] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [highlightCreateForm, setHighlightCreateForm] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<
+    Array<{ id: string; file: File }>
+  >([]);
+  const [pendingPreview, setPendingPreview] = useState<TaskAttachmentPreviewTarget>(null);
+  const [formMode, setFormMode] = useState<TaskFormMode>("closed");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [reassignTaskId, setReassignTaskId] = useState<string | null>(null);
   const [reassignTargetUserId, setReassignTargetUserId] = useState("");
   const [reassigning, setReassigning] = useState(false);
-  const createFormRef = useRef<HTMLDivElement | null>(null);
+  const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
   const activeSellers = useMemo(
@@ -272,12 +283,57 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }));
   }, [activeSellers, assigneeUserId, isAdmin, myPortfolio]);
 
-  const focusCreateForm = useCallback(() => {
-    setHighlightCreateForm(true);
+  const resetTaskFormFields = useCallback(() => {
+    setTitle("");
+    setDescription("");
+    setPendingAttachments([]);
+    setPendingPreview(null);
+    setDueDate(localDateInputValue());
+    setPriority("normal");
+    setTaskType("follow_up");
+    setCustomerKey("");
+    setAssigneeUserId("");
+    setEditingTaskId(null);
+  }, []);
+
+  const scrollToTaskForm = useCallback(() => {
     window.setTimeout(() => {
-      createFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      taskFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   }, []);
+
+  const openCreateForm = useCallback(() => {
+    resetTaskFormFields();
+    setFormMode("create");
+    scrollToTaskForm();
+  }, [resetTaskFormFields, scrollToTaskForm]);
+
+  const openEditForm = useCallback(
+    (task: CommercialTaskDto) => {
+      setPendingAttachments([]);
+      setPendingPreview(null);
+      setEditingTaskId(task.id);
+      setTitle(task.title ?? "");
+      setDescription((task.description ?? "").trim());
+      setDueDate(isoToLocalDateInput(task.due_at));
+      setPriority(task.priority || "normal");
+      setTaskType(task.task_type || "follow_up");
+      setAssigneeUserId(task.assignee_user_id || "");
+      setCustomerKey(
+        task.customer_code && task.customer_store
+          ? `${task.customer_code}|${task.customer_store}`
+          : "",
+      );
+      setFormMode("edit");
+      scrollToTaskForm();
+    },
+    [scrollToTaskForm],
+  );
+
+  const closeTaskForm = useCallback(() => {
+    setFormMode("closed");
+    resetTaskFormFields();
+  }, [resetTaskFormFields]);
 
   useEffect(() => {
     if (!canManageFollowups) return;
@@ -291,11 +347,16 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setCustomerKey(`${link.customerCode}|${link.customerStore}`);
     }
     if (link.createTask || link.customerCode) {
-      focusCreateForm();
+      resetTaskFormFields();
+      if (link.customerCode && link.customerStore) {
+        setCustomerKey(`${link.customerCode}|${link.customerStore}`);
+      }
+      setFormMode("create");
+      scrollToTaskForm();
     }
     clearCreateTaskQueryFromUrl();
     return undefined;
-  }, [canManageFollowups, focusCreateForm]);
+  }, [canManageFollowups, resetTaskFormFields, scrollToTaskForm]);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -444,32 +505,60 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         customer_store: customer?.store ?? null,
         assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
       });
-      if (attachmentFile) {
-        try {
-          await uploadTaskAttachment(created.id, attachmentFile);
-        } catch (attachErr: unknown) {
+      if (pendingAttachments.length > 0) {
+        const failed: string[] = [];
+        for (const item of pendingAttachments) {
+          try {
+            await uploadTaskAttachment(created.id, item.file);
+          } catch {
+            failed.push(item.file.name);
+          }
+        }
+        if (failed.length > 0) {
           notifyError(
-            attachErr instanceof Error
-              ? `Tarefa criada, mas o anexo falhou: ${attachErr.message}`
-              : "Tarefa criada, mas o anexo falhou.",
+            `Tarefa criada, mas falhou o anexo: ${failed.join(", ")}.`,
           );
         }
       }
-      setTitle("");
-      setDescription("");
-      setAttachmentFile(null);
-      setDueDate(localDateInputValue());
-      setPriority("normal");
-      setTaskType("follow_up");
-      setCustomerKey("");
-      setAssigneeUserId("");
-      setHighlightCreateForm(false);
-      notifySuccess(attachmentFile ? "Tarefa criada com anexo." : "Tarefa criada.");
+      const hadAttachment = pendingAttachments.length > 0;
+      resetTaskFormFields();
+      setFormMode("closed");
+      notifySuccess(hadAttachment ? "Tarefa criada com anexo." : "Tarefa criada.");
       await reload();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const onSaveEdit = async () => {
+    if (!canManageFollowups || !editingTaskId) return;
+    const missing: string[] = [];
+    if (!title.trim()) missing.push("Título");
+    if (!dueDate) missing.push("Prazo");
+    if (!notifyMissingRequired(missing)) return;
+    setSavingEdit(true);
+    try {
+      const customer = parseCustomerKey(customerKey);
+      const note = description.trim();
+      await updateTask(editingTaskId, {
+        title: title.trim(),
+        description: note || null,
+        task_type: taskType || "follow_up",
+        priority: priority || "normal",
+        due_at: dueDateInputToIsoEod(dueDate),
+        customer_code: customer?.code ?? null,
+        customer_store: customer?.store ?? null,
+        assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
+      });
+      closeTaskForm();
+      notifySuccess("Tarefa atualizada.");
+      await reload();
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : "Falha ao atualizar tarefa.");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -566,9 +655,16 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
         actions={
-          <ActionButton variant="ghost" onClick={() => void reload()}>
-            Atualizar
-          </ActionButton>
+          <div className="cm-my-day-queue-actions">
+            {canManageFollowups ? (
+              <ActionButton variant="primary" onClick={openCreateForm}>
+                Nova tarefa
+              </ActionButton>
+            ) : null}
+            <ActionButton variant="ghost" onClick={() => void reload()}>
+              Atualizar
+            </ActionButton>
+          </div>
         }
       >
         <div className="cm-my-day-toolbar">
@@ -620,17 +716,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         </div>
 
         {reassignTaskId ? (
-          <div className="cm-my-day-reassign" role="region" aria-label="Reatribuir tarefa">
-            <CommercialSelectField
-              label="Novo responsável"
-              hint={CM_HELP.myDay.reassignTask}
-              options={sellerOptions}
-              value={reassignTargetUserId}
-              onChange={setReassignTargetUserId}
-              allowEmpty={false}
-              searchable={sellerOptions.length > 8}
-            />
-            <div className="cm-my-day-form__actions">
+          <SectionCard
+            title="Reatribuir tarefa"
+            hint={CM_HELP.myDay.reassignTask}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+            collapsible
+            defaultOpen
+            actions={
               <ActionButton
                 variant="ghost"
                 onClick={() => {
@@ -638,17 +731,31 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   setReassignTargetUserId("");
                 }}
               >
-                Cancelar
+                Fechar
               </ActionButton>
-              <ActionButton
-                variant="primary"
-                disabled={reassigning}
-                onClick={() => void onReassign()}
-              >
-                {reassigning ? "Reatribuindo…" : "Confirmar reatribução"}
-              </ActionButton>
+            }
+          >
+            <div className="cm-my-day-reassign" role="region" aria-label="Reatribuir tarefa">
+              <CommercialSelectField
+                label="Novo responsável"
+                hint={CM_HELP.myDay.reassignTask}
+                options={sellerOptions}
+                value={reassignTargetUserId}
+                onChange={setReassignTargetUserId}
+                allowEmpty={false}
+                searchable={sellerOptions.length > 8}
+              />
+              <div className="cm-my-day-form__actions">
+                <ActionButton
+                  variant="primary"
+                  disabled={reassigning}
+                  onClick={() => void onReassign()}
+                >
+                  {reassigning ? "Reatribuindo…" : "Confirmar reatribução"}
+                </ActionButton>
+              </div>
             </div>
-          </div>
+          </SectionCard>
         ) : null}
 
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
@@ -676,15 +783,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 }
               >
                 {canManageFollowups ? (
-                  <ActionButton variant="primary" onClick={focusCreateForm}>
-                    Criar follow-up
+                  <ActionButton variant="primary" onClick={openCreateForm}>
+                    Nova tarefa
                   </ActionButton>
                 ) : null}
               </EmptyState>
             ) : (
               <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
                 {items.map((task) => {
-                  const note = (task.description ?? "").trim();
                   const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
                   const priorityLabel =
                     PRIORITY_LABELS[task.priority] ?? task.priority;
@@ -693,58 +799,42 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       ? sellerNameByUserId.get(task.assignee_user_id) ??
                         directoryLabelFor(task.assignee_user_id)
                       : null;
-                  const attachmentCount = task.attachment_count ?? 0;
                   return (
-                  <div key={task.id} className="cm-my-day-list__item">
-                  <CommercialWorklistItem
-                    title={task.title}
-                    meta={`${formatDue(task.due_at)} · ${priorityLabel}${
-                      typeLabel ? ` · ${typeLabel}` : ""
-                    }${assigneeLabel ? ` · ${assigneeLabel}` : ""}${
-                      task.customer_code
-                        ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
-                        : ""
-                    }${attachmentCount > 0 ? ` · ${attachmentCount} anexo${attachmentCount === 1 ? "" : "s"}` : ""}`}
-                    detail={note ? truncateNote(note) : undefined}
-                    tone={toneForBucket(bucket)}
-                    primaryActionLabel={canManageFollowups ? "Concluir" : undefined}
-                    onPrimaryAction={
-                      canManageFollowups ? () => void onComplete(task.id) : undefined
-                    }
-                    secondaryActionLabel={
-                      task.customer_code && task.customer_store ? "Abrir conta" : undefined
-                    }
-                    onSecondaryAction={
-                      task.customer_code && task.customer_store
-                        ? () =>
-                            navigateCustomerDetail(task.customer_code!, task.customer_store!, {
-                              basePath,
-                            })
-                        : undefined
-                    }
-                    tertiaryActionLabel={canManageFollowups ? "Adiar +1 dia" : undefined}
-                    onTertiaryAction={
-                      canManageFollowups ? () => void onDefer(task) : undefined
-                    }
-                    quaternaryActionLabel={isAdmin ? "Reatribuir" : undefined}
-                    onQuaternaryAction={
-                      isAdmin
-                        ? () => {
-                            setReassignTaskId(task.id);
-                            setReassignTargetUserId(task.assignee_user_id);
-                          }
-                        : undefined
-                    }
-                  />
-                  <TaskAttachmentsBlock
-                    taskId={task.id}
-                    initialCount={attachmentCount}
-                    canManage={canManageFollowups}
-                    onChanged={() => void reload()}
-                    notifyError={notifyError}
-                    notifySuccess={notifySuccess}
-                  />
-                  </div>
+                    <TaskDetailCard
+                      key={task.id}
+                      task={task}
+                      tone={toneForBucket(bucket)}
+                      typeLabel={typeLabel}
+                      priorityLabel={priorityLabel}
+                      assigneeLabel={assigneeLabel}
+                      canManage={canManageFollowups}
+                      isAdmin={isAdmin}
+                      formatDue={formatDue}
+                      onEdit={() => openEditForm(task)}
+                      onComplete={() => void onComplete(task.id)}
+                      onDefer={() => void onDefer(task)}
+                      onReassign={
+                        isAdmin
+                          ? () => {
+                              setReassignTaskId(task.id);
+                              setReassignTargetUserId(task.assignee_user_id);
+                            }
+                          : undefined
+                      }
+                      onOpenAccount={
+                        task.customer_code && task.customer_store
+                          ? () =>
+                              navigateCustomerDetail(
+                                task.customer_code!,
+                                task.customer_store!,
+                                { basePath },
+                              )
+                          : undefined
+                      }
+                      onAttachmentsChanged={() => void reload()}
+                      notifyError={notifyError}
+                      notifySuccess={notifySuccess}
+                    />
                   );
                 })}
               </div>
@@ -753,25 +843,30 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         ) : null}
       </SectionCard>
 
-      {canManageFollowups ? (
-        <div
-          ref={createFormRef}
-          className={
-            highlightCreateForm ? "cm-my-day-create cm-my-day-create--focus" : "cm-my-day-create"
-          }
-        >
+      {canManageFollowups && formMode !== "closed" ? (
+        <div ref={taskFormRef} className="cm-my-day-create">
           <SectionCard
-            title="Nova tarefa"
+            title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
             subtitle={
-              highlightCreateForm
-                ? "Cliente ou ação pré-preenchidos — confirme prazo, título e observação."
+              formMode === "edit"
+                ? "Altere os campos e salve. Anexos continuam na linha da tarefa."
                 : isAdmin
                   ? "Título, prazo, tipo, responsável, cliente e observação."
                   : "Título, prazo, tipo, cliente e observação — padrão HubSpot/Pipedrive."
             }
-            hint={CM_HELP.myDay.newTask}
+            hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
+            collapsible
+            open={formMode !== "closed"}
+            onOpenChange={(next) => {
+              if (!next) closeTaskForm();
+            }}
+            actions={
+              <ActionButton variant="ghost" onClick={closeTaskForm}>
+                Fechar
+              </ActionButton>
+            }
           >
             <div className="cm-my-day-form">
               <div className="cm-my-day-form__title">
@@ -827,7 +922,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     setAssigneeUserId(value);
                     setCustomerKey("");
                   }}
-                  allowEmpty
+                  allowEmpty={formMode !== "edit"}
                   emptyLabel="Eu (padrão)"
                   searchable={sellerOptions.length > 8}
                 />
@@ -842,36 +937,83 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 emptyLabel="Sem vínculo (opcional)"
                 searchable={customerOptions.length > 8}
               />
-              <div className="cm-my-day-form__title">
-                <label className="cm-task-attachments__upload cm-task-attachments__upload--field">
-                  <span className="cm-field-label-text">Anexo (opcional)</span>
-                  <input
-                    type="file"
+              {formMode === "create" ? (
+                <div className="cm-my-day-form__title cm-my-day-attachments">
+                  <CommercialFileDropzone
+                    multiple
                     accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain"
-                    onChange={(event) => {
-                      setAttachmentFile(event.target.files?.[0] ?? null);
+                    fieldLabel="Anexo (opcional)"
+                    onFilesSelected={(files) => {
+                      setPendingAttachments((current) => [
+                        ...current,
+                        ...files.map((file) => ({
+                          id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                          file,
+                        })),
+                      ]);
+                    }}
+                    labels={{
+                      title: "Arraste ou clique para anexar",
+                      hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB por arquivo",
                     }}
                   />
-                  <span className="cm-hint-text">
-                    {attachmentFile
-                      ? attachmentFile.name
-                      : "PDF, imagem, TXT, Word ou Excel · máx. 10 MB"}
-                  </span>
-                </label>
-              </div>
+                  <CommercialAttachmentFileList
+                    items={pendingAttachments.map((item) => ({
+                      id: item.id,
+                      fileName: item.file.name,
+                      detail:
+                        item.file.size < 1024
+                          ? `${item.file.size} B`
+                          : item.file.size < 1024 * 1024
+                            ? `${(item.file.size / 1024).toFixed(1)} KB`
+                            : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`,
+                    }))}
+                    emptyMessage="Nenhum arquivo na fila. Use a área acima para anexar."
+                    labels={{ empty: "Nenhum arquivo na fila. Use a área acima para anexar." }}
+                    onOpen={(item) => {
+                      const found = pendingAttachments.find((row) => row.id === item.id);
+                      if (found) setPendingPreview({ kind: "local", file: found.file });
+                    }}
+                    onRemove={(item) => {
+                      setPendingAttachments((current) =>
+                        current.filter((row) => row.id !== item.id),
+                      );
+                    }}
+                    canRemove
+                  />
+                </div>
+              ) : null}
               <div className="cm-my-day-form__actions">
-                <ActionButton
-                  variant="primary"
-                  disabled={creating}
-                  onClick={() => void onCreate()}
-                >
-                  {creating ? "Criando…" : "Criar tarefa"}
+                <ActionButton variant="ghost" onClick={closeTaskForm}>
+                  Cancelar
                 </ActionButton>
+                {formMode === "edit" ? (
+                  <ActionButton
+                    variant="primary"
+                    disabled={savingEdit}
+                    onClick={() => void onSaveEdit()}
+                  >
+                    {savingEdit ? "Salvando…" : "Salvar alterações"}
+                  </ActionButton>
+                ) : (
+                  <ActionButton
+                    variant="primary"
+                    disabled={creating}
+                    onClick={() => void onCreate()}
+                  >
+                    {creating ? "Criando…" : "Criar tarefa"}
+                  </ActionButton>
+                )}
               </div>
             </div>
           </SectionCard>
         </div>
       ) : null}
+      <TaskAttachmentPreviewModal
+        target={pendingPreview}
+        open={Boolean(pendingPreview)}
+        onClose={() => setPendingPreview(null)}
+      />
     </section>
   );
 }

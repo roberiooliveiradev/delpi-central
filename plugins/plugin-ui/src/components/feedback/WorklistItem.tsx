@@ -28,6 +28,8 @@ export type WorklistItemProps = {
   onTertiaryAction?: () => void;
   quaternaryActionLabel?: string;
   onQuaternaryAction?: () => void;
+  /** Ações extras (ex.: Editar) antes dos botões nomeados. */
+  extraActions?: ReactNode;
   classNames: WorklistItemClassNames;
   className?: string;
 };
@@ -57,6 +59,7 @@ export function WorklistItem({
   onTertiaryAction,
   quaternaryActionLabel,
   onQuaternaryAction,
+  extraActions,
   classNames,
   className,
 }: WorklistItemProps) {
@@ -65,6 +68,7 @@ export function WorklistItem({
     .join(" ");
 
   const hasActions =
+    Boolean(extraActions) ||
     Boolean(primaryActionLabel) ||
     Boolean(secondaryActionLabel) ||
     Boolean(tertiaryActionLabel) ||
@@ -79,6 +83,7 @@ export function WorklistItem({
       </div>
       {hasActions ? (
         <div className={classNames.actions}>
+          {extraActions}
           {quaternaryActionLabel && onQuaternaryAction ? (
             <button
               type="button"

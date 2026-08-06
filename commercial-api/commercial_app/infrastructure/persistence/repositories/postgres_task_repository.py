@@ -246,6 +246,50 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return _row_task(row)
 
+    def update(
+        self,
+        *,
+        task_id: UUID,
+        title: str,
+        description: str | None,
+        task_type: str,
+        priority: str,
+        due_at: datetime | None,
+        customer_code: str | None,
+        customer_store: str | None,
+        assignee_user_id: str,
+    ) -> CommercialTask | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.tasks
+               SET title = %s,
+                   description = %s,
+                   task_type = %s,
+                   priority = %s,
+                   due_at = %s,
+                   customer_code = %s,
+                   customer_store = %s,
+                   assignee_user_id = %s,
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+               AND status = 'open'
+         RETURNING {_TASK_COLUMNS}
+            """,
+            (
+                title,
+                description,
+                task_type,
+                priority,
+                due_at,
+                customer_code,
+                customer_store,
+                assignee_user_id,
+                str(task_id),
+            ),
+        )
+        return _row_task(row)
+
 
 class PostgresActivityRepository(PluginBaseRepository, ActivityRepositoryPort):
     def list_for_customer(

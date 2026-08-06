@@ -1,0 +1,68 @@
+/**
+ * FileDropzone — .delpi-ui-file-dropzone*
+ * Tokens: --delpi-ui-accent, --delpi-ui-border, --delpi-ui-surface, --delpi-ui-text, --delpi-ui-muted
+ */
+
+.delpi-ui-file-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 42%, var(--delpi-ui-border, #e6e6e6));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 4%, var(--delpi-ui-surface, #ffffff));
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--delpi-ui-text, #111111);
+}
+
+.delpi-ui-file-dropzone:hover:not(.delpi-ui-file-dropzone--disabled),
+.delpi-ui-file-dropzone--active {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #ffffff));
+}
+
+.delpi-ui-file-dropzone--disabled,
+.delpi-ui-file-dropzone--busy {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-file-dropzone__input {
+  display: none;
+}
+
+.delpi-ui-file-dropzone__icon {
+  color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-file-dropzone__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111111);
+}
+
+.delpi-ui-file-dropzone__hint {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 12px;
+  color: var(--delpi-ui-muted, var(--delpi-ui-text-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-file-dropzone__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-file-dropzone__field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111111);
+}
