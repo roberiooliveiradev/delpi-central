@@ -18,11 +18,14 @@ type TaskDetailCardProps = {
   /** Quem criou/atribuiu — exibido quando diferente do responsável. */
   assignedByLabel?: string | null;
   canManage: boolean;
-  /** Só o criador edita; assignee de tarefa atribuída não. */
+  /** Criador, responsável ou gestor — edita conteúdo/anexos. */
   canEdit: boolean;
+  /** Mesmo critério de edição (apenas tarefas abertas). */
+  canDelete?: boolean;
   /** Concluídas: só leitura (sem Editar / Adiar / Concluir). */
   readOnly?: boolean;
   onEdit: () => void;
+  onDelete?: () => void;
   onComplete: () => void;
   onDefer: () => void;
   onOpenAccount?: () => void;
@@ -52,8 +55,10 @@ export function TaskDetailCard({
   assignedByLabel,
   canManage,
   canEdit,
+  canDelete = false,
   readOnly = false,
   onEdit,
+  onDelete,
   onComplete,
   onDefer,
   onOpenAccount,
@@ -141,6 +146,11 @@ export function TaskDetailCard({
           {!readOnly && canEdit ? (
             <ActionButton variant="ghost" onClick={onEdit}>
               Editar
+            </ActionButton>
+          ) : null}
+          {!readOnly && canDelete && onDelete ? (
+            <ActionButton variant="ghost" onClick={onDelete}>
+              Excluir
             </ActionButton>
           ) : null}
           {!readOnly && canManage ? (

@@ -17,6 +17,8 @@ type PortfolioScopeValue = {
   isAdmin: boolean;
   canViewWorklist: boolean;
   canManageFollowups: boolean;
+  /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
+  currentUserId: string | null;
   myPortfolio: SellerPortfolio | null;
   sellers: SellerPortfolio[];
   sellerIdFilter: string | null;
@@ -38,6 +40,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [capabilities, setCapabilities] = useState<CommercialCapabilities>(EMPTY_CAPABILITIES);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myPortfolio, setMyPortfolio] = useState<SellerPortfolio | null>(null);
   const [sellers, setSellers] = useState<SellerPortfolio[]>([]);
   const [sellerIdFilter, setSellerIdFilterState] = useState<string | null>(null);
@@ -60,6 +63,9 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       .then(async (response) => {
         const admin = Boolean(response.is_admin);
         setIsAdmin(admin);
+        const fromMe = (response.user_id || "").trim();
+        const fromPortfolio = (response.portfolio?.user_id || "").trim();
+        setCurrentUserId(fromMe || fromPortfolio || null);
         setMyPortfolio(response.portfolio);
         setCapabilities({
           worklist_view: Boolean(response.capabilities?.worklist_view),
@@ -85,6 +91,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         setError(err instanceof Error ? err.message : "Erro ao carregar carteira.");
         setIsAdmin(false);
         setCapabilities(EMPTY_CAPABILITIES);
+        setCurrentUserId(null);
         setMyPortfolio(null);
         setSellers([]);
       })
@@ -102,6 +109,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       isAdmin,
       canViewWorklist: capabilities.worklist_view,
       canManageFollowups: capabilities.followups_manage,
+      currentUserId,
       myPortfolio,
       sellers,
       sellerIdFilter,
@@ -114,6 +122,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       error,
       isAdmin,
       capabilities,
+      currentUserId,
       myPortfolio,
       sellers,
       sellerIdFilter,

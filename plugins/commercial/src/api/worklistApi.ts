@@ -1,5 +1,5 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
-import { commercialApiUrl, httpGet, httpPatch, httpPost } from "./httpClient";
+import { commercialApiUrl, httpDelete, httpGet, httpPatch, httpPost } from "./httpClient";
 
 export type CommercialTaskDto = {
   id: string;
@@ -133,6 +133,14 @@ export async function updateTask(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao atualizar tarefa.");
+}
+
+export async function deleteTask(taskId: string, signal?: AbortSignal): Promise<CommercialTaskDto> {
+  const response = await httpDelete<ApiSuccessResponse<CommercialTaskDto>>(
+    commercialApiUrl(`/tasks/${encodeURIComponent(taskId)}`),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao excluir tarefa.");
 }
 
 export async function completeTask(taskId: string, signal?: AbortSignal): Promise<CommercialTaskDto> {

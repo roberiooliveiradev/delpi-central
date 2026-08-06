@@ -11,6 +11,7 @@ import {
   completeTask,
   createTask,
   deferTask,
+  deleteTask,
   getCompletedWorklist,
   getMyWorklist,
   updateTask,
@@ -215,7 +216,8 @@ function heroCopy(counts: { overdue: number; today: number; later: number }): {
 }
 
 export function MyDayPage({ basePath }: MyDayPageProps) {
-  const { canManageFollowups, isAdmin, myPortfolio, sellers } = usePortfolioScope();
+  const { canManageFollowups, isAdmin, myPortfolio, currentUserId, sellers } =
+    usePortfolioScope();
   const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -325,9 +327,13 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const openEditForm = useCallback(
     (task: CommercialTaskDto) => {
-      const me = (myPortfolio?.user_id || "").trim();
-      if (!me || (task.created_by_user_id || "").trim() !== me) {
-        notifyError("Só quem criou a tarefa pode editá-la.");
+      const me = (currentUserId || myPortfolio?.user_id || "").trim();
+      const createdBy = (task.created_by_user_id || "").trim();
+      const assignee = (task.assignee_user_id || "").trim();
+      const allowed =
+        Boolean(me) && (createdBy === me || assignee === me || isAdmin);
+      if (!allowed) {
+        notifyError("Sem permissão para editar esta tarefa.");
         return;
       }
       setPendingAttachments([]);
@@ -347,7 +353,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setFormMode("edit");
       scrollToTaskForm();
     },
-    [myPortfolio?.user_id, notifyError, scrollToTaskForm],
+    [currentUserId, isAdmin, myPortfolio?.user_id, notifyError, scrollToTaskForm],
   );
 
   const closeTaskForm = useCallback(() => {
@@ -502,6 +508,25 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       await reload();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao concluir.");
+    }
+  };
+
+  const onDelete = async (task: CommercialTaskDto) => {
+    if (!canManageFollowups) return;
+    const label = (task.title || "").trim() || "esta tarefa";
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`Excluir «${label}»? Esta ação não pode ser desfeita.`)
+    ) {
+      return;
+    }
+    try {
+      await deleteTask(task.id);
+      if (editingTaskId === task.id) closeTaskForm();
+      notifySuccess("Tarefa excluída.");
+      await reload();
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : "Falha ao excluir.");
     }
   };
 
@@ -790,14 +815,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       : null;
                   const createdBy = (task.created_by_user_id || "").trim();
                   const assignee = (task.assignee_user_id || "").trim();
-                  const me = (myPortfolio?.user_id || "").trim();
+                  const me = (currentUserId || myPortfolio?.user_id || "").trim();
                   const assignedByLabel =
                     createdBy && createdBy !== assignee
                       ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
                       : null;
                   const readOnly = bucket === "done";
-                  const canEdit =
-                    !readOnly && canManageFollowups && Boolean(me) && createdBy === me;
+                  const canEditTask =
+                    !readOnly &&
+                    canManageFollowups &&
+                    Boolean(me) &&
+                    (createdBy === me || assignee === me || isAdmin);
                   return (
                     <TaskDetailCard
                       key={task.id}
@@ -808,10 +836,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       assigneeLabel={assigneeLabel}
                       assignedByLabel={assignedByLabel}
                       canManage={canManageFollowups}
-                      canEdit={canEdit}
+                      canEdit={canEditTask}
+                      canDelete={canEditTask}
                       readOnly={readOnly}
                       formatDue={formatDue}
                       onEdit={() => openEditForm(task)}
+                      onDelete={() => void onDelete(task)}
                       onComplete={() => void onComplete(task.id)}
                       onDefer={() => void onDefer(task)}
                       onOpenAccount={

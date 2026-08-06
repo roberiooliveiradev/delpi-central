@@ -150,9 +150,24 @@ class ManageWorklistUseCase:
             return False
         return task.assignee_user_id in self.team_user_ids()
 
-    def _can_edit_task(self, *, task: CommercialTask, actor_user_id: str) -> bool:
-        """Só o criador edita campos/anexos via formulário — assignee de tarefa atribuída não."""
-        return (task.created_by_user_id or "").strip() == (actor_user_id or "").strip()
+    def _can_edit_task(
+        self,
+        *,
+        task: CommercialTask,
+        actor_user_id: str,
+        actor_is_portfolio_manager: bool = False,
+    ) -> bool:
+        """Criador, responsável ou gestor da equipe do responsável."""
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            return False
+        if (task.created_by_user_id or "").strip() == actor:
+            return True
+        return self._can_act_on_task(
+            task=task,
+            actor_user_id=actor,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        )
 
     def get_worklist(
         self,
@@ -345,11 +360,12 @@ class ManageWorklistUseCase:
         existing = self._tasks.get_by_id(task_id)
         if existing is None or existing.status != "open":
             raise LookupError("Tarefa não encontrada ou já concluída.")
-        if not self._can_edit_task(task=existing, actor_user_id=user_id):
-            raise PermissionError(
-                "Só quem criou a tarefa pode editá-la. Tarefas atribuídas a você "
-                "podem ser adiadas ou concluídas."
-            )
+        if not self._can_edit_task(
+            task=existing,
+            actor_user_id=user_id,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        ):
+            raise PermissionError("Sem permissão para editar esta tarefa.")
 
         title = (data.title or "").strip()
         if not title:
@@ -536,6 +552,49 @@ class ManageWorklistUseCase:
             activity_type="system",
             subject=f"Tarefa reatribuída: {task.title}",
             body=f"De {existing.assignee_user_id} para {new_assignee}",
+            occurred_at=None,
+            actor_user_id=user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            task_id=task.id,
+        )
+        return task
+
+    def delete_task(
+        self,
+        *,
+        user_id: str,
+        task_id: UUID,
+        actor_is_portfolio_manager: bool = False,
+    ) -> CommercialTask:
+        existing = self._tasks.get_by_id(task_id)
+        if existing is None:
+            raise LookupError("Tarefa não encontrada.")
+        if existing.status != "open":
+            raise LookupError("Só é possível excluir tarefas abertas.")
+        if not self._can_edit_task(
+            task=existing,
+            actor_user_id=user_id,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        ):
+            raise PermissionError("Sem permissão para excluir esta tarefa.")
+
+        task = self._tasks.soft_delete(task_id=task_id)
+        if task is None:
+            raise LookupError("Tarefa não encontrada.")
+
+        if self._audit:
+            self._audit.append(
+                actor_user_id=user_id,
+                action="commercial.task.deleted",
+                entity_type="task",
+                entity_id=str(task.id),
+                payload={"title": task.title},
+            )
+        self._activities.create(
+            activity_type="system",
+            subject=f"Tarefa excluída: {task.title}",
+            body=None,
             occurred_at=None,
             actor_user_id=user_id,
             customer_code=task.customer_code,

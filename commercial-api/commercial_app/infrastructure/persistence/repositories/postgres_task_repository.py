@@ -298,6 +298,22 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return _row_task(row)
 
+    def soft_delete(self, *, task_id: UUID) -> CommercialTask | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.tasks
+               SET deleted_at = NOW(),
+                   status = 'cancelled',
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+               AND status = 'open'
+         RETURNING {_TASK_COLUMNS}
+            """,
+            (str(task_id),),
+        )
+        return _row_task(row)
+
 
 class PostgresActivityRepository(PluginBaseRepository, ActivityRepositoryPort):
     def list_for_customer(

@@ -93,6 +93,11 @@ class TaskRepositoryPort(ABC):
         """Atualiza campos de tarefa aberta (autorização no use case)."""
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_delete(self, *, task_id: UUID) -> CommercialTask | None:
+        """Marca tarefa como excluída (deleted_at); autorização no use case."""
+        raise NotImplementedError
+
 
 class ActivityRepositoryPort(ABC):
     @abstractmethod

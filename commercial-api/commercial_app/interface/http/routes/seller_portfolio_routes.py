@@ -62,6 +62,7 @@ def get_my_seller_portfolio(request: Request):
         user = current_user_from_request(request)
         return ok(
             {
+                "user_id": user_id,
                 "portfolio": portfolio_to_dict(portfolio) if portfolio else None,
                 "is_admin": can_manage_portfolios(user),
                 "capabilities": {

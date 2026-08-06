@@ -26,6 +26,8 @@ export type CommercialCapabilities = {
 };
 
 export type SellerPortfolioMeResponse = {
+  /** Sempre o usuário autenticado (mesmo sem carteira). */
+  user_id?: string | null;
   portfolio: SellerPortfolio | null;
   is_admin: boolean;
   capabilities?: CommercialCapabilities;

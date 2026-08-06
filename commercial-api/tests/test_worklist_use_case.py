@@ -208,6 +208,30 @@ class InMemoryTaskRepo:
         self.items[task.id] = updated
         return updated
 
+    def soft_delete(self, *, task_id: UUID) -> CommercialTask | None:
+        task = self.items.get(task_id)
+        if task is None or task.status != "open":
+            return None
+        now = datetime.now(timezone.utc)
+        deleted = CommercialTask(
+            id=task.id,
+            title=task.title,
+            description=task.description,
+            task_type=task.task_type,
+            status="cancelled",
+            priority=task.priority,
+            due_at=task.due_at,
+            completed_at=task.completed_at,
+            assignee_user_id=task.assignee_user_id,
+            created_by_user_id=task.created_by_user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            created_at=task.created_at,
+            updated_at=now,
+        )
+        del self.items[task.id]
+        return deleted
+
 
 class InMemoryActivityRepo:
     def __init__(self) -> None:
@@ -446,14 +470,15 @@ def test_update_task_fields_and_permission():
             actor_is_portfolio_manager=False,
         )
 
-    # Gestor da equipe não edita tarefa criada por outro (só o criador edita).
-    with pytest.raises(PermissionError):
-        uc.update_task(
-            user_id="manager",
-            task_id=created.id,
-            data=UpdateTaskInput(title="Gestor não deve editar", assignee_user_id="seller-b"),
-            actor_is_portfolio_manager=True,
-        )
+    # Gestor da equipe pode editar tarefa do time.
+    as_manager = uc.update_task(
+        user_id="manager",
+        task_id=created.id,
+        data=UpdateTaskInput(title="Gestor editou", assignee_user_id="seller-b"),
+        actor_is_portfolio_manager=True,
+    )
+    assert as_manager.title == "Gestor editou"
+    assert as_manager.assignee_user_id == "seller-b"
 
     assigned = uc.create_task(
         user_id="manager",
@@ -463,12 +488,14 @@ def test_update_task_fields_and_permission():
     assert assigned.created_by_user_id == "manager"
     assert assigned.assignee_user_id == "seller-a"
 
-    with pytest.raises(PermissionError):
-        uc.update_task(
-            user_id="seller-a",
-            task_id=assigned.id,
-            data=UpdateTaskInput(title="Assignee não edita"),
-        )
+    # Responsável pode editar tarefa atribuída a ele.
+    as_assignee = uc.update_task(
+        user_id="seller-a",
+        task_id=assigned.id,
+        data=UpdateTaskInput(title="Assignee editou", description="Nota do responsável"),
+    )
+    assert as_assignee.title == "Assignee editou"
+    assert as_assignee.description == "Nota do responsável"
 
     as_creator = uc.update_task(
         user_id="manager",
@@ -478,6 +505,41 @@ def test_update_task_fields_and_permission():
     )
     assert as_creator.title == "Gestor criador editou"
     assert as_creator.assignee_user_id == "seller-b"
+
+
+def test_delete_task_permissions():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["manager", "seller-a", "seller-b"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+    now = datetime.now(timezone.utc)
+    mine = uc.create_task(
+        user_id="seller-a",
+        data=CreateTaskInput(title="Minha", due_at=now),
+    )
+    assigned = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(title="Atribuída", assignee_user_id="seller-a", due_at=now),
+        actor_is_portfolio_manager=True,
+    )
+
+    with pytest.raises(PermissionError):
+        uc.delete_task(user_id="seller-b", task_id=mine.id)
+
+    deleted_mine = uc.delete_task(user_id="seller-a", task_id=mine.id)
+    assert deleted_mine.status == "cancelled"
+    assert tasks.get_by_id(mine.id) is None
+
+    deleted_assigned = uc.delete_task(user_id="seller-a", task_id=assigned.id)
+    assert deleted_assigned.title == "Atribuída"
+    assert any(
+        a.task_id == assigned.id and "excluída" in (a.subject or "").lower()
+        for a in activities.items
+    )
 
 
 def test_team_worklist_requires_manager():
