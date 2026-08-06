@@ -16,7 +16,12 @@ export const CM_HELP = {
   },
   home: {
     overview:
-      "Resumo do que precisa de atenção agora: atrasos, follow-ups e situação da carteira. Use os CTAs para ir direto à ação.",
+      "Saudação e resumo do dia: chips de pedidos, follow-ups e atrasos no escopo atual.",
+    alerts: "Fila do que precisa de ação agora — CTAs levam direto a Pedidos ou Meu dia.",
+    kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
+    kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
+    management:
+      "Área do administrador. KPIs ROL/OTD/conversão e tabela de equipe entram na etapa P1.",
     shortcuts: "Atalhos para as áreas principais — objetivo: chegar à ação em até dois cliques.",
     analytics:
       "BI e propostas ficam em apps irmãos. Aqui só há deep links para não misturar worklist com analytics.",
