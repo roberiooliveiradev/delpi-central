@@ -77,8 +77,10 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | Filtro por tipo | Sim | Client-side na worklist | Padrão Pipedrive/HubSpot |
 | Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
 | **Anexo** | Prévia no card; gestão em Nova/Editar | `/attachments` + volume | **P2 entregue** |
-| **Editar tarefa** | Form colapsável (campos + anexos + responsável) | `PATCH /tasks/{id}` | Criador \| responsável \| gestor |
-| **Excluir tarefa** | Botão Excluir + confirm | `DELETE /tasks/{id}` (soft delete) | Mesmo critério de edição |
+| **Editar tarefa** | Form colapsável (campos + anexos + responsável) | `PATCH /tasks/{id}` | Só o **criador** |
+| **Excluir tarefa** | Botão Excluir + confirm | `DELETE /tasks/{id}` (soft delete) | Só o **criador** |
+| **Adiar** | +1 dia | `POST .../defer` | Só o **criador** |
+| **Concluir** | Botão Concluir | `POST .../complete` | Responsável (ou gestor da equipe) |
 | **Realtime worklist** | WS invalida fila + toast in-app (Meu dia / Início) | `GET /commercial/realtime/ws` | Entregue ago/2026 |
 | **Tarefas concluídas na UI** | Chip **Concluídas** (somente leitura) | `GET /me/worklist/done` | **Entregue ago/2026** |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |

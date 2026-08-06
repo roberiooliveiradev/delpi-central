@@ -52,21 +52,22 @@ class ManageAttachmentsUseCase:
     def _can_act_on_task(
         self,
         *,
-        task: Any,
+        task_assignee: str,
+        task_created_by: str,
         actor_user_id: str,
         actor_is_portfolio_manager: bool,
     ) -> bool:
         actor = (actor_user_id or "").strip()
         if not actor:
             return False
-        if (getattr(task, "created_by_user_id", None) or "").strip() == actor:
+        # Criador gerencia anexos; responsável/gestor também (evidência operacional).
+        if (task_created_by or "").strip() == actor:
             return True
-        if (getattr(task, "assignee_user_id", None) or "").strip() == actor:
+        if (task_assignee or "").strip() == actor:
             return True
         if not actor_is_portfolio_manager:
             return False
-        assignee = (getattr(task, "assignee_user_id", None) or "").strip()
-        return bool(assignee) and assignee in self.team_user_ids()
+        return bool(task_assignee) and task_assignee in self.team_user_ids()
 
     def _assert_owner_access(
         self,
@@ -91,7 +92,8 @@ class ManageAttachmentsUseCase:
             if task is None or task.status in {"cancelled"}:
                 raise LookupError("Tarefa não encontrada.")
             if not self._can_act_on_task(
-                task=task,
+                task_assignee=task.assignee_user_id,
+                task_created_by=task.created_by_user_id,
                 actor_user_id=actor_user_id,
                 actor_is_portfolio_manager=actor_is_portfolio_manager,
             ):

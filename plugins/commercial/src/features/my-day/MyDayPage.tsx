@@ -331,11 +331,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     (task: CommercialTaskDto) => {
       const me = (currentUserId || myPortfolio?.user_id || "").trim();
       const createdBy = (task.created_by_user_id || "").trim();
-      const assignee = (task.assignee_user_id || "").trim();
-      const allowed =
-        Boolean(me) && (createdBy === me || assignee === me || isAdmin);
-      if (!allowed) {
-        notifyError("Sem permissão para editar esta tarefa.");
+      if (!me || createdBy !== me) {
+        notifyError("Só quem criou a tarefa pode editá-la.");
         return;
       }
       setPendingAttachments([]);
@@ -355,7 +352,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setFormMode("edit");
       scrollToTaskForm();
     },
-    [currentUserId, isAdmin, myPortfolio?.user_id, notifyError, scrollToTaskForm],
+    [currentUserId, myPortfolio?.user_id, notifyError, scrollToTaskForm],
   );
 
   const closeTaskForm = useCallback(() => {
@@ -825,11 +822,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
                       : null;
                   const readOnly = bucket === "done";
-                  const canEditTask =
-                    !readOnly &&
-                    canManageFollowups &&
-                    Boolean(me) &&
-                    (createdBy === me || assignee === me || isAdmin);
+                  const isCreator = Boolean(me) && createdBy === me;
+                  const canEditTask = !readOnly && canManageFollowups && isCreator;
                   return (
                     <TaskDetailCard
                       key={task.id}
@@ -842,6 +836,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       canManage={canManageFollowups}
                       canEdit={canEditTask}
                       canDelete={canEditTask}
+                      canDefer={canEditTask}
                       readOnly={readOnly}
                       formatDue={formatDue}
                       onEdit={() => openEditForm(task)}

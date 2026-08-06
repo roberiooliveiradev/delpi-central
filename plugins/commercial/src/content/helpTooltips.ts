@@ -52,7 +52,7 @@ export const CM_HELP = {
     taskAssignee:
       "Responsável com carteira ativa. Vazio = você. Só gestores atribuem a outro vendedor.",
     taskAssignedBy:
-      "Quem criou e atribuiu a tarefa. Criador, responsável e gestores da equipe podem editar, anexar e excluir.",
+      "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; o responsável apenas conclui.",
     taskCustomer:
       "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
@@ -60,9 +60,9 @@ export const CM_HELP = {
     taskAttachment:
       "Adicione ou remova anexos em Nova tarefa / Editar. No card da fila só há prévia (clique para abrir).",
     editTask:
-      "Criador, responsável ou gestor da equipe podem editar título, observação, prazo, tipo, prioridade, cliente e anexos. Gestores também trocam o responsável.",
-    deleteTask: "Remove a tarefa aberta da fila (soft delete). Confirme antes de excluir.",
-    deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
+      "Só quem criou a tarefa pode editar título, observação, prazo, tipo, prioridade, cliente e anexos. Gestores criadores também trocam o responsável aqui.",
+    deleteTask: "Só o criador remove a tarefa aberta da fila. Confirme antes de excluir.",
+    deferTask: "Só o criador empurra o prazo em +1 dia. O responsável apenas conclui.",
     reassignTask:
       "Troca o responsável no formulário Editar (campo Responsável). Destino deve ter carteira ativa.",
   },

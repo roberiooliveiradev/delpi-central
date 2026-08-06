@@ -150,24 +150,9 @@ class ManageWorklistUseCase:
             return False
         return task.assignee_user_id in self.team_user_ids()
 
-    def _can_edit_task(
-        self,
-        *,
-        task: CommercialTask,
-        actor_user_id: str,
-        actor_is_portfolio_manager: bool = False,
-    ) -> bool:
-        """Criador, responsável ou gestor da equipe do responsável."""
-        actor = (actor_user_id or "").strip()
-        if not actor:
-            return False
-        if (task.created_by_user_id or "").strip() == actor:
-            return True
-        return self._can_act_on_task(
-            task=task,
-            actor_user_id=actor,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
-        )
+    def _can_edit_task(self, *, task: CommercialTask, actor_user_id: str) -> bool:
+        """Só o criador edita/exclui/adia; o responsável apenas conclui."""
+        return (task.created_by_user_id or "").strip() == (actor_user_id or "").strip()
 
     def get_worklist(
         self,
@@ -360,12 +345,11 @@ class ManageWorklistUseCase:
         existing = self._tasks.get_by_id(task_id)
         if existing is None or existing.status != "open":
             raise LookupError("Tarefa não encontrada ou já concluída.")
-        if not self._can_edit_task(
-            task=existing,
-            actor_user_id=user_id,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
-        ):
-            raise PermissionError("Sem permissão para editar esta tarefa.")
+        if not self._can_edit_task(task=existing, actor_user_id=user_id):
+            raise PermissionError(
+                "Só quem criou a tarefa pode editá-la. Tarefas atribuídas a você "
+                "podem ser concluídas."
+            )
 
         title = (data.title or "").strip()
         if not title:
@@ -481,12 +465,11 @@ class ManageWorklistUseCase:
         existing = self._tasks.get_by_id(task_id)
         if existing is None or existing.status != "open":
             raise LookupError("Tarefa não encontrada ou já concluída.")
-        if not self._can_act_on_task(
-            task=existing,
-            actor_user_id=user_id,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
-        ):
-            raise PermissionError("Sem permissão para adiar esta tarefa.")
+        if not self._can_edit_task(task=existing, actor_user_id=user_id):
+            raise PermissionError(
+                "Só quem criou a tarefa pode adiá-la. Tarefas atribuídas a você "
+                "podem ser concluídas."
+            )
         task = self._tasks.update_due_at(task_id=task_id, due_at=due_at)
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
@@ -572,12 +555,11 @@ class ManageWorklistUseCase:
             raise LookupError("Tarefa não encontrada.")
         if existing.status != "open":
             raise LookupError("Só é possível excluir tarefas abertas.")
-        if not self._can_edit_task(
-            task=existing,
-            actor_user_id=user_id,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
-        ):
-            raise PermissionError("Sem permissão para excluir esta tarefa.")
+        if not self._can_edit_task(task=existing, actor_user_id=user_id):
+            raise PermissionError(
+                "Só quem criou a tarefa pode excluí-la. Tarefas atribuídas a você "
+                "podem ser concluídas."
+            )
 
         task = self._tasks.soft_delete(task_id=task_id)
         if task is None:

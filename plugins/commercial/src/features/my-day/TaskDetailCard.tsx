@@ -18,10 +18,12 @@ type TaskDetailCardProps = {
   /** Quem criou/atribuiu — exibido quando diferente do responsável. */
   assignedByLabel?: string | null;
   canManage: boolean;
-  /** Criador, responsável ou gestor — edita conteúdo/anexos. */
+  /** Só o criador edita conteúdo/anexos. */
   canEdit: boolean;
-  /** Mesmo critério de edição (apenas tarefas abertas). */
+  /** Só o criador exclui. */
   canDelete?: boolean;
+  /** Só o criador adia prazo. */
+  canDefer?: boolean;
   /** Concluídas: só leitura (sem Editar / Adiar / Concluir). */
   readOnly?: boolean;
   onEdit: () => void;
@@ -56,6 +58,7 @@ export function TaskDetailCard({
   canManage,
   canEdit,
   canDelete = false,
+  canDefer = false,
   readOnly = false,
   onEdit,
   onDelete,
@@ -153,7 +156,7 @@ export function TaskDetailCard({
               Excluir
             </ActionButton>
           ) : null}
-          {!readOnly && canManage ? (
+          {!readOnly && canDefer ? (
             <ActionButton variant="ghost" onClick={onDefer}>
               Adiar +1 dia
             </ActionButton>
