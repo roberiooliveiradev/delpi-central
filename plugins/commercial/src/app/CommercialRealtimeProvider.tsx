@@ -11,12 +11,15 @@ import {
 import { getCommercialClientId } from "./commercialClientId";
 import { useCommercialFloatingNotice } from "./CommercialFloatingNoticeProvider";
 import { usePortfolioScope } from "./PortfolioScopeContext";
+import { lookupDirectoryUsers } from "../api/commercialPortfolioApi";
 import {
   buildCommercialRealtimeWsUrl,
+  isGenericActorDisplayName,
   parseCommercialRealtimeEvent,
   resolveWorklistNotification,
   type CommercialWorklistChangedEvent,
 } from "../constants/realtime";
+import { formatDirectoryUserLabel } from "../shared/directoryUserLabel";
 
 const PING_MS = 25_000;
 const RECONNECT_MS = 4_000;
@@ -218,17 +221,15 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
 export function useCommercialRealtimeNotices(enabled = true) {
   const { subscribeWorklistChanged } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
-  const { myPortfolio } = usePortfolioScope();
+  const { myPortfolio, currentUserId } = usePortfolioScope();
   const clientId = getCommercialClientId();
-  const currentUserId = myPortfolio?.user_id ?? null;
+  const resolvedUserId = currentUserId ?? myPortfolio?.user_id ?? null;
 
   useEffect(() => {
     if (!enabled) return;
-    return subscribeWorklistChanged((event) => {
-      if (event.actorClientId && event.actorClientId === clientId) {
-        return;
-      }
-      const payload = resolveWorklistNotification(event, currentUserId);
+
+    const publish = (event: CommercialWorklistChangedEvent) => {
+      const payload = resolveWorklistNotification(event, resolvedUserId);
       const options = {
         title: payload.title,
         id: `cm-rt-${event.taskId}-${event.reason}`,
@@ -243,10 +244,54 @@ export function useCommercialRealtimeNotices(enabled = true) {
         return;
       }
       notifyInfo(payload.message, options);
+    };
+
+    return subscribeWorklistChanged((event) => {
+      if (event.actorClientId && event.actorClientId === clientId) {
+        return;
+      }
+
+      const needActor = isGenericActorDisplayName(event.actorDisplayName);
+      const needAssignee = isGenericActorDisplayName(event.assigneeDisplayName);
+      const ids = [
+        needActor ? (event.actorUserId || "").trim() : "",
+        needAssignee ? (event.assigneeUserIds?.[0] || "").trim() : "",
+      ].filter(Boolean);
+
+      if (ids.length === 0) {
+        publish(event);
+        return;
+      }
+
+      void lookupDirectoryUsers(ids)
+        .then((items) => {
+          const byId = new Map(
+            items.filter((item) => item?.id).map((item) => [item.id, item]),
+          );
+          let next = event;
+          if (needActor && event.actorUserId) {
+            const label = formatDirectoryUserLabel(byId.get(event.actorUserId) || {});
+            if (label) {
+              next = { ...next, actorDisplayName: label };
+            }
+          }
+          if (needAssignee && event.assigneeUserIds?.[0]) {
+            const label = formatDirectoryUserLabel(
+              byId.get(event.assigneeUserIds[0]) || {},
+            );
+            if (label) {
+              next = { ...next, assigneeDisplayName: label };
+            }
+          }
+          publish(next);
+        })
+        .catch(() => {
+          publish(event);
+        });
     });
   }, [
     clientId,
-    currentUserId,
+    resolvedUserId,
     enabled,
     notifyInfo,
     notifySuccess,

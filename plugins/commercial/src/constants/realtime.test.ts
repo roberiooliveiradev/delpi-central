@@ -16,6 +16,7 @@ function baseEvent(
     taskTitle: "Ligar ACME",
     assigneeUserIds: ["seller-b", "seller-a"],
     actorDisplayName: "Ana Gestora",
+    assigneeDisplayName: "Bruno Vendedor",
     ...overrides,
   };
 }
@@ -40,9 +41,9 @@ describe("resolveWorklistNotification", () => {
     expect(note.message).toBe("Ana Gestora atribuiu a você: Ligar ACME");
   });
 
-  it("usa texto genérico para a equipe", () => {
+  it("inclui ator e responsável na atribuição para a equipe", () => {
     const note = resolveWorklistNotification(baseEvent({ reason: "task.created" }), "manager-1");
-    expect(note.message).toBe("Ana Gestora atribuiu: Ligar ACME");
+    expect(note.message).toBe("Ana Gestora atribuiu a Bruno Vendedor: Ligar ACME");
   });
 
   it("inclui ator em alterações", () => {
@@ -51,5 +52,13 @@ describe("resolveWorklistNotification", () => {
       "seller-b",
     );
     expect(note.message).toBe("Ana Gestora alterou a tarefa: Ligar ACME");
+  });
+
+  it("inclui ator em conclusões", () => {
+    const note = resolveWorklistNotification(
+      baseEvent({ reason: "task.completed", assigneeUserIds: ["seller-b"] }),
+      "manager-1",
+    );
+    expect(note.message).toBe("Ana Gestora concluiu: Ligar ACME");
   });
 });

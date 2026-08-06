@@ -18,7 +18,11 @@ from commercial_app.composition.commercial_composer import (
     build_manage_attachments_use_case,
     build_task_repository,
 )
-from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
+from commercial_app.core.auth_actor import (
+    actor_display_name_from_request,
+    actor_sub_from_request,
+    current_user_from_request,
+)
 from commercial_app.core.responses import fail, ok
 from commercial_app.application.services.commercial_realtime_notify import notify_worklist_changed
 from commercial_app.interface.http.client_id import client_id_from_request
@@ -49,6 +53,7 @@ def _notify_task_attachment(task_id: str, request: Request) -> None:
         task_id=str(task.id),
         assignee_user_ids=[task.assignee_user_id],
         actor_user_id=_user_id(request),
+        actor_display_name=actor_display_name_from_request(request),
         task_title=task.title,
         actor_client_id=client_id_from_request(request),
     )

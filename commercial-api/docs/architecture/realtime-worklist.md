@@ -24,10 +24,11 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
   "assigneeUserIds": ["seller-b", "seller-a"],
   "actorUserId": "manager-1",
   "actorDisplayName": "Ana Gestora",
+  "assigneeDisplayName": "Bruno Vendedor",
   "actorClientId": "client-uuid",
   "notification": {
     "title": "Tarefa reatribuída",
-    "message": "Ana Gestora reatribuiu a tarefa: Ligar ACME",
+    "message": "Ana Gestora reatribuiu a Bruno Vendedor: Ligar ACME",
     "variant": "info"
   }
 }
@@ -35,7 +36,7 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 
 Valores de `reason`: `task.created`, `task.updated`, `task.completed`, `task.deferred`, `task.reassigned`, `attachment.changed`.
 
-`actorDisplayName` vem da carteira (`display_name`); se ausente → «Alguém da equipe».
+`actorDisplayName` vem do usuário autenticado (RBAC `name`) e, se faltar, da carteira (`display_name`); se ausente → «Alguém da equipe». `assigneeDisplayName` é o responsável atual.
 
 O payload `notification` no fio é genérico (audiência `team`). O MFE personaliza o toast com `assigneeUserIds` + `myPortfolio.user_id`:
 

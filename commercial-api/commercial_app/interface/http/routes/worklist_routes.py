@@ -21,9 +21,16 @@ from commercial_app.composition.commercial_composer import (
     build_manage_worklist_use_case,
     build_task_repository,
 )
-from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
+from commercial_app.core.auth_actor import (
+    actor_display_name_from_request,
+    actor_sub_from_request,
+    current_user_from_request,
+)
 from commercial_app.core.responses import fail, ok
-from commercial_app.application.services.commercial_realtime_notify import notify_worklist_changed
+from commercial_app.application.services.commercial_realtime_notify import (
+    WorklistChangeReason,
+    notify_worklist_changed,
+)
 from commercial_app.interface.http.client_id import client_id_from_request
 from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateActivityBody,
@@ -47,6 +54,24 @@ def _user_id(request: Request) -> str | None:
 def _use_case():
     return build_manage_worklist_use_case()
 
+
+def _notify_task_change(
+    request: Request,
+    *,
+    reason: WorklistChangeReason,
+    task_id: str,
+    assignee_user_ids: list[str],
+    task_title: str | None,
+) -> None:
+    notify_worklist_changed(
+        reason=reason,
+        task_id=task_id,
+        assignee_user_ids=assignee_user_ids,
+        actor_user_id=_user_id(request),
+        actor_display_name=actor_display_name_from_request(request),
+        task_title=task_title,
+        actor_client_id=client_id_from_request(request),
+    )
 
 def _is_portfolio_manager(request: Request) -> bool:
     return can_manage_portfolios(current_user_from_request(request))
@@ -166,13 +191,12 @@ def create_task(request: Request, body: CreateTaskBody):
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
-        notify_worklist_changed(
+        _notify_task_change(
+            request,
             reason="task.created",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
-            actor_user_id=user_id,
             task_title=task.title,
-            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
     except PermissionError as exc:
@@ -211,13 +235,12 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
         assignees = [task.assignee_user_id]
         if existing and existing.assignee_user_id != task.assignee_user_id:
             assignees.append(existing.assignee_user_id)
-        notify_worklist_changed(
+        _notify_task_change(
+            request,
             reason="task.updated",
             task_id=str(task.id),
             assignee_user_ids=assignees,
-            actor_user_id=user_id,
             task_title=task.title,
-            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
     except PermissionError as exc:
@@ -243,13 +266,12 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
             task_id=task_id,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
-        notify_worklist_changed(
+        _notify_task_change(
+            request,
             reason="task.completed",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
-            actor_user_id=user_id,
             task_title=task.title,
-            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
     except PermissionError as exc:
@@ -274,13 +296,12 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
             due_at=body.due_at,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
-        notify_worklist_changed(
+        _notify_task_change(
+            request,
             reason="task.deferred",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
-            actor_user_id=user_id,
             task_title=task.title,
-            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
     except PermissionError as exc:
@@ -311,13 +332,12 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
         assignees = [task.assignee_user_id]
         if existing and existing.assignee_user_id != task.assignee_user_id:
             assignees.append(existing.assignee_user_id)
-        notify_worklist_changed(
+        _notify_task_change(
+            request,
             reason="task.reassigned",
             task_id=str(task.id),
             assignee_user_ids=assignees,
-            actor_user_id=user_id,
             task_title=task.title,
-            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")
     except PermissionError as exc:
@@ -329,6 +349,35 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
     except Exception:
         logger.exception("reassign_task_failed")
         return fail("Erro interno ao reatribuir tarefa.", 500, operation_id="reassign_task")
+
+
+@tasks_router.delete("/{task_id}", operation_id="delete_task")
+@require_any_permission(*COMMERCIAL_FOLLOWUPS_PERMISSIONS)
+def delete_task(request: Request, task_id: UUID = Path(...)):
+    try:
+        user_id = _user_id(request)
+        if not user_id:
+            return fail("Usuário não identificado.", 401, operation_id="delete_task")
+        task = _use_case().delete_task(
+            user_id=user_id,
+            task_id=task_id,
+            actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
+        _notify_task_change(
+            request,
+            reason="task.deleted",
+            task_id=str(task.id),
+            assignee_user_ids=[task.assignee_user_id],
+            task_title=task.title,
+        )
+        return ok(task.to_dict(), message="Tarefa excluída.", operation_id="delete_task")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="delete_task")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="delete_task")
+    except Exception:
+        logger.exception("delete_task_failed")
+        return fail("Erro interno ao excluir tarefa.", 500, operation_id="delete_task")
 
 
 @activities_router.post("", operation_id="create_activity")

@@ -47,6 +47,27 @@ def test_build_notification_mentions_who_assigned():
     assert note["variant"] == "info"
 
 
+def test_build_notification_team_assignment_includes_assignee():
+    note = build_worklist_notification(
+        reason="task.created",
+        task_title="Ligar ACME",
+        actor_display_name="Ana Gestora",
+        assignee_display_name="Bruno Vendedor",
+        audience="team",
+    )
+    assert note["message"] == "Ana Gestora atribuiu a Bruno Vendedor: Ligar ACME"
+
+
+def test_build_notification_completed_includes_actor():
+    note = build_worklist_notification(
+        reason="task.completed",
+        task_title="Follow-up",
+        actor_display_name="Usuário Comum",
+        audience="team",
+    )
+    assert note["message"] == "Usuário Comum concluiu: Follow-up"
+
+
 def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
     hub = MagicMock()
     scheduled: list[tuple[str, dict]] = []
@@ -60,7 +81,7 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
         hub,
     )
     monkeypatch.setattr(
-        "commercial_app.application.services.commercial_realtime_notify.resolve_actor_display_name",
+        "commercial_app.application.services.commercial_realtime_notify.resolve_user_display_name",
         lambda _uid: "Ana Gestora",
     )
 
@@ -81,7 +102,7 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
     for room, body in by_room.items():
         assert body["actorDisplayName"] == "Ana Gestora"
         assert body["assigneeUserIds"] == ["seller-a"]
-        assert body["notification"]["message"] == "Ana Gestora atribuiu: Ligar ACME"
+        assert "Ana Gestora atribuiu" in body["notification"]["message"]
         assert body["notification"]["title"] == "Nova tarefa"
 
 
@@ -107,7 +128,7 @@ def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):
     body = by_room[user_room("seller-b")]
     assert body["assigneeUserIds"] == ["seller-b", "seller-a"]
     assert body["actorDisplayName"] == "Ana Gestora"
-    assert body["notification"]["message"] == "Ana Gestora reatribuiu a tarefa: Follow-up"
+    assert "Ana Gestora reatribuiu" in body["notification"]["message"]
 
 
 def test_user_room_key():

@@ -1,6 +1,13 @@
 from __future__ import annotations
 
+import re
+
 from fastapi import Request
+
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
 
 
 def _user_attr(user: object | dict, *keys: str) -> str | None:
@@ -17,6 +24,13 @@ def _user_attr(user: object | dict, *keys: str) -> str | None:
     return None
 
 
+def _safe_display_label(value: str | None) -> str | None:
+    cleaned = (value or "").strip()
+    if not cleaned or _UUID_RE.match(cleaned):
+        return None
+    return cleaned
+
+
 def actor_sub_from_request(request: Request) -> str | None:
     user = getattr(request.state, "user", None)
     if user is None:
@@ -26,3 +40,18 @@ def actor_sub_from_request(request: Request) -> str | None:
 
 def current_user_from_request(request: Request):
     return getattr(request.state, "user", None)
+
+
+def actor_display_name_from_request(request: Request) -> str | None:
+    """
+    Nome amigável do ator autenticado (RBAC/JWT), nunca UUID cru.
+    Preferência: name → preferred_username → email.
+    """
+    user = current_user_from_request(request)
+    if user is None:
+        return None
+    for key in ("name", "preferred_username", "email"):
+        label = _safe_display_label(_user_attr(user, key))
+        if label:
+            return label
+    return None

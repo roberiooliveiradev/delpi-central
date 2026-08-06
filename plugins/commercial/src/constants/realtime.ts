@@ -6,6 +6,7 @@ export type WorklistChangeReason =
   | "task.completed"
   | "task.deferred"
   | "task.reassigned"
+  | "task.deleted"
   | "attachment.changed";
 
 export type CommercialRealtimeNotification = {
@@ -23,6 +24,8 @@ export type CommercialWorklistChangedEvent = {
   actorUserId?: string | null;
   /** Nome amigável de quem originou a mutação (nunca UUID). */
   actorDisplayName?: string | null;
+  /** Nome do responsável atual (assigneeUserIds[0]). */
+  assigneeDisplayName?: string | null;
   actorClientId?: string | null;
   notification?: CommercialRealtimeNotification | null;
 };
@@ -31,6 +34,8 @@ export type CommercialRealtimeEvent =
   | CommercialWorklistChangedEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
+
+const GENERIC_ACTOR_LABELS = new Set(["alguém", "alguém da equipe"]);
 
 export function buildCommercialRealtimeWsUrl(options: {
   token: string;
@@ -59,10 +64,22 @@ export function parseCommercialRealtimeEvent(raw: string): CommercialRealtimeEve
   return null;
 }
 
+export function isGenericActorDisplayName(value: string | null | undefined): boolean {
+  const name = (value || "").trim();
+  if (!name) return true;
+  return GENERIC_ACTOR_LABELS.has(name.toLowerCase());
+}
+
 function actorLabel(event: CommercialWorklistChangedEvent): string {
   const name = (event.actorDisplayName || "").trim();
-  if (name) return name;
+  if (name && !isGenericActorDisplayName(name)) return name;
   return "Alguém da equipe";
+}
+
+function assigneeLabel(event: CommercialWorklistChangedEvent): string {
+  const name = (event.assigneeDisplayName || "").trim();
+  if (name && !isGenericActorDisplayName(name)) return name;
+  return "alguém";
 }
 
 export type WorklistNotificationAudience = "assignee" | "previous" | "team";
@@ -102,6 +119,7 @@ export function fallbackWorklistNotification(
 ): CommercialRealtimeNotification {
   const titleLabel = (event.taskTitle || "").trim() || "Tarefa sem título";
   const actor = actorLabel(event);
+  const assignee = assigneeLabel(event);
   const audience = options?.audience ?? "assignee";
   const assigneeChanged = (event.assigneeUserIds || []).length > 1;
 
@@ -112,7 +130,7 @@ export function fallbackWorklistNotification(
         message:
           audience === "assignee"
             ? `${actor} atribuiu a você: ${titleLabel}`
-            : `${actor} atribuiu: ${titleLabel}`,
+            : `${actor} atribuiu a ${assignee}: ${titleLabel}`,
         variant: "info",
       };
     case "task.updated":
@@ -126,7 +144,7 @@ export function fallbackWorklistNotification(
       if (assigneeChanged && audience === "previous") {
         return {
           title: "Tarefa reatribuída",
-          message: `${actor} reatribuiu a tarefa: ${titleLabel}`,
+          message: `${actor} reatribuiu a ${assignee}: ${titleLabel}`,
           variant: "info",
         };
       }
@@ -153,8 +171,14 @@ export function fallbackWorklistNotification(
         message:
           audience === "assignee"
             ? `${actor} atribuiu a você: ${titleLabel}`
-            : `${actor} reatribuiu a tarefa: ${titleLabel}`,
+            : `${actor} reatribuiu a ${assignee}: ${titleLabel}`,
         variant: "info",
+      };
+    case "task.deleted":
+      return {
+        title: "Tarefa excluída",
+        message: `${actor} excluiu: ${titleLabel}`,
+        variant: "warning",
       };
     case "attachment.changed":
       return {
