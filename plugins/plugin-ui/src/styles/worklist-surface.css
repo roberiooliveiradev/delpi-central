@@ -182,3 +182,22 @@
 .delpi-ui-worklist-item__action--primary:hover {
   filter: brightness(0.97);
 }
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action,
+.theme-dark .delpi-ui-worklist-item__action {
+  border-color: color-mix(in srgb, #fff 22%, transparent);
+  color: color-mix(in srgb, #fff 92%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action--primary,
+.theme-dark .delpi-ui-worklist-item__action--primary {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 28%, transparent);
+  color: #e8f7fc;
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action--ghost,
+.theme-dark .delpi-ui-worklist-item__action--ghost {
+  color: color-mix(in srgb, #fff 88%, transparent);
+}

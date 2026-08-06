@@ -23,13 +23,16 @@ export const CM_HELP = {
   },
   myDay: {
     worklist:
-      "Worklist priorizada: atrasadas → hoje → depois. Concluir registra a tarefa como feita e atualiza a fila.",
-    bucketOverdue: "Tarefas com prazo anterior a hoje (UTC do servidor).",
+      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Cada tarefa tem prazo, prioridade e, de preferência, cliente vinculado.",
+    bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
-    bucketLater: "Tarefas sem prazo ou com prazo futuro.",
+    bucketLater: "Tarefas com prazo futuro.",
     newTask:
-      "Cria um follow-up atribuído a você. Depois você pode vincular à conta pelo detalhe do cliente.",
-    taskTitle: "Texto curto que aparece na fila. Prefira verbo + cliente/assunto.",
+      "Cria follow-up atribuído a você. Prazo padrão = hoje (fim do dia). Vincule um cliente da carteira quando possível.",
+    taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
+    taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
+    taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
+    taskCustomer: "Cliente da sua carteira — abre atalho Abrir conta na linha da tarefa.",
   },
   openOrders: {
     page:

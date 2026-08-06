@@ -89,6 +89,19 @@
   align-items: center;
 }
 
+.dashboard-commercial .cm-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.dashboard-commercial .cm-form-grid__actions {
+  display: flex;
+  align-items: flex-end;
+  min-height: 44px;
+}
+
 .dashboard-commercial .cm-link {
   color: var(--cm-accent);
   text-decoration: none;

@@ -15,16 +15,24 @@ import {
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialLoadingCard,
+  CommercialSelectField,
   CommercialTextField,
   CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
 
 type MyDayPageProps = {
   basePath: string;
 };
 
 type BucketKey = "overdue" | "today" | "later";
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Baixa" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "Alta" },
+] as const;
 
 function formatDue(dueAt?: string | null): string {
   if (!dueAt) return "Sem prazo";
@@ -46,15 +54,35 @@ function toneForBucket(bucket: BucketKey): "danger" | "warning" | "neutral" {
   return "neutral";
 }
 
+function parseCustomerKey(key: string): { code: string; store: string } | null {
+  const sep = key.indexOf("|");
+  if (sep <= 0) return null;
+  const code = key.slice(0, sep).trim();
+  const store = key.slice(sep + 1).trim();
+  if (!code || !store) return null;
+  return { code, store };
+}
+
 export function MyDayPage({ basePath }: MyDayPageProps) {
-  const { canManageFollowups } = usePortfolioScope();
+  const { canManageFollowups, myPortfolio } = usePortfolioScope();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<WorklistData | null>(null);
   const [bucket, setBucket] = useState<BucketKey>("overdue");
   const [title, setTitle] = useState("");
+  const [dueDate, setDueDate] = useState(localDateInputValue);
+  const [priority, setPriority] = useState("normal");
+  const [customerKey, setCustomerKey] = useState("");
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const customerOptions = useMemo(() => {
+    const rows = myPortfolio?.customers ?? [];
+    return rows.map((c) => ({
+      value: `${c.customer_code}|${c.customer_store}`,
+      label: `${c.customer_name?.trim() || "Cliente"} (${c.customer_code}/${c.customer_store})`,
+    }));
+  }, [myPortfolio]);
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -99,12 +127,23 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const onCreate = async () => {
     if (!canManageFollowups) return;
     const trimmed = title.trim();
-    if (!trimmed) return;
+    if (!trimmed || !dueDate) return;
     setCreating(true);
     setActionError(null);
     try {
-      await createTask({ title: trimmed, task_type: "follow_up", priority: "normal" });
+      const customer = parseCustomerKey(customerKey);
+      await createTask({
+        title: trimmed,
+        task_type: "follow_up",
+        priority: priority || "normal",
+        due_at: dueDateInputToIsoEod(dueDate),
+        customer_code: customer?.code ?? null,
+        customer_store: customer?.store ?? null,
+      });
       setTitle("");
+      setDueDate(localDateInputValue());
+      setPriority("normal");
+      setCustomerKey("");
       await reload();
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
@@ -117,7 +156,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     <section className="cm-page-stack">
       <SectionCard
         title="Meu dia"
-        subtitle="Fila priorizada: atrasadas → hoje → depois."
+        subtitle="Fila do dia: atrasadas → hoje → depois (padrão CRM)."
         hint={CM_HELP.myDay.worklist}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
@@ -158,10 +197,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           <EmptyState
             classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
             defaultTitle="Nenhuma tarefa nesta fila"
-            defaultMessage="Crie um follow-up ou escolha outra fila."
+            defaultMessage="Crie um follow-up com prazo ou escolha outra fila."
           >
             {canManageFollowups ? (
-              <p className="cm-muted">Use o formulário abaixo para a primeira tarefa.</p>
+              <p className="cm-muted">Use o formulário abaixo — prazo padrão é hoje.</p>
             ) : null}
           </EmptyState>
         ) : null}
@@ -200,24 +239,55 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       {canManageFollowups ? (
         <SectionCard
           title="Nova tarefa"
-          subtitle="Follow-up atribuído a você."
+          subtitle="Follow-up com prazo, prioridade e cliente da carteira."
           hint={CM_HELP.myDay.newTask}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
-          <div className="cm-nav-row" style={{ alignItems: "flex-end" }}>
-            <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-              <CommercialTextField
-                label="Título"
-                hint={CM_HELP.myDay.taskTitle}
-                value={title}
-                onChange={setTitle}
-                placeholder="Ex.: Ligar para ACME sobre atraso"
-              />
+          <div className="cm-form-grid">
+            <CommercialTextField
+              label="Título"
+              hint={CM_HELP.myDay.taskTitle}
+              value={title}
+              onChange={setTitle}
+              placeholder="Ex.: Ligar para ACME sobre atraso"
+              required
+            />
+            <CommercialTextField
+              label="Prazo"
+              hint={CM_HELP.myDay.taskDue}
+              type="date"
+              value={dueDate}
+              onChange={setDueDate}
+              required
+            />
+            <CommercialSelectField
+              label="Prioridade"
+              hint={CM_HELP.myDay.taskPriority}
+              options={[...PRIORITY_OPTIONS]}
+              value={priority}
+              onChange={setPriority}
+              allowEmpty={false}
+            />
+            <CommercialSelectField
+              label="Cliente"
+              hint={CM_HELP.myDay.taskCustomer}
+              options={customerOptions}
+              value={customerKey}
+              onChange={setCustomerKey}
+              allowEmpty
+              emptyLabel="Sem vínculo (opcional)"
+              searchable={customerOptions.length > 8}
+            />
+            <div className="cm-form-grid__actions">
+              <ActionButton
+                variant="primary"
+                disabled={creating || !title.trim() || !dueDate}
+                onClick={() => void onCreate()}
+              >
+                {creating ? "Criando…" : "Criar tarefa"}
+              </ActionButton>
             </div>
-            <ActionButton variant="primary" disabled={creating || !title.trim()} onClick={() => void onCreate()}>
-              {creating ? "Criando…" : "Criar tarefa"}
-            </ActionButton>
           </div>
         </SectionCard>
       ) : null}
