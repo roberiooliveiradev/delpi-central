@@ -1,6 +1,7 @@
 import {
   createDashboardAlertQueue,
   createDashboardAttachmentFileList,
+  createDashboardAttachmentPreviewStrip,
   createDashboardDetailCard,
   createDashboardDetailFieldGrid,
   createDashboardFileDropzone,
@@ -20,6 +21,7 @@ import {
   createTimeline,
   createDashboardUnderlineNav,
   attachmentFileListBemClasses,
+  attachmentPreviewStripBemClasses,
   dataTableBemClasses,
   detailCardRichBemClasses,
   emptyStateCardBemClasses,
@@ -83,6 +85,14 @@ export const CommercialAttachmentFileList = createDashboardAttachmentFileList({
     download: "Baixar",
     remove: "Remover",
     empty: "Nenhum anexo nesta tarefa.",
+  },
+});
+
+export const CommercialAttachmentPreviewStrip = createDashboardAttachmentPreviewStrip({
+  classNames: attachmentPreviewStripBemClasses(UI_PREFIX),
+  labels: {
+    empty: "Nenhum anexo nesta tarefa.",
+    openAriaLabel: (fileName: string) => `Abrir prévia de ${fileName}`,
   },
 });
 

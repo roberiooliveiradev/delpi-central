@@ -11,7 +11,6 @@ import {
   createTask,
   deferTask,
   getMyWorklist,
-  reassignTask,
   updateTask,
   type CommercialTaskDto,
   type WorklistData,
@@ -49,6 +48,7 @@ import {
   TaskAttachmentPreviewModal,
   type TaskAttachmentPreviewTarget,
 } from "./TaskAttachmentPreviewModal";
+import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 import { TaskDetailCard } from "./TaskDetailCard";
 
 type MyDayPageProps = {
@@ -229,9 +229,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [pendingPreview, setPendingPreview] = useState<TaskAttachmentPreviewTarget>(null);
   const [formMode, setFormMode] = useState<TaskFormMode>("closed");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [reassignTaskId, setReassignTaskId] = useState<string | null>(null);
-  const [reassignTargetUserId, setReassignTargetUserId] = useState("");
-  const [reassigning, setReassigning] = useState(false);
   const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
@@ -468,23 +465,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }
   };
 
-  const onReassign = async () => {
-    if (!isAdmin || !reassignTaskId) return;
-    if (!notifyMissingRequired(reassignTargetUserId ? [] : ["Novo responsável"])) return;
-    setReassigning(true);
-    try {
-      await reassignTask(reassignTaskId, reassignTargetUserId);
-      setReassignTaskId(null);
-      setReassignTargetUserId("");
-      notifySuccess("Tarefa reatribuída.");
-      await reload();
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao reatribuir.");
-    } finally {
-      setReassigning(false);
-    }
-  };
-
   const onCreate = async () => {
     if (!canManageFollowups) return;
     const missing: string[] = [];
@@ -715,49 +695,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           ) : null}
         </div>
 
-        {reassignTaskId ? (
-          <SectionCard
-            title="Reatribuir tarefa"
-            hint={CM_HELP.myDay.reassignTask}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-            collapsible
-            defaultOpen
-            actions={
-              <ActionButton
-                variant="ghost"
-                onClick={() => {
-                  setReassignTaskId(null);
-                  setReassignTargetUserId("");
-                }}
-              >
-                Fechar
-              </ActionButton>
-            }
-          >
-            <div className="cm-my-day-reassign" role="region" aria-label="Reatribuir tarefa">
-              <CommercialSelectField
-                label="Novo responsável"
-                hint={CM_HELP.myDay.reassignTask}
-                options={sellerOptions}
-                value={reassignTargetUserId}
-                onChange={setReassignTargetUserId}
-                allowEmpty={false}
-                searchable={sellerOptions.length > 8}
-              />
-              <div className="cm-my-day-form__actions">
-                <ActionButton
-                  variant="primary"
-                  disabled={reassigning}
-                  onClick={() => void onReassign()}
-                >
-                  {reassigning ? "Reatribuindo…" : "Confirmar reatribução"}
-                </ActionButton>
-              </div>
-            </div>
-          </SectionCard>
-        ) : null}
-
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
@@ -808,19 +745,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       priorityLabel={priorityLabel}
                       assigneeLabel={assigneeLabel}
                       canManage={canManageFollowups}
-                      isAdmin={isAdmin}
                       formatDue={formatDue}
                       onEdit={() => openEditForm(task)}
                       onComplete={() => void onComplete(task.id)}
                       onDefer={() => void onDefer(task)}
-                      onReassign={
-                        isAdmin
-                          ? () => {
-                              setReassignTaskId(task.id);
-                              setReassignTargetUserId(task.assignee_user_id);
-                            }
-                          : undefined
-                      }
                       onOpenAccount={
                         task.customer_code && task.customer_store
                           ? () =>
@@ -849,10 +777,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
             subtitle={
               formMode === "edit"
-                ? "Altere os campos e salve. Anexos continuam na linha da tarefa."
+                ? isAdmin
+                  ? "Altere campos, responsável e anexos; salve para gravar."
+                  : "Altere campos e anexos; salve para gravar."
                 : isAdmin
-                  ? "Título, prazo, tipo, responsável, cliente e observação."
-                  : "Título, prazo, tipo, cliente e observação — padrão HubSpot/Pipedrive."
+                  ? "Título, prazo, tipo, responsável, cliente, observação e anexos."
+                  : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
             }
             hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
             classNames={cmSectionCardClassNames}
@@ -980,6 +910,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       );
                     }}
                     canRemove
+                  />
+                </div>
+              ) : null}
+              {formMode === "edit" && editingTaskId ? (
+                <div className="cm-my-day-form__title">
+                  <TaskAttachmentsBlock
+                    taskId={editingTaskId}
+                    mode="manage"
+                    onChanged={() => void reload()}
+                    notifyError={notifyError}
+                    notifySuccess={notifySuccess}
                   />
                 </div>
               ) : null}

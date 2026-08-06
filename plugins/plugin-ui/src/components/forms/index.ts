@@ -54,6 +54,16 @@ export {
   type AttachmentFileListProps,
   type DashboardAttachmentFileListProps,
 } from "./AttachmentFileList";
+export {
+  AttachmentPreviewStrip,
+  attachmentPreviewStripBemClasses,
+  createDashboardAttachmentPreviewStrip,
+  type AttachmentPreviewStripClassNames,
+  type AttachmentPreviewStripItem,
+  type AttachmentPreviewStripLabels,
+  type AttachmentPreviewStripProps,
+  type DashboardAttachmentPreviewStripProps,
+} from "./AttachmentPreviewStrip";
 
 export {
   SelectControl,

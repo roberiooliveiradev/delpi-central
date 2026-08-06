@@ -220,7 +220,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "MultiSelectField"),
   vc("forms", "ReadOnlyField"),
   vc("forms", "FileDropzone"),
-  vc("forms", "AttachmentFileList"),
+  vc("forms", "AttachmentFileList", {
+    addedAt: "2026-08-05",
+    description: "Lista de anexos com Abrir / Baixar / Remover.",
+  }),
+  vc("forms", "AttachmentPreviewStrip", {
+    addedAt: "2026-08-06",
+    description: "Prévia visual de anexos (thumbs / ícones) só leitura.",
+  }),
   vc("forms", "FilterCheckboxField"),
   vc("forms", "FormFieldShell"),
   vc("forms", "FormSelectControl"),

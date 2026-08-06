@@ -16,11 +16,9 @@ type TaskDetailCardProps = {
   priorityLabel: string;
   assigneeLabel?: string | null;
   canManage: boolean;
-  isAdmin: boolean;
   onEdit: () => void;
   onComplete: () => void;
   onDefer: () => void;
-  onReassign?: () => void;
   onOpenAccount?: () => void;
   onAttachmentsChanged: () => void;
   notifyError: (message: string) => void;
@@ -44,11 +42,9 @@ export function TaskDetailCard({
   priorityLabel,
   assigneeLabel,
   canManage,
-  isAdmin,
   onEdit,
   onComplete,
   onDefer,
-  onReassign,
   onOpenAccount,
   onAttachmentsChanged,
   notifyError,
@@ -75,16 +71,12 @@ export function TaskDetailCard({
           },
         ]
       : []),
-    ...(note
-      ? [
-          {
-            label: "Observação",
-            value: note,
-            hint: CM_HELP.myDay.taskDescription,
-            wide: true as const,
-          },
-        ]
-      : []),
+    {
+      label: "Observação",
+      value: note || "Sem observação",
+      hint: CM_HELP.myDay.taskDescription,
+      wide: true as const,
+    },
   ];
 
   return (
@@ -111,11 +103,6 @@ export function TaskDetailCard({
               Editar
             </ActionButton>
           ) : null}
-          {isAdmin && onReassign ? (
-            <ActionButton variant="ghost" onClick={onReassign}>
-              Reatribuir
-            </ActionButton>
-          ) : null}
           {canManage ? (
             <ActionButton variant="ghost" onClick={onDefer}>
               Adiar +1 dia
@@ -134,16 +121,18 @@ export function TaskDetailCard({
         </div>
       }
     >
-      <CommercialDetailFieldGrid fields={fields} valueFallback="—" wrapLabels />
-      <TaskAttachmentsBlock
-        taskId={task.id}
-        initialCount={attachmentCount}
-        canManage={canManage}
-        embedded
-        onChanged={onAttachmentsChanged}
-        notifyError={notifyError}
-        notifySuccess={notifySuccess}
-      />
+      <div className="cm-task-detail-card__body">
+        <CommercialDetailFieldGrid fields={fields} valueFallback="—" wrapLabels />
+        <TaskAttachmentsBlock
+          taskId={task.id}
+          initialCount={attachmentCount}
+          mode="preview"
+          embedded
+          onChanged={onAttachmentsChanged}
+          notifyError={notifyError}
+          notifySuccess={notifySuccess}
+        />
+      </div>
     </CommercialDetailCard>
   );
 }

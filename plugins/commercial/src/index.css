@@ -212,6 +212,18 @@
   gap: 8px;
 }
 
+.dashboard-commercial .cm-task-detail-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-my-day-attachments--embedded {
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--cm-border, #e6e6e6) 70%, transparent);
+}
+
 .dashboard-commercial .cm-my-day-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

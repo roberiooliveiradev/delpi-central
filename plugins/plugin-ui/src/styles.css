@@ -25,8 +25,8 @@
 @import "./styles/section-card.css";
 @import "./styles/file-dropzone.css";
 @import "./styles/attachment-file-list.css";
-@import "./styles/departmental-kpi.css";
-@import "./styles/analytics-kpi.css";
+@import "./styles/attachment-preview-strip.css";
+@import "./styles/departmental-kpi.css";@import "./styles/analytics-kpi.css";
 @import "./styles/chart-card.css";
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";

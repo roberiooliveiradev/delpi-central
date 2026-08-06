@@ -51,14 +51,14 @@ export const CM_HELP = {
     taskCustomer:
       "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
-      "Observação interna (notes). Aparece na fila e no histórico da conta — não é e-mail ao cliente.",
+      "Observação interna (notes). Visível no card da tarefa e no histórico da conta — não é e-mail ao cliente.",
     taskAttachment:
-      "Use a área de anexar e a lista abaixo (Abrir / Baixar / Remover). Pré-visualização no modal do kit.",
+      "Adicione ou remova anexos em Nova tarefa / Editar. No card da fila só há prévia (clique para abrir).",
     editTask:
-      "Altera título, observação, prazo, tipo, prioridade e cliente. Gestores podem trocar o responsável.",
+      "Altera título, observação, prazo, tipo, prioridade, cliente e anexos. Gestores também trocam o responsável aqui.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
     reassignTask:
-      "Troca o responsável (só gestão). Destino deve ter carteira ativa no Comercial.",
+      "Troca o responsável no formulário Editar (campo Responsável). Destino deve ter carteira ativa.",
   },
   openOrders: {
     page:

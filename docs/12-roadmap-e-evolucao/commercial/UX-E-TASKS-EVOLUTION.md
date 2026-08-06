@@ -71,12 +71,14 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | Deep link Conta → form | Sim | — | `?createTask=1&customer_*` |
 | Buckets atrasadas / hoje / depois | Sim | worklist | |
 | **Responsável** | Picker (gestão) / self (vendedor) | `assignee_user_id` no create | **P1 entregue** |
-| **Reatribuir** | Sim (gestão) | `POST /tasks/{id}/reassign` | **P1 entregue** |
+| **Reatribuir** | Campo Responsável em **Editar** (gestão) | `PATCH` assignee (`POST .../reassign` ainda na API) | UI unificada no Editar |
 | Fila equipe | Chips Minhas / Equipe + filtro responsável | `GET /me/worklist?scope=team` | **P1 entregue** |
-| **Observação / description** | Sim (form + fila) | Coluna + create + activity body | **P0 entregue** |
+| **Observação / description** | Sim (form + card) | Coluna + create + activity body | **P0 entregue** |
 | Filtro por tipo | Sim | Client-side na worklist | Padrão Pipedrive/HubSpot |
 | Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
-| **Anexo** | Sim (form + linha) | `/attachments` + volume | **P2 entregue** |
+| **Anexo** | Prévia no card; gestão em Nova/Editar | `/attachments` + volume | **P2 entregue** |
+| **Editar tarefa** | Form colapsável (campos + anexos + responsável) | `PATCH /tasks/{id}` | Entregue ago/2026 |
+| **Tarefas concluídas na UI** | Não (somem da fila) | Persistidas `status=done` | **Correção futura** — § 3.1 |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |
 | Lembrete / recorrência | Não | — | Mercado sim |
 | Convidados / local / calendário busy | Não | — | Pipedrive meetings |
@@ -126,6 +128,28 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 | Meeting: local, guests, busy/free | Pipedrive | Só se calendário entrar no escopo |
 | Auto-tasks (pedido atrasado → follow-up) | HubSpot workflows | “Start tasks” já no backlog Wave G |
 | Sequências / cadências | HubSpot Sequences | Spec P2 em API-ROUTES |
+
+### 3.1 Correção futura — tarefas concluídas “somem” da UI
+
+**Comportamento atual (esperado no MVP, ruim de UX):** ao **Concluir**, a tarefa some da fila Meu dia. O usuário não vê histórico de feitos no próprio Meu dia.
+
+**Para onde vão (não se perdem):**
+
+| Camada | O que acontece |
+|--------|----------------|
+| Banco `commercial.tasks` | `status` passa a `done`; `completed_at` preenchido; registro permanece |
+| Worklist `GET /me/worklist` | Só lista `status=open` → concluídas **não** entram nos buckets |
+| Conta 360 / activities | Activity `system` “Tarefa concluída: …” no histórico do cliente (quando houver vínculo) |
+| UI Meu dia | Sem aba/filtro “Concluídas” → percepção de que “sumiu” |
+
+**Quando redesenhar a página Meu dia**, escolher uma destas (ou combinação):
+
+1. Chip/filtro **Concluídas** (hoje / 7 dias / período) na mesma página.
+2. Seção colapsável **Concluídas recentemente** sob a fila aberta.
+3. Deep link Conta 360 → timeline (já parcialmente coberto por activities).
+4. `GET /tasks?status=done` (ou worklist `include=done`) + paginação — evita carregar histórico eterno na fila operacional.
+
+Não implementar agora: deixar explícito na próxima alteração de layout do Meu dia.
 
 ---
 
