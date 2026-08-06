@@ -180,33 +180,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const getAccessToken = useCallback(() => tokenRef.current, []);
 
-  const clearSessionState = useCallback(() => {
-    setIsAuthenticated(false);
-    setCoreLoaded(false);
+  const clearSessionState = useCallback(
+    (options?: { clearKeycloakToken?: boolean }) => {
+      const clearKeycloakToken = options?.clearKeycloakToken !== false;
 
-    tokenRef.current = undefined;
-    // Mantém Keycloak e o portal alinhados: senão o polling admin pode
-    // disparar request sem Bearer enquanto o adapter ainda tem sessão.
-    try {
-      keycloak.clearToken();
-    } catch {
-      // noop
-    }
+      setIsAuthenticated(false);
+      setCoreLoaded(false);
 
-    setUser(undefined);
-    setApps([]);
-    setRoutes([]);
-    setDashboard(undefined);
-    setNotifications([]);
-    setFavorites([]);
+      tokenRef.current = undefined;
+      // Mantém Keycloak e o portal alinhados: senão o polling admin pode
+      // disparar request sem Bearer enquanto o adapter ainda tem sessão.
+      // No fluxo de Sair, NÃO limpar aqui: keycloak.logout() precisa do
+      // idToken para enviar id_token_hint e pular a tela de confirmação.
+      if (clearKeycloakToken) {
+        try {
+          keycloak.clearToken();
+        } catch {
+          // noop
+        }
+      }
 
-    resetAppLauncherAppearanceRegistry();
+      setUser(undefined);
+      setApps([]);
+      setRoutes([]);
+      setDashboard(undefined);
+      setNotifications([]);
+      setFavorites([]);
 
-    identityLoadInFlightRef.current = false;
-    dashboardLoadInFlightRef.current = false;
-    notificationsLoadInFlightRef.current = false;
-    favoritesLoadInFlightRef.current = false;
-  }, []);
+      resetAppLauncherAppearanceRegistry();
+
+      identityLoadInFlightRef.current = false;
+      dashboardLoadInFlightRef.current = false;
+      notificationsLoadInFlightRef.current = false;
+      favoritesLoadInFlightRef.current = false;
+    },
+    []
+  );
 
   const stopTokenRefresh = useCallback(() => {
     if (refreshIntervalRef.current) {
@@ -628,7 +637,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     stopTokenRefresh();
 
     window.setTimeout(() => {
-      clearSessionState();
+      // Preserva idToken no adapter até keycloak.logout() montar a URL
+      // com id_token_hint (sem isso o Keycloak exibe "Do you want to log out?").
+      clearSessionState({ clearKeycloakToken: false });
 
       void runGlobalFrontChannelLogout().finally(() => {
         void keycloak.logout({ redirectUri: window.location.origin + "/" });
