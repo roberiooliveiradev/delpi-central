@@ -283,6 +283,14 @@ export {
   type UnderlineNavProps,
 } from "./UnderlineNav";
 export {
+  TopBar,
+  createDashboardTopBar,
+  topBarBemClasses,
+  type DashboardTopBarProps,
+  type TopBarClassNames,
+  type TopBarProps,
+} from "./TopBar";
+export {
   FormGrid,
   createDashboardFormGrid,
   formGridBemClasses,

@@ -14,7 +14,7 @@ import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
-import { CommercialScopeChipBar, CommercialUnderlineNav } from "./commercialUi";
+import { CommercialScopeChipBar, CommercialTopBar } from "./commercialUi";
 
 type PluginShellProps = {
   view: PluginView;
@@ -130,37 +130,35 @@ export function PluginShell({
           </header>
         ) : null}
 
-        <div className="cm-admin-topbar">
-          <div className="cm-admin-topbar__row">
-            <CommercialUnderlineNav
-              aria-label="Áreas do Portal Comercial"
-              activeId={activeId}
-              items={items.map((item) => ({
-                id: item.id,
-                label: item.label,
-                icon: NAV_ICONS[item.id],
-                count: item.count,
-                title: NAV_HELP[item.id]
-                  ? `${item.label}. ${NAV_HELP[item.id]}`
-                  : item.label,
-                onSelect: () =>
-                  navigatePluginView(item.id, {
-                    basePath,
-                    search: search || undefined,
-                  }),
-              }))}
-            />
-            {scopeLabel ? (
-              <div className="cm-shell-scope">
+        <CommercialTopBar
+          aria-label="Áreas do Portal Comercial"
+          activeId={activeId}
+          items={items.map((item) => ({
+            id: item.id,
+            label: item.label,
+            icon: NAV_ICONS[item.id],
+            count: item.count,
+            title: NAV_HELP[item.id]
+              ? `${item.label}. ${NAV_HELP[item.id]}`
+              : item.label,
+            onSelect: () =>
+              navigatePluginView(item.id, {
+                basePath,
+                search: search || undefined,
+              }),
+          }))}
+          actions={
+            scopeLabel ? (
+              <>
                 <CommercialScopeChipBar
                   label="Escopo"
                   chips={[{ id: "scope", label: scopeLabel, active: true }]}
                 />
                 <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
-              </div>
-            ) : null}
-          </div>
-        </div>
+              </>
+            ) : undefined
+          }
+        />
 
         {children}
       </div>

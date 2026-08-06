@@ -71,6 +71,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Nav secundária underline (áreas do plugin); aria-current, badge count, scroll mobile.",
   }),
+  vc("layout", "TopBar", {
+    addedAt: "2026-08-06",
+    description:
+      "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions.",
+  }),
   vc("layout", "NavigationCard", {
     addedAt: "2026-07-16",
     description: "Card clicável de navegação/atalho (unidades, submódulos).",

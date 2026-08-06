@@ -9,6 +9,7 @@ import {
   createDashboardTextAreaField,
   createDashboardTextField,
   createDashboardTitleWithHelp,
+  createDashboardTopBar,
   createDashboardWorklistItem,
   createInitialsAvatar,
   createTimeline,
@@ -45,6 +46,10 @@ export const cmScopeChipBarClassNames = scopeChipBarBemClasses(UI_PREFIX);
 export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
 export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
+export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
+export const CommercialUnderlineNav = createDashboardUnderlineNav({ prefix: UI_PREFIX });
+export const cmUnderlineNavClassNames = underlineNavBemClasses(UI_PREFIX);
+
 export const cmSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -79,8 +84,6 @@ export const CommercialAlertQueue = createDashboardAlertQueue({ prefix: UI_PREFI
 export const CommercialScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
 export const CommercialWorklistItem = createDashboardWorklistItem({ prefix: UI_PREFIX });
 export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
-export const CommercialUnderlineNav = createDashboardUnderlineNav({ prefix: UI_PREFIX });
-export const cmUnderlineNavClassNames = underlineNavBemClasses(UI_PREFIX);
 
 const { field: cmSelectFieldClasses, control: cmSelectControlClasses } =
   selectFieldPacClasses(UI_PREFIX);

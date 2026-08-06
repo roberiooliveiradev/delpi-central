@@ -1,0 +1,53 @@
+/**
+ * TopBar — faixa sticky de navegação (padrão admin-navbar do portal).
+ * Compõe UnderlineNav; abas com ícone + label + underline ativo em --primary.
+ */
+
+.delpi-ui-topbar {
+  min-width: 0;
+  background: var(--delpi-ui-surface, var(--surface, var(--card, #fff)));
+  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 40%, transparent);
+}
+
+.delpi-ui-topbar--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.delpi-ui-topbar--bleed {
+  margin-inline: calc(-1 * var(--delpi-ui-page-padding, 16px));
+  padding-inline: var(--delpi-ui-page-padding, 16px);
+}
+
+.delpi-ui-topbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+.delpi-ui-topbar__nav {
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.delpi-ui-topbar__nav .delpi-ui-underline-nav {
+  width: 100%;
+}
+
+.delpi-ui-topbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding-bottom: 6px;
+}
+
+:root[data-theme="dark"] .delpi-ui-topbar,
+.theme-dark .delpi-ui-topbar {
+  background: var(--delpi-ui-surface, var(--surface, var(--card, #161b22)));
+}

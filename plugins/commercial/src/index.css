@@ -29,6 +29,7 @@
   --delpi-ui-muted: var(--cm-text-muted);
   --delpi-ui-section-gap: var(--cm-section-gap);
   --delpi-ui-grid-gap: var(--cm-grid-gap);
+  --delpi-ui-page-padding: var(--cm-page-padding, 24px);
 }
 
 :root[data-theme="dark"] .dashboard-commercial {
@@ -75,7 +76,7 @@
   min-width: 0;
 }
 
-/* Saudação acima da top bar (só Início) */
+/* Saudação acima da TopBar (só Início) */
 .dashboard-commercial .cm-shell-greeting {
   min-width: 0;
   padding: 2px 0 0;
@@ -91,43 +92,6 @@
   font-weight: 700;
   line-height: 1.35;
   color: var(--text, var(--pva-text, #111));
-}
-
-/* Top bar = admin-navbar: faixa sticky só com abas (ícone + label) */
-.dashboard-commercial .cm-admin-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  min-width: 0;
-  margin: 0 calc(-1 * var(--pva-page-padding, 16px));
-  padding: 0 var(--pva-page-padding, 16px);
-  background: var(--surface, var(--card, var(--pva-surface, #fff)));
-  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--text, #111) 40%, transparent);
-}
-
-.dashboard-commercial .cm-admin-topbar__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  min-width: 0;
-}
-
-.dashboard-commercial .cm-admin-topbar .cm-underline-nav,
-.dashboard-commercial .cm-admin-topbar .delpi-ui-underline-nav {
-  width: auto;
-  min-width: 0;
-  flex: 1 1 240px;
-}
-
-.dashboard-commercial .cm-shell-scope {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  padding-bottom: 6px;
 }
 
 .dashboard-commercial .cm-home-summary {
