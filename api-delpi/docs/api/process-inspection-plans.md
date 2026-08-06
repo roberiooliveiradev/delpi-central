@@ -24,11 +24,12 @@ Consultas de **planos de inspeção de processo** (como inspecionar o produto �
 
 ### Semântica SQL
 
-- **OP aberta:** `SC2010` com `D_E_L_E_T_ = ''` e `C2_DATRF` vazio.
+- **Escopo de produto:** apenas **produto acabado** — `SB1010.B1_TIPO = 'PA'`.
+- **OP aberta:** `SC2010` com `D_E_L_E_T_ = ''` e `C2_DATRF` vazio (join PA).
 - **Tem plano:** existe linha em `QP6010` para o `C2_PRODUTO` (`QP6_PRODUT`).
 - **OBS:** `C2_YOBSQUA`.
 - Filial: `C2_FILIAL` quando `branch` ∈ {`01`,`02`}.
-- Detalhe por produto reutiliza `ProductInspectionRepository` (`MAX(QP6_REVI)` só neste módulo de cadastro — não alterar auditoria QPK).
+- Detalhe por produto reutiliza `ProductInspectionRepository` (`MAX(QP6_REVI)` só neste módulo de cadastro — não alterar auditoria QPK); só retorna se o código for PA com QP6.
 
 ---
 

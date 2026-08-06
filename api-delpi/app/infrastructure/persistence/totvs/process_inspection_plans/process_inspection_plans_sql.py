@@ -1,12 +1,23 @@
-"""SQL — cadastro de planos de inspeção de processo (QP6 × OPs abertas SC2)."""
+"""SQL — cadastro de planos de inspeção de processo (QP6 × OPs abertas SC2).
+
+Escopo: apenas produtos acabados (`SB1010.B1_TIPO = 'PA'`).
+"""
 
 from __future__ import annotations
 
 from app.domain.totvs.protheus_branches import branch_filter_sql
 
+# Produto acabado — canônico Protheus (SB1).
+_SB1_PA_JOIN = """
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.D_E_L_E_T_ = ''
+           AND RTRIM(SB1.B1_COD) = RTRIM(OP.C2_PRODUTO)
+           AND RTRIM(LTRIM(SB1.B1_TIPO)) = 'PA'
+"""
+
 
 def _open_ops_cte(*, branch_scope: str) -> tuple[str, list]:
-    """OPs abertas (C2_DATRF vazio) com flag has_plan via existência em QP6010."""
+    """OPs abertas de PA (C2_DATRF vazio) com flag has_plan via existência em QP6010."""
     branch_clause, branch_params = branch_filter_sql("OP.C2_FILIAL", branch_scope)
     where_extra = f"AND {branch_clause}" if branch_clause else ""
     sql = f"""
@@ -26,6 +37,7 @@ def _open_ops_cte(*, branch_scope: str) -> tuple[str, list]:
                 ELSE 0
             END AS has_plan
         FROM SC2010 OP WITH (NOLOCK)
+        {_SB1_PA_JOIN}
         WHERE OP.D_E_L_E_T_ = ''
           AND (OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = '')
           {where_extra}
@@ -129,10 +141,14 @@ def build_count_products_with_plan_sql() -> tuple[str, tuple]:
     sql = """
     SELECT COUNT(*) AS total
     FROM (
-        SELECT QP6_PRODUT
-        FROM QP6010 WITH (NOLOCK)
-        WHERE D_E_L_E_T_ = ''
-        GROUP BY QP6_PRODUT
+        SELECT Q.QP6_PRODUT
+        FROM QP6010 Q WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.D_E_L_E_T_ = ''
+           AND RTRIM(SB1.B1_COD) = RTRIM(Q.QP6_PRODUT)
+           AND RTRIM(LTRIM(SB1.B1_TIPO)) = 'PA'
+        WHERE Q.D_E_L_E_T_ = ''
+        GROUP BY Q.QP6_PRODUT
     ) x
     """
     return sql, ()
@@ -147,11 +163,15 @@ def build_list_products_with_plan_sql(
     sql = """
     ;WITH active_qp6 AS (
         SELECT
-            RTRIM(QP6_PRODUT) AS product_code,
-            MAX(QP6_REVI) AS revision
-        FROM QP6010 WITH (NOLOCK)
-        WHERE D_E_L_E_T_ = ''
-        GROUP BY QP6_PRODUT
+            RTRIM(Q.QP6_PRODUT) AS product_code,
+            MAX(Q.QP6_REVI) AS revision
+        FROM QP6010 Q WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.D_E_L_E_T_ = ''
+           AND RTRIM(SB1.B1_COD) = RTRIM(Q.QP6_PRODUT)
+           AND RTRIM(LTRIM(SB1.B1_TIPO)) = 'PA'
+        WHERE Q.D_E_L_E_T_ = ''
+        GROUP BY Q.QP6_PRODUT
     )
     SELECT
         a.product_code,
@@ -178,9 +198,13 @@ def build_list_products_with_plan_sql(
 def build_product_has_plan_sql(product_code: str) -> tuple[str, tuple]:
     sql = """
     SELECT TOP 1 1 AS ok
-    FROM QP6010 WITH (NOLOCK)
-    WHERE D_E_L_E_T_ = ''
-      AND RTRIM(QP6_PRODUT) = RTRIM(?)
+    FROM QP6010 Q WITH (NOLOCK)
+    INNER JOIN SB1010 SB1 WITH (NOLOCK)
+        ON SB1.D_E_L_E_T_ = ''
+       AND RTRIM(SB1.B1_COD) = RTRIM(Q.QP6_PRODUT)
+       AND RTRIM(LTRIM(SB1.B1_TIPO)) = 'PA'
+    WHERE Q.D_E_L_E_T_ = ''
+      AND RTRIM(Q.QP6_PRODUT) = RTRIM(?)
     """
     return sql, (product_code,)
 
