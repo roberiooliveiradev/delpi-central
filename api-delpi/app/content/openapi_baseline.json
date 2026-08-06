@@ -40958,13 +40958,13 @@
         "locale": {
           "en": {
             "summary": "Production OTD series",
-            "description": "Daily OTD (on-time delivery) evolution over the period.",
-            "whenToUse": "Use for an on-time trend chart across days — useful in production/logistics TV meetings."
+            "description": "OTD (on-time delivery) evolution by day, week, month or year.",
+            "whenToUse": "Use for an on-time trend chart on TV. Choose month for monthly trends; day remains the default for existing panels."
           },
           "pt-BR": {
             "summary": "Série de OTD de produção",
-            "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
-            "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV."
+            "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
+            "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes."
           }
         },
         "params": {
@@ -41104,13 +41104,13 @@
           }
         },
         "tv": {
-          "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV.",
-          "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
+          "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes.",
+          "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
           "label": "Série de OTD de produção"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Daily OTD (on-time delivery) evolution over the period."
+      "description": "OTD (on-time delivery) evolution by day, week, month or year."
     },
     {
       "method": "GET",

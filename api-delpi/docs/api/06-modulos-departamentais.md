@@ -153,7 +153,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - Console: `operation_id=list_eficiencia_fabril_appointments`; caller `eficiencia-fabril` — após o primeiro load do período, recargas devem ser cache hit (&lt; 500 ms).
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no prazo **ou** em andamento já atrasadas (`C2_DATRF` vazio e `C2_DATPRF` &lt; hoje); período por data prevista. |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs mãe (sequência `001`) e filtro `status` (`on_time` / `late`). |
-| GET | `/production/otd/series` | Série temporal de OTD por filial. |
+| GET | `/production/otd/series` | Série temporal de OTD por filial (`granularity`: day, week, month, year). |
 | GET | `/production/unproductive-hours/summary` | Resumo de horas improdutivas (paradas PCP — todos os motivos). |
 | GET | `/production/unproductive-hours/items` | Listagem paginada de apontamentos de parada (+ descrição do motivo). |
 | GET | `/production/unproductive-hours/ranking` | Ranking top N por motivo, recurso, centro de custo, operador, produto ou operação. |

@@ -222,14 +222,12 @@
     },
     "get_production_otd_series": {
       "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "fixedQueryParams": null,
       "tvConstraints": {
         "requiresBranchPermission": true
       },
       "valueFieldTypes": {
-        "periodo": "date",
+        "periodo": "string",
         "sort_key": "string",
         "start_date": "date",
         "end_date": "date",
@@ -237,9 +235,12 @@
         "otd_filial_02": "number"
       },
       "label": "OTD — série temporal",
-      "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
-      "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV.",
+      "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "default": "day"
+        },
         "periodDays": {
           "type": "integer",
           "label": "Período (dias)",

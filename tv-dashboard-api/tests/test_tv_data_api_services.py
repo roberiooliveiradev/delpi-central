@@ -180,13 +180,40 @@ def test_validate_params_skips_required_when_fixed_query_params():
 
 
 def test_validate_data_binding_otd_series_without_granularity():
+    """Painéis legados sem granularity continuam válidos — default day no schema."""
+    route = TvDataRouteCatalogService().get_route("get_production_otd_series") or {}
+    if not route:
+        pytest.skip("Catálogo OTD série indisponível")
+    assert "fixedQueryParams" not in route or "granularity" not in (
+        route.get("fixedQueryParams") or {}
+    )
+    granularity = (route.get("paramSchema") or {}).get("granularity") or {}
+    assert "month" in (granularity.get("enum") or [])
+    assert granularity.get("default") == "day"
+    validate_data_binding(
+        {
+            "operationId": route["operationId"],
+            "params": {"periodDays": 30, "branch": "02"},
+            "displayMode": "line_chart",
+        },
+        block_type="data_chart",
+        route=route,
+    )
+
+
+def test_validate_data_binding_otd_series_with_month_granularity():
     route = TvDataRouteCatalogService().get_route("get_production_otd_series") or {}
     if not route:
         pytest.skip("Catálogo OTD série indisponível")
     validate_data_binding(
         {
             "operationId": route["operationId"],
-            "params": {"periodDays": 30, "branch": "02"},
+            "params": {
+                "granularity": "month",
+                "start_date": "2026-01-01",
+                "end_date": "2026-06-30",
+                "branch": "01",
+            },
             "displayMode": "line_chart",
         },
         block_type="data_chart",

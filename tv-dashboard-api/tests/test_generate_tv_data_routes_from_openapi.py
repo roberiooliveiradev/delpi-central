@@ -346,3 +346,34 @@ def test_list_lmp_nonconformities_is_open_ended_without_period_days():
     assert "periodDays" not in (sample.get("defaultParams") or {})
     assert sample.get("paramStrategy") == "date_range"
 
+
+def test_apply_overlay_null_clears_fixed_query_params():
+    gen = _load_generator_module()
+    merged = gen.apply_overlay(
+        {
+            "operationId": "demo",
+            "fixedQueryParams": {"granularity": "day"},
+            "paramSchema": {"start_date": {"type": "string"}},
+        },
+        {"fixedQueryParams": None, "paramSchema": {"granularity": {"default": "day"}}},
+    )
+    assert "fixedQueryParams" not in merged
+    assert merged["paramSchema"]["granularity"]["default"] == "day"
+
+
+def test_production_otd_series_exposes_month_granularity():
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item for item in generated if item["operationId"] == "get_production_otd_series"
+    )
+    assert "fixedQueryParams" not in sample
+    granularity = (sample.get("paramSchema") or {}).get("granularity") or {}
+    assert granularity.get("enum") == ["day", "week", "month", "year"]
+    assert granularity.get("default") == "day"
+    assert granularity.get("optional") is False
+
