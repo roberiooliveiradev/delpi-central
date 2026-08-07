@@ -116,6 +116,8 @@ export type HorizontalTimelineCluster = {
   /** Tom do destaque (prioridade: current → danger → warning → success → info → neutral). */
   tone: HorizontalTimelineTone;
   entries: Array<{ id: string; label: string; tone: HorizontalTimelineTone }>;
+  /** Legenda única (várias linhas) — evita spans sobrepostos. */
+  captionText: string;
 };
 
 const TONE_PRIORITY: Record<HorizontalTimelineTone, number> = {
@@ -141,8 +143,44 @@ function pickClusterTone(
   );
 }
 
+/** Normaliza qualquer data comum (ISO, Protheus, BR) para YYYY-MM-DD. */
+export function normalizeTimelineDayKey(value: string): string {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const compact = s.match(/^(\d{4})(\d{2})(\d{2})(?:$|\D)/);
+  if (compact) return `${compact[1]}-${compact[2]}-${compact[3]}`;
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return s;
+}
+
 /**
- * Agrupa eventos do mesmo dia (um ponto no trilho, legendas empilhadas)
+ * Uma string com quebras de linha. Funde «Início previsto» + «Fim previsto»
+ * no mesmo dia para legenda curta (evita colisão visual).
+ */
+export function formatClusterCaptionText(
+  entries: Array<{ label: string }>,
+): string {
+  const labels = entries.map((e) => String(e.label || "").trim()).filter(Boolean);
+  if (labels.length <= 1) return labels[0] ?? "";
+
+  const isStart = (label: string) => /in[ií]cio\s+previst/i.test(label);
+  const isEnd = (label: string) => /fim\s+previst/i.test(label);
+  const startIdx = labels.findIndex(isStart);
+  const endIdx = labels.findIndex(isEnd);
+
+  if (startIdx >= 0 && endIdx >= 0 && startIdx !== endIdx) {
+    const rest = labels.filter((_, index) => index !== startIdx && index !== endIdx);
+    return [...rest, "Início e fim previstos"].join("\n");
+  }
+
+  return labels.join("\n");
+}
+
+/**
+ * Agrupa eventos do mesmo dia (um ponto no trilho, legenda multilinha)
  * e distribui os grupos de forma uniforme — evita sobreposição de captions.
  * «Agora» usa eixo cronológico alinhado aos grupos (mesmo dia = mesmo X).
  */
@@ -158,7 +196,7 @@ export function layoutHorizontalTimeline(
 
   const byDay = new Map<string, HorizontalTimelinePoint[]>();
   for (const event of events) {
-    const day = event.dateIso.trim();
+    const day = normalizeTimelineDayKey(event.dateIso);
     if (!day) continue;
     const list = byDay.get(day) ?? [];
     list.push(event);
@@ -172,6 +210,11 @@ export function layoutHorizontalTimeline(
     const isCurrent = entries.some((e) => Boolean(e.isCurrent));
     const leftPercent =
       n <= 1 ? 50 : edgePad + (index / (n - 1)) * (100 - edgePad * 2);
+    const mapped = entries.map((e) => ({
+      id: e.id,
+      label: e.label,
+      tone: e.tone,
+    }));
     return {
       id: `day-${dateIso}`,
       dateIso,
@@ -179,11 +222,8 @@ export function layoutHorizontalTimeline(
       leftPercent,
       isCurrent,
       tone: pickClusterTone(entries, isCurrent),
-      entries: entries.map((e) => ({
-        id: e.id,
-        label: e.label,
-        tone: e.tone,
-      })),
+      entries: mapped,
+      captionText: formatClusterCaptionText(mapped),
     };
   });
 
@@ -191,7 +231,8 @@ export function layoutHorizontalTimeline(
     return { clusters, today: null };
   }
 
-  const todayMs = parseIsoDay(todayPoint.dateIso);
+  const todayDay = normalizeTimelineDayKey(todayPoint.dateIso);
+  const todayMs = parseIsoDay(todayDay || todayPoint.dateIso);
   let leftPercent = 50;
 
   if (clusters.length === 0) {
@@ -199,7 +240,7 @@ export function layoutHorizontalTimeline(
   } else if (clusters.length === 1) {
     leftPercent = clusters[0].leftPercent;
   } else {
-    const sameDay = clusters.find((c) => c.dateIso === todayPoint.dateIso);
+    const sameDay = clusters.find((c) => c.dateIso === todayDay);
     if (sameDay) {
       leftPercent = sameDay.leftPercent;
     } else if (todayMs == null) {
@@ -234,7 +275,7 @@ export function layoutHorizontalTimeline(
   return {
     clusters,
     today: {
-      dateIso: todayPoint.dateIso,
+      dateIso: todayDay || todayPoint.dateIso,
       dateLabel: todayPoint.dateLabel,
       leftPercent,
     },
@@ -261,11 +302,22 @@ export function HorizontalTimeline({
   }
 
   const trackStyle = {
-    // Mais espaço abaixo quando um dia tem várias legendas empilhadas.
     ["--delpi-ui-htimeline-caption-rows" as string]: String(
-      Math.max(1, ...layout.clusters.map((c) => c.entries.length), 1),
+      Math.max(
+        1,
+        ...layout.clusters.map((c) => c.captionText.split("\n").length),
+        1,
+      ),
     ),
   };
+
+  const todayOnMilestone = Boolean(
+    layout.today &&
+      layout.clusters.some(
+        (cluster) =>
+          Math.abs(cluster.leftPercent - layout.today!.leftPercent) < 0.05,
+      ),
+  );
 
   return (
     <div
@@ -280,7 +332,12 @@ export function HorizontalTimeline({
 
           {layout.today ? (
             <div
-              className={classNames.now}
+              className={[
+                classNames.now,
+                todayOnMilestone ? "delpi-ui-htimeline__now--coincident" : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
               style={{ left: `${layout.today.leftPercent}%` }}
               title={`${labels.todayMarkerTitle} · ${layout.today.dateLabel}`}
             >
@@ -292,7 +349,9 @@ export function HorizontalTimeline({
                 <Flag size={14} strokeWidth={2.4} aria-hidden="true" />
               </span>
               <span className={classNames.stem} aria-hidden="true" />
-              <span className={classNames.pin} aria-hidden="true" />
+              {!todayOnMilestone ? (
+                <span className={classNames.pin} aria-hidden="true" />
+              ) : null}
               <span className="delpi-ui-htimeline__sr-only">
                 {labels.todayMarkerTitle} {layout.today.dateLabel}
               </span>
@@ -301,10 +360,11 @@ export function HorizontalTimeline({
 
           <ol className={classNames.milestones}>
             {layout.clusters.map((cluster) => {
+              const lineCount = cluster.captionText.split("\n").length;
               const modifiers = [
                 cluster.tone,
                 ...(cluster.isCurrent ? (["current"] as const) : []),
-                ...(cluster.entries.length > 1 ? (["stacked"] as const) : []),
+                ...(lineCount > 1 ? (["stacked"] as const) : []),
               ];
               const itemBases = classNames.item.split(/\s+/).filter(Boolean);
               const itemClass = [
@@ -322,11 +382,7 @@ export function HorizontalTimeline({
                 >
                   <span className={classNames.dot} aria-hidden="true" />
                   <div className={classNames.caption}>
-                    {cluster.entries.map((entry) => (
-                      <span key={entry.id} className={classNames.label}>
-                        {entry.label}
-                      </span>
-                    ))}
+                    <span className={classNames.label}>{cluster.captionText}</span>
                     <time className={classNames.date} dateTime={cluster.dateIso}>
                       {cluster.dateLabel}
                     </time>

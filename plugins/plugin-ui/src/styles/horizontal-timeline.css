@@ -1,6 +1,6 @@
 /**
  * HorizontalTimeline (OTD) — grupos por dia espaçados + «Agora» acima do trilho.
- * Padrão: today-marker / swimlane (bandeira não compete com legendas).
+ * Caption em fluxo (não absolute) + legenda única com pre-line.
  */
 
 .delpi-ui-htimeline {
@@ -18,15 +18,14 @@
   position: relative;
   width: 100%;
   min-height: calc(
-    var(--delpi-ui-htimeline-rail-y) + 72px +
-      (var(--delpi-ui-htimeline-caption-rows) - 1) * 1.15rem
+    var(--delpi-ui-htimeline-rail-y) + 88px +
+      (var(--delpi-ui-htimeline-caption-rows) - 1) * 1.2rem
   );
-  padding: 4px 0 8px;
+  padding: 4px 0 12px;
   box-sizing: border-box;
   overflow: visible;
 }
 
-/* Eixo compartilhado: marcos e «Agora» usam o mesmo left%. */
 .delpi-ui-htimeline__axis {
   position: relative;
   width: auto;
@@ -63,13 +62,14 @@
 .delpi-ui-htimeline__item {
   position: absolute;
   top: var(--delpi-ui-htimeline-rail-y);
-  transform: translate(-50%, -50%);
+  /* Dot centrado no trilho; caption flui abaixo (sem absolute). */
+  transform: translate(-50%, calc(var(--delpi-ui-htimeline-marker) / -2));
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: max-content;
-  max-width: 8.25rem;
+  max-width: 9rem;
   pointer-events: none;
 }
 
@@ -136,44 +136,45 @@
 }
 
 .delpi-ui-htimeline__caption {
-  position: absolute;
-  top: calc(var(--delpi-ui-htimeline-marker) / 2 + 12px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  margin-top: 10px;
   width: max-content;
-  max-width: 8.25rem;
+  max-width: 9rem;
   text-align: center;
   pointer-events: auto;
 }
 
 .delpi-ui-htimeline__label {
+  display: block;
+  position: static;
+  margin: 0;
+  padding: 0;
   font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.35;
+  white-space: pre-line;
   color: var(--delpi-ui-text, var(--text, #111));
 }
 
-.delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label {
-  margin-top: 1px;
-  font-weight: 500;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+.delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label {
+  font-weight: 600;
 }
 
 .delpi-ui-htimeline__date {
+  display: block;
   font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+  line-height: 1.3;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-htimeline__current-tag {
   display: inline-flex;
   align-items: center;
-  margin-top: 4px;
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -188,7 +189,6 @@
   );
 }
 
-/* —— Marcador «Agora» (acima do trilho) —— */
 .delpi-ui-htimeline__now {
   position: absolute;
   top: 0;
@@ -201,6 +201,15 @@
   width: max-content;
   max-width: 5.5rem;
   pointer-events: none;
+}
+
+/* Coincide com marco: só bandeira + haste (sem pin no trilho). */
+.delpi-ui-htimeline__now--coincident {
+  height: calc(var(--delpi-ui-htimeline-rail-y) - 2px);
+}
+
+.delpi-ui-htimeline__now--coincident .delpi-ui-htimeline__stem {
+  opacity: 0.75;
 }
 
 .delpi-ui-htimeline__today-tag {
@@ -291,9 +300,4 @@
 :root[data-theme="dark"] .delpi-ui-htimeline__today-tag,
 [data-theme="dark"] .delpi-ui-htimeline__today-tag {
   color: #bae6fd;
-}
-
-:root[data-theme="dark"] .delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label,
-[data-theme="dark"] .delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label {
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8));
 }

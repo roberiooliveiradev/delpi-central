@@ -284,6 +284,8 @@ export {
   horizontalTimelineBemClasses,
   horizontalTimelinePositionPercent,
   layoutHorizontalTimeline,
+  formatClusterCaptionText,
+  normalizeTimelineDayKey,
   DEFAULT_HORIZONTAL_TIMELINE_LABELS,
   type DashboardHorizontalTimelineProps,
   type HorizontalTimelineClassNames,
