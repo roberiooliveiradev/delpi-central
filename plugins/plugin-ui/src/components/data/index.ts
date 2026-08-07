@@ -282,6 +282,7 @@ export {
   HorizontalTimeline,
   createDashboardHorizontalTimeline,
   horizontalTimelineBemClasses,
+  horizontalTimelinePositionPercent,
   DEFAULT_HORIZONTAL_TIMELINE_LABELS,
   type DashboardHorizontalTimelineProps,
   type HorizontalTimelineClassNames,

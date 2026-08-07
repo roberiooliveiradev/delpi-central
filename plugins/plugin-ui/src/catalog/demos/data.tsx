@@ -392,12 +392,12 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
     exportName: "HorizontalTimeline",
     title: "HorizontalTimeline",
     description:
-      "Marcos horizontais com data, tom e destaque «Hoje» (bandeira). Use createDashboardHorizontalTimeline no MFE.",
+      "Timeline OTD: eixo proporcional às datas; «Agora» (bandeira) acima do trilho. Use createDashboardHorizontalTimeline no MFE.",
     propsSummary: ["points", "labels", "aria-label"],
     demos: [
       {
         id: "default",
-        label: "OP / marcos",
+        label: "OP / OTD (mesmo dia)",
         render: () => <HorizontalTimelineDemo />,
       },
     ],
@@ -409,14 +409,38 @@ function HorizontalTimelineDemo() {
   return (
     <HorizontalTimeline
       classNames={classNames}
-      aria-label="Demo linha do tempo"
+      aria-label="Demo linha do tempo OTD"
       points={[
         {
           id: "1",
-          label: "Emissão",
+          label: "Emissão da OP",
           dateIso: "2026-08-04",
           dateLabel: "04/08/2026",
           tone: "neutral",
+          kind: "event",
+        },
+        {
+          id: "2",
+          label: "Início previsto",
+          dateIso: "2026-08-06",
+          dateLabel: "06/08/2026",
+          tone: "info",
+          kind: "event",
+        },
+        {
+          id: "3",
+          label: "Entrega do pedido",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "neutral",
+          kind: "event",
+        },
+        {
+          id: "4",
+          label: "Fim previsto da OP",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "success",
           kind: "event",
           isCurrent: true,
         },
@@ -427,14 +451,6 @@ function HorizontalTimelineDemo() {
           dateLabel: "07/08/2026",
           tone: "info",
           kind: "today",
-        },
-        {
-          id: "3",
-          label: "Fim previsto",
-          dateIso: "2026-08-10",
-          dateLabel: "10/08/2026",
-          tone: "success",
-          kind: "event",
         },
       ]}
     />

@@ -1,82 +1,89 @@
 /**
- * HorizontalTimeline — marcos horizontais (datas + tom + «hoje» com bandeira).
+ * HorizontalTimeline (OTD) — eixo temporal proporcional + «Agora» acima do trilho.
+ * Padrão de mercado: today-marker / swimlane flag above axis (não compete com marcos).
  * Tokens: --delpi-ui-accent / surface / text / border / muted / success.
- *
- * Conectores: itens em flex iguais (sem max-width/space-evenly) para se tocarem;
- * cada trilho vai do centro do marco anterior ao centro do atual.
  */
 
 .delpi-ui-htimeline {
-  --delpi-ui-htimeline-marker: 22px;
-  --delpi-ui-htimeline-rail-inset: 12px;
-  list-style: none;
-  margin: 0 auto;
-  padding: 8px 4px 4px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: stretch;
-  gap: 0;
+  --delpi-ui-htimeline-marker: 14px;
+  --delpi-ui-htimeline-flag: 22px;
+  --delpi-ui-htimeline-rail-y: 52px;
+  --delpi-ui-htimeline-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   width: 100%;
-  min-width: max-content;
+  min-width: 0;
   box-sizing: border-box;
 }
 
-.delpi-ui-htimeline__item {
+.delpi-ui-htimeline__track {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex: 1 1 0;
-  width: auto;
-  min-width: 100px;
-  max-width: none;
-  padding: 0 4px;
-  text-align: center;
+  width: 100%;
+  min-height: 168px;
+  /* Sem inset horizontal: left% do «Agora» e dos marcos alinha com o trilho. */
+  padding: 4px 0 8px;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
-.delpi-ui-htimeline__connector {
+.delpi-ui-htimeline__rail {
   position: absolute;
-  top: calc(var(--delpi-ui-htimeline-marker) / 2);
-  left: calc(-50% + var(--delpi-ui-htimeline-rail-inset));
-  right: calc(50% + var(--delpi-ui-htimeline-rail-inset));
-  width: auto;
+  left: 0;
+  right: 0;
+  top: var(--delpi-ui-htimeline-rail-y);
   height: 2px;
-  margin: 0;
-  transform: translateY(-50%);
+  border-radius: 999px;
   background: color-mix(
     in srgb,
-    var(--delpi-ui-border, var(--border, #e6e6e6)) 55%,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
     var(--delpi-ui-muted, var(--text-muted, #64748b))
   );
   z-index: 0;
   pointer-events: none;
 }
 
+.delpi-ui-htimeline__milestones {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-htimeline__item {
+  position: absolute;
+  top: var(--delpi-ui-htimeline-rail-y);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 7.5rem;
+  pointer-events: none;
+}
+
 .delpi-ui-htimeline__dot {
   box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  margin-block: calc((var(--delpi-ui-htimeline-marker) - 14px) / 2);
+  width: var(--delpi-ui-htimeline-marker);
+  height: var(--delpi-ui-htimeline-marker);
   border-radius: 999px;
   border: 2px solid var(--delpi-ui-border, var(--border, #e6e6e6));
   background: var(--delpi-ui-surface, var(--surface, #fff));
-  z-index: 1;
   box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 80%, transparent);
+    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 85%, transparent);
+  flex-shrink: 0;
 }
 
 .delpi-ui-htimeline__item--neutral .delpi-ui-htimeline__dot,
 .delpi-ui-htimeline__item--default .delpi-ui-htimeline__dot {
   border-color: var(--delpi-ui-border, var(--border, #e6e6e6));
-  background: var(--delpi-ui-surface, var(--surface, #fff));
 }
 
 .delpi-ui-htimeline__item--info .delpi-ui-htimeline__dot {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-htimeline-accent);
   background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-htimeline-accent) 35%,
     var(--delpi-ui-surface, var(--surface, #fff))
   );
 }
@@ -108,42 +115,28 @@
   );
 }
 
-.delpi-ui-htimeline__item--today .delpi-ui-htimeline__dot {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  background: var(--delpi-ui-accent, var(--primary, #089bdb));
-  box-shadow:
-    0 0 0 4px
-      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 28%, transparent),
-    0 0 0 3px
-      color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 80%, transparent);
-}
-
-.delpi-ui-htimeline__flag {
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--delpi-ui-htimeline-marker);
-  height: var(--delpi-ui-htimeline-marker);
-  border-radius: 999px;
-  color: #fff;
-  background: var(--delpi-ui-accent, var(--primary, #089bdb));
-  border: 2px solid
-    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 70%, #fff);
-  box-shadow:
-    0 0 0 4px
-      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 28%, transparent),
-    0 2px 8px
-      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
-}
-
 .delpi-ui-htimeline__item--current .delpi-ui-htimeline__dot {
-  transform: scale(1.15);
+  transform: scale(1.2);
   border-width: 3px;
+  box-shadow:
+    0 0 0 3px
+      color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 85%, transparent),
+    0 0 0 6px color-mix(in srgb, #16a34a 22%, transparent);
 }
 
-.delpi-ui-htimeline__item--current .delpi-ui-htimeline__flag {
-  transform: scale(1.08);
+.delpi-ui-htimeline__caption {
+  position: absolute;
+  top: calc(var(--delpi-ui-htimeline-marker) / 2 + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: max-content;
+  max-width: 7.5rem;
+  text-align: center;
+  pointer-events: auto;
 }
 
 .delpi-ui-htimeline__label {
@@ -153,30 +146,21 @@
   color: var(--delpi-ui-text, var(--text, #111));
 }
 
-.delpi-ui-htimeline__item--today .delpi-ui-htimeline__label {
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  font-weight: 700;
-}
-
 .delpi-ui-htimeline__date {
   font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
-.delpi-ui-htimeline__current-tag,
-.delpi-ui-htimeline__today-tag {
+.delpi-ui-htimeline__current-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 2px 6px;
   border-radius: 999px;
-}
-
-.delpi-ui-htimeline__current-tag {
   color: var(--delpi-ui-success, #166534);
   background: color-mix(
     in srgb,
@@ -185,13 +169,92 @@
   );
 }
 
+/* —— Marcador «Agora» (acima do trilho) —— */
+.delpi-ui-htimeline__now {
+  position: absolute;
+  top: 0;
+  height: calc(var(--delpi-ui-htimeline-rail-y) + 5px);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  pointer-events: none;
+}
+
 .delpi-ui-htimeline__today-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
   color: #075985;
   background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 24%,
+    var(--delpi-ui-htimeline-accent) 22%,
     var(--delpi-ui-surface, var(--surface, #fff))
   );
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 35%, transparent);
+}
+
+.delpi-ui-htimeline__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--delpi-ui-htimeline-flag);
+  height: var(--delpi-ui-htimeline-flag);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--delpi-ui-htimeline-accent);
+  border: 2px solid
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 55%, #fff);
+  box-shadow:
+    0 0 0 3px
+      color-mix(in srgb, var(--delpi-ui-htimeline-accent) 22%, transparent),
+    0 2px 8px color-mix(in srgb, var(--delpi-ui-htimeline-accent) 30%, transparent);
+}
+
+.delpi-ui-htimeline__stem {
+  flex: 1 1 auto;
+  width: 2px;
+  min-height: 8px;
+  margin-top: 2px;
+  background: var(--delpi-ui-htimeline-accent);
+  border-radius: 999px;
+  opacity: 0.9;
+}
+
+.delpi-ui-htimeline__pin {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: -1px;
+  border-radius: 999px;
+  background: var(--delpi-ui-htimeline-accent);
+  border: 2px solid var(--delpi-ui-surface, var(--surface, #fff));
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 40%, transparent);
+}
+
+.delpi-ui-htimeline__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .delpi-ui-htimeline__empty {
@@ -208,9 +271,4 @@
 :root[data-theme="dark"] .delpi-ui-htimeline__today-tag,
 [data-theme="dark"] .delpi-ui-htimeline__today-tag {
   color: #bae6fd;
-}
-
-:root[data-theme="dark"] .delpi-ui-htimeline__item--today .delpi-ui-htimeline__label,
-[data-theme="dark"] .delpi-ui-htimeline__item--today .delpi-ui-htimeline__label {
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }

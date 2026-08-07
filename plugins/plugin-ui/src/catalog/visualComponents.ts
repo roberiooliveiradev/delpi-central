@@ -208,7 +208,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("data", "HorizontalTimeline", {
     addedAt: "2026-08-07",
-    changeNote: "Linha do tempo horizontal de marcos com bandeira «Hoje»",
+    changeNote:
+      "Timeline OTD: eixo temporal proporcional; marcador Agora (bandeira) acima do trilho",
   }),
   vc("data", "TreeGuideRails", {
     addedAt: "2026-07-13",
