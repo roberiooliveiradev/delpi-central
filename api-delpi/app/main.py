@@ -295,7 +295,16 @@ app.include_router(inspecoes_entrada_router.router)
 app.include_router(inspecoes_processo_router.router)
 app.include_router(process_inspection_plans_router.router)
 app.include_router(pedidos_venda_abertos_router.router)
-app.include_router(propostas_comerciais_controller.router)
+app.include_router(
+    propostas_comerciais_controller.router,
+    prefix="/propostas-comerciais",
+)
+# EN: «propostas comerciais» → commercial-proposals (não proposals-comerciais)
+app.include_router(
+    propostas_comerciais_controller.router,
+    prefix="/commercial-proposals",
+    include_in_schema=False,
+)
 
 register_audit_5s_socket_handlers()
 

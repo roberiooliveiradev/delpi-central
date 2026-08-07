@@ -2,7 +2,7 @@ import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn 
 import { ArrowLeft, FileDown, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getProposalDocument, openProposalDocumentPdf } from "../../api/proposalsDocumentApi";
+import { getProposalDocument, openProposalDocumentPdf } from "../../api/commercialProposalsApi";
 import {
   cmDataTableClassNames,
   cmDataTableLabels,

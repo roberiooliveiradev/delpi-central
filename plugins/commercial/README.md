@@ -32,7 +32,7 @@ Nav: `Início → Meu dia → Pedidos → Carteira → Propostas → Gestão →
 | `/apps/commercial-api` | Carteiras, avatars, worklist, anexos, enrichment (`X-Delpi-Caller-App: commercial`) |
 | `/apps/api-delpi/pedidos-venda-abertos/` | Pedidos em aberto (barra final) |
 | `/apps/api-delpi/commercial/*` | KPIs, ROL, OTD, propostas OV |
-| `/apps/api-delpi/propostas-comerciais` | Documento ADY + PDF (path legado api-delpi) |
+| `/apps/api-delpi/commercial-proposals` | Documento ADY + PDF (EN; alias legado: `/propostas-comerciais`) |
 
 Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 

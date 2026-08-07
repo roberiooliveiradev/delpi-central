@@ -6,8 +6,8 @@ import type {
 } from "../types/proposalsDocument";
 import { apiDelpiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
 
-/** Path HTTP legado da api-delpi (não traduzir — rota real é `/propostas-comerciais`). */
-export const PROPOSALS_DOCUMENT_API_BASE = apiDelpiUrl("/propostas-comerciais");
+/** Commercial proposals (ADY). Path EN completo; legado PT: `/propostas-comerciais`. */
+export const COMMERCIAL_PROPOSALS_API_BASE = apiDelpiUrl("/commercial-proposals");
 
 export async function listProposalsDocuments(
   limit = 100,
@@ -15,7 +15,7 @@ export async function listProposalsDocuments(
 ): Promise<ProposalDocumentListData> {
   const query = new URLSearchParams({ limit: String(limit) });
   const response = await httpGet<ApiSuccessResponse<ProposalDocumentListData>>(
-    `${PROPOSALS_DOCUMENT_API_BASE}?${query.toString()}`,
+    `${COMMERCIAL_PROPOSALS_API_BASE}?${query.toString()}`,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao listar propostas comerciais.");
@@ -27,7 +27,7 @@ export async function getProposalDocument(
 ): Promise<ProposalDocumentDetail> {
   const code = encodeURIComponent(propostaInterna.trim());
   const response = await httpGet<ApiSuccessResponse<ProposalDocumentDetail>>(
-    `${PROPOSALS_DOCUMENT_API_BASE}/${code}`,
+    `${COMMERCIAL_PROPOSALS_API_BASE}/${code}`,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar proposta comercial.");
@@ -39,7 +39,7 @@ export async function exportProposalDocumentPdf(
   signal?: AbortSignal,
 ): Promise<{ blob: Blob; filename: string | null }> {
   const code = encodeURIComponent(propostaInterna.trim());
-  const url = `${PROPOSALS_DOCUMENT_API_BASE}/${code}/pdf`;
+  const url = `${COMMERCIAL_PROPOSALS_API_BASE}/${code}/pdf`;
   const result = overrides
     ? await httpPostBlob(url, overrides, { signal })
     : await httpGetBlobWithMeta(url, { signal });

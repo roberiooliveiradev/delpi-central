@@ -23,10 +23,10 @@ from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
 )
 from app.utils.logger import log_error
 
-router = APIRouter(
-    prefix="/propostas-comerciais",
-    tags=["Propostas Comerciais"],
-)
+# Prefixo HTTP montado em main.py:
+# - legado PT: /propostas-comerciais
+# - EN (termo completo «propostas comerciais» → commercial-proposals): /commercial-proposals
+router = APIRouter(tags=["Propostas Comerciais"])
 
 
 @router.get("", include_in_schema=False)
