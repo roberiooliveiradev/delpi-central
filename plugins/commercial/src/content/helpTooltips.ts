@@ -150,6 +150,10 @@ export const CM_HELP = {
       opsNote:
         "OPs são compartilhadas por produto/filial e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
       opsTable: "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
+      otdPrazo:
+        "Status OTD e dias (previsto × real) da OP via by-op. Negativo = finalização antes do previsto. «Ver no OTD produção» abre a ficha completa no dashboard de produção.",
+      otdLinkedPi:
+        "OPs intermediárias (PI) vinculadas pelo mesmo nº OP (C2_NUM). Resumo on_time / late / open vem do link_summary da api-delpi.",
       opNumero: "Número da ordem de produção no TOTVS.",
       opProduzido: "Quantidade já produzida na OP (C2_QUJE / by-op).",
       opPlanejado: "Quantidade planejada da OP (C2_QUANT / by-op).",

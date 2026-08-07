@@ -1,9 +1,13 @@
 /** Resposta enxuta de GET /production/orders/by-op/{op}. */
+export type ProductionOrderOtdStatus = "open" | "on_time" | "late" | string;
+
 export type ProductionOrderRow = {
   branch?: string | null;
   production_order?: string | null;
+  order_number?: string | null;
   product_code?: string | null;
   product_description?: string | null;
+  product_type?: string | null;
   warehouse?: string | null;
   planned_qty?: number | null;
   produced_qty?: number | null;
@@ -13,14 +17,23 @@ export type ProductionOrderRow = {
   planned_start_date?: string | null;
   due_date?: string | null;
   finish_date?: string | null;
-  otd_status?: string | null;
+  otd_status?: ProductionOrderOtdStatus | null;
   days_diff?: number | null;
+};
+
+export type ProductionOrderLinkSummary = {
+  order_number?: string | null;
+  link_field?: string | null;
+  total_pi_orders?: number | null;
+  on_time_ops?: number | null;
+  late_ops?: number | null;
+  open_ops?: number | null;
 };
 
 export type ProductionOrderByOpData = {
   order: ProductionOrderRow;
   linked_orders?: ProductionOrderRow[];
-  link_summary?: Record<string, unknown>;
+  link_summary?: ProductionOrderLinkSummary | Record<string, unknown>;
 };
 
 /** Subconjunto útil de GET /products/{code}/factory-status. */

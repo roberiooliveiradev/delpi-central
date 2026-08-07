@@ -544,6 +544,7 @@ export function OpenOrdersLineDetailModal({
           selectedOp={selectedOp}
           onSelectOp={setSelectedOp}
           orderDeliveryDate={item.data_entrega}
+          branch={item.filial}
           extrasByOp={extras.opsByNumber}
           loadingExtras={extras.loading}
         />

@@ -14,31 +14,30 @@ import { formatDisplayDate, resolveOpVsPedidoPrazo } from "../utils/dates";
 import { displayApiScalar } from "../utils/displayApiScalar";
 import { formatQuantity } from "../utils/format";
 import { buildOpHorizontalTimeline, buildOpTimelineEvents } from "../utils/opTimeline";
+import {
+  formatOtdStatusLabel,
+  otdStatusBadgeVariant,
+} from "../utils/productionOtdLink";
 import { SectionCard, SegmentToggle, StatusBadge } from "@delpi/plugin-ui/index";
 import { useMemo } from "react";
+import { OpenOrdersOtdPiPanel } from "./OpenOrdersOtdPiPanel";
 
 type OpenOrdersOpProgressBlockProps = {
   ops: OpAllocationEntry[];
   selectedOp: string;
   onSelectOp: (numeroOp: string) => void;
   orderDeliveryDate: string | null;
+  branch?: string | null;
   extrasByOp: Record<string, OpExtrasBundle>;
   loadingExtras: boolean;
 };
-
-function otdLabel(status: string | null | undefined): string {
-  if (!status) return "—";
-  if (status === "on_time") return "No prazo";
-  if (status === "late") return "Atrasado";
-  if (status === "open") return "Em aberto";
-  return status;
-}
 
 export function OpenOrdersOpProgressBlock({
   ops,
   selectedOp,
   onSelectOp,
   orderDeliveryDate,
+  branch,
   extrasByOp,
   loadingExtras,
 }: OpenOrdersOpProgressBlockProps) {
@@ -118,14 +117,8 @@ export function OpenOrdersOpProgressBlock({
           />
           <StatusBadge
             classNames={cmStatusBadgeClassNames}
-            label={`OTD: ${otdLabel(order?.otd_status)}`}
-            variant={
-              order?.otd_status === "late"
-                ? "danger"
-                : order?.otd_status === "on_time"
-                  ? "success"
-                  : "info"
-            }
+            label={`OTD: ${formatOtdStatusLabel(order?.otd_status)}`}
+            variant={otdStatusBadgeVariant(order?.otd_status)}
           />
           {displayApiScalar(order?.warehouse || current.armazem, "") ? (
             <span>Armazém {displayApiScalar(order?.warehouse || current.armazem)}</span>
@@ -163,6 +156,14 @@ export function OpenOrdersOpProgressBlock({
           {formatDisplayDate(order?.planned_start_date ?? current.data_inicio_prevista_op)} · Fim
           prev. {formatDisplayDate(order?.due_date ?? current.data_fim_prevista_op)}
         </p>
+
+        {extras?.byOp ? (
+          <OpenOrdersOtdPiPanel
+            productionOrder={current.numero_op}
+            branch={order?.branch ?? branch}
+            byOp={extras.byOp}
+          />
+        ) : null}
 
         {loadingExtras && !extras ? (
           <CommercialLoadingCard title="Carregando timeline da OP…" variant="panel" />

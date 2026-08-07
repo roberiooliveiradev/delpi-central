@@ -234,7 +234,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 │ Status fabril do produto (factory-status; some se 403)                   │
 │ KPIs: saldo · estoque · produzir · valor · atraso · status · kind · datas│
 │ Charts compactos: cobertura · prazo                                      │
-│ Produção/OPs: SegmentToggle · meter produzido/planejado · Timeline OP    │
+│ Produção/OPs: SegmentToggle · meter · Prazo OTD + PIs · Timeline · CTA   │
+│   «Ver no OTD produção» → /apps/dashboard-production/otd/op/{op}         │
 │ Tabela OP rica (produzido/planejado/saldo/status/OTD) — clique sincroniza│
 │ Estrutura do produto (BOM colapsável, só código da linha)                │
 │ [Copiar pedido] [Ver OV n] [Abrir conta]                                 │

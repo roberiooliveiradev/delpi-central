@@ -1276,6 +1276,132 @@
   color: var(--cm-text-muted);
 }
 
+.dashboard-commercial .cm-open-orders-detail__otd-pi {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-surface) 82%, var(--cm-surface-muted));
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-cta {
+  font-size: 0.8125rem;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--cm-border) 80%, transparent);
+  background: color-mix(in srgb, var(--cm-surface) 90%, transparent);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi-label {
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi-value {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--cm-text);
+  line-height: 1.25;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-linked {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--cm-border) 75%, transparent);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-summary {
+  margin: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cm-surface-muted) 55%, transparent);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cm-accent, var(--primary, #089bdb));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-link:hover {
+  color: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 80%, #fff);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-code {
+  font-variant-numeric: tabular-nums;
+  color: var(--cm-text);
+  font-weight: 550;
+}
+
 .dashboard-commercial .cm-product-structure-tree {
   --delpi-ui-tree-guide-color: color-mix(in srgb, var(--cm-text-muted) 42%, transparent);
   display: flex;
