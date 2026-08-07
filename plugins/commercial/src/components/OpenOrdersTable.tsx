@@ -269,41 +269,48 @@ export function OpenOrdersTable({
         title="Pedidos em aberto"
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
-        titleHint={CM_HELP.openOrders.table}
+        hint={CM_HELP.openOrders.table}
       >
         <div className="cm-table-toolbar" style={tableStyle}>
           <div className="cm-table-toolbar__leading">
             <div className="cm-table-toolbar__layout">
-              <SegmentToggle
-                prefix={UI_PREFIX}
-                size="sm"
-                ariaLabel="Modo de visualização"
-                idPrefix="open-orders-layout"
-                value={layout}
-                onChange={setLayout}
-                options={[
-                  { value: "table", label: "Tabela" },
-                  { value: "cards", label: "Cards" },
-                ]}
-              />
               <HelpTooltip
                 content={CM_HELP.openOrders.layoutToggle}
                 ariaLabel="Ajuda: modo Tabela ou Cards"
+                wrap
                 placement="bottom"
-              />
+              >
+                <SegmentToggle
+                  prefix={UI_PREFIX}
+                  size="sm"
+                  ariaLabel="Modo de visualização"
+                  idPrefix="open-orders-layout"
+                  value={layout}
+                  onChange={setLayout}
+                  options={[
+                    { value: "table", label: "Tabela" },
+                    { value: "cards", label: "Cards" },
+                  ]}
+                />
+              </HelpTooltip>
             </div>
             <p className="cm-table-toolbar__hint">
-              {visibleColumnCount} coluna(s) · {exportRows.length.toLocaleString("pt-BR")} linha(s)
               <HelpTooltip
                 content={CM_HELP.openOrders.table}
                 ariaLabel="Ajuda: tabela de pedidos"
+                wrap
                 placement="bottom"
-              />
+              >
+                <span className="delpi-ui-section-hint-label">
+                  {visibleColumnCount} coluna(s) ·{" "}
+                  {exportRows.length.toLocaleString("pt-BR")} linha(s)
+                </span>
+              </HelpTooltip>
             </p>
           </div>
           <div className="cm-table-toolbar__actions">
             <ExcelExportButton
-              onClick={() => void handleExportExcel()}
+              onExport={() => void handleExportExcel()}
               disabled={exportRows.length === 0 || exporting || loading}
               exporting={exporting}
             />
@@ -339,25 +346,27 @@ export function OpenOrdersTable({
               }}
             />
             <div className="cm-open-orders-cards-toolbar__dir">
-              <SegmentToggle
-                prefix={UI_PREFIX}
-                size="sm"
-                ariaLabel="Direção da ordenação"
-                idPrefix="open-orders-sort-dir"
-                value={sortDirection}
-                onChange={(dir) => {
-                  if (dir !== sortDirection) onSort(sortKey);
-                }}
-                options={[
-                  { value: "asc", label: "Crescente" },
-                  { value: "desc", label: "Decrescente" },
-                ]}
-              />
               <HelpTooltip
                 content={CM_HELP.openOrders.sortDirection}
                 ariaLabel="Ajuda: direção da ordenação"
+                wrap
                 placement="bottom"
-              />
+              >
+                <SegmentToggle
+                  prefix={UI_PREFIX}
+                  size="sm"
+                  ariaLabel="Direção da ordenação"
+                  idPrefix="open-orders-sort-dir"
+                  value={sortDirection}
+                  onChange={(dir) => {
+                    if (dir !== sortDirection) onSort(sortKey);
+                  }}
+                  options={[
+                    { value: "asc", label: "Crescente" },
+                    { value: "desc", label: "Decrescente" },
+                  ]}
+                />
+              </HelpTooltip>
             </div>
           </div>
         ) : null}

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ActionButton, EmptyState, HelpTooltip } from "@delpi/plugin-ui/index";
+import { ActionButton, EmptyState, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
 import {
@@ -121,9 +121,8 @@ export function OpenOrdersPageImpl() {
       <CommercialPageHero
         aria-label="Pedidos em aberto"
         eyebrow="Pedidos"
-        title="Pedidos em aberto"
-        badge={
-          <HelpTooltip content={CM_HELP.openOrders.page} ariaLabel="Ajuda: Pedidos em aberto" />
+        title={
+          <SectionHintLabel label="Pedidos em aberto" hint={CM_HELP.openOrders.page} />
         }
         actions={
           <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
@@ -139,10 +138,7 @@ export function OpenOrdersPageImpl() {
               sellers={sellers}
               value={sellerIdFilter}
               onChange={setSellerIdFilter}
-            />
-            <HelpTooltip
-              content={CM_HELP.openOrders.sellerScope}
-              ariaLabel="Ajuda: filtro de carteira"
+              hint={CM_HELP.openOrders.sellerScope}
             />
           </div>
         ) : null}

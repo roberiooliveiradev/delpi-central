@@ -30,7 +30,7 @@ export const ANALYTICS_CONTENT = {
   oportunidades: {
     title: "Oportunidades",
     subtitle: "Lista de OVs/propostas comerciais do período.",
-    detail: "Detalhe da oportunidade de venda.",
+    detail: "Detalhe da OV: KPIs, cabeçalho, cliente/vendedor, produtos, BOM e histórico AIJ (timeline/tabela).",
   },
   filters: {
     start: "Data inicial",

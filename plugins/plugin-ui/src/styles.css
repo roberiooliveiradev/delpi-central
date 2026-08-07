@@ -227,18 +227,10 @@
 
 .delpi-ui-field-label__text {
   cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 3px;
 }
 
 .delpi-ui-section-hint-label {
   cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 3px;
 }
 
 .delpi-ui-tab-cell {

@@ -440,14 +440,19 @@ export function DataTableSection<T>({
         <div className={sectionClassNames.header}>
           {title.trim() ? (
             <h2 className={sectionClassNames.title}>
-              {title}
               {titleHint ? (
                 <HelpTooltip
                   content={titleHint}
                   ariaLabel={labels.titleHelpAriaLabel(title)}
+                  wrap
+                  placement="bottom"
                   className={sectionClassNames.titleHelp}
-                />
-              ) : null}
+                >
+                  <span className="delpi-ui-section-hint-label">{title}</span>
+                </HelpTooltip>
+              ) : (
+                title
+              )}
             </h2>
           ) : (
             <span />

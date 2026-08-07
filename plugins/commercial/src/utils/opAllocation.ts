@@ -130,6 +130,12 @@ function allocateLineFromPool(
       saldo_alocado: allocated,
       data_fim_prevista_op: entry.op.data_fim_prevista_op,
       observacao_op: entry.op.observacao_op?.trim() ?? "",
+      quantidade_op: roundQuantity(Math.max(0, entry.op.quantidade_op ?? 0)),
+      quantidade_produzida: roundQuantity(Math.max(0, entry.op.quantidade_produzida ?? 0)),
+      data_emissao_op: entry.op.data_emissao_op,
+      data_inicio_prevista_op: entry.op.data_inicio_prevista_op,
+      armazem: entry.op.armazem?.trim() ?? "",
+      descricao_produto: entry.op.descricao_produto?.trim() ?? "",
     });
 
     if (isQuantityNeedSatisfied(remainingNeed)) {

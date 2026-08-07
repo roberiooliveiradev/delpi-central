@@ -114,17 +114,20 @@ export function SectionCard({
         <div>
           <h2 className={classNames.title}>
             <span className={classNames.titleWithHelp}>
-              <span key="title">{title}</span>
               {hint ? (
                 <HelpTooltip
-                  key="help"
                   content={hint}
                   ariaLabel={labels.titleHelpAriaLabel(title)}
-                />
-              ) : null}
+                  wrap
+                  placement="bottom"
+                >
+                  <span className="delpi-ui-section-hint-label">{title}</span>
+                </HelpTooltip>
+              ) : (
+                <span>{title}</span>
+              )}
               {collapsible ? (
                 <button
-                  key="collapse"
                   type="button"
                   className={classNames.collapseToggle}
                   aria-expanded={isOpen}

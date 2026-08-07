@@ -35,14 +35,18 @@ export function TitleWithHelp({
 
   return (
     <span className={rootClass}>
-      <span key="title">{title}</span>
       {hint ? (
         <HelpTooltip
-          key="help"
           content={hint}
           ariaLabel={labels.titleHelpAriaLabel(title)}
-        />
-      ) : null}
+          wrap
+          placement="bottom"
+        >
+          <span className="delpi-ui-section-hint-label">{title}</span>
+        </HelpTooltip>
+      ) : (
+        <span>{title}</span>
+      )}
     </span>
   );
 }

@@ -28,7 +28,9 @@ describe("ChartCard", () => {
       </ChartCard>,
     );
     expect(screen.getByText("Últimos 30 dias.")).toBeTruthy();
-    expect(screen.getByLabelText("Ajuda: OEE")).toBeTruthy();
+    expect(screen.getByText("OEE")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-help-tooltip__trigger")).toBeNull();
   });
 
   it("renderiza ações no header quando classNames.actions existe", () => {

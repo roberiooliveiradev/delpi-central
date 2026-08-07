@@ -28,6 +28,27 @@ export function getTodayIsoDate(): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Dias relativos a hoje (negativo = já passou). Null se data inválida. */
+export function getDaysFromToday(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const iso = toIsoDateOnly(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  const [ty, tm, td] = getTodayIsoDate().split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const today = new Date(ty, tm - 1, td);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+}
+
+export function formatDaysFromTodayLabel(days: number | null): string {
+  if (days == null) return "—";
+  if (days === 0) return "Hoje";
+  if (days === 1) return "Em 1 dia";
+  if (days === -1) return "Há 1 dia";
+  if (days > 1) return `Em ${days} dias`;
+  return `Há ${Math.abs(days)} dias`;
+}
+
 /** Data de entrega já passou e a linha ainda possui saldo pendente. */
 export function isDeliveryOverdue(
   dataEntrega: string | null | undefined,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Filter, RotateCcw } from "lucide-react";
-import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
+import { ActionButton, SectionHintLabel } from "@delpi/plugin-ui/index";
 
 import {
   CommercialDateField,
@@ -49,8 +49,9 @@ export function FilterBar({
         <div className="cm-filter-bar__header">
           <div className="cm-filter-bar__title">
             <Filter size={18} aria-hidden="true" />
-            <h2>Filtros</h2>
-            <HelpTooltip content={CM_HELP.openOrders.filters} ariaLabel="Ajuda: Filtros" />
+            <h2>
+              <SectionHintLabel label="Filtros" hint={CM_HELP.openOrders.filters} />
+            </h2>
           </div>
           <div className="cm-filter-bar__header-actions">
             <ActionButton variant="ghost" onClick={() => setShowMore((v) => !v)}>

@@ -33,6 +33,11 @@ export type OpenOrdersTotvsItem = {
   previsao_op?: LineOpForecast;
   preco_venda: number;
   valor_aberto: number;
+  /**
+   * Número da OV (AD1_NROPOR) quando o contrato/API enriquecer o vínculo pedido↔oportunidade.
+   * Sem o campo, o modal tenta resolver via probe pedido≈OV.
+   */
+  proposal_number?: string | null;
 };
 
 export type OpenOrdersTotvsData = {

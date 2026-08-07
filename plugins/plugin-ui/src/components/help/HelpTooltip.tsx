@@ -1,5 +1,6 @@
 import { HelpCircle } from "lucide-react";
 import {
+  Children,
   cloneElement,
   isValidElement,
   useCallback,
@@ -157,6 +158,17 @@ function wrapChildDescribedBy(child: ReactNode, tooltipId: string): ReactNode {
   return cloneElement(element, {
     "aria-describedby": mergeDescribedBy(element.props["aria-describedby"], tooltipId),
   });
+}
+
+/**
+ * Normaliza filhos do modo `wrap` (inclui array explícito) e atribui keys via
+ * `Children.toArray` — evita warning de key no `<span>` raiz do HelpTooltip.
+ */
+function wrapChildrenDescribedBy(children: ReactNode, tooltipId: string): ReactNode {
+  const items = Children.toArray(children);
+  if (items.length === 0) return null;
+  if (items.length === 1) return wrapChildDescribedBy(items[0], tooltipId);
+  return items.map((child) => wrapChildDescribedBy(child, tooltipId));
 }
 
 /** Balão explicativo com portal no body (seguro em layouts com transform/overflow). */
@@ -336,7 +348,7 @@ export function HelpTooltip({
         : {})}
     >
       {wrap ? (
-        wrapChildDescribedBy(children, tooltipId)
+        wrapChildrenDescribedBy(children, tooltipId)
       ) : (
         <button
           ref={triggerRef}

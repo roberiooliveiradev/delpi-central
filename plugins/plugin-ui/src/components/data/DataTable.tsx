@@ -263,22 +263,27 @@ function renderColumnHeader<T>(
   classNames: DataTableClassNames,
   labels: DataTableLabels,
 ) {
+  const headerText =
+    column.headerHint != null && column.headerHint !== "" ? (
+      <HelpTooltip
+        content={column.headerHint}
+        ariaLabel={labels.headerHelpAriaLabel(column.header)}
+        wrap
+        placement="bottom"
+        className={classNames.headerHelp}
+      >
+        <span className={`${classNames.headerText} delpi-ui-section-hint-label`}>
+          {column.header}
+        </span>
+      </HelpTooltip>
+    ) : (
+      <span className={classNames.headerText}>{column.header}</span>
+    );
+
   return (
     <span className={classNames.headerLabel}>
-      {column.headerPrefix ? (
-        <span key="prefix">{column.headerPrefix}</span>
-      ) : null}
-      <span key="text" className={classNames.headerText}>
-        {column.header}
-      </span>
-      {column.headerHint ? (
-        <HelpTooltip
-          key="help"
-          content={column.headerHint}
-          ariaLabel={labels.headerHelpAriaLabel(column.header)}
-          className={classNames.headerHelp}
-        />
-      ) : null}
+      {column.headerPrefix ? <span>{column.headerPrefix}</span> : null}
+      {headerText}
     </span>
   );
 }

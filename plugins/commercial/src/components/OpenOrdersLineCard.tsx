@@ -1,5 +1,5 @@
-import type { KeyboardEvent } from "react";
-import { HelpTooltip, StatusBadge } from "@delpi/plugin-ui/index";
+import type { KeyboardEvent, ReactNode } from "react";
+import { FieldLabel, StatusBadge } from "@delpi/plugin-ui/index";
 
 import {
   CommercialInlineMeter,
@@ -8,15 +8,16 @@ import {
 import { CM_HELP } from "../content/helpTooltips";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatQuantity } from "../utils/format";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
   resolveLineCoverage,
   resolvePrevisaoPrazoBadge,
 } from "../utils/openOrdersLineVisual";
 import { getLineOpForecast } from "../utils/opAllocation";
+import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus } from "../utils/statusBadges";
-import type { TableColumnKey } from "../utils/tableColumns";
+import { TABLE_COLUMNS, type TableColumnKey } from "../utils/tableColumns";
 
 type OpenOrdersLineCardProps = {
   item: OpenOrdersTotvsItem;
@@ -34,23 +35,118 @@ function badgeVariant(
   return "neutral";
 }
 
-function CardFieldLabel({
+function CardField({
   columnKey,
   label,
+  children,
+  valueClassName,
 }: {
   columnKey: TableColumnKey;
   label: string;
+  children: ReactNode;
+  valueClassName?: string;
 }) {
   return (
-    <span className="cm-open-orders-card__field-label">
-      <span>{label}</span>
-      <HelpTooltip
-        content={openOrdersColumnHelp(columnKey)}
-        ariaLabel={`Ajuda: ${label}`}
-        placement="top"
+    <div className="cm-open-orders-card__field">
+      <FieldLabel
+        label={label}
+        hint={openOrdersColumnHelp(columnKey)}
+        className="cm-open-orders-card__field-label"
       />
-    </span>
+      <div className={valueClassName ?? "cm-open-orders-card__meta"}>{children}</div>
+    </div>
   );
+}
+
+function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactNode {
+  switch (key) {
+    case "nome_cliente":
+      return item.nome_cliente || "—";
+    case "loja_cadastro":
+      return item.loja_cadastro || "—";
+    case "filial":
+      return item.filial || "—";
+    case "pedido":
+      return `${item.pedido || "—"} · Linha ${item.linha || "—"}`;
+    case "pedido_cliente":
+      return item.pedido_cliente || "—";
+    case "produto":
+      return item.produto || "—";
+    case "codigo_cliente":
+      return item.codigo_cliente || "—";
+    case "quantidade":
+      return formatQuantity(item.quantidade);
+    case "entregue":
+      return formatQuantity(item.entregue);
+    case "saldo":
+      return formatQuantity(item.saldo);
+    case "no_estoque":
+      return formatQuantity(getAllocatedStock(item));
+    case "cobertura": {
+      const coverage = resolveLineCoverage(item);
+      return (
+        <CommercialInlineMeter
+          value={coverage.ratio}
+          max={1}
+          tone={coverage.tone}
+          label={`${coverage.percentLabel} · ${coverage.quantityLabel}`}
+          aria-label="Cobertura"
+        />
+      );
+    }
+    case "data_entrega": {
+      const days = getDeliveryOverdueDays(item.data_entrega);
+      const late = days != null && item.saldo > 0;
+      return (
+        <span className={late ? "cm-cell-danger" : undefined}>
+          {formatDisplayDate(item.data_entrega)}
+        </span>
+      );
+    }
+    case "previsao_entrega_op": {
+      const previsao = getLineOpForecast(item);
+      const prazoBadge = resolvePrevisaoPrazoBadge(item);
+      return (
+        <div className="cm-open-orders-card__row">
+          <span>{previsao.previsaoLabel}</span>
+          {prazoBadge ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label={prazoBadge.label}
+              variant={prazoBadge.variant}
+            />
+          ) : null}
+        </div>
+      );
+    }
+    case "data_despacho":
+      return item.data_despacho ? formatDisplayDate(item.data_despacho) : "Não informado";
+    case "valor_aberto":
+      return formatCurrency(item.valor_aberto);
+    case "status": {
+      const status = getLineStatus(item);
+      return (
+        <StatusBadge
+          classNames={cmStatusBadgeClassNames}
+          label={status.label}
+          variant={badgeVariant(status.tone)}
+        />
+      );
+    }
+    case "atraso_dias": {
+      const overdue = getDeliveryOverdueDays(item.data_entrega);
+      if (overdue == null || item.saldo <= 0) return "—";
+      return (
+        <StatusBadge
+          classNames={cmStatusBadgeClassNames}
+          label={`${overdue.toLocaleString("pt-BR")} d`}
+          variant="danger"
+        />
+      );
+    }
+    default:
+      return "—";
+  }
 }
 
 export function OpenOrdersLineCard({
@@ -58,12 +154,6 @@ export function OpenOrdersLineCard({
   visibleKeys,
   onOpenDetail,
 }: OpenOrdersLineCardProps) {
-  const coverage = resolveLineCoverage(item);
-  const previsao = getLineOpForecast(item);
-  const status = getLineStatus(item);
-  const prazoBadge = resolvePrevisaoPrazoBadge(item);
-  const overdue = getDeliveryOverdueDays(item.data_entrega);
-  const show = (key: TableColumnKey) => visibleKeys.has(key);
   const openDetail = () => onOpenDetail(item);
 
   const onCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -75,6 +165,7 @@ export function OpenOrdersLineCard({
 
   const customerLabel = item.nome_cliente?.trim() || "linha";
   const pedidoLabel = item.pedido?.trim() || "—";
+  const fields = TABLE_COLUMNS.filter((column) => visibleKeys.has(column.key));
 
   return (
     <article
@@ -85,104 +176,30 @@ export function OpenOrdersLineCard({
       onClick={openDetail}
       onKeyDown={onCardKeyDown}
     >
-      {show("nome_cliente") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="nome_cliente" label="Cliente" />
-          <h3 className="cm-open-orders-card__title">{item.nome_cliente || "Cliente"}</h3>
-        </div>
-      ) : null}
-      {show("pedido") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="pedido" label="Pedido" />
-          <p className="cm-open-orders-card__meta">
-            {item.pedido || "—"} · Linha {item.linha || "—"}
-          </p>
-        </div>
-      ) : null}
-      {show("produto") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="produto" label="Produto" />
-          <p className="cm-open-orders-card__meta">{item.produto || "—"}</p>
-        </div>
-      ) : null}
-      {show("cobertura") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="cobertura" label="Cobertura" />
-          <CommercialInlineMeter
-            value={coverage.ratio}
-            max={1}
-            tone={coverage.tone}
-            label={`${coverage.percentLabel} · ${coverage.quantityLabel}`}
-            aria-label="Cobertura"
-          />
-        </div>
-      ) : null}
-      {show("data_entrega") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="data_entrega" label="Entrega" />
-          <p className="cm-open-orders-card__meta">
-            {formatDisplayDate(item.data_entrega)}
-          </p>
-        </div>
-      ) : null}
-      {show("previsao_entrega_op") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="previsao_entrega_op" label="Previsão OP" />
-          <div className="cm-open-orders-card__row">
-            <span>{previsao.previsaoLabel}</span>
-            {prazoBadge ? (
-              <StatusBadge
-                classNames={cmStatusBadgeClassNames}
-                label={prazoBadge.label}
-                variant={prazoBadge.variant}
-              />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-      {(show("status") || (show("atraso_dias") && overdue != null && item.saldo > 0)) ? (
-        <div className="cm-open-orders-card__field">
-          <div className="cm-open-orders-card__badges-head">
-            {show("status") ? (
-              <CardFieldLabel columnKey="status" label="Status" />
-            ) : null}
-            {show("atraso_dias") ? (
-              <CardFieldLabel columnKey="atraso_dias" label="Atraso" />
-            ) : null}
-          </div>
-          <div className="cm-open-orders-card__badges">
-            {show("status") ? (
-              <StatusBadge
-                classNames={cmStatusBadgeClassNames}
-                label={status.label}
-                variant={badgeVariant(status.tone)}
-              />
-            ) : null}
-            {show("atraso_dias") && overdue != null && item.saldo > 0 ? (
-              <StatusBadge
-                classNames={cmStatusBadgeClassNames}
-                label={`${overdue} d`}
-                variant="danger"
-              />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-      {show("valor_aberto") ? (
-        <div className="cm-open-orders-card__field">
-          <CardFieldLabel columnKey="valor_aberto" label="Valor aberto" />
-          <p className="cm-open-orders-card__value">{formatCurrency(item.valor_aberto)}</p>
-        </div>
-      ) : null}
+      {fields.map((column) => {
+        const isTitle = column.key === "nome_cliente";
+        const isValue = column.key === "valor_aberto";
+        return (
+          <CardField
+            key={column.key}
+            columnKey={column.key}
+            label={column.label}
+            valueClassName={
+              isTitle
+                ? "cm-open-orders-card__title"
+                : isValue
+                  ? "cm-open-orders-card__value"
+                  : "cm-open-orders-card__meta"
+            }
+          >
+            {renderCardValue(column.key, item)}
+          </CardField>
+        );
+      })}
       <div className="cm-open-orders-card__actions">
         <span className="cm-open-orders-card__open-hint" aria-hidden="true">
           {CM_HELP.openOrders.cardOpenHint}
         </span>
-        <HelpTooltip
-          content={CM_HELP.openOrders.detail.modal}
-          ariaLabel="Ajuda: detalhe da linha"
-          placement="top"
-        />
       </div>
     </article>
   );

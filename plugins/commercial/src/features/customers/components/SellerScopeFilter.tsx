@@ -4,9 +4,10 @@ type SellerScopeFilterProps = {
   sellers: { id: string; display_name: string }[];
   value: string | null;
   onChange: (sellerId: string | null) => void;
+  hint?: string;
 };
 
-export function SellerScopeFilter({ sellers, value, onChange }: SellerScopeFilterProps) {
+export function SellerScopeFilter({ sellers, value, onChange, hint }: SellerScopeFilterProps) {
   const options = sellers.map((seller) => ({
     value: seller.id,
     label: seller.display_name,
@@ -16,6 +17,7 @@ export function SellerScopeFilter({ sellers, value, onChange }: SellerScopeFilte
     <div className="pva-seller-scope" role="group" aria-label="Filtro de carteira">
       <CommercialSelectField
         label="Carteira"
+        hint={hint}
         options={options}
         value={value ?? ""}
         onChange={(next) => onChange(next || null)}

@@ -92,8 +92,9 @@ export function InlineMeter({
       aria-label={ariaLabel}
     >
       <div className={classNames.track}>
-        {ratios.map((seg) =>
-          seg.ratio > 0 ? (
+        {ratios
+          .filter((seg) => seg.ratio > 0)
+          .map((seg) => (
             <span
               key={seg.id}
               className={[
@@ -102,8 +103,7 @@ export function InlineMeter({
               ].join(" ")}
               style={{ width: `${seg.ratio * 100}%` }}
             />
-          ) : null,
-        )}
+          ))}
       </div>
       {label != null ? <div className={classNames.label}>{label}</div> : null}
     </div>

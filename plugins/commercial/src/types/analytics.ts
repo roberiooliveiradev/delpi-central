@@ -83,16 +83,27 @@ export type CommercialProposalHistoryEvent = {
   process_label?: string | null;
   stage_label?: string | null;
   start_date?: string | null;
+  start_time?: string | null;
   end_date?: string | null;
+  end_time?: string | null;
   duration_display?: string | null;
+  duration_minutes?: number | null;
+  status?: string | null;
   status_label?: string | null;
   is_open?: boolean;
   is_late?: boolean;
   is_current?: boolean;
+  is_engineering?: boolean;
+  is_engineering_flow?: boolean;
+  is_engineering_entry?: boolean;
+  flow_transition?: string | null;
+  flow_transition_label?: string | null;
+  flow_transition_labels?: string[] | null;
 };
 
 export type CommercialProposalDetail = CommercialProposal & {
   customer_name?: string | null;
+  customer_store?: string | null;
   seller_code?: string | null;
   seller_name?: string | null;
   process_code?: string | null;
@@ -100,6 +111,12 @@ export type CommercialProposalDetail = CommercialProposal & {
   stage_label?: string | null;
   list_history?: CommercialProposalHistoryEvent[];
   list_products?: CommercialProduct[];
+};
+
+export type CommercialProposalHistoryEventsData = {
+  items: CommercialProposalHistoryEvent[];
+  total?: number;
+  reference_revision?: string | null;
 };
 
 export type CommercialProposalsPage = {

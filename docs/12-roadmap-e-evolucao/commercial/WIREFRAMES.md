@@ -209,8 +209,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 │ Tabela: Cobertura (InlineMeter) · Prev. OP + badge · Status · Atraso badge│
 │ Cards: mesmos campos visíveis · Ordenar por + direção · Detalhe → modal   │
 └───────────────────────────────────────────────────────────────────────────┘
-┌─ Modal host-fill (Detalhe da linha) ──────────────────────────────────────┐
-│ KPIs · gráficos cobertura/prazo/OPs · tabela OP · Abrir conta / Copiar    │
+┌─ Modal host-fill (Detalhe da linha) — ver WF-02R-D ───────────────────────┐
+│ Status fabril · KPIs · charts · bloco OP+timeline · tabela OP · Ver OV?   │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -221,6 +221,46 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 **Mobile (≤768px):** default Cards na 1ª visita; hero empilha; modal fill.
 
 **Histórico:** WF-02 (KPI cards + tabela densa + modal OP) → WF-02R → H/T/C/D.
+
+### WF-02R-D — Modal Detalhe da linha
+
+**Domínio:** SC5/SC6 + OP SC2 (não misturar com OV AD*).  
+**APIs extras ao abrir:** `/products/{code}/factory-status`, `/production/orders/by-op/{op}`, `/production/appointments/by-op`, opcional `/products/{code}/structure`; probe OV via `GET /commercial/proposals/{pedido}` se não houver `proposal_number`.
+
+```
+┌─ Modal host-fill · Detalhe da linha ─────────────────────────────────────┐
+│ Pedido · Linha · Produto · Cliente                                       │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Status fabril do produto (factory-status; some se 403)                   │
+│ KPIs: saldo · estoque · produzir · valor · atraso · status · kind · datas│
+│ Charts compactos: cobertura · prazo                                      │
+│ Produção/OPs: SegmentToggle · meter produzido/planejado · Timeline OP    │
+│ Tabela OP rica (produzido/planejado/saldo/status/OTD) — clique sincroniza│
+│ Estrutura do produto (BOM colapsável, só código da linha)                │
+│ [Copiar pedido] [Ver OV n] [Abrir conta]                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Fora do modal:** KPI/processo AD1, tabela ADJ multi-item, timeline AIJ, export OV → **WF-OV-D**.
+
+### WF-OV-D — Página Detalhe da OV (Gestão)
+
+**Rota:** analytics opportunity detail (`AnalyticsOpportunityDetailPage`)  
+**Paridade:** dashboard-commercial `CommercialDetailPage`  
+**APIs:** `GET /commercial/proposals/{n}` + `/history/events` + `/products/{code}/structure` por item.
+
+```
+┌─ Página · OV n ──────────────────────────────────────────────────────────┐
+│ [Voltar] [Atualizar]                                                     │
+│ KPI: Status · Abertura · Fechamento                                      │
+│ Cards: Proposta | Cliente e vendedor                                     │
+│ Produtos ADJ (grupo, tipo, qtd PI)                                       │
+│ BOM por produto                                                          │
+│ Histórico: [Linha do tempo | Tabela] via /history/events                 │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Mapa:** comercial (OV) na página; operacional (pedido+OP) no modal WF-02R-D. Deep link opcional modal → esta página.
 
 
 ---
@@ -472,6 +512,8 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Capacidade Portal do Vendedor | Wireframe | Rota Portal Comercial |
 |-------------------------------|-----------|------------------------|
 | Lista pedidos em aberto | WF-02R | `/open-orders` |
+| Detalhe linha (OP + fabril) | WF-02R-D | modal em `/open-orders` |
+| Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
 | Minha carteira | WF-03 | `/customers` |
 | Check-up cliente | WF-04 | `/customers/:code/:store` |
 | Config vendedores | WF-05 | `/seller-portfolios` |

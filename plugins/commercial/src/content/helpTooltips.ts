@@ -125,7 +125,9 @@ export const CM_HELP = {
     },
     detail: {
       modal:
-        "Detalhe da linha: indicadores, gráficos de cobertura/prazo/OPs e lista FIFO das ordens de produção usadas na previsão.",
+        "Detalhe da linha: status fabril do produto, indicadores, gráficos, timeline da OP e lista FIFO das ordens usadas na previsão.",
+      factoryStatus:
+        "Visão fabril consolidada do produto (PA/PI, produção iniciada, expedição) via api-delpi /factory-status.",
       saldo: "Quantidade ainda em aberto nesta linha do pedido.",
       estoqueAlocado:
         "Parte do estoque físico já atribuída a esta linha no algoritmo FIFO do portal.",
@@ -133,7 +135,10 @@ export const CM_HELP = {
       valorAberto: "Valor monetário ainda em aberto nesta linha.",
       atraso: "Dias de atraso da entrega prometida, se a linha ainda estiver em aberto.",
       status: "Pode faturar / parcial / sem estoque / atrasado — mesmo critério da coluna Status.",
+      coberturaKind:
+        "Como a linha está coberta: estoque, OP completa, parcial, sem OP ou OP sem data prevista.",
       entregaPedido: "Data de entrega prometida no pedido de venda.",
+      despacho: "Data de despacho informada no TOTVS, quando houver.",
       previsaoEntrega: "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
       chartCobertura:
         "Compara quantidade alocada em estoque versus saldo a produzir para fechar a linha.",
@@ -144,15 +149,21 @@ export const CM_HELP = {
       chartOpsCaption: "Alocado no pedido vs saldo OP",
       opsNote:
         "OPs são compartilhadas por produto/filial e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
-      opsTable: "Ordens de produção usadas na previsão desta linha (FIFO).",
+      opsTable: "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
       opNumero: "Número da ordem de produção no TOTVS.",
+      opProduzido: "Quantidade já produzida na OP (C2_QUJE / by-op).",
+      opPlanejado: "Quantidade planejada da OP (C2_QUANT / by-op).",
       opSaldo: "Saldo restante da OP no momento da alocação.",
       opAlocado: "Quanto desta OP foi atribuído a esta linha do pedido.",
       opFim: "Data fim prevista da OP (quando cadastrada).",
-      opStatus: "Se o fim previsto da OP está no prazo ou atrasado em relação à entrega do pedido.",
+      opStatus: "Status Protheus da OP ou comparação fim previsto × entrega do pedido.",
+      opOtd: "On-time delivery da OP (on_time / late / open) quando disponível em by-op.",
       opObs: "Observação cadastrada na OP, quando houver.",
+      bom: "Estrutura (BOM) do produto desta linha — mesma API /products/{code}/structure do dashboard.",
       copyPedido: "Copia o número do pedido para a área de transferência.",
       openAccount: "Abre a Conta 360 do cliente (código + loja) no Portal Comercial.",
+      openOv:
+        "Abre o detalhe da oportunidade (OV) na Gestão do Portal, quando o vínculo pedido↔OV for resolvido.",
     },
   },
   customers: {
@@ -217,6 +228,17 @@ export const CM_HELP = {
     transferTarget: "Carteira que recebe os clientes.",
     transferCustomers: "Selecione um ou mais clientes da carteira de origem.",
     transferReason: "Motivo obrigatório da transferência (fica no histórico).",
+  },
+  analytics: {
+    ovStatus: "Status atual da OV no Protheus (AD1010).",
+    ovOpen: "Data de abertura da oportunidade (AD1_DATA).",
+    ovClose: "Data de fechamento / assinatura (AD1_DTASSI), quando houver.",
+    ovHeader: "Cabeçalho AD1010: filial, revisão, processo, estágio e descrição.",
+    ovCustomer: "Cliente e vendedor vinculados à OV (SA1 / SA3).",
+    ovProducts: "Itens da OV (ADJ010): código, descrição, grupo, tipo e quantidade.",
+    ovBom: "Estrutura de produto (BOM) via /products/{code}/structure para cada item da OV.",
+    ovHistory:
+      "Histórico AIJ010 da OV — timeline ou tabela. Fonte: GET /commercial/proposals/{n}/history/events.",
   },
 } as const;
 

@@ -3,6 +3,7 @@ import type {
   ChartGranularity,
   ClosingRateData,
   CommercialProposalDetail,
+  CommercialProposalHistoryEventsData,
   CommercialProposalsPage,
   CommercialRolSeriesData,
   AnalyticsFilterParams,
@@ -97,6 +98,33 @@ export function getCommercialProposalByNumber(
     `${apiDelpiUrl(`${COMMERCIAL_PATH}/proposals/${encoded}`)}${query ? `?${query}` : ""}`,
     { signal },
   ).then((response) => unwrapEnvelope(response, "Erro ao carregar detalhe da OV"));
+}
+
+export function getCommercialProposalHistoryEvents(
+  proposalNumber: string,
+  params: {
+    branch: string;
+    revision?: string;
+    start_date?: string;
+    end_date?: string;
+  },
+  signal?: AbortSignal,
+) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("branch", params.branch);
+  if (params.revision) searchParams.set("revision", params.revision);
+  if (params.start_date) searchParams.set("start_date", params.start_date);
+  if (params.end_date) searchParams.set("end_date", params.end_date);
+  const encoded = encodeURIComponent(proposalNumber.trim());
+  const query = searchParams.toString();
+  return httpGet<ApiSuccessResponse<CommercialProposalHistoryEventsData>>(
+    `${apiDelpiUrl(`${COMMERCIAL_PATH}/proposals/${encoded}/history/events`)}${
+      query ? `?${query}` : ""
+    }`,
+    { signal },
+  ).then((response) =>
+    unwrapEnvelope(response, "Erro ao carregar histórico da OV"),
+  );
 }
 
 export function getSalesOrderOtdPanel(params: AnalyticsFilterParams, signal?: AbortSignal) {

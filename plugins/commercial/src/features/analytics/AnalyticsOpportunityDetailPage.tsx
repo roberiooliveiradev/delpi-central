@@ -1,22 +1,56 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import {
+  ActionButton,
+  DataTable,
+  EmptyState,
+  SectionCard,
+  SegmentToggle,
+  StatusBadge,
+  type DataTableColumn,
+} from "@delpi/plugin-ui/index";
+import { ArrowLeft, CalendarCheck, CalendarPlus, Flag, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { getCommercialProposalByNumber } from "../../api/analyticsApi";
+import {
+  getCommercialProposalByNumber,
+  getCommercialProposalHistoryEvents,
+} from "../../api/analyticsApi";
+import { fetchOptional, fetchProductStructure } from "../../api/productionExtrasApi";
 import {
   cmDataTableClassNames,
   cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  cmStatusBadgeClassNames,
+  CommercialActivityTimeline,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
   CommercialTitleWithHelp,
+  UI_PREFIX,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
+import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
-import type { CommercialProduct, CommercialProposalDetail, CommercialProposalHistoryEvent } from "../../types/analytics";
+import { CM_HELP } from "../../content/helpTooltips";
+import type {
+  CommercialProduct,
+  CommercialProposalDetail,
+  CommercialProposalHistoryEvent,
+} from "../../types/analytics";
+import type { ProductStructureData, ProductStructureNode } from "../../types/productionExtras";
 import { formatDisplayDate } from "../../utils/dates";
+import { formatQuantity } from "../../utils/format";
+import {
+  hasRenderableProductStructure,
+  structureRoots,
+} from "../../utils/productStructurePresentation";
+import {
+  formatProcessStageLabel,
+  historyEventKey,
+  mapProposalHistoryToTimelineItems,
+  resolveHistoryDuration,
+  resolveHistoryStatus,
+} from "../../utils/proposalHistoryFormatting";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
 import { resolveAnalyticsApiBranch } from "./utils/analyticsBranchFilters";
@@ -27,10 +61,37 @@ type AnalyticsOpportunityDetailPageProps = {
   search?: string;
 };
 
+type HistoryView = "timeline" | "table";
+
 function readQueryParam(search: string | undefined, key: string): string {
   if (typeof window === "undefined" && !search) return "";
   const params = new URLSearchParams(search ?? window.location.search);
   return (params.get(key) ?? "").trim();
+}
+
+function StructureTree({ nodes, depth = 0 }: { nodes: ProductStructureNode[]; depth?: number }) {
+  if (nodes.length === 0) return null;
+  return (
+    <ul className="cm-ov-bom-list" data-depth={depth}>
+      {nodes.map((node, index) => {
+        const code = String(node.code || node.product_code || "—");
+        const children = node.components ?? node.items ?? [];
+        const qty =
+          node.quantity != null && !Number.isNaN(Number(node.quantity))
+            ? ` × ${formatQuantity(Number(node.quantity))}${node.unit ? ` ${node.unit}` : ""}`
+            : "";
+        return (
+          <li key={`${code}-${index}`}>
+            <strong>{code}</strong>
+            {node.type ? ` [${node.type}]` : ""}
+            {node.description ? ` — ${node.description}` : ""}
+            {qty}
+            {children.length > 0 ? <StructureTree nodes={children} depth={depth + 1} /> : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export function AnalyticsOpportunityDetailPage({
@@ -47,41 +108,138 @@ export function AnalyticsOpportunityDetailPage({
     "01";
 
   const [data, setData] = useState<CommercialProposalDetail | null>(null);
+  const [history, setHistory] = useState<CommercialProposalHistoryEvent[]>([]);
+  const [structures, setStructures] = useState<
+    { code: string; description?: string | null; structure: ProductStructureData }[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [historyView, setHistoryView] = useState<HistoryView>("timeline");
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void getCommercialProposalByNumber(
-      proposalNumber,
-      { branch, revision: revisionFromUrl || undefined },
-      controller.signal,
-    )
-      .then((result) => {
-        if (!controller.signal.aborted) setData(result);
-      })
-      .catch((err: unknown) => {
+    setHistoryError(null);
+
+    void (async () => {
+      try {
+        const [detailResult, historyResult] = await Promise.all([
+          getCommercialProposalByNumber(
+            proposalNumber,
+            { branch, revision: revisionFromUrl || undefined },
+            controller.signal,
+          ),
+          fetchOptional(() =>
+            getCommercialProposalHistoryEvents(
+              proposalNumber,
+              {
+                branch,
+                revision: revisionFromUrl || undefined,
+                start_date: filters.dateStart || undefined,
+                end_date: filters.dateEnd || undefined,
+              },
+              controller.signal,
+            ),
+          ),
+        ]);
+
+        if (controller.signal.aborted) return;
+
+        setData(detailResult);
+        setHistory(historyResult.data?.items ?? []);
+        if (historyResult.error) setHistoryError(historyResult.error);
+
+        const products = detailResult.list_products ?? [];
+        const seen = new Set<string>();
+        const unique = products.filter((product) => {
+          const code = product.code?.trim();
+          if (!code || seen.has(code)) return false;
+          seen.add(code);
+          return true;
+        });
+
+        const structureResults = await Promise.all(
+          unique.map(async (product) => {
+            const result = await fetchOptional(() =>
+              fetchProductStructure(product.code.trim(), controller.signal),
+            );
+            return {
+              product,
+              structure: result.data,
+            };
+          }),
+        );
+
+        if (controller.signal.aborted) return;
+
+        setStructures(
+          structureResults.flatMap(({ product, structure }) => {
+            if (!structure || !hasRenderableProductStructure(structure)) return [];
+            return [
+              {
+                code: product.code.trim(),
+                description: product.description,
+                structure,
+              },
+            ];
+          }),
+        );
+      } catch (err: unknown) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar OV.");
         setData(null);
-      })
-      .finally(() => {
+        setHistory([]);
+        setStructures([]);
+      } finally {
         if (!controller.signal.aborted) setLoading(false);
-      });
+      }
+    })();
+
     return () => controller.abort();
-  }, [proposalNumber, branch, revisionFromUrl, reloadKey]);
+  }, [
+    proposalNumber,
+    branch,
+    revisionFromUrl,
+    reloadKey,
+    filters.dateStart,
+    filters.dateEnd,
+  ]);
 
   const productColumns: DataTableColumn<CommercialProduct>[] = useMemo(
     () => [
       { key: "code", header: "Código", render: (row) => row.code },
-      { key: "desc", header: "Descrição", render: (row) => row.description || "—" },
+      {
+        key: "desc",
+        header: "Descrição",
+        render: (row) => row.description || "—",
+      },
+      {
+        key: "group",
+        header: "Grupo",
+        render: (row) => row.group_code || "—",
+      },
+      {
+        key: "type",
+        header: "Tipo",
+        render: (row) =>
+          row.type ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label={row.type}
+              variant={row.type === "PA" ? "success" : "info"}
+            />
+          ) : (
+            "—"
+          ),
+      },
       {
         key: "qty",
-        header: "Qtd",
-        render: (row) => (row.qtd_pi != null ? String(row.qtd_pi) : "—"),
+        header: "Qtd PI",
+        align: "right",
+        render: (row) => (row.qtd_pi != null ? formatQuantity(row.qtd_pi) : "—"),
       },
     ],
     [],
@@ -90,13 +248,43 @@ export function AnalyticsOpportunityDetailPage({
   const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = useMemo(
     () => [
       { key: "rev", header: "Rev.", render: (row) => row.revision },
-      { key: "process", header: "Processo", render: (row) => row.process_label || row.process_code },
-      { key: "stage", header: "Etapa", render: (row) => row.stage_label || row.stage_code },
-      { key: "start", header: "Início", render: (row) => formatDisplayDate(row.start_date) },
-      { key: "end", header: "Fim", render: (row) => formatDisplayDate(row.end_date) },
-      { key: "dur", header: "Duração", render: (row) => row.duration_display || "—" },
+      {
+        key: "process",
+        header: "Processo",
+        render: (row) => formatProcessStageLabel(row.process_code, row.process_label),
+      },
+      {
+        key: "stage",
+        header: "Etapa",
+        render: (row) => formatProcessStageLabel(row.stage_code, row.stage_label),
+      },
+      {
+        key: "start",
+        header: "Início",
+        render: (row) => formatDisplayDate(row.start_date),
+      },
+      {
+        key: "end",
+        header: "Fim",
+        render: (row) => formatDisplayDate(row.end_date),
+      },
+      {
+        key: "dur",
+        header: "Duração",
+        render: (row) => resolveHistoryDuration(row),
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => resolveHistoryStatus(row),
+      },
     ],
     [],
+  );
+
+  const timelineItems = useMemo(
+    () => mapProposalHistoryToTimelineItems(history),
+    [history],
   );
 
   return (
@@ -131,29 +319,85 @@ export function AnalyticsOpportunityDetailPage({
 
       {!loading && data ? (
         <>
-          <SectionCard
-            title="Cabeçalho"
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-          >
-            <CommercialDetailFieldGrid
-              fields={[
-                { label: "OV", value: data.proposal_number },
-                { label: "Revisão", value: data.revision },
-                { label: "Filial", value: data.branch },
-                { label: "Status", value: data.status_label || data.status_code || "—" },
-                { label: "Cliente", value: data.customer_name || data.customer_code || "—" },
-                { label: "Vendedor", value: data.seller_name || data.seller_code || "—" },
-                { label: "Data", value: formatDisplayDate(data.proposal_date) },
-                { label: "Etapa", value: data.stage_label || data.stage || "—" },
-                { label: "Processo", value: data.process_label || data.process_code || "—" },
-                { label: "Descrição", value: data.description || "—" },
-              ]}
+          <div className="cm-ov-kpi-row">
+            <KpiCard
+              title="Status"
+              titleHint={CM_HELP.analytics.ovStatus}
+              value={data.status_label || data.status_code || "—"}
+              icon={<Flag size={22} aria-hidden="true" />}
             />
-          </SectionCard>
+            <KpiCard
+              title="Abertura"
+              titleHint={CM_HELP.analytics.ovOpen}
+              value={formatDisplayDate(data.proposal_date)}
+              icon={<CalendarPlus size={22} aria-hidden="true" />}
+            />
+            <KpiCard
+              title="Fechamento"
+              titleHint={CM_HELP.analytics.ovClose}
+              value={formatDisplayDate(data.end_date)}
+              icon={<CalendarCheck size={22} aria-hidden="true" />}
+            />
+          </div>
+
+          <div className="cm-ov-detail-grid">
+            <SectionCard
+              title="Proposta"
+              hint={CM_HELP.analytics.ovHeader}
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+            >
+              <CommercialDetailFieldGrid
+                fields={[
+                  { label: "OV", value: data.proposal_number },
+                  { label: "Revisão", value: data.revision },
+                  { label: "Filial", value: data.branch },
+                  {
+                    label: "Status",
+                    value: (
+                      <StatusBadge
+                        classNames={cmStatusBadgeClassNames}
+                        label={data.status_label || data.status_code || "—"}
+                        variant="info"
+                      />
+                    ),
+                  },
+                  {
+                    label: "Processo",
+                    value: formatProcessStageLabel(data.process_code, data.process_label),
+                  },
+                  {
+                    label: "Estágio",
+                    value: formatProcessStageLabel(data.stage, data.stage_label),
+                  },
+                  { label: "Abertura", value: formatDisplayDate(data.proposal_date) },
+                  { label: "Fechamento", value: formatDisplayDate(data.end_date) },
+                  { label: "Descrição", value: data.description || "—" },
+                ]}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title="Cliente e vendedor"
+              hint={CM_HELP.analytics.ovCustomer}
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+            >
+              <CommercialDetailFieldGrid
+                fields={[
+                  { label: "Cliente", value: data.customer_name || "—" },
+                  { label: "Código", value: data.customer_code || "—" },
+                  { label: "Loja", value: data.customer_store || "—" },
+                  { label: "Vendedor", value: data.seller_name || "—" },
+                  { label: "Cód. vendedor", value: data.seller_code || "—" },
+                ]}
+              />
+            </SectionCard>
+          </div>
 
           <SectionCard
             title="Produtos"
+            hint={CM_HELP.analytics.ovProducts}
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
@@ -167,19 +411,62 @@ export function AnalyticsOpportunityDetailPage({
             />
           </SectionCard>
 
+          {structures.length > 0 ? (
+            <SectionCard
+              title="Estrutura do produto"
+              hint={CM_HELP.analytics.ovBom}
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+            >
+              {structures.map((entry) => (
+                <div key={entry.code} className="cm-open-orders-detail__op-card">
+                  <strong>
+                    {entry.code}
+                    {entry.description ? ` — ${entry.description}` : ""}
+                  </strong>
+                  <StructureTree nodes={structureRoots(entry.structure)} />
+                </div>
+              ))}
+            </SectionCard>
+          ) : null}
+
           <SectionCard
-            title="Histórico"
+            title="Histórico da OV"
+            hint={CM_HELP.analytics.ovHistory}
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <DataTable
-              rows={data.list_history ?? []}
-              columns={historyColumns}
-              rowKey={(row, index) => `${row.revision}-${row.process_code}-${row.stage_code}-${index}`}
-              classNames={cmDataTableClassNames}
-              labels={cmDataTableLabels}
-              layout="section"
-            />
+            <div className="cm-ov-history-toggle">
+              <SegmentToggle
+                prefix={UI_PREFIX}
+                size="sm"
+                ariaLabel="Modo do histórico"
+                idPrefix="ov-history-view"
+                value={historyView}
+                onChange={setHistoryView}
+                options={[
+                  { value: "timeline", label: "Linha do tempo" },
+                  { value: "table", label: "Tabela" },
+                ]}
+              />
+            </div>
+            {historyError ? <p role="alert">{historyError}</p> : null}
+            {historyView === "timeline" ? (
+              <CommercialActivityTimeline
+                items={timelineItems}
+                emptyMessage="Nenhum evento registrado no histórico da OV."
+                aria-label="Linha do tempo da OV"
+              />
+            ) : (
+              <DataTable
+                rows={history}
+                columns={historyColumns}
+                rowKey={(row, index) => historyEventKey(row, index)}
+                classNames={cmDataTableClassNames}
+                labels={cmDataTableLabels}
+                layout="section"
+              />
+            )}
           </SectionCard>
         </>
       ) : null}
