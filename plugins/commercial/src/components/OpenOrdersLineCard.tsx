@@ -1,10 +1,11 @@
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { FieldLabel, StatusBadge } from "@delpi/plugin-ui/index";
 
 import {
   CommercialInlineMeter,
   cmStatusBadgeClassNames,
 } from "../app/commercialUi";
+import { navigateCustomerDetail } from "../app/pluginNavigation";
 import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
@@ -16,7 +17,7 @@ import {
   resolveLineCoverage,
   resolvePrevisaoPrazoBadge,
 } from "../utils/openOrdersLineVisual";
-import { getLineOpForecast } from "../utils/opAllocation";
+import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
 import { TABLE_COLUMNS, type TableColumnKey } from "../utils/tableColumns";
@@ -25,8 +26,14 @@ type OpenOrdersLineCardProps = {
   item: OpenOrdersTotvsItem;
   visibleKeys: ReadonlySet<TableColumnKey>;
   hasAvatar?: boolean;
+  basePath?: string;
   onOpenDetail: (item: OpenOrdersTotvsItem) => void;
 };
+
+/** Evita que o clique no link interno dispare o open do card inteiro. */
+function stopCardBubble(event: MouseEvent | KeyboardEvent) {
+  event.stopPropagation();
+}
 
 function badgeVariant(
   tone: ReturnType<typeof getLineStatus>["tone"],
@@ -65,6 +72,7 @@ function renderCardValue(
   key: TableColumnKey,
   item: OpenOrdersTotvsItem,
   hasAvatar: boolean,
+  options: { basePath?: string; onOpenDetail: (item: OpenOrdersTotvsItem) => void },
 ): ReactNode {
   switch (key) {
     case "nome_cliente": {
@@ -83,7 +91,21 @@ function renderCardValue(
             />
           ) : null}
           <div className="cm-open-orders-client__text">
-            <strong className="cm-open-orders-client__name">{name}</strong>
+            {code && store ? (
+              <button
+                type="button"
+                className="cm-open-orders-client__name"
+                onClick={(event) => {
+                  stopCardBubble(event);
+                  navigateCustomerDetail(code, store, { basePath: options.basePath });
+                }}
+                onKeyDown={stopCardBubble}
+              >
+                {name}
+              </button>
+            ) : (
+              <strong className="cm-open-orders-client__name">{name}</strong>
+            )}
             <span className="cm-open-orders-client__id">
               {formatEntityTypeWithCodeStore(item.tipo_entidade, item.codigo_cadastro, null)}
             </span>
@@ -141,9 +163,25 @@ function renderCardValue(
     case "previsao_entrega_op": {
       const previsao = getLineOpForecast(item);
       const prazoBadge = resolvePrevisaoPrazoBadge(item);
+      if (previsao.previsaoLabel === "—") return "—";
       return (
         <div className="cm-cell-inline">
-          <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
+          {canOpenOpForecastModal(item) ? (
+            <button
+              type="button"
+              className="cm-link-button cm-cell-inline__primary"
+              title="Ver detalhe da linha e OPs"
+              onClick={(event) => {
+                stopCardBubble(event);
+                options.onOpenDetail(item);
+              }}
+              onKeyDown={stopCardBubble}
+            >
+              {previsao.previsaoLabel}
+            </button>
+          ) : (
+            <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
+          )}
           {prazoBadge ? (
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
@@ -191,6 +229,7 @@ export function OpenOrdersLineCard({
   item,
   visibleKeys,
   hasAvatar = false,
+  basePath,
   onOpenDetail,
 }: OpenOrdersLineCardProps) {
   const openDetail = () => onOpenDetail(item);
@@ -205,6 +244,7 @@ export function OpenOrdersLineCard({
   const customerLabel = item.nome_cliente?.trim() || "linha";
   const pedidoLabel = item.pedido?.trim() || "—";
   const fields = TABLE_COLUMNS.filter((column) => visibleKeys.has(column.key));
+  const valueOptions = { basePath, onOpenDetail };
 
   return (
     <article
@@ -231,7 +271,7 @@ export function OpenOrdersLineCard({
                   : "cm-open-orders-card__meta"
             }
           >
-            {renderCardValue(column.key, item, hasAvatar)}
+            {renderCardValue(column.key, item, hasAvatar, valueOptions)}
           </CardField>
         );
       })}

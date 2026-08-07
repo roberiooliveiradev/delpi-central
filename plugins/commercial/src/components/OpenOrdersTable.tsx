@@ -474,6 +474,7 @@ export function OpenOrdersTable({
                   key={rowKey(row)}
                   item={row}
                   visibleKeys={visibleKeySet}
+                  basePath={basePath}
                   hasAvatar={Boolean(
                     row.codigo_cadastro?.trim() &&
                       row.loja_cadastro?.trim() &&
