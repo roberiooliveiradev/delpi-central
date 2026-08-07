@@ -14,7 +14,7 @@ export const EF_HELP_TOOLTIPS = {
     workCenter:
       "Filtra por centro de trabalho (CT). Permite múltipla seleção entre os CTs presentes nos dados carregados.",
     shift:
-      "Turno do apontamento conforme horário de início (1º, 2º ou 3º turno).",
+      "Turno do apontamento (API: turno/turno_label por horário de início — 1º, 2º ou 3º).",
     efficiencyBands:
       "Filtra por faixa de eficiência: na faixa (≥ 50%), eficiência baixa (< 50%) ou fora da faixa (0–199%).",
   },

@@ -349,6 +349,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_eficiencia_fabril_dashboard": RouteContract(
         "eficiencia_fabril_dashboard", "composite_analysis"
     ),
+    "get_eficiencia_fabril_efficiency_by_work_center": RouteContract(
+        "eficiencia_fabril_efficiency_by_work_center", "paged_list"
+    ),
     "get_inspecoes_entrada_resumo": RouteContract(
         "inspecoes_entrada_resumo", "scalar"
     ),

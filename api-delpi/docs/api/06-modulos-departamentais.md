@@ -143,7 +143,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento — roteiro (SG2), estrutura (BOM), análise de tempos e **`time_analysis.findings`** (alertas automáticos). |
 | GET | `/production/oee/series` | Série temporal de OEE por filial. Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
-| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe). |
+| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe; campos `turno`/`turno_label`; filtro opcional `shift=1\|2\|3` ou CSV). |
+| GET | `/production/eficiencia-fabril/efficiency-by-work-center` | Média de eficiência (%) por CT — mesma regra do plugin (OK + faixa 0–199%); filtro `shift` opcional. Ideal para gráfico no TV. |
 | GET | `/production/machine-programs/top-intermediates` | Ranking de intermediários (PI) mais produzidos — programas de máquina (Manutenção). Doc: [production-machine-programs.md](./production-machine-programs.md). |
 
 **Performance (`/production/eficiencia-fabril/appointments`):**

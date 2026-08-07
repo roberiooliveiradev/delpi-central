@@ -315,10 +315,46 @@ def test_eficiencia_fabril_appointments_returns_meta(mock_build) -> None:
         employee=None,
         work_center=None,
         status_ok_only=False,
+        shift=None,
     )
     assert_envelope_meta(
         body_json(response),
         operation_id="list_eficiencia_fabril_appointments",
+        shape="paged_list",
+    )
+
+
+@patch(f"{_PRODUCTION}.build_get_eficiencia_fabril_efficiency_by_work_center_use_case")
+def test_eficiencia_fabril_efficiency_by_work_center_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.production.production_router import (
+        get_eficiencia_fabril_efficiency_by_work_center,
+    )
+
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value=[
+                {
+                    "work_center": "CT-01C",
+                    "efficiency_pct": 75.71,
+                    "appointment_count": 20,
+                }
+            ]
+        )
+    )
+    response = get_eficiencia_fabril_efficiency_by_work_center(
+        start_date=None,
+        end_date=None,
+        date_start=None,
+        date_end=None,
+        branch=None,
+        op=None,
+        employee=None,
+        work_center=None,
+        shift=None,
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="get_eficiencia_fabril_efficiency_by_work_center",
         shape="paged_list",
     )
 

@@ -16,6 +16,7 @@ from app.application.dto.eficiencia_fabril.get_eficiencia_fabril_dashboard_reque
 from app.domain.ports.eficiencia_fabril.eficiencia_fabril_query_repository_port import (
     EficienciaFabrilQueryRepositoryPort,
 )
+from app.domain.production.factory_shifts import resolve_factory_shift
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_settings import (
     EficienciaFabrilQuerySettings,
@@ -277,6 +278,9 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
         if isinstance(data_producao, date):
             data_producao = data_producao.isoformat()
 
+        hora_inicio = _strip_str(row.get("HORA_INICIO"))
+        shift = resolve_factory_shift(hora_inicio)
+
         return EficienciaFabrilDashboardItem(
             appointment_id=_to_int(row.get("appointment_id")),
             filial=_strip_str(row.get("FILIAL")),
@@ -292,8 +296,10 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             login_operador=_strip_str(row.get("LOGIN_OPERADOR")),
             nome_operador=_strip_str(row.get("NOME_OPERADOR")),
             data_producao=data_producao,
-            hora_inicio=_strip_str(row.get("HORA_INICIO")),
+            hora_inicio=hora_inicio,
             hora_final=_strip_str(row.get("HORA_FINAL")),
+            turno=shift.id if shift else None,
+            turno_label=shift.label if shift else None,
             qtd_apontada=_to_float(row.get("QTD_APONTADA")),
             meta_por_hora=_to_float(row.get("META_POR_HORA")),
             tempo_real_horas=_to_float(row.get("TEMPO_REAL_HORAS")),

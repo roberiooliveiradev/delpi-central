@@ -757,6 +757,53 @@
           "optional": true
         }
       }
+    },
+    "list_eficiencia_fabril_appointments": {
+      "label": "Eficiência fabril — apontamentos (carga bulk)",
+      "description": "Apontamentos do período para tabela/gráfico. Agregações (média por CT) exigem a lista completa — maxRows alto evita média distorcida.",
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
+      "valueFields": [
+        "eficiencia_percentual",
+        "resultado_mod",
+        "tempo_real_horas",
+        "tempo_previsto_horas"
+      ],
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
+      }
+    },
+    "get_eficiencia_fabril_efficiency_by_work_center": {
+      "label": "Eficiência fabril — média % por CT",
+      "description": "Uma linha por centro de trabalho com efficiency_pct (média OK 0–199%), igual ao plugin.",
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ],
+      "valueFieldTypes": {
+        "efficiency_pct": "number",
+        "appointment_count": "number"
+      },
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
+      },
+      "allowedDisplayModes": [
+        "table",
+        "bar_chart",
+        "auto"
+      ]
     }
   }
 }

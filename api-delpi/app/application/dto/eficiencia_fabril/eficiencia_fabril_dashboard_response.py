@@ -39,6 +39,10 @@ class EficienciaFabrilDashboardItem:
     data_producao: Optional[str] = None
     hora_inicio: Optional[str] = None
     hora_final: Optional[str] = None
+    # Código do turno (1|2|3) classificado por hora_inicio.
+    turno: Optional[str] = None
+    # Rótulo pt-BR do turno (ex.: «1º Turno»).
+    turno_label: Optional[str] = None
     qtd_apontada: Optional[float] = None
     meta_por_hora: Optional[float] = None
     tempo_real_horas: Optional[float] = None

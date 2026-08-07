@@ -2967,14 +2967,38 @@
       "locale": {
         "en": {
           "label": "Shift",
-          "description": "Shift query parameter."
+          "description": "Shift filter. 5S uses TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; factory efficiency uses 1|2|3 (or CSV)."
         },
         "pt-BR": {
           "label": "Turno",
-          "description": "Turno de produção."
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
         }
       },
       "enumLabels": {
+        "1": {
+          "en": {
+            "label": "1st shift"
+          },
+          "pt-BR": {
+            "label": "1º Turno"
+          }
+        },
+        "2": {
+          "en": {
+            "label": "2nd shift"
+          },
+          "pt-BR": {
+            "label": "2º Turno"
+          }
+        },
+        "3": {
+          "en": {
+            "label": "3rd shift"
+          },
+          "pt-BR": {
+            "label": "3º Turno"
+          }
+        },
         "ADMINISTRATIVO": {
           "en": {
             "label": "Administrative"

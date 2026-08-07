@@ -100,6 +100,10 @@ export type EficienciaFabrilItem = {
   data_producao: string | null;
   hora_inicio: string | null;
   hora_final: string | null;
+  /** Código do turno (1|2|3) classificado pela API a partir de hora_inicio. */
+  turno?: string | null;
+  /** Rótulo pt-BR do turno (ex.: «1º Turno»). */
+  turno_label?: string | null;
   qtd_apontada: number | null;
   meta_por_hora: number | null;
   unidade: string | null;

@@ -419,6 +419,50 @@ def test_enrich_table_accepts_bare_list_payload_like_eficiencia_appointments():
     assert any(column["key"] == "appointment_id" for column in columns)
 
 
+def test_resolve_table_max_rows_bulk_list_and_appointments_overlay():
+    """Bulk list / overlay de apontamentos não pode ficar no default 90 (distorce AVG por CT)."""
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _DEFAULT_BULK_LIST_MAX_ROWS,
+        _DEFAULT_TABLE_MAX_ROWS,
+        _merge_route_info_for_presentation,
+        _resolve_table_max_rows,
+    )
+
+    assert _resolve_table_max_rows({}, {}) == _DEFAULT_TABLE_MAX_ROWS
+    assert (
+        _resolve_table_max_rows({}, {"tvConstraints": {"bulkList": True}})
+        == _DEFAULT_BULK_LIST_MAX_ROWS
+    )
+    assert (
+        _resolve_table_max_rows({}, {"tvConstraints": {"maxRows": 10000, "bulkList": True}})
+        == 10000
+    )
+    # Bloco legado com maxRows=90 não pode vencer o floor bulk (regressão 58,8% vs 75,7%).
+    assert (
+        _resolve_table_max_rows(
+            {"maxRows": 90},
+            {"tvConstraints": {"maxRows": 10000, "bulkList": True}},
+        )
+        == 10000
+    )
+
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route("list_eficiencia_fabril_appointments")
+    assert route is not None
+    assert int((route.get("tvConstraints") or {}).get("maxRows") or 0) >= 10000
+
+    # Payload em cache sem overlay não pode apagar constraints do catálogo.
+    merged = _merge_route_info_for_presentation(
+        route,
+        {"label": "stale", "tvConstraints": {}},
+    )
+    assert merged.get("tvConstraints", {}).get("bulkList") is True
+    assert int(merged.get("tvConstraints", {}).get("maxRows") or 0) >= 10000
+    assert (
+        _resolve_table_max_rows({"maxRows": 90}, merged) >= 10000
+    )
+
+
 def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
     """Catálogo gerado às vezes usa valueFields fantasma; discovery deve preencher o KPI."""
     reset_comunicado_data_block_cache()

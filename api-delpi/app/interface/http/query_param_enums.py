@@ -44,6 +44,8 @@ SI_DEPARTMENT_ID_VALUES = (
 )
 SEVERITY_VALUES = ("low", "medium", "high", "critical")
 SHIFT_5S_VALUES = ("TURNO_1", "TURNO_2", "TURNO_3", "ADMINISTRATIVO")
+# Eficiência fabril / apontamentos — ids 1|2|3 (heurística por hora_inicio).
+FACTORY_SHIFT_VALUES = ("1", "2", "3")
 ACTIVE_BOOL_VALUES = ("true", "false")
 YES_NO_VALUES = ("sim", "nao")
 AUDIT_5S_STATUS_VALUES = ("open", "in_progress", "closed", "cancelled")
@@ -335,11 +337,23 @@ def SEVERITY_QUERY():
 )
 def SHIFT_5S_QUERY():
     return Query(
-    None,
+        None,
     description="5S shift: TURNO_1, TURNO_2, TURNO_3 or ADMINISTRATIVO.",
     pattern=_enum_pattern(SHIFT_5S_VALUES),
     enum=list(SHIFT_5S_VALUES),
-)
+    )
+
+
+def FACTORY_SHIFT_QUERY():
+    """Turno de fábrica (eficiência fabril): 1|2|3 (CSV ainda aceito pelo use case se chegar)."""
+    return Query(
+        None,
+        description=(
+            "Factory shift filter by appointment start time: 1 (1st), 2 (2nd) or 3 (3rd)."
+        ),
+        pattern=_enum_pattern(FACTORY_SHIFT_VALUES),
+        enum=list(FACTORY_SHIFT_VALUES),
+    )
 def AUDIT_5S_STATUS_QUERY():
     return Query(
     None,

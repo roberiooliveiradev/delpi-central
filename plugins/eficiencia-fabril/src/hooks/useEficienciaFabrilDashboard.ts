@@ -67,7 +67,7 @@ function applyScopeFilters(
       const employeeValue = buildEmployeeOptionValue(item);
       return employeeValue ? params.employees.includes(employeeValue) : false;
     })
-    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts))
+    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts, item.turno))
     .filter((item) => matchesEfficiencyBandFilter(item, params.efficiency_bands));
 }
 

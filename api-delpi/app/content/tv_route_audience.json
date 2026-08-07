@@ -1264,6 +1264,21 @@
       },
       "category": "production"
     },
+    "get_eficiencia_fabril_efficiency_by_work_center": {
+      "locale": {
+        "en": {
+          "summary": "Factory efficiency average % by work center",
+          "description": "Average efficiency percent per work center (OK appointments in 0–199% band), same rule as the factory efficiency plugin.",
+          "label": "Factory efficiency by work center"
+        },
+        "pt-BR": {
+          "label": "Eficiência fabril — média % por CT",
+          "summary": "Eficiência fabril — média % por centro de trabalho",
+          "description": "Média de eficiência (%) por CT (apontamentos OK na faixa 0–199%), mesma regra do plugin eficiência-fabril. Ideal para gráfico de barras no TV."
+        }
+      },
+      "category": "production"
+    },
     "get_envelope_contracts": {
       "locale": {
         "en": {

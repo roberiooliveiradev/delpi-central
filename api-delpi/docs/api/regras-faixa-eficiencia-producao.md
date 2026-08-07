@@ -83,7 +83,9 @@ Consumidores:
 - Detalhe na UI: `GET /production/oee/appointments/{appointment_id}` (roteiro SG2, estrutura BOM, tempos, `findings` de alertas).
 
 - **Dashboard** (`/dashboard`): summary e charts aplicam cap 0–199 via repositório.
-- **Appointments** (`/appointments`): retorna todos os registros do período; o MFE filtra localmente para KPIs.
+- **Appointments** (`/appointments`): retorna todos os registros do período (com `turno`/`turno_label` classificados por `hora_inicio`); o MFE filtra localmente para KPIs. Filtro opcional `shift=1|2|3` (CSV) na API para consumidores externos.
+- **Eficiência por CT** (`/efficiency-by-work-center`): média % por centro de trabalho — mesma regra do plugin (OK + faixa 0–199%); use no TV em vez da lista bulk.
+- **Turnos de fábrica (canônico na API):** `app/domain/production/factory_shifts.py` — 1º `04:34–14:17`, 2º `14:18–23:49`, 3º `23:50–04:33`. O plugin espelha as faixas em `constants/shifts.ts` e prefere `item.turno` quando a API envia.
 - Tabela: linha vermelha + badge **Verificar** se `isProductionEfficiencyOutlier(eficiencia_percentual)`.
 - Tabela: linha âmbar + badge **Eficiência baixa** se eficiência na faixa válida e `< 50%` (`isProductionEfficiencyLow`).
 - Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{id}`; API de detalhe: `GET /production/oee/appointments/{id}` com `time_analysis.findings` (inclui `low_efficiency_reported` e diagnóstico de motivo).

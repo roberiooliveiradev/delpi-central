@@ -63,6 +63,8 @@ _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_s
 _DEFAULT_TABLE_MAX_ROWS = 90
 # Séries longas (ex.: «este ano» diário): tabela acompanha o gráfico com todos os pontos.
 _DEFAULT_SERIES_TABLE_MAX_ROWS = 366
+# Listagens bulk (apontamentos) usadas em AVG por CT/turno: 90 linhas distorce a média.
+_DEFAULT_BULK_LIST_MAX_ROWS = 10000
 
 
 def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
@@ -105,15 +107,55 @@ def _apply_incremental_pagination_defaults(
 
 
 def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any]) -> int:
-    if binding.get("maxRows") is not None:
-        return max(1, int(binding["maxRows"]))
-    constraints = route_info.get("tvConstraints")
-    if isinstance(constraints, dict) and constraints.get("maxRows") is not None:
-        return max(1, int(constraints["maxRows"]))
+    """Cap de linhas da tabela/gráfico.
+
+    Rotas ``bulkList`` (apontamentos etc.) têm piso alto: ``binding.maxRows`` legado
+    (ex.: 90) não pode ficar abaixo do floor da rota — senão AVG por CT/turno distorce.
+    """
+    constraints = (
+        route_info.get("tvConstraints")
+        if isinstance(route_info.get("tvConstraints"), dict)
+        else {}
+    )
+    route_cap = (
+        max(1, int(constraints["maxRows"]))
+        if constraints.get("maxRows") is not None
+        else None
+    )
+    bulk = bool(constraints.get("bulkList"))
+    binding_raw = binding.get("maxRows")
+    binding_cap = max(1, int(binding_raw)) if binding_raw is not None else None
+
+    if bulk:
+        floor = route_cap if route_cap is not None else _DEFAULT_BULK_LIST_MAX_ROWS
+        if binding_cap is None:
+            return floor
+        return max(binding_cap, floor)
+
+    if binding_cap is not None:
+        return binding_cap
+    if route_cap is not None:
+        return route_cap
     # Rota de série: tabela traz todos os pontos da API (acompanha o gráfico), sem cap de 90.
     if str(route_info.get("seriesField") or "").strip():
         return _DEFAULT_SERIES_TABLE_MAX_ROWS
     return _DEFAULT_TABLE_MAX_ROWS
+
+
+def _merge_route_info_for_presentation(
+    catalog_route: dict[str, Any] | None,
+    payload_route: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Catálogo vence em constraints/campos TV — payload em cache pode estar desatualizado."""
+    base = dict(payload_route) if isinstance(payload_route, dict) else {}
+    if not isinstance(catalog_route, dict):
+        return base
+    merged = {**base, **catalog_route}
+    # tvConstraints do catálogo sempre atual (overlay bulkList/maxRows).
+    catalog_constraints = catalog_route.get("tvConstraints")
+    if isinstance(catalog_constraints, dict):
+        merged["tvConstraints"] = dict(catalog_constraints)
+    return merged
 
 
 def _build_data_cache_key(
@@ -1462,7 +1504,10 @@ class ComunicadoDataEnrichmentService:
             result["resolved"] = resolve_data_fetch_error(exc)
             return result
 
-        route_info = payload.get("route") or {}
+        route_info = _merge_route_info_for_presentation(
+            route if isinstance(route, dict) else None,
+            payload.get("route") if isinstance(payload.get("route"), dict) else None,
+        )
         cache_hit = bool(payload.get("_tvCacheHit"))
         data = payload.get("data")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}

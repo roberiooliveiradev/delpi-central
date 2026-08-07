@@ -11,6 +11,10 @@ from app.application.services.eficiencia_fabril.eficiencia_fabril_appointments_c
 from app.domain.ports.eficiencia_fabril.eficiencia_fabril_query_repository_port import (
     EficienciaFabrilQueryRepositoryPort,
 )
+from app.domain.production.factory_shifts import (
+    matches_factory_shift_filter,
+    parse_factory_shift_filter,
+)
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_settings import (
     EficienciaFabrilQuerySettings,
@@ -37,6 +41,7 @@ class GetEficienciaFabrilAppointmentsUseCase:
         employee: Optional[str] = None,
         work_center: Optional[str] = None,
         status_ok_only: bool = False,
+        shift: Optional[str] = None,
     ) -> list[dict]:
         if not date_start or not str(date_start).strip():
             raise ValueError("date_start é obrigatório.")
@@ -59,6 +64,8 @@ class GetEficienciaFabrilAppointmentsUseCase:
                 f"branch inválida. Valores aceitos: {', '.join(self._settings.branches)}."
             )
 
+        shift_filter = parse_factory_shift_filter(shift)
+
         request = GetEficienciaFabrilDashboardRequest(
             date_start=parsed_start,
             date_end=parsed_end,
@@ -77,9 +84,21 @@ class GetEficienciaFabrilAppointmentsUseCase:
         )
         cached = get_cached_eficiencia_fabril_appointments(cache_key)
         if cached is not None:
-            return cached
+            result = cached
+        else:
+            items = self._repository.get_appointments(request, status_ok_only=status_ok_only)
+            result = [item.to_dict() for item in items]
+            set_cached_eficiencia_fabril_appointments(cache_key, result)
 
-        items = self._repository.get_appointments(request, status_ok_only=status_ok_only)
-        result = [item.to_dict() for item in items]
-        set_cached_eficiencia_fabril_appointments(cache_key, result)
-        return result
+        if not shift_filter:
+            return result
+
+        return [
+            item
+            for item in result
+            if matches_factory_shift_filter(
+                item.get("hora_inicio"),
+                shifts=shift_filter,
+                turno=item.get("turno"),
+            )
+        ]
