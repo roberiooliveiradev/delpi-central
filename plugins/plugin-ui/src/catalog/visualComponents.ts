@@ -206,6 +206,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-07",
     changeNote: "Barra de proporção compacta para células e cards",
   }),
+  vc("data", "HorizontalTimeline", {
+    addedAt: "2026-08-07",
+    changeNote: "Linha do tempo horizontal de marcos com bandeira «Hoje»",
+  }),
   vc("data", "TreeGuideRails", {
     addedAt: "2026-07-13",
     changeNote: "Linhas pontilhadas suaves para árvores hierárquicas",

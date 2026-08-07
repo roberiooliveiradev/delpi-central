@@ -603,6 +603,23 @@ Trilhos pontilhados suaves para árvores hierárquicas (estilo explorador de arq
 
 CSS: `styles/tree-guides.css`. Consumidores: `transformometro` (WBS), `minha-delpi-chat` (árvore de apresentação).
 
+### `HorizontalTimeline`
+
+Linha do tempo **horizontal** de marcos (rótulo + data + tom). Marco `kind: "today"` usa ícone de bandeira e tag «Agora». Diferente do `Timeline` (atividade vertical).
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `points` | `HorizontalTimelinePoint[]` | Marcos (`id`, `label`, `dateIso`, `dateLabel`, `tone`, `kind?`, `isCurrent?`) |
+| `labels` | parcial | `currentTag`, `todayTag`, `emptyMessage`, `todayMarkerTitle` |
+| `aria-label` | `string?` | Acessibilidade do `<ol>` |
+
+```tsx
+const Timeline = createDashboardHorizontalTimeline({ prefix: "cm" });
+<Timeline points={points} labels={{ emptyMessage: "Sem marcos." }} />
+```
+
+CSS: `styles/horizontal-timeline.css`. Consumidor: `commercial` (detalhe OP / Pedidos em aberto).
+
 ### `DetailFieldGrid`
 
 Grade de detalhe (`<dl>`) para fichas operacionais — rótulos, valores, hint opcional e coluna wide.

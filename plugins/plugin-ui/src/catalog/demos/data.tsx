@@ -24,6 +24,8 @@ import {
   TablePaginationNav,
   tablePaginationNavBemClasses,
   TreeGuideRails,
+  HorizontalTimeline,
+  horizontalTimelineBemClasses,
   type DataTableColumn,
 } from "../../components/data";
 import { createDashboardLoadingActivityCard } from "../../components/feedback";
@@ -384,7 +386,60 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
       },
     ],
   },
+  {
+    id: "data.HorizontalTimeline",
+    family: "data",
+    exportName: "HorizontalTimeline",
+    title: "HorizontalTimeline",
+    description:
+      "Marcos horizontais com data, tom e destaque «Hoje» (bandeira). Use createDashboardHorizontalTimeline no MFE.",
+    propsSummary: ["points", "labels", "aria-label"],
+    demos: [
+      {
+        id: "default",
+        label: "OP / marcos",
+        render: () => <HorizontalTimelineDemo />,
+      },
+    ],
+  },
 ];
+
+function HorizontalTimelineDemo() {
+  const classNames = horizontalTimelineBemClasses(PUC_PREFIX);
+  return (
+    <HorizontalTimeline
+      classNames={classNames}
+      aria-label="Demo linha do tempo"
+      points={[
+        {
+          id: "1",
+          label: "Emissão",
+          dateIso: "2026-08-04",
+          dateLabel: "04/08/2026",
+          tone: "neutral",
+          kind: "event",
+          isCurrent: true,
+        },
+        {
+          id: "today",
+          label: "Hoje",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "info",
+          kind: "today",
+        },
+        {
+          id: "3",
+          label: "Fim previsto",
+          dateIso: "2026-08-10",
+          dateLabel: "10/08/2026",
+          tone: "success",
+          kind: "event",
+        },
+      ]}
+    />
+  );
+}
 
 function TreeGuideRailsDemo() {
   const rows: Array<{ label: string; depth: number; path: boolean[] }> = [

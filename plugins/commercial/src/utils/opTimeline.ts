@@ -1,8 +1,14 @@
+import type { HorizontalTimelineTone } from "@delpi/plugin-ui/index";
 import type { OpAllocationEntry } from "../types/opForecast";
 import type { ProductionAppointmentItem, ProductionOrderByOpData } from "../types/productionExtras";
 import { formatDisplayDate, resolveOpVsPedidoPrazo } from "./dates";
 
 export type OpTimelineTone = "default" | "danger" | "warning" | "success" | "info";
+
+function toHorizontalTone(tone: OpTimelineTone | undefined): HorizontalTimelineTone {
+  if (!tone || tone === "default") return "neutral";
+  return tone;
+}
 
 export type OpTimelineItem = {
   id: string;
@@ -174,7 +180,7 @@ export type OpHorizontalTimelinePoint = {
   label: string;
   dateIso: string;
   dateLabel: string;
-  tone: OpTimelineTone;
+  tone: HorizontalTimelineTone;
   kind: "event" | "today";
   /** Marco atual: último evento ≤ hoje, ou próximo se todos no futuro. */
   isCurrent: boolean;
@@ -199,7 +205,7 @@ export function buildOpHorizontalTimeline(
       label: String(event.title),
       dateIso: sortKey(event.occurredAt),
       dateLabel: String(event.timeLabel || formatDisplayDate(event.occurredAt)),
-      tone: event.tone ?? "default",
+      tone: toHorizontalTone(event.tone),
       kind: "event" as const,
       isCurrent: false,
     }));

@@ -279,6 +279,19 @@ export {
 } from "./TreeGuideRails";
 
 export {
+  HorizontalTimeline,
+  createDashboardHorizontalTimeline,
+  horizontalTimelineBemClasses,
+  DEFAULT_HORIZONTAL_TIMELINE_LABELS,
+  type DashboardHorizontalTimelineProps,
+  type HorizontalTimelineClassNames,
+  type HorizontalTimelineLabels,
+  type HorizontalTimelinePoint,
+  type HorizontalTimelineProps,
+  type HorizontalTimelineTone,
+} from "./HorizontalTimeline";
+
+export {
   Timeline,
   createTimeline,
   buildTimelineForest,

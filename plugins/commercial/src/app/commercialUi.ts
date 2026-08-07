@@ -19,6 +19,7 @@ import {
   createHostContainedDrawerShell,
   createHostContainedModalShell,
   createDashboardInlineMeter,
+  createDashboardHorizontalTimeline,
   createFilterBarShell,
   dateFieldBemClasses,
   createDashboardPageHero,
@@ -65,6 +66,9 @@ export const cmStateBannerClassNames = stateBannerBemClasses(UI_PREFIX);
 export const cmStatusBadgeClassNames = statusBadgeBemClasses(UI_PREFIX);
 export const cmInlineMeterClassNames = inlineMeterBemClasses(UI_PREFIX);
 export const CommercialInlineMeter = createDashboardInlineMeter({ prefix: UI_PREFIX });
+export const CommercialHorizontalTimeline = createDashboardHorizontalTimeline({
+  prefix: UI_PREFIX,
+});
 export const cmAlertQueueClassNames = alertQueueBemClasses(UI_PREFIX);
 export const cmScopeChipBarClassNames = scopeChipBarBemClasses(UI_PREFIX);
 export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);

@@ -2,6 +2,7 @@ import {
   cmSectionCardClassNames,
   cmSectionLabels,
   cmStatusBadgeClassNames,
+  CommercialHorizontalTimeline,
   CommercialInlineMeter,
   CommercialLoadingCard,
   UI_PREFIX,
@@ -13,7 +14,6 @@ import { formatDisplayDate, resolveOpVsPedidoPrazo } from "../utils/dates";
 import { displayApiScalar } from "../utils/displayApiScalar";
 import { formatQuantity } from "../utils/format";
 import { buildOpHorizontalTimeline, buildOpTimelineEvents } from "../utils/opTimeline";
-import { OpenOrdersHorizontalTimeline } from "./OpenOrdersHorizontalTimeline";
 import { SectionCard, SegmentToggle, StatusBadge } from "@delpi/plugin-ui/index";
 import { useMemo } from "react";
 
@@ -169,9 +169,9 @@ export function OpenOrdersOpProgressBlock({
         ) : (
           <div className="cm-open-orders-detail__timeline-wrap">
             <p className="cm-open-orders-detail__timeline-caption">Linha do tempo da OP</p>
-            <OpenOrdersHorizontalTimeline
+            <CommercialHorizontalTimeline
               points={horizontalPoints}
-              emptyMessage="Sem marcos com data para esta OP."
+              labels={{ emptyMessage: "Sem marcos com data para esta OP." }}
               aria-label={`Linha do tempo da OP ${current.numero_op}`}
             />
           </div>
