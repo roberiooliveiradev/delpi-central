@@ -1,4 +1,4 @@
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 
 export type CustomerCommercialStatus = "ativo" | "atencao" | "inativo";
 
@@ -17,7 +17,7 @@ export type CustomerSummary = {
   temAtraso: boolean;
   temPedidoParcial: boolean;
   /** Referências às linhas do dataset (não clonar). */
-  lines: PedidosVendaAbertosItem[];
+  lines: OpenOrdersTotvsItem[];
   /** Enrichment (SA1 / NF / avatar). */
   city?: string | null;
   state?: string | null;

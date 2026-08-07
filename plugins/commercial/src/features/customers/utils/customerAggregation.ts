@@ -3,7 +3,7 @@ import {
   getDeliveryOverdueDays,
   isDeliveryOverdue,
 } from "../../../utils/dates.ts";
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos.ts";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs.ts";
 import type {
   CustomerAggregationResult,
   CustomerSummary,
@@ -20,7 +20,7 @@ export function toFiniteNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function isPartialDeliveryLine(item: PedidosVendaAbertosItem): boolean {
+export function isPartialDeliveryLine(item: OpenOrdersTotvsItem): boolean {
   const entregue = toFiniteNumber(item.entregue);
   const saldo = toFiniteNumber(item.saldo);
   return entregue > 0 && saldo > 0;
@@ -44,7 +44,7 @@ function pickDominantName(names: string[]): string {
   return best;
 }
 
-function resolveNextDelivery(lines: PedidosVendaAbertosItem[]): string | null {
+function resolveNextDelivery(lines: OpenOrdersTotvsItem[]): string | null {
   let next: string | null = null;
   for (const line of lines) {
     const saldo = toFiniteNumber(line.saldo);
@@ -62,7 +62,7 @@ function summarizeGroup(
   key: string,
   codigo: string,
   loja: string,
-  lines: PedidosVendaAbertosItem[],
+  lines: OpenOrdersTotvsItem[],
 ): CustomerSummary {
   const orderKeys = new Set<string>();
   const overdueOrders = new Set<string>();
@@ -116,9 +116,9 @@ function summarizeGroup(
  * Não muta o array de entrada. Não soma saldo em quantidade (UMs incompatíveis).
  */
 export function aggregateCustomers(
-  items: readonly PedidosVendaAbertosItem[],
+  items: readonly OpenOrdersTotvsItem[],
 ): CustomerAggregationResult {
-  const groups = new Map<string, PedidosVendaAbertosItem[]>();
+  const groups = new Map<string, OpenOrdersTotvsItem[]>();
   let incompleteLineCount = 0;
   const allOrderKeys = new Set<string>();
   let totalValorAberto = 0;

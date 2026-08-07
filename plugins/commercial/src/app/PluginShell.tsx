@@ -15,7 +15,7 @@ import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { formatCurrency } from "../utils/format";
-import { GestaoSubNav } from "../features/gestao/components/GestaoSubNav";
+import { AnalyticsSubNav } from "../features/analytics/components/AnalyticsSubNav";
 import { isAnalyticsView, resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
@@ -231,7 +231,7 @@ export function PluginShell({
         />
 
         {isAnalyticsView(view) && showAnalytics ? (
-          <GestaoSubNav view={view} basePath={basePath} />
+          <AnalyticsSubNav view={view} basePath={basePath} />
         ) : null}
 
         <CommercialViewTransition transitionKey={view} tone="page">

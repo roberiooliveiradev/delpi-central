@@ -15,17 +15,17 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
-import { GestaoEquipePage } from "./features/gestao/GestaoEquipePage";
-import { GestaoOportunidadeDetailPage } from "./features/gestao/GestaoOportunidadeDetailPage";
-import { GestaoOportunidadesPage } from "./features/gestao/GestaoOportunidadesPage";
-import { GestaoOtdLineDetailPage } from "./features/gestao/GestaoOtdLineDetailPage";
-import { GestaoOtdPage } from "./features/gestao/GestaoOtdPage";
-import { GestaoPage } from "./features/gestao/GestaoPage";
+import { AnalyticsTeamPage } from "./features/analytics/AnalyticsTeamPage";
+import { AnalyticsOpportunityDetailPage } from "./features/analytics/AnalyticsOpportunityDetailPage";
+import { AnalyticsOpportunitiesPage } from "./features/analytics/AnalyticsOpportunitiesPage";
+import { AnalyticsOtdLineDetailPage } from "./features/analytics/AnalyticsOtdLineDetailPage";
+import { AnalyticsOtdPage } from "./features/analytics/AnalyticsOtdPage";
+import { AnalyticsPage } from "./features/analytics/AnalyticsPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
 import { OpenOrdersPage } from "./features/open-orders/OpenOrdersPage";
-import { PropostaDetailPage } from "./features/propostas/PropostaDetailPage";
-import { PropostasPage } from "./features/propostas/PropostasPage";
+import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
+import { ProposalsPage } from "./features/proposals/ProposalsPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
 export type AppProps = {
@@ -94,28 +94,28 @@ function AppRoutes({
       ) : null}
       {view === "proposals" ? (
         canViewProposals ? (
-          <PropostasPage basePath={basePath} />
+          <ProposalsPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "proposal_detail" && route.propostaId ? (
         canViewProposals ? (
-          <PropostaDetailPage basePath={basePath} propostaId={route.propostaId} />
+          <ProposalDetailPage basePath={basePath} propostaId={route.propostaId} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "analytics" ? (
         canViewAnalytics ? (
-          <GestaoPage basePath={basePath} />
+          <AnalyticsPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "analytics_otd" ? (
         canViewAnalytics ? (
-          <GestaoOtdPage basePath={basePath} />
+          <AnalyticsOtdPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
@@ -125,7 +125,7 @@ function AppRoutes({
       route.orderNumber &&
       route.lineItem ? (
         canViewAnalytics ? (
-          <GestaoOtdLineDetailPage
+          <AnalyticsOtdLineDetailPage
             basePath={basePath}
             branch={route.orderBranch}
             orderNumber={route.orderNumber}
@@ -137,21 +137,21 @@ function AppRoutes({
       ) : null}
       {view === "analytics_team" ? (
         canViewAnalytics && canUseTeamScope ? (
-          <GestaoEquipePage basePath={basePath} />
+          <AnalyticsTeamPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "analytics_opportunities" ? (
         canViewAnalytics ? (
-          <GestaoOportunidadesPage basePath={basePath} />
+          <AnalyticsOpportunitiesPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "analytics_opportunity_detail" && route.proposalNumber ? (
         canViewAnalytics ? (
-          <GestaoOportunidadeDetailPage
+          <AnalyticsOpportunityDetailPage
             basePath={basePath}
             proposalNumber={route.proposalNumber}
             search={search}

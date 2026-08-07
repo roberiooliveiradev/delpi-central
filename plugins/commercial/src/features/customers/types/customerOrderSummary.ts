@@ -1,4 +1,4 @@
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos.ts";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs.ts";
 
 export type CustomerOrderSituation = "atrasado" | "parcial" | "em_aberto";
 
@@ -16,5 +16,5 @@ export type CustomerOrderSummary = {
   temParcial: boolean;
   situacao: CustomerOrderSituation;
   /** Referências às linhas do dataset (não clonar). */
-  lines: PedidosVendaAbertosItem[];
+  lines: OpenOrdersTotvsItem[];
 };

@@ -1,7 +1,7 @@
 import type {
-  PedidosVendaAbertosItem,
-  PedidosVendaAbertosSummary,
-} from "../types/pedidosVendaAbertos";
+  OpenOrdersTotvsItem,
+  OpenOrdersTotvsSummary,
+} from "../types/openOrdersTotvs";
 import { formatEntityCodeStore } from "./entityCodeStore";
 import { isDeliveryOverdue, isWithinDateRange } from "./dates";
 import {
@@ -17,7 +17,7 @@ export type ClientOption = {
   name: string;
 };
 
-export type PedidosVendaAbertosFilters = {
+export type OpenOrdersTotvsFilters = {
   search: string;
   filial: string;
   clientCodes: string[];
@@ -28,7 +28,7 @@ export type PedidosVendaAbertosFilters = {
   lateOnly: boolean;
 };
 
-export const DEFAULT_FILTERS: PedidosVendaAbertosFilters = {
+export const DEFAULT_FILTERS: OpenOrdersTotvsFilters = {
   search: "",
   filial: "",
   clientCodes: [],
@@ -38,7 +38,7 @@ export const DEFAULT_FILTERS: PedidosVendaAbertosFilters = {
   lateOnly: false,
 };
 
-export function getClientKey(item: PedidosVendaAbertosItem): string {
+export function getClientKey(item: OpenOrdersTotvsItem): string {
   return item.nome_cliente?.trim() || item.codigo_cliente?.trim() || "";
 }
 
@@ -49,9 +49,9 @@ function includesInsensitive(value: string | null | undefined, query: string): b
 }
 
 export function filterPedidosItems(
-  items: PedidosVendaAbertosItem[],
-  filters: PedidosVendaAbertosFilters,
-): PedidosVendaAbertosItem[] {
+  items: OpenOrdersTotvsItem[],
+  filters: OpenOrdersTotvsFilters,
+): OpenOrdersTotvsItem[] {
   return items.filter((item) => {
     if (filters.filial && item.filial !== filters.filial) return false;
     if (
@@ -91,8 +91,8 @@ export function filterPedidosItems(
 }
 
 export function computeSummaryFromItems(
-  items: PedidosVendaAbertosItem[],
-): PedidosVendaAbertosSummary {
+  items: OpenOrdersTotvsItem[],
+): OpenOrdersTotvsSummary {
   return {
     total_linhas: items.length,
     valor_total_aberto: items.reduce((acc, item) => acc + (item.valor_aberto ?? 0), 0),
@@ -104,11 +104,11 @@ export function computeSummaryFromItems(
   };
 }
 
-export function collectDistinctFiliais(items: PedidosVendaAbertosItem[]): string[] {
+export function collectDistinctFiliais(items: OpenOrdersTotvsItem[]): string[] {
   return [...new Set(items.map((item) => item.filial).filter(Boolean))].sort();
 }
 
-export function collectDistinctClients(items: PedidosVendaAbertosItem[]): ClientOption[] {
+export function collectDistinctClients(items: OpenOrdersTotvsItem[]): ClientOption[] {
   const clients = new Map<string, ClientOption>();
 
   for (const item of items) {

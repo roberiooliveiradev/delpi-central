@@ -33,7 +33,7 @@ Reads TOTVS continuam na api-delpi; estado Delpi na commercial-api.
 
 ```bash
 docker exec -it delpi-commercial-api \
-  python scripts/backfill_from_pedidos_venda_abertos.py
+  python scripts/backfill_from_open_orders_legacy.py
 ./commercial-api/scripts/reconcile_portfolio_counts.sh
 ```
 

@@ -25,7 +25,7 @@ export type UseCustomerDetailDataResult = {
 };
 
 /**
- * Detalhe do cliente: reutiliza getPedidosVendaAbertos via useCustomersData.
+ * Detalhe do cliente: reutiliza getOpenOrdersTotvs via useCustomersData.
  * Deep link independente da visita prévia à lista.
  */
 export function useCustomerDetailData(

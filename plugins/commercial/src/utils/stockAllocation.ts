@@ -1,22 +1,22 @@
-import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { compareDeliveryDates } from "./dates";
 import { roundQuantity } from "./quantityMath";
 
-export function buildStockGroupKey(item: PedidosVendaAbertosItem): string {
+export function buildStockGroupKey(item: OpenOrdersTotvsItem): string {
   return `${item.filial}::${item.produto}`;
 }
 
-export function buildLineKey(item: PedidosVendaAbertosItem): string {
+export function buildLineKey(item: OpenOrdersTotvsItem): string {
   return `${item.filial}::${item.pedido}::${item.linha}::${item.produto}`;
 }
 
-export function getAllocatedStock(item: PedidosVendaAbertosItem): number {
+export function getAllocatedStock(item: OpenOrdersTotvsItem): number {
   return item.estoque_alocado ?? 0;
 }
 
 function compareLinesForStockAllocation(
-  a: PedidosVendaAbertosItem,
-  b: PedidosVendaAbertosItem,
+  a: OpenOrdersTotvsItem,
+  b: OpenOrdersTotvsItem,
 ): number {
   const byDelivery = compareDeliveryDates(a.data_entrega, b.data_entrega);
   if (byDelivery !== 0) return byDelivery;
@@ -27,7 +27,7 @@ function compareLinesForStockAllocation(
   return (a.linha ?? "").localeCompare(b.linha ?? "", "pt-BR", { numeric: true });
 }
 
-function resolvePhysicalStock(items: PedidosVendaAbertosItem[]): number {
+function resolvePhysicalStock(items: OpenOrdersTotvsItem[]): number {
   return roundQuantity(Math.max(0, ...items.map((item) => item.no_estoque ?? 0)));
 }
 
@@ -36,11 +36,11 @@ function resolvePhysicalStock(items: PedidosVendaAbertosItem[]): number {
  * priorizando pedidos com data de entrega mais antiga (FIFO operacional).
  */
 export function allocateStockToOrders(
-  items: PedidosVendaAbertosItem[],
-): PedidosVendaAbertosItem[] {
+  items: OpenOrdersTotvsItem[],
+): OpenOrdersTotvsItem[] {
   if (items.length === 0) return [];
 
-  const groups = new Map<string, PedidosVendaAbertosItem[]>();
+  const groups = new Map<string, OpenOrdersTotvsItem[]>();
   for (const item of items) {
     const key = buildStockGroupKey(item);
     const bucket = groups.get(key);

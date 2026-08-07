@@ -1,6 +1,6 @@
-import type { OpsAbertaDetalhe, OpsAbertasData } from "../types/opsAbertas";
-import type { LineOpPrevisao, OpAllocationEntry } from "../types/opPrevisao";
-import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import type { OpsAbertaDetalhe, OpsAbertasData } from "../types/openOps";
+import type { LineOpForecast, OpAllocationEntry } from "../types/opForecast";
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { compareDeliveryDates, formatDisplayDate } from "./dates";
 import {
   isNegligibleQuantity,
@@ -14,10 +14,10 @@ import {
 } from "./stockAllocation";
 
 export type {
-  LineOpPrevisao,
-  LineOpPrevisaoKind,
+  LineOpForecast,
+  LineOpForecastKind,
   OpAllocationEntry,
-} from "../types/opPrevisao";
+} from "../types/opForecast";
 
 export type OpsProductGroup = {
   detalhes: OpsAbertaDetalhe[];
@@ -65,8 +65,8 @@ function compareOpsByForecastDate(left: string | null, right: string | null): nu
 }
 
 function compareLinesForAllocation(
-  a: PedidosVendaAbertosItem,
-  b: PedidosVendaAbertosItem,
+  a: OpenOrdersTotvsItem,
+  b: OpenOrdersTotvsItem,
 ): number {
   const byDelivery = compareDeliveryDates(a.data_entrega, b.data_entrega);
   if (byDelivery !== 0) return byDelivery;
@@ -88,7 +88,7 @@ function buildOpPool(detalhes: OpsAbertaDetalhe[]): OpPoolEntry[] {
     }));
 }
 
-function buildEstoquePrevisao(saldoNecessarioProducao: number): LineOpPrevisao {
+function buildEstoquePrevisao(saldoNecessarioProducao: number): LineOpForecast {
   return {
     kind: "estoque",
     saldoNecessarioProducao,
@@ -103,7 +103,7 @@ function buildEstoquePrevisao(saldoNecessarioProducao: number): LineOpPrevisao {
 function allocateLineFromPool(
   need: number,
   pool: OpPoolEntry[],
-): { previsao: LineOpPrevisao; remainingNeed: number } {
+): { previsao: LineOpForecast; remainingNeed: number } {
   const opsUtilizadas: OpAllocationEntry[] = [];
   let remainingNeed = roundQuantity(need);
   let previsaoData: string | null = null;
@@ -206,12 +206,12 @@ function allocateLineFromPool(
  * após a alocação de estoque. A previsão é a data da OP que completa o saldo faltante da linha.
  */
 export function allocateOpsToOrders(
-  items: PedidosVendaAbertosItem[],
+  items: OpenOrdersTotvsItem[],
   opsIndex: OpsProductIndex,
-): PedidosVendaAbertosItem[] {
+): OpenOrdersTotvsItem[] {
   if (items.length === 0) return [];
 
-  const groups = new Map<string, PedidosVendaAbertosItem[]>();
+  const groups = new Map<string, OpenOrdersTotvsItem[]>();
   for (const item of items) {
     const key = buildStockGroupKey(item);
     const bucket = groups.get(key);
@@ -219,7 +219,7 @@ export function allocateOpsToOrders(
     else groups.set(key, [item]);
   }
 
-  const previsaoByLine = new Map<string, LineOpPrevisao>();
+  const previsaoByLine = new Map<string, LineOpForecast>();
 
   for (const [groupKey, groupItems] of groups) {
     const pool = buildOpPool(opsIndex.get(groupKey)?.detalhes ?? []);
@@ -246,7 +246,7 @@ export function allocateOpsToOrders(
   }));
 }
 
-export function getLineOpPrevisao(item: PedidosVendaAbertosItem): LineOpPrevisao {
+export function getLineOpForecast(item: OpenOrdersTotvsItem): LineOpForecast {
   return (
     item.previsao_op ?? {
       kind: "estoque",
@@ -260,7 +260,7 @@ export function getLineOpPrevisao(item: PedidosVendaAbertosItem): LineOpPrevisao
   );
 }
 
-export function canOpenOpPrevisaoModal(item: PedidosVendaAbertosItem): boolean {
-  const previsao = getLineOpPrevisao(item);
+export function canOpenOpForecastModal(item: OpenOrdersTotvsItem): boolean {
+  const previsao = getLineOpForecast(item);
   return previsao.opsUtilizadas.length > 0;
 }

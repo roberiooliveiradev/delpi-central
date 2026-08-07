@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { enrichPortfolioCustomers } from "../../../api/customerEnrichmentApi";
-import { getPedidosVendaAbertos } from "../../../api/pedidosVendaAbertosApi";
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos";
+import { getOpenOrdersTotvs } from "../../../api/openOrdersTotvsApi";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import type {
   CustomerAggregationResult,
   CustomerAttentionFilter,
@@ -29,7 +29,7 @@ export type UseCustomersDataResult = {
   refreshing: boolean;
   error: string | null;
   hasData: boolean;
-  items: PedidosVendaAbertosItem[];
+  items: OpenOrdersTotvsItem[];
   aggregation: CustomerAggregationResult | null;
   filteredCustomers: CustomerSummary[];
   pagedCustomers: CustomerSummary[];
@@ -58,7 +58,7 @@ export function useCustomersData(
   },
 ): UseCustomersDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
-  const [items, setItems] = useState<PedidosVendaAbertosItem[]>([]);
+  const [items, setItems] = useState<OpenOrdersTotvsItem[]>([]);
   const [enrichmentByKey, setEnrichmentByKey] = useState<
     Record<
       string,
@@ -104,7 +104,7 @@ export function useCustomersData(
         }
         setError(null);
 
-        const data = await getPedidosVendaAbertos(controller.signal, {
+        const data = await getOpenOrdersTotvs(controller.signal, {
           sellerId: sellerId || null,
         });
         setItems(data.items);

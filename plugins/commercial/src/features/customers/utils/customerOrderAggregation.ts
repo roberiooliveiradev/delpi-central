@@ -3,7 +3,7 @@ import {
   getDeliveryOverdueDays,
   isDeliveryOverdue,
 } from "../../../utils/dates.ts";
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos.ts";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs.ts";
 import type {
   CustomerOrderSituation,
   CustomerOrderSummary,
@@ -14,7 +14,7 @@ import {
 } from "./customerAggregation.ts";
 import { buildOrderKey, normalizeCadastroPart } from "./customerIdentity.ts";
 
-function resolveNextDelivery(lines: readonly PedidosVendaAbertosItem[]): string | null {
+function resolveNextDelivery(lines: readonly OpenOrdersTotvsItem[]): string | null {
   let next: string | null = null;
   for (const line of lines) {
     const saldo = toFiniteNumber(line.saldo);
@@ -31,7 +31,7 @@ function resolveNextDelivery(lines: readonly PedidosVendaAbertosItem[]): string 
 /**
  * Primeiro `pedido_cliente` não vazio na ordem das linhas do grupo (determinístico).
  */
-export function pickPedidoCliente(lines: readonly PedidosVendaAbertosItem[]): string {
+export function pickPedidoCliente(lines: readonly OpenOrdersTotvsItem[]): string {
   for (const line of lines) {
     const value = normalizeCadastroPart(line.pedido_cliente);
     if (value) return value;
@@ -48,7 +48,7 @@ export function resolveOrderSituation(
   return "em_aberto";
 }
 
-function summarizeOrderGroup(lines: PedidosVendaAbertosItem[]): CustomerOrderSummary {
+function summarizeOrderGroup(lines: OpenOrdersTotvsItem[]): CustomerOrderSummary {
   const first = lines[0];
   const filial = normalizeCadastroPart(first?.filial);
   const pedido = normalizeCadastroPart(first?.pedido);
@@ -95,9 +95,9 @@ function summarizeOrderGroup(lines: PedidosVendaAbertosItem[]): CustomerOrderSum
  * Agrupa linhas do cliente por `filial|pedido`. Não muta a entrada.
  */
 export function aggregateCustomerOrders(
-  lines: readonly PedidosVendaAbertosItem[],
+  lines: readonly OpenOrdersTotvsItem[],
 ): CustomerOrderSummary[] {
-  const groups = new Map<string, PedidosVendaAbertosItem[]>();
+  const groups = new Map<string, OpenOrdersTotvsItem[]>();
 
   for (const line of lines) {
     const key = buildOrderKey(line.filial, line.pedido);

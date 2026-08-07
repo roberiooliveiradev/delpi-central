@@ -1,14 +1,14 @@
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
-import type { PedidosVendaAbertosItem } from "../../../types/pedidosVendaAbertos";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
 
 type CustomerOrderLinesProps = {
-  lines: readonly PedidosVendaAbertosItem[];
+  lines: readonly OpenOrdersTotvsItem[];
   orderKey: string;
 };
 
-function lineOverdueLabel(item: PedidosVendaAbertosItem): string {
+function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
   const saldo = toFiniteNumber(item.saldo);
   if (!isDeliveryOverdue(item.data_entrega, saldo)) return "Em dia";
   const days = getDeliveryOverdueDays(item.data_entrega) ?? 0;

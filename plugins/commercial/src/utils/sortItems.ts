@@ -1,6 +1,6 @@
-import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { compareDeliveryDates } from "./dates";
-import { getLineOpPrevisao } from "./opAllocation";
+import { getLineOpForecast } from "./opAllocation";
 
 export type SortKey =
   | "nome_cliente"
@@ -33,10 +33,10 @@ function compareNullableDate(a: string | null, b: string | null): number {
 }
 
 export function sortPedidosItems(
-  items: PedidosVendaAbertosItem[],
+  items: OpenOrdersTotvsItem[],
   key: SortKey,
   direction: SortDirection,
-): PedidosVendaAbertosItem[] {
+): OpenOrdersTotvsItem[] {
   const sorted = [...items].sort((a, b) => {
     let result = 0;
 
@@ -72,8 +72,8 @@ export function sortPedidosItems(
         result = a.valor_aberto - b.valor_aberto;
         break;
       case "previsao_entrega_op": {
-        const leftDate = getLineOpPrevisao(a).previsaoData;
-        const rightDate = getLineOpPrevisao(b).previsaoData;
+        const leftDate = getLineOpForecast(a).previsaoData;
+        const rightDate = getLineOpForecast(b).previsaoData;
         result = compareNullableDate(leftDate, rightDate);
         break;
       }

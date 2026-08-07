@@ -1,4 +1,4 @@
-import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import {
   formatOverdueDaysLabel,
   getDeliveryOverdueDays,
@@ -22,11 +22,11 @@ export type StatusBadgeDescriptor = {
   tone: BadgeTone;
 };
 
-function hasFullAllocatedStock(item: PedidosVendaAbertosItem, estoque: number): boolean {
+function hasFullAllocatedStock(item: OpenOrdersTotvsItem, estoque: number): boolean {
   return item.saldo > 0 && estoque >= item.saldo;
 }
 
-function hasPartialAllocatedStock(item: PedidosVendaAbertosItem, estoque: number): boolean {
+function hasPartialAllocatedStock(item: OpenOrdersTotvsItem, estoque: number): boolean {
   return estoque > 0 && estoque < item.saldo;
 }
 
@@ -34,7 +34,7 @@ function hasNoAllocatedStock(estoque: number): boolean {
   return estoque <= 0;
 }
 
-export function getLineStatus(item: PedidosVendaAbertosItem): StatusBadgeDescriptor {
+export function getLineStatus(item: OpenOrdersTotvsItem): StatusBadgeDescriptor {
   const estoque = getAllocatedStock(item);
   const overdue = isDeliveryOverdue(item.data_entrega, item.saldo);
 
@@ -96,7 +96,7 @@ const FATURAVEL_KINDS: LineStatusKind[] = ["pode_faturar", "atrasado_com_estoque
 const PARCIAL_KINDS: LineStatusKind[] = ["estoque_parcial", "atrasado_parcial"];
 const SEM_ESTOQUE_KINDS: LineStatusKind[] = ["sem_estoque", "atrasado_sem_estoque"];
 
-export function matchesStockFilter(item: PedidosVendaAbertosItem, filter: StockFilter): boolean {
+export function matchesStockFilter(item: OpenOrdersTotvsItem, filter: StockFilter): boolean {
   if (!filter) return true;
 
   const kind = getLineStatus(item).kind;

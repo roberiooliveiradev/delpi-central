@@ -165,9 +165,9 @@ export function resolvePluginRoute(
   if (relativePath === "propostas") {
     return { view: "proposals", pathname: path, relativePath };
   }
-  const legacyPropostaDetail = /^propostas\/([^/]+)$/.exec(relativePath);
-  if (legacyPropostaDetail) {
-    const propostaId = safeDecodeSegment(legacyPropostaDetail[1] ?? "");
+  const legacyProposalDetail = /^propostas\/([^/]+)$/.exec(relativePath);
+  if (legacyProposalDetail) {
+    const propostaId = safeDecodeSegment(legacyProposalDetail[1] ?? "");
     if (!propostaId?.trim()) {
       return { view: "not_found", pathname: path, relativePath };
     }

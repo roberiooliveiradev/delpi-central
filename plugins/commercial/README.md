@@ -70,7 +70,7 @@ Upload multipart → volume `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
 **Adiado** até o Comercial superar o PVA e pedido explícito. Artefatos: [F2C-CUTOVER-RUNBOOK.md](../../docs/12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md).
 
 ```bash
-docker exec -it delpi-commercial-api python scripts/backfill_from_pedidos_venda_abertos.py
+docker exec -it delpi-commercial-api python scripts/backfill_from_open_orders_legacy.py
 ./commercial-api/scripts/reconcile_portfolio_counts.sh
 ```
 
@@ -92,7 +92,7 @@ Smoke: `curl -I http://localhost/apps/commercial/assets/remoteEntry.js`
 src/
   api/           — clients commercial-api / api-delpi
   app/           — rotas, shell, navegação, portfolio scope
-  content/       — textos PT (help + gestao + propostas)
-  features/      — home, my-day, open-orders, customers, gestao, propostas, seller-portfolios
+  content/       — textos PT (help + analytics + proposals)
+  features/      — home, my-day, open-orders, customers, analytics, proposals, seller-portfolios
   shared/        — formatadores
 ```

@@ -1,1 +1,1 @@
-export { PedidosVendaAbertosPage as OpenOrdersPage } from "../../pages/PedidosVendaAbertosPage";
+export { OpenOrdersPageImpl as OpenOrdersPage } from "../../pages/OpenOrdersPageImpl";

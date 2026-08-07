@@ -2,17 +2,17 @@ import { Filter, RotateCcw } from "lucide-react";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../content/helpTooltips";
-import type { ClientOption, PedidosVendaAbertosFilters } from "../utils/filterItems";
+import type { ClientOption, OpenOrdersTotvsFilters } from "../utils/filterItems";
 import type { StockFilter } from "../utils/statusBadges";
 import { MultiSelectField } from "./MultiSelectField";
 import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
 type FilterBarProps = {
-  filters: PedidosVendaAbertosFilters;
+  filters: OpenOrdersTotvsFilters;
   filiais: string[];
   clients: ClientOption[];
   hasActiveFilters: boolean;
-  onChange: (patch: Partial<PedidosVendaAbertosFilters>) => void;
+  onChange: (patch: Partial<OpenOrdersTotvsFilters>) => void;
   onReset: () => void;
 };
 

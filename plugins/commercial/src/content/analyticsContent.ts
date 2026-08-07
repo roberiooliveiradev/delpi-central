@@ -1,4 +1,4 @@
-export const GESTAO_CONTENT = {
+export const ANALYTICS_CONTENT = {
   nav: {
     overview: "Visão geral",
     otd: "OTD",
@@ -44,7 +44,7 @@ export const GESTAO_CONTENT = {
   },
 };
 
-export const PROPOSTAS_CONTENT = {
+export const PROPOSALS_CONTENT = {
   list: {
     title: "Propostas comerciais",
     subtitle: "Consulta read-only de propostas ativas do Protheus (ADY).",

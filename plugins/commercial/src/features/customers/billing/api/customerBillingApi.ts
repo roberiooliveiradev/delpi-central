@@ -1,5 +1,5 @@
 import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../../../../types/api.ts";
-import { PEDIDOS_VENDA_ABERTOS_API_BASE } from "../../../../api/pedidosVendaAbertosApi.ts";
+import { OPEN_ORDERS_TOTVS_API_BASE } from "../../../../api/openOrdersTotvsApi.ts";
 import { httpGet } from "../../../../api/httpClient.ts";
 import type {
   CustomerBillingData,
@@ -32,7 +32,7 @@ export function buildCustomerBillingPath(query: CustomerBillingQuery): string {
     params.set("search", query.search.trim());
   }
   return (
-    `${PEDIDOS_VENDA_ABERTOS_API_BASE}/clientes/` +
+    `${OPEN_ORDERS_TOTVS_API_BASE}/clientes/` +
     `${encodeSegment(query.codigo)}/${encodeSegment(query.loja)}/notas-fiscais?` +
     params.toString()
   );

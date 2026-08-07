@@ -2,14 +2,14 @@ import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import type { CustomerBillingData, CustomerBillingSeriesPayload } from "../types/billing";
 import { apiDelpiUrl, httpGet, httpPost } from "./httpClient";
 
-const PEDIDOS_VENDA_ABERTOS_PATH = "/pedidos-venda-abertos";
+const OPEN_ORDERS_TOTVS_PATH = "/pedidos-venda-abertos";
 
 export async function fetchCustomerBillingSeries(
   customers: Array<{ customer_code: string; customer_store: string }>,
   options?: { months?: number; signal?: AbortSignal },
 ): Promise<CustomerBillingSeriesPayload> {
   const response = await httpPost<ApiSuccessResponse<CustomerBillingSeriesPayload>>(
-    apiDelpiUrl(`${PEDIDOS_VENDA_ABERTOS_PATH}/customers/billing-series`),
+    apiDelpiUrl(`${OPEN_ORDERS_TOTVS_PATH}/customers/billing-series`),
     { customers, months: options?.months ?? 12 },
     { signal: options?.signal },
   );
@@ -37,7 +37,7 @@ export async function getCustomerOutboundInvoices(
 
   const response = await httpGet<ApiSuccessResponse<CustomerBillingData>>(
     `${apiDelpiUrl(
-      `${PEDIDOS_VENDA_ABERTOS_PATH}/clientes/${encodeURIComponent(codigo)}/${encodeURIComponent(loja)}/notas-fiscais`,
+      `${OPEN_ORDERS_TOTVS_PATH}/clientes/${encodeURIComponent(codigo)}/${encodeURIComponent(loja)}/notas-fiscais`,
     )}?${params.toString()}`,
     { signal: options?.signal },
   );

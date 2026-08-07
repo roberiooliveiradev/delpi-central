@@ -194,7 +194,7 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 ## WF-02 — Pedidos em aberto
 
 **Rota:** `/apps/commercial/open-orders`  
-**Paridade:** `PedidosVendaAbertosPage`  
+**Paridade:** `OpenOrdersPage` / `OpenOrdersPageImpl`  
 **Dados:** api-delpi `GET /pedidos-venda-abertos/` (+ ops abertas)
 
 ```

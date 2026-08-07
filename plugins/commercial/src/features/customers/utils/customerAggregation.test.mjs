@@ -398,9 +398,9 @@ describe("customerSorting e filters", () => {
 });
 
 describe("CustomersPage estrutural", () => {
-  it("usa getPedidosVendaAbertos e nao inventa endpoint", () => {
+  it("usa getOpenOrdersTotvs e nao inventa endpoint", () => {
     const hook = readFileSync(join(__dirname, "../hooks/useCustomersData.ts"), "utf8");
-    assert.match(hook, /getPedidosVendaAbertos/);
+    assert.match(hook, /getOpenOrdersTotvs/);
     assert.doesNotMatch(hook, /ops-abertas|getOpsAbertas/);
     assert.match(hook, /reloadKey/);
   });
