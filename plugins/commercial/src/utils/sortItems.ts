@@ -1,5 +1,5 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
-import { compareDeliveryDates } from "./dates";
+import { compareDeliveryDates, getDeliveryOverdueDays } from "./dates";
 import { getLineOpForecast } from "./opAllocation";
 
 export type SortKey =
@@ -13,7 +13,8 @@ export type SortKey =
   | "data_despacho"
   | "saldo"
   | "valor_aberto"
-  | "previsao_entrega_op";
+  | "previsao_entrega_op"
+  | "atraso_dias";
 
 export type SortDirection = "asc" | "desc";
 
@@ -75,6 +76,12 @@ export function sortPedidosItems(
         const leftDate = getLineOpForecast(a).previsaoData;
         const rightDate = getLineOpForecast(b).previsaoData;
         result = compareNullableDate(leftDate, rightDate);
+        break;
+      }
+      case "atraso_dias": {
+        const left = getDeliveryOverdueDays(a.data_entrega) ?? 0;
+        const right = getDeliveryOverdueDays(b.data_entrega) ?? 0;
+        result = left - right;
         break;
       }
       default:

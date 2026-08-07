@@ -1,4 +1,5 @@
-export const TABLE_FONT_SIZE_STORAGE_KEY = "pedidos-venda-abertos:table-font-size:v1";
+export const TABLE_FONT_SIZE_STORAGE_KEY = "commercial:open-orders:table-font-size:v1";
+const LEGACY_TABLE_FONT_SIZE_STORAGE_KEY = "pedidos-venda-abertos:table-font-size:v1";
 
 export const DEFAULT_TABLE_FONT_SIZE = 13;
 export const MIN_TABLE_FONT_SIZE = 11;
@@ -14,7 +15,9 @@ export function loadTableFontSize(): number {
   }
 
   try {
-    const raw = window.localStorage.getItem(TABLE_FONT_SIZE_STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(TABLE_FONT_SIZE_STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_TABLE_FONT_SIZE_STORAGE_KEY);
     if (!raw) return DEFAULT_TABLE_FONT_SIZE;
 
     const parsed = Number.parseInt(raw, 10);

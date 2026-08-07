@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { Filter, RotateCcw } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
 
+import {
+  CommercialDateField,
+  CommercialFilterBarShell,
+  CommercialMultiSelectField,
+  CommercialSelectField,
+  CommercialTextField,
+} from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
 import type { ClientOption, OpenOrdersTotvsFilters } from "../utils/filterItems";
 import type { StockFilter } from "../utils/statusBadges";
-import { MultiSelectField } from "./MultiSelectField";
-import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
 type FilterBarProps = {
   filters: OpenOrdersTotvsFilters;
@@ -30,6 +36,7 @@ export function FilterBar({
   onChange,
   onReset,
 }: FilterBarProps) {
+  const [showMore, setShowMore] = useState(false);
   const filialOptions = filiais.map((filial) => ({ value: filial, label: filial }));
   const clientOptions = clients.map((client) => ({
     value: client.key,
@@ -37,84 +44,96 @@ export function FilterBar({
   }));
 
   return (
-    <FilterBarShell
+    <CommercialFilterBarShell
       leading={
-        <div className="pva-filter-bar__header">
-          <div className="pva-filter-bar__title">
+        <div className="cm-filter-bar__header">
+          <div className="cm-filter-bar__title">
             <Filter size={18} aria-hidden="true" />
             <h2>Filtros</h2>
             <HelpTooltip content={CM_HELP.openOrders.filters} ariaLabel="Ajuda: Filtros" />
           </div>
-          {hasActiveFilters ? (
-            <button type="button" className="pva-btn pva-btn--ghost pva-btn--sm" onClick={onReset}>
-              <RotateCcw size={14} aria-hidden="true" />
-              Limpar filtros
-            </button>
-          ) : null}
+          <div className="cm-filter-bar__header-actions">
+            <ActionButton variant="ghost" onClick={() => setShowMore((v) => !v)}>
+              {showMore ? "Menos filtros" : "Mais filtros"}
+            </ActionButton>
+            {hasActiveFilters ? (
+              <ActionButton variant="ghost" onClick={onReset}>
+                <RotateCcw size={14} aria-hidden="true" />
+                Limpar
+              </ActionButton>
+            ) : null}
+          </div>
         </div>
       }
     >
-      <FilterInputField
-        id="pva-filter-search"
+      <CommercialTextField
         label="Busca livre"
         hint={CM_HELP.openOrders.filterSearch}
-        type="search"
-        wide
         value={filters.search}
         placeholder="Cliente, pedido, produto, código…"
         onChange={(value) => onChange({ search: value })}
       />
-      <FilterSelectField
-        id="pva-filter-filial"
+      <CommercialSelectField
         label="Filial"
         hint={CM_HELP.openOrders.filterBranch}
         value={filters.filial}
         onChange={(value) => onChange({ filial: value })}
         options={filialOptions}
-        placeholderOption="Todas"
+        allowEmpty
+        emptyLabel="Todas"
       />
-      <MultiSelectField
+      <CommercialMultiSelectField
         label="Cliente"
         hint={CM_HELP.openOrders.filterClient}
-        searchable
         options={clientOptions}
         selectedValues={filters.clientCodes}
         onChange={(clientCodes) => onChange({ clientCodes })}
       />
-      <FilterSelectField
-        id="pva-filter-stock"
-        label="Status da linha"
-        hint={CM_HELP.openOrders.filterStock}
-        value={filters.stockStatus}
-        onChange={(value) => onChange({ stockStatus: value as StockFilter })}
-        options={STOCK_OPTIONS}
-        placeholderOption="Todos os status"
-      />
-      <FilterSelectField
-        id="pva-filter-late"
-        label="Entrega"
-        hint="Filtrar só linhas com entrega em atraso."
-        value={filters.lateOnly ? "late" : ""}
-        onChange={(value) => onChange({ lateOnly: value === "late" })}
-        options={[{ value: "late", label: "Em atraso" }]}
-        placeholderOption="Todas"
-      />
-      <FilterInputField
-        id="pva-filter-date-start"
+      <CommercialDateField
         label="Entrega de"
         hint={CM_HELP.openOrders.filterDateStart}
-        type="date"
         value={filters.dateStart}
         onChange={(value) => onChange({ dateStart: value })}
       />
-      <FilterInputField
-        id="pva-filter-date-end"
+      <CommercialDateField
         label="Entrega até"
         hint={CM_HELP.openOrders.filterDateEnd}
-        type="date"
         value={filters.dateEnd}
         onChange={(value) => onChange({ dateEnd: value })}
       />
-    </FilterBarShell>
+
+      {showMore ? (
+        <>
+          <CommercialSelectField
+            label="Status da linha"
+            hint={CM_HELP.openOrders.filterStock}
+            value={filters.stockStatus}
+            onChange={(value) =>
+              onChange({
+                stockStatus: value as StockFilter,
+                lateOnly: value ? false : filters.lateOnly,
+              })
+            }
+            options={STOCK_OPTIONS}
+            allowEmpty
+            emptyLabel="Todos os status"
+          />
+          <CommercialSelectField
+            label="Entrega"
+            hint={CM_HELP.openOrders.filterLate}
+            value={filters.lateOnly ? "late" : ""}
+            onChange={(value) =>
+              onChange({
+                lateOnly: value === "late",
+                stockStatus: value === "late" ? "" : filters.stockStatus,
+              })
+            }
+            options={[{ value: "late", label: "Em atraso" }]}
+            allowEmpty
+            emptyLabel="Todas"
+          />
+        </>
+      ) : null}
+    </CommercialFilterBarShell>
   );
 }

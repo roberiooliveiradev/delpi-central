@@ -80,6 +80,21 @@ export function useOpenOrdersDashboard(sellerId?: string | null) {
   const filiais = useMemo(() => collectDistinctFiliais(itemsWithOpForecast), [itemsWithOpForecast]);
   const clients = useMemo(() => collectDistinctClients(itemsWithOpForecast), [itemsWithOpForecast]);
 
+  const attentionBaseItems = useMemo(
+    () =>
+      filterPedidosItems(itemsWithOpForecast, {
+        ...filters,
+        stockStatus: "",
+        lateOnly: false,
+      }),
+    [itemsWithOpForecast, filters],
+  );
+
+  const attentionSummary = useMemo(
+    () => computeSummaryFromItems(attentionBaseItems),
+    [attentionBaseItems],
+  );
+
   const filteredItems = useMemo(
     () => filterPedidosItems(itemsWithOpForecast, filters),
     [itemsWithOpForecast, filters],
@@ -142,6 +157,7 @@ export function useOpenOrdersDashboard(sellerId?: string | null) {
     filteredItems,
     paginatedItems,
     summary,
+    attentionSummary,
     filters,
     updateFilters,
     resetFilters,

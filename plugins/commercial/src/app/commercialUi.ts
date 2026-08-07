@@ -14,6 +14,10 @@ import {
   createDashboardDateField,
   createDashboardTextField,
   createDashboardTitleWithHelp,
+  createDashboardStateBanner,
+  createCompactPagination,
+  createHostContainedDrawerShell,
+  createFilterBarShell,
   dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardTopBar,
@@ -28,6 +32,7 @@ import {
   detailCardRichBemClasses,
   emptyStateCardBemClasses,
   fileDropzoneBemClasses,
+  filtersRowBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
@@ -42,9 +47,11 @@ import {
   worklistItemBemClasses,
   timelineBemClasses,
   underlineNavBemClasses,
+  withBemModifier,
 } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "cm";
+export const CM_PORTAL_SCOPE = "dashboard-commercial";
 
 export const cmPageHeaderClassNames = pageHeaderBrandBemClasses(UI_PREFIX);
 export const cmNavCardClassNames = navigationCardBemClasses(UI_PREFIX);
@@ -129,6 +136,35 @@ export const CommercialScopeChipBar = createDashboardScopeChipBar({ prefix: UI_P
 export const CommercialWorklistItem = createDashboardWorklistItem({ prefix: UI_PREFIX });
 export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
 
+export const CommercialStateBanner = createDashboardStateBanner({
+  classNames: cmStateBannerClassNames,
+});
+
+export const CommercialDrawerShell = createHostContainedDrawerShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+  closeAriaLabel: "Fechar painel",
+  backdropAriaLabel: "Fechar painel",
+});
+
+export const CommercialFilterBarShell = createFilterBarShell({
+  prefix: UI_PREFIX,
+  withGrid: true,
+  defaultAriaLabel: "Filtros",
+});
+
+export const CommercialPagination = createCompactPagination({
+  prefix: UI_PREFIX,
+  layout: "flat",
+  labels: {
+    info: ({ page, totalPages, total }) =>
+      `Página ${page} de ${totalPages} · ${total.toLocaleString("pt-BR")} registro(s)`,
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação de pedidos",
+  },
+});
+
 const { field: cmSelectFieldClasses, control: cmSelectControlClasses } =
   selectFieldPacClasses(UI_PREFIX);
 
@@ -188,7 +224,14 @@ export const CommercialAvatar = createInitialsAvatar(UI_PREFIX);
 
 export const cmFiltersKit = createDashboardFiltersKit({
   prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
   labels: {
     filtersAriaLabel: "Filtros",
   },
 });
+
+export const cmFiltersRowClassNames = filtersRowBemClasses(UI_PREFIX);
+export const cmFiltersRowWideClassNames = {
+  ...cmFiltersRowClassNames,
+  filterBox: withBemModifier(cmFiltersRowClassNames.filterBox, "wide"),
+};

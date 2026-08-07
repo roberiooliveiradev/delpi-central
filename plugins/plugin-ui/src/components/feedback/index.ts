@@ -159,7 +159,9 @@ export {
 export {
   DrawerShell,
   createDrawerShell,
+  createHostContainedDrawerShell,
   drawerShellBemClasses,
+  type CreateDrawerShellConfig,
   type DashboardDrawerShellProps,
   type DrawerShellClassNames,
   type DrawerShellProps,

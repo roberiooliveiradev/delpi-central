@@ -111,6 +111,7 @@ PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 
 # Aliases Portal Comercial (cutover / consolidação nativa): commercial.* + legado.
 COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
+COMMERCIAL_ACCOUNTS_TEAM_VIEW = "commercial.accounts.team.view"
 COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
 COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
 COMMERCIAL_PROPOSALS_VIEW = "commercial.proposals.view"

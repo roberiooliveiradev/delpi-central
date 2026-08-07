@@ -3,6 +3,10 @@ import { createPortal } from "react-dom";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
+import {
+  resolveHostContainedPortalTarget,
+} from "./ModalShell";
+import { useContainedModalViewportStyle } from "./useContainedModalViewportStyle";
 
 export type DrawerShellClassNames = {
   root: string;
@@ -35,6 +39,12 @@ export type DrawerShellProps = {
    * Portais vão para `document.body` — sem este escopo o CSS do plugin não aplica.
    */
   portalScopeClassName?: string;
+  /**
+   * Quando definido com `containedInPortalTarget`, o overlay fica na área do MFE
+   * (não cobre a sidebar do Portal). Preferir `createHostContainedDrawerShell`.
+   */
+  portalTarget?: HTMLElement | null;
+  containedInPortalTarget?: boolean;
 };
 
 export function drawerShellBemClasses(prefix: string): DrawerShellClassNames {
@@ -66,6 +76,8 @@ export function DrawerShell({
   backdropAriaLabel = "Fechar painel",
   lockPageScroll,
   portalScopeClassName,
+  portalTarget = null,
+  containedInPortalTarget = false,
 }: DrawerShellProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -73,6 +85,12 @@ export function DrawerShell({
   const panelRef = useRef<HTMLElement | null>(null);
   const structuredHeader = Boolean(classNames.headerText);
   const portalTheme = useDelpiUiPortalTheme(open);
+  const containedHost =
+    containedInPortalTarget && portalTarget instanceof HTMLElement ? portalTarget : null;
+  const containedViewportStyle = useContainedModalViewportStyle(
+    open && Boolean(containedHost),
+    containedHost,
+  );
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -91,15 +109,19 @@ export function DrawerShell({
 
     window.addEventListener("keydown", handleKeyDown);
 
-    const unlockPageScroll = lockPageScroll
-      ? lockPageScroll()
-      : (() => {
-          const previousOverflow = document.body.style.overflow;
-          document.body.style.overflow = "hidden";
-          return () => {
-            document.body.style.overflow = previousOverflow;
-          };
-        })();
+    // Host-contained: não trava scroll do body (sidebar/portal continuam usáveis).
+    const unlockPageScroll =
+      containedHost
+        ? () => undefined
+        : lockPageScroll
+          ? lockPageScroll()
+          : (() => {
+              const previousOverflow = document.body.style.overflow;
+              document.body.style.overflow = "hidden";
+              return () => {
+                document.body.style.overflow = previousOverflow;
+              };
+            })();
 
     const rafId = requestAnimationFrame(() => {
       const focusTarget = panelRef.current?.querySelector<HTMLElement>(
@@ -113,14 +135,26 @@ export function DrawerShell({
       unlockPageScroll();
       cancelAnimationFrame(rafId);
     };
-  }, [open, lockPageScroll]);
+  }, [open, lockPageScroll, containedHost]);
 
   if (!open) {
     return null;
   }
 
   const panelClass = [classNames.panel, className].filter(Boolean).join(" ");
-  const scopeClass = [portalScopeClassName, portalTheme.hostClassName].filter(Boolean).join(" ");
+  const rootClass = [
+    classNames.root,
+    containedHost ? "delpi-ui-drawer-root--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const scopeClass = [
+    portalScopeClassName,
+    portalTheme.hostClassName,
+    containedHost ? "delpi-ui-drawer-portal--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -136,8 +170,16 @@ export function DrawerShell({
     ) : null;
 
   return createPortal(
-    <div className={scopeClass} style={portalTheme.style} data-theme={portalTheme.dataTheme ?? undefined}>
-      <div className={classNames.root} role="presentation">
+    <div
+      className={scopeClass}
+      style={{
+        ...portalTheme.style,
+        ...(containedViewportStyle ?? {}),
+      }}
+      data-theme={portalTheme.dataTheme ?? undefined}
+      data-drawer-contained={containedInPortalTarget ? "true" : undefined}
+    >
+      <div className={rootClass} role="presentation">
         <button
           type="button"
           className={classNames.backdrop}
@@ -184,19 +226,21 @@ export function DrawerShell({
         </aside>
       </div>
     </div>,
-    document.body,
+    portalTarget ?? document.body,
   );
 }
 
 export type DashboardDrawerShellProps = Omit<DrawerShellProps, "classNames">;
 
-export function createDrawerShell(config: {
+export type CreateDrawerShellConfig = {
   prefix: string;
   closeAriaLabel?: string;
   backdropAriaLabel?: string;
   classNames?: Partial<DrawerShellClassNames>;
   portalScopeClassName?: string;
-}) {
+};
+
+export function createDrawerShell(config: CreateDrawerShellConfig) {
   const classNames: DrawerShellClassNames = {
     ...drawerShellBemClasses(config.prefix),
     ...config.classNames,
@@ -210,6 +254,31 @@ export function createDrawerShell(config: {
         backdropAriaLabel={config.backdropAriaLabel}
         portalScopeClassName={config.portalScopeClassName}
         {...props}
+      />
+    );
+  };
+}
+
+/**
+ * Drawer na área do MFE (portal no root do plugin), sem cobrir sidebar do Portal.
+ * Espelha `createHostContainedModalShell`.
+ */
+export function createHostContainedDrawerShell(
+  config: CreateDrawerShellConfig & { portalScopeClassName: string },
+) {
+  const Drawer = createDrawerShell(config);
+  const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
+
+  return function HostContainedDrawerShell(props: DashboardDrawerShellProps) {
+    const portalTarget =
+      typeof document !== "undefined"
+        ? resolveHostContainedPortalTarget(hostSelector)
+        : null;
+    return (
+      <Drawer
+        {...props}
+        portalTarget={portalTarget}
+        containedInPortalTarget={Boolean(portalTarget)}
       />
     );
   };

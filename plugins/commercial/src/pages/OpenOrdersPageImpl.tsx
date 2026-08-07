@@ -1,24 +1,35 @@
 import { useEffect } from "react";
-import {
-  AlertTriangle,
-  CalendarClock,
-  Package,
-  PackageCheck,
-  Wallet,
-} from "lucide-react";
+import { ActionButton, EmptyState, HelpTooltip } from "@delpi/plugin-ui/index";
+import { RefreshCw } from "lucide-react";
 
-import { PVA_STATE_BOX } from "../ui/stateChrome";
+import {
+  CommercialLoadingCard,
+  CommercialPageHero,
+  CommercialPagination,
+  CommercialScopeChipBar,
+  CommercialStateBanner,
+  cmEmptyStateClassNames,
+} from "../app/commercialUi";
 import { usePortfolioScope } from "../app/usePortfolioScope";
 import { FilterBar } from "../components/FilterBar";
-import { KpiCard } from "../components/KpiCard";
-import { PageHeader } from "../components/PageHeader";
-import { Pagination } from "../components/Pagination";
 import { OpenOrdersTable } from "../components/OpenOrdersTable";
 import { CM_HELP } from "../content/helpTooltips";
 import { SellerScopeFilter } from "../features/customers/components/SellerScopeFilter";
 import { useOpenOrdersDashboard } from "../hooks/useOpenOrdersDashboard";
-import { EmptyState } from "../ui/EmptyState";
 import { formatCurrency } from "../utils/format";
+import type { StockFilter } from "../utils/statusBadges";
+
+type AttentionChipId = "all" | "can_invoice" | "partial" | "late";
+
+function resolveAttentionChip(filters: {
+  stockStatus: StockFilter;
+  lateOnly: boolean;
+}): AttentionChipId {
+  if (filters.lateOnly) return "late";
+  if (filters.stockStatus === "com_estoque") return "can_invoice";
+  if (filters.stockStatus === "parcial") return "partial";
+  return "all";
+}
 
 export function OpenOrdersPageImpl() {
   const {
@@ -28,7 +39,6 @@ export function OpenOrdersPageImpl() {
     setSellerIdFilter,
   } = usePortfolioScope();
 
-  // Deep link da Gestão Equipe: ?seller_id=
   useEffect(() => {
     if (!canUseTeamScope || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search || "");
@@ -46,6 +56,7 @@ export function OpenOrdersPageImpl() {
     allItemsCount,
     paginatedItems,
     summary,
+    attentionSummary,
     filters,
     updateFilters,
     resetFilters,
@@ -65,85 +76,116 @@ export function OpenOrdersPageImpl() {
   const showEmptyDataset = !loading && !error && allItemsCount === 0;
   const showFilteredEmpty =
     !loading && !error && allItemsCount > 0 && totalFiltered === 0;
+  const activeChip = resolveAttentionChip(filters);
+
+  const selectChip = (id: AttentionChipId) => {
+    if (id === "all") {
+      updateFilters({ stockStatus: "" as StockFilter, lateOnly: false });
+      return;
+    }
+    if (id === "can_invoice") {
+      updateFilters({ stockStatus: "com_estoque", lateOnly: false });
+      return;
+    }
+    if (id === "partial") {
+      updateFilters({ stockStatus: "parcial", lateOnly: false });
+      return;
+    }
+    updateFilters({ stockStatus: "", lateOnly: true });
+  };
 
   return (
-    <>
-      <PageHeader loading={loading} onRefresh={reload} totalLoaded={allItemsCount} />
+    <section className="cm-page-stack cm-open-orders-page">
+      <div className="cm-page-header-row">
+        <CommercialPageHero
+          aria-label="Pedidos em aberto"
+          eyebrow="Pedidos"
+          title="Pedidos em aberto"
+          description={
+            loading && !allItemsCount
+              ? "Carregando carteira…"
+              : `${allItemsCount.toLocaleString("pt-BR")} linha(s) carregadas${
+                  hasActiveFilters
+                    ? ` · ${totalFiltered.toLocaleString("pt-BR")} após filtros`
+                    : ""
+                } · ${formatCurrency(summary.valor_total_aberto)} em aberto`
+          }
+          badge={
+            <HelpTooltip content={CM_HELP.openOrders.page} ariaLabel="Ajuda: Pedidos em aberto" />
+          }
+        />
+        <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
+          <RefreshCw size={16} aria-hidden="true" /> Atualizar
+        </ActionButton>
+      </div>
 
       {canUseTeamScope ? (
-        <div className="pva-customers-page__header" style={{ marginBottom: 8 }}>
+        <div className="cm-open-orders-page__scope">
           <SellerScopeFilter
             sellers={sellers}
             value={sellerIdFilter}
             onChange={setSellerIdFilter}
           />
+          <HelpTooltip
+            content={CM_HELP.openOrders.sellerScope}
+            ariaLabel="Ajuda: filtro de carteira"
+          />
         </div>
       ) : null}
 
       {loading && !allItemsCount ? (
-        <div className={PVA_STATE_BOX} role="status">
-          Carregando pedidos em aberto…
-        </div>
+        <CommercialLoadingCard title="Carregando pedidos em aberto…" variant="panel" />
       ) : null}
 
       {!loading && error ? (
-        <div className="pva-alert pva-alert--error" role="alert">
+        <CommercialStateBanner variant="error">
           <p>{error}</p>
-          <button type="button" className="pva-btn pva-btn--ghost" onClick={reload}>
+          <ActionButton variant="ghost" onClick={() => reload()}>
             Tentar novamente
-          </button>
-        </div>
+          </ActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {showEmptyDataset ? (
         <EmptyState
-          title="Nenhum pedido em aberto"
-          description="Não há linhas em aberto no escopo da carteira selecionada."
+          classNames={cmEmptyStateClassNames}
+          defaultTitle="Nenhum pedido em aberto"
+          defaultMessage="Não há linhas em aberto no escopo da carteira selecionada."
         />
       ) : null}
 
       {!error && allItemsCount > 0 ? (
         <>
-          <section className="pva-kpi-grid" aria-label="Resumo">
-            <KpiCard
-              title="Linhas em aberto"
-              titleHint={CM_HELP.openOrders.kpiLines}
-              value={summary.total_linhas.toLocaleString("pt-BR")}
-              subtitle={hasActiveFilters ? "Com filtros aplicados" : "Total carregado"}
-              icon={<Package size={22} />}
-              loading={loading}
-            />
-            <KpiCard
-              title="Valor em aberto"
-              titleHint={CM_HELP.openOrders.kpiValue}
-              value={formatCurrency(summary.valor_total_aberto)}
-              icon={<Wallet size={22} />}
-              loading={loading}
-              wide
-            />
-            <KpiCard
-              title="Pode faturar"
-              titleHint={CM_HELP.openOrders.kpiCanInvoice}
-              value={summary.itens_com_estoque.toLocaleString("pt-BR")}
-              icon={<PackageCheck size={22} />}
-              loading={loading}
-            />
-            <KpiCard
-              title="Estoque parcial"
-              titleHint={CM_HELP.openOrders.kpiPartialStock}
-              value={summary.itens_estoque_parcial.toLocaleString("pt-BR")}
-              icon={<AlertTriangle size={22} />}
-              loading={loading}
-            />
-            <KpiCard
-              title="Pedidos em atraso"
-              titleHint={CM_HELP.openOrders.kpiLate}
-              value={summary.linhas_em_atraso.toLocaleString("pt-BR")}
-              icon={<CalendarClock size={22} />}
-              loading={loading}
-              valueTone={summary.linhas_em_atraso > 0 ? "danger" : "default"}
-            />
-          </section>
+          <CommercialScopeChipBar
+            aria-label="Atenção operacional"
+            label="Atenção"
+            chips={[
+              {
+                id: "all",
+                label: `Todos (${attentionSummary.total_linhas.toLocaleString("pt-BR")})`,
+                active: activeChip === "all",
+                onSelect: () => selectChip("all"),
+              },
+              {
+                id: "can_invoice",
+                label: `Pode faturar (${attentionSummary.itens_com_estoque.toLocaleString("pt-BR")})`,
+                active: activeChip === "can_invoice",
+                onSelect: () => selectChip("can_invoice"),
+              },
+              {
+                id: "partial",
+                label: `Parcial (${attentionSummary.itens_estoque_parcial.toLocaleString("pt-BR")})`,
+                active: activeChip === "partial",
+                onSelect: () => selectChip("partial"),
+              },
+              {
+                id: "late",
+                label: `Atraso (${attentionSummary.linhas_em_atraso.toLocaleString("pt-BR")})`,
+                active: activeChip === "late",
+                onSelect: () => selectChip("late"),
+              },
+            ]}
+          />
 
           <FilterBar
             filters={filters}
@@ -155,12 +197,10 @@ export function OpenOrdersPageImpl() {
           />
 
           {opsWarning ? (
-            <div className="pva-alert pva-alert--warning" role="status">
-              <p>
-                Pedidos carregados, mas a previsão produtiva (OPs abertas) não está disponível:{" "}
-                {opsWarning}
-              </p>
-            </div>
+            <CommercialStateBanner>
+              Pedidos carregados, mas a previsão produtiva (OPs abertas) não está disponível:{" "}
+              {opsWarning}
+            </CommercialStateBanner>
           ) : null}
 
           <OpenOrdersTable
@@ -177,7 +217,7 @@ export function OpenOrdersPageImpl() {
             }
           />
 
-          <Pagination
+          <CommercialPagination
             page={page}
             pageSize={pageSize}
             total={totalFiltered}
@@ -185,6 +225,6 @@ export function OpenOrdersPageImpl() {
           />
         </>
       ) : null}
-    </>
+    </section>
   );
 }

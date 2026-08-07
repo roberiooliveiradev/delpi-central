@@ -191,50 +191,57 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 
 ---
 
-## WF-02 — Pedidos em aberto
+## WF-02R — Pedidos em aberto (bancada operacional)
 
 **Rota:** `/apps/commercial/open-orders`  
 **Paridade:** `OpenOrdersPage` / `OpenOrdersPageImpl`  
-**Dados:** api-delpi `GET /pedidos-venda-abertos/` (+ ops abertas)
+**Dados:** api-delpi `GET /pedidos-venda-abertos/` (+ ops abertas)  
+**Papel:** bancada de linhas (achar → entender entrega → agir). Home = atenção; Gestão = KPIs de período.  
+**Kit:** prefixo `cm-*` (`PageHero`, `ScopeChipBar`, `FilterBar`, `DataTable`, `DrawerShell`).
 
 ```
 ┌─ Portal Comercial · Pedidos em aberto ──────────────────────────────────────┐
-│ Breadcrumb: Portal Comercial › Pedidos em aberto                            │
+│ [PageHero] Pedidos em aberto · {N} linhas · escopo carteira                 │
+│            [Atualizar] [Exportar]                                           │
 │                                                                             │
-│ ┌─ Filtros ───────────────────────────────────────────────────── [Limpar]─┐│
-│ │ Filial [Todas ▾]  Cliente ·····  Pedido ·····  Status [▾]               ││
-│ │ Atraso [ ] Só atrasados   Parcial [ ]   Busca geral ··············      ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
+│ [AttentionChips] Todos | Pode faturar (52) | Parcial (17) | Atraso (7)     │
+│                  · Valor R$ … (métrica no chip Todos / hero)                │
 │                                                                             │
-│ ┌ KPI abertos ┐ ┌ Valor saldo ┐ ┌ Atrasados ┐ ┌ Parciais ┐                 │
-│ │ 128         │ │ R$ 3,4 mi   │ │ 12        │ │ 8        │                 │
-│ └─────────────┘ └─────────────┘ └───────────┘ └──────────┘                 │
+│ [FilterBar] Busca · Filial · Cliente · Entrega de/até · [Mais filtros ▾]   │
+│             (avançado: status estoque, limpar)                              │
 │                                                                             │
-│ [Exportar CSV]                                              Mostrando 1–50 │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ Filial │ Pedido │ Item │ Cliente        │ Produto │ Saldo │ Entrega │⚠ ││
-│ │ 01     │ 000123 │ 01   │ 01001-01 ACME  │ 90…     │ 120   │ 02/08   │⚠ ││
-│ │ 01     │ 000124 │ 02   │ 01002-01 Beta  │ …       │  40   │ 10/08   │  ││
-│ │ …                                                                       ││
+│ [SectionCard + DataTable enxuta]                            Mostrando 1–50 │
+│ │ Cliente │ Pedido/linha │ Produto │ Saldo │ Entrega │ Prev. OP │ Status │ │
+│ │         │              │         │       │         │         │ Valor  │ │
+│ │         │              │         │       │         │         │ Atraso │ │
+│ │ ACME →  │ 000123 / 01  │ 90…     │ 120   │ 02/08   │ badge   │ …      │ │
 │ └─────────────────────────────────────────────────────────────────────────┘│
 │ [< Ant]  Página 1 de 3  [Próx >]                                            │
 │                                                                             │
-│ Clique em cliente → /customers/:code/:store                                 │
-│ Clique em linha (opcional) → drawer resumo do pedido                        │
+│ Clique na linha / Prev. OP → Drawer (direita, host-contained)               │
+│ Deep links Home: ?stock= / ?focus=late → chip equivalente                   │
+│ seller_id = portfolio id (team.view ou unrestricted)                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Mobile (≤768px):** KPIs em coluna; tabela vira cards com `data-label` ou scroll horizontal intencional.
+**Colunas default (8–9):** Cliente (+ link Conta), Pedido/linha, Produto, Saldo, Entrega pedido, Previsão OP, Status estoque, Valor aberto, Atraso (dias). Demais via menu Colunas.
 
-**Drawer resumo (opcional F2b):**
+**Mobile (≤768px):** chips empilham; tabela scroll horizontal ou densidade reduzida — sem segunda faixa de KPI cards.
+
+**Drawer de linha (obrigatório):**
 
 ```
-┌─ Pedido 000123 / item 01 ──────────── [x]─┐
-│ Cliente 01001-01 ACME                      │
-│ Saldo 120 · Entrega 02/08 · ⚠ Atrasado     │
-│ [Abrir conta]  [Copiar chave]              │
-└────────────────────────────────────────────┘
+┌─ Linha 000123 / 01 ─────────────────────────── [x]─┐
+│ Cliente · Pedido · Produto                         │
+│ Saldo · Alocado · A produzir · Entrega · Previsão  │
+│ Status estoque · Dias em atraso                    │
+│ ── OPs (FIFO) ──────────────────────────────────── │
+│ │ OP │ Saldo │ Alocado │ Previsão │ …             │
+│ [Abrir conta]  [Copiar nº pedido]                  │
+└────────────────────────────────────────────────────┘
 ```
+
+**Histórico:** WF-02 (KPI cards + tabela densa + modal OP) foi substituído por WF-02R.
 
 ---
 
@@ -484,7 +491,7 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 
 | Capacidade Portal do Vendedor | Wireframe | Rota Portal Comercial |
 |-------------------------------|-----------|------------------------|
-| Lista pedidos em aberto | WF-02 | `/open-orders` |
+| Lista pedidos em aberto | WF-02R | `/open-orders` |
 | Minha carteira | WF-03 | `/customers` |
 | Check-up cliente | WF-04 | `/customers/:code/:store` |
 | Config vendedores | WF-05 | `/seller-portfolios` |

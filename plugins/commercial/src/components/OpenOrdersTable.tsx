@@ -1,24 +1,41 @@
 import type { CSSProperties } from "react";
-import { useState } from "react";
-import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
-import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
+import { useMemo, useState } from "react";
+import {
+  DataTable,
+  ExcelExportButton,
+  HelpTooltip,
+  SectionCard,
+  StatusBadge,
+  type DataTableColumn,
+} from "@delpi/plugin-ui/index";
+
+import {
+  cmDataTableClassNames,
+  cmDataTableLabels,
+  cmSectionCardClassNames,
+  cmSectionLabels,
+  cmStatusBadgeClassNames,
+} from "../app/commercialUi";
+import { navigateCustomerDetail } from "../app/pluginNavigation";
+import { CM_HELP } from "../content/helpTooltips";
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
 import { useTableFontSize } from "../hooks/useTableFontSize";
-import { formatDisplayDate } from "../utils/dates";
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
+import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
+import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
+import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
 import { formatCurrency, formatQuantity } from "../utils/format";
 import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
-import { getLineStatus } from "../utils/statusBadges";
 import type { SortDirection, SortKey } from "../utils/sortItems";
-import { isSortableTableColumnKey, type TableColumnKey } from "../utils/tableColumns";
-import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
-import { OpForecastModal } from "./OpForecastModal";
-import { StatusBadge } from "./StatusBadge";
+import { getLineStatus } from "../utils/statusBadges";
+import {
+  isSortableTableColumnKey,
+  type TableColumnKey,
+} from "../utils/tableColumns";
+import { OpenOrdersLineDrawer } from "./OpenOrdersLineDrawer";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
-import { ExcelExportButton, HelpTooltip, withBemModifier } from "@delpi/plugin-ui/index";
-import { CM_HELP } from "../content/helpTooltips";
-import { PVA_TABLE } from "../ui/tableChrome";
 
 type OpenOrdersTableProps = {
   rows: OpenOrdersTotvsItem[];
@@ -28,100 +45,21 @@ type OpenOrdersTableProps = {
   onSort: (key: SortKey) => void;
   loading?: boolean;
   emptyMessage?: string;
+  basePath?: string;
 };
-
-function sortIndicator(active: boolean, direction: SortDirection): string {
-  if (!active) return "↕";
-  return direction === "asc" ? "↑" : "↓";
-}
 
 function rowKey(row: OpenOrdersTotvsItem): string {
   return `${row.filial}-${row.pedido}-${row.linha}-${row.produto}`;
 }
 
-function renderPrevisaoCell(
-  row: OpenOrdersTotvsItem,
-  onOpenModal: (row: OpenOrdersTotvsItem) => void,
-) {
-  const previsao = getLineOpForecast(row);
-
-  if (previsao.previsaoLabel === "—") {
-    return "—";
-  }
-
-  if (canOpenOpForecastModal(row)) {
-    return (
-      <button
-        type="button"
-        className="pva-link-btn"
-        onClick={() => onOpenModal(row)}
-        title="Ver OPs utilizadas na previsão"
-      >
-        {previsao.previsaoLabel}
-      </button>
-    );
-  }
-
-  return previsao.previsaoLabel;
-}
-
-function renderCell(
-  row: OpenOrdersTotvsItem,
-  key: TableColumnKey,
-  onOpenModal: (row: OpenOrdersTotvsItem) => void,
-) {
-  switch (key) {
-    case "nome_cliente":
-      return (
-        <div className="pva-cell-stack">
-          <strong>{row.nome_cliente || "—"}</strong>
-          <span className="pva-cell-muted">
-            {formatEntityTypeWithCodeStore(row.tipo_entidade, row.codigo_cadastro, null)}
-          </span>
-        </div>
-      );
-    case "loja_cadastro":
-      return row.loja_cadastro || "—";
-    case "filial":
-      return row.filial || "—";
-    case "pedido":
-      return (
-        <div className="pva-cell-stack">
-          <span>{row.pedido || "—"}</span>
-          <span className="pva-cell-muted">Linha {row.linha || "—"}</span>
-        </div>
-      );
-    case "pedido_cliente":
-      return row.pedido_cliente || "—";
-    case "produto":
-      return row.produto || "—";
-    case "codigo_cliente":
-      return row.codigo_cliente || "—";
-    case "quantidade":
-      return formatQuantity(row.quantidade);
-    case "entregue":
-      return formatQuantity(row.entregue);
-    case "saldo":
-      return formatQuantity(row.saldo);
-    case "no_estoque":
-      return formatQuantity(getAllocatedStock(row));
-    case "data_entrega":
-      return formatDisplayDate(row.data_entrega);
-    case "previsao_entrega_op":
-      return renderPrevisaoCell(row, onOpenModal);
-    case "data_despacho":
-      return row.data_despacho ? formatDisplayDate(row.data_despacho) : "Não informado";
-    case "valor_aberto":
-      return formatCurrency(row.valor_aberto);
-    case "status":
-      return (
-        <div className="pva-badge-group pva-badge-group--status">
-          <StatusBadge badge={getLineStatus(row)} />
-        </div>
-      );
-    default:
-      return "—";
-  }
+function badgeVariant(
+  tone: ReturnType<typeof getLineStatus>["tone"],
+): "neutral" | "info" | "success" | "warning" | "danger" {
+  if (tone === "success") return "success";
+  if (tone === "warning") return "warning";
+  if (tone === "danger") return "danger";
+  if (tone === "info") return "info";
+  return "neutral";
 }
 
 export function OpenOrdersTable({
@@ -132,9 +70,10 @@ export function OpenOrdersTable({
   onSort,
   loading = false,
   emptyMessage = "Nenhum registro encontrado.",
+  basePath,
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
-  const [modalItem, setModalItem] = useState<OpenOrdersTotvsItem | null>(null);
+  const [drawerItem, setDrawerItem] = useState<OpenOrdersTotvsItem | null>(null);
   const { preferences, visibleColumns, visibleColumnCount, setColumnVisible, resetPreferences } =
     useTableColumnPreferences();
   const {
@@ -148,15 +87,12 @@ export function OpenOrdersTable({
   } = useTableFontSize();
 
   const tableStyle = {
-    "--pva-table-font-size": `${fontSize}px`,
+    "--cm-table-font-size": `${fontSize}px`,
     "--delpi-ui-table-font-size": `${fontSize}px`,
-    "--pva-table-font-size-muted": `${Math.max(10, fontSize - 1)}px`,
-    "--pva-table-badge-font-size": `${Math.max(10, fontSize - 1)}px`,
   } as CSSProperties;
 
   const handleExportExcel = async () => {
     if (exportRows.length === 0 || exporting) return;
-
     try {
       setExporting(true);
       await exportOpenOrdersExcel(exportRows, visibleColumns);
@@ -165,24 +101,125 @@ export function OpenOrdersTable({
     }
   };
 
+  const columns: DataTableColumn<OpenOrdersTotvsItem>[] = useMemo(() => {
+    const renderers: Record<
+      TableColumnKey,
+      (row: OpenOrdersTotvsItem) => ReturnType<DataTableColumn<OpenOrdersTotvsItem>["render"]>
+    > = {
+      nome_cliente: (row) => (
+        <div className="cm-cell-stack">
+          {row.codigo_cadastro && row.loja_cadastro ? (
+            <button
+              type="button"
+              className="cm-link-button"
+              onClick={() =>
+                navigateCustomerDetail(row.codigo_cadastro, row.loja_cadastro, { basePath })
+              }
+            >
+              <strong>{row.nome_cliente || "—"}</strong>
+            </button>
+          ) : (
+            <strong>{row.nome_cliente || "—"}</strong>
+          )}
+          <span className="cm-cell-muted">
+            {formatEntityTypeWithCodeStore(row.tipo_entidade, row.codigo_cadastro, null)}
+          </span>
+        </div>
+      ),
+      loja_cadastro: (row) => row.loja_cadastro || "—",
+      filial: (row) => row.filial || "—",
+      pedido: (row) => (
+        <div className="cm-cell-stack">
+          <span>{row.pedido || "—"}</span>
+          <span className="cm-cell-muted">Linha {row.linha || "—"}</span>
+        </div>
+      ),
+      pedido_cliente: (row) => row.pedido_cliente || "—",
+      produto: (row) => row.produto || "—",
+      codigo_cliente: (row) => row.codigo_cliente || "—",
+      quantidade: (row) => formatQuantity(row.quantidade),
+      entregue: (row) => formatQuantity(row.entregue),
+      saldo: (row) => formatQuantity(row.saldo),
+      no_estoque: (row) => formatQuantity(getAllocatedStock(row)),
+      data_entrega: (row) => formatDisplayDate(row.data_entrega),
+      previsao_entrega_op: (row) => {
+        const previsao = getLineOpForecast(row);
+        if (previsao.previsaoLabel === "—") return "—";
+        if (canOpenOpForecastModal(row)) {
+          return (
+            <button
+              type="button"
+              className="cm-link-button"
+              onClick={() => setDrawerItem(row)}
+              title="Ver OPs utilizadas na previsão"
+            >
+              {previsao.previsaoLabel}
+            </button>
+          );
+        }
+        return previsao.previsaoLabel;
+      },
+      data_despacho: (row) =>
+        row.data_despacho ? formatDisplayDate(row.data_despacho) : "Não informado",
+      valor_aberto: (row) => formatCurrency(row.valor_aberto),
+      status: (row) => {
+        const badge = getLineStatus(row);
+        return (
+          <StatusBadge
+            classNames={cmStatusBadgeClassNames}
+            label={badge.label}
+            variant={badgeVariant(badge.tone)}
+          />
+        );
+      },
+      atraso_dias: (row) => {
+        const days = getDeliveryOverdueDays(row.data_entrega);
+        if (days == null || row.saldo <= 0) return "—";
+        return days.toLocaleString("pt-BR");
+      },
+    };
+
+    return visibleColumns.map((column) => ({
+      key: column.key,
+      header: column.label,
+      sortable: Boolean(column.sortable),
+      interactive:
+        column.key === "nome_cliente" ||
+        column.key === "previsao_entrega_op" ||
+        column.key === "status",
+      align:
+        column.key === "saldo" ||
+        column.key === "valor_aberto" ||
+        column.key === "quantidade" ||
+        column.key === "entregue" ||
+        column.key === "no_estoque" ||
+        column.key === "atraso_dias"
+          ? ("right" as const)
+          : undefined,
+      render: (row) => renderers[column.key](row),
+    }));
+  }, [basePath, visibleColumns]);
+
   return (
     <>
-      <section className="pva-card pva-table-card" aria-label="Pedidos em aberto" style={tableStyle}>
-        <div className="pva-table-card__toolbar">
-          <p className="pva-table-card__hint">
-            {visibleColumnCount} coluna(s) visível(is)
-            {exportRows.length > 0 ? ` · ${exportRows.length.toLocaleString("pt-BR")} linha(s) para exportar` : ""}.
-            Previsão (OP) = data em que o saldo faltante da linha seria coberto pelas OPs abertas (FIFO).
+      <SectionCard
+        title="Pedidos em aberto"
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
+        titleHint={CM_HELP.openOrders.table}
+      >
+        <div className="cm-table-toolbar" style={tableStyle}>
+          <p className="cm-table-toolbar__hint">
+            {visibleColumnCount} coluna(s) · {exportRows.length.toLocaleString("pt-BR")} linha(s)
+            para exportar. Previsão (OP) = cobertura FIFO pelas OPs abertas.
             <HelpTooltip
               content={CM_HELP.openOrders.table}
               ariaLabel="Ajuda: tabela de pedidos"
               placement="bottom"
             />
           </p>
-          <div className="pva-table-card__actions">
+          <div className="cm-table-toolbar__actions">
             <ExcelExportButton
-              className="pva-export-actions"
-              buttonClassName="pva-btn pva-btn--ghost pva-btn--sm"
               disabled={exportRows.length === 0}
               exporting={exporting}
               onExport={handleExportExcel}
@@ -204,75 +241,39 @@ export function OpenOrdersTable({
           </div>
         </div>
 
-        <div className={PVA_TABLE.wrap}>
-          <table className={withBemModifier(PVA_TABLE.table, "sortable")}>
-            <thead>
-              <tr>
-                {visibleColumns.map((column) => (
-                  <th key={column.key} className={column.className}>
-                    {column.sortable ? (
-                      <button
-                        type="button"
-                        className={
-                          sortKey === column.key
-                            ? PVA_TABLE.sortButtonActive
-                            : PVA_TABLE.sortButton
-                        }
-                        onClick={() => {
-                          if (isSortableTableColumnKey(column.key)) {
-                            onSort(column.key);
-                          }
-                        }}
-                      >
-                        <span>{column.label}</span>
-                        <span className={PVA_TABLE.sortIndicator} aria-hidden="true">
-                          {sortIndicator(sortKey === column.key, sortDirection)}
-                        </span>
-                      </button>
-                    ) : (
-                      column.label
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={visibleColumnCount} className={PVA_TABLE.empty}>
-                    Carregando…
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={visibleColumnCount} className={PVA_TABLE.empty}>
-                    {emptyMessage}
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr key={rowKey(row)}>
-                    {visibleColumns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={column.className}
-                        data-label={column.label}
-                      >
-                        {renderCell(row, column.key, setModalItem)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+        {loading ? (
+          <p className="cm-table-loading" role="status">
+            Carregando…
+          </p>
+        ) : rows.length === 0 ? (
+          <p className="cm-table-empty" role="status">
+            {emptyMessage}
+          </p>
+        ) : (
+          <DataTable
+            rows={rows}
+            columns={columns}
+            rowKey={rowKey}
+            classNames={cmDataTableClassNames}
+            labels={cmDataTableLabels}
+            layout="section"
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={(key) => {
+              if (isSortableTableColumnKey(key as TableColumnKey)) {
+                onSort(key as SortKey);
+              }
+            }}
+            onRowClick={(row) => setDrawerItem(row)}
+          />
+        )}
+      </SectionCard>
 
-      <OpForecastModal
-        item={modalItem}
-        open={modalItem != null}
-        onClose={() => setModalItem(null)}
+      <OpenOrdersLineDrawer
+        item={drawerItem}
+        open={drawerItem != null}
+        onClose={() => setDrawerItem(null)}
+        basePath={basePath}
       />
     </>
   );

@@ -45,6 +45,7 @@ from app.domain.entities.pedidos_venda_abertos.seller_portfolio import (
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.pedidos_venda_abertos.portfolio_access import (
+    can_filter_by_seller_id,
     current_user_id,
     is_portfolio_admin,
     is_portfolio_unrestricted,
@@ -103,10 +104,14 @@ class BillingSeriesBody(BaseModel):
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
+    can_filter = can_filter_by_seller_id()
+    seller_filter = (seller_id or "").strip() or None
+    # team.view pode filtrar uma carteira; unrestricted sem filtro vê consolidado.
+    unrestricted = is_portfolio_unrestricted() or (can_filter and bool(seller_filter))
     return build_resolve_portfolio_scope_use_case().execute(
         user_id=current_user_id(),
-        is_unrestricted=is_portfolio_unrestricted(),
-        seller_id_filter=seller_id if is_portfolio_unrestricted() else None,
+        is_unrestricted=unrestricted,
+        seller_id_filter=seller_filter if can_filter else None,
     )
 
 
@@ -121,13 +126,13 @@ def _resolve_scope(seller_id: Optional[str] = None):
 def list_pedidos_venda_abertos_route(
     seller_id: Optional[str] = Query(
         None,
-        description="Filtro de carteira (somente admin/gerente).",
+        description="Filtro de carteira (team.view, admin/gerente).",
     ),
 ):
     try:
-        if seller_id and not is_portfolio_unrestricted():
+        if seller_id and not can_filter_by_seller_id():
             return error_response(
-                "Filtro por vendedor disponível apenas para gerentes.",
+                "Filtro por vendedor disponível apenas para equipe ou gerentes.",
                 status_code=403,
             )
         scope = _resolve_scope(seller_id)

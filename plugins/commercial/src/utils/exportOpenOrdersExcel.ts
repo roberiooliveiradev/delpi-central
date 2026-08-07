@@ -1,6 +1,6 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { exportTableFormat, type TableExportPayload } from "@delpi/plugin-ui/index";
-import { formatDisplayDate } from "./dates";
+import { formatDisplayDate, getDeliveryOverdueDays } from "./dates";
 import { getLineOpForecast } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
 import { getLineStatus } from "./statusBadges";
@@ -44,6 +44,8 @@ function itemExportValue(item: OpenOrdersTotvsItem, key: TableColumnKey): Export
       return item.valor_aberto ?? 0;
     case "status":
       return getLineStatus(item).label;
+    case "atraso_dias":
+      return getDeliveryOverdueDays(item.data_entrega) ?? "";
     default:
       return "";
   }

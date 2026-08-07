@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { DrawerShell, drawerShellBemClasses } from "./DrawerShell";
+import {
+  createHostContainedDrawerShell,
+  DrawerShell,
+  drawerShellBemClasses,
+} from "./DrawerShell";
 
 describe("DrawerShell", () => {
   it("não renderiza quando fechado", () => {
@@ -42,5 +46,29 @@ describe("DrawerShell", () => {
     expect(screen.getByText("Ajuste metas e responsáveis.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Salvar" })).toBeTruthy();
     expect(screen.getByText("Formulário")).toBeTruthy();
+  });
+
+  it("createHostContainedDrawerShell porta para o root do MFE", () => {
+    const host = document.createElement("div");
+    host.className = "dashboard-commercial";
+    document.body.appendChild(host);
+
+    const HostDrawer = createHostContainedDrawerShell({
+      prefix: "cm",
+      portalScopeClassName: "dashboard-commercial",
+    });
+
+    const { unmount } = render(
+      <HostDrawer open title="Linha do pedido" onClose={vi.fn()}>
+        <p>Detalhe OP</p>
+      </HostDrawer>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Linha do pedido" });
+    expect(dialog.closest("[data-drawer-contained='true']")).toBeTruthy();
+    expect(host.contains(dialog)).toBe(true);
+
+    unmount();
+    host.remove();
   });
 });

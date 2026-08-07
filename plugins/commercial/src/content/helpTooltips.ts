@@ -83,9 +83,12 @@ export const CM_HELP = {
     filterBranch: "Filial TOTVS do pedido. Vazio = todas as filiais do escopo.",
     filterClient: "Um ou mais clientes da carteira (código+loja).",
     filterStock:
-      "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado.",
+      "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
+    filterLate: "Filtrar só linhas com entrega prometida vencida e saldo em aberto.",
     filterDateStart: "Início da janela pela data de entrega prometida da linha.",
     filterDateEnd: "Fim da janela pela data de entrega prometida da linha.",
+    sellerScope:
+      "Filtra pedidos pela carteira do vendedor selecionado. Vazio = todas as carteiras que você pode ver.",
     table:
       "Cada linha é um item de pedido em aberto. Use colunas, ordenação e exportação Excel conforme a preferência salva.",
   },

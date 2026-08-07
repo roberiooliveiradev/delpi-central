@@ -1,3 +1,6 @@
+/**
+ * @deprecated Preferir `OpenOrdersLineDrawer` (WF-02R). Mantido só como referência legado PVA.
+ */
 import { PVA_COL_NUMERIC, PVA_TABLE } from "../ui/tableChrome";
 import { PVA_STATE_BOX } from "../ui/stateChrome";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";

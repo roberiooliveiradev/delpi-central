@@ -54,7 +54,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
     void Promise.all(
       activeSellers.map(async (seller: SellerPortfolio) => {
         try {
-          const data = await getOpenOrders(controller.signal, { sellerId: seller.user_id });
+          const data = await getOpenOrders(controller.signal, { sellerId: seller.id });
           const items = data.items ?? [];
           return {
             id: seller.id,
@@ -122,9 +122,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
           onClick={() =>
             navigatePluginView("open_orders", {
               basePath,
-              search: `?seller_id=${encodeURIComponent(
-                sellers.find((s) => s.id === row.id)?.user_id ?? "",
-              )}`,
+              search: `?seller_id=${encodeURIComponent(row.id)}`,
             })
           }
         >
