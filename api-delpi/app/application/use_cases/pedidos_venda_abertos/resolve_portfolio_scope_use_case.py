@@ -51,7 +51,10 @@ class ResolvePortfolioScopeUseCase:
 
         portfolio: SellerPortfolio | None
         if is_unrestricted and seller_filter:
+            # Aceita id da carteira (PK) ou user_id (legado / callers equivocados).
             portfolio = self._repository.get_by_id(seller_filter)
+            if portfolio is None:
+                portfolio = self._repository.get_by_user_id(seller_filter)
             if portfolio is None:
                 raise LookupError("Vendedor não encontrado para filtro de carteira.")
             if not portfolio.active:

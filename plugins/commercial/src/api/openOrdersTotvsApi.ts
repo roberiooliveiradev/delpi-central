@@ -16,7 +16,7 @@ export async function getOpenOrdersTotvs(
   const qs = params.toString();
   // Barra final obrigatória (Mixed Content atrás de HTTPS).
   const response = await httpGet<ApiSuccessResponse<OpenOrdersTotvsData>>(
-    `${apiDelpiUrl("/pedidos-venda-abertos")}/${qs ? `?${qs}` : ""}`,
+    `${apiDelpiUrl("/pedidos-venda-abertos/")}${qs ? `?${qs}` : ""}`,
     { signal },
   );
 

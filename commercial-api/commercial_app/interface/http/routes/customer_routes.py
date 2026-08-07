@@ -62,7 +62,32 @@ def enrich_portfolio_customers(_request: Request, body: EnrichmentBody = Body(..
             ]
         }
         result = build_delpi_commercial_gateway().enrich_portfolio_customers(payload=payload)
-        return ok(result.get("data", result), message="Clientes enriquecidos.")
+        data = result.get("data", result)
+        # api-delpi marca has_avatar pelo schema/arquivo legado PVA; o MFE baixa
+        # avatar via commercial-api — alinhar flag ao storage canônico.
+        items = data.get("items") if isinstance(data, dict) else None
+        if isinstance(items, list) and items:
+            avatar_keys = build_manage_customer_avatar_use_case().list_keys_with_avatar(
+                customers=[
+                    (
+                        str(item.get("customer_code") or "").strip(),
+                        str(item.get("customer_store") or "").strip(),
+                    )
+                    for item in items
+                    if isinstance(item, dict)
+                ]
+            )
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                code = str(item.get("customer_code") or "").strip()
+                store = str(item.get("customer_store") or "").strip()
+                has_avatar = bool(code and store and (code, store) in avatar_keys)
+                item["has_avatar"] = has_avatar
+                item["avatar_url"] = (
+                    f"/customers/{code}/{store}/avatar" if has_avatar else None
+                )
+        return ok(data, message="Clientes enriquecidos.")
     except ValueError as exc:
         return fail(str(exc), 400)
     except RuntimeError as exc:

@@ -116,6 +116,13 @@ class Settings:
         "PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR",
         default="/app/data/pedidos-venda-abertos/avatars",
     )
+    # Alinha escopo seller_id de pedidos-venda-abertos ao schema commercial
+    # (mesmo valor da commercial-api). Default commercial após cutover F2c.
+    COMMERCIAL_PORTFOLIO_SOURCE: str = (
+        str(_get_env("COMMERCIAL_PORTFOLIO_SOURCE", default="commercial") or "commercial")
+        .strip()
+        .lower()
+    )
     KAIZEN_EVIDENCE_UPLOAD_DIR: str = _get_env(
         "KAIZEN_EVIDENCE_UPLOAD_DIR",
         default="/app/data/kaizen-evidences",

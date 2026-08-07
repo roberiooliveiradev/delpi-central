@@ -16,7 +16,7 @@ export async function getOpenOrders(
   // Barra final obrigatória: sem ela o FastAPI redireciona e, atrás do
   // proxy HTTPS, o Location pode vir em http:// → Mixed Content no browser.
   const response = await httpGet<ApiSuccessResponse<OpenOrdersData>>(
-    `${apiDelpiUrl(OPEN_ORDERS_PATH)}/${qs ? `?${qs}` : ""}`,
+    `${apiDelpiUrl(`${OPEN_ORDERS_PATH}/`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
 

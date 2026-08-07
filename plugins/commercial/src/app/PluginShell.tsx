@@ -69,7 +69,6 @@ function greetingForNow(date = new Date()): string {
 export function PluginShell({
   view,
   basePath,
-  search,
   showAdmin = false,
   showWorklist = false,
   showProposals = false,
@@ -212,10 +211,9 @@ export function PluginShell({
               ? `${item.label}. ${NAV_HELP[item.id]}`
               : item.label,
             onSelect: () =>
-              navigatePluginView(item.id, {
-                basePath,
-                search: search || undefined,
-              }),
+              // Nav de topo: path limpo. Não reaproveitar query da view atual
+              // (ex.: ?pedido=&linha= reabre modal; datas de Gestão vazam em Pedidos).
+              navigatePluginView(item.id, { basePath }),
           }))}
           actions={
             scopeLabel ? (

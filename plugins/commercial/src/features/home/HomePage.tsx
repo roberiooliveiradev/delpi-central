@@ -246,7 +246,8 @@ export function HomePage({
           const settled = await Promise.allSettled(
             active.map(async (seller: SellerPortfolio) => {
               const data = await getOpenOrders(controller.signal, {
-                sellerId: seller.user_id,
+                // Filtro api-delpi é id da carteira (PK), não user_id do JWT.
+                sellerId: seller.id,
               });
               const kpis = kpisFromOpenOrders(data);
               return {

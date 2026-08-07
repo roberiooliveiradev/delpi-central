@@ -139,6 +139,37 @@ def test_resolve_scope_admin_unrestricted() -> None:
     repo.get_by_user_id.assert_not_called()
 
 
+def test_resolve_scope_admin_filter_by_user_id_fallback() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = None
+    repo.get_by_user_id.return_value = _portfolio(id="s1", user_id="u-filter")
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="admin",
+        is_unrestricted=True,
+        seller_id_filter="u-filter",
+    )
+    assert scope.unrestricted is False
+    assert scope.seller_id == "s1"
+    assert ("100", "01") in (scope.allowed_customers or frozenset())
+    repo.get_by_id.assert_called_once_with("u-filter")
+    repo.get_by_user_id.assert_called_once_with("u-filter")
+
+
+def test_resolve_scope_admin_filter_missing_raises() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = None
+    repo.get_by_user_id.return_value = None
+    try:
+        ResolvePortfolioScopeUseCase(repo).execute(
+            user_id="admin",
+            is_unrestricted=True,
+            seller_id_filter="missing",
+        )
+        raise AssertionError("expected LookupError")
+    except LookupError as exc:
+        assert "não encontrado" in str(exc).lower()
+
+
 def test_resolve_scope_seller_without_portfolio() -> None:
     repo = MagicMock()
     repo.get_by_user_id.return_value = None
