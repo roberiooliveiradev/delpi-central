@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { FieldLabel } from "../help/FieldLabel";
 import { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
 import { delpiUiClass } from "../../utils/delpiUiClass";
+import { NativeCheckboxControl } from "./NativeCheckboxControl";
 
 export type MultiSelectOption = {
   value: string;
@@ -386,15 +387,13 @@ export function MultiSelectField({
                 <li className={classNames.empty}>{emptyListMessage}</li>
               ) : (
                 filteredOptions.map((option) => (
-                  <li key={option.value}>
-                    <label className={classNames.option} title={option.label}>
-                      <input
-                        type="checkbox"
-                        checked={selectedValues.includes(option.value)}
-                        onChange={() => toggleValue(option.value)}
-                      />
-                      <span>{option.label}</span>
-                    </label>
+                  <li key={option.value} className={classNames.option} title={option.label}>
+                    <NativeCheckboxControl
+                      className="delpi-ui-native-checkbox--compact"
+                      checked={selectedValues.includes(option.value)}
+                      onChange={() => toggleValue(option.value)}
+                      label={option.label}
+                    />
                   </li>
                 ))
               )}

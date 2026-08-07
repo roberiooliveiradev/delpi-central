@@ -40,6 +40,7 @@
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";
 @import "./styles/data-table.css";
+@import "./styles/inline-meter.css";
 @import "./styles/pagination.css";
 @import "./styles/detail-card.css";
 @import "./styles/drawer.css";

@@ -1,6 +1,7 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { compareDeliveryDates, getDeliveryOverdueDays } from "./dates";
 import { getLineOpForecast } from "./opAllocation";
+import { getAllocatedStock } from "./stockAllocation";
 
 export type SortKey =
   | "nome_cliente"
@@ -12,6 +13,7 @@ export type SortKey =
   | "data_entrega"
   | "data_despacho"
   | "saldo"
+  | "cobertura"
   | "valor_aberto"
   | "previsao_entrega_op"
   | "atraso_dias";
@@ -31,6 +33,11 @@ function compareStrings(a: string | null, b: string | null): number {
 
 function compareNullableDate(a: string | null, b: string | null): number {
   return compareDeliveryDates(a, b);
+}
+
+function coverageRatio(item: OpenOrdersTotvsItem): number {
+  if (item.saldo <= 0) return 1;
+  return getAllocatedStock(item) / item.saldo;
 }
 
 export function sortPedidosItems(
@@ -68,6 +75,9 @@ export function sortPedidosItems(
         break;
       case "saldo":
         result = a.saldo - b.saldo;
+        break;
+      case "cobertura":
+        result = coverageRatio(a) - coverageRatio(b);
         break;
       case "valor_aberto":
         result = a.valor_aberto - b.valor_aberto;

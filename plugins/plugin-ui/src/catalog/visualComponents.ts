@@ -202,6 +202,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: CATALOG_EXPAND_DATE,
     changeNote: "Menu Colunas / Exibir colunas canônico",
   }),
+  vc("data", "InlineMeter", {
+    addedAt: "2026-08-07",
+    changeNote: "Barra de proporção compacta para células e cards",
+  }),
   vc("data", "TreeGuideRails", {
     addedAt: "2026-07-13",
     changeNote: "Linhas pontilhadas suaves para árvores hierárquicas",

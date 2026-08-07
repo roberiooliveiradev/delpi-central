@@ -17,10 +17,12 @@ export type PageHeroClassNames = {
   title: string;
   description: string;
   badge: string;
+  actions: string;
   highlights: string;
   highlight: string;
   highlightLabel: string;
   highlightValue: string;
+  body: string;
 };
 
 export type PageHeroProps = {
@@ -29,7 +31,11 @@ export type PageHeroProps = {
   title: ReactNode;
   description?: ReactNode;
   badge?: ReactNode;
+  /** Ações à direita do headline (ex.: Atualizar). */
+  actions?: ReactNode;
   highlights?: PageHeroHighlight[];
+  /** Faixa inferior (filtros, chips, escopo). */
+  children?: ReactNode;
   className?: string;
   "aria-label"?: string;
 };
@@ -47,6 +53,7 @@ export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
       "delpi-ui-page-hero__description",
     ),
     badge: delpiUiClass(`${prefix}-page-hero__badge`, "delpi-ui-page-hero__badge"),
+    actions: delpiUiClass(`${prefix}-page-hero__actions`, "delpi-ui-page-hero__actions"),
     highlights: delpiUiClass(
       `${prefix}-page-hero__highlights`,
       "delpi-ui-page-hero__highlights",
@@ -63,6 +70,7 @@ export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
       `${prefix}-page-hero__highlight-value`,
       "delpi-ui-page-hero__highlight-value",
     ),
+    body: delpiUiClass(`${prefix}-page-hero__body`, "delpi-ui-page-hero__body"),
   };
 }
 
@@ -72,7 +80,9 @@ export function PageHero({
   title,
   description,
   badge,
+  actions,
   highlights,
+  children,
   className,
   "aria-label": ariaLabel,
 }: PageHeroProps) {
@@ -87,6 +97,7 @@ export function PageHero({
         <div className={classNames.headline}>
           <h1 className={classNames.title}>{title}</h1>
           {badge ? <div className={classNames.badge}>{badge}</div> : null}
+          {actions ? <div className={classNames.actions}>{actions}</div> : null}
         </div>
         {description ? <p className={classNames.description}>{description}</p> : null}
         {hasHighlights ? (
@@ -99,6 +110,7 @@ export function PageHero({
             ))}
           </div>
         ) : null}
+        {children ? <div className={classNames.body}>{children}</div> : null}
       </div>
     </section>
   );

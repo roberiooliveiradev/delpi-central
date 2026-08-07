@@ -34,6 +34,12 @@ function itemExportValue(item: OpenOrdersTotvsItem, key: TableColumnKey): Export
       return item.saldo ?? 0;
     case "no_estoque":
       return getAllocatedStock(item);
+    case "cobertura": {
+      const allocated = getAllocatedStock(item);
+      const saldo = item.saldo ?? 0;
+      if (saldo <= 0) return "100%";
+      return `${Math.round((allocated / saldo) * 100)}%`;
+    }
     case "data_entrega":
       return item.data_entrega ? formatDisplayDate(item.data_entrega) : "";
     case "previsao_entrega_op":

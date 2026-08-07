@@ -292,6 +292,16 @@ export {
   type TimelineTone,
   type TimelineTreeNode,
 } from "./Timeline";
+export {
+  InlineMeter,
+  createDashboardInlineMeter,
+  inlineMeterBemClasses,
+  type DashboardInlineMeterProps,
+  type InlineMeterClassNames,
+  type InlineMeterProps,
+  type InlineMeterSegment,
+  type InlineMeterTone,
+} from "./InlineMeter";
 /** Alias de produto (Account 360 / follow-ups) — mesmo componente Timeline. */
 export {
   Timeline as ActivityTimeline,

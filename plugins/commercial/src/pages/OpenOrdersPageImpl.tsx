@@ -94,44 +94,103 @@ export function OpenOrdersPageImpl() {
     updateFilters({ stockStatus: "", lateOnly: true });
   };
 
+  const highlights = [
+    {
+      id: "linhas",
+      label: "Linhas",
+      value: loading && !allItemsCount ? "—" : allItemsCount.toLocaleString("pt-BR"),
+    },
+    {
+      id: "valor",
+      label: "Valor em aberto",
+      value: loading && !allItemsCount ? "—" : formatCurrency(summary.valor_total_aberto),
+    },
+    ...(hasActiveFilters
+      ? [
+          {
+            id: "filtradas",
+            label: "Após filtros",
+            value: totalFiltered.toLocaleString("pt-BR"),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <section className="cm-page-stack cm-open-orders-page">
-      <div className="cm-page-header-row">
-        <CommercialPageHero
-          aria-label="Pedidos em aberto"
-          eyebrow="Pedidos"
-          title="Pedidos em aberto"
-          description={
-            loading && !allItemsCount
-              ? "Carregando carteira…"
-              : `${allItemsCount.toLocaleString("pt-BR")} linha(s) carregadas${
-                  hasActiveFilters
-                    ? ` · ${totalFiltered.toLocaleString("pt-BR")} após filtros`
-                    : ""
-                } · ${formatCurrency(summary.valor_total_aberto)} em aberto`
-          }
-          badge={
-            <HelpTooltip content={CM_HELP.openOrders.page} ariaLabel="Ajuda: Pedidos em aberto" />
-          }
-        />
-        <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </div>
+      <CommercialPageHero
+        aria-label="Pedidos em aberto"
+        eyebrow="Pedidos"
+        title="Pedidos em aberto"
+        badge={
+          <HelpTooltip content={CM_HELP.openOrders.page} ariaLabel="Ajuda: Pedidos em aberto" />
+        }
+        actions={
+          <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
+            <RefreshCw size={16} aria-hidden="true" />
+            <span>Atualizar</span>
+          </ActionButton>
+        }
+        highlights={highlights}
+      >
+        {canUseTeamScope ? (
+          <div className="cm-open-orders-page__scope">
+            <SellerScopeFilter
+              sellers={sellers}
+              value={sellerIdFilter}
+              onChange={setSellerIdFilter}
+            />
+            <HelpTooltip
+              content={CM_HELP.openOrders.sellerScope}
+              ariaLabel="Ajuda: filtro de carteira"
+            />
+          </div>
+        ) : null}
 
-      {canUseTeamScope ? (
-        <div className="cm-open-orders-page__scope">
-          <SellerScopeFilter
-            sellers={sellers}
-            value={sellerIdFilter}
-            onChange={setSellerIdFilter}
-          />
-          <HelpTooltip
-            content={CM_HELP.openOrders.sellerScope}
-            ariaLabel="Ajuda: filtro de carteira"
-          />
-        </div>
-      ) : null}
+        {!error && allItemsCount > 0 ? (
+          <>
+            <CommercialScopeChipBar
+              aria-label="Atenção operacional"
+              label="Atenção"
+              chips={[
+                {
+                  id: "all",
+                  label: `Todos (${attentionSummary.total_linhas.toLocaleString("pt-BR")})`,
+                  active: activeChip === "all",
+                  onSelect: () => selectChip("all"),
+                },
+                {
+                  id: "can_invoice",
+                  label: `Pode faturar (${attentionSummary.itens_com_estoque.toLocaleString("pt-BR")})`,
+                  active: activeChip === "can_invoice",
+                  onSelect: () => selectChip("can_invoice"),
+                },
+                {
+                  id: "partial",
+                  label: `Parcial (${attentionSummary.itens_estoque_parcial.toLocaleString("pt-BR")})`,
+                  active: activeChip === "partial",
+                  onSelect: () => selectChip("partial"),
+                },
+                {
+                  id: "late",
+                  label: `Atraso (${attentionSummary.linhas_em_atraso.toLocaleString("pt-BR")})`,
+                  active: activeChip === "late",
+                  onSelect: () => selectChip("late"),
+                },
+              ]}
+            />
+
+            <FilterBar
+              filters={filters}
+              filiais={filiais}
+              clients={clients}
+              hasActiveFilters={hasActiveFilters}
+              onChange={updateFilters}
+              onReset={resetFilters}
+            />
+          </>
+        ) : null}
+      </CommercialPageHero>
 
       {loading && !allItemsCount ? (
         <CommercialLoadingCard title="Carregando pedidos em aberto…" variant="panel" />
@@ -154,55 +213,15 @@ export function OpenOrdersPageImpl() {
         />
       ) : null}
 
+      {opsWarning && allItemsCount > 0 ? (
+        <CommercialStateBanner>
+          Pedidos carregados, mas a previsão produtiva (OPs abertas) não está disponível:{" "}
+          {opsWarning}
+        </CommercialStateBanner>
+      ) : null}
+
       {!error && allItemsCount > 0 ? (
         <>
-          <CommercialScopeChipBar
-            aria-label="Atenção operacional"
-            label="Atenção"
-            chips={[
-              {
-                id: "all",
-                label: `Todos (${attentionSummary.total_linhas.toLocaleString("pt-BR")})`,
-                active: activeChip === "all",
-                onSelect: () => selectChip("all"),
-              },
-              {
-                id: "can_invoice",
-                label: `Pode faturar (${attentionSummary.itens_com_estoque.toLocaleString("pt-BR")})`,
-                active: activeChip === "can_invoice",
-                onSelect: () => selectChip("can_invoice"),
-              },
-              {
-                id: "partial",
-                label: `Parcial (${attentionSummary.itens_estoque_parcial.toLocaleString("pt-BR")})`,
-                active: activeChip === "partial",
-                onSelect: () => selectChip("partial"),
-              },
-              {
-                id: "late",
-                label: `Atraso (${attentionSummary.linhas_em_atraso.toLocaleString("pt-BR")})`,
-                active: activeChip === "late",
-                onSelect: () => selectChip("late"),
-              },
-            ]}
-          />
-
-          <FilterBar
-            filters={filters}
-            filiais={filiais}
-            clients={clients}
-            hasActiveFilters={hasActiveFilters}
-            onChange={updateFilters}
-            onReset={resetFilters}
-          />
-
-          {opsWarning ? (
-            <CommercialStateBanner>
-              Pedidos carregados, mas a previsão produtiva (OPs abertas) não está disponível:{" "}
-              {opsWarning}
-            </CommercialStateBanner>
-          ) : null}
-
           <OpenOrdersTable
             rows={paginatedItems}
             exportRows={sortedItems}

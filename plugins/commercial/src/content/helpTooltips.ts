@@ -91,6 +91,69 @@ export const CM_HELP = {
       "Filtra pedidos pela carteira do vendedor selecionado. Vazio = todas as carteiras que você pode ver.",
     table:
       "Cada linha é um item de pedido em aberto. Use colunas, ordenação e exportação Excel conforme a preferência salva.",
+    layoutToggle:
+      "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
+    sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
+    sortDirection: "Crescente ou decrescente no campo de ordenação selecionado.",
+    cardOpenHint: "Abrir detalhes",
+    cardAriaOpen: "Abrir detalhes da linha",
+    columns: {
+      nome_cliente:
+        "Nome do cliente no pedido. Clique para abrir a Conta 360 (código + loja).",
+      loja_cadastro: "Loja do cadastro do cliente no TOTVS (A1_LOJA).",
+      filial: "Filial TOTVS em que o pedido foi digitado.",
+      pedido: "Número do pedido de venda e número da linha (item SC6).",
+      pedido_cliente: "Número do pedido no cliente (quando informado no TOTVS).",
+      produto: "Código do produto (B1_COD) da linha em aberto.",
+      codigo_cliente: "Código do produto no cliente (quando cadastrado).",
+      quantidade: "Quantidade original pedida na linha.",
+      entregue: "Quantidade já entregue / faturada desta linha.",
+      saldo: "Quantidade ainda em aberto (pedida − entregue).",
+      no_estoque:
+        "Estoque físico alocado a esta linha (FIFO por produto/filial no cliente — não é reserva formal).",
+      cobertura:
+        "Proporção estoque alocado ÷ saldo em aberto. Verde ≈ 100%; amarelo parcial; vermelho sem cobertura.",
+      data_entrega: "Data de entrega prometida no pedido (compromisso comercial).",
+      previsao_entrega_op:
+        "Previsão de disponibilidade pela cobertura FIFO das OPs abertas. Clique para o detalhe da linha. O badge compara previsão OP × entrega do pedido.",
+      data_despacho: "Data de despacho informada no TOTVS, quando houver.",
+      valor_aberto: "Valor em aberto da linha (saldo × preço).",
+      status:
+        "Situação operacional de estoque/atraso calculada no cliente: pode faturar, parcial, sem estoque ou atrasado.",
+      atraso_dias:
+        "Dias corridos desde a data de entrega prometida, só se ainda houver saldo em aberto.",
+    },
+    detail: {
+      modal:
+        "Detalhe da linha: indicadores, gráficos de cobertura/prazo/OPs e lista FIFO das ordens de produção usadas na previsão.",
+      saldo: "Quantidade ainda em aberto nesta linha do pedido.",
+      estoqueAlocado:
+        "Parte do estoque físico já atribuída a esta linha no algoritmo FIFO do portal.",
+      saldoProduzir: "Quanto ainda precisa ser produzido após considerar o estoque alocado.",
+      valorAberto: "Valor monetário ainda em aberto nesta linha.",
+      atraso: "Dias de atraso da entrega prometida, se a linha ainda estiver em aberto.",
+      status: "Pode faturar / parcial / sem estoque / atrasado — mesmo critério da coluna Status.",
+      entregaPedido: "Data de entrega prometida no pedido de venda.",
+      previsaoEntrega: "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
+      chartCobertura:
+        "Compara quantidade alocada em estoque versus saldo a produzir para fechar a linha.",
+      chartPrazo:
+        "Dias até a entrega do pedido e até a previsão OP (valor negativo = data já passou).",
+      chartPrazoCaption: "Negativo = já passou",
+      chartOps: "Por OP: quanto foi alocado a este pedido versus o saldo restante da OP.",
+      chartOpsCaption: "Alocado no pedido vs saldo OP",
+      opsNote:
+        "OPs são compartilhadas por produto/filial e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
+      opsTable: "Ordens de produção usadas na previsão desta linha (FIFO).",
+      opNumero: "Número da ordem de produção no TOTVS.",
+      opSaldo: "Saldo restante da OP no momento da alocação.",
+      opAlocado: "Quanto desta OP foi atribuído a esta linha do pedido.",
+      opFim: "Data fim prevista da OP (quando cadastrada).",
+      opStatus: "Se o fim previsto da OP está no prazo ou atrasado em relação à entrega do pedido.",
+      opObs: "Observação cadastrada na OP, quando houver.",
+      copyPedido: "Copia o número do pedido para a área de transferência.",
+      openAccount: "Abre a Conta 360 do cliente (código + loja) no Portal Comercial.",
+    },
   },
   customers: {
     page:

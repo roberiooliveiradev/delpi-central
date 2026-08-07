@@ -78,9 +78,9 @@ describe("createDashboardCreatableMultiSelectField", () => {
     expect(document.querySelector(".delpi-ui-tag-chip")).toBeTruthy();
 
     fireEvent.click(container.querySelector(".pac-multi-select__trigger") as Element);
-    const boxes = container.querySelectorAll('.pac-multi-select__option input[type="checkbox"]');
-    expect(boxes.length).toBeGreaterThanOrEqual(2);
-    fireEvent.click(boxes[1] as Element);
+    expect(container.querySelectorAll(".delpi-ui-native-checkbox").length).toBeGreaterThanOrEqual(2);
+    const second = container.querySelectorAll(".delpi-ui-native-checkbox__input")[1] as HTMLInputElement;
+    fireEvent.click(second);
     expect(onChange).toHaveBeenCalledWith(["automacao"]);
   });
 });

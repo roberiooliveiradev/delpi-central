@@ -12,6 +12,7 @@ export type TableColumnKey =
   | "entregue"
   | "saldo"
   | "no_estoque"
+  | "cobertura"
   | "data_entrega"
   | "data_despacho"
   | "valor_aberto"
@@ -26,12 +27,12 @@ export type TableColumnDef = {
   className?: string;
 };
 
-/** Colunas default enxutas (WF-02R). */
+/** Colunas default enxutas (WF-02R-T). */
 export const DEFAULT_VISIBLE_COLUMN_KEYS: readonly TableColumnKey[] = [
   "nome_cliente",
   "pedido",
   "produto",
-  "saldo",
+  "cobertura",
   "data_entrega",
   "previsao_entrega_op",
   "status",
@@ -51,6 +52,7 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "entregue", label: "Entregue" },
   { key: "saldo", label: "Saldo", sortable: true },
   { key: "no_estoque", label: "Est. alocado" },
+  { key: "cobertura", label: "Cobertura", sortable: true },
   { key: "data_entrega", label: "Entrega pedido", sortable: true },
   { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
   { key: "data_despacho", label: "Despacho", sortable: true },

@@ -17,6 +17,8 @@ import {
   createDashboardStateBanner,
   createCompactPagination,
   createHostContainedDrawerShell,
+  createHostContainedModalShell,
+  createDashboardInlineMeter,
   createFilterBarShell,
   dateFieldBemClasses,
   createDashboardPageHero,
@@ -33,6 +35,7 @@ import {
   emptyStateCardBemClasses,
   fileDropzoneBemClasses,
   filtersRowBemClasses,
+  inlineMeterBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
@@ -60,6 +63,8 @@ export const cmDataTableClassNames = dataTableBemClasses(UI_PREFIX);
 export const cmEmptyStateClassNames = emptyStateCardBemClasses(UI_PREFIX);
 export const cmStateBannerClassNames = stateBannerBemClasses(UI_PREFIX);
 export const cmStatusBadgeClassNames = statusBadgeBemClasses(UI_PREFIX);
+export const cmInlineMeterClassNames = inlineMeterBemClasses(UI_PREFIX);
+export const CommercialInlineMeter = createDashboardInlineMeter({ prefix: UI_PREFIX });
 export const cmAlertQueueClassNames = alertQueueBemClasses(UI_PREFIX);
 export const cmScopeChipBarClassNames = scopeChipBarBemClasses(UI_PREFIX);
 export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
@@ -145,6 +150,15 @@ export const CommercialDrawerShell = createHostContainedDrawerShell({
   portalScopeClassName: CM_PORTAL_SCOPE,
   closeAriaLabel: "Fechar painel",
   backdropAriaLabel: "Fechar painel",
+});
+
+/** Modal workbench (fill) — detalhe de linha / painéis amplos sem cobrir sidebar. */
+export const CommercialWorkbenchModal = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+  containedLayout: "fill",
+  variant: "page",
+  closeAriaLabel: "Fechar",
 });
 
 export const CommercialFilterBarShell = createFilterBarShell({

@@ -28,4 +28,21 @@ describe("PageHero", () => {
     expect(screen.getByText("Pedidos")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
   });
+
+  it("renderiza actions e children no body", () => {
+    const cn = pageHeroBemClasses("cm");
+    render(
+      <PageHero
+        classNames={cn}
+        title="Pedidos"
+        actions={<button type="button">Atualizar</button>}
+      >
+        <p>Filtros aqui</p>
+      </PageHero>,
+    );
+    expect(screen.getByRole("button", { name: "Atualizar" })).toBeTruthy();
+    expect(screen.getByText("Filtros aqui")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-page-hero__body")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-page-hero__actions")).toBeTruthy();
+  });
 });

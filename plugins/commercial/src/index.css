@@ -653,11 +653,87 @@
   margin-bottom: 12px;
 }
 
+.dashboard-commercial .cm-table-toolbar__leading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.dashboard-commercial .cm-table-toolbar__layout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial .cm-open-orders-cards-toolbar__dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-open-orders-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-card__field-label,
+.dashboard-commercial .cm-open-orders-card__badges-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-card__badges-head {
+  gap: 12px;
+}
+
+.dashboard-commercial .cm-open-orders-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.dashboard-commercial .cm-open-orders-detail__intro {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__intro-text {
+  font-size: 13px;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-detail__footer-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-commercial .cm-open-orders-drawer__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .dashboard-commercial .cm-table-toolbar__hint {
   margin: 0;
   color: var(--cm-text-muted);
   font-size: 13px;
-  flex: 1 1 240px;
 }
 
 .dashboard-commercial .cm-table-toolbar__actions {
@@ -678,6 +754,11 @@
   font-size: 12px;
 }
 
+.dashboard-commercial .cm-cell-danger {
+  color: var(--delpi-ui-danger, #dc2626);
+  font-weight: 600;
+}
+
 .dashboard-commercial .cm-drawer-footer-actions {
   display: flex;
   justify-content: flex-end;
@@ -688,11 +769,135 @@
 .dashboard-commercial .cm-open-orders-drawer__note,
 .dashboard-commercial .cm-open-orders-drawer__empty,
 .dashboard-commercial .cm-table-loading,
-.dashboard-commercial .cm-table-empty {
+.dashboard-commercial .cm-table-empty,
+.dashboard-commercial .cm-open-orders-cards__empty {
   margin: 12px 0 0;
   color: var(--cm-text-muted);
   font-size: 13px;
 }
+
+.dashboard-commercial .cm-open-orders-cards-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.dashboard-commercial .cm-open-orders-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  font-size: var(--cm-table-font-size, 13px);
+}
+
+.dashboard-commercial .cm-open-orders-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--cm-border, #e6e6e6);
+  background: var(--cm-surface, #fff);
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-card--interactive {
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.dashboard-commercial .cm-open-orders-card--interactive:hover,
+.dashboard-commercial .cm-open-orders-card--interactive:focus-visible {
+  border-color: var(--cm-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--cm-surface, #fff) 92%,
+    var(--cm-accent, var(--primary, #089bdb)) 8%
+  );
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 18%, transparent);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.dashboard-commercial .cm-open-orders-card__open-hint {
+  margin-right: auto;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--cm-accent, var(--primary, #089bdb));
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .cm-open-orders-card--interactive:hover .cm-open-orders-card__open-hint,
+.dashboard-commercial .cm-open-orders-card--interactive:focus-visible .cm-open-orders-card__open-hint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.dashboard-commercial .cm-open-orders-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cm-text);
+}
+
+.dashboard-commercial .cm-open-orders-card__meta {
+  margin: 0;
+  color: var(--cm-text-muted);
+  font-size: 0.92em;
+}
+
+.dashboard-commercial .cm-open-orders-card__row,
+.dashboard-commercial .cm-open-orders-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-open-orders-card__value {
+  margin: 0;
+  font-weight: 700;
+  color: var(--cm-accent, var(--primary, #089bdb));
+}
+
+.dashboard-commercial .cm-open-orders-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__chart-host {
+  width: 100%;
+  min-height: 160px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__meter-block {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-commercial .cm-open-orders-detail__charts {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 @media (max-width: 900px) {
   .dashboard-commercial .cm-gestao-charts-grid,

@@ -131,9 +131,10 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border-radius: 8px;
   cursor: pointer;
+  min-width: 0;
   color: var(--delpi-ui-text, var(--text, #111111));
   font-size: 13px;
   font-weight: 400;
@@ -143,26 +144,18 @@
 .delpi-ui-multi-select__option:hover {
   background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
     transparent
   );
 }
 
-/* Isola checkbox do CSS genérico de input/filters-row. */
-.delpi-ui-multi-select__option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  flex: 0 0 16px;
-  margin: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+/* Option = NativeCheckboxControl (checkbox moderno canônico). */
+.delpi-ui-multi-select__option .delpi-ui-native-checkbox {
+  width: 100%;
+  min-width: 0;
 }
 
-.delpi-ui-multi-select__option span {
+.delpi-ui-multi-select__option .delpi-ui-native-checkbox__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

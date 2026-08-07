@@ -1,0 +1,64 @@
+/**
+ * InlineMeter — barra de proporção compacta para células de tabela / cards.
+ */
+
+.delpi-ui-inline-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 72px;
+  max-width: 160px;
+}
+
+.delpi-ui-inline-meter__track {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-inline-meter--sm .delpi-ui-inline-meter__track {
+  height: 6px;
+}
+
+.delpi-ui-inline-meter--md .delpi-ui-inline-meter__track {
+  height: 8px;
+}
+
+.delpi-ui-inline-meter__fill {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-inline-meter__fill--neutral {
+  background: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+}
+
+.delpi-ui-inline-meter__fill--success {
+  background: var(--delpi-ui-success, #16a34a);
+}
+
+.delpi-ui-inline-meter__fill--warning {
+  background: var(--delpi-ui-warning, #d97706);
+}
+
+.delpi-ui-inline-meter__fill--danger {
+  background: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-ui-inline-meter__label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.72)));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

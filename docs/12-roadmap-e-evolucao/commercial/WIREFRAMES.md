@@ -197,51 +197,31 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 **Paridade:** `OpenOrdersPage` / `OpenOrdersPageImpl`  
 **Dados:** api-delpi `GET /pedidos-venda-abertos/` (+ ops abertas)  
 **Papel:** bancada de linhas (achar → entender entrega → agir). Home = atenção; Gestão = KPIs de período.  
-**Kit:** prefixo `cm-*` (`PageHero`, `ScopeChipBar`, `FilterBar`, `DataTable`, `DrawerShell`).
+**Kit:** `cm-*` — PageHero (`actions`/`children`), ScopeChipBar, FilterBar, DataTable / Cards, InlineMeter, WorkbenchModal host-fill.  
+**Evoluções:** WF-02R-H (Hero), WF-02R-T (tabela visual), WF-02R-C (cards), WF-02R-D (modal detalhe). MultiSelect do kit usa o mesmo checkbox moderno das Colunas.
 
 ```
-┌─ Portal Comercial · Pedidos em aberto ──────────────────────────────────────┐
-│ [PageHero] Pedidos em aberto · {N} linhas · escopo carteira                 │
-│            [Atualizar] [Exportar]                                           │
-│                                                                             │
-│ [AttentionChips] Todos | Pode faturar (52) | Parcial (17) | Atraso (7)     │
-│                  · Valor R$ … (métrica no chip Todos / hero)                │
-│                                                                             │
-│ [FilterBar] Busca · Filial · Cliente · Entrega de/até · [Mais filtros ▾]   │
-│             (avançado: status estoque, limpar)                              │
-│                                                                             │
-│ [SectionCard + DataTable enxuta]                            Mostrando 1–50 │
-│ │ Cliente │ Pedido/linha │ Produto │ Saldo │ Entrega │ Prev. OP │ Status │ │
-│ │         │              │         │       │         │         │ Valor  │ │
-│ │         │              │         │       │         │         │ Atraso │ │
-│ │ ACME →  │ 000123 / 01  │ 90…     │ 120   │ 02/08   │ badge   │ …      │ │
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│ [< Ant]  Página 1 de 3  [Próx >]                                            │
-│                                                                             │
-│ Clique na linha / Prev. OP → Drawer (direita, host-contained)               │
-│ Deep links Home: ?stock= / ?focus=late → chip equivalente                   │
-│ seller_id = portfolio id (team.view ou unrestricted)                        │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─ PageHero (card único) ───────────────────────────────────────────────────┐
+│ PEDIDOS · highlights Linhas / Valor / Após filtros         [↻ Atualizar] │
+│ Carteira · Atenção chips · FilterBar (busca/filial/cliente/datas)         │
+└───────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard ─ [Tabela|Cards] ─ Excel · Fonte · Colunas ──────────────────┐
+│ Tabela: Cobertura (InlineMeter) · Prev. OP + badge · Status · Atraso badge│
+│ Cards: mesmos campos visíveis · Ordenar por + direção · Detalhe → modal   │
+└───────────────────────────────────────────────────────────────────────────┘
+┌─ Modal host-fill (Detalhe da linha) ──────────────────────────────────────┐
+│ KPIs · gráficos cobertura/prazo/OPs · tabela OP · Abrir conta / Copiar    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Colunas default (8–9):** Cliente (+ link Conta), Pedido/linha, Produto, Saldo, Entrega pedido, Previsão OP, Status estoque, Valor aberto, Atraso (dias). Demais via menu Colunas.
+**Colunas default:** Cliente, Pedido, Produto, Cobertura, Entrega, Prev. OP, Status, Valor, Atraso.  
+**Clique:** linha / Prev. OP / card → modal expandido (drawer lateral deprecado).  
+**Deep links:** `?stock=` / `?focus=late` → chip; `seller_id` = portfolio id.
 
-**Mobile (≤768px):** chips empilham; tabela scroll horizontal ou densidade reduzida — sem segunda faixa de KPI cards.
+**Mobile (≤768px):** default Cards na 1ª visita; hero empilha; modal fill.
 
-**Drawer de linha (obrigatório):**
+**Histórico:** WF-02 (KPI cards + tabela densa + modal OP) → WF-02R → H/T/C/D.
 
-```
-┌─ Linha 000123 / 01 ─────────────────────────── [x]─┐
-│ Cliente · Pedido · Produto                         │
-│ Saldo · Alocado · A produzir · Entrega · Previsão  │
-│ Status estoque · Dias em atraso                    │
-│ ── OPs (FIFO) ──────────────────────────────────── │
-│ │ OP │ Saldo │ Alocado │ Previsão │ …             │
-│ [Abrir conta]  [Copiar nº pedido]                  │
-└────────────────────────────────────────────────────┘
-```
-
-**Histórico:** WF-02 (KPI cards + tabela densa + modal OP) foi substituído por WF-02R.
 
 ---
 

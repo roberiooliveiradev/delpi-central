@@ -40,6 +40,7 @@ import {
   type FlowchartNodeType,
 } from "../model/bpmnNodeCatalog";
 import { DiagramInlineTextEdit } from "../editor/DiagramInlineTextEdit";
+import { NativeCheckboxControl } from "../../forms/NativeCheckboxControl";
 
 export type BpmnNodeData = {
   label: string;
@@ -165,13 +166,12 @@ function NodeLabel({
 function ScopeCheckbox({ id, data }: { id: string; data: BpmnNodeData }) {
   if (!data.scopeSelectable) return null;
   return (
-    <label className="delpi-ui-bpmn-node__scope">
-      <input
-        type="checkbox"
-        checked={Boolean(data.inScope)}
-        onChange={() => data.onToggleScope?.(id)}
-      />
-    </label>
+    <NativeCheckboxControl
+      className="delpi-ui-native-checkbox--compact delpi-ui-bpmn-node__scope"
+      checked={Boolean(data.inScope)}
+      onChange={() => data.onToggleScope?.(id)}
+      aria-label="Incluir no escopo"
+    />
   );
 }
 
