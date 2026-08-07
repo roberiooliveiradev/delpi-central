@@ -3613,6 +3613,16 @@ body.td-composer--marqueeing *{
   gap: 4px;
   min-height: 0;
 }
+.dashboard-tv-dashboard .td-deck-ribbon__stack{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 11rem;
+  max-width: 16rem;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__stack .td-field{
+  width: 100%;
+}
 .dashboard-tv-dashboard .td-deck-ribbon__caption{
   display: flex;
   justify-content: center;

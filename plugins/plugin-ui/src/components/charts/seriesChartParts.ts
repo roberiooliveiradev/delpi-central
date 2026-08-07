@@ -17,6 +17,7 @@ import {
   OFFICE_CHART_SERIES_COLOR,
   SERIES_CHART_CATEGORY_PALETTE,
   resolveValueScaleColor,
+  resolveGoalThresholdColor,
   type SeriesChartColorScale,
   type SeriesChartKind,
 } from "./seriesChartOptions";
@@ -1001,6 +1002,8 @@ export function resolveCategorySlicePaintColor(args: {
   seriesColor: string;
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  /** Valor da linha de meta (`by_goal`). */
+  goalValue?: number | null;
   parts?: ChartPartsMap | null;
   parentSeriesIndex?: number;
 }): string {
@@ -1013,6 +1016,21 @@ export function resolveCategorySlicePaintColor(args: {
   if (markerFill) return markerFill;
 
   const scale = args.colorScale;
+  const value = Number(args.value) || 0;
+  const goal = args.goalValue;
+  if (
+    scale?.mode === "by_goal" &&
+    goal != null &&
+    Number.isFinite(Number(goal))
+  ) {
+    return resolveGoalThresholdColor({
+      value,
+      goal: Number(goal),
+      polarity: scale.polarity ?? "high_is_good",
+      fallbackColor: args.seriesColor,
+    });
+  }
+
   const ramp = args.categoryColors?.filter((c) => c?.trim()) ?? [];
   if (
     scale?.mode === "by_value" &&
@@ -1021,7 +1039,7 @@ export function resolveCategorySlicePaintColor(args: {
     args.valueMax != null
   ) {
     return resolveValueScaleColor({
-      value: Number(args.value) || 0,
+      value,
       min: args.valueMin,
       max: args.valueMax,
       colors: ramp,

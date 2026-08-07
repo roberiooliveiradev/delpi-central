@@ -173,7 +173,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableFrameChrome: "Preenchimento e contorno da moldura da tabela.",
     openDataPanel: "Abre o painel de fontes de dados.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
-    chartAxes: "Eixos e linhas de grade.",
+    chartAxes: "Eixos, grade, meta e ordenação A→Z das categorias (centros de trabalho).",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
     chartSeriesColor: "Cor principal da série de dados do gráfico.",
     canvasTable:

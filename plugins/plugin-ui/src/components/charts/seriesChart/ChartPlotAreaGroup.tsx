@@ -127,6 +127,7 @@ export function ChartPlotAreaGroup({
             interaction={interaction}
             categoryColors={config.categoryColors}
             colorScale={config.colorScale}
+            goalValue={goalValue}
           />
         )
       ) : null}
@@ -148,6 +149,7 @@ export function ChartPlotAreaGroup({
             chartParts={chartParts}
             categoryColors={config.categoryColors}
             colorScale={config.colorScale}
+            goalValue={goalValue}
           />
         )
       ) : null}
@@ -211,6 +213,7 @@ export function ChartPlotAreaGroup({
           chartParts={chartParts}
           categoryColors={config.categoryColors}
           colorScale={config.colorScale}
+          goalValue={goalValue}
         />
       ) : null}
 
@@ -236,6 +239,7 @@ export function ChartPlotAreaGroup({
           innerRadiusRatio={pieInnerRadiusRatio}
           categoryColors={config.categoryColors}
           colorScale={config.colorScale}
+          goalValue={goalValue}
         />
       ) : null}
 
@@ -247,6 +251,9 @@ export function ChartPlotAreaGroup({
             seriesColor={seriesColor}
             interaction={interaction}
             seriesIndex={0}
+            categoryColors={config.categoryColors}
+            colorScale={config.colorScale}
+            goalValue={goalValue}
           />
           <ChartSeriesLine
             layout={layout}

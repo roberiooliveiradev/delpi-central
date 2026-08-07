@@ -19,6 +19,7 @@ export type ChartSeriesStackedBarProps = Pick<SeriesChartSharedProps, "layout" |
   chartParts?: ChartPartsMap | null;
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  goalValue?: number | null;
 };
 
 /**
@@ -35,6 +36,7 @@ export function ChartSeriesStackedBar({
   chartParts,
   categoryColors,
   colorScale,
+  goalValue = null,
 }: ChartSeriesStackedBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
@@ -82,6 +84,7 @@ export function ChartSeriesStackedBar({
           seriesColor: seriesColor || OFFICE_CHART_SERIES_COLOR,
           categoryColors,
           colorScale,
+          goalValue,
           parts: chartParts,
           parentSeriesIndex: seriesIndex,
         });

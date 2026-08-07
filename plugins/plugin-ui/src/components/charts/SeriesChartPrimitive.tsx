@@ -311,6 +311,11 @@ export function SeriesChartPrimitive({
     categoryColors: config.categoryColors,
     chartParts,
     sort: config.legendSort,
+    colorScale: config.colorScale,
+    goalValue:
+      config.showGoalLine && config.goalLineValue != null && Number.isFinite(Number(config.goalLineValue))
+        ? Number(config.goalLineValue)
+        : null,
   });
   const legendPosition = config.legendPosition ?? "bottom";
   const legendLayout = resolveSeriesChartLegendLayout({

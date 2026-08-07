@@ -1,5 +1,6 @@
 import {
   resolveSeriesChartLegendSort,
+  type SeriesChartColorScale,
   type SeriesChartKind,
   type SeriesChartLegendSort,
   type SeriesChartLegendSortResolved,
@@ -95,9 +96,9 @@ export function sortSeriesChartSeriesList(
 }
 
 /**
- * Aplica ordenação da legenda aos pontos de categoria (pizza/funil/empilhado).
- * Multi-série: a ordem das séries no plot permanece; só a lista da legenda
- * é reordenada em `buildSeriesChartLegendItems` (cores por índice original).
+ * Aplica ordenação às categorias do plot (eixo X / fatias) e à legenda alinhada.
+ * Antes: só pizza/funil/empilhado (`usesCategoryLegend`); barras/linhas ignoravam
+ * `nameAsc` e ficavam na ordem bruta da API (aparentemente «aleatória»).
  */
 export function applySeriesChartLegendSort(args: {
   chartType: SeriesChartKind;
@@ -120,8 +121,19 @@ export function applySeriesChartLegendSort(args: {
     usesCategoryLegend,
   });
 
-  if (resolvedSort === "data" || !usesCategoryLegend) {
+  if (resolvedSort === "data") {
     return { points, seriesList, resolvedSort, usesCategoryLegend };
+  }
+
+  /* Multi-série cartesiana: reordena categorias alinhadas em todas as séries. */
+  if (seriesWithData && seriesWithData.length > 1 && !usesCategoryLegend) {
+    const sortedSeries = sortAlignedSeriesCategories(seriesWithData, resolvedSort);
+    return {
+      points: sortedSeries[0]?.points ?? points,
+      seriesList: sortedSeries,
+      resolvedSort,
+      usesCategoryLegend,
+    };
   }
 
   const sourcePoints = seriesWithData?.[0]?.points ?? points;
@@ -129,12 +141,49 @@ export function applySeriesChartLegendSort(args: {
   if (seriesWithData?.[0]) {
     return {
       points: sortedPoints,
-      seriesList: [{ ...seriesWithData[0], points: sortedPoints }],
+      seriesList: [{ ...seriesWithData[0], points: sortedPoints }, ...seriesWithData.slice(1)],
       resolvedSort,
       usesCategoryLegend,
     };
   }
   return { points: sortedPoints, seriesList, resolvedSort, usesCategoryLegend };
+}
+
+/**
+ * Reordena pontos de várias séries pela mesma permutação de categorias
+ * (rótulo da 1ª série; em empate de nome usa valor da 1ª para value*).
+ */
+function sortAlignedSeriesCategories(
+  seriesList: SeriesChartSeriesSpec[],
+  sort: SeriesChartLegendSortResolved,
+): SeriesChartSeriesSpec[] {
+  const primary = seriesList[0]!;
+  const indexed = primary.points.map((point, index) => ({ point, index }));
+  if (sort === "valueDesc") {
+    indexed.sort((a, b) => pointSortValue(b.point) - pointSortValue(a.point));
+  } else if (sort === "valueAsc") {
+    indexed.sort((a, b) => pointSortValue(a.point) - pointSortValue(b.point));
+  } else if (sort === "nameAsc") {
+    indexed.sort((a, b) =>
+      pointSortName(a.point).localeCompare(pointSortName(b.point), "pt-BR"),
+    );
+  } else if (sort === "nameDesc") {
+    indexed.sort((a, b) =>
+      pointSortName(b.point).localeCompare(pointSortName(a.point), "pt-BR"),
+    );
+  }
+  const order = indexed.map((entry) => entry.index);
+  return seriesList.map((series) => ({
+    ...series,
+    points: order.map(
+      (sourceIndex) =>
+        series.points[sourceIndex] ?? {
+          label: primary.points[sourceIndex]?.label ?? "",
+          value: null,
+          sourceIndex,
+        },
+    ),
+  }));
 }
 
 function sortLegendItemsByMeta(
@@ -174,8 +223,20 @@ export function buildSeriesChartLegendItems(args: {
   categoryColors?: string[] | null;
   chartParts?: ChartPartsMap | null;
   sort?: SeriesChartLegendSort | null;
+  colorScale?: SeriesChartColorScale | null;
+  goalValue?: number | null;
 }): SeriesChartLegendItem[] | undefined {
-  const { chartType, points, seriesColor, seriesList, categoryColors, chartParts, sort } = args;
+  const {
+    chartType,
+    points,
+    seriesColor,
+    seriesList,
+    categoryColors,
+    chartParts,
+    sort,
+    colorScale,
+    goalValue,
+  } = args;
   const seriesWithData = seriesList?.filter((series) => series.points.length > 0);
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
   const seriesCount = seriesWithData?.length ?? 1;
@@ -212,8 +273,11 @@ export function buildSeriesChartLegendItems(args: {
     color: resolveCategorySlicePaintColor({
       index,
       sourceIndex: point.sourceIndex ?? index,
+      value: point.value,
       seriesColor,
       categoryColors,
+      colorScale,
+      goalValue,
       parts: chartParts,
     }),
   }));

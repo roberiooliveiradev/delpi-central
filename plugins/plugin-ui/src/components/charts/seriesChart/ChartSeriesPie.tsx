@@ -18,6 +18,7 @@ export type ChartSeriesPieProps = Pick<SeriesChartSharedProps, "layout" | "point
   innerRadiusRatio?: number;
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  goalValue?: number | null;
 };
 
 function polar(cx: number, cy: number, r: number, angleRad: number) {
@@ -65,6 +66,7 @@ export function ChartSeriesPie({
   innerRadiusRatio = 0,
   categoryColors,
   colorScale,
+  goalValue = null,
 }: ChartSeriesPieProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
@@ -118,6 +120,7 @@ export function ChartSeriesPie({
           seriesColor,
           categoryColors,
           colorScale,
+          goalValue,
           parts: chartParts,
           parentSeriesIndex: seriesIndex,
         });

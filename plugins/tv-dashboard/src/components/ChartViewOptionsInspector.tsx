@@ -5,6 +5,7 @@ import {
   CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
   CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS,
   CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
+  CHART_LEGEND_SORT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   toSeriesChartKind,
@@ -136,7 +137,7 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               pane={pane}
               title="Aparência"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
-              defaultOpen={false}
+              defaultOpen
             >
               <DeckField
                 id="td-chart-value-format"
@@ -213,6 +214,26 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
                     })
                   }
                   options={CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+              <DeckField
+                id="td-chart-category-sort"
+                label="Ordenação do eixo (categorias)"
+                hint="A→Z para centros de trabalho; Valor para ranking. Automático = ordem dos dados."
+              >
+                <FormSelectControl
+                  id="td-chart-category-sort"
+                  ariaLabel="Ordenação das categorias do eixo"
+                  value={options.legendSort ?? "auto"}
+                  onChange={(value) =>
+                    setOptions({
+                      legendSort: value as ComunicadoChartOptions["legendSort"],
+                    })
+                  }
+                  options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
                     value: entry.value,
                     label: entry.label,
                   }))}

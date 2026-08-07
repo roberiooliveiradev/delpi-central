@@ -58,6 +58,46 @@ describe("seriesChartLegendItems", () => {
     expect(items?.[2]?.color).toBe("#f97316");
   });
 
+  it("applySeriesChartLegendSort — barra nameAsc ordena categorias no eixo X", () => {
+    const sorted = applySeriesChartLegendSort({
+      chartType: "bar",
+      sort: "nameAsc",
+      points: [
+        { label: "CT-08B", value: 105.4, sourceIndex: 0 },
+        { label: "CT-01B", value: 97.7, sourceIndex: 1 },
+        { label: "CT-01A", value: 88.2, sourceIndex: 2 },
+      ],
+    });
+    expect(sorted.resolvedSort).toBe("nameAsc");
+    expect(sorted.points.map((p) => p.label)).toEqual(["CT-01A", "CT-01B", "CT-08B"]);
+  });
+
+  it("applySeriesChartLegendSort — multi-série nameAsc alinha categorias em todas as séries", () => {
+    const sorted = applySeriesChartLegendSort({
+      chartType: "bar",
+      sort: "nameAsc",
+      points: [],
+      seriesList: [
+        {
+          name: "Filial 01",
+          points: [
+            { label: "CT-02", value: 10, sourceIndex: 0 },
+            { label: "CT-01", value: 20, sourceIndex: 1 },
+          ],
+        },
+        {
+          name: "Filial 02",
+          points: [
+            { label: "CT-02", value: 30, sourceIndex: 0 },
+            { label: "CT-01", value: 40, sourceIndex: 1 },
+          ],
+        },
+      ],
+    });
+    expect(sorted.seriesList?.[0]?.points.map((p) => p.label)).toEqual(["CT-01", "CT-02"]);
+    expect(sorted.seriesList?.[1]?.points.map((p) => p.value)).toEqual([40, 30]);
+  });
+
   it("linha single-series retorna undefined (fallback seriesName)", () => {
     const items = buildSeriesChartLegendItems({
       chartType: "line",

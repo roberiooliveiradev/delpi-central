@@ -66,7 +66,13 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
   const categorical = chartPalettesByKind("categorical");
   const semantic = chartPalettesByKind("semantic");
   const colorByValue = options.colorScale?.mode === "by_value";
-  const polarity = options.colorScale?.polarity ?? "high_is_bad";
+  const colorByGoal = options.colorScale?.mode === "by_goal";
+  const polarity = options.colorScale?.polarity ?? (colorByGoal ? "high_is_good" : "high_is_bad");
+  const hasGoal =
+    options.showGoalLine === true &&
+    options.goalLineValue != null &&
+    Number.isFinite(Number(options.goalLineValue));
+  const scaleActive = colorByValue || colorByGoal;
 
   const applyPalette = (palette: ChartColorPalette) => {
     onApplyOptions(applyChartColorPalette(palette, options));
@@ -86,7 +92,8 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
       <section className="td-chart-style-menu__section">
         <h4>Escalas (melhor / pior)</h4>
         <p className="td-chart-style-menu__hint">
-          Pelo valor: rampa no número. Sem isso: ordem das categorias.
+          Pelo valor: rampa no número. Pela meta: verde ≥ meta, laranja até 5% abaixo, vermelho
+          abaixo disso. Sem escala: ordem das categorias.
         </p>
         <PaletteGrid palettes={semantic} options={options} onApply={applyPalette} />
         <div className="td-chart-style-menu__scale-controls">
@@ -106,6 +113,35 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
             />
             <span>Colorir pelo valor</span>
           </label>
+          <label
+            className="td-chart-style-menu__scale-toggle"
+            title={
+              hasGoal
+                ? "Verde na meta ou acima; laranja até 5% abaixo; vermelho abaixo de 5%."
+                : "Ative a linha de meta e defina o valor no inspetor."
+            }
+          >
+            <input
+              type="checkbox"
+              checked={colorByGoal}
+              disabled={!hasGoal && !colorByGoal}
+              onChange={(event) => {
+                onApplyOptions(
+                  applyChartColorScaleMode(
+                    options,
+                    event.target.checked ? "by_goal" : "off",
+                    event.target.checked ? "high_is_good" : polarity,
+                  ),
+                );
+              }}
+            />
+            <span>Colorir pela meta</span>
+          </label>
+          {!hasGoal ? (
+            <p className="td-chart-style-menu__hint">
+              Para colorir pela meta, adicione a linha de meta e informe o valor.
+            </p>
+          ) : null}
           <div
             className="td-chart-style-menu__polarity"
             role="group"
@@ -120,7 +156,7 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
                 .filter(Boolean)
                 .join(" ")}
               aria-pressed={polarity === "high_is_bad"}
-              disabled={!colorByValue}
+              disabled={!scaleActive}
               onClick={() =>
                 onApplyOptions(applyChartColorScalePolarity(options, "high_is_bad"))
               }
@@ -136,7 +172,7 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
                 .filter(Boolean)
                 .join(" ")}
               aria-pressed={polarity === "high_is_good"}
-              disabled={!colorByValue}
+              disabled={!scaleActive}
               onClick={() =>
                 onApplyOptions(applyChartColorScalePolarity(options, "high_is_good"))
               }

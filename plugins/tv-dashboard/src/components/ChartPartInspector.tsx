@@ -417,16 +417,15 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               }))}
             />
           </DeckField>
-          <DeckField id="td-chart-part-legend-sort" label="Ordenação">
+          <DeckField id="td-chart-part-legend-sort" label="Ordenação (categorias / eixo)">
             <FormSelectControl
               id="td-chart-part-legend-sort"
-              ariaLabel="Ordenação da legenda"
+              ariaLabel="Ordenação das categorias do gráfico"
               value={options.legendSort ?? "auto"}
               onChange={(value) =>
                 persistOptions({
                   ...options,
                   legendSort: value as ComunicadoChartOptions["legendSort"],
-                  showLegend: true,
                 })
               }
               options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({

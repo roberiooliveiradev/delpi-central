@@ -4,6 +4,8 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from app.domain.shared.pt_month_labels import format_month_year_chart_label
+
 
 # Cobre um ano inteiro em granularidade diária (366 dias) para não truncar séries
 # como «este ano (até hoje)». Acima disso (multi-ano diário) trunca por segurança.
@@ -51,8 +53,7 @@ def _format_week_label(start_iso: str, end_iso: str) -> str:
 
 def _month_key_label(month_key: str) -> str:
     year_str, month_str = month_key.split("-", 1)
-    parsed = date(int(year_str), int(month_str), 1)
-    return parsed.strftime("%b. de %y").replace(".", ".")
+    return format_month_year_chart_label(int(year_str), int(month_str))
 
 
 def _clamp_range(

@@ -145,6 +145,36 @@ describe("seriesChartParts", () => {
     ).toBe("#15803d");
   });
 
+  it("resolveCategorySlicePaintColor by_goal usa faixas vs meta", () => {
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 100,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#15803d");
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 96,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#f97316");
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 90,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#be123c");
+  });
+
   it("resolve cor e marcador a partir de primitivos (stroke/fill)", () => {
     const parts = upsertChartPartState(
       upsertChartPartState({}, { kind: "series", seriesIndex: 0 }, { style: { stroke: "#abcdef" } }),

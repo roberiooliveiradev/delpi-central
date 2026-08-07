@@ -10,22 +10,11 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from app.domain.shared.pt_month_labels import MONTH_ABBREV_PT
+
 DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
-_MONTH_LABELS_PT = (
-    "jan",
-    "fev",
-    "mar",
-    "abr",
-    "mai",
-    "jun",
-    "jul",
-    "ago",
-    "set",
-    "out",
-    "nov",
-    "dez",
-)
+_MONTH_LABELS_PT = MONTH_ABBREV_PT
 
 
 @dataclass(frozen=True, slots=True)
