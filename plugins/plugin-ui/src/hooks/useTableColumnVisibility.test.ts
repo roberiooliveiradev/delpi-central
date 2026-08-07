@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useTableColumnVisibility } from "./useTableColumnVisibility";
 import {
+  applyVisibleColumnReorder,
   createDefaultColumnVisibility,
+  sanitizeColumnOrder,
   sanitizeColumnVisibility,
 } from "../utils/tableColumnVisibilityPreferences";
 
@@ -42,6 +44,22 @@ describe("tableColumnVisibilityPreferences", () => {
     expect(visibility.op).toBe(true);
     expect(visibility.valor).toBe(true);
     expect(visibility.data).toBe(false);
+  });
+
+  it("sanitiza order e completa chaves faltantes", () => {
+    expect(
+      sanitizeColumnOrder({ order: ["valor", "ghost", "data"] }, COLUMNS),
+    ).toEqual(["valor", "data", "op"]);
+  });
+
+  it("applyVisibleColumnReorder preserva ocultas", () => {
+    const full = ["data", "op", "valor"];
+    // op oculta; visíveis data+valor reordenadas para valor, data
+    expect(applyVisibleColumnReorder(full, ["valor", "data"])).toEqual([
+      "valor",
+      "op",
+      "data",
+    ]);
   });
 });
 
@@ -93,7 +111,7 @@ describe("useTableColumnVisibility", () => {
     expect(result.current.visibility.valor).toBe(true);
   });
 
-  it("filterColumns remove colunas ocultas", () => {
+  it("filterColumns remove colunas ocultas e respeita order", () => {
     const { result } = renderHook(() =>
       useTableColumnVisibility({
         storageKey: "test:filter:v1",
@@ -103,6 +121,7 @@ describe("useTableColumnVisibility", () => {
 
     act(() => {
       result.current.setColumnVisible("data", false);
+      result.current.reorderColumns("valor", "op");
     });
 
     const filtered = result.current.filterColumns([
@@ -110,7 +129,27 @@ describe("useTableColumnVisibility", () => {
       { key: "op", header: "OP" },
       { key: "valor", header: "Valor" },
     ]);
-    expect(filtered.map((c) => c.key)).toEqual(["op", "valor"]);
+    expect(filtered.map((c) => c.key)).toEqual(["valor", "op"]);
+  });
+
+  it("persiste order em localStorage", () => {
+    vi.useFakeTimers();
+    const storageKey = "test:order:v1";
+    const { result } = renderHook(() =>
+      useTableColumnVisibility({ storageKey, columns: COLUMNS }),
+    );
+
+    act(() => {
+      result.current.reorderColumns("valor", "data");
+    });
+    expect(result.current.order).toEqual(["valor", "data", "op"]);
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    const raw = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}");
+    expect(raw.order).toEqual(["valor", "data", "op"]);
   });
 
   it("enabled=false não grava localStorage", () => {

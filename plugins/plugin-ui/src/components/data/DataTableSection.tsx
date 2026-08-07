@@ -303,8 +303,11 @@ export function DataTableSection<T>({
   const columnVisibilityEnabled = Boolean(columnPreferencesKey);
   const {
     visibility,
+    orderedColumns,
     visibleKeys,
     setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
     reset: resetColumnVisibility,
     filterColumns,
   } = useTableColumnVisibility({
@@ -528,9 +531,10 @@ export function DataTableSection<T>({
               <div className={sectionClassNames.toolbarExtra}>
                 {columnVisibilityEnabled ? (
                   <TableColumnVisibilityMenu
-                    columns={columnCatalog}
+                    columns={orderedColumns}
                     visibility={visibility}
                     onToggleColumn={setColumnVisible}
+                    onReorderColumns={reorderColumns}
                     onReset={resetColumnVisibility}
                     labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
                   />
@@ -554,6 +558,10 @@ export function DataTableSection<T>({
               serverSort?.onSortChange ?? (serverPagination ? undefined : handleSortChange)
             }
             layout="section"
+            enableColumnReorder={columnVisibilityEnabled}
+            onColumnOrderChange={
+              columnVisibilityEnabled ? applyVisibleOrder : undefined
+            }
             classNames={tableClassNames}
             labels={tableLabels}
           />

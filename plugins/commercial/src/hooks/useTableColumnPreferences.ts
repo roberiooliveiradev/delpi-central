@@ -9,8 +9,9 @@ import {
   type TableColumnPreferences,
 } from "../utils/tableColumns";
 
-const STORAGE_KEY = "commercial:open-orders:table-columns:v6";
+const STORAGE_KEY = "commercial:open-orders:table-columns:v7";
 const LEGACY_STORAGE_KEYS = [
+  "commercial:open-orders:table-columns:v6",
   "commercial:open-orders:table-columns:v5",
   "pedidos-venda-abertos:table-columns:v4",
   "pedidos-venda-abertos:table-columns:v1",
@@ -26,8 +27,12 @@ export function useTableColumnPreferences() {
 
   const {
     visibility,
+    order,
+    orderedColumns,
     visibleColumnCount,
     setColumnVisible: setVisible,
+    reorderColumns,
+    applyVisibleOrder,
     reset,
     filterColumns,
   } = useTableColumnVisibility({
@@ -41,8 +46,9 @@ export function useTableColumnPreferences() {
   const preferences: TableColumnPreferences = useMemo(
     () => ({
       visibility: visibility as Record<TableColumnKey, boolean>,
+      order: order as TableColumnKey[],
     }),
-    [visibility],
+    [order, visibility],
   );
 
   const visibleColumns = useMemo(
@@ -53,9 +59,16 @@ export function useTableColumnPreferences() {
   return {
     preferences,
     visibleColumns,
+    orderedMenuColumns: orderedColumns,
     visibleColumnCount,
     setColumnVisible: (key: TableColumnKey, visible: boolean) => {
       setVisible(key, visible);
+    },
+    reorderColumns: (fromKey: TableColumnKey, toKey: TableColumnKey) => {
+      reorderColumns(fromKey, toKey);
+    },
+    applyVisibleOrder: (visibleKeysInOrder: string[]) => {
+      applyVisibleOrder(visibleKeysInOrder);
     },
     resetPreferences: reset,
   };

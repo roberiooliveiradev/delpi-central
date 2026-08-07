@@ -20,11 +20,12 @@ import {
 import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
-import { TABLE_COLUMNS, type TableColumnKey } from "../utils/tableColumns";
+import type { TableColumnKey } from "../utils/tableColumns";
 
 type OpenOrdersLineCardProps = {
   item: OpenOrdersTotvsItem;
-  visibleKeys: ReadonlySet<TableColumnKey>;
+  /** Colunas visíveis na ordem compartilhada com a tabela. */
+  visibleColumns: ReadonlyArray<{ key: TableColumnKey; label: string }>;
   hasAvatar?: boolean;
   basePath?: string;
   onOpenDetail: (item: OpenOrdersTotvsItem) => void;
@@ -227,7 +228,7 @@ function renderCardValue(
 
 export function OpenOrdersLineCard({
   item,
-  visibleKeys,
+  visibleColumns,
   hasAvatar = false,
   basePath,
   onOpenDetail,
@@ -243,7 +244,7 @@ export function OpenOrdersLineCard({
 
   const customerLabel = item.nome_cliente?.trim() || "linha";
   const pedidoLabel = item.pedido?.trim() || "—";
-  const fields = TABLE_COLUMNS.filter((column) => visibleKeys.has(column.key));
+  const fields = visibleColumns;
   const valueOptions = { basePath, onOpenDetail };
 
   return (

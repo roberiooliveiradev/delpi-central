@@ -78,9 +78,11 @@ export function createDefaultColumnVisibility(): Record<TableColumnKey, boolean>
 export function createDefaultColumnPreferences(): TableColumnPreferences {
   return {
     visibility: createDefaultColumnVisibility(),
+    order: [...TABLE_COLUMN_KEYS],
   };
 }
 
 export type TableColumnPreferences = {
   visibility: Record<TableColumnKey, boolean>;
+  order: TableColumnKey[];
 };

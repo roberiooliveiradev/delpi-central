@@ -2,8 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { TableColumnVisibilityItem } from "../components/data/TableColumnVisibilityMenu";
 import {
+  applyVisibleColumnReorder,
+  createDefaultColumnOrder,
   createDefaultColumnVisibility,
   loadColumnVisibilityPreferences,
+  reorderColumnKeys,
+  sanitizeColumnOrder,
   saveColumnVisibilityPreferences,
   type TableColumnVisibilityMap,
   type TableColumnVisibilityPreferences,
@@ -24,15 +28,38 @@ export type UseTableColumnVisibilityOptions = {
 
 export type UseTableColumnVisibilityResult = {
   visibility: TableColumnVisibilityMap;
+  /** Ordem completa do catálogo (inclui ocultas). */
+  order: string[];
+  /** Colunas do catálogo na ordem atual (visíveis e ocultas). */
+  orderedColumns: TableColumnVisibilityItem[];
   visibleKeys: string[];
   visibleColumnCount: number;
   setColumnVisible: (key: string, visible: boolean) => void;
+  /** Define a ordem completa do catálogo. */
+  setColumnOrder: (order: string[]) => void;
+  /** Reordena duas chaves no catálogo completo (menu Colunas). */
+  reorderColumns: (fromKey: string, toKey: string) => void;
+  /**
+   * Aplica ordem vinda da DataTable (só colunas visíveis).
+   * Preserva a posição relativa das colunas ocultas.
+   */
+  applyVisibleOrder: (visibleKeysInOrder: string[]) => void;
   reset: () => void;
   filterColumns: <T extends { key: string }>(columns: readonly T[]) => T[];
 };
 
+function defaultPreferences(
+  columns: readonly TableColumnVisibilityItem[],
+  defaultVisibility?: TableColumnVisibilityMap,
+): TableColumnVisibilityPreferences {
+  return {
+    visibility: createDefaultColumnVisibility(columns, defaultVisibility),
+    order: createDefaultColumnOrder(columns),
+  };
+}
+
 /**
- * Preferências de visibilidade de colunas com persistência em localStorage.
+ * Preferências de visibilidade + ordem de colunas com persistência em localStorage.
  * Usado por `DataTableSection` (`columnPreferencesKey`) e por MFEs com tabela própria.
  */
 export function useTableColumnVisibility(
@@ -58,30 +85,33 @@ export function useTableColumnVisibility(
           emptyFallbackKeys,
           legacyStorageKeys,
         })
-      : { visibility: createDefaultColumnVisibility(columns, defaultVisibility) },
+      : defaultPreferences(columns, defaultVisibility),
   );
 
   // Re-sincroniza quando o catálogo de colunas muda (chaves novas/removidas).
   useEffect(() => {
     setPreferences((current) => {
       if (!enabled) {
-        return { visibility: createDefaultColumnVisibility(columns, defaultVisibility) };
+        return defaultPreferences(columns, defaultVisibility);
       }
       const known = new Set(columns.map((c) => c.key));
-      const next = createDefaultColumnVisibility(columns, defaultVisibility);
+      const nextVisibility = createDefaultColumnVisibility(columns, defaultVisibility);
       for (const [key, value] of Object.entries(current.visibility)) {
-        if (known.has(key)) next[key] = value;
+        if (known.has(key)) nextVisibility[key] = value;
       }
-      const visibleCount = columns.filter((c) => next[c.key]).length;
+      const visibleCount = columns.filter((c) => nextVisibility[c.key]).length;
       if (visibleCount === 0 && columns.length > 0) {
         const fallback = (emptyFallbackKeys ?? []).filter((key) => known.has(key));
         if (fallback.length > 0) {
-          for (const key of fallback) next[key] = true;
+          for (const key of fallback) nextVisibility[key] = true;
         } else {
-          next[columns[0].key] = true;
+          nextVisibility[columns[0].key] = true;
         }
       }
-      return { visibility: next };
+      return {
+        visibility: nextVisibility,
+        order: sanitizeColumnOrder({ order: current.order }, columns),
+      };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- columnKeysSignature
   }, [columnKeysSignature, storageKey, enabled]);
@@ -94,9 +124,21 @@ export function useTableColumnVisibility(
     return () => window.clearTimeout(handle);
   }, [enabled, preferences, saveDebounceMs, storageKey]);
 
+  const order = useMemo(
+    () => sanitizeColumnOrder({ order: preferences.order }, columns),
+    [columns, preferences.order],
+  );
+
+  const orderedColumns = useMemo(() => {
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    return order
+      .map((key) => byKey.get(key))
+      .filter((column): column is TableColumnVisibilityItem => Boolean(column));
+  }, [columns, order]);
+
   const visibleKeys = useMemo(
-    () => columns.filter((column) => preferences.visibility[column.key]).map((column) => column.key),
-    [columns, preferences.visibility],
+    () => order.filter((key) => preferences.visibility[key]),
+    [order, preferences.visibility],
   );
 
   const setColumnVisible = useCallback(
@@ -114,6 +156,7 @@ export function useTableColumnVisibility(
         }
 
         return {
+          ...current,
           visibility: {
             ...current.visibility,
             [key]: visible,
@@ -124,23 +167,67 @@ export function useTableColumnVisibility(
     [columns, keepAtLeastOne],
   );
 
+  const setColumnOrder = useCallback(
+    (nextOrder: string[]) => {
+      setPreferences((current) => ({
+        ...current,
+        order: sanitizeColumnOrder({ order: nextOrder }, columns),
+      }));
+    },
+    [columns],
+  );
+
+  const reorderColumns = useCallback(
+    (fromKey: string, toKey: string) => {
+      setPreferences((current) => {
+        const currentOrder = sanitizeColumnOrder({ order: current.order }, columns);
+        return {
+          ...current,
+          order: reorderColumnKeys(currentOrder, fromKey, toKey),
+        };
+      });
+    },
+    [columns],
+  );
+
+  const applyVisibleOrder = useCallback(
+    (visibleKeysInOrder: string[]) => {
+      setPreferences((current) => {
+        const currentOrder = sanitizeColumnOrder({ order: current.order }, columns);
+        return {
+          ...current,
+          order: applyVisibleColumnReorder(currentOrder, visibleKeysInOrder),
+        };
+      });
+    },
+    [columns],
+  );
+
   const reset = useCallback(() => {
-    setPreferences({
-      visibility: createDefaultColumnVisibility(columns, defaultVisibility),
-    });
+    setPreferences(defaultPreferences(columns, defaultVisibility));
   }, [columns, defaultVisibility]);
 
   const filterColumns = useCallback(
-    <T extends { key: string }>(items: readonly T[]): T[] =>
-      items.filter((item) => preferences.visibility[item.key]),
-    [preferences.visibility],
+    <T extends { key: string }>(items: readonly T[]): T[] => {
+      const byKey = new Map(items.map((item) => [item.key, item]));
+      return order
+        .filter((key) => preferences.visibility[key])
+        .map((key) => byKey.get(key))
+        .filter((item): item is T => Boolean(item));
+    },
+    [order, preferences.visibility],
   );
 
   return {
     visibility: preferences.visibility,
+    order,
+    orderedColumns,
     visibleKeys,
     visibleColumnCount: visibleKeys.length,
     setColumnVisible,
+    setColumnOrder,
+    reorderColumns,
+    applyVisibleOrder,
     reset,
     filterColumns,
   };

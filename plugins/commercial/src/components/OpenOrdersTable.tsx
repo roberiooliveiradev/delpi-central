@@ -103,8 +103,16 @@ export function OpenOrdersTable({
   const [detailItem, setDetailItem] = useState<OpenOrdersTotvsItem | null>(null);
   const deepLinkHandledRef = useRef(false);
   const { layout, setLayout } = useOpenOrdersLayout();
-  const { preferences, visibleColumns, visibleColumnCount, setColumnVisible, resetPreferences } =
-    useTableColumnPreferences();
+  const {
+    preferences,
+    visibleColumns,
+    orderedMenuColumns,
+    visibleColumnCount,
+    setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
+    resetPreferences,
+  } = useTableColumnPreferences();
   const {
     fontSize,
     increase,
@@ -145,11 +153,6 @@ export function OpenOrdersTable({
     setDetailItem(null);
     syncOpenOrdersLineQueryToUrl(null);
   };
-
-  const visibleKeySet = useMemo(
-    () => new Set(visibleColumns.map((c) => c.key)),
-    [visibleColumns],
-  );
 
   const tableStyle = {
     "--cm-table-font-size": `${fontSize}px`,
@@ -397,8 +400,10 @@ export function OpenOrdersTable({
               isDefault={isDefault}
             />
             <TableColumnSettings
+              columns={orderedMenuColumns}
               visibility={preferences.visibility}
               onToggleColumn={setColumnVisible}
+              onReorderColumns={reorderColumns}
               onReset={resetPreferences}
             />
           </div>
@@ -461,6 +466,8 @@ export function OpenOrdersTable({
                 }
               }}
               onRowClick={(row) => openDetail(row)}
+              enableColumnReorder
+              onColumnOrderChange={applyVisibleOrder}
               columns={columns}
             />
           </div>
@@ -473,7 +480,7 @@ export function OpenOrdersTable({
                 <OpenOrdersLineCard
                   key={rowKey(row)}
                   item={row}
-                  visibleKeys={visibleKeySet}
+                  visibleColumns={visibleColumns}
                   basePath={basePath}
                   hasAvatar={Boolean(
                     row.codigo_cadastro?.trim() &&

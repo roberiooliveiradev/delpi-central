@@ -265,10 +265,15 @@ export {
 export { DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS } from "./tableColumnVisibilityLabels";
 
 export {
+  applyVisibleColumnReorder,
+  createDefaultColumnOrder,
   createDefaultColumnVisibility,
   loadColumnVisibilityPreferences,
+  reorderColumnKeys,
   saveColumnVisibilityPreferences,
+  sanitizeColumnOrder,
   sanitizeColumnVisibility,
+  sanitizeColumnVisibilityPreferences,
   type TableColumnVisibilityMap,
   type TableColumnVisibilityPreferences,
 } from "../../utils/tableColumnVisibilityPreferences";
