@@ -1,0 +1,60 @@
+---
+description: Ordem e escopo ao melhorar páginas MFE lista+detalhe — P0 contratos/URL, P1 inteligência, P2 higiene; o que o agente deve e não deve fazer
+globs: plugins/**/*,docs/05-plugin-system/playbook-mfe-page-excellence.md,docs/12-roadmap-e-evolucao/**/WIREFRAMES.md
+alwaysApply: false
+---
+
+# Excelência de páginas MFE (lista + detalhe)
+
+## Princípio
+
+Melhoria de bancada operacional (lista + modal/detalhe) segue **P0 → P1 → P2**. Contrato API e URL compartilhável vêm antes de polish visual. Modal = resumo acionável; ficha completa = deep link.
+
+Playbook completo: [`docs/05-plugin-system/playbook-mfe-page-excellence.md`](../docs/05-plugin-system/playbook-mfe-page-excellence.md).  
+Caso de referência: Pedidos em aberto (`plugins/commercial`, WF-02R/D).
+
+Complementa: `root-cause-generalized-fix.mdc`, `plugins-reusable-components.mdc`, `plugins-documentation.mdc`, `mfe-modal-host-contained.mdc`, `infra-sequential-container-startup.mdc`.
+
+## Ordem obrigatória
+
+```
+P0 Contratos e navegação → P1 Inteligência do detalhe → P2 UX, higiene e docs
+```
+
+| Fase | Foco |
+|------|------|
+| **P0** | Tipar/consumir payload real; sync query↔estado (sem apagar filtros no mount); deep links corretos; CTA cruzado só com campo preenchido |
+| **P1** | Valor operacional no detalhe (indicators, listas densas, prefetch + on-demand, empty/erro) |
+| **P2** | Skeleton sem bloquear snapshot local; dead code; empty de escopo + freshness leve; helps de negócio; README + wireframe |
+
+Commit por fase em esforços grandes; testes + `tsc` antes de avançar.
+
+## O que fazer
+
+1. Diagnosticar causa raiz no **contrato** (campo ausente, path mentido, tipagem errada) — não só na UI.
+2. URL CRM-style: filtros e detalhe na query; `replaceState` bidirecional.
+3. Kit-first: `SectionHintLabel` / hover no rótulo; textos em `content/helpTooltips.ts` (PT de negócio).
+4. CSS só layout do plugin (`cm-*` / prefixo); zero espelho `.delpi-ui-*`.
+5. Modal host-contained (`mfe-modal-host-contained.mdc`).
+6. Atualizar README do plugin (+ wireframe se existir) quando a UX mudar.
+7. Rebuild com `up-*-sequential.sh` (fase `mfe`; `remote` só se kit mudou).
+
+## O que NÃO fazer
+
+- Mentir contrato (path errado, tipagem inventada, probe stub sem HTTP).
+- Apagar query de filtro/atenção no mount (one-shot destructivo).
+- Embutir ficha completa de outro domínio/MFE no modal.
+- Path/campo de API, `operationId` ou códigos Protheus no **help** ao usuário.
+- Ícone «?» solto quando o padrão do plugin é hover no label.
+- Inventar `as_of`/campo na API «só para freshness».
+- Criar primitivo de kit no MFE; alterar Module Federation / `plugin-ui` sem necessidade.
+- Entregar só código sem docs quando deep links, modal ou contrato mudaram.
+- Patch pontual sem generalizar (ver `root-cause-generalized-fix.mdc`).
+
+## Checklist antes de merge
+
+- [ ] P0: URL shareable (filtros + detalhe) e contrato tipado/consumido corretamente?
+- [ ] P1: detalhe coerente com payload real; empty/loading/erro visíveis?
+- [ ] P2: helps sem vazamento técnico; dead code zero; README/wireframe atualizados?
+- [ ] Testes unitários do escopo + `tsc` do(s) plugin(s)?
+- [ ] Rebuild orientado pelo script sequencial?
