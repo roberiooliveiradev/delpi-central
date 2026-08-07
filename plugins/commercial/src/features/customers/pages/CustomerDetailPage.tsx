@@ -39,13 +39,14 @@ export function CustomerDetailPage({
   basePath,
   search,
 }: CustomerDetailPageProps) {
-  const { isAdmin, sellers, myPortfolio, canViewWorklist, canManageFollowups } = usePortfolioScope();
+  const { canUseTeamScope, sellers, myPortfolio, canViewWorklist, canManageFollowups } =
+    usePortfolioScope();
 
   const sellerNameByKey = useMemo(() => {
-    if (isAdmin) return buildSellerNameByCustomerKey(sellers);
+    if (canUseTeamScope) return buildSellerNameByCustomerKey(sellers);
     if (myPortfolio) return buildSellerNameByCustomerKey([myPortfolio]);
     return new Map<string, string>();
-  }, [isAdmin, sellers, myPortfolio]);
+  }, [canUseTeamScope, sellers, myPortfolio]);
 
   const {
     loading,
@@ -243,7 +244,7 @@ export function CustomerDetailPage({
           {section === "historico" ? <CustomerBillingPanel billing={billing} /> : null}
 
           {section === "oportunidades" || section === "contatos" ? (
-            <CustomerSectionComingSoon section={section} />
+            <CustomerSectionComingSoon section={section} basePath={basePath} />
           ) : null}
         </>
       ) : null}

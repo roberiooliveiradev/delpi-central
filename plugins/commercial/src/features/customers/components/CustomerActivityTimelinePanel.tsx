@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { ActionButton, SectionCard } from "@delpi/plugin-ui/index";
+import { useEffect, useState } from "react";
 
 import { listCustomerActivities, type CommercialActivityDto } from "../../../api/worklistApi";
 import { CM_HELP } from "../../../content/helpTooltips";
@@ -9,6 +9,7 @@ import {
   CommercialActivityTimeline,
   CommercialLoadingCard,
 } from "../../../app/commercialUi";
+import { navigatePluginView } from "../../../app/pluginNavigation";
 
 type CustomerActivityTimelineProps = {
   codigo: string;
@@ -84,23 +85,21 @@ export function CustomerActivityTimelinePanel({
       <div className="cm-nav-row" style={{ marginTop: 12 }}>
         <ActionButton
           variant="ghost"
-          onClick={() => window.location.assign("/apps/propostas-comerciais")}
+          onClick={() => navigatePluginView("propostas", { basePath })}
         >
           Propostas →
         </ActionButton>
         <ActionButton
           variant="ghost"
-          onClick={() => window.location.assign("/apps/dashboard-commercial")}
+          onClick={() => navigatePluginView("gestao_oportunidades", { basePath })}
         >
-          Dashboard OV →
+          Oportunidades →
         </ActionButton>
         <ActionButton
           variant="ghost"
-          onClick={() => {
-            window.location.assign(`${basePath}/open-orders`);
-          }}
+          onClick={() => navigatePluginView("open_orders", { basePath })}
         >
-          Pedidos filtrados →
+          Pedidos →
         </ActionButton>
       </div>
     </SectionCard>

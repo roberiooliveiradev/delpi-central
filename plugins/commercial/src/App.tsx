@@ -15,9 +15,17 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
+import { GestaoEquipePage } from "./features/gestao/GestaoEquipePage";
+import { GestaoOportunidadeDetailPage } from "./features/gestao/GestaoOportunidadeDetailPage";
+import { GestaoOportunidadesPage } from "./features/gestao/GestaoOportunidadesPage";
+import { GestaoOtdLineDetailPage } from "./features/gestao/GestaoOtdLineDetailPage";
+import { GestaoOtdPage } from "./features/gestao/GestaoOtdPage";
+import { GestaoPage } from "./features/gestao/GestaoPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
 import { OpenOrdersPage } from "./features/open-orders/OpenOrdersPage";
+import { PropostaDetailPage } from "./features/propostas/PropostaDetailPage";
+import { PropostasPage } from "./features/propostas/PropostasPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
 export type AppProps = {
@@ -39,7 +47,14 @@ function AppRoutes({
   const pathname = usePluginRouterPath(pathnameFromHost, basePath);
   const route = resolvePluginRoute(pathname, basePath);
   const { view } = route;
-  const { isAdmin, canViewWorklist, myPortfolio } = usePortfolioScope();
+  const {
+    isAdmin,
+    canViewWorklist,
+    canViewAnalytics,
+    canViewPropostas,
+    canUseTeamScope,
+    myPortfolio,
+  } = usePortfolioScope();
   const scopeLabel = myPortfolio?.display_name
     ? `Carteira: ${myPortfolio.display_name}`
     : undefined;
@@ -51,10 +66,18 @@ function AppRoutes({
       search={search}
       showAdmin={isAdmin}
       showWorklist={canViewWorklist}
+      showPropostas={canViewPropostas}
+      showAnalytics={canViewAnalytics}
       scopeLabel={scopeLabel}
     >
       {view === "home" ? (
-        <HomePage basePath={basePath} showAdmin={isAdmin} showWorklist={canViewWorklist} />
+        <HomePage
+          basePath={basePath}
+          showAdmin={isAdmin}
+          showWorklist={canViewWorklist}
+          showPropostas={canViewPropostas}
+          showAnalytics={canViewAnalytics}
+        />
       ) : null}
       {view === "my_day" ? (
         canViewWorklist ? <MyDayPage basePath={basePath} /> : <NotFoundPage basePath={basePath} />
@@ -68,6 +91,74 @@ function AppRoutes({
           basePath={basePath}
           search={search}
         />
+      ) : null}
+      {view === "propostas" ? (
+        canViewPropostas ? (
+          <PropostasPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "proposta_detail" && route.propostaId ? (
+        canViewPropostas ? (
+          <PropostaDetailPage basePath={basePath} propostaId={route.propostaId} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao" ? (
+        canViewAnalytics ? (
+          <GestaoPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao_otd" ? (
+        canViewAnalytics ? (
+          <GestaoOtdPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao_otd_line" &&
+      route.orderBranch &&
+      route.orderNumber &&
+      route.lineItem ? (
+        canViewAnalytics ? (
+          <GestaoOtdLineDetailPage
+            basePath={basePath}
+            branch={route.orderBranch}
+            orderNumber={route.orderNumber}
+            lineItem={route.lineItem}
+          />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao_equipe" ? (
+        canViewAnalytics && canUseTeamScope ? (
+          <GestaoEquipePage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao_oportunidades" ? (
+        canViewAnalytics ? (
+          <GestaoOportunidadesPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "gestao_oportunidade_detail" && route.proposalNumber ? (
+        canViewAnalytics ? (
+          <GestaoOportunidadeDetailPage
+            basePath={basePath}
+            proposalNumber={route.proposalNumber}
+            search={search}
+          />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
       ) : null}
       {view === "seller_portfolios" ? (
         isAdmin ? (

@@ -1,8 +1,11 @@
 import {
   buildCustomerDetailPath,
+  buildGestaoOportunidadeDetailPath,
+  buildGestaoOtdLinePath,
   buildPluginPath,
+  buildPropostaDetailPath,
   normalizePathname,
-  type PluginView,
+  type BuildablePluginView,
 } from "./pluginRoutes";
 
 export function navigatePluginPath(target: string): void {
@@ -20,7 +23,7 @@ export function navigatePluginPath(target: string): void {
 }
 
 export function navigatePluginView(
-  view: Exclude<PluginView, "customer_detail" | "not_found">,
+  view: BuildablePluginView,
   options?: { basePath?: string; search?: string },
 ): void {
   const target = buildPluginPath(view, options?.basePath, options?.search);
@@ -38,4 +41,46 @@ export function navigateCustomerDetail(
   return true;
 }
 
-export { buildCustomerDetailPath };
+export function navigatePropostaDetail(
+  propostaId: string,
+  options?: { basePath?: string },
+): boolean {
+  const path = buildPropostaDetailPath(options?.basePath, propostaId);
+  if (!path) return false;
+  navigatePluginPath(path);
+  return true;
+}
+
+export function navigateGestaoOportunidadeDetail(
+  proposalNumber: string,
+  options?: { basePath?: string; search?: string },
+): boolean {
+  const path = buildGestaoOportunidadeDetailPath(
+    options?.basePath,
+    proposalNumber,
+    options?.search,
+  );
+  if (!path) return false;
+  navigatePluginPath(path);
+  return true;
+}
+
+export function navigateGestaoOtdLine(
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  options?: { basePath?: string; search?: string },
+): boolean {
+  const path = buildGestaoOtdLinePath(
+    options?.basePath,
+    branch,
+    orderNumber,
+    lineItem,
+    options?.search,
+  );
+  if (!path) return false;
+  navigatePluginPath(path);
+  return true;
+}
+
+export { buildCustomerDetailPath, buildPropostaDetailPath };

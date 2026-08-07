@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarCheck,
-  ExternalLink,
   Package,
   PackageCheck,
   Wallet,
@@ -49,6 +48,8 @@ type HomePageProps = {
   basePath: string;
   showAdmin: boolean;
   showWorklist: boolean;
+  showPropostas?: boolean;
+  showAnalytics?: boolean;
 };
 
 type HomeOrdersKpis = {
@@ -102,8 +103,6 @@ type MgmtKpis = {
 
 const emptyMgmt: MgmtKpis = { rolPct: null, closingPct: null, otdPct: null };
 const TEAM_FETCH_CAP = 12;
-const DASHBOARD_COMMERCIAL_URL = "/apps/dashboard-commercial";
-const PROPOSTAS_URL = "/apps/propostas-comerciais";
 
 const cmEmptyCompactClassNames = {
   ...cmEmptyStateClassNames,
@@ -111,7 +110,13 @@ const cmEmptyCompactClassNames = {
   withTitle: true,
 };
 
-export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
+export function HomePage({
+  basePath,
+  showAdmin,
+  showWorklist,
+  showPropostas = false,
+  showAnalytics = false,
+}: HomePageProps) {
   const { sellerIdFilter, sellers } = usePortfolioScope();
   const { setMetrics, resetMetrics } = useHomeHeroMetrics();
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -122,10 +127,10 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
   const [worklistOpen, setWorklistOpen] = useState(0);
   const [worklistOverdue, setWorklistOverdue] = useState(0);
   const [worklistToday, setWorklistToday] = useState(0);
-  const [mgmtLoading, setMgmtLoading] = useState(showAdmin);
+  const [mgmtLoading, setMgmtLoading] = useState(showAnalytics);
   const [mgmtError, setMgmtError] = useState<string | null>(null);
   const [mgmtKpis, setMgmtKpis] = useState<MgmtKpis>(emptyMgmt);
-  const [teamLoading, setTeamLoading] = useState(showAdmin);
+  const [teamLoading, setTeamLoading] = useState(showAnalytics);
   const [teamRows, setTeamRows] = useState<TeamRow[]>([]);
   const [teamError, setTeamError] = useState<string | null>(null);
 
@@ -154,7 +159,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     setOrdersError(null);
     setWorklistLoading(showWorklist);
     setWorklistError(null);
-    if (showAdmin) {
+    if (showAnalytics) {
       setMgmtLoading(true);
       setMgmtError(null);
       setTeamLoading(true);
@@ -197,7 +202,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           setWorklistLoading(false);
         });
 
-    const mgmtPromise = showAdmin
+    const mgmtPromise = showAnalytics
       ? Promise.allSettled([
           getHeadOfficeRolTargetPct(controller.signal),
           getClosingRate(controller.signal),
@@ -230,7 +235,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           setMgmtLoading(false);
         });
 
-    const teamPromise = showAdmin
+    const teamPromise = showAnalytics
       ? (async () => {
           const active = sellers.filter((s) => s.active).slice(0, TEAM_FETCH_CAP);
           if (!active.length) {
@@ -288,7 +293,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
 
     void Promise.allSettled([ordersPromise, worklistPromise, mgmtPromise, teamPromise]);
     return () => controller.abort();
-  }, [sellerIdFilter, sellers, showAdmin, showWorklist]);
+  }, [sellerIdFilter, sellers, showAnalytics, showWorklist]);
 
   useEffect(() => {
     const abort = reload();
@@ -531,7 +536,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         )}
       </SectionCard>
 
-      {showAdmin ? (
+      {showAnalytics ? (
         <SectionCard
           title="Gestão"
           subtitle="ROL, conversão e OTD do mês + carteiras da equipe."
@@ -541,9 +546,9 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           actions={
             <ActionButton
               variant="ghost"
-              onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
+              onClick={() => navigatePluginView("gestao", { basePath })}
             >
-              <ExternalLink size={16} aria-hidden="true" /> Ver no Dashboard
+              Abrir Gestão
             </ActionButton>
           }
         >
@@ -565,7 +570,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.rolPct)}
                 subtitle="Matriz no mês"
                 icon={<Wallet size={22} />}
-                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
+                onClick={() => navigatePluginView("gestao", { basePath })}
               />
               <KpiCard
                 title="Conversão"
@@ -573,7 +578,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.closingPct)}
                 subtitle="Propostas → ganhas"
                 icon={<PackageCheck size={22} />}
-                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
+                onClick={() => navigatePluginView("gestao", { basePath })}
               />
               <KpiCard
                 title="OTD pedidos"
@@ -581,7 +586,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.otdPct)}
                 subtitle="Entrega no prazo"
                 icon={<Package size={22} />}
-                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
+                onClick={() => navigatePluginView("gestao_otd", { basePath })}
               />
             </div>
           ) : null}
@@ -603,12 +608,14 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               defaultTitle="Nenhuma carteira ativa"
               defaultMessage="Cadastre vendedores em Carteiras para ver a tabela da equipe."
             >
-              <ActionButton
-                variant="primary"
-                onClick={() => navigatePluginView("seller_portfolios", { basePath })}
-              >
-                Abrir Carteiras
-              </ActionButton>
+              {showAdmin ? (
+                <ActionButton
+                  variant="primary"
+                  onClick={() => navigatePluginView("seller_portfolios", { basePath })}
+                >
+                  Abrir Carteiras
+                </ActionButton>
+              ) : null}
             </EmptyState>
           ) : null}
           {!teamLoading && teamRows.length > 0 ? (
@@ -624,28 +631,34 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         </SectionCard>
       ) : null}
 
-      <SectionCard
-        title="Analytics e propostas"
-        subtitle="Deep links externos — BI permanece fora do portal operacional."
-        hint={CM_HELP.home.analytics}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        <div className="cm-nav-row">
-          <ActionButton
-            variant="ghost"
-            onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
-          >
-            <ExternalLink size={16} aria-hidden="true" /> Dashboard Comercial
-          </ActionButton>
-          <ActionButton
-            variant="ghost"
-            onClick={() => window.location.assign(PROPOSTAS_URL)}
-          >
-            <ExternalLink size={16} aria-hidden="true" /> Propostas
-          </ActionButton>
-        </div>
-      </SectionCard>
+      {showPropostas || showAnalytics ? (
+        <SectionCard
+          title="Atalhos"
+          subtitle="Gestão e propostas comerciais no próprio portal."
+          hint={CM_HELP.home.analytics}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
+          <div className="cm-nav-row">
+            {showAnalytics ? (
+              <ActionButton
+                variant="ghost"
+                onClick={() => navigatePluginView("gestao", { basePath })}
+              >
+                Gestão
+              </ActionButton>
+            ) : null}
+            {showPropostas ? (
+              <ActionButton
+                variant="ghost"
+                onClick={() => navigatePluginView("propostas", { basePath })}
+              >
+                Propostas
+              </ActionButton>
+            ) : null}
+          </div>
+        </SectionCard>
+      ) : null}
     </section>
   );
 }

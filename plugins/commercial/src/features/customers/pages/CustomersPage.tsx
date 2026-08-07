@@ -31,18 +31,18 @@ type CustomersPageProps = {
  * Minha carteira — clientes com pedidos em aberto no escopo do vendedor.
  */
 export function CustomersPage({ basePath }: CustomersPageProps) {
-  const { isAdmin, sellers, sellerIdFilter, setSellerIdFilter, myPortfolio } =
+  const { canUseTeamScope, sellers, sellerIdFilter, setSellerIdFilter, myPortfolio } =
     usePortfolioScope();
 
   const sellerNameByKey = useMemo(() => {
-    if (isAdmin) {
+    if (canUseTeamScope) {
       return buildSellerNameByCustomerKey(sellers);
     }
     if (myPortfolio) {
       return buildSellerNameByCustomerKey([myPortfolio]);
     }
     return new Map<string, string>();
-  }, [isAdmin, sellers, myPortfolio]);
+  }, [canUseTeamScope, sellers, myPortfolio]);
 
   const {
     loading,
@@ -66,7 +66,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     reload,
     portfolioMessage,
     portfolioEmpty,
-  } = useCustomersData(isAdmin ? sellerIdFilter : null, { sellerNameByKey });
+  } = useCustomersData(canUseTeamScope ? sellerIdFilter : null, { sellerNameByKey });
 
   const hasActiveFilters = Boolean(search.trim()) || filter !== "all";
   const showInitialLoading = loading && !hasData;
@@ -101,7 +101,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           </p>
         </div>
         <div className="pva-customers-page__header-actions">
-          {isAdmin ? (
+          {canUseTeamScope ? (
             <SellerScopeFilter
               sellers={sellers}
               value={sellerIdFilter}

@@ -11,8 +11,10 @@ import {
   createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
+  createDashboardDateField,
   createDashboardTextField,
   createDashboardTitleWithHelp,
+  dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardTopBar,
   createDashboardViewTransition,
@@ -158,6 +160,10 @@ export const CommercialMultiSelectField = createDashboardMultiSelectField({
 
 export const CommercialTextField = createDashboardTextField({
   classNames: textFieldBemClasses(UI_PREFIX),
+});
+
+export const CommercialDateField = createDashboardDateField({
+  classNames: dateFieldBemClasses(UI_PREFIX),
 });
 
 export const CommercialTextAreaField = createDashboardTextAreaField({

@@ -23,6 +23,12 @@ export type CommercialCapabilities = {
   worklist_view: boolean;
   followups_manage: boolean;
   seller_portfolios_manage: boolean;
+  analytics_view: boolean;
+  propostas_view: boolean;
+  propostas_export: boolean;
+  accounts_team_view: boolean;
+  worklist_team_view: boolean;
+  team_scope: boolean;
 };
 
 export type SellerPortfolioMeResponse = {

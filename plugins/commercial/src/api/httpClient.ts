@@ -176,13 +176,56 @@ export async function httpPostFormData<T>(
 }
 
 export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
+  const { blob } = await httpGetBlobWithMeta(url, options);
+  return blob;
+}
+
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const match = header.match(/filename=\"?([^\";]+)\"?/i);
+  return match?.[1]?.trim() ?? null;
+}
+
+export async function httpGetBlobWithMeta(
+  url: string,
+  options: RequestOptions = {},
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const headers = buildHeaders(false);
+  headers.Accept = "application/pdf,application/octet-stream,*/*";
   const response = await fetch(url, {
     method: "GET",
-    headers: buildHeaders(false),
+    headers,
     signal: options.signal,
   });
   if (!response.ok) {
     throw new Error(await parseError(response));
   }
-  return response.blob();
+  return {
+    blob: await response.blob(),
+    filename: filenameFromContentDisposition(response.headers.get("Content-Disposition")),
+    contentType: response.headers.get("Content-Type"),
+  };
+}
+
+export async function httpPostBlob(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const headers = buildHeaders(true);
+  headers.Accept = "application/pdf,application/octet-stream,*/*";
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body ?? {}),
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+  return {
+    blob: await response.blob(),
+    filename: filenameFromContentDisposition(response.headers.get("Content-Disposition")),
+    contentType: response.headers.get("Content-Type"),
+  };
 }

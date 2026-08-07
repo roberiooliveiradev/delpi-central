@@ -5,6 +5,13 @@ export type PortfolioScopeContextValue = {
   loading: boolean;
   error?: string | null;
   isAdmin: boolean;
+  canViewWorklist?: boolean;
+  canManageFollowups?: boolean;
+  canViewAnalytics?: boolean;
+  canViewPropostas?: boolean;
+  canExportPropostas?: boolean;
+  canUseTeamScope?: boolean;
+  canViewWorklistTeam?: boolean;
   myPortfolio: SellerPortfolio | null;
   sellers: SellerPortfolio[];
   sellerIdFilter: string | null;

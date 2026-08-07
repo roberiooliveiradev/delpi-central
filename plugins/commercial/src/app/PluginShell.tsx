@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  BarChart3,
   BriefcaseBusiness,
   CalendarCheck,
   ClipboardList,
+  FileText,
   Home,
   Settings,
   Users,
@@ -13,7 +15,8 @@ import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { formatCurrency } from "../utils/format";
-import { type PluginView } from "./pluginRoutes";
+import { GestaoSubNav } from "../features/gestao/components/GestaoSubNav";
+import { isGestaoView, resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
@@ -30,33 +33,31 @@ type PluginShellProps = {
   search?: string;
   showAdmin?: boolean;
   showWorklist?: boolean;
+  showPropostas?: boolean;
+  showAnalytics?: boolean;
   scopeLabel?: string;
   children: ReactNode;
 };
 
-type NavId = Exclude<PluginView, "customer_detail" | "not_found">;
-
-const NAV_HELP: Partial<Record<NavId, string>> = {
+const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   home: CM_HELP.shell.navHome,
   my_day: CM_HELP.shell.navMyDay,
   open_orders: CM_HELP.shell.navOrders,
   customers: CM_HELP.shell.navCustomers,
+  propostas: CM_HELP.shell.navPropostas,
+  gestao: CM_HELP.shell.navGestao,
   seller_portfolios: CM_HELP.shell.navAdmin,
 };
 
-const NAV_ICONS: Record<NavId, ReactNode> = {
+const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
   my_day: <CalendarCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
   open_orders: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
+  propostas: <FileText size={16} strokeWidth={1.75} aria-hidden="true" />,
+  gestao: <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />,
   seller_portfolios: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
-
-function resolveActiveNavId(view: PluginView): NavId {
-  if (view === "customer_detail") return "customers";
-  if (view === "not_found") return "home";
-  return view;
-}
 
 function greetingForNow(date = new Date()): string {
   const hour = date.getHours();
@@ -71,6 +72,8 @@ export function PluginShell({
   search,
   showAdmin = false,
   showWorklist = false,
+  showPropostas = false,
+  showAnalytics = false,
   scopeLabel,
   children,
 }: PluginShellProps) {
@@ -107,7 +110,7 @@ export function PluginShell({
   }, []);
 
   const items: Array<{
-    id: NavId;
+    id: PluginNavId;
     label: string;
     count?: number;
   }> = [
@@ -115,8 +118,10 @@ export function PluginShell({
     ...(showWorklist
       ? [{ id: "my_day" as const, label: "Meu dia", count: myDayBadge || undefined }]
       : []),
-    { id: "open_orders", label: "Pedidos em aberto" },
-    { id: "customers", label: "Minha carteira" },
+    { id: "open_orders", label: "Pedidos" },
+    { id: "customers", label: "Carteira" },
+    ...(showPropostas ? [{ id: "propostas" as const, label: "Propostas" }] : []),
+    ...(showAnalytics ? [{ id: "gestao" as const, label: "Gestão" }] : []),
     ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),
   ];
 
@@ -174,23 +179,23 @@ export function PluginShell({
                   <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
                 </>
               }
-            description="Bem vindo ao Portal Comercial! Alertas e números da carteira abaixo — use a navegação para operar."
-            badge={
-              scopeLabel ? (
-                <StatusBadge
-                  classNames={cmStatusBadgeClassNames}
-                  label={scopeLabel}
-                  variant="info"
-                />
-              ) : (
-                <StatusBadge
-                  classNames={cmStatusBadgeClassNames}
-                  label="Carteira própria"
-                  variant="neutral"
-                />
-              )
-            }
-            highlights={heroHighlights}
+              description="Bem vindo ao Portal Comercial! Alertas e números da carteira abaixo — use a navegação para operar."
+              badge={
+                scopeLabel ? (
+                  <StatusBadge
+                    classNames={cmStatusBadgeClassNames}
+                    label={scopeLabel}
+                    variant="info"
+                  />
+                ) : (
+                  <StatusBadge
+                    classNames={cmStatusBadgeClassNames}
+                    label="Carteira própria"
+                    variant="neutral"
+                  />
+                )
+              }
+              highlights={heroHighlights}
             />
           </CommercialViewTransition>
         ) : null}
@@ -225,6 +230,10 @@ export function PluginShell({
           }
         />
 
+        {isGestaoView(view) && showAnalytics ? (
+          <GestaoSubNav view={view} basePath={basePath} />
+        ) : null}
+
         <CommercialViewTransition transitionKey={view} tone="page">
           {children}
         </CommercialViewTransition>
@@ -236,7 +245,7 @@ export function PluginShell({
 export function HomeNavIcon({
   target,
 }: {
-  target: "orders" | "customers" | "admin" | "my_day";
+  target: "orders" | "customers" | "admin" | "my_day" | "propostas" | "gestao";
 }) {
   if (target === "orders") {
     return <ClipboardList size={22} strokeWidth={1.75} aria-hidden="true" />;
@@ -246,6 +255,12 @@ export function HomeNavIcon({
   }
   if (target === "my_day") {
     return <CalendarCheck size={22} strokeWidth={1.75} aria-hidden="true" />;
+  }
+  if (target === "propostas") {
+    return <FileText size={22} strokeWidth={1.75} aria-hidden="true" />;
+  }
+  if (target === "gestao") {
+    return <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
   return <Settings size={22} strokeWidth={1.75} aria-hidden="true" />;
 }

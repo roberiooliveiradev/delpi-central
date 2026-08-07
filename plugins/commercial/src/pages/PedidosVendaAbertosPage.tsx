@@ -1,4 +1,4 @@
-import { PVA_STATE_BOX } from "../ui/stateChrome";
+import { useEffect } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -7,6 +7,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { PVA_STATE_BOX } from "../ui/stateChrome";
 import { usePortfolioScope } from "../app/usePortfolioScope";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -20,7 +21,23 @@ import { EmptyState } from "../ui/EmptyState";
 import { formatCurrency } from "../utils/format";
 
 export function PedidosVendaAbertosPage() {
-  const { isAdmin, sellers, sellerIdFilter, setSellerIdFilter } = usePortfolioScope();
+  const {
+    canUseTeamScope,
+    sellers,
+    sellerIdFilter,
+    setSellerIdFilter,
+  } = usePortfolioScope();
+
+  // Deep link da Gestão Equipe: ?seller_id=
+  useEffect(() => {
+    if (!canUseTeamScope || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search || "");
+    const fromQuery = (params.get("seller_id") || "").trim();
+    if (fromQuery && fromQuery !== (sellerIdFilter || "")) {
+      setSellerIdFilter(fromQuery);
+    }
+  }, [canUseTeamScope, sellerIdFilter, setSellerIdFilter]);
+
   const {
     loading,
     error,
@@ -43,7 +60,7 @@ export function PedidosVendaAbertosPage() {
     sortKey,
     sortDirection,
     toggleSort,
-  } = usePedidosVendaAbertosDashboard(isAdmin ? sellerIdFilter : null);
+  } = usePedidosVendaAbertosDashboard(canUseTeamScope ? sellerIdFilter : null);
 
   const showEmptyDataset = !loading && !error && allItemsCount === 0;
   const showFilteredEmpty =
@@ -53,7 +70,7 @@ export function PedidosVendaAbertosPage() {
     <>
       <PageHeader loading={loading} onRefresh={reload} totalLoaded={allItemsCount} />
 
-      {isAdmin ? (
+      {canUseTeamScope ? (
         <div className="pva-customers-page__header" style={{ marginBottom: 8 }}>
           <SellerScopeFilter
             sellers={sellers}

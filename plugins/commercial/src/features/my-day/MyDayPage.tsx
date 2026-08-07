@@ -217,8 +217,15 @@ function heroCopy(counts: { overdue: number; today: number; later: number }): {
 }
 
 export function MyDayPage({ basePath }: MyDayPageProps) {
-  const { canManageFollowups, isAdmin, myPortfolio, currentUserId, sellers } =
-    usePortfolioScope();
+  const {
+    canManageFollowups,
+    isAdmin,
+    canViewWorklistTeam,
+    myPortfolio,
+    currentUserId,
+    sellers,
+  } = usePortfolioScope();
+  const canTeamWorklist = canViewWorklistTeam || isAdmin;
   const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
   const confirm = useCommercialConfirm();
   const [loading, setLoading] = useState(true);
@@ -292,7 +299,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const customerOptions = useMemo(() => {
     const portfolio =
-      isAdmin && assigneeUserId
+      canTeamWorklist && assigneeUserId
         ? activeSellers.find((seller) => seller.user_id === assigneeUserId) ?? myPortfolio
         : myPortfolio;
     const rows = portfolio?.customers ?? [];
@@ -300,7 +307,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       value: `${c.customer_code}|${c.customer_store}`,
       label: `${c.customer_name?.trim() || "Cliente"} (${c.customer_code}/${c.customer_store})`,
     }));
-  }, [activeSellers, assigneeUserId, isAdmin, myPortfolio]);
+  }, [activeSellers, assigneeUserId, canTeamWorklist, myPortfolio]);
 
   const resetTaskFormFields = useCallback(() => {
     setTitle("");
@@ -387,9 +394,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     async (signal?: AbortSignal, options?: { preferBucket?: BucketKey | null }) => {
       setLoading(true);
       setError(null);
-      const scope = isAdmin && workScope === "team" ? "team" : "mine";
+      const scope = canTeamWorklist && workScope === "team" ? "team" : "mine";
       const assigneeUserId =
-        isAdmin && workScope === "team" && teamAssigneeFilter
+        canTeamWorklist && workScope === "team" && teamAssigneeFilter
           ? teamAssigneeFilter
           : null;
       try {
@@ -426,15 +433,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [isAdmin, teamAssigneeFilter, workScope],
+    [canTeamWorklist, teamAssigneeFilter, workScope],
   );
 
   useEffect(() => {
-    if (!isAdmin && workScope === "team") {
+    if (!canTeamWorklist && workScope === "team") {
       setWorkScope("mine");
       setTeamAssigneeFilter("");
     }
-  }, [isAdmin, workScope]);
+  }, [canTeamWorklist, workScope]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -560,7 +567,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         due_at: dueDateInputToIsoEod(dueDate),
         customer_code: customer?.code ?? null,
         customer_store: customer?.store ?? null,
-        assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
+        assignee_user_id: canTeamWorklist && assigneeUserId ? assigneeUserId : undefined,
       });
       if (pendingAttachments.length > 0) {
         const failed: string[] = [];
@@ -607,7 +614,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         due_at: dueDateInputToIsoEod(dueDate),
         customer_code: customer?.code ?? null,
         customer_store: customer?.store ?? null,
-        assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
+        assignee_user_id: canTeamWorklist && assigneeUserId ? assigneeUserId : undefined,
       });
       closeTaskForm();
       notifySuccess("Tarefa atualizada.");
@@ -726,7 +733,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         }
       >
         <div className="cm-my-day-toolbar">
-          {isAdmin ? (
+          {canTeamWorklist ? (
             <CommercialScopeChipBar
               label={
                 <CommercialTitleWithHelp
@@ -740,7 +747,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               chips={scopeChips}
             />
           ) : null}
-          {isAdmin && workScope === "team" && sellerOptions.length > 0 ? (
+          {canTeamWorklist && workScope === "team" && sellerOptions.length > 0 ? (
             <div className="cm-my-day-toolbar__filter">
               <CommercialSelectField
                 label="Responsável"
@@ -871,10 +878,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
             subtitle={
               formMode === "edit"
-                ? isAdmin
+                ? canTeamWorklist
                   ? "Altere campos, responsável e anexos; salve para gravar."
                   : "Altere campos e anexos; salve para gravar."
-                : isAdmin
+                : canTeamWorklist
                   ? "Título, prazo, tipo, responsável, cliente, observação e anexos."
                   : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
             }
@@ -882,7 +889,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
             collapsible
-            open={formMode !== "closed"}
+            open
             onOpenChange={(next) => {
               if (!next) closeTaskForm();
             }}
@@ -936,7 +943,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 onChange={setTaskType}
                 allowEmpty={false}
               />
-              {isAdmin && sellerOptions.length > 0 ? (
+              {canTeamWorklist && sellerOptions.length > 0 ? (
                 <CommercialSelectField
                   label="Responsável"
                   hint={CM_HELP.myDay.taskAssignee}

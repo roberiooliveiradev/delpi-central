@@ -5,13 +5,15 @@
 export const CM_HELP = {
   shell: {
     portal:
-      "Portal operacional da carteira: Início, Meu dia, pedidos em aberto, contas e administração de vendedores. Analytics pesado fica nos deep links (Dashboard Comercial / Propostas).",
+      "Portal comercial: Início, Meu dia, pedidos, carteira, propostas, gestão e administração de vendedores — tudo no mesmo app.",
     scope:
-      "Escopo atual da sessão: sua carteira ou a carteira do vendedor selecionado (admin). Filtra pedidos, clientes e alertas.",
+      "Escopo atual da sessão: sua carteira ou a carteira do vendedor selecionado (team.view ou admin). Filtra pedidos, clientes e alertas.",
     navHome: "Visão geral: alertas prioritários e atalhos para as áreas do portal.",
     navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Linhas de pedido de venda em aberto no TOTVS, no escopo da carteira.",
     navCustomers: "Clientes da carteira com pedidos em aberto e indicadores comerciais.",
+    navPropostas: "Propostas comerciais (ADY) read-only com emissão de PDF.",
+    navGestao: "KPIs, OTD, equipe e oportunidades comerciais no período filtrado.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },
   home: {
@@ -22,12 +24,14 @@ export const CM_HELP = {
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:
       "KPIs de gestão (ROL, conversão, OTD) via api-delpi e tabela da equipe por carteira. Falha parcial não derruba a Home.",
-    kpiRol: "ROL da matriz versus meta no mês corrente (Dashboard Comercial).",
+    kpiRol: "ROL da matriz versus meta no mês corrente (Gestão do Portal Comercial).",
     kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
     kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
     shortcuts: "Atalhos para as áreas principais — objetivo: chegar à ação em até dois cliques.",
     analytics:
-      "BI e propostas ficam em apps irmãos. Aqui só há deep links para não misturar worklist com analytics.",
+      "Atalhos internos para Gestão e Propostas no Portal Comercial (sem deep link para MFEs irmãos).",
+    scope:
+      "Escopo atual: sua carteira ou a de um vendedor da equipe (team.view ou admin de carteiras).",
   },
   myDay: {
     worklist:
