@@ -2,6 +2,7 @@ import { ChevronDown, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { NativeCheckboxControl } from "./NativeCheckboxControl";
@@ -66,6 +67,8 @@ export type MultiSelectFieldProps = {
   showSelectedTags?: boolean;
   includeSelectedInOptions?: boolean;
   showBulkActions?: boolean;
+  /** Escopo CSS do MFE no portal do painel (ex.: `dashboard-commercial`). */
+  portalScopeClassName?: string;
 };
 
 /** Monta BEM `{prefix}-multi-select__*` + classes estáveis `.delpi-ui-multi-select*`. */
@@ -139,10 +142,12 @@ export function MultiSelectField({
   showSelectedTags = false,
   includeSelectedInOptions = false,
   showBulkActions = true,
+  portalScopeClassName,
 }: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const generatedId = useId();
   const triggerId = id ?? generatedId;
   const listId = `${triggerId}-list`;
@@ -225,14 +230,16 @@ export function MultiSelectField({
   }, [open]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current?.contains(event.target as Node)) return;
+    if (disabled) {
       setOpen(false);
+      setQuery("");
     }
+  }, [disabled]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const closePanel = () => {
+    setOpen(false);
+    setQuery("");
+  };
 
   const triggerLabel = useMemo(() => {
     if (selectedValues.length > 0 && labels.selectedCountLabel) {
@@ -290,8 +297,17 @@ export function MultiSelectField({
       ? labels.emptyOptionsCreatable
       : labels.emptyOptions;
 
+  // Espelha `--portal` em cada token (prefix + delpi-ui), como no SelectControl.
+  const panelClassName = [
+    classNames.panel,
+    ...classNames.panel
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((token) => `${token}--portal`),
+  ].join(" ");
+
   return (
-    <div className={rootClass} ref={wrapperRef}>
+    <div className={rootClass}>
       <FieldLabel label={label} hint={labelHint} className={classNames.fieldLabel} />
 
       {showSelectedTags && selectedValues.length > 0 && classNames.tagList ? (
@@ -315,7 +331,10 @@ export function MultiSelectField({
         </div>
       ) : null}
 
-      <div className={open ? classNames.multiSelectOpen : classNames.multiSelect}>
+      <div
+        className={open ? classNames.multiSelectOpen : classNames.multiSelect}
+        ref={anchorRef}
+      >
         <button
           id={triggerId}
           type="button"
@@ -324,82 +343,96 @@ export function MultiSelectField({
           aria-haspopup="listbox"
           aria-controls={listId}
           disabled={disabled}
-          onClick={() => setOpen((current) => !current)}
+          onClick={() => {
+            setOpen((current) => {
+              if (current) setQuery("");
+              return !current;
+            });
+          }}
         >
           <span className={classNames.triggerLabel}>{triggerLabel}</span>
           <ChevronDown size={16} aria-hidden="true" />
         </button>
 
-        {open ? (
-          <div className={classNames.panel}>
-            {searchable ? (
-              <input
-                type="search"
-                className={classNames.search}
-                placeholder={labels.searchPlaceholder}
-                value={query}
-                aria-label={labels.searchAriaLabel?.(label)}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && canCreate) {
-                    event.preventDefault();
-                    handleCreate();
-                  }
-                }}
-              />
-            ) : null}
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={anchorRef}
+          panelRef={panelRef}
+          className={panelClassName}
+          variant="bare"
+          matchAnchorWidth
+          role="presentation"
+          portalScopeClassName={portalScopeClassName}
+          exclusive={false}
+          onDismiss={closePanel}
+        >
+          {searchable ? (
+            <input
+              type="search"
+              className={classNames.search}
+              placeholder={labels.searchPlaceholder}
+              value={query}
+              aria-label={labels.searchAriaLabel?.(label)}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && canCreate) {
+                  event.preventDefault();
+                  handleCreate();
+                }
+              }}
+            />
+          ) : null}
 
-            {!showBulkActions && canCreate ? (
-              <div className={classNames.actions}>
-                <button type="button" className={actionButtonClass} onClick={handleCreate}>
-                  {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
-                    normalizedQuery,
-                  )}
-                </button>
-              </div>
-            ) : null}
-
-            {showBulkActions && canCreate && classNames.createOption ? (
-              <button
-                type="button"
-                className={classNames.createOption}
-                onClick={handleCreate}
-              >
+          {!showBulkActions && canCreate ? (
+            <div className={classNames.actions}>
+              <button type="button" className={actionButtonClass} onClick={handleCreate}>
                 {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
                   normalizedQuery,
                 )}
               </button>
-            ) : null}
+            </div>
+          ) : null}
 
-            {showBulkActions ? (
-              <div className={classNames.actions}>
-                <button type="button" className={actionButtonClass} onClick={selectVisible}>
-                  {labels.selectVisible}
-                </button>
-                <button type="button" className={actionButtonClass} onClick={() => onChange([])}>
-                  {labels.clear}
-                </button>
-              </div>
-            ) : null}
-
-            <ul id={listId} className={classNames.list} role="listbox" aria-multiselectable="true">
-              {filteredOptions.length === 0 ? (
-                <li className={classNames.empty}>{emptyListMessage}</li>
-              ) : (
-                filteredOptions.map((option) => (
-                  <li key={option.value} className={classNames.option} title={option.label}>
-                    <NativeCheckboxControl
-                      className="delpi-ui-native-checkbox--compact"
-                      checked={selectedValues.includes(option.value)}
-                      onChange={() => toggleValue(option.value)}
-                      label={option.label}
-                    />
-                  </li>
-                ))
+          {showBulkActions && canCreate && classNames.createOption ? (
+            <button
+              type="button"
+              className={classNames.createOption}
+              onClick={handleCreate}
+            >
+              {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
+                normalizedQuery,
               )}
-            </ul>
-          </div>
-        ) : null}
+            </button>
+          ) : null}
+
+          {showBulkActions ? (
+            <div className={classNames.actions}>
+              <button type="button" className={actionButtonClass} onClick={selectVisible}>
+                {labels.selectVisible}
+              </button>
+              <button type="button" className={actionButtonClass} onClick={() => onChange([])}>
+                {labels.clear}
+              </button>
+            </div>
+          ) : null}
+
+          <ul id={listId} className={classNames.list} role="listbox" aria-multiselectable="true">
+            {filteredOptions.length === 0 ? (
+              <li className={classNames.empty}>{emptyListMessage}</li>
+            ) : (
+              filteredOptions.map((option) => (
+                <li key={option.value} className={classNames.option} title={option.label}>
+                  <NativeCheckboxControl
+                    className="delpi-ui-native-checkbox--compact"
+                    checked={selectedValues.includes(option.value)}
+                    onChange={() => toggleValue(option.value)}
+                    label={option.label}
+                  />
+                </li>
+              ))
+            )}
+          </ul>
+        </AnchoredPanelPortal>
       </div>
     </div>
   );
@@ -426,6 +459,7 @@ export function createDashboardMultiSelectField(config: {
   prefix?: string;
   classNames?: MultiSelectFieldClassNames;
   labels: MultiSelectFieldLabels;
+  portalScopeClassName?: string;
 }) {
   const classNames = resolveMultiSelectClassNames(config);
 
@@ -433,6 +467,7 @@ export function createDashboardMultiSelectField(config: {
     hint,
     placeholder,
     labelHint,
+    portalScopeClassName,
     ...props
   }: DashboardMultiSelectFieldProps) {
     return (
@@ -444,6 +479,7 @@ export function createDashboardMultiSelectField(config: {
         }}
         labelHint={hint ?? labelHint}
         {...props}
+        portalScopeClassName={portalScopeClassName ?? config.portalScopeClassName}
       />
     );
   };
@@ -468,6 +504,7 @@ export function createDashboardCreatableMultiSelectField(config: {
   showSelectedTags?: boolean;
   includeSelectedInOptions?: boolean;
   showBulkActions?: boolean;
+  portalScopeClassName?: string;
 }) {
   const classNames = resolveMultiSelectClassNames(config);
 
@@ -476,6 +513,7 @@ export function createDashboardCreatableMultiSelectField(config: {
     placeholder,
     labelHint,
     options = [],
+    portalScopeClassName,
     ...props
   }: DashboardCreatableMultiSelectFieldProps) {
     return (
@@ -493,6 +531,7 @@ export function createDashboardCreatableMultiSelectField(config: {
         includeSelectedInOptions={config.includeSelectedInOptions ?? true}
         showBulkActions={config.showBulkActions ?? false}
         {...props}
+        portalScopeClassName={portalScopeClassName ?? config.portalScopeClassName}
       />
     );
   };

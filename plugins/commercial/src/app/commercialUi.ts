@@ -202,6 +202,7 @@ export const CommercialSelectField = createDashboardSelectField({
 
 export const CommercialMultiSelectField = createDashboardMultiSelectField({
   prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
   labels: {
     emptyLabel: "Nenhum selecionado",
     searchPlaceholder: "Buscar…",

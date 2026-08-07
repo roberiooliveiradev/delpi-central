@@ -84,6 +84,17 @@
   box-shadow: 0 10px 28px color-mix(in srgb, var(--delpi-ui-text, #111) 16%, transparent);
 }
 
+/* Portal no body: posição vem do AnchoredPanelPortal (fixed); evita clip por overflow do card. */
+.delpi-ui-multi-select__panel--portal,
+[class*="-multi-select__panel--portal"] {
+  right: auto;
+  top: auto;
+  left: auto;
+  min-width: 12rem;
+  width: max(100%, 240px);
+  max-width: min(420px, calc(100vw - 16px));
+}
+
 .delpi-ui-multi-select__search {
   width: 100%;
   min-height: 36px;

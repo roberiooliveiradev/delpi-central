@@ -57,4 +57,26 @@ describe("MultiSelectField actions", () => {
     expect(clear.className).toContain("delpi-ui-multi-select__action");
     expect(selectVisible.className).toEqual(clear.className);
   });
+
+  it("abre o painel via portal no document.body (evita clip por overflow do card)", () => {
+    const { container } = render(
+      <div className="dashboard-commercial" style={{ overflow: "hidden", height: 40 }}>
+        <MultiSelectField
+          label="Cliente"
+          searchable
+          portalScopeClassName="dashboard-commercial"
+          options={[{ value: "a", label: "3-RHO INTERRUPTORES" }]}
+          selectedValues={[]}
+          onChange={() => undefined}
+        />
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+    const list = screen.getByRole("listbox");
+    expect(list).toBeTruthy();
+    expect(container.contains(list)).toBe(false);
+    expect(document.body.contains(list)).toBe(true);
+    expect(list.closest("[class*='multi-select__panel--portal']")).toBeTruthy();
+  });
 });
