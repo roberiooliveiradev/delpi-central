@@ -422,6 +422,8 @@ class ProductionOrdersRepository(
             RTRIM(LTRIM(OP.C2_PRIOR)) AS priority,
             RTRIM(LTRIM(OP.C2_STATUS)) AS order_status,
             RTRIM(LTRIM(OP.C2_OBS)) AS observation,
+            NULLIF(RTRIM(LTRIM(OP.C2_PEDIDO)), '') AS sales_order,
+            NULLIF(RTRIM(LTRIM(OP.C2_ITEMPV)), '') AS sales_order_item,
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_EMISSAO, 112), 23) AS issue_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRI, 112), 23) AS planned_start_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRF, 112), 23) AS due_date,

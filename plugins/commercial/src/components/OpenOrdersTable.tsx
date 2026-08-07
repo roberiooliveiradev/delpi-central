@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DataTable,
   ExcelExportButton,
@@ -36,6 +36,11 @@ import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
 import { formatCurrency, formatQuantity } from "../utils/format";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
+import {
+  findOpenOrderLine,
+  parseOpenOrdersLineDeepLink,
+  syncOpenOrdersLineQueryToUrl,
+} from "../utils/openOrdersDeepLink";
 import {
   resolveLineCoverage,
   resolvePrevisaoPrazoBadge,
@@ -96,6 +101,7 @@ export function OpenOrdersTable({
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
   const [detailItem, setDetailItem] = useState<OpenOrdersTotvsItem | null>(null);
+  const deepLinkHandledRef = useRef(false);
   const { layout, setLayout } = useOpenOrdersLayout();
   const { preferences, visibleColumns, visibleColumnCount, setColumnVisible, resetPreferences } =
     useTableColumnPreferences();
@@ -109,6 +115,36 @@ export function OpenOrdersTable({
     isDefault,
   } = useTableFontSize();
   const customerAvatars = useOpenOrdersCustomerAvatars(rows);
+
+  useEffect(() => {
+    if (loading || deepLinkHandledRef.current) return;
+    deepLinkHandledRef.current = true;
+    const link = parseOpenOrdersLineDeepLink();
+    if (!link) return;
+    const found = findOpenOrderLine(exportRows, link);
+    if (found) {
+      setDetailItem(found as OpenOrdersTotvsItem);
+      syncOpenOrdersLineQueryToUrl({
+        pedido: found.pedido,
+        linha: found.linha,
+        filial: found.filial,
+      });
+    }
+  }, [loading, exportRows]);
+
+  const openDetail = (row: OpenOrdersTotvsItem) => {
+    setDetailItem(row);
+    syncOpenOrdersLineQueryToUrl({
+      pedido: row.pedido,
+      linha: row.linha,
+      filial: row.filial,
+    });
+  };
+
+  const closeDetail = () => {
+    setDetailItem(null);
+    syncOpenOrdersLineQueryToUrl(null);
+  };
 
   const visibleKeySet = useMemo(
     () => new Set(visibleColumns.map((c) => c.key)),
@@ -229,7 +265,7 @@ export function OpenOrdersTable({
               <button
                 type="button"
                 className="cm-link-button cm-cell-inline__primary"
-                onClick={() => setDetailItem(row)}
+                onClick={() => openDetail(row)}
                 title="Ver detalhe da linha e OPs"
               >
                 {previsao.previsaoLabel}
@@ -424,7 +460,7 @@ export function OpenOrdersTable({
                   onSort(key as SortKey);
                 }
               }}
-              onRowClick={(row) => setDetailItem(row)}
+              onRowClick={(row) => openDetail(row)}
               columns={columns}
             />
           </div>
@@ -445,7 +481,7 @@ export function OpenOrdersTable({
                         customerAvatarKey(row.codigo_cadastro, row.loja_cadastro),
                       ),
                   )}
-                  onOpenDetail={setDetailItem}
+                  onOpenDetail={openDetail}
                 />
               ))
             )}
@@ -456,7 +492,7 @@ export function OpenOrdersTable({
       <OpenOrdersLineDetailModal
         item={detailItem}
         open={Boolean(detailItem)}
-        onClose={() => setDetailItem(null)}
+        onClose={closeDetail}
         basePath={basePath}
       />
     </>

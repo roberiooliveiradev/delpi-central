@@ -10,6 +10,7 @@ import {
   CommercialStateBanner,
   cmEmptyStateClassNames,
 } from "../app/commercialUi";
+import { navigatePluginView } from "../app/pluginNavigation";
 import { usePortfolioScope } from "../app/usePortfolioScope";
 import { FilterBar } from "../components/FilterBar";
 import { OpenOrdersTable } from "../components/OpenOrdersTable";
@@ -29,6 +30,13 @@ function resolveAttentionChip(filters: {
   if (filters.stockStatus === "com_estoque") return "can_invoice";
   if (filters.stockStatus === "parcial") return "partial";
   return "all";
+}
+
+function formatUpdatedAt(value: Date): string {
+  return value.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function OpenOrdersPageImpl() {
@@ -53,6 +61,9 @@ export function OpenOrdersPageImpl() {
     error,
     opsWarning,
     reload,
+    lastUpdatedAt,
+    portfolioEmpty,
+    portfolioMessage,
     allItemsCount,
     paginatedItems,
     summary,
@@ -73,7 +84,7 @@ export function OpenOrdersPageImpl() {
     toggleSort,
   } = useOpenOrdersDashboard(canUseTeamScope ? sellerIdFilter : null);
 
-  const showEmptyDataset = !loading && !error && allItemsCount === 0;
+  const showEmptyDataset = !loading && !error && allItemsCount === 0 && !portfolioEmpty;
   const showFilteredEmpty =
     !loading && !error && allItemsCount > 0 && totalFiltered === 0;
   const activeChip = resolveAttentionChip(filters);
@@ -125,10 +136,20 @@ export function OpenOrdersPageImpl() {
           <SectionHintLabel label="Pedidos em aberto" hint={CM_HELP.openOrders.page} />
         }
         actions={
-          <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
-            <RefreshCw size={16} aria-hidden="true" />
-            <span>Atualizar</span>
-          </ActionButton>
+          <div className="cm-open-orders-page__toolbar-actions">
+            {lastUpdatedAt && !loading ? (
+              <span
+                className="cm-open-orders-page__freshness"
+                title={CM_HELP.openOrders.freshness}
+              >
+                Atualizado às {formatUpdatedAt(lastUpdatedAt)}
+              </span>
+            ) : null}
+            <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
+              <RefreshCw size={16} aria-hidden="true" />
+              <span>Atualizar</span>
+            </ActionButton>
+          </div>
         }
         highlights={highlights}
       >
@@ -188,7 +209,7 @@ export function OpenOrdersPageImpl() {
         ) : null}
       </CommercialPageHero>
 
-      {loading && !allItemsCount ? (
+      {loading && !allItemsCount && !portfolioEmpty ? (
         <CommercialLoadingCard title="Carregando pedidos em aberto…" variant="panel" />
       ) : null}
 
@@ -199,6 +220,23 @@ export function OpenOrdersPageImpl() {
             Tentar novamente
           </ActionButton>
         </CommercialStateBanner>
+      ) : null}
+
+      {portfolioEmpty ? (
+        <EmptyState
+          classNames={cmEmptyStateClassNames}
+          defaultMessage={
+            portfolioMessage ||
+            "Carteira sem clientes. Inclua clientes em Carteiras para ver pedidos em aberto."
+          }
+        >
+          <ActionButton
+            variant="primary"
+            onClick={() => navigatePluginView("seller_portfolios")}
+          >
+            Abrir carteiras
+          </ActionButton>
+        </EmptyState>
       ) : null}
 
       {showEmptyDataset ? (
@@ -216,7 +254,7 @@ export function OpenOrdersPageImpl() {
         </CommercialStateBanner>
       ) : null}
 
-      {!error && allItemsCount > 0 ? (
+      {!error && !portfolioEmpty && allItemsCount > 0 ? (
         <>
           <OpenOrdersTable
             rows={paginatedItems}

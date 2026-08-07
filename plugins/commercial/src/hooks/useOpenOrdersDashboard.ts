@@ -8,7 +8,10 @@ import {
   filterPedidosItems,
   type OpenOrdersTotvsFilters,
 } from "../utils/filterItems";
-import type { StockFilter } from "../utils/statusBadges";
+import {
+  parseOpenOrdersAttentionDeepLink,
+  syncOpenOrdersAttentionQueryToUrl,
+} from "../utils/openOrdersDeepLink";
 import { allocateStockToOrders } from "../utils/stockAllocation";
 import { allocateOpsToOrders, buildOpsProductIndex } from "../utils/opAllocation";
 import { useOpenOrdersTotvs } from "./useOpenOrdersTotvs";
@@ -21,47 +24,30 @@ import {
 
 export const PAGE_SIZE = 50;
 
-const STOCK_QUERY_VALUES = new Set<string>(["com_estoque", "parcial", "sem_estoque"]);
-
-function readOrdersDeepLinkFilters(): Partial<OpenOrdersTotvsFilters> {
-  if (typeof window === "undefined") return {};
-  const params = new URLSearchParams(window.location.search);
-  const patch: Partial<OpenOrdersTotvsFilters> = {};
-  const stock = (params.get("stock") ?? "").trim();
-  if (STOCK_QUERY_VALUES.has(stock)) patch.stockStatus = stock as StockFilter;
-  const focus = (params.get("focus") ?? "").trim().toLowerCase();
-  if (focus === "late" || focus === "atraso") patch.lateOnly = true;
-  return patch;
-}
-
-function clearOrdersDeepLinkQueryFromUrl(): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  let changed = false;
-  for (const key of ["stock", "focus"]) {
-    if (url.searchParams.has(key)) {
-      url.searchParams.delete(key);
-      changed = true;
-    }
-  }
-  if (!changed) return;
-  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-}
-
 export function useOpenOrdersDashboard(sellerId?: string | null) {
   const { data, opsData, opsWarning, loading, error, reload } =
     useOpenOrdersTotvs(sellerId);
   const [filters, setFilters] = useState<OpenOrdersTotvsFilters>(() => ({
     ...DEFAULT_FILTERS,
-    ...readOrdersDeepLinkFilters(),
+    ...parseOpenOrdersAttentionDeepLink(),
   }));
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT.direction);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    clearOrdersDeepLinkQueryFromUrl();
-  }, []);
+    if (!loading && data) {
+      setLastUpdatedAt(new Date());
+    }
+  }, [loading, data]);
+
+  useEffect(() => {
+    syncOpenOrdersAttentionQueryToUrl({
+      stockStatus: filters.stockStatus || undefined,
+      lateOnly: filters.lateOnly,
+    });
+  }, [filters.stockStatus, filters.lateOnly]);
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
@@ -153,6 +139,9 @@ export function useOpenOrdersDashboard(sellerId?: string | null) {
     error,
     opsWarning,
     reload,
+    lastUpdatedAt,
+    portfolioEmpty: Boolean(data?.portfolio?.empty),
+    portfolioMessage: data?.portfolio?.message ?? null,
     allItemsCount: allItems.length,
     filteredItems,
     paginatedItems,

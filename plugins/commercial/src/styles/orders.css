@@ -261,55 +261,6 @@
   color: color-mix(in srgb, var(--pva-accent) 82%, var(--pva-text));
 }
 
-.pva-op-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.pva-op-modal__metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin: 0;
-}
-
-.pva-op-modal__metrics div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pva-op-modal__metrics dt {
-  margin: 0;
-  color: var(--pva-muted);
-  font-size: var(--pva-font-sm);
-}
-
-.pva-op-modal__metrics dd {
-  margin: 0;
-  font-weight: 600;
-}
-
-.pva-op-modal__note {
-  margin: 0;
-  color: var(--pva-muted);
-  font-size: var(--pva-font-sm);
-  line-height: 1.45;
-}
-
-.pva-op-modal__table-wrap {
-  max-height: 360px;
-}
-
-.pva-op-modal__observacao {
-  min-width: 160px;
-  max-width: 280px;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.4;
-}
-
 /* Check-up legado — cards / status / linhas (compat) */
 .pva-checkup-page {
   gap: 16px;

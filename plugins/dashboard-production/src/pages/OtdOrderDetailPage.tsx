@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Factory,
   Package,
+  ShoppingCart,
   Truck,
 } from "lucide-react";
 
@@ -36,6 +37,7 @@ import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal, formatInteger } from "../utils/format";
 import { appendFiltersToPath, readProductionFilters } from "../utils/filterUrl";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
+import { buildCommercialOpenOrderPath } from "../utils/commercialOpenOrderLink";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { readProductField } from "../utils/productFields";
@@ -76,8 +78,23 @@ export function OtdOrderDetailPage({
 
   const backPath = appendFiltersToPath(PRODUCTION_ROUTES.otd, filterState);
 
+  const commercialOpenOrderPath = useMemo(() => {
+    const salesOrder = order?.sales_order?.trim();
+    if (!salesOrder) return null;
+    return buildCommercialOpenOrderPath({
+      pedido: salesOrder,
+      linha: order?.sales_order_item,
+      filial: order?.branch || branch,
+    });
+  }, [order?.sales_order, order?.sales_order_item, order?.branch, branch]);
+
   const handleBack = () => {
     navigateProductionBack(backPath, filterState);
+  };
+
+  const handleOpenCommercialOrder = () => {
+    if (!commercialOpenOrderPath || typeof window === "undefined") return;
+    window.location.assign(commercialOpenOrderPath);
   };
 
   const handleIntermediateOrderClick = (row: IntermediateProductionOrderRow) => {
@@ -139,6 +156,12 @@ export function OtdOrderDetailPage({
             { label: "Qtd. planejada", value: formatDecimal(order.planned_qty) },
             { label: "Qtd. produzida", value: formatDecimal(order.produced_qty) },
             { label: "Armazém", value: order.warehouse || "—" },
+            {
+              label: "Pedido de venda",
+              value: order.sales_order
+                ? `${order.sales_order}${order.sales_order_item ? ` / ${order.sales_order_item}` : ""}`
+                : "—",
+            },
             {
               label: "Observação",
               value: order.observation || "—",
@@ -245,10 +268,22 @@ export function OtdOrderDetailPage({
         onRefresh={detail.reload}
         refreshing={detail.loading && Boolean(order)}
         actions={
-          <button type="button" className={GHOST_BTN} onClick={handleBack}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            Voltar
-          </button>
+          <>
+            {commercialOpenOrderPath ? (
+              <button
+                type="button"
+                className={GHOST_BTN}
+                onClick={handleOpenCommercialOrder}
+              >
+                <ShoppingCart size={16} aria-hidden="true" />
+                Ver pedido no comercial
+              </button>
+            ) : null}
+            <button type="button" className={GHOST_BTN} onClick={handleBack}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              Voltar
+            </button>
+          </>
         }
       />
 

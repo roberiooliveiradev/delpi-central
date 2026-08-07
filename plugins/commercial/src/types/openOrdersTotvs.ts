@@ -34,8 +34,8 @@ export type OpenOrdersTotvsItem = {
   preco_venda: number;
   valor_aberto: number;
   /**
-   * Número da OV (AD1_NROPOR) quando o contrato/API enriquecer o vínculo pedido↔oportunidade.
-   * Sem o campo, o modal tenta resolver via probe pedido≈OV.
+   * Número da OV (AD1_NROPOR) quando a API enriquecer o vínculo pedido↔oportunidade.
+   * Sem o campo, o modal resolve via GET /commercial/proposals?search=pedido (não path /{pedido}).
    */
   proposal_number?: string | null;
 };

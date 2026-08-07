@@ -1,4 +1,5 @@
-import { SectionCard, StatusBadge } from "@delpi/plugin-ui/index";
+import { SectionCard, StatusBadge, SectionHintLabel } from "@delpi/plugin-ui/index";
+import type { ReactNode } from "react";
 
 import {
   cmSectionCardClassNames,
@@ -9,6 +10,7 @@ import {
 import { CM_HELP } from "../content/helpTooltips";
 import type { ProductFactoryStatusData } from "../types/productionExtras";
 import { displayApiScalar } from "../utils/displayApiScalar";
+import { formatQuantity } from "../utils/format";
 
 type OpenOrdersFactoryStatusStripProps = {
   loading: boolean;
@@ -38,6 +40,25 @@ function ynTone(value: string): "success" | "warning" | "neutral" {
   return "neutral";
 }
 
+type ChipProps = {
+  label: string;
+  hint: string;
+  children: ReactNode;
+};
+
+function FactoryChip({ label, hint, children }: ChipProps) {
+  return (
+    <div className="cm-open-orders-detail__factory-chip" role="listitem">
+      <SectionHintLabel
+        label={label}
+        hint={hint}
+        className="cm-open-orders-detail__factory-chip-label"
+      />
+      {children}
+    </div>
+  );
+}
+
 export function OpenOrdersFactoryStatusStrip({
   loading,
   data,
@@ -49,16 +70,23 @@ export function OpenOrdersFactoryStatusStrip({
   const statusLabel = displayApiScalar(data?.factory_status);
   const paStarted = displayApiScalar(data?.production?.summary?.pa_production_started);
   const piStarted = displayApiScalar(data?.production?.summary?.pi_production_started);
+  const indicators = data?.indicators;
+  const maxPa = indicators?.max_pa_producible_from_stock;
+  const limitingMp = indicators?.limiting_raw_material_code?.trim();
+  const mpWithoutStock = indicators?.total_raw_materials_without_stock_for_one_pa;
+  const help = CM_HELP.openOrders.detail;
 
   return (
     <SectionCard
       title="Status fabril do produto"
-      hint={CM_HELP.openOrders.detail.factoryStatus}
+      hint={help.factoryStatus}
       classNames={cmSectionCardClassNames}
       labels={cmSectionLabels}
     >
       {loading && !data ? (
-        <CommercialLoadingCard title="Carregando status fabril…" variant="panel" />
+        <div className="cm-open-orders-detail__section-skel">
+          <CommercialLoadingCard title="Carregando status fabril…" variant="panel" />
+        </div>
       ) : null}
       {error ? <p role="alert">{error}</p> : null}
       {!loading && !data && !error ? (
@@ -73,45 +101,59 @@ export function OpenOrdersFactoryStatusStrip({
               variant={factoryTone(statusLabel)}
             />
             <p className="cm-open-orders-detail__muted">
-              Visão integrada PA/PI, produção e expedição do código desta linha.
+              Visão integrada PA/PI, produção e expedição do código desta linha (filial da linha).
             </p>
           </div>
           <div className="cm-open-orders-detail__factory-chips" role="list">
-            <div className="cm-open-orders-detail__factory-chip" role="listitem">
-              <span className="cm-open-orders-detail__factory-chip-label">PA iniciada</span>
+            <FactoryChip label="PA iniciada" hint={help.factoryPaStarted}>
               <StatusBadge
                 classNames={cmStatusBadgeClassNames}
                 label={paStarted}
                 variant={ynTone(paStarted)}
               />
-            </div>
-            <div className="cm-open-orders-detail__factory-chip" role="listitem">
-              <span className="cm-open-orders-detail__factory-chip-label">PI iniciada</span>
+            </FactoryChip>
+            <FactoryChip label="PI iniciada" hint={help.factoryPiStarted}>
               <StatusBadge
                 classNames={cmStatusBadgeClassNames}
                 label={piStarted}
                 variant={ynTone(piStarted)}
               />
-            </div>
-            <div className="cm-open-orders-detail__factory-chip" role="listitem">
-              <span className="cm-open-orders-detail__factory-chip-label">OPs PA / PI</span>
+            </FactoryChip>
+            <FactoryChip label="OPs PA / PI" hint={help.factoryOpsPaPi}>
               <strong className="cm-open-orders-detail__factory-chip-value">
                 {displayApiScalar(data.production?.summary?.total_pa_orders)} /{" "}
                 {displayApiScalar(data.production?.summary?.total_pi_orders)}
               </strong>
-            </div>
-            <div className="cm-open-orders-detail__factory-chip" role="listitem">
-              <span className="cm-open-orders-detail__factory-chip-label">Expedido</span>
+            </FactoryChip>
+            <FactoryChip label="Expedido" hint={help.factoryShipped}>
               <strong className="cm-open-orders-detail__factory-chip-value">
                 {displayApiScalar(data.shipping?.summary?.total_shipped_quantity)}
               </strong>
-            </div>
-            <div className="cm-open-orders-detail__factory-chip" role="listitem">
-              <span className="cm-open-orders-detail__factory-chip-label">Perda inspeção</span>
+            </FactoryChip>
+            <FactoryChip label="Perda inspeção" hint={help.factoryInspectionLoss}>
               <strong className="cm-open-orders-detail__factory-chip-value">
                 {displayApiScalar(data.shipping?.summary?.total_inspection_loss_quantity)}
               </strong>
-            </div>
+            </FactoryChip>
+            {maxPa != null && Number.isFinite(Number(maxPa)) ? (
+              <FactoryChip label="PA produzível (MP)" hint={help.factoryMpPa}>
+                <strong className="cm-open-orders-detail__factory-chip-value">
+                  {formatQuantity(Number(maxPa))}
+                </strong>
+              </FactoryChip>
+            ) : null}
+            {limitingMp ? (
+              <FactoryChip label="MP limitante" hint={help.factoryMpLimiting}>
+                <strong className="cm-open-orders-detail__factory-chip-value">{limitingMp}</strong>
+              </FactoryChip>
+            ) : null}
+            {mpWithoutStock != null && Number(mpWithoutStock) > 0 ? (
+              <FactoryChip label="MPs sem estoque p/ 1 PA" hint={help.factoryMpWithoutStock}>
+                <strong className="cm-open-orders-detail__factory-chip-value">
+                  {formatQuantity(Number(mpWithoutStock))}
+                </strong>
+              </FactoryChip>
+            ) : null}
           </div>
         </div>
       ) : null}

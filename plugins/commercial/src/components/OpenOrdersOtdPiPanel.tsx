@@ -1,10 +1,11 @@
-import { ActionButton, HelpTooltip, StatusBadge } from "@delpi/plugin-ui/index";
+import { ActionButton, SectionHintLabel, StatusBadge } from "@delpi/plugin-ui/index";
 
 import { cmStatusBadgeClassNames } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
 import type { ProductionOrderByOpData } from "../types/productionExtras";
 import { formatDisplayDate } from "../utils/dates";
 import { displayApiScalar } from "../utils/displayApiScalar";
+import { formatQuantity } from "../utils/format";
 import {
   buildProductionOtdOrderPath,
   formatOtdDaysDiff,
@@ -30,7 +31,7 @@ function openProductionOtd(
 }
 
 /**
- * Bloco compacto: prazo OTD da OP + resumo/lista de PIs + deep link produção.
+ * Bloco compacto: prazo OTD da OP + tabela densa de PIs + deep link produção.
  */
 export function OpenOrdersOtdPiPanel({
   productionOrder,
@@ -41,7 +42,7 @@ export function OpenOrdersOtdPiPanel({
 
   const order = byOp.order;
   const summary = parseProductionLinkSummary(byOp.link_summary);
-  const pis = linkedPiOrders(byOp.linked_orders, 5);
+  const pis = linkedPiOrders(byOp.linked_orders, 8);
   const totalPi = summary?.total_pi_orders ?? pis.length;
   const onTime = summary?.on_time_ops ?? null;
   const late = summary?.late_ops ?? null;
@@ -67,10 +68,11 @@ export function OpenOrdersOtdPiPanel({
   return (
     <div className="cm-open-orders-detail__otd-pi">
       <div className="cm-open-orders-detail__otd-pi-head">
-        <div className="cm-open-orders-detail__otd-pi-title-row">
-          <p className="cm-open-orders-detail__otd-pi-title">Prazo OTD</p>
-          <HelpTooltip content={help.otdPrazo} ariaLabel="Ajuda: prazo OTD" />
-        </div>
+        <SectionHintLabel
+          label="Prazo OTD"
+          hint={help.otdPrazo}
+          className="cm-open-orders-detail__otd-pi-title"
+        />
         {otdHref ? (
           <ActionButton
             variant="ghost"
@@ -89,7 +91,11 @@ export function OpenOrdersOtdPiPanel({
 
       <div className="cm-open-orders-detail__otd-pi-kpis">
         <div className="cm-open-orders-detail__otd-pi-kpi">
-          <span className="cm-open-orders-detail__otd-pi-kpi-label">Status OTD</span>
+          <SectionHintLabel
+            label="Status OTD"
+            hint={help.otdStatus}
+            className="cm-open-orders-detail__otd-pi-kpi-label"
+          />
           <StatusBadge
             classNames={cmStatusBadgeClassNames}
             label={formatOtdStatusLabel(order.otd_status)}
@@ -97,19 +103,31 @@ export function OpenOrdersOtdPiPanel({
           />
         </div>
         <div className="cm-open-orders-detail__otd-pi-kpi">
-          <span className="cm-open-orders-detail__otd-pi-kpi-label">Dias (previsto × real)</span>
+          <SectionHintLabel
+            label="Dias (previsto × real)"
+            hint={help.otdDays}
+            className="cm-open-orders-detail__otd-pi-kpi-label"
+          />
           <strong className="cm-open-orders-detail__otd-pi-kpi-value">
             {formatOtdDaysDiff(order.days_diff)}
           </strong>
         </div>
         <div className="cm-open-orders-detail__otd-pi-kpi">
-          <span className="cm-open-orders-detail__otd-pi-kpi-label">Entrega prevista</span>
+          <SectionHintLabel
+            label="Entrega prevista"
+            hint={help.otdDue}
+            className="cm-open-orders-detail__otd-pi-kpi-label"
+          />
           <strong className="cm-open-orders-detail__otd-pi-kpi-value">
             {formatDisplayDate(order.due_date)}
           </strong>
         </div>
         <div className="cm-open-orders-detail__otd-pi-kpi">
-          <span className="cm-open-orders-detail__otd-pi-kpi-label">Finalização</span>
+          <SectionHintLabel
+            label="Finalização"
+            hint={help.otdFinish}
+            className="cm-open-orders-detail__otd-pi-kpi-label"
+          />
           <strong className="cm-open-orders-detail__otd-pi-kpi-value">
             {formatDisplayDate(order.finish_date)}
           </strong>
@@ -118,49 +136,75 @@ export function OpenOrdersOtdPiPanel({
 
       {summaryLine || pis.length > 0 ? (
         <div className="cm-open-orders-detail__otd-pi-linked">
-          <div className="cm-open-orders-detail__otd-pi-title-row">
-            <p className="cm-open-orders-detail__otd-pi-title">OPs de PI vinculadas</p>
-            <HelpTooltip content={help.otdLinkedPi} ariaLabel="Ajuda: OPs de PI" />
-          </div>
+          <SectionHintLabel
+            label="OPs de PI vinculadas"
+            hint={help.otdLinkedPi}
+            className="cm-open-orders-detail__otd-pi-title"
+          />
           {summaryLine ? (
             <p className="cm-open-orders-detail__muted cm-open-orders-detail__otd-pi-summary">
               {summaryLine}
             </p>
           ) : null}
           {pis.length > 0 ? (
-            <ul className="cm-open-orders-detail__otd-pi-list">
-              {pis.map((row) => {
-                const opId = String(row.production_order || "").trim();
-                return (
-                  <li key={opId} className="cm-open-orders-detail__otd-pi-row">
-                    <StatusBadge
-                      classNames={cmStatusBadgeClassNames}
-                      label={formatOtdStatusLabel(row.otd_status)}
-                      variant={otdStatusBadgeVariant(row.otd_status)}
-                    />
-                    <button
-                      type="button"
-                      className="cm-open-orders-detail__otd-pi-link"
-                      onClick={() =>
-                        openProductionOtd(opId, {
-                          branch: row.branch || resolvedBranch,
-                          productType: row.product_type || "PI",
-                        })
-                      }
-                    >
-                      {opId}
-                    </button>
-                    <span className="cm-open-orders-detail__otd-pi-code">
-                      {displayApiScalar(row.product_code, "—")}
-                    </span>
-                    <span className="cm-open-orders-detail__muted">
-                      Prev. {formatDisplayDate(row.due_date)} · Dias{" "}
-                      {formatOtdDaysDiff(row.days_diff)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="cm-open-orders-detail__otd-pi-table-wrap">
+              <table className="cm-open-orders-detail__otd-pi-table">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <SectionHintLabel label="Status" hint={help.otdStatus} />
+                    </th>
+                    <th scope="col">
+                      <SectionHintLabel label="OP" hint={help.opNumero} />
+                    </th>
+                    <th scope="col">Código</th>
+                    <th scope="col">
+                      <SectionHintLabel label="Previsto" hint={help.otdDue} />
+                    </th>
+                    <th scope="col">
+                      <SectionHintLabel label="Dias" hint={help.otdDays} />
+                    </th>
+                    <th scope="col">
+                      <SectionHintLabel label="Qtd" hint={help.opPlanejado} />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pis.map((row) => {
+                    const opId = String(row.production_order || "").trim();
+                    return (
+                      <tr key={opId}>
+                        <td>
+                          <StatusBadge
+                            classNames={cmStatusBadgeClassNames}
+                            label={formatOtdStatusLabel(row.otd_status)}
+                            variant={otdStatusBadgeVariant(row.otd_status)}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="cm-open-orders-detail__otd-pi-link"
+                            onClick={() =>
+                              openProductionOtd(opId, {
+                                branch: row.branch || resolvedBranch,
+                                productType: row.product_type || "PI",
+                              })
+                            }
+                          >
+                            {opId}
+                          </button>
+                        </td>
+                        <td>{displayApiScalar(row.product_code, "—")}</td>
+                        <td>{formatDisplayDate(row.due_date)}</td>
+                        <td>{formatOtdDaysDiff(row.days_diff)}</td>
+                        <td>{formatQuantity(row.planned_qty)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : null}
           {totalPi != null && totalPi > pis.length ? (
             <p className="cm-open-orders-detail__muted">

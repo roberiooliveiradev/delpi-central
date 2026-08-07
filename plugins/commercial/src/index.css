@@ -1097,6 +1097,14 @@
   color: var(--cm-text-muted);
 }
 
+.dashboard-commercial .cm-open-orders-detail__snapshot-label.delpi-ui-section-hint-label,
+.dashboard-commercial .cm-open-orders-detail__factory-chip-label.delpi-ui-section-hint-label,
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi-label.delpi-ui-section-hint-label,
+.dashboard-commercial .cm-open-orders-detail__otd-pi-title.delpi-ui-section-hint-label,
+.dashboard-commercial .cm-open-orders-detail__timeline-caption.delpi-ui-section-hint-label {
+  display: inline;
+}
+
 .dashboard-commercial .cm-open-orders-detail__snapshot-value {
   font-size: 1rem;
   font-weight: 650;
@@ -1301,6 +1309,11 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-open-orders-detail__guide-step .delpi-ui-section-hint-label {
+  color: inherit;
+  font: inherit;
+}
+
 .dashboard-commercial .cm-open-orders-detail__otd-pi-title {
   margin: 0;
   font-size: 0.75rem;
@@ -1400,6 +1413,89 @@
   font-variant-numeric: tabular-nums;
   color: var(--cm-text);
   font-weight: 550;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--cm-border) 80%, transparent);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table th,
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table td {
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid color-mix(in srgb, var(--cm-border) 70%, transparent);
+  white-space: nowrap;
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table th {
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cm-text-muted);
+  background: color-mix(in srgb, var(--cm-surface-muted) 55%, transparent);
+}
+
+.dashboard-commercial .cm-open-orders-detail__otd-pi-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__appointments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__appointments-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__appointments-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cm-surface-muted) 50%, transparent);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-commercial .cm-open-orders-detail__section-skel {
+  min-height: 4.5rem;
+}
+
+.dashboard-commercial .cm-open-orders-detail__timeline-wrap {
+  min-height: 5.5rem;
+}
+
+.dashboard-commercial .cm-open-orders-page__toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-commercial .cm-open-orders-page__freshness {
+  font-size: 0.75rem;
+  color: var(--cm-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-commercial .cm-product-structure-tree {

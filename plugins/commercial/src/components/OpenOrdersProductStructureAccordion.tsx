@@ -14,20 +14,62 @@ type OpenOrdersProductStructureAccordionProps = {
   structure: ProductStructureData | null;
   error: string | null;
   productCode: string;
+  loading?: boolean;
 };
 
 export function OpenOrdersProductStructureAccordion({
   structure,
   error,
   productCode,
+  loading = false,
 }: OpenOrdersProductStructureAccordionProps) {
   const roots = useMemo(() => (structure ? structureRoots(structure) : []), [structure]);
 
-  if (error && !structure) {
-    return null;
+  if (loading && !structure && !error) {
+    return (
+      <SectionCard
+        title="Estrutura do produto"
+        hint={CM_HELP.openOrders.detail.bom}
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
+        collapsible
+        defaultOpen={false}
+      >
+        <p className="cm-open-orders-detail__muted">Carregando BOM…</p>
+      </SectionCard>
+    );
   }
+
+  if (error && !structure) {
+    return (
+      <SectionCard
+        title="Estrutura do produto"
+        hint={CM_HELP.openOrders.detail.bom}
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
+        collapsible
+        defaultOpen
+      >
+        <p role="alert">{error}</p>
+      </SectionCard>
+    );
+  }
+
   if (roots.length === 0) {
-    return null;
+    return (
+      <SectionCard
+        title="Estrutura do produto"
+        hint={CM_HELP.openOrders.detail.bom}
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
+        collapsible
+        defaultOpen={false}
+      >
+        <p className="cm-open-orders-detail__muted">
+          Nenhuma estrutura (BOM) disponível para {productCode || "este produto"}.
+        </p>
+      </SectionCard>
+    );
   }
 
   return (

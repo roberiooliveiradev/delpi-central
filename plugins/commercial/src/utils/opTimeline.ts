@@ -1,6 +1,9 @@
 import type { HorizontalTimelineTone } from "@delpi/plugin-ui/index";
 import type { OpAllocationEntry } from "../types/opForecast";
-import type { ProductionAppointmentItem, ProductionOrderByOpData } from "../types/productionExtras";
+import type {
+  ProductionAppointmentByOpRow,
+  ProductionOrderByOpData,
+} from "../types/productionExtras";
 import { formatDisplayDate, resolveOpVsPedidoPrazo } from "./dates";
 
 export type OpTimelineTone = "default" | "danger" | "warning" | "success" | "info";
@@ -43,7 +46,7 @@ export type BuildOpTimelineInput = {
   op: OpAllocationEntry;
   orderDeliveryDate?: string | null;
   byOp?: ProductionOrderByOpData | null;
-  appointments?: ProductionAppointmentItem[] | null;
+  appointments?: ProductionAppointmentByOpRow[] | null;
   labels?: Partial<OpTimelineLabels>;
 };
 
@@ -131,35 +134,60 @@ export function buildOpTimelineEvents(input: BuildOpTimelineInput): OpTimelineIt
   }
 
   const appointments = (input.appointments ?? []).filter((row) =>
-    Boolean(row.appointment_date?.trim()),
+    Boolean(
+      sortKey(row.first_date) ||
+        sortKey(row.last_date) ||
+        sortKey(row.appointment_date),
+    ),
   );
   if (appointments.length === 1) {
     const row = appointments[0];
-    const when = row.appointment_date!.trim();
+    const first = sortKey(row.first_date || row.appointment_date);
+    const last = sortKey(row.last_date || row.first_date || row.appointment_date);
+    const count = Number(row.appointment_count) || 1;
     events.push({
       id: `appointment-0-${input.op.numero_op}`,
-      title: labels.appointment,
-      occurredAt: when,
-      timeLabel: formatDisplayDate(when),
-      detail: row.work_center?.trim() || undefined,
+      title:
+        count > 1 ? labels.appointmentsMany(count) : labels.appointment,
+      occurredAt: first,
+      timeLabel:
+        first && last && first !== last
+          ? `${formatDisplayDate(first)} – ${formatDisplayDate(last)}`
+          : formatDisplayDate(first),
+      detail:
+        row.work_center?.trim() ||
+        (row.work_center_count != null
+          ? `${row.work_center_count} centro(s)`
+          : undefined),
       tone: "info",
     });
   } else if (appointments.length > 1) {
-    const sorted = [...appointments].sort((a, b) =>
-      sortKey(a.appointment_date).localeCompare(sortKey(b.appointment_date)),
-    );
-    const first = sorted[0].appointment_date!.trim();
-    const last = sorted[sorted.length - 1].appointment_date!.trim();
-    events.push({
-      id: `appointments-${input.op.numero_op}`,
-      title: labels.appointmentsMany(appointments.length),
-      occurredAt: first,
-      timeLabel:
-        first === last
-          ? formatDisplayDate(first)
-          : `${formatDisplayDate(first)} – ${formatDisplayDate(last)}`,
-      tone: "info",
-    });
+    const dated = appointments
+      .map((row) => ({
+        row,
+        first: sortKey(row.first_date || row.appointment_date),
+        last: sortKey(row.last_date || row.first_date || row.appointment_date),
+      }))
+      .filter((row) => row.first)
+      .sort((a, b) => a.first.localeCompare(b.first));
+    if (dated.length > 0) {
+      const first = dated[0].first;
+      const last = dated[dated.length - 1].last || dated[dated.length - 1].first;
+      const totalCount = dated.reduce(
+        (sum, row) => sum + (Number(row.row.appointment_count) || 1),
+        0,
+      );
+      events.push({
+        id: `appointments-${input.op.numero_op}`,
+        title: labels.appointmentsMany(totalCount),
+        occurredAt: first,
+        timeLabel:
+          first === last
+            ? formatDisplayDate(first)
+            : `${formatDisplayDate(first)} – ${formatDisplayDate(last)}`,
+        tone: "info",
+      });
+    }
   }
 
   if (finishReal) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   fetchAppointmentsByOp,
@@ -11,18 +11,22 @@ import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import type {
   ProductFactoryStatusData,
   ProductStructureData,
-  ProductionAppointmentItem,
+  ProductionAppointmentByOpRow,
   ProductionOrderByOpData,
 } from "../types/productionExtras";
 import { getLineOpForecast } from "../utils/opAllocation";
+import { resolveProposalForOpenOrderLine } from "../utils/resolveProposalForOpenOrder";
 
-const MAX_OPS_FETCH = 5;
+/** Prefetch inicial; demais OPs sob demanda ao selecionar. */
+export const MAX_OPS_PREFETCH = 12;
+const OPS_CONCURRENCY = 3;
 
 export type OpExtrasBundle = {
   byOp: ProductionOrderByOpData | null;
-  appointments: ProductionAppointmentItem[];
+  appointments: ProductionAppointmentByOpRow[];
   forbidden: boolean;
   error: string | null;
+  loading?: boolean;
 };
 
 export type OpenOrdersLineDetailExtras = {
@@ -33,9 +37,11 @@ export type OpenOrdersLineDetailExtras = {
   opsByNumber: Record<string, OpExtrasBundle>;
   productStructure: ProductStructureData | null;
   structureError: string | null;
-  /** OV resolvida (campo item ou probe pedido≈OV). */
+  /** OV resolvida (campo item ou busca /commercial/proposals). */
   proposalNumber: string | null;
   proposalBranch: string | null;
+  opsPrefetchTruncated: number;
+  ensureOpLoaded: (opNumber: string) => void;
 };
 
 const EMPTY: OpenOrdersLineDetailExtras = {
@@ -48,43 +54,154 @@ const EMPTY: OpenOrdersLineDetailExtras = {
   structureError: null,
   proposalNumber: null,
   proposalBranch: null,
+  opsPrefetchTruncated: 0,
+  ensureOpLoaded: () => undefined,
 };
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await mapper(items[index]);
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () =>
+    worker(),
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+async function loadOpBundle(
+  opNumber: string,
+  branch: string,
+  signal: AbortSignal,
+): Promise<OpExtrasBundle & { opNumber: string }> {
+  const [byOpResult, apptResult] = await Promise.all([
+    fetchOptional(() =>
+      fetchProductionOrderByOp(opNumber, { branch: branch || undefined }, signal),
+    ),
+    fetchOptional(() =>
+      fetchAppointmentsByOp({ op: opNumber, branch: branch || undefined }, signal),
+    ),
+  ]);
+  return {
+    opNumber,
+    byOp: byOpResult.data,
+    appointments: apptResult.data?.items ?? [],
+    forbidden: byOpResult.forbidden || apptResult.forbidden,
+    error: byOpResult.error || apptResult.error,
+    loading: false,
+  };
+}
 
 export function useOpenOrdersLineDetailExtras(
   item: OpenOrdersTotvsItem | null,
   open: boolean,
+  selectedOp?: string | null,
 ): OpenOrdersLineDetailExtras {
-  const [state, setState] = useState<OpenOrdersLineDetailExtras>(EMPTY);
+  const [state, setState] = useState<Omit<OpenOrdersLineDetailExtras, "ensureOpLoaded">>(
+    EMPTY,
+  );
+  const abortRef = useRef<AbortController | null>(null);
+  const loadedOpsRef = useRef<Set<string>>(new Set());
 
-  const opNumbers = useMemo(() => {
+  const allOpNumbers = useMemo(() => {
     if (!item) return [] as string[];
     return getLineOpForecast(item)
       .opsUtilizadas.map((op) => op.numero_op?.trim())
-      .filter((op): op is string => Boolean(op && op !== "—"))
-      .slice(0, MAX_OPS_FETCH);
+      .filter((op): op is string => Boolean(op && op !== "—"));
   }, [item]);
 
-  const opKey = opNumbers.join("|");
+  const prefetchOps = useMemo(
+    () => allOpNumbers.slice(0, MAX_OPS_PREFETCH),
+    [allOpNumbers],
+  );
+  const truncatedCount = Math.max(0, allOpNumbers.length - prefetchOps.length);
+  const opKey = prefetchOps.join("|");
   const productCode = item?.produto?.trim() ?? "";
   const branch = item?.filial?.trim() ?? "";
   const explicitProposal = item?.proposal_number?.trim() || null;
 
+  const ensureOpLoaded = useCallback(
+    (opNumber: string) => {
+      const op = opNumber.trim();
+      if (!op || !open || !item) return;
+      if (loadedOpsRef.current.has(op)) return;
+      const controller = abortRef.current;
+      if (!controller || controller.signal.aborted) return;
+
+      loadedOpsRef.current.add(op);
+      setState((prev) => ({
+        ...prev,
+        opsByNumber: {
+          ...prev.opsByNumber,
+          [op]: {
+            byOp: null,
+            appointments: [],
+            forbidden: false,
+            error: null,
+            loading: true,
+          },
+        },
+      }));
+
+      void loadOpBundle(op, branch, controller.signal).then((row) => {
+        if (controller.signal.aborted) return;
+        setState((prev) => ({
+          ...prev,
+          opsByNumber: {
+            ...prev.opsByNumber,
+            [row.opNumber]: {
+              byOp: row.byOp,
+              appointments: row.appointments,
+              forbidden: row.forbidden,
+              error: row.error,
+              loading: false,
+            },
+          },
+        }));
+      });
+    },
+    [open, item, branch],
+  );
+
   useEffect(() => {
     if (!open || !item) {
       setState(EMPTY);
+      loadedOpsRef.current = new Set();
       return;
     }
 
     const controller = new AbortController();
+    abortRef.current = controller;
     let cancelled = false;
+    loadedOpsRef.current = new Set(prefetchOps);
 
     async function load() {
-      setState((prev) => ({ ...prev, loading: true }));
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        opsPrefetchTruncated: truncatedCount,
+      }));
 
-      const [factoryResult, structureResult, proposalResult, ...opResults] =
+      const [factoryResult, structureResult, proposalResolved, opRows] =
         await Promise.all([
           productCode
-            ? fetchOptional(() => fetchProductFactoryStatus(productCode, controller.signal))
+            ? fetchOptional(() =>
+                fetchProductFactoryStatus(
+                  productCode,
+                  { branch: branch || undefined },
+                  controller.signal,
+                ),
+              )
             : Promise.resolve({
                 data: null as ProductFactoryStatusData | null,
                 forbidden: false,
@@ -101,60 +218,28 @@ export function useOpenOrdersLineDetailExtras(
               }),
           explicitProposal
             ? Promise.resolve({
-                data: { proposal_number: explicitProposal },
-                forbidden: false,
-                missing: false,
-                error: null as string | null,
+                proposalNumber: explicitProposal,
+                branch: branch || null,
               })
-            : Promise.resolve({
-                data: null as { proposal_number: string } | null,
-                forbidden: false,
-                missing: true,
-                error: null as string | null,
-              }),
-          ...opNumbers.map(async (opNumber) => {
-            const [byOpResult, apptResult] = await Promise.all([
-              fetchOptional(() =>
-                fetchProductionOrderByOp(
-                  opNumber,
-                  { branch: branch || undefined },
-                  controller.signal,
-                ),
-              ),
-              fetchOptional(() =>
-                fetchAppointmentsByOp(
-                  { op: opNumber, branch: branch || undefined },
-                  controller.signal,
-                ),
-              ),
-            ]);
-            return {
-              opNumber,
-              byOp: byOpResult.data,
-              appointments: apptResult.data?.items ?? [],
-              forbidden: byOpResult.forbidden || apptResult.forbidden,
-              error: byOpResult.error || apptResult.error,
-            };
-          }),
+            : resolveProposalForOpenOrderLine(item!, controller.signal),
+          mapPool(prefetchOps, OPS_CONCURRENCY, (opNumber) =>
+            loadOpBundle(opNumber, branch, controller.signal),
+          ),
         ]);
 
       if (cancelled || controller.signal.aborted) return;
 
       const opsByNumber: Record<string, OpExtrasBundle> = {};
-      for (const row of opResults) {
+      for (const row of opRows) {
+        loadedOpsRef.current.add(row.opNumber);
         opsByNumber[row.opNumber] = {
           byOp: row.byOp,
           appointments: row.appointments,
           forbidden: row.forbidden,
           error: row.error,
+          loading: false,
         };
       }
-
-      const resolvedProposal =
-        explicitProposal ||
-        (proposalResult.data && "proposal_number" in proposalResult.data
-          ? proposalResult.data.proposal_number
-          : null);
 
       setState({
         loading: false,
@@ -164,8 +249,9 @@ export function useOpenOrdersLineDetailExtras(
         opsByNumber,
         productStructure: structureResult.data,
         structureError: structureResult.error,
-        proposalNumber: resolvedProposal,
-        proposalBranch: resolvedProposal ? branch || null : null,
+        proposalNumber: proposalResolved?.proposalNumber ?? null,
+        proposalBranch: proposalResolved?.branch ?? null,
+        opsPrefetchTruncated: truncatedCount,
       });
     }
 
@@ -175,7 +261,15 @@ export function useOpenOrdersLineDetailExtras(
       cancelled = true;
       controller.abort();
     };
-  }, [open, item, opKey, productCode, branch, explicitProposal, opNumbers]);
+  }, [open, item, opKey, productCode, branch, explicitProposal, prefetchOps, truncatedCount]);
 
-  return state;
+  useEffect(() => {
+    if (!open || !selectedOp?.trim()) return;
+    ensureOpLoaded(selectedOp);
+  }, [open, selectedOp, ensureOpLoaded]);
+
+  return {
+    ...state,
+    ensureOpLoaded,
+  };
 }

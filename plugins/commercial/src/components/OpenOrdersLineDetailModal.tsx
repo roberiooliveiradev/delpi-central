@@ -5,7 +5,7 @@ import {
   ChartCard,
   chartCardBemClasses,
   HintAction,
-  HelpTooltip,
+  SectionHintLabel,
 } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 import {
@@ -89,9 +89,9 @@ export function OpenOrdersLineDetailModal({
   onClose,
   basePath,
 }: OpenOrdersLineDetailModalProps) {
-  const extras = useOpenOrdersLineDetailExtras(item, open);
   const previsao = item ? getLineOpForecast(item) : null;
   const [selectedOp, setSelectedOp] = useState("");
+  const extras = useOpenOrdersLineDetailExtras(item, open, selectedOp);
 
   useEffect(() => {
     if (!previsao?.opsUtilizadas.length) {
@@ -238,7 +238,11 @@ export function OpenOrdersLineDetailModal({
               `cm-open-orders-detail__snapshot-card--${snapshotTone.situacao}`,
             ].join(" ")}
           >
-            <span className="cm-open-orders-detail__snapshot-label">Situação</span>
+            <SectionHintLabel
+              label="Situação"
+              hint={DETAIL.snapshotSituacao}
+              className="cm-open-orders-detail__snapshot-label"
+            />
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
               label={lineStatus.label}
@@ -251,7 +255,11 @@ export function OpenOrdersLineDetailModal({
               `cm-open-orders-detail__snapshot-card--${snapshotTone.cobertura}`,
             ].join(" ")}
           >
-            <span className="cm-open-orders-detail__snapshot-label">Cobertura</span>
+            <SectionHintLabel
+              label="Cobertura"
+              hint={DETAIL.snapshotCobertura}
+              className="cm-open-orders-detail__snapshot-label"
+            />
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
               label={forecastKindLabel(previsao.kind)}
@@ -265,7 +273,11 @@ export function OpenOrdersLineDetailModal({
               `cm-open-orders-detail__snapshot-card--${snapshotTone.entrega}`,
             ].join(" ")}
           >
-            <span className="cm-open-orders-detail__snapshot-label">Entrega pedido</span>
+            <SectionHintLabel
+              label="Entrega pedido"
+              hint={DETAIL.entregaPedido}
+              className="cm-open-orders-detail__snapshot-label"
+            />
             <strong className="cm-open-orders-detail__snapshot-value">
               {formatDisplayDate(item.data_entrega)}
             </strong>
@@ -285,7 +297,11 @@ export function OpenOrdersLineDetailModal({
               `cm-open-orders-detail__snapshot-card--${snapshotTone.previsao}`,
             ].join(" ")}
           >
-            <span className="cm-open-orders-detail__snapshot-label">Previsão OP</span>
+            <SectionHintLabel
+              label="Previsão OP"
+              hint={DETAIL.previsaoEntrega}
+              className="cm-open-orders-detail__snapshot-label"
+            />
             <strong className="cm-open-orders-detail__snapshot-value">{previsao.previsaoLabel}</strong>
             <span
               className={
@@ -300,15 +316,23 @@ export function OpenOrdersLineDetailModal({
         </div>
 
         <nav className="cm-open-orders-detail__guide" aria-label="Seções do detalhe">
-          <HelpTooltip content={DETAIL.modal} ariaLabel="Ajuda: detalhe da linha" wrap placement="bottom">
-            <ol className="cm-open-orders-detail__guide-list">
-              <li className="cm-open-orders-detail__guide-step">Resumo</li>
-              <li className="cm-open-orders-detail__guide-step">Fabril</li>
-              <li className="cm-open-orders-detail__guide-step">Indicadores</li>
-              <li className="cm-open-orders-detail__guide-step">Cobertura / prazo</li>
-              <li className="cm-open-orders-detail__guide-step">Produção OP</li>
-            </ol>
-          </HelpTooltip>
+          <ol className="cm-open-orders-detail__guide-list">
+            <li className="cm-open-orders-detail__guide-step">
+              <SectionHintLabel label="Resumo" hint={DETAIL.guideResumo} />
+            </li>
+            <li className="cm-open-orders-detail__guide-step">
+              <SectionHintLabel label="Fabril" hint={DETAIL.guideFabril} />
+            </li>
+            <li className="cm-open-orders-detail__guide-step">
+              <SectionHintLabel label="Indicadores" hint={DETAIL.guideIndicadores} />
+            </li>
+            <li className="cm-open-orders-detail__guide-step">
+              <SectionHintLabel label="Cobertura / prazo" hint={DETAIL.guideCobertura} />
+            </li>
+            <li className="cm-open-orders-detail__guide-step">
+              <SectionHintLabel label="Produção OP" hint={DETAIL.guideProducao} />
+            </li>
+          </ol>
         </nav>
 
         <OpenOrdersFactoryStatusStrip
@@ -319,7 +343,9 @@ export function OpenOrdersLineDetailModal({
         />
 
         <section className="cm-open-orders-detail__metrics" aria-label="Indicadores da linha">
-          <h3 className="cm-open-orders-detail__metrics-title">Indicadores da linha</h3>
+          <h3 className="cm-open-orders-detail__metrics-title">
+            <SectionHintLabel label="Indicadores da linha" hint={DETAIL.metricsTitle} />
+          </h3>
           <CommercialDetailFieldGrid
             valueFallback="—"
             wrapLabels
@@ -462,7 +488,11 @@ export function OpenOrdersLineDetailModal({
           >
             <div className="cm-open-orders-detail__prazo-cards">
               <div className="cm-open-orders-detail__prazo-card">
-                <span className="cm-open-orders-detail__snapshot-label">Entrega pedido</span>
+                <SectionHintLabel
+                  label="Entrega pedido"
+                  hint={DETAIL.entregaPedido}
+                  className="cm-open-orders-detail__snapshot-label"
+                />
                 <strong className="cm-open-orders-detail__snapshot-value">
                   {formatDisplayDate(item.data_entrega)}
                 </strong>
@@ -477,7 +507,11 @@ export function OpenOrdersLineDetailModal({
                 </span>
               </div>
               <div className="cm-open-orders-detail__prazo-card">
-                <span className="cm-open-orders-detail__snapshot-label">Previsão OP</span>
+                <SectionHintLabel
+                  label="Previsão OP"
+                  hint={DETAIL.previsaoEntrega}
+                  className="cm-open-orders-detail__snapshot-label"
+                />
                 <strong className="cm-open-orders-detail__snapshot-value">
                   {previsao.previsaoLabel}
                 </strong>
@@ -547,12 +581,11 @@ export function OpenOrdersLineDetailModal({
           branch={item.filial}
           extrasByOp={extras.opsByNumber}
           loadingExtras={extras.loading}
+          opsPrefetchTruncated={extras.opsPrefetchTruncated}
         />
 
         <p className="cm-open-orders-drawer__note">
-          <HelpTooltip content={DETAIL.opsTable} ariaLabel="Ajuda: tabela de OPs" wrap placement="top">
-            <span className="delpi-ui-section-hint-label">{DETAIL.opsNote}</span>
-          </HelpTooltip>
+          <SectionHintLabel label={DETAIL.opsNote} hint={DETAIL.opsTable} />
         </p>
 
         {previsao.opsUtilizadas.length > 0 ? (
@@ -693,6 +726,7 @@ export function OpenOrdersLineDetailModal({
           structure={extras.productStructure}
           error={extras.structureError}
           productCode={item.produto}
+          loading={extras.loading}
         />
       </div>
     </CommercialWorkbenchModal>

@@ -25,11 +25,15 @@ export async function fetchProductionOrderByOp(
 
 export async function fetchProductFactoryStatus(
   productCode: string,
+  params?: { branch?: string | null },
   signal?: AbortSignal,
 ): Promise<ProductFactoryStatusData> {
   const encoded = encodeURIComponent(productCode.trim());
+  const search = new URLSearchParams();
+  if (params?.branch?.trim()) search.set("branch", params.branch.trim());
+  const qs = search.toString();
   const response = await httpGet<ApiSuccessResponse<ProductFactoryStatusData>>(
-    apiDelpiUrl(`/products/${encoded}/factory-status`),
+    `${apiDelpiUrl(`/products/${encoded}/factory-status`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
   return unwrapApiDelpiEnvelope(response, "Erro ao carregar status fabril.");

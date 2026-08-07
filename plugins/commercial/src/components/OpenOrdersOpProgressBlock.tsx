@@ -18,7 +18,7 @@ import {
   formatOtdStatusLabel,
   otdStatusBadgeVariant,
 } from "../utils/productionOtdLink";
-import { SectionCard, SegmentToggle, StatusBadge } from "@delpi/plugin-ui/index";
+import { SectionCard, SegmentToggle, StatusBadge, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useMemo } from "react";
 import { OpenOrdersOtdPiPanel } from "./OpenOrdersOtdPiPanel";
 
@@ -30,6 +30,7 @@ type OpenOrdersOpProgressBlockProps = {
   branch?: string | null;
   extrasByOp: Record<string, OpExtrasBundle>;
   loadingExtras: boolean;
+  opsPrefetchTruncated?: number;
 };
 
 export function OpenOrdersOpProgressBlock({
@@ -40,6 +41,7 @@ export function OpenOrdersOpProgressBlock({
   branch,
   extrasByOp,
   loadingExtras,
+  opsPrefetchTruncated = 0,
 }: OpenOrdersOpProgressBlockProps) {
   const current = useMemo(
     () => ops.find((op) => op.numero_op === selectedOp) ?? ops[0] ?? null,
@@ -61,10 +63,7 @@ export function OpenOrdersOpProgressBlock({
 
   const extras = extrasByOp[current.numero_op];
   const order = extras?.byOp?.order;
-  const planned = Math.max(
-    0,
-    order?.planned_qty ?? current.quantidade_op ?? 0,
-  );
+  const planned = Math.max(0, order?.planned_qty ?? current.quantidade_op ?? 0);
   const produced = Math.max(
     0,
     order?.produced_qty ?? current.quantidade_produzida ?? 0,
@@ -77,6 +76,7 @@ export function OpenOrdersOpProgressBlock({
     appointments: extras?.appointments ?? [],
   });
   const horizontalPoints = buildOpHorizontalTimeline(timelineItems);
+  const appointments = (extras?.appointments ?? []).slice(0, 5);
 
   const prazo = resolveOpVsPedidoPrazo(
     order?.due_date ?? current.data_fim_prevista_op,
@@ -105,6 +105,13 @@ export function OpenOrdersOpProgressBlock({
             }))}
           />
         </div>
+      ) : null}
+
+      {opsPrefetchTruncated > 0 ? (
+        <p className="cm-open-orders-detail__muted">
+          +{opsPrefetchTruncated} OP(s) além do prefetch — selecione na tabela para carregar o
+          detalhe.
+        </p>
       ) : null}
 
       <div className="cm-open-orders-detail__op-card">
@@ -163,13 +170,19 @@ export function OpenOrdersOpProgressBlock({
             branch={order?.branch ?? branch}
             byOp={extras.byOp}
           />
+        ) : extras?.loading ? (
+          <CommercialLoadingCard title="Carregando prazo OTD…" variant="panel" />
         ) : null}
 
         {loadingExtras && !extras ? (
           <CommercialLoadingCard title="Carregando timeline da OP…" variant="panel" />
         ) : (
           <div className="cm-open-orders-detail__timeline-wrap">
-            <p className="cm-open-orders-detail__timeline-caption">Linha do tempo da OP</p>
+            <SectionHintLabel
+              label="Linha do tempo da OP"
+              hint={CM_HELP.openOrders.detail.timeline}
+              className="cm-open-orders-detail__timeline-caption"
+            />
             <CommercialHorizontalTimeline
               points={horizontalPoints}
               labels={{ emptyMessage: "Sem marcos com data para esta OP." }}
@@ -177,6 +190,48 @@ export function OpenOrdersOpProgressBlock({
             />
           </div>
         )}
+
+        {appointments.length > 0 ? (
+          <div className="cm-open-orders-detail__appointments">
+            <SectionHintLabel
+              label="Apontamentos"
+              hint={CM_HELP.openOrders.detail.appointments}
+              className="cm-open-orders-detail__otd-pi-title"
+            />
+            <ul className="cm-open-orders-detail__appointments-list">
+              {appointments.map((row, index) => {
+                const first = row.first_date || row.appointment_date;
+                const last = row.last_date || first;
+                const qty = row.qty_produced ?? row.reported_quantity;
+                return (
+                  <li
+                    key={`${row.production_order || current.numero_op}-${index}`}
+                    className="cm-open-orders-detail__appointments-row"
+                  >
+                    <span>
+                      {formatDisplayDate(first)}
+                      {last && first && last !== first
+                        ? ` – ${formatDisplayDate(last)}`
+                        : ""}
+                    </span>
+                    <span className="cm-open-orders-detail__muted">
+                      {Number(row.appointment_count) > 1
+                        ? `${row.appointment_count} apont.`
+                        : "1 apont."}
+                      {row.work_center_count != null
+                        ? ` · ${row.work_center_count} centro(s)`
+                        : row.work_center
+                          ? ` · ${row.work_center}`
+                          : ""}
+                    </span>
+                    <strong>{formatQuantity(qty)}</strong>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
+
         {extras?.error ? <p role="alert">{extras.error}</p> : null}
       </div>
     </SectionCard>

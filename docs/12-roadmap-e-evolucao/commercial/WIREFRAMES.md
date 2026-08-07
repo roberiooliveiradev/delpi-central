@@ -215,8 +215,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 ```
 
 **Colunas default:** Cliente, Pedido, Produto, Cobertura, Entrega, Prev. OP, Status, Valor, Atraso.  
-**Clique:** linha / Prev. OP / card → modal expandido (drawer lateral deprecado).  
-**Deep links:** `?stock=` / `?focus=late` → chip; `seller_id` = portfolio id.
+**Clique:** linha / Prev. OP / card → modal expandido (drawer lateral removido).  
+**Deep links (shareable):** `?stock=` / `?focus=late` sincronizam com chips de atenção; `?pedido=&linha=&filial=` abre o modal da linha; `seller_id` = portfolio id. Home pode emitir `?focus=late` / `?stock=…`.
 
 **Mobile (≤768px):** default Cards na 1ª visita; hero empilha; modal fill.
 
@@ -225,22 +225,26 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 ### WF-02R-D — Modal Detalhe da linha
 
 **Domínio:** SC5/SC6 + OP SC2 (não misturar com OV AD*).  
-**APIs extras ao abrir:** `/products/{code}/factory-status`, `/production/orders/by-op/{op}`, `/production/appointments/by-op`, opcional `/products/{code}/structure`; probe OV via `GET /commercial/proposals/{pedido}` se não houver `proposal_number`.
+**APIs extras ao abrir:** `/products/{code}/factory-status?branch=`, `/production/orders/by-op/{op}`, `/production/appointments/by-op` (agregado), opcional `/products/{code}/structure`.  
+**OV (AD1_NROPOR):** se a lista PVA trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` e match por filial+cliente (limiar). **Não** chamar `GET /proposals/{pedido}` — path é OV, não `C5_NUM`. Sem vínculo SC5↔AD1 estável documentado no PVA, enriquecimento na lista é opcional.
 
 ```
 ┌─ Modal host-fill · Detalhe da linha ─────────────────────────────────────┐
 │ Pedido · Linha · Produto · Cliente                                       │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ Status fabril do produto (factory-status; some se 403)                   │
-│ KPIs: saldo · estoque · produzir · valor · atraso · status · kind · datas│
+│ Status fabril (+ chips MP: PA produzível, MP limitante, MPs sem estoque) │
+│ KPIs locais da linha (não bloqueados pelo loading dos extras)            │
 │ Charts compactos: cobertura · prazo                                      │
-│ Produção/OPs: SegmentToggle · meter · Prazo OTD + PIs · Timeline · CTA   │
+│ Produção/OPs: SegmentToggle · meter · Prazo OTD + tabela PI densa        │
+│   Timeline · apontamentos agregados · prefetch até 12 OPs (+ on-demand)  │
 │   «Ver no OTD produção» → /apps/dashboard-production/otd/op/{op}         │
-│ Tabela OP rica (produzido/planejado/saldo/status/OTD) — clique sincroniza│
-│ Estrutura do produto (BOM colapsável, só código da linha)                │
+│ Tabela OP rica — clique sincroniza OP selecionada                        │
+│ Estrutura do produto (BOM: empty/erro/loading visíveis)                  │
 │ [Copiar pedido] [Ver OV n] [Abrir conta]                                 │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Deep link inverso:** OTD detalhe OP com `C2_PEDIDO` → «Ver pedido no comercial» (`?pedido=&linha=&filial=`).
 
 **Fora do modal:** KPI/processo AD1, tabela ADJ multi-item, timeline AIJ, export OV → **WF-OV-D**.
 

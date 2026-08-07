@@ -125,9 +125,41 @@ export const CM_HELP = {
     },
     detail: {
       modal:
-        "Detalhe da linha: status fabril do produto, indicadores, gráficos, timeline da OP e lista FIFO das ordens usadas na previsão.",
+        "Detalhe da linha: status fabril do produto, indicadores, gráficos, timeline da OP e lista das ordens usadas na previsão.",
+      guideResumo: "Cartões de situação, cobertura, entrega do pedido e previsão OP no topo do modal.",
+      guideFabril: "Status fabril do produto: produção PA/PI, expedição e capacidade de matéria-prima.",
+      guideIndicadores: "Saldo, estoque alocado, valor aberto e demais indicadores da linha do pedido.",
+      guideCobertura: "Gráficos de cobertura estoque × demanda e prazo (entrega vs previsão OP).",
+      guideProducao: "OPs alocadas, prazo OTD, timeline, apontamentos e tabela desta linha.",
       factoryStatus:
-        "Visão fabril consolidada do produto (PA/PI, produção iniciada, expedição) via api-delpi /factory-status.",
+        "Visão fabril consolidada do produto nesta filial: produção PA/PI, expedição e restrições de matéria-prima.",
+      factoryPaStarted: "Indica se a produção do produto acabado (PA) deste código já foi iniciada.",
+      factoryPiStarted:
+        "Indica se a produção de produto intermediário (PI) vinculada a este código já foi iniciada.",
+      factoryOpsPaPi: "Quantidade de ordens de produção de PA e de PI relacionadas a este produto.",
+      factoryShipped: "Quantidade já expedida deste produto.",
+      factoryInspectionLoss: "Quantidade registrada como perda em inspeção.",
+      factoryMpPa:
+        "Máximo de PA que o estoque atual de matéria-prima permite produzir.",
+      factoryMpLimiting: "Código da matéria-prima que limita a produção de 1 PA.",
+      factoryMpWithoutStock:
+        "Quantidade de matérias-primas sem saldo suficiente para produzir 1 PA.",
+      snapshotSituacao:
+        "Situação operacional da linha (pode faturar, parcial, sem estoque ou atrasado) — mesmo critério da coluna Status.",
+      snapshotCobertura:
+        "Como a linha está coberta na previsão: estoque, OP completa, parcial, sem OP ou OP sem data.",
+      metricsTitle:
+        "Indicadores desta linha do pedido: saldo, estoque alocado, valor e despacho.",
+      appointments:
+        "Apontamentos da OP: período, quantidade produzida e centros de trabalho.",
+      timeline:
+        "Marcos da OP (emissão, início/fim previstos, entrega do pedido, apontamentos e fim real) em ordem cronológica.",
+      opProgress: "Progresso produzido ÷ planejado da OP selecionada.",
+      otdStatus: "Classificação OTD da OP: no prazo, atrasada ou em aberto.",
+      otdDays:
+        "Diferença em dias entre a data prevista e a finalização real (negativo = antecipou).",
+      otdDue: "Data de entrega prevista da OP.",
+      otdFinish: "Data de finalização real da OP, quando disponível.",
       saldo: "Quantidade ainda em aberto nesta linha do pedido.",
       estoqueAlocado:
         "Parte do estoque físico já atribuída a esta linha no algoritmo FIFO do portal.",
@@ -138,8 +170,9 @@ export const CM_HELP = {
       coberturaKind:
         "Como a linha está coberta: estoque, OP completa, parcial, sem OP ou OP sem data prevista.",
       entregaPedido: "Data de entrega prometida no pedido de venda.",
-      despacho: "Data de despacho informada no TOTVS, quando houver.",
-      previsaoEntrega: "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
+      despacho: "Data de despacho informada no sistema, quando houver.",
+      previsaoEntrega:
+        "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
       chartCobertura:
         "Compara quantidade alocada em estoque versus saldo a produzir para fechar a linha.",
       chartPrazo:
@@ -149,26 +182,30 @@ export const CM_HELP = {
       chartOpsCaption: "Alocado no pedido vs saldo OP",
       opsNote:
         "OPs são compartilhadas por produto/filial e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
-      opsTable: "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
+      opsTable:
+        "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
       otdPrazo:
-        "Status OTD e dias (previsto × real) da OP via by-op. Negativo = finalização antes do previsto. «Ver no OTD produção» abre a ficha completa no dashboard de produção.",
+        "Status OTD e dias (previsto × real) da OP. Negativo = finalização antes do previsto. «Ver no OTD produção» abre a ficha completa no dashboard de produção.",
       otdLinkedPi:
-        "OPs intermediárias (PI) vinculadas pelo mesmo nº OP (C2_NUM). Resumo on_time / late / open vem do link_summary da api-delpi.",
-      opNumero: "Número da ordem de produção no TOTVS.",
-      opProduzido: "Quantidade já produzida na OP (C2_QUJE / by-op).",
-      opPlanejado: "Quantidade planejada da OP (C2_QUANT / by-op).",
+        "OPs intermediárias (PI) vinculadas pelo mesmo número de OP. Mostra resumo no prazo / atrasadas / em aberto.",
+      opNumero: "Número da ordem de produção.",
+      opProduzido: "Quantidade já produzida nesta OP.",
+      opPlanejado: "Quantidade planejada nesta OP.",
       opSaldo: "Saldo restante da OP no momento da alocação.",
       opAlocado: "Quanto desta OP foi atribuído a esta linha do pedido.",
       opFim: "Data fim prevista da OP (quando cadastrada).",
-      opStatus: "Status Protheus da OP ou comparação fim previsto × entrega do pedido.",
-      opOtd: "On-time delivery da OP (on_time / late / open) quando disponível em by-op.",
+      opStatus: "Status da OP ou comparação do fim previsto com a entrega do pedido.",
+      opOtd: "On-time delivery da OP (no prazo, atrasada ou em aberto), quando disponível.",
       opObs: "Observação cadastrada na OP, quando houver.",
-      bom: "Estrutura (BOM) do produto desta linha — mesma API /products/{code}/structure do dashboard.",
+      bom: "Estrutura (BOM) do produto desta linha.",
       copyPedido: "Copia o número do pedido para a área de transferência.",
       openAccount: "Abre a Conta 360 do cliente (código + loja) no Portal Comercial.",
       openOv:
-        "Abre o detalhe da oportunidade (OV) na Gestão do Portal, quando o vínculo pedido↔OV for resolvido.",
+        "Abre o detalhe da oportunidade de venda (OV) na Gestão, quando o vínculo com o pedido for encontrado.",
     },
+    freshness: "Horário da última carga bem-sucedida desta página neste navegador.",
+    portfolioEmpty:
+      "A carteira selecionada não tem clientes cadastrados — configure em Carteiras para ver pedidos.",
   },
   customers: {
     page:
