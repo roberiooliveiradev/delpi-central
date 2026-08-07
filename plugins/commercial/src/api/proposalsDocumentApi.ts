@@ -6,7 +6,8 @@ import type {
 } from "../types/proposalsDocument";
 import { apiDelpiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
 
-export const PROPOSALS_DOCUMENT_API_BASE = apiDelpiUrl("/proposals-comerciais");
+/** Path HTTP legado da api-delpi (não traduzir — rota real é `/propostas-comerciais`). */
+export const PROPOSALS_DOCUMENT_API_BASE = apiDelpiUrl("/propostas-comerciais");
 
 export async function listProposalsDocuments(
   limit = 100,
