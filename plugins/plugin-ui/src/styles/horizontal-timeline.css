@@ -1,13 +1,13 @@
 /**
- * HorizontalTimeline (OTD) — eixo temporal proporcional + «Agora» acima do trilho.
- * Padrão de mercado: today-marker / swimlane flag above axis (não compete com marcos).
- * Tokens: --delpi-ui-accent / surface / text / border / muted / success.
+ * HorizontalTimeline (OTD) — grupos por dia espaçados + «Agora» acima do trilho.
+ * Padrão: today-marker / swimlane (bandeira não compete com legendas).
  */
 
 .delpi-ui-htimeline {
   --delpi-ui-htimeline-marker: 14px;
   --delpi-ui-htimeline-flag: 22px;
-  --delpi-ui-htimeline-rail-y: 52px;
+  --delpi-ui-htimeline-rail-y: 56px;
+  --delpi-ui-htimeline-caption-rows: 1;
   --delpi-ui-htimeline-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   width: 100%;
   min-width: 0;
@@ -17,11 +17,22 @@
 .delpi-ui-htimeline__track {
   position: relative;
   width: 100%;
-  min-height: 168px;
-  /* Sem inset horizontal: left% do «Agora» e dos marcos alinha com o trilho. */
+  min-height: calc(
+    var(--delpi-ui-htimeline-rail-y) + 72px +
+      (var(--delpi-ui-htimeline-caption-rows) - 1) * 1.15rem
+  );
   padding: 4px 0 8px;
   box-sizing: border-box;
   overflow: visible;
+}
+
+/* Eixo compartilhado: marcos e «Agora» usam o mesmo left%. */
+.delpi-ui-htimeline__axis {
+  position: relative;
+  width: auto;
+  min-height: inherit;
+  margin: 0 12px;
+  box-sizing: border-box;
 }
 
 .delpi-ui-htimeline__rail {
@@ -58,7 +69,7 @@
   flex-direction: column;
   align-items: center;
   width: max-content;
-  max-width: 7.5rem;
+  max-width: 8.25rem;
   pointer-events: none;
 }
 
@@ -116,7 +127,7 @@
 }
 
 .delpi-ui-htimeline__item--current .delpi-ui-htimeline__dot {
-  transform: scale(1.2);
+  transform: scale(1.15);
   border-width: 3px;
   box-shadow:
     0 0 0 3px
@@ -126,15 +137,15 @@
 
 .delpi-ui-htimeline__caption {
   position: absolute;
-  top: calc(var(--delpi-ui-htimeline-marker) / 2 + 10px);
+  top: calc(var(--delpi-ui-htimeline-marker) / 2 + 12px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   width: max-content;
-  max-width: 7.5rem;
+  max-width: 8.25rem;
   text-align: center;
   pointer-events: auto;
 }
@@ -142,19 +153,27 @@
 .delpi-ui-htimeline__label {
   font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label {
+  margin-top: 1px;
+  font-weight: 500;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-htimeline__date {
   font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
+  margin-top: 2px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-htimeline__current-tag {
   display: inline-flex;
   align-items: center;
+  margin-top: 4px;
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -180,6 +199,7 @@
   flex-direction: column;
   align-items: center;
   width: max-content;
+  max-width: 5.5rem;
   pointer-events: none;
 }
 
@@ -271,4 +291,9 @@
 :root[data-theme="dark"] .delpi-ui-htimeline__today-tag,
 [data-theme="dark"] .delpi-ui-htimeline__today-tag {
   color: #bae6fd;
+}
+
+:root[data-theme="dark"] .delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label,
+[data-theme="dark"] .delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label + .delpi-ui-htimeline__label {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8));
 }

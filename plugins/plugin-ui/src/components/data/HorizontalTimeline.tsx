@@ -20,6 +20,7 @@ export type HorizontalTimelinePoint = {
 export type HorizontalTimelineClassNames = {
   root: string;
   track: string;
+  axis: string;
   rail: string;
   milestones: string;
   item: string;
@@ -63,6 +64,7 @@ export function horizontalTimelineBemClasses(prefix: string): HorizontalTimeline
   return {
     root: delpiUiClass(block, "delpi-ui-htimeline"),
     track: delpiUiClass(`${block}__track`, "delpi-ui-htimeline__track"),
+    axis: delpiUiClass(`${block}__axis`, "delpi-ui-htimeline__axis"),
     rail: delpiUiClass(`${block}__rail`, "delpi-ui-htimeline__rail"),
     milestones: delpiUiClass(`${block}__milestones`, "delpi-ui-htimeline__milestones"),
     item: delpiUiClass(`${block}__item`, "delpi-ui-htimeline__item"),
@@ -95,7 +97,7 @@ export function horizontalTimelinePositionPercent(
   dateIso: string,
   rangeStartMs: number,
   rangeEndMs: number,
-  edgePadPercent = 6,
+  edgePadPercent = 8,
 ): number {
   const ms = parseIsoDay(dateIso);
   if (ms == null) return 50;
@@ -105,7 +107,139 @@ export function horizontalTimelinePositionPercent(
   return Math.min(100 - edgePadPercent, Math.max(edgePadPercent, padded));
 }
 
-type LaidOutEvent = HorizontalTimelinePoint & { leftPercent: number };
+export type HorizontalTimelineCluster = {
+  id: string;
+  dateIso: string;
+  dateLabel: string;
+  leftPercent: number;
+  isCurrent: boolean;
+  /** Tom do destaque (prioridade: current → danger → warning → success → info → neutral). */
+  tone: HorizontalTimelineTone;
+  entries: Array<{ id: string; label: string; tone: HorizontalTimelineTone }>;
+};
+
+const TONE_PRIORITY: Record<HorizontalTimelineTone, number> = {
+  danger: 5,
+  warning: 4,
+  success: 3,
+  info: 2,
+  neutral: 1,
+};
+
+function pickClusterTone(
+  entries: HorizontalTimelinePoint[],
+  isCurrent: boolean,
+): HorizontalTimelineTone {
+  if (isCurrent) {
+    const current = entries.find((e) => e.isCurrent);
+    if (current) return current.tone;
+  }
+  return entries.reduce<HorizontalTimelineTone>(
+    (best, entry) =>
+      TONE_PRIORITY[entry.tone] > TONE_PRIORITY[best] ? entry.tone : best,
+    "neutral",
+  );
+}
+
+/**
+ * Agrupa eventos do mesmo dia (um ponto no trilho, legendas empilhadas)
+ * e distribui os grupos de forma uniforme — evita sobreposição de captions.
+ * «Agora» usa eixo cronológico alinhado aos grupos (mesmo dia = mesmo X).
+ */
+export function layoutHorizontalTimeline(
+  points: HorizontalTimelinePoint[],
+  edgePad = 8,
+): {
+  clusters: HorizontalTimelineCluster[];
+  today: { dateIso: string; dateLabel: string; leftPercent: number } | null;
+} {
+  const events = points.filter((p) => p.kind !== "today");
+  const todayPoint = points.find((p) => p.kind === "today") ?? null;
+
+  const byDay = new Map<string, HorizontalTimelinePoint[]>();
+  for (const event of events) {
+    const day = event.dateIso.trim();
+    if (!day) continue;
+    const list = byDay.get(day) ?? [];
+    list.push(event);
+    byDay.set(day, list);
+  }
+
+  const days = [...byDay.keys()].sort((a, b) => a.localeCompare(b));
+  const n = days.length;
+  const clusters: HorizontalTimelineCluster[] = days.map((dateIso, index) => {
+    const entries = byDay.get(dateIso) ?? [];
+    const isCurrent = entries.some((e) => Boolean(e.isCurrent));
+    const leftPercent =
+      n <= 1 ? 50 : edgePad + (index / (n - 1)) * (100 - edgePad * 2);
+    return {
+      id: `day-${dateIso}`,
+      dateIso,
+      dateLabel: entries[0]?.dateLabel ?? dateIso,
+      leftPercent,
+      isCurrent,
+      tone: pickClusterTone(entries, isCurrent),
+      entries: entries.map((e) => ({
+        id: e.id,
+        label: e.label,
+        tone: e.tone,
+      })),
+    };
+  });
+
+  if (!todayPoint) {
+    return { clusters, today: null };
+  }
+
+  const todayMs = parseIsoDay(todayPoint.dateIso);
+  let leftPercent = 50;
+
+  if (clusters.length === 0) {
+    leftPercent = 50;
+  } else if (clusters.length === 1) {
+    leftPercent = clusters[0].leftPercent;
+  } else {
+    const sameDay = clusters.find((c) => c.dateIso === todayPoint.dateIso);
+    if (sameDay) {
+      leftPercent = sameDay.leftPercent;
+    } else if (todayMs == null) {
+      leftPercent = clusters[clusters.length - 1].leftPercent;
+    } else {
+      const firstMs = parseIsoDay(clusters[0].dateIso) ?? todayMs;
+      const lastMs = parseIsoDay(clusters[clusters.length - 1].dateIso) ?? todayMs;
+      if (todayMs <= firstMs) {
+        leftPercent = clusters[0].leftPercent;
+      } else if (todayMs >= lastMs) {
+        leftPercent = clusters[clusters.length - 1].leftPercent;
+      } else {
+        let lo = 0;
+        for (let i = 0; i < clusters.length - 1; i += 1) {
+          const a = parseIsoDay(clusters[i].dateIso) ?? 0;
+          const b = parseIsoDay(clusters[i + 1].dateIso) ?? 0;
+          if (todayMs >= a && todayMs <= b) {
+            lo = i;
+            break;
+          }
+        }
+        const aMs = parseIsoDay(clusters[lo].dateIso) ?? todayMs;
+        const bMs = parseIsoDay(clusters[lo + 1].dateIso) ?? todayMs;
+        const t = bMs === aMs ? 0 : (todayMs - aMs) / (bMs - aMs);
+        leftPercent =
+          clusters[lo].leftPercent +
+          t * (clusters[lo + 1].leftPercent - clusters[lo].leftPercent);
+      }
+    }
+  }
+
+  return {
+    clusters,
+    today: {
+      dateIso: todayPoint.dateIso,
+      dateLabel: todayPoint.dateLabel,
+      leftPercent,
+    },
+  };
+}
 
 /**
  * Linha do tempo OTD: marcos no trilho (abaixo) + «Agora» como bandeira acima,
@@ -120,138 +254,91 @@ export function HorizontalTimeline({
 }: HorizontalTimelineProps) {
   const labels = { ...DEFAULT_HORIZONTAL_TIMELINE_LABELS, ...labelsProp };
 
-  const layout = useMemo(() => {
-    const events = points.filter((p) => p.kind !== "today");
-    const today = points.find((p) => p.kind === "today") ?? null;
-    const dayMs = [
-      ...events.map((p) => parseIsoDay(p.dateIso)),
-      today ? parseIsoDay(today.dateIso) : null,
-    ].filter((n): n is number => n != null);
+  const layout = useMemo(() => layoutHorizontalTimeline(points), [points]);
 
-    if (dayMs.length === 0) {
-      return { events: [] as LaidOutEvent[], today: null as (LaidOutEvent & HorizontalTimelinePoint) | null };
-    }
-
-    const rangeStartMs = Math.min(...dayMs);
-    const rangeEndMs = Math.max(...dayMs);
-
-    const edgePad = 6;
-    const laidEvents: LaidOutEvent[] = [...events]
-      .sort((a, b) => a.dateIso.localeCompare(b.dateIso))
-      .map((point) => ({
-        ...point,
-        leftPercent: horizontalTimelinePositionPercent(
-          point.dateIso,
-          rangeStartMs,
-          rangeEndMs,
-          edgePad,
-        ),
-      }));
-
-    // Separação mínima entre marcos colados (ida + volta para caber nas bordas).
-    // «Agora» não entra neste ajuste — permanece na % cronológica pura.
-    const minGap = 7;
-    const minLeft = edgePad;
-    const maxLeft = 100 - edgePad;
-    for (let i = 1; i < laidEvents.length; i += 1) {
-      const prev = laidEvents[i - 1];
-      const curr = laidEvents[i];
-      if (curr.leftPercent - prev.leftPercent < minGap) {
-        curr.leftPercent = prev.leftPercent + minGap;
-      }
-    }
-    for (let i = laidEvents.length - 2; i >= 0; i -= 1) {
-      const curr = laidEvents[i];
-      const next = laidEvents[i + 1];
-      if (next.leftPercent - curr.leftPercent < minGap) {
-        curr.leftPercent = next.leftPercent - minGap;
-      }
-    }
-    for (const event of laidEvents) {
-      event.leftPercent = Math.min(maxLeft, Math.max(minLeft, event.leftPercent));
-    }
-
-    const todayLaid = today
-      ? {
-          ...today,
-          leftPercent: horizontalTimelinePositionPercent(
-            today.dateIso,
-            rangeStartMs,
-            rangeEndMs,
-            edgePad,
-          ),
-        }
-      : null;
-
-    return { events: laidEvents, today: todayLaid };
-  }, [points]);
-
-  if (points.length === 0 || (layout.events.length === 0 && !layout.today)) {
+  if (points.length === 0 || (layout.clusters.length === 0 && !layout.today)) {
     return <p className={classNames.empty}>{labels.emptyMessage}</p>;
   }
+
+  const trackStyle = {
+    // Mais espaço abaixo quando um dia tem várias legendas empilhadas.
+    ["--delpi-ui-htimeline-caption-rows" as string]: String(
+      Math.max(1, ...layout.clusters.map((c) => c.entries.length), 1),
+    ),
+  };
 
   return (
     <div
       className={[classNames.root, className].filter(Boolean).join(" ")}
       role="group"
       aria-label={ariaLabel}
+      style={trackStyle}
     >
       <div className={classNames.track}>
-        <span className={classNames.rail} aria-hidden="true" />
+        <div className={classNames.axis}>
+          <span className={classNames.rail} aria-hidden="true" />
 
-        {layout.today ? (
-          <div
-            className={classNames.now}
-            style={{ left: `${layout.today.leftPercent}%` }}
-            title={`${labels.todayMarkerTitle} · ${layout.today.dateLabel}`}
-          >
-            <span className={classNames.todayTag}>
-              <Flag size={10} strokeWidth={2.5} aria-hidden="true" />
-              {labels.todayTag}
-            </span>
-            <span className={classNames.flag} aria-hidden="true">
-              <Flag size={14} strokeWidth={2.4} aria-hidden="true" />
-            </span>
-            <span className={classNames.stem} aria-hidden="true" />
-            <span className={classNames.pin} aria-hidden="true" />
-            <span className="delpi-ui-htimeline__sr-only">
-              {labels.todayMarkerTitle} {layout.today.dateLabel}
-            </span>
-          </div>
-        ) : null}
+          {layout.today ? (
+            <div
+              className={classNames.now}
+              style={{ left: `${layout.today.leftPercent}%` }}
+              title={`${labels.todayMarkerTitle} · ${layout.today.dateLabel}`}
+            >
+              <span className={classNames.todayTag}>
+                <Flag size={10} strokeWidth={2.5} aria-hidden="true" />
+                {labels.todayTag}
+              </span>
+              <span className={classNames.flag} aria-hidden="true">
+                <Flag size={14} strokeWidth={2.4} aria-hidden="true" />
+              </span>
+              <span className={classNames.stem} aria-hidden="true" />
+              <span className={classNames.pin} aria-hidden="true" />
+              <span className="delpi-ui-htimeline__sr-only">
+                {labels.todayMarkerTitle} {layout.today.dateLabel}
+              </span>
+            </div>
+          ) : null}
 
-        <ol className={classNames.milestones}>
-          {layout.events.map((point) => {
-            const modifiers = [
-              point.tone,
-              ...(point.isCurrent ? (["current"] as const) : []),
-            ];
-            const itemBases = classNames.item.split(/\s+/).filter(Boolean);
-            const itemClass = [
-              ...itemBases,
-              ...modifiers.flatMap((mod) => itemBases.map((base) => `${base}--${mod}`)),
-            ].join(" ");
+          <ol className={classNames.milestones}>
+            {layout.clusters.map((cluster) => {
+              const modifiers = [
+                cluster.tone,
+                ...(cluster.isCurrent ? (["current"] as const) : []),
+                ...(cluster.entries.length > 1 ? (["stacked"] as const) : []),
+              ];
+              const itemBases = classNames.item.split(/\s+/).filter(Boolean);
+              const itemClass = [
+                ...itemBases,
+                ...modifiers.flatMap((mod) =>
+                  itemBases.map((base) => `${base}--${mod}`),
+                ),
+              ].join(" ");
 
-            return (
-              <li
-                key={point.id}
-                className={itemClass}
-                style={{ left: `${point.leftPercent}%` }}
-              >
-                <span className={classNames.dot} aria-hidden="true" />
-                <div className={classNames.caption}>
-                  <span className={classNames.label}>{point.label}</span>
-                  <time className={classNames.date} dateTime={point.dateIso}>
-                    {point.dateLabel}
-                  </time>
-                  {point.isCurrent ? (
-                    <span className={classNames.currentTag}>{labels.currentTag}</span>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+              return (
+                <li
+                  key={cluster.id}
+                  className={itemClass}
+                  style={{ left: `${cluster.leftPercent}%` }}
+                >
+                  <span className={classNames.dot} aria-hidden="true" />
+                  <div className={classNames.caption}>
+                    {cluster.entries.map((entry) => (
+                      <span key={entry.id} className={classNames.label}>
+                        {entry.label}
+                      </span>
+                    ))}
+                    <time className={classNames.date} dateTime={cluster.dateIso}>
+                      {cluster.dateLabel}
+                    </time>
+                    {cluster.isCurrent ? (
+                      <span className={classNames.currentTag}>{labels.currentTag}</span>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </div>
     </div>
   );
