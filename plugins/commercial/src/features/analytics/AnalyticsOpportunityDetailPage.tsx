@@ -30,6 +30,7 @@ import {
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { KpiCard } from "../../components/KpiCard";
+import { ProductStructureTree } from "../../components/ProductStructureTree";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type {
@@ -37,7 +38,7 @@ import type {
   CommercialProposalDetail,
   CommercialProposalHistoryEvent,
 } from "../../types/analytics";
-import type { ProductStructureData, ProductStructureNode } from "../../types/productionExtras";
+import type { ProductStructureData } from "../../types/productionExtras";
 import { formatDisplayDate } from "../../utils/dates";
 import { formatQuantity } from "../../utils/format";
 import {
@@ -67,31 +68,6 @@ function readQueryParam(search: string | undefined, key: string): string {
   if (typeof window === "undefined" && !search) return "";
   const params = new URLSearchParams(search ?? window.location.search);
   return (params.get(key) ?? "").trim();
-}
-
-function StructureTree({ nodes, depth = 0 }: { nodes: ProductStructureNode[]; depth?: number }) {
-  if (nodes.length === 0) return null;
-  return (
-    <ul className="cm-ov-bom-list" data-depth={depth}>
-      {nodes.map((node, index) => {
-        const code = String(node.code || node.product_code || "—");
-        const children = node.components ?? node.items ?? [];
-        const qty =
-          node.quantity != null && !Number.isNaN(Number(node.quantity))
-            ? ` × ${formatQuantity(Number(node.quantity))}${node.unit ? ` ${node.unit}` : ""}`
-            : "";
-        return (
-          <li key={`${code}-${index}`}>
-            <strong>{code}</strong>
-            {node.type ? ` [${node.type}]` : ""}
-            {node.description ? ` — ${node.description}` : ""}
-            {qty}
-            {children.length > 0 ? <StructureTree nodes={children} depth={depth + 1} /> : null}
-          </li>
-        );
-      })}
-    </ul>
-  );
 }
 
 export function AnalyticsOpportunityDetailPage({
@@ -420,11 +396,11 @@ export function AnalyticsOpportunityDetailPage({
             >
               {structures.map((entry) => (
                 <div key={entry.code} className="cm-open-orders-detail__op-card">
-                  <strong>
-                    {entry.code}
-                    {entry.description ? ` — ${entry.description}` : ""}
-                  </strong>
-                  <StructureTree nodes={structureRoots(entry.structure)} />
+                  <ProductStructureTree
+                    nodes={structureRoots(entry.structure)}
+                    caption={`${entry.code}${entry.description ? ` — ${entry.description}` : ""}`}
+                    expandDepth={1}
+                  />
                 </div>
               ))}
             </SectionCard>
