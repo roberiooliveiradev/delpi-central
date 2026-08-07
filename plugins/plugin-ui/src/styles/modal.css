@@ -102,6 +102,17 @@
   outline-offset: 2px;
 }
 
+/*
+ * Modo escuro: --secundary (#003866) some no fundo escuro.
+ * Títulos e ícones de chrome usam o azul destaque do portal (--primary).
+ */
+:root[data-theme="dark"] .delpi-ui-modal__title,
+[data-theme="dark"] .delpi-ui-modal__title,
+:root[data-theme="dark"] .delpi-ui-modal__close,
+[data-theme="dark"] .delpi-ui-modal__close {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
 .delpi-ui-modal__body {
   flex: 1;
   overflow: auto;

@@ -68,6 +68,13 @@
   cursor: pointer;
 }
 
+:root[data-theme="dark"] .delpi-ui-drawer__title,
+[data-theme="dark"] .delpi-ui-drawer__title,
+:root[data-theme="dark"] .delpi-ui-drawer__close,
+[data-theme="dark"] .delpi-ui-drawer__close {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
 .delpi-ui-drawer__body {
   flex: 1;
   overflow: auto;
