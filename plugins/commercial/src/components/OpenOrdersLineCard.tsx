@@ -6,8 +6,10 @@ import {
   cmStatusBadgeClassNames,
 } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
+import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
+import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { formatCurrency, formatQuantity } from "../utils/format";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
@@ -16,12 +18,13 @@ import {
 } from "../utils/openOrdersLineVisual";
 import { getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
-import { getLineStatus } from "../utils/statusBadges";
+import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
 import { TABLE_COLUMNS, type TableColumnKey } from "../utils/tableColumns";
 
 type OpenOrdersLineCardProps = {
   item: OpenOrdersTotvsItem;
   visibleKeys: ReadonlySet<TableColumnKey>;
+  hasAvatar?: boolean;
   onOpenDetail: (item: OpenOrdersTotvsItem) => void;
 };
 
@@ -58,10 +61,36 @@ function CardField({
   );
 }
 
-function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactNode {
+function renderCardValue(
+  key: TableColumnKey,
+  item: OpenOrdersTotvsItem,
+  hasAvatar: boolean,
+): ReactNode {
   switch (key) {
-    case "nome_cliente":
-      return item.nome_cliente || "—";
+    case "nome_cliente": {
+      const code = item.codigo_cadastro?.trim() ?? "";
+      const store = item.loja_cadastro?.trim() ?? "";
+      const name = item.nome_cliente?.trim() || "—";
+      return (
+        <div className="cm-open-orders-client">
+          {code && store ? (
+            <CustomerAvatar
+              code={code}
+              store={store}
+              name={name}
+              hasAvatar={hasAvatar}
+              size="sm"
+            />
+          ) : null}
+          <div className="cm-open-orders-client__text">
+            <strong className="cm-open-orders-client__name">{name}</strong>
+            <span className="cm-open-orders-client__id">
+              {formatEntityTypeWithCodeStore(item.tipo_entidade, item.codigo_cadastro, null)}
+            </span>
+          </div>
+        </div>
+      );
+    }
     case "loja_cadastro":
       return item.loja_cadastro || "—";
     case "filial":
@@ -85,13 +114,19 @@ function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactN
     case "cobertura": {
       const coverage = resolveLineCoverage(item);
       return (
-        <CommercialInlineMeter
-          value={coverage.ratio}
-          max={1}
-          tone={coverage.tone}
-          label={`${coverage.percentLabel} · ${coverage.quantityLabel}`}
-          aria-label="Cobertura"
-        />
+        <div className="cm-open-orders-meter">
+          <CommercialInlineMeter
+            value={coverage.ratio}
+            max={1}
+            tone={coverage.tone}
+            size="sm"
+            label={coverage.percentLabel}
+            aria-label={`Cobertura ${coverage.percentLabel}: ${coverage.quantityLabel}`}
+          />
+          <span className="cm-cell-muted cm-open-orders-meter__qty">
+            {coverage.quantityLabel}
+          </span>
+        </div>
       );
     }
     case "data_entrega": {
@@ -107,11 +142,12 @@ function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactN
       const previsao = getLineOpForecast(item);
       const prazoBadge = resolvePrevisaoPrazoBadge(item);
       return (
-        <div className="cm-open-orders-card__row">
-          <span>{previsao.previsaoLabel}</span>
+        <div className="cm-cell-inline">
+          <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
           {prazoBadge ? (
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
+              className="cm-open-orders-badge"
               label={prazoBadge.label}
               variant={prazoBadge.variant}
             />
@@ -128,7 +164,8 @@ function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactN
       return (
         <StatusBadge
           classNames={cmStatusBadgeClassNames}
-          label={status.label}
+          className="cm-open-orders-badge"
+          label={getLineStatusCompactLabel(item)}
           variant={badgeVariant(status.tone)}
         />
       );
@@ -139,6 +176,7 @@ function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactN
       return (
         <StatusBadge
           classNames={cmStatusBadgeClassNames}
+          className="cm-open-orders-badge cm-open-orders-badge--days"
           label={`${overdue.toLocaleString("pt-BR")} d`}
           variant="danger"
         />
@@ -152,6 +190,7 @@ function renderCardValue(key: TableColumnKey, item: OpenOrdersTotvsItem): ReactN
 export function OpenOrdersLineCard({
   item,
   visibleKeys,
+  hasAvatar = false,
   onOpenDetail,
 }: OpenOrdersLineCardProps) {
   const openDetail = () => onOpenDetail(item);
@@ -192,7 +231,7 @@ export function OpenOrdersLineCard({
                   : "cm-open-orders-card__meta"
             }
           >
-            {renderCardValue(column.key, item)}
+            {renderCardValue(column.key, item, hasAvatar)}
           </CardField>
         );
       })}

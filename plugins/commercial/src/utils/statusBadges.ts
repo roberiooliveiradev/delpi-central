@@ -90,6 +90,27 @@ export function getLineStatus(item: OpenOrdersTotvsItem): StatusBadgeDescriptor 
   };
 }
 
+/** Rótulo curto para células de tabela (dias ficam na coluna Atraso). */
+export function getLineStatusCompactLabel(item: OpenOrdersTotvsItem): string {
+  const status = getLineStatus(item);
+  switch (status.kind) {
+    case "atrasado_sem_estoque":
+      return "Atrasado";
+    case "atrasado_com_estoque":
+      return "Atrasado · estoque";
+    case "atrasado_parcial":
+      return "Atrasado · parcial";
+    case "pode_faturar":
+      return "Pode faturar";
+    case "estoque_parcial":
+      return "Parcial";
+    case "sem_estoque":
+      return "Sem estoque";
+    default:
+      return status.label;
+  }
+}
+
 export type StockFilter = "" | "com_estoque" | "parcial" | "sem_estoque";
 
 const FATURAVEL_KINDS: LineStatusKind[] = ["pode_faturar", "atrasado_com_estoque"];

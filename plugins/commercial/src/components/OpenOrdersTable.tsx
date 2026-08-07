@@ -22,6 +22,11 @@ import {
 } from "../app/commercialUi";
 import { navigateCustomerDetail } from "../app/pluginNavigation";
 import { CM_HELP } from "../content/helpTooltips";
+import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
+import {
+  customerAvatarKey,
+  useOpenOrdersCustomerAvatars,
+} from "../hooks/useOpenOrdersCustomerAvatars";
 import { useOpenOrdersLayout } from "../hooks/useOpenOrdersLayout";
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
 import { useTableFontSize } from "../hooks/useTableFontSize";
@@ -38,7 +43,7 @@ import {
 import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import type { SortDirection, SortKey } from "../utils/sortItems";
-import { getLineStatus } from "../utils/statusBadges";
+import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
 import {
   isSortableTableColumnKey,
   TABLE_COLUMNS,
@@ -103,6 +108,7 @@ export function OpenOrdersTable({
     canDecrease,
     isDefault,
   } = useTableFontSize();
+  const customerAvatars = useOpenOrdersCustomerAvatars(rows);
 
   const visibleKeySet = useMemo(
     () => new Set(visibleColumns.map((c) => c.key)),
@@ -129,30 +135,52 @@ export function OpenOrdersTable({
       TableColumnKey,
       (row: OpenOrdersTotvsItem) => ReturnType<DataTableColumn<OpenOrdersTotvsItem>["render"]>
     > = {
-      nome_cliente: (row) => (
-        <div className="cm-cell-stack">
-          {row.codigo_cadastro && row.loja_cadastro ? (
-            <button
-              type="button"
-              className="cm-link-button"
-              onClick={() =>
-                navigateCustomerDetail(row.codigo_cadastro, row.loja_cadastro, { basePath })
-              }
-            >
-              <strong>{row.nome_cliente || "—"}</strong>
-            </button>
-          ) : (
-            <strong>{row.nome_cliente || "—"}</strong>
-          )}
-          <span className="cm-cell-muted">
-            {formatEntityTypeWithCodeStore(row.tipo_entidade, row.codigo_cadastro, null)}
-          </span>
-        </div>
-      ),
+      nome_cliente: (row) => {
+        const code = row.codigo_cadastro?.trim() ?? "";
+        const store = row.loja_cadastro?.trim() ?? "";
+        const hasAvatar =
+          Boolean(code && store) &&
+          Boolean(customerAvatars.get(customerAvatarKey(code, store)));
+        const name = row.nome_cliente?.trim() || "—";
+        const entityLine = formatEntityTypeWithCodeStore(
+          row.tipo_entidade,
+          row.codigo_cadastro,
+          null,
+        );
+        return (
+          <div className="cm-open-orders-client">
+            {code && store ? (
+              <CustomerAvatar
+                code={code}
+                store={store}
+                name={name}
+                hasAvatar={hasAvatar}
+                size="sm"
+              />
+            ) : (
+              <span className="cm-open-orders-client__avatar-spacer" aria-hidden="true" />
+            )}
+            <div className="cm-open-orders-client__text">
+              {code && store ? (
+                <button
+                  type="button"
+                  className="cm-open-orders-client__name"
+                  onClick={() => navigateCustomerDetail(code, store, { basePath })}
+                >
+                  {name}
+                </button>
+              ) : (
+                <strong className="cm-open-orders-client__name">{name}</strong>
+              )}
+              <span className="cm-open-orders-client__id">{entityLine}</span>
+            </div>
+          </div>
+        );
+      },
       loja_cadastro: (row) => row.loja_cadastro || "—",
       filial: (row) => row.filial || "—",
       pedido: (row) => (
-        <div className="cm-cell-stack">
+        <div className="cm-cell-stack cm-cell-stack--tight">
           <span>{row.pedido || "—"}</span>
           <span className="cm-cell-muted">Linha {row.linha || "—"}</span>
         </div>
@@ -167,13 +195,19 @@ export function OpenOrdersTable({
       cobertura: (row) => {
         const coverage = resolveLineCoverage(row);
         return (
-          <CommercialInlineMeter
-            value={coverage.ratio}
-            max={1}
-            tone={coverage.tone}
-            label={`${coverage.percentLabel} · ${coverage.quantityLabel}`}
-            aria-label="Cobertura de estoque"
-          />
+          <div className="cm-open-orders-meter">
+            <CommercialInlineMeter
+              value={coverage.ratio}
+              max={1}
+              tone={coverage.tone}
+              size="sm"
+              label={coverage.percentLabel}
+              aria-label={`Cobertura ${coverage.percentLabel}: ${coverage.quantityLabel}`}
+            />
+            <span className="cm-cell-muted cm-open-orders-meter__qty">
+              {coverage.quantityLabel}
+            </span>
+          </div>
         );
       },
       data_entrega: (row) => {
@@ -189,30 +223,30 @@ export function OpenOrdersTable({
         const previsao = getLineOpForecast(row);
         const prazoBadge = resolvePrevisaoPrazoBadge(row);
         if (previsao.previsaoLabel === "—") return "—";
-        const label = (
-          <div className="cm-cell-stack">
+        return (
+          <div className="cm-cell-inline">
             {canOpenOpForecastModal(row) ? (
               <button
                 type="button"
-                className="cm-link-button"
+                className="cm-link-button cm-cell-inline__primary"
                 onClick={() => setDetailItem(row)}
                 title="Ver detalhe da linha e OPs"
               >
                 {previsao.previsaoLabel}
               </button>
             ) : (
-              <span>{previsao.previsaoLabel}</span>
+              <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
             )}
             {prazoBadge ? (
               <StatusBadge
                 classNames={cmStatusBadgeClassNames}
+                className="cm-open-orders-badge"
                 label={prazoBadge.label}
                 variant={prazoBadge.variant}
               />
             ) : null}
           </div>
         );
-        return label;
       },
       data_despacho: (row) =>
         row.data_despacho ? formatDisplayDate(row.data_despacho) : "Não informado",
@@ -222,7 +256,8 @@ export function OpenOrdersTable({
         return (
           <StatusBadge
             classNames={cmStatusBadgeClassNames}
-            label={badge.label}
+            className="cm-open-orders-badge"
+            label={getLineStatusCompactLabel(row)}
             variant={badgeVariant(badge.tone)}
           />
         );
@@ -233,6 +268,7 @@ export function OpenOrdersTable({
         return (
           <StatusBadge
             classNames={cmStatusBadgeClassNames}
+            className="cm-open-orders-badge cm-open-orders-badge--days"
             label={`${days.toLocaleString("pt-BR")} d`}
             variant="danger"
           />
@@ -251,17 +287,18 @@ export function OpenOrdersTable({
         column.key === "status" ||
         column.key === "cobertura",
       align:
-        column.key === "saldo" ||
-        column.key === "valor_aberto" ||
-        column.key === "quantidade" ||
-        column.key === "entregue" ||
-        column.key === "no_estoque" ||
         column.key === "atraso_dias"
-          ? ("right" as const)
-          : undefined,
+          ? ("center" as const)
+          : column.key === "saldo" ||
+              column.key === "valor_aberto" ||
+              column.key === "quantidade" ||
+              column.key === "entregue" ||
+              column.key === "no_estoque"
+            ? ("right" as const)
+            : undefined,
       render: (row) => renderers[column.key](row),
     }));
-  }, [basePath, visibleColumns]);
+  }, [basePath, customerAvatars, visibleColumns]);
 
   return (
     <>
@@ -372,7 +409,7 @@ export function OpenOrdersTable({
         ) : null}
 
         {layout === "table" ? (
-          <div style={tableStyle}>
+          <div className="cm-open-orders-table" style={tableStyle}>
             <DataTable
               rows={rows}
               rowKey={rowKey}
@@ -401,6 +438,13 @@ export function OpenOrdersTable({
                   key={rowKey(row)}
                   item={row}
                   visibleKeys={visibleKeySet}
+                  hasAvatar={Boolean(
+                    row.codigo_cadastro?.trim() &&
+                      row.loja_cadastro?.trim() &&
+                      customerAvatars.get(
+                        customerAvatarKey(row.codigo_cadastro, row.loja_cadastro),
+                      ),
+                  )}
                   onOpenDetail={setDetailItem}
                 />
               ))
