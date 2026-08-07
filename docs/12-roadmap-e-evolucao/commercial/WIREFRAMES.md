@@ -30,10 +30,32 @@
 | `/apps/commercial/customers` | Minha carteira | F2b | Vendedor+ |
 | `/apps/commercial/customers/:code/:store` | Conta (detalhe) | F2b | Vendedor+ |
 | `/apps/commercial/seller-portfolios` | Carteiras | F2b | Admin |
-| `/apps/commercial/my-day` | Meu dia | F5 | Vendedor+ |
-| `/apps/commercial/prospects` | Prospects | pós-paridade | Vendedor+ |
-| `/apps/commercial/opportunities` | Oportunidades | F6 | Vendedor+ |
-| `/apps/commercial/forecast` | Forecast | F6 | Vendedor / Supervisor |
+| `/apps/commercial/my-day` | Meu dia | Wave G+ | worklist.view |
+| `/apps/commercial/propostas` | Propostas (ADY) | Consolidação | propostas.view |
+| `/apps/commercial/propostas/:id` | Detalhe + PDF | Consolidação | propostas.view |
+| `/apps/commercial/gestao` | Gestão visão geral | Consolidação | analytics.view |
+| `/apps/commercial/gestao/otd` | OTD | Consolidação | analytics.view |
+| `/apps/commercial/gestao/equipe` | Equipe | Consolidação | analytics + team |
+| `/apps/commercial/gestao/oportunidades` | Oportunidades OV | Consolidação | analytics.view |
+| `/apps/commercial/prospects` | Prospects | pós-consolidação / P3 | — |
+| `/apps/commercial/forecast` | Forecast | pós-consolidação | — |
+
+### WF-G — Gestão visão geral (`/gestao`) — ASCII
+
+```text
+[UnderlineNav] Início | Meu dia | Pedidos | Carteira | Propostas | Gestão | Carteiras†
+[Subnav Gestão] Visão geral · OTD · Equipe · Oportunidades
+[FilterBar] Competence | Start DateField | End DateField | Branch | Segment | [Atualizar]
+[KPI row ×6] ROL | Meta | Conversão | OTD | Ticket | Funil
+[Série ROL]  chart
+[Funil OV]   stages
+[Tabela OV]  resumo período → drill /gestao/oportunidades/:n
+[Export]
+```
+
+Datas v1: **2× DateField** (sem DateRangeField). Filtros: URL + `sessionStorage` `delpi.commercial.gestao.filters`.
+
+Wireframes ASCII detalhados + matriz `@delpi/plugin-ui`: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 
 ---
 

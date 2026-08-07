@@ -1,79 +1,77 @@
 # Perfis e permissões — Portal Comercial
 
-> **Objetivo:** criar **papéis** na Minha Delpi (Core RBAC) e atribuí-los a usuários/grupos — sem permissões soltas no usuário e **sem** códigos que nomeiem persona (`commercial.vendedor`, etc.).  
+> **Objetivo:** permission codes = **capacidades** (`view` / `manage` / `export`) — **sem** códigos de cargo. Papéis Minha Delpi agrupam codes (você decide quem recebe o quê).  
 > **Modelo:** [permission-resolver.md](../../03-autenticacao-autorizacao/permission-resolver.md)  
-> **Manifest:** [commercial.manifest.json](../../../plugins/commercial/commercial.manifest.json)
+> **Manifest:** [commercial.manifest.json](../../../plugins/commercial/commercial.manifest.json)  
+> **Consolidação:** [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)
 
 ## Princípio
 
 ```text
-Usuário → Papel(éis) Minha Delpi → permission codes (capacidades) → API / MFE
+Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 ```
 
 | É | Não é |
 |---|--------|
-| `commercial.accounts.view` (capacidade) | `commercial.vendedor` / `permissao.vendedor` |
-| Papel **Comercial — Vendedor** (agrupa codes) | Atribuir 15 codes soltos no usuário |
-| Escopo `own\|team` na **API** (carteira) | Permission `commercial.scope.team` |
+| `commercial.analytics.view` | `commercial.supervisor` / `commercial.vendedor` |
+| Papel que **agrupa** codes | Permission com nome de persona |
 
-## Catálogo Wave G (manifest + commercial-api)
+## Catálogo (manifest + commercial-api)
 
 | Código | Nome UI | Onde vale |
 |--------|---------|-----------|
-| `commercial.accounts.view` | Acessar Portal Comercial | App, Início, pedidos, carteira, conta; aliases: `pedidos-venda-abertos.access`, `api-delpi.access` |
-| `commercial.worklist.view` | Ver Meu dia / worklist | Menu `/my-day`, `GET /me/worklist`, `GET /tasks` |
-| `commercial.followups.manage` | Gerir follow-ups próprios | `POST /tasks`, complete, `POST /activities` |
-| `commercial.seller-portfolios.manage` | Administrar carteiras | Admin carteiras; alias: `pedidos-venda-abertos.admin` |
-| `commercial.audit.view` | Ver auditoria comercial | `GET /audit` (quando exposto) |
+| `commercial.accounts.view` | Acessar Portal Comercial | Início, pedidos, carteira, conta |
+| `commercial.worklist.view` | Ver Meu dia | `/my-day`, worklist |
+| `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
+| `commercial.seller-portfolios.manage` | Administrar carteiras | CRUD `/seller-portfolios`; `is_admin` |
+| `commercial.audit.view` | Ver auditoria | quando exposta |
+| `commercial.analytics.view` | Ver Gestão à vista | **Toda** `/gestao/*` (visão geral, OTD, equipe, oportunidades OV) |
+| `commercial.propostas.view` | Ver propostas documento | `/propostas` lista/detalhe ADY |
+| `commercial.propostas.export` | Exportar PDF proposta | POST PDF com overrides |
+| `commercial.accounts.team.view` | Ver carteira da equipe | filtro vendedor Pedidos/Carteira; Gestão Equipe |
+| `commercial.worklist.team.view` | Ver worklist da equipe | Meu dia `scope=team` |
 
-**Home:** usa `commercial.accounts.view` (não há `commercial.home.view` separado na Wave G).
+**Home** usa `accounts.view`. **Não** existem `otd.view` / `oportunidades.view` separados — cobertos por `analytics.view`.
 
-Códigos Wave H+ (pipeline, forecast, samples…) ficam no playbook §9 — **não** ativar no manifest até o MFE/API checarem.
+## Aliases (OR) — coexistência com irmãos
 
-## Papéis sugeridos (criar na Minha Delpi)
+| Área | Codes aceitos |
+|------|----------------|
+| Leitura portal | `accounts.view` \| `pedidos-venda-abertos.access` \| `api-delpi.access` |
+| Admin carteiras | `seller-portfolios.manage` \| `pedidos-venda-abertos.admin` |
+| Gestão BI / OTD / OV | `analytics.view` \| `dashboard-commercial.view` \| `api-delpi.access` |
+| Documento ADY + PDF | `propostas.view` (+ export) \| `propostas-comerciais.view` \| `api-delpi.access` \| `dashboard-commercial.view` |
+| Team | **somente** `commercial.*.team.view` |
 
-| Papel (nome sugerido) | Objetivo | Permission codes |
-|-----------------------|----------|------------------|
-| **Comercial — Vendedor** | Carteira própria, pedidos, Meu dia, conta 360 | `commercial.accounts.view`, `commercial.worklist.view`, `commercial.followups.manage` |
-| **Comercial — Supervisor** | Mesmo que vendedor; visão equipe via escopo API + home gestão | mesmos codes do Vendedor (+ `seller-portfolios.manage` **não** incluído) |
-| **Comercial — Admin carteiras** | Configurar vendedores/carteiras | Supervisor + `commercial.seller-portfolios.manage` |
-| **Comercial — Auditor (leitura)** | Consulta + audit | `commercial.accounts.view`, `commercial.audit.view` |
-| **Comercial — Full (Wave H+)** | Pipeline/forecast futuros | documentar depois; não criar agora |
+Novas atribuições de papel: preferir só `commercial.*`.
 
-Supervisor vs Vendedor: a diferença de **dados** (equipe) não é um permission code de persona — é resolução de escopo na commercial-api / api-delpi quando o usuário tem carteiras/equipe. Na Wave G, admin (`seller-portfolios.manage`) já enxerga lista de vendedores no filtro.
+## Equipe (G4)
 
-## Como criar o papel Vendedor (3 passos)
+- Universo = carteiras **ativas** na commercial-api.
+- Filtro MFE: `accounts.team.view || seller-portfolios.manage`.
+- `is_admin` no `/sellers/me` = **apenas** `can_manage_portfolios` (CRUD).
 
-1. **Admin Minha Delpi → Papéis → Novo**  
-   Nome: `Comercial — Vendedor`
-2. **Marcar permissões:**
-   - [ ] `commercial.accounts.view`
-   - [ ] `commercial.worklist.view`
-   - [ ] `commercial.followups.manage`
-3. **Atribuir** o papel ao usuário ou ao grupo (evitar `user_permissions` diretas salvo exceção auditada).
+## Papéis sugeridos (exemplos — criar na Minha Delpi)
 
-Repetir para Admin carteiras incluindo `commercial.seller-portfolios.manage`.
-
-## Aliases Portal do Vendedor (até F2c)
-
-| Legado | Equivalente commercial |
-|-------|------------------------|
-| `pedidos-venda-abertos.access` | leitura (`accounts.view`) |
-| `pedidos-venda-abertos.admin` | `seller-portfolios.manage` |
-
-No cutover F2c, migrar papéis para só `commercial.*`.
+| Papel | Codes (exemplo) |
+|-------|-----------------|
+| Comercial — Operacional | accounts.view + worklist.view + followups.manage |
+| Comercial — Vê gestão | operacional + **analytics.view** |
+| Comercial — Vê equipe | + accounts.team.view + worklist.team.view |
+| Comercial — Emite PDF | + propostas.view + propostas.export |
+| Comercial — Admin carteiras | + seller-portfolios.manage |
+| Comercial — Auditor | accounts.view + audit.view |
 
 ## O que NÃO fazer
 
-- Inventar permission com nome de cargo/persona.
-- Confundir role Keycloak com papel Delpi (resolver Core é a fonte).
+- Permission com nome de cargo/persona.
+- Exigir `seller-portfolios.manage` para ver Gestão ou equipe.
 - Usar o MFE como única barreira — API revalida codes.
-- Dar `seller-portfolios.manage` a todo vendedor “para facilitar”.
 
 ## Checklist homologação RBAC
 
-- [ ] Papel Vendedor criado; menu mostra Início, Meu dia, Pedidos, Carteira; **não** Carteiras admin
-- [ ] Sem `worklist.view` → `/my-day` oculto / 403 na API
-- [ ] Sem `followups.manage` → não cria/completa tarefa (403)
-- [ ] Admin carteiras vê `/seller-portfolios`
-- [ ] PVA ainda acessível com aliases legados (F2c não aplicado)
+- [ ] Sem `analytics.view` (nem alias dashboard) → nav Gestão oculta / 403
+- [ ] Sem `propostas.view` → nav Propostas oculta / 403
+- [ ] `team.view` sem `manage` → filtro equipe ok; tela Carteiras oculta
+- [ ] `manage` → Carteiras + filtro equipe
+- [ ] Aliases PVA/dashboard ainda aceitos na API (coexistência)

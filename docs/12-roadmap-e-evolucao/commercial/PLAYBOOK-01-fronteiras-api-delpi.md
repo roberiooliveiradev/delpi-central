@@ -2,10 +2,10 @@
 
 **Contrato vivo** — define o que fica em cada serviço e como evitar duplicação de SQL TOTVS / CRM Delpi.
 
-**Status:** ago/2026 — baseline documental; implementação nas fases F1–F2b do [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) (produto ao usuário: **Portal Comercial**).  
+**Status:** ago/2026 — consolidação nativa em curso ([GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)).  
 **Referência de padrão:** [maintenance/PLAYBOOK-01-fronteiras-api-delpi.md](../maintenance/PLAYBOOK-01-fronteiras-api-delpi.md).
 
-O MFE legado `pedidos-venda-abertos` permanece até a fase **F2c** (depreciação pós-paridade). A UI canônica-alvo das jornadas de carteira/pedidos é o **Portal Comercial** (`plugins/commercial`).
+O MFE legado `pedidos-venda-abertos` **coexiste** (decisão 5C); F2c só após o Portal superar o PVA. A UX canônica é o **Portal Comercial** (`plugins/commercial`) — páginas nativas, zero hosteamento.
 
 ---
 
@@ -15,16 +15,16 @@ O MFE legado `pedidos-venda-abertos` permanece até a fase **F2c** (depreciaçã
 |--------|------------------|
 | **api-delpi** | Única implementação de SQL Protheus; KPIs e listagens TOTVS; contrato `{ success, message, data, meta }`; OpenAPI + `route_contract_registry` |
 | **commercial-api** | CRUD operacional Postgres; workflows CRM; orquestração; **gateways HTTP** para TOTVS via api-delpi |
-| **MFE existentes** | Podem chamar api-delpi **direto** para reads TOTVS já estabilizados (`dashboard-commercial`, `propostas-comerciais`, listagens de pedidos) |
-| **commercial-workspace / Portal Comercial / CRUD migrado** | Chama **somente** `commercial-api` para estado Delpi (JWT); reads TOTVS via api-delpi ou via gateway da commercial-api; nunca SQL Server |
+| **MFE Portal Comercial (`plugins/commercial`)** | **Única UX de produto** a consolidar: páginas **nativas**; estado Delpi via commercial-api; reads TOTVS via HTTP api-delpi (direto ou gateway) — **nunca SQL** |
+| **MFEs irmãos** (`dashboard-commercial`, `propostas-comerciais`, PVA) | **Legado coexistente** — podem chamar api-delpi; **não** são hosteados nem deep-link como entrega do Portal Comercial |
 
 ```text
-Browser (dashboard / propostas / pedidos read)
-  → api-delpi → SQL Server (TOTVS)
+Browser Portal Comercial (páginas nativas)
+  → commercial-api → Postgres (carteira / Meu dia / avatar)
+  → api-delpi → SQL Server (TOTVS: KPIs, OV, ADY, pedidos)
 
-Browser (workspace / carteira CRUD / CRM)
-  → commercial-api → Postgres
-  → commercial-api → DelpiApiClient → api-delpi → TOTVS
+Browser MFEs irmãos (legado coexistente)
+  → api-delpi → TOTVS
 ```
 
 **Proibido:**
@@ -32,7 +32,8 @@ Browser (workspace / carteira CRUD / CRM)
 - Copiar queries TOTVS de `api-delpi/.../totvs/**` para `commercial-api`.
 - Segundo client SQL Server no plugin ou na commercial-api.
 - Expandir CRUD de carteira/oportunidade/forecast **dentro** da api-delpi após ADR-001.
-- MFE de workspace chamar api-delpi bypassando commercial-api para dados que a API dedicada já agrega.
+- Tratar deep link / iframe / MF de outro MFE como **produto** do Portal Comercial.
+- MFE commercial chamar SQL Server direto.
 
 ---
 

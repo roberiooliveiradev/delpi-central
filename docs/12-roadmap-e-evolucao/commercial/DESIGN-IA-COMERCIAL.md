@@ -1,28 +1,27 @@
 # Design / IA — Portal Comercial (Wave G / G+)
 
-> **Status:** Wave G+ P0+P1 concluídos · UX polish Home/Meu dia (ago/2026) · backlog tarefas em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md)  
+> **Status:** Wave G+ concluído · **consolidação nativa** em curso — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
 > **Produto:** Portal Comercial · `id` `commercial` · `/apps/commercial`  
 > **UI kit:** `@delpi/plugin-ui` · prefixo MFE `cm-` · root `.dashboard-commercial`  
-> **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) (WF-00, WF-01R, WF-06R) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
+> **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
 
-O Portal Comercial é o hub operacional da carteira: Início, Meu dia, pedidos em aberto, Conta 360 e admin de carteiras.
+O Portal Comercial é o hub operacional **e** de gestão à vista: Início, Meu dia, pedidos, Conta 360, **Propostas (ADY)**, **Gestão (BI/OTD/OV/Equipe)** e admin de carteiras — páginas **nativas** (sem deep link como produto).
 
 ## Princípios de informação (Overview → Focus → Detail → Action)
 
 | Camada | Superfície | Objetivo |
 |--------|------------|----------|
-| **Overview** | Início (`/`) | Hero de saudação, alertas, KPIs — sem regra pesada |
-| **Focus / Action** | Meu dia (`/my-day`) | Worklist **própria**; criar com prazo/prioridade/cliente; concluir / adiar |
-| **Detail** | Pedidos, carteira, conta | Operação e Account 360 (+ CTA follow-up) |
-| **Admin** | Carteiras (`/seller-portfolios`) | Configuração (permission manage) |
+| **Overview** | Início (`/`) | Hero, alertas, KPIs leves; teaser Gestão (sem deep link irmão) |
+| **Focus / Action** | Meu dia, Pedidos, Propostas ADY | Filas e documentos |
+| **Diagnosis** | Gestão (`/gestao/*`) | KPIs, séries, OTD, equipe, oportunidades OV |
+| **Detail** | Carteira, conta, detalhe OV/ADY/OTD | Investigation |
+| **Admin** | Carteiras (`/seller-portfolios`) | CRUD (`seller-portfolios.manage`) |
 
-Analytics pesado (ROL/OTD/BI) permanece em deep link para `dashboard-commercial` / propostas — cards leves de gestão só na Home admin.
-
-## Navegação (Wave G+)
+## Navegação (alvo consolidação)
 
 ```text
 Shell: TopBar flush + UnderlineNav
-Início → Meu dia → Pedidos em aberto → Minha carteira → Conta → Carteiras (admin)
+Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†
 ```
 
 - **Início:** `PageHero` (saudação + highlights vivos) **acima** da TopBar.
@@ -33,8 +32,8 @@ Início → Meu dia → Pedidos em aberto → Minha carteira → Conta → Carte
 
 ### Início (ordem e anti-redundância)
 
-Atenção → Seus números (KPIs clicáveis + Atualizar) → Gestão/Equipe (admin) → Analytics externos.  
-Sem barra de chips sob a nav nem atalhos que dupliquem a UnderlineNav.
+Atenção → Seus números (KPIs clicáveis + Atualizar) → Gestão teaser (`analytics.view`) com CTA interno `/gestao`.  
+**Sem** bloco Analytics/Propostas via deep link para MFEs irmãos.
 
 ### Meu dia (ordem)
 

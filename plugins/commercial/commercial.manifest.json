@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "commercial",
   "name": "Portal Comercial",
-  "description": "Portal comercial para carteira de clientes, pedidos em aberto, Meu dia e gestão de vendedores.",
+  "description": "Portal comercial nativo: carteira, pedidos, Meu dia, Gestão à vista e propostas documento.",
   "icon": "briefcase",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "microfrontend",
   "basePath": "/apps/commercial",
   "entry": "/apps/commercial/assets/remoteEntry.js",
@@ -12,31 +12,61 @@
     {
       "code": "commercial.accounts.view",
       "name": "Acessar Portal Comercial",
-      "description": "Permite acessar o Portal Comercial com a própria carteira de clientes (alias legado: pedidos-venda-abertos.access).",
+      "description": "Acesso ao Portal (carteira, pedidos, conta). Alias legado: pedidos-venda-abertos.access.",
       "module": "commercial"
     },
     {
       "code": "commercial.worklist.view",
       "name": "Ver Meu dia / worklist",
-      "description": "Permite acessar Meu dia, worklist e listagem de tarefas do vendedor.",
+      "description": "Acessar Meu dia, worklist e listagem de tarefas do vendedor.",
       "module": "commercial"
     },
     {
       "code": "commercial.followups.manage",
       "name": "Gerir follow-ups próprios",
-      "description": "Permite criar e concluir tarefas e registrar atividades comerciais próprias.",
+      "description": "Criar e concluir tarefas e registrar atividades comerciais próprias.",
       "module": "commercial"
     },
     {
       "code": "commercial.seller-portfolios.manage",
       "name": "Administrar carteiras comerciais",
-      "description": "Permite configurar vendedores/carteiras e transferir clientes (alias legado: pedidos-venda-abertos.admin).",
+      "description": "CRUD de carteiras e transferências. Alias legado: pedidos-venda-abertos.admin.",
       "module": "commercial"
     },
     {
       "code": "commercial.audit.view",
       "name": "Ver auditoria comercial",
-      "description": "Permite consultar trilha de auditoria do módulo comercial quando exposta.",
+      "description": "Consultar trilha de auditoria do módulo quando exposta.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.analytics.view",
+      "name": "Ver Gestão à vista",
+      "description": "Acesso a toda a área Gestão (visão geral, OTD, equipe, oportunidades OV). Alias: dashboard-commercial.view.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.propostas.view",
+      "name": "Ver propostas documento",
+      "description": "Listar e abrir propostas ADY. Alias: propostas-comerciais.view.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.propostas.export",
+      "name": "Exportar PDF de proposta",
+      "description": "Gerar PDF revisável de proposta ADY com overrides.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.accounts.team.view",
+      "name": "Ver carteira da equipe",
+      "description": "Filtrar pedidos/carteira por vendedor e ver Gestão Equipe. Sem alias legado.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.worklist.team.view",
+      "name": "Ver worklist da equipe",
+      "description": "Meu dia com escopo equipe (scope=team). Sem alias legado.",
       "module": "commercial"
     }
   ],
@@ -59,7 +89,7 @@
     },
     {
       "path": "/apps/commercial/open-orders",
-      "label": "Pedidos em aberto",
+      "label": "Pedidos",
       "permission": "commercial.accounts.view",
       "icon": "clipboard-list",
       "order": 15,
@@ -67,18 +97,58 @@
     },
     {
       "path": "/apps/commercial/customers",
-      "label": "Minha carteira",
+      "label": "Carteira",
       "permission": "commercial.accounts.view",
-      "icon": "clipboard-list",
+      "icon": "users",
       "order": 16,
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/propostas",
+      "label": "Propostas",
+      "permission": "commercial.propostas.view",
+      "icon": "file-text",
+      "order": 17,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/gestao",
+      "label": "Gestão",
+      "permission": "commercial.analytics.view",
+      "icon": "bar-chart-2",
+      "order": 18,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/gestao/otd",
+      "label": "Gestão OTD",
+      "permission": "commercial.analytics.view",
+      "icon": "clock",
+      "order": 19,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/gestao/equipe",
+      "label": "Gestão Equipe",
+      "permission": "commercial.analytics.view",
+      "icon": "users",
+      "order": 20,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/gestao/oportunidades",
+      "label": "Oportunidades",
+      "permission": "commercial.analytics.view",
+      "icon": "target",
+      "order": 21,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/seller-portfolios",
-      "label": "Carteiras de vendedores",
+      "label": "Carteiras",
       "permission": "commercial.seller-portfolios.manage",
       "icon": "settings",
-      "order": 17,
+      "order": 22,
       "showInMenu": false
     }
   ],

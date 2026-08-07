@@ -6,11 +6,18 @@ from fastapi import APIRouter, Body, Path, Query, Request
 
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
+    COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS,
     COMMERCIAL_MANAGE_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
+    can_export_propostas,
     can_manage_followups,
     can_manage_portfolios,
+    can_use_team_scope,
+    can_view_accounts_team,
+    can_view_analytics,
+    can_view_propostas,
     can_view_worklist,
+    can_view_worklist_team,
 )
 from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
@@ -64,11 +71,18 @@ def get_my_seller_portfolio(request: Request):
             {
                 "user_id": user_id,
                 "portfolio": portfolio_to_dict(portfolio) if portfolio else None,
+                # is_admin = somente manage (CRUD). Filtro equipe = team_scope no MFE.
                 "is_admin": can_manage_portfolios(user),
                 "capabilities": {
                     "worklist_view": can_view_worklist(user),
                     "followups_manage": can_manage_followups(user),
                     "seller_portfolios_manage": can_manage_portfolios(user),
+                    "analytics_view": can_view_analytics(user),
+                    "propostas_view": can_view_propostas(user),
+                    "propostas_export": can_export_propostas(user),
+                    "accounts_team_view": can_view_accounts_team(user),
+                    "worklist_team_view": can_view_worklist_team(user),
+                    "team_scope": can_use_team_scope(user),
                 },
             },
             message="Carteira do usuário carregada.",
@@ -84,13 +98,19 @@ def get_my_seller_portfolio(request: Request):
 
 
 @router.get("", operation_id="list_seller_portfolios")
-@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+@require_any_permission(*COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS)
 def list_seller_portfolios(
     request: Request,
     active_only: bool = Query(False, description="Se true, lista apenas ativos."),
 ):
+    """Lista carteiras para admin (CRUD) ou team.view (filtro / Gestão Equipe)."""
     try:
-        portfolios = _use_case().list_portfolios(active_only=active_only)
+        user = current_user_from_request(request)
+        # Só team (sem manage): força ativos — universo G4.
+        force_active = active_only or (
+            can_use_team_scope(user) and not can_manage_portfolios(user)
+        )
+        portfolios = _use_case().list_portfolios(active_only=force_active)
         return ok(
             {"items": [portfolio_to_dict(item) for item in portfolios]},
             message="Carteiras carregadas com sucesso.",

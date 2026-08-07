@@ -1,13 +1,13 @@
 # Inventário de ativos — domínio Comercial
 
-> **Status:** baseline factual (ago/2026)  
+> **Status:** baseline factual + consolidação nativa em curso — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
 > **Produto ao usuário:** **Portal Comercial** (`id` técnico `commercial`)  
 > **Playbook mestre:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)
 
-Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação e acompanhar a **paridade** que libera a depreciação de `pedidos-venda-abertos`.
+Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação.
 
-**Destino de produto:** o **Portal Comercial** (`commercial` + `commercial-api`) já cobre a paridade F2b; o plugin antigo só é depreciado após o gate § 2.1.1 (F2c).
+**Destino de produto:** o **Portal Comercial** é a UX canônica (páginas nativas). Plugins irmãos **coexistem** (decisão 5C); F2c só após Comercial ≥ PVA + pedido.
 
 ---
 
@@ -15,10 +15,10 @@ Este documento lista o que **já existe** no monorepo para o domínio Comercial 
 
 | Plugin `id` | Nome ao usuário | `basePath` | Papel | Consome |
 |---|---|---|---|---|
-| `commercial` | **Portal Comercial** | `/apps/commercial` | Entrada canônica de paridade (pedidos, carteira, admin) | commercial-api + api-delpi |
-| `dashboard-commercial` | Dashboard Comercial | `/apps/dashboard-commercial` | Cockpit KPIs (ROL, conversão, OTD, novos negócios, propostas OV) | api-delpi `/commercial/*` |
-| `pedidos-venda-abertos` | Portal do Vendedor | `/apps/pedidos-venda-abertos` | Legado até F2c; depois **depreciado** | api-delpi (+ carteira legado até cutover) |
-| `propostas-comerciais` | Propostas Comerciais | `/apps/propostas-comerciais` | Listagem, detalhe e PDF de propostas ativas | api-delpi `/propostas-comerciais/*` |
+| `commercial` | **Portal Comercial** | `/apps/commercial` | UX canônica (ops + Gestão + Propostas ADY) | commercial-api + api-delpi |
+| `dashboard-commercial` | Dashboard Comercial | `/apps/dashboard-commercial` | Legado coexistente (referência até Gestão nativa) | api-delpi `/commercial/*` |
+| `pedidos-venda-abertos` | Portal do Vendedor | `/apps/pedidos-venda-abertos` | Legado coexistente (F2c adiado) | api-delpi |
+| `propostas-comerciais` | Propostas Comerciais | `/apps/propostas-comerciais` | Legado coexistente (referência até ADY nativo) | api-delpi `/propostas-comerciais/*` |
 
 **Existem:** `plugins/commercial/`, `commercial-api/` (F0–F2b harden em `main`).
 
@@ -28,10 +28,10 @@ Este documento lista o que **já existe** no monorepo para o domínio Comercial 
 
 | Plugin | Páginas / rotas principais |
 |---|---|
-| `commercial` | Home, open-orders, customers, customer detail, seller-portfolios |
-| `dashboard-commercial` | Dashboard, detalhe proposta OV, OTD painel, OTD linha |
-| `pedidos-venda-abertos` | Pedidos, clientes (carteira), detalhe cliente, config vendedores |
-| `propostas-comerciais` | Lista, detalhe, export PDF |
+| `commercial` | Home, open-orders, customers, seller-portfolios, **gestao/***, **propostas** (consolidação) |
+| `dashboard-commercial` | Dashboard, detalhe proposta OV, OTD (legado) |
+| `pedidos-venda-abertos` | Pedidos, clientes, detalhe, config (legado) |
+| `propostas-comerciais` | Lista, detalhe, PDF (legado) |
 
 Docs locais:
 

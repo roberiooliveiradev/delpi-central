@@ -11,6 +11,7 @@ from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_READ_PERMISSIONS,
     COMMERCIAL_WORKLIST_PERMISSIONS,
     can_manage_portfolios,
+    can_view_worklist_team,
 )
 from commercial_app.application.use_cases.manage_worklist import (
     CreateActivityInput,
@@ -77,11 +78,20 @@ def _is_portfolio_manager(request: Request) -> bool:
     return can_manage_portfolios(current_user_from_request(request))
 
 
+def _can_view_team_worklist(request: Request) -> bool:
+    """G4: worklist.team.view OU manage (admin continua vendo equipe)."""
+    user = current_user_from_request(request)
+    return can_view_worklist_team(user) or can_manage_portfolios(user)
+
+
 @me_router.get("/worklist", operation_id="get_my_worklist")
 @require_any_permission(*COMMERCIAL_WORKLIST_PERMISSIONS)
 def get_my_worklist(
     request: Request,
-    scope: str = Query("mine", description="mine | team (team exige manage de carteiras)"),
+    scope: str = Query(
+        "mine",
+        description="mine | team (team exige worklist.team.view ou manage)",
+    ),
     assignee_user_id: str | None = Query(
         None,
         description="Filtra responsável na fila da equipe (somente scope=team).",
@@ -96,7 +106,7 @@ def get_my_worklist(
             user_id=user_id,
             scope="team" if normalized == "team" else "mine",
             assignee_user_id=assignee_user_id,
-            actor_is_portfolio_manager=_is_portfolio_manager(request),
+            actor_is_portfolio_manager=_can_view_team_worklist(request),
         )
         return ok(data, message="Worklist carregada.", operation_id="get_my_worklist")
     except PermissionError as exc:
@@ -112,7 +122,10 @@ def get_my_worklist(
 @require_any_permission(*COMMERCIAL_WORKLIST_PERMISSIONS)
 def get_my_completed_worklist(
     request: Request,
-    scope: str = Query("mine", description="mine | team (team exige manage de carteiras)"),
+    scope: str = Query(
+        "mine",
+        description="mine | team (team exige worklist.team.view ou manage)",
+    ),
     assignee_user_id: str | None = Query(
         None,
         description="Filtra responsável na fila da equipe (somente scope=team).",
@@ -128,7 +141,7 @@ def get_my_completed_worklist(
             user_id=user_id,
             scope="team" if normalized == "team" else "mine",
             assignee_user_id=assignee_user_id,
-            actor_is_portfolio_manager=_is_portfolio_manager(request),
+            actor_is_portfolio_manager=_can_view_team_worklist(request),
             limit=limit,
         )
         return ok(

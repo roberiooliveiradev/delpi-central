@@ -15,7 +15,9 @@
 | **Tasks P1** | Responsável / reassign / fila equipe | **concluído** (ago/2026) |
 | **Tasks P2** | Anexos | **concluído** (ago/2026) — volume + API + Meu dia |
 | **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops) |
-| **F2c** | Depreciar PVA | **pendente** — após homologação Comercial/QA |
+| **Consolidação nativa** | Gestão + Propostas ADY + elevar ops (kit) | **em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
+| **F2c** | Depreciar PVA | **adiado** — só após Comercial superar + pedido explícito |
+| **P3 CRM** | Reminder/checklist avançado | **bloqueado** até consolidação |
 
 ## Paridade UX (F2b harden)
 

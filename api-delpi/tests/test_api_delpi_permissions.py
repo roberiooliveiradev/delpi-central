@@ -83,3 +83,14 @@ def test_pedidos_venda_abertos_accepts_commercial_aliases() -> None:
         in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
     )
     assert perms.PEDIDOS_VENDA_ABERTOS_ACCESS in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+
+
+def test_kpi_commercial_accepts_analytics_alias() -> None:
+    assert perms.COMMERCIAL_ANALYTICS_VIEW in perms.KPI_COMMERCIAL_ACCESS
+    assert perms.DASHBOARD_COMMERCIAL_VIEW in perms.KPI_COMMERCIAL_ACCESS
+
+
+def test_propostas_comerciais_accepts_commercial_aliases() -> None:
+    assert perms.COMMERCIAL_PROPOSTAS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS
+    assert perms.COMMERCIAL_PROPOSTAS_EXPORT in perms.PROPOSTAS_COMERCIAIS_ACCESS
+    assert perms.PROPOSTAS_COMERCIAIS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS

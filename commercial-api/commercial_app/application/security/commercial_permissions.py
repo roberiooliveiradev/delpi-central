@@ -1,4 +1,4 @@
-"""Códigos RBAC do módulo Comercial — com aliases legados pedidos-venda-abertos."""
+"""Códigos RBAC do módulo Comercial — capacidades + aliases legados (coexistência 5C)."""
 
 from __future__ import annotations
 
@@ -9,9 +9,16 @@ COMMERCIAL_WORKLIST_VIEW = "commercial.worklist.view"
 COMMERCIAL_FOLLOWUPS_MANAGE = "commercial.followups.manage"
 COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
 COMMERCIAL_AUDIT_VIEW = "commercial.audit.view"
+COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
+COMMERCIAL_PROPOSTAS_VIEW = "commercial.propostas.view"
+COMMERCIAL_PROPOSTAS_EXPORT = "commercial.propostas.export"
+COMMERCIAL_ACCOUNTS_TEAM_VIEW = "commercial.accounts.team.view"
+COMMERCIAL_WORKLIST_TEAM_VIEW = "commercial.worklist.team.view"
 
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
+DASHBOARD_COMMERCIAL_VIEW = "dashboard-commercial.view"
+PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 API_DELPI_ACCESS = "api-delpi.access"
 
 COMMERCIAL_READ_PERMISSIONS: tuple[str, ...] = (
@@ -41,6 +48,39 @@ COMMERCIAL_AUDIT_PERMISSIONS: tuple[str, ...] = (
     COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
     API_DELPI_ACCESS,
+)
+
+# Gestão BI / OTD / OV — aliases enquanto dashboard-commercial coexiste (G3)
+COMMERCIAL_ANALYTICS_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_ANALYTICS_VIEW,
+    DASHBOARD_COMMERCIAL_VIEW,
+    API_DELPI_ACCESS,
+)
+
+# Documento ADY + PDF (G3)
+COMMERCIAL_PROPOSTAS_VIEW_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_PROPOSTAS_VIEW,
+    PROPOSTAS_COMERCIAIS_VIEW,
+    DASHBOARD_COMMERCIAL_VIEW,
+    API_DELPI_ACCESS,
+)
+
+COMMERCIAL_PROPOSTAS_EXPORT_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_PROPOSTAS_EXPORT,
+    COMMERCIAL_PROPOSTAS_VIEW,
+    PROPOSTAS_COMERCIAIS_VIEW,
+    DASHBOARD_COMMERCIAL_VIEW,
+    API_DELPI_ACCESS,
+)
+
+# Team — sem alias legado (G4). Lista de carteiras = team.view OU manage (+ aliases manage).
+COMMERCIAL_ACCOUNTS_TEAM_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ACCOUNTS_TEAM_VIEW,)
+
+COMMERCIAL_WORKLIST_TEAM_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_WORKLIST_TEAM_VIEW,)
+
+COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_ACCOUNTS_TEAM_VIEW,
+    *COMMERCIAL_MANAGE_PERMISSIONS,
 )
 
 
@@ -93,3 +133,28 @@ def can_manage_portfolios(user: Any | None) -> bool:
 
 def can_view_audit(user: Any | None) -> bool:
     return has_any_permission(user, COMMERCIAL_AUDIT_PERMISSIONS)
+
+
+def can_view_analytics(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_ANALYTICS_PERMISSIONS)
+
+
+def can_view_propostas(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_PROPOSTAS_VIEW_PERMISSIONS)
+
+
+def can_export_propostas(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_PROPOSTAS_EXPORT_PERMISSIONS)
+
+
+def can_view_accounts_team(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_ACCOUNTS_TEAM_PERMISSIONS)
+
+
+def can_view_worklist_team(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_WORKLIST_TEAM_PERMISSIONS)
+
+
+def can_use_team_scope(user: Any | None) -> bool:
+    """Filtro multi-vendedor / Gestão Equipe: team.view OU manage (+ aliases)."""
+    return can_view_accounts_team(user) or can_manage_portfolios(user)

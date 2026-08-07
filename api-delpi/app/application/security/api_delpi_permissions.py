@@ -109,10 +109,12 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 
-# Aliases Portal Comercial (cutover): papel Vendedor recebe commercial.* e ainda
-# consome rotas TOTVS em /pedidos-venda-abertos via api-delpi.
+# Aliases Portal Comercial (cutover / consolidação nativa): commercial.* + legado.
 COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
 COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
+COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
+COMMERCIAL_PROPOSTAS_VIEW = "commercial.propostas.view"
+COMMERCIAL_PROPOSTAS_EXPORT = "commercial.propostas.export"
 
 # --- financeiro — despesas por centro de custo ---
 FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
@@ -173,7 +175,11 @@ REPORTS_MANAGE_FILIAL_ES = "reports.manage.filial-es"
 
 # --- conjuntos usados em @require_any_permission ---
 KPI_FINANCIAL_ACCESS = [API_DELPI_ACCESS, DASHBOARD_FINANCIAL_VIEW]
-KPI_COMMERCIAL_ACCESS = [API_DELPI_ACCESS, DASHBOARD_COMMERCIAL_VIEW]
+KPI_COMMERCIAL_ACCESS = [
+    API_DELPI_ACCESS,
+    DASHBOARD_COMMERCIAL_VIEW,
+    COMMERCIAL_ANALYTICS_VIEW,
+]
 KPI_PRODUCTION_ACCESS = [API_DELPI_ACCESS, DASHBOARD_PRODUCTION_VIEW]
 KPI_SUPPLIES_ACCESS = [API_DELPI_ACCESS, DASHBOARD_SUPPLIES_VIEW]
 KPI_QUALITY_ACCESS = [API_DELPI_QUALITY_ACCESS, DASHBOARD_QUALITY_VIEW]
@@ -535,6 +541,8 @@ PROPOSTAS_COMERCIAIS_ACCESS = [
     API_DELPI_ACCESS,
     PROPOSTAS_COMERCIAIS_VIEW,
     DASHBOARD_COMMERCIAL_VIEW,
+    COMMERCIAL_PROPOSTAS_VIEW,
+    COMMERCIAL_PROPOSTAS_EXPORT,
 ]
 
 PLANEJAMENTO_ORCAMENTARIO_ACCESS_PERMISSIONS = [

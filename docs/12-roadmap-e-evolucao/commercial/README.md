@@ -1,20 +1,21 @@
 # Portal Comercial — documentação
 
-> **Status:** playbook oficial + F0–F2b harden + **Wave G+** (UnderlineNav, Home hero/gestão, Meu dia CRM) em `main`; F2c pendente de homologação  
+> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
 
-O **Portal Comercial** concentra jornadas de carteira, pedidos em aberto, Meu dia (worklist) e admin de vendedores. Reads TOTVS ficam na **api-delpi**; estado Delpi (carteira/avatar/tasks) na **commercial-api**.
+O **Portal Comercial** é a UX canônica a evoluir: carteira, pedidos, Meu dia, **Gestão à vista** (páginas nativas) e **Propostas documento**. Reads TOTVS na **api-delpi**; estado Delpi na **commercial-api**. **Zero hosteamento** de MFEs irmãos.
 
-O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A UX operacional (KPIs, filtros, Excel, previsão OP, check-up) está no Portal Comercial — [runbook F2c](./F2C-CUTOVER-RUNBOOK.md).
+Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais` **coexistem** no menu (decisão 5C); remoção só no futuro. F2c cutover **não** é pré-requisito da consolidação.
 
 ## Documentos
 
 | Documento | Conteúdo |
 |-----------|----------|
+| **[GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)** | **Norte consolidação** — nav, perms, DoD, filtros, OV vs ADY |
 | **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
-| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2c + Wave G+ |
+| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2 + consolidação nativa |
 | **[DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)** | Design de IA / navegação / princípios UX |
 | **[UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md)** | UX polish entregue + backlog tarefas (obs./responsável/anexos) |
 | **[PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)** | Papéis Minha Delpi × permission codes (Wave G) |
@@ -42,7 +43,8 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A U
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
 | Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |
-| F2c (ocultar PVA + redirects) | Artefatos prontos — flip após homologação |
+| **Consolidação nativa** (Gestão + ADY + elevar ops) | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
+| F2c (ocultar PVA + redirects) | **Adiado** — só após Comercial ≥ PVA + pedido |
 
 ## Pacotes e URLs
 
@@ -57,12 +59,12 @@ README do plugin: [`plugins/commercial/README.md`](../../../plugins/commercial/R
 ## Fronteira (resumo)
 
 ```text
-MFEs analíticos + reads TOTVS de pedidos
-  → api-delpi → TOTVS
+Portal Comercial (páginas nativas)
+  → commercial-api → Postgres (carteira / Meu dia / avatars)
+  → api-delpi → TOTVS (pedidos, KPIs, OTD, OV, ADY)
 
-Portal Comercial (carteira Delpi, admin, avatars)
-  → commercial-api → Postgres (+ volume avatars)
-  → commercial-api → api-delpi (search / enrichment)
+MFEs irmãos (legado coexistente)
+  → api-delpi → TOTVS
 ```
 
 **HTTPS:** clients usam paths relativos; `commercial-api` com `redirect_slashes=False` (evita Mixed Content atrás do TLS). Pedidos TOTVS na api-delpi usam barra final em `pedidos-venda-abertos/`.
@@ -72,19 +74,20 @@ Portal Comercial (carteira Delpi, admin, avatars)
 | Plugin | Papel | Destino |
 |--------|--------|---------|
 | `commercial` | **Portal Comercial** (entrada canônica da paridade) | Ativo |
-| `dashboard-commercial` | Cockpit KPIs / OTD / propostas OV | Permanece |
-| `pedidos-venda-abertos` | Portal do Vendedor | **Ativo** (coexiste até F2c real) |
-| `propostas-comerciais` | Propostas ativas + PDF | Permanece |
+| `dashboard-commercial` | Cockpit KPIs / OTD / OV (legado coexistente) | Referência até Gestão nativa |
+| `pedidos-venda-abertos` | Portal do Vendedor | **Ativo** (coexiste; cutover F2c adiado) |
+| `propostas-comerciais` | Propostas ADY + PDF (legado) | Referência até Propostas nativas |
 
 ## Fases
 
 | Fase | Entrega | Status |
 |------|---------|--------|
 | F0–F2 | Docs, API, migrations, dual-read | Concluído |
-| F2b | Paridade UX | **Concluído** (port PVA → commercial) |
-| F2c | Depreciar PVA | Pendente homologação |
-| F3–F4 | Runtime módulo + composição | Fora do escopo atual |
-| F5–F7 | CRM / forecast / amostras | Fora do escopo atual |
+| F2b | Paridade UX operacional | **Concluído** (port PVA → commercial) |
+| **Consolidação nativa** | Gestão + Propostas ADY + elevar ops | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
+| F2c | Depreciar PVA | **Adiado** (só após Comercial superar + pedido) |
+| P3 CRM | Reminder/checklist avançado | **Bloqueado** até consolidação |
+| F3–F4 | Runtime módulo | Fora do escopo atual |
 
 ## Referências
 
