@@ -14,7 +14,7 @@ export type GestaoFilterUrlState = LinkedDateFilters & {
   customerSegment: "" | "weg" | "new_business";
 };
 
-const SESSION_STORAGE_KEY = "delpi.commercial.gestao.filters";
+const SESSION_STORAGE_KEY = "delpi.commercial.analytics.filters";
 
 function isValidIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);

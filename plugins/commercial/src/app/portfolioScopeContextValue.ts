@@ -8,8 +8,8 @@ export type PortfolioScopeContextValue = {
   canViewWorklist?: boolean;
   canManageFollowups?: boolean;
   canViewAnalytics?: boolean;
-  canViewPropostas?: boolean;
-  canExportPropostas?: boolean;
+  canViewProposals?: boolean;
+  canExportProposals?: boolean;
   canUseTeamScope?: boolean;
   canViewWorklistTeam?: boolean;
   myPortfolio: SellerPortfolio | null;

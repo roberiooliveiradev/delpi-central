@@ -12,9 +12,9 @@ import {
   CommercialLoadingCard,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigateGestaoOtdLine } from "../../app/pluginNavigation";
+import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { KpiCard } from "../../components/KpiCard";
-import { GESTAO_CONTENT } from "../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../content/analyticsContent";
 import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/gestao";
 import { formatDisplayDate } from "../../utils/dates";
 import { GestaoFilters } from "./components/GestaoFilters";
@@ -84,7 +84,7 @@ export function GestaoOtdPage({ basePath }: GestaoOtdPageProps) {
           type="button"
           className="cm-link-button"
           onClick={() =>
-            navigateGestaoOtdLine(row.branch, row.order_number, row.line_item, {
+            navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
               basePath,
               search: buildGestaoFilterSearchParams(filters.filterState),
             })

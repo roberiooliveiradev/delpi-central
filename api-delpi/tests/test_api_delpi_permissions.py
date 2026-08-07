@@ -91,6 +91,7 @@ def test_kpi_commercial_accepts_analytics_alias() -> None:
 
 
 def test_propostas_comerciais_accepts_commercial_aliases() -> None:
+    assert perms.COMMERCIAL_PROPOSALS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS
+    assert perms.COMMERCIAL_PROPOSALS_EXPORT in perms.PROPOSTAS_COMERCIAIS_ACCESS
     assert perms.COMMERCIAL_PROPOSTAS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS
-    assert perms.COMMERCIAL_PROPOSTAS_EXPORT in perms.PROPOSTAS_COMERCIAIS_ACCESS
     assert perms.PROPOSTAS_COMERCIAIS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS

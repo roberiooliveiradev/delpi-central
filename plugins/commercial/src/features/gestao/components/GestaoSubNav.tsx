@@ -1,7 +1,7 @@
 import { CommercialUnderlineNav } from "../../../app/commercialUi";
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import type { PluginView } from "../../../app/pluginRoutes";
-import { GESTAO_CONTENT } from "../../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../../content/analyticsContent";
 
 type GestaoSubNavProps = {
   view: PluginView;
@@ -9,19 +9,19 @@ type GestaoSubNavProps = {
 };
 
 const ITEMS = [
-  { id: "gestao" as const, label: GESTAO_CONTENT.nav.overview },
-  { id: "gestao_otd" as const, label: GESTAO_CONTENT.nav.otd },
-  { id: "gestao_equipe" as const, label: GESTAO_CONTENT.nav.equipe },
-  { id: "gestao_oportunidades" as const, label: GESTAO_CONTENT.nav.oportunidades },
+  { id: "analytics" as const, label: GESTAO_CONTENT.nav.overview },
+  { id: "analytics_otd" as const, label: GESTAO_CONTENT.nav.otd },
+  { id: "analytics_team" as const, label: GESTAO_CONTENT.nav.equipe },
+  { id: "analytics_opportunities" as const, label: GESTAO_CONTENT.nav.oportunidades },
 ];
 
 function resolveActiveId(view: PluginView): (typeof ITEMS)[number]["id"] {
-  if (view === "gestao_otd" || view === "gestao_otd_line") return "gestao_otd";
-  if (view === "gestao_equipe") return "gestao_equipe";
-  if (view === "gestao_oportunidades" || view === "gestao_oportunidade_detail") {
-    return "gestao_oportunidades";
+  if (view === "analytics_otd" || view === "analytics_otd_line") return "analytics_otd";
+  if (view === "analytics_team") return "analytics_team";
+  if (view === "analytics_opportunities" || view === "analytics_opportunity_detail") {
+    return "analytics_opportunities";
   }
-  return "gestao";
+  return "analytics";
 }
 
 export function GestaoSubNav({ view, basePath }: GestaoSubNavProps) {

@@ -4,7 +4,7 @@ import {
   CommercialSelectField,
   cmFiltersKit,
 } from "../../../app/commercialUi";
-import { GESTAO_CONTENT } from "../../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../../content/analyticsContent";
 import { GESTAO_BRANCH_OPTIONS } from "../utils/gestaoBranchFilters";
 import type { GestaoFilterUrlState } from "../utils/gestaoFilterUrl";
 

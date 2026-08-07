@@ -16,7 +16,7 @@ import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { formatCurrency } from "../utils/format";
 import { GestaoSubNav } from "../features/gestao/components/GestaoSubNav";
-import { isGestaoView, resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
+import { isAnalyticsView, resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
@@ -33,7 +33,7 @@ type PluginShellProps = {
   search?: string;
   showAdmin?: boolean;
   showWorklist?: boolean;
-  showPropostas?: boolean;
+  showProposals?: boolean;
   showAnalytics?: boolean;
   scopeLabel?: string;
   children: ReactNode;
@@ -44,8 +44,8 @@ const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   my_day: CM_HELP.shell.navMyDay,
   open_orders: CM_HELP.shell.navOrders,
   customers: CM_HELP.shell.navCustomers,
-  propostas: CM_HELP.shell.navPropostas,
-  gestao: CM_HELP.shell.navGestao,
+  proposals: CM_HELP.shell.navProposals,
+  analytics: CM_HELP.shell.navGestao,
   seller_portfolios: CM_HELP.shell.navAdmin,
 };
 
@@ -54,8 +54,8 @@ const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   my_day: <CalendarCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
   open_orders: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
-  propostas: <FileText size={16} strokeWidth={1.75} aria-hidden="true" />,
-  gestao: <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />,
+  proposals: <FileText size={16} strokeWidth={1.75} aria-hidden="true" />,
+  analytics: <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />,
   seller_portfolios: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
@@ -72,7 +72,7 @@ export function PluginShell({
   search,
   showAdmin = false,
   showWorklist = false,
-  showPropostas = false,
+  showProposals = false,
   showAnalytics = false,
   scopeLabel,
   children,
@@ -120,8 +120,8 @@ export function PluginShell({
       : []),
     { id: "open_orders", label: "Pedidos" },
     { id: "customers", label: "Carteira" },
-    ...(showPropostas ? [{ id: "propostas" as const, label: "Propostas" }] : []),
-    ...(showAnalytics ? [{ id: "gestao" as const, label: "Gestão" }] : []),
+    ...(showProposals ? [{ id: "proposals" as const, label: "Propostas" }] : []),
+    ...(showAnalytics ? [{ id: "analytics" as const, label: "Gestão" }] : []),
     ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),
   ];
 
@@ -230,7 +230,7 @@ export function PluginShell({
           }
         />
 
-        {isGestaoView(view) && showAnalytics ? (
+        {isAnalyticsView(view) && showAnalytics ? (
           <GestaoSubNav view={view} basePath={basePath} />
         ) : null}
 
@@ -245,7 +245,7 @@ export function PluginShell({
 export function HomeNavIcon({
   target,
 }: {
-  target: "orders" | "customers" | "admin" | "my_day" | "propostas" | "gestao";
+  target: "orders" | "customers" | "admin" | "my_day" | "proposals" | "analytics";
 }) {
   if (target === "orders") {
     return <ClipboardList size={22} strokeWidth={1.75} aria-hidden="true" />;
@@ -256,10 +256,10 @@ export function HomeNavIcon({
   if (target === "my_day") {
     return <CalendarCheck size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
-  if (target === "propostas") {
+  if (target === "proposals") {
     return <FileText size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
-  if (target === "gestao") {
+  if (target === "analytics") {
     return <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
   return <Settings size={22} strokeWidth={1.75} aria-hidden="true" />;

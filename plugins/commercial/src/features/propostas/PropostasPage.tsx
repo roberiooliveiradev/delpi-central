@@ -13,8 +13,8 @@ import {
   CommercialTextField,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigatePropostaDetail } from "../../app/pluginNavigation";
-import { PROPOSTAS_CONTENT } from "../../content/gestaoContent";
+import { navigateProposalDetail } from "../../app/pluginNavigation";
+import { PROPOSTAS_CONTENT } from "../../content/analyticsContent";
 import type { PropostaComercialListData, PropostaComercialListItem } from "../../types/propostasComerciais";
 
 function filterPropostas(
@@ -75,7 +75,7 @@ export function PropostasPage({ basePath }: PropostasPageProps) {
         <button
           type="button"
           className="cm-link-button"
-          onClick={() => navigatePropostaDetail(row.proposta_interna, { basePath })}
+          onClick={() => navigateProposalDetail(row.proposta_interna, { basePath })}
         >
           {row.numero_ov || row.proposta_interna}
         </button>

@@ -26,14 +26,14 @@ export function CustomerSectionComingSoon({
             <ActionButton
               variant="primary"
               onClick={() =>
-                navigatePluginView("gestao_oportunidades", { basePath })
+                navigatePluginView("analytics_opportunities", { basePath })
               }
             >
               Ver oportunidades
             </ActionButton>
             <ActionButton
               variant="ghost"
-              onClick={() => navigatePluginView("gestao", { basePath })}
+              onClick={() => navigatePluginView("analytics", { basePath })}
             >
               Visão geral
             </ActionButton>
@@ -58,7 +58,7 @@ export function CustomerSectionComingSoon({
             </ActionButton>
             <ActionButton
               variant="ghost"
-              onClick={() => navigatePluginView("propostas", { basePath })}
+              onClick={() => navigatePluginView("proposals", { basePath })}
             >
               Ver propostas
             </ActionButton>

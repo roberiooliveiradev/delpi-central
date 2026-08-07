@@ -1,4 +1,4 @@
-"""Testes de capacidades RBAC commercial-api (G2–G4)."""
+"""Testes de capacidades RBAC commercial-api (G2–G4) — codes EN + aliases."""
 
 from __future__ import annotations
 
@@ -18,11 +18,15 @@ def test_analytics_accepts_commercial_and_dashboard_aliases() -> None:
     assert not perms.can_view_analytics(_user(perms.COMMERCIAL_ACCOUNTS_VIEW))
 
 
-def test_propostas_accepts_commercial_and_legacy_aliases() -> None:
-    assert perms.can_view_propostas(_user(perms.COMMERCIAL_PROPOSTAS_VIEW))
-    assert perms.can_view_propostas(_user(perms.PROPOSTAS_COMERCIAIS_VIEW))
-    assert perms.can_export_propostas(_user(perms.COMMERCIAL_PROPOSTAS_EXPORT))
-    assert not perms.can_view_propostas(_user(perms.COMMERCIAL_ACCOUNTS_VIEW))
+def test_proposals_canonical_en_and_pt_legacy_alias() -> None:
+    assert perms.COMMERCIAL_PROPOSALS_VIEW == "commercial.proposals.view"
+    assert perms.COMMERCIAL_PROPOSALS_EXPORT == "commercial.proposals.export"
+    assert perms.can_view_proposals(_user(perms.COMMERCIAL_PROPOSALS_VIEW))
+    assert perms.can_view_proposals(_user(perms.COMMERCIAL_PROPOSTAS_VIEW_LEGACY))
+    assert perms.can_view_proposals(_user(perms.PROPOSTAS_COMERCIAIS_VIEW))
+    assert perms.can_export_proposals(_user(perms.COMMERCIAL_PROPOSALS_EXPORT))
+    assert perms.can_export_proposals(_user(perms.COMMERCIAL_PROPOSTAS_EXPORT_LEGACY))
+    assert not perms.can_view_proposals(_user(perms.COMMERCIAL_ACCOUNTS_VIEW))
 
 
 def test_team_scope_is_team_view_or_manage_without_pva_access_alias() -> None:

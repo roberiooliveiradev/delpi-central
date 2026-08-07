@@ -14,7 +14,7 @@ import {
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
-import { GESTAO_CONTENT } from "../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProduct, CommercialProposalDetail, CommercialProposalHistoryEvent } from "../../types/gestao";
 import { formatDisplayDate } from "../../utils/dates";
 import { useGestaoFilters } from "./hooks/useGestaoFilters";
@@ -110,7 +110,7 @@ export function GestaoOportunidadeDetailPage({
           <ActionButton
             variant="ghost"
             onClick={() =>
-              navigatePluginView("gestao_oportunidades", {
+              navigatePluginView("analytics_opportunities", {
                 basePath,
                 search: buildGestaoFilterSearchParams(filters.filterState),
               })

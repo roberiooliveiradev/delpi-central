@@ -14,7 +14,7 @@ import {
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
-import { GESTAO_CONTENT } from "../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../content/analyticsContent";
 import type { SellerPortfolio } from "../../types/portfolio";
 import { formatCurrency } from "../../utils/format";
 

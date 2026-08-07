@@ -31,12 +31,12 @@
 | `/apps/commercial/customers/:code/:store` | Conta (detalhe) | F2b | Vendedor+ |
 | `/apps/commercial/seller-portfolios` | Carteiras | F2b | Admin |
 | `/apps/commercial/my-day` | Meu dia | Wave G+ | worklist.view |
-| `/apps/commercial/propostas` | Propostas (ADY) | Consolidação | propostas.view |
-| `/apps/commercial/propostas/:id` | Detalhe + PDF | Consolidação | propostas.view |
-| `/apps/commercial/gestao` | Gestão visão geral | Consolidação | analytics.view |
-| `/apps/commercial/gestao/otd` | OTD | Consolidação | analytics.view |
-| `/apps/commercial/gestao/equipe` | Equipe | Consolidação | analytics + team |
-| `/apps/commercial/gestao/oportunidades` | Oportunidades OV | Consolidação | analytics.view |
+| `/apps/commercial/proposals` | Propostas (ADY) | Consolidação | proposals.view |
+| `/apps/commercial/proposals/:id` | Detalhe + PDF | Consolidação | proposals.view |
+| `/apps/commercial/analytics` | Gestão visão geral | Consolidação | analytics.view |
+| `/apps/commercial/analytics/otd` | OTD | Consolidação | analytics.view |
+| `/apps/commercial/analytics/team` | Equipe | Consolidação | analytics + team |
+| `/apps/commercial/analytics/opportunities` | Oportunidades OV | Consolidação | analytics.view |
 | `/apps/commercial/prospects` | Prospects | pós-consolidação / P3 | — |
 | `/apps/commercial/forecast` | Forecast | pós-consolidação | — |
 

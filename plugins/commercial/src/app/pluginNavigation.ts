@@ -1,9 +1,9 @@
 import {
   buildCustomerDetailPath,
-  buildGestaoOportunidadeDetailPath,
-  buildGestaoOtdLinePath,
+  buildAnalyticsOpportunityDetailPath,
+  buildAnalyticsOtdLinePath,
   buildPluginPath,
-  buildPropostaDetailPath,
+  buildProposalDetailPath,
   normalizePathname,
   type BuildablePluginView,
 } from "./pluginRoutes";
@@ -41,21 +41,21 @@ export function navigateCustomerDetail(
   return true;
 }
 
-export function navigatePropostaDetail(
+export function navigateProposalDetail(
   propostaId: string,
   options?: { basePath?: string },
 ): boolean {
-  const path = buildPropostaDetailPath(options?.basePath, propostaId);
+  const path = buildProposalDetailPath(options?.basePath, propostaId);
   if (!path) return false;
   navigatePluginPath(path);
   return true;
 }
 
-export function navigateGestaoOportunidadeDetail(
+export function navigateAnalyticsOpportunityDetail(
   proposalNumber: string,
   options?: { basePath?: string; search?: string },
 ): boolean {
-  const path = buildGestaoOportunidadeDetailPath(
+  const path = buildAnalyticsOpportunityDetailPath(
     options?.basePath,
     proposalNumber,
     options?.search,
@@ -65,13 +65,13 @@ export function navigateGestaoOportunidadeDetail(
   return true;
 }
 
-export function navigateGestaoOtdLine(
+export function navigateAnalyticsOtdLine(
   branch: string,
   orderNumber: string,
   lineItem: string,
   options?: { basePath?: string; search?: string },
 ): boolean {
-  const path = buildGestaoOtdLinePath(
+  const path = buildAnalyticsOtdLinePath(
     options?.basePath,
     branch,
     orderNumber,
@@ -83,4 +83,4 @@ export function navigateGestaoOtdLine(
   return true;
 }
 
-export { buildCustomerDetailPath, buildPropostaDetailPath };
+export { buildCustomerDetailPath, buildProposalDetailPath };

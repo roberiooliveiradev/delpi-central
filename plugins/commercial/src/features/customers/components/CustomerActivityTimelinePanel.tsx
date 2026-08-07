@@ -85,13 +85,13 @@ export function CustomerActivityTimelinePanel({
       <div className="cm-nav-row" style={{ marginTop: 12 }}>
         <ActionButton
           variant="ghost"
-          onClick={() => navigatePluginView("propostas", { basePath })}
+          onClick={() => navigatePluginView("proposals", { basePath })}
         >
           Propostas →
         </ActionButton>
         <ActionButton
           variant="ghost"
-          onClick={() => navigatePluginView("gestao_oportunidades", { basePath })}
+          onClick={() => navigatePluginView("analytics_opportunities", { basePath })}
         >
           Oportunidades →
         </ActionButton>

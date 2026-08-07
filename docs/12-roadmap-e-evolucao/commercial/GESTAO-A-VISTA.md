@@ -21,9 +21,9 @@
 Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†
 ```
 
-† `seller-portfolios.manage`. Gestão exige `analytics.view`. Propostas exige `propostas.view`.
+† `seller-portfolios.manage`. Gestão exige `analytics.view`. Propostas exige `proposals.view`.
 
-Subnav Gestão: `Visão geral · OTD · Equipe · Oportunidades`.
+Subnav Gestão: `Visão geral · OTD · Equipe · Oportunidades` → paths `/analytics`, `/analytics/otd`, `/analytics/team`, `/analytics/opportunities`.
 
 ## Duas “propostas”
 
@@ -40,8 +40,8 @@ Subnav Gestão: `Visão geral · OTD · Equipe · Oportunidades`.
 | `commercial.worklist.view` / `followups.manage` | Meu dia |
 | `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) |
 | `commercial.audit.view` | Auditoria |
-| `commercial.analytics.view` | **Toda** a Gestão (visão geral, OTD, equipe, OV) |
-| `commercial.propostas.view` / `.export` | Lista/detalhe ADY + PDF |
+| `commercial.analytics.view` | **Toda** a Gestão (`/analytics/*`) |
+| `commercial.proposals.view` / `.export` | Lista/detalhe ADY + PDF (`/proposals`) |
 | `commercial.accounts.team.view` | Filtro multi-vendedor / Gestão Equipe |
 | `commercial.worklist.team.view` | Meu dia `scope=team` |
 
@@ -52,7 +52,7 @@ Subnav Gestão: `Visão geral · OTD · Equipe · Oportunidades`.
 | Leitura portal | `pedidos-venda-abertos.access`, `api-delpi.access` |
 | Admin carteiras | `pedidos-venda-abertos.admin` |
 | Gestão BI | `dashboard-commercial.view`, `api-delpi.access` |
-| ADY/PDF | `propostas-comerciais.view`, `api-delpi.access`, `dashboard-commercial.view` |
+| ADY/PDF | `propostas-comerciais.view`, `commercial.propostas.*` (legado), `api-delpi.access`, `dashboard-commercial.view` |
 | Team | **só** `commercial.*.team.view` (sem alias) |
 
 ### Equipe (G4)
@@ -64,7 +64,7 @@ Universo = carteiras **ativas** (`listSellerPortfolios`). Filtro MFE: `accounts.
 | | |
 |--|--|
 | URL | `competence`, `start_date`, `end_date`, `branch`, `customer_segment` |
-| sessionStorage | `delpi.commercial.gestao.filters` (não reutilizar chave do dashboard) |
+| sessionStorage | `delpi.commercial.analytics.filters` (não reutilizar chave do dashboard) |
 | Hook | `useGestaoFilters` |
 | Datas v1 | **2× DateField** (+ competence) — sem DateRangeField |
 
@@ -77,8 +77,8 @@ Universo = carteiras **ativas** (`listSellerPortfolios`). Filtro MFE: `accounts.
 | 1b | Carteira + Conta operacional kit-first | Commit + rebuild |
 | 1c | Carteiras + team RBAC + Home sem deep link | Commit + rebuild commercial-api/MFE |
 | 1b-híbrida | Conta CTAs internos | Commit |
-| 2–5 | `/gestao/*` | Commit + rebuild |
-| 6 | `/propostas` ADY+PDF | Commit + rebuild |
+| 2–5 | `/analytics/*` | Commit + rebuild |
+| 6 | `/proposals` ADY+PDF | Commit + rebuild |
 
 Após cada etapa: commit git → `up-dev-sequential.sh` dos serviços tocados → smoke/logs/403.
 

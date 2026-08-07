@@ -12,7 +12,7 @@ export const CM_HELP = {
     navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Linhas de pedido de venda em aberto no TOTVS, no escopo da carteira.",
     navCustomers: "Clientes da carteira com pedidos em aberto e indicadores comerciais.",
-    navPropostas: "Propostas comerciais (ADY) read-only com emissão de PDF.",
+    navProposals: "Propostas comerciais (ADY) read-only com emissão de PDF.",
     navGestao: "KPIs, OTD, equipe e oportunidades comerciais no período filtrado.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },

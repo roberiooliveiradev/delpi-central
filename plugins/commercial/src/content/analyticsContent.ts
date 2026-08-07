@@ -29,7 +29,7 @@ export const GESTAO_CONTENT = {
   },
   oportunidades: {
     title: "Oportunidades",
-    subtitle: "Lista de OVs/propostas comerciais do período.",
+    subtitle: "Lista de OVs/proposals comerciais do período.",
     detail: "Detalhe da oportunidade de venda.",
   },
   filters: {

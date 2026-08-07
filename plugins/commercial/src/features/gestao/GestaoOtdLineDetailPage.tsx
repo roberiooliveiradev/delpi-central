@@ -12,7 +12,7 @@ import {
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
-import { GESTAO_CONTENT } from "../../content/gestaoContent";
+import { GESTAO_CONTENT } from "../../content/analyticsContent";
 import type { SalesOrderOtdLineDetailData } from "../../types/gestao";
 import { formatDisplayDate } from "../../utils/dates";
 import { useGestaoFilters } from "./hooks/useGestaoFilters";
@@ -85,7 +85,7 @@ export function GestaoOtdLineDetailPage({
           <ActionButton
             variant="ghost"
             onClick={() =>
-              navigatePluginView("gestao_otd", {
+              navigatePluginView("analytics_otd", {
                 basePath,
                 search: buildGestaoFilterSearchParams(filters.filterState),
               })

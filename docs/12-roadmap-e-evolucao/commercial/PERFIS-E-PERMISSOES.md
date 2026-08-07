@@ -25,13 +25,13 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
 | `commercial.seller-portfolios.manage` | Administrar carteiras | CRUD `/seller-portfolios`; `is_admin` |
 | `commercial.audit.view` | Ver auditoria | quando exposta |
-| `commercial.analytics.view` | Ver Gestão à vista | **Toda** `/gestao/*` (visão geral, OTD, equipe, oportunidades OV) |
-| `commercial.propostas.view` | Ver propostas documento | `/propostas` lista/detalhe ADY |
-| `commercial.propostas.export` | Exportar PDF proposta | POST PDF com overrides |
+| `commercial.analytics.view` | Ver Gestão à vista | **Toda** `/analytics/*` (visão geral, OTD, equipe, oportunidades OV) |
+| `commercial.proposals.view` | Ver propostas documento | `/proposals` lista/detalhe ADY |
+| `commercial.proposals.export` | Exportar PDF proposta | POST PDF com overrides |
 | `commercial.accounts.team.view` | Ver carteira da equipe | filtro vendedor Pedidos/Carteira; Gestão Equipe |
 | `commercial.worklist.team.view` | Ver worklist da equipe | Meu dia `scope=team` |
 
-**Home** usa `accounts.view`. **Não** existem `otd.view` / `oportunidades.view` separados — cobertos por `analytics.view`.
+**Home** usa `accounts.view`. **Não** existem `otd.view` / `opportunities.view` separados — cobertos por `analytics.view`.
 
 ## Aliases (OR) — coexistência com irmãos
 
@@ -40,7 +40,7 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | Leitura portal | `accounts.view` \| `pedidos-venda-abertos.access` \| `api-delpi.access` |
 | Admin carteiras | `seller-portfolios.manage` \| `pedidos-venda-abertos.admin` |
 | Gestão BI / OTD / OV | `analytics.view` \| `dashboard-commercial.view` \| `api-delpi.access` |
-| Documento ADY + PDF | `propostas.view` (+ export) \| `propostas-comerciais.view` \| `api-delpi.access` \| `dashboard-commercial.view` |
+| Documento ADY + PDF | `proposals.view` (+ export) \| `propostas.view` (legado) \| `propostas-comerciais.view` \| `api-delpi.access` \| `dashboard-commercial.view` |
 | Team | **somente** `commercial.*.team.view` |
 
 Novas atribuições de papel: preferir só `commercial.*`.

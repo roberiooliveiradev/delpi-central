@@ -1,1 +1,1 @@
-export { PROPOSTAS_CONTENT } from "./gestaoContent";
+export { PROPOSTAS_CONTENT } from "./analyticsContent";

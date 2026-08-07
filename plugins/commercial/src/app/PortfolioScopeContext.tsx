@@ -18,8 +18,8 @@ type PortfolioScopeValue = {
   canViewWorklist: boolean;
   canManageFollowups: boolean;
   canViewAnalytics: boolean;
-  canViewPropostas: boolean;
-  canExportPropostas: boolean;
+  canViewProposals: boolean;
+  canExportProposals: boolean;
   canUseTeamScope: boolean;
   canViewWorklistTeam: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
@@ -39,8 +39,8 @@ const EMPTY_CAPABILITIES: CommercialCapabilities = {
   followups_manage: false,
   seller_portfolios_manage: false,
   analytics_view: false,
-  propostas_view: false,
-  propostas_export: false,
+  proposals_view: false,
+  proposals_export: false,
   accounts_team_view: false,
   worklist_team_view: false,
   team_scope: false,
@@ -50,15 +50,15 @@ function resolveCapabilities(
   raw: SellerPortfolioMeCapabilities | undefined,
   admin: boolean,
 ): CommercialCapabilities {
-  // manage implica team_scope na prática (G4); analytics/propostas NÃO herdam de admin.
+  // manage implica team_scope na prática (G4); analytics/proposals NÃO herdam de admin.
   const teamScope = Boolean(raw?.team_scope ?? admin);
   return {
     worklist_view: Boolean(raw?.worklist_view),
     followups_manage: Boolean(raw?.followups_manage),
     seller_portfolios_manage: Boolean(raw?.seller_portfolios_manage ?? admin),
     analytics_view: Boolean(raw?.analytics_view),
-    propostas_view: Boolean(raw?.propostas_view),
-    propostas_export: Boolean(raw?.propostas_export ?? raw?.propostas_view),
+    proposals_view: Boolean(raw?.proposals_view),
+    proposals_export: Boolean(raw?.proposals_export ?? raw?.proposals_view),
     accounts_team_view: Boolean(raw?.accounts_team_view ?? teamScope),
     worklist_team_view: Boolean(raw?.worklist_team_view),
     team_scope: teamScope,
@@ -137,8 +137,8 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       canViewWorklist: capabilities.worklist_view,
       canManageFollowups: capabilities.followups_manage,
       canViewAnalytics: capabilities.analytics_view,
-      canViewPropostas: capabilities.propostas_view,
-      canExportPropostas: capabilities.propostas_export,
+      canViewProposals: capabilities.proposals_view,
+      canExportProposals: capabilities.proposals_export,
       canUseTeamScope: capabilities.team_scope,
       canViewWorklistTeam: capabilities.worklist_team_view,
       currentUserId,

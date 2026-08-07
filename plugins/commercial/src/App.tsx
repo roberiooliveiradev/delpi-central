@@ -51,7 +51,7 @@ function AppRoutes({
     isAdmin,
     canViewWorklist,
     canViewAnalytics,
-    canViewPropostas,
+    canViewProposals,
     canUseTeamScope,
     myPortfolio,
   } = usePortfolioScope();
@@ -66,7 +66,7 @@ function AppRoutes({
       search={search}
       showAdmin={isAdmin}
       showWorklist={canViewWorklist}
-      showPropostas={canViewPropostas}
+      showProposals={canViewProposals}
       showAnalytics={canViewAnalytics}
       scopeLabel={scopeLabel}
     >
@@ -75,7 +75,7 @@ function AppRoutes({
           basePath={basePath}
           showAdmin={isAdmin}
           showWorklist={canViewWorklist}
-          showPropostas={canViewPropostas}
+          showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
         />
       ) : null}
@@ -92,35 +92,35 @@ function AppRoutes({
           search={search}
         />
       ) : null}
-      {view === "propostas" ? (
-        canViewPropostas ? (
+      {view === "proposals" ? (
+        canViewProposals ? (
           <PropostasPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "proposta_detail" && route.propostaId ? (
-        canViewPropostas ? (
+      {view === "proposal_detail" && route.propostaId ? (
+        canViewProposals ? (
           <PropostaDetailPage basePath={basePath} propostaId={route.propostaId} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao" ? (
+      {view === "analytics" ? (
         canViewAnalytics ? (
           <GestaoPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao_otd" ? (
+      {view === "analytics_otd" ? (
         canViewAnalytics ? (
           <GestaoOtdPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao_otd_line" &&
+      {view === "analytics_otd_line" &&
       route.orderBranch &&
       route.orderNumber &&
       route.lineItem ? (
@@ -135,21 +135,21 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao_equipe" ? (
+      {view === "analytics_team" ? (
         canViewAnalytics && canUseTeamScope ? (
           <GestaoEquipePage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao_oportunidades" ? (
+      {view === "analytics_opportunities" ? (
         canViewAnalytics ? (
           <GestaoOportunidadesPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "gestao_oportunidade_detail" && route.proposalNumber ? (
+      {view === "analytics_opportunity_detail" && route.proposalNumber ? (
         canViewAnalytics ? (
           <GestaoOportunidadeDetailPage
             basePath={basePath}

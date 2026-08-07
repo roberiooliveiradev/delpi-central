@@ -13,8 +13,8 @@ import {
   CommercialTextField,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigateGestaoOportunidadeDetail } from "../../app/pluginNavigation";
-import { GESTAO_CONTENT } from "../../content/gestaoContent";
+import { navigateAnalyticsOpportunityDetail } from "../../app/pluginNavigation";
+import { GESTAO_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProposal } from "../../types/gestao";
 import { formatDisplayDate } from "../../utils/dates";
 import { GestaoFilters } from "./components/GestaoFilters";
@@ -82,7 +82,7 @@ export function GestaoOportunidadesPage({ basePath }: GestaoOportunidadesPagePro
           type="button"
           className="cm-link-button"
           onClick={() =>
-            navigateGestaoOportunidadeDetail(row.proposal_number, {
+            navigateAnalyticsOpportunityDetail(row.proposal_number, {
               basePath,
               search: buildGestaoFilterSearchParams(filters.filterState),
             })

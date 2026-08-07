@@ -16,7 +16,7 @@ import {
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
-import { PROPOSTAS_CONTENT } from "../../content/gestaoContent";
+import { PROPOSTAS_CONTENT } from "../../content/analyticsContent";
 import type {
   PropostaComercialDetail,
   PropostaComercialItem,
@@ -36,7 +36,7 @@ type PropostaDetailPageProps = {
 };
 
 export function PropostaDetailPage({ basePath, propostaId }: PropostaDetailPageProps) {
-  const { canExportPropostas } = usePortfolioScope();
+  const { canExportProposals } = usePortfolioScope();
   const [data, setData] = useState<PropostaComercialDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +131,7 @@ export function PropostaDetailPage({ basePath, propostaId }: PropostaDetailPageP
           }
         />
         <div className="cm-nav-row">
-          {canExportPropostas ? (
+          {canExportProposals ? (
             <ActionButton
               variant="primary"
               onClick={() => void handleExportPdf()}
@@ -146,7 +146,7 @@ export function PropostaDetailPage({ basePath, propostaId }: PropostaDetailPageP
           </ActionButton>
           <ActionButton
             variant="ghost"
-            onClick={() => navigatePluginView("propostas", { basePath })}
+            onClick={() => navigatePluginView("proposals", { basePath })}
           >
             <ArrowLeft size={16} aria-hidden="true" /> {PROPOSTAS_CONTENT.detail.back}
           </ActionButton>
@@ -252,7 +252,7 @@ export function PropostaDetailPage({ basePath, propostaId }: PropostaDetailPageP
             />
           </SectionCard>
 
-          {canExportPropostas ? (
+          {canExportProposals ? (
             <SectionCard
               title="PDF revisável"
               subtitle="Ajuste observações/contato antes de exportar (POST com overrides)."

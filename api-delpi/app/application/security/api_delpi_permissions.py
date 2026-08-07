@@ -113,6 +113,9 @@ PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
 COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
 COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
+COMMERCIAL_PROPOSALS_VIEW = "commercial.proposals.view"
+COMMERCIAL_PROPOSALS_EXPORT = "commercial.proposals.export"
+# Alias PT (manifest pré-rename) — manter no OR até cleanup
 COMMERCIAL_PROPOSTAS_VIEW = "commercial.propostas.view"
 COMMERCIAL_PROPOSTAS_EXPORT = "commercial.propostas.export"
 
@@ -541,6 +544,8 @@ PROPOSTAS_COMERCIAIS_ACCESS = [
     API_DELPI_ACCESS,
     PROPOSTAS_COMERCIAIS_VIEW,
     DASHBOARD_COMMERCIAL_VIEW,
+    COMMERCIAL_PROPOSALS_VIEW,
+    COMMERCIAL_PROPOSALS_EXPORT,
     COMMERCIAL_PROPOSTAS_VIEW,
     COMMERCIAL_PROPOSTAS_EXPORT,
 ]

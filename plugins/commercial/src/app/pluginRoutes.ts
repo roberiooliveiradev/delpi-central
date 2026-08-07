@@ -7,14 +7,14 @@ export type PluginView =
   | "open_orders"
   | "customers"
   | "customer_detail"
-  | "propostas"
-  | "proposta_detail"
-  | "gestao"
-  | "gestao_otd"
-  | "gestao_otd_line"
-  | "gestao_equipe"
-  | "gestao_oportunidades"
-  | "gestao_oportunidade_detail"
+  | "proposals"
+  | "proposal_detail"
+  | "analytics"
+  | "analytics_otd"
+  | "analytics_otd_line"
+  | "analytics_team"
+  | "analytics_opportunities"
+  | "analytics_opportunity_detail"
   | "seller_portfolios"
   | "not_found";
 
@@ -23,8 +23,8 @@ export type PluginNavId =
   | "my_day"
   | "open_orders"
   | "customers"
-  | "propostas"
-  | "gestao"
+  | "proposals"
+  | "analytics"
   | "seller_portfolios";
 
 export type ResolvedPluginRoute = {
@@ -94,33 +94,33 @@ export function resolvePluginRoute(
     return { view: "seller_portfolios", pathname: path, relativePath };
   }
 
-  if (relativePath === "propostas") {
-    return { view: "propostas", pathname: path, relativePath };
+  if (relativePath === "proposals") {
+    return { view: "proposals", pathname: path, relativePath };
   }
 
-  const propostaDetail = /^propostas\/([^/]+)$/.exec(relativePath);
+  const propostaDetail = /^proposals\/([^/]+)$/.exec(relativePath);
   if (propostaDetail) {
     const propostaId = safeDecodeSegment(propostaDetail[1] ?? "");
     if (!propostaId?.trim()) {
       return { view: "not_found", pathname: path, relativePath };
     }
     return {
-      view: "proposta_detail",
+      view: "proposal_detail",
       pathname: path,
       relativePath,
       propostaId: propostaId.trim(),
     };
   }
 
-  if (relativePath === "gestao") {
-    return { view: "gestao", pathname: path, relativePath };
+  if (relativePath === "analytics") {
+    return { view: "analytics", pathname: path, relativePath };
   }
 
-  if (relativePath === "gestao/otd") {
-    return { view: "gestao_otd", pathname: path, relativePath };
+  if (relativePath === "analytics/otd") {
+    return { view: "analytics_otd", pathname: path, relativePath };
   }
 
-  const otdLine = /^gestao\/otd\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(relativePath);
+  const otdLine = /^analytics\/otd\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(relativePath);
   if (otdLine) {
     const orderBranch = safeDecodeSegment(otdLine[1] ?? "");
     const orderNumber = safeDecodeSegment(otdLine[2] ?? "");
@@ -129,7 +129,7 @@ export function resolvePluginRoute(
       return { view: "not_found", pathname: path, relativePath };
     }
     return {
-      view: "gestao_otd_line",
+      view: "analytics_otd_line",
       pathname: path,
       relativePath,
       orderBranch: orderBranch.trim(),
@@ -138,25 +138,86 @@ export function resolvePluginRoute(
     };
   }
 
-  if (relativePath === "gestao/equipe") {
-    return { view: "gestao_equipe", pathname: path, relativePath };
+  if (relativePath === "analytics/team") {
+    return { view: "analytics_team", pathname: path, relativePath };
   }
 
-  if (relativePath === "gestao/oportunidades") {
-    return { view: "gestao_oportunidades", pathname: path, relativePath };
+  if (relativePath === "analytics/opportunities") {
+    return { view: "analytics_opportunities", pathname: path, relativePath };
   }
 
-  const ovDetail = /^gestao\/oportunidades\/([^/]+)$/.exec(relativePath);
+  const ovDetail = /^analytics\/opportunities\/([^/]+)$/.exec(relativePath);
   if (ovDetail) {
     const proposalNumber = safeDecodeSegment(ovDetail[1] ?? "");
     if (!proposalNumber?.trim()) {
       return { view: "not_found", pathname: path, relativePath };
     }
     return {
-      view: "gestao_oportunidade_detail",
+      view: "analytics_opportunity_detail",
       pathname: path,
       relativePath,
       proposalNumber: proposalNumber.trim(),
+    };
+  }
+
+
+  // Legacy PT path aliases (pre-EN rename) — resolve to same views
+  if (relativePath === "propostas") {
+    return { view: "proposals", pathname: path, relativePath };
+  }
+  const legacyPropostaDetail = /^propostas\/([^/]+)$/.exec(relativePath);
+  if (legacyPropostaDetail) {
+    const propostaId = safeDecodeSegment(legacyPropostaDetail[1] ?? "");
+    if (!propostaId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "proposal_detail",
+      pathname: path,
+      relativePath,
+      propostaId: propostaId.trim(),
+    };
+  }
+  if (relativePath === "gestao") {
+    return { view: "analytics", pathname: path, relativePath };
+  }
+  if (relativePath === "gestao/otd") {
+    return { view: "analytics_otd", pathname: path, relativePath };
+  }
+  if (relativePath === "gestao/equipe") {
+    return { view: "analytics_team", pathname: path, relativePath };
+  }
+  if (relativePath === "gestao/oportunidades") {
+    return { view: "analytics_opportunities", pathname: path, relativePath };
+  }
+  const legacyOv = /^gestao\/oportunidades\/([^/]+)$/.exec(relativePath);
+  if (legacyOv) {
+    const proposalNumber = safeDecodeSegment(legacyOv[1] ?? "");
+    if (!proposalNumber?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "analytics_opportunity_detail",
+      pathname: path,
+      relativePath,
+      proposalNumber: proposalNumber.trim(),
+    };
+  }
+  const legacyOtdLine = /^gestao\/otd\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(relativePath);
+  if (legacyOtdLine) {
+    const orderBranch = safeDecodeSegment(legacyOtdLine[1] ?? "");
+    const orderNumber = safeDecodeSegment(legacyOtdLine[2] ?? "");
+    const lineItem = safeDecodeSegment(legacyOtdLine[3] ?? "");
+    if (!orderBranch?.trim() || !orderNumber?.trim() || !lineItem?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "analytics_otd_line",
+      pathname: path,
+      relativePath,
+      orderBranch: orderBranch.trim(),
+      orderNumber: orderNumber.trim(),
+      lineItem: lineItem.trim(),
     };
   }
 
@@ -187,9 +248,9 @@ export function resolvePluginRoute(
 export type BuildablePluginView = Exclude<
   PluginView,
   | "customer_detail"
-  | "proposta_detail"
-  | "gestao_otd_line"
-  | "gestao_oportunidade_detail"
+  | "proposal_detail"
+  | "analytics_otd_line"
+  | "analytics_opportunity_detail"
   | "not_found"
 >;
 
@@ -208,16 +269,16 @@ export function buildPluginPath(
           ? `${base}/seller-portfolios`
           : view === "my_day"
             ? `${base}/my-day`
-            : view === "propostas"
-              ? `${base}/propostas`
-              : view === "gestao"
-                ? `${base}/gestao`
-                : view === "gestao_otd"
-                  ? `${base}/gestao/otd`
-                  : view === "gestao_equipe"
-                    ? `${base}/gestao/equipe`
-                    : view === "gestao_oportunidades"
-                      ? `${base}/gestao/oportunidades`
+            : view === "proposals"
+              ? `${base}/proposals`
+              : view === "analytics"
+                ? `${base}/analytics`
+                : view === "analytics_otd"
+                  ? `${base}/analytics/otd`
+                  : view === "analytics_team"
+                    ? `${base}/analytics/team`
+                    : view === "analytics_opportunities"
+                      ? `${base}/analytics/opportunities`
                       : base;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
@@ -237,29 +298,29 @@ export function buildCustomerDetailPath(
   return `${base}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}`;
 }
 
-export function buildPropostaDetailPath(
+export function buildProposalDetailPath(
   basePath: string | undefined,
   propostaId: string,
 ): string | null {
   const id = propostaId.trim();
   if (!id) return null;
-  return `${normalizeBasePath(basePath)}/propostas/${encodeURIComponent(id)}`;
+  return `${normalizeBasePath(basePath)}/proposals/${encodeURIComponent(id)}`;
 }
 
-export function buildGestaoOportunidadeDetailPath(
+export function buildAnalyticsOpportunityDetailPath(
   basePath: string | undefined,
   proposalNumber: string,
   search?: string,
 ): string | null {
   const number = proposalNumber.trim();
   if (!number) return null;
-  const path = `${normalizeBasePath(basePath)}/gestao/oportunidades/${encodeURIComponent(number)}`;
+  const path = `${normalizeBasePath(basePath)}/analytics/opportunities/${encodeURIComponent(number)}`;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
-export function buildGestaoOtdLinePath(
+export function buildAnalyticsOtdLinePath(
   basePath: string | undefined,
   branch: string,
   orderNumber: string,
@@ -270,34 +331,34 @@ export function buildGestaoOtdLinePath(
   const o = orderNumber.trim();
   const l = lineItem.trim();
   if (!b || !o || !l) return null;
-  const path = `${normalizeBasePath(basePath)}/gestao/otd/${encodeURIComponent(b)}/${encodeURIComponent(o)}/${encodeURIComponent(l)}`;
+  const path = `${normalizeBasePath(basePath)}/analytics/otd/${encodeURIComponent(b)}/${encodeURIComponent(o)}/${encodeURIComponent(l)}`;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
-export function isGestaoView(view: PluginView): boolean {
+export function isAnalyticsView(view: PluginView): boolean {
   return (
-    view === "gestao" ||
-    view === "gestao_otd" ||
-    view === "gestao_otd_line" ||
-    view === "gestao_equipe" ||
-    view === "gestao_oportunidades" ||
-    view === "gestao_oportunidade_detail"
+    view === "analytics" ||
+    view === "analytics_otd" ||
+    view === "analytics_otd_line" ||
+    view === "analytics_team" ||
+    view === "analytics_opportunities" ||
+    view === "analytics_opportunity_detail"
   );
 }
 
 export function resolveActiveNavId(view: PluginView): PluginNavId {
   if (view === "customer_detail") return "customers";
-  if (view === "proposta_detail") return "propostas";
-  if (isGestaoView(view)) return "gestao";
+  if (view === "proposal_detail") return "proposals";
+  if (isAnalyticsView(view)) return "analytics";
   if (view === "not_found") return "home";
   if (
     view === "home" ||
     view === "my_day" ||
     view === "open_orders" ||
     view === "customers" ||
-    view === "propostas" ||
+    view === "proposals" ||
     view === "seller_portfolios"
   ) {
     return view;

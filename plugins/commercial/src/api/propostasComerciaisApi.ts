@@ -6,7 +6,7 @@ import type {
 } from "../types/propostasComerciais";
 import { apiDelpiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
 
-export const PROPOSTAS_COMERCIAIS_API_BASE = apiDelpiUrl("/propostas-comerciais");
+export const PROPOSTAS_COMERCIAIS_API_BASE = apiDelpiUrl("/proposals-comerciais");
 
 export async function listPropostasComerciais(
   limit = 100,

@@ -15,12 +15,12 @@ Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-com
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
 | `/apps/commercial/customers` | Carteira de clientes | `accounts.view` |
 | `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `accounts.view` |
-| `/apps/commercial/propostas` | Propostas documento (ADY) | `propostas.view` |
-| `/apps/commercial/propostas/:id` | Detalhe + PDF revisável | `propostas.view` |
-| `/apps/commercial/gestao` | Gestão — visão geral | `analytics.view` |
-| `/apps/commercial/gestao/otd` | Gestão — OTD | `analytics.view` |
-| `/apps/commercial/gestao/equipe` | Gestão — equipe | `analytics.view` (+ team) |
-| `/apps/commercial/gestao/oportunidades` | Oportunidades OV | `analytics.view` |
+| `/apps/commercial/proposals` | Propostas documento (ADY) | `proposals.view` |
+| `/apps/commercial/proposals/:id` | Detalhe + PDF revisável | `proposals.view` |
+| `/apps/commercial/analytics` | Gestão — visão geral | `analytics.view` |
+| `/apps/commercial/analytics/otd` | Gestão — OTD | `analytics.view` |
+| `/apps/commercial/analytics/team` | Gestão — equipe | `analytics.view` (+ team) |
+| `/apps/commercial/analytics/opportunities` | Oportunidades OV | `analytics.view` |
 | `/apps/commercial/seller-portfolios` | Carteiras (admin) | `seller-portfolios.manage` |
 
 Nav: `Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†`
@@ -32,7 +32,7 @@ Nav: `Início → Meu dia → Pedidos → Carteira → Propostas → Gestão →
 | `/apps/commercial-api` | Carteiras, avatars, worklist, anexos, enrichment (`X-Delpi-Caller-App: commercial`) |
 | `/apps/api-delpi/pedidos-venda-abertos/` | Pedidos em aberto (barra final) |
 | `/apps/api-delpi/commercial/*` | KPIs, ROL, OTD, propostas OV |
-| `/apps/api-delpi/propostas-comerciais` | Documento ADY + PDF |
+| `/apps/api-delpi/propostas-comerciais` | Documento ADY + PDF (path legado api-delpi) |
 
 Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
@@ -44,12 +44,12 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 | `commercial.worklist.view` / `followups.manage` | Meu dia |
 | `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) |
 | `commercial.audit.view` | Auditoria |
-| `commercial.analytics.view` | **Toda** a Gestão |
-| `commercial.propostas.view` / `.export` | ADY + PDF |
+| `commercial.analytics.view` | **Toda** a Gestão (`/analytics/*`) |
+| `commercial.proposals.view` / `.export` | ADY + PDF (`/proposals/*`) |
 | `commercial.accounts.team.view` | Filtro multi-vendedor / Gestão Equipe |
 | `commercial.worklist.team.view` | Meu dia `scope=team` |
 
-Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias legado.
+Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias PVA. Alias curto `commercial.propostas.*` ainda aceito na API.
 
 Registrar no Core:
 

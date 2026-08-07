@@ -48,7 +48,7 @@ type HomePageProps = {
   basePath: string;
   showAdmin: boolean;
   showWorklist: boolean;
-  showPropostas?: boolean;
+  showProposals?: boolean;
   showAnalytics?: boolean;
 };
 
@@ -114,7 +114,7 @@ export function HomePage({
   basePath,
   showAdmin,
   showWorklist,
-  showPropostas = false,
+  showProposals = false,
   showAnalytics = false,
 }: HomePageProps) {
   const { sellerIdFilter, sellers } = usePortfolioScope();
@@ -546,7 +546,7 @@ export function HomePage({
           actions={
             <ActionButton
               variant="ghost"
-              onClick={() => navigatePluginView("gestao", { basePath })}
+              onClick={() => navigatePluginView("analytics", { basePath })}
             >
               Abrir Gestão
             </ActionButton>
@@ -570,7 +570,7 @@ export function HomePage({
                 value={formatPct(mgmtKpis.rolPct)}
                 subtitle="Matriz no mês"
                 icon={<Wallet size={22} />}
-                onClick={() => navigatePluginView("gestao", { basePath })}
+                onClick={() => navigatePluginView("analytics", { basePath })}
               />
               <KpiCard
                 title="Conversão"
@@ -578,7 +578,7 @@ export function HomePage({
                 value={formatPct(mgmtKpis.closingPct)}
                 subtitle="Propostas → ganhas"
                 icon={<PackageCheck size={22} />}
-                onClick={() => navigatePluginView("gestao", { basePath })}
+                onClick={() => navigatePluginView("analytics", { basePath })}
               />
               <KpiCard
                 title="OTD pedidos"
@@ -586,7 +586,7 @@ export function HomePage({
                 value={formatPct(mgmtKpis.otdPct)}
                 subtitle="Entrega no prazo"
                 icon={<Package size={22} />}
-                onClick={() => navigatePluginView("gestao_otd", { basePath })}
+                onClick={() => navigatePluginView("analytics_otd", { basePath })}
               />
             </div>
           ) : null}
@@ -631,7 +631,7 @@ export function HomePage({
         </SectionCard>
       ) : null}
 
-      {showPropostas || showAnalytics ? (
+      {showProposals || showAnalytics ? (
         <SectionCard
           title="Atalhos"
           subtitle="Gestão e propostas comerciais no próprio portal."
@@ -643,15 +643,15 @@ export function HomePage({
             {showAnalytics ? (
               <ActionButton
                 variant="ghost"
-                onClick={() => navigatePluginView("gestao", { basePath })}
+                onClick={() => navigatePluginView("analytics", { basePath })}
               >
                 Gestão
               </ActionButton>
             ) : null}
-            {showPropostas ? (
+            {showProposals ? (
               <ActionButton
                 variant="ghost"
-                onClick={() => navigatePluginView("propostas", { basePath })}
+                onClick={() => navigatePluginView("proposals", { basePath })}
               >
                 Propostas
               </ActionButton>
