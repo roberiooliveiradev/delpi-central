@@ -1013,7 +1013,7 @@
 .dashboard-commercial .cm-open-orders-detail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   min-width: 0;
   color: var(--cm-text);
 }
@@ -1021,6 +1021,37 @@
 .dashboard-commercial .cm-open-orders-detail__intro-text {
   font-size: 0.8125rem;
   color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-detail__guide {
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dashboard-commercial .cm-open-orders-detail__guide-step {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-surface-muted) 80%, var(--cm-surface));
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-open-orders-detail__guide-step:first-child {
+  color: var(--cm-accent, var(--primary, #089bdb));
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 40%, var(--cm-border));
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, var(--cm-surface));
 }
 
 .dashboard-commercial .cm-open-orders-detail__snapshot {
@@ -1033,12 +1064,29 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 96px;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--cm-border);
   background: var(--cm-surface-muted);
   min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__snapshot-card--danger {
+  border-color: color-mix(in srgb, var(--cm-danger, #dc2626) 45%, var(--cm-border));
+  background: color-mix(in srgb, var(--cm-danger, #dc2626) 10%, var(--cm-surface-muted));
+}
+
+.dashboard-commercial .cm-open-orders-detail__snapshot-card--warning {
+  border-color: color-mix(in srgb, #d97706 45%, var(--cm-border));
+  background: color-mix(in srgb, #d97706 10%, var(--cm-surface-muted));
+}
+
+.dashboard-commercial .cm-open-orders-detail__snapshot-card--success {
+  border-color: color-mix(in srgb, var(--cm-success, #16a34a) 40%, var(--cm-border));
+  background: color-mix(in srgb, var(--cm-success, #16a34a) 10%, var(--cm-surface-muted));
 }
 
 .dashboard-commercial .cm-open-orders-detail__snapshot-label {
@@ -1050,10 +1098,11 @@
 }
 
 .dashboard-commercial .cm-open-orders-detail__snapshot-value {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 650;
   color: var(--cm-text);
   line-height: 1.25;
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-commercial .cm-open-orders-detail__snapshot-meta {
@@ -1066,10 +1115,31 @@
   font-weight: 600;
 }
 
+.dashboard-commercial .cm-open-orders-detail__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-surface) 82%, var(--cm-surface-muted));
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-open-orders-detail__metrics-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cm-text-muted);
+}
+
 .dashboard-commercial .cm-open-orders-detail__charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
 }
 
 .dashboard-commercial .cm-open-orders-detail__chart-host {
@@ -1078,11 +1148,11 @@
 }
 
 .dashboard-commercial .cm-open-orders-detail__chart-host--compact {
-  min-height: 88px;
+  min-height: 112px;
 }
 
 .dashboard-commercial .cm-open-orders-detail__meter-block {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .dashboard-commercial .cm-open-orders-detail__prazo-cards {
@@ -1096,6 +1166,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-height: 78px;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--cm-border);
@@ -1118,19 +1189,21 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dashboard-commercial .cm-open-orders-detail__factory-chips {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
 .dashboard-commercial .cm-open-orders-detail__factory-chip {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 78px;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--cm-border);
@@ -1147,6 +1220,8 @@
 
 .dashboard-commercial .cm-open-orders-detail__factory-chip-value {
   font-size: 0.9375rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
   color: var(--cm-text);
 }
 
@@ -1344,6 +1419,10 @@
   .dashboard-commercial .cm-ov-kpi-row {
     grid-template-columns: 1fr 1fr;
   }
+
+  .dashboard-commercial .cm-open-orders-detail__factory-chips {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -1351,6 +1430,10 @@
   .dashboard-commercial .cm-open-orders-detail__snapshot,
   .dashboard-commercial .cm-open-orders-detail__prazo-cards {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-open-orders-detail__factory-chips {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

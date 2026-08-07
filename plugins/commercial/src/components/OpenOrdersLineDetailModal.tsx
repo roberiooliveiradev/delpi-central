@@ -14,6 +14,7 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -114,13 +115,31 @@ export function OpenOrdersLineDetailModal({
   const forecastDays = getDaysFromToday(previsao.previsaoData);
   const description = `${item.nome_cliente || "Cliente"} · Pedido ${item.pedido || "—"} · Linha ${item.linha || "—"} · Produto ${item.produto || "—"}`;
 
-  const coverageStacked = [
-    {
-      name: "Cobertura",
-      estoque: Math.max(0, coverage.allocated),
-      produzir: Math.max(0, previsao.saldoNecessarioProducao),
-    },
-  ];
+  const coverageStacked = (() => {
+    const estoqueQty = Math.max(0, coverage.allocated);
+    const produzirQty = Math.max(0, previsao.saldoNecessarioProducao);
+    const total = estoqueQty + produzirQty;
+    if (total <= 0) {
+      return [
+        {
+          name: "Demanda",
+          estoque: 0,
+          produzir: 0,
+          estoqueQty: 0,
+          produzirQty: 0,
+        },
+      ];
+    }
+    return [
+      {
+        name: "Demanda",
+        estoque: (estoqueQty / total) * 100,
+        produzir: (produzirQty / total) * 100,
+        estoqueQty,
+        produzirQty,
+      },
+    ];
+  })();
 
   const prazoCompare = [
     {
@@ -140,6 +159,14 @@ export function OpenOrdersLineDetailModal({
     if (row.id === "pedido" && !item.data_entrega) return false;
     return true;
   });
+
+  const snapshotTone = {
+    situacao: lineStatus.tone === "danger" || lineStatus.tone === "warning" ? lineStatus.tone : "neutral",
+    cobertura:
+      coverage.tone === "success" ? "success" : coverage.tone === "danger" ? "danger" : "neutral",
+    entrega: (deliveryDays ?? 0) < 0 ? "danger" : "neutral",
+    previsao: (forecastDays ?? 0) < 0 ? "warning" : "neutral",
+  } as const;
 
   const copyPedido = async () => {
     const text = item.pedido?.trim();
@@ -205,7 +232,12 @@ export function OpenOrdersLineDetailModal({
     >
       <div className="cm-open-orders-detail">
         <div className="cm-open-orders-detail__snapshot" aria-label="Resumo da linha">
-          <div className="cm-open-orders-detail__snapshot-card">
+          <div
+            className={[
+              "cm-open-orders-detail__snapshot-card",
+              `cm-open-orders-detail__snapshot-card--${snapshotTone.situacao}`,
+            ].join(" ")}
+          >
             <span className="cm-open-orders-detail__snapshot-label">Situação</span>
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
@@ -213,7 +245,12 @@ export function OpenOrdersLineDetailModal({
               variant={badgeVariant(lineStatus.tone)}
             />
           </div>
-          <div className="cm-open-orders-detail__snapshot-card">
+          <div
+            className={[
+              "cm-open-orders-detail__snapshot-card",
+              `cm-open-orders-detail__snapshot-card--${snapshotTone.cobertura}`,
+            ].join(" ")}
+          >
             <span className="cm-open-orders-detail__snapshot-label">Cobertura</span>
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
@@ -222,7 +259,12 @@ export function OpenOrdersLineDetailModal({
             />
             <span className="cm-open-orders-detail__snapshot-meta">{coverage.percentLabel}</span>
           </div>
-          <div className="cm-open-orders-detail__snapshot-card">
+          <div
+            className={[
+              "cm-open-orders-detail__snapshot-card",
+              `cm-open-orders-detail__snapshot-card--${snapshotTone.entrega}`,
+            ].join(" ")}
+          >
             <span className="cm-open-orders-detail__snapshot-label">Entrega pedido</span>
             <strong className="cm-open-orders-detail__snapshot-value">
               {formatDisplayDate(item.data_entrega)}
@@ -237,20 +279,37 @@ export function OpenOrdersLineDetailModal({
               {formatDaysFromTodayLabel(deliveryDays)}
             </span>
           </div>
-          <div className="cm-open-orders-detail__snapshot-card">
+          <div
+            className={[
+              "cm-open-orders-detail__snapshot-card",
+              `cm-open-orders-detail__snapshot-card--${snapshotTone.previsao}`,
+            ].join(" ")}
+          >
             <span className="cm-open-orders-detail__snapshot-label">Previsão OP</span>
             <strong className="cm-open-orders-detail__snapshot-value">{previsao.previsaoLabel}</strong>
-            <span className="cm-open-orders-detail__snapshot-meta">
+            <span
+              className={
+                (forecastDays ?? 0) < 0
+                  ? "cm-open-orders-detail__snapshot-meta cm-open-orders-detail__snapshot-meta--danger"
+                  : "cm-open-orders-detail__snapshot-meta"
+              }
+            >
               {previsao.previsaoData ? formatDaysFromTodayLabel(forecastDays) : "Sem data de OP"}
             </span>
           </div>
         </div>
 
-        <HelpTooltip content={DETAIL.modal} ariaLabel="Ajuda: detalhe da linha" wrap placement="bottom">
-          <span className="cm-open-orders-detail__intro-text delpi-ui-section-hint-label">
-            Resumo → fabril → cobertura/prazo → produção OP
-          </span>
-        </HelpTooltip>
+        <nav className="cm-open-orders-detail__guide" aria-label="Seções do detalhe">
+          <HelpTooltip content={DETAIL.modal} ariaLabel="Ajuda: detalhe da linha" wrap placement="bottom">
+            <ol className="cm-open-orders-detail__guide-list">
+              <li className="cm-open-orders-detail__guide-step">Resumo</li>
+              <li className="cm-open-orders-detail__guide-step">Fabril</li>
+              <li className="cm-open-orders-detail__guide-step">Indicadores</li>
+              <li className="cm-open-orders-detail__guide-step">Cobertura / prazo</li>
+              <li className="cm-open-orders-detail__guide-step">Produção OP</li>
+            </ol>
+          </HelpTooltip>
+        </nav>
 
         <OpenOrdersFactoryStatusStrip
           loading={extras.loading}
@@ -259,55 +318,62 @@ export function OpenOrdersLineDetailModal({
           error={extras.factoryError}
         />
 
-        <CommercialDetailFieldGrid
-          valueFallback="—"
-          wrapLabels
-          fields={[
-            {
-              label: "Saldo do pedido",
-              hint: DETAIL.saldo,
-              value: formatQuantity(item.saldo),
-            },
-            {
-              label: "Estoque alocado",
-              hint: DETAIL.estoqueAlocado,
-              value: formatQuantity(getAllocatedStock(item)),
-            },
-            {
-              label: "Saldo a produzir",
-              hint: DETAIL.saldoProduzir,
-              value: formatQuantity(previsao.saldoNecessarioProducao),
-            },
-            {
-              label: "Valor aberto",
-              hint: DETAIL.valorAberto,
-              value: formatCurrency(item.valor_aberto),
-            },
-            {
-              label: "Atraso",
-              hint: DETAIL.atraso,
-              value:
-                overdueDays != null && item.saldo > 0
-                  ? `${overdueDays.toLocaleString("pt-BR")} dia(s)`
-                  : "No prazo",
-            },
-            {
-              label: "Despacho",
-              hint: DETAIL.despacho,
-              value: formatDisplayDate(item.data_despacho),
-            },
-            {
-              label: "Ainda falta produzir",
-              hint: DETAIL.coberturaKind,
-              value:
-                previsao.kind === "parcial" && previsao.saldoFaltanteProducao > 0
-                  ? formatQuantity(previsao.saldoFaltanteProducao)
-                  : previsao.kind === "estoque"
-                    ? "0 (estoque cobre)"
-                    : "—",
-            },
-          ]}
-        />
+        <section className="cm-open-orders-detail__metrics" aria-label="Indicadores da linha">
+          <h3 className="cm-open-orders-detail__metrics-title">Indicadores da linha</h3>
+          <CommercialDetailFieldGrid
+            valueFallback="—"
+            wrapLabels
+            fields={[
+              {
+                label: "Saldo do pedido",
+                hint: DETAIL.saldo,
+                value: formatQuantity(item.saldo),
+              },
+              {
+                label: "Estoque alocado",
+                hint: DETAIL.estoqueAlocado,
+                value: formatQuantity(getAllocatedStock(item)),
+              },
+              {
+                label: "Saldo a produzir",
+                hint: DETAIL.saldoProduzir,
+                value: formatQuantity(previsao.saldoNecessarioProducao),
+              },
+              {
+                label: "Valor aberto",
+                hint: DETAIL.valorAberto,
+                value: formatCurrency(item.valor_aberto),
+              },
+              {
+                label: "Atraso",
+                hint: DETAIL.atraso,
+                value:
+                  overdueDays != null && item.saldo > 0
+                    ? `${overdueDays.toLocaleString("pt-BR")} dia(s)`
+                    : "No prazo",
+              },
+              {
+                label: "Despacho",
+                hint: DETAIL.despacho,
+                value: item.data_despacho
+                  ? formatDisplayDate(item.data_despacho)
+                  : "Não informado",
+              },
+              {
+                label: "Ainda falta produzir",
+                hint: DETAIL.coberturaKind,
+                value:
+                  previsao.kind === "parcial" && previsao.saldoFaltanteProducao > 0
+                    ? formatQuantity(previsao.saldoFaltanteProducao)
+                    : previsao.kind === "estoque" || previsao.kind === "coberto"
+                      ? "0 (estoque / OP cobre)"
+                      : previsao.saldoNecessarioProducao > 0
+                        ? formatQuantity(previsao.saldoNecessarioProducao)
+                        : "Não aplicável",
+              },
+            ]}
+          />
+        </section>
 
         <div className="cm-open-orders-detail__charts">
           <ChartCard
@@ -326,28 +392,47 @@ export function OpenOrdersLineDetailModal({
                 aria-label="Cobertura de estoque"
               />
             </div>
-            {coverageStacked[0].estoque > 0 || coverageStacked[0].produzir > 0 ? (
+            {coverageStacked[0].estoqueQty > 0 || coverageStacked[0].produzirQty > 0 ? (
               <div className="cm-open-orders-detail__chart-host cm-open-orders-detail__chart-host--compact">
-                <ResponsiveContainer width="100%" height={88}>
+                <ResponsiveContainer width="100%" height={112}>
                   <BarChart
                     data={coverageStacked}
                     layout="vertical"
-                    margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
-                    barCategoryGap={12}
+                    margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
+                    barCategoryGap={18}
+                    barSize={28}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--cm-border)" />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                      stroke="var(--cm-border)"
+                    />
+                    <XAxis
+                      type="number"
+                      domain={[0, 100]}
+                      tickFormatter={(v) => `${Math.round(Number(v))}%`}
+                      tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }}
+                    />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={72}
+                      width={64}
                       tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }}
                     />
                     <Tooltip
-                      formatter={(v, name) => [
-                        formatQuantity(Number(v)),
-                        name === "estoque" ? "Estoque alocado" : "A produzir",
-                      ]}
+                      formatter={(v, name, item) => {
+                        const payload = item?.payload as
+                          | { estoqueQty?: number; produzirQty?: number }
+                          | undefined;
+                        const qty =
+                          name === "estoque"
+                            ? payload?.estoqueQty
+                            : payload?.produzirQty;
+                        return [
+                          `${formatQuantity(Number(qty ?? 0))} (${Math.round(Number(v))}%)`,
+                          name === "estoque" ? "Estoque alocado" : "A produzir",
+                        ];
+                      }}
                       contentStyle={{
                         background: "var(--cm-surface)",
                         border: "1px solid var(--cm-border)",
@@ -364,7 +449,9 @@ export function OpenOrdersLineDetailModal({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            ) : null}
+            ) : (
+              <p className="cm-open-orders-detail__muted">Sem saldo a cobrir nesta linha.</p>
+            )}
           </ChartCard>
 
           <ChartCard
@@ -394,21 +481,42 @@ export function OpenOrdersLineDetailModal({
                 <strong className="cm-open-orders-detail__snapshot-value">
                   {previsao.previsaoLabel}
                 </strong>
-                <span className="cm-open-orders-detail__snapshot-meta">
+                <span
+                  className={
+                    (forecastDays ?? 0) < 0
+                      ? "cm-open-orders-detail__snapshot-meta--danger"
+                      : "cm-open-orders-detail__snapshot-meta"
+                  }
+                >
                   {formatDaysFromTodayLabel(forecastDays)}
                 </span>
               </div>
             </div>
             {prazoCompare.length > 0 ? (
               <div className="cm-open-orders-detail__chart-host cm-open-orders-detail__chart-host--compact">
-                <ResponsiveContainer width="100%" height={100}>
-                  <BarChart data={prazoCompare} margin={{ top: 8, right: 8, left: 8, bottom: 4 }}>
+                <ResponsiveContainer width="100%" height={132}>
+                  <BarChart
+                    data={prazoCompare}
+                    margin={{ top: 12, right: 12, left: 4, bottom: 4 }}
+                    barCategoryGap="28%"
+                    barSize={40}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--cm-border)" />
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }}
                     />
-                    <YAxis tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }} />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "var(--cm-text-muted)" }}
+                      tickFormatter={(v) => `${v}d`}
+                      width={40}
+                    />
+                    <ReferenceLine
+                      y={0}
+                      stroke="var(--cm-accent, #089bdb)"
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                    />
                     <Tooltip
                       formatter={(v) => [`${Number(v)} dia(s)`, "Relativo a hoje"]}
                       contentStyle={{
@@ -417,7 +525,7 @@ export function OpenOrdersLineDetailModal({
                         color: "var(--cm-text)",
                       }}
                     />
-                    <Bar dataKey="days" radius={4}>
+                    <Bar dataKey="days" radius={[6, 6, 0, 0]}>
                       {prazoCompare.map((row) => (
                         <Cell key={row.id} fill={row.fill} />
                       ))}
