@@ -17,7 +17,7 @@ import {
   resolveLineCoverage,
   resolvePrevisaoPrazoBadge,
 } from "../utils/openOrdersLineVisual";
-import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
+import { canOpenOpForecastDetail, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
 import type { TableColumnKey } from "../utils/tableColumns";
@@ -167,7 +167,7 @@ function renderCardValue(
       if (previsao.previsaoLabel === "—") return "—";
       return (
         <div className="cm-cell-inline">
-          {canOpenOpForecastModal(item) ? (
+          {canOpenOpForecastDetail(item) ? (
             <button
               type="button"
               className="cm-link-button cm-cell-inline__primary"

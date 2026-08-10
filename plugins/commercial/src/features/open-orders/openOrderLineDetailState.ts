@@ -7,37 +7,35 @@ import {
   type OpenOrderDetailState,
 } from "./openOrderDetailState";
 
-export type OpenOrderOpRouteIdentity = {
+export type OpenOrderLineRouteIdentity = {
   branch: string;
   orderNumber: string;
   lineItem: string;
-  productionOrder: string;
 };
 
-export type OpenOrderOpDetailState = OpenOrderDetailState<OpenOrdersTotvsItem>;
-export type OpenOrderOpDetailAction = OpenOrderDetailAction<OpenOrdersTotvsItem>;
+export type OpenOrderLineDetailState = OpenOrderDetailState<OpenOrdersTotvsItem>;
+export type OpenOrderLineDetailAction = OpenOrderDetailAction<OpenOrdersTotvsItem>;
 
-export const INITIAL_OPEN_ORDER_OP_DETAIL_STATE =
+export const INITIAL_OPEN_ORDER_LINE_DETAIL_STATE =
   createInitialOpenOrderDetailState<OpenOrdersTotvsItem>();
 
-export function buildOpenOrderOpRouteIdentity(identity: OpenOrderOpRouteIdentity): string {
+export function buildOpenOrderLineRouteIdentity(identity: OpenOrderLineRouteIdentity): string {
   return JSON.stringify([
     identity.branch.trim(),
     identity.orderNumber.trim(),
     identity.lineItem.trim(),
-    identity.productionOrder.trim(),
   ]);
 }
 
-export function reduceOpenOrderOpDetailState(
-  state: OpenOrderOpDetailState,
-  action: OpenOrderOpDetailAction,
-): OpenOrderOpDetailState {
+export function reduceOpenOrderLineDetailState(
+  state: OpenOrderLineDetailState,
+  action: OpenOrderLineDetailAction,
+): OpenOrderLineDetailState {
   return reduceOpenOrderDetailState(state, action);
 }
 
-export function selectOpenOrderOpSnapshot(
-  state: OpenOrderOpDetailState,
+export function selectOpenOrderLineSnapshot(
+  state: OpenOrderLineDetailState,
   identity: string,
 ): OpenOrdersTotvsItem | null {
   return selectOpenOrderDetailSnapshot(state, identity);

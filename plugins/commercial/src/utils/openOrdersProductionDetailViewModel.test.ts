@@ -52,12 +52,12 @@ function representativeOpenOrder(): OpenOrdersTotvsItem {
 }
 
 describe("paridade funcional do detalhe de produção", () => {
-  it("projeta os mesmos blocos e dados para modal e página da OP", () => {
+  it("projeta os mesmos blocos e dados para as páginas da linha e da OP", () => {
     const item = representativeOpenOrder();
-    const modalProjection = buildOpenOrdersProductionDetailViewModel(item);
+    const lineProjection = buildOpenOrdersProductionDetailViewModel(item);
     const pageProjection = buildOpenOrdersProductionDetailViewModel(item, "OP-100");
 
-    expect(pageProjection.sections).toEqual(modalProjection.sections);
+    expect(pageProjection.sections).toEqual(lineProjection.sections);
     expect(pageProjection.sections.map((section) => section.id)).toEqual([
       "snapshot",
       "factory",

@@ -2,6 +2,7 @@ import {
   buildCustomerDetailPath,
   buildAnalyticsOpportunityDetailPath,
   buildAnalyticsOtdLinePath,
+  buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildPluginPath,
   buildProposalDetailPath,
@@ -13,13 +14,20 @@ import {
   type CustomersListSellerAccess,
 } from "../utils/customersListDeepLink";
 
-export function navigatePluginPath(target: string): void {
+export function navigatePluginPath(
+  target: string,
+  options?: { replace?: boolean },
+): void {
   if (typeof window === "undefined") return;
 
   const current = `${normalizePathname(window.location.pathname)}${window.location.search || ""}`;
   if (current === target) return;
 
-  window.history.pushState(null, "", target);
+  if (options?.replace) {
+    window.history.replaceState(null, "", target);
+  } else {
+    window.history.pushState(null, "", target);
+  }
   const popState =
     typeof PopStateEvent === "function"
       ? new PopStateEvent("popstate")
@@ -115,4 +123,27 @@ export function navigateOpenOrderOpDetail(
   return true;
 }
 
-export { buildCustomerDetailPath, buildOpenOrderOpDetailPath, buildProposalDetailPath };
+export function navigateOpenOrderLineDetail(
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  options?: { basePath?: string; search?: string; replace?: boolean },
+): boolean {
+  const path = buildOpenOrderLineDetailPath(
+    options?.basePath,
+    branch,
+    orderNumber,
+    lineItem,
+    options?.search,
+  );
+  if (!path) return false;
+  navigatePluginPath(path, { replace: options?.replace });
+  return true;
+}
+
+export {
+  buildCustomerDetailPath,
+  buildOpenOrderLineDetailPath,
+  buildOpenOrderOpDetailPath,
+  buildProposalDetailPath,
+};

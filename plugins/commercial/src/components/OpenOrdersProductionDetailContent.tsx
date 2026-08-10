@@ -24,7 +24,6 @@ import {
 import {
   CommercialDetailFieldGrid,
   CommercialInlineMeter,
-  CommercialWorkbenchModal,
   cmDataTableClassNames,
   cmDataTableLabels,
   cmStatusBadgeClassNames,
@@ -55,13 +54,6 @@ import { OpenOrdersProductStructureAccordion } from "./OpenOrdersProductStructur
 
 const chartClasses = chartCardBemClasses(UI_PREFIX);
 const DETAIL = CM_HELP.openOrders.detail;
-
-type OpenOrdersLineDetailModalProps = {
-  item: OpenOrdersTotvsItem | null;
-  open: boolean;
-  onClose: () => void;
-  basePath?: string;
-};
 
 type OpenOrdersProductionDetailContentProps = {
   item: OpenOrdersTotvsItem;
@@ -683,30 +675,5 @@ export function OpenOrdersProductionDetailContent({
           loading={extras.loading}
         />
     </div>
-  );
-}
-
-export function OpenOrdersLineDetailModal({
-  item,
-  open,
-  onClose,
-  basePath,
-}: OpenOrdersLineDetailModalProps) {
-  if (!item) return null;
-  const description = `${item.nome_cliente || "Cliente"} · Pedido ${item.pedido || "—"} · Linha ${item.linha || "—"} · Produto ${item.produto || "—"}`;
-  return (
-    <CommercialWorkbenchModal
-      open={open}
-      onClose={onClose}
-      title="Detalhe da linha"
-      description={description}
-    >
-      <OpenOrdersProductionDetailContent
-        item={item}
-        basePath={basePath}
-        search={typeof window !== "undefined" ? window.location.search : ""}
-        onNavigate={onClose}
-      />
-    </CommercialWorkbenchModal>
   );
 }

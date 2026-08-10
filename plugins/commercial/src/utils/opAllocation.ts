@@ -266,7 +266,7 @@ export function getLineOpForecast(item: OpenOrdersTotvsItem): LineOpForecast {
   );
 }
 
-export function canOpenOpForecastModal(item: OpenOrdersTotvsItem): boolean {
+export function canOpenOpForecastDetail(item: OpenOrdersTotvsItem): boolean {
   const previsao = getLineOpForecast(item);
   return previsao.opsUtilizadas.length > 0;
 }

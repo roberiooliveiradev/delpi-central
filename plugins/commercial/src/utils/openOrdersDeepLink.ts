@@ -76,21 +76,6 @@ export function buildOpenOrdersContextSearch(
   return query ? `?${query}` : "";
 }
 
-/** Retorno da ficha OP: contexto allowlisted + linha exata para reabrir o modal. */
-export function buildOpenOrderLineReturnSearch(
-  search: string | undefined,
-  line: OpenOrdersLineDeepLink,
-): string {
-  const target = new URLSearchParams(buildOpenOrdersContextSearch(search));
-  target.set("pedido", line.pedido.trim());
-  const linha = line.linha?.trim();
-  if (linha) target.set("linha", linha);
-  const filial = line.filial?.trim();
-  if (filial) target.set("filial", filial);
-  const query = target.toString();
-  return query ? `?${query}` : "";
-}
-
 /** Escreve/atualiza params de atenção na URL sem apagar o restante. */
 export function syncOpenOrdersAttentionQueryToUrl(
   attention: OpenOrdersAttentionDeepLink,
@@ -110,31 +95,10 @@ export function syncOpenOrdersAttentionQueryToUrl(
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export function syncOpenOrdersLineQueryToUrl(
-  line: OpenOrdersLineDeepLink | null,
-): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (!line) {
-    url.searchParams.delete("pedido");
-    url.searchParams.delete("linha");
-    url.searchParams.delete("filial");
-  } else {
-    url.searchParams.set("pedido", line.pedido.trim());
-    const linha = line.linha?.trim();
-    if (linha) url.searchParams.set("linha", linha);
-    else url.searchParams.delete("linha");
-    const filial = line.filial?.trim();
-    if (filial) url.searchParams.set("filial", filial);
-    else url.searchParams.delete("filial");
-  }
-  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-}
-
-export function findOpenOrderLine(
-  items: Array<{ filial: string; pedido: string; linha: string }>,
+export function findOpenOrderLine<T extends { filial: string; pedido: string; linha: string }>(
+  items: T[],
   link: OpenOrdersLineDeepLink,
-) {
+): T | null {
   const pedido = link.pedido.trim();
   const linha = link.linha?.trim();
   const filial = link.filial?.trim();

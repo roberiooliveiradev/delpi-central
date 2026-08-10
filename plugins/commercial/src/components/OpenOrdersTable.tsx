@@ -20,7 +20,11 @@ import {
   cmStatusBadgeClassNames,
   UI_PREFIX,
 } from "../app/commercialUi";
-import { navigateCustomerDetail, navigateOpenOrderOpDetail } from "../app/pluginNavigation";
+import {
+  navigateCustomerDetail,
+  navigateOpenOrderLineDetail,
+  navigateOpenOrderOpDetail,
+} from "../app/pluginNavigation";
 import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import {
@@ -40,13 +44,12 @@ import {
   findOpenOrderLine,
   buildOpenOrdersContextSearch,
   parseOpenOrdersLineDeepLink,
-  syncOpenOrdersLineQueryToUrl,
 } from "../utils/openOrdersDeepLink";
 import {
   resolveLineCoverage,
   resolvePrevisaoPrazoBadge,
 } from "../utils/openOrdersLineVisual";
-import { canOpenOpForecastModal, getLineOpForecast } from "../utils/opAllocation";
+import { canOpenOpForecastDetail, getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import type { SortDirection, SortKey } from "../utils/sortItems";
 import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
@@ -56,7 +59,6 @@ import {
   type TableColumnKey,
 } from "../utils/tableColumns";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
-import { OpenOrdersLineDetailModal } from "./OpenOrdersLineDetailModal";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
 
@@ -101,7 +103,6 @@ export function OpenOrdersTable({
   basePath,
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
-  const [detailItem, setDetailItem] = useState<OpenOrdersTotvsItem | null>(null);
   const deepLinkHandledRef = useRef(false);
   const { layout, setLayout } = useOpenOrdersLayout();
   const {
@@ -132,27 +133,19 @@ export function OpenOrdersTable({
     if (!link) return;
     const found = findOpenOrderLine(exportRows, link);
     if (found) {
-      setDetailItem(found as OpenOrdersTotvsItem);
-      syncOpenOrdersLineQueryToUrl({
-        pedido: found.pedido,
-        linha: found.linha,
-        filial: found.filial,
+      navigateOpenOrderLineDetail(found.filial, found.pedido, found.linha, {
+        basePath,
+        search: buildOpenOrdersContextSearch(),
+        replace: true,
       });
     }
-  }, [loading, exportRows]);
+  }, [basePath, loading, exportRows]);
 
   const openDetail = (row: OpenOrdersTotvsItem) => {
-    setDetailItem(row);
-    syncOpenOrdersLineQueryToUrl({
-      pedido: row.pedido,
-      linha: row.linha,
-      filial: row.filial,
+    navigateOpenOrderLineDetail(row.filial, row.pedido, row.linha, {
+      basePath,
+      search: buildOpenOrdersContextSearch(),
     });
-  };
-
-  const closeDetail = () => {
-    setDetailItem(null);
-    syncOpenOrdersLineQueryToUrl(null);
   };
 
   const tableStyle = {
@@ -266,7 +259,7 @@ export function OpenOrdersTable({
         if (previsao.previsaoLabel === "—") return "—";
         return (
           <div className="cm-cell-inline">
-            {canOpenOpForecastModal(row) ? (
+            {canOpenOpForecastDetail(row) ? (
               <button
                 type="button"
                 className="cm-link-button cm-cell-inline__primary"
@@ -521,12 +514,6 @@ export function OpenOrdersTable({
         )}
       </SectionCard>
 
-      <OpenOrdersLineDetailModal
-        item={detailItem}
-        open={Boolean(detailItem)}
-        onClose={closeDetail}
-        basePath={basePath}
-      />
     </>
   );
 }

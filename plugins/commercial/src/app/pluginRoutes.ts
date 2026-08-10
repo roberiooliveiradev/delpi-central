@@ -5,6 +5,7 @@ export type PluginView =
   | "home"
   | "my_day"
   | "open_orders"
+  | "open_order_line_detail"
   | "open_order_op_detail"
   | "customers"
   | "customer_detail"
@@ -86,6 +87,25 @@ export function resolvePluginRoute(
 
   if (relativePath === "open-orders") {
     return { view: "open_orders", pathname: path, relativePath };
+  }
+
+  const openOrderLineDetail =
+    /^open-orders\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(relativePath);
+  if (openOrderLineDetail) {
+    const orderBranch = safeDecodeSegment(openOrderLineDetail[1] ?? "");
+    const orderNumber = safeDecodeSegment(openOrderLineDetail[2] ?? "");
+    const lineItem = safeDecodeSegment(openOrderLineDetail[3] ?? "");
+    if (!orderBranch?.trim() || !orderNumber?.trim() || !lineItem?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "open_order_line_detail",
+      pathname: path,
+      relativePath,
+      orderBranch: orderBranch.trim(),
+      orderNumber: orderNumber.trim(),
+      lineItem: lineItem.trim(),
+    };
   }
 
   const openOrderOpDetail =
@@ -276,6 +296,7 @@ export function resolvePluginRoute(
 export type BuildablePluginView = Exclude<
   PluginView,
   | "customer_detail"
+  | "open_order_line_detail"
   | "open_order_op_detail"
   | "proposal_detail"
   | "analytics_otd_line"
@@ -348,6 +369,23 @@ export function buildOpenOrderOpDetailPath(
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
+export function buildOpenOrderLineDetailPath(
+  basePath: string | undefined,
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  search?: string,
+): string | null {
+  const normalizedBranch = branch.trim();
+  const normalizedOrder = orderNumber.trim();
+  const normalizedLine = lineItem.trim();
+  if (!normalizedBranch || !normalizedOrder || !normalizedLine) return null;
+  const path = `${normalizeBasePath(basePath)}/open-orders/${encodeURIComponent(normalizedBranch)}/${encodeURIComponent(normalizedOrder)}/${encodeURIComponent(normalizedLine)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
+}
+
 export function buildProposalDetailPath(
   basePath: string | undefined,
   propostaId: string,
@@ -399,7 +437,7 @@ export function isAnalyticsView(view: PluginView): boolean {
 }
 
 export function resolveActiveNavId(view: PluginView): PluginNavId {
-  if (view === "open_order_op_detail") return "open_orders";
+  if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
   if (view === "customer_detail") return "customers";
   if (view === "proposal_detail") return "proposals";
   if (isAnalyticsView(view)) return "analytics";

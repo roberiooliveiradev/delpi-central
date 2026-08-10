@@ -10,13 +10,10 @@ import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "..
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
 import {
+  navigateOpenOrderLineDetail,
   navigateOpenOrderOpDetail,
-  navigatePluginPath,
 } from "../../../app/pluginNavigation";
-import {
-  buildCommercialOpenOrderPath,
-  buildOpenOrdersContextSearch,
-} from "../../../utils/openOrdersDeepLink";
+import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import { getLineOpForecast } from "../../../utils/opAllocation";
 
 type CustomerOrderLinesProps = {
@@ -59,13 +56,14 @@ export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderL
           <CommercialActionButton
             variant="ghost"
             onClick={() =>
-              navigatePluginPath(
-                buildCommercialOpenOrderPath({
+              navigateOpenOrderLineDetail(
+                line.filial,
+                line.pedido,
+                line.linha,
+                {
                   basePath,
-                  filial: line.filial,
-                  pedido: line.pedido,
-                  linha: line.linha,
-                }),
+                  search: buildOpenOrdersContextSearch(),
+                },
               )
             }
           >

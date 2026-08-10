@@ -22,6 +22,7 @@ Portal Minha DELPI
 | `/apps/commercial` | Início — hero + alertas + KPIs + teaser Gestão | `accounts.view` |
 | `/apps/commercial/my-day` | Meu dia — worklist | `worklist.view` |
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
+| `/apps/commercial/open-orders/:filial/:pedido/:linha` | Ficha nativa da linha do pedido | `accounts.view` |
 | `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `accounts.view` |
 | `/apps/commercial/customers` | Carteira de clientes | `accounts.view` |
 | `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `accounts.view` |
@@ -48,7 +49,7 @@ Sincronizados com o estado da página (`replaceState`); **não** apagam filtros 
 |-------|--------|
 | `?stock=com_estoque\|parcial\|sem_estoque` | Chip de atenção (estoque) |
 | `?focus=late` | Chip «Atraso» |
-| `?pedido=&linha=&filial=` | Abre o modal completo da linha; ao fechar, limpa só esses params |
+| `?pedido=&linha=&filial=` | Link legado: localiza a linha e migra para a rota nativa |
 | `seller_id` | Escopo de carteira (já existente) |
 
 A Home pode emitir `?focus=late` / `?stock=…`. Helpers: [`src/utils/openOrdersDeepLink.ts`](./src/utils/openOrdersDeepLink.ts).
@@ -111,7 +112,7 @@ de dados por aba**: só consultam a fonte quando a seção correspondente está
 ativa. Loading, erro, vazio, retry e atualização permanecem isolados por fonte.
 Os CTAs aparecem apenas quando o usuário possui a capacidade necessária.
 
-### Modal e página da OP (WF-02R-D)
+### Páginas da linha e da OP (WF-02R-D)
 
 Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 
@@ -120,14 +121,14 @@ Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 - BOM (`/products/{code}/structure`) com empty/erro/loading visíveis
 - Helps: `SectionHintLabel` + textos em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (linguagem de negócio, sem paths de API)
 
-O modal mantém a quick view completa e oferece a ficha SPA
-`/open-orders/:filial/:pedido/:linha/op/:op`. A ficha valida linha e OP dentro da
-carteira retornada para o `seller_id` da query, reutiliza exatamente o mesmo
-`OpenOrdersProductionDetailContent` e retorna à bancada com `stock`, `focus` e
-`seller_id` preservados, além de forçar `pedido`, `linha` e `filial` para reabrir
-o mesmo modal. A troca entre múltiplas OPs atualiza a rota interna compartilhável.
-Modal, OP, OV, proposta e conta usam `CommercialPagePath`
-nos retornos de páginas de detalhe.
+A linha abre diretamente na ficha SPA
+`/open-orders/:filial/:pedido/:linha`, preservando `stock`, `focus` e `seller_id`.
+Links legados com `pedido`, `linha` e `filial` na query são resolvidos no escopo
+carregado e substituídos pela rota nativa. A OP mantém
+`/open-orders/:filial/:pedido/:linha/op/:op`, valida linha e OP na carteira e
+reutiliza o mesmo `OpenOrdersProductionDetailContent` integral. Seu retorno aponta
+para a página da linha; a troca entre múltiplas OPs atualiza a URL compartilhável.
+Linha, OP, OV, proposta e conta usam `CommercialPagePath`.
 
 **OV:** se a lista trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` com match por filial+cliente ([`resolveProposalForOpenOrder.ts`](./src/utils/resolveProposalForOpenOrder.ts)). **Não** chamar `GET /proposals/{pedido}` como se pedido (`C5_NUM`) fosse número de OV.
 
@@ -205,7 +206,7 @@ TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-mani
 
 ## Conteúdo PT
 
-Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts` + bundles Gestão/Propostas). Não hardcode frases longas em JSX. No modal de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
+Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts` + bundles Gestão/Propostas). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
 
 ## Anexos de tarefa
 
@@ -266,10 +267,10 @@ como este checkpoint não altera `plugin-ui`, não há rebuild do remote do kit.
 src/
   api/           — clients commercial-api / api-delpi
   app/           — rotas, shell, navegação, portfolio scope
-  components/    — open-orders (tabela, modal, strips) e UI compartilhada
+  components/    — open-orders (tabela, conteúdo de detalhe, strips) e UI compartilhada
   content/       — textos PT (help + analytics + proposals)
   features/      — home, my-day, open-orders, customers, analytics, proposals, seller-portfolios
-  hooks/         — dashboard open-orders, extras do modal, layout
+  hooks/         — dashboard open-orders, extras do detalhe, layout
   pages/         — implementações de página (ex.: OpenOrdersPageImpl)
   utils/         — deep links, OV, timeline OP, formatação
 ```

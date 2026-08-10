@@ -10,29 +10,21 @@ import {
   CommercialPagePath,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
-import {
-  buildOpenOrderLineDetailPath,
-  buildOpenOrderOpDetailPath,
-  buildPluginPath,
-} from "../../app/pluginRoutes";
+import { buildPluginPath } from "../../app/pluginRoutes";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
+import { buildOpenOrdersContextSearch, findOpenOrderLine } from "../../utils/openOrdersDeepLink";
 import {
-  buildOpenOrdersContextSearch,
-} from "../../utils/openOrdersDeepLink";
-import { getLineOpForecast } from "../../utils/opAllocation";
-import {
-  buildOpenOrderOpRouteIdentity,
-  INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
-  reduceOpenOrderOpDetailState,
-  selectOpenOrderOpSnapshot,
-} from "./openOrderOpDetailState";
+  buildOpenOrderLineRouteIdentity,
+  INITIAL_OPEN_ORDER_LINE_DETAIL_STATE,
+  reduceOpenOrderLineDetailState,
+  selectOpenOrderLineSnapshot,
+} from "./openOrderLineDetailState";
 
-type OpenOrderOpDetailPageProps = {
+type OpenOrderLineDetailPageProps = {
   basePath: string;
   branch: string;
   orderNumber: string;
   lineItem: string;
-  productionOrder: string;
   search?: string;
 };
 
@@ -43,40 +35,27 @@ function readSellerId(search?: string): string | null {
   return (params.get("seller_id") ?? "").trim() || null;
 }
 
-export function OpenOrderOpDetailPage({
+export function OpenOrderLineDetailPage({
   basePath,
   branch,
   orderNumber,
   lineItem,
-  productionOrder,
   search,
-}: OpenOrderOpDetailPageProps) {
+}: OpenOrderLineDetailPageProps) {
   const [loadState, dispatchLoad] = useReducer(
-    reduceOpenOrderOpDetailState,
-    INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
+    reduceOpenOrderLineDetailState,
+    INITIAL_OPEN_ORDER_LINE_DETAIL_STATE,
   );
   const [reloadKey, setReloadKey] = useState(0);
   const sellerId = useMemo(() => readSellerId(search), [search]);
-  const routeIdentity = buildOpenOrderOpRouteIdentity({
-    branch,
-    orderNumber,
-    lineItem,
-    productionOrder,
-  });
-  const item = selectOpenOrderOpSnapshot(loadState, routeIdentity);
+  const routeIdentity = buildOpenOrderLineRouteIdentity({ branch, orderNumber, lineItem });
+  const item = selectOpenOrderLineSnapshot(loadState, routeIdentity);
   const requestBelongsToRoute = loadState.requestIdentity === routeIdentity;
   const loading =
     loadState.status === "loading" || (!requestBelongsToRoute && item === null);
   const refreshing = requestBelongsToRoute && loadState.status === "refreshing";
   const contextSearch = useMemo(() => buildOpenOrdersContextSearch(search), [search]);
-  const ordersHref = buildPluginPath("open_orders", basePath, contextSearch);
-  const lineHref = buildOpenOrderLineDetailPath(
-    basePath,
-    branch,
-    orderNumber,
-    lineItem,
-    contextSearch,
-  ) ?? ordersHref;
+  const backHref = buildPluginPath("open_orders", basePath, contextSearch);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -85,25 +64,18 @@ export function OpenOrderOpDetailPage({
     void getOpenOrdersTotvs(controller.signal, { sellerId })
       .then((data) => {
         if (controller.signal.aborted) return;
-        const matched =
-          data.items.find(
-            (row) =>
-              row.filial.trim() === branch &&
-              row.pedido.trim() === orderNumber &&
-              row.linha.trim() === lineItem,
-          ) ?? null;
-        const opExists = matched
-          ? getLineOpForecast(matched).opsUtilizadas.some(
-              (op) => op.numero_op.trim() === productionOrder,
-            )
-          : false;
-        if (!matched || !opExists) {
+        const matched = findOpenOrderLine(data.items, {
+          filial: branch,
+          pedido: orderNumber,
+          linha: lineItem,
+        });
+        if (!matched) {
           dispatchLoad({
             type: "request_not_found",
             identity: routeIdentity,
             message: data.portfolio?.empty
               ? data.portfolio.message || "Nenhum pedido disponível neste escopo."
-              : "A linha ou a OP não foi encontrada no escopo atual.",
+              : "A linha não foi encontrada no escopo atual.",
           });
           return;
         }
@@ -114,68 +86,36 @@ export function OpenOrderOpDetailPage({
         dispatchLoad({
           type: "request_failed",
           identity: routeIdentity,
-          message: reason instanceof Error
-            ? reason.message
-            : "Não foi possível carregar o detalhe da OP.",
+          message:
+            reason instanceof Error
+              ? reason.message
+              : "Não foi possível carregar o detalhe da linha.",
         });
       });
 
     return () => controller.abort();
-  }, [
-    branch,
-    lineItem,
-    orderNumber,
-    productionOrder,
-    reloadKey,
-    routeIdentity,
-    sellerId,
-  ]);
+  }, [branch, lineItem, orderNumber, reloadKey, routeIdentity, sellerId]);
 
   const navigateBack = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    navigatePluginPath(lineHref);
-  };
-
-  const selectProductionOrder = (nextProductionOrder: string) => {
-    const target = buildOpenOrderOpDetailPath(
-      basePath,
-      branch,
-      orderNumber,
-      lineItem,
-      nextProductionOrder,
-      contextSearch,
-    );
-    if (target) navigatePluginPath(target);
+    navigatePluginPath(backHref);
   };
 
   return (
     <section className="cm-page-stack">
       <CommercialPagePath
-        back={{ label: "Detalhe da linha", href: lineHref, onNavigate: navigateBack }}
-        items={[
-          {
-            id: "orders",
-            label: "Pedidos em aberto",
-            href: ordersHref,
-            onNavigate: (event) => {
-              event.preventDefault();
-              navigatePluginPath(ordersHref);
-            },
-          },
-          {
-            id: "line",
-            label: `Pedido ${orderNumber} · linha ${lineItem}`,
-            href: lineHref,
-            onNavigate: navigateBack,
-          },
-        ]}
-        current={`OP ${productionOrder}`}
+        back={{ label: "Pedidos em aberto", href: backHref, onNavigate: navigateBack }}
+        current={`Pedido ${orderNumber} · linha ${lineItem}`}
       />
 
       <CommercialPageHero
-        eyebrow="Produção do pedido"
-        title={`OP ${productionOrder}`}
-        description={`Pedido ${orderNumber} · linha ${lineItem} · filial ${branch}`}
+        eyebrow="Pedido em aberto"
+        title={`Pedido ${orderNumber} · linha ${lineItem}`}
+        description={
+          item
+            ? `${item.nome_cliente || "Cliente"} · Produto ${item.produto || "—"} · filial ${branch}`
+            : `Filial ${branch}`
+        }
         actions={
           <ActionButton
             variant="ghost"
@@ -183,13 +123,19 @@ export function OpenOrderOpDetailPage({
             disabled={refreshing}
             aria-busy={refreshing}
           >
-            <RefreshCw size={16} aria-hidden="true" className={refreshing ? "pva-spin" : undefined} />
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={refreshing ? "pva-spin" : undefined}
+            />
             {refreshing ? "Atualizando…" : "Atualizar"}
           </ActionButton>
         }
       />
 
-      {loading ? <CommercialLoadingCard title="Carregando detalhe da OP…" variant="panel" /> : null}
+      {loading ? (
+        <CommercialLoadingCard title="Carregando detalhe da linha…" variant="panel" />
+      ) : null}
       {loadState.blockingError ? (
         <>
           <EmptyState
@@ -225,9 +171,7 @@ export function OpenOrderOpDetailPage({
         <OpenOrdersProductionDetailContent
           item={item}
           basePath={basePath}
-          productionOrder={productionOrder}
-          search={search}
-          onProductionOrderChange={selectProductionOrder}
+          search={contextSearch}
         />
       ) : null}
     </section>

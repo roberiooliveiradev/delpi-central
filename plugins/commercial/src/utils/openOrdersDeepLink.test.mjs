@@ -4,7 +4,6 @@ import { describe, it } from "node:test";
 
 import {
   buildCommercialOpenOrderPath,
-  buildOpenOrderLineReturnSearch,
   buildOpenOrdersContextSearch,
   findOpenOrderLine,
   parseOpenOrdersAttentionDeepLink,
@@ -48,7 +47,7 @@ describe("openOrdersDeepLink", () => {
     assert.equal(parseOpenOrdersLineDeepLink("?linha=01"), null);
   });
 
-  it("preserva somente contexto reconhecido no retorno da OP", () => {
+  it("preserva somente contexto reconhecido nas páginas nativas", () => {
     assert.equal(
       buildOpenOrdersContextSearch(
         "?stock=parcial&focus=late&seller_id=v1&pedido=9&linha=02&filial=01&extra=x",
@@ -58,13 +57,6 @@ describe("openOrdersDeepLink", () => {
     assert.equal(
       buildOpenOrdersContextSearch("?stock=invalido&focus=atraso&seller_id=v2"),
       "?seller_id=v2",
-    );
-    assert.equal(
-      buildOpenOrderLineReturnSearch(
-        "?stock=parcial&focus=late&seller_id=v1&pedido=antigo&extra=x",
-        { pedido: " 9 ", linha: " 02 ", filial: " 01 " },
-      ),
-      "?stock=parcial&focus=late&seller_id=v1&pedido=9&linha=02&filial=01",
     );
   });
 

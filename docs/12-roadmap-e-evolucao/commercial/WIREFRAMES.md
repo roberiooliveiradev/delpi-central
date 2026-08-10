@@ -197,8 +197,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 **Paridade:** `OpenOrdersPage` / `OpenOrdersPageImpl`  
 **Dados:** api-delpi `GET /pedidos-venda-abertos/` (+ ops abertas)  
 **Papel:** bancada de linhas (achar → entender entrega → agir). Home = atenção; Gestão = KPIs de período.  
-**Kit:** `cm-*` — PageHero (`actions`/`children`), ScopeChipBar, FilterBar, DataTable / Cards, InlineMeter, WorkbenchModal host-fill.  
-**Evoluções:** WF-02R-H (Hero), WF-02R-T (tabela visual), WF-02R-C (cards), WF-02R-D (modal detalhe). MultiSelect do kit usa o mesmo checkbox moderno das Colunas.
+**Kit:** `cm-*` — PageHero (`actions`/`children`), ScopeChipBar, FilterBar, DataTable / Cards, InlineMeter.
+**Evoluções:** WF-02R-H (Hero), WF-02R-T (tabela visual), WF-02R-C (cards), WF-02R-D (página de detalhe). MultiSelect do kit usa o mesmo checkbox moderno das Colunas.
 
 ```
 ┌─ PageHero (card único) ───────────────────────────────────────────────────┐
@@ -207,30 +207,30 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 └───────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard ─ [Tabela|Cards] ─ Excel · Fonte · Colunas ──────────────────┐
 │ Tabela: Cobertura (InlineMeter) · Prev. OP + badge · Status · Atraso badge│
-│ Cards: mesmos campos visíveis · Ordenar por + direção · Detalhe → modal   │
+│ Cards: mesmos campos visíveis · Ordenar por + direção · Detalhe → página  │
 └───────────────────────────────────────────────────────────────────────────┘
-┌─ Modal host-fill (Detalhe da linha) — ver WF-02R-D ───────────────────────┐
+┌─ Página nativa (Detalhe da linha) — ver WF-02R-D ─────────────────────────┐
 │ Status fabril · KPIs · charts · bloco OP+timeline · tabela OP · Ver OP/OV │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Colunas default:** Cliente, Pedido, Produto, Cobertura, Entrega, Prev. OP, Status, Valor, Atraso.  
-**Clique:** linha / Prev. OP / card → modal expandido (quick view preservada); ação
+**Clique:** linha / Prev. OP / card → página nativa da linha; ação
 da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
-**URLs internas compartilháveis:** `?stock=` / `?focus=late` sincronizam com chips de atenção; `?pedido=&linha=&filial=` abre o modal da linha; `seller_id` = portfolio id. Home pode emitir `?focus=late` / `?stock=…`.
+**URLs internas compartilháveis:** `?stock=` / `?focus=late` sincronizam com chips de atenção; `/open-orders/:filial/:pedido/:linha` abre a linha; `seller_id` = portfolio id. O legado `?pedido=&linha=&filial=` é migrado após localizar a linha. Home pode emitir `?focus=late` / `?stock=…`.
 
-**Mobile (≤768px):** default Cards na 1ª visita; hero empilha; modal fill.
+**Mobile (≤768px):** default Cards na 1ª visita; hero e página de detalhe empilham.
 
 **Histórico:** WF-02 (KPI cards + tabela densa + modal OP) → WF-02R → H/T/C/D.
 
-### WF-02R-D — Modal completo + Página nativa da OP
+### WF-02R-D — Páginas nativas da linha e da OP
 
 **Domínio:** SC5/SC6 + OP SC2 (não misturar com OV AD*).  
 **APIs extras ao abrir:** `/products/{code}/factory-status?branch=`, `/production/orders/by-op/{op}`, `/production/appointments/by-op` (agregado), opcional `/products/{code}/structure`.  
 **OV (AD1_NROPOR):** se a lista PVA trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` e match por filial+cliente (limiar). **Não** chamar `GET /proposals/{pedido}` — path é OV, não `C5_NUM`. Sem vínculo SC5↔AD1 estável documentado no PVA, enriquecimento na lista é opcional.
 
 ```
-┌─ Modal host-fill · Detalhe da linha (quick view completa) ───────────────┐
+┌─ Página linha · PagePath Pedidos / Pedido-linha ─────────────────────────┐
 │ Pedido · Linha · Produto · Cliente                                       │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Status fabril (+ chips MP: PA produzível, MP limitante, MPs sem estoque) │
@@ -244,21 +244,21 @@ da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
 │ [Abrir página OP] [Copiar pedido] [Ver OV n] [Abrir conta]               │
 └──────────────────────────────────────────────────────────────────────────┘
 ┌─ Página OP nativa · PagePath Pedidos / Pedido-linha / OP ────────────────┐
-│ PageHero · mesmo OpenOrdersProductionDetailContent integral do modal      │
-│ loading / erro / 404 / retry · troca OP na URL · retorno reabre a linha   │
+│ PageHero · mesmo OpenOrdersProductionDetailContent integral da linha      │
+│ loading / erro / 404 / retry · troca OP na URL · retorno abre a linha     │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Entrada por contexto de pedido:** `?pedido=&linha=&filial=` abre a linha correspondente dentro do próprio `commercial`.
+**Entrada por contexto de pedido:** `?pedido=&linha=&filial=` localiza a linha e
+substitui o endereço pela rota nativa `/open-orders/:filial/:pedido/:linha`.
 
 **Página OP:** busca a linha exata por filial+pedido+linha no escopo `seller_id` e
 confirma a OP em `opsUtilizadas`; não usa iframe, import ou URL de outro MFE.
-Modal e página compartilham hook, cálculos, componentes e conteúdo operacional.
+As páginas compartilham hook, cálculos, componentes e conteúdo operacional.
 Ao trocar entre múltiplas OPs, a própria rota SPA é atualizada; ao voltar, somente
-`stock`, `focus` e `seller_id` são herdados e `pedido`, `linha`, `filial` são
-forçados para reabrir exatamente a quick view de origem.
+`stock`, `focus` e `seller_id` são herdados, e a OP retorna à rota da linha.
 
-**Fora do modal:** KPI/processo AD1, tabela ADJ multi-item, timeline AIJ, export OV → **WF-OV-D**.
+**Fora do detalhe de pedido:** KPI/processo AD1, tabela ADJ multi-item, timeline AIJ, export OV → **WF-OV-D**.
 
 ### WF-OV-D — Página Detalhe da OV (Gestão)
 
@@ -280,7 +280,7 @@ forçados para reabrir exatamente a quick view de origem.
 **Mapa:** OV exclusivamente nesta página, aberta por
 `navigateAnalyticsOpportunityDetail`; não existe modal de OV. O PagePath retorna
 a `/analytics/opportunities` preservando apenas filtros allowlisted presentes.
-Pedido+OP permanece no modal completo e também na página nativa WF-02R-D.
+Pedido+OP permanece nas páginas nativas WF-02R-D.
 
 
 ---
@@ -601,7 +601,7 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Capacidade Portal do Vendedor | Wireframe | Rota Portal Comercial |
 |-------------------------------|-----------|------------------------|
 | Lista pedidos em aberto | WF-02R | `/open-orders` |
-| Detalhe linha (OP + fabril) | WF-02R-D | modal completo + `/open-orders/:filial/:pedido/:linha/op/:op` |
+| Detalhe linha (OP + fabril) | WF-02R-D | `/open-orders/:filial/:pedido/:linha` + `/open-orders/:filial/:pedido/:linha/op/:op` |
 | Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
 | Minha carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
