@@ -101,3 +101,6 @@ def test_build_sales_order_otd_line_detail_sql_uses_shared_cte() -> None:
 
     assert "LINHAS_ELEGIVEIS" in sql
     assert "SELECT TOP 1 *" in sql
+    assert "A1_NREDUZ" in sql
+    assert "customer_short_name" in sql
+    assert "COALESCE" in sql

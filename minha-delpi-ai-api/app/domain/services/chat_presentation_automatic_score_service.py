@@ -366,6 +366,7 @@ class ChatPresentationAutomaticScoreService:
             entity=entity,
             explicit_format=None,
             user_message=user_message,
+            metadata=metadata,
         ):
             return True
 

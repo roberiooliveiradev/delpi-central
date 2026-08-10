@@ -78,6 +78,37 @@ describe("displayFormatSelection", () => {
     });
   });
 
+  it("com eixo X focado, % grava nos valores (não na categoria)", () => {
+    const chart = {
+      id: "c1",
+      type: "chart_view" as const,
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      chartOptions: {
+        valueFormat: "auto" as const,
+        categoryLabelFormat: "day" as const,
+        displayCategoryFormat: {
+          category: "date" as const,
+          presetId: "date-short",
+          pattern: "dd/mm/yyyy",
+        },
+      },
+    };
+    const patch = applyDisplayFormatSpecToBlock(
+      {
+        selected: chart,
+        selectedChartPart: { kind: "axis", axis: "x" },
+      },
+      { category: "percent", presetId: "percent", decimalPlaces: 1 },
+    );
+    expect(patch).toMatchObject({
+      chartOptions: {
+        displayValueFormat: expect.objectContaining({ category: "percent" }),
+        valueFormat: "percent",
+        categoryLabelFormat: "day",
+      },
+    });
+  });
+
   it("tabela: sem coluna grava global; com headerCell/cell grava só nas colunas", () => {
     const table = {
       id: "t1",

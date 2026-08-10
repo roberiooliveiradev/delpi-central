@@ -16,6 +16,15 @@ def test_stock_simple_question_keeps_table_primary_without_visual_bundle():
     )
 
 
+def test_openapi_list_entity_does_not_force_text_only_without_metadata():
+    """Anti-padrão: listagem OpenAPI não pode ocultar tabela por cair em generic."""
+    assert not ChatPresentationTextFirstPolicyService.should_default_to_text_only(
+        path="/production/schedule/today",
+        entity="production_schedule_today",
+        user_message="produtos programados para produzir hoje",
+    )
+
+
 def test_explicit_chart_request_builds_visual_bundle():
     assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
         path="/products/10080001/stock",

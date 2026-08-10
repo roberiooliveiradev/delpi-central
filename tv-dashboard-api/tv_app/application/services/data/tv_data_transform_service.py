@@ -64,6 +64,19 @@ def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
     return result.normalized
 
 
+def _page_items_from_value(raw: Any) -> list[Any] | None:
+    """Lista bare ou Page `{ items|rows: [...] }` sob wrappers (lines, orders, …)."""
+    if isinstance(raw, list):
+        return raw
+    if not isinstance(raw, dict):
+        return None
+    for nested_key in ("items", "rows"):
+        nested = raw.get(nested_key)
+        if isinstance(nested, list):
+            return nested
+    return None
+
+
 def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
     data = unwrap_operational_data(data)
     if isinstance(data, list):
@@ -78,11 +91,32 @@ def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
                     columns.append(key_s)
         return {"columns": columns, "rows": rows}
     if isinstance(data, dict):
-        for key in ("items", "rows", "points", "data", "results", "values", "records", "entries", "flow", "history"):
-            inner = data.get(key)
-            if isinstance(inner, list):
-                nested = coerce_payload_to_table(inner)
-                if nested is not None:
+        for key in (
+            "items",
+            "rows",
+            "points",
+            "data",
+            "results",
+            "values",
+            "records",
+            "entries",
+            "flow",
+            "history",
+            "lines",
+            "orders",
+        ):
+            page_items = _page_items_from_value(data.get(key))
+            if page_items is not None:
+                nested = coerce_payload_to_table(page_items)
+                if nested is not None and nested.get("rows"):
+                    return nested
+        for key, value in data.items():
+            if key in {"meta", "summary", "pagination", "success", "message", "errors", "error"}:
+                continue
+            page_items = _page_items_from_value(value)
+            if page_items:
+                nested = coerce_payload_to_table(page_items)
+                if nested is not None and nested.get("rows"):
                     return nested
         scalar_rows: list[dict[str, Any]] = []
         for key, value in data.items():

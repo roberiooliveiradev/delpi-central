@@ -25,7 +25,11 @@ _LIST_LINES_CTE = """
             RTRIM(LTRIM(C6.C6_PRODUTO)) AS product_code,
             RTRIM(LTRIM(B1.B1_DESC)) AS product_description,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
-            RTRIM(LTRIM(SA1.A1_NOME)) AS customer_name,
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(SA1.A1_NREDUZ)), ''),
+                RTRIM(LTRIM(SA1.A1_NOME))
+            ) AS customer_name,
+            RTRIM(LTRIM(SA1.A1_NREDUZ)) AS customer_short_name,
             C6.C6_QTDVEN AS qty_sold,
             C6.C6_QTDENT AS qty_delivered,
             CONVERT(VARCHAR(10), CONVERT(DATE, C6.C6_ENTREG, 112), 23) AS promised_date,
@@ -178,6 +182,7 @@ def _list_order_clause(request: GetSalesOrderOtdPanelRequest) -> str:
         "product_description": "product_description",
         "customer_code": "customer_code",
         "customer_name": "customer_name",
+        "customer_short_name": "customer_short_name",
         "promised_date": "promised_date",
         "invoice_date": "invoice_date",
         "qty_sold": "qty_sold",

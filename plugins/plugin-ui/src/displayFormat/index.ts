@@ -20,7 +20,14 @@ export {
   type DisplayFormatMenuItem,
   type DisplayFormatPreset,
 } from "./catalog";
-export { parseDisplayDate, monthAbbrevPt, monthFullPt, weekdayFullPt } from "./parseDisplayDate";
+export {
+  parseDisplayDate,
+  isLocalizedChartPeriodLabel,
+  localizeEnglishMonthTokensInLabel,
+  monthAbbrevPt,
+  monthFullPt,
+  weekdayFullPt,
+} from "./parseDisplayDate";
 export { formatCustomPattern, patternLooksLikeDate } from "./formatCustomPattern";
 export { formatDisplayValue, normalizeSpec } from "./formatDisplayValue";
 export {

@@ -805,6 +805,64 @@
         "bar_chart",
         "auto"
       ]
+    },
+    "get_sales_order_otd_panel": {
+      "label": "Pedidos de venda — painel OTD (linhas)",
+      "description": "Linhas de pedido com status no prazo/atrasado. Payload em lines.items. Sem Data início/fim retorna todo o histórico elegível (útil para «todos os atrasados»).",
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "tableFields": "lines",
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date"
+      }
+    },
+    "get_supplies_purchase_order_otd_panel": {
+      "label": "Pedidos de compra MP — painel OTD (linhas)",
+      "description": "Linhas de PC MP com status no prazo/atrasado. Inclui supplier_short_name (A2_NREDUZ). Payload em lines.items.",
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
+      "tableFields": "lines",
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "valueFieldTypes": {
+        "purchase_order_otd_pct": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "expected_delivery_date": "date",
+        "receipt_entry_date": "date",
+        "invoice_issue_date": "date",
+        "purchase_order_issue_date": "date"
+      }
     }
   }
 }

@@ -36,6 +36,7 @@ GET /supplies/purchase-order-otd/panel?...&status=late&page=1&page_size=20
 | Objeto | Papel |
 |--------|-------|
 | `VW_PONTUALIDADE_FORNECEDORES` | Linhas de recebimento vs prazo prometido |
+| `SA2010` (A2) | Fornecedor — `A2_NREDUZ` (nome reduzido) no painel |
 
 Leitura analítica com `WITH (NOLOCK)`.
 
@@ -56,6 +57,13 @@ Interpretação alinhada ao dashboard de suprimentos: recebimento ≤ data prome
 | `total_lines` | Linhas elegíveis no período |
 | `on_time_lines` / `late_lines` | Contagens |
 | `purchase_order_otd_pct` | `on_time_lines / total_lines × 100` (2 casas) |
+
+Painel (`/panel`) — fornecedor:
+
+| Campo | Fonte |
+|-------|--------|
+| `supplier_name` | Preferência `SA2.A2_NREDUZ`; se vazio, `NOME_FORNECEDOR` da view |
+| `supplier_short_name` | `SA2.A2_NREDUZ` |
 
 ## Cache
 

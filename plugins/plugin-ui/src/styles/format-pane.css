@@ -2,6 +2,8 @@
 .delpi-ui-format-pane {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   /* Trava o scroll no __body: sem isso o painel cresce com o conteúdo e o
@@ -9,6 +11,7 @@
   overflow: hidden;
   background: var(--delpi-ui-surface, var(--td-surface, #fff));
   color: var(--delpi-ui-text, var(--td-text, #111));
+  box-sizing: border-box;
 }
 
 .delpi-ui-format-pane__head {

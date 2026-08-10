@@ -53,6 +53,8 @@ export function DisplayFormatRibbonGroup({
   const panelRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const numeric = isNumericDisplayCategory(spec.category);
+  /* Eixo X (categoria): % ainda aplica nos valores via displayFormatSelection. */
+  const percentShortcutEnabled = numeric || target === "chartCategory";
   const dialogOpen = formatDialog?.open ?? uncontrolledDialogOpen;
   const setDialogOpen = formatDialog?.onOpenChange ?? setUncontrolledDialogOpen;
   const dialogOwnedByParent = Boolean(formatDialog);
@@ -118,7 +120,7 @@ export function DisplayFormatRibbonGroup({
         <button
           type="button"
           className={cn.shortcut}
-          disabled={!numeric}
+          disabled={!percentShortcutEnabled}
           title="Porcentagem"
           aria-label="Porcentagem"
           onClick={() => onChange(togglePercentDisplayFormat(spec))}

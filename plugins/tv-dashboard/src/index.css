@@ -8154,8 +8154,13 @@ body.td-composer--marqueeing *{
   color: var(--td-text);
   cursor: pointer;
 }
-.dashboard-tv-dashboard .td-deck-inspector__checkbox input,
-.dashboard-tv-dashboard .td-field .td-deck-inspector__checkbox input{
+/*
+ * Checkbox legado (label + input nativo). Não aplicar em NativeCheckboxControl:
+ * a especificidade `.dashboard-tv-dashboard … input` desfazia opacity:0 do kit e
+ * deixava input + caixa custom na sidebar (bug ao marcar/desmarcar colunas).
+ */
+.dashboard-tv-dashboard .td-deck-inspector__checkbox:not(.delpi-ui-native-checkbox) input,
+.dashboard-tv-dashboard .td-field .td-deck-inspector__checkbox:not(.delpi-ui-native-checkbox) input{
   width: 1rem;
   height: 1rem;
   max-width: 1rem;
@@ -8167,29 +8172,39 @@ body.td-composer--marqueeing *{
   flex: 0 0 auto;
   accent-color: var(--td-accent);
 }
-.dashboard-tv-dashboard .td-deck-inspector__value-fields{
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-  max-width: 100%;
-}
-.dashboard-tv-dashboard .td-deck-inspector__value-fields--compact{
-  gap: 0.2rem;
-}
-.dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
-  margin: 0 0 0.15rem;
-}
 .dashboard-tv-dashboard .td-deck-inspector__column-list{
   display: flex;
   flex-direction: column;
   gap: inherit;
+  width: 100%;
   min-width: 0;
   max-height: min(52vh, 420px);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
+  box-sizing: border-box;
+}
+/* Sidebar: um scroll só no FormatPane — evita caixa curta no topo com vazio abaixo. */
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-inspector__column-list,
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-inspector__projection-list{
+  max-height: none;
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields--compact{
+  gap: 0.2rem;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
+  margin: 0 0 0.15rem;
 }
 .dashboard-tv-dashboard .td-deck-inspector__projection-list{
   display: flex;
@@ -8202,19 +8217,33 @@ body.td-composer--marqueeing *{
   overscroll-behavior: contain;
   padding-right: 2px;
 }
+.dashboard-tv-dashboard .td-deck-inspector__value-fields--columns{
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
 .dashboard-tv-dashboard .td-deck-inspector__column-row{
   display: flex;
   align-items: flex-start;
   gap: 0.35rem;
   justify-content: flex-start;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-row-body{
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.dashboard-tv-dashboard .td-deck-inspector__column-row-body > .delpi-ui-native-control,
+.dashboard-tv-dashboard .td-deck-inspector__column-row-body > input.delpi-ui-native-control{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-row-summary{
   display: flex;

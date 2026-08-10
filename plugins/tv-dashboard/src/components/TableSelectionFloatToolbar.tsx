@@ -20,6 +20,7 @@ import { TableAddElementMenu } from "./TableAddElementMenu";
 import { TableDataMenu, type TableDataMenuActionId } from "./TableDataMenu";
 import { TableStylesMenu } from "./TableStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { focusSidePanelAnchor } from "../utils/focusSidePanelAnchor";
 
 type Props = {
   block: ComunicadoTableViewBlock;
@@ -84,9 +85,7 @@ export function TableSelectionFloatToolbar({ block }: Props) {
     setSelectionPanelTab("data");
     const anchorId =
       actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
-    requestAnimationFrame(() => {
-      document.getElementById(anchorId)?.scrollIntoView({ block: "nearest" });
-    });
+    focusSidePanelAnchor(anchorId);
   };
 
   return (

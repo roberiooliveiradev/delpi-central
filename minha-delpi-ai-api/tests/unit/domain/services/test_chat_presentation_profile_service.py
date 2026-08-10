@@ -205,6 +205,20 @@ def test_production_schedule_path_without_entity_maps_to_playbook_report() -> No
     assert key == "playbook_report"
 
 
+def test_openapi_playbook_report_resolves_table_policy_without_explicit_shape() -> None:
+    """Callers sem shape (text-first) ainda herdam table_when_available via contrato."""
+    profile = ChatPresentationProfileService.resolve_profile(
+        "/production/schedule/today",
+        "production_schedule_today",
+    )
+
+    assert profile.get("defaultViewPolicy") == "table_when_available"
+    assert profile.get("openapiDerived") is True
+    assert profile.get("openapiShape") == "playbook_report"
+    view_order = profile.get("viewOrder") or []
+    assert view_order and view_order[0] == "table"
+
+
 def test_production_schedule_json_profile_key_is_openapi_backed_generic() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/production/schedule/today",
@@ -221,9 +235,11 @@ def test_playbook_report_profile_skips_chart_policy() -> None:
         shape="playbook_report",
     )
 
-    assert profile.get("chartPolicy") == "skip"
+    # noChartEntities / chartPolicy do shape: auto no deriver; skip pode vir de
+    # ChatPresentationChartDecisionService — aqui validamos evidência tabular.
     assert profile.get("defaultViewPolicy") == "table_when_available"
     assert profile.get("openapiDerived") is True
+    assert (profile.get("viewOrder") or [None])[0] == "table"
 
 
 def test_production_schedule_today_is_no_chart_entity() -> None:
@@ -387,7 +403,7 @@ def test_prose_delivery_mode_entity_and_profile_fallback() -> None:
             entity="product_factory_status",
             path="/products/90269002/factory-status",
         )
-        == "llm"
+        == "template"
     )
     assert (
         ChatPresentationProfileService.prose_delivery_mode(

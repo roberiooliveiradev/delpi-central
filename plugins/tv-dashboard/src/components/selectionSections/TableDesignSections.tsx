@@ -54,6 +54,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { TableAddElementMenu } from "../TableAddElementMenu";
 import { TableDataMenu, type TableDataMenuActionId } from "../TableDataMenu";
 import { TableStylesMenu } from "../TableStylesMenu";
+import { focusSidePanelAnchor } from "../../utils/focusSidePanelAnchor";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
@@ -167,9 +168,7 @@ function useTableDesignControls() {
     setSelectionPanelTab("data");
     const anchorId =
       actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
-    requestAnimationFrame(() => {
-      document.getElementById(anchorId)?.scrollIntoView({ block: "nearest" });
-    });
+    focusSidePanelAnchor(anchorId);
   };
 
   const shadeableParts = (selectedTableParts.length > 0 ? selectedTableParts : []).filter(
