@@ -224,6 +224,10 @@ export const CM_HELP = {
     sellerScope:
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",
+    layoutToggle:
+      "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
+    sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
+    sortDirection: "Crescente ou decrescente no campo de ordenação selecionado.",
     tableColumns:
       "Escolha a ordem e as colunas exibidas. A preferência fica salva neste navegador.",
     trend:

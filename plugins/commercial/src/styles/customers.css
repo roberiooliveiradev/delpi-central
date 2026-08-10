@@ -77,6 +77,17 @@
   margin-bottom: var(--cm-grid-gap);
 }
 
+.dashboard-commercial .cm-customers-list__cards {
+  display: grid;
+  gap: var(--cm-grid-gap);
+}
+
+.dashboard-commercial .cm-customers-list__cards-empty {
+  margin: 0;
+  color: var(--cm-text-muted);
+  font-size: 14px;
+}
+
 .dashboard-commercial .cm-customer-detail-page,
 .dashboard-commercial .cm-customer-overview,
 .dashboard-commercial .cm-customer-overview__main,
@@ -252,7 +263,6 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.dashboard-commercial .cm-customers-list__mobile,
 .dashboard-commercial .cm-customer-account-rail__mobile,
 .dashboard-commercial .cm-customer-account-rail-slot--mobile,
 .dashboard-commercial .cm-customer-orders__mobile,
@@ -298,7 +308,6 @@
     justify-content: stretch;
   }
 
-  .dashboard-commercial .cm-customers-list__desktop,
   .dashboard-commercial .cm-customer-account-rail-slot--desktop,
   .dashboard-commercial .cm-customer-account-rail__desktop,
   .dashboard-commercial .cm-customer-orders__desktop,
@@ -309,7 +318,6 @@
     display: none;
   }
 
-  .dashboard-commercial .cm-customers-list__mobile,
   .dashboard-commercial .cm-customer-account-rail-slot--mobile,
   .dashboard-commercial .cm-customer-account-rail__mobile,
   .dashboard-commercial .cm-customer-orders__mobile,

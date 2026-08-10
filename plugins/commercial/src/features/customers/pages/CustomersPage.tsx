@@ -319,14 +319,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             </CommercialEmptyState>
           ) : null}
 
+          <CustomerBillingSeriesChart customers={aggregation.customers} />
+
           {!showEmptyDataset && !showFilteredEmpty ? (
             <CommercialSectionCard
               title="Clientes da carteira"
-              subtitle={
-                filteredCustomers.length === 0
-                  ? "0 clientes"
-                  : `${((page - 1) * 20 + 1).toLocaleString("pt-BR")}–${Math.min(page * 20, filteredCustomers.length).toLocaleString("pt-BR")} de ${filteredCustomers.length.toLocaleString("pt-BR")} clientes`
-              }
               hint={CM_HELP.customers.list}
             >
               <CustomersTable
@@ -351,8 +348,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               ) : null}
             </CommercialSectionCard>
           ) : null}
-
-          <CustomerBillingSeriesChart customers={aggregation.customers} />
         </>
       ) : null}
     </section>

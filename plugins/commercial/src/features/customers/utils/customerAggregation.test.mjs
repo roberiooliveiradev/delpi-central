@@ -448,7 +448,7 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(page, /clientes\/:|navigatePluginView\("customers"/);
   });
 
-  it("usa composicao kit-first no hero, filtros, tabela desktop e cards mobile", () => {
+  it("usa composicao kit-first no hero, filtros, tabela e cards com chrome de Pedidos", () => {
     const page = readFileSync(join(__dirname, "../pages/CustomersPage.tsx"), "utf8");
     const table = readFileSync(join(__dirname, "../components/CustomersTable.tsx"), "utf8");
     assert.match(page, /CommercialPageHero/);
@@ -457,13 +457,18 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /SellerScopeFilter/);
     assert.doesNotMatch(page, /CustomerSummaryCards/);
     assert.ok(
-      page.indexOf("<CustomersTable") < page.indexOf("<CustomerBillingSeriesChart"),
+      page.indexOf("<CustomerBillingSeriesChart") < page.indexOf("<CustomersTable"),
     );
     for (const focus of ["all", "attention", "inactive", "growth", "no_sale_60"]) {
       assert.match(page, new RegExp(`id: "${focus}"`));
     }
     assert.match(table, /CommercialDataTable/);
     assert.match(table, /CommercialDataRecordCard/);
+    assert.match(table, /cm-open-orders-client/);
+    assert.match(table, /CustomerAvatar/);
+    assert.match(table, /SegmentToggle/);
+    assert.match(table, /TableFontSizeControls/);
+    assert.match(table, /useCustomersListLayout/);
     assert.match(table, /onRowClick=\{openCustomer\}/);
     assert.match(table, /event\.stopPropagation\(\)/);
     assert.match(table, /href=\{detailHref\(customer\)\}/);
@@ -475,7 +480,6 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /CommercialTableColumnVisibilityMenu/);
     assert.doesNotMatch(table, /<table|MoreHorizontal/);
     assert.doesNotMatch(page, /@delpi\/plugin-ui/);
-    assert.doesNotMatch(table, /@delpi\/plugin-ui/);
   });
 
   it("usa conjunto completo filtrado no export e lazy fetch no grafico", () => {
