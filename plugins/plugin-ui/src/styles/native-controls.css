@@ -137,6 +137,9 @@ textarea.delpi-ui-native-control--compact {
   --delpi-ui-checkbox-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   --delpi-ui-checkbox-check: #ffffff;
 
+  /* Containing block do input absoluto — sem isso o a11y ancora no painel
+     (ex.: side panel position:relative) e empilha checkboxes no canto. */
+  position: relative;
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -250,6 +253,7 @@ textarea.delpi-ui-native-control--compact {
 
 /* Switch — mesmo reforço de eixo horizontal (é <label>). */
 .delpi-ui-native-switch {
+  position: relative;
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;

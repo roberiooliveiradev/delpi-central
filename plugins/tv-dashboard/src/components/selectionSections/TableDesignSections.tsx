@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   Database,
   Grid3x3,
@@ -52,9 +52,9 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { TableAddElementMenu } from "../TableAddElementMenu";
-import { TableColumnsSelectModal } from "../TableColumnsSelectModal";
 import { TableDataMenu, type TableDataMenuActionId } from "../TableDataMenu";
 import { TableStylesMenu } from "../TableStylesMenu";
+import { focusSidePanelAnchor } from "../../utils/focusSidePanelAnchor";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
@@ -163,12 +163,12 @@ function useTableDesignControls() {
     setSelectionPanelTab("element");
   };
 
-  const openDataFocus = (actionId: Exclude<TableDataMenuActionId, "columns">) => {
+  const openDataFocus = (actionId: TableDataMenuActionId) => {
     openDataPanel();
     setSelectionPanelTab("data");
-    requestAnimationFrame(() => {
-      document.getElementById("td-view-data-source")?.scrollIntoView({ block: "nearest" });
-    });
+    const anchorId =
+      actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
+    focusSidePanelAnchor(anchorId);
   };
 
   const shadeableParts = (selectedTableParts.length > 0 ? selectedTableParts : []).filter(
@@ -643,44 +643,32 @@ function TableDataBandOrInline({
   ctrl: NonNullable<ReturnType<typeof useTableDesignControls>>;
 }) {
   const inSectionPopover = useRibbonSectionPopoverSurface();
-  const [columnsModalOpen, setColumnsModalOpen] = useState(false);
 
   const dataMenu = (close?: () => void) => (
     <TableDataMenu
       onSelect={(actionId) => {
-        if (actionId === "columns") {
-          setColumnsModalOpen(true);
-        } else {
-          ctrl.openDataFocus(actionId);
-        }
+        ctrl.openDataFocus(actionId);
         close?.();
       }}
     />
   );
 
+  if (inSectionPopover) {
+    return dataMenu();
+  }
+
   return (
-    <>
-      {inSectionPopover ? (
-        dataMenu()
-      ) : (
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTilePopover
-            icon={Database}
-            label="Selecionar dados"
-            hint={H.openDataPanel}
-            panelLabel="Dados da tabela"
-            panelVariant="menu"
-            panelClassName="td-chart-float__popover--actions"
-          >
-            {(close) => dataMenu(close)}
-          </DeckRibbonTilePopover>
-        </div>
-      )}
-      <TableColumnsSelectModal
-        open={columnsModalOpen}
-        onClose={() => setColumnsModalOpen(false)}
-        block={ctrl.block}
-      />
-    </>
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTilePopover
+        icon={Database}
+        label="Selecionar dados"
+        hint={H.openDataPanel}
+        panelLabel="Dados da tabela"
+        panelVariant="menu"
+        panelClassName="td-chart-float__popover--actions"
+      >
+        {(close) => dataMenu(close)}
+      </DeckRibbonTilePopover>
+    </div>
   );
 }

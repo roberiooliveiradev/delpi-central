@@ -1100,18 +1100,6 @@
 .dashboard-tv-dashboard .td-modal--wide{
   width: min(980px, 100%);
 }
-/* Colunas do visual — card centralizado (paridade Selecionar dados do gráfico). */
-.dashboard-tv-dashboard .td-modal--table-columns{
-  width: min(440px, 100%);
-}
-.dashboard-tv-dashboard .td-modal--table-columns .td-deck-inspector__value-fields--columns{
-  width: 100%;
-  min-width: 0;
-  align-self: stretch;
-}
-.dashboard-tv-dashboard .td-modal--table-columns .td-deck-inspector__column-list{
-  max-height: min(56vh, 480px);
-}
 .dashboard-tv-dashboard .td-modal--layers{
   width: min(720px, 100%);
 }
@@ -8184,29 +8172,39 @@ body.td-composer--marqueeing *{
   flex: 0 0 auto;
   accent-color: var(--td-accent);
 }
-.dashboard-tv-dashboard .td-deck-inspector__value-fields{
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-  max-width: 100%;
-}
-.dashboard-tv-dashboard .td-deck-inspector__value-fields--compact{
-  gap: 0.2rem;
-}
-.dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
-  margin: 0 0 0.15rem;
-}
 .dashboard-tv-dashboard .td-deck-inspector__column-list{
   display: flex;
   flex-direction: column;
   gap: inherit;
+  width: 100%;
   min-width: 0;
   max-height: min(52vh, 420px);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
+  box-sizing: border-box;
+}
+/* Sidebar: um scroll só no FormatPane — evita caixa curta no topo com vazio abaixo. */
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-inspector__column-list,
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-inspector__projection-list{
+  max-height: none;
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields--compact{
+  gap: 0.2rem;
+}
+.dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
+  margin: 0 0 0.15rem;
 }
 .dashboard-tv-dashboard .td-deck-inspector__projection-list{
   display: flex;

@@ -36,4 +36,13 @@ describe("td-field checkbox CSS contract", () => {
     );
     expect(css).toContain("max-width: 1rem");
   });
+
+  it("lista de colunas no side panel não usa max-height aninhado", () => {
+    expect(css).toContain(
+      ".td-deck-side-panel .td-deck-inspector__column-list",
+    );
+    expect(css).toMatch(
+      /\.td-deck-side-panel \.td-deck-inspector__column-list[\s\S]*?max-height:\s*none/,
+    );
+  });
 });

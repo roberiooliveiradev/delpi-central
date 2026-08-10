@@ -9,7 +9,6 @@ import {
   type ComunicadoTableViewBlock,
   type TableElementId,
 } from "@delpi/tv-dashboard-presentation";
-import { useState } from "react";
 
 import {
   applyTableAddElementChoice,
@@ -18,10 +17,10 @@ import {
 import { type TableStyleRecipe, buildTableStyleRecipeApplication } from "../content/tableStyleRecipes";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
 import { TableAddElementMenu } from "./TableAddElementMenu";
-import { TableColumnsSelectModal } from "./TableColumnsSelectModal";
 import { TableDataMenu, type TableDataMenuActionId } from "./TableDataMenu";
 import { TableStylesMenu } from "./TableStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { focusSidePanelAnchor } from "../utils/focusSidePanelAnchor";
 
 type Props = {
   block: ComunicadoTableViewBlock;
@@ -33,7 +32,6 @@ type Props = {
 export function TableSelectionFloatToolbar({ block }: Props) {
   const { updateSelected, openDataPanel, selectTablePart, setSelectionPanelTab } =
     useComunicadoEditor();
-  const [columnsModalOpen, setColumnsModalOpen] = useState(false);
 
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
 
@@ -83,65 +81,54 @@ export function TableSelectionFloatToolbar({ block }: Props) {
   };
 
   const openDataFocus = (actionId: TableDataMenuActionId) => {
-    if (actionId === "columns") {
-      setColumnsModalOpen(true);
-      return;
-    }
     openDataPanel();
     setSelectionPanelTab("data");
-    requestAnimationFrame(() => {
-      document.getElementById("td-view-data-source")?.scrollIntoView({ block: "nearest" });
-    });
+    const anchorId =
+      actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
+    focusSidePanelAnchor(anchorId);
   };
 
   return (
-    <>
-      <ComplexSelectionFloatToolbar
-        blockId={block.id}
-        frame={block.frame}
-        labels={{
-          elements: "Elementos da tabela",
-          style: "Estilos da tabela",
-          data: "Dados da tabela",
-        }}
-        renderElements={(close) => (
-          <TableAddElementMenu
-            options={options}
-            onApplyChoice={applyAddElementChoice}
-            onMoreOptions={(elementId) => {
-              openAddElementMoreOptions(elementId);
-              close();
-            }}
-          />
-        )}
-        renderStyle={(close) => (
-          <TableStylesMenu
-            options={options}
-            preset={block.tablePreset}
-            onApplyRecipe={(recipe) => {
-              applyRecipe(recipe);
-              close();
-            }}
-            onClear={() => {
-              clearTableStyle();
-              close();
-            }}
-          />
-        )}
-        renderData={(close) => (
-          <TableDataMenu
-            onSelect={(actionId) => {
-              openDataFocus(actionId);
-              close();
-            }}
-          />
-        )}
-      />
-      <TableColumnsSelectModal
-        open={columnsModalOpen}
-        onClose={() => setColumnsModalOpen(false)}
-        block={block}
-      />
-    </>
+    <ComplexSelectionFloatToolbar
+      blockId={block.id}
+      frame={block.frame}
+      labels={{
+        elements: "Elementos da tabela",
+        style: "Estilos da tabela",
+        data: "Dados da tabela",
+      }}
+      renderElements={(close) => (
+        <TableAddElementMenu
+          options={options}
+          onApplyChoice={applyAddElementChoice}
+          onMoreOptions={(elementId) => {
+            openAddElementMoreOptions(elementId);
+            close();
+          }}
+        />
+      )}
+      renderStyle={(close) => (
+        <TableStylesMenu
+          options={options}
+          preset={block.tablePreset}
+          onApplyRecipe={(recipe) => {
+            applyRecipe(recipe);
+            close();
+          }}
+          onClear={() => {
+            clearTableStyle();
+            close();
+          }}
+        />
+      )}
+      renderData={(close) => (
+        <TableDataMenu
+          onSelect={(actionId) => {
+            openDataFocus(actionId);
+            close();
+          }}
+        />
+      )}
+    />
   );
 }
