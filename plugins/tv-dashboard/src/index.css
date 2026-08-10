@@ -3613,10 +3613,13 @@ body.td-composer--marqueeing *{
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: visible;
+  overflow-y: hidden;
   box-sizing: border-box;
+  align-self: center;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__stack{
   display: flex;
@@ -3650,12 +3653,21 @@ body.td-composer--marqueeing *{
   justify-content: center;
   padding-top: 2px;
   border-top: 1px solid color-mix(in srgb, var(--td-border) 70%, transparent);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__caption-text{
   font-size: var(--td-ribbon-caption-size);
   letter-spacing: 0.02em;
   color: var(--td-muted);
   text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__style-checks{
   display: grid;
@@ -4153,8 +4165,15 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__body{
   align-items: stretch;
   justify-content: flex-start;
+  align-self: stretch;
+  width: 100%;
   overflow: visible;
   flex: 0 0 auto;
+}
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__group{
+  flex: 0 1 auto;
+  min-width: 0;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__tiles,
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__tiles--shape-menus{
@@ -5218,12 +5237,12 @@ body.td-composer--marqueeing *{
   height: auto;
   max-height: none;
   min-height: 0;
-  /* Pode encolher; --wide ocupa folga (kit flex:1). */
-  flex: 0 1 auto;
-  padding: 2px 6px 2px;
+  /* Não encolher: corte horizontal vinha de flex-shrink + overflow:hidden. */
+  flex: 0 0 auto;
+  min-width: max-content;
+  padding: 2px 8px 2px;
   justify-content: flex-start;
   gap: 2px;
-  /* Clip só o miolo; caption permanece no fluxo sem encolher. */
   overflow: hidden;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__group{
@@ -5232,7 +5251,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide{
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: max-content;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__body{
   flex: 1 1 auto;
@@ -5240,11 +5259,14 @@ body.td-composer--marqueeing *{
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
+  align-self: center;
   gap: 4px;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   min-height: 0;
   max-height: none;
-  overflow: hidden;
+  overflow-x: visible;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption{
@@ -5254,10 +5276,16 @@ body.td-composer--marqueeing *{
   padding-top: 1px;
   padding-bottom: 1px;
   min-height: 1.15rem;
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption-text{
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   line-height: 1.15;
   font-size: var(--td-ribbon-caption-size, 10px);
 }

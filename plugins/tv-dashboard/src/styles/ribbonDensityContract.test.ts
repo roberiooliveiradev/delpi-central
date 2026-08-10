@@ -119,9 +119,6 @@ describe("ribbon density contract", () => {
     expect(body).toBeTruthy();
     expect(body).toMatch(/justify-content:\s*center/);
     expect(body).toMatch(/align-items:\s*center/);
-    expect(body).toMatch(/width:\s*100%/);
-    expect(body).toMatch(/overflow:\s*hidden/);
-    expect(body).toMatch(/flex:\s*1\s+1\s+auto/);
 
     const compactBody = css.match(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__body\s*\{[^}]+\}/s,
@@ -129,7 +126,9 @@ describe("ribbon density contract", () => {
     expect(compactBody).toBeTruthy();
     expect(compactBody).toMatch(/justify-content:\s*center/);
     expect(compactBody).toMatch(/flex:\s*1\s+1\s+auto/);
-    expect(compactBody).toMatch(/overflow:\s*hidden/);
+    expect(compactBody).toMatch(/width:\s*max-content/);
+    expect(compactBody).toMatch(/overflow-x:\s*visible/);
+    expect(compactBody).toMatch(/overflow-y:\s*hidden/);
   });
 
   it("large-btn compacto limita rótulo a 2 linhas (sem vazar na caption)", () => {
@@ -170,22 +169,22 @@ describe("ribbon density contract", () => {
     );
   });
 
-  it("group--wide compacto ocupa folga com flex:1 e pode encolher", () => {
+  it("group--wide compacto cresce com piso max-content (não comprime controles)", () => {
     const block = css.match(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__group--wide\s*\{[^}]+\}/s,
     )?.[0];
     expect(block).toBeTruthy();
     expect(block).toMatch(/flex:\s*1\s+1\s+auto/);
-    expect(block).toMatch(/min-width:\s*0/);
+    expect(block).toMatch(/min-width:\s*max-content/);
   });
 
-  it("grupos compactos encolhem (não flex-shrink:0) e sem border-right duplicado", () => {
+  it("grupos compactos não encolhem (flex-shrink 0) e sem border-right duplicado", () => {
     const group = css.match(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__group\s*\{[^}]+\}/s,
     )?.[0];
     expect(group).toBeTruthy();
-    expect(group).toMatch(/flex:\s*0\s+1\s+auto/);
-    expect(group).not.toMatch(/flex-shrink:\s*0/);
+    expect(group).toMatch(/flex:\s*0\s+0\s+auto/);
+    expect(group).toMatch(/min-width:\s*max-content/);
 
     const baseGroup = css.match(
       /\.dashboard-tv-dashboard \.td-deck-ribbon__group\s*\{[^}]+\}/s,
@@ -193,5 +192,16 @@ describe("ribbon density contract", () => {
     expect(baseGroup).toBeTruthy();
     expect(baseGroup).toMatch(/border-right:\s*none/);
     expect(baseGroup).not.toMatch(/border-right:\s*1px/);
+  });
+
+  it("caption compacta usa ellipsis (não vaza no divisor vizinho)", () => {
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__caption-text\s*\{[^}]*text-overflow:\s*ellipsis/s,
+    );
+    const typo = readFileSync(
+      join(base, "../components/formatRibbon/FormatRibbonTypographySections.tsx"),
+      "utf8",
+    );
+    expect(typo).toMatch(/title=\{embed \? "Efeitos de texto" : "Efeitos"\}/);
   });
 });

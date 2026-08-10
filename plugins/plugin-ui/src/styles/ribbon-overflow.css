@@ -25,12 +25,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Encolhe quando a faixa aperta; --wide cresce para ocupar folga. */
-  flex: 0 1 auto;
+  /*
+   * Não encolher abaixo do conteúdo — encolher + overflow:hidden cortava tiles.
+   * Folga na faixa: colapso responsivo (RibbonGroupsRow), não flex-shrink.
+   */
+  flex: 0 0 auto;
   align-items: stretch;
-  min-width: 0;
-  /* Não comprimir o bbox ao width do host — senão a medida expandida fica subestimada. */
+  min-width: max-content;
   max-width: none;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -48,7 +51,8 @@
 
 .delpi-ui-ribbon-group--wide {
   flex: 1 1 auto;
-  min-width: min(12rem, 100%);
+  /* Pode crescer; piso = conteúdo (não comprimir controles). */
+  min-width: max-content;
 }
 
 .delpi-ui-ribbon-group__body {
@@ -59,12 +63,15 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
-  /* Evita ícone/rótulo pintar por cima da caption da seção. */
-  overflow: hidden;
+  /* Só vertical: evita pintar na caption; horizontal segue o conteúdo. */
+  overflow-x: visible;
+  overflow-y: hidden;
   box-sizing: border-box;
+  align-self: center;
 }
 
 .delpi-ui-ribbon-group__caption {
@@ -75,6 +82,11 @@
   justify-content: center;
   margin-top: 2px;
   min-height: 1.1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .delpi-ui-ribbon-group__caption--above {
@@ -88,6 +100,9 @@
   letter-spacing: 0.01em;
   color: var(--delpi-ui-muted, var(--text-muted, #666666));
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .delpi-ui-ribbon-group--no-caption .delpi-ui-ribbon-group__caption {

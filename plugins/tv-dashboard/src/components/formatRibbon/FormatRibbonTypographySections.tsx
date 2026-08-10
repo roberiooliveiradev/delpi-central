@@ -871,7 +871,7 @@ export function FormatRibbonTypographySections({
       <TypographyPaneOrGroup
         embed={embed}
         groupId="typo-effects"
-        title="Efeitos de texto"
+        title={embed ? "Efeitos de texto" : "Efeitos"}
         hint={H.textEffects}
         defaultOpen={false}
       >
