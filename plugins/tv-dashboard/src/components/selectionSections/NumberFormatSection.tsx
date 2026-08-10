@@ -1,4 +1,5 @@
 import {
+  DisplayFormatDialog,
   DisplayFormatRibbonGroup,
   type DisplayFormatSpec,
 } from "@delpi/plugin-ui/index";
@@ -7,6 +8,7 @@ import {
   mergeKpiPartsWithOptions,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
+import { useState } from "react";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import {
@@ -22,6 +24,8 @@ import type { SelectionSectionLayout } from "./types";
 
 /**
  * Grupo Número — ribbon + inspetor compacto (mesmo componente do kit).
+ * O modal Formatar fica fora do `DeckRibbonGroup` para sobreviver ao dismiss
+ * do popover quando o grupo está colapsado.
  */
 export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout }) {
   const {
@@ -35,6 +39,7 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
     lastPartialTextEditSelection,
     updateSelected,
   } = useComunicadoEditor();
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
 
   const activeTextEdit =
     textEditSelection ??
@@ -88,20 +93,40 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
       sampleValue={sampleValue}
       density={layout === "pane" ? "compact" : "ribbon"}
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+      formatDialog={{ open: formatDialogOpen, onOpenChange: setFormatDialogOpen }}
+    />
+  );
+
+  const formatDialog = (
+    <DisplayFormatDialog
+      open={formatDialogOpen}
+      onClose={() => setFormatDialogOpen(false)}
+      spec={spec}
+      onApply={onChange}
+      sampleValue={sampleValue}
+      target={descriptor.target}
+      targetHint={descriptor.hint}
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
     />
   );
 
   if (layout === "pane") {
     return (
-      <SelectionPaneSection title="Número" hint="Formato de exibição (categorias + personalizado).">
-        {body}
-      </SelectionPaneSection>
+      <>
+        <SelectionPaneSection title="Número" hint="Formato de exibição (categorias + personalizado).">
+          {body}
+        </SelectionPaneSection>
+        {formatDialog}
+      </>
     );
   }
 
   return (
-    <DeckRibbonGroup groupId="number-format" label="Número" hint="Formato de número, data e percentual.">
-      {body}
-    </DeckRibbonGroup>
+    <>
+      <DeckRibbonGroup groupId="number-format" label="Número" hint="Formato de número, data e percentual.">
+        {body}
+      </DeckRibbonGroup>
+      {formatDialog}
+    </>
   );
 }
