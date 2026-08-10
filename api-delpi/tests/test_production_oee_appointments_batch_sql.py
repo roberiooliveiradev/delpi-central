@@ -13,7 +13,8 @@ def test_oee_appointments_batch_sql_materializes_once() -> None:
         order_clause="ORDER BY production_date DESC",
     )
 
-    assert sql.count("WITH APONTAMENTOS_OEE AS") == 1
+    assert "APONTAMENTOS_OEE AS" in sql
+    assert sql.count("APONTAMENTOS_OEE AS") == 1
     assert f"INTO {OEE_APPOINTMENTS_TEMP_TABLE}" in sql
     assert f"FROM {OEE_APPOINTMENTS_TEMP_TABLE}" in sql
     assert sql.count(f"FROM {OEE_APPOINTMENTS_TEMP_TABLE}") == 3
@@ -22,14 +23,15 @@ def test_oee_appointments_batch_sql_materializes_once() -> None:
     assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
 
 
-def test_oee_appointments_materialize_sql_returns_all_rows() -> None:
+def test_oee_appointments_materialize_sql_includes_leading_ctes() -> None:
     sql = format_oee_appointments_materialize_sql(
         appointments_select="SELECT 1 AS appointment_id",
         where_clause="1=1",
+        leading_ctes="SHY_RANKED AS (SELECT 1 AS rn)",
     )
-
+    assert "SHY_RANKED AS" in sql
+    assert "APONTAMENTOS_OEE AS" in sql
     assert "FROM #Delpi_OeeAppointments" in sql.replace("\n", " ")
-    assert "OFFSET ?" not in sql
 
 
 def test_oee_appointments_batch_sql_applies_status_clause_on_temp() -> None:

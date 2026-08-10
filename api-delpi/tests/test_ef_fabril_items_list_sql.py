@@ -30,7 +30,19 @@ def test_ef_fabril_items_list_sql_uses_ranked_cte_instead_of_outer_apply() -> No
 
     assert "WITH" in sql
     assert "H6_RANKED AS" in sql
+    assert "PA_RANKED AS" in sql
+    assert "SHY_RANKED AS" in sql
+    assert "SG2_RANKED AS" in sql
     assert "LEFT JOIN H6_RANKED H6" in sql
     assert "OUTER APPLY" not in sql
     assert "EF.FILIAL AS FILIAL" in sql
-    assert params == ("2026-04-01", "2026-06-30", "01", "01")
+    # H6(dates+branch) + PA/SHY/SG2(branch×3) + where
+    assert params == (
+        "2026-04-01",
+        "2026-06-30",
+        "01",
+        "01",
+        "01",
+        "01",
+        "01",
+    )

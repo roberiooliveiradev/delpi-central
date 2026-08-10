@@ -16,7 +16,7 @@ from app.domain.entities.production.overall_equipment_effectiveness import (
 def production_oee_cache_key(request: ProductionRequest) -> str:
     return "|".join(
         [
-            "production-oee",
+            "production-oee-tempad-v2",
             request.branch or "",
             request.start_date or "",
             request.end_date or "",
@@ -70,7 +70,7 @@ def get_cached_chart_series(key: str) -> dict[str, Any] | None:
 def production_oee_by_branch_cache_key(request: ProductionRequest) -> str:
     return "|".join(
         [
-            "production-oee-by-branch",
+            "production-oee-by-branch-tempad-v2",
             request.branch or "",
             request.start_date or "",
             request.end_date or "",
@@ -83,7 +83,7 @@ def production_oee_appointments_materialized_cache_key(
 ) -> str:
     return "|".join(
         [
-            "production-oee-appointments-materialized",
+            "production-oee-appointments-materialized-tempad-v2",
             request.branch or "",
             request.start_date or "",
             request.end_date or "",
@@ -100,7 +100,7 @@ def production_oee_appointments_bundle_cache_key(
 ) -> str:
     return "|".join(
         [
-            "production-oee-appointments",
+            "production-oee-appointments-tempad-v2",
             production_oee_appointments_materialized_cache_key(request),
             request.status or "",
             request.efficiency_bands or "",
@@ -158,7 +158,7 @@ def set_cached_production_oee_by_branch(key: str, value: list[dict]) -> None:
 def production_oee_series_daily_cache_key(request: ProductionRequest) -> str:
     return "|".join(
         [
-            "production-oee-series-daily",
+            "production-oee-series-daily-tempad-v2",
             request.branch or "",
             request.start_date or "",
             request.end_date or "",

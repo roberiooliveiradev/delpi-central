@@ -1,15 +1,13 @@
 """Batch OEE apontamentos — materializa view fabril uma vez (temp table)."""
 
-from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
-    build_oee_fabril_appointments_select,
-)
-
 OEE_APPOINTMENTS_TEMP_TABLE = "#Delpi_OeeAppointments"
 
 OEE_APPOINTMENTS_MATERIALIZE_SQL = f"""
         SET NOCOUNT ON;
         DROP TABLE IF EXISTS {OEE_APPOINTMENTS_TEMP_TABLE};
-        WITH APONTAMENTOS_OEE AS (
+        WITH
+        {{leading_ctes}}
+        APONTAMENTOS_OEE AS (
             {{appointments_select}}
             WHERE {{where_clause}}
         )
@@ -55,8 +53,13 @@ def format_oee_appointments_materialize_sql(
     *,
     appointments_select: str,
     where_clause: str,
+    leading_ctes: str = "",
 ) -> str:
+    ctes = leading_ctes.strip()
+    if ctes and not ctes.endswith(","):
+        ctes = f"{ctes},"
     materialize = OEE_APPOINTMENTS_MATERIALIZE_SQL.format(
+        leading_ctes=ctes,
         appointments_select=appointments_select,
         where_clause=where_clause,
     )
@@ -69,8 +72,13 @@ def format_oee_appointments_batch_sql(
     where_clause: str,
     status_clause: str,
     order_clause: str,
+    leading_ctes: str = "",
 ) -> str:
+    ctes = leading_ctes.strip()
+    if ctes and not ctes.endswith(","):
+        ctes = f"{ctes},"
     materialize = OEE_APPOINTMENTS_MATERIALIZE_SQL.format(
+        leading_ctes=ctes,
         appointments_select=appointments_select,
         where_clause=where_clause,
     )

@@ -41,9 +41,10 @@ Consumidores:
 |--------|-----|
 | `production_fabril_appointment_scope.py` | View, CTs excluídos, `STATUS_REGISTRO_OK` |
 | `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
-| `production_fabril_efficiency_sql.py` | `status` valid/outlier em `EFICIENCIA_PERCENTUAL` |
-| `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010) |
-| `production_fabril_oee_kpi_sql.py` | KPI agregado OEE (`NOLOCK`, `TRY_CAST`) — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7 |
+| `production_fabril_efficiency_sql.py` | %/previsto/meta canônicos (`HY_TEMPAD`) + `status` valid/outlier |
+| `production_fabril_standard_time_sql.py` | CTEs/joins SHY+SG2 compartilhados |
+| `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010 + % canônico) |
+| `production_fabril_oee_kpi_sql.py` | KPI agregado OEE (`NOLOCK`, % canônico TEMPAD) — ver [apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) |
 | `production_fabril_ef_items_sql.py` | Listagem eficiência fabril com `appointment_id` |
 | `production_fabril_sh6010_apply.py` | `OUTER APPLY` view → SH6010 (compartilhado OEE + EF) |
 | `production_appointment_time_analysis.py` | Diagnóstico `time_analysis.findings` no detalhe do apontamento |
@@ -73,10 +74,9 @@ Consumidores:
 ### OEE — `GET /production/oee`
 
 - **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
-- **Métrica do painel:** `EFICIENCIA_PERCENTUAL` — média simples na faixa 0–199% (tempo previsto ÷ tempo real).
+- **Métrica do painel:** % canônico (`setup + HY_TEMPAD × qtd` ÷ tempo real) — mesma expressão da eficiência fabril; média simples na faixa 0–199%.
 - Detalhe: `GET /production/oee/appointments/{id}` — SH6010 com roteiro, tempos e eficiência calculada pelos mesmos critérios.
 - Campos `time_analysis.formula_*`: textos em linguagem operacional (sem códigos Protheus) — ver changelog jun/2026.
-
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 
 - Listagem inclui `appointment_id` (vínculo SH6010 via `production_fabril_sh6010_apply`) para abrir detalhe.
