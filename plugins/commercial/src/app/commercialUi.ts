@@ -28,6 +28,7 @@ import {
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardDataRecordCard,
+  ExcelExportButton,
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
@@ -88,6 +89,7 @@ export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;
+export const CommercialExcelExportButton = ExcelExportButton;
 export const CommercialSectionHintLabel = SectionHintLabel;
 export const CommercialTableColumnVisibilityMenu = TableColumnVisibilityMenu;
 export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });

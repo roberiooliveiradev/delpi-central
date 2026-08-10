@@ -442,7 +442,7 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /Tentar novamente/);
     assert.match(page, /identificação cadastral/);
     assert.match(page, /Nenhum cliente corresponde/);
-    assert.match(page, /CustomerSummaryCards/);
+    assert.doesNotMatch(page, /CustomerSummaryCards/);
     assert.doesNotMatch(page, /CustomerAttentionList/);
     assert.match(page, /CustomersTable/);
     assert.doesNotMatch(page, /clientes\/:|navigatePluginView\("customers"/);
@@ -455,8 +455,10 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /CommercialScopeChipBar/);
     assert.match(page, /CommercialFilterBarShell/);
     assert.match(page, /SellerScopeFilter/);
-    assert.match(page, /CustomerSummaryCards/);
-    assert.ok(page.indexOf("CustomersTable") < page.indexOf("CustomerBillingSeriesChart"));
+    assert.doesNotMatch(page, /CustomerSummaryCards/);
+    assert.ok(
+      page.indexOf("<CustomersTable") < page.indexOf("<CustomerBillingSeriesChart"),
+    );
     for (const focus of ["all", "attention", "inactive", "growth", "no_sale_60"]) {
       assert.match(page, new RegExp(`id: "${focus}"`));
     }
@@ -465,7 +467,9 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /onRowClick=\{openCustomer\}/);
     assert.match(table, /event\.stopPropagation\(\)/);
     assert.match(table, /href=\{detailHref\(customer\)\}/);
-    assert.match(table, /commercial:customers:table-columns:v1/);
+    assert.match(table, /useCustomerTablePreferences\(canUseTeamScope\)/);
+    assert.match(table, /CommercialExcelExportButton/);
+    assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns\)/);
     assert.match(table, /resizableColumns/);
     assert.match(table, /enableColumnReorder/);
     assert.match(table, /CommercialTableColumnVisibilityMenu/);
@@ -474,12 +478,37 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(table, /@delpi\/plugin-ui/);
   });
 
+  it("usa conjunto completo filtrado no export e lazy fetch no grafico", () => {
+    const page = readFileSync(join(__dirname, "../pages/CustomersPage.tsx"), "utf8");
+    const chart = readFileSync(
+      join(__dirname, "../components/CustomerBillingSeriesChart.tsx"),
+      "utf8",
+    );
+    const seriesHook = readFileSync(
+      join(__dirname, "../hooks/useCustomerBillingSeries.ts"),
+      "utf8",
+    );
+    const lazyHook = readFileSync(
+      join(__dirname, "../hooks/useLazyBillingSeriesActivation.ts"),
+      "utf8",
+    );
+    assert.match(page, /exportRows=\{filteredCustomers\}/);
+    assert.match(page, /canUseTeamScope=\{canUseTeamScope\}/);
+    assert.match(chart, /CommercialSectionCard/);
+    assert.match(chart, /collapsible/);
+    assert.match(chart, /useCustomerBillingSeries\(customers, \{ enabled \}\)/);
+    assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);
+    assert.match(lazyHook, /IntersectionObserver/);
+    assert.match(lazyHook, /if \(mobile\)/);
+  });
+
   it("nao mantem componentes e CSS espelho da lista legada", () => {
     for (const file of [
       "CustomersFilters.tsx",
       "CustomerAttentionList.tsx",
       "CustomerCommercialStatus.tsx",
       "CustomerContactsStub.tsx",
+      "CustomerSummaryCards.tsx",
     ]) {
       assert.equal(existsSync(join(__dirname, `../components/${file}`)), false);
     }

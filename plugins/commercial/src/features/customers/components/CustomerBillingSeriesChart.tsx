@@ -8,10 +8,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/index";
+import { EmptyState } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
+  CommercialSectionCard,
   CommercialSelectField,
   CommercialStateBanner,
   cmEmptyStateClassNames,
@@ -22,12 +23,8 @@ import {
   BILLING_SERIES_ALL_KEY,
   useCustomerBillingSeries,
 } from "../hooks/useCustomerBillingSeries";
+import { useLazyBillingSeriesActivation } from "../hooks/useLazyBillingSeriesActivation";
 import type { CustomerSummary } from "../types/customerSummary";
-
-const CHART_CLASSES = chartCardBemClasses("cm", {
-  headerLayout: "titleRow",
-  wide: true,
-});
 
 /** Mesma altura do gráfico ROL do dashboard comercial. */
 const CHART_HEIGHT = 320;
@@ -60,6 +57,7 @@ function formatChartCurrency(value: number): string {
  */
 export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesChartProps) {
   const gradientId = useId().replace(/:/g, "");
+  const { anchorRef, open, setOpen, enabled } = useLazyBillingSeriesActivation();
   const {
     selectedKey,
     setSelectedKey,
@@ -70,7 +68,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     totalValue,
     coverage,
     reload,
-  } = useCustomerBillingSeries(customers);
+  } = useCustomerBillingSeries(customers, { enabled });
 
   const chartData = useMemo(
     () =>
@@ -88,36 +86,40 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
       : customerOptions.find((c) => c.key === selectedKey)?.nome ?? "Cliente";
 
   return (
-    <ChartCard
-      title="Faturamento — últimos 12 meses"
-      titleHint={CM_HELP.customers.billingSeries}
-      hint={
-        loading
-          ? "Atualizando série…"
-          : hasValues
-            ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)}`
-            : undefined
-      }
-      classNames={CHART_CLASSES}
-      className="cm-billing-series-chart"
-      headerActions={
-        <CommercialSelectField
-          label="Cliente"
-          options={[
-            { value: BILLING_SERIES_ALL_KEY, label: "Todos os clientes" },
-            ...customerOptions.map((customer) => ({
-              value: customer.key,
-              label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
-            })),
-          ]}
-          value={selectedKey}
-          onChange={setSelectedKey}
-          allowEmpty={false}
-          searchable={customerOptions.length > 8}
-          disabled={loading && customerOptions.length === 0}
-        />
-      }
-    >
+    <div ref={anchorRef} className="cm-billing-series-chart">
+      <CommercialSectionCard
+        title="Faturamento — últimos 12 meses"
+        hint={CM_HELP.customers.billingSeries}
+        subtitle={
+          loading
+            ? "Atualizando série…"
+            : hasValues
+              ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)}`
+              : undefined
+        }
+        collapsible
+        open={open}
+        onOpenChange={setOpen}
+        actions={
+          open ? (
+            <CommercialSelectField
+              label="Cliente"
+              options={[
+                { value: BILLING_SERIES_ALL_KEY, label: "Todos os clientes" },
+                ...customerOptions.map((customer) => ({
+                  value: customer.key,
+                  label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
+                })),
+              ]}
+              value={selectedKey}
+              onChange={setSelectedKey}
+              allowEmpty={false}
+              searchable={customerOptions.length > 8}
+              disabled={loading && customerOptions.length === 0}
+            />
+          ) : undefined
+        }
+      >
       {error && !hasValues ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}
@@ -194,6 +196,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
           </ResponsiveContainer>
         </>
       )}
-    </ChartCard>
+      </CommercialSectionCard>
+    </div>
   );
 }

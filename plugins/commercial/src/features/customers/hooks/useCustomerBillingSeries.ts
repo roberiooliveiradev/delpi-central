@@ -54,7 +54,9 @@ function requestFingerprint(
 
 export function useCustomerBillingSeries(
   customers: CustomerSummary[] | undefined,
+  options?: { enabled?: boolean },
 ): UseCustomerBillingSeriesResult {
+  const enabled = options?.enabled ?? true;
   const [selectedKey, setSelectedKey] = useState(ALL_KEY);
   const [points, setPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,7 +87,7 @@ export function useCustomerBillingSeries(
   const fingerprint = useMemo(() => requestFingerprint(requestPairs), [requestPairs]);
 
   useEffect(() => {
-    if (!fingerprint) return;
+    if (!enabled || !fingerprint) return;
 
     const pairs = fingerprint.split("|").map((token) => {
       const [customer_code, customer_store] = token.split("\0");
@@ -121,9 +123,12 @@ export function useCustomerBillingSeries(
       cancelled = true;
       controller.abort();
     };
-  }, [fingerprint, reloadKey]);
+  }, [enabled, fingerprint, reloadKey]);
 
-  const displayedPoints = fingerprint ? points : [];
+  const displayedPoints = useMemo(
+    () => (enabled && fingerprint ? points : []),
+    [enabled, fingerprint, points],
+  );
   const totalValue = useMemo(
     () => displayedPoints.reduce((sum, point) => sum + (Number(point.value) || 0), 0),
     [displayedPoints],
@@ -134,10 +139,11 @@ export function useCustomerBillingSeries(
     setSelectedKey,
     customerOptions,
     points: displayedPoints,
-    loading: fingerprint ? loading : false,
-    error: fingerprint ? error : null,
+    loading: enabled && fingerprint ? loading : false,
+    error: enabled && fingerprint ? error : null,
     totalValue,
-    coverage: fingerprint ? coverage : { covered: 0, total: 0, failedBatches: 0 },
+    coverage:
+      enabled && fingerprint ? coverage : { covered: 0, total: 0, failedBatches: 0 },
     reload,
   };
 }

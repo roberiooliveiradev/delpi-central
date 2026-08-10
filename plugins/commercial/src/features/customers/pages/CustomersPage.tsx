@@ -16,7 +16,6 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { EmptyState } from "../../../ui/EmptyState";
-import { CustomerSummaryCards } from "../components/CustomerSummaryCards";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
@@ -292,8 +291,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
 
       {aggregation && hasData && !showInitialLoading && !portfolioEmpty ? (
         <>
-          <CustomerSummaryCards aggregation={aggregation} loading={refreshing} />
-
           {aggregation.incompleteLineCount > 0 ? (
             <CommercialStateBanner>
               <p>
@@ -335,6 +332,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             >
               <CustomersTable
                 customers={pagedCustomers}
+                exportRows={filteredCustomers}
+                canUseTeamScope={canUseTeamScope}
                 sortKey={sortKey}
                 sortDirection={sortDirection}
                 onSort={toggleSort}

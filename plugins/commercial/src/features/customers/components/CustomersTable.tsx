@@ -1,12 +1,12 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 
 import {
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialExcelExportButton,
   CommercialStatusBadge,
   CommercialTableColumnVisibilityMenu,
   type DataTableColumn,
-  type DataTableColumnWidths,
 } from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
@@ -21,6 +21,9 @@ import type {
   CustomerListSortKey,
   CustomerSummary,
 } from "../types/customerSummary";
+import { useCustomerTablePreferences } from "../hooks/useCustomerTablePreferences";
+import { exportCustomersExcel } from "../utils/exportCustomersExcel";
+import type { CustomerColumnDef } from "../utils/customerTableColumns";
 import {
   resolveCustomerStatus,
   statusLabel,
@@ -29,74 +32,10 @@ import { CM_HELP } from "../../../content/helpTooltips";
 import { BillingTrendCell } from "./BillingTrendCell";
 import { CustomerAvatar } from "./CustomerAvatar";
 
-const CUSTOMER_TABLE_PREFERENCES_KEY = "commercial:customers:table-columns:v1";
-
-const CUSTOMER_COLUMN_CATALOG = [
-  { key: "nome", label: "Cliente" },
-  { key: "sellerName", label: "Vendedor" },
-  { key: "city", label: "Cidade / UF" },
-  { key: "lastPurchaseDate", label: "Última venda" },
-  { key: "billed12m", label: "Fat. 12 meses" },
-  { key: "billingTrend", label: "Tendência" },
-  { key: "status", label: "Status" },
-  { key: "valorTotalAberto", label: "Em aberto" },
-  { key: "quantidadePedidosAtrasados", label: "Atrasos" },
-  { key: "proximaEntrega", label: "Próxima entrega" },
-] as const;
-
-type CustomerTablePreferences = {
-  visibility: Record<string, boolean>;
-  order: string[];
-  widths: DataTableColumnWidths;
-};
-
-function defaultTablePreferences(): CustomerTablePreferences {
-  return {
-    visibility: Object.fromEntries(CUSTOMER_COLUMN_CATALOG.map((column) => [column.key, true])),
-    order: CUSTOMER_COLUMN_CATALOG.map((column) => column.key),
-    widths: {},
-  };
-}
-
-function loadTablePreferences(): CustomerTablePreferences {
-  const defaults = defaultTablePreferences();
-  if (typeof window === "undefined") return defaults;
-  try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(CUSTOMER_TABLE_PREFERENCES_KEY) ?? "null",
-    ) as Partial<CustomerTablePreferences> | null;
-    if (!parsed) return defaults;
-    const known = new Set(defaults.order);
-    const savedOrder = Array.isArray(parsed.order)
-      ? parsed.order.filter((key, index, values) => known.has(key) && values.indexOf(key) === index)
-      : [];
-    const order = [
-      ...savedOrder,
-      ...defaults.order.filter((key) => !savedOrder.includes(key)),
-    ];
-    const visibility = Object.fromEntries(
-      defaults.order.map((key) => [key, parsed.visibility?.[key] !== false]),
-    );
-    if (!Object.values(visibility).some(Boolean)) visibility.nome = true;
-    return {
-      visibility,
-      order,
-      widths:
-        parsed.widths && typeof parsed.widths === "object"
-          ? Object.fromEntries(
-              Object.entries(parsed.widths).filter(
-                ([key, value]) => known.has(key) && typeof value === "number",
-              ),
-            )
-          : {},
-    };
-  } catch {
-    return defaults;
-  }
-}
-
 type CustomersTableProps = {
   customers: CustomerSummary[];
+  exportRows: CustomerSummary[];
+  canUseTeamScope: boolean;
   sortKey: CustomerListSortKey;
   sortDirection: CustomerListSortDirection;
   onSort: (key: Exclude<CustomerListSortKey, "attention">) => void;
@@ -117,6 +56,8 @@ function statusVariant(
 
 export function CustomersTable({
   customers,
+  exportRows,
+  canUseTeamScope,
   sortKey,
   sortDirection,
   onSort,
@@ -126,18 +67,18 @@ export function CustomersTable({
   loading = false,
   emptyMessage = "Nenhum cliente corresponde aos filtros selecionados.",
 }: CustomersTableProps) {
-  const [tablePreferences, setTablePreferences] = useState(loadTablePreferences);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        CUSTOMER_TABLE_PREFERENCES_KEY,
-        JSON.stringify(tablePreferences),
-      );
-    } catch {
-      // Preferência local é progressiva; a tabela continua funcional sem storage.
-    }
-  }, [tablePreferences]);
+  const [exporting, setExporting] = useState(false);
+  const {
+    visibility,
+    orderedColumns,
+    filterColumns,
+    widths,
+    setWidths,
+    setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
+    reset,
+  } = useCustomerTablePreferences(canUseTeamScope);
 
   const detailHref = (customer: CustomerSummary) => {
     const path = buildCustomerDetailPath(basePath, customer.codigo, customer.loja);
@@ -257,59 +198,37 @@ export function CustomersTable({
         render: (customer) => formatDisplayDate(customer.proximaEntrega),
       },
   ];
-  const columnsByKey = new Map(columns.map((column) => [column.key, column]));
-  const visibleColumns = tablePreferences.order
-    .filter((key) => tablePreferences.visibility[key])
-    .map((key) => columnsByKey.get(key))
-    .filter((column): column is DataTableColumn<CustomerSummary> => Boolean(column));
-  const orderedCatalog = tablePreferences.order
-    .map((key) => CUSTOMER_COLUMN_CATALOG.find((column) => column.key === key))
-    .filter((column): column is (typeof CUSTOMER_COLUMN_CATALOG)[number] => Boolean(column));
+  const visibleColumns = filterColumns(columns).filter(
+    (column): column is DataTableColumn<CustomerSummary> => Boolean(column),
+  );
+  const visibleExportColumns = filterColumns(
+    orderedColumns,
+  ) as CustomerColumnDef[];
 
-  const setColumnVisible = (key: string, visible: boolean) => {
-    setTablePreferences((current) => {
-      const visibleCount = current.order.filter((columnKey) => current.visibility[columnKey]).length;
-      if (!visible && current.visibility[key] && visibleCount <= 1) return current;
-      return {
-        ...current,
-        visibility: { ...current.visibility, [key]: visible },
-      };
-    });
-  };
-
-  const reorderColumns = (fromKey: string, toKey: string) => {
-    setTablePreferences((current) => {
-      const fromIndex = current.order.indexOf(fromKey);
-      const toIndex = current.order.indexOf(toKey);
-      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return current;
-      const order = [...current.order];
-      const [moved] = order.splice(fromIndex, 1);
-      order.splice(toIndex, 0, moved);
-      return { ...current, order };
-    });
-  };
-
-  const applyVisibleOrder = (visibleOrder: string[]) => {
-    setTablePreferences((current) => {
-      let visibleIndex = 0;
-      return {
-        ...current,
-        order: current.order.map((key) =>
-          current.visibility[key] ? (visibleOrder[visibleIndex++] ?? key) : key,
-        ),
-      };
-    });
+  const handleExportExcel = async () => {
+    if (exportRows.length === 0 || exporting) return;
+    try {
+      setExporting(true);
+      await exportCustomersExcel(exportRows, visibleExportColumns);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
     <>
       <div className="cm-customers-list__desktop">
         <div className="cm-customers-list__toolbar">
+          <CommercialExcelExportButton
+            onExport={() => void handleExportExcel()}
+            disabled={exportRows.length === 0 || exporting || loading}
+            exporting={exporting}
+          />
           <CommercialTableColumnVisibilityMenu
-            columns={orderedCatalog}
-            visibility={tablePreferences.visibility}
+            columns={orderedColumns}
+            visibility={visibility}
             onToggleColumn={setColumnVisible}
-            onReset={() => setTablePreferences(defaultTablePreferences())}
+            onReset={reset}
             onReorderColumns={reorderColumns}
             labels={{
               trigger: "Colunas",
@@ -333,10 +252,8 @@ export function CustomersTable({
           onSortChange={(key) => onSort(key as Exclude<CustomerListSortKey, "attention">)}
           onRowClick={openCustomer}
           rowClickRole="button"
-          columnWidths={tablePreferences.widths}
-          onColumnWidthsChange={(widths) =>
-            setTablePreferences((current) => ({ ...current, widths }))
-          }
+          columnWidths={widths}
+          onColumnWidthsChange={setWidths}
           resizableColumns
           enableColumnReorder
           onColumnOrderChange={applyVisibleOrder}
