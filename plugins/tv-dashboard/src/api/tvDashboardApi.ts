@@ -188,6 +188,8 @@ export type PresentationPayload = {
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;
+    /** Token capability — mídia browser-safe via `/public/present/...`. */
+    publicToken?: string;
     publicUrl?: string;
     masterConfig?: PlaylistMasterConfig;
   };

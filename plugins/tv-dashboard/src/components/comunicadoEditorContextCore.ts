@@ -386,6 +386,11 @@ export type ComunicadoEditorContextValue = {
   canUndo: boolean;
   canRedo: boolean;
   playlistId: string;
+  /**
+   * Token público da programação — mídia em `<img>`/`<video>`/CSS via
+   * `/public/present/...` (sem JWT). Ver `resolveBrowserDisplayMediaUrl`.
+   */
+  publicToken: string | null;
   /** dataDefaults live da programação — preview/refresh canônicos. */
   playlistDefaults: Record<string, unknown> | null;
   /** Master slide da programação (fundo/logo herdados no palco — 4E.3). */

@@ -1949,6 +1949,7 @@ export function PlaylistEditorPage({
       {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
+          publicToken={playlist.publicToken}
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
           viewportProfile={playlist.viewportProfile}

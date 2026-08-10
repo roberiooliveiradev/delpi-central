@@ -5,28 +5,22 @@ import {
   serializeComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
 
-import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
+import { resolveBrowserDisplayMediaUrl, ensureBrowserSafeMediaUrl } from "../api/browserSafeMediaUrl";
 import {
   adminMediaUrl,
-  publicPresentMediaUrl,
   type PlaylistMasterConfig,
   type PresentationPayload,
   type Slide,
 } from "../api/tvDashboardApi";
 import { isPublicPresentMediaUrl } from "../utils/overlayLivePreviewPayload";
 
-/** URL de mídia para render nativo (miniatura / CSS / img). */
+/** URL de mídia para render nativo (miniatura / CSS / img / vídeo). */
 function displayMediaUrl(
   playlistId: string,
   assetId: string,
   publicToken?: string | null,
 ): string {
-  const token = typeof publicToken === "string" ? publicToken.trim() : "";
-  // Mesmo contrato da prévia admin /present — access_token em URL admin é frágil.
-  if (token) {
-    return publicPresentMediaUrl(token, assetId);
-  }
-  return withBrowserMediaAccessToken(adminMediaUrl(playlistId, assetId));
+  return resolveBrowserDisplayMediaUrl(playlistId, assetId, publicToken);
 }
 
 /**
@@ -292,7 +286,9 @@ export function resolveMasterForPreview(
       const url = String(background.url);
       out.background = {
         ...background,
-        url: isPublicPresentMediaUrl(url) ? url : withBrowserMediaAccessToken(url),
+        url: isPublicPresentMediaUrl(url)
+          ? url
+          : ensureBrowserSafeMediaUrl(url, { publicToken }),
       };
     } else {
       out.background = background;
@@ -305,7 +301,9 @@ export function resolveMasterForPreview(
       logoOut.url = displayMediaUrl(playlistId, logo.assetId, publicToken);
     } else if (typeof logoOut.url === "string" && logoOut.url) {
       const url = String(logoOut.url);
-      logoOut.url = isPublicPresentMediaUrl(url) ? url : withBrowserMediaAccessToken(url);
+      logoOut.url = isPublicPresentMediaUrl(url)
+        ? url
+        : ensureBrowserSafeMediaUrl(url, { publicToken });
     }
     out.logo = logoOut;
   }

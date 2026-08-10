@@ -19,7 +19,10 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
-import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
+import {
+  resolvePublicMediaToken,
+  rewriteAdminMediaUrlsForBrowser,
+} from "../api/browserSafeMediaUrl";
 import { getAccessToken } from "../api/httpClient";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
 import "./presentation.css";
@@ -41,7 +44,9 @@ function blocksFromNativeData(data: Record<string, unknown> | undefined): Comuni
 }
 
 function forBrowserDisplay(payload: PresentationPayload): PresentationPayload {
-  return rewriteAdminMediaUrlsForBrowser(payload);
+  const publicToken =
+    resolvePublicMediaToken(payload.playlist.publicToken ?? payload.playlist.publicUrl) ?? null;
+  return rewriteAdminMediaUrlsForBrowser(payload, publicToken);
 }
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
-import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
+import { resolveBrowserDisplayMediaUrl } from "../api/browserSafeMediaUrl";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
@@ -34,13 +34,16 @@ type Props = {
 };
 
 /**
- * Player do editor: tenta URL streamável (`access_token` + Range).
- * Se falhar (auth/Range), cai no blob autenticado — mesmo contrato das imagens.
+ * Player do editor: stream via URL pública (capability) quando há publicToken;
+ * senão admin+access_token; se falhar, blob autenticado.
  */
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
-  const { playlistId } = useComunicadoEditor();
+  const { playlistId, publicToken } = useComunicadoEditor();
   const mediaUrl = resolveEditorMediaUrl(playlistId, block.assetId, block.url);
-  const streamSrc = mediaUrl ? withBrowserMediaAccessToken(mediaUrl) : undefined;
+  const streamSrc =
+    playlistId && block.assetId
+      ? resolveBrowserDisplayMediaUrl(playlistId, block.assetId, publicToken)
+      : undefined;
   const [preferBlob, setPreferBlob] = useState(false);
   const blob = useAuthenticatedBlobUrl(preferBlob ? mediaUrl : undefined);
   const src = preferBlob ? blob.src : streamSrc;

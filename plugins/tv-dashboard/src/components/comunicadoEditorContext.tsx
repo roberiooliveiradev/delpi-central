@@ -69,6 +69,8 @@ export {
 
 type ProviderProps = {
   playlistId: string;
+  /** Token público — stream de vídeo/imagem no palco sem JWT na query. */
+  publicToken?: string | null;
   slideId?: string;
   globalRefreshSec?: number;
   /** Dimensão canônica do slide (720p / 1080p / 4k / portrait / custom). */
@@ -163,6 +165,7 @@ function ComunicadoEditorKeyboardBridge() {
 
 export function ComunicadoEditorProvider({
   playlistId,
+  publicToken = null,
   slideId,
   globalRefreshSec = 300,
   viewportProfile = "1080p",
@@ -820,6 +823,7 @@ export function ComunicadoEditorProvider({
     canUndo,
     canRedo,
     playlistId,
+    publicToken: publicToken?.trim() || null,
     playlistDefaults: playlistDefaults ?? null,
     masterLogo,
     mediaLibraryOpen: media.mediaLibraryOpen,
