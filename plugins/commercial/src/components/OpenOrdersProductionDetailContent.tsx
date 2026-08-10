@@ -23,6 +23,7 @@ import {
 
 import {
   CommercialDetailFieldGrid,
+  CommercialDataRecordCard,
   CommercialInlineMeter,
   cmDataTableClassNames,
   cmDataTableLabels,
@@ -37,6 +38,7 @@ import {
 import { CM_HELP } from "../content/helpTooltips";
 import { useOpenOrdersLineDetailExtras } from "../hooks/useOpenOrdersLineDetailExtras";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
+import type { OpAllocationEntry } from "../types/opForecast";
 import {
   formatDaysFromTodayLabel,
   formatDisplayDate,
@@ -61,6 +63,7 @@ type OpenOrdersProductionDetailContentProps = {
   productionOrder?: string;
   search?: string;
   onProductionOrderChange?: (productionOrder: string) => void;
+  showOpenProductionOrderAction?: boolean;
   onNavigate?: () => void;
 };
 
@@ -88,6 +91,7 @@ export function OpenOrdersProductionDetailContent({
   productionOrder,
   search,
   onProductionOrderChange,
+  showOpenProductionOrderAction = true,
   onNavigate,
 }: OpenOrdersProductionDetailContentProps) {
   const detail = useMemo(
@@ -193,7 +197,7 @@ export function OpenOrdersProductionDetailContent({
   return (
     <div className="cm-open-orders-detail">
       <div className="cm-drawer-footer-actions" aria-label="Ações do detalhe">
-        {selectedOp ? (
+        {selectedOp && showOpenProductionOrderAction ? (
           <ActionButton variant="primary" onClick={openProductionOrder}>
             Abrir página da OP {selectedOp}
           </ActionButton>
@@ -535,7 +539,9 @@ export function OpenOrdersProductionDetailContent({
         </p>
 
         {previsao.opsUtilizadas.length > 0 ? (
-          <DataTable
+          <>
+          <div className="cm-responsive-records__desktop">
+            <DataTable
             rows={previsao.opsUtilizadas}
             rowKey={(row) => row.numero_op}
             classNames={cmDataTableClassNames}
@@ -663,7 +669,52 @@ export function OpenOrdersProductionDetailContent({
                 render: (row) => row.observacao_op || "—",
               },
             ]}
-          />
+            />
+          </div>
+          <div className="cm-responsive-records__mobile" aria-label="Ordens de produção">
+            {previsao.opsUtilizadas.map((row: OpAllocationEntry) => {
+              const byOp = extras.opsByNumber[row.numero_op]?.byOp?.order;
+              const produced = byOp?.produced_qty ?? row.quantidade_produzida;
+              const planned = byOp?.planned_qty ?? row.quantidade_op;
+              const otd = byOp?.otd_status;
+              return (
+                <CommercialDataRecordCard
+                  key={row.numero_op}
+                  title={`OP ${row.numero_op || "não informada"}`}
+                  subtitle={row.descricao_produto || item.produto || "Produto não informado"}
+                  status={
+                    otd ? (
+                      <StatusBadge
+                        classNames={cmStatusBadgeClassNames}
+                        label={otd === "on_time" ? "No prazo" : otd === "late" ? "Atrasado" : otd}
+                        variant={otd === "late" ? "danger" : otd === "on_time" ? "success" : "info"}
+                      />
+                    ) : undefined
+                  }
+                  fields={[
+                    { id: "produced", label: "Produzido", value: formatQuantity(produced) },
+                    { id: "planned", label: "Planejado", value: formatQuantity(planned) },
+                    { id: "balance", label: "Saldo OP", value: formatQuantity(row.saldo_op_total) },
+                    { id: "allocated", label: "Alocado", value: formatQuantity(row.saldo_alocado) },
+                    {
+                      id: "end",
+                      label: "Fim previsto",
+                      value: row.data_fim_prevista_op
+                        ? formatDisplayDate(row.data_fim_prevista_op)
+                        : "Sem data prevista",
+                    },
+                    { id: "note", label: "Observação", value: row.observacao_op || "—" },
+                  ]}
+                  context={
+                    <ActionButton variant="ghost" onClick={() => selectProductionOrder(row.numero_op)}>
+                      {row.numero_op === selectedOp ? "OP selecionada" : "Selecionar OP"}
+                    </ActionButton>
+                  }
+                />
+              );
+            })}
+          </div>
+          </>
         ) : (
           <p className="cm-open-orders-drawer__empty">Nenhuma OP alocada para esta linha.</p>
         )}

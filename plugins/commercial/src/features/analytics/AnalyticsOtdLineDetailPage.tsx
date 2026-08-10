@@ -1,5 +1,5 @@
 import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getSalesOrderOtdLineDetail } from "../../api/analyticsApi";
@@ -9,9 +9,11 @@ import {
   cmSectionLabels,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
+  CommercialPagePath,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginPath } from "../../app/pluginNavigation";
+import { buildPluginPath } from "../../app/pluginRoutes";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SalesOrderOtdLineDetailData } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
@@ -35,6 +37,11 @@ export function AnalyticsOtdLineDetailPage({
   const [data, setData] = useState<SalesOrderOtdLineDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const backHref = buildPluginPath(
+    "analytics_otd",
+    basePath,
+    buildAnalyticsFilterSearchParams(filters.filterState),
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -76,23 +83,23 @@ export function AnalyticsOtdLineDetailPage({
 
   return (
     <section className="cm-page-stack">
+      <CommercialPagePath
+        back={{
+          label: "OTD",
+          href: backHref,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigatePluginPath(backHref);
+          },
+        }}
+        current={`Pedido ${orderNumber} · item ${lineItem}`}
+      />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={`Pedido ${orderNumber} · item ${lineItem}`}
           hint={ANALYTICS_CONTENT.otd.lineDetail}
         />
         <div className="cm-nav-row">
-          <ActionButton
-            variant="ghost"
-            onClick={() =>
-              navigatePluginView("analytics_otd", {
-                basePath,
-                search: buildAnalyticsFilterSearchParams(filters.filterState),
-              })
-            }
-          >
-            <ArrowLeft size={16} aria-hidden="true" /> Voltar
-          </ActionButton>
           <ActionButton variant="ghost" onClick={() => window.location.reload()}>
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </ActionButton>

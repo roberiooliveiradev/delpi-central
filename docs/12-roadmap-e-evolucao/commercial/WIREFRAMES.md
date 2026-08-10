@@ -217,7 +217,13 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 **Colunas default:** Cliente, Pedido, Produto, Cobertura, Entrega, Prev. OP, Status, Valor, Atraso.  
 **Clique:** linha / Prev. OP / card → página nativa da linha; ação
 da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
-**URLs internas compartilháveis:** `?stock=` / `?focus=late` sincronizam com chips de atenção; `/open-orders/:filial/:pedido/:linha` abre a linha; `seller_id` = portfolio id. O legado `?pedido=&linha=&filial=` é migrado após localizar a linha. Home pode emitir `?focus=late` / `?stock=…`.
+**URLs internas compartilháveis:** busca, filial, clientes, datas, estoque/atenção,
+`seller_id`, sort/direção e página formam o estado canônico da lista. Valores são
+allowlisted, defaults são omitidos, `popstate` restaura a bancada e filtros/escopo/
+sort resetam a página. `seller_id` só é aceito com `team_scope` e portfolio id
+válido. O `replaceState` roda apenas na rota exata `/open-orders`; linha e OP
+preservam o estado completo no retorno. O legado `?pedido=&linha=&filial=` é
+migrado após localizar a linha. Home pode emitir `?focus=late` / `?stock=…`.
 
 **Mobile (≤768px):** default Cards na 1ª visita; hero e página de detalhe empilham.
 
@@ -243,20 +249,21 @@ da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
 │ Estrutura do produto (BOM: empty/erro/loading visíveis)                  │
 │ [Abrir página OP] [Copiar pedido] [Ver OV n] [Abrir conta]               │
 └──────────────────────────────────────────────────────────────────────────┘
-┌─ Página OP nativa · PagePath Pedidos / Pedido-linha / OP ────────────────┐
+┌─ Página OP nativa · PagePath Pedidos / Pedido-linha / Produto / OP ──────┐
 │ PageHero · mesmo OpenOrdersProductionDetailContent integral da linha      │
-│ loading / erro / 404 / retry · troca OP na URL · retorno abre a linha     │
+│ loading / erro / 404 / retry · troca OP na URL · sem CTA para a própria OP│
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Entrada por contexto de pedido:** `?pedido=&linha=&filial=` localiza a linha e
 substitui o endereço pela rota nativa `/open-orders/:filial/:pedido/:linha`.
 
-**Página OP:** busca a linha exata por filial+pedido+linha no escopo `seller_id` e
+**Página OP:** busca a linha exata por filial+pedido+linha no escopo `seller_id`
+validado contra `PortfolioScope.canUseTeamScope` e ids carregados, e
 confirma a OP em `opsUtilizadas`; não usa iframe, import ou URL de outro MFE.
 As páginas compartilham hook, cálculos, componentes e conteúdo operacional.
-Ao trocar entre múltiplas OPs, a própria rota SPA é atualizada; ao voltar, somente
-`stock`, `focus` e `seller_id` são herdados, e a OP retorna à rota da linha.
+Ao trocar entre múltiplas OPs, a própria rota SPA é atualizada; ao voltar, todo o
+estado canônico da bancada é herdado, e a OP retorna à rota da linha.
 
 **Fora do detalhe de pedido:** KPI/processo AD1, tabela ADJ multi-item, timeline AIJ, export OV → **WF-OV-D**.
 
@@ -280,6 +287,8 @@ Ao trocar entre múltiplas OPs, a própria rota SPA é atualizada; ao voltar, so
 **Mapa:** OV exclusivamente nesta página, aberta por
 `navigateAnalyticsOpportunityDetail`; não existe modal de OV. O PagePath retorna
 a `/analytics/opportunities` preservando apenas filtros allowlisted presentes.
+Produtos, histórico em modo tabela e detalhe de OP usam `DataTable` no desktop e
+`DataRecordCard` no mobile.
 Pedido+OP permanece nas páginas nativas WF-02R-D.
 
 

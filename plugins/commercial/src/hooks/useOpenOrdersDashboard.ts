@@ -9,14 +9,15 @@ import {
   type OpenOrdersTotvsFilters,
 } from "../utils/filterItems";
 import {
-  parseOpenOrdersAttentionDeepLink,
-  syncOpenOrdersAttentionQueryToUrl,
+  isOpenOrdersListPath,
+  parseOpenOrdersListUrlState,
+  syncOpenOrdersListStateToUrl,
+  type OpenOrdersSellerAccess,
 } from "../utils/openOrdersDeepLink";
 import { allocateStockToOrders } from "../utils/stockAllocation";
 import { allocateOpsToOrders, buildOpsProductIndex } from "../utils/opAllocation";
 import { useOpenOrdersTotvs } from "./useOpenOrdersTotvs";
 import {
-  DEFAULT_SORT,
   sortPedidosItems,
   type SortDirection,
   type SortKey,
@@ -24,16 +25,35 @@ import {
 
 export const PAGE_SIZE = 50;
 
-export function useOpenOrdersDashboard(sellerId?: string | null) {
+type OpenOrdersUrlOptions = {
+  basePath?: string;
+  sellerAccess?: OpenOrdersSellerAccess;
+  sellerScopeLoading?: boolean;
+  onSellerIdChange?: (sellerId: string | null) => void;
+};
+
+export function useOpenOrdersDashboard(
+  sellerId?: string | null,
+  urlOptions: OpenOrdersUrlOptions = {},
+) {
+  const {
+    basePath,
+    sellerAccess,
+    sellerScopeLoading = false,
+    onSellerIdChange,
+  } = urlOptions;
+  const initialUrlState = useMemo(
+    () => parseOpenOrdersListUrlState(undefined, sellerAccess),
+    [sellerAccess],
+  );
   const { data, opsData, opsWarning, loading, error, reload } =
     useOpenOrdersTotvs(sellerId);
-  const [filters, setFilters] = useState<OpenOrdersTotvsFilters>(() => ({
-    ...DEFAULT_FILTERS,
-    ...parseOpenOrdersAttentionDeepLink(),
-  }));
-  const [page, setPage] = useState(1);
-  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT.direction);
+  const [filters, setFilters] = useState<OpenOrdersTotvsFilters>(initialUrlState.filters);
+  const [page, setPage] = useState(initialUrlState.page);
+  const [sortKey, setSortKey] = useState<SortKey>(initialUrlState.sortKey);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    initialUrlState.sortDirection,
+  );
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -43,11 +63,25 @@ export function useOpenOrdersDashboard(sellerId?: string | null) {
   }, [loading, data]);
 
   useEffect(() => {
-    syncOpenOrdersAttentionQueryToUrl({
-      stockStatus: filters.stockStatus || undefined,
-      lateOnly: filters.lateOnly,
-    });
-  }, [filters.stockStatus, filters.lateOnly]);
+    if (sellerScopeLoading) return;
+    if (initialUrlState.sellerId !== sellerId) {
+      onSellerIdChange?.(initialUrlState.sellerId);
+    }
+  }, [initialUrlState.sellerId, onSellerIdChange, sellerId, sellerScopeLoading]);
+
+  useEffect(() => {
+    const restoreFromUrl = () => {
+      if (!isOpenOrdersListPath(window.location.pathname, basePath)) return;
+      const state = parseOpenOrdersListUrlState(undefined, sellerAccess);
+      setFilters(state.filters);
+      setPage(state.page);
+      setSortKey(state.sortKey);
+      setSortDirection(state.sortDirection);
+      onSellerIdChange?.(state.sellerId);
+    };
+    window.addEventListener("popstate", restoreFromUrl);
+    return () => window.removeEventListener("popstate", restoreFromUrl);
+  }, [basePath, onSellerIdChange, sellerAccess]);
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
@@ -95,6 +129,29 @@ export function useOpenOrdersDashboard(sellerId?: string | null) {
 
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    if (loading || sellerScopeLoading) return;
+    syncOpenOrdersListStateToUrl(
+      {
+        filters,
+        sellerId: sellerId ?? null,
+        sortKey,
+        sortDirection,
+        page: currentPage,
+      },
+      basePath,
+    );
+  }, [
+    basePath,
+    currentPage,
+    filters,
+    loading,
+    sellerId,
+    sellerScopeLoading,
+    sortDirection,
+    sortKey,
+  ]);
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;

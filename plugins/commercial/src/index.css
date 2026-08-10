@@ -1620,6 +1620,10 @@
   gap: 12px;
 }
 
+.dashboard-commercial .cm-responsive-records__mobile {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .dashboard-commercial .cm-open-orders-detail__charts,
   .dashboard-commercial .cm-open-orders-detail__snapshot,
@@ -1656,6 +1660,15 @@
 @media (max-width: 768px) {
   .dashboard-commercial.dashboard-page {
     padding: 16px;
+  }
+
+  .dashboard-commercial .cm-responsive-records__desktop {
+    display: none;
+  }
+
+  .dashboard-commercial .cm-responsive-records__mobile {
+    display: grid;
+    gap: var(--cm-grid-gap);
   }
 }
 

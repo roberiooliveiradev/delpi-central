@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useMemo } from "react";
 import { ActionButton, EmptyState, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
@@ -41,20 +41,24 @@ function formatUpdatedAt(value: Date): string {
 
 export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const {
+    loading: sellerScopeLoading,
     canUseTeamScope,
     sellers,
     sellerIdFilter,
     setSellerIdFilter,
   } = usePortfolioScope();
 
-  useEffect(() => {
-    if (!canUseTeamScope || typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search || "");
-    const fromQuery = (params.get("seller_id") || "").trim();
-    if (fromQuery && fromQuery !== (sellerIdFilter || "")) {
-      setSellerIdFilter(fromQuery);
-    }
-  }, [canUseTeamScope, sellerIdFilter, setSellerIdFilter]);
+  const sellerAccess = useMemo(
+    () => ({
+      allowSellerId: canUseTeamScope,
+      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
+    }),
+    [canUseTeamScope, sellers],
+  );
+  const restoreSellerFromUrl = useCallback(
+    (sellerId: string | null) => setSellerIdFilter(sellerId),
+    [setSellerIdFilter],
+  );
 
   const {
     loading,
@@ -82,7 +86,17 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     sortKey,
     sortDirection,
     toggleSort,
-  } = useOpenOrdersDashboard(canUseTeamScope ? sellerIdFilter : null);
+  } = useOpenOrdersDashboard(canUseTeamScope ? sellerIdFilter : null, {
+    basePath,
+    sellerAccess,
+    sellerScopeLoading,
+    onSellerIdChange: restoreSellerFromUrl,
+  });
+
+  const changeSeller = (sellerId: string | null) => {
+    setSellerIdFilter(sellerId);
+    setPage(1);
+  };
 
   const showEmptyDataset = !loading && !error && allItemsCount === 0 && !portfolioEmpty;
   const showFilteredEmpty =
@@ -158,7 +172,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
             <SellerScopeFilter
               sellers={sellers}
               value={sellerIdFilter}
-              onChange={setSellerIdFilter}
+              onChange={changeSeller}
               hint={CM_HELP.openOrders.sellerScope}
             />
           </div>

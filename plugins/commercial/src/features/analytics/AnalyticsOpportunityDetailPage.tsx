@@ -23,6 +23,7 @@ import {
   cmSectionLabels,
   cmStatusBadgeClassNames,
   CommercialActivityTimeline,
+  CommercialDataRecordCard,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
   CommercialPagePath,
@@ -384,14 +385,42 @@ export function AnalyticsOpportunityDetailPage({
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <DataTable
-              rows={data.list_products ?? []}
-              columns={productColumns}
-              rowKey={(row, index) => `${row.code}-${index}`}
-              classNames={cmDataTableClassNames}
-              labels={cmDataTableLabels}
-              layout="section"
-            />
+            <div className="cm-responsive-records__desktop">
+              <DataTable
+                rows={data.list_products ?? []}
+                columns={productColumns}
+                rowKey={(row, index) => `${row.code}-${index}`}
+                classNames={cmDataTableClassNames}
+                labels={cmDataTableLabels}
+                layout="section"
+              />
+            </div>
+            <div className="cm-responsive-records__mobile" aria-label="Produtos da OV">
+              {(data.list_products ?? []).map((product, index) => (
+                <CommercialDataRecordCard
+                  key={`${product.code}-${index}`}
+                  title={product.code || "Produto não informado"}
+                  subtitle={product.description || "Sem descrição"}
+                  status={
+                    product.type ? (
+                      <StatusBadge
+                        classNames={cmStatusBadgeClassNames}
+                        label={product.type}
+                        variant={product.type === "PA" ? "success" : "info"}
+                      />
+                    ) : undefined
+                  }
+                  fields={[
+                    { id: "group", label: "Grupo", value: product.group_code || "—" },
+                    {
+                      id: "qty",
+                      label: "Qtd PI",
+                      value: product.qtd_pi != null ? formatQuantity(product.qtd_pi) : "—",
+                    },
+                  ]}
+                />
+              ))}
+            </div>
           </SectionCard>
 
           {structures.length > 0 ? (
@@ -441,14 +470,38 @@ export function AnalyticsOpportunityDetailPage({
                 aria-label="Linha do tempo da OV"
               />
             ) : (
-              <DataTable
-                rows={history}
-                columns={historyColumns}
-                rowKey={(row, index) => historyEventKey(row, index)}
-                classNames={cmDataTableClassNames}
-                labels={cmDataTableLabels}
-                layout="section"
-              />
+              <>
+                <div className="cm-responsive-records__desktop">
+                  <DataTable
+                    rows={history}
+                    columns={historyColumns}
+                    rowKey={(row, index) => historyEventKey(row, index)}
+                    classNames={cmDataTableClassNames}
+                    labels={cmDataTableLabels}
+                    layout="section"
+                  />
+                </div>
+                <div className="cm-responsive-records__mobile" aria-label="Histórico da OV">
+                  {history.map((event, index) => (
+                    <CommercialDataRecordCard
+                      key={historyEventKey(event, index)}
+                      title={`Revisão ${event.revision || "—"}`}
+                      subtitle={formatProcessStageLabel(event.process_code, event.process_label)}
+                      status={resolveHistoryStatus(event)}
+                      fields={[
+                        {
+                          id: "stage",
+                          label: "Etapa",
+                          value: formatProcessStageLabel(event.stage_code, event.stage_label),
+                        },
+                        { id: "start", label: "Início", value: formatDisplayDate(event.start_date) },
+                        { id: "end", label: "Fim", value: formatDisplayDate(event.end_date) },
+                        { id: "duration", label: "Duração", value: resolveHistoryDuration(event) },
+                      ]}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </SectionCard>
         </>

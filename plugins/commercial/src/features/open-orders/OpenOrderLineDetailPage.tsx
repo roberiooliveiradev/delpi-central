@@ -11,8 +11,13 @@ import {
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
-import { buildOpenOrdersContextSearch, findOpenOrderLine } from "../../utils/openOrdersDeepLink";
+import {
+  buildOpenOrdersContextSearch,
+  findOpenOrderLine,
+  resolveOpenOrdersSellerId,
+} from "../../utils/openOrdersDeepLink";
 import {
   buildOpenOrderLineRouteIdentity,
   INITIAL_OPEN_ORDER_LINE_DETAIL_STATE,
@@ -28,13 +33,6 @@ type OpenOrderLineDetailPageProps = {
   search?: string;
 };
 
-function readSellerId(search?: string): string | null {
-  const params = new URLSearchParams(
-    search ?? (typeof window !== "undefined" ? window.location.search : ""),
-  );
-  return (params.get("seller_id") ?? "").trim() || null;
-}
-
 export function OpenOrderLineDetailPage({
   basePath,
   branch,
@@ -47,17 +45,37 @@ export function OpenOrderLineDetailPage({
     INITIAL_OPEN_ORDER_LINE_DETAIL_STATE,
   );
   const [reloadKey, setReloadKey] = useState(0);
-  const sellerId = useMemo(() => readSellerId(search), [search]);
+  const {
+    loading: scopeLoading,
+    canUseTeamScope,
+    sellers,
+  } = usePortfolioScope();
+  const sellerAccess = useMemo(
+    () => ({
+      allowSellerId: canUseTeamScope,
+      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
+    }),
+    [canUseTeamScope, sellers],
+  );
+  const sourceSearch = search ?? (typeof window !== "undefined" ? window.location.search : "");
+  const sellerId = useMemo(
+    () => resolveOpenOrdersSellerId(new URLSearchParams(sourceSearch).get("seller_id"), sellerAccess),
+    [sellerAccess, sourceSearch],
+  );
   const routeIdentity = buildOpenOrderLineRouteIdentity({ branch, orderNumber, lineItem });
   const item = selectOpenOrderLineSnapshot(loadState, routeIdentity);
   const requestBelongsToRoute = loadState.requestIdentity === routeIdentity;
-  const loading =
+  const loading = scopeLoading ||
     loadState.status === "loading" || (!requestBelongsToRoute && item === null);
   const refreshing = requestBelongsToRoute && loadState.status === "refreshing";
-  const contextSearch = useMemo(() => buildOpenOrdersContextSearch(search), [search]);
+  const contextSearch = useMemo(
+    () => buildOpenOrdersContextSearch(sourceSearch, sellerAccess),
+    [sellerAccess, sourceSearch],
+  );
   const backHref = buildPluginPath("open_orders", basePath, contextSearch);
 
   useEffect(() => {
+    if (scopeLoading) return;
     const controller = new AbortController();
     dispatchLoad({ type: "request_started", identity: routeIdentity });
 
@@ -94,7 +112,7 @@ export function OpenOrderLineDetailPage({
       });
 
     return () => controller.abort();
-  }, [branch, lineItem, orderNumber, reloadKey, routeIdentity, sellerId]);
+  }, [branch, lineItem, orderNumber, reloadKey, routeIdentity, scopeLoading, sellerId]);
 
   const navigateBack = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();

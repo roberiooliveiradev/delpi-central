@@ -47,12 +47,22 @@ Sincronizados com o estado da página (`replaceState`); **não** apagam filtros 
 
 | Query | Efeito |
 |-------|--------|
+| `q` | Busca livre |
+| `branch` | Filial |
+| `client` (repetível) | Clientes selecionados |
 | `?stock=com_estoque\|parcial\|sem_estoque` | Chip de atenção (estoque) |
 | `?focus=late` | Chip «Atraso» |
+| `date_start` / `date_end` | Intervalo de entrega (`YYYY-MM-DD`) |
+| `sort` / `dir=asc\|desc` | Coluna allowlisted e direção da ordenação |
+| `page` | Página da lista em memória; volta a 1 quando filtro, escopo ou sort muda |
 | `?pedido=&linha=&filial=` | Link legado: localiza a linha e migra para a rota nativa |
-| `seller_id` | Escopo de carteira (já existente) |
+| `seller_id` | Escopo de carteira, aceito só com `team_scope` e id de carteira válido |
 
-A Home pode emitir `?focus=late` / `?stock=…`. Helpers: [`src/utils/openOrdersDeepLink.ts`](./src/utils/openOrdersDeepLink.ts).
+A URL é restaurada em `popstate`; valores inválidos e defaults são removidos. O
+`replaceState` canônico roda somente na rota exata `/open-orders`, nunca nas
+fichas. Linha e OP preservam todos os parâmetros acima no retorno. A Home pode
+emitir `?focus=late` / `?stock=…`. Helpers:
+[`src/utils/openOrdersDeepLink.ts`](./src/utils/openOrdersDeepLink.ts).
 
 Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido → mesma URL `pedido/linha/filial` (ver README do `dashboard-production`).
 
@@ -130,12 +140,15 @@ Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 - Helps: `SectionHintLabel` + textos em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (linguagem de negócio, sem paths de API)
 
 A linha abre diretamente na ficha SPA
-`/open-orders/:filial/:pedido/:linha`, preservando `stock`, `focus` e `seller_id`.
+`/open-orders/:filial/:pedido/:linha`, preservando o estado canônico completo da
+lista (filtros, escopo, ordenação e página).
 Links legados com `pedido`, `linha` e `filial` na query são resolvidos no escopo
 carregado e substituídos pela rota nativa. A OP mantém
 `/open-orders/:filial/:pedido/:linha/op/:op`, valida linha e OP na carteira e
 reutiliza o mesmo `OpenOrdersProductionDetailContent` integral. Seu retorno aponta
 para a página da linha; a troca entre múltiplas OPs atualiza a URL compartilhável.
+O breadcrumb da OP inclui o produto após a carga e a própria ficha não repete o
+CTA de abrir a OP atual.
 Linha, OP, OV, proposta e conta usam `CommercialPagePath`.
 
 **OV:** se a lista trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` com match por filial+cliente ([`resolveProposalForOpenOrder.ts`](./src/utils/resolveProposalForOpenOrder.ts)). **Não** chamar `GET /proposals/{pedido}` como se pedido (`C5_NUM`) fosse número de OV.
@@ -222,7 +235,9 @@ Upload multipart → volume `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
 
 ## Cutover PVA (F2c)
 
-**Adiado** até o Comercial superar o PVA e pedido explícito. Artefatos: [F2C-CUTOVER-RUNBOOK.md](../../docs/12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md).
+Redirects F2c ativos nos gateways canônicos de produção e desenvolvimento por
+`gateway/snippets/commercial-f2c-redirects.conf`. Artefatos operacionais:
+[F2C-CUTOVER-RUNBOOK.md](../../docs/12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md).
 
 ```bash
 docker exec -it delpi-commercial-api python scripts/backfill_from_open_orders_legacy.py

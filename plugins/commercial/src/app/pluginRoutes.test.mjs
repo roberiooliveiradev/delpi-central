@@ -99,7 +99,14 @@ describe("estrutura dos detalhes de linha e OP", () => {
     ]);
     assert.match(linePage, /<OpenOrdersProductionDetailContent/);
     assert.match(opPage, /<OpenOrdersProductionDetailContent/);
+    assert.match(linePage, /canUseTeamScope/);
+    assert.match(linePage, /resolveOpenOrdersSellerId/);
+    assert.match(opPage, /canUseTeamScope/);
+    assert.match(opPage, /resolveOpenOrdersSellerId/);
+    assert.match(opPage, /showOpenProductionOrderAction=\{false\}/);
+    assert.match(opPage, /Produto \$\{item\.produto\.trim\(\)\}/);
     assert.match(content, /export function OpenOrdersProductionDetailContent/);
+    assert.match(content, /CommercialDataRecordCard/);
     assert.doesNotMatch(table, /CommercialWorkbenchModal|detailItem|syncOpenOrdersLineQuery/);
     assert.match(table, /navigateOpenOrderLineDetail/);
     assert.match(table, /parseOpenOrdersLineDeepLink/);
@@ -112,6 +119,24 @@ describe("estrutura dos detalhes de linha e OP", () => {
     for (const source of [linePage, opPage, otdPanel, otdUtils]) {
       assert.doesNotMatch(source, /dashboard-production|production-appointments|iframe/i);
     }
+  });
+
+  it("mantém cards mobile e PagePath determinístico nos detalhes", async () => {
+    const [opportunity, otdLine] = await Promise.all([
+      readFile(
+        new URL("../features/analytics/AnalyticsOpportunityDetailPage.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../features/analytics/AnalyticsOtdLineDetailPage.tsx", import.meta.url),
+        "utf8",
+      ),
+    ]);
+    assert.match(opportunity, /CommercialDataRecordCard/);
+    assert.match(opportunity, /cm-responsive-records__mobile/);
+    assert.match(otdLine, /<CommercialPagePath/);
+    assert.match(otdLine, /buildPluginPath\(/);
+    assert.doesNotMatch(otdLine, /ArrowLeft/);
   });
 
   it("mantém OV exclusivamente como página navegada pelo helper", async () => {

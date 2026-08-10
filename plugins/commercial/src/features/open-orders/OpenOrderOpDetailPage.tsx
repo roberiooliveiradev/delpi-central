@@ -15,9 +15,11 @@ import {
   buildOpenOrderOpDetailPath,
   buildPluginPath,
 } from "../../app/pluginRoutes";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
 import {
   buildOpenOrdersContextSearch,
+  resolveOpenOrdersSellerId,
 } from "../../utils/openOrdersDeepLink";
 import { getLineOpForecast } from "../../utils/opAllocation";
 import {
@@ -36,13 +38,6 @@ type OpenOrderOpDetailPageProps = {
   search?: string;
 };
 
-function readSellerId(search?: string): string | null {
-  const params = new URLSearchParams(
-    search ?? (typeof window !== "undefined" ? window.location.search : ""),
-  );
-  return (params.get("seller_id") ?? "").trim() || null;
-}
-
 export function OpenOrderOpDetailPage({
   basePath,
   branch,
@@ -56,7 +51,23 @@ export function OpenOrderOpDetailPage({
     INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
   );
   const [reloadKey, setReloadKey] = useState(0);
-  const sellerId = useMemo(() => readSellerId(search), [search]);
+  const {
+    loading: scopeLoading,
+    canUseTeamScope,
+    sellers,
+  } = usePortfolioScope();
+  const sellerAccess = useMemo(
+    () => ({
+      allowSellerId: canUseTeamScope,
+      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
+    }),
+    [canUseTeamScope, sellers],
+  );
+  const sourceSearch = search ?? (typeof window !== "undefined" ? window.location.search : "");
+  const sellerId = useMemo(
+    () => resolveOpenOrdersSellerId(new URLSearchParams(sourceSearch).get("seller_id"), sellerAccess),
+    [sellerAccess, sourceSearch],
+  );
   const routeIdentity = buildOpenOrderOpRouteIdentity({
     branch,
     orderNumber,
@@ -65,10 +76,13 @@ export function OpenOrderOpDetailPage({
   });
   const item = selectOpenOrderOpSnapshot(loadState, routeIdentity);
   const requestBelongsToRoute = loadState.requestIdentity === routeIdentity;
-  const loading =
+  const loading = scopeLoading ||
     loadState.status === "loading" || (!requestBelongsToRoute && item === null);
   const refreshing = requestBelongsToRoute && loadState.status === "refreshing";
-  const contextSearch = useMemo(() => buildOpenOrdersContextSearch(search), [search]);
+  const contextSearch = useMemo(
+    () => buildOpenOrdersContextSearch(sourceSearch, sellerAccess),
+    [sellerAccess, sourceSearch],
+  );
   const ordersHref = buildPluginPath("open_orders", basePath, contextSearch);
   const lineHref = buildOpenOrderLineDetailPath(
     basePath,
@@ -79,6 +93,7 @@ export function OpenOrderOpDetailPage({
   ) ?? ordersHref;
 
   useEffect(() => {
+    if (scopeLoading) return;
     const controller = new AbortController();
     dispatchLoad({ type: "request_started", identity: routeIdentity });
 
@@ -128,6 +143,7 @@ export function OpenOrderOpDetailPage({
     productionOrder,
     reloadKey,
     routeIdentity,
+    scopeLoading,
     sellerId,
   ]);
 
@@ -169,7 +185,7 @@ export function OpenOrderOpDetailPage({
             onNavigate: navigateBack,
           },
         ]}
-        current={`OP ${productionOrder}`}
+        current={`${item?.produto?.trim() ? `Produto ${item.produto.trim()} · ` : ""}OP ${productionOrder}`}
       />
 
       <CommercialPageHero
@@ -226,8 +242,9 @@ export function OpenOrderOpDetailPage({
           item={item}
           basePath={basePath}
           productionOrder={productionOrder}
-          search={search}
+          search={contextSearch}
           onProductionOrderChange={selectProductionOrder}
+          showOpenProductionOrderAction={false}
         />
       ) : null}
     </section>
