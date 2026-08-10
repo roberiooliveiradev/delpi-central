@@ -18,7 +18,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insert:
       "Adiciona elementos ao slide personalizado: textos, mídias e formas. Clique no palco para selecionar e editar.",
     background:
-      "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
+      "Define a cor, o gradiente ou a imagem de fundo do slide. A imagem preenche toda a tela (cobertura, sem repetir).",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
     textEffects: "Sombra, contorno e reflexo tipográfico no texto selecionado.",
     textStroke: "Cor e espessura do contorno ao redor das letras.",
@@ -609,6 +609,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     entranceDuration: "Duração da animação de entrada em milissegundos.",
     uploadMedia: "Substitui a imagem ou vídeo do elemento pelo arquivo enviado.",
     backgroundColor: "Cor sólida de fundo do slide personalizado.",
-    uploadBackground: "Imagem de fundo em tela cheia. Substitui a cor quando definida.",
+    uploadBackground:
+      "Escolha um arquivo ou a biblioteca. A imagem preenche toda a tela (cobertura, centro), no editor e na TV.",
+    clearBackground: "Remove a imagem de fundo e volta para a cor sólida branca.",
   },
 } as const;

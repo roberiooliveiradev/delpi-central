@@ -35,6 +35,30 @@ describe("RichComunicadoStage (canônico editor ≡ TV)", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("imagem de fundo preenche o palco via camada cover", () => {
+    const { container } = render(
+      <RichComunicadoStage
+        data={{
+          version: 4,
+          background: {
+            type: "image",
+            url: "/apps/tv-dashboard-api/public/present/t/media/bg?x=1",
+          },
+          blocks: [],
+        }}
+      />,
+    );
+    const img = container.querySelector("img.delpi-ui-comunicado__background") as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img?.getAttribute("src")).toContain("media/bg");
+    expect(img?.getAttribute("alt")).toBe("");
+    expect(img?.style.objectFit).toBe("cover");
+    expect(img?.style.width).toBe("100%");
+    expect(img?.style.height).toBe("100%");
+    const root = container.querySelector(".tdp-native-screen.tdp-comunicado") as HTMLElement | null;
+    expect(root?.style.backgroundImage).toBe("");
+  });
+
   it("RichComunicadoMasterLogo usa url() com aspas (query string segura)", () => {
     const { container } = render(
       <RichComunicadoMasterLogo url="/apps/tv-dashboard-api/public/present/t/media/a?x=1" />,

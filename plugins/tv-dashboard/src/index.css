@@ -6216,6 +6216,11 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-ribbon__preset-swatch:hover{
   border-color: color-mix(in srgb, var(--td-accent) 45%, var(--td-border));
 }
+.dashboard-tv-dashboard .td-deck-ribbon__bg-image-swatch{
+  width: 56px;
+  height: 32px;
+  background-color: #0f172a;
+}
 .dashboard-tv-dashboard .td-deck-chrome__ribbon--settings .td-deck-ribbon{
   flex-wrap: nowrap;
   overflow-x: auto;

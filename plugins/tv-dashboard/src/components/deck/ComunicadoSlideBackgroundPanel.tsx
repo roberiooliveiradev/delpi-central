@@ -1,8 +1,10 @@
-import { Upload, FolderOpen } from "lucide-react";
+import { Upload, FolderOpen, ImageOff } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { useAuthenticatedBlobUrl } from "../../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { resolveEditorMediaUrl } from "../slideCardPreview";
 import { COMUNICADO_BACKGROUND_GRADIENT_PRESETS } from "./ComunicadoSlideBackgroundRibbon";
 import { DeckField } from "./DeckField";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -15,8 +17,20 @@ type Labels = Record<string, string>;
 const GRADIENT_PRESETS = COMUNICADO_BACKGROUND_GRADIENT_PRESETS;
 
 export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Labels }) {
-  const { uploading, background, triggerUpload, openMediaLibrary, setBackgroundColor, setBackgroundGradient } =
-    useComunicadoEditor();
+  const {
+    uploading,
+    background,
+    playlistId,
+    triggerUpload,
+    openMediaLibrary,
+    setBackgroundColor,
+    setBackgroundGradient,
+  } = useComunicadoEditor();
+  const imageApiUrl =
+    background?.type === "image"
+      ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
+      : undefined;
+  const { src: imagePreviewSrc } = useAuthenticatedBlobUrl(imageApiUrl);
 
   const gradientFrom = background?.type === "gradient" ? background.from : "#0f172a";
   const gradientTo = background?.type === "gradient" ? background.to : "#1e3a5f";
@@ -76,7 +90,30 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
             {labels.comunicadoUpload ?? "Enviar imagem de fundo"}
           </button>
         </HintAction>
+        {background?.type === "image" ? (
+          <HintAction hint={E.clearBackground} ariaLabel="Ajuda: remover fundo">
+            <button type="button" className="td-btn td-btn--sm" onClick={() => setBackgroundColor("#ffffff")}>
+              <ImageOff size={15} aria-hidden="true" />
+              Remover imagem
+            </button>
+          </HintAction>
+        ) : null}
       </div>
+      {background?.type === "image" && imagePreviewSrc ? (
+        <div
+          className="td-deck-ribbon__bg-image-swatch"
+          style={{
+            width: "100%",
+            height: 72,
+            borderRadius: 8,
+            backgroundImage: `url(${JSON.stringify(imagePreviewSrc)})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+          aria-hidden
+        />
+      ) : null}
     </DeckPropertySection>
   );
 }

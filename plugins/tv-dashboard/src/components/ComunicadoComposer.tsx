@@ -6,7 +6,7 @@ import {
   buildViewDataLinkPatch,
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
-  comunicadoBackgroundCssProperties,
+  comunicadoBackgroundRootStyle,
   hugFrameToContentSizePx,
   isClickPathDrawTool,
   isComunicadoVisualBoxBlock,
@@ -21,6 +21,7 @@ import {
   resolveViewportPixelSize,
   isLineShapeKind,
   resolveBlockPlacementStyle,
+  RichComunicadoBackground,
   RichComunicadoMasterLogo,
   staticLabelFromTextBoundBlock,
   useComunicadoGoogleFonts,
@@ -94,6 +95,7 @@ import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionCon
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { GroupTransformLayer } from "./GroupTransformLayer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { resolveEditorMediaUrl } from "./slideCardPreview";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import { ComplexViewFloatToolbarOverlay } from "./ComplexViewFloatToolbarOverlay";
 import { shouldShowComplexViewFloatToolbar } from "./ComplexViewFloatToolbar";
@@ -125,15 +127,16 @@ function resolveComposerBlockDataLoading(
   return !hasResolved && dataPreviewLoading;
 }
 
-function useCanvasBackgroundStyle() {
-  const { background } = useComunicadoEditor();
-  const imageApiUrl = background?.type === "image" ? background.url : undefined;
+function useCanvasBackgroundPaint(): { style: CSSProperties; imageSrc?: string } {
+  const { background, playlistId } = useComunicadoEditor();
+  const imageApiUrl =
+    background?.type === "image"
+      ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
+      : undefined;
   const { src: imageBlobUrl } = useAuthenticatedBlobUrl(imageApiUrl);
 
-  return useMemo(
-    () => comunicadoBackgroundCssProperties(background, imageBlobUrl),
-    [background, imageBlobUrl],
-  );
+  const style = useMemo(() => comunicadoBackgroundRootStyle(background), [background]);
+  return { style, imageSrc: imageBlobUrl };
 }
 
 function MasterLogoOverlay() {
@@ -208,7 +211,7 @@ export function ComunicadoComposerCanvas() {
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   useAuthenticatedComunicadoCustomFonts(config.customFonts);
-  const canvasStyle = useCanvasBackgroundStyle();
+  const { style: canvasStyle, imageSrc: backgroundImageSrc } = useCanvasBackgroundPaint();
   const designSize = useMemo(
     () =>
       resolveViewportPixelSize(viewportProfile, {
@@ -1090,6 +1093,7 @@ export function ComunicadoComposerCanvas() {
           }}
           onContextMenu={handleCanvasContextMenu}
         >
+          <RichComunicadoBackground url={backgroundImageSrc} />
           {/*
            * Mesma árvore da TV (`ComunicadoStageFrame`): root + __stage.
            * Blocos/logo posicionam no stage — paridade de containing block.

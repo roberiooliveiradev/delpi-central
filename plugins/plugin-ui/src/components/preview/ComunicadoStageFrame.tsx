@@ -12,6 +12,11 @@ export type ComunicadoStageFrameProps = {
   className?: string;
   /** Classes do palco interno (default: dual `__stage`). */
   stageClassName?: string;
+  /**
+   * Camada de fundo (ex.: imagem cover) — irmã do palco, atrás dos blocos.
+   * Cor/gradiente continuam em `style` no root.
+   */
+  backgroundLayer?: ReactNode;
 };
 
 /**
@@ -24,10 +29,12 @@ export function ComunicadoStageFrame({
   style,
   className,
   stageClassName,
+  backgroundLayer,
 }: ComunicadoStageFrameProps) {
   const bem = comunicadoStageBemClasses("tdp");
   return (
     <div className={ensureComunicadoDualClass(className ?? bem.root)} style={style}>
+      {backgroundLayer}
       <div className={ensureComunicadoDualClass(stageClassName ?? bem.stage)}>{children}</div>
     </div>
   );

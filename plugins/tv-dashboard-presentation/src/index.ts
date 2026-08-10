@@ -40,6 +40,7 @@ export {
   DESIGN_VIEWPORT_BLEED_RATIO,
 } from "./DesignViewportStage";
 export { RichComunicadoStage } from "./RichComunicadoStage";
+export { RichComunicadoBackground } from "./RichComunicadoBackground";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
@@ -383,7 +384,11 @@ export {
   useComunicadoCustomFonts,
   type ComunicadoLoadedCustomFont,
 } from "./comunicadoCustomFonts";
-export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
+export {
+  comunicadoBackgroundCssProperties,
+  comunicadoBackgroundImageUrl,
+  comunicadoBackgroundRootStyle,
+} from "./comunicadoBackgroundStyle";
 export {
   blockTypeForDisplayMode,
   defaultDisplayModeForInsert,

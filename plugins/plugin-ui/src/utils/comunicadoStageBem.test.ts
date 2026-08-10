@@ -32,6 +32,8 @@ describe("comunicadoStageBem", () => {
     expect(cn.root).toContain(COMUNICADO_UI_PREFIX);
     expect(cn.stage).toContain("tdp-comunicado__stage");
     expect(cn.stage).toContain(`${COMUNICADO_UI_PREFIX}__stage`);
+    expect(cn.background).toContain("tdp-comunicado__background");
+    expect(cn.background).toContain(`${COMUNICADO_UI_PREFIX}__background`);
   });
 
   it("comunicadoDualSuffix cobre modificadores", () => {
