@@ -205,18 +205,9 @@ function finiteNumber(value: unknown): number | null {
 export function resolveEfficiencyPinBands(
   bands: ComunicadoEfficiencyPinBands | undefined | null,
 ): Required<ComunicadoEfficiencyPinBands> {
-  const goodMinPct =
-    typeof bands?.goodMinPct === "number" && Number.isFinite(bands.goodMinPct)
-      ? bands.goodMinPct
-      : EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT;
-  const warnMinPct =
-    typeof bands?.warnMinPct === "number" && Number.isFinite(bands.warnMinPct)
-      ? bands.warnMinPct
-      : EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT;
-  const validMaxPct =
-    typeof bands?.validMaxPct === "number" && Number.isFinite(bands.validMaxPct)
-      ? bands.validMaxPct
-      : EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT;
+  const goodMinPct = finiteNumber(bands?.goodMinPct) ?? EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT;
+  const warnMinPct = finiteNumber(bands?.warnMinPct) ?? EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT;
+  const validMaxPct = finiteNumber(bands?.validMaxPct) ?? EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT;
   return { goodMinPct, warnMinPct, validMaxPct };
 }
 
@@ -378,17 +369,17 @@ export function normalizeEfficiencyPinBinding(
       : undefined;
   const bandsRaw = raw.bands && typeof raw.bands === "object" ? (raw.bands as Record<string, unknown>) : null;
   const bands: ComunicadoEfficiencyPinBands | undefined = bandsRaw
-    ? {
-        ...(typeof bandsRaw.goodMinPct === "number" && Number.isFinite(bandsRaw.goodMinPct)
-          ? { goodMinPct: bandsRaw.goodMinPct }
-          : {}),
-        ...(typeof bandsRaw.warnMinPct === "number" && Number.isFinite(bandsRaw.warnMinPct)
-          ? { warnMinPct: bandsRaw.warnMinPct }
-          : {}),
-        ...(typeof bandsRaw.validMaxPct === "number" && Number.isFinite(bandsRaw.validMaxPct)
-          ? { validMaxPct: bandsRaw.validMaxPct }
-          : {}),
-      }
+    ? (() => {
+        const goodMinPct = finiteNumber(bandsRaw.goodMinPct);
+        const warnMinPct = finiteNumber(bandsRaw.warnMinPct);
+        const validMaxPct = finiteNumber(bandsRaw.validMaxPct);
+        const next: ComunicadoEfficiencyPinBands = {
+          ...(goodMinPct != null ? { goodMinPct } : {}),
+          ...(warnMinPct != null ? { warnMinPct } : {}),
+          ...(validMaxPct != null ? { validMaxPct } : {}),
+        };
+        return next;
+      })()
     : undefined;
   const hasBands = bands && Object.keys(bands).length > 0;
   if (

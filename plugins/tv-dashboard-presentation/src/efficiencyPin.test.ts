@@ -41,6 +41,15 @@ describe("efficiencyPin", () => {
     expect(classifyEfficiencyPinPct(40, bands)).toBe("bad");
   });
 
+  it("normaliza faixas numéricas mesmo quando vêm como string (JSON/eco)", () => {
+    const binding = normalizeEfficiencyPinBinding({
+      workCenter: "CT-01",
+      bands: { goodMinPct: "95", warnMinPct: "75", validMaxPct: "199" },
+    });
+    expect(binding?.bands).toEqual({ goodMinPct: 95, warnMinPct: 75, validMaxPct: 199 });
+    expect(classifyEfficiencyPinPct(70, binding?.bands)).toBe("bad");
+  });
+
   it("propaga faixas para pins da mesma fonte", () => {
     const blocks = [
       {

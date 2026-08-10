@@ -1,4 +1,4 @@
-import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT,
   EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT,
@@ -18,6 +18,7 @@ import {
   resolveEfficiencyPinInfoMode,
   resolveEfficiencyPinRole,
   type ComunicadoEfficiencyPinBinding,
+  type ComunicadoEfficiencyPinBands,
   type ComunicadoEfficiencyPinInfoMode,
   type ComunicadoShapeBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -28,6 +29,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { DeckRangeField } from "./deck/DeckRangeField";
 
 type Props = {
   pane?: boolean;
@@ -58,7 +60,6 @@ export function EfficiencyPinInspector({
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
-  const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
   const pin = selected && isEfficiencyPinBlock(selected) ? selected : null;
   const binding = pin?.efficiencyPin ?? {};
@@ -123,29 +124,37 @@ export function EfficiencyPinInspector({
     });
   }, [blocks, pin?.id]);
 
-  function patchEfficiencyPin(patch: Partial<ComunicadoEfficiencyPinBinding>) {
+  function commitEfficiencyPinBands(partial: ComunicadoEfficiencyPinBands) {
     if (!pin) return;
-    const nextBands = patch.bands ? { ...binding.bands, ...patch.bands } : binding.bands;
+    /* Sempre grava as 3 faixas resolvidas — evita perder Bom/Máx. e snap ao default na digitação. */
+    const nextBands = resolveEfficiencyPinBands({ ...binding.bands, ...partial });
     const next: ComunicadoEfficiencyPinBinding = {
       ...binding,
-      ...patch,
-      ...(nextBands ? { bands: nextBands } : {}),
+      bands: nextBands,
     };
     const selectedPatch = {
       ...pin,
       efficiencyPin: next,
       content: next.workCenter?.trim() || pin.content || "",
     } as ComunicadoShapeBlock;
-    /* Faixas de cor: uma regra para o mapa — propaga aos pins da mesma fonte. */
-    if (patch.bands && nextBands) {
-      const withSelected = blocks.map((block) => (block.id === pin.id ? selectedPatch : block));
-      updateBlocks(
-        applyEfficiencyPinBandsToSharedPins(withSelected, nextBands, {
-          sourceId: pin.dataSourceId,
-        }),
-      );
+    const withSelected = blocks.map((block) => (block.id === pin.id ? selectedPatch : block));
+    updateBlocks(
+      applyEfficiencyPinBandsToSharedPins(withSelected, nextBands, {
+        sourceId: pin.dataSourceId,
+      }),
+    );
+  }
+
+  function patchEfficiencyPin(patch: Partial<ComunicadoEfficiencyPinBinding>) {
+    if (!pin) return;
+    if (patch.bands) {
+      commitEfficiencyPinBands(patch.bands);
       return;
     }
+    const next: ComunicadoEfficiencyPinBinding = {
+      ...binding,
+      ...patch,
+    };
     updateSelected({
       efficiencyPin: next,
       content: next.workCenter?.trim() || pin.content || "",
@@ -325,58 +334,42 @@ export function EfficiencyPinInspector({
           </button>
         ) : null}
       </DeckPropertySection>
-      <DeckPropertySection title="Faixas do radar" pane={pane} defaultOpen={false}>
+      <DeckPropertySection title="Faixas do radar" pane={pane} defaultOpen>
         <p className="td-deck-inspector__hint">
-          Compartilhadas com todos os pins da mesma fonte. Verde ≥ Bom · amarelo ≥ Atenção e &lt;
-          Bom · vermelho &lt; Atenção · laranja fora do máx. válido.
+          Compartilhadas com todos os pins da mesma fonte. Digite e saia do campo (Tab/Enter) para
+          aplicar. Verde ≥ Bom · amarelo ≥ Atenção e &lt; Bom · vermelho &lt; Atenção · laranja fora
+          do máx. válido.
         </p>
-        <DeckField label={`Bom (verde) ≥ % — padrão ${EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT}`}>
-          <NativeTextControl
-            className={compactNative}
-            type="number"
-            value={String(bands.goodMinPct)}
-            onChange={(value) => {
-              const n = Number(value);
-              patchEfficiencyPin({
-                bands: {
-                  goodMinPct: Number.isFinite(n) ? n : EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT,
-                },
-              });
-            }}
-          />
-        </DeckField>
-        <DeckField
+        <DeckRangeField
+          id="td-eff-pin-band-good"
+          density="compact"
+          label={`Bom (verde) ≥ % — padrão ${EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT}`}
+          min={0}
+          max={999}
+          step={1}
+          value={bands.goodMinPct}
+          onChange={(goodMinPct) => commitEfficiencyPinBands({ goodMinPct })}
+        />
+        <DeckRangeField
+          id="td-eff-pin-band-warn"
+          density="compact"
           label={`Atenção (amarelo) ≥ % — abaixo = vermelho (padrão ${EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT})`}
-        >
-          <NativeTextControl
-            className={compactNative}
-            type="number"
-            value={String(bands.warnMinPct)}
-            onChange={(value) => {
-              const n = Number(value);
-              patchEfficiencyPin({
-                bands: {
-                  warnMinPct: Number.isFinite(n) ? n : EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT,
-                },
-              });
-            }}
-          />
-        </DeckField>
-        <DeckField label={`Máx. válido % (padrão ${EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT})`}>
-          <NativeTextControl
-            className={compactNative}
-            type="number"
-            value={String(bands.validMaxPct)}
-            onChange={(value) => {
-              const n = Number(value);
-              patchEfficiencyPin({
-                bands: {
-                  validMaxPct: Number.isFinite(n) ? n : EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT,
-                },
-              });
-            }}
-          />
-        </DeckField>
+          min={0}
+          max={999}
+          step={1}
+          value={bands.warnMinPct}
+          onChange={(warnMinPct) => commitEfficiencyPinBands({ warnMinPct })}
+        />
+        <DeckRangeField
+          id="td-eff-pin-band-valid-max"
+          density="compact"
+          label={`Máx. válido % (padrão ${EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT})`}
+          min={0}
+          max={999}
+          step={1}
+          value={bands.validMaxPct}
+          onChange={(validMaxPct) => commitEfficiencyPinBands({ validMaxPct })}
+        />
       </DeckPropertySection>
     </>
   );
