@@ -453,6 +453,7 @@ export function DeckSettingsPanel({
               panelLabel="Resolução alvo"
               panelClassName="td-deck-ribbon-tile-popover--wide td-deck-ribbon-tile-popover--viewport"
             >
+              <ViewportResolutionFields
                 compact
                 value={{
                   viewportProfile: playlist.viewportProfile,
