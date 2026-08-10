@@ -33,6 +33,7 @@ import {
 import {
   navigateAnalyticsOpportunityDetail,
   navigateCustomerDetail,
+  navigateOpenOrderOpDetail,
 } from "../app/pluginNavigation";
 import { CM_HELP } from "../content/helpTooltips";
 import { useOpenOrdersLineDetailExtras } from "../hooks/useOpenOrdersLineDetailExtras";
@@ -51,6 +52,7 @@ import { resolveLineCoverage } from "../utils/openOrdersLineVisual";
 import { getLineOpForecast } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus } from "../utils/statusBadges";
+import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink";
 import { OpenOrdersFactoryStatusStrip } from "./OpenOrdersFactoryStatusStrip";
 import { OpenOrdersOpProgressBlock } from "./OpenOrdersOpProgressBlock";
 import { OpenOrdersProductStructureAccordion } from "./OpenOrdersProductStructureAccordion";
@@ -63,6 +65,15 @@ type OpenOrdersLineDetailModalProps = {
   open: boolean;
   onClose: () => void;
   basePath?: string;
+};
+
+type OpenOrdersProductionDetailContentProps = {
+  item: OpenOrdersTotvsItem;
+  basePath?: string;
+  productionOrder?: string;
+  search?: string;
+  onProductionOrderChange?: (productionOrder: string) => void;
+  onNavigate?: () => void;
 };
 
 function prazoVariant(
@@ -83,15 +94,17 @@ function badgeVariant(
   return "neutral";
 }
 
-export function OpenOrdersLineDetailModal({
+export function OpenOrdersProductionDetailContent({
   item,
-  open,
-  onClose,
   basePath,
-}: OpenOrdersLineDetailModalProps) {
-  const previsao = item ? getLineOpForecast(item) : null;
-  const [selectedOp, setSelectedOp] = useState("");
-  const extras = useOpenOrdersLineDetailExtras(item, open, selectedOp);
+  productionOrder,
+  search,
+  onProductionOrderChange,
+  onNavigate,
+}: OpenOrdersProductionDetailContentProps) {
+  const previsao = getLineOpForecast(item);
+  const [selectedOp, setSelectedOp] = useState(productionOrder?.trim() ?? "");
+  const extras = useOpenOrdersLineDetailExtras(item, true, selectedOp);
 
   useEffect(() => {
     if (!previsao?.opsUtilizadas.length) {
@@ -99,22 +112,22 @@ export function OpenOrdersLineDetailModal({
       return;
     }
     setSelectedOp((current) => {
+      const requested = productionOrder?.trim();
+      if (requested && previsao.opsUtilizadas.some((op) => op.numero_op === requested)) {
+        return requested;
+      }
       if (current && previsao.opsUtilizadas.some((op) => op.numero_op === current)) {
         return current;
       }
       return previsao.opsUtilizadas[0].numero_op;
     });
-  }, [previsao]);
-
-  if (!item || !previsao) return null;
+  }, [previsao, productionOrder]);
 
   const lineStatus = getLineStatus(item);
   const coverage = resolveLineCoverage(item);
   const overdueDays = getDeliveryOverdueDays(item.data_entrega);
   const deliveryDays = getDaysFromToday(item.data_entrega);
   const forecastDays = getDaysFromToday(previsao.previsaoData);
-  const description = `${item.nome_cliente || "Cliente"} · Pedido ${item.pedido || "—"} · Linha ${item.linha || "—"} · Produto ${item.produto || "—"}`;
-
   const coverageStacked = (() => {
     const estoqueQty = Math.max(0, coverage.allocated);
     const produzirQty = Math.max(0, previsao.saldoNecessarioProducao);
@@ -183,7 +196,7 @@ export function OpenOrdersLineDetailModal({
     const store = item.loja_cadastro?.trim();
     if (!code || !store) return;
     navigateCustomerDetail(code, store, { basePath });
-    onClose();
+    onNavigate?.();
   };
 
   const openOv = () => {
@@ -195,17 +208,37 @@ export function OpenOrdersLineDetailModal({
       basePath,
       search: search.toString() ? `?${search.toString()}` : undefined,
     });
-    onClose();
+    onNavigate?.();
+  };
+
+  const openProductionOrder = () => {
+    if (!selectedOp) return;
+    navigateOpenOrderOpDetail(
+      item.filial,
+      item.pedido,
+      item.linha,
+      selectedOp,
+      {
+        basePath,
+        search: buildOpenOrdersContextSearch(search),
+      },
+    );
+    onNavigate?.();
+  };
+
+  const selectProductionOrder = (numeroOp: string) => {
+    setSelectedOp(numeroOp);
+    onProductionOrderChange?.(numeroOp);
   };
 
   return (
-    <CommercialWorkbenchModal
-      open={open}
-      onClose={onClose}
-      title="Detalhe da linha"
-      description={description}
-      footer={
-        <div className="cm-drawer-footer-actions">
+    <div className="cm-open-orders-detail">
+      <div className="cm-drawer-footer-actions" aria-label="Ações do detalhe">
+        {selectedOp ? (
+          <ActionButton variant="primary" onClick={openProductionOrder}>
+            Abrir página da OP {selectedOp}
+          </ActionButton>
+        ) : null}
           <HintAction hint={DETAIL.copyPedido} ariaLabel="Ajuda: copiar pedido" placement="top">
             <ActionButton variant="ghost" onClick={copyPedido}>
               Copiar pedido
@@ -227,10 +260,7 @@ export function OpenOrdersLineDetailModal({
               Abrir conta
             </ActionButton>
           </HintAction>
-        </div>
-      }
-    >
-      <div className="cm-open-orders-detail">
+      </div>
         <div className="cm-open-orders-detail__snapshot" aria-label="Resumo da linha">
           <div
             className={[
@@ -576,7 +606,7 @@ export function OpenOrdersLineDetailModal({
         <OpenOrdersOpProgressBlock
           ops={previsao.opsUtilizadas}
           selectedOp={selectedOp}
-          onSelectOp={setSelectedOp}
+          onSelectOp={selectProductionOrder}
           orderDeliveryDate={item.data_entrega}
           branch={item.filial}
           extrasByOp={extras.opsByNumber}
@@ -595,7 +625,7 @@ export function OpenOrdersLineDetailModal({
             classNames={cmDataTableClassNames}
             labels={cmDataTableLabels}
             layout="section"
-            onRowClick={(row) => setSelectedOp(row.numero_op)}
+            onRowClick={(row) => selectProductionOrder(row.numero_op)}
             columns={[
               {
                 key: "op",
@@ -728,7 +758,31 @@ export function OpenOrdersLineDetailModal({
           productCode={item.produto}
           loading={extras.loading}
         />
-      </div>
+    </div>
+  );
+}
+
+export function OpenOrdersLineDetailModal({
+  item,
+  open,
+  onClose,
+  basePath,
+}: OpenOrdersLineDetailModalProps) {
+  if (!item) return null;
+  const description = `${item.nome_cliente || "Cliente"} · Pedido ${item.pedido || "—"} · Linha ${item.linha || "—"} · Produto ${item.produto || "—"}`;
+  return (
+    <CommercialWorkbenchModal
+      open={open}
+      onClose={onClose}
+      title="Detalhe da linha"
+      description={description}
+    >
+      <OpenOrdersProductionDetailContent
+        item={item}
+        basePath={basePath}
+        search={typeof window !== "undefined" ? window.location.search : ""}
+        onNavigate={onClose}
+      />
     </CommercialWorkbenchModal>
   );
 }

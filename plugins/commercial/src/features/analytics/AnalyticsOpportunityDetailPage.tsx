@@ -7,7 +7,7 @@ import {
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { ArrowLeft, CalendarCheck, CalendarPlus, Flag, RefreshCw } from "lucide-react";
+import { CalendarCheck, CalendarPlus, Flag, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -25,10 +25,12 @@ import {
   CommercialActivityTimeline,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
+  CommercialPagePath,
   CommercialTitleWithHelp,
   UI_PREFIX,
 } from "../../app/commercialUi";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginPath } from "../../app/pluginNavigation";
+import { buildPluginPath } from "../../app/pluginRoutes";
 import { KpiCard } from "../../components/KpiCard";
 import { ProductStructureTree } from "../../components/ProductStructureTree";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
@@ -53,7 +55,7 @@ import {
   resolveHistoryStatus,
 } from "../../utils/proposalHistoryFormatting";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
-import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
+import { buildAnalyticsOpportunityBackSearch } from "./utils/analyticsFilterUrl";
 import { resolveAnalyticsApiBranch } from "./utils/analyticsBranchFilters";
 
 type AnalyticsOpportunityDetailPageProps = {
@@ -93,6 +95,11 @@ export function AnalyticsOpportunityDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [historyView, setHistoryView] = useState<HistoryView>("timeline");
+  const backHref = buildPluginPath(
+    "analytics_opportunities",
+    basePath,
+    buildAnalyticsOpportunityBackSearch(search),
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -265,23 +272,23 @@ export function AnalyticsOpportunityDetailPage({
 
   return (
     <section className="cm-page-stack">
+      <CommercialPagePath
+        back={{
+          label: "Oportunidades",
+          href: backHref,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigatePluginPath(backHref);
+          },
+        }}
+        current={`OV ${proposalNumber}`}
+      />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={`OV ${proposalNumber}`}
           hint={ANALYTICS_CONTENT.oportunidades.detail}
         />
         <div className="cm-nav-row">
-          <ActionButton
-            variant="ghost"
-            onClick={() =>
-              navigatePluginView("analytics_opportunities", {
-                basePath,
-                search: buildAnalyticsFilterSearchParams(filters.filterState),
-              })
-            }
-          >
-            <ArrowLeft size={16} aria-hidden="true" /> Voltar
-          </ActionButton>
           <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </ActionButton>

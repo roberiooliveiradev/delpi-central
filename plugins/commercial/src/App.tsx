@@ -24,6 +24,7 @@ import { AnalyticsPage } from "./features/analytics/AnalyticsPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
 import { OpenOrdersPage } from "./features/open-orders/OpenOrdersPage";
+import { OpenOrderOpDetailPage } from "./features/open-orders/OpenOrderOpDetailPage";
 import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
 import { ProposalsPage } from "./features/proposals/ProposalsPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
@@ -82,7 +83,21 @@ function AppRoutes({
       {view === "my_day" ? (
         canViewWorklist ? <MyDayPage basePath={basePath} /> : <NotFoundPage basePath={basePath} />
       ) : null}
-      {view === "open_orders" ? <OpenOrdersPage /> : null}
+      {view === "open_orders" ? <OpenOrdersPage basePath={basePath} /> : null}
+      {view === "open_order_op_detail" &&
+      route.orderBranch &&
+      route.orderNumber &&
+      route.lineItem &&
+      route.productionOrder ? (
+        <OpenOrderOpDetailPage
+          basePath={basePath}
+          branch={route.orderBranch}
+          orderNumber={route.orderNumber}
+          lineItem={route.lineItem}
+          productionOrder={route.productionOrder}
+          search={search}
+        />
+      ) : null}
       {view === "customers" ? <CustomersPage basePath={basePath} /> : null}
       {view === "customer_detail" && route.codigo && route.loja ? (
         <CustomerDetailPage

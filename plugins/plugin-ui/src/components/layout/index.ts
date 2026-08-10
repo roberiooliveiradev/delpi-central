@@ -283,6 +283,17 @@ export {
   type UnderlineNavProps,
 } from "./UnderlineNav";
 export {
+  PagePath,
+  createDashboardPagePath,
+  isSafeNavigationHref,
+  pagePathBemClasses,
+  type DashboardPagePathProps,
+  type PagePathClassNames,
+  type PagePathItem,
+  type PagePathLink,
+  type PagePathProps,
+} from "./PagePath";
+export {
   TopBar,
   createDashboardTopBar,
   topBarBemClasses,

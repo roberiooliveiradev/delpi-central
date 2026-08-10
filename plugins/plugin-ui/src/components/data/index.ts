@@ -153,6 +153,16 @@ export {
 } from "./DataCellValue";
 
 export {
+  DataRecordCard,
+  createDashboardDataRecordCard,
+  dataRecordCardBemClasses,
+  type DashboardDataRecordCardProps,
+  type DataRecordCardClassNames,
+  type DataRecordCardField,
+  type DataRecordCardProps,
+} from "./DataRecordCard";
+
+export {
   isCellSelected,
   isColumnSelected,
   isRowSelected,

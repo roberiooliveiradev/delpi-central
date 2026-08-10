@@ -9,6 +9,8 @@ import {
   ConfigurableTableClassesProvider,
   createDashboardPaginationKit,
   DataRouteCatalogPanel,
+  DataRecordCard,
+  dataRecordCardBemClasses,
   DataTable,
   dataTableBemClasses,
   DataTableSection,
@@ -44,6 +46,7 @@ const MOCK_ROWS: DemoRow[] = [
 ];
 
 const tableCn = dataTableBemClasses(PUC_PREFIX);
+const recordCardCn = dataRecordCardBemClasses(PUC_PREFIX);
 const sectionCn = dataTableSectionBemClasses(PUC_PREFIX);
 const paginationKit = paginationBemClasses(PUC_PREFIX);
 const compactCn = compactPaginationBemClasses(PUC_PREFIX, { ghostBtn: "puc-ghost-btn" });
@@ -136,6 +139,39 @@ function useTrackedSingleFetchProgress(_active: boolean): RequestProgress {
 }
 
 export const dataCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "data.DataRecordCard",
+    family: "data",
+    exportName: "DataRecordCard",
+    title: "DataRecordCard",
+    description: "Registro responsivo com semântica dl e navegação opcional por anchor.",
+    docAnchor: "datarecordcard",
+    propsSummary: ["leading", "title", "subtitle", "status", "fields", "context", "href"],
+    demos: [
+      {
+        id: "link",
+        label: "Registro navegável",
+        render: () => (
+          <div style={{ width: "100%", maxWidth: 620 }}>
+            <DataRecordCard
+              classNames={recordCardCn}
+              leading={<strong>PV</strong>}
+              title="Pedido 12345"
+              subtitle="Cliente ACME"
+              status={<span className="puc-chip puc-chip--active">Em análise</span>}
+              fields={[
+                { id: "value", label: "Valor", value: "R$ 18.450,00" },
+                { id: "date", label: "Entrega", value: "14/08/2026" },
+                { id: "branch", label: "Filial", value: "01" },
+              ]}
+              context="Atualizado há 5 minutos"
+              href="#pedido-12345"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
   {
     id: "data.DataTable",
     family: "data",

@@ -68,8 +68,15 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "UnderlineNav", {
     addedAt: "2026-08-06",
+    updatedAt: "2026-08-10",
+    changeNote: "Modo tabs com semântica ARIA, roving tabindex e teclado.",
     description:
       "Nav secundária underline (áreas do plugin); aria-current, badge count, scroll mobile.",
+  }),
+  vc("layout", "PagePath", {
+    addedAt: "2026-08-10",
+    description:
+      "Caminho responsivo de página com back/current fixos e ancestrais em overflow acessível.",
   }),
   vc("layout", "TopBar", {
     addedAt: "2026-08-06",
@@ -175,6 +182,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "DrawerShell"),
   vc("feedback", "ConfirmModalPanel"),
   // data
+  vc("data", "DataRecordCard", {
+    addedAt: "2026-08-10",
+    description:
+      "Card genérico de registro com dl/dt/dd e raiz navegável opcional.",
+  }),
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
     updatedAt: "2026-07-17",

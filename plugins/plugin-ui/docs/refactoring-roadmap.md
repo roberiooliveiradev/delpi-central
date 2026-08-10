@@ -437,6 +437,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | UI 100% domínio (fishbone PAC, presentation SI PanZoom, …) | CSS no MFE **ok** se **não** for export/dual-class do kit |
 | `@media print` hide de help-tooltip | Utilitário no kit (ondas 7.1/7.4); MFE commercial sem seletor `.delpi-ui-*` (onda 7.6) |
 | Admin chat se permanecer domínio | Renomear classes para **não** parecer shell KPI/filter do kit |
+| Checkpoint P-1 commercial (ago/2026) | Kit ganhou `PagePath`, `DataRecordCard` e tabs no `UnderlineNav`; wrappers criados, sem migração de consumidores |
 
 ---
 

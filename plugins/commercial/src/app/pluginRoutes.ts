@@ -5,6 +5,7 @@ export type PluginView =
   | "home"
   | "my_day"
   | "open_orders"
+  | "open_order_op_detail"
   | "customers"
   | "customer_detail"
   | "proposals"
@@ -38,6 +39,7 @@ export type ResolvedPluginRoute = {
   orderBranch?: string;
   orderNumber?: string;
   lineItem?: string;
+  productionOrder?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -84,6 +86,32 @@ export function resolvePluginRoute(
 
   if (relativePath === "open-orders") {
     return { view: "open_orders", pathname: path, relativePath };
+  }
+
+  const openOrderOpDetail =
+    /^open-orders\/([^/]+)\/([^/]+)\/([^/]+)\/op\/([^/]+)$/.exec(relativePath);
+  if (openOrderOpDetail) {
+    const orderBranch = safeDecodeSegment(openOrderOpDetail[1] ?? "");
+    const orderNumber = safeDecodeSegment(openOrderOpDetail[2] ?? "");
+    const lineItem = safeDecodeSegment(openOrderOpDetail[3] ?? "");
+    const productionOrder = safeDecodeSegment(openOrderOpDetail[4] ?? "");
+    if (
+      !orderBranch?.trim() ||
+      !orderNumber?.trim() ||
+      !lineItem?.trim() ||
+      !productionOrder?.trim()
+    ) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "open_order_op_detail",
+      pathname: path,
+      relativePath,
+      orderBranch: orderBranch.trim(),
+      orderNumber: orderNumber.trim(),
+      lineItem: lineItem.trim(),
+      productionOrder: productionOrder.trim(),
+    };
   }
 
   if (relativePath === "customers") {
@@ -248,6 +276,7 @@ export function resolvePluginRoute(
 export type BuildablePluginView = Exclude<
   PluginView,
   | "customer_detail"
+  | "open_order_op_detail"
   | "proposal_detail"
   | "analytics_otd_line"
   | "analytics_opportunity_detail"
@@ -296,6 +325,27 @@ export function buildCustomerDetailPath(
   if (!code || !store) return null;
   const base = normalizeBasePath(basePath);
   return `${base}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}`;
+}
+
+export function buildOpenOrderOpDetailPath(
+  basePath: string | undefined,
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  productionOrder: string,
+  search?: string,
+): string | null {
+  const normalizedBranch = branch.trim();
+  const normalizedOrder = orderNumber.trim();
+  const normalizedLine = lineItem.trim();
+  const normalizedOp = productionOrder.trim();
+  if (!normalizedBranch || !normalizedOrder || !normalizedLine || !normalizedOp) {
+    return null;
+  }
+  const path = `${normalizeBasePath(basePath)}/open-orders/${encodeURIComponent(normalizedBranch)}/${encodeURIComponent(normalizedOrder)}/${encodeURIComponent(normalizedLine)}/op/${encodeURIComponent(normalizedOp)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
 export function buildProposalDetailPath(
@@ -349,6 +399,7 @@ export function isAnalyticsView(view: PluginView): boolean {
 }
 
 export function resolveActiveNavId(view: PluginView): PluginNavId {
+  if (view === "open_order_op_detail") return "open_orders";
   if (view === "customer_detail") return "customers";
   if (view === "proposal_detail") return "proposals";
   if (isAnalyticsView(view)) return "analytics";

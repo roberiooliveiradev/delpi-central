@@ -10,6 +10,10 @@ export type UnderlineNavItem = {
   count?: number;
   /** Tooltip / título nativo do botão. */
   title?: string;
+  /** Id do painel controlado, obrigatório semanticamente no modo tabs. */
+  controlId?: string;
+  /** Id do tab usado pelo painel em aria-labelledby. */
+  tabId?: string;
   onSelect?: () => void;
 };
 
@@ -25,6 +29,7 @@ export type UnderlineNavClassNames = {
 export type UnderlineNavProps = {
   items: UnderlineNavItem[];
   activeId: string;
+  mode?: "navigation" | "tabs";
   classNames: UnderlineNavClassNames;
   className?: string;
   "aria-label"?: string;
@@ -44,6 +49,7 @@ export function underlineNavBemClasses(prefix: string): UnderlineNavClassNames {
 export function UnderlineNav({
   items,
   activeId,
+  mode = "navigation",
   classNames,
   className,
   "aria-label": ariaLabel = "Navegação",
@@ -52,7 +58,7 @@ export function UnderlineNav({
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
 
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") {
       return;
     }
@@ -70,9 +76,12 @@ export function UnderlineNav({
     buttons[next]?.click();
   };
 
-  return (
-    <nav className={rootClass} aria-label={ariaLabel}>
-      <div className={classNames.scroller}>
+  const activeTabIndex = Math.max(
+    0,
+    items.findIndex((item) => item.id === activeId),
+  );
+  const itemsContent = (
+    <>
         {items.map((item, index) => {
           const active = item.id === activeId;
           const itemClass = active ? withBemModifier(classNames.item, "active") : classNames.item;
@@ -83,7 +92,12 @@ export function UnderlineNav({
               type="button"
               data-underline-nav-item=""
               className={itemClass}
-              aria-current={active ? "page" : undefined}
+              role={mode === "tabs" ? "tab" : undefined}
+              id={mode === "tabs" ? (item.tabId ?? `${item.id}-tab`) : undefined}
+              aria-current={mode === "navigation" && active ? "page" : undefined}
+              aria-selected={mode === "tabs" ? active : undefined}
+              aria-controls={mode === "tabs" ? item.controlId : undefined}
+              tabIndex={mode === "tabs" ? (index === activeTabIndex ? 0 : -1) : undefined}
               title={item.title}
               onClick={item.onSelect}
               onKeyDown={(event) => onKeyDown(event, index)}
@@ -98,7 +112,22 @@ export function UnderlineNav({
             </button>
           );
         })}
+    </>
+  );
+
+  if (mode === "tabs") {
+    return (
+      <div className={rootClass}>
+        <div className={classNames.scroller} role="tablist" aria-label={ariaLabel}>
+          {itemsContent}
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <nav className={rootClass} aria-label={ariaLabel}>
+      <div className={classNames.scroller}>{itemsContent}</div>
     </nav>
   );
 }

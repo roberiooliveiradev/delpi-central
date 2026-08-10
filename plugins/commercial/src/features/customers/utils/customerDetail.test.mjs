@@ -13,8 +13,8 @@ import {
   navigateCustomerDetail,
 } from "../../../app/pluginNavigation.ts";
 import {
+  COMMERCIAL_BASE_PATH,
   isPluginNavActive,
-  PVA_BASE_PATH,
   resolvePluginRoute,
 } from "../../../app/pluginRoutes.ts";
 import { aggregateCustomers } from "./customerAggregation.ts";
@@ -59,21 +59,21 @@ function line(overrides = {}) {
 }
 
 describe("resolvePluginRoute — customer_detail", () => {
-  it("reconhece /clientes/:codigo/:loja", () => {
-    const route = resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000123/01`);
+  it("reconhece /customers/:codigo/:loja", () => {
+    const route = resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000123/01`);
     assert.equal(route.view, "customer_detail");
     assert.equal(route.codigo, "000123");
     assert.equal(route.loja, "01");
   });
 
   it("preserva zeros a esquerda", () => {
-    const route = resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000123/01`);
+    const route = resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000123/01`);
     assert.equal(route.codigo, "000123");
     assert.notEqual(route.codigo, "123");
   });
 
   it("decodifica segmentos", () => {
-    const route = resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000%20123/0%201`);
+    const route = resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000%20123/0%201`);
     assert.equal(route.view, "customer_detail");
     assert.equal(route.codigo, "000 123");
     assert.equal(route.loja, "0 1");
@@ -81,27 +81,27 @@ describe("resolvePluginRoute — customer_detail", () => {
 
   it("trata encoding invalido", () => {
     assert.equal(
-      resolvePluginRoute(`${PVA_BASE_PATH}/clientes/%E0%A4%A/01`).view,
+      resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/%E0%A4%A/01`).view,
       "not_found",
     );
   });
 
   it("rejeita segmentos extras", () => {
     assert.equal(
-      resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000123/01/extra`).view,
+      resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000123/01/extra`).view,
       "not_found",
     );
   });
 
   it("aceita barra final", () => {
     assert.equal(
-      resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000123/01/`).view,
+      resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000123/01/`).view,
       "customer_detail",
     );
   });
 
   it("ignora query string", () => {
-    const route = resolvePluginRoute(`${PVA_BASE_PATH}/clientes/000123/01?x=1`);
+    const route = resolvePluginRoute(`${COMMERCIAL_BASE_PATH}/customers/000123/01?x=1`);
     assert.equal(route.view, "customer_detail");
     assert.equal(route.codigo, "000123");
   });
@@ -115,23 +115,23 @@ describe("resolvePluginRoute — customer_detail", () => {
 describe("buildCustomerDetailPath", () => {
   it("constroi path com encoding seguro", () => {
     assert.equal(
-      buildCustomerDetailPath(PVA_BASE_PATH, "000123", "01"),
-      `${PVA_BASE_PATH}/clientes/000123/01`,
+      buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "000123", "01"),
+      `${COMMERCIAL_BASE_PATH}/customers/000123/01`,
     );
     assert.equal(
-      buildCustomerDetailPath(PVA_BASE_PATH, "a/b", "01"),
-      `${PVA_BASE_PATH}/clientes/a%2Fb/01`,
+      buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "a/b", "01"),
+      `${COMMERCIAL_BASE_PATH}/customers/a%2Fb/01`,
     );
   });
 
   it("rejeita codigo vazio", () => {
-    assert.equal(buildCustomerDetailPath(PVA_BASE_PATH, "", "01"), null);
-    assert.equal(buildCustomerDetailPath(PVA_BASE_PATH, "   ", "01"), null);
+    assert.equal(buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "", "01"), null);
+    assert.equal(buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "   ", "01"), null);
   });
 
   it("rejeita loja vazia", () => {
-    assert.equal(buildCustomerDetailPath(PVA_BASE_PATH, "000123", ""), null);
-    assert.equal(buildCustomerDetailPath(PVA_BASE_PATH, "000123", "  "), null);
+    assert.equal(buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "000123", ""), null);
+    assert.equal(buildCustomerDetailPath(COMMERCIAL_BASE_PATH, "000123", "  "), null);
   });
 });
 
@@ -461,7 +461,7 @@ describe("navigateCustomerDetail", () => {
       }
     };
     globalThis.window = {
-      location: { pathname: `${PVA_BASE_PATH}/clientes`, search: "" },
+      location: { pathname: `${COMMERCIAL_BASE_PATH}/customers`, search: "" },
       history: {
         pushState: (_s, _t, url) => {
           pushed.push(String(url));
@@ -477,7 +477,7 @@ describe("navigateCustomerDetail", () => {
 
   it("navega para detalhe com encoding", () => {
     assert.equal(navigateCustomerDetail("000123", "01"), true);
-    assert.deepEqual(pushed, [`${PVA_BASE_PATH}/clientes/000123/01`]);
+    assert.deepEqual(pushed, [`${COMMERCIAL_BASE_PATH}/customers/000123/01`]);
   });
 
   it("recusa identidade incompleta", () => {

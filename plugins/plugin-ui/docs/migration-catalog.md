@@ -341,6 +341,10 @@ Documento canônico do plugin: [kaizometro/docs/UI-PLUGIN-UI.md](../../kaizometr
 | **7.8** | `cipa` — botões de ação e voltar compartilhados | ✅ |
 | **7.9** | `cipa` — UI base completa (header, cards, tabela, estados, navegação e formulários) | ✅ |
 
+**Checkpoint P-1 (ago/2026):** `PagePath`, `DataRecordCard` e modo `tabs` de
+`UnderlineNav` foram entregues no kit, com wrappers `Commercial*`. Nenhum
+consumidor commercial foi migrado neste checkpoint.
+
 ### Checklist por plugin (preencher ao fechar onda)
 
 | Plugin | Onda | CSS kit zerado | TSX cópia/inline resolvido | Dual-class ok | Notas |

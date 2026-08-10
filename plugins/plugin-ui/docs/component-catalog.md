@@ -78,6 +78,62 @@ Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
 
 ---
 
+## `PagePath`
+
+Breadcrumb semântico (`nav` + `ol`) para páginas internas. `back` e `current` são
+sempre preservados; ancestrais excedentes entram em painel ancorado com Escape,
+click outside e foco. O limite responsivo é 4 itens a partir de 640 px e 2 abaixo.
+`maxVisibleItems` reduz esse teto. Hrefs perigosos (`javascript:`, `data:` etc.) são
+rejeitados.
+
+```tsx
+const CommercialPagePath = createDashboardPagePath({
+  prefix: "cm",
+  portalScopeClassName: "dashboard-commercial",
+});
+
+<CommercialPagePath
+  back={{ label: "Pedidos", href: "/pedidos" }}
+  items={[{ id: "cliente", label: "Cliente ACME", href: "/clientes/42" }]}
+  current="Pedido 12345"
+/>
+```
+
+Props principais: `back`, `items`, `current`, `maxVisibleItems`, `size` (`sm`/`md`),
+`ariaLabel` e `className`.
+
+---
+
+## `UnderlineNav`
+
+No modo padrão `navigation`, preserva `nav`, botões e `aria-current="page"`. Em
+`mode="tabs"`, expõe `tablist`/`tab`, `aria-selected`, `aria-controls` (via
+`item.controlId`), roving `tabIndex` e teclado Setas/Home/End.
+
+---
+
+## `DataRecordCard`
+
+Card neutro de domínio para listas responsivas. Usa `dl`/`dt`/`dd`; a raiz é
+`article` sem `href` e anchor real quando `href` é informado.
+
+```tsx
+const CommercialDataRecordCard = createDashboardDataRecordCard({ prefix: "cm" });
+
+<CommercialDataRecordCard
+  title="Pedido 12345"
+  subtitle="Cliente ACME"
+  fields={[{ id: "value", label: "Valor", value: "R$ 1.250,00" }]}
+  href="/pedidos/12345"
+/>
+```
+
+Props principais: `leading`, `title`, `subtitle`, `status`, `fields`, `context`,
+`href`, `onNavigate`, `ariaLabel` e `className`. `fields[].present === false`
+omite o campo.
+
+---
+
 ## `DocumentReader`
 
 Composição canônica para leitura e impressão de documentos formais em papel A4:

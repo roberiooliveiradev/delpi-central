@@ -2,6 +2,7 @@ import {
   buildCustomerDetailPath,
   buildAnalyticsOpportunityDetailPath,
   buildAnalyticsOtdLinePath,
+  buildOpenOrderOpDetailPath,
   buildPluginPath,
   buildProposalDetailPath,
   normalizePathname,
@@ -83,4 +84,24 @@ export function navigateAnalyticsOtdLine(
   return true;
 }
 
-export { buildCustomerDetailPath, buildProposalDetailPath };
+export function navigateOpenOrderOpDetail(
+  branch: string,
+  orderNumber: string,
+  lineItem: string,
+  productionOrder: string,
+  options?: { basePath?: string; search?: string },
+): boolean {
+  const path = buildOpenOrderOpDetailPath(
+    options?.basePath,
+    branch,
+    orderNumber,
+    lineItem,
+    productionOrder,
+    options?.search,
+  );
+  if (!path) return false;
+  navigatePluginPath(path);
+  return true;
+}
+
+export { buildCustomerDetailPath, buildOpenOrderOpDetailPath, buildProposalDetailPath };

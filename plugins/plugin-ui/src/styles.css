@@ -56,6 +56,7 @@
 @import "./styles/timeline.css";
 @import "./styles/worklist-surface.css";
 @import "./styles/underline-nav.css";
+@import "./styles/page-path.css";
 @import "./styles/top-bar.css";
 @import "./styles/page-hero.css";
 @import "./styles/view-transition.css";
@@ -64,6 +65,7 @@
 @import "./styles/action-controls.css";
 @import "./styles/page-header.css";
 @import "./styles/navigation-card.css";
+@import "./styles/data-record-card.css";
 @import "./styles/preview-detail-card.css";
 @import "./styles/status-badge.css";
 @import "./styles/initials-avatar.css";

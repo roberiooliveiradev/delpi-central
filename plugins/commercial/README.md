@@ -13,6 +13,7 @@ Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-com
 | `/apps/commercial` | Início — hero + alertas + KPIs + teaser Gestão | `accounts.view` |
 | `/apps/commercial/my-day` | Meu dia — worklist | `worklist.view` |
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
+| `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `accounts.view` |
 | `/apps/commercial/customers` | Carteira de clientes | `accounts.view` |
 | `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `accounts.view` |
 | `/apps/commercial/proposals` | Propostas documento (ADY) | `proposals.view` |
@@ -37,14 +38,14 @@ Sincronizados com o estado da página (`replaceState`); **não** apagam filtros 
 |-------|--------|
 | `?stock=com_estoque\|parcial\|sem_estoque` | Chip de atenção (estoque) |
 | `?focus=late` | Chip «Atraso» |
-| `?pedido=&linha=&filial=` | Abre o modal da linha; ao fechar, limpa só esses params |
+| `?pedido=&linha=&filial=` | Abre o modal completo da linha; ao fechar, limpa só esses params |
 | `seller_id` | Escopo de carteira (já existente) |
 
 A Home pode emitir `?focus=late` / `?stock=…`. Helpers: [`src/utils/openOrdersDeepLink.ts`](./src/utils/openOrdersDeepLink.ts).
 
 Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido → mesma URL `pedido/linha/filial` (ver README do `dashboard-production`).
 
-### Modal Detalhe da linha (WF-02R-D)
+### Modal e página da OP (WF-02R-D)
 
 Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 
@@ -52,6 +53,15 @@ Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 - OPs: prefetch limitado + fetch on-demand; prazo OTD + tabela PI; timeline; apontamentos agregados
 - BOM (`/products/{code}/structure`) com empty/erro/loading visíveis
 - Helps: `SectionHintLabel` + textos em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (linguagem de negócio, sem paths de API)
+
+O modal mantém a quick view completa e oferece a ficha SPA
+`/open-orders/:filial/:pedido/:linha/op/:op`. A ficha valida linha e OP dentro da
+carteira retornada para o `seller_id` da query, reutiliza exatamente o mesmo
+`OpenOrdersProductionDetailContent` e retorna à bancada com `stock`, `focus` e
+`seller_id` preservados, além de forçar `pedido`, `linha` e `filial` para reabrir
+o mesmo modal. A troca entre múltiplas OPs atualiza a rota interna compartilhável.
+Modal, OP, OV, proposta e conta usam `CommercialPagePath`
+nos retornos de páginas de detalhe.
 
 **OV:** se a lista trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` com match por filial+cliente ([`resolveProposalForOpenOrder.ts`](./src/utils/resolveProposalForOpenOrder.ts)). **Não** chamar `GET /proposals/{pedido}` como se pedido (`C5_NUM`) fosse número de OV.
 

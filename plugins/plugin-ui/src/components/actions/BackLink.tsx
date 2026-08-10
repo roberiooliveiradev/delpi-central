@@ -1,23 +1,30 @@
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 
-export type BackLinkProps = {
+type BackLinkBaseProps = {
   children: ReactNode;
-  onClick: () => void;
   className?: string;
   variant?: "default" | "prominent";
 };
+
+export type BackLinkProps = BackLinkBaseProps &
+  (
+    | {
+        href: string;
+        onClick?: MouseEventHandler<HTMLAnchorElement>;
+      }
+    | {
+        href?: undefined;
+        onClick: () => void;
+      }
+  );
 
 /**
  * Link de navegação «voltar» com seta, usado no topo das páginas.
  *
  * CSS: `styles/action-controls.css` (`.delpi-ui-back-link`).
  */
-export function BackLink({
-  children,
-  onClick,
-  className,
-  variant = "default",
-}: BackLinkProps) {
+export function BackLink(props: BackLinkProps) {
+  const { children, className, variant = "default" } = props;
   const rootClass = [
     "delpi-ui-back-link",
     variant === "prominent" ? "delpi-ui-back-link--prominent" : null,
@@ -26,12 +33,26 @@ export function BackLink({
     .filter(Boolean)
     .join(" ");
 
-  return (
-    <button type="button" className={rootClass} onClick={onClick}>
+  const content = (
+    <>
       <span className="delpi-ui-back-link__arrow" aria-hidden={true}>
         ←
       </span>
       {children}
+    </>
+  );
+
+  if ("href" in props) {
+    return (
+      <a className={rootClass} href={props.href ?? ""} onClick={props.onClick}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" className={rootClass} onClick={props.onClick}>
+      {content}
     </button>
   );
 }

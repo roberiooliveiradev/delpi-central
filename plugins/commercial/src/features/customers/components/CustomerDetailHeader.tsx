@@ -7,8 +7,9 @@ import {
   RefreshCw,
   UserRound,
 } from "lucide-react";
-import { BackLink, HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { CommercialPagePath } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -24,6 +25,7 @@ type CustomerDetailHeaderProps = {
   refreshing: boolean;
   loading: boolean;
   onBack: () => void;
+  backHref: string;
   onReload: () => void;
   onRegisterContact: () => void;
   onScheduleFollowUp?: () => void;
@@ -55,6 +57,7 @@ export function CustomerDetailHeader({
   refreshing,
   loading,
   onBack,
+  backHref,
   onReload,
   onRegisterContact,
   onScheduleFollowUp,
@@ -81,17 +84,17 @@ export function CustomerDetailHeader({
 
   return (
     <header className="pva-detail-header">
-      <nav className="pva-detail-breadcrumb" aria-label="Navegação">
-        <BackLink onClick={onBack}>
-          Minha carteira
-        </BackLink>
-        <span className="pva-detail-breadcrumb__sep" aria-hidden="true">
-          /
-        </span>
-        <span className="pva-detail-breadcrumb__current">
-          {customer.nome || "Cliente"}
-        </span>
-      </nav>
+      <CommercialPagePath
+        back={{
+          label: "Minha carteira",
+          href: backHref,
+          onNavigate: (event) => {
+            event.preventDefault();
+            onBack();
+          },
+        }}
+        current={customer.nome || "Cliente"}
+      />
 
       <div className="pva-detail-header__row">
         <div className="pva-detail-header__identity">

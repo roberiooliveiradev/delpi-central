@@ -2,6 +2,7 @@ import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
+import { buildPluginPath } from "../../../app/pluginRoutes";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { EmptyState } from "../../../ui/EmptyState";
 import { PVA_STATE_BOX } from "../../../ui/stateChrome";
@@ -143,6 +144,7 @@ export function CustomerDetailPage({
           refreshing={refreshing}
           loading={loading}
           onBack={goBack}
+          backHref={buildPluginPath("customers", basePath)}
           onReload={reload}
           onRegisterContact={() => changeSection("contatos")}
           onScheduleFollowUp={

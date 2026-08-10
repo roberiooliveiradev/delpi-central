@@ -39,7 +39,7 @@ function formatUpdatedAt(value: Date): string {
   });
 }
 
-export function OpenOrdersPageImpl() {
+export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const {
     canUseTeamScope,
     sellers,
@@ -257,6 +257,7 @@ export function OpenOrdersPageImpl() {
       {!error && !portfolioEmpty && allItemsCount > 0 ? (
         <>
           <OpenOrdersTable
+            basePath={basePath}
             rows={paginatedItems}
             exportRows={sortedItems}
             sortKey={sortKey}

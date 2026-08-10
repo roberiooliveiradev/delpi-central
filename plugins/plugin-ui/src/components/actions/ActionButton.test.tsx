@@ -66,4 +66,12 @@ describe("BackLink", () => {
       "delpi-ui-back-link--prominent",
     );
   });
+
+  it("usa anchor real quando recebe href", () => {
+    render(<BackLink href="/apps/commercial/customers">Minha carteira</BackLink>);
+
+    expect(
+      screen.getByRole("link", { name: /Minha carteira/ }).getAttribute("href"),
+    ).toBe("/apps/commercial/customers");
+  });
 });

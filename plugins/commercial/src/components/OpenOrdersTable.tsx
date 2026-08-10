@@ -20,7 +20,7 @@ import {
   cmStatusBadgeClassNames,
   UI_PREFIX,
 } from "../app/commercialUi";
-import { navigateCustomerDetail } from "../app/pluginNavigation";
+import { navigateCustomerDetail, navigateOpenOrderOpDetail } from "../app/pluginNavigation";
 import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import {
@@ -38,6 +38,7 @@ import { formatCurrency, formatQuantity } from "../utils/format";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
   findOpenOrderLine,
+  buildOpenOrdersContextSearch,
   parseOpenOrdersLineDeepLink,
   syncOpenOrdersLineQueryToUrl,
 } from "../utils/openOrdersDeepLink";
@@ -260,6 +261,7 @@ export function OpenOrdersTable({
       },
       previsao_entrega_op: (row) => {
         const previsao = getLineOpForecast(row);
+        const firstOp = previsao.opsUtilizadas[0]?.numero_op?.trim();
         const prazoBadge = resolvePrevisaoPrazoBadge(row);
         if (previsao.previsaoLabel === "—") return "—";
         return (
@@ -283,6 +285,28 @@ export function OpenOrdersTable({
                 label={prazoBadge.label}
                 variant={prazoBadge.variant}
               />
+            ) : null}
+            {firstOp ? (
+              <button
+                type="button"
+                className="cm-link-button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigateOpenOrderOpDetail(
+                    row.filial,
+                    row.pedido,
+                    row.linha,
+                    firstOp,
+                    {
+                      basePath,
+                      search: buildOpenOrdersContextSearch(),
+                    },
+                  );
+                }}
+                title={`Abrir página da OP ${firstOp}`}
+              >
+                OP {firstOp}
+              </button>
             ) : null}
           </div>
         );

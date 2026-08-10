@@ -14,6 +14,7 @@ export type OpenOrdersLineDeepLink = {
 };
 
 const STOCK_QUERY_VALUES = new Set<string>(["com_estoque", "parcial", "sem_estoque"]);
+const OPEN_ORDERS_CONTEXT_QUERY_KEYS = ["stock", "focus", "seller_id"] as const;
 
 export function buildCommercialOpenOrderPath(
   options: OpenOrdersLineDeepLink & OpenOrdersAttentionDeepLink & { basePath?: string },
@@ -56,6 +57,38 @@ export function parseOpenOrdersLineDeepLink(
   const linha = (params.get("linha") ?? "").trim() || undefined;
   const filial = (params.get("filial") ?? "").trim() || undefined;
   return { pedido, linha, filial };
+}
+
+/** Mantém apenas o contexto reconhecido da bancada ao entrar/sair de uma ficha de OP. */
+export function buildOpenOrdersContextSearch(
+  search = typeof window !== "undefined" ? window.location.search : "",
+): string {
+  const source = new URLSearchParams(search);
+  const target = new URLSearchParams();
+  for (const key of OPEN_ORDERS_CONTEXT_QUERY_KEYS) {
+    const value = (source.get(key) ?? "").trim();
+    if (!value) continue;
+    if (key === "stock" && !STOCK_QUERY_VALUES.has(value)) continue;
+    if (key === "focus" && value.toLowerCase() !== "late") continue;
+    target.set(key, value);
+  }
+  const query = target.toString();
+  return query ? `?${query}` : "";
+}
+
+/** Retorno da ficha OP: contexto allowlisted + linha exata para reabrir o modal. */
+export function buildOpenOrderLineReturnSearch(
+  search: string | undefined,
+  line: OpenOrdersLineDeepLink,
+): string {
+  const target = new URLSearchParams(buildOpenOrdersContextSearch(search));
+  target.set("pedido", line.pedido.trim());
+  const linha = line.linha?.trim();
+  if (linha) target.set("linha", linha);
+  const filial = line.filial?.trim();
+  if (filial) target.set("filial", filial);
+  const query = target.toString();
+  return query ? `?${query}` : "";
 }
 
 /** Escreve/atualiza params de atenção na URL sem apagar o restante. */

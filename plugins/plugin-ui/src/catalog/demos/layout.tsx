@@ -37,6 +37,8 @@ import {
   initialsAvatarBemClasses,
   NavigationCard,
   navigationCardBemClasses,
+  PagePath,
+  pagePathBemClasses,
   PageHeader,
   pageHeaderBrandBemClasses,
   PanelCard,
@@ -49,6 +51,8 @@ import {
   sectionCardKaizenBemClasses,
   SimpleKpiCard,
   simpleKpiCardBemClasses,
+  UnderlineNav,
+  underlineNavBemClasses,
 } from "../../components/layout";
 import type { CatalogEntryDraft } from "../types";
 
@@ -56,6 +60,8 @@ const ribbonGroupsCn = ribbonGroupsRowBemClasses(PUC_PREFIX);
 const ribbonGroupCn = ribbonGroupBemClasses(PUC_PREFIX);
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
 const navCardCn = navigationCardBemClasses(PUC_PREFIX);
+const pagePathCn = pagePathBemClasses(PUC_PREFIX);
+const underlineNavCn = underlineNavBemClasses(PUC_PREFIX);
 const previewDetailCardCn = previewDetailCardBemClasses(PUC_PREFIX);
 const panelCn = panelCardBemClasses(PUC_PREFIX);
 const contentCn = contentCardBemClasses(PUC_PREFIX);
@@ -71,6 +77,33 @@ const detailGridCn = detailFieldGridBemClasses(PUC_PREFIX);
 const formGridCn = formGridBemClasses(PUC_PREFIX);
 const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
+
+function UnderlineNavDemo({ mode }: { mode: "navigation" | "tabs" }) {
+  const [activeId, setActiveId] = useState("overview");
+  return (
+    <UnderlineNav
+      mode={mode}
+      classNames={underlineNavCn}
+      activeId={activeId}
+      aria-label={mode === "tabs" ? "Detalhes do registro" : "Áreas do módulo"}
+      items={[
+        {
+          id: "overview",
+          label: "Visão geral",
+          controlId: "catalog-panel-overview",
+          onSelect: () => setActiveId("overview"),
+        },
+        {
+          id: "history",
+          label: "Histórico",
+          count: 3,
+          controlId: "catalog-panel-history",
+          onSelect: () => setActiveId("history"),
+        },
+      ]}
+    />
+  );
+}
 
 export const layoutCatalogEntries: CatalogEntryDraft[] = [
   {
@@ -212,6 +245,56 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             </IconButton>
           </div>
         ),
+      },
+    ],
+  },
+  {
+    id: "layout.PagePath",
+    family: "layout",
+    exportName: "PagePath",
+    title: "PagePath",
+    description: "Caminho responsivo de página com back/current fixos e overflow acessível.",
+    docAnchor: "pagepath",
+    propsSummary: ["back", "items", "current", "maxVisibleItems", "size"],
+    demos: [
+      {
+        id: "overflow",
+        label: "Com overflow",
+        render: () => (
+          <PagePath
+            classNames={pagePathCn}
+            portalScopeClassName={PUC_DASHBOARD_ROOT}
+            back={{ label: "Pedidos", href: "#pedidos" }}
+            items={[
+              { id: "carteira", label: "Carteira", href: "#carteira" },
+              { id: "cliente", label: "Cliente ACME", href: "#cliente" },
+              { id: "filial", label: "Filial 01", href: "#filial" },
+            ]}
+            current="Pedido 12345"
+            maxVisibleItems={3}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.UnderlineNav",
+    family: "layout",
+    exportName: "UnderlineNav",
+    title: "UnderlineNav",
+    description: "Navegação underline ou tabs acessíveis com teclado e roving tabindex.",
+    docAnchor: "underlinenav",
+    propsSummary: ["items", "activeId", "mode", "aria-label"],
+    demos: [
+      {
+        id: "navigation",
+        label: "Navegação",
+        render: () => <UnderlineNavDemo mode="navigation" />,
+      },
+      {
+        id: "tabs",
+        label: "Tabs",
+        render: () => <UnderlineNavDemo mode="tabs" />,
       },
     ],
   },

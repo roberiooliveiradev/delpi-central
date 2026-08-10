@@ -1,5 +1,5 @@
 import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
-import { ArrowLeft, FileDown, RefreshCw } from "lucide-react";
+import { FileDown, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getProposalDocument, openProposalDocumentPdf } from "../../api/commercialProposalsApi";
@@ -11,10 +11,12 @@ import {
   cmSectionLabels,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
+  CommercialPagePath,
   CommercialTextAreaField,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginPath } from "../../app/pluginNavigation";
+import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import type {
@@ -118,9 +120,21 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
   }
 
   const cabecalho = data?.cabecalho;
+  const backHref = buildPluginPath("proposals", basePath);
 
   return (
     <section className="cm-page-stack">
+      <CommercialPagePath
+        back={{
+          label: "Propostas",
+          href: backHref,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigatePluginPath(backHref);
+          },
+        }}
+        current={cabecalho?.numero_ov || `Proposta ${propostaId}`}
+      />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={cabecalho?.numero_ov || PROPOSALS_CONTENT.detail.title}
@@ -143,12 +157,6 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
           ) : null}
           <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
-          </ActionButton>
-          <ActionButton
-            variant="ghost"
-            onClick={() => navigatePluginView("proposals", { basePath })}
-          >
-            <ArrowLeft size={16} aria-hidden="true" /> {PROPOSALS_CONTENT.detail.back}
           </ActionButton>
         </div>
       </header>

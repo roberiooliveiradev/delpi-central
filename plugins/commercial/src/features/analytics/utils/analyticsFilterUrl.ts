@@ -15,6 +15,13 @@ export type AnalyticsFilterUrlState = LinkedDateFilters & {
 };
 
 const SESSION_STORAGE_KEY = "delpi.commercial.analytics.filters";
+const ANALYTICS_OPPORTUNITY_BACK_KEYS = [
+  "start_date",
+  "end_date",
+  "competence",
+  "branch",
+  "customer_segment",
+] as const;
 
 function isValidIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -143,6 +150,19 @@ export function buildAnalyticsFilterSearchParams(state: AnalyticsFilterUrlState)
   if (branch) params.set("branch", branch);
   if (state.customerSegment) params.set("customer_segment", state.customerSegment);
   const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+export function buildAnalyticsOpportunityBackSearch(search?: string): string {
+  const source = new URLSearchParams(
+    search ?? (typeof window !== "undefined" ? window.location.search : ""),
+  );
+  const target = new URLSearchParams();
+  for (const key of ANALYTICS_OPPORTUNITY_BACK_KEYS) {
+    const value = (source.get(key) ?? "").trim();
+    if (value) target.set(key, value);
+  }
+  const query = target.toString();
   return query ? `?${query}` : "";
 }
 

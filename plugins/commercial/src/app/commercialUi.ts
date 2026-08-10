@@ -23,6 +23,8 @@ import {
   createFilterBarShell,
   dateFieldBemClasses,
   createDashboardPageHero,
+  createDashboardPagePath,
+  createDashboardDataRecordCard,
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
@@ -76,6 +78,13 @@ export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });
+export const CommercialPagePath = createDashboardPagePath({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+});
+export const CommercialDataRecordCard = createDashboardDataRecordCard({
+  prefix: UI_PREFIX,
+});
 export const CommercialViewTransition = createDashboardViewTransition({
   prefix: UI_PREFIX,
 });
