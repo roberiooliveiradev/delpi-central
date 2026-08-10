@@ -13,6 +13,11 @@ import {
   resolveShapePrimitive,
   type ComunicadoVisualPrimitive,
 } from "./comunicadoVisualPrimitive";
+import {
+  EFFICIENCY_PIN_HIT_SIZE_PCT,
+  ensureEfficiencyPinResizableFrame,
+  isEfficiencyPinShapeKind,
+} from "./efficiencyPin";
 
 export type { ComunicadoGeometryVertex } from "./comunicadoTypes";
 
@@ -122,11 +127,18 @@ export function resolveLineEndpoints(
 }
 
 /** Caixa de seleção / interseção — derivada da geometria, não da dimensão do ponto. */
-export function geometryBoundingFrame(geometry: ComunicadoShapeGeometry): ComunicadoFrame {
+export function geometryBoundingFrame(
+  geometry: ComunicadoShapeGeometry,
+  options?: { hitSizePct?: number },
+): ComunicadoFrame {
   if (geometry.primitive === "point") {
-    const half = COMUNICADO_POINT_HIT_SIZE_PCT / 2;
+    const hit =
+      options?.hitSizePct && options.hitSizePct > 0
+        ? options.hitSizePct
+        : COMUNICADO_POINT_HIT_SIZE_PCT;
+    const half = hit / 2;
     const { x, y } = geometry.position;
-    return { x: x - half, y: y - half, w: COMUNICADO_POINT_HIT_SIZE_PCT, h: COMUNICADO_POINT_HIT_SIZE_PCT };
+    return { x: x - half, y: y - half, w: hit, h: hit };
   }
 
   const xs = geometry.points.map((point) => point.x);
@@ -313,6 +325,8 @@ export function geometryToPersistedFrame(block: ComunicadoShapeBlock): Comunicad
 
 /** Linha e ponto não usam os 8 handles de bbox — linha usa endpoints. */
 export function shapeBlockAllowsResize(block: ComunicadoShapeBlock): boolean {
+  /* Pin CT é área redimensionável (radar preenche o frame). */
+  if (isEfficiencyPinShapeKind(block.shape)) return true;
   if (isPointShapeKind(block.shape) || isLineShapeKind(block.shape)) return false;
   return true;
 }
@@ -354,8 +368,21 @@ export function clampFrameForBlock(block: ComunicadoBlock, frame: ComunicadoFram
   };
 }
 
+function efficiencyPinFallbackFrame(block: ComunicadoShapeBlock): ComunicadoFrame {
+  return {
+    x: block.frame.x,
+    y: block.frame.y,
+    w: Math.max(block.frame.w, EFFICIENCY_PIN_HIT_SIZE_PCT),
+    h: Math.max(block.frame.h, EFFICIENCY_PIN_HIT_SIZE_PCT),
+  };
+}
+
 /** Frame para seleção / marquee — inclui alvo do ponto sem dimensão. */
 export function resolveBlockHitFrame(block: ComunicadoBlock): ComunicadoFrame {
+  if (block.type === "shape" && isEfficiencyPinShapeKind(block.shape)) {
+    /* Pin CT: frame da área (migrado) é a verdade — handles alinhados ao wrap. */
+    return ensureEfficiencyPinResizableFrame(block, efficiencyPinFallbackFrame(block)).frame;
+  }
   if (block.type === "shape") {
     return geometryBoundingFrame(resolveShapeGeometry(block));
   }
@@ -369,6 +396,17 @@ export function resolveBlockPlacementStyle(block: ComunicadoBlock): CSSPropertie
       top: `${block.frame.y}%`,
       width: `${block.frame.w}%`,
       height: `${block.frame.h}%`,
+    };
+  }
+
+  if (isEfficiencyPinShapeKind(block.shape)) {
+    const frame = ensureEfficiencyPinResizableFrame(block, efficiencyPinFallbackFrame(block)).frame;
+    return {
+      left: `${frame.x}%`,
+      top: `${frame.y}%`,
+      width: `${frame.w}%`,
+      height: `${frame.h}%`,
+      overflow: "visible",
     };
   }
 

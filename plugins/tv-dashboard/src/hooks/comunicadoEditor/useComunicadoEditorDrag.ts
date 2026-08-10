@@ -253,6 +253,9 @@ export function useComunicadoEditorDrag({
         if ("connector" in patch && patch.connector === undefined && next.type === "shape") {
           delete (next as ComunicadoShapeBlock).connector;
         }
+        if ("vertices" in patch && patch.vertices === undefined && next.type === "shape") {
+          delete (next as ComunicadoShapeBlock).vertices;
+        }
         return next;
       });
       /* Endpoint drag: não detach via reconcile — attach/detach parcial já veio no patch. */

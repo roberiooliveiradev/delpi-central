@@ -36,6 +36,10 @@ import {
 } from "./CanvasTableDataBindingInspector";
 import { InputBindingInspector } from "./InputBindingInspector";
 import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
+import {
+  EfficiencyPinInspector,
+  canShowEfficiencyPinInspector,
+} from "./EfficiencyPinInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { NumberFormatSection } from "./selectionSections/NumberFormatSection";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -92,6 +96,7 @@ export function SelectedDataSidePanel({
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
   const isTextBound = primary ? canShowTextDataBindingInspector(primary) : false;
+  const isEfficiencyPin = primary ? canShowEfficiencyPinInspector(primary) : false;
   const isCanvasTableBound = primary
     ? canShowCanvasTableDataBindingInspector(primary)
     : false;
@@ -318,6 +323,13 @@ export function SelectedDataSidePanel({
         />
       ) : null}
 
+      {isEfficiencyPin && !isView ? (
+        <EfficiencyPinInspector
+          pane
+          onOpenDataSources={() => openCatalog("insert")}
+        />
+      ) : null}
+
       {isTextBound && !isView ? (
         <>
           <TextDataBindingInspector
@@ -349,7 +361,7 @@ export function SelectedDataSidePanel({
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
         />
-      ) : isView || isTextBound || isCanvasTableBound ? (
+      ) : isView || isTextBound || isCanvasTableBound || isEfficiencyPin ? (
         <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
@@ -361,7 +373,7 @@ export function SelectedDataSidePanel({
         <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
-      {!isView && !isTextBound && !isCanvasTableBound && !isInputFilter && !bindingTarget ? (
+      {!isView && !isTextBound && !isCanvasTableBound && !isEfficiencyPin && !isInputFilter && !bindingTarget ? (
         <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>

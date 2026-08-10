@@ -7,6 +7,7 @@
  */
 
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import { isEfficiencyPinShapeKind } from "@delpi/tv-dashboard-presentation";
 
 import { resolveClosedGroupSelection } from "./comunicadoGrouping";
 import {
@@ -29,7 +30,9 @@ export type StagePointerDownAction = GroupedBlockPointerDownAction;
 
 /** Blocos que aceitam edição inline (L5) no duplo clique. */
 export function isInlineTextEditableBlock(block: ComunicadoBlock): boolean {
-  return block.type === "heading" || block.type === "text" || block.type === "shape";
+  if (block.type === "heading" || block.type === "text") return true;
+  if (block.type === "shape" && isEfficiencyPinShapeKind(block.shape)) return false;
+  return block.type === "shape";
 }
 
 /**

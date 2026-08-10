@@ -36,6 +36,11 @@ import {
   isPointShapeKind,
   resolveShapePrimitive,
 } from "./comunicadoVisualPrimitive";
+import {
+  ensureEfficiencyPinResizableFrame,
+  isEfficiencyPinShapeKind,
+  normalizeEfficiencyPinBinding,
+} from "./efficiencyPin";
 import { normalizeShapeConnector } from "./comunicadoConnectors";
 import {
   serializeContentRuns,
@@ -490,6 +495,10 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
   if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 0, h: 0 };
+  /* Pin CT: quadrado redimensionável (handles de bbox). */
+  if (shape && isEfficiencyPinShapeKind(shape)) {
+    return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX * 0.45, { x: 40, y: 35 });
+  }
   /* Linha permanece alongada — não é caixa quadrada. */
   if (shape && isLineShapeKind(shape)) return { x: 10, y: 48, w: 80, h: 4 };
   if (
@@ -575,7 +584,19 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       fontWeight: "normal" as const,
     };
     if (shape && isPointShapeKind(shape)) {
-      return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };
+      return {
+        ...base,
+        markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT,
+      };
+    }
+    if (shape && isEfficiencyPinShapeKind(shape)) {
+      return {
+        ...base,
+        fill: "transparent",
+        stroke: "transparent",
+        strokeWidth: 0,
+        opacity: 1,
+      };
     }
     if (shape === "rounded-rect" || shape === "callout-rect" || shape === "callout-rounded") {
       return { ...base, borderRadius: 16 };
@@ -660,7 +681,15 @@ export function createBlock(
   }
   if (type === "shape") {
     const kind = shape ?? "rectangle";
-    let shapeBlock = { ...base, type, shape: kind, content: content || "" } as ComunicadoBlock;
+    let shapeBlock = {
+      ...base,
+      type,
+      shape: kind,
+      content: content || "",
+      ...(isEfficiencyPinShapeKind(kind)
+        ? { efficiencyPin: { role: "pin" as const, infoMode: "attached" as const } }
+        : {}),
+    } as ComunicadoBlock;
     if (shapeBlock.type === "shape" && isLineShapeKind(kind)) {
       const vertices = lineEndpointsFromFrame(shapeBlock.frame);
       shapeBlock = {
@@ -691,7 +720,11 @@ export function createBlock(
 }
 
 export function createShapeBlock(shape: ComunicadoShapeKind): ComunicadoBlock {
-  return createBlock("shape", "", shape);
+  const block = createBlock("shape", "", shape);
+  if (block.type === "shape" && isEfficiencyPinShapeKind(shape)) {
+    return ensureEfficiencyPinResizableFrame(block, defaultFrame("shape", "efficiency-pin"));
+  }
+  return block;
 }
 
 export function createIconBlock(iconName: string): ComunicadoBlock {
@@ -866,6 +899,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (serializedRuns) base.contentRuns = serializedRuns;
     if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
     if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
+    if (block.efficiencyPin) base.efficiencyPin = { ...block.efficiencyPin, ...(block.efficiencyPin.bands ? { bands: { ...block.efficiencyPin.bands } } : {}) };
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
     if (block.vertices && block.vertices.length > 0) {
@@ -1092,35 +1126,46 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const kind = shape && isComunicadoShapeKind(shape) ? shape : "rectangle";
     const vertices = normalizeVertices(block.vertices);
     const connector = normalizeShapeConnector(block.connector);
+    const efficiencyPin = isEfficiencyPinShapeKind(kind)
+      ? normalizeEfficiencyPinBinding(block.efficiencyPin) ?? {
+          role: "pin" as const,
+          infoMode: "attached" as const,
+        }
+      : undefined;
     const shapeTextFields = syncTextBlockFields(
       typeof block.content === "string" ? block.content : "",
       block.contentRuns,
     );
     const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
     const textProjection = normalizeTextProjection(block.textProjection);
-    return attachBlockAnimations(
-      {
-        id,
-        type,
-        frame,
-        style: { ...defaultStyle("shape", kind), ...style },
-        shape: kind,
-        groupId,
-        content: shapeTextFields.content,
-        ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
-        ...(dataSourceId ? { dataSourceId } : {}),
-        ...(textProjection ? { textProjection } : {}),
-        href: links.href,
-        linkTarget: links.linkTarget,
-        ...(vertices ? { vertices } : {}),
-        ...(connector ? { connector } : {}),
-        resolved:
-          block.resolved && typeof block.resolved === "object"
-            ? (block.resolved as ComunicadoDataResolved)
-            : undefined,
-      },
-      block,
-    );
+    let shapeNorm = {
+      id,
+      type: "shape" as const,
+      frame,
+      style: { ...defaultStyle("shape", kind), ...style },
+      shape: kind,
+      groupId,
+      content: shapeTextFields.content,
+      ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
+      ...(dataSourceId ? { dataSourceId } : {}),
+      ...(textProjection ? { textProjection } : {}),
+      ...(efficiencyPin ? { efficiencyPin } : {}),
+      href: links.href,
+      linkTarget: links.linkTarget,
+      ...(vertices ? { vertices } : {}),
+      ...(connector ? { connector } : {}),
+      resolved:
+        block.resolved && typeof block.resolved === "object"
+          ? (block.resolved as ComunicadoDataResolved)
+          : undefined,
+    };
+    if (isEfficiencyPinShapeKind(kind)) {
+      shapeNorm = ensureEfficiencyPinResizableFrame(
+        shapeNorm,
+        defaultFrame("shape", "efficiency-pin"),
+      );
+    }
+    return attachBlockAnimations(shapeNorm, block);
   }
   if (type === "icon") {
     const iconName =

@@ -5,6 +5,7 @@ import {
   catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
+  isEfficiencyPinBlock,
   staticLabelFromTextBoundBlock,
   suggestDefaultTextProjection,
   textProjectionPrefixFromStaticLabel,
@@ -238,6 +239,8 @@ export function TextDataBindingInspector({
   );
 }
 
-export function canShowTextDataBindingInspector(selected: { type: string } | null | undefined): boolean {
-  return Boolean(selected && isComunicadoVisualBoxBlock(selected as never));
+export function canShowTextDataBindingInspector(selected: { type: string; shape?: string } | null | undefined): boolean {
+  if (!selected || !isComunicadoVisualBoxBlock(selected as never)) return false;
+  if (isEfficiencyPinBlock(selected as never)) return false;
+  return true;
 }

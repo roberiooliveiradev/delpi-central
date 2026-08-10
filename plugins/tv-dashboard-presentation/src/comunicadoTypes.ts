@@ -29,6 +29,8 @@ export type ComunicadoNamedTextStyle = "title1" | "subtitle" | "body";
 
 export type ComunicadoShapeKind =
   | "point"
+  /** Pin de CT na planta — radar colorido pela eficiência (fonte efficiency-by-work-center). */
+  | "efficiency-pin"
   | "rectangle"
   | "rounded-rect"
   | "snip-rect"
@@ -304,6 +306,50 @@ export type ComunicadoShapeConnector = {
   routing?: ComunicadoConnectorRouting;
 };
 
+/** Faixas % do radar de eficiência no pin da planta. */
+export type ComunicadoEfficiencyPinBands = {
+  /** ≥ este valor → bom (verde). Default 95. */
+  goodMinPct?: number;
+  /** ≥ este e &lt; good → atenção (amarelo). Default 50. */
+  warnMinPct?: number;
+  /** Acima deste valor → fora da faixa / verificar. Default 199. */
+  validMaxPct?: number;
+};
+
+/**
+ * Binding do pin `efficiency-pin`: escolhe a linha do CT na fonte ligada
+ * (`get_eficiencia_fabril_efficiency_by_work_center`).
+ */
+export type ComunicadoEfficiencyPinInfoMode = "attached" | "detached" | "hidden";
+
+export type ComunicadoEfficiencyPinRole = "pin" | "info";
+
+export type ComunicadoEfficiencyPinBinding = {
+  /** Código/nome do centro de trabalho (match em `matchField`). */
+  workCenter?: string;
+  /** Campo da linha para match — default `work_center`. */
+  matchField?: string;
+  /** Campo do % — default `efficiency_pct`. */
+  valueField?: string;
+  /**
+   * @deprecated Preferir `infoMode`.
+   * Exibe o código do CT sob o radar. Default true.
+   */
+  showLabel?: boolean;
+  /**
+   * Onde fica CT/%:
+   * - `attached` — sob o radar no mesmo bloco (default)
+   * - `detached` — só radar; use um bloco `role: info` separado
+   * - `hidden` — só radar, sem texto
+   */
+  infoMode?: ComunicadoEfficiencyPinInfoMode;
+  /** `pin` = radar (+ rótulo se attached); `info` = só cartão de texto. Default `pin`. */
+  role?: ComunicadoEfficiencyPinRole;
+  /** Par ligado (pin ↔ info) quando a informação está separada. */
+  linkedBlockId?: string;
+  bands?: ComunicadoEfficiencyPinBands;
+};
+
 export type ComunicadoShapeBlock = ComunicadoBlockBase &
   ComunicadoTextDataBoundFields & {
   type: "shape";
@@ -315,6 +361,8 @@ export type ComunicadoShapeBlock = ComunicadoBlockBase &
    * Só faz sentido em kinds de linha (`line`, `line-arrow-*`).
    */
   connector?: ComunicadoShapeConnector;
+  /** Só `efficiency-pin` — CT + faixas do radar. */
+  efficiencyPin?: ComunicadoEfficiencyPinBinding;
   content?: string;
   /** Rich text opcional (formas com dados ou formatação). */
   contentRuns?: ComunicadoContentRun[];

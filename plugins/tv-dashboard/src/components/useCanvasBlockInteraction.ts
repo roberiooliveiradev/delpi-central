@@ -9,8 +9,11 @@ import {
   blockSupportsShapeChromeHandles,
   clampFrame,
   clampFrameForBlock,
+  EFFICIENCY_PIN_HIT_SIZE_PCT,
+  ensureEfficiencyPinResizableFrame,
   detachConnectorEndpoint,
   findNearestConnectionSite,
+  isEfficiencyPinBlock,
   isLineShapeKind,
   isPointShapeKind,
   resolveBlockConnectionSites,
@@ -379,13 +382,35 @@ export function useCanvasBlockInteraction({
       event.preventDefault();
       event.stopPropagation();
 
-      const aspectRatio = block.frame.w / Math.max(block.frame.h, 0.1);
+      /* Pin CT legado: grava frame usável no modelo antes do gesto (chrome ≠ persistido). */
+      let dragBlock = block;
+      if (isEfficiencyPinBlock(block)) {
+        const migrated = ensureEfficiencyPinResizableFrame(block, {
+          x: block.frame.x,
+          y: block.frame.y,
+          w: EFFICIENCY_PIN_HIT_SIZE_PCT,
+          h: EFFICIENCY_PIN_HIT_SIZE_PCT,
+        });
+        if (
+          migrated.frame.w !== block.frame.w ||
+          migrated.frame.h !== block.frame.h ||
+          migrated.vertices !== block.vertices
+        ) {
+          onUpdateBlockRef.current?.(block.id, {
+            frame: migrated.frame,
+            vertices: migrated.vertices,
+          });
+          dragBlock = migrated;
+        }
+      }
+
+      const aspectRatio = dragBlock.frame.w / Math.max(dragBlock.frame.h, 0.1);
       const dragState: DragState = {
         mode,
-        blockId: block.id,
+        blockId: dragBlock.id,
         startX: event.clientX,
         startY: event.clientY,
-        startFrame: { ...block.frame },
+        startFrame: { ...dragBlock.frame },
         aspectRatio,
       };
 
@@ -441,10 +466,10 @@ export function useCanvasBlockInteraction({
       }
 
       if (mode === "rotate") {
-        let centerX = block.frame.x + block.frame.w / 2;
-        let centerY = block.frame.y + block.frame.h / 2;
-        if (block.type === "shape" && isPointShapeKind(block.shape)) {
-          const geometry = resolveShapeGeometry(block);
+        let centerX = dragBlock.frame.x + dragBlock.frame.w / 2;
+        let centerY = dragBlock.frame.y + dragBlock.frame.h / 2;
+        if (dragBlock.type === "shape" && isPointShapeKind(dragBlock.shape)) {
+          const geometry = resolveShapeGeometry(dragBlock);
           if (geometry.primitive === "point") {
             centerX = geometry.position.x;
             centerY = geometry.position.y;
@@ -458,7 +483,7 @@ export function useCanvasBlockInteraction({
           ? rect.top + (centerY / 100) * rect.height
           : event.clientY;
         onInteractionStartRef.current?.({
-          blockId: block.id,
+          blockId: dragBlock.id,
           mode,
           startFrame: dragState.startFrame,
         });
@@ -466,7 +491,7 @@ export function useCanvasBlockInteraction({
           ...dragState,
           centerX,
           centerY,
-          startRotation: block.style?.rotation ?? 0,
+          startRotation: dragBlock.style?.rotation ?? 0,
           startPointerAngle: Math.atan2(
             event.clientY - centerClientY,
             event.clientX - centerClientX,

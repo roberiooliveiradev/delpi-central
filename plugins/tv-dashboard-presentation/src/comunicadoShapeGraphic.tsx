@@ -289,6 +289,14 @@ function renderSvgShape(
       return (
         <circle cx="50" cy="50" r="10" fill={fill} stroke={stroke} strokeWidth={sw > 0 ? sw : 0} />
       );
+    case "efficiency-pin":
+      return (
+        <>
+          <circle cx="50" cy="50" r="28" fill="none" stroke={fill} strokeWidth="3" opacity="0.35" />
+          <circle cx="50" cy="50" r="18" fill="none" stroke={fill} strokeWidth="3" opacity="0.55" />
+          <circle cx="50" cy="50" r="8" fill={fill} stroke={stroke} strokeWidth={sw > 0 ? sw : 0} />
+        </>
+      );
     case "line":
       return (
         <line

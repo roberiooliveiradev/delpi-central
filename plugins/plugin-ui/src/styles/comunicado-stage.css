@@ -427,6 +427,59 @@
   flex-shrink: 0;
 }
 
+/* Pin CT / radar de eficiência na planta */
+.delpi-ui-comunicado__efficiency-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 2;
+  width: max-content;
+  max-width: 100%;
+}
+
+.delpi-ui-comunicado__efficiency-pin__radar {
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.delpi-ui-comunicado__efficiency-pin__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #f8fafc;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.delpi-ui-comunicado__efficiency-pin__pct {
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+/* Legacy span rings — prefer SVG animate in EfficiencyPinView */
+.delpi-ui-comunicado__efficiency-pin__ring {
+  display: none;
+}
+
+.delpi-ui-comunicado__efficiency-pin__core {
+  display: none;
+}
+
 .delpi-ui-comunicado__shape-svg,
 .delpi-ui-comunicado__shape-fill,
 .delpi-ui-comunicado__shape-line {

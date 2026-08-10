@@ -50,18 +50,19 @@ export function resolveVisualBoxElementCapabilities(
   const shapeAdjustments = shapeAdjustmentSpecs(shapeKind).some(
     (spec) => spec.id !== "corner" && spec.id !== "round",
   );
+  const efficiencyPin = shapeKind === "efficiency-pin";
 
   return {
-    textHighlight: true,
-    clearFormatting: true,
-    paragraphJustify: true,
-    paragraphLists: true,
-    paragraphNamedStyle: true,
-    paragraphSpacing: true,
+    textHighlight: !efficiencyPin,
+    clearFormatting: !efficiencyPin,
+    paragraphJustify: !efficiencyPin,
+    paragraphLists: !efficiencyPin,
+    paragraphNamedStyle: !efficiencyPin,
+    paragraphSpacing: !efficiencyPin,
     shapeGallery: true,
-    shapeChrome: true,
-    shapeAdjustments,
-    shapeMarker: primitive === "point",
+    shapeChrome: !efficiencyPin,
+    shapeAdjustments: efficiencyPin ? false : shapeAdjustments,
+    shapeMarker: primitive === "point" && !efficiencyPin,
   };
 }
 

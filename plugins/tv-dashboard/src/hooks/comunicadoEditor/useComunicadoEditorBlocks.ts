@@ -25,9 +25,11 @@ import {
   deleteChartPart,
   deleteKpiPart,
   deleteTablePart,
+  findSharedEfficiencyPinDataSourceId,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isEfficiencyPinShapeKind,
   kpiPartAllowsDelete,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
@@ -568,6 +570,13 @@ export function useComunicadoEditorBlocks({
     (shape: ComunicadoShapeKind) => {
       let block = createShapeBlock(shape);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      /* Pin CT: reutiliza a fonte de eficiência já no slide (só o CT muda por pin). */
+      if (block.type === "shape" && isEfficiencyPinShapeKind(shape)) {
+        const sharedId = findSharedEfficiencyPinDataSourceId(configRef.current.blocks ?? []);
+        if (sharedId) {
+          block = { ...block, dataSourceId: sharedId };
+        }
+      }
       block = placeInserted(block);
       setShapeMenuOpen(false);
       setRibbonTabRequest("element");

@@ -34,6 +34,19 @@ describe("comunicadoShapeGeometry", () => {
     expect(shapeBlockAllowsResize(block)).toBe(false);
   });
 
+  it("efficiency-pin permite resize de bbox", () => {
+    expect(
+      shapeBlockAllowsResize({
+        id: "pin",
+        type: "shape",
+        shape: "efficiency-pin",
+        frame: { x: 10, y: 10, w: 8, h: 8 },
+        style: {},
+        content: "",
+      }),
+    ).toBe(true);
+  });
+
   it("linha é formada por pelo menos dois pontos (vertices iniciais)", () => {
     const block = createShapeBlock("line");
     expect(block.type).toBe("shape");

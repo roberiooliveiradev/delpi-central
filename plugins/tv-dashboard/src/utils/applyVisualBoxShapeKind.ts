@@ -38,9 +38,27 @@ export function buildVisualBoxShapeKindPatch(
           ? (block.style?.strokeWidth ?? block.style?.borderWidth ?? 0)
           : defaultStrokeWidthForPrimitive(nextPrimitive),
       ...(nextPrimitive === "point"
-        ? { markerRadius: block.style?.markerRadius ?? 8 }
+        ? { markerRadius: block.style?.markerRadius ?? (kind === "efficiency-pin" ? 32 : 8) }
         : {}),
     };
+  }
+
+  if (kind === "efficiency-pin") {
+    patch.efficiencyPin =
+      block.type === "shape" && block.efficiencyPin
+        ? block.efficiencyPin
+        : { role: "pin", infoMode: "attached" };
+    const baseStyle = (patch.style as Record<string, unknown> | undefined) ?? {
+      ...block.style,
+    };
+    patch.style = {
+      ...baseStyle,
+      fill: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+    };
+  } else if (block.type === "shape" && block.efficiencyPin) {
+    patch.efficiencyPin = undefined;
   }
 
   return patch as Partial<ComunicadoBlock>;

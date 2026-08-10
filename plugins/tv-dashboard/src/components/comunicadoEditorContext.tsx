@@ -10,10 +10,13 @@ import {
 import {
   applyFieldLabelsToResolved,
   collectCanvasTableSourceIds,
+  defaultFrame,
+  ensureEfficiencyPinResizableFrame,
   isComunicadoVisualBoxBlock,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isEfficiencyPinBlock,
   isFetchableDataBlockType,
   parseComunicadoConfig,
   serializeComunicadoConfig,
@@ -23,6 +26,7 @@ import {
   type ComunicadoDataDisplayMode,
   type ComunicadoDataSourceBlock,
   type PresentationSelectionUpdateEvent,
+  type ComunicadoShapeBlock,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -382,6 +386,28 @@ export function ComunicadoEditorProvider({
     },
     [deckHistory, onChange, playlistId],
   );
+
+  /* Pins CT legados (w/h≈0): persiste frame redimensionável no modelo — chrome sozinho não basta. */
+  useEffect(() => {
+    const blocks = config.blocks ?? [];
+    const defaultPin = defaultFrame("shape", "efficiency-pin");
+    let changed = false;
+    const nextBlocks = blocks.map((block) => {
+      if (!isEfficiencyPinBlock(block)) return block;
+      const fixed = ensureEfficiencyPinResizableFrame(block as ComunicadoShapeBlock, defaultPin);
+      if (
+        fixed.frame.w !== block.frame.w ||
+        fixed.frame.h !== block.frame.h ||
+        fixed.vertices !== block.vertices
+      ) {
+        changed = true;
+        return fixed;
+      }
+      return block;
+    });
+    if (!changed) return;
+    applyConfig({ ...configRef.current, blocks: nextBlocks });
+  }, [applyConfig, config.blocks]);
 
   const {
     pushPast,
