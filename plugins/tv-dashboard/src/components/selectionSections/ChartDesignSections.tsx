@@ -494,7 +494,7 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
   if (!ctrl) return null;
 
   const body = (
-    <div className="td-deck-ribbon__stack">
+    <div className="td-deck-ribbon__stack td-deck-ribbon__stack--ribbon-row">
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         {(
           [

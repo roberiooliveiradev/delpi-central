@@ -3608,13 +3608,14 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon__body{
   display: flex;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   width: 100%;
   min-height: 0;
+  overflow: hidden;
   box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__stack{
@@ -3624,6 +3625,22 @@ body.td-composer--marqueeing *{
   min-width: 0;
   max-width: 16rem;
   width: 100%;
+}
+/* Ribbon: tiles + campo na mesma faixa (evita coluna alta colada no topo). */
+.dashboard-tv-dashboard .td-deck-ribbon__stack--ribbon-row{
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  width: auto;
+  max-width: 100%;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__stack--ribbon-row .td-field{
+  width: auto;
+  min-width: 9rem;
+  max-width: 12rem;
+  margin: 0;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__stack .td-field{
   width: 100%;
@@ -3776,6 +3793,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-ribbon__cascade-item span{
   flex: 1;
 }
+.dashboard-tv-dashboard .td-ribbon-large-btn__label,
 .dashboard-tv-dashboard .td-ribbon-large-btn span{
   white-space: pre-line;
   text-align: center;
@@ -4135,6 +4153,8 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__body{
   align-items: stretch;
   justify-content: flex-start;
+  overflow: visible;
+  flex: 0 0 auto;
 }
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__tiles,
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__tiles--shape-menus{
@@ -5200,8 +5220,9 @@ body.td-composer--marqueeing *{
   flex: 0 1 auto;
   padding: 2px 4px 0;
   justify-content: flex-start;
-  gap: 3px;
-  overflow: visible;
+  gap: 2px;
+  /* Clip interno: body overflow; popovers usam portal. */
+  overflow: hidden;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__group{
   height: 100%;
@@ -5211,7 +5232,7 @@ body.td-composer--marqueeing *{
   min-width: 0;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__body{
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
@@ -5220,7 +5241,7 @@ body.td-composer--marqueeing *{
   width: 100%;
   min-height: 0;
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
   box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__caption{
@@ -5232,11 +5253,14 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__tiles{
   grid-template-rows: auto;
   align-items: center;
+  justify-content: center;
+  max-height: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile{
   min-width: 44px;
-  min-height: 52px;
-  padding: 4px 4px;
+  min-height: 0;
+  max-height: 100%;
+  padding: 2px 4px;
   gap: 2px;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile__icon{
@@ -5249,11 +5273,47 @@ body.td-composer--marqueeing *{
   line-height: 1.1;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-large-btn{
-  min-width: 56px;
-  min-height: 52px;
-  padding: 4px 8px;
-  gap: 2px;
-  font-size: 11px;
+  min-width: 52px;
+  min-height: 0;
+  max-height: 100%;
+  padding: 2px 6px;
+  gap: 1px;
+  font-size: 10px;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-large-btn__label,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-large-btn span{
+  max-width: 4.75rem;
+  max-height: 2.4em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: pre-line;
+  word-break: break-word;
+  font-size: 10px;
+  line-height: 1.15;
+}
+/* Toggles de elemento (Rótulos / Eixos) densos na faixa. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-element-toggle__trigger{
+  min-width: 2.75rem;
+  max-height: 100%;
+  padding: 0.2rem 0.3rem;
+  gap: 0.1rem;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-element-toggle__label{
+  max-width: 3.75rem;
+  font-size: 0.625rem;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__stack--ribbon-row{
+  max-height: 100%;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__stack{
+  width: auto;
+  max-width: 100%;
 }
 /* Shape menus / color triggers alinhados à faixa (sem estourar a altura). */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups--inspector{

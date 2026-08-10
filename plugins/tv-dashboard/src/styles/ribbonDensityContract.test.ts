@@ -108,12 +108,36 @@ describe("ribbon density contract", () => {
     expect(body).toMatch(/justify-content:\s*center/);
     expect(body).toMatch(/align-items:\s*center/);
     expect(body).toMatch(/width:\s*100%/);
+    expect(body).toMatch(/overflow:\s*hidden/);
+    expect(body).toMatch(/flex:\s*1\s+1\s+auto/);
 
     const compactBody = css.match(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__body\s*\{[^}]+\}/s,
     )?.[0];
     expect(compactBody).toBeTruthy();
     expect(compactBody).toMatch(/justify-content:\s*center/);
+    expect(compactBody).toMatch(/flex:\s*1\s+1\s+auto/);
+    expect(compactBody).toMatch(/overflow:\s*hidden/);
+  });
+
+  it("large-btn compacto limita rótulo a 2 linhas (sem vazar na caption)", () => {
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-ribbon-large-btn__label[\s\S]*?-webkit-line-clamp:\s*2/s,
+    );
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-ribbon-large-btn\s*\{[^}]*min-height:\s*0/s,
+    );
+  });
+
+  it("Eixos na ribbon usa stack em linha (tiles + ordenar)", () => {
+    const axes = readFileSync(
+      join(base, "../components/selectionSections/ChartDesignSections.tsx"),
+      "utf8",
+    );
+    expect(axes).toMatch(/td-deck-ribbon__stack--ribbon-row/);
+    expect(css).toMatch(
+      /\.td-deck-ribbon__stack--ribbon-row\s*\{[^}]*flex-direction:\s*row/s,
+    );
   });
 
   it("inputs de frame têm largura legível (≥72px) em 5 colunas", () => {

@@ -44,5 +44,7 @@ describe("ribbon group divider contract", () => {
     expect(body).toMatch(/justify-content:\s*center/);
     expect(body).toMatch(/align-items:\s*center/);
     expect(body).toMatch(/width:\s*100%/);
+    expect(body).toMatch(/overflow:\s*hidden/);
+    expect(body).toMatch(/min-height:\s*0/);
   });
 });
