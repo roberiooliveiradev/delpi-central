@@ -53,10 +53,8 @@ export function DisplayFormatRibbonGroup({
   const panelRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const numeric = isNumericDisplayCategory(spec.category);
-<<<<<<< HEAD
   /* Eixo X (categoria): % ainda aplica nos valores via displayFormatSelection. */
   const percentShortcutEnabled = numeric || target === "chartCategory";
-=======
   const dialogOpen = formatDialog?.open ?? uncontrolledDialogOpen;
   const setDialogOpen = formatDialog?.onOpenChange ?? setUncontrolledDialogOpen;
   const dialogOwnedByParent = Boolean(formatDialog);
@@ -67,7 +65,6 @@ export function DisplayFormatRibbonGroup({
     dismissActiveExclusiveAnchoredPanel();
     setDialogOpen(true);
   };
->>>>>>> 8ada460e5 (fix(plugin-ui): modal Formatar não fecha ao clicar com popover Número)
 
   useEffect(() => {
     if (!menuOpen) return;
