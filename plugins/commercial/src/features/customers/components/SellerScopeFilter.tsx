@@ -14,7 +14,7 @@ export function SellerScopeFilter({ sellers, value, onChange, hint }: SellerScop
   }));
 
   return (
-    <div className="pva-seller-scope" role="group" aria-label="Filtro de carteira">
+    <div className="cm-customer-seller-scope" role="group" aria-label="Filtro de carteira">
       <CommercialSelectField
         label="Carteira"
         hint={hint}

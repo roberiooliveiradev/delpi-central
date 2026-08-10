@@ -23,8 +23,8 @@ const CHART_CLASSES = chartCardBemClasses("cm", {
 });
 
 const CHART_HEIGHT = 320;
-const COLOR_CURRENT = "var(--pva-brand)";
-const COLOR_PRIOR = "var(--pva-accent)";
+const COLOR_CURRENT = "var(--cm-accent)";
+const COLOR_PRIOR = "color-mix(in srgb, var(--cm-accent) 56%, var(--cm-text-muted))";
 
 type CustomerPurchaseEvolutionChartProps = {
   points: PurchaseEvolutionPoint[];

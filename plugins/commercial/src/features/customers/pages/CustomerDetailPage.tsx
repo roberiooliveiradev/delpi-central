@@ -2,10 +2,14 @@ import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
-import { CommercialPagePath } from "../../../app/commercialUi";
+import {
+  CommercialActionButton,
+  CommercialEmptyState,
+  CommercialLoadingCard,
+  CommercialPagePath,
+  CommercialStateBanner,
+} from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
-import { EmptyState } from "../../../ui/EmptyState";
-import { PVA_STATE_BOX } from "../../../ui/stateChrome";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
@@ -164,9 +168,9 @@ export function CustomerDetailPage({
   };
 
   return (
-    <div className="pva-internal-page pva-checkup-page">
+    <div className="cm-customer-detail-page">
       {!customer ? (
-        <header className="pva-detail-header pva-detail-header--minimal">
+        <header className="cm-customer-detail-header cm-customer-detail-header--minimal">
           <CommercialPagePath
             back={{
               label: "Minha carteira",
@@ -178,15 +182,14 @@ export function CustomerDetailPage({
             }}
             current={notFound ? "Cliente não encontrado" : `Carregando ${codeStore}…`}
           />
-          <div className="pva-detail-header__row">
+          <div className="cm-customer-detail-header__row">
             <div>
-              <h1 className="pva-detail-header__name">Cliente</h1>
-              <p className="pva-checkup__code">Código / loja: {codeStore}</p>
+              <h1 className="cm-customer-detail-header__name">Cliente</h1>
+              <p className="cm-customer-detail__code">Código / loja: {codeStore}</p>
             </div>
             {!notFound ? (
-              <button
-                type="button"
-                className="pva-btn pva-btn--ghost"
+              <CommercialActionButton
+                variant="ghost"
                 onClick={refreshActiveSection}
                 disabled={loading || refreshing}
                 aria-busy={refreshing || loading}
@@ -194,10 +197,10 @@ export function CustomerDetailPage({
                 <RefreshCw
                   size={16}
                   aria-hidden="true"
-                  className={refreshing ? "pva-spin" : undefined}
+                  className={refreshing ? "cm-spin" : undefined}
                 />
                 {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
-              </button>
+              </CommercialActionButton>
             ) : null}
           </div>
         </header>
@@ -215,41 +218,38 @@ export function CustomerDetailPage({
       )}
 
       {showInitialLoading ? (
-        <div className={PVA_STATE_BOX} role="status">
-          Carregando dados do cliente…
-        </div>
+        <CommercialLoadingCard title="Carregando dados do cliente…" variant="panel" />
       ) : null}
 
       {error && !hasData ? (
-        <div className="pva-alert pva-alert--error" role="alert">
+        <CommercialStateBanner variant="error">
           <p>{error}</p>
-          <div className="pva-checkup__actions">
-            <button type="button" className="pva-btn pva-btn--secondary" onClick={reload}>
+          <div className="cm-customer-detail__actions">
+            <CommercialActionButton variant="ghost" onClick={reload}>
               Tentar novamente
-            </button>
-            <button type="button" className="pva-btn pva-btn--secondary" onClick={goBack}>
+            </CommercialActionButton>
+            <CommercialActionButton variant="ghost" onClick={goBack}>
               Voltar para clientes
-            </button>
+            </CommercialActionButton>
           </div>
-        </div>
+        </CommercialStateBanner>
       ) : null}
 
       {error && hasData ? (
-        <div className="pva-alert pva-alert--warning" role="alert">
+        <CommercialStateBanner>
           <p>Não foi possível atualizar os pedidos em aberto: {error}</p>
-          <button
-            type="button"
-            className="pva-btn pva-btn--secondary"
+          <CommercialActionButton
+            variant="ghost"
             onClick={reload}
             disabled={refreshing}
           >
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {customer && listData.enrichment.error ? (
-        <div className="pva-alert pva-alert--warning" role="status">
+        <CommercialStateBanner>
           <p>
             Cadastro e faturamento com cobertura parcial
             {listData.enrichment.total > 0
@@ -257,27 +257,25 @@ export function CustomerDetailPage({
               : ""}
             : {listData.enrichment.error}
           </p>
-          <button
-            type="button"
-            className="pva-btn pva-btn--secondary"
+          <CommercialActionButton
+            variant="ghost"
             onClick={reload}
             disabled={refreshing || listData.enrichment.loading}
           >
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {notFound ? (
-        <EmptyState
+        <CommercialEmptyState
           title="Cliente não encontrado"
-          description={`Não há pedidos de venda em aberto para o código / loja ${codeStore} no momento.`}
-          action={
-            <button type="button" className="pva-btn pva-btn--secondary" onClick={goBack}>
+          message={`Não há pedidos de venda em aberto para o código / loja ${codeStore} no momento.`}
+        >
+            <CommercialActionButton variant="ghost" onClick={goBack}>
               Voltar para clientes
-            </button>
-          }
-        />
+            </CommercialActionButton>
+        </CommercialEmptyState>
       ) : null}
 
       {customer ? (
@@ -288,8 +286,8 @@ export function CustomerDetailPage({
             openOrdersCount={customer.quantidadePedidosAbertos}
           />
 
-          <div className="pva-customer-overview__grid">
-            <div className="pva-customer-account-rail-slot--mobile">
+          <div className="cm-customer-overview__grid">
+            <div className="cm-customer-account-rail-slot--mobile">
               <CustomerAccountRail
                 customer={customer}
                 basePath={basePath}
@@ -298,7 +296,7 @@ export function CustomerDetailPage({
               />
             </div>
             <main
-              className="pva-customer-overview__main"
+              className="cm-customer-overview__main"
               id={customerDetailPanelId(section)}
               role="tabpanel"
               aria-labelledby={customerDetailTabId(section)}
@@ -320,9 +318,9 @@ export function CustomerDetailPage({
                 <>
                   <CustomerAttentionOrders orders={attentionOrders} />
                   {orders.length === 0 ? (
-                    <div className={PVA_STATE_BOX} role="status">
+                    <CommercialStateBanner>
                       Cliente localizado, porém sem linhas utilizáveis neste recorte.
-                    </div>
+                    </CommercialStateBanner>
                   ) : (
                     <CustomerOrdersTable orders={orders} basePath={basePath} />
                   )}
@@ -347,7 +345,7 @@ export function CustomerDetailPage({
                 />
               ) : null}
             </main>
-            <aside className="pva-customer-overview__side pva-customer-account-rail-slot--desktop">
+            <aside className="cm-customer-overview__side cm-customer-account-rail-slot--desktop">
               <CustomerAccountRail
                 customer={customer}
                 basePath={basePath}

@@ -1,6 +1,14 @@
+import type { DataTableColumn } from "@delpi/plugin-ui/index";
+
+import {
+  CommercialActionButton,
+  CommercialDataRecordCard,
+  CommercialDataTable,
+  CommercialSectionCard,
+  CommercialStatusBadge,
+} from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { compareDeliveryDates, formatDisplayDate } from "../../../utils/dates";
-import { PVA_TABLE } from "../../../ui/tableChrome";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 
 type CustomerOpenOrdersPreviewProps = {
@@ -36,64 +44,89 @@ export function CustomerOpenOrdersPreview({
   onSeeAll,
 }: CustomerOpenOrdersPreviewProps) {
   const rows = orders.slice(0, PREVIEW_LIMIT);
+  const columns: DataTableColumn<CustomerOrderSummary>[] = [
+    { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
+    {
+      key: "issue",
+      header: "Emissão",
+      render: (order) => formatDisplayDate(pickEmission(order)),
+    },
+    {
+      key: "forecast",
+      header: "Previsão",
+      render: (order) =>
+        order.proximaEntrega ? formatDisplayDate(order.proximaEntrega) : "—",
+    },
+    {
+      key: "value",
+      header: "Valor em aberto",
+      align: "right",
+      render: (order) => formatCurrency(order.valorTotalAberto),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (order) => {
+        const status = previewStatus(order);
+        return <CommercialStatusBadge variant={status.tone} label={status.label} />;
+      },
+    },
+  ];
 
   return (
-    <section className="pva-card pva-orders-preview" aria-label="Pedidos em aberto">
-      <div className="pva-orders-preview__header">
-        <h2 className="pva-orders-preview__title">Pedidos em aberto</h2>
-      </div>
+    <CommercialSectionCard title="Pedidos em aberto">
       {rows.length === 0 ? (
-        <p className="pva-orders-preview__empty">Nenhum pedido em aberto no momento.</p>
+        <p className="cm-customer-orders-preview__empty">Nenhum pedido em aberto no momento.</p>
       ) : (
-        <div className={PVA_TABLE.wrap}>
-          <table className={PVA_TABLE.table}>
-            <thead>
-              <tr>
-                <th scope="col">Pedido</th>
-                <th scope="col">Emissão</th>
-                <th scope="col">Previsão</th>
-                <th scope="col" className={PVA_TABLE.colNumeric}>
-                  Valor em aberto
-                </th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((order) => {
-                const status = previewStatus(order);
-                return (
-                  <tr key={order.key}>
-                    <td data-label="Pedido">{order.pedido || "—"}</td>
-                    <td data-label="Emissão">
-                      {formatDisplayDate(pickEmission(order))}
-                    </td>
-                    <td data-label="Previsão">
-                      {order.proximaEntrega
+        <>
+          <div className="cm-customer-orders-preview__desktop">
+            <CommercialDataTable
+              rows={rows}
+              columns={columns}
+              rowKey={(order) => order.key}
+              layout="section"
+            />
+          </div>
+          <div className="cm-customer-orders-preview__mobile">
+            {rows.map((order) => {
+              const status = previewStatus(order);
+              return (
+                <CommercialDataRecordCard
+                  key={order.key}
+                  title={`Pedido ${order.pedido || "não informado"}`}
+                  subtitle={`Emissão ${formatDisplayDate(pickEmission(order))}`}
+                  status={
+                    <CommercialStatusBadge
+                      variant={status.tone}
+                      label={status.label}
+                    />
+                  }
+                  fields={[
+                    {
+                      id: "forecast",
+                      label: "Previsão",
+                      value: order.proximaEntrega
                         ? formatDisplayDate(order.proximaEntrega)
-                        : "—"}
-                    </td>
-                    <td data-label="Valor em aberto" className={PVA_TABLE.colNumeric}>
-                      {formatCurrency(order.valorTotalAberto)}
-                    </td>
-                    <td data-label="Status">
-                      <span className={`pva-order-status pva-order-status--${status.tone}`}>
-                        <span className="pva-order-status__dot" aria-hidden="true" />
-                        {status.label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        : "—",
+                    },
+                    {
+                      id: "value",
+                      label: "Valor em aberto",
+                      value: formatCurrency(order.valorTotalAberto),
+                    },
+                  ]}
+                />
+              );
+            })}
+          </div>
+        </>
       )}
-      <div className="pva-orders-preview__footer">
-        <button type="button" className="pva-orders-preview__link" onClick={onSeeAll}>
+      <div className="cm-customer-orders-preview__footer">
+        <CommercialActionButton variant="ghost" onClick={onSeeAll}>
           Ver todos os pedidos
           <span aria-hidden="true"> →</span>
-        </button>
+        </CommercialActionButton>
       </div>
-    </section>
+    </CommercialSectionCard>
   );
 }

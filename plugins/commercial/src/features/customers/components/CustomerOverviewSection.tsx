@@ -34,12 +34,12 @@ export function CustomerOverviewSection({
   const evolution = useCustomerPurchaseEvolution(customer.codigo, customer.loja, true);
 
   return (
-    <div className="pva-customer-overview">
+    <div className="cm-customer-overview">
       <CustomerOverviewKpis customer={customer} loading={loading} />
       <CustomerAttentionBanner customer={customer} onAnalyze={onGoToOrders} />
 
-      <div className="pva-customer-overview__grid">
-        <div className="pva-customer-overview__main">
+      <div className="cm-customer-overview__grid">
+        <div className="cm-customer-overview__main">
           <CustomerPurchaseEvolutionChart
             points={evolution.points}
             loading={evolution.loading}
@@ -53,7 +53,7 @@ export function CustomerOverviewSection({
             onViewActivities={onGoToActivities}
           />
         </div>
-        <aside className="pva-customer-overview__side">
+        <aside className="cm-customer-overview__side">
           <CustomerNextActionCard customer={customer} onViewOrders={onGoToOrders} />
         </aside>
       </div>

@@ -4,7 +4,7 @@
  * Uso: node --experimental-strip-types --test src/features/customers/utils/customerAggregation.test.mjs
  */
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -473,7 +473,7 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /resizableColumns/);
     assert.match(table, /enableColumnReorder/);
     assert.match(table, /CommercialTableColumnVisibilityMenu/);
-    assert.doesNotMatch(table, /<table|MoreHorizontal|pva-customers-table/);
+    assert.doesNotMatch(table, /<table|MoreHorizontal/);
     assert.doesNotMatch(page, /@delpi\/plugin-ui/);
     assert.doesNotMatch(table, /@delpi\/plugin-ui/);
   });
@@ -513,8 +513,33 @@ describe("CustomersPage estrutural", () => {
       assert.equal(existsSync(join(__dirname, `../components/${file}`)), false);
     }
     const css = readFileSync(join(__dirname, "../../../styles/customers.css"), "utf8");
-    assert.doesNotMatch(css, /pva-customers-table|pva-customers-toolbar|pva-filter-chip/);
+    assert.doesNotMatch(css, new RegExp(["pva", "-"].join(""), "i"));
     assert.doesNotMatch(css, /\.delpi-ui-/);
+  });
+
+  it("remove chrome legado de toda a feature de clientes", () => {
+    const featureRoot = join(__dirname, "..");
+    const sourceFiles = [];
+    const visit = (directory) => {
+      for (const entry of readdirSync(directory)) {
+        const path = join(directory, entry);
+        if (statSync(path).isDirectory()) {
+          visit(path);
+        } else if (/\.(?:ts|tsx|mjs)$/.test(entry)) {
+          sourceFiles.push(path);
+        }
+      }
+    };
+    visit(featureRoot);
+    sourceFiles.push(join(__dirname, "../../../styles/customers.css"));
+
+    const legacyClass = new RegExp(["pva", "-"].join(""), "i");
+    const legacyConstants = new RegExp(["PVA", "_(?:STATE|TABLE)"].join(""));
+    for (const file of sourceFiles) {
+      const source = readFileSync(file, "utf8");
+      assert.doesNotMatch(source, legacyClass, file);
+      assert.doesNotMatch(source, legacyConstants, file);
+    }
   });
 });
 

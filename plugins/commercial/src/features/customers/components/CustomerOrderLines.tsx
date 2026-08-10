@@ -1,3 +1,10 @@
+import type { DataTableColumn } from "@delpi/plugin-ui/index";
+
+import {
+  CommercialActionButton,
+  CommercialDataRecordCard,
+  CommercialDataTable,
+} from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
@@ -28,116 +35,133 @@ function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
 }
 
 export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderLinesProps) {
-  const regionId = `pva-order-lines-${orderKey.replace(/\|/g, "-")}`;
+  const regionId = `cm-order-lines-${orderKey.replace(/\|/g, "-")}`;
+  const rows = Array.from(lines);
+  const rowKey = (line: OpenOrdersTotvsItem, index: number) =>
+    `${orderKey}-${line.linha ?? index}-${line.produto ?? ""}`;
+  const actions = (line: OpenOrdersTotvsItem) => {
+    const canOpenOrder = Boolean(
+      line.filial?.trim() && line.pedido?.trim() && line.linha?.trim(),
+    );
+    const productionOrders = canOpenOrder
+      ? Array.from(
+          new Map(
+            getLineOpForecast(line).opsUtilizadas
+              .filter((op) => op.numero_op.trim())
+              .map((op) => [op.numero_op.trim(), op]),
+          ).values(),
+        )
+      : [];
+    if (!canOpenOrder && productionOrders.length === 0) return null;
+    return (
+      <div className="cm-customer-order-line-actions">
+        {canOpenOrder ? (
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() =>
+              navigatePluginPath(
+                buildCommercialOpenOrderPath({
+                  basePath,
+                  filial: line.filial,
+                  pedido: line.pedido,
+                  linha: line.linha,
+                }),
+              )
+            }
+          >
+            Ver em Pedidos
+          </CommercialActionButton>
+        ) : null}
+        {productionOrders.map((op) => (
+          <CommercialActionButton
+            key={op.numero_op}
+            variant="ghost"
+            onClick={() =>
+              navigateOpenOrderOpDetail(
+                line.filial,
+                line.pedido,
+                line.linha,
+                op.numero_op,
+                {
+                  basePath,
+                  search: buildOpenOrdersContextSearch(),
+                },
+              )
+            }
+          >
+            Ver OP {op.numero_op}
+          </CommercialActionButton>
+        ))}
+      </div>
+    );
+  };
+  const columns: DataTableColumn<OpenOrdersTotvsItem>[] = [
+    { key: "product", header: "Produto", render: (line) => line.produto?.trim() || "—" },
+    {
+      key: "ordered",
+      header: "Pedida",
+      align: "right",
+      render: (line) => toFiniteNumber(line.quantidade).toLocaleString("pt-BR"),
+    },
+    {
+      key: "delivered",
+      header: "Entregue",
+      align: "right",
+      render: (line) => toFiniteNumber(line.entregue).toLocaleString("pt-BR"),
+    },
+    {
+      key: "balance",
+      header: "Saldo",
+      align: "right",
+      render: (line) => toFiniteNumber(line.saldo).toLocaleString("pt-BR"),
+    },
+    {
+      key: "delivery",
+      header: "Entrega",
+      render: (line) => formatDisplayDate(line.data_entrega),
+    },
+    {
+      key: "open-value",
+      header: "Valor aberto",
+      align: "right",
+      render: (line) => formatCurrency(toFiniteNumber(line.valor_aberto)),
+    },
+    { key: "delay", header: "Atraso", render: lineOverdueLabel },
+    { key: "actions", header: "Ação", render: actions },
+  ];
 
   return (
     <div
       id={regionId}
-      className="pva-checkup-lines"
+      className="cm-customer-order-lines"
       role="region"
       aria-label="Linhas do pedido"
     >
-      <table className="pva-checkup-lines__table">
-        <thead>
-          <tr>
-            <th scope="col">Produto</th>
-            <th scope="col" className="pva-col-numeric">
-              Pedida
-            </th>
-            <th scope="col" className="pva-col-numeric">
-              Entregue
-            </th>
-            <th scope="col" className="pva-col-numeric">
-              Saldo
-            </th>
-            <th scope="col">Entrega</th>
-            <th scope="col" className="pva-col-numeric">
-              Valor aberto
-            </th>
-            <th scope="col">Atraso</th>
-            <th scope="col">Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line, index) => {
-            const rowKey = `${orderKey}-${line.linha ?? index}-${line.produto ?? ""}`;
-            const canOpenOrder = Boolean(
-              line.filial?.trim() && line.pedido?.trim() && line.linha?.trim(),
-            );
-            const productionOrders = canOpenOrder
-              ? Array.from(
-                  new Map(
-                    getLineOpForecast(line).opsUtilizadas
-                      .filter((op) => op.numero_op.trim())
-                      .map((op) => [op.numero_op.trim(), op]),
-                  ).values(),
-                )
-              : [];
-            return (
-              <tr key={rowKey}>
-                <td data-label="Produto">{line.produto?.trim() || "—"}</td>
-                <td data-label="Pedida" className="pva-col-numeric">
-                  {toFiniteNumber(line.quantidade).toLocaleString("pt-BR")}
-                </td>
-                <td data-label="Entregue" className="pva-col-numeric">
-                  {toFiniteNumber(line.entregue).toLocaleString("pt-BR")}
-                </td>
-                <td data-label="Saldo" className="pva-col-numeric">
-                  {toFiniteNumber(line.saldo).toLocaleString("pt-BR")}
-                </td>
-                <td data-label="Entrega">{formatDisplayDate(line.data_entrega)}</td>
-                <td data-label="Valor aberto" className="pva-col-numeric">
-                  {formatCurrency(toFiniteNumber(line.valor_aberto))}
-                </td>
-                <td data-label="Atraso">{lineOverdueLabel(line)}</td>
-                <td data-label="Ação">
-                  <div className="pva-customer-order-line-actions">
-                    {canOpenOrder ? (
-                      <button
-                        type="button"
-                        className="pva-btn pva-btn--ghost"
-                        onClick={() =>
-                          navigatePluginPath(
-                            buildCommercialOpenOrderPath({
-                              basePath,
-                              filial: line.filial,
-                              pedido: line.pedido,
-                              linha: line.linha,
-                            }),
-                          )
-                        }
-                      >
-                        Ver em Pedidos
-                      </button>
-                    ) : null}
-                    {productionOrders.map((op) => (
-                      <button
-                        key={op.numero_op}
-                        type="button"
-                        className="pva-btn pva-btn--ghost"
-                        onClick={() =>
-                          navigateOpenOrderOpDetail(
-                            line.filial,
-                            line.pedido,
-                            line.linha,
-                            op.numero_op,
-                            {
-                              basePath,
-                              search: buildOpenOrdersContextSearch(),
-                            },
-                          )
-                        }
-                      >
-                        Ver OP {op.numero_op}
-                      </button>
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="cm-customer-order-lines__desktop">
+        <CommercialDataTable
+          rows={rows}
+          columns={columns}
+          rowKey={rowKey}
+          layout="section"
+        />
+      </div>
+      <div className="cm-customer-order-lines__mobile">
+        {rows.map((line, index) => (
+          <CommercialDataRecordCard
+            key={rowKey(line, index)}
+            title={line.produto?.trim() || "Produto não informado"}
+            subtitle={`Entrega ${formatDisplayDate(line.data_entrega)}`}
+            status={lineOverdueLabel(line)}
+            fields={[
+              { id: "ordered", label: "Pedida", value: toFiniteNumber(line.quantidade).toLocaleString("pt-BR") },
+              { id: "delivered", label: "Entregue", value: toFiniteNumber(line.entregue).toLocaleString("pt-BR") },
+              { id: "balance", label: "Saldo", value: toFiniteNumber(line.saldo).toLocaleString("pt-BR") },
+              { id: "open-value", label: "Valor aberto", value: formatCurrency(toFiniteNumber(line.valor_aberto)) },
+            ]}
+            context={actions(line)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

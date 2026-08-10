@@ -4,6 +4,7 @@ import {
   createDashboardAttachmentFileList,
   createDashboardAttachmentPreviewStrip,
   createDashboardDetailCard,
+  createDashboardEmptyState,
   createDashboardDetailFieldGrid,
   createDashboardSectionCard,
   createDashboardStatusBadge,
@@ -32,6 +33,7 @@ import {
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
+  createMetricKpiCard,
   DataCellValue,
   DataTable,
   createInitialsAvatar,
@@ -65,7 +67,7 @@ import {
   type DataCellValueProps,
   type DashboardDataTableProps,
 } from "@delpi/plugin-ui/index";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 
 export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
 
@@ -117,6 +119,45 @@ export const CommercialPagePath = createDashboardPagePath({
 export const CommercialDataRecordCard = createDashboardDataRecordCard({
   prefix: UI_PREFIX,
 });
+export const CommercialEmptyState = createDashboardEmptyState({
+  classNames: {
+    ...cmEmptyStateClassNames,
+    withTitle: true,
+  },
+  defaultMessage: "",
+});
+const CommercialMetricKpiBase = createMetricKpiCard(UI_PREFIX);
+type CommercialMetricCardProps = {
+  label: string;
+  value: string;
+  hint?: ReactNode;
+  titleHint?: string;
+  icon?: ReactNode;
+  hero?: boolean;
+  tone?: "default" | "danger";
+  loading?: boolean;
+};
+export function CommercialMetricCard({
+  label,
+  value,
+  hint,
+  titleHint,
+  icon,
+  hero = false,
+  tone = "default",
+  loading = false,
+}: CommercialMetricCardProps) {
+  return createElement(CommercialMetricKpiBase, {
+    label,
+    value: loading ? "…" : value,
+    hint,
+    titleHint,
+    icon,
+    tone: tone === "danger" ? "negative" : "default",
+    fitValue: hero,
+    className: hero ? "cm-kpi-card--wide" : undefined,
+  });
+}
 
 export function CommercialDataTable<T>(props: DashboardDataTableProps<T>) {
   return createElement(DataTable<T>, {

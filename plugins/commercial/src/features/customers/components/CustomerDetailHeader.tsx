@@ -8,7 +8,11 @@ import {
 } from "lucide-react";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 
-import { CommercialPagePath } from "../../../app/commercialUi";
+import {
+  CommercialActionButton,
+  CommercialPagePath,
+  CommercialStatusBadge,
+} from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -80,7 +84,7 @@ export function CustomerDetailHeader({
   }, [menuOpen]);
 
   return (
-    <header className="pva-detail-header">
+    <header className="cm-customer-detail-header">
       <CommercialPagePath
         back={{
           label: "Minha carteira",
@@ -93,8 +97,8 @@ export function CustomerDetailHeader({
         current={customer.nome || "Cliente"}
       />
 
-      <div className="pva-detail-header__row">
-        <div className="pva-detail-header__identity">
+      <div className="cm-customer-detail-header__row">
+        <div className="cm-customer-detail-header__identity">
           <CustomerAvatar
             code={customer.codigo}
             store={customer.loja}
@@ -102,21 +106,27 @@ export function CustomerDetailHeader({
             hasAvatar={customer.hasAvatar}
             size="lg"
           />
-          <div className="pva-detail-header__titles">
-            <div className="pva-detail-header__name-row">
-              <h1 className="pva-detail-header__name">
+          <div className="cm-customer-detail-header__titles">
+            <div className="cm-customer-detail-header__name-row">
+              <h1 className="cm-customer-detail-header__name">
                 {customer.nome || "Cliente sem nome"}
               </h1>
               <HelpTooltip
                 content={CM_HELP.customerDetail.header}
                 ariaLabel="Ajuda: Conta do cliente"
               />
-              <span className={`pva-status-pill pva-status-pill--${status}`}>
-                <span className="pva-status-pill__dot" aria-hidden="true" />
-                {statusLabel(status)}
-              </span>
+              <CommercialStatusBadge
+                variant={
+                  status === "ativo"
+                    ? "success"
+                    : status === "atencao"
+                      ? "warning"
+                      : "neutral"
+                }
+                label={statusLabel(status)}
+              />
             </div>
-            <ul className="pva-detail-header__meta">
+            <ul className="cm-customer-detail-header__meta">
               <li>
                 Código: {customer.codigo}
                 <span className="visually-hidden"> ({codeStore})</span>
@@ -144,35 +154,33 @@ export function CustomerDetailHeader({
           </div>
         </div>
 
-        <div className="pva-detail-header__actions">
+        <div className="cm-customer-detail-header__actions">
           {onScheduleFollowUp ? (
-            <button
-              type="button"
-              className="pva-btn pva-btn--primary"
+            <CommercialActionButton
+              variant="primary"
               onClick={onScheduleFollowUp}
-              title={CM_HELP.customerDetail.scheduleFollowUp}
+              aria-label={CM_HELP.customerDetail.scheduleFollowUp}
             >
               <Calendar size={16} aria-hidden="true" />
               Agendar follow-up
-            </button>
+            </CommercialActionButton>
           ) : null}
-          <div className="pva-detail-header__menu" ref={menuRef}>
-            <button
-              type="button"
-              className="pva-btn pva-btn--ghost pva-detail-header__more"
+          <div className="cm-customer-detail-header__menu" ref={menuRef}>
+            <CommercialActionButton
+              variant="ghost"
+              className="cm-customer-detail-header__more"
               aria-label="Mais ações"
               aria-expanded={menuOpen}
               aria-controls={menuId}
               onClick={() => setMenuOpen((open) => !open)}
             >
               <MoreHorizontal size={18} aria-hidden="true" />
-            </button>
+            </CommercialActionButton>
             {menuOpen ? (
-              <div id={menuId} className="pva-detail-header__menu-panel" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="pva-detail-header__menu-item"
+              <div id={menuId} className="cm-customer-detail-header__menu-panel" role="menu">
+                <CommercialActionButton
+                  variant="ghost"
+                  className="cm-customer-detail-header__menu-item"
                   disabled={loading || refreshing}
                   onClick={() => {
                     setMenuOpen(false);
@@ -182,10 +190,10 @@ export function CustomerDetailHeader({
                   <RefreshCw
                     size={14}
                     aria-hidden="true"
-                    className={refreshing ? "pva-spin" : undefined}
+                    className={refreshing ? "cm-spin" : undefined}
                   />
                   Atualizar seção
-                </button>
+                </CommercialActionButton>
               </div>
             ) : null}
           </div>

@@ -62,16 +62,16 @@ export function CustomerAccountRail({
 
   return (
     <>
-      <div className="pva-customer-account-rail__desktop">
+      <div className="cm-customer-account-rail__desktop">
         <CommercialDetailCard
           title="Dados da conta"
           hint={CM_HELP.customerDetail.accountData}
-          className="pva-customer-account-rail"
+          className="cm-customer-account-rail"
         >
           {content()}
         </CommercialDetailCard>
       </div>
-      <div className="pva-customer-account-rail__mobile">
+      <div className="cm-customer-account-rail__mobile">
         <CommercialSectionCard
           title="Dados da conta"
           hint={CM_HELP.customerDetail.accountData}

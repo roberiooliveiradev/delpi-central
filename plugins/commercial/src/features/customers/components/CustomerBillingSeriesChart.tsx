@@ -30,7 +30,7 @@ import type { CustomerSummary } from "../types/customerSummary";
 const CHART_HEIGHT = 320;
 
 /** Accent do Portal — acompanha tema claro/escuro. */
-const SERIES_COLOR = "var(--pva-accent)";
+const SERIES_COLOR = "var(--cm-accent)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];

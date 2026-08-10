@@ -1,7 +1,7 @@
 import { FileText, Receipt, Wallet } from "lucide-react";
 
+import { CommercialMetricCard } from "../../../../app/commercialUi";
 import { CM_HELP } from "../../../../content/helpTooltips";
-import { MetricCard } from "../../../../ui/MetricCard";
 import { formatCurrency } from "../../../../utils/format";
 import { formatDisplayDate } from "../../../../utils/dates";
 import type { CustomerBillingSummary } from "../types/customerBilling";
@@ -16,8 +16,8 @@ export function CustomerBillingSummaryCards({
   loading,
 }: CustomerBillingSummaryCardsProps) {
   return (
-    <section className="pva-metrics" aria-label="Indicadores de faturamento" aria-busy={loading || undefined}>
-      <MetricCard
+    <section className="cm-customer-metrics" aria-label="Indicadores de faturamento" aria-busy={loading || undefined}>
+      <CommercialMetricCard
         hero
         label="Valor faturado no período"
         titleHint={CM_HELP.customerDetail.billingValue}
@@ -25,14 +25,14 @@ export function CustomerBillingSummaryCards({
         icon={<Wallet size={18} aria-hidden="true" />}
         loading={loading && !summary}
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Quantidade de notas"
         titleHint={CM_HELP.customerDetail.billingInvoiceCount}
         value={summary ? summary.invoice_count.toLocaleString("pt-BR") : "—"}
         icon={<Receipt size={18} aria-hidden="true" />}
         loading={loading && !summary}
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Data da última nota"
         titleHint={CM_HELP.customerDetail.billingLastDate}
         value={
@@ -41,7 +41,7 @@ export function CustomerBillingSummaryCards({
         icon={<FileText size={18} aria-hidden="true" />}
         loading={loading && !summary}
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Valor da última nota"
         titleHint={CM_HELP.customerDetail.billingLastValue}
         value={

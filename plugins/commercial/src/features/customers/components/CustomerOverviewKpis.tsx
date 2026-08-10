@@ -1,9 +1,9 @@
 import { BarChart3, CalendarClock, Clock3, Wallet } from "lucide-react";
 
+import { CommercialMetricCard } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
-import { MetricCard } from "../../../ui/MetricCard";
 import type { CustomerSummary } from "../types/customerSummary";
 import { BillingTrendCell } from "./BillingTrendCell";
 
@@ -14,8 +14,8 @@ type CustomerOverviewKpisProps = {
 
 export function CustomerOverviewKpis({ customer, loading = false }: CustomerOverviewKpisProps) {
   return (
-    <section className="pva-metrics pva-metrics--overview" aria-label="Indicadores do cliente">
-      <MetricCard
+    <section className="cm-customer-metrics cm-customer-metrics--overview" aria-label="Indicadores do cliente">
+      <CommercialMetricCard
         label="Faturamento 12 meses"
         titleHint={CM_HELP.customerDetail.billed12m}
         value={customer.billed12m == null ? "—" : formatCurrency(customer.billed12m)}
@@ -30,21 +30,21 @@ export function CustomerOverviewKpis({ customer, loading = false }: CustomerOver
           )
         }
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Valor em aberto"
         titleHint={CM_HELP.customerDetail.openValue}
         value={formatCurrency(customer.valorTotalAberto)}
         icon={<Wallet size={18} aria-hidden="true" />}
         loading={loading}
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Pedidos em aberto"
         titleHint={CM_HELP.customerDetail.openOrders}
         value={customer.quantidadePedidosAbertos.toLocaleString("pt-BR")}
         icon={<CalendarClock size={18} aria-hidden="true" />}
         loading={loading}
       />
-      <MetricCard
+      <CommercialMetricCard
         label="Última venda"
         titleHint={CM_HELP.customerDetail.lastSale}
         value={

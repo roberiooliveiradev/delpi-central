@@ -2,6 +2,7 @@ import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
 
 import {
   CommercialSelectField,
+  CommercialStateBanner,
   CommercialTextField,
 } from "../../../../app/commercialUi";
 import { CM_HELP } from "../../../../content/helpTooltips";
@@ -54,9 +55,9 @@ export function CustomerBillingFilters({
   onSearchChange,
 }: CustomerBillingFiltersProps) {
   return (
-    <section className="pva-billing-filters" aria-label="Filtros de faturamento">
+    <section className="cm-customer-billing-filters" aria-label="Filtros de faturamento">
       <p
-        className="pva-billing-filters__hint"
+        className="cm-customer-billing-filters__hint"
         style={{ display: "flex", alignItems: "center", gap: 6 }}
       >
         Período e situação das notas de saída deste cliente.
@@ -80,7 +81,7 @@ export function CustomerBillingFilters({
         ))}
       </div>
 
-      <div className="cm-form-grid pva-billing-filters__dates">
+      <div className="cm-form-grid cm-customer-billing-filters__dates">
         <CommercialTextField
           label="Data inicial"
           type="date"
@@ -114,12 +115,12 @@ export function CustomerBillingFilters({
       </div>
 
       {validationError ? (
-        <p className="pva-alert pva-alert--warning" role="alert">
+        <CommercialStateBanner>
           {validationError}
-        </p>
+        </CommercialStateBanner>
       ) : null}
 
-      <p className="pva-billing-filters__hint">
+      <p className="cm-customer-billing-filters__hint">
         Notas canceladas no Protheus (exclusão lógica) não aparecem nesta lista.
       </p>
     </section>

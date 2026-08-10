@@ -1,7 +1,8 @@
-import { ActionButton } from "@delpi/plugin-ui/index";
-
+import {
+  CommercialActionButton,
+  CommercialEmptyState,
+} from "../../../app/commercialUi";
 import { navigatePluginView } from "../../../app/pluginNavigation";
-import { EmptyState } from "../../../ui/EmptyState";
 
 type CustomerSectionComingSoonProps = {
   basePath: string;
@@ -18,16 +19,16 @@ export function CustomerSectionComingSoon({
   canViewAnalytics,
 }: CustomerSectionComingSoonProps) {
   return (
-    <EmptyState
+    <CommercialEmptyState
       title="Oportunidades da conta"
-      description={
+      message={
         canViewAnalytics
           ? "Consulte a área de Oportunidades usando o código real deste cliente."
           : "Você não possui permissão para consultar oportunidades."
       }
-      action={
-        canViewAnalytics && customerCode.trim() ? (
-          <ActionButton
+    >
+      {canViewAnalytics && customerCode.trim() ? (
+          <CommercialActionButton
             variant="primary"
             onClick={() =>
               navigatePluginView("analytics_opportunities", {
@@ -37,9 +38,8 @@ export function CustomerSectionComingSoon({
             }
           >
             Ver oportunidades
-          </ActionButton>
-        ) : undefined
-      }
-    />
+          </CommercialActionButton>
+      ) : null}
+    </CommercialEmptyState>
   );
 }

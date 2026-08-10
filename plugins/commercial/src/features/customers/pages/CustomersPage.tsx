@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import {
   CommercialActionButton,
+  CommercialEmptyState,
   CommercialFilterBarShell,
   CommercialLoadingCard,
   CommercialPageHero,
@@ -15,7 +16,6 @@ import {
   CommercialTextField,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
-import { EmptyState } from "../../../ui/EmptyState";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
@@ -202,7 +202,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               <RefreshCw
                 size={16}
                 aria-hidden="true"
-                className={refreshing ? "pva-spin" : undefined}
+                className={refreshing ? "cm-spin" : undefined}
               />
               {refreshing || loading ? "Atualizando…" : "Atualizar"}
             </CommercialActionButton>
@@ -242,7 +242,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
       </CommercialPageHero>
 
       {portfolioEmpty && portfolioMessage ? (
-        <EmptyState title="Carteira vazia" description={portfolioMessage} />
+        <CommercialEmptyState title="Carteira vazia" message={portfolioMessage} />
       ) : null}
 
       {showInitialLoading ? (
@@ -302,22 +302,21 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           ) : null}
 
           {showEmptyDataset ? (
-            <EmptyState
+            <CommercialEmptyState
               title="Nenhum cliente em aberto"
-              description="Não há pedidos de venda em aberto para os clientes da carteira no momento."
+              message="Não há pedidos de venda em aberto para os clientes da carteira no momento."
             />
           ) : null}
 
           {showFilteredEmpty ? (
-            <EmptyState
+            <CommercialEmptyState
               title="Nenhum resultado"
-              description="Nenhum cliente corresponde à busca e aos filtros."
-              action={
+              message="Nenhum cliente corresponde à busca e aos filtros."
+            >
                 <CommercialActionButton variant="ghost" onClick={resetFilters}>
                   Limpar busca e filtros
                 </CommercialActionButton>
-              }
-            />
+            </CommercialEmptyState>
           ) : null}
 
           {!showEmptyDataset && !showFilteredEmpty ? (

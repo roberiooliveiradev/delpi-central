@@ -477,15 +477,15 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(rail, /CommercialSectionCard/);
     assert.match(rail, /collapsible/);
     assert.match(rail, /defaultOpen=\{false\}/);
-    assert.match(page, /pva-customer-account-rail-slot--mobile/);
-    assert.match(page, /pva-customer-account-rail-slot--desktop/);
+    assert.match(page, /cm-customer-account-rail-slot--mobile/);
+    assert.match(page, /cm-customer-account-rail-slot--desktop/);
     assert.match(css, /@media \(max-width: 768px\)/);
   });
 
   it("usa PagePath inclusive sem customer e tabpanel rotulado", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     assert.match(page, /<CommercialPagePath/);
-    assert.doesNotMatch(page, /pva-detail-breadcrumb/);
+    assert.doesNotMatch(page, /detail-breadcrumb/);
     assert.match(page, /role="tabpanel"/);
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
   });

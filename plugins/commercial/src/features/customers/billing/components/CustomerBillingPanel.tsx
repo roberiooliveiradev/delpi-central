@@ -1,6 +1,11 @@
 import { RefreshCw } from "lucide-react";
 
-import { PVA_STATE_BOX } from "../../../../ui/stateChrome";
+import {
+  CommercialActionButton,
+  CommercialEmptyState,
+  CommercialLoadingCard,
+  CommercialStateBanner,
+} from "../../../../app/commercialUi";
 import type { UseCustomerBillingResult } from "../hooks/useCustomerBilling";
 import { CustomerBillingFilters } from "./CustomerBillingFilters";
 import { CustomerBillingSummaryCards } from "./CustomerBillingSummaryCards";
@@ -38,21 +43,20 @@ export function CustomerBillingPanel({ billing }: CustomerBillingPanelProps) {
     !loading && !error && !validationError && data && data.invoices.length === 0;
 
   return (
-    <div className="pva-billing-panel">
-      <header className="pva-checkup__nav-row">
-        <h2 className="pva-checkup-section-title" style={{ margin: 0 }}>
+    <div className="cm-customer-billing-panel">
+      <header className="cm-customer-billing-panel__header">
+        <h2 className="cm-customer-section-title">
           Faturamento e notas fiscais
         </h2>
-        <button
-          type="button"
-          className="pva-btn pva-btn--ghost"
+        <CommercialActionButton
+          variant="ghost"
           onClick={reload}
           disabled={loading || refreshing || Boolean(validationError)}
           aria-busy={refreshing || loading}
         >
-          <RefreshCw size={16} aria-hidden="true" className={refreshing ? "pva-spin" : undefined} />
+          <RefreshCw size={16} aria-hidden="true" className={refreshing ? "cm-spin" : undefined} />
           {refreshing || loading ? "Atualizando…" : "Atualizar"}
-        </button>
+        </CommercialActionButton>
       </header>
 
       <CustomerBillingFilters
@@ -71,42 +75,39 @@ export function CustomerBillingPanel({ billing }: CustomerBillingPanelProps) {
       />
 
       {showInitialLoading ? (
-        <div className={PVA_STATE_BOX} role="status">
-          Carregando faturamento…
-        </div>
+        <CommercialLoadingCard title="Carregando faturamento…" variant="panel" />
       ) : null}
 
       {error && !hasData ? (
-        <div className="pva-alert pva-alert--error" role="alert">
+        <CommercialStateBanner variant="error">
           <p>{error}</p>
-          <button type="button" className="pva-btn pva-btn--ghost" onClick={reload}>
+          <CommercialActionButton variant="ghost" onClick={reload}>
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {error && hasData ? (
-        <div className="pva-alert pva-alert--warning" role="alert">
+        <CommercialStateBanner>
           <p>Não foi possível atualizar o faturamento: {error}</p>
-          <button
-            type="button"
-            className="pva-btn pva-btn--ghost"
+          <CommercialActionButton
+            variant="ghost"
             onClick={reload}
             disabled={refreshing}
           >
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {data && !showInitialLoading ? (
         <>
           <CustomerBillingSummaryCards summary={data.summary} loading={refreshing} />
           {empty ? (
-            <div className={PVA_STATE_BOX} role="status">
-              Não foram encontradas notas fiscais de saída no período selecionado. Ajuste o
-              período ou os filtros para tentar novamente.
-            </div>
+            <CommercialEmptyState
+              title="Nenhuma nota fiscal encontrada"
+              message="Ajuste o período ou os filtros para tentar novamente."
+            />
           ) : (
             <CustomerInvoicesTable
               invoices={data.invoices}

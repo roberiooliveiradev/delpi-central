@@ -1,66 +1,97 @@
+import type { DataTableColumn } from "@delpi/plugin-ui/index";
+
+import {
+  CommercialDataRecordCard,
+  CommercialDataTable,
+} from "../../../../app/commercialUi";
 import { formatCurrency } from "../../../../utils/format";
 
+type CustomerInvoiceItem = {
+  item: string;
+  product_code: string;
+  product_description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_value: number;
+  sales_order: string;
+  sales_order_item: string;
+  customer_order: string;
+};
+
 type CustomerInvoiceItemsProps = {
-  items: readonly {
-    item: string;
-    product_code: string;
-    product_description: string;
-    quantity: number;
-    unit: string;
-    unit_price: number;
-    total_value: number;
-    sales_order: string;
-    sales_order_item: string;
-    customer_order: string;
-  }[];
+  items: readonly CustomerInvoiceItem[];
 };
 
 export function CustomerInvoiceItems({ items }: CustomerInvoiceItemsProps) {
+  const rows = Array.from(items);
+  const columns: DataTableColumn<CustomerInvoiceItem>[] = [
+    { key: "item", header: "Item", render: (line) => line.item || "—" },
+    { key: "product", header: "Produto", render: (line) => line.product_code || "—" },
+    {
+      key: "description",
+      header: "Descrição",
+      render: (line) => line.product_description || "—",
+    },
+    {
+      key: "quantity",
+      header: "Qtd",
+      align: "right",
+      render: (line) => line.quantity.toLocaleString("pt-BR"),
+    },
+    { key: "unit", header: "UM", render: (line) => line.unit || "—" },
+    {
+      key: "unit-price",
+      header: "Unitário",
+      align: "right",
+      render: (line) => formatCurrency(line.unit_price),
+    },
+    {
+      key: "total",
+      header: "Total",
+      align: "right",
+      render: (line) => formatCurrency(line.total_value),
+    },
+    {
+      key: "order",
+      header: "Pedido",
+      render: (line) =>
+        `${line.sales_order || "—"}${line.customer_order ? ` · ${line.customer_order}` : ""}`,
+    },
+  ];
+  const rowKey = (line: CustomerInvoiceItem) =>
+    `${line.item}-${line.product_code}-${line.sales_order_item}`;
+
   return (
-    <div className="pva-checkup-lines" role="region" aria-label="Itens da nota fiscal">
-      <table className="pva-checkup-lines__table">
-        <thead>
-          <tr>
-            <th scope="col">Item</th>
-            <th scope="col">Produto</th>
-            <th scope="col">Descrição</th>
-            <th scope="col" className="pva-col-numeric">
-              Qtd
-            </th>
-            <th scope="col">UM</th>
-            <th scope="col" className="pva-col-numeric">
-              Unitário
-            </th>
-            <th scope="col" className="pva-col-numeric">
-              Total
-            </th>
-            <th scope="col">Pedido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((line) => (
-            <tr key={`${line.item}-${line.product_code}-${line.sales_order_item}`}>
-              <td data-label="Item">{line.item || "—"}</td>
-              <td data-label="Produto">{line.product_code || "—"}</td>
-              <td data-label="Descrição">{line.product_description || "—"}</td>
-              <td data-label="Qtd" className="pva-col-numeric">
-                {line.quantity.toLocaleString("pt-BR")}
-              </td>
-              <td data-label="UM">{line.unit || "—"}</td>
-              <td data-label="Unitário" className="pva-col-numeric">
-                {formatCurrency(line.unit_price)}
-              </td>
-              <td data-label="Total" className="pva-col-numeric">
-                {formatCurrency(line.total_value)}
-              </td>
-              <td data-label="Pedido">
-                {line.sales_order || "—"}
-                {line.customer_order ? ` · ${line.customer_order}` : ""}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="cm-customer-invoice-items" role="region" aria-label="Itens da nota fiscal">
+      <div className="cm-customer-invoice-items__desktop">
+        <CommercialDataTable
+          rows={rows}
+          columns={columns}
+          rowKey={rowKey}
+          layout="section"
+        />
+      </div>
+      <div className="cm-customer-invoice-items__mobile">
+        {rows.map((line) => (
+          <CommercialDataRecordCard
+            key={rowKey(line)}
+            title={line.product_code || "Produto não informado"}
+            subtitle={line.product_description || "Sem descrição"}
+            fields={[
+              { id: "item", label: "Item", value: line.item || "—" },
+              { id: "quantity", label: "Quantidade", value: `${line.quantity.toLocaleString("pt-BR")} ${line.unit || ""}`.trim() },
+              { id: "unit-price", label: "Unitário", value: formatCurrency(line.unit_price) },
+              { id: "total", label: "Total", value: formatCurrency(line.total_value) },
+              {
+                id: "order",
+                label: "Pedido",
+                value: `${line.sales_order || "—"}${line.customer_order ? ` · ${line.customer_order}` : ""}`,
+              },
+            ]}
+          />
+        ))}
+      </div>
     </div>
   );
 }

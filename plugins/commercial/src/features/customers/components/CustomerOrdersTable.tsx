@@ -2,12 +2,14 @@ import type { DataTableColumn } from "@delpi/plugin-ui/index";
 import { type ReactNode, useId, useState } from "react";
 
 import {
+  CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialSectionCard,
+  CommercialStatusBadge,
 } from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
-import { StatusBadge } from "../../../ui/StatusBadge";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
 import { CustomerOrderLines } from "./CustomerOrderLines";
@@ -25,17 +27,16 @@ function formatMaxOverdue(days: number): string {
 
 function renderStatus(order: CustomerOrderSummary): ReactNode {
   return (
-    <StatusBadge
-      tone={
+    <CommercialStatusBadge
+      variant={
         order.situacao === "atrasado"
           ? "danger"
           : order.situacao === "parcial"
             ? "warning"
             : "neutral"
       }
-    >
-      {orderSituationLabel(order.situacao)}
-    </StatusBadge>
+      label={orderSituationLabel(order.situacao)}
+    />
   );
 }
 
@@ -85,15 +86,14 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
         const expanded = expandedKey === order.key;
         const panelId = `${baseId}-desktop-lines-${order.key.replace(/\|/g, "-")}`;
         return (
-          <button
-            type="button"
-            className="pva-btn pva-btn--ghost pva-checkup-expand"
+          <CommercialActionButton
+            variant="ghost"
             aria-expanded={expanded}
             aria-controls={panelId}
             onClick={() => toggle(order.key)}
           >
             {expanded ? "Recolher linhas" : "Expandir linhas"}
-          </button>
+          </CommercialActionButton>
         );
       },
     },
@@ -101,9 +101,8 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
   const expandedOrder = orders.find((order) => order.key === expandedKey) ?? null;
 
   return (
-    <section className="pva-table-card" aria-label="Todos os pedidos em aberto">
-      <h2 className="pva-checkup-section-title">Todos os pedidos em aberto</h2>
-      <div className="pva-customer-orders__desktop">
+    <CommercialSectionCard title="Todos os pedidos em aberto">
+      <div className="cm-customer-orders__desktop">
         <CommercialDataTable
           rows={orders}
           columns={columns}
@@ -125,12 +124,12 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
         ) : null}
       </div>
 
-      <div className="pva-customer-orders__mobile" aria-label="Pedidos em aberto">
+      <div className="cm-customer-orders__mobile" aria-label="Pedidos em aberto">
         {orders.map((order) => {
           const expanded = expandedKey === order.key;
           const panelId = `${baseId}-mobile-lines-${order.key.replace(/\|/g, "-")}`;
           return (
-            <div key={order.key} className="pva-customer-orders__mobile-item">
+            <div key={order.key} className="cm-customer-orders__mobile-item">
               <CommercialDataRecordCard
                 title={`Pedido ${order.pedido || "não informado"}`}
                 subtitle={`Filial ${order.filial || "não informada"}`}
@@ -165,15 +164,14 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
                   },
                 ]}
                 context={
-                  <button
-                    type="button"
-                    className="pva-btn pva-btn--ghost pva-checkup-expand"
+                  <CommercialActionButton
+                    variant="ghost"
                     aria-expanded={expanded}
                     aria-controls={panelId}
                     onClick={() => toggle(order.key)}
                   >
                     {expanded ? "Recolher linhas" : "Expandir linhas"}
-                  </button>
+                  </CommercialActionButton>
                 }
               />
               {expanded ? (
@@ -193,6 +191,6 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
           );
         })}
       </div>
-    </section>
+    </CommercialSectionCard>
   );
 }

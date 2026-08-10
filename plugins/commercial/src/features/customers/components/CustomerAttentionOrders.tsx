@@ -1,6 +1,9 @@
+import {
+  CommercialSectionCard,
+  CommercialStatusBadge,
+} from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
-import { StatusBadge } from "../../../ui/StatusBadge";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
 
@@ -16,26 +19,26 @@ function formatMaxOverdue(days: number): string {
 
 export function CustomerAttentionOrders({ orders }: CustomerAttentionOrdersProps) {
   return (
-    <section className="pva-checkup-attention" aria-label="Pedidos que exigem atenção">
-      <h2 className="pva-checkup-section-title">Pedidos que exigem atenção</h2>
+    <CommercialSectionCard title="Pedidos que exigem atenção">
       {orders.length === 0 ? (
-        <p className="pva-checkup-attention__empty" role="status">
+        <p className="cm-customer-attention-orders__empty" role="status">
           Nenhum pedido exige atenção especial no momento — carteira em dia neste recorte.
         </p>
       ) : (
-        <ul className="pva-checkup-attention__list">
+        <ul className="cm-customer-attention-orders__list">
           {orders.map((order) => (
-            <li key={order.key} className="pva-checkup-attention__item">
-              <div className="pva-checkup-attention__main">
-                <span className="pva-checkup-attention__pedido">
+            <li key={order.key} className="cm-customer-attention-orders__item">
+              <div className="cm-customer-attention-orders__main">
+                <span className="cm-customer-attention-orders__order">
                   Pedido {order.pedido}
                   {order.filial ? ` · Filial ${order.filial}` : ""}
                 </span>
-                <StatusBadge tone="neutral">
-                  {orderSituationLabel(order.situacao)}
-                </StatusBadge>
+                <CommercialStatusBadge
+                  variant="neutral"
+                  label={orderSituationLabel(order.situacao)}
+                />
               </div>
-              <div className="pva-checkup-attention__metrics">
+              <div className="cm-customer-attention-orders__metrics">
                 {order.temAtraso ? (
                   <span>Maior atraso: {formatMaxOverdue(order.maiorAtrasoDias)}</span>
                 ) : null}
@@ -48,6 +51,6 @@ export function CustomerAttentionOrders({ orders }: CustomerAttentionOrdersProps
           ))}
         </ul>
       )}
-    </section>
+    </CommercialSectionCard>
   );
 }

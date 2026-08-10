@@ -1,5 +1,9 @@
 import { CalendarDays } from "lucide-react";
 
+import {
+  CommercialActionButton,
+  CommercialDetailCard,
+} from "../../../app/commercialUi";
 import type { CustomerSummary } from "../types/customerSummary";
 import {
   resolveCustomerNextAction,
@@ -43,23 +47,21 @@ export function CustomerNextActionCard({
   const urgent = status === "atencao" || customer.temAtraso;
 
   return (
-    <section className="pva-card pva-next-action-card" aria-label="Próxima ação">
-      <div className="pva-next-action-card__icon" aria-hidden="true">
+    <CommercialDetailCard title="Próxima ação">
+      <div className="cm-customer-next-action__icon" aria-hidden="true">
         <CalendarDays size={28} />
       </div>
-      <h2 className="pva-next-action-card__eyebrow">Próxima ação</h2>
-      <h3 className="pva-next-action-card__title">{title}</h3>
-      <p className="pva-next-action-card__text">{buildDescription(customer)}</p>
+      <h3 className="cm-customer-next-action__title">{title}</h3>
+      <p className="cm-customer-next-action__text">{buildDescription(customer)}</p>
       {urgent ? (
-        <p className="pva-next-action-card__deadline">Prazo: Hoje</p>
+        <p className="cm-customer-next-action__deadline">Prazo: Hoje</p>
       ) : null}
-      <button
-        type="button"
-        className="pva-btn pva-btn--primary pva-next-action-card__cta"
+      <CommercialActionButton
+        variant="primary"
         onClick={onViewOrders}
       >
         Ver pedidos em aberto
-      </button>
-    </section>
+      </CommercialActionButton>
+    </CommercialDetailCard>
   );
 }
