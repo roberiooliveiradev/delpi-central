@@ -25,7 +25,10 @@ _LIST_LINES_CTE = """
             RTRIM(LTRIM(C6.C6_PRODUTO)) AS product_code,
             RTRIM(LTRIM(B1.B1_DESC)) AS product_description,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
-            RTRIM(LTRIM(SA1.A1_NOME)) AS customer_name,
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(SA1.A1_NREDUZ)), ''),
+                RTRIM(LTRIM(SA1.A1_NOME))
+            ) AS customer_name,
             RTRIM(LTRIM(SA1.A1_NREDUZ)) AS customer_short_name,
             C6.C6_QTDVEN AS qty_sold,
             C6.C6_QTDENT AS qty_delivered,
