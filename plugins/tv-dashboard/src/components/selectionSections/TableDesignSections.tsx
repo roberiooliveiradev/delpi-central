@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Database,
   Grid3x3,
@@ -52,6 +52,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { TableAddElementMenu } from "../TableAddElementMenu";
+import { TableColumnsSelectModal } from "../TableColumnsSelectModal";
 import { TableDataMenu, type TableDataMenuActionId } from "../TableDataMenu";
 import { TableStylesMenu } from "../TableStylesMenu";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
@@ -162,13 +163,11 @@ function useTableDesignControls() {
     setSelectionPanelTab("element");
   };
 
-  const openDataFocus = (actionId: TableDataMenuActionId) => {
+  const openDataFocus = (actionId: Exclude<TableDataMenuActionId, "columns">) => {
     openDataPanel();
     setSelectionPanelTab("data");
-    const anchorId =
-      actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
     requestAnimationFrame(() => {
-      document.getElementById(anchorId)?.scrollIntoView({ block: "nearest" });
+      document.getElementById("td-view-data-source")?.scrollIntoView({ block: "nearest" });
     });
   };
 
@@ -644,32 +643,44 @@ function TableDataBandOrInline({
   ctrl: NonNullable<ReturnType<typeof useTableDesignControls>>;
 }) {
   const inSectionPopover = useRibbonSectionPopoverSurface();
+  const [columnsModalOpen, setColumnsModalOpen] = useState(false);
 
   const dataMenu = (close?: () => void) => (
     <TableDataMenu
       onSelect={(actionId) => {
-        ctrl.openDataFocus(actionId);
+        if (actionId === "columns") {
+          setColumnsModalOpen(true);
+        } else {
+          ctrl.openDataFocus(actionId);
+        }
         close?.();
       }}
     />
   );
 
-  if (inSectionPopover) {
-    return dataMenu();
-  }
-
   return (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-      <DeckRibbonTilePopover
-        icon={Database}
-        label="Selecionar dados"
-        hint={H.openDataPanel}
-        panelLabel="Dados da tabela"
-        panelVariant="menu"
-        panelClassName="td-chart-float__popover--actions"
-      >
-        {(close) => dataMenu(close)}
-      </DeckRibbonTilePopover>
-    </div>
+    <>
+      {inSectionPopover ? (
+        dataMenu()
+      ) : (
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTilePopover
+            icon={Database}
+            label="Selecionar dados"
+            hint={H.openDataPanel}
+            panelLabel="Dados da tabela"
+            panelVariant="menu"
+            panelClassName="td-chart-float__popover--actions"
+          >
+            {(close) => dataMenu(close)}
+          </DeckRibbonTilePopover>
+        </div>
+      )}
+      <TableColumnsSelectModal
+        open={columnsModalOpen}
+        onClose={() => setColumnsModalOpen(false)}
+        block={ctrl.block}
+      />
+    </>
   );
 }

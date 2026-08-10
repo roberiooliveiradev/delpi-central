@@ -1100,6 +1100,18 @@
 .dashboard-tv-dashboard .td-modal--wide{
   width: min(980px, 100%);
 }
+/* Colunas do visual — card centralizado (paridade Selecionar dados do gráfico). */
+.dashboard-tv-dashboard .td-modal--table-columns{
+  width: min(440px, 100%);
+}
+.dashboard-tv-dashboard .td-modal--table-columns .td-deck-inspector__value-fields--columns{
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
+.dashboard-tv-dashboard .td-modal--table-columns .td-deck-inspector__column-list{
+  max-height: min(56vh, 480px);
+}
 .dashboard-tv-dashboard .td-modal--layers{
   width: min(720px, 100%);
 }
@@ -8207,19 +8219,33 @@ body.td-composer--marqueeing *{
   overscroll-behavior: contain;
   padding-right: 2px;
 }
+.dashboard-tv-dashboard .td-deck-inspector__value-fields--columns{
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
 .dashboard-tv-dashboard .td-deck-inspector__column-row{
   display: flex;
   align-items: flex-start;
   gap: 0.35rem;
   justify-content: flex-start;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-row-body{
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.dashboard-tv-dashboard .td-deck-inspector__column-row-body > .delpi-ui-native-control,
+.dashboard-tv-dashboard .td-deck-inspector__column-row-body > input.delpi-ui-native-control{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-row-summary{
   display: flex;
