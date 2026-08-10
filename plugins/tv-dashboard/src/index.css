@@ -8154,8 +8154,13 @@ body.td-composer--marqueeing *{
   color: var(--td-text);
   cursor: pointer;
 }
-.dashboard-tv-dashboard .td-deck-inspector__checkbox input,
-.dashboard-tv-dashboard .td-field .td-deck-inspector__checkbox input{
+/*
+ * Checkbox legado (label + input nativo). Não aplicar em NativeCheckboxControl:
+ * a especificidade `.dashboard-tv-dashboard … input` desfazia opacity:0 do kit e
+ * deixava input + caixa custom na sidebar (bug ao marcar/desmarcar colunas).
+ */
+.dashboard-tv-dashboard .td-deck-inspector__checkbox:not(.delpi-ui-native-checkbox) input,
+.dashboard-tv-dashboard .td-field .td-deck-inspector__checkbox:not(.delpi-ui-native-checkbox) input{
   width: 1rem;
   height: 1rem;
   max-width: 1rem;

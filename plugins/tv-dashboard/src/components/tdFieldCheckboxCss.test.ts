@@ -27,8 +27,13 @@ describe("td-field checkbox CSS contract", () => {
     );
   });
 
-  it("fixa tamanho do input do checkbox no inspector", () => {
-    expect(css).toMatch(/\.td-deck-inspector--side[\s\S]*?max-width:\s*1rem/);
+  it("não força input nativo visível no NativeCheckboxControl da sidebar", () => {
+    expect(css).toContain(
+      ".td-deck-inspector__checkbox:not(.delpi-ui-native-checkbox) input",
+    );
+    expect(css).not.toMatch(
+      /\.td-deck-inspector__checkbox input,\s*\n\.dashboard-tv-dashboard \.td-field \.td-deck-inspector__checkbox input/,
+    );
     expect(css).toContain("max-width: 1rem");
   });
 });
