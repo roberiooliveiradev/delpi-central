@@ -266,13 +266,16 @@ export function FormatRibbonTypographySections({
         effectivePartialSelection.end,
       ),
   );
-  const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
+  const applyTextFormatStyle = (
+    patch: Parameters<typeof updateSelectedTextFormatStyle>[0],
+    applyOptions?: Parameters<typeof updateSelectedTextFormatStyle>[1],
+  ) => {
     if (multiVisualBox) {
-      updateSelectedTextFormatStyle(patch);
+      updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
     if (fullContentSelectionActive) {
-      updateSelectedTextFormatStyle(patch);
+      updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
     /*
@@ -317,7 +320,7 @@ export function FormatRibbonTypographySections({
       }
       if (applyEditingTextRunStylePatch(runPatch)) return;
     }
-    updateSelectedTextFormatStyle(patch);
+    updateSelectedTextFormatStyle(patch, applyOptions);
   };
 
   function applyToggleOrContainer(
@@ -675,22 +678,31 @@ export function FormatRibbonTypographySections({
               clamp={clampFontSize}
               portalScopeClassName="dashboard-tv-dashboard"
               onChange={(next) =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(next),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  {
+                    fontSize: clampFontSize(next),
+                    fontSizeAuto: false,
+                  },
+                  { fontSizeMode: "absolute" },
+                )
               }
               onStepDown={() =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  { fontSizeAuto: false },
+                  {
+                    fontSizeMode: "delta",
+                    fontSizeDelta: -COMUNICADO_FONT_SIZE_STEP,
+                  },
+                )
               }
               onStepUp={() =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  { fontSizeAuto: false },
+                  {
+                    fontSizeMode: "delta",
+                    fontSizeDelta: COMUNICADO_FONT_SIZE_STEP,
+                  },
+                )
               }
               stepDownDisabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
               stepDownAriaLabel="Diminuir fonte"

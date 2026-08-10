@@ -113,6 +113,12 @@ import {
 import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 import type { TextFormatStyleSnapshot } from "../../utils/selectedTextFormatTarget";
 import { buildSelectedTextFormatBlockPatch } from "../../utils/applySelectedTextFormatStyle";
+import {
+  resolveAppliedNumericProperty,
+  sparsePropertyPatch,
+  type SelectionPropertyApplyOptions,
+} from "../../utils/selectionPropertyApply";
+import { clampFontSize } from "@delpi/tv-dashboard-presentation";
 
 type Options = {
   canvasRef?: RefObject<HTMLElement | null>;
@@ -860,17 +866,40 @@ export function useComunicadoEditorBlocks({
   );
 
   const updateSelectedStyle = useCallback(
-    (patch: NonNullable<ComunicadoBlock["style"]>) => {
+    (
+      patch: NonNullable<ComunicadoBlock["style"]>,
+      applyOptions?: SelectionPropertyApplyOptions,
+    ) => {
       const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
       if (targets.length === 0) return;
       const idSet = new Set(targets.map((block) => block.id));
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-        idSet.has(block.id)
-          ? applyComunicadoBlockStylePatch(block, patch, {
-              selectedInputPart: block.type === "input" ? selectedInputPart : null,
-            })
-          : block,
-      );
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (!idSet.has(block.id)) return block;
+        const currentSize =
+          typeof block.style?.fontSize === "number" && block.style.fontSize > 0
+            ? block.style.fontSize
+            : block.type === "heading"
+              ? 56
+              : 28;
+        const nextFontSize = resolveAppliedNumericProperty({
+          current: currentSize,
+          value: typeof patch.fontSize === "number" ? patch.fontSize : undefined,
+          mode: applyOptions?.fontSizeMode,
+          delta: applyOptions?.fontSizeDelta,
+          clamp: clampFontSize,
+        });
+        const effective = sparsePropertyPatch({
+          ...(patch as Record<string, unknown>),
+          ...(nextFontSize != null
+            ? { fontSize: nextFontSize }
+            : applyOptions?.fontSizeMode === "delta"
+              ? { fontSize: undefined }
+              : {}),
+        }) as NonNullable<ComunicadoBlock["style"]>;
+        return applyComunicadoBlockStylePatch(block, effective, {
+          selectedInputPart: block.type === "input" ? selectedInputPart : null,
+        });
+      });
       updateBlocks(nextBlocks);
     },
     [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
@@ -878,7 +907,7 @@ export function useComunicadoEditorBlocks({
 
   /** Tipografia da ribbon Formatar — bloco text/heading/shape ou tipografia de complexo/parte. */
   const updateSelectedTextFormatStyle = useCallback(
-    (patch: TextFormatStyleSnapshot) => {
+    (patch: TextFormatStyleSnapshot, applyOptions?: SelectionPropertyApplyOptions) => {
       if (!selected) return;
 
       const complexPatch = buildSelectedTextFormatBlockPatch({
@@ -889,13 +918,14 @@ export function useComunicadoEditorBlocks({
         selectedTablePart,
         selectedTableParts,
         selectedInputPart,
+        applyOptions,
       });
       if (complexPatch) {
         updateSelected(complexPatch);
         return;
       }
 
-      updateSelectedStyle(patch as NonNullable<ComunicadoBlock["style"]>);
+      updateSelectedStyle(patch as NonNullable<ComunicadoBlock["style"]>, applyOptions);
     },
     [
       selected,

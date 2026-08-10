@@ -539,6 +539,7 @@ export function resolveChartPartFontSize(
 
 /**
  * Replica tipografia em todas as partes textuais do gráfico (Excel: Format Chart → Font).
+ * Merge **por parte** (preserva cor/peso/tamanho locais quando o patch é esparso).
  * `dataLabel` individual herda de `dataLabels`; eixos/axisTitle cobrem X e Y.
  */
 export function applyChartTextStyleToSiblingParts(
@@ -549,16 +550,24 @@ export function applyChartTextStyleToSiblingParts(
   for (const kind of Object.keys(CHART_PART_FONT_SIZE_DEFAULTS) as ChartTextPartKind[]) {
     if (kind === "dataLabel") continue;
     if (kind === "axis") {
-      next = upsertChartPartState(next, { kind: "axis", axis: "x" }, { style });
-      next = upsertChartPartState(next, { kind: "axis", axis: "y" }, { style });
+      for (const axis of ["x", "y"] as const) {
+        const ref = { kind: "axis" as const, axis };
+        const prev = getChartPartState(next, ref)?.style;
+        next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
+      }
       continue;
     }
     if (kind === "axisTitle") {
-      next = upsertChartPartState(next, { kind: "axisTitle", axis: "x" }, { style });
-      next = upsertChartPartState(next, { kind: "axisTitle", axis: "y" }, { style });
+      for (const axis of ["x", "y"] as const) {
+        const ref = { kind: "axisTitle" as const, axis };
+        const prev = getChartPartState(next, ref)?.style;
+        next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
+      }
       continue;
     }
-    next = upsertChartPartState(next, { kind }, { style });
+    const ref = { kind } as ChartPartRef;
+    const prev = getChartPartState(next, ref)?.style;
+    next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
   }
   return next;
 }
@@ -637,10 +646,24 @@ export function upsertChartPartState(
     [key]: {
       ...prev,
       ...restPatch,
-      style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      style: patch.style ? mergeChartPartStyle(prev.style, patch.style) : prev.style,
       frame: nextFrame,
     },
   };
+}
+
+/** Merge esparso: `undefined` no patch não apaga propriedades existentes. */
+export function mergeChartPartStyle(
+  prev: ChartPartStyle | null | undefined,
+  patch: ChartPartStyle,
+): ChartPartStyle {
+  const merged: ChartPartStyle = { ...(prev ?? {}), ...patch };
+  for (const key of Object.keys(merged) as Array<keyof ChartPartStyle>) {
+    if (merged[key] === undefined) {
+      delete merged[key];
+    }
+  }
+  return merged;
 }
 
 /** Projeta options flat → partes (visibilidade + conteúdo + cor da série). */

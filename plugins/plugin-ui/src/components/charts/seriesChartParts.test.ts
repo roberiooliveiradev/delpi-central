@@ -82,6 +82,20 @@ describe("seriesChartParts", () => {
     expect(next.dataLabels?.style?.fontSize).toBe(20);
   });
 
+  it("applyChartTextStyleToSiblingParts com patch esparso preserva estilo local", () => {
+    const base = applyChartTextStyleToSiblingParts(
+      {},
+      { fontSize: 22, color: "#111", fontWeight: "bold" },
+    );
+    const next = applyChartTextStyleToSiblingParts(base, { fontFamily: "Georgia" });
+    expect(next.title?.style).toMatchObject({
+      fontFamily: "Georgia",
+      fontSize: 22,
+      color: "#111",
+      fontWeight: "bold",
+    });
+  });
+
   it("resolveSeriesPaintColor lê chartParts da série N", () => {
     const parts = upsertChartPartState({}, { kind: "series", seriesIndex: 1 }, {
       style: { stroke: "#aabbcc" },

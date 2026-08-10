@@ -303,10 +303,24 @@ export function upsertInputPartState(
     [key]: {
       ...prev,
       ...restPatch,
-      style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      style: patch.style ? mergeInputPartStyle(prev.style, patch.style) : prev.style,
       frame: nextFrame,
     },
   };
+}
+
+/** Merge esparso: `undefined` no patch não apaga propriedades existentes. */
+export function mergeInputPartStyle(
+  prev: InputPartStyle | null | undefined,
+  patch: Partial<InputPartStyle>,
+): InputPartStyle {
+  const merged: InputPartStyle = { ...(prev ?? {}), ...patch };
+  for (const key of Object.keys(merged) as Array<keyof InputPartStyle>) {
+    if (merged[key] === undefined) {
+      delete merged[key];
+    }
+  }
+  return merged;
 }
 
 /** Replica tipografia em label/badge/control (tipografia global do filtro). */
@@ -316,7 +330,9 @@ export function applyInputTextStyleToSiblingParts(
 ): InputPartsMap {
   let next = parts ?? {};
   for (const kind of INPUT_TEXT_PART_KINDS) {
-    next = upsertInputPartState(next, { kind }, { style });
+    const ref = { kind } as const;
+    const prev = getInputPartState(next, ref)?.style;
+    next = upsertInputPartState(next, ref, { style: mergeInputPartStyle(prev, style) });
   }
   return next;
 }

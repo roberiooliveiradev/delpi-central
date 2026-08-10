@@ -336,23 +336,30 @@ export type ComunicadoEditorContextValue = {
     fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
   ) => void;
   updateBlockLink: (blockId: string, href: string | undefined) => void;
-  updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
+  updateSelectedStyle: (
+    patch: NonNullable<ComunicadoBlock["style"]>,
+    applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
+  ) => void;
   /** Tipografia Formatar — bloco text/heading ou parte textual KPI/chart. */
-  updateSelectedTextFormatStyle: (patch: {
-    fontFamily?: string;
-    fontSize?: number;
-    fontWeight?: string;
-    fontStyle?: string;
-    color?: string;
-    textDecoration?: string;
-    textHighlight?: string;
-    textAlign?: string;
-    verticalAlign?: string;
-    textShadow?: string;
-    textStrokeColor?: string;
-    textStrokeWidth?: number;
-    textReflection?: boolean;
-  }) => void;
+  updateSelectedTextFormatStyle: (
+    patch: {
+      fontFamily?: string;
+      fontSize?: number;
+      fontWeight?: string;
+      fontStyle?: string;
+      color?: string;
+      textDecoration?: string;
+      textHighlight?: string;
+      textAlign?: string;
+      verticalAlign?: string;
+      textShadow?: string;
+      textStrokeColor?: string;
+      textStrokeWidth?: number;
+      textReflection?: boolean;
+      fontSizeAuto?: boolean;
+    },
+    applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
+  ) => void;
   /** @deprecated Use `applyDynamicContentSpec` via picker `{ }`. */
   insertDataFieldAtCursor: () => void;
   /** Aplica spec do fluxo de conteúdo dinâmico no alvo ativo (texto/forma/Grade). */

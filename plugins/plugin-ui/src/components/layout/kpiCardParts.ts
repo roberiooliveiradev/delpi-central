@@ -816,7 +816,9 @@ export function applyKpiPartStyleToSiblingParts(
   }
   let next = parts ?? {};
   for (const kind of KPI_TEXT_PART_KINDS) {
-    next = upsertKpiPartState(next, { kind }, { style });
+    const ref = { kind } as const;
+    const prev = getKpiPartState(next, ref)?.style;
+    next = upsertKpiPartState(next, ref, { style: mergeKpiPartStyle(prev, style) });
   }
   return next;
 }
