@@ -53,6 +53,9 @@ export type Playlist = {
   name: string;
   description?: string | null;
   viewportProfile: string;
+  /** Dimensões custom em px (quando viewportProfile === "custom"). */
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   transitionStyle: string;
   defaultDurationSec: number;
   globalRefreshSec: number;
@@ -180,6 +183,8 @@ export type PresentationPayload = {
     name: string;
     description?: string | null;
     viewportProfile: string;
+    viewportWidth?: number | null;
+    viewportHeight?: number | null;
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;
@@ -455,6 +460,8 @@ export async function updatePlaylist(
     name: string;
     description: string;
     viewportProfile: string;
+    viewportWidth: number | null;
+    viewportHeight: number | null;
     transitionStyle: string;
     defaultDurationSec: number;
     globalRefreshSec: number;

@@ -74,7 +74,12 @@ import {
   slidePayloadForClipboard,
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
-import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
+import { ExportPdfDialog } from "../components/ExportPdfDialog";
+import {
+  exportActivePlaylistSlidesToPdf,
+  resolvePlaylistDesignSize,
+} from "../utils/exportPlaylistPdf";
+import { exportSlideElementToPng, exportSlideElementToPdf, resolveSlideExportTarget } from "../utils/exportSlidePng";
 import { exportSlidePptx } from "../utils/exportSlidePptx";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import { registerPreviewHandoff } from "../utils/previewHandoff";
@@ -167,6 +172,8 @@ export function PlaylistEditorPage({
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
+  const [exportPdfOpen, setExportPdfOpen] = useState(false);
+  const [exportPdfProgress, setExportPdfProgress] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBusy, setRenameBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
@@ -734,12 +741,29 @@ export function PlaylistEditorPage({
     if (field === "dataDefaults" && value && typeof value === "object") {
       setPlaylist({ ...playlist, dataDefaults: value as Record<string, unknown> });
     }
+    if (field === "viewport" && value && typeof value === "object") {
+      const patch = value as {
+        viewportProfile?: string;
+        viewportWidth?: number | null;
+        viewportHeight?: number | null;
+      };
+      setPlaylist({
+        ...playlist,
+        viewportProfile: patch.viewportProfile ?? playlist.viewportProfile,
+        viewportWidth: patch.viewportWidth ?? null,
+        viewportHeight: patch.viewportHeight ?? null,
+      });
+    }
     try {
-      const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      const body =
+        field === "viewport" && value && typeof value === "object"
+          ? (value as Parameters<typeof updatePlaylist>[1])
+          : ({ [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      const updated = await updatePlaylist(playlist.id, body);
       setPlaylist({ ...updated, slides: previousPlaylist.slides });
       await deckHistory.confirmChange();
     } catch (caught) {
-      if (field === "dataDefaults") {
+      if (field === "dataDefaults" || field === "viewport") {
         setPlaylist(previousPlaylist);
       }
       deckHistory.cancelChange();
@@ -765,21 +789,72 @@ export function PlaylistEditorPage({
     }
   }
 
-  async function handleExportPdf() {
-    if (!selectedSlide) return;
-    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
-    if (!target) {
-      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+  function handleExportPdf() {
+    if (!selectedSlide && slides.every((slide) => slide.isActive === false)) {
+      tvDashboardNotice("Não há telas para exportar.");
       return;
     }
+    setExportPdfProgress(null);
+    setExportPdfOpen(true);
+  }
+
+  async function handleGenerateExportPdf(options: {
+    scope: "playlist" | "current";
+    pixelRatio: 1 | 2;
+  }) {
+    if (!playlist) return;
+    const designSize = resolvePlaylistDesignSize(playlist);
+    const safePlaylist = playlist.name.replace(/[^\w\-]+/g, "_").slice(0, 40) || "programacao";
     setExportBusy(true);
+    setExportPdfProgress(options.scope === "playlist" ? "Preparando…" : "Capturando slide…");
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      await exportSlideElementToPdf(target, { fileName: `${safeTitle}.pdf` });
+      if (options.scope === "current") {
+        if (!selectedSlide) {
+          tvDashboardNotice("Selecione um slide para exportar.");
+          return;
+        }
+        const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+        if (!target) {
+          tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+          return;
+        }
+        const safeTitle =
+          selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
+        await exportSlideElementToPdf(target, {
+          fileName: `${safeTitle}.pdf`,
+          pixelRatio: options.pixelRatio,
+          designSize,
+        });
+      } else {
+        const result = await exportActivePlaylistSlidesToPdf({
+          playlistId: playlist.id,
+          slides,
+          designSize,
+          previewBySlideId,
+          masterConfig: playlist.masterConfig,
+          publicToken: playlist.publicToken,
+          pixelRatio: options.pixelRatio,
+          fileName: `${safePlaylist}.pdf`,
+          onProgress: ({ current, total, slideTitle }) => {
+            setExportPdfProgress(
+              `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
+            );
+          },
+        });
+        if (result.skipped > 0) {
+          tvDashboardNotice(
+            `PDF gerado com ${result.pageCount} página(s); ${result.skipped} tela(s) ignorada(s).`,
+          );
+        }
+      }
+      setExportPdfOpen(false);
+      setExportPdfProgress(null);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PDF.");
     } finally {
       setExportBusy(false);
+      setExportPdfProgress(null);
     }
   }
 
@@ -1757,6 +1832,7 @@ export function PlaylistEditorPage({
 
   const admin = uiContent?.admin ?? {};
   const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
+  const activeSlideCount = slides.filter((slide) => slide.isActive !== false).length;
 
   const slideDeckProps = {
     slides,
@@ -1828,6 +1904,8 @@ export function PlaylistEditorPage({
     inactiveLabel: admin.slideInactive ?? "Pausada",
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
+    viewportWidth: playlist.viewportWidth,
+    viewportHeight: playlist.viewportHeight,
     masterConfig: playlist.masterConfig,
     defaultDurationSec: playlist.defaultDurationSec,
     defaultTransitionStyle: playlist.transitionStyle,
@@ -1874,6 +1952,8 @@ export function PlaylistEditorPage({
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
           viewportProfile={playlist.viewportProfile}
+          viewportWidth={playlist.viewportWidth}
+          viewportHeight={playlist.viewportHeight}
           masterConfig={selectedSlideMaster}
           playlistDefaults={playlist.dataDefaults}
           value={editorComunicadoValue}
@@ -1913,6 +1993,8 @@ export function PlaylistEditorPage({
                     playlistId={playlistId}
                     previewSlide={previewBySlideId[selectedSlide.id]}
                     viewportProfile={playlist.viewportProfile}
+                    viewportWidth={playlist.viewportWidth}
+                    viewportHeight={playlist.viewportHeight}
                     masterConfig={selectedSlideMaster}
                     publicToken={playlist.publicToken}
                   />
@@ -1942,6 +2024,17 @@ export function PlaylistEditorPage({
           if (!renameBusy) setRenameOpen(false);
         }}
         onConfirm={(name) => void handleRenamePlaylist(name)}
+      />
+      <ExportPdfDialog
+        open={exportPdfOpen}
+        onClose={() => {
+          if (!exportBusy) setExportPdfOpen(false);
+        }}
+        onGenerate={(opts) => handleGenerateExportPdf(opts)}
+        activeSlideCount={activeSlideCount}
+        hasCurrentSlide={Boolean(selectedSlide)}
+        progressLabel={exportPdfProgress}
+        busy={exportBusy}
       />
       <KeyboardShortcutsCatalogModal />
       </TvCopilotDockProvider>

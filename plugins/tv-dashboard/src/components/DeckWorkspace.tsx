@@ -17,6 +17,8 @@ type Props = {
   inactiveLabel: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   publicToken?: string | null;
   onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
@@ -63,6 +65,8 @@ export function DeckWorkspace({
   inactiveLabel,
   canPasteSlide,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   publicToken,
   onSelect,
@@ -116,6 +120,8 @@ export function DeckWorkspace({
         inactiveLabel={inactiveLabel}
         canPasteSlide={canPasteSlide}
         viewportProfile={viewportProfile}
+        viewportWidth={viewportWidth}
+        viewportHeight={viewportHeight}
         masterConfig={masterConfig}
         publicToken={publicToken}
         onSelect={onSelect}

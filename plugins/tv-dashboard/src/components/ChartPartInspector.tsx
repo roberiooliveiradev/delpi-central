@@ -72,11 +72,16 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     beginEditChartPart,
     updateSelected,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
   } = useComunicadoEditor();
 
   if (!selectedChartPart) return null;
 
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),

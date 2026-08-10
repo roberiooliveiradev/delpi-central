@@ -55,6 +55,8 @@ type Props = {
   inactiveLabel?: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   /** Duração padrão da playlist (para badge efetivo). */
   defaultDurationSec?: number;
@@ -105,6 +107,8 @@ export function SlideFilmstrip({
   inactiveLabel = "Pausada",
   canPasteSlide,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   defaultDurationSec = 30,
   defaultTransitionStyle = "fade",
@@ -422,6 +426,8 @@ export function SlideFilmstrip({
               playlistId={playlistId}
               previewSlide={previewBySlideId[slide.id]}
               viewportProfile={viewportProfile}
+              viewportWidth={viewportWidth}
+              viewportHeight={viewportHeight}
               masterConfig={effectiveMaster}
               publicToken={publicToken}
             />

@@ -45,6 +45,8 @@ export function InputPartInspector({ pane = false, block }: Props) {
     clearInputPartSelection,
     updateSelected,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
   } = useComunicadoEditor();
 
   if (!selectedInputPart) return null;
@@ -62,7 +64,10 @@ export function InputPartInspector({ pane = false, block }: Props) {
       : blockContrastBg;
   const frameable = inputPartAllowsFrame(selectedInputPart);
   const explicitFrame = resolveInputPartFrame(partState);
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const partFramePct = clampInputPartFrame(
     explicitFrame ?? defaultInputPartFrame(selectedInputPart.kind),
   );

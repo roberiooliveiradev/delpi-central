@@ -72,7 +72,7 @@ export function SlideCurrentRibbon({
           <DeckRibbonTile
             icon={Download}
             label={exportBusy ? "…" : "PDF"}
-            hint="Exportar a tela atual como PDF (captura PNG em página A4)."
+            hint="Abrir diálogo para exportar PDF (programação ou slide atual)."
             disabled={exportBusy}
             keyTip={K.exportPdf}
             onClick={onExportPdf}

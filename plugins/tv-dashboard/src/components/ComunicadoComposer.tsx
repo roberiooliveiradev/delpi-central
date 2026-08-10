@@ -195,6 +195,8 @@ export function ComunicadoComposerCanvas() {
     stageGridSizePercent,
     updateBlock,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
     stageZoom,
     stagePanMode,
     stageDrawTool,
@@ -208,8 +210,12 @@ export function ComunicadoComposerCanvas() {
   useAuthenticatedComunicadoCustomFonts(config.customFonts);
   const canvasStyle = useCanvasBackgroundStyle();
   const designSize = useMemo(
-    () => resolveViewportPixelSize(viewportProfile),
-    [viewportProfile],
+    () =>
+      resolveViewportPixelSize(viewportProfile, {
+        width: viewportWidth,
+        height: viewportHeight,
+      }),
+    [viewportProfile, viewportWidth, viewportHeight],
   );
   const selectionChromeStyle = useMemo(
     () => ({

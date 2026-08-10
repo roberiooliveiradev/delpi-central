@@ -10,6 +10,13 @@ describe("resolveViewportPixelSize", () => {
     expect(resolveViewportPixelSize("1080p_portrait")).toEqual({ width: 1080, height: 1920 });
   });
 
+  it("custom com dims", () => {
+    expect(resolveViewportPixelSize("custom", { width: 100, height: 70 })).toEqual({
+      width: 100,
+      height: 70,
+    });
+  });
+
   it("cai em 1080p para perfil ausente ou inválido", () => {
     expect(resolveViewportPixelSize(undefined)).toEqual({ width: 1920, height: 1080 });
     expect(resolveViewportPixelSize("nope")).toEqual({ width: 1920, height: 1080 });

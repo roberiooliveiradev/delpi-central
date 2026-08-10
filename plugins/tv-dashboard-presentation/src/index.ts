@@ -57,9 +57,33 @@ export {
 } from "./presentationFitPolicy";
 export { usePresentationViewportPin } from "./usePresentationViewportPin";
 export {
+  isCustomViewportProfile,
+  isNamedViewportProfile,
+  listViewportProfileSelectOptions,
   resolveViewportPixelSize,
+  VIEWPORT_CUSTOM_PROFILE,
+  VIEWPORT_PROFILE_PRESETS,
+  type ResolveViewportPixelSizeOptions,
   type ViewportPixelSize,
+  type ViewportProfileOption,
 } from "./viewportPixelSize";
+export {
+  clampDesignPx,
+  cssPxToMm,
+  formatViewportDimensionFromPx,
+  isViewportLengthUnit,
+  parseViewportDimensionToPx,
+  pxFromUnit,
+  readStoredViewportLengthUnit,
+  unitFromPx,
+  VIEWPORT_DESIGN_PX_MAX,
+  VIEWPORT_DESIGN_PX_MIN,
+  VIEWPORT_LENGTH_UNIT_LABELS,
+  VIEWPORT_LENGTH_UNIT_STORAGE_KEY,
+  VIEWPORT_LENGTH_UNITS,
+  writeStoredViewportLengthUnit,
+  type ViewportLengthUnit,
+} from "./viewportLengthUnits";
 export {
   clampFramePositionPercent,
   clampFrameSizePercent,

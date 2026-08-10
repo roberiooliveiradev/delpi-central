@@ -43,6 +43,7 @@ import { PlaylistDataFiltersFields } from "./PlaylistDataFiltersFields";
 import { TdNativeTextField } from "./tdFormFields";
 import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
+import { ViewportResolutionFields } from "./ViewportResolutionFields";
 
 type Props = {
   activeTab: Extract<DeckRibbonTabId, "slide" | "playlist">;
@@ -66,13 +67,6 @@ type Props = {
     },
   ) => void;
 };
-
-const VIEWPORT_OPTIONS = [
-  { value: "1080p", label: "1920×1080 (Full HD)" },
-  { value: "1080p_portrait", label: "1080×1920 (Retrato)" },
-  { value: "4k", label: "3840×2160 (4K)" },
-  { value: "720p", label: "1280×720 (HD)" },
-];
 
 const TRANSITION_OPTIONS = [
   { value: "fade", label: "Fade" },
@@ -457,16 +451,15 @@ export function DeckSettingsPanel({
               label="Resolução"
               hint={F.viewport}
               panelLabel="Resolução alvo"
-              panelClassName="td-deck-ribbon-tile-popover--narrow"
+              panelClassName="td-deck-ribbon-tile-popover--wide td-deck-ribbon-tile-popover--viewport"
             >
-              <ToolbarSelectField
-                label="Resolução alvo"
-                title={F.viewport}
-                value={playlist.viewportProfile}
-                allowEmptyOption={false}
-                searchable={false}
-                options={VIEWPORT_OPTIONS}
-                onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+                compact
+                value={{
+                  viewportProfile: playlist.viewportProfile,
+                  viewportWidth: playlist.viewportWidth,
+                  viewportHeight: playlist.viewportHeight,
+                }}
+                onChange={(next) => onSavePlaylistSettings("viewport", next)}
               />
             </DeckRibbonTilePopover>
 

@@ -70,6 +70,8 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     beginEditKpiPart,
     updateSelected,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
   } = useComunicadoEditor();
 
   if (!selectedKpiPart) return null;
@@ -88,7 +90,10 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     );
   }
 
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const options = mergeComunicadoKpiOptions({
     ...block.kpiOptions,
     ...partsToKpiOptions(block.kpiParts),

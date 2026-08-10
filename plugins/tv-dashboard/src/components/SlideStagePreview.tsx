@@ -10,6 +10,8 @@ type Props = {
   playlistId: string;
   previewSlide?: PresentationPayload["slides"][number];
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   publicToken?: string | null;
 };
@@ -19,6 +21,8 @@ export function SlideStagePreview({
   playlistId,
   previewSlide,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   publicToken,
 }: Props) {
@@ -54,6 +58,8 @@ export function SlideStagePreview({
     <div className="td-deck-stage__preview">
       <DesignViewportStage
         viewportProfile={viewportProfile}
+        viewportWidth={viewportWidth}
+        viewportHeight={viewportHeight}
         surface="thumbnail"
         fit="auto"
       >

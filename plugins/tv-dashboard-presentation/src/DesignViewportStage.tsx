@@ -16,6 +16,9 @@ export type DesignViewportFitMode = PresentationFitMode;
 
 type Props = {
   viewportProfile?: string | null;
+  /** Dimensões custom em px (profile === "custom"). */
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -134,6 +137,8 @@ function stageScaleStyle(
  */
 export function DesignViewportStage({
   viewportProfile,
+  viewportWidth,
+  viewportHeight,
   children,
   className,
   contentClassName,
@@ -145,7 +150,10 @@ export function DesignViewportStage({
   const [scale, setScale] = useState<number | null>(null);
   const [resolvedFit, setResolvedFit] = useState<PresentationFitResolved>("contain");
   const scaleMethod = resolvePresentationScaleMethod(surface);
-  const { width, height } = resolveViewportPixelSize(viewportProfile);
+  const { width, height } = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const { bleedX, bleedY, outerW, outerH } = computeDesignViewportBleedSize(width, height);
 
   useLayoutEffect(() => {

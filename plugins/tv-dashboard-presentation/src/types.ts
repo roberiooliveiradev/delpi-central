@@ -20,6 +20,9 @@ export type PresentationSection = {
 
 export type PresentationPlaylist = {
   viewportProfile?: string;
+  /** Dimensões custom em px (quando viewportProfile === "custom"). */
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   transitionStyle?: string;
   globalRefreshSec?: number;
   defaultDurationSec?: number;

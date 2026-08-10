@@ -165,6 +165,8 @@ export function PresentationView({
       ) : null}
       <DesignViewportStage
         viewportProfile={viewport}
+        viewportWidth={payload.playlist.viewportWidth}
+        viewportHeight={payload.playlist.viewportHeight}
         className="tdp-stage__design"
         surface={presentationSurfaceFromViewMode(mode)}
         fit="auto"

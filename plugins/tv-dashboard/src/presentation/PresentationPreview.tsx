@@ -190,6 +190,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       </div>
       <DesignViewportStage
         viewportProfile={viewport}
+        viewportWidth={payload.playlist.viewportWidth}
+        viewportHeight={payload.playlist.viewportHeight}
         className="tdp-stage__design"
         surface="preview"
         fit="auto"

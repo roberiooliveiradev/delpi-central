@@ -104,6 +104,8 @@ export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
   /** Perfil de viewport da playlist — define o tamanho de design do palco. */
   viewportProfile: string;
+  viewportWidth: number | null;
+  viewportHeight: number | null;
   /** Slide cujo config já foi aplicado no provider (pode atrasar 1 frame vs selectedSlideId). */
   appliedSlideId?: string;
   blocks: ComunicadoBlock[];

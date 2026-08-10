@@ -273,7 +273,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     slideBranch: "Filtra os dados operacionais desta tela para uma filial. Vazio = consolidado.",
     slidePeriod: "Janela de dias usada nas consultas de KPIs e indicadores desta tela.",
     viewport:
-      "Resolução de referência para o layout. Escolha o perfil mais próximo do monitor da TV.",
+      "Resolução de referência do canvas (presets ou Personalizado). Deve aproximar o monitor da TV.",
+    viewportUnit:
+      "Unidade dos campos L×A (px, cm, mm, in, pt, pc). Conversão CSS a 96 dpi; o canvas grava sempre em pixels.",
+    viewportCustomHint:
+      "Valores físicos usam referência CSS 96 dpi (1 in = 96 px). Limites: 64–7680 px por eixo.",
     transition: "Efeito visual ao trocar de tela na exibição (fade, deslizar ou corte direto).",
     slideTransition:
       "Substitui a transição padrão só nesta tela. «Herdar» usa a seção (se houver) ou a programação.",

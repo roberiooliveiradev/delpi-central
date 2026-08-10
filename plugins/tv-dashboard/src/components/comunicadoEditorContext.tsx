@@ -71,8 +71,10 @@ type ProviderProps = {
   playlistId: string;
   slideId?: string;
   globalRefreshSec?: number;
-  /** Dimensão canônica do slide (720p / 1080p / 4k / portrait). */
+  /** Dimensão canônica do slide (720p / 1080p / 4k / portrait / custom). */
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   /** Filtros globais da programação (live) — disparam refresh do preview. */
   playlistDefaults?: Record<string, unknown> | null;
@@ -164,6 +166,8 @@ export function ComunicadoEditorProvider({
   slideId,
   globalRefreshSec = 300,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   playlistDefaults = null,
   value,
@@ -350,8 +354,13 @@ export function ComunicadoEditorProvider({
   }
 
   const stage = useComunicadoEditorStage();
-  const designSizeRef = useRef(resolveViewportPixelSize(viewportProfile));
-  designSizeRef.current = resolveViewportPixelSize(viewportProfile);
+  const designSizeRef = useRef(
+    resolveViewportPixelSize(viewportProfile, { width: viewportWidth, height: viewportHeight }),
+  );
+  designSizeRef.current = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
 
   const applyConfig = useCallback(
     (next: ComunicadoConfig, options?: { persist?: boolean }) => {
@@ -656,6 +665,8 @@ export function ComunicadoEditorProvider({
   const ctxValue: ComunicadoEditorContextValue = {
     config,
     viewportProfile: viewportProfile || "1080p",
+    viewportWidth: viewportWidth ?? null,
+    viewportHeight: viewportHeight ?? null,
     appliedSlideId,
     blocks,
     selectedIds: selection.selectedIds,

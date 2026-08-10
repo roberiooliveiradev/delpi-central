@@ -49,7 +49,7 @@ export function ComplexSelectionFloatToolbar({
   stylePopoverClassName = "td-chart-float__popover td-chart-float__popover--style",
   dataPopoverClassName = "td-chart-float__popover td-chart-float__popover--actions",
 }: Props) {
-  const { viewportProfile } = useComunicadoEditor();
+  const { viewportProfile, viewportWidth, viewportHeight } = useComunicadoEditor();
   const [panel, setPanel] = useState<ComplexFloatPanel>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const elementsBtnRef = useRef<HTMLButtonElement>(null);
@@ -58,10 +58,13 @@ export function ComplexSelectionFloatToolbar({
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const floatMetrics = useMemo(() => {
-    const designSize = resolveViewportPixelSize(viewportProfile);
+    const designSize = resolveViewportPixelSize(viewportProfile, {
+      width: viewportWidth,
+      height: viewportHeight,
+    });
     const shortSide = complexFrameShortSidePx(frame, designSize);
     return resolveComplexFloatToolbarMetrics(shortSide);
-  }, [frame.h, frame.w, viewportProfile]);
+  }, [frame.h, frame.w, viewportProfile, viewportWidth, viewportHeight]);
 
   const floatStyle = useMemo(
     (): CSSProperties =>

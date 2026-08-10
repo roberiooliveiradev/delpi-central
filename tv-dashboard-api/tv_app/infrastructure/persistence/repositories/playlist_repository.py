@@ -40,12 +40,16 @@ def _utcnow() -> datetime:
 
 def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
     owner = row.get("owner_user_id") or row.get("created_by")
+    width = row.get("viewport_width")
+    height = row.get("viewport_height")
     return {
         "id": str(row["id"]),
         "publicToken": row["public_token"],
         "name": row["name"],
         "description": row["description"],
         "viewportProfile": row["viewport_profile"],
+        "viewportWidth": int(width) if width is not None else None,
+        "viewportHeight": int(height) if height is not None else None,
         "transitionStyle": row["transition_style"],
         "defaultDurationSec": row["default_duration_sec"],
         "globalRefreshSec": row["global_refresh_sec"],
@@ -525,6 +529,9 @@ class PlaylistRepository:
         name: str | None = None,
         description: str | None = None,
         viewport_profile: str | None = None,
+        viewport_width: int | None = None,
+        viewport_height: int | None = None,
+        clear_viewport_dims: bool = False,
         transition_style: str | None = None,
         default_duration_sec: int | None = None,
         global_refresh_sec: int | None = None,
@@ -545,6 +552,14 @@ class PlaylistRepository:
             if value is not None:
                 fields.append(f"{column} = %s")
                 values.append(value)
+        if clear_viewport_dims:
+            fields.append("viewport_width = NULL")
+            fields.append("viewport_height = NULL")
+        elif viewport_width is not None and viewport_height is not None:
+            fields.append("viewport_width = %s")
+            values.append(viewport_width)
+            fields.append("viewport_height = %s")
+            values.append(viewport_height)
         if data_defaults is not None:
             fields.append("data_defaults = %s::jsonb")
             values.append(json.dumps(data_defaults))
@@ -577,9 +592,9 @@ class PlaylistRepository:
                     tuple(values),
                 )
                 row = cur.fetchone()
+                if not row:
+                    raise PlaylistNotFoundError
             conn.commit()
-        if not row:
-            raise PlaylistNotFoundError
         return _row_to_playlist(row)
 
     def set_active(
@@ -666,11 +681,12 @@ class PlaylistRepository:
                 cur.execute(
                     """
                     INSERT INTO tv_dashboard.playlists (
-                      public_token, name, description, viewport_profile, transition_style,
+                      public_token, name, description, viewport_profile, viewport_width, viewport_height,
+                      transition_style,
                       default_duration_sec, global_refresh_sec, data_defaults, master_config,
                       is_active, created_by, owner_user_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s, %s)
                     RETURNING *
                     """,
                     (
@@ -678,6 +694,8 @@ class PlaylistRepository:
                         copy_name,
                         source.get("description"),
                         source["viewportProfile"],
+                        source.get("viewportWidth"),
+                        source.get("viewportHeight"),
                         source["transitionStyle"],
                         source["defaultDurationSec"],
                         source["globalRefreshSec"],

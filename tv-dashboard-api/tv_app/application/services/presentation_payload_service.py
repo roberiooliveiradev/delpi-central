@@ -233,6 +233,8 @@ class PresentationPayloadService:
                 "name": playlist["name"],
                 "description": playlist.get("description"),
                 "viewportProfile": playlist.get("viewportProfile") or "1080p",
+                "viewportWidth": playlist.get("viewportWidth"),
+                "viewportHeight": playlist.get("viewportHeight"),
                 "transitionStyle": playlist_transition,
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
