@@ -48,11 +48,26 @@ Consolidar apontamentos de produção do Protheus (`SH6010`), calculando eficiê
 
 ## Fórmulas
 
+### Canônicas na API (appointments / OEE — ago/2026+)
+
+Ritmo unitário estável = `HY_TEMPAD` (h/unidade no snapshot SHY).  
+`HY_TEMPOM = HY_TEMPAD × HY_QUANT` encolhe com apontamento parcial — **não** usar `HY_TEMPOM × (qtd / C2_QUANT)`.
+
 ```text
-TEMPO_PREVISTO_HORAS = SETUP_OP + (HY_TEMPOM * (H6_QTDPROD / C2_QUANT))
-EFICIENCIA_PERCENTUAL = (TEMPO_PREVISTO_HORAS / TEMPO_REAL_HORAS) × 100
+META_POR_HORA           = 1 / HY_TEMPAD
+TEMPO_PREVISTO_HORAS    = SETUP_OP + (HY_TEMPAD × QTD_APONTADA)
+EFICIENCIA_PERCENTUAL   = (TEMPO_PREVISTO_HORAS / TEMPO_REAL_HORAS) × 100
 TEMPO_GANHO_PERDIDO_HORAS = TEMPO_PREVISTO_HORAS - TEMPO_REAL_HORAS
-RESULTADO_MOD = TEMPO_GANHO_PERDIDO_HORAS × VALOR_MOD_HORA
+RESULTADO_MOD           = TEMPO_GANHO_PERDIDO_HORAS × VALOR_MOD_HORA
+```
+
+Fallback de ritmo: `HY_TEMPOM / HY_QUANT`; por fim `G2_TEMPAD`.  
+Módulos: `production_meta_por_hora.py`, `production_tempo_previsto.py`, `production_fabril_ef_items_sql.py`.
+
+### Legado na view TOTVS (não usar para KPI)
+
+```text
+TEMPO_PREVISTO_HORAS = SETUP_OP + (HY_TEMPOM * (H6_QTDPROD / C2_QUANT))  -- oscila com HY_QUANT
 ```
 
 **Agregação no dashboard (implementado no MFE):**

@@ -545,3 +545,89 @@ describe("bubble projection", () => {
     });
   });
 });
+
+describe("maxCategories / Outros", () => {
+  it("barra de CT não agrega em Outros (sem teto na policy)", () => {
+    const rows = Array.from({ length: 25 }, (_, index) => ({
+      work_center: `CT-${String(index + 1).padStart(2, "0")}`,
+      oee: 70 + index,
+    }));
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "work_center", label: "CT" },
+            { key: "oee", label: "OEE" },
+          ],
+          rows,
+        },
+      },
+      {
+        chartType: "bar",
+        chartProjection: {
+          categoryField: "work_center",
+          series: [{ field: "oee", aggregation: "sum" }],
+        },
+      },
+    );
+    const labels = next?.chart?.points?.map((point) => point.label) ?? [];
+    expect(labels).toHaveLength(25);
+    expect(labels).not.toContain("Outros");
+  });
+
+  it("pizza ainda compacta categorias excedentes em Outros", () => {
+    const rows = Array.from({ length: 12 }, (_, index) => ({
+      work_center: `CT-${index + 1}`,
+      oee: 10,
+    }));
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "work_center", label: "CT" },
+            { key: "oee", label: "OEE" },
+          ],
+          rows,
+        },
+      },
+      {
+        chartType: "pie",
+        chartProjection: {
+          categoryField: "work_center",
+          series: [{ field: "oee", aggregation: "sum" }],
+        },
+      },
+    );
+    const labels = next?.chart?.points?.map((point) => point.label) ?? [];
+    expect(labels).toContain("Outros");
+    expect(labels.length).toBeLessThanOrEqual(8);
+  });
+
+  it("chartProjection.maxCategories=0 desliga o teto também na pizza", () => {
+    const rows = Array.from({ length: 12 }, (_, index) => ({
+      work_center: `CT-${index + 1}`,
+      oee: 10,
+    }));
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "work_center", label: "CT" },
+            { key: "oee", label: "OEE" },
+          ],
+          rows,
+        },
+      },
+      {
+        chartType: "pie",
+        chartProjection: {
+          categoryField: "work_center",
+          series: [{ field: "oee", aggregation: "sum" }],
+          maxCategories: 0,
+        },
+      },
+    );
+    expect(next?.chart?.points).toHaveLength(12);
+    expect(next?.chart?.points?.some((point) => point.label === "Outros")).toBe(false);
+  });
+});

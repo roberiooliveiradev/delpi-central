@@ -113,6 +113,13 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
     assert "SHY.HY_QUANT / SHY.HY_TEMPOM" in EF_FABRIL_ITEMS_SELECT
     assert "1.0 / SG2.G2_TEMPAD" in EF_FABRIL_ITEMS_SELECT
     assert "QTD_TOTAL_OP AS FLOAT) / SHY.HY_TEMPOM" not in EF_FABRIL_ITEMS_SELECT
+    # Previsto/eficiência: HY_TEMPAD × qtd (não TEMPOM × qtd/C2 da view).
+    assert "SHY.HY_TEMPAD" in EF_FABRIL_ITEMS_SELECT
+    assert "HY_SETUP" in EF_FABRIL_ITEMS_SELECT or "SHY.HY_SETUP" in EF_FABRIL_ITEMS_SELECT
+    assert "TRY_CAST(EF.QTD_APONTADA AS FLOAT)" in EF_FABRIL_ITEMS_SELECT
+    assert "TRY_CAST(EF.TEMPO_PREVISTO_HORAS AS FLOAT) AS TEMPO_PREVISTO_HORAS" not in EF_FABRIL_ITEMS_SELECT
+    assert "TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT) AS EFICIENCIA_PERCENTUAL" not in EF_FABRIL_ITEMS_SELECT
+    assert "C2_QUANT" not in EF_FABRIL_ITEMS_SELECT or "QTD_APONTADA" in EF_FABRIL_ITEMS_SELECT
 
     sql, _params = build_ef_fabril_items_list_sql(
         where_clause="1=1",
@@ -128,6 +135,9 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
     assert "1.0 / SHY.HY_TEMPAD" in sql
     assert "HY_TEMPAD" in sql
     assert "HY_QUANT" in sql
+    assert "HY_SETUP" in sql
+    assert "G2_SETUP" in sql
+    assert "QTD_APONTADA" in sql
     assert "PA_RANKED" in sql
     assert "SHY_RANKED" in sql
     assert "SG2_RANKED" in sql
@@ -136,7 +146,8 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
     assert "SG2010" in sql
     assert f"+ '{FINISHED_PRODUCTION_ORDER_SUFFIX}'" in sql
     assert "OUTER APPLY" not in sql
-
+    assert "AS TEMPO_PREVISTO_HORAS" in sql
+    assert "AS EFICIENCIA_PERCENTUAL" in sql
 
 def test_eficiencia_fabril_map_item_includes_pa_and_operation_description() -> None:
     from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_repository import (

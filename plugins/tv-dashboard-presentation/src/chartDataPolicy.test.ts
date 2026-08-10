@@ -29,9 +29,17 @@ describe("chartDataPolicy", () => {
 
   it("bar/horizontal_bar multi-série com wells SERIES", () => {
     expect(resolveChartDataPolicy("bar").maxSeries).toBe(6);
+    expect(resolveChartDataPolicy("bar").maxCategories).toBeUndefined();
     expect(resolveChartDataPolicy("bar").wells.some((w) => w.role === "series")).toBe(true);
     expect(resolveChartDataPolicy("horizontal_bar").maxSeries).toBe(6);
+    expect(resolveChartDataPolicy("horizontal_bar").maxCategories).toBeUndefined();
     expect(resolveChartDataPolicy("horizontal_bar").rowMode).toBe("groupByCategory");
+    expect(resolveChartDataPolicy("stacked_bar").maxCategories).toBeUndefined();
+  });
+
+  it("pizza mantém soft-cap com bucket Outros", () => {
+    expect(resolveChartDataPolicy("pie").maxCategories).toBe(8);
+    expect(resolveChartDataPolicy("doughnut").maxCategories).toBe(8);
   });
 
   it("scatter/bubble são rowwise; histogram bins", () => {

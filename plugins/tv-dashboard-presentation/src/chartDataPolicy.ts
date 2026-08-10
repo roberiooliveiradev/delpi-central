@@ -113,7 +113,7 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     rowMode: "groupByCategory",
     defaultAggregation: "sum",
     maxSeries: 6,
-    maxCategories: 20,
+    /* Sem teto: CTs / dimensões operacionais precisam aparecer todos (não «Outros»). */
     wells: [WELL_CATEGORY, WELL_SERIES],
   },
   horizontal_bar: {
@@ -122,7 +122,6 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     rowMode: "groupByCategory",
     defaultAggregation: "sum",
     maxSeries: 6,
-    maxCategories: 20,
     wells: [WELL_CATEGORY, WELL_SERIES],
   },
   stacked_bar: {
@@ -131,7 +130,6 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     rowMode: "groupByCategory",
     defaultAggregation: "sum",
     maxSeries: 6,
-    maxCategories: 15,
     wells: [WELL_CATEGORY, WELL_SERIES],
   },
   pie: {
