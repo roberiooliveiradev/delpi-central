@@ -15,8 +15,10 @@ type CustomersFiltersProps = {
 
 const FILTER_OPTIONS: { value: CustomerAttentionFilter; label: string }[] = [
   { value: "all", label: "Todos os clientes" },
-  { value: "overdue", label: "Com atraso" },
-  { value: "partial", label: "Parcialmente atendidos" },
+  { value: "attention", label: "Precisam de atenção" },
+  { value: "inactive", label: "Inativos" },
+  { value: "growth", label: "Em crescimento" },
+  { value: "no_sale_60", label: "Sem venda há 60 dias" },
 ];
 
 export function CustomersFilters({

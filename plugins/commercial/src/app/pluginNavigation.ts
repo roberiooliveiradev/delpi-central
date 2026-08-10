@@ -8,6 +8,10 @@ import {
   normalizePathname,
   type BuildablePluginView,
 } from "./pluginRoutes";
+import {
+  sanitizeCustomersListSearch,
+  type CustomersListSellerAccess,
+} from "../utils/customersListDeepLink";
 
 export function navigatePluginPath(target: string): void {
   if (typeof window === "undefined") return;
@@ -34,11 +38,18 @@ export function navigatePluginView(
 export function navigateCustomerDetail(
   codigo: string,
   loja: string,
-  options?: { basePath?: string },
+  options?: {
+    basePath?: string;
+    search?: string;
+    sellerAccess?: CustomersListSellerAccess;
+  },
 ): boolean {
   const path = buildCustomerDetailPath(options?.basePath, codigo, loja);
   if (!path) return false;
-  navigatePluginPath(path);
+  const sourceSearch =
+    options?.search ?? (typeof window !== "undefined" ? window.location.search : "");
+  const search = sanitizeCustomersListSearch(sourceSearch, options?.sellerAccess);
+  navigatePluginPath(`${path}${search}`);
   return true;
 }
 

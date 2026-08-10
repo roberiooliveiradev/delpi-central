@@ -2,7 +2,6 @@ import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
-import { buildPluginPath } from "../../../app/pluginRoutes";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { EmptyState } from "../../../ui/EmptyState";
 import { PVA_STATE_BOX } from "../../../ui/stateChrome";
@@ -23,6 +22,11 @@ import {
   type CustomerDetailSection,
 } from "../utils/customerDetailSection";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
+import {
+  buildCustomersListPath,
+  parseCustomersListDeepLink,
+  type CustomersListSellerAccess,
+} from "../../../utils/customersListDeepLink";
 
 type CustomerDetailPageProps = {
   codigo: string;
@@ -43,6 +47,18 @@ export function CustomerDetailPage({
   const { canUseTeamScope, sellers, myPortfolio, canViewWorklist, canManageFollowups } =
     usePortfolioScope();
 
+  const sellerAccess = useMemo<CustomersListSellerAccess>(
+    () => ({
+      allowSellerId: canUseTeamScope,
+      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
+    }),
+    [canUseTeamScope, sellers],
+  );
+  const listDeepLink = parseCustomersListDeepLink(
+    search ?? (typeof window !== "undefined" ? window.location.search : ""),
+    sellerAccess,
+  );
+
   const sellerNameByKey = useMemo(() => {
     if (canUseTeamScope) return buildSellerNameByCustomerKey(sellers);
     if (myPortfolio) return buildSellerNameByCustomerKey([myPortfolio]);
@@ -59,7 +75,10 @@ export function CustomerDetailPage({
     customer: rawCustomer,
     orders,
     attentionOrders,
-  } = useCustomerDetailData(codigo, loja, { sellerNameByKey });
+  } = useCustomerDetailData(codigo, loja, {
+    sellerNameByKey,
+    sellerId: listDeepLink.sellerId,
+  });
 
   const customer = rawCustomer;
 
@@ -96,7 +115,12 @@ export function CustomerDetailPage({
     Boolean(customer) || isHistorySection(section),
   );
 
-  const goBack = () => navigatePluginView("customers", { basePath });
+  const goBack = () => {
+    const currentSearch =
+      typeof window !== "undefined" ? window.location.search : search;
+    const deepLink = parseCustomersListDeepLink(currentSearch, sellerAccess);
+    navigatePluginPath(buildCustomersListPath(basePath, deepLink, sellerAccess));
+  };
   const codeStore = formatEntityCodeStore(codigo, loja) ?? `${codigo}-${loja}`;
   const showInitialLoading = loading && !hasData;
   const notFound = hasData && !loading && customer === null;
@@ -144,7 +168,7 @@ export function CustomerDetailPage({
           refreshing={refreshing}
           loading={loading}
           onBack={goBack}
-          backHref={buildPluginPath("customers", basePath)}
+          backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
           onReload={reload}
           onRegisterContact={() => changeSection("contatos")}
           onScheduleFollowUp={

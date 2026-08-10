@@ -399,7 +399,8 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /Carregando dados do cliente/);
     assert.match(page, /Tentar novamente/);
     assert.match(page, /Cliente não encontrado/);
-    assert.match(page, /navigatePluginView\("customers"/);
+    assert.match(page, /buildCustomersListPath/);
+    assert.match(page, /navigatePluginPath/);
     assert.match(page, /useCustomerDetailData/);
     assert.match(page, /CustomerOverviewSection/);
     assert.match(page, /CustomerDetailHeader/);
@@ -478,6 +479,35 @@ describe("navigateCustomerDetail", () => {
   it("navega para detalhe com encoding", () => {
     assert.equal(navigateCustomerDetail("000123", "01"), true);
     assert.deepEqual(pushed, [`${COMMERCIAL_BASE_PATH}/customers/000123/01`]);
+  });
+
+  it("preserva somente query allowlisted e seller permitido", () => {
+    assert.equal(
+      navigateCustomerDetail("000123", "01", {
+        search:
+          "?q=Acme&focus=no_sale_60&seller_id=seller-1&redirect=https://example.com",
+        sellerAccess: {
+          allowSellerId: true,
+          validSellerIds: ["seller-1"],
+        },
+      }),
+      true,
+    );
+    assert.deepEqual(pushed, [
+      `${COMMERCIAL_BASE_PATH}/customers/000123/01?q=Acme&focus=no_sale_60&seller_id=seller-1`,
+    ]);
+  });
+
+  it("remove seller sem RBAC ou fora do escopo válido", () => {
+    assert.equal(
+      navigateCustomerDetail("000123", "01", {
+        search: "?focus=attention&seller_id=seller-1",
+      }),
+      true,
+    );
+    assert.deepEqual(pushed, [
+      `${COMMERCIAL_BASE_PATH}/customers/000123/01?focus=attention`,
+    ]);
   });
 
   it("recusa identidade incompleta", () => {

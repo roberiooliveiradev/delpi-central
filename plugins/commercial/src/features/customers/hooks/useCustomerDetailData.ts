@@ -33,10 +33,11 @@ export function useCustomerDetailData(
   loja: string,
   options?: {
     sellerNameByKey?: ReadonlyMap<string, string>;
+    sellerId?: string | null;
   },
 ): UseCustomerDetailDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
-  const listData = useCustomersData(null, { sellerNameByKey });
+  const listData = useCustomersData(options?.sellerId ?? null, { sellerNameByKey });
 
   const customer = useMemo(() => {
     if (!listData.aggregation) return undefined;

@@ -45,6 +45,22 @@ A Home pode emitir `?focus=late` / `?stock=…`. Helpers: [`src/utils/openOrders
 
 Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido → mesma URL `pedido/linha/filial` (ver README do `dashboard-production`).
 
+## Carteira de clientes
+
+A lista em `/apps/commercial/customers` mantém o estado na URL por
+`replaceState`, sem recarregar o MFE:
+
+| Query | Efeito |
+|-------|--------|
+| `q` | Busca por cliente, código, loja, vendedor ou pedido |
+| `focus=attention\|inactive\|growth\|no_sale_60` | Recorte comercial da lista |
+| `seller_id` | Carteira selecionada; aceito apenas para escopo de equipe e vendedor válido |
+
+Somente essas chaves são preservadas ao abrir e retornar do detalhe. Valores
+inválidos são removidos, e o estado padrão `focus=all` é omitido da URL. O
+contrato canônico está em
+[`src/utils/customersListDeepLink.ts`](./src/utils/customersListDeepLink.ts).
+
 ### Modal e página da OP (WF-02R-D)
 
 Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:

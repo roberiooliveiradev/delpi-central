@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -14,6 +14,12 @@ import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
+import {
+  buildCustomersListPath,
+  buildCustomersListSearch,
+  parseCustomersListDeepLink,
+  type CustomersListSellerAccess,
+} from "../../../utils/customersListDeepLink";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -31,8 +37,24 @@ type CustomersPageProps = {
  * Minha carteira — clientes com pedidos em aberto no escopo do vendedor.
  */
 export function CustomersPage({ basePath }: CustomersPageProps) {
-  const { canUseTeamScope, sellers, sellerIdFilter, setSellerIdFilter, myPortfolio } =
-    usePortfolioScope();
+  const {
+    loading: scopeLoading,
+    canUseTeamScope,
+    sellers,
+    sellerIdFilter,
+    setSellerIdFilter,
+    myPortfolio,
+  } = usePortfolioScope();
+  const [hydratedSellerAccessKey, setHydratedSellerAccessKey] = useState<string | null>(null);
+
+  const sellerAccess = useMemo<CustomersListSellerAccess>(
+    () => ({
+      allowSellerId: canUseTeamScope,
+      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
+    }),
+    [canUseTeamScope, sellers],
+  );
+  const sellerAccessKey = `${sellerAccess.allowSellerId ? "team" : "own"}:${sellerAccess.validSellerIds.join(",")}`;
 
   const sellerNameByKey = useMemo(() => {
     if (canUseTeamScope) {
@@ -67,6 +89,83 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     portfolioMessage,
     portfolioEmpty,
   } = useCustomersData(canUseTeamScope ? sellerIdFilter : null, { sellerNameByKey });
+
+  useEffect(() => {
+    if (scopeLoading || typeof window === "undefined") return;
+
+    const applyBrowserState = () => {
+      const deepLink = parseCustomersListDeepLink(window.location.search, sellerAccess);
+      setSearch(deepLink.q);
+      setFilter(deepLink.focus);
+      setSellerIdFilter(deepLink.sellerId);
+
+      const canonicalPath = buildCustomersListPath(basePath, deepLink, sellerAccess);
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+      if (canonicalPath !== currentPath) {
+        window.history.replaceState(window.history.state, "", canonicalPath);
+      }
+    };
+
+    applyBrowserState();
+    setHydratedSellerAccessKey(sellerAccessKey);
+    window.addEventListener("popstate", applyBrowserState);
+    return () => window.removeEventListener("popstate", applyBrowserState);
+  }, [
+    basePath,
+    scopeLoading,
+    sellerAccess,
+    sellerAccessKey,
+    setFilter,
+    setSearch,
+    setSellerIdFilter,
+  ]);
+
+  const listSearch = useMemo(
+    () =>
+      buildCustomersListSearch(
+        {
+          q: search,
+          focus: filter,
+          sellerId: canUseTeamScope ? sellerIdFilter : null,
+        },
+        sellerAccess,
+      ),
+    [canUseTeamScope, filter, search, sellerAccess, sellerIdFilter],
+  );
+
+  useEffect(() => {
+    if (
+      scopeLoading ||
+      typeof window === "undefined" ||
+      hydratedSellerAccessKey !== sellerAccessKey
+    ) {
+      return;
+    }
+    const target = buildCustomersListPath(
+      basePath,
+      {
+        q: search,
+        focus: filter,
+        sellerId: canUseTeamScope ? sellerIdFilter : null,
+      },
+      sellerAccess,
+    );
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (target !== current) {
+      window.history.replaceState(window.history.state, "", target);
+    }
+  }, [
+    basePath,
+    canUseTeamScope,
+    filter,
+    hydratedSellerAccessKey,
+    listSearch,
+    search,
+    sellerAccess,
+    sellerIdFilter,
+    scopeLoading,
+    sellerAccessKey,
+  ]);
 
   const hasActiveFilters = Boolean(search.trim()) || filter !== "all";
   const showInitialLoading = loading && !hasData;
@@ -248,6 +347,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 sortDirection={sortDirection}
                 onSort={toggleSort}
                 basePath={basePath}
+                listSearch={listSearch}
+                sellerAccess={sellerAccess}
               />
               {filteredCustomers.length > 20 ? (
                 <Pagination

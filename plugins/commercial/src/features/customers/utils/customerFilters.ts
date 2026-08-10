@@ -3,6 +3,7 @@ import type {
   CustomerSummary,
 } from "../types/customerSummary.ts";
 import { normalizeCadastroPart } from "./customerIdentity.ts";
+import { isWithoutSaleForDays } from "./customerPortfolioKpis.ts";
 
 function includesInsensitive(haystack: string, needle: string): boolean {
   if (!needle) return true;
@@ -40,8 +41,10 @@ export function matchesCustomerFilter(
   filter: CustomerAttentionFilter,
 ): boolean {
   if (filter === "all") return true;
-  if (filter === "overdue") return customer.temAtraso;
-  if (filter === "partial") return customer.temPedidoParcial;
+  if (filter === "attention") return customer.status === "atencao";
+  if (filter === "inactive") return customer.status === "inativo";
+  if (filter === "growth") return customer.billingTrend === "up";
+  if (filter === "no_sale_60") return isWithoutSaleForDays(customer, 60);
   return true;
 }
 

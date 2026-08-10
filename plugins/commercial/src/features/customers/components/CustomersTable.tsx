@@ -6,6 +6,7 @@ import { formatDisplayDate } from "../../../utils/dates";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { PVA_TABLE } from "../../../ui/tableChrome";
 import { navigateCustomerDetail } from "../../../app/pluginNavigation";
+import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 import type {
   CustomerListSortDirection,
   CustomerListSortKey,
@@ -25,6 +26,8 @@ type CustomersTableProps = {
   sortDirection: CustomerListSortDirection;
   onSort: (key: Exclude<CustomerListSortKey, "attention">) => void;
   basePath: string;
+  listSearch: string;
+  sellerAccess: CustomersListSellerAccess;
 };
 
 type SortableKey = Exclude<CustomerListSortKey, "attention">;
@@ -35,6 +38,8 @@ export function CustomersTable({
   sortDirection,
   onSort,
   basePath,
+  listSearch,
+  sellerAccess,
 }: CustomersTableProps) {
   const renderSortHeader = (column: SortableKey, label: string) => {
     const active = sortKey === column;
@@ -119,6 +124,8 @@ export function CustomersTable({
                         onClick={() =>
                           navigateCustomerDetail(customer.codigo, customer.loja, {
                             basePath,
+                            search: listSearch,
+                            sellerAccess,
                           })
                         }
                         onKeyDown={(event) => {
@@ -126,6 +133,8 @@ export function CustomersTable({
                             event.preventDefault();
                             navigateCustomerDetail(customer.codigo, customer.loja, {
                               basePath,
+                              search: listSearch,
+                              sellerAccess,
                             });
                           }
                         }}
@@ -171,7 +180,11 @@ export function CustomersTable({
                     className="pva-customers-table__menu"
                     aria-label={openLabel}
                     onClick={() =>
-                      navigateCustomerDetail(customer.codigo, customer.loja, { basePath })
+                      navigateCustomerDetail(customer.codigo, customer.loja, {
+                        basePath,
+                        search: listSearch,
+                        sellerAccess,
+                      })
                     }
                   >
                     <MoreHorizontal size={16} aria-hidden="true" />

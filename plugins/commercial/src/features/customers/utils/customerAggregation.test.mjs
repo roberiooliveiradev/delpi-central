@@ -329,7 +329,7 @@ describe("customerSorting e filters", () => {
     assert.equal(matchesCustomerSearch(customer, "xyz"), false);
   });
 
-  it("filtro com atraso e parcialmente atendido", () => {
+  it("filtra atenção, inativos e crescimento pela semântica existente", () => {
     const overdue = aggregateCustomers([
       line({
         codigo_cadastro: "1",
@@ -339,18 +339,25 @@ describe("customerSorting e filters", () => {
         entregue: 0,
       }),
     ]).customers[0];
-    const partial = aggregateCustomers([
+    const inactive = {
+      ...aggregateCustomers([
       line({
         codigo_cadastro: "2",
         loja_cadastro: "01",
         data_entrega: "2099-01-01",
-        saldo: 2,
+        saldo: 0,
         entregue: 1,
       }),
-    ]).customers[0];
-    assert.equal(filterCustomers([overdue, partial], "", "overdue").length, 1);
-    assert.equal(filterCustomers([overdue, partial], "", "partial").length, 1);
-    assert.equal(filterCustomers([overdue, partial], "", "all").length, 2);
+      ]).customers[0],
+      status: "inativo",
+    };
+    const attention = { ...overdue, status: "atencao" };
+    const growth = { ...overdue, key: "growth|01", status: "ativo", billingTrend: "up" };
+    const customers = [attention, inactive, growth];
+    assert.equal(filterCustomers(customers, "", "attention").length, 1);
+    assert.equal(filterCustomers(customers, "", "inactive").length, 1);
+    assert.equal(filterCustomers(customers, "", "growth").length, 1);
+    assert.equal(filterCustomers(customers, "", "all").length, 3);
   });
 
   it("busca e filtro combinados", () => {
@@ -372,9 +379,33 @@ describe("customerSorting e filters", () => {
         saldo: 1,
       }),
     ]).customers[0];
-    const filtered = filterCustomers([overdueAcme, overdueBeta], "acme", "overdue");
+    const filtered = filterCustomers(
+      [
+        { ...overdueAcme, status: "atencao" },
+        { ...overdueBeta, status: "atencao" },
+      ],
+      "acme",
+      "attention",
+    );
     assert.equal(filtered.length, 1);
     assert.equal(filtered[0].nome, "ACME");
+  });
+
+  it("filtra sem venda há 60 dias pelos campos reais de enrichment", () => {
+    const base = aggregateCustomers([
+      line({ codigo_cadastro: "1", loja_cadastro: "01" }),
+    ]).customers[0];
+    const recent = {
+      ...base,
+      key: "recent|01",
+      lastPurchaseDate: new Date().toISOString().slice(0, 10),
+    };
+    const old = { ...base, key: "old|01", lastPurchaseDate: "2000-01-01" };
+    const unknown = { ...base, key: "unknown|01", lastPurchaseDate: null };
+    assert.deepEqual(
+      filterCustomers([recent, old, unknown], "", "no_sale_60").map((customer) => customer.key),
+      ["old|01", "unknown|01"],
+    );
   });
 
   it("ordenacao nao muta o array original", () => {
