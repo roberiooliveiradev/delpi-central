@@ -12,7 +12,7 @@ import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import {
   applyDisplayFormatSpecToBlock,
   resolveCurrentDisplayFormatSpec,
-  resolveDisplayFormatTarget,
+  resolveDisplayFormatDescriptor,
   sampleValueForDisplayFormat,
 } from "../../utils/displayFormatSelection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -28,13 +28,33 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
     selected,
     selectedChartPart,
     selectedKpiPart,
+    selectedTablePart,
+    selectedTableParts,
     selectedCanvasTableCell,
+    textEditSelection,
+    lastPartialTextEditSelection,
     updateSelected,
   } = useComunicadoEditor();
 
-  const ctx = { selected, selectedChartPart, selectedKpiPart, selectedCanvasTableCell };
-  const target = resolveDisplayFormatTarget(ctx);
-  if (!selected || !target) return null;
+  const activeTextEdit =
+    textEditSelection ??
+    (lastPartialTextEditSelection &&
+    selected &&
+    lastPartialTextEditSelection.blockId === selected.id
+      ? lastPartialTextEditSelection
+      : null);
+
+  const ctx = {
+    selected,
+    selectedChartPart,
+    selectedKpiPart,
+    selectedTablePart,
+    selectedTableParts,
+    selectedCanvasTableCell,
+    textEditSelection: activeTextEdit,
+  };
+  const descriptor = resolveDisplayFormatDescriptor(ctx);
+  if (!selected || !descriptor) return null;
 
   const spec = resolveCurrentDisplayFormatSpec(ctx);
   const sampleValue = sampleValueForDisplayFormat(ctx);
@@ -63,7 +83,8 @@ export function NumberFormatSection({ layout }: { layout: SelectionSectionLayout
     <DisplayFormatRibbonGroup
       spec={spec}
       onChange={onChange}
-      target={target}
+      target={descriptor.target}
+      targetHint={descriptor.hint}
       sampleValue={sampleValue}
       density={layout === "pane" ? "compact" : "ribbon"}
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}

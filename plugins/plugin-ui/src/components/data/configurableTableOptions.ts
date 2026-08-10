@@ -12,6 +12,10 @@ export type PresentationTableColumn = {
   label: string;
   /** Largura relativa da coluna (% do total da tabela). Omitido = auto. */
   widthPct?: number;
+  /** Spec canônico por coluna — prevalece sobre `displayValueFormat` global. */
+  displayFormat?: DisplayFormatSpec;
+  /** Espelho legado por coluna (fallback de leitura). */
+  valueFormat?: ConfigurableTableValueFormat;
 };
 
 export type ConfigurableTableTextAlign = "left" | "center" | "right";
@@ -56,7 +60,7 @@ export type ConfigurableTableOptions = {
   zebraStripe?: boolean;
   showBorders?: boolean;
   valueFormat?: ConfigurableTableValueFormat;
-  /** Spec canônico da grade (global nesta entrega — não por coluna). */
+  /** Spec canônico global da grade (fallback quando a coluna não tem override). */
   displayValueFormat?: DisplayFormatSpec;
   headerUppercase?: boolean;
   /** Quebra texto nas células (Excel → Quebrar Texto Automaticamente). */

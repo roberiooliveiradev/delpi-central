@@ -174,6 +174,7 @@ export function resolveCanvasTableCellDisplay(
         text: formatTextProjectionValue(
           normalized.value,
           mapNumberFormatToTextFormat(normalized.format),
+          { displayFormat: normalized.displayFormat },
         ),
         value: normalized.value,
         fromData: false,
@@ -186,6 +187,7 @@ export function resolveCanvasTableCellDisplay(
             ? formatTextProjectionValue(
                 normalized.value,
                 mapNumberFormatToTextFormat(normalized.format),
+                { displayFormat: normalized.displayFormat },
               )
             : normalized.text ?? "",
         series: normalized.series,
@@ -217,6 +219,7 @@ export function resolveCanvasTableCellDisplay(
       anchor != null
         ? formatTextProjectionValue(anchor, ref.format ?? "number", {
             decimalPlaces: ref.decimalPlaces,
+            displayFormat: ref.displayFormat ?? normalized.displayFormat,
           })
         : normalized.text?.trim() || "—";
     const tone = resolveTextDataRefValue(
@@ -235,7 +238,10 @@ export function resolveCanvasTableCellDisplay(
 
   const { text, color } = resolveTextDataRefValue(
     resolved,
-    ref,
+    {
+      ...ref,
+      displayFormat: ref.displayFormat ?? normalized.displayFormat,
+    },
     normalized.text?.trim() || "—",
   );
   const numeric = parseProjectionNumber(text);
@@ -387,12 +393,18 @@ export function suggestCanvasTableCellDataRef(
       : suggestPreferredProjectionField(resolved, fields)) ?? fields[0]?.field;
   if (!field) return undefined;
   if (preferSeries) {
-    return { field, aggregation: "list", format: "number" };
+    return {
+      field,
+      aggregation: "list",
+      displayFormat: { category: "general", presetId: "general" },
+      format: "raw",
+    };
   }
   return {
     field,
     aggregation: suggestDefaultAggregationForField(resolved, field),
-    format: "number",
+    displayFormat: { category: "general", presetId: "general" },
+    format: "raw",
   };
 }
 

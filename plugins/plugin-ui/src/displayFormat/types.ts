@@ -28,8 +28,11 @@ export type DisplayFormatTarget =
   | "chartValue"
   | "chartCategory"
   | "table"
+  | "tableColumn"
   | "kpi"
-  | "canvasCell";
+  | "canvasCell"
+  | "textProjection"
+  | "textDataRef";
 
 export type ParsedDisplayDate = {
   year: number;

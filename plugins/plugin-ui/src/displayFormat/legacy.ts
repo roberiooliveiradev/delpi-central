@@ -177,3 +177,27 @@ export function canvasNumberFormatFromSpec(spec: DisplayFormatSpec): LegacyCanva
   if (spec.presetId === "number-0" || spec.decimalPlaces === 0) return "integer";
   return "decimal";
 }
+
+export function textProjectionFormatFromSpec(spec: DisplayFormatSpec): {
+  format: LegacyTextProjectionFormat;
+  decimalPlaces?: number;
+} {
+  if (spec.category === "date" || spec.category === "time") {
+    return { format: "date" };
+  }
+  if (spec.category === "text") {
+    return { format: "raw" };
+  }
+  if (spec.category === "general") {
+    return {
+      format: "raw",
+      ...(typeof spec.decimalPlaces === "number" ? { decimalPlaces: spec.decimalPlaces } : {}),
+    };
+  }
+  const kpi = kpiValueFormatFromSpec(spec);
+  const out: { format: LegacyTextProjectionFormat; decimalPlaces?: number } = {
+    format: kpi === "raw" ? "raw" : kpi,
+  };
+  if (typeof spec.decimalPlaces === "number") out.decimalPlaces = spec.decimalPlaces;
+  return out;
+}

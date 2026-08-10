@@ -37,6 +37,7 @@ import {
 import { InputBindingInspector } from "./InputBindingInspector";
 import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
+import { NumberFormatSection } from "./selectionSections/NumberFormatSection";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { MultiSourceDataParamsPanel } from "./MultiSourceDataParamsPanel";
 import { resolveSelectedDataContext } from "../utils/selectedDataContext";
@@ -318,21 +319,27 @@ export function SelectedDataSidePanel({
       ) : null}
 
       {isTextBound && !isView ? (
-        <TextDataBindingInspector
-          pane
-          route={selectedRoute}
-          labelCatalog={labelCatalog}
-          onOpenDataSources={() => openCatalog("insert")}
-        />
+        <>
+          <TextDataBindingInspector
+            pane
+            route={selectedRoute}
+            labelCatalog={labelCatalog}
+            onOpenDataSources={() => openCatalog("insert")}
+          />
+          <NumberFormatSection layout="pane" />
+        </>
       ) : null}
 
       {isCanvasTableBound && !isView ? (
-        <CanvasTableDataBindingInspector
-          pane
-          route={selectedRoute}
-          labelCatalog={labelCatalog}
-          onOpenDataSources={() => openCatalog("insert")}
-        />
+        <>
+          <CanvasTableDataBindingInspector
+            pane
+            route={selectedRoute}
+            labelCatalog={labelCatalog}
+            onOpenDataSources={() => openCatalog("insert")}
+          />
+          <NumberFormatSection layout="pane" />
+        </>
       ) : null}
 
       {bindingTarget && "dataBinding" in bindingTarget ? (

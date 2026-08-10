@@ -127,14 +127,14 @@ export function isTablePartSelected(
   return (interaction?.selectedParts ?? []).some((part) => isTablePartRefEqual(ref, part));
 }
 
-/** Índices das colunas selecionadas (partes `headerCell`, primária + multi). */
+/** Índices das colunas selecionadas (partes `headerCell`/`cell`, primária + multi). */
 export function selectedTableColumnIndexes(
   interaction?: Pick<TableInteraction, "selectedPart" | "selectedParts"> | null,
 ): Set<number> {
   const indexes = new Set<number>();
   const parts = [interaction?.selectedPart, ...(interaction?.selectedParts ?? [])];
   for (const part of parts) {
-    if (part?.kind === "headerCell") indexes.add(part.colIndex);
+    if (part?.kind === "headerCell" || part?.kind === "cell") indexes.add(part.colIndex);
   }
   return indexes;
 }

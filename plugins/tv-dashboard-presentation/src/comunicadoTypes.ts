@@ -149,6 +149,10 @@ export type ComunicadoTextDataRef = {
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
   /**
+   * Spec canônico de exibição — na leitura ganha de `format`/`decimalPlaces`.
+   */
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec;
+  /**
    * Casas decimais (0–6) para `number` / `percent` / `currency`.
    * A exibição arredonda (half-up via `Intl`).
    */
@@ -163,6 +167,8 @@ export type ComunicadoTextProjection = {
   field: string;
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
+  /** Spec canônico de exibição — na leitura ganha de `format`/`decimalPlaces`. */
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec;
   /** Ver `ComunicadoTextDataRef.decimalPlaces`. */
   decimalPlaces?: number;
   prefix?: string;

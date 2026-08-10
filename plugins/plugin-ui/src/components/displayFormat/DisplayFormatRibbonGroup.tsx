@@ -20,6 +20,8 @@ export type DisplayFormatRibbonGroupProps = {
   spec: DisplayFormatSpec;
   onChange: (spec: DisplayFormatSpec) => void;
   target: DisplayFormatTarget;
+  /** Rótulo fino do alvo (ex.: Coluna "Qtd"). Fallback = label genérico do target. */
+  targetHint?: string;
   sampleValue?: unknown;
   density?: "ribbon" | "compact";
   portalScopeClassName?: string;
@@ -29,6 +31,7 @@ export function DisplayFormatRibbonGroup({
   spec,
   onChange,
   target,
+  targetHint,
   sampleValue,
   density = "ribbon",
   portalScopeClassName,
@@ -57,7 +60,7 @@ export function DisplayFormatRibbonGroup({
       ref={rootRef}
       className={[cn.group, density === "compact" ? cn.groupCompact : ""].filter(Boolean).join(" ")}
     >
-      <DisplayFormatTargetHint target={target} />
+      <DisplayFormatTargetHint target={target} label={targetHint} />
       <button
         type="button"
         className={cn.trigger}

@@ -53,13 +53,14 @@ function sparklinePointsFromResolved(resolved: ComunicadoDataResolved | undefine
 
 function formatSignedPct(pct: number): string {
   const abs = Math.abs(pct);
-  const text = abs.toLocaleString("pt-BR", {
-    maximumFractionDigits: abs >= 10 ? 1 : 2,
-    minimumFractionDigits: 0,
+  const text = formatDisplayValue(abs, {
+    category: "percent",
+    presetId: "percent",
+    decimalPlaces: abs >= 10 ? 1 : 2,
   });
-  if (pct > 0) return `+${text}%`;
-  if (pct < 0) return `−${text}%`;
-  return `${text}%`;
+  if (pct > 0) return `+${text}`;
+  if (pct < 0) return `−${text}`;
+  return text;
 }
 
 function resolveComparisonPresentation(params: {

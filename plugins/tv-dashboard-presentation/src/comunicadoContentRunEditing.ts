@@ -79,6 +79,45 @@ export function expandRangeToDataRefAtoms(
   return { start: nextStart, end: nextEnd };
 }
 
+/** Run sob o caret/seleção (prioriza dataRef tocado pelo intervalo). */
+export function findContentRunAtOffset(
+  runs: ComunicadoContentRun[],
+  start: number,
+  end: number = start,
+): { run: ComunicadoContentRun; index: number; runStart: number; runEnd: number } | null {
+  if (!runs.length) return null;
+  const range =
+    end > start ? expandRangeToDataRefAtoms(runs, start, end) : clampSelectionRange(runs, start, end);
+  const probe = end > start ? range.start : Math.max(0, range.start);
+  let pos = 0;
+  for (let index = 0; index < runs.length; index += 1) {
+    const run = runs[index];
+    const len = runPlainLength(run);
+    const runStart = pos;
+    const runEnd = pos + len;
+    const touches =
+      end > start
+        ? runStart < range.end && runEnd > range.start
+        : probe >= runStart && (probe < runEnd || (probe === runEnd && index === runs.length - 1));
+    if (touches) {
+      return { run, index, runStart, runEnd };
+    }
+    pos = runEnd;
+  }
+  return null;
+}
+
+/** Índice do primeiro run com dataRef tocado pela seleção (ou null). */
+export function findDataRefRunIndexInRange(
+  runs: ComunicadoContentRun[],
+  start: number,
+  end: number,
+): number | null {
+  const hit = findContentRunAtOffset(runs, start, end);
+  if (!hit?.run.dataRef?.field?.trim()) return null;
+  return hit.index;
+}
+
 export type ContentRunStyleToggleKey = "fontWeight" | "fontStyle" | "underline" | "strikethrough";
 
 /** Patch de tipografia de caractere (Google Slides TextRun / Canva RichtextRange). */

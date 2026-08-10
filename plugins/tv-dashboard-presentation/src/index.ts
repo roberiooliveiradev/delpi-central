@@ -595,6 +595,8 @@ export {
   contentRunInlineStyleProperties,
   contentRunsFromEditableRoot,
   expandRangeToDataRefAtoms,
+  findContentRunAtOffset,
+  findDataRefRunIndexInRange,
   getEditableTextSelectionOffsets,
   hasPersistableContentRuns,
   insertLineBreakAtOffset,
@@ -1116,6 +1118,7 @@ export {
 } from "./fieldKeyHumanize";
 export {
   distributeTableProjectionColumnWidths,
+  formatTableProjectionColumns,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,

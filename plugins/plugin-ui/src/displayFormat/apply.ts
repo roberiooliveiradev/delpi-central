@@ -5,11 +5,13 @@ import {
   chartValueFormatFromSpec,
   kpiValueFormatFromSpec,
   tableValueFormatFromSpec,
+  textProjectionFormatFromSpec,
   type LegacyCanvasNumberFormat,
   type LegacyCategoryLabelFormat,
   type LegacyChartValueFormat,
   type LegacyKpiValueFormat,
   type LegacyTableValueFormat,
+  type LegacyTextProjectionFormat,
 } from "./legacy";
 
 export type ChartDisplayFormatPatch = {
@@ -34,6 +36,17 @@ export type KpiDisplayFormatPatch = {
 export type CanvasCellDisplayFormatPatch = {
   displayFormat: DisplayFormatSpec;
   format: LegacyCanvasNumberFormat;
+};
+
+export type TextDisplayFormatPatch = {
+  displayFormat: DisplayFormatSpec;
+  format: LegacyTextProjectionFormat;
+  decimalPlaces?: number;
+};
+
+export type TableColumnDisplayFormatPatch = {
+  displayFormat: DisplayFormatSpec;
+  valueFormat: LegacyTableValueFormat;
 };
 
 /** Gravação: spec + espelho legado (nunca o contrário). */
@@ -74,5 +87,22 @@ export function canvasCellPatchFromSpec(spec: DisplayFormatSpec): CanvasCellDisp
   return {
     displayFormat: spec,
     format: canvasNumberFormatFromSpec(spec),
+  };
+}
+
+export function textPatchFromSpec(spec: DisplayFormatSpec): TextDisplayFormatPatch {
+  const mirror = textProjectionFormatFromSpec(spec);
+  const patch: TextDisplayFormatPatch = {
+    displayFormat: spec,
+    format: mirror.format,
+  };
+  if (typeof mirror.decimalPlaces === "number") patch.decimalPlaces = mirror.decimalPlaces;
+  return patch;
+}
+
+export function tableColumnPatchFromSpec(spec: DisplayFormatSpec): TableColumnDisplayFormatPatch {
+  return {
+    displayFormat: spec,
+    valueFormat: tableValueFormatFromSpec(spec),
   };
 }

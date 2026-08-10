@@ -64,14 +64,19 @@ export function TableViewBlockView({
 
   const allRows = resolved.table?.rows ?? [];
   const allColumns = resolveTableColumns(resolved, allRows);
-  const widthByKey = new Map(
-    (block.tableProjection?.columns ?? [])
-      .filter((column) => column.widthPct != null && column.widthPct > 0)
-      .map((column) => [column.key, column.widthPct as number]),
+  const projectionByKey = new Map(
+    (block.tableProjection?.columns ?? []).map((column) => [column.key, column]),
   );
   const columns = allColumns.map((column) => {
-    const widthPct = widthByKey.get(column.key);
-    return widthPct != null ? { ...column, widthPct } : column;
+    const projected = projectionByKey.get(column.key);
+    const widthPct =
+      projected?.widthPct != null && projected.widthPct > 0 ? projected.widthPct : undefined;
+    return {
+      ...column,
+      ...(widthPct != null ? { widthPct } : {}),
+      ...(projected?.displayFormat ? { displayFormat: projected.displayFormat } : {}),
+      ...(projected?.valueFormat ? { valueFormat: projected.valueFormat } : {}),
+    };
   });
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
