@@ -57,6 +57,7 @@ export function CustomerDetailPage({
     canViewWorklist,
     canManageFollowups,
     canViewAnalytics,
+    canViewProposals,
   } = usePortfolioScope();
 
   const sellerAccess = useMemo<CustomersListSellerAccess>(
@@ -195,7 +196,7 @@ export function CustomerDetailPage({
                   aria-hidden="true"
                   className={refreshing ? "pva-spin" : undefined}
                 />
-                {refreshing || loading ? "Atualizando…" : "Atualizar"}
+                {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
               </button>
             ) : null}
           </div>
@@ -288,6 +289,14 @@ export function CustomerDetailPage({
           />
 
           <div className="pva-customer-overview__grid">
+            <div className="pva-customer-account-rail-slot--mobile">
+              <CustomerAccountRail
+                customer={customer}
+                basePath={basePath}
+                canViewProposals={canViewProposals}
+                onViewOrders={() => changeSection("pedidos")}
+              />
+            </div>
             <main
               className="pva-customer-overview__main"
               id={customerDetailPanelId(section)}
@@ -300,7 +309,10 @@ export function CustomerDetailPage({
                   customer={customer}
                   orders={orders}
                   loading={refreshing}
+                  activities={activities}
+                  canViewActivities={canViewWorklist}
                   onGoToOrders={() => changeSection("pedidos")}
+                  onGoToActivities={() => changeSection("atividades")}
                 />
               ) : null}
 
@@ -335,9 +347,11 @@ export function CustomerDetailPage({
                 />
               ) : null}
             </main>
-            <aside className="pva-customer-overview__side">
+            <aside className="pva-customer-overview__side pva-customer-account-rail-slot--desktop">
               <CustomerAccountRail
                 customer={customer}
+                basePath={basePath}
+                canViewProposals={canViewProposals}
                 onViewOrders={() => changeSection("pedidos")}
               />
             </aside>

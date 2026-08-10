@@ -19,7 +19,12 @@ import type { CommercialProposal } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
-import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
+import {
+  buildAnalyticsOpportunityBackSearch,
+  readAnalyticsOpportunitySearch,
+  subscribeAnalyticsFilterRouteSync,
+  writeAnalyticsOpportunitySearchToUrl,
+} from "./utils/analyticsFilterUrl";
 
 type AnalyticsOpportunitiesPageProps = {
   basePath: string;
@@ -29,10 +34,22 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    writeAnalyticsOpportunitySearchToUrl(search);
+  }, [search]);
+
+  useEffect(
+    () =>
+      subscribeAnalyticsFilterRouteSync(() => {
+        setSearch(readAnalyticsOpportunitySearch());
+      }),
+    [],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -84,7 +101,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           onClick={() =>
             navigateAnalyticsOpportunityDetail(row.proposal_number, {
               basePath,
-              search: buildAnalyticsFilterSearchParams(filters.filterState),
+              search: buildAnalyticsOpportunityBackSearch(),
             })
           }
         >

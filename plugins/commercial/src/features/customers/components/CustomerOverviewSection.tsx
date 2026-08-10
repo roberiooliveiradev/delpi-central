@@ -1,15 +1,22 @@
 import type { CustomerSummary } from "../types/customerSummary";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
+import type { UseCustomerActivitiesResult } from "../hooks/useCustomerActivities";
+import { useCustomerPurchaseEvolution } from "../hooks/useCustomerPurchaseEvolution";
+import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 import { CustomerAttentionBanner } from "./CustomerAttentionBanner";
 import { CustomerNextActionCard } from "./CustomerNextActionCard";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
 import { CustomerOverviewKpis } from "./CustomerOverviewKpis";
+import { CustomerPurchaseEvolutionChart } from "./CustomerPurchaseEvolutionChart";
 
 type CustomerOverviewSectionProps = {
   customer: CustomerSummary;
   orders: CustomerOrderSummary[];
   loading?: boolean;
+  activities: UseCustomerActivitiesResult;
+  canViewActivities: boolean;
   onGoToOrders: () => void;
+  onGoToActivities: () => void;
 };
 
 /**
@@ -19,8 +26,13 @@ export function CustomerOverviewSection({
   customer,
   orders,
   loading = false,
+  activities,
+  canViewActivities,
   onGoToOrders,
+  onGoToActivities,
 }: CustomerOverviewSectionProps) {
+  const evolution = useCustomerPurchaseEvolution(customer.codigo, customer.loja, true);
+
   return (
     <div className="pva-customer-overview">
       <CustomerOverviewKpis customer={customer} loading={loading} />
@@ -28,7 +40,18 @@ export function CustomerOverviewSection({
 
       <div className="pva-customer-overview__grid">
         <div className="pva-customer-overview__main">
+          <CustomerPurchaseEvolutionChart
+            points={evolution.points}
+            loading={evolution.loading}
+            error={evolution.error}
+          />
           <CustomerOpenOrdersPreview orders={orders} onSeeAll={onGoToOrders} />
+          <CustomerActivityTimelinePanel
+            activities={activities}
+            canViewActivities={canViewActivities}
+            preview
+            onViewActivities={onGoToActivities}
+          />
         </div>
         <aside className="pva-customer-overview__side">
           <CustomerNextActionCard customer={customer} onViewOrders={onGoToOrders} />

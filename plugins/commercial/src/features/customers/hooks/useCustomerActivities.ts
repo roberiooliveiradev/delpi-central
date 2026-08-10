@@ -62,8 +62,8 @@ export function useCustomerActivities(
 
   return {
     items,
-    loading,
-    refreshing,
+    loading: enabled && loading,
+    refreshing: enabled && refreshing,
     error,
     hasData,
     reload,

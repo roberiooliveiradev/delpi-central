@@ -21,6 +21,7 @@ const ANALYTICS_OPPORTUNITY_BACK_KEYS = [
   "competence",
   "branch",
   "customer_segment",
+  "search",
 ] as const;
 
 function isValidIsoDate(value: string): boolean {
@@ -166,6 +167,25 @@ export function buildAnalyticsOpportunityBackSearch(search?: string): string {
   return query ? `?${query}` : "";
 }
 
+export function readAnalyticsOpportunitySearch(
+  search = typeof window !== "undefined" ? window.location.search : "",
+): string {
+  return (new URLSearchParams(search).get("search") ?? "").trim();
+}
+
+export function writeAnalyticsOpportunitySearchToUrl(value: string): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  const normalized = value.trim();
+  if (normalized) url.searchParams.set("search", normalized);
+  else url.searchParams.delete("search");
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
 export function writeAnalyticsFiltersToUrl(state: AnalyticsFilterUrlState): void {
   if (typeof window === "undefined") return;
   try {
@@ -173,7 +193,11 @@ export function writeAnalyticsFiltersToUrl(state: AnalyticsFilterUrlState): void
   } catch {
     // ignora
   }
-  const nextSearch = buildAnalyticsFilterSearchParams(state);
+  const nextParams = new URLSearchParams(buildAnalyticsFilterSearchParams(state));
+  const opportunitySearch = readAnalyticsOpportunitySearch(window.location.search);
+  if (opportunitySearch) nextParams.set("search", opportunitySearch);
+  const serialized = nextParams.toString();
+  const nextSearch = serialized ? `?${serialized}` : "";
   const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
   if (
     `${window.location.pathname}${window.location.search}${window.location.hash}` ===

@@ -119,6 +119,23 @@
   display: none;
 }
 
+.dashboard-commercial .pva-customer-account-rail__mobile,
+.dashboard-commercial .pva-customer-account-rail-slot--mobile,
+.dashboard-commercial .pva-customer-orders__mobile {
+  display: none;
+}
+
+.dashboard-commercial .pva-customer-account-rail-slot--desktop {
+  position: sticky;
+  top: 16px;
+}
+
+.dashboard-commercial .pva-customer-order-line-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .dashboard-commercial .cm-customers-list__toolbar {
   display: flex;
   justify-content: flex-end;
@@ -139,5 +156,22 @@
   .dashboard-commercial .cm-customers-list__mobile {
     display: grid;
     gap: var(--pva-gap);
+  }
+
+  .dashboard-commercial .pva-customer-account-rail-slot--desktop,
+  .dashboard-commercial .pva-customer-account-rail__desktop,
+  .dashboard-commercial .pva-customer-orders__desktop {
+    display: none;
+  }
+
+  .dashboard-commercial .pva-customer-account-rail-slot--mobile,
+  .dashboard-commercial .pva-customer-account-rail__mobile,
+  .dashboard-commercial .pva-customer-orders__mobile {
+    display: grid;
+    gap: var(--pva-gap);
+  }
+
+  .dashboard-commercial .pva-customer-account-rail-slot--mobile {
+    grid-column: 1 / -1;
   }
 }

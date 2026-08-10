@@ -12,6 +12,8 @@ type CustomerActivityTimelineProps = {
   activities: UseCustomerActivitiesResult;
   canViewActivities: boolean;
   onScheduleFollowUp?: () => void;
+  preview?: boolean;
+  onViewActivities?: () => void;
 };
 
 function formatWhen(iso?: string | null): string {
@@ -33,8 +35,11 @@ export function CustomerActivityTimelinePanel({
   activities,
   canViewActivities,
   onScheduleFollowUp,
+  preview = false,
+  onViewActivities,
 }: CustomerActivityTimelineProps) {
   const { loading, refreshing, error, hasData, items, reload } = activities;
+  const visibleItems = preview ? items.slice(0, 3) : items;
 
   return (
     <SectionCard
@@ -47,10 +52,10 @@ export function CustomerActivityTimelinePanel({
       {!canViewActivities ? (
         <p role="status">Você não possui permissão para consultar atividades desta conta.</p>
       ) : null}
-      {canViewActivities && loading && !hasData ? (
+      {canViewActivities && !preview && loading && !hasData ? (
         <CommercialLoadingCard title="Carregando atividades…" variant="panel" />
       ) : null}
-      {canViewActivities && error ? (
+      {canViewActivities && !preview && error ? (
         <div role="alert">
           <p>{hasData ? `Não foi possível atualizar: ${error}` : error}</p>
           <ActionButton variant="ghost" onClick={reload} disabled={refreshing}>
@@ -60,7 +65,7 @@ export function CustomerActivityTimelinePanel({
       ) : null}
       {canViewActivities && hasData ? (
         <CommercialActivityTimeline
-          items={items.map((item) => ({
+          items={visibleItems.map((item) => ({
             id: item.id,
             title: item.subject || item.activity_type,
             occurredAt: item.occurred_at,
@@ -71,6 +76,18 @@ export function CustomerActivityTimelinePanel({
           emptyMessage="Ainda não há atividades nesta conta. Registre um follow-up no Meu dia."
           aria-label="Timeline da conta"
         />
+      ) : null}
+      {canViewActivities && preview && !hasData ? (
+        <p role="status">
+          As atividades são carregadas somente quando você abre a seção Atividades.
+        </p>
+      ) : null}
+      {canViewActivities && preview && onViewActivities ? (
+        <div className="cm-nav-row">
+          <ActionButton variant="ghost" onClick={onViewActivities}>
+            Ver atividades
+          </ActionButton>
+        </div>
       ) : null}
       {onScheduleFollowUp ? (
         <div className="cm-nav-row">

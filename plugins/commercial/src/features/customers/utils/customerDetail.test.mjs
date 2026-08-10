@@ -439,8 +439,12 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const activitiesHook = readSrc("features/customers/hooks/useCustomerActivities.ts");
     assert.match(page, /Boolean\(customer\) && isHistorySection\(section\)/);
     assert.match(page, /Boolean\(customer\) && section === "atividades"/);
-    assert.doesNotMatch(overview, /useCustomerPurchaseEvolution|CustomerActivityTimelinePanel/);
-    assert.match(activitiesHook, /if \(!enabled\) return/);
+    assert.match(overview, /useCustomerPurchaseEvolution/);
+    assert.match(overview, /CustomerPurchaseEvolutionChart/);
+    assert.match(overview, /CustomerActivityTimelinePanel/);
+    assert.match(overview, /preview/);
+    assert.doesNotMatch(overview, /listCustomerActivities/);
+    assert.match(activitiesHook, /if \(!enabled\)/);
     assert.match(activitiesHook, /AbortController/);
     assert.match(activitiesHook, /reload/);
   });
@@ -450,12 +454,32 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     const opportunities = readSrc("features/customers/components/CustomerSectionComingSoon.tsx");
     const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
+    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
     assert.match(page, /canViewWorklist && canManageFollowups/);
     assert.doesNotMatch(header, /Registrar contato|onRegisterContact/);
     assert.match(opportunities, /canViewAnalytics && customerCode\.trim\(\)/);
     assert.match(opportunities, /search: customerCode\.trim\(\)/);
     assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
+    assert.match(lines, /getLineOpForecast/);
+    assert.match(lines, /navigateOpenOrderOpDetail/);
+    assert.match(lines, /buildOpenOrdersContextSearch/);
+    assert.match(rail, /canViewProposals/);
+    assert.match(rail, /Propostas gerais/);
+    assert.match(rail, /quantidadePedidosAbertos > 0/);
+    assert.doesNotMatch(rail, /customerCode|customer_code|search:/);
     assert.doesNotMatch(page, /iframe|dashboard-production|production-appointments/);
+  });
+
+  it("rail mobile usa accordion do kit e desktop persistente", () => {
+    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
+    const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
+    const css = readSrc("styles/customers.css");
+    assert.match(rail, /CommercialSectionCard/);
+    assert.match(rail, /collapsible/);
+    assert.match(rail, /defaultOpen=\{false\}/);
+    assert.match(page, /pva-customer-account-rail-slot--mobile/);
+    assert.match(page, /pva-customer-account-rail-slot--desktop/);
+    assert.match(css, /@media \(max-width: 768px\)/);
   });
 
   it("usa PagePath inclusive sem customer e tabpanel rotulado", () => {
@@ -466,8 +490,10 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
   });
 
-  it("expansao acessivel na tabela de pedidos", () => {
+  it("pedidos usam DataTable, cards e expansao acessivel", () => {
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
+    assert.match(table, /CommercialDataTable/);
+    assert.match(table, /CommercialDataRecordCard/);
     assert.match(table, /aria-expanded/);
     assert.match(table, /aria-controls/);
     assert.match(table, /Expandir linhas/);
@@ -490,6 +516,14 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
   it("hook de dados nao depende da pagina de lista", () => {
     const hook = readSrc("features/customers/hooks/useCustomerDetailData.ts");
     assert.doesNotMatch(hook, /CustomersPage/);
+  });
+
+  it("oportunidades hidrata busca da URL e mantém retorno", () => {
+    const page = readSrc("features/analytics/AnalyticsOpportunitiesPage.tsx");
+    assert.match(page, /useState\(\(\) => readAnalyticsOpportunitySearch\(\)\)/);
+    assert.match(page, /subscribeAnalyticsFilterRouteSync/);
+    assert.match(page, /writeAnalyticsOpportunitySearchToUrl\(search\)/);
+    assert.match(page, /buildAnalyticsOpportunityBackSearch\(\)/);
   });
 });
 
