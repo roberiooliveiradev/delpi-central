@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 const THEME_SOURCE_VARS = [
   "--delpi-ui-accent",
   "--delpi-ui-surface",
+  "--delpi-ui-surface-muted",
   "--delpi-ui-popover-bg",
   "--delpi-ui-text",
   "--delpi-ui-border",
@@ -94,6 +95,12 @@ export function resolveDelpiUiPortalTheme(anchor?: HTMLElement | null): DelpiUiP
     style["--delpi-ui-surface"] = surface;
     /* Popovers no body compartilham o mesmo fundo do host (Forma, cor, Lucide…). */
     style["--delpi-ui-popover-bg"] = style["--delpi-ui-popover-bg"] || surface;
+    /* Caixas de prévia (ex.: Formatar → Exemplo) — nunca cair no fallback claro #f8fafc. */
+    style["--delpi-ui-surface-muted"] =
+      style["--delpi-ui-surface-muted"] ||
+      (text
+        ? `color-mix(in srgb, ${text} 8%, ${surface})`
+        : `color-mix(in srgb, #64748b 12%, ${surface})`);
   }
   if (text) style["--delpi-ui-text"] = text;
   if (border) style["--delpi-ui-border"] = border;

@@ -23,6 +23,7 @@ describe("resolveDelpiUiPortalTheme", () => {
     host.className = "dashboard-tv-dashboard";
     host.style.setProperty("--td-surface", "#1b2030");
     host.style.setProperty("--delpi-ui-surface", "#1b2030");
+    host.style.setProperty("--delpi-ui-text", "#f8fafc");
     const anchor = document.createElement("button");
     host.appendChild(anchor);
     document.body.appendChild(host);
@@ -30,6 +31,7 @@ describe("resolveDelpiUiPortalTheme", () => {
     const theme = resolveDelpiUiPortalTheme(anchor);
     expect(theme.style["--delpi-ui-surface"]).toBe("#1b2030");
     expect(theme.style["--delpi-ui-popover-bg"]).toBe("#1b2030");
+    expect(theme.style["--delpi-ui-surface-muted"]).toContain("color-mix");
 
     host.remove();
   });

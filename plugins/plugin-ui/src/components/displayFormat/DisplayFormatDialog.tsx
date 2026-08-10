@@ -24,6 +24,8 @@ export type DisplayFormatDialogProps = {
   onApply: (spec: DisplayFormatSpec) => void;
   sampleValue?: unknown;
   target: DisplayFormatTarget;
+  /** Rótulo fino do alvo (ex.: Coluna "Qtd"). */
+  targetHint?: string;
   portalScopeClassName?: string;
 };
 
@@ -34,6 +36,7 @@ export function DisplayFormatDialog({
   onApply,
   sampleValue = 30,
   target,
+  targetHint,
   portalScopeClassName = "delpi-ui",
 }: DisplayFormatDialogProps) {
   const cn = DEFAULT_DISPLAY_FORMAT_CN;
@@ -92,7 +95,7 @@ export function DisplayFormatDialog({
       }
     >
       <div className={cn.dialogBody}>
-        <DisplayFormatTargetHint target={target} className={cn.dialogHint} />
+        <DisplayFormatTargetHint target={target} label={targetHint} className={cn.dialogHint} />
         <div className={cn.dialogGrid}>
           <div className={cn.categoryList} role="listbox" aria-label="Categoria">
             {DISPLAY_FORMAT_CATEGORIES.map((item) => {
@@ -105,6 +108,7 @@ export function DisplayFormatDialog({
                   aria-selected={active}
                   className={[cn.categoryBtn, active ? cn.categoryBtnActive : ""].filter(Boolean).join(" ")}
                   onClick={() => selectCategory(item.category)}
+                  onPointerDown={(event) => event.stopPropagation()}
                 >
                   {item.label}
                 </button>
@@ -145,6 +149,7 @@ export function DisplayFormatDialog({
                       aria-selected={active}
                       className={[cn.typeBtn, active ? cn.typeBtnActive : ""].filter(Boolean).join(" ")}
                       onClick={() => setDraft({ ...preset.spec, presetId: preset.id })}
+                      onPointerDown={(event) => event.stopPropagation()}
                     >
                       <span>{preset.label}</span>
                       {preset.spec.pattern ? (
