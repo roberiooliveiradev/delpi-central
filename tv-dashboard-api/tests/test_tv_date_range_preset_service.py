@@ -37,6 +37,50 @@ def test_this_month_and_this_week(today_fixed: date | None = None):
     assert compute_preset_range("custom", today=today) is None
 
 
+def test_previous_day_skips_weekend_to_friday():
+    """Reunião na segunda acompanha a sexta, não o domingo."""
+    monday = date(2026, 7, 13)
+    assert compute_preset_range("previous_day", today=monday) == (
+        date(2026, 7, 10),
+        date(2026, 7, 10),
+    )
+    sunday = date(2026, 7, 12)
+    assert compute_preset_range("previous_day", today=sunday) == (
+        date(2026, 7, 10),
+        date(2026, 7, 10),
+    )
+    saturday = date(2026, 7, 11)
+    assert compute_preset_range("previous_day", today=saturday) == (
+        date(2026, 7, 10),
+        date(2026, 7, 10),
+    )
+    tuesday = date(2026, 7, 14)
+    assert compute_preset_range("previous_day", today=tuesday) == (
+        date(2026, 7, 13),
+        date(2026, 7, 13),
+    )
+    assert compute_preset_range("yesterday", today=monday) == (date(2026, 7, 10), date(2026, 7, 10))
+
+
+def test_this_month_until_yesterday_ends_on_previous_business_day():
+    monday = date(2026, 7, 13)
+    assert compute_preset_range("this_month_until_yesterday", today=monday) == (
+        date(2026, 7, 1),
+        date(2026, 7, 10),  # sexta
+    )
+    wednesday = date(2026, 7, 15)
+    assert compute_preset_range("this_month_until_yesterday", today=wednesday) == (
+        date(2026, 7, 1),
+        date(2026, 7, 14),  # terça
+    )
+    # 1º dia do mês: ainda não há dia útil concluído no mês corrente
+    first = date(2026, 8, 3)  # segunda; dia útil anterior = 31/07
+    assert compute_preset_range("this_month_until_yesterday", today=first) == (
+        date(2026, 8, 1),
+        date(2026, 8, 1),
+    )
+
+
 def test_previous_calendar_periods_cross_year_boundaries():
     today = date(2026, 1, 2)
     assert compute_preset_range("previous_week", today=today) == (

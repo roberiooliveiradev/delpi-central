@@ -5,10 +5,12 @@ import { resolveDataSourceLabel } from "./comunicadoDataArchitecture";
 /** Presets de período — espelha labels do MFE (dateRangePresets). */
 export const DATA_SOURCE_DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   this_month: "Este mês (até hoje)",
+  this_month_until_yesterday: "Este mês (até ontem)",
   this_week: "Esta semana (até hoje)",
   this_quarter: "Este trimestre (até hoje)",
   this_year: "Este ano (até hoje)",
   today: "Hoje",
+  previous_day: "Dia anterior",
   previous_week: "Semana passada",
   previous_month: "Mês passado",
   previous_quarter: "Trimestre passado",
