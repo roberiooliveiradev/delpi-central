@@ -1,4 +1,4 @@
-import { formatDisplayValue } from "@delpi/plugin-ui";
+import { formatDisplayValue } from "@delpi/plugin-ui/index";
 
 /** Casas decimais permitidas na formatação de número / percentual / moeda. */
 export const DECIMAL_PLACES_MIN = 0;

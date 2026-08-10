@@ -1,9 +1,9 @@
 import {
+  formatDisplayValue,
   parseKpiNumericValue,
   resolveDelpiKpiTone,
+  specFromTextProjectionFormat,
 } from "@delpi/plugin-ui/index";
-
-import { formatDisplayValue, specFromTextProjectionFormat } from "@delpi/plugin-ui";
 import { normalizeDecimalPlaces } from "./nativeFormat";
 import type {
   ComunicadoBlock,

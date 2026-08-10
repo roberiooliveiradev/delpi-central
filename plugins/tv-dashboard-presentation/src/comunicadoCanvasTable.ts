@@ -9,7 +9,7 @@ import {
   resolveDisplayFormatSpec,
   specFromCanvasNumberFormat,
   type DisplayFormatSpec,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 import type {
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
