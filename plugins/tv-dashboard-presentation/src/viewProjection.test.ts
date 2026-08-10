@@ -76,6 +76,22 @@ describe("applyViewProjection", () => {
     expect(Object.keys(next?.table?.rows?.[0] ?? {})).toEqual(["periodo", "oee"]);
   });
 
+  it("anexa coluna nova da fonte que ainda não está na projeção", () => {
+    const next = applyViewProjection(sampleResolved, {
+      tableProjection: {
+        columns: [
+          { key: "periodo", visible: true },
+          { key: "oee", visible: true },
+        ],
+      },
+    });
+    expect(next?.table?.columns?.map((col) => col.key)).toEqual([
+      "periodo",
+      "oee",
+      "otd",
+    ]);
+  });
+
   it("oculta sáb./dom. nos pontos do gráfico quando excludeWeekends", () => {
     const daily: ComunicadoDataResolved = {
       table: {
