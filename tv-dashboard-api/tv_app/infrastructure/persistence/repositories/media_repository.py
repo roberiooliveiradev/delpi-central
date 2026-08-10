@@ -124,6 +124,12 @@ class MediaRepository:
         return _row_to_asset(row) if row else None
 
     def get_for_token(self, token: str, asset_id: UUID) -> dict[str, Any] | None:
+        """Mídia pelo token público — capability URL, independente de is_active.
+
+        O payload `/public/present/{token}` continua exigindo programação ativa.
+        `<img>`/CSS da home e do filmstrip não enviam JWT; desativar o deck
+        não pode 404 nas capas autenticadas nem nas URLs já emitidas.
+        """
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -131,7 +137,7 @@ class MediaRepository:
                     SELECT ma.*
                     FROM tv_dashboard.media_assets ma
                     INNER JOIN tv_dashboard.playlists p ON p.id = ma.playlist_id
-                    WHERE ma.id = %s AND p.public_token = %s AND p.is_active = TRUE
+                    WHERE ma.id = %s AND p.public_token = %s
                     """,
                     (str(asset_id), token.strip()),
                 )

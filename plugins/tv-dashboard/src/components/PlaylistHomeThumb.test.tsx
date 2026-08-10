@@ -11,7 +11,7 @@ vi.mock("./SlideCardThumbnail", () => ({
 }));
 
 describe("PlaylistHomeThumb", () => {
-  it("usa mídia admin autenticada na home, inclusive para programação inativa", () => {
+  it("passa publicToken para a miniatura (<img>/CSS não enviam Authorization)", () => {
     const coverSlide: Slide = {
       id: "slide-1",
       playlistId: "playlist-1",
@@ -29,15 +29,16 @@ describe("PlaylistHomeThumb", () => {
           id: "playlist-1",
           viewportProfile: "1080p",
           coverSlide,
-          publicToken: "token-que-nao-deve-ser-usado",
+          publicToken: "tok-publico",
         }}
       />,
     );
 
-    const props = slideCardThumbnail.mock.calls.at(-1)?.[0] as
-      | Record<string, unknown>
-      | undefined;
-    expect(props).toMatchObject({ playlistId: "playlist-1" });
-    expect(props).not.toHaveProperty("publicToken");
+    expect(slideCardThumbnail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playlistId: "playlist-1",
+        publicToken: "tok-publico",
+      }),
+    );
   });
 });
