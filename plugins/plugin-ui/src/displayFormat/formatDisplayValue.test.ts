@@ -11,6 +11,7 @@ import {
   specFromChartValueFormat,
 } from "./legacy";
 import { parseDisplayDate } from "./parseDisplayDate";
+import { bumpDisplayFormatDecimalPlaces, toggleThousandsDisplayFormat } from "./shortcuts";
 
 describe("formatDisplayValue", () => {
   it("percentual canônico não multiplica por 100", () => {
@@ -65,6 +66,26 @@ describe("formatDisplayValue", () => {
     expect(formatDisplayValue(12.5, specFromCanvasNumberFormat("decimal"))).toBe("12,5");
     expect(formatDisplayValue(12.5, specFromCanvasNumberFormat("integer"))).toBe("13");
     expect(formatDisplayValue(12.5, specFromPresetId("number-2"))).toBe("12,50");
+  });
+
+  it("atalho de casas atualiza o valor sem precisar do separador de milhar", () => {
+    const base = specFromPresetId("number-2");
+    expect(formatDisplayValue(16, base)).toBe("16,00");
+
+    const fewer = bumpDisplayFormatDecimalPlaces(base, -1);
+    expect(fewer.decimalPlaces).toBe(1);
+    expect(fewer.presetId).toBe("number-2");
+    expect(formatDisplayValue(16, fewer)).toBe("16,0");
+
+    const none = bumpDisplayFormatDecimalPlaces(fewer, -1);
+    expect(formatDisplayValue(16, none)).toBe("16");
+
+    const more = bumpDisplayFormatDecimalPlaces(base, 1);
+    expect(formatDisplayValue(16, more)).toBe("16,000");
+
+    /* milhar só muda grouping; casas já aplicadas pelo bump continuam válidas */
+    const withThousands = toggleThousandsDisplayFormat(more);
+    expect(formatDisplayValue(16000, withThousands)).toBe("16.000,000");
   });
 
   it("gravação só espelha spec → enum", () => {

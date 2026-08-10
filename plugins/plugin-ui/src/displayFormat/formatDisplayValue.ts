@@ -117,24 +117,20 @@ function formatNumberSpec(value: number, spec: DisplayFormatSpec): string {
 
   if (spec.category === "number") {
     const hasExplicit = typeof spec.decimalPlaces === "number" && Number.isFinite(spec.decimalPlaces);
-    const digits = hasExplicit ? clampPlaces(spec.decimalPlaces, 2) : 2;
-    const thousands = spec.useThousandsSeparator !== false && spec.presetId !== "number-2";
-    if (spec.presetId === "number-2") {
-      return value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: false,
-      });
-    }
-    if (spec.presetId === "number-0") {
-      return value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-        useGrouping: thousands,
-      });
-    }
+    const digits = hasExplicit
+      ? clampPlaces(spec.decimalPlaces, 2)
+      : spec.presetId === "number-0"
+        ? 0
+        : 2;
+    const thousands =
+      typeof spec.useThousandsSeparator === "boolean"
+        ? spec.useThousandsSeparator
+        : spec.presetId !== "number-2";
+    /* number-2 / number-0 padam casas do preset; overrides explícitos (atalhos .0←/.0→) vencem. */
+    const padExact =
+      hasExplicit || spec.presetId === "number-2" || spec.presetId === "number-0";
     return value.toLocaleString("pt-BR", {
-      minimumFractionDigits: hasExplicit ? digits : 0,
+      minimumFractionDigits: padExact ? digits : 0,
       maximumFractionDigits: digits,
       useGrouping: thousands,
     });
