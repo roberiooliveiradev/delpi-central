@@ -643,8 +643,25 @@ _SKIP_GENERIC_LIST_KEYS = frozenset(
 )
 
 
+def _rows_from_list_or_page(raw: Any) -> list[Any] | None:
+    """Lista bare ou envelope Page `{ items|rows: [...] }` (ex.: lines/orders OTD)."""
+    if isinstance(raw, list):
+        return raw
+    if not isinstance(raw, dict):
+        return None
+    for nested_key in ("items", "rows"):
+        nested = raw.get(nested_key)
+        if isinstance(nested, list):
+            return nested
+    return None
+
+
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
-    """Extrai linhas para tabela: lista bare, `items`/`tableField` e chaves list comuns."""
+    """Extrai linhas para tabela: lista bare, `items`/`tableField` e chaves list comuns.
+
+    Desembrulha também envelopes paginados aninhados (`lines.items`, `orders.items`)
+    sem acoplar a operationId — mesmo contrato do chat operacional.
+    """
     data = unwrap_operational_data(data)
     if isinstance(data, list):
         return data
@@ -659,15 +676,16 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
             keys.append(key)
 
     for key in keys:
-        raw = data.get(key)
-        if isinstance(raw, list) and raw:
-            return raw
+        rows = _rows_from_list_or_page(data.get(key))
+        if rows:
+            return rows
 
     for key, raw in data.items():
         if key in _SKIP_GENERIC_LIST_KEYS:
             continue
-        if isinstance(raw, list) and raw:
-            return raw
+        rows = _rows_from_list_or_page(raw)
+        if rows:
+            return rows
 
     return []
 

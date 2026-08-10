@@ -2017,3 +2017,70 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
         "value",
     }
     assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"
+
+
+def test_enrich_sales_order_otd_panel_unwraps_lines_items_page():
+    """Painel OTD devolve `{ lines: { items: [...] } }` — tabela TV não pode ficar vazia."""
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_sales_order_otd_panel",
+            "shape": "paged_list",
+            "entity": "sales_order_otd_panel",
+        },
+        "data": {
+            "branch": "02",
+            "summary": {
+                "total_lines": 1,
+                "on_time_lines": 0,
+                "late_lines": 1,
+                "sales_order_otd_pct": 0.0,
+                "late_percentage": 100.0,
+            },
+            "lines": {
+                "items": [
+                    {
+                        "order_number": "000123",
+                        "line_item": "01",
+                        "branch": "02",
+                        "status": "late",
+                        "customer_name": "Cliente ES",
+                        "promised_date": "2026-01-10",
+                    }
+                ],
+                "total": 1,
+                "page": 1,
+                "page_size": 20,
+            },
+        },
+        "route": {
+            "label": "Pedidos de venda — painel OTD",
+            "tableFields": "lines",
+            "allowedDisplayModes": ["table", "kpi", "auto"],
+            "metaShape": "paged_list",
+            "tvConstraints": {"maxRows": 200},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "otd-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_sales_order_otd_panel",
+                    "params": {"branch": "02", "status": "late"},
+                    "displayMode": "table",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    resolved = enriched[0]["resolved"]
+    assert resolved["table"]["rows"], "esperado lines.items desembrulhado"
+    assert resolved["table"]["rows"][0]["order_number"] == "000123"
+    assert resolved["table"]["rows"][0]["status"] == "late"

@@ -805,6 +805,35 @@
         "bar_chart",
         "auto"
       ]
+    },
+    "get_sales_order_otd_panel": {
+      "label": "Pedidos de venda — painel OTD (linhas)",
+      "description": "Linhas de pedido com status no prazo/atrasado. Payload em lines.items. Sem Data início/fim retorna todo o histórico elegível (útil para «todos os atrasados»).",
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "tableFields": "lines",
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date"
+      }
     }
   }
 }
