@@ -146,6 +146,17 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "total_lines": "Total de linhas",
     "on_time_lines": "Linhas no prazo",
     "late_lines": "Linhas atrasadas",
+    "customer_code": "Código cliente",
+    "customer_name": "Cliente",
+    "customer_short_name": "Nome reduzido",
+    "order_number": "Pedido",
+    "line_item": "Item",
+    "product_code": "Produto",
+    "product_description": "Descrição",
+    "promised_date": "Data prometida",
+    "invoice_date": "Data faturamento",
+    "status": "Status",
+    "days_diff": "Dias (atraso/adianto)",
 }
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {

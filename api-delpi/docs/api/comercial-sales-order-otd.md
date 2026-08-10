@@ -30,6 +30,7 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 |--------|-------|
 | `SC6010` (C6) | Itens do pedido de venda |
 | `SC5010` (C5) | Cabeçalho do pedido (cliente, segmento) |
+| `SA1010` (A1) | Cliente — `A1_NOME`, `A1_NREDUZ` (nome reduzido) |
 
 Leitura analítica com `WITH (NOLOCK)`.
 
@@ -65,6 +66,13 @@ Entram linhas que atendem **todos** os critérios:
 | `on_time_lines` | Linhas no prazo |
 | `late_lines` | Linhas atrasadas |
 | `sales_order_otd_pct` | `on_time_lines / total_lines × 100` (2 casas decimais) |
+
+Painel (`/panel`) — campos de linha relevantes:
+
+| Campo | Fonte |
+|-------|--------|
+| `customer_name` | `SA1.A1_NOME` |
+| `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 
 Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
