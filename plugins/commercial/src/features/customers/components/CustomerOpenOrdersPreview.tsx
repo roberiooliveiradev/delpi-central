@@ -7,12 +7,24 @@ import {
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
+import {
+  navigateAnalyticsOpportunityDetail,
+  navigateOpenOrderLineDetail,
+} from "../../../app/pluginNavigation";
 import { formatCurrency } from "../../../utils/format";
 import { compareDeliveryDates, formatDisplayDate } from "../../../utils/dates";
+import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
+import {
+  buildOrderOpportunityContextSearch,
+  findFirstNavigableOrderLine,
+  findOrderProposalLine,
+} from "../utils/customerAccountActions";
 
 type CustomerOpenOrdersPreviewProps = {
   orders: CustomerOrderSummary[];
+  basePath: string;
+  canViewAnalytics: boolean;
   onSeeAll: () => void;
 };
 
@@ -41,9 +53,52 @@ const PREVIEW_LIMIT = 5;
 
 export function CustomerOpenOrdersPreview({
   orders,
+  basePath,
+  canViewAnalytics,
   onSeeAll,
 }: CustomerOpenOrdersPreviewProps) {
   const rows = orders.slice(0, PREVIEW_LIMIT);
+  const actions = (order: CustomerOrderSummary) => {
+    const firstLine = findFirstNavigableOrderLine(order.lines);
+    const proposalLine = canViewAnalytics ? findOrderProposalLine(order.lines) : null;
+    const proposalNumber = proposalLine?.proposal_number?.trim() || null;
+    if (!firstLine && !proposalNumber) return null;
+    return (
+      <div className="cm-customer-order-line-actions">
+        {firstLine ? (
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() =>
+              navigateOpenOrderLineDetail(
+                firstLine.filial,
+                firstLine.pedido,
+                firstLine.linha,
+                {
+                  basePath,
+                  search: buildOpenOrdersContextSearch(),
+                },
+              )
+            }
+          >
+            Abrir linha
+          </CommercialActionButton>
+        ) : null}
+        {proposalLine && proposalNumber ? (
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() =>
+              navigateAnalyticsOpportunityDetail(proposalNumber, {
+                basePath,
+                search: buildOrderOpportunityContextSearch(proposalLine),
+              })
+            }
+          >
+            Ver OV {proposalNumber}
+          </CommercialActionButton>
+        ) : null}
+      </div>
+    );
+  };
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
     { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
     {
@@ -70,6 +125,11 @@ export function CustomerOpenOrdersPreview({
         const status = previewStatus(order);
         return <CommercialStatusBadge variant={status.tone} label={status.label} />;
       },
+    },
+    {
+      key: "actions",
+      header: "Ações",
+      render: (order) => actions(order) ?? "—",
     },
   ];
 
@@ -115,6 +175,7 @@ export function CustomerOpenOrdersPreview({
                       value: formatCurrency(order.valorTotalAberto),
                     },
                   ]}
+                  context={actions(order)}
                 />
               );
             })}

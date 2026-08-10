@@ -3,8 +3,7 @@ import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import type { UseCustomerActivitiesResult } from "../hooks/useCustomerActivities";
 import { useCustomerPurchaseEvolution } from "../hooks/useCustomerPurchaseEvolution";
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
-import { CustomerAttentionBanner } from "./CustomerAttentionBanner";
-import { CustomerNextActionCard } from "./CustomerNextActionCard";
+import { CustomerConversationPoints } from "./CustomerConversationPoints";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
 import { CustomerOverviewKpis } from "./CustomerOverviewKpis";
 import { CustomerPurchaseEvolutionChart } from "./CustomerPurchaseEvolutionChart";
@@ -15,12 +14,15 @@ type CustomerOverviewSectionProps = {
   loading?: boolean;
   activities: UseCustomerActivitiesResult;
   canViewActivities: boolean;
+  canViewAnalytics: boolean;
+  coveragePartial: boolean;
+  basePath: string;
   onGoToOrders: () => void;
   onGoToActivities: () => void;
 };
 
 /**
- * Visão geral do cliente — KPIs, banner, gráfico, preview de pedidos e laterais.
+ * Visão geral do cliente — KPIs, fatos, evolução, pedidos e atividades.
  */
 export function CustomerOverviewSection({
   customer,
@@ -28,6 +30,9 @@ export function CustomerOverviewSection({
   loading = false,
   activities,
   canViewActivities,
+  canViewAnalytics,
+  coveragePartial,
+  basePath,
   onGoToOrders,
   onGoToActivities,
 }: CustomerOverviewSectionProps) {
@@ -36,27 +41,27 @@ export function CustomerOverviewSection({
   return (
     <div className="cm-customer-overview">
       <CustomerOverviewKpis customer={customer} loading={loading} />
-      <CustomerAttentionBanner customer={customer} onAnalyze={onGoToOrders} />
-
-      <div className="cm-customer-overview__grid">
-        <div className="cm-customer-overview__main">
-          <CustomerPurchaseEvolutionChart
-            points={evolution.points}
-            loading={evolution.loading}
-            error={evolution.error}
-          />
-          <CustomerOpenOrdersPreview orders={orders} onSeeAll={onGoToOrders} />
-          <CustomerActivityTimelinePanel
-            activities={activities}
-            canViewActivities={canViewActivities}
-            preview
-            onViewActivities={onGoToActivities}
-          />
-        </div>
-        <aside className="cm-customer-overview__side">
-          <CustomerNextActionCard customer={customer} onViewOrders={onGoToOrders} />
-        </aside>
-      </div>
+      <CustomerConversationPoints
+        customer={customer}
+        coveragePartial={coveragePartial}
+      />
+      <CustomerPurchaseEvolutionChart
+        points={evolution.points}
+        loading={evolution.loading}
+        error={evolution.error}
+      />
+      <CustomerOpenOrdersPreview
+        orders={orders}
+        basePath={basePath}
+        canViewAnalytics={canViewAnalytics}
+        onSeeAll={onGoToOrders}
+      />
+      <CustomerActivityTimelinePanel
+        activities={activities}
+        canViewActivities={canViewActivities}
+        preview
+        onViewActivities={onGoToActivities}
+      />
     </div>
   );
 }

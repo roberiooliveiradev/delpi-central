@@ -8,15 +8,19 @@ import {
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
+import { navigateOpenOrderLineDetail } from "../../../app/pluginNavigation";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
+import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
+import { findFirstNavigableOrderLine } from "../utils/customerAccountActions";
 import { CustomerOrderLines } from "./CustomerOrderLines";
 
 type CustomerOrdersTableProps = {
   orders: CustomerOrderSummary[];
   basePath: string;
+  canViewAnalytics: boolean;
 };
 
 function formatMaxOverdue(days: number): string {
@@ -40,11 +44,23 @@ function renderStatus(order: CustomerOrderSummary): ReactNode {
   );
 }
 
-export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTableProps) {
+export function CustomerOrdersTable({
+  orders,
+  basePath,
+  canViewAnalytics,
+}: CustomerOrdersTableProps) {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const baseId = useId();
   const toggle = (key: string) =>
     setExpandedKey((current) => (current === key ? null : key));
+  const openFirstLine = (order: CustomerOrderSummary) => {
+    const line = findFirstNavigableOrderLine(order.lines);
+    if (!line) return;
+    navigateOpenOrderLineDetail(line.filial, line.pedido, line.linha, {
+      basePath,
+      search: buildOpenOrdersContextSearch(),
+    });
+  };
 
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
     { key: "branch", header: "Filial", render: (order) => order.filial || "—" },
@@ -81,19 +97,27 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
     },
     {
       key: "details",
-      header: "Detalhes",
+      header: "Ações",
       render: (order) => {
         const expanded = expandedKey === order.key;
         const panelId = `${baseId}-desktop-lines-${order.key.replace(/\|/g, "-")}`;
+        const canOpen = Boolean(findFirstNavigableOrderLine(order.lines));
         return (
-          <CommercialActionButton
-            variant="ghost"
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            onClick={() => toggle(order.key)}
-          >
-            {expanded ? "Recolher linhas" : "Expandir linhas"}
-          </CommercialActionButton>
+          <div className="cm-customer-order-line-actions">
+            {canOpen ? (
+              <CommercialActionButton variant="ghost" onClick={() => openFirstLine(order)}>
+                Abrir pedido
+              </CommercialActionButton>
+            ) : null}
+            <CommercialActionButton
+              variant="ghost"
+              aria-expanded={expanded}
+              aria-controls={panelId}
+              onClick={() => toggle(order.key)}
+            >
+              {expanded ? "Recolher linhas" : "Expandir linhas"}
+            </CommercialActionButton>
+          </div>
         );
       },
     },
@@ -119,6 +143,7 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
               lines={expandedOrder.lines}
               orderKey={expandedOrder.key}
               basePath={basePath}
+              canViewAnalytics={canViewAnalytics}
             />
           </div>
         ) : null}
@@ -164,14 +189,24 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
                   },
                 ]}
                 context={
-                  <CommercialActionButton
-                    variant="ghost"
-                    aria-expanded={expanded}
-                    aria-controls={panelId}
-                    onClick={() => toggle(order.key)}
-                  >
-                    {expanded ? "Recolher linhas" : "Expandir linhas"}
-                  </CommercialActionButton>
+                  <div className="cm-customer-order-line-actions">
+                    {findFirstNavigableOrderLine(order.lines) ? (
+                      <CommercialActionButton
+                        variant="ghost"
+                        onClick={() => openFirstLine(order)}
+                      >
+                        Abrir pedido
+                      </CommercialActionButton>
+                    ) : null}
+                    <CommercialActionButton
+                      variant="ghost"
+                      aria-expanded={expanded}
+                      aria-controls={panelId}
+                      onClick={() => toggle(order.key)}
+                    >
+                      {expanded ? "Recolher linhas" : "Expandir linhas"}
+                    </CommercialActionButton>
+                  </div>
                 }
               />
               {expanded ? (
@@ -184,6 +219,7 @@ export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTablePro
                     lines={order.lines}
                     orderKey={order.key}
                     basePath={basePath}
+                    canViewAnalytics={canViewAnalytics}
                   />
                 </div>
               ) : null}

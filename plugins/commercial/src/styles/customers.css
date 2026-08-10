@@ -158,32 +158,6 @@
   gap: 6px;
 }
 
-.dashboard-commercial .cm-customer-detail-header__menu {
-  position: relative;
-}
-
-.dashboard-commercial .cm-customer-detail-header__more {
-  min-width: 44px;
-}
-
-.dashboard-commercial .cm-customer-detail-header__menu-panel {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 180px;
-  padding: 6px;
-  border: 1px solid var(--cm-border);
-  border-radius: 8px;
-  background: var(--cm-surface);
-  box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
-}
-
-.dashboard-commercial .cm-customer-detail-header__menu-item {
-  width: 100%;
-  justify-content: flex-start;
-}
-
 .dashboard-commercial .cm-customer-overview__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.9fr);
@@ -201,15 +175,6 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.dashboard-commercial .cm-customer-attention-banner__title,
-.dashboard-commercial .cm-customer-next-action__title {
-  margin: 0 0 8px;
-  color: var(--cm-text);
-  font-size: 16px;
-  font-weight: 750;
-}
-
-.dashboard-commercial .cm-customer-attention-banner__list,
 .dashboard-commercial .cm-customer-attention-orders__list {
   display: flex;
   flex-direction: column;
@@ -219,26 +184,12 @@
   list-style: none;
 }
 
-.dashboard-commercial .cm-customer-attention-banner__item,
 .dashboard-commercial .cm-customer-attention-orders__main,
 .dashboard-commercial .cm-customer-attention-orders__metrics {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-}
-
-.dashboard-commercial .cm-customer-attention-banner__dot {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: #d97706;
-}
-
-.dashboard-commercial .cm-customer-attention-banner__item--down,
-.dashboard-commercial .cm-customer-next-action__deadline {
-  color: var(--cm-danger);
 }
 
 .dashboard-commercial .cm-customer-attention-orders__item {
@@ -261,29 +212,13 @@
 .dashboard-commercial .cm-customer-attention-orders__empty,
 .dashboard-commercial .cm-customer-orders-preview__empty,
 .dashboard-commercial .cm-customer-invoices__empty,
-.dashboard-commercial .cm-customer-next-action__text {
+.dashboard-commercial .cm-customer-conversation-points__empty {
   margin: 0;
   color: var(--cm-text-muted);
   font-size: 13px;
 }
 
-.dashboard-commercial .cm-customer-next-action__icon {
-  display: inline-flex;
-  width: 48px;
-  height: 48px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--cm-accent) 12%, var(--cm-surface));
-  color: var(--cm-accent);
-}
-
-.dashboard-commercial .cm-customer-next-action__deadline {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-}
-
+.dashboard-commercial .cm-customer-conversation-points,
 .dashboard-commercial .cm-customer-orders-preview__footer,
 .dashboard-commercial .cm-customer-order-line-actions,
 .dashboard-commercial .cm-customer-billing-pagination {

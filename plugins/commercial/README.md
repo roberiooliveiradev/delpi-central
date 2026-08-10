@@ -112,6 +112,14 @@ de dados por aba**: só consultam a fonte quando a seção correspondente está
 ativa. Loading, erro, vazio, retry e atualização permanecem isolados por fonte.
 Os CTAs aparecem apenas quando o usuário possui a capacidade necessária.
 
+No resumo, `Pontos para conversa` apresenta badges derivados do snapshot real
+(atrasos, cobertura cadastral parcial e valor em aberto), com vazio explícito
+quando nenhum fato está disponível. A próxima ação tem fonte visual única no
+rail `Dados da conta`. Pedidos e previews abrem a página nativa da primeira
+linha com chaves completas; o CTA `Ver OV n` só aparece com
+`proposal_number` recebido no payload e `commercial.analytics.view`, sem probe
+adicional e sem modal.
+
 ### Páginas da linha e da OP (WF-02R-D)
 
 Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:

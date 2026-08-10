@@ -1,8 +1,6 @@
-import { useEffect, useId, useRef, useState } from "react";
 import {
   Calendar,
   MapPin,
-  MoreHorizontal,
   RefreshCw,
   UserRound,
 } from "lucide-react";
@@ -63,25 +61,11 @@ export function CustomerDetailHeader({
   onReload,
   onScheduleFollowUp,
 }: CustomerDetailHeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
   const status = customer.status ?? resolveCustomerStatus(customer);
   const codeStore =
     formatEntityCodeStore(customer.codigo, customer.loja) ??
     `${customer.codigo}-${customer.loja}`;
   const place = locationLabel(customer);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [menuOpen]);
 
   return (
     <header className="cm-customer-detail-header">
@@ -165,38 +149,18 @@ export function CustomerDetailHeader({
               Agendar follow-up
             </CommercialActionButton>
           ) : null}
-          <div className="cm-customer-detail-header__menu" ref={menuRef}>
-            <CommercialActionButton
-              variant="ghost"
-              className="cm-customer-detail-header__more"
-              aria-label="Mais ações"
-              aria-expanded={menuOpen}
-              aria-controls={menuId}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              <MoreHorizontal size={18} aria-hidden="true" />
-            </CommercialActionButton>
-            {menuOpen ? (
-              <div id={menuId} className="cm-customer-detail-header__menu-panel" role="menu">
-                <CommercialActionButton
-                  variant="ghost"
-                  className="cm-customer-detail-header__menu-item"
-                  disabled={loading || refreshing}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onReload();
-                  }}
-                >
-                  <RefreshCw
-                    size={14}
-                    aria-hidden="true"
-                    className={refreshing ? "cm-spin" : undefined}
-                  />
-                  Atualizar seção
-                </CommercialActionButton>
-              </div>
-            ) : null}
-          </div>
+          <CommercialActionButton
+            variant="ghost"
+            disabled={loading || refreshing}
+            onClick={onReload}
+          >
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={refreshing ? "cm-spin" : undefined}
+            />
+            {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
+          </CommercialActionButton>
         </div>
       </div>
     </header>

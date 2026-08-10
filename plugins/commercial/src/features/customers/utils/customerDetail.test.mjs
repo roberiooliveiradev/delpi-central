@@ -449,6 +449,25 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(activitiesHook, /reload/);
   });
 
+  it("overview usa pontos factuais e mantém próxima ação somente no rail", () => {
+    const overview = readSrc("features/customers/components/CustomerOverviewSection.tsx");
+    const points = readSrc("features/customers/components/CustomerConversationPoints.tsx");
+    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
+    assert.match(overview, /CustomerConversationPoints/);
+    assert.doesNotMatch(overview, /CustomerAttentionBanner|CustomerNextActionCard/);
+    assert.match(points, /Pontos para conversa/);
+    assert.match(points, /CommercialStatusBadge/);
+    assert.match(points, /Nenhum ponto objetivo identificado/);
+    assert.match(rail, /label: "Próxima ação"/);
+  });
+
+  it("header oferece atualização direta sem duplicar menu", () => {
+    const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
+    assert.match(header, /Atualizar seção/);
+    assert.match(header, /onClick=\{onReload\}/);
+    assert.doesNotMatch(header, /Mais ações|menuOpen|MoreHorizontal/);
+  });
+
   it("CTAs da conta respeitam identidade e permissoes reais", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
@@ -462,6 +481,9 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
     assert.match(lines, /getLineOpForecast/);
     assert.match(lines, /navigateOpenOrderOpDetail/);
+    assert.match(lines, /canViewAnalytics && proposalNumber/);
+    assert.match(lines, /navigateAnalyticsOpportunityDetail/);
+    assert.match(lines, /Ver OV \{proposalNumber\}/);
     assert.match(lines, /buildOpenOrdersContextSearch/);
     assert.match(rail, /canViewProposals/);
     assert.match(rail, /Propostas gerais/);
@@ -492,11 +514,21 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
 
   it("pedidos usam DataTable, cards e expansao acessivel", () => {
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
+    const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
     assert.match(table, /CommercialDataTable/);
     assert.match(table, /CommercialDataRecordCard/);
     assert.match(table, /aria-expanded/);
     assert.match(table, /aria-controls/);
     assert.match(table, /Expandir linhas/);
+    assert.match(table, /findFirstNavigableOrderLine/);
+    assert.match(table, /Abrir pedido/);
+    assert.match(table, /navigateOpenOrderLineDetail/);
+    assert.match(preview, /navigateOpenOrderLineDetail/);
+    assert.match(preview, /Abrir linha/);
+    assert.match(preview, /canViewAnalytics \? findOrderProposalLine/);
+    assert.match(preview, /navigateAnalyticsOpportunityDetail/);
+    assert.match(preview, /Ver OV \{proposalNumber\}/);
+    assert.doesNotMatch(`${table}\n${preview}`, /Modal|Workbench/);
   });
 
   it("navegacao a partir da tabela de clientes", () => {

@@ -23,6 +23,7 @@ import { CustomerSectionComingSoon } from "../components/CustomerSectionComingSo
 import { useCustomerBilling } from "../billing/hooks/useCustomerBilling";
 import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
 import { useCustomerActivities } from "../hooks/useCustomerActivities";
+import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
 import {
   buildCustomerDetailSearch,
   customerDetailPanelId,
@@ -309,6 +310,12 @@ export function CustomerDetailPage({
                   loading={refreshing}
                   activities={activities}
                   canViewActivities={canViewWorklist}
+                  canViewAnalytics={canViewAnalytics}
+                  coveragePartial={
+                    !listData.enrichment.loading &&
+                    !hasCustomerEnrichmentCoverage(customer)
+                  }
+                  basePath={basePath}
                   onGoToOrders={() => changeSection("pedidos")}
                   onGoToActivities={() => changeSection("atividades")}
                 />
@@ -322,7 +329,11 @@ export function CustomerDetailPage({
                       Cliente localizado, porém sem linhas utilizáveis neste recorte.
                     </CommercialStateBanner>
                   ) : (
-                    <CustomerOrdersTable orders={orders} basePath={basePath} />
+                    <CustomerOrdersTable
+                      orders={orders}
+                      basePath={basePath}
+                      canViewAnalytics={canViewAnalytics}
+                    />
                   )}
                 </>
               ) : null}

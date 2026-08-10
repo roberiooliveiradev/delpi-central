@@ -10,16 +10,19 @@ import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "..
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
 import {
+  navigateAnalyticsOpportunityDetail,
   navigateOpenOrderLineDetail,
   navigateOpenOrderOpDetail,
 } from "../../../app/pluginNavigation";
 import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import { getLineOpForecast } from "../../../utils/opAllocation";
+import { buildOrderOpportunityContextSearch } from "../utils/customerAccountActions";
 
 type CustomerOrderLinesProps = {
   lines: readonly OpenOrdersTotvsItem[];
   orderKey: string;
   basePath: string;
+  canViewAnalytics: boolean;
 };
 
 function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
@@ -31,7 +34,12 @@ function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
   return `Atrasado (${days.toLocaleString("pt-BR")} dias)`;
 }
 
-export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderLinesProps) {
+export function CustomerOrderLines({
+  lines,
+  orderKey,
+  basePath,
+  canViewAnalytics,
+}: CustomerOrderLinesProps) {
   const regionId = `cm-order-lines-${orderKey.replace(/\|/g, "-")}`;
   const rows = Array.from(lines);
   const rowKey = (line: OpenOrdersTotvsItem, index: number) =>
@@ -49,7 +57,14 @@ export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderL
           ).values(),
         )
       : [];
-    if (!canOpenOrder && productionOrders.length === 0) return null;
+    const proposalNumber = line.proposal_number?.trim() || null;
+    if (
+      !canOpenOrder &&
+      productionOrders.length === 0 &&
+      !(canViewAnalytics && proposalNumber)
+    ) {
+      return null;
+    }
     return (
       <div className="cm-customer-order-line-actions">
         {canOpenOrder ? (
@@ -90,6 +105,19 @@ export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderL
             Ver OP {op.numero_op}
           </CommercialActionButton>
         ))}
+        {canViewAnalytics && proposalNumber ? (
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() =>
+              navigateAnalyticsOpportunityDetail(proposalNumber, {
+                basePath,
+                search: buildOrderOpportunityContextSearch(line),
+              })
+            }
+          >
+            Ver OV {proposalNumber}
+          </CommercialActionButton>
+        ) : null}
       </div>
     );
   };
