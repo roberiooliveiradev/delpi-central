@@ -3,7 +3,7 @@ export type CustomerDetailSection =
   | "pedidos"
   | "historico"
   | "oportunidades"
-  | "contatos";
+  | "atividades";
 
 /** Valores canônicos + aliases legados (ex.: faturamento → historico). */
 const SECTION_ALIASES: Record<string, CustomerDetailSection> = {
@@ -14,7 +14,8 @@ const SECTION_ALIASES: Record<string, CustomerDetailSection> = {
   faturamento: "historico",
   historico: "historico",
   oportunidades: "oportunidades",
-  contatos: "contatos",
+  atividades: "atividades",
+  contatos: "atividades",
   /** Alias legado — aba removida; cai na visão geral. */
   checkups: "resumo",
 };
@@ -24,7 +25,7 @@ export const CUSTOMER_DETAIL_SECTION_ORDER: readonly CustomerDetailSection[] = [
   "pedidos",
   "historico",
   "oportunidades",
-  "contatos",
+  "atividades",
 ] as const;
 
 export function parseCustomerDetailSection(
@@ -61,4 +62,12 @@ export function buildCustomerDetailSearch(
 
 export function isHistorySection(section: CustomerDetailSection): boolean {
   return section === "historico";
+}
+
+export function customerDetailTabId(section: CustomerDetailSection): string {
+  return `customer-tab-${section}`;
+}
+
+export function customerDetailPanelId(section: CustomerDetailSection): string {
+  return `customer-panel-${section}`;
 }

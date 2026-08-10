@@ -10,6 +10,7 @@ import { CustomerOrderLines } from "./CustomerOrderLines";
 
 type CustomerOrdersTableProps = {
   orders: CustomerOrderSummary[];
+  basePath: string;
 };
 
 function formatMaxOverdue(days: number): string {
@@ -18,7 +19,7 @@ function formatMaxOverdue(days: number): string {
   return `${days.toLocaleString("pt-BR")} dias`;
 }
 
-export function CustomerOrdersTable({ orders }: CustomerOrdersTableProps) {
+export function CustomerOrdersTable({ orders, basePath }: CustomerOrdersTableProps) {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const baseId = useId();
 
@@ -104,7 +105,11 @@ export function CustomerOrdersTable({ orders }: CustomerOrdersTableProps) {
                     <tr className="pva-checkup-detail-row">
                       <td colSpan={9}>
                         <div id={panelId} role="region" aria-labelledby={controlId}>
-                          <CustomerOrderLines lines={order.lines} orderKey={order.key} />
+                          <CustomerOrderLines
+                            lines={order.lines}
+                            orderKey={order.key}
+                            basePath={basePath}
+                          />
                         </div>
                       </td>
                     </tr>

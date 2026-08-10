@@ -408,18 +408,62 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
   });
 
   it("abas do mockup e aliases de secao", async () => {
-    const { parseCustomerDetailSection, buildCustomerDetailSearch } = await import("./customerDetailSection.ts");
+    const {
+      parseCustomerDetailSection,
+      buildCustomerDetailSearch,
+      customerDetailPanelId,
+      customerDetailTabId,
+    } = await import("./customerDetailSection.ts");
     assert.equal(parseCustomerDetailSection(""), "resumo");
     assert.equal(parseCustomerDetailSection("?secao=faturamento"), "historico");
     assert.equal(parseCustomerDetailSection("?secao=historico"), "historico");
-    assert.equal(parseCustomerDetailSection("?secao=contatos"), "contatos");
+    assert.equal(parseCustomerDetailSection("?secao=contatos"), "atividades");
+    assert.equal(parseCustomerDetailSection("?secao=atividades"), "atividades");
     assert.equal(buildCustomerDetailSearch("resumo"), "");
     assert.equal(buildCustomerDetailSearch("historico"), "?secao=historico");
+    assert.equal(customerDetailTabId("atividades"), "customer-tab-atividades");
+    assert.equal(customerDetailPanelId("atividades"), "customer-panel-atividades");
     const sections = readSrc("features/customers/components/CustomerDetailSections.tsx");
     assert.match(sections, /Visão geral/);
     assert.match(sections, /Histórico de vendas/);
     assert.match(sections, /Oportunidades/);
+    assert.match(sections, /CommercialUnderlineNav/);
+    assert.match(sections, /mode="tabs"/);
+    assert.match(sections, /customerDetailPanelId/);
     assert.match(sections, /openOrdersCount/);
+  });
+
+  it("carrega fontes secundarias somente na aba correspondente", () => {
+    const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
+    const overview = readSrc("features/customers/components/CustomerOverviewSection.tsx");
+    const activitiesHook = readSrc("features/customers/hooks/useCustomerActivities.ts");
+    assert.match(page, /Boolean\(customer\) && isHistorySection\(section\)/);
+    assert.match(page, /Boolean\(customer\) && section === "atividades"/);
+    assert.doesNotMatch(overview, /useCustomerPurchaseEvolution|CustomerActivityTimelinePanel/);
+    assert.match(activitiesHook, /if \(!enabled\) return/);
+    assert.match(activitiesHook, /AbortController/);
+    assert.match(activitiesHook, /reload/);
+  });
+
+  it("CTAs da conta respeitam identidade e permissoes reais", () => {
+    const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
+    const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
+    const opportunities = readSrc("features/customers/components/CustomerSectionComingSoon.tsx");
+    const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
+    assert.match(page, /canViewWorklist && canManageFollowups/);
+    assert.doesNotMatch(header, /Registrar contato|onRegisterContact/);
+    assert.match(opportunities, /canViewAnalytics && customerCode\.trim\(\)/);
+    assert.match(opportunities, /search: customerCode\.trim\(\)/);
+    assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
+    assert.doesNotMatch(page, /iframe|dashboard-production|production-appointments/);
+  });
+
+  it("usa PagePath inclusive sem customer e tabpanel rotulado", () => {
+    const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
+    assert.match(page, /<CommercialPagePath/);
+    assert.doesNotMatch(page, /pva-detail-breadcrumb/);
+    assert.match(page, /role="tabpanel"/);
+    assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
   });
 
   it("expansao acessivel na tabela de pedidos", () => {

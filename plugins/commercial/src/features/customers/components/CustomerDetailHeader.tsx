@@ -3,7 +3,6 @@ import {
   Calendar,
   MapPin,
   MoreHorizontal,
-  Phone,
   RefreshCw,
   UserRound,
 } from "lucide-react";
@@ -27,7 +26,6 @@ type CustomerDetailHeaderProps = {
   onBack: () => void;
   backHref: string;
   onReload: () => void;
-  onRegisterContact: () => void;
   onScheduleFollowUp?: () => void;
 };
 
@@ -59,7 +57,6 @@ export function CustomerDetailHeader({
   onBack,
   backHref,
   onReload,
-  onRegisterContact,
   onScheduleFollowUp,
 }: CustomerDetailHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -159,14 +156,6 @@ export function CustomerDetailHeader({
               Agendar follow-up
             </button>
           ) : null}
-          <button
-            type="button"
-            className="pva-btn pva-btn--secondary"
-            onClick={onRegisterContact}
-          >
-            <Phone size={16} aria-hidden="true" />
-            Registrar contato
-          </button>
           <div className="pva-detail-header__menu" ref={menuRef}>
             <button
               type="button"
@@ -195,7 +184,7 @@ export function CustomerDetailHeader({
                     aria-hidden="true"
                     className={refreshing ? "pva-spin" : undefined}
                   />
-                  Atualizar dados
+                  Atualizar seção
                 </button>
               </div>
             ) : null}

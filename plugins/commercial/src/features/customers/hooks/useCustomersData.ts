@@ -49,6 +49,12 @@ export type UseCustomersDataResult = {
   reload: () => void;
   portfolioMessage: string | null;
   portfolioEmpty: boolean;
+  enrichment: {
+    loading: boolean;
+    error: string | null;
+    covered: number;
+    total: number;
+  };
 };
 
 export function useCustomersData(
@@ -79,6 +85,10 @@ export function useCustomersData(
   const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
   const [portfolioMessage, setPortfolioMessage] = useState<string | null>(null);
   const [portfolioEmpty, setPortfolioEmpty] = useState(false);
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false);
+  const [enrichmentError, setEnrichmentError] = useState<string | null>(null);
+  const [enrichmentCovered, setEnrichmentCovered] = useState(0);
+  const [enrichmentTotal, setEnrichmentTotal] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<CustomerAttentionFilter>("all");
@@ -118,8 +128,11 @@ export function useCustomersData(
           customer_code: customer.codigo,
           customer_store: customer.loja,
         }));
+        setEnrichmentTotal(pairs.length);
         if (pairs.length > 0) {
           try {
+            setEnrichmentLoading(true);
+            setEnrichmentError(null);
             const enriched = await enrichPortfolioCustomers(pairs, controller.signal);
             if (controller.signal.aborted) return;
             const map: typeof enrichmentByKey = {};
@@ -138,13 +151,26 @@ export function useCustomersData(
               };
             }
             setEnrichmentByKey(map);
-          } catch {
-            if (!controller.signal.aborted) {
-              setEnrichmentByKey({});
+            setEnrichmentCovered(Object.keys(map).length);
+            if (Object.keys(map).length < pairs.length) {
+              setEnrichmentError(
+                `Cobertura parcial: ${Object.keys(map).length} de ${pairs.length} clientes enriquecidos.`,
+              );
             }
+          } catch (err) {
+            if (!controller.signal.aborted) {
+              setEnrichmentError(
+                err instanceof Error ? err.message : "Não foi possível enriquecer os clientes.",
+              );
+            }
+          } finally {
+            if (!controller.signal.aborted) setEnrichmentLoading(false);
           }
         } else {
           setEnrichmentByKey({});
+          setEnrichmentCovered(0);
+          setEnrichmentLoading(false);
+          setEnrichmentError(null);
         }
       } catch (err) {
         if (controller.signal.aborted) return;
@@ -261,5 +287,11 @@ export function useCustomersData(
     reload,
     portfolioMessage,
     portfolioEmpty,
+    enrichment: {
+      loading: enrichmentLoading,
+      error: enrichmentError,
+      covered: enrichmentCovered,
+      total: enrichmentTotal,
+    },
   };
 }

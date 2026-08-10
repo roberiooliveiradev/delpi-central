@@ -1,21 +1,15 @@
 import type { CustomerSummary } from "../types/customerSummary";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
-import { useCustomerPurchaseEvolution } from "../hooks/useCustomerPurchaseEvolution";
 import { CustomerAttentionBanner } from "./CustomerAttentionBanner";
-import { CustomerContactsStub } from "./CustomerContactsStub";
 import { CustomerNextActionCard } from "./CustomerNextActionCard";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
 import { CustomerOverviewKpis } from "./CustomerOverviewKpis";
-import { CustomerPurchaseEvolutionChart } from "./CustomerPurchaseEvolutionChart";
-import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 
 type CustomerOverviewSectionProps = {
   customer: CustomerSummary;
   orders: CustomerOrderSummary[];
   loading?: boolean;
-  basePath: string;
   onGoToOrders: () => void;
-  onGoToContacts: () => void;
 };
 
 /**
@@ -25,16 +19,8 @@ export function CustomerOverviewSection({
   customer,
   orders,
   loading = false,
-  basePath,
   onGoToOrders,
-  onGoToContacts,
 }: CustomerOverviewSectionProps) {
-  const evolution = useCustomerPurchaseEvolution(
-    customer.codigo,
-    customer.loja,
-    true,
-  );
-
   return (
     <div className="pva-customer-overview">
       <CustomerOverviewKpis customer={customer} loading={loading} />
@@ -42,21 +28,10 @@ export function CustomerOverviewSection({
 
       <div className="pva-customer-overview__grid">
         <div className="pva-customer-overview__main">
-          <CustomerPurchaseEvolutionChart
-            points={evolution.points}
-            loading={evolution.loading}
-            error={evolution.error}
-          />
           <CustomerOpenOrdersPreview orders={orders} onSeeAll={onGoToOrders} />
-          <CustomerActivityTimelinePanel
-            codigo={customer.codigo}
-            loja={customer.loja}
-            basePath={basePath}
-          />
         </div>
         <aside className="pva-customer-overview__side">
           <CustomerNextActionCard customer={customer} onViewOrders={onGoToOrders} />
-          <CustomerContactsStub onAdd={onGoToContacts} />
         </aside>
       </div>
     </div>

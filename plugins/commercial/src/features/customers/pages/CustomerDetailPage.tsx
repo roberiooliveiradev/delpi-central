@@ -2,6 +2,7 @@ import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
+import { CommercialPagePath } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { EmptyState } from "../../../ui/EmptyState";
 import { PVA_STATE_BOX } from "../../../ui/stateChrome";
@@ -10,13 +11,18 @@ import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
 import { CustomerDetailHeader } from "../components/CustomerDetailHeader";
+import { CustomerAccountRail } from "../components/CustomerAccountRail";
+import { CustomerActivityTimelinePanel } from "../components/CustomerActivityTimelinePanel";
 import { CustomerOrdersTable } from "../components/CustomerOrdersTable";
 import { CustomerOverviewSection } from "../components/CustomerOverviewSection";
 import { CustomerSectionComingSoon } from "../components/CustomerSectionComingSoon";
 import { useCustomerBilling } from "../billing/hooks/useCustomerBilling";
 import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
+import { useCustomerActivities } from "../hooks/useCustomerActivities";
 import {
   buildCustomerDetailSearch,
+  customerDetailPanelId,
+  customerDetailTabId,
   isHistorySection,
   parseCustomerDetailSection,
   type CustomerDetailSection,
@@ -44,8 +50,14 @@ export function CustomerDetailPage({
   basePath,
   search,
 }: CustomerDetailPageProps) {
-  const { canUseTeamScope, sellers, myPortfolio, canViewWorklist, canManageFollowups } =
-    usePortfolioScope();
+  const {
+    canUseTeamScope,
+    sellers,
+    myPortfolio,
+    canViewWorklist,
+    canManageFollowups,
+    canViewAnalytics,
+  } = usePortfolioScope();
 
   const sellerAccess = useMemo<CustomersListSellerAccess>(
     () => ({
@@ -75,6 +87,7 @@ export function CustomerDetailPage({
     customer: rawCustomer,
     orders,
     attentionOrders,
+    listData,
   } = useCustomerDetailData(codigo, loja, {
     sellerNameByKey,
     sellerId: listDeepLink.sellerId,
@@ -112,7 +125,12 @@ export function CustomerDetailPage({
   const billing = useCustomerBilling(
     codigo,
     loja,
-    Boolean(customer) || isHistorySection(section),
+    Boolean(customer) && isHistorySection(section),
+  );
+  const activities = useCustomerActivities(
+    codigo,
+    loja,
+    Boolean(customer) && section === "atividades" && canViewWorklist,
   );
 
   const goBack = () => {
@@ -124,20 +142,41 @@ export function CustomerDetailPage({
   const codeStore = formatEntityCodeStore(codigo, loja) ?? `${codigo}-${loja}`;
   const showInitialLoading = loading && !hasData;
   const notFound = hasData && !loading && customer === null;
+  const canScheduleFollowUp = canViewWorklist && canManageFollowups;
+  const scheduleFollowUp = canScheduleFollowUp
+    ? () => {
+        const params = new URLSearchParams({
+          createTask: "1",
+          customer_code: codigo,
+          customer_store: loja,
+        });
+        navigatePluginView("my_day", {
+          basePath,
+          search: `?${params.toString()}`,
+        });
+      }
+    : undefined;
+  const refreshActiveSection = () => {
+    reload();
+    if (section === "historico") billing.reload();
+    if (section === "atividades") activities.reload();
+  };
 
   return (
     <div className="pva-internal-page pva-checkup-page">
       {!customer ? (
         <header className="pva-detail-header pva-detail-header--minimal">
-          <nav className="pva-detail-breadcrumb" aria-label="Navegação">
-            <button type="button" className="pva-detail-breadcrumb__link" onClick={goBack}>
-              Minha carteira
-            </button>
-            <span className="pva-detail-breadcrumb__sep" aria-hidden="true">
-              /
-            </span>
-            <span className="pva-detail-breadcrumb__current">{codeStore}</span>
-          </nav>
+          <CommercialPagePath
+            back={{
+              label: "Minha carteira",
+              href: buildCustomersListPath(basePath, listDeepLink, sellerAccess),
+              onNavigate: (event) => {
+                event.preventDefault();
+                goBack();
+              },
+            }}
+            current={notFound ? "Cliente não encontrado" : `Carregando ${codeStore}…`}
+          />
           <div className="pva-detail-header__row">
             <div>
               <h1 className="pva-detail-header__name">Cliente</h1>
@@ -147,7 +186,7 @@ export function CustomerDetailPage({
               <button
                 type="button"
                 className="pva-btn pva-btn--ghost"
-                onClick={reload}
+                onClick={refreshActiveSection}
                 disabled={loading || refreshing}
                 aria-busy={refreshing || loading}
               >
@@ -169,23 +208,8 @@ export function CustomerDetailPage({
           loading={loading}
           onBack={goBack}
           backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
-          onReload={reload}
-          onRegisterContact={() => changeSection("contatos")}
-          onScheduleFollowUp={
-            canViewWorklist && canManageFollowups
-              ? () => {
-                  const params = new URLSearchParams({
-                    createTask: "1",
-                    customer_code: codigo,
-                    customer_store: loja,
-                  });
-                  navigatePluginView("my_day", {
-                    basePath,
-                    search: `?${params.toString()}`,
-                  });
-                }
-              : undefined
-          }
+          onReload={refreshActiveSection}
+          onScheduleFollowUp={scheduleFollowUp}
         />
       )}
 
@@ -223,6 +247,26 @@ export function CustomerDetailPage({
         </div>
       ) : null}
 
+      {customer && listData.enrichment.error ? (
+        <div className="pva-alert pva-alert--warning" role="status">
+          <p>
+            Cadastro e faturamento com cobertura parcial
+            {listData.enrichment.total > 0
+              ? ` (${listData.enrichment.covered}/${listData.enrichment.total})`
+              : ""}
+            : {listData.enrichment.error}
+          </p>
+          <button
+            type="button"
+            className="pva-btn pva-btn--secondary"
+            onClick={reload}
+            disabled={refreshing || listData.enrichment.loading}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      ) : null}
+
       {notFound ? (
         <EmptyState
           title="Cliente não encontrado"
@@ -243,35 +287,61 @@ export function CustomerDetailPage({
             openOrdersCount={customer.quantidadePedidosAbertos}
           />
 
-          {section === "resumo" ? (
-            <CustomerOverviewSection
-              customer={customer}
-              orders={orders}
-              loading={refreshing}
-              basePath={basePath}
-              onGoToOrders={() => changeSection("pedidos")}
-              onGoToContacts={() => changeSection("contatos")}
-            />
-          ) : null}
+          <div className="pva-customer-overview__grid">
+            <main
+              className="pva-customer-overview__main"
+              id={customerDetailPanelId(section)}
+              role="tabpanel"
+              aria-labelledby={customerDetailTabId(section)}
+              tabIndex={0}
+            >
+              {section === "resumo" ? (
+                <CustomerOverviewSection
+                  customer={customer}
+                  orders={orders}
+                  loading={refreshing}
+                  onGoToOrders={() => changeSection("pedidos")}
+                />
+              ) : null}
 
-          {section === "pedidos" ? (
-            <>
-              <CustomerAttentionOrders orders={attentionOrders} />
-              {orders.length === 0 ? (
-                <div className={PVA_STATE_BOX} role="status">
-                  Cliente localizado, porém sem linhas utilizáveis neste recorte.
-                </div>
-              ) : (
-                <CustomerOrdersTable orders={orders} />
-              )}
-            </>
-          ) : null}
+              {section === "pedidos" ? (
+                <>
+                  <CustomerAttentionOrders orders={attentionOrders} />
+                  {orders.length === 0 ? (
+                    <div className={PVA_STATE_BOX} role="status">
+                      Cliente localizado, porém sem linhas utilizáveis neste recorte.
+                    </div>
+                  ) : (
+                    <CustomerOrdersTable orders={orders} basePath={basePath} />
+                  )}
+                </>
+              ) : null}
 
-          {section === "historico" ? <CustomerBillingPanel billing={billing} /> : null}
+              {section === "historico" ? <CustomerBillingPanel billing={billing} /> : null}
 
-          {section === "oportunidades" || section === "contatos" ? (
-            <CustomerSectionComingSoon section={section} basePath={basePath} />
-          ) : null}
+              {section === "oportunidades" ? (
+                <CustomerSectionComingSoon
+                  basePath={basePath}
+                  customerCode={codigo}
+                  canViewAnalytics={canViewAnalytics}
+                />
+              ) : null}
+
+              {section === "atividades" ? (
+                <CustomerActivityTimelinePanel
+                  activities={activities}
+                  canViewActivities={canViewWorklist}
+                  onScheduleFollowUp={scheduleFollowUp}
+                />
+              ) : null}
+            </main>
+            <aside className="pva-customer-overview__side">
+              <CustomerAccountRail
+                customer={customer}
+                onViewOrders={() => changeSection("pedidos")}
+              />
+            </aside>
+          </div>
         </>
       ) : null}
     </div>

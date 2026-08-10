@@ -2,10 +2,13 @@ import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
+import { navigatePluginPath } from "../../../app/pluginNavigation";
+import { buildCommercialOpenOrderPath } from "../../../utils/openOrdersDeepLink";
 
 type CustomerOrderLinesProps = {
   lines: readonly OpenOrdersTotvsItem[];
   orderKey: string;
+  basePath: string;
 };
 
 function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
@@ -17,7 +20,7 @@ function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
   return `Atrasado (${days.toLocaleString("pt-BR")} dias)`;
 }
 
-export function CustomerOrderLines({ lines, orderKey }: CustomerOrderLinesProps) {
+export function CustomerOrderLines({ lines, orderKey, basePath }: CustomerOrderLinesProps) {
   const regionId = `pva-order-lines-${orderKey.replace(/\|/g, "-")}`;
 
   return (
@@ -45,11 +48,15 @@ export function CustomerOrderLines({ lines, orderKey }: CustomerOrderLinesProps)
               Valor aberto
             </th>
             <th scope="col">Atraso</th>
+            <th scope="col">Ação</th>
           </tr>
         </thead>
         <tbody>
           {lines.map((line, index) => {
             const rowKey = `${orderKey}-${line.linha ?? index}-${line.produto ?? ""}`;
+            const canOpenOrder = Boolean(
+              line.filial?.trim() && line.pedido?.trim() && line.linha?.trim(),
+            );
             return (
               <tr key={rowKey}>
                 <td data-label="Produto">{line.produto?.trim() || "—"}</td>
@@ -67,6 +74,26 @@ export function CustomerOrderLines({ lines, orderKey }: CustomerOrderLinesProps)
                   {formatCurrency(toFiniteNumber(line.valor_aberto))}
                 </td>
                 <td data-label="Atraso">{lineOverdueLabel(line)}</td>
+                <td data-label="Ação">
+                  {canOpenOrder ? (
+                    <button
+                      type="button"
+                      className="pva-btn pva-btn--ghost"
+                      onClick={() =>
+                        navigatePluginPath(
+                          buildCommercialOpenOrderPath({
+                            basePath,
+                            filial: line.filial,
+                            pedido: line.pedido,
+                            linha: line.linha,
+                          }),
+                        )
+                      }
+                    >
+                      Ver em Pedidos
+                    </button>
+                  ) : null}
+                </td>
               </tr>
             );
           })}

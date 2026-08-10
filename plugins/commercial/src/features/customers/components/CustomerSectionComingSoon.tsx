@@ -2,73 +2,44 @@ import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import { EmptyState } from "../../../ui/EmptyState";
-import type { CustomerDetailSection } from "../utils/customerDetailSection";
 
 type CustomerSectionComingSoonProps = {
-  section: CustomerDetailSection;
   basePath: string;
+  customerCode: string;
+  canViewAnalytics: boolean;
 };
 
 /**
- * Conta híbrida (3C): resumo/CTA interno — Oportunidades → Gestão; Contatos → Meu dia.
+ * Oportunidades são consultadas pela página canônica, com busca real por cliente.
  */
 export function CustomerSectionComingSoon({
-  section,
   basePath,
+  customerCode,
+  canViewAnalytics,
 }: CustomerSectionComingSoonProps) {
-  if (section === "oportunidades") {
-    return (
-      <EmptyState
-        title="Oportunidades (OV)"
-        description="Acompanhe o funil e o detalhe das oportunidades deste cliente na Gestão."
-        action={
-          <div className="cm-nav-row">
-            <ActionButton
-              variant="primary"
-              onClick={() =>
-                navigatePluginView("analytics_opportunities", { basePath })
-              }
-            >
-              Ver oportunidades
-            </ActionButton>
-            <ActionButton
-              variant="ghost"
-              onClick={() => navigatePluginView("analytics", { basePath })}
-            >
-              Visão geral
-            </ActionButton>
-          </div>
-        }
-      />
-    );
-  }
-
-  if (section === "contatos") {
-    return (
-      <EmptyState
-        title="Contatos"
-        description="Cadastro de contatos ainda não está disponível. Use o Meu dia para follow-ups e a área Propostas para documentos ADY."
-        action={
-          <div className="cm-nav-row">
-            <ActionButton
-              variant="primary"
-              onClick={() => navigatePluginView("my_day", { basePath })}
-            >
-              Abrir Meu dia
-            </ActionButton>
-            <ActionButton
-              variant="ghost"
-              onClick={() => navigatePluginView("proposals", { basePath })}
-            >
-              Ver propostas
-            </ActionButton>
-          </div>
-        }
-      />
-    );
-  }
-
   return (
-    <EmptyState title="Em breve" description="Esta seção ainda não está disponível." />
+    <EmptyState
+      title="Oportunidades da conta"
+      description={
+        canViewAnalytics
+          ? "Consulte a área de Oportunidades usando o código real deste cliente."
+          : "Você não possui permissão para consultar oportunidades."
+      }
+      action={
+        canViewAnalytics && customerCode.trim() ? (
+          <ActionButton
+            variant="primary"
+            onClick={() =>
+              navigatePluginView("analytics_opportunities", {
+                basePath,
+                search: `?${new URLSearchParams({ search: customerCode.trim() }).toString()}`,
+              })
+            }
+          >
+            Ver oportunidades
+          </ActionButton>
+        ) : undefined
+      }
+    />
   );
 }

@@ -1,7 +1,4 @@
 import { ActionButton, SectionCard } from "@delpi/plugin-ui/index";
-import { useEffect, useState } from "react";
-
-import { listCustomerActivities, type CommercialActivityDto } from "../../../api/worklistApi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
   cmSectionCardClassNames,
@@ -9,12 +6,12 @@ import {
   CommercialActivityTimeline,
   CommercialLoadingCard,
 } from "../../../app/commercialUi";
-import { navigatePluginView } from "../../../app/pluginNavigation";
+import type { UseCustomerActivitiesResult } from "../hooks/useCustomerActivities";
 
 type CustomerActivityTimelineProps = {
-  codigo: string;
-  loja: string;
-  basePath: string;
+  activities: UseCustomerActivitiesResult;
+  canViewActivities: boolean;
+  onScheduleFollowUp?: () => void;
 };
 
 function formatWhen(iso?: string | null): string {
@@ -33,30 +30,11 @@ function formatWhen(iso?: string | null): string {
 }
 
 export function CustomerActivityTimelinePanel({
-  codigo,
-  loja,
-  basePath,
+  activities,
+  canViewActivities,
+  onScheduleFollowUp,
 }: CustomerActivityTimelineProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [items, setItems] = useState<CommercialActivityDto[]>([]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-    listCustomerActivities(codigo, loja, controller.signal)
-      .then((rows) => setItems(rows))
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Erro ao carregar timeline.");
-        setItems([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [codigo, loja]);
+  const { loading, refreshing, error, hasData, items, reload } = activities;
 
   return (
     <SectionCard
@@ -66,9 +44,21 @@ export function CustomerActivityTimelinePanel({
       classNames={cmSectionCardClassNames}
       labels={cmSectionLabels}
     >
-      {loading ? <CommercialLoadingCard title="Carregando atividades…" variant="panel" /> : null}
-      {error ? <p role="alert">{error}</p> : null}
-      {!loading ? (
+      {!canViewActivities ? (
+        <p role="status">Você não possui permissão para consultar atividades desta conta.</p>
+      ) : null}
+      {canViewActivities && loading && !hasData ? (
+        <CommercialLoadingCard title="Carregando atividades…" variant="panel" />
+      ) : null}
+      {canViewActivities && error ? (
+        <div role="alert">
+          <p>{hasData ? `Não foi possível atualizar: ${error}` : error}</p>
+          <ActionButton variant="ghost" onClick={reload} disabled={refreshing}>
+            Tentar novamente
+          </ActionButton>
+        </div>
+      ) : null}
+      {canViewActivities && hasData ? (
         <CommercialActivityTimeline
           items={items.map((item) => ({
             id: item.id,
@@ -82,26 +72,13 @@ export function CustomerActivityTimelinePanel({
           aria-label="Timeline da conta"
         />
       ) : null}
-      <div className="cm-nav-row" style={{ marginTop: 12 }}>
-        <ActionButton
-          variant="ghost"
-          onClick={() => navigatePluginView("proposals", { basePath })}
-        >
-          Propostas →
-        </ActionButton>
-        <ActionButton
-          variant="ghost"
-          onClick={() => navigatePluginView("analytics_opportunities", { basePath })}
-        >
-          Oportunidades →
-        </ActionButton>
-        <ActionButton
-          variant="ghost"
-          onClick={() => navigatePluginView("open_orders", { basePath })}
-        >
-          Pedidos →
-        </ActionButton>
-      </div>
+      {onScheduleFollowUp ? (
+        <div className="cm-nav-row">
+          <ActionButton variant="primary" onClick={onScheduleFollowUp}>
+            Agendar follow-up
+          </ActionButton>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }
