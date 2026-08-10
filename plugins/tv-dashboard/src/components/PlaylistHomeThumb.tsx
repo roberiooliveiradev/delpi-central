@@ -35,7 +35,6 @@ export function PlaylistHomeThumb({ playlist }: Props) {
       viewportWidth={playlist.viewportWidth}
       viewportHeight={playlist.viewportHeight}
       masterConfig={playlist.masterConfig}
-      publicToken={playlist.publicToken}
       fillContainer
     />
   );
