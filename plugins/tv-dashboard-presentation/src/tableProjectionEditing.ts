@@ -11,7 +11,21 @@ export function resolveEditableTableProjectionColumns(
   block: ComunicadoTableViewBlock,
 ): TableColumnProjection[] {
   const existing = block.tableProjection?.columns;
-  if (existing?.length) return existing.map((column) => ({ ...column }));
+  if (existing?.length) {
+    const resolved = applyViewProjection(block.resolved, {
+      tableProjection: block.tableProjection,
+    });
+    const fromData = resolveTableColumns(resolved, resolved?.table?.rows ?? []);
+    const known = new Set(existing.map((column) => column.key));
+    const appended = fromData
+      .filter((column) => !known.has(column.key))
+      .map((column) => ({
+        key: column.key,
+        label: column.label,
+        visible: true,
+      }));
+    return [...existing.map((column) => ({ ...column })), ...appended];
+  }
 
   const resolved = applyViewProjection(block.resolved, {
     tableProjection: block.tableProjection,

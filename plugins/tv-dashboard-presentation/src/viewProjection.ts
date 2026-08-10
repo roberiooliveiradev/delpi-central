@@ -320,7 +320,15 @@ function applyTableProjection(
     return resolved;
   }
 
-  const visible = projection.columns.filter((col) => col.visible !== false);
+  // Alinha ao inspetor (`resolveVisibleKeys`): colunas novas da fonte que ainda
+  // não estão na projeção entram como visíveis (ex.: campo novo na API).
+  const projectedKeys = new Set(projection.columns.map((col) => col.key));
+  const appended: TableColumnProjection[] = columns
+    .filter((col) => !projectedKeys.has(col.key))
+    .map((col) => ({ key: col.key, visible: true }));
+  const effectiveColumns = [...projection.columns, ...appended];
+
+  const visible = effectiveColumns.filter((col) => col.visible !== false);
   if (visible.length === 0) {
     return {
       ...resolved,

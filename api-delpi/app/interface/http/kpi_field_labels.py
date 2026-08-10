@@ -111,6 +111,17 @@ SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "total_lines": "Total de linhas",
     "on_time_lines": "Linhas no prazo",
     "late_lines": "Linhas atrasadas",
+    "supplier_code": "Código fornecedor",
+    "supplier_name": "Fornecedor",
+    "supplier_short_name": "Nome reduzido",
+    "order_number": "Pedido",
+    "order_item": "Item",
+    "product_code": "Produto",
+    "product_description": "Descrição",
+    "expected_delivery_date": "Data prometida",
+    "receipt_entry_date": "Data recebimento",
+    "status": "Status",
+    "days_diff": "Dias",
 }
 
 SUPPLIES_STOCK_VALUE_FIELD_LABELS: dict[str, str] = {

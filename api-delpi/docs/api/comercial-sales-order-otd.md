@@ -71,7 +71,7 @@ Painel (`/panel`) — campos de linha relevantes:
 
 | Campo | Fonte |
 |-------|--------|
-| `customer_name` | `SA1.A1_NOME` |
+| `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 
 Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
