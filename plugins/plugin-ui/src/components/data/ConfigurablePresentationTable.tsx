@@ -131,8 +131,8 @@ export function ConfigurablePresentationTable({
                 >
                   {formatConfigurableTableCellValue(
                     row[column.key],
-                    valueFormat,
-                    config.displayValueFormat,
+                    column.valueFormat ?? valueFormat,
+                    column.displayFormat ?? config.displayValueFormat,
                   )}
                 </TableCell>
               ))}
@@ -158,8 +158,8 @@ export function ConfigurablePresentationTable({
                 >
                   {formatConfigurableTableCellValue(
                     totalRow[column.key],
-                    valueFormat,
-                    config.displayValueFormat,
+                    column.valueFormat ?? valueFormat,
+                    column.displayFormat ?? config.displayValueFormat,
                   )}
                 </TableCell>
               ))}

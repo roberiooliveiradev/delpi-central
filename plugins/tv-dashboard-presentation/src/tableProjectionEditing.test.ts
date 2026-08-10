@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import {
   distributeTableProjectionColumnWidths,
+  formatTableProjectionColumns,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,
@@ -57,6 +58,31 @@ describe("tableProjectionEditing", () => {
     ]);
 
     expect(keys).toEqual(["code", "description"]);
+  });
+
+  it("mapeia célula do corpo para a mesma chave de coluna", () => {
+    const keys = selectedTableProjectionColumnKeys(block, [
+      { kind: "cell", rowIndex: 2, colIndex: 0 },
+    ]);
+    expect(keys).toEqual(["code"]);
+  });
+
+  it("grava displayFormat só nas colunas alvo", () => {
+    const projection = formatTableProjectionColumns(block, ["description"], {
+      displayFormat: { category: "currency", currency: "BRL", decimalPlaces: 2 },
+      valueFormat: "currency",
+    });
+    expect(projection.columns).toEqual([
+      { key: "code", label: "Código", visible: true },
+      {
+        key: "description",
+        label: "Descrição",
+        visible: true,
+        widthPct: 60,
+        displayFormat: { category: "currency", currency: "BRL", decimalPlaces: 2 },
+        valueFormat: "currency",
+      },
+    ]);
   });
 
   it("distribui a largura igualmente entre colunas visíveis", () => {

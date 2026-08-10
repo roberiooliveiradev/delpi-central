@@ -36,6 +36,7 @@ export {
   specFromTableValueFormat,
   specFromTextProjectionFormat,
   tableValueFormatFromSpec,
+  textProjectionFormatFromSpec,
   type LegacyCanvasNumberFormat,
   type LegacyCategoryLabelFormat,
   type LegacyChartValueFormat,
@@ -52,11 +53,15 @@ export {
   chartCategoryPatchFromSpec,
   chartValuePatchFromSpec,
   kpiPatchFromSpec,
+  tableColumnPatchFromSpec,
   tablePatchFromSpec,
+  textPatchFromSpec,
   type CanvasCellDisplayFormatPatch,
   type ChartDisplayFormatPatch,
   type KpiDisplayFormatPatch,
+  type TableColumnDisplayFormatPatch,
   type TableDisplayFormatPatch,
+  type TextDisplayFormatPatch,
 } from "./apply";
 export {
   bumpDisplayFormatDecimalPlaces,

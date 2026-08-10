@@ -156,6 +156,15 @@ describe("textViewProjection", () => {
     );
   });
 
+  it("formatTextProjectionValue: displayFormat canônico vence enum legado", () => {
+    expect(
+      formatTextProjectionValue(12.345, "number", {
+        decimalPlaces: 0,
+        displayFormat: { category: "currency", currency: "BRL", decimalPlaces: 2 },
+      }),
+    ).toMatch(/R\$\s*12,35/);
+  });
+
   it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {
     const siResolved: ComunicadoDataResolved = {
       kpi: { value: 1100, label: "value" },

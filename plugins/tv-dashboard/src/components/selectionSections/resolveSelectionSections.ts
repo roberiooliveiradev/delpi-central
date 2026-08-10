@@ -78,7 +78,7 @@ function resolveSingleBlockSections(
     case "text":
     case "heading":
     case "shape":
-      return withCommonTail(["visualBox"]);
+      return withCommonTail(["visualBox", "numberFormat"]);
     case "icon":
       return withCommonTail(["iconEditor"]);
     case "image":

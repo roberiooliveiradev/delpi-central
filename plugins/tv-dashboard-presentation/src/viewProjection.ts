@@ -68,6 +68,10 @@ export type TableColumnProjection = {
   visible: boolean;
   /** Largura relativa da coluna (% do total da tabela). */
   widthPct?: number;
+  /** Spec canônico por coluna — na leitura ganha do formato global da grade. */
+  displayFormat?: import("@delpi/plugin-ui").DisplayFormatSpec;
+  /** Espelho legado por coluna (gerado pelo adapter ao gravar `displayFormat`). */
+  valueFormat?: "auto" | "number" | "currency" | "percent";
 };
 
 export type TableViewProjection = {
@@ -156,6 +160,14 @@ export function normalizeKpiProjection(raw: unknown): KpiViewProjection | undefi
       if ((item as KpiMetricProjection).format) {
         metric.format = (item as KpiMetricProjection).format;
       }
+      const metricDisplayFormat = (item as KpiMetricProjection).displayFormat;
+      if (
+        metricDisplayFormat &&
+        typeof metricDisplayFormat === "object" &&
+        typeof (metricDisplayFormat as { category?: unknown }).category === "string"
+      ) {
+        metric.displayFormat = metricDisplayFormat;
+      }
       const decimalPlaces = (item as KpiMetricProjection).decimalPlaces;
       if (typeof decimalPlaces === "number" && Number.isFinite(decimalPlaces)) {
         const n = Math.trunc(decimalPlaces);
@@ -226,6 +238,23 @@ export function normalizeTableProjection(raw: unknown): TableViewProjection | un
       const widthPct = asFiniteNumber((item as TableColumnProjection).widthPct);
       if (widthPct != null && widthPct > 0) {
         col.widthPct = Math.max(1, Math.min(100, widthPct));
+      }
+      const colDisplayFormat = (item as TableColumnProjection).displayFormat;
+      if (
+        colDisplayFormat &&
+        typeof colDisplayFormat === "object" &&
+        typeof (colDisplayFormat as { category?: unknown }).category === "string"
+      ) {
+        col.displayFormat = colDisplayFormat;
+      }
+      const colValueFormat = (item as TableColumnProjection).valueFormat;
+      if (
+        colValueFormat === "auto" ||
+        colValueFormat === "number" ||
+        colValueFormat === "currency" ||
+        colValueFormat === "percent"
+      ) {
+        col.valueFormat = colValueFormat;
       }
       return col;
     })

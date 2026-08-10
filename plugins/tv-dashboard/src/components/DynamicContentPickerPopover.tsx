@@ -132,7 +132,8 @@ export function DynamicContentPickerPopover({
                         onPick(
                           dataRefToDynamicContent({
                             field: option.field,
-                            format: "number",
+                            displayFormat: { category: "general", presetId: "general" },
+                            format: "raw",
                             label: option.label,
                           }),
                         );

@@ -24,7 +24,7 @@ export function resolveEditableTableProjectionColumns(
   }));
 }
 
-/** Chaves das colunas selecionadas (partes `headerCell`) na ordem das colunas visíveis. */
+/** Chaves das colunas selecionadas (`headerCell` ou `cell`) na ordem das colunas visíveis. */
 export function selectedTableProjectionColumnKeys(
   block: ComunicadoTableViewBlock,
   parts: readonly ComunicadoTablePartRef[],
@@ -33,11 +33,38 @@ export function selectedTableProjectionColumnKeys(
     (column) => column.visible !== false,
   );
   const indexes = new Set(
-    parts.flatMap((part) => (part.kind === "headerCell" ? [part.colIndex] : [])),
+    parts.flatMap((part) =>
+      part.kind === "headerCell" || part.kind === "cell" ? [part.colIndex] : [],
+    ),
   );
   return visibleColumns.flatMap((column, colIndex) =>
     indexes.has(colIndex) ? [column.key] : [],
   );
+}
+
+/** Aplica formato de exibição às colunas selecionadas (spec + espelho legado). */
+export function formatTableProjectionColumns(
+  block: ComunicadoTableViewBlock,
+  columnKeys: readonly string[],
+  patch: {
+    displayFormat: TableColumnProjection["displayFormat"];
+    valueFormat?: TableColumnProjection["valueFormat"];
+  },
+): TableViewProjection {
+  const keys = new Set(columnKeys);
+  return {
+    ...block.tableProjection,
+    columns: resolveEditableTableProjectionColumns(block).map((column) => {
+      if (!keys.has(column.key)) return column;
+      const next: TableColumnProjection = {
+        ...column,
+        displayFormat: patch.displayFormat,
+      };
+      if (patch.valueFormat) next.valueFormat = patch.valueFormat;
+      else delete next.valueFormat;
+      return next;
+    }),
+  };
 }
 
 /** Distribui a largura igualmente entre as colunas visíveis (PowerPoint «Distribuir Colunas»). */
