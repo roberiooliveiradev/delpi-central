@@ -4,9 +4,11 @@ import {
   EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT,
   EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT,
   EFFICIENCY_PIN_OPERATION_ID,
+  applyEfficiencyPinBandsToSharedPins,
   applySharedDataSourceToUnlinkedEfficiencyPins,
   buildEfficiencyPinInfoBlock,
   dataSourceOptionsForInspector,
+  findSharedEfficiencyPinBands,
   findSharedEfficiencyPinDataSourceId,
   isDataSourceBlockType,
   isEfficiencyPinBlock,
@@ -129,6 +131,21 @@ export function EfficiencyPinInspector({
       ...patch,
       ...(nextBands ? { bands: nextBands } : {}),
     };
+    const selectedPatch = {
+      ...pin,
+      efficiencyPin: next,
+      content: next.workCenter?.trim() || pin.content || "",
+    } as ComunicadoShapeBlock;
+    /* Faixas de cor: uma regra para o mapa — propaga aos pins da mesma fonte. */
+    if (patch.bands && nextBands) {
+      const withSelected = blocks.map((block) => (block.id === pin.id ? selectedPatch : block));
+      updateBlocks(
+        applyEfficiencyPinBandsToSharedPins(withSelected, nextBands, {
+          sourceId: pin.dataSourceId,
+        }),
+      );
+      return;
+    }
     updateSelected({
       efficiencyPin: next,
       content: next.workCenter?.trim() || pin.content || "",
@@ -138,12 +155,19 @@ export function EfficiencyPinInspector({
   function linkSource(nextSourceId: string) {
     if (!pin) return;
     const trimmed = nextSourceId.trim();
+    const inheritedBands = trimmed
+      ? findSharedEfficiencyPinBands(blocks, trimmed) ?? binding.bands
+      : binding.bands;
     const withSelected = blocks.map((block) =>
       block.id === pin.id
         ? ({
             ...block,
             dataSourceId: trimmed || undefined,
             textProjection: undefined,
+            efficiencyPin: {
+              ...(block.efficiencyPin ?? {}),
+              ...(inheritedBands ? { bands: inheritedBands } : {}),
+            },
           } as typeof block)
         : block,
     );
@@ -302,7 +326,11 @@ export function EfficiencyPinInspector({
         ) : null}
       </DeckPropertySection>
       <DeckPropertySection title="Faixas do radar" pane={pane} defaultOpen={false}>
-        <DeckField label={`Bom ≥ % (padrão ${EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT})`}>
+        <p className="td-deck-inspector__hint">
+          Compartilhadas com todos os pins da mesma fonte. Verde ≥ Bom · amarelo ≥ Atenção e &lt;
+          Bom · vermelho &lt; Atenção · laranja fora do máx. válido.
+        </p>
+        <DeckField label={`Bom (verde) ≥ % — padrão ${EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT}`}>
           <NativeTextControl
             className={compactNative}
             type="number"
@@ -317,7 +345,9 @@ export function EfficiencyPinInspector({
             }}
           />
         </DeckField>
-        <DeckField label={`Atenção ≥ % (padrão ${EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT})`}>
+        <DeckField
+          label={`Atenção (amarelo) ≥ % — abaixo = vermelho (padrão ${EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT})`}
+        >
           <NativeTextControl
             className={compactNative}
             type="number"
@@ -347,9 +377,6 @@ export function EfficiencyPinInspector({
             }}
           />
         </DeckField>
-        <p className="td-deck-inspector__hint">
-          Verde ≥ bom · amarelo ≥ atenção · vermelho abaixo · laranja fora da faixa.
-        </p>
       </DeckPropertySection>
     </>
   );

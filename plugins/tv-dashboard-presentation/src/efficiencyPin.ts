@@ -150,6 +150,49 @@ export function applySharedDataSourceToUnlinkedEfficiencyPins(
   });
 }
 
+/**
+ * Propaga faixas de cor para todos os pins CT da mesma fonte (mapa da planta).
+ * Sem `sourceId`, aplica a todos os pins do slide.
+ */
+export function applyEfficiencyPinBandsToSharedPins(
+  blocks: readonly ComunicadoBlock[],
+  bands: ComunicadoEfficiencyPinBands,
+  options?: { sourceId?: string | null; excludeBlockId?: string | null },
+): ComunicadoBlock[] {
+  const sourceId = options?.sourceId?.trim() || "";
+  const excludeId = options?.excludeBlockId?.trim() || "";
+  return blocks.map((block) => {
+    if (!isEfficiencyPinBlock(block)) return block;
+    if (excludeId && block.id === excludeId) return block;
+    if (sourceId && block.dataSourceId?.trim() !== sourceId) return block;
+    return {
+      ...block,
+      efficiencyPin: {
+        ...(block.efficiencyPin ?? {}),
+        bands: { ...bands },
+      },
+    };
+  });
+}
+
+/** Faixas já gravadas em algum pin da mesma fonte (para herdar ao vincular). */
+export function findSharedEfficiencyPinBands(
+  blocks: readonly ComunicadoBlock[],
+  sourceId: string | null | undefined,
+): ComunicadoEfficiencyPinBands | undefined {
+  const trimmed = sourceId?.trim();
+  if (!trimmed) return undefined;
+  for (const block of blocks) {
+    if (!isEfficiencyPinBlock(block)) continue;
+    if (block.dataSourceId?.trim() !== trimmed) continue;
+    const bands = block.efficiencyPin?.bands;
+    if (bands && (bands.goodMinPct != null || bands.warnMinPct != null || bands.validMaxPct != null)) {
+      return { ...bands };
+    }
+  }
+  return undefined;
+}
+
 function finiteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim()) {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { shapeBlockAllowsResize } from "./comunicadoShapeGeometry";
 import {
   EFFICIENCY_PIN_OPERATION_ID,
+  applyEfficiencyPinBandsToSharedPins,
   applySharedDataSourceToUnlinkedEfficiencyPins,
   buildEfficiencyPinInfoBlock,
   classifyEfficiencyPinPct,
@@ -29,6 +30,45 @@ describe("efficiencyPin", () => {
     expect(classifyEfficiencyPinPct(40)).toBe("bad");
     expect(classifyEfficiencyPinPct(250)).toBe("verify");
     expect(classifyEfficiencyPinPct(null)).toBe("unknown");
+  });
+
+  it("Atenção ≥ 75 deixa abaixo de 75 em vermelho e 75–94 em amarelo", () => {
+    const bands = { goodMinPct: 95, warnMinPct: 75 };
+    expect(classifyEfficiencyPinPct(96, bands)).toBe("good");
+    expect(classifyEfficiencyPinPct(80, bands)).toBe("warn");
+    expect(classifyEfficiencyPinPct(75, bands)).toBe("warn");
+    expect(classifyEfficiencyPinPct(74.9, bands)).toBe("bad");
+    expect(classifyEfficiencyPinPct(40, bands)).toBe("bad");
+  });
+
+  it("propaga faixas para pins da mesma fonte", () => {
+    const blocks = [
+      {
+        id: "pin-a",
+        type: "shape" as const,
+        shape: "efficiency-pin" as const,
+        frame: { x: 1, y: 1, w: 8, h: 8 },
+        style: {},
+        content: "",
+        dataSourceId: "src-1",
+        efficiencyPin: { workCenter: "CT-01", bands: { warnMinPct: 75 } },
+      },
+      {
+        id: "pin-b",
+        type: "shape" as const,
+        shape: "efficiency-pin" as const,
+        frame: { x: 2, y: 2, w: 8, h: 8 },
+        style: {},
+        content: "",
+        dataSourceId: "src-1",
+        efficiencyPin: { workCenter: "CT-02" },
+      },
+    ];
+    const next = applyEfficiencyPinBandsToSharedPins(blocks, { goodMinPct: 95, warnMinPct: 75 }, {
+      sourceId: "src-1",
+    });
+    expect(next[0]?.efficiencyPin?.bands).toEqual({ goodMinPct: 95, warnMinPct: 75 });
+    expect(next[1]?.efficiencyPin?.bands).toEqual({ goodMinPct: 95, warnMinPct: 75 });
   });
 
   it("resolve cor e % pelo work_center na tabela", () => {
