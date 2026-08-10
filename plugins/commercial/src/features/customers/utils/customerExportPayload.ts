@@ -1,6 +1,7 @@
 import { formatDisplayDate } from "../../../utils/dates";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
+import { hasCustomerEnrichmentCoverage } from "./customerEnrichmentCoverage";
 import { resolveCustomerStatus, statusLabel } from "./customerListPresentation";
 import type { CustomerColumnDef, CustomerColumnKey } from "./customerTableColumns";
 
@@ -10,6 +11,13 @@ type CustomerTableExportPayload = {
   columns: Array<{ key: string; label: string }>;
   rows: Array<Record<string, unknown>>;
 };
+
+const ENRICHMENT_COLUMNS = new Set<CustomerColumnKey>([
+  "city",
+  "lastPurchaseDate",
+  "billed12m",
+  "billingTrend",
+]);
 
 function billingTrendLabel(customer: CustomerSummary): string {
   const trend = customer.billingTrend;
@@ -32,6 +40,10 @@ export function customerExportValue(
   customer: CustomerSummary,
   key: CustomerColumnKey,
 ): ExportCellValue {
+  if (ENRICHMENT_COLUMNS.has(key) && !hasCustomerEnrichmentCoverage(customer)) {
+    return "";
+  }
+
   switch (key) {
     case "nome": {
       const codeStore =
@@ -46,7 +58,7 @@ export function customerExportValue(
     case "lastPurchaseDate":
       return customer.lastPurchaseDate ? formatDisplayDate(customer.lastPurchaseDate) : "";
     case "billed12m":
-      return customer.billed12m ?? 0;
+      return customer.billed12m ?? "";
     case "billingTrend":
       return billingTrendLabel(customer);
     case "status":

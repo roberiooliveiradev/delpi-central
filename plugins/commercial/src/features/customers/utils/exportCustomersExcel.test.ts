@@ -22,9 +22,12 @@ const CUSTOMER: CustomerSummary = {
   sellerName: "Maria",
   city: "Joinville",
   state: "SC",
+  lastPurchaseDate: "2026-08-01",
   billed12m: 98_765.43,
   billingTrend: "up",
   billingTrendPct: 12.5,
+  coverageKnown: true,
+  enrichmentAvailable: true,
   status: "atencao",
 };
 
@@ -66,6 +69,31 @@ describe("buildCustomersExportPayload", () => {
       city: "Joinville / SC",
       billed12m: 98_765.43,
       billingTrend: "Alta (12,5%)",
+    });
+  });
+
+  it("deixa enrichment sem cobertura vazio sem inventar zero", () => {
+    const payload = buildCustomersExportPayload(
+      [
+        {
+          ...CUSTOMER,
+          coverageKnown: false,
+          enrichmentAvailable: false,
+        },
+      ],
+      [
+        CUSTOMER_COLUMN_CATALOG[2],
+        CUSTOMER_COLUMN_CATALOG[3],
+        CUSTOMER_COLUMN_CATALOG[4],
+        CUSTOMER_COLUMN_CATALOG[5],
+      ],
+    );
+
+    expect(payload.rows[0]).toEqual({
+      city: "",
+      lastPurchaseDate: "",
+      billed12m: "",
+      billingTrend: "",
     });
   });
 });

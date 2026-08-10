@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from "react";
 
 import {
+  CommercialDataCellValue,
   CommercialDataRecordCard,
   CommercialDataTable,
   CommercialExcelExportButton,
@@ -23,6 +24,7 @@ import type {
 } from "../types/customerSummary";
 import { useCustomerTablePreferences } from "../hooks/useCustomerTablePreferences";
 import { exportCustomersExcel } from "../utils/exportCustomersExcel";
+import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
 import type { CustomerColumnDef } from "../utils/customerTableColumns";
 import {
   resolveCustomerStatus,
@@ -135,24 +137,43 @@ export function CustomersTable({
         key: "city",
         header: "Cidade / UF",
         sortable: true,
-        render: (customer) =>
-          customer.city || customer.state
-            ? [customer.city, customer.state].filter(Boolean).join(" / ")
-            : "—",
+        render: (customer) => (
+          <CommercialDataCellValue
+            value={
+              customer.city || customer.state
+                ? [customer.city, customer.state].filter(Boolean).join(" / ")
+                : null
+            }
+            present={hasCustomerEnrichmentCoverage(customer)}
+          />
+        ),
       },
       {
         key: "lastPurchaseDate",
         header: "Última venda",
         sortable: true,
-        render: (customer) => formatDisplayDate(customer.lastPurchaseDate ?? null),
+        render: (customer) => (
+          <CommercialDataCellValue
+            value={
+              customer.lastPurchaseDate
+                ? formatDisplayDate(customer.lastPurchaseDate)
+                : null
+            }
+            present={hasCustomerEnrichmentCoverage(customer)}
+          />
+        ),
       },
       {
         key: "billed12m",
         header: "Fat. 12 meses",
         sortable: true,
         align: "right",
-        render: (customer) =>
-          customer.billed12m == null ? "—" : formatCurrency(customer.billed12m),
+        render: (customer) => (
+          <CommercialDataCellValue
+            value={customer.billed12m == null ? null : formatCurrency(customer.billed12m)}
+            present={hasCustomerEnrichmentCoverage(customer)}
+          />
+        ),
       },
       {
         key: "billingTrend",
@@ -160,7 +181,11 @@ export function CustomersTable({
         headerHint: CM_HELP.customers.trend,
         sortable: true,
         render: (customer) => (
-          <BillingTrendCell trend={customer.billingTrend} pct={customer.billingTrendPct} />
+          <BillingTrendCell
+            trend={customer.billingTrend}
+            pct={customer.billingTrendPct}
+            covered={hasCustomerEnrichmentCoverage(customer)}
+          />
         ),
       },
       {
@@ -290,7 +315,16 @@ export function CustomersTable({
                 {
                   id: "last-sale",
                   label: "Última venda",
-                  value: formatDisplayDate(customer.lastPurchaseDate ?? null),
+                  value: (
+                    <CommercialDataCellValue
+                      value={
+                        customer.lastPurchaseDate
+                          ? formatDisplayDate(customer.lastPurchaseDate)
+                          : null
+                      }
+                      present={hasCustomerEnrichmentCoverage(customer)}
+                    />
+                  ),
                 },
                 {
                   id: "open-value",

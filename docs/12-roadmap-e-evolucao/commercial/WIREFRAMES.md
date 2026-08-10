@@ -289,7 +289,9 @@ Pedido+OP permanece no modal completo e também na página nativa WF-02R-D.
 
 **Rota:** `/apps/commercial/customers`  
 **Papel:** priorizar clientes da carteira com pedidos de venda em aberto; não representa a SA1 completa.
-**Estado URL:** `q`, `focus` e `seller_id` allowlisted; presets fixos agora, saved views customizadas depois.
+**Estado URL:** somente `q`, `focus`, `seller_id`, `sort`, `dir` e `page`
+allowlisted; presets fixos agora, saved views customizadas depois. Valores
+inválidos são normalizados e defaults são omitidos.
 
 ```text
 ┌─ PageHero · Minha carteira ─────────────────────────── [Atualizar] ──────┐
@@ -319,6 +321,17 @@ Pedido+OP permanece no modal completo e também na página nativa WF-02R-D.
 `SellerScopeFilter`, `CustomersTable`, `CustomerSummaryCards`,
 `CustomerBillingSeriesChart` e o mapper `CustomerSummary → DataRecordCard`.
 O MFE mantém apenas layout/responsividade e regra comercial; não replica CSS do kit.
+
+**Colunas default:** Cliente, Última venda, Fat. 12 meses, Tendência, Status,
+Em aberto, Atrasos e Próxima entrega. Vendedor é default apenas para escopo de
+equipe; Cidade / UF começa oculta. O usuário pode persistir visibilidade, ordem
+e largura localmente.
+
+**Cobertura:** a lista base de pedidos em aberto não é paginada na origem e
+permanece utilizável se enrichment ou faturamento falhar parcialmente. O MFE
+divide enrichment e billing em lotes determinísticos de até 200 clientes e
+agrega a cobertura. Campo derivado sem lote coberto mostra
+`Dado indisponível`; export deixa a célula vazia, sem converter ausência em zero.
 
 ### WF-03R-M — Minha carteira (mobile)
 

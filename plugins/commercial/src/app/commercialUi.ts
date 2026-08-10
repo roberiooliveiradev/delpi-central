@@ -32,6 +32,7 @@ import {
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
+  DataCellValue,
   DataTable,
   createInitialsAvatar,
   createTimeline,
@@ -61,6 +62,7 @@ import {
   timelineBemClasses,
   underlineNavBemClasses,
   withBemModifier,
+  type DataCellValueProps,
   type DashboardDataTableProps,
 } from "@delpi/plugin-ui/index";
 import { createElement } from "react";
@@ -92,6 +94,20 @@ export const CommercialActionButton = ActionButton;
 export const CommercialExcelExportButton = ExcelExportButton;
 export const CommercialSectionHintLabel = SectionHintLabel;
 export const CommercialTableColumnVisibilityMenu = TableColumnVisibilityMenu;
+export function CommercialDataCellValue({
+  labels,
+  ...props
+}: DataCellValueProps) {
+  return createElement(DataCellValue, {
+    ...props,
+    labels: {
+      nullLabel: "Dado indisponível",
+      emptyLabel: "Dado indisponível",
+      missingLabel: "Dado indisponível",
+      ...labels,
+    },
+  });
+}
 export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });
 export const CommercialStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const CommercialPagePath = createDashboardPagePath({

@@ -38,4 +38,7 @@ class TransferCustomersBody(BaseModel):
 
 
 class EnrichmentBody(BaseModel):
-    customers: list[CustomerAssignmentBody] = Field(default_factory=list)
+    customers: list[CustomerAssignmentBody] = Field(
+        default_factory=list,
+        max_length=200,
+    )

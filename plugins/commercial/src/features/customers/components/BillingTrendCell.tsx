@@ -1,5 +1,6 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 
+import { CommercialDataCellValue } from "../../../app/commercialUi";
 import type { CustomerSummary } from "../types/customerSummary";
 import {
   billingTrendTitle,
@@ -9,9 +10,14 @@ import {
 type BillingTrendCellProps = {
   trend: CustomerSummary["billingTrend"];
   pct: CustomerSummary["billingTrendPct"];
+  covered?: boolean;
 };
 
-export function BillingTrendCell({ trend, pct }: BillingTrendCellProps) {
+export function BillingTrendCell({ trend, pct, covered = true }: BillingTrendCellProps) {
+  if (!covered) {
+    return <CommercialDataCellValue value={undefined} present={false} />;
+  }
+
   if (!trend || trend === "insufficient") {
     return (
       <span className="cm-billing-trend cm-billing-trend--muted" title={billingTrendTitle(trend, pct)}>

@@ -71,11 +71,22 @@ o MFE:
 | `q` | Busca por cliente, código, loja, vendedor ou pedido |
 | `focus=attention\|inactive\|growth\|no_sale_60` | Recorte comercial fixo da lista |
 | `seller_id` | Carteira selecionada; aceito apenas para escopo de equipe e vendedor válido |
+| `sort` | Ordenação allowlisted da carteira |
+| `dir=asc\|desc` | Direção da ordenação |
+| `page` | Página da lista em memória |
 
-Somente essas chaves são preservadas ao abrir e retornar do detalhe. Valores
+Somente `q`, `focus`, `seller_id`, `sort`, `dir` e `page` são preservados ao
+abrir e retornar do detalhe. Valores
 inválidos são removidos, e o estado padrão `focus=all` é omitido da URL. O
 contrato canônico está em
 [`src/utils/customersListDeepLink.ts`](./src/utils/customersListDeepLink.ts).
+
+As colunas visíveis por padrão seguem o WF-03R: Cliente, Última venda,
+Fat. 12 meses, Tendência, Status, Em aberto, Atrasos e Próxima entrega.
+Vendedor aparece por padrão somente no escopo de equipe; Cidade / UF permanece
+oculta. Enrichment e faturamento são enviados em lotes determinísticos de no
+máximo 200 clientes. Falha parcial preserva a lista base e explicita cobertura;
+células sem cobertura mostram `Dado indisponível` e ficam vazias no Excel.
 
 Presets são fixos nesta etapa; saved views nomeadas/compartilhadas ficam para uma
 evolução com contrato de persistência e visibilidade próprio.
@@ -240,6 +251,11 @@ npm run lint
 npm run build
 git diff --check
 ```
+
+Baseline conhecido do `plugin-ui`: a suíte global possui 5 falhas preexistentes
+fora deste escopo. A validação focada de `PagePath`, `DataRecordCard`,
+`UnderlineNav` e `BackLink` passa; este checkpoint não mascara nem altera esses
+componentes.
 
 Rebuild operacional, quando necessário, deve usar o script sequencial acima;
 como este checkpoint não altera `plugin-ui`, não há rebuild do remote do kit.

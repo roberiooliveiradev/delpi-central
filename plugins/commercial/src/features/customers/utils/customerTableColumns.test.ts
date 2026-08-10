@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { createCustomerDefaultColumnVisibility } from "./customerTableColumns";
 
 describe("createCustomerDefaultColumnVisibility", () => {
-  it("mantém uma bancada enxuta no escopo individual", () => {
+  it("segue as colunas default do WF-03R no escopo individual", () => {
     expect(createCustomerDefaultColumnVisibility(false)).toEqual({
       nome: true,
       sellerName: false,
       city: false,
-      lastPurchaseDate: false,
-      billed12m: false,
-      billingTrend: false,
+      lastPurchaseDate: true,
+      billed12m: true,
+      billingTrend: true,
       status: true,
       valorTotalAberto: true,
       quantidadePedidosAtrasados: true,
