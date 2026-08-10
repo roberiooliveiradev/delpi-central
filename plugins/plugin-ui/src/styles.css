@@ -12,6 +12,7 @@
 @import "./styles/deck-section.css";
 @import "./styles/data-route-catalog.css";
 @import "./styles/format-pane.css";
+@import "./styles/display-format.css";
 @import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
 @import "./styles/select-control.css";
@@ -625,7 +626,7 @@
   top: calc(100% + 0.2rem);
   left: 0;
   min-width: 100%;
-  max-height: min(60vh, 420px);
+  max-height: 14rem;
   overflow: auto;
   border-radius: calc(var(--delpi-ui-radius-sm, var(--mdc-radius-sm, 8px)) - 1px);
   border: 1px solid var(--delpi-ui-border, var(--mdc-control-border, var(--border, #e5e7eb)));

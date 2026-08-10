@@ -1,15 +1,19 @@
 import {
+  formatDisplayValue,
   parseKpiNumericValue,
   resolveDelpiKpiTone,
+  resolveDisplayFormatSpec,
+  specFromKpiValueFormat,
   type DelpiKpiCardTone,
   type DelpiKpiComparisonTone,
+  type DisplayFormatSpec,
 } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import { isAutoBakedFieldLabel } from "./fieldLabelRegistry";
-import { formatCurrency, formatNumber, formatPct } from "./nativeFormat";
+import { formatNumber } from "./nativeFormat";
 import type { KpiMetricProjection } from "./viewProjection";
 
 export type KpiViewPresentation = {
@@ -30,6 +34,7 @@ export type KpiViewPresentation = {
 export type KpiMetricPresentationOverrides = Pick<
   KpiMetricProjection,
   | "format"
+  | "displayFormat"
   | "decimalPlaces"
   | "colorRules"
   | "label"
@@ -140,7 +145,13 @@ export function resolveKpiViewPresentation(
     resolved?.label ||
     "Indicador";
 
-  const valueText = formatKpiValue(rawValue, valueFormat, options.unit, decimalPlaces);
+  const valueText = formatKpiValue(
+    rawValue,
+    valueFormat,
+    options.unit,
+    decimalPlaces,
+    metricOverrides?.displayFormat ?? options.displayValueFormat,
+  );
   const hint = options.subtitle?.trim() || undefined;
   const sparklinePoints = sparklinePointsFromResolved(resolved);
   const comparison = resolveComparisonPresentation({
@@ -173,16 +184,18 @@ function formatKpiValue(
   format: ComunicadoKpiOptions["valueFormat"],
   unit?: string,
   decimalPlaces?: number | null,
+  spec?: DisplayFormatSpec | null,
 ): string {
   if (value == null || value === "") return "—";
 
   const numeric = parseKpiNumericValue(value);
+  const resolved = resolveDisplayFormatSpec(spec, specFromKpiValueFormat(format, decimalPlaces));
 
   /**
    * `raw` explícito: se o valor numérico tem excesso de casas (float de API),
    * formata como número — senão o FitText do card fica travado em fonte miúda.
    */
-  if (format === "raw") {
+  if (resolved.category === "text" && (format === "raw" || format == null)) {
     const base = String(value);
     if (numeric != null && /^-?\d+\.\d{4,}$/.test(base.trim())) {
       const text = formatNumber(numeric, decimalPlaces);
@@ -191,38 +204,22 @@ function formatKpiValue(
     return unit && !base.includes(unit) ? `${base}${unit}` : base;
   }
 
-  if (format == null) {
-    if (numeric != null) {
-      const text = formatNumber(numeric, decimalPlaces);
-      return unit ? `${text} ${unit}` : text;
-    }
-    const base = String(value);
-    return unit && !base.includes(unit) ? `${base}${unit}` : base;
-  }
-
   if (numeric == null) {
     const base = String(value);
     return unit && !base.includes(unit) ? `${base}${unit}` : base;
   }
 
-  if (format === "percent") {
-    const text = formatPct(numeric, decimalPlaces);
-    return unit && unit !== "%" ? `${text} ${unit}` : text;
+  const text = formatDisplayValue(numeric, resolved);
+  if (
+    unit &&
+    resolved.category !== "percent" &&
+    resolved.category !== "currency" &&
+    !text.includes(unit)
+  ) {
+    return `${text} ${unit}`;
   }
-
-  if (format === "currency") {
-    const text = formatCurrency(numeric, decimalPlaces);
-    return unit && !text.includes(unit) ? `${text} ${unit}` : text;
+  if (unit && resolved.category === "percent" && unit !== "%" && !text.includes(unit)) {
+    return `${text} ${unit}`;
   }
-
-  if (format === "compact") {
-    const text = numeric.toLocaleString("pt-BR", {
-      notation: "compact",
-      maximumFractionDigits: 1,
-    });
-    return unit ? `${text} ${unit}` : text;
-  }
-
-  const text = formatNumber(numeric, decimalPlaces);
-  return unit ? `${text} ${unit}` : text;
+  return text;
 }

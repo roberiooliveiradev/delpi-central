@@ -41,7 +41,7 @@ export function ComunicadoKpiRibbon() {
     <DeckRibbonGroups>
       <SelectionTypedWithTailHost
         layout="ribbon"
-        typed={["typography", "kpiAppearance", "appearance"]}
+        typed={["typography", "kpiAppearance", "numberFormat", "appearance"]}
       />
     </DeckRibbonGroups>
   );

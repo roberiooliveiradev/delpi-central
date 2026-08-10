@@ -3,6 +3,13 @@
  * Ilustrativa com opcional `dataRef` por célula (≠ `table_view` live).
  */
 
+import {
+  formatDisplayValue,
+  isDisplayFormatSpec,
+  resolveDisplayFormatSpec,
+  specFromCanvasNumberFormat,
+  type DisplayFormatSpec,
+} from "@delpi/plugin-ui";
 import type {
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
@@ -42,6 +49,8 @@ export type CanvasTableCell = {
   text?: string;
   value?: number | null;
   format?: CanvasTableNumberFormat;
+  /** Spec canônico da célula — na leitura ganha do enum `format`. */
+  displayFormat?: DisplayFormatSpec;
   /** Série estática do sparkline (5–60 pontos). */
   series?: number[];
   style?: CanvasTableCellStyle;
@@ -104,6 +113,9 @@ export function normalizeCanvasTableCell(value: unknown): CanvasTableCell {
       value.format === "currency"
     ) {
       cell.format = value.format;
+    }
+    if (isDisplayFormatSpec((value as CanvasTableCell).displayFormat)) {
+      cell.displayFormat = (value as CanvasTableCell).displayFormat;
     }
     if (Array.isArray(value.series)) {
       cell.series = value.series
@@ -168,13 +180,21 @@ export function canvasTableCellPlainText(cell: CanvasTableCell | string | null |
   const normalized = normalizeCanvasTableCell(cell);
   if (normalized.kind === "number") {
     if (normalized.value != null && Number.isFinite(normalized.value)) {
-      return formatCanvasTableNumber(normalized.value, normalized.format ?? "decimal");
+      return formatCanvasTableNumber(
+        normalized.value,
+        normalized.format ?? "decimal",
+        normalized.displayFormat,
+      );
     }
     return normalized.text ?? "";
   }
   if (normalized.kind === "sparkline") {
     if (normalized.value != null && Number.isFinite(normalized.value)) {
-      return formatCanvasTableNumber(normalized.value, normalized.format ?? "decimal");
+      return formatCanvasTableNumber(
+        normalized.value,
+        normalized.format ?? "decimal",
+        normalized.displayFormat,
+      );
     }
     return normalized.text ?? "";
   }
@@ -204,27 +224,13 @@ export function parseLooseNumber(raw: string): number | null {
 export function formatCanvasTableNumber(
   value: number,
   format: CanvasTableNumberFormat = "decimal",
+  spec?: DisplayFormatSpec | null,
 ): string {
   if (!Number.isFinite(value)) return "";
-  switch (format) {
-    case "integer":
-      return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(value);
-    case "percent":
-      return new Intl.NumberFormat("pt-BR", {
-        style: "percent",
-        maximumFractionDigits: 1,
-      }).format(value > 1 || value < -1 ? value / 100 : value);
-    case "currency":
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(value);
-    case "plain":
-      return String(value);
-    case "decimal":
-    default:
-      return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value);
-  }
+  return formatDisplayValue(
+    value,
+    resolveDisplayFormatSpec(spec, specFromCanvasNumberFormat(format)),
+  );
 }
 
 export function inferCanvasTableCellFromText(text: string): CanvasTableCell {

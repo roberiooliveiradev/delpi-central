@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { Eye, Type } from "lucide-react";
+import { Eye, Hash, Type } from "lucide-react";
 
 import {
   DECK_RIBBON_COLLAPSE_ICONS,
@@ -29,6 +29,10 @@ describe("deckRibbonCollapseIcons", () => {
   it("slide-current e playlist-chrome não usam Eye", () => {
     expect(DECK_RIBBON_COLLAPSE_ICONS["slide-current"]).not.toBe(Eye);
     expect(DECK_RIBBON_COLLAPSE_ICONS["playlist-chrome"]).not.toBe(Eye);
+  });
+
+  it("grupo Número usa Hash no collapse", () => {
+    expect(DECK_RIBBON_COLLAPSE_ICONS["number-format"]).toBe(Hash);
   });
 
   it("todo groupId=\"…\" explícito em componentes tem ícone no mapa", () => {

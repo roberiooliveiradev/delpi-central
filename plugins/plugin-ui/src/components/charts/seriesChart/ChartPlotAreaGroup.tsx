@@ -419,6 +419,8 @@ export function ChartPlotAreaGroup({
           decimalPlaces={config.decimalPlaces}
           points={points}
           categoryLabelFormat={config.categoryLabelFormat}
+          displayValueFormat={config.displayValueFormat}
+          displayCategoryFormat={config.displayCategoryFormat}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -513,6 +515,8 @@ export function ChartPlotAreaGroup({
           valueFormat={valueFormat}
           decimalPlaces={config.decimalPlaces}
           categoryLabelFormat={config.categoryLabelFormat}
+          displayValueFormat={config.displayValueFormat}
+          displayCategoryFormat={config.displayCategoryFormat}
           interaction={interaction}
           chartParts={chartParts}
         />

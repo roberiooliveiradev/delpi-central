@@ -7,7 +7,6 @@ import {
 import {
   TABLE_ELEMENT_CATALOG,
   TABLE_TEXT_ALIGN_OPTIONS,
-  TABLE_VALUE_FORMAT_OPTIONS,
   isTableElementEnabled,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
@@ -142,20 +141,6 @@ export function TableViewOptionsInspector({
               title="Células"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}
             >
-              <DeckField id="td-table-value-format" label="Formato dos valores">
-                <FormSelectControl
-                  id="td-table-value-format"
-                  ariaLabel="Formato dos valores"
-                  value={options.valueFormat ?? "auto"}
-                  onChange={(value) =>
-                    setOptions({ valueFormat: value as ComunicadoTableOptions["valueFormat"] })
-                  }
-                  options={TABLE_VALUE_FORMAT_OPTIONS.map((entry) => ({
-                    value: entry.value,
-                    label: entry.label,
-                  }))}
-                />
-              </DeckField>
               {!omitCellAlign ? (
                 <DeckField id="td-table-text-align" label="Alinhamento">
                   <FormSelectControl

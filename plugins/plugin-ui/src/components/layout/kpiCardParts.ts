@@ -177,6 +177,7 @@ export type KpiCardFlatOptions = {
   valueColor?: string;
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
+  displayValueFormat?: import("../../displayFormat/types").DisplayFormatSpec;
   /** Meta numérica para comparação / progresso. */
   target?: number;
   /** Comparação: meta, período anterior (série) ou desligada. */

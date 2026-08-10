@@ -13,6 +13,7 @@ import {
   ChartTypeSection,
 } from "./ChartDesignSections";
 import { ChartSeriesSection } from "./ChartSeriesSection";
+import { NumberFormatSection } from "./NumberFormatSection";
 import { DataSourceHintSection } from "./DataSourceHintSection";
 import { DisplaySection } from "./DisplaySection";
 import { FrameSizeSection } from "./FrameSizeSection";
@@ -113,6 +114,8 @@ function renderSection(
       return <ChartLabelsSection key={id} layout={layout} />;
     case "chartAxes":
       return <ChartAxesSection key={id} layout={layout} />;
+    case "numberFormat":
+      return <NumberFormatSection key={id} layout={layout} />;
     case "chartSeries":
       return <ChartSeriesSection key={id} layout={layout} />;
     case "kpiAppearance":

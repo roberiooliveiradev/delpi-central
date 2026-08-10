@@ -202,6 +202,14 @@ describe("comunicadoHelpers", () => {
     expect(css.borderRadius).toBeUndefined();
   });
 
+  it("gráfico novo nasce com data abreviada no eixo (decks antigos ficam raw no default)", () => {
+    const block = createChartViewBlock("line");
+    expect(block.type).toBe("chart_view");
+    if (block.type !== "chart_view") throw new Error("chart");
+    expect(block.chartOptions?.categoryLabelFormat).toBe("day");
+    expect(block.chartOptions?.displayCategoryFormat?.presetId).toBe("date-short");
+  });
+
   it("promove boxShadow de kpi/chart/tabela/filtro para --tdp-block-box-shadow na moldura", () => {
     const shadow = "0 4px 14px rgba(0, 0, 0, 0.28)";
     const blocks = [

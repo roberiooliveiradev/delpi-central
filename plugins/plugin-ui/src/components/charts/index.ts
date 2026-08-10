@@ -88,6 +88,8 @@ export {
   SERIES_CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   formatSeriesChartValue,
   formatSeriesChartCategoryLabel,
+  resolveSeriesChartValueDisplaySpec,
+  resolveSeriesChartCategoryDisplaySpec,
   localizeEnglishMonthTokensInLabel,
   parseSeriesChartCategoryDate,
   truncateSeriesChartCategoryLabel,

@@ -11,6 +11,7 @@ import {
   DECK_TABLE_DEFAULTS,
   isAutomaticTextColor,
   resolvePaintTextColor,
+  specFromCategoryLabelFormat,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -297,7 +298,11 @@ export function createDataSourceBlock(
 }
 
 export function createChartViewBlock(chartType: ComunicadoChartType): ComunicadoBlock {
-  const chartOptions = { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
+  const chartOptions = {
+    ...DEFAULT_COMUNICADO_CHART_OPTIONS,
+    categoryLabelFormat: "day" as const,
+    displayCategoryFormat: specFromCategoryLabelFormat("day"),
+  };
   return {
     id: newBlockId(),
     type: "chart_view",

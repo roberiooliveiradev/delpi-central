@@ -43,6 +43,30 @@ describe("resolveXLabelTextAnchor", () => {
   });
 });
 
+describe("buildSeriesChartLayout ticks usam o mesmo spec dos valores", () => {
+  it("moeda reserva margem esquerda maior que auto (não corta R$)", () => {
+    const points = [
+      { value: 1234.56, label: "2026-08-03" },
+      { value: 2345.67, label: "2026-08-04" },
+    ];
+    const auto = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      valueFormat: "auto",
+    });
+    const currency = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      valueFormat: "currency",
+    });
+    expect(currency.margin.left).toBeGreaterThan(auto.margin.left);
+  });
+});
+
 describe("buildSeriesChartLayout viewBox dinâmico", () => {
   it("respeita viewW/viewH informados", () => {
     const layout = buildSeriesChartLayout({

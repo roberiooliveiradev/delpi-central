@@ -30,6 +30,8 @@ export * from "./components/deck";
 export * from "./brand";
 export * from "./theme";
 export * from "./utils";
+export * from "./displayFormat";
+export * from "./components/displayFormat";
 export * from "./hooks";
 export * from "./types/chartGranularity";
 export * from "./export";

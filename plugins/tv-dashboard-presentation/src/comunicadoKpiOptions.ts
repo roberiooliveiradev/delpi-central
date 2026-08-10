@@ -2,6 +2,7 @@ import {
   DECK_KPI_DEFAULTS,
   type DelpiKpiCardTone,
   type DelpiKpiColorRule,
+  type DisplayFormatSpec,
 } from "@delpi/plugin-ui/index";
 
 /** Opções declarativas do bloco `kpi_view` (espelha chartOptions). */
@@ -16,6 +17,8 @@ export type ComunicadoKpiOptions = {
   valueColor?: string;
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
+  /** Spec canônico do valor — na leitura ganha do enum `valueFormat`. */
+  displayValueFormat?: DisplayFormatSpec;
   /**
    * Casas decimais (0–6) para number / percent / currency.
    * Arredonda na exibição (`Intl`).

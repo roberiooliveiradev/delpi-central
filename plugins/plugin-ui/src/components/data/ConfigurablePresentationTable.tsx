@@ -129,7 +129,11 @@ export function ConfigurablePresentationTable({
                   interaction={interaction}
                   tableParts={tableParts}
                 >
-                  {formatConfigurableTableCellValue(row[column.key], valueFormat)}
+                  {formatConfigurableTableCellValue(
+                    row[column.key],
+                    valueFormat,
+                    config.displayValueFormat,
+                  )}
                 </TableCell>
               ))}
             </TableRow>
@@ -152,7 +156,11 @@ export function ConfigurablePresentationTable({
                   interaction={interaction}
                   tableParts={tableParts}
                 >
-                  {formatConfigurableTableCellValue(totalRow[column.key], valueFormat)}
+                  {formatConfigurableTableCellValue(
+                    totalRow[column.key],
+                    valueFormat,
+                    config.displayValueFormat,
+                  )}
                 </TableCell>
               ))}
             </TableRow>

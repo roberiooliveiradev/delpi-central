@@ -33,6 +33,7 @@ export type KpiMetricProjection = {
   aggregation?: ViewAggregation;
   label?: string;
   format?: "number" | "percent" | "compact" | "raw" | "currency";
+  displayFormat?: import("@delpi/plugin-ui").DisplayFormatSpec;
   /** Casas decimais (0–6) para number / percent / currency. */
   decimalPlaces?: number;
   colorRules?: DelpiKpiColorRule[];

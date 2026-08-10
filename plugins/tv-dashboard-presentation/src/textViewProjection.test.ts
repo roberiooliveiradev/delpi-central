@@ -139,6 +139,10 @@ describe("textViewProjection", () => {
     expect(textBlockHasDataBinding({ content: "estático" })).toBe(false);
   });
 
+  it("formatTextProjectionValue date usa calendário UTC", () => {
+    expect(formatTextProjectionValue("2026-08-03", "date")).toBe("03/08/2026");
+  });
+
   it("formatTextProjectionValue percent usa vírgula; currency formata BRL", () => {
     expect(formatTextProjectionValue(80, "percent")).toBe("80,0%");
     expect(formatTextProjectionValue(4005.33, "currency")).toMatch(/R\$\s*4\.005,33/);

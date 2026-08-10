@@ -7,7 +7,6 @@ import {
 import {
   KPI_ELEMENT_CATALOG,
   applyKpiElementVisibility,
-  formatSupportsDecimalPlaces,
   isKpiElementEnabled,
   isKpiElementOpenForPart,
   kpiElementPrimaryPartRef,
@@ -22,7 +21,6 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DecimalPlacesField } from "./DecimalPlacesField";
 import { InspectorElementRow } from "./InspectorElementRow";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { KpiPartInspector } from "./KpiPartInspector";
@@ -138,33 +136,6 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
                 onChange={(value) => patchOptions({ unit: value.trim() || undefined })}
               />
             </DeckField>
-            <DeckField id="td-kpi-format" label="Formato do valor">
-              <FormSelectControl
-                id="td-kpi-format"
-                ariaLabel="Formato do valor"
-                value={options.valueFormat ?? "number"}
-                onChange={(value) => {
-                  const valueFormat = value as ComunicadoKpiOptions["valueFormat"];
-                  const patch: Partial<ComunicadoKpiOptions> = { valueFormat };
-                  if (!formatSupportsDecimalPlaces(valueFormat)) {
-                    patch.decimalPlaces = undefined;
-                  }
-                  patchOptions(patch);
-                }}
-                options={[
-                  { value: "raw", label: "Como veio da fonte" },
-                  { value: "number", label: "Número" },
-                  { value: "percent", label: "Percentual" },
-                  { value: "currency", label: "Moeda" },
-                  { value: "compact", label: "Compacto" },
-                ]}
-              />
-            </DeckField>
-            <DecimalPlacesField
-              format={options.valueFormat ?? "number"}
-              value={options.decimalPlaces}
-              onChange={(decimalPlaces) => patchOptions({ decimalPlaces })}
-            />
             <DeckField id="td-kpi-tone" label="Cor base (tone)">
               <FormSelectControl
                 id="td-kpi-tone"

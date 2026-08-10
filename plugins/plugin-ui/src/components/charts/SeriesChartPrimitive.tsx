@@ -287,6 +287,10 @@ export function SeriesChartPrimitive({
     categoryLabelRotation: config.categoryLabelRotation,
     categoryLabelOverflow: config.categoryLabelOverflow,
     categoryLabelFormat: config.categoryLabelFormat,
+    displayCategoryFormat: config.displayCategoryFormat,
+    valueFormat,
+    decimalPlaces: config.decimalPlaces,
+    displayValueFormat: config.displayValueFormat,
     markerGutterPx: chartType === "bubble" ? SERIES_CHART_BUBBLE_MAX_R + 2 : undefined,
     plotPadExtraPx: centeredPlot
       ? dataLabelOutsideGutterPx(resolvedDataLabels, chartType)
@@ -465,6 +469,8 @@ export function SeriesChartPrimitive({
           points={usable}
           seriesName={seriesName}
           valueFormat={valueFormat}
+          decimalPlaces={config.decimalPlaces}
+          displayValueFormat={config.displayValueFormat}
           visible={Boolean(config.showDataTable)}
           interaction={interaction}
           chartParts={chartParts}

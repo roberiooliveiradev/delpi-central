@@ -1,0 +1,199 @@
+/* Formatação centralizada (Excel-like) — classes .delpi-ui-display-format* */
+
+.delpi-ui-display-format__hint {
+  margin: 0 0 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-display-format__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 168px;
+}
+
+.delpi-ui-display-format__group--compact {
+  min-width: 0;
+}
+
+.delpi-ui-display-format__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.delpi-ui-display-format__trigger:hover {
+  border-color: var(--delpi-ui-border-strong, #cbd5e1);
+}
+
+.delpi-ui-display-format__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.delpi-ui-display-format__shortcut,
+.delpi-ui-display-format__launcher {
+  min-width: 28px;
+  min-height: 26px;
+  padding: 2px 6px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delpi-ui-display-format__shortcut:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-display-format__menu {
+  min-width: 220px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--delpi-ui-surface, #fff);
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 18%, transparent);
+}
+
+.delpi-ui-display-format__menu-item,
+.delpi-ui-display-format__menu-more,
+.delpi-ui-display-format__cat,
+.delpi-ui-display-format__type {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.delpi-ui-display-format__menu-item:hover,
+.delpi-ui-display-format__menu-more:hover,
+.delpi-ui-display-format__cat:hover,
+.delpi-ui-display-format__type:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 10%, transparent);
+}
+
+.delpi-ui-display-format__menu-item--active,
+.delpi-ui-display-format__cat--active,
+.delpi-ui-display-format__type--active {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 16%, transparent);
+  font-weight: 600;
+}
+
+.delpi-ui-display-format__menu-desc,
+.delpi-ui-display-format__type-meta {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, #64748b);
+  font-weight: 400;
+}
+
+.delpi-ui-display-format__menu-more {
+  margin-top: 4px;
+  border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 0 0 6px 6px;
+  color: var(--delpi-ui-accent, #2563eb);
+}
+
+.delpi-ui-display-format__dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: min(560px, 100%);
+}
+
+.delpi-ui-display-format__dialog-grid {
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: 16px;
+}
+
+.delpi-ui-display-format__cats,
+.delpi-ui-display-format__types {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.delpi-ui-display-format__sample {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface-muted, #f8fafc);
+}
+
+.delpi-ui-display-format__sample-label {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-display-format__sample-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delpi-ui-display-format__custom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.delpi-ui-display-format__custom input {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+}
+
+.delpi-ui-display-format__custom-help,
+.delpi-ui-display-format__locale {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-display-format__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-display-format__dialog-grid {
+    grid-template-columns: 1fr;
+  }
+}

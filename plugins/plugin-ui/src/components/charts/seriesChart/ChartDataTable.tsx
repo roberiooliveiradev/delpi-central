@@ -1,3 +1,4 @@
+import type { DisplayFormatSpec } from "../../../displayFormat";
 import type { SeriesChartValueFormat, SeriesChartPoint } from "../seriesChartOptions";
 import { formatSeriesChartValue } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
@@ -11,6 +12,8 @@ export type ChartDataTableProps = {
   points: SeriesChartPoint[];
   seriesName: string;
   valueFormat: SeriesChartValueFormat;
+  decimalPlaces?: number | null;
+  displayValueFormat?: DisplayFormatSpec | null;
   visible?: boolean;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
@@ -24,6 +27,8 @@ export function ChartDataTable({
   points,
   seriesName,
   valueFormat,
+  decimalPlaces,
+  displayValueFormat,
   visible = true,
   interaction,
 }: ChartDataTableProps) {
@@ -53,7 +58,14 @@ export function ChartDataTable({
             return (
               <tr key={`dt-${index}`}>
                 <td>{period}</td>
-                <td>{formatSeriesChartValue(Number(point.value), valueFormat ?? "auto")}</td>
+                <td>
+                  {formatSeriesChartValue(
+                    Number(point.value),
+                    valueFormat ?? "auto",
+                    decimalPlaces,
+                    displayValueFormat,
+                  )}
+                </td>
               </tr>
             );
           })}

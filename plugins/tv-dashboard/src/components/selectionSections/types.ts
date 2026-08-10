@@ -27,6 +27,7 @@ export type SelectionSectionId =
   | "chartType"
   | "chartLabels"
   | "chartAxes"
+  | "numberFormat"
   | "chartSeries"
   | "tableStyleOptions"
   | "tableBorders"

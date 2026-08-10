@@ -9,9 +9,7 @@ import {
   CHART_LEGEND_POSITION_OPTIONS,
   CHART_LEGEND_LAYOUT_OPTIONS,
   CHART_LEGEND_SORT_OPTIONS,
-  CHART_VALUE_FORMAT_OPTIONS,
   CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
-  CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
@@ -530,44 +528,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                   }))}
                 />
               </DeckField>
-              <DeckField id="td-chart-part-axis-cat-format" label="Formato">
-                <FormSelectControl
-                  id="td-chart-part-axis-cat-format"
-                  ariaLabel="Formato da categoria"
-                  value={options.categoryLabelFormat ?? "raw"}
-                  onChange={(value) =>
-                    persistOptions({
-                      ...options,
-                      categoryLabelFormat:
-                        value as ComunicadoChartOptions["categoryLabelFormat"],
-                    })
-                  }
-                  options={CHART_CATEGORY_LABEL_FORMAT_OPTIONS.map((entry) => ({
-                    value: entry.value,
-                    label: entry.label,
-                  }))}
-                />
-              </DeckField>
             </>
-          ) : (
-            <DeckField id="td-chart-part-axis-value-format" label="Formato dos valores">
-              <FormSelectControl
-                id="td-chart-part-axis-value-format"
-                ariaLabel="Formato dos valores"
-                value={options.valueFormat ?? "auto"}
-                onChange={(value) =>
-                  persistOptions({
-                    ...options,
-                    valueFormat: value as ComunicadoChartOptions["valueFormat"],
-                  })
-                }
-                options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
-                  value: entry.value,
-                  label: entry.label,
-                }))}
-              />
-            </DeckField>
-          )}
+          ) : null}
         </>
       ) : null}
 

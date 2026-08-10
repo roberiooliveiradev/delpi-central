@@ -1,4 +1,12 @@
 import {
+  formatDisplayValue,
+  parseDisplayDate,
+  resolveDisplayFormatSpec,
+  specFromCategoryLabelFormat,
+  specFromChartValueFormat,
+  type DisplayFormatSpec,
+} from "../../displayFormat";
+import {
   DECK_CATEGORY_PALETTE,
   DECK_THEME_DARK,
   DECK_THEME_LIGHT,
@@ -125,6 +133,16 @@ export type SeriesChartOptions = {
    */
   smoothLines?: boolean;
   valueFormat?: SeriesChartValueFormat;
+  /**
+   * Spec canônico dos valores (eixo Y, rótulos, tabela interna).
+   * Na leitura ganha do enum `valueFormat`.
+   */
+  displayValueFormat?: DisplayFormatSpec;
+  /**
+   * Spec canônico das categorias (eixo X / datas).
+   * Na leitura ganha do enum `categoryLabelFormat`.
+   */
+  displayCategoryFormat?: DisplayFormatSpec;
   /**
    * Casas decimais fixas; `null`/ausente = comportamento do format (auto).
    * Aplica a ticks, data labels e tabela.
@@ -439,100 +457,44 @@ export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChart
   });
 }
 
-function resolveFractionDigits(
-  decimalPlaces: number | null | undefined,
-  fallbackMax: number,
-  fallbackMin = 0,
-): { minimumFractionDigits: number; maximumFractionDigits: number } {
-  if (typeof decimalPlaces === "number" && Number.isFinite(decimalPlaces) && decimalPlaces >= 0) {
-    const places = Math.min(8, Math.floor(decimalPlaces));
-    return { minimumFractionDigits: places, maximumFractionDigits: places };
-  }
-  return { minimumFractionDigits: fallbackMin, maximumFractionDigits: fallbackMax };
+export function resolveSeriesChartValueDisplaySpec(
+  options: Pick<SeriesChartOptions, "displayValueFormat" | "valueFormat" | "decimalPlaces">,
+): DisplayFormatSpec {
+  return resolveDisplayFormatSpec(
+    options.displayValueFormat,
+    specFromChartValueFormat(options.valueFormat, options.decimalPlaces),
+  );
+}
+
+export function resolveSeriesChartCategoryDisplaySpec(
+  options: Pick<SeriesChartOptions, "displayCategoryFormat" | "categoryLabelFormat">,
+): DisplayFormatSpec {
+  return resolveDisplayFormatSpec(
+    options.displayCategoryFormat,
+    specFromCategoryLabelFormat(options.categoryLabelFormat),
+  );
 }
 
 export function formatSeriesChartValue(
   value: number,
   format: SeriesChartValueFormat,
   decimalPlaces?: number | null,
+  spec?: DisplayFormatSpec | null,
 ): string {
-  if (format === "compact") {
-    const digits = resolveFractionDigits(decimalPlaces, 1);
-    return value.toLocaleString("pt-BR", {
-      notation: "compact",
-      compactDisplay: "short",
-      ...digits,
-    });
-  }
-  if (format === "currency") {
-    const hasCents = Math.abs(value % 1) > 1e-9;
-    const digits = resolveFractionDigits(decimalPlaces, hasCents ? 2 : 0, hasCents ? 2 : 0);
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      ...digits,
-    });
-  }
-  if (format === "currency4") {
-    const digits = resolveFractionDigits(decimalPlaces, 4, 2);
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      ...digits,
-    });
-  }
-  if (format === "percent") {
-    const digits = resolveFractionDigits(decimalPlaces, 1);
-    return `${value.toLocaleString("pt-BR", digits)}%`;
-  }
-  if (format === "number") {
-    const digits = resolveFractionDigits(decimalPlaces, 2);
-    return value.toLocaleString("pt-BR", digits);
-  }
-  /* Geral (auto): número localizado — sem inferir % ou R$ (escolha do usuário). */
-  const digits = resolveFractionDigits(decimalPlaces, 2);
-  return value.toLocaleString("pt-BR", digits);
+  return formatDisplayValue(
+    value,
+    resolveDisplayFormatSpec(spec, specFromChartValueFormat(format, decimalPlaces)),
+  );
 }
 
 /** Parse ISO / YYYY-MM / YYYY-MM-DD (e variantes com hora). */
 export function parseSeriesChartCategoryDate(raw: string): Date | null {
-  const text = raw.trim();
-  if (!text) return null;
-  const ym = /^(\d{4})-(\d{2})$/.exec(text);
-  if (ym) {
-    const year = Number(ym[1]);
-    const month = Number(ym[2]);
-    if (month < 1 || month > 12) return null;
-    return new Date(Date.UTC(year, month - 1, 1));
-  }
-  const ymd = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(text);
-  if (ymd) {
-    const year = Number(ymd[1]);
-    const month = Number(ymd[2]);
-    const day = Number(ymd[3]);
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return new Date(Date.UTC(year, month - 1, day));
-  }
-  const parsed = Date.parse(text);
-  if (!Number.isFinite(parsed)) return null;
-  return new Date(parsed);
+  const parsed = parseDisplayDate(raw);
+  if (!parsed) return null;
+  return new Date(
+    Date.UTC(parsed.year, parsed.month, parsed.day, parsed.hour, parsed.minute, parsed.second),
+  );
 }
-
-/** Abreviações pt-BR (sem depender de ICU/locale do runtime). */
-const MONTH_ABBREV_PT = [
-  "jan",
-  "fev",
-  "mar",
-  "abr",
-  "mai",
-  "jun",
-  "jul",
-  "ago",
-  "set",
-  "out",
-  "nov",
-  "dez",
-] as const;
 
 const EN_MONTH_TO_PT: Record<string, string> = {
   jan: "Jan",
@@ -550,11 +512,6 @@ const EN_MONTH_TO_PT: Record<string, string> = {
   dec: "Dez",
 };
 
-function monthAbbrevPt(monthIndex0: number, capitalize = true): string {
-  const abbrev = MONTH_ABBREV_PT[((monthIndex0 % 12) + 12) % 12]!;
-  return capitalize ? `${abbrev[0]!.toUpperCase()}${abbrev.slice(1)}` : abbrev;
-}
-
 /** Troca abreviações EN remanescentes (ex.: cache antigo «Feb. de 26»). */
 export function localizeEnglishMonthTokensInLabel(raw: string): string {
   return raw.replace(
@@ -570,31 +527,17 @@ export function localizeEnglishMonthTokensInLabel(raw: string): string {
 export function formatSeriesChartCategoryLabel(
   raw: string,
   format: SeriesChartCategoryLabelFormat = "raw",
+  spec?: DisplayFormatSpec | null,
 ): string {
-  if (format === "raw") return localizeEnglishMonthTokensInLabel(raw);
-  const date = parseSeriesChartCategoryDate(raw);
-  if (!date) return localizeEnglishMonthTokensInLabel(raw);
-  const month = date.getUTCMonth();
-  const year = date.getUTCFullYear();
-  const yy = String(year).slice(-2).padStart(2, "0");
-  if (format === "year") {
-    return String(year);
+  const resolved = resolveDisplayFormatSpec(spec, specFromCategoryLabelFormat(format));
+  if (resolved.category === "text" || resolved.presetId === "text") {
+    return localizeEnglishMonthTokensInLabel(raw);
   }
-  if (format === "month") {
-    return `${monthAbbrevPt(month)}. de ${year}`;
+  const formatted = formatDisplayValue(raw, resolved);
+  if (!formatted || formatted === raw) {
+    if (!parseSeriesChartCategoryDate(raw)) return localizeEnglishMonthTokensInLabel(raw);
   }
-  if (format === "day") {
-    const dd = String(date.getUTCDate()).padStart(2, "0");
-    const mm = String(month + 1).padStart(2, "0");
-    return `${dd}/${mm}/${year}`;
-  }
-  /* autoDate: curto e legível */
-  const hasDay = /^\d{4}-\d{2}-\d{2}/.test(raw.trim());
-  if (hasDay) {
-    const dd = String(date.getUTCDate()).padStart(2, "0");
-    return `${dd} ${monthAbbrevPt(month)}`;
-  }
-  return `${monthAbbrevPt(month)}/${yy}`;
+  return formatted;
 }
 
 /** Trunca rótulo de categoria com reticências (overflow=truncate). */

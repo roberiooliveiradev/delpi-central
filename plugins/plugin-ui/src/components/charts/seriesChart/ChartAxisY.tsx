@@ -15,6 +15,7 @@ import {
   resolveYAxisTitleAnchorX,
   type SeriesChartLayout,
 } from "./layout";
+import type { DisplayFormatSpec } from "../../../displayFormat";
 import type {
   SeriesChartCategoryLabelFormat,
   SeriesChartPoint,
@@ -33,6 +34,8 @@ export type ChartAxisYProps = {
   /** Quando horizontal: categorias no eixo Y. */
   points?: SeriesChartPoint[];
   categoryLabelFormat?: SeriesChartCategoryLabelFormat;
+  displayValueFormat?: DisplayFormatSpec | null;
+  displayCategoryFormat?: DisplayFormatSpec | null;
 };
 
 export function ChartAxisY({
@@ -46,6 +49,8 @@ export function ChartAxisY({
   chartParts,
   points = [],
   categoryLabelFormat = "raw",
+  displayValueFormat,
+  displayCategoryFormat,
 }: ChartAxisYProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, ticks, toY, orientation, visibleXLabelIndices } = layout;
@@ -124,6 +129,7 @@ export function ChartAxisY({
               String(point.label ?? index + 1),
               categoryLabelFormat,
               layout.categoryLabelOverflow,
+              displayCategoryFormat,
             );
             return (
               <text
@@ -154,7 +160,7 @@ export function ChartAxisY({
                 dominantBaseline={baseline}
                 style={axisTypography}
               >
-                {formatChartTick(tick, valueFormat, decimalPlaces)}
+                {formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
               </text>
             );
           })
@@ -174,7 +180,7 @@ export function ChartAxisY({
                 dominantBaseline={baseline}
                 style={axisTypography}
               >
-                {formatChartTick(tick, valueFormat, decimalPlaces)}
+                {formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
               </text>
             );
           })

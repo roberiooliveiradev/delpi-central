@@ -3,7 +3,8 @@ import {
   resolveDelpiKpiTone,
 } from "@delpi/plugin-ui/index";
 
-import { formatCurrency, formatNumber, formatPct, normalizeDecimalPlaces } from "./nativeFormat";
+import { formatDisplayValue, specFromTextProjectionFormat } from "@delpi/plugin-ui";
+import { normalizeDecimalPlaces } from "./nativeFormat";
 import type {
   ComunicadoBlock,
   ComunicadoContentRun,
@@ -85,25 +86,8 @@ export function formatTextProjectionValue(
   options?: FormatTextProjectionOptions,
 ): string {
   if (value == null || value === "") return "—";
-  if (format === "raw" || format == null) return String(value);
-  if (format === "date") {
-    const text = String(value).trim();
-    if (!text) return "—";
-    const parsed = Date.parse(text);
-    if (!Number.isNaN(parsed)) {
-      return new Date(parsed).toLocaleDateString("pt-BR");
-    }
-    return text;
-  }
-  const numeric = parseProjectionNumber(value);
-  if (numeric == null) return String(value);
-  const places = options?.decimalPlaces;
-  if (format === "percent") return formatPct(numeric, places);
-  if (format === "currency") return formatCurrency(numeric, places);
-  if (format === "compact") {
-    return numeric.toLocaleString("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
-  }
-  return formatNumber(numeric, places);
+  const spec = specFromTextProjectionFormat(format, options?.decimalPlaces);
+  return formatDisplayValue(value, spec);
 }
 
 export function resolveTextDataRefValue(
