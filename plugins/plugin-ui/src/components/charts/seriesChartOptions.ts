@@ -1,5 +1,7 @@
 import {
   formatDisplayValue,
+  isLocalizedChartPeriodLabel,
+  localizeEnglishMonthTokensInLabel,
   parseDisplayDate,
   resolveDisplayFormatSpec,
   specFromCategoryLabelFormat,
@@ -496,33 +498,8 @@ export function parseSeriesChartCategoryDate(raw: string): Date | null {
   );
 }
 
-const EN_MONTH_TO_PT: Record<string, string> = {
-  jan: "Jan",
-  feb: "Fev",
-  mar: "Mar",
-  apr: "Abr",
-  may: "Mai",
-  jun: "Jun",
-  jul: "Jul",
-  aug: "Ago",
-  sep: "Set",
-  sept: "Set",
-  oct: "Out",
-  nov: "Nov",
-  dec: "Dez",
-};
-
-/** Troca abreviações EN remanescentes (ex.: cache antigo «Feb. de 26»). */
-export function localizeEnglishMonthTokensInLabel(raw: string): string {
-  return raw.replace(
-    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\b(\.)?/gi,
-    (_match, month: string, dot: string | undefined) => {
-      const key = String(month).toLowerCase();
-      const pt = EN_MONTH_TO_PT[key] ?? month;
-      return `${pt}${dot ?? ""}`;
-    },
-  );
-}
+/** @deprecated Preferir import de `displayFormat` — reexport de compat. */
+export { localizeEnglishMonthTokensInLabel };
 
 export function formatSeriesChartCategoryLabel(
   raw: string,
@@ -530,6 +507,13 @@ export function formatSeriesChartCategoryLabel(
   spec?: DisplayFormatSpec | null,
 ): string {
   const resolved = resolveDisplayFormatSpec(spec, specFromCategoryLabelFormat(format));
+  /*
+   * API já entrega «Jan. de 26» / «Fev. de 26». Reaplicar date-short (default do chart_view)
+   * via Date.parse gerava 26/01/2001 nos meses EN-ambíguos e deixava PT cru — inconsistente.
+   */
+  if (isLocalizedChartPeriodLabel(raw)) {
+    return localizeEnglishMonthTokensInLabel(raw);
+  }
   if (resolved.category === "text" || resolved.presetId === "text") {
     return localizeEnglishMonthTokensInLabel(raw);
   }

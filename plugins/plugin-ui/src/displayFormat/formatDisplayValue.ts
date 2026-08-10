@@ -1,6 +1,8 @@
 import { getDisplayFormatPreset } from "./catalog";
 import { formatCustomPattern } from "./formatCustomPattern";
 import {
+  isLocalizedChartPeriodLabel,
+  localizeEnglishMonthTokensInLabel,
   monthAbbrevPt,
   monthFullPt,
   parseDisplayDate,
@@ -27,6 +29,10 @@ export function formatDisplayValue(
   }
 
   if (resolved.category === "date" || resolved.category === "time") {
+    if (typeof value === "string" && isLocalizedChartPeriodLabel(value)) {
+      /* «Jan. de 26» da API — não reformatar como dd/mm/yyyy. */
+      return localizeEnglishMonthTokensInLabel(value);
+    }
     const date = parseDisplayDate(value);
     if (!date) return stringifyFallback(value);
     return formatDateSpec(date, resolved, String(value));

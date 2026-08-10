@@ -2,6 +2,7 @@ import {
   canvasCellPatchFromSpec,
   chartCategoryPatchFromSpec,
   chartValuePatchFromSpec,
+  isNumericDisplayCategory,
   kpiPatchFromSpec,
   resolveDisplayFormatSpec,
   specFromCanvasNumberFormat,
@@ -133,10 +134,18 @@ export function applyDisplayFormatSpecToBlock(
   spec: DisplayFormatSpec,
 ): Partial<ComunicadoBlock> | null {
   const selected = ctx.selected;
-  const target = resolveDisplayFormatTarget(ctx);
+  let target = resolveDisplayFormatTarget(ctx);
   if (!selected || !target) return null;
 
   if (selected.type === "chart_view") {
+    /*
+     * Eixo X selecionado + formato numérico (% / moeda / número): aplica nos valores.
+     * Caso típico — usuário tenta % com o eixo de período focado; o atalho ficava
+     * disabled (categoria=date) ou gravava percent no rótulo sem mudar as barras.
+     */
+    if (target === "chartCategory" && isNumericDisplayCategory(spec.category) && spec.category !== "general") {
+      target = "chartValue";
+    }
     const current = mergeComunicadoChartOptions(selected.chartOptions);
     const patch =
       target === "chartCategory" ? chartCategoryPatchFromSpec(spec) : chartValuePatchFromSpec(spec);

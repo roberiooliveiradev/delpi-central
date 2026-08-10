@@ -108,9 +108,98 @@ export function parseDisplayDate(raw: unknown): ParsedDisplayDate | null {
     };
   }
 
-  const parsed = Date.parse(text);
-  if (!Number.isFinite(parsed)) return null;
-  return fromInstant(new Date(parsed));
+  /* dd/mm/yyyy ou d/m/yyyy (pt-BR) — sem Date.parse (evita ambiguidade US). */
+  const br = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
+  if (br) {
+    const day = Number(br[1]);
+    const month = Number(br[2]);
+    const year = Number(br[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return { year, month: month - 1, day, hour: 0, minute: 0, second: 0, dateOnly: true };
+  }
+
+  /*
+   * Rótulo de bucket mensal da API («Jan. de 26», «Fev. de 2026»).
+   * Nunca cair em Date.parse: «Jan. de 26» vira 26/01/2001 no motor ECMA.
+   */
+  const monthDe = parseLocalizedMonthYearLabel(text);
+  if (monthDe) return monthDe;
+
+  /*
+   * Sem Date.parse em texto livre: abreviações EN ambíguas («Jan», «Mar», «Jun»)
+   * e rótulos PT («Fev») produzem NaN ou datas fantasmas (ano 2001).
+   */
+  return null;
+}
+
+const MONTH_ABBREV_PARSE: Record<string, number> = {
+  jan: 0,
+  fev: 1,
+  feb: 1,
+  mar: 2,
+  abr: 3,
+  apr: 3,
+  mai: 4,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  ago: 7,
+  aug: 7,
+  set: 8,
+  sep: 8,
+  sept: 8,
+  out: 9,
+  oct: 9,
+  nov: 10,
+  dez: 11,
+  dec: 11,
+};
+
+/** True para rótulos já humanizados pela API (série mensal / legado EN). */
+export function isLocalizedChartPeriodLabel(raw: string): boolean {
+  return Boolean(parseLocalizedMonthYearLabel(raw.trim()));
+}
+
+const EN_MONTH_TO_PT_LABEL: Record<string, string> = {
+  jan: "Jan",
+  feb: "Fev",
+  mar: "Mar",
+  apr: "Abr",
+  may: "Mai",
+  jun: "Jun",
+  jul: "Jul",
+  aug: "Ago",
+  sep: "Set",
+  sept: "Set",
+  oct: "Out",
+  nov: "Nov",
+  dec: "Dez",
+};
+
+/** Troca abreviações EN remanescentes (ex.: cache antigo «Feb. de 26»). */
+export function localizeEnglishMonthTokensInLabel(raw: string): string {
+  return raw.replace(
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\b(\.)?/gi,
+    (_match, month: string, dot: string | undefined) => {
+      const key = String(month).toLowerCase();
+      const pt = EN_MONTH_TO_PT_LABEL[key] ?? month;
+      return `${pt}${dot ?? ""}`;
+    },
+  );
+}
+
+function parseLocalizedMonthYearLabel(text: string): ParsedDisplayDate | null {
+  const match =
+    /^(jan|fev|feb|mar|abr|apr|mai|may|jun|jul|ago|aug|set|sep|sept|out|oct|nov|dez|dec)\.?\s+de\s+(\d{2}|\d{4})$/i.exec(
+      text,
+    );
+  if (!match) return null;
+  const month = MONTH_ABBREV_PARSE[match[1]!.toLowerCase()];
+  if (month == null) return null;
+  let year = Number(match[2]);
+  if (!Number.isFinite(year)) return null;
+  if (year < 100) year += 2000;
+  return { year, month, day: 1, hour: 0, minute: 0, second: 0, dateOnly: true };
 }
 
 function fromInstant(date: Date): ParsedDisplayDate {

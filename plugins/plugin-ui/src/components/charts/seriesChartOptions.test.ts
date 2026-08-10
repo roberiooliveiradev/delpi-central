@@ -151,6 +151,14 @@ describe("formatSeriesChartValue / category label", () => {
     expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelFormat).toBe("raw");
   });
 
+  it("day em rótulo mensal da API preserva o texto (não vira 26/01/2001)", () => {
+    expect(formatSeriesChartCategoryLabel("Jan. de 26", "day")).toBe("Jan. de 26");
+    expect(formatSeriesChartCategoryLabel("Fev. de 26", "day")).toBe("Fev. de 26");
+    expect(formatSeriesChartCategoryLabel("Mar. de 26", "day")).toBe("Mar. de 26");
+    expect(formatSeriesChartCategoryLabel("Jun. de 26", "day")).toBe("Jun. de 26");
+    expect(formatSeriesChartCategoryLabel("Feb. de 26", "day")).toBe("Fev. de 26");
+  });
+
   it("day formata ISO UTC sem virar dia anterior", () => {
     expect(formatSeriesChartCategoryLabel("2026-08-03", "raw")).toBe("2026-08-03");
     expect(formatSeriesChartCategoryLabel("2026-08-03", "day")).toBe("03/08/2026");

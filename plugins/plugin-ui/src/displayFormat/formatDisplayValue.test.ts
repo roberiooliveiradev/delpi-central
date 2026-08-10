@@ -24,6 +24,18 @@ describe("formatDisplayValue", () => {
     expect(parsed).toMatchObject({ year: 2026, month: 7, day: 3, dateOnly: true });
   });
 
+  it("rótulo mensal PT da API não passa por Date.parse (Jan. de 26 ≠ 2001)", () => {
+    expect(parseDisplayDate("Jan. de 26")).toMatchObject({
+      year: 2026,
+      month: 0,
+      day: 1,
+      dateOnly: true,
+    });
+    expect(parseDisplayDate("Fev. de 26")).toMatchObject({ year: 2026, month: 1, day: 1 });
+    expect(formatDisplayValue("Jan. de 26", specFromPresetId("date-short"))).toBe("Jan. de 26");
+    expect(formatDisplayValue("Fev. de 26", specFromPresetId("date-short"))).toBe("Fev. de 26");
+  });
+
   it("máscara mm é mês sem HH e minuto com HH", () => {
     expect(formatCustomPattern("2026-08-03", "dd/mm/yyyy")).toBe("03/08/2026");
     expect(formatCustomPattern("2026-08-03T14:05:00", "HH:mm")).toBe("14:05");
