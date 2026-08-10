@@ -3,7 +3,7 @@
     grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(0, 1fr));
   }
 
-  .pva-metrics > .delpi-ui-kpi-card:nth-child(n + 5) {
+  .pva-metrics > .pva-kpi-card:nth-child(n + 5) {
     grid-column: span 1;
   }
 
@@ -21,7 +21,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .pva-metrics > .delpi-ui-kpi-card--wide {
+  .pva-metrics > .pva-kpi-card--wide {
     grid-column: 1 / -1;
   }
 
@@ -29,7 +29,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .pva-metrics--portfolio > .delpi-ui-kpi-card--wide {
+  .pva-metrics--portfolio > .pva-kpi-card--wide {
     grid-column: auto;
   }
 
@@ -51,18 +51,6 @@
 }
 
 @media (max-width: 900px) {
-  .pva-attention-item {
-    grid-template-columns: 1fr;
-  }
-
-  .pva-attention-item__actions {
-    justify-content: stretch;
-  }
-
-  .pva-attention-item__actions .pva-btn {
-    width: 100%;
-  }
-
   .pva-checkup-context {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -101,58 +89,11 @@
     flex: 1 1 auto;
   }
 
-  .pva-customers-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table.pva-customers-table.delpi-ui-table {
-    min-width: 760px;
-  }
-
-  /* Cards mobile para lista quando data-card-layout */
-  .pva-customers-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .pva-customer-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 14px;
-    border-radius: var(--pva-radius-md);
-    background: var(--pva-surface);
-    border: 1px solid var(--pva-border);
-    box-shadow: var(--pva-shadow-sm);
-  }
-
-  .pva-customer-card__row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: var(--pva-font-sm);
-  }
-
-  .pva-customer-card__label {
-    color: var(--pva-muted);
-  }
-
-  .pva-customer-card__value {
-    font-weight: 650;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
 }
 
 @media (max-width: 480px) {
   .pva-metrics {
     grid-template-columns: 1fr;
-  }
-
-  .pva-attention-item__metrics {
-    grid-template-columns: 1fr 1fr;
   }
 
   .pva-checkup-context {

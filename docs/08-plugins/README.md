@@ -123,6 +123,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4/SD3; UI: monitoramento + `/analise-consumo`) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
+| Portal Comercial | `/apps/commercial-api/*` + `/apps/api-delpi/pedidos-venda-abertos/*`, `/commercial/*`, `/commercial-proposals/*`, `/products/*` e `/production/*` — [README](../../plugins/commercial/README.md) · [wireframes](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
@@ -183,6 +184,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
 | reports | `reports` |
+| commercial | `commercial` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -233,6 +235,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Apontamento de Produção | [Plugin README](../../plugins/production-appointments/README.md) · [API](../../api-delpi/docs/api/production-appointments.md) |
 | Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
+| Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 
 ---
 

@@ -17,14 +17,14 @@ import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import type { PurchaseEvolutionPoint } from "../hooks/useCustomerPurchaseEvolution";
 
-const CHART_CLASSES = chartCardBemClasses("pva", {
+const CHART_CLASSES = chartCardBemClasses("cm", {
   headerLayout: "titleRow",
   wide: true,
 });
 
 const CHART_HEIGHT = 320;
-const COLOR_CURRENT = "#003866";
-const COLOR_PRIOR = "#089bdb";
+const COLOR_CURRENT = "var(--pva-brand)";
+const COLOR_PRIOR = "var(--pva-accent)";
 
 type CustomerPurchaseEvolutionChartProps = {
   points: PurchaseEvolutionPoint[];
@@ -70,9 +70,9 @@ export function CustomerPurchaseEvolutionChart({
     <ChartCard
       title="Evolução de compras"
       titleHint={CM_HELP.customerDetail.purchaseEvolution}
-      hint="Comparativo: últimos 12 meses × 12 meses anteriores"
+      hint={CM_HELP.customerDetail.purchaseEvolutionComparison}
       classNames={CHART_CLASSES}
-      className="pva-purchase-evolution"
+      className="cm-purchase-evolution"
       headerActions={
         <CommercialSelectField
           label="Período"

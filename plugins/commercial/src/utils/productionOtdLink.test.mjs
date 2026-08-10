@@ -3,27 +3,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  buildProductionOtdOrderPath,
   formatOtdDaysDiff,
   linkedPiOrders,
   parseProductionLinkSummary,
 } from "./productionOtdLink.ts";
-
-describe("buildProductionOtdOrderPath", () => {
-  it("monta path com branch e product_type", () => {
-    assert.equal(
-      buildProductionOtdOrderPath("10601501001", {
-        branch: "02",
-        productType: "PA",
-      }),
-      "/apps/dashboard-production/otd/op/10601501001?branch=02&product_type=PA",
-    );
-  });
-
-  it("retorna null sem OP", () => {
-    assert.equal(buildProductionOtdOrderPath("  "), null);
-  });
-});
 
 describe("parseProductionLinkSummary", () => {
   it("normaliza contadores", () => {

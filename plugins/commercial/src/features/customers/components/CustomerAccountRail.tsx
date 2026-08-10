@@ -4,6 +4,7 @@ import {
   CommercialDetailCard,
   CommercialDetailFieldGrid,
 } from "../../../app/commercialUi";
+import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -35,7 +36,7 @@ export function CustomerAccountRail({
   return (
     <CommercialDetailCard
       title="Dados da conta"
-      hint="Informações disponíveis no recorte atual."
+      hint={CM_HELP.customerDetail.accountData}
       className="pva-customer-account-rail"
     >
       <CommercialDetailFieldGrid fields={fields} valueFallback="Dado indisponível" wrapLabels />

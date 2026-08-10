@@ -237,13 +237,6 @@
   gap: 6px;
 }
 
-.pva-badge-group--status .delpi-ui-status-badge {
-  white-space: normal;
-  text-align: left;
-  line-height: 1.35;
-  max-width: min(100%, 240px);
-}
-
 .pva-link-btn {
   padding: 0;
   border: none;

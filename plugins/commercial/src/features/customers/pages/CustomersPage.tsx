@@ -279,7 +279,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               sellers={sellers}
               value={sellerIdFilter}
               onChange={setSellerIdFilter}
-              hint={CM_HELP.openOrders.sellerScope}
+              hint={CM_HELP.customers.sellerScope}
             />
           ) : null}
           {hasActiveFilters ? (

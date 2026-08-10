@@ -19,7 +19,7 @@ import {
 } from "../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../types/customerSummary";
 
-const CHART_CLASSES = chartCardBemClasses("pva", {
+const CHART_CLASSES = chartCardBemClasses("cm", {
   headerLayout: "titleRow",
   wide: true,
 });
@@ -27,8 +27,8 @@ const CHART_CLASSES = chartCardBemClasses("pva", {
 /** Mesma altura do gráfico ROL do dashboard comercial. */
 const CHART_HEIGHT = 320;
 
-/** Accent DELPI — alinhado ao comercial (série primária). */
-const SERIES_COLOR = "#089bdb";
+/** Accent do Portal — acompanha tema claro/escuro. */
+const SERIES_COLOR = "var(--pva-accent)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
@@ -92,7 +92,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
             : undefined
       }
       classNames={CHART_CLASSES}
-      className="pva-billing-series-chart"
+      className="cm-billing-series-chart"
       headerActions={
         <CommercialSelectField
           label="Cliente"

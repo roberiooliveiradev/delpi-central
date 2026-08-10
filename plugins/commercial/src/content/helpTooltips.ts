@@ -185,7 +185,7 @@ export const CM_HELP = {
       opsTable:
         "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
       otdPrazo:
-        "Status OTD e dias (previsto × real) da OP. Negativo = finalização antes do previsto. «Ver no OTD produção» abre a ficha completa no dashboard de produção.",
+        "Status OTD e dias entre a previsão e a conclusão da OP. Valor negativo indica finalização antecipada.",
       otdLinkedPi:
         "OPs intermediárias (PI) vinculadas pelo mesmo número de OP. Mostra resumo no prazo / atrasadas / em aberto.",
       opNumero: "Número da ordem de produção.",
@@ -209,7 +209,7 @@ export const CM_HELP = {
   },
   customers: {
     page:
-      "Carteira agregada a partir dos pedidos em aberto: um cartão/linha por cliente (código+loja).",
+      "Clientes da carteira com pedidos de venda em aberto, agrupados por conta.",
     kpiActive: "Clientes da carteira que têm pelo menos um pedido em aberto.",
     kpiNoSale60:
       "Clientes cuja última venda (quando disponível) foi há 60 dias ou mais — priorize reativação.",
@@ -221,21 +221,29 @@ export const CM_HELP = {
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterSituation:
       "Atalhos de atenção: todos, com atraso ou parcialmente atendidos nos pedidos em aberto.",
+    sellerScope:
+      "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",
+    tableColumns:
+      "Escolha a ordem e as colunas exibidas. A preferência fica salva neste navegador.",
     trend:
       "Comparamos o faturamento dos últimos 6 meses com o dos 6 meses anteriores. Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; entre −5% e +5%, estável. Sem histórico suficiente, a tendência fica indefinida.",
   },
   customerDetail: {
     header:
-      "Conta 360 do cliente (código+loja): indicadores, pedidos em aberto, faturamento, timeline e atalhos.",
+      "Visão integrada da conta: indicadores, pedidos em aberto, faturamento, atividades e próximos passos.",
+    accountData:
+      "Resumo cadastral e comercial da conta no recorte disponível, incluindo última venda, faturamento, situação e próxima ação.",
     billed12m: "Faturamento (NFs de saída) nos últimos 12 meses deste cliente.",
     openValue: "Soma do saldo em aberto dos pedidos deste cliente.",
     openOrders: "Quantidade de pedidos distintos ainda em aberto.",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
       "Comparativo mês a mês: últimos 12 meses versus os 12 meses imediatamente anteriores.",
+    purchaseEvolutionComparison:
+      "Compara os últimos 12 meses com os 12 meses anteriores para evidenciar mudança de ritmo nas compras.",
     timeline:
-      "Atividades e follow-ups registrados na commercial-api para esta conta (código+loja).",
+      "Atividades e follow-ups registrados para esta conta, em ordem cronológica.",
     scheduleFollowUp:
       "Abre o Meu dia com este cliente já selecionado para criar um follow-up com prazo.",
     billingValue: "Total faturado no período selecionado nos filtros de notas.",

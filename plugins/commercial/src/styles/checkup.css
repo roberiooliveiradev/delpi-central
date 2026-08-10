@@ -325,25 +325,6 @@
 
 /* ——— Detalhe do cliente (mockup visão geral) ——— */
 
-.pva-detail-breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  margin-bottom: 14px;
-  font-size: var(--pva-font-sm);
-  color: var(--pva-muted);
-}
-
-.pva-detail-breadcrumb .delpi-ui-back-link {
-  font-size: inherit;
-}
-
-.pva-detail-breadcrumb__current {
-  color: var(--pva-brand);
-  font-weight: 650;
-}
-
 .pva-detail-header {
   display: flex;
   flex-direction: column;
@@ -550,17 +531,7 @@
   min-width: 0;
 }
 
-.pva-purchase-evolution__filter {
-  display: block;
-  min-width: 180px;
-}
-
-.pva-purchase-evolution__select {
-  min-height: 40px;
-  font-size: var(--pva-font-sm);
-}
-
-.dashboard-pedidos-venda-abertos .pva-purchase-evolution .recharts-legend-item-text {
+.dashboard-commercial .cm-purchase-evolution .recharts-legend-item-text {
   color: var(--pva-muted) !important;
 }
 
@@ -705,32 +676,7 @@
   cursor: not-allowed;
 }
 
-.pva-contacts-stub {
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pva-contacts-stub__title {
-  margin: 0;
-  font-size: var(--pva-font-lg);
-  font-weight: 750;
-  color: var(--pva-brand);
-}
-
-.pva-contacts-stub__empty {
-  margin: 0;
-  font-size: var(--pva-font-sm);
-  color: var(--pva-muted);
-  line-height: 1.45;
-}
-
-.pva-contacts-stub__add {
-  align-self: flex-start;
-}
-
-.dashboard-pedidos-venda-abertos .pva-purchase-evolution .recharts-responsive-container {
+.dashboard-commercial .cm-purchase-evolution .recharts-responsive-container {
   width: 100% !important;
   min-height: 320px;
 }

@@ -99,8 +99,8 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-/* Altura mínima da grade — chrome do KPI vem do kit (.delpi-ui-kpi-card). */
-.pva-metrics .delpi-ui-kpi-card {
+/* Altura mínima é composição da grade; o chrome do KPI permanece no kit. */
+.pva-metrics > .pva-kpi-card {
   min-height: 118px;
   min-width: 0;
 }

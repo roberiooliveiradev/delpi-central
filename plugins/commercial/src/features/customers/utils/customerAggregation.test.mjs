@@ -4,7 +4,7 @@
  * Uso: node --experimental-strip-types --test src/features/customers/utils/customerAggregation.test.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -473,6 +473,20 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(page, /@delpi\/plugin-ui/);
     assert.doesNotMatch(table, /@delpi\/plugin-ui/);
   });
+
+  it("nao mantem componentes e CSS espelho da lista legada", () => {
+    for (const file of [
+      "CustomersFilters.tsx",
+      "CustomerAttentionList.tsx",
+      "CustomerCommercialStatus.tsx",
+      "CustomerContactsStub.tsx",
+    ]) {
+      assert.equal(existsSync(join(__dirname, `../components/${file}`)), false);
+    }
+    const css = readFileSync(join(__dirname, "../../../styles/customers.css"), "utf8");
+    assert.doesNotMatch(css, /pva-customers-table|pva-customers-toolbar|pva-filter-chip/);
+    assert.doesNotMatch(css, /\.delpi-ui-/);
+  });
 });
 
 describe("customerPortfolioKpis", () => {
@@ -548,6 +562,6 @@ describe("BillingTrendCell", () => {
     assert.match(src, /TrendingUp/);
     assert.match(src, /TrendingDown/);
     assert.match(src, /Minus/);
-    assert.match(src, /pva-billing-trend--\$\{trend\}/);
+    assert.match(src, /cm-billing-trend--\$\{trend\}/);
   });
 });

@@ -27,7 +27,6 @@ type OpenOrdersOpProgressBlockProps = {
   selectedOp: string;
   onSelectOp: (numeroOp: string) => void;
   orderDeliveryDate: string | null;
-  branch?: string | null;
   extrasByOp: Record<string, OpExtrasBundle>;
   loadingExtras: boolean;
   opsPrefetchTruncated?: number;
@@ -38,7 +37,6 @@ export function OpenOrdersOpProgressBlock({
   selectedOp,
   onSelectOp,
   orderDeliveryDate,
-  branch,
   extrasByOp,
   loadingExtras,
   opsPrefetchTruncated = 0,
@@ -165,11 +163,7 @@ export function OpenOrdersOpProgressBlock({
         </p>
 
         {extras?.byOp ? (
-          <OpenOrdersOtdPiPanel
-            productionOrder={current.numero_op}
-            branch={order?.branch ?? branch}
-            byOp={extras.byOp}
-          />
+          <OpenOrdersOtdPiPanel byOp={extras.byOp} />
         ) : extras?.loading ? (
           <CommercialLoadingCard title="Carregando prazo OTD…" variant="panel" />
         ) : null}

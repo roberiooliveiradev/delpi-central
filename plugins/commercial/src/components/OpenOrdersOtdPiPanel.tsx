@@ -1,4 +1,4 @@
-import { ActionButton, SectionHintLabel, StatusBadge } from "@delpi/plugin-ui/index";
+import { SectionHintLabel, StatusBadge } from "@delpi/plugin-ui/index";
 
 import { cmStatusBadgeClassNames } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
@@ -7,7 +7,6 @@ import { formatDisplayDate } from "../utils/dates";
 import { displayApiScalar } from "../utils/displayApiScalar";
 import { formatQuantity } from "../utils/format";
 import {
-  buildProductionOtdOrderPath,
   formatOtdDaysDiff,
   formatOtdStatusLabel,
   linkedPiOrders,
@@ -16,26 +15,13 @@ import {
 } from "../utils/productionOtdLink";
 
 type OpenOrdersOtdPiPanelProps = {
-  productionOrder: string;
-  branch?: string | null;
   byOp?: ProductionOrderByOpData | null;
 };
 
-function openProductionOtd(
-  productionOrder: string,
-  options?: { branch?: string | null; productType?: string | null },
-): void {
-  const path = buildProductionOtdOrderPath(productionOrder, options);
-  if (!path || typeof window === "undefined") return;
-  window.location.assign(path);
-}
-
 /**
- * Bloco compacto: prazo OTD da OP + tabela densa de PIs + deep link produção.
+ * Bloco compacto: prazo OTD da OP + tabela densa de PIs.
  */
 export function OpenOrdersOtdPiPanel({
-  productionOrder,
-  branch,
   byOp,
 }: OpenOrdersOtdPiPanelProps) {
   if (!byOp?.order) return null;
@@ -48,11 +34,6 @@ export function OpenOrdersOtdPiPanel({
   const late = summary?.late_ops ?? null;
   const open = summary?.open_ops ?? null;
   const help = CM_HELP.openOrders.detail;
-  const resolvedBranch = order.branch || branch || null;
-  const otdHref = buildProductionOtdOrderPath(productionOrder, {
-    branch: resolvedBranch,
-    productType: order.product_type,
-  });
 
   const summaryLine = (() => {
     if (totalPi <= 0 && pis.length === 0) return null;
@@ -73,20 +54,6 @@ export function OpenOrdersOtdPiPanel({
           hint={help.otdPrazo}
           className="cm-open-orders-detail__otd-pi-title"
         />
-        {otdHref ? (
-          <ActionButton
-            variant="ghost"
-            className="cm-open-orders-detail__otd-pi-cta"
-            onClick={() =>
-              openProductionOtd(productionOrder, {
-                branch: resolvedBranch,
-                productType: order.product_type,
-              })
-            }
-          >
-            Ver no OTD produção
-          </ActionButton>
-        ) : null}
       </div>
 
       <div className="cm-open-orders-detail__otd-pi-kpis">
@@ -181,20 +148,7 @@ export function OpenOrdersOtdPiPanel({
                             variant={otdStatusBadgeVariant(row.otd_status)}
                           />
                         </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="cm-open-orders-detail__otd-pi-link"
-                            onClick={() =>
-                              openProductionOtd(opId, {
-                                branch: row.branch || resolvedBranch,
-                                productType: row.product_type || "PI",
-                              })
-                            }
-                          >
-                            {opId}
-                          </button>
-                        </td>
+                        <td>{opId}</td>
                         <td>{displayApiScalar(row.product_code, "—")}</td>
                         <td>{formatDisplayDate(row.due_date)}</td>
                         <td>{formatOtdDaysDiff(row.days_diff)}</td>
@@ -208,7 +162,7 @@ export function OpenOrdersOtdPiPanel({
           ) : null}
           {totalPi != null && totalPi > pis.length ? (
             <p className="cm-open-orders-detail__muted">
-              +{totalPi - pis.length} OP(s) — abra no OTD produção para a lista completa.
+              +{totalPi - pis.length} OP(s) vinculada(s) fora deste resumo.
             </p>
           ) : null}
         </div>

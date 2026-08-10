@@ -55,20 +55,24 @@ describe("rota nativa da OP comercial", () => {
 
 describe("estrutura do detalhe OP", () => {
   it("página e modal compartilham o conteúdo operacional sem URL de outro plugin", async () => {
-    const [page, modal, app] = await Promise.all([
+    const [page, modal, app, otdPanel, otdUtils] = await Promise.all([
       readFile(
         new URL("../features/open-orders/OpenOrderOpDetailPage.tsx", import.meta.url),
         "utf8",
       ),
       readFile(new URL("../components/OpenOrdersLineDetailModal.tsx", import.meta.url), "utf8"),
       readFile(new URL("../App.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../components/OpenOrdersOtdPiPanel.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../utils/productionOtdLink.ts", import.meta.url), "utf8"),
     ]);
     assert.match(page, /OpenOrdersProductionDetailContent/);
     assert.match(modal, /export function OpenOrdersProductionDetailContent/);
     assert.match(modal, /<OpenOrdersProductionDetailContent/);
     assert.match(app, /view === "open_order_op_detail"/);
     assert.match(app, /<OpenOrderOpDetailPage/);
-    assert.doesNotMatch(page, /dashboard-production|pedidos-venda-abertos|iframe/i);
+    for (const source of [page, otdPanel, otdUtils]) {
+      assert.doesNotMatch(source, /dashboard-production|production-appointments|iframe/i);
+    }
   });
 
   it("mantém OV exclusivamente como página navegada pelo helper", async () => {

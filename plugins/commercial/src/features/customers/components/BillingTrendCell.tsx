@@ -14,7 +14,7 @@ type BillingTrendCellProps = {
 export function BillingTrendCell({ trend, pct }: BillingTrendCellProps) {
   if (!trend || trend === "insufficient") {
     return (
-      <span className="pva-customers-table__muted" title={billingTrendTitle(trend, pct)}>
+      <span className="cm-billing-trend cm-billing-trend--muted" title={billingTrendTitle(trend, pct)}>
         —
       </span>
     );
@@ -27,11 +27,11 @@ export function BillingTrendCell({ trend, pct }: BillingTrendCellProps) {
 
   return (
     <span
-      className={`pva-billing-trend pva-billing-trend--${trend}`}
+      className={`cm-billing-trend cm-billing-trend--${trend}`}
       title={title}
     >
-      <Icon className="pva-billing-trend__icon" size={16} strokeWidth={2.25} aria-hidden="true" />
-      {pctLabel ? <span className="pva-billing-trend__pct">{pctLabel}</span> : null}
+      <Icon className="cm-billing-trend__icon" size={16} strokeWidth={2.25} aria-hidden="true" />
+      {pctLabel ? <span className="cm-billing-trend__pct">{pctLabel}</span> : null}
       <span className="visually-hidden">{title}</span>
     </span>
   );

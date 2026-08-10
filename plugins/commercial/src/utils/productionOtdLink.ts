@@ -3,36 +3,10 @@ import type {
   ProductionOrderRow,
 } from "../types/productionExtras";
 
-export const PRODUCTION_OTD_BASE_PATH = "/apps/dashboard-production/otd";
-
 function asFiniteNumber(value: unknown): number | null {
   if (value == null || value === "") return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
-}
-
-/** Monta deep link para o detalhe OTD da OP no dashboard de produção. */
-export function buildProductionOtdOrderPath(
-  productionOrder: string,
-  options?: { branch?: string | null; productType?: string | null },
-): string | null {
-  const op = String(productionOrder || "").trim();
-  if (!op) return null;
-
-  const base = `${PRODUCTION_OTD_BASE_PATH}/op/${encodeURIComponent(op)}`;
-  const params = new URLSearchParams();
-  const branch = String(options?.branch || "").trim();
-  if (branch) params.set("branch", branch);
-
-  const productType = String(options?.productType || "")
-    .trim()
-    .toUpperCase();
-  if (productType === "PA" || productType === "PI") {
-    params.set("product_type", productType);
-  }
-
-  const query = params.toString();
-  return query ? `${base}?${query}` : base;
 }
 
 export function parseProductionLinkSummary(

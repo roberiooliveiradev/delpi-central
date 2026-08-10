@@ -1,10 +1,19 @@
 # Portal Comercial
 
-Microfrontend federado do domínio comercial — UX canônica a evoluir (**consolidação nativa**).
+Microfrontend federado do domínio comercial. Reúne, no próprio Portal Comercial,
+as bancadas e fichas de Minha carteira, Conta 360, pedidos, OP, oportunidades OV,
+propostas e gestão.
 
 > Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md)
 
-Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-comerciais`) **coexistem** no menu; o Portal **não** hosteia nem deep-linka esses MFEs como produto.
+Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-comerciais`) **coexistem** no menu. O `commercial` não usa iframe, remote, componente, URL nem fallback de interface de outro MFE: suas páginas são nativas e consomem apenas contratos HTTP.
+
+```text
+Portal Minha DELPI
+  → MFE commercial (rotas SPA + RBAC + @delpi/plugin-ui)
+    → commercial-api (carteiras, atividades, anexos e enrichment)
+    → api-delpi (pedidos, faturamento, produção, OV e ADY)
+```
 
 ## Rotas UI
 
@@ -22,6 +31,7 @@ Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-com
 | `/apps/commercial/analytics/otd` | Gestão — OTD | `analytics.view` |
 | `/apps/commercial/analytics/team` | Gestão — equipe | `analytics.view` (+ team) |
 | `/apps/commercial/analytics/opportunities` | Oportunidades OV | `analytics.view` |
+| `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `analytics.view` |
 | `/apps/commercial/seller-portfolios` | Carteiras (admin) | `seller-portfolios.manage` |
 
 Nav: `Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†`
@@ -45,21 +55,50 @@ A Home pode emitir `?focus=late` / `?stock=…`. Helpers: [`src/utils/openOrders
 
 Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido → mesma URL `pedido/linha/filial` (ver README do `dashboard-production`).
 
-## Carteira de clientes
+## Minha carteira — WF-03R
 
-A lista em `/apps/commercial/customers` mantém o estado na URL por
-`replaceState`, sem recarregar o MFE:
+A lista representa **clientes da carteira com pedidos de venda em aberto**; não é
+a base SA1 completa. O `PageHero` concentra escopo, recortes e busca. A lista usa
+`DataTable` no desktop e `DataRecordCard` no mobile, com a mesma paginação e
+ordenação em memória. Colunas, ordem e larguras são preferências locais
+versionadas; a análise de faturamento vem depois da lista.
+
+O estado compartilhável é sincronizado na URL por `replaceState`, sem recarregar
+o MFE:
 
 | Query | Efeito |
 |-------|--------|
 | `q` | Busca por cliente, código, loja, vendedor ou pedido |
-| `focus=attention\|inactive\|growth\|no_sale_60` | Recorte comercial da lista |
+| `focus=attention\|inactive\|growth\|no_sale_60` | Recorte comercial fixo da lista |
 | `seller_id` | Carteira selecionada; aceito apenas para escopo de equipe e vendedor válido |
 
 Somente essas chaves são preservadas ao abrir e retornar do detalhe. Valores
 inválidos são removidos, e o estado padrão `focus=all` é omitido da URL. O
 contrato canônico está em
 [`src/utils/customersListDeepLink.ts`](./src/utils/customersListDeepLink.ts).
+
+Presets são fixos nesta etapa; saved views nomeadas/compartilhadas ficam para uma
+evolução com contrato de persistência e visibilidade próprio.
+
+## Conta 360 — WF-04R
+
+`/apps/commercial/customers/:codigo/:loja` é a página canônica da conta. Usa
+`CommercialPagePath` para retornar à Minha carteira preservando `q`, `focus` e
+`seller_id`, e sincroniza a aba ativa em `?secao=`:
+
+| `secao` | Conteúdo |
+|---------|----------|
+| omitida / `resumo` | Visão geral, indicadores, evolução, pedidos e atividades recentes |
+| `pedidos` | Pedidos e linhas do cliente |
+| `historico` | Faturamento, filtros e notas fiscais |
+| `oportunidades` | Explicação e CTA interno permissionado |
+| `atividades` | Timeline real e follow-ups |
+
+Aliases legados (`faturamento`, `contatos`, `section`) são normalizados sem
+apagar os demais parâmetros. Faturamento/notas e atividades usam **lazy loading
+de dados por aba**: só consultam a fonte quando a seção correspondente está
+ativa. Loading, erro, vazio, retry e atualização permanecem isolados por fonte.
+Os CTAs aparecem apenas quando o usuário possui a capacidade necessária.
 
 ### Modal e página da OP (WF-02R-D)
 
@@ -80,6 +119,14 @@ Modal, OP, OV, proposta e conta usam `CommercialPagePath`
 nos retornos de páginas de detalhe.
 
 **OV:** se a lista trouxer `proposal_number`, usa direto; senão `GET /commercial/proposals?search={pedido}&branch=` com match por filial+cliente ([`resolveProposalForOpenOrder.ts`](./src/utils/resolveProposalForOpenOrder.ts)). **Não** chamar `GET /proposals/{pedido}` como se pedido (`C5_NUM`) fosse número de OV.
+
+### Página nativa da OV (WF-OV-D)
+
+`/apps/commercial/analytics/opportunities/:proposalNumber` é o único detalhe da
+OV. A página mostra status, datas, proposta, cliente/vendedor, itens, estrutura
+dos produtos e histórico em timeline/tabela. `CommercialPagePath` volta para
+Oportunidades preservando apenas os filtros internos allowlisted. Não existe
+modal de OV nem navegação para outro plugin.
 
 **Empty / freshness:** `portfolio.empty` → empty state + CTA Carteiras; toolbar com «Atualizado às HH:MM» após carga.
 
@@ -114,6 +161,31 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias PVA. Alias curto `commercial.propostas.*` ainda aceito na API.
 
+Aplicação nas páginas deste fluxo:
+
+- Minha carteira, Conta e OP: `commercial.accounts.view`;
+- `seller_id`: somente `commercial.accounts.team.view` (ou administração de carteiras);
+- OV e CTA Oportunidades: `commercial.analytics.view`;
+- atividades: `commercial.worklist.view`;
+- criar follow-up: `commercial.worklist.view` + `commercial.followups.manage`;
+- Propostas ADY: `commercial.proposals.view`.
+
+## Componentes compartilhados e composições
+
+O MFE importa os primitivos de `@delpi/plugin-ui` por Module Federation e mantém
+localmente apenas composição, responsividade e regra de domínio.
+
+- Navegação/detalhe: `PagePath`, `UnderlineNav` em modo tabs, `PageHero`;
+- dados: `DataTable`, `DataRecordCard`, `DetailCard`, `DetailFieldGrid`,
+  `Timeline`, `StatusBadge`, `KpiCard` e `ChartCard`;
+- operação: `SectionCard`, `ScopeChipBar`, `FilterBarShell`,
+  `TableColumnVisibilityMenu`, `CompactPagination`, `ActionButton`,
+  `StateBanner`, `EmptyState` e `LoadingActivityCard`;
+- composições do domínio: `CustomersTable`, `CustomerAccountRail`,
+  `CustomerOrdersTable`, `CustomerBillingPanel`,
+  `CustomerBillingSeriesChart`, `CustomerPurchaseEvolutionChart` e
+  `OpenOrdersProductionDetailContent`.
+
 Registrar no Core:
 
 ```bash
@@ -142,12 +214,35 @@ docker exec -it delpi-commercial-api python scripts/backfill_from_open_orders_le
 ```bash
 cd plugins/commercial
 npm install
+npm test
+npm run lint
 npm run build
 ```
 
 Rebuild sequencial: `./infra/scripts/up-dev-sequential.sh --fase mfe --build commercial`
 
 Smoke: `curl -I http://localhost/apps/commercial/assets/remoteEntry.js`
+
+Smoke autenticado da API operacional:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "X-Delpi-Caller-App: commercial" \
+  "http://localhost/apps/api-delpi/pedidos-venda-abertos/"
+```
+
+Validação do checkpoint Carteira/Conta:
+
+```bash
+cd plugins/commercial
+npm test
+npm run lint
+npm run build
+git diff --check
+```
+
+Rebuild operacional, quando necessário, deve usar o script sequencial acima;
+como este checkpoint não altera `plugin-ui`, não há rebuild do remote do kit.
 
 ## Estrutura
 

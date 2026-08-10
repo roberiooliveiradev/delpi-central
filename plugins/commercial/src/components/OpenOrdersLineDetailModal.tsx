@@ -608,7 +608,6 @@ export function OpenOrdersProductionDetailContent({
           selectedOp={selectedOp}
           onSelectOp={selectProductionOrder}
           orderDeliveryDate={item.data_entrega}
-          branch={item.filial}
           extrasByOp={extras.opsByNumber}
           loadingExtras={extras.loading}
           opsPrefetchTruncated={extras.opsPrefetchTruncated}

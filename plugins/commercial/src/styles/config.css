@@ -194,55 +194,6 @@
   background: var(--pva-surface);
 }
 
-.pva-config-linked-item {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 10px;
-  border-radius: var(--pva-radius-sm);
-  border: 1px solid color-mix(in srgb, var(--pva-border) 70%, transparent);
-  background: var(--pva-surface);
-  min-height: 44px;
-  box-sizing: border-box;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.pva-config-linked-item .pva-avatar,
-.pva-config-linked-item .delpi-ui-avatar {
-  flex-shrink: 0;
-}
-
-.pva-config-linked-item__text {
-  min-width: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 1px 0;
-}
-
-.pva-config-linked-item__text strong {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--pva-font-sm);
-  font-weight: 650;
-  line-height: 1.35;
-  color: var(--pva-brand);
-}
-
-.pva-config-linked-item__text span {
-  display: block;
-  color: var(--pva-muted);
-  font-size: 11px;
-  line-height: 1.35;
-  font-variant-numeric: tabular-nums;
-}
-
 .pva-config-customer-hits li {
   display: flex;
   flex-wrap: nowrap;

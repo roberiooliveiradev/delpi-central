@@ -155,8 +155,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 │            │ ┌─ Atalhos ─────────────┐  ┌─ Resumo da carteira ──────────┐ │
 │            │ │ [Pedidos em aberto]   │  │ Clientes     42               │ │
 │            │ │ [Minha carteira]      │  │ Valor em aberto  R$ 1,2 mi    │ │
-│            │ │ [Propostas →]         │  │ Atrasados     5               │ │
-│            │ │   (deep link externo) │  │ Próxima entrega  08/08        │ │
+│            │ │ [Propostas]           │  │ Atrasados     5               │ │
+│            │ │   (página nativa)     │  │ Próxima entrega  08/08        │ │
 │            │ └───────────────────────┘  └───────────────────────────────┘ │
 │            │                                                                │
 │            │ ┌─ Recentes ───────────────────────────────────────────────┐ │
@@ -217,7 +217,7 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 **Colunas default:** Cliente, Pedido, Produto, Cobertura, Entrega, Prev. OP, Status, Valor, Atraso.  
 **Clique:** linha / Prev. OP / card → modal expandido (quick view preservada); ação
 da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
-**Deep links (shareable):** `?stock=` / `?focus=late` sincronizam com chips de atenção; `?pedido=&linha=&filial=` abre o modal da linha; `seller_id` = portfolio id. Home pode emitir `?focus=late` / `?stock=…`.
+**URLs internas compartilháveis:** `?stock=` / `?focus=late` sincronizam com chips de atenção; `?pedido=&linha=&filial=` abre o modal da linha; `seller_id` = portfolio id. Home pode emitir `?focus=late` / `?stock=…`.
 
 **Mobile (≤768px):** default Cards na 1ª visita; hero empilha; modal fill.
 
@@ -249,7 +249,7 @@ da OP → página SPA nativa `/open-orders/:filial/:pedido/:linha/op/:op`.
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Deep link inverso:** OTD detalhe OP com `C2_PEDIDO` → «Ver pedido no comercial» (`?pedido=&linha=&filial=`).
+**Entrada por contexto de pedido:** `?pedido=&linha=&filial=` abre a linha correspondente dentro do próprio `commercial`.
 
 **Página OP:** busca a linha exata por filial+pedido+linha no escopo `seller_id` e
 confirma a OP em `opsUtilizadas`; não usa iframe, import ou URL de outro MFE.
@@ -285,77 +285,133 @@ Pedido+OP permanece no modal completo e também na página nativa WF-02R-D.
 
 ---
 
-## WF-03 — Minha carteira (lista de clientes)
+## WF-03R — Minha carteira (desktop)
 
 **Rota:** `/apps/commercial/customers`  
-**Paridade:** `CustomersPage`  
-**Dados:** commercial-api portfolio + enrichment api-delpi
+**Papel:** priorizar clientes da carteira com pedidos de venda em aberto; não representa a SA1 completa.
+**Estado URL:** `q`, `focus` e `seller_id` allowlisted; presets fixos agora, saved views customizadas depois.
 
-```
-┌─ Portal Comercial · Minha carteira ─────────────────────────────────────────┐
-│ Breadcrumb: Portal Comercial › Minha carteira                               │
-│                                                                             │
-│ Escopo: (•) Minha carteira  ( ) Equipe     ← equipe só se permissão         │
-│ Busca ················  [Atenção ▾]  [Ordenar: valor aberto ▾]              │
-│                                                                             │
-│ ┌─ Fila de atenção ───────────────────────────────────────────────────────┐│
-│ │ Chips: Atrasados (5) · Sem pedido recente (3) · Parcial (2)             ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ Avatar │ Cliente              │ Cidade   │ Aberto    │ Atraso │ Próx.  ││
-│ │ [img]  │ 01001-01 ACME Ltda   │ Joinville│ R$ 180 mil│ 2      │ 08/08  ││
-│ │ [img]  │ 01002-01 Beta SA     │ Blumenau │ R$  42 mil│ 0      │ 12/08  ││
-│ │ …                                                                       ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ Linha inteira clicável → detalhe da conta                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
+```text
+┌─ PageHero · Minha carteira ─────────────────────────── [Atualizar] ──────┐
+│ Clientes no recorte 24 │ Valor aberto R$ 1,9 mi │ Após filtros 7        │
+│ Atualizado 09:04                                                       │
+│ Carteira [Todos os vendedores ▾]                                      │
+│ Foco [Todos] [Atenção] [Inativos] [Em crescimento] [Sem venda 60d]     │
+│ Buscar cliente, código, loja ou pedido [___________________________]    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard · Clientes (1–20 de 24) ─────────────── [Colunas] ────────┐
+│ Cliente       Vendedor  Última venda  Fat.12m  Em aberto  Atrasos      │
+│ ACME 01001/01 Ana       01/08/26      R$ 800k  R$ 90k     2            │
+│ … clique/Enter na linha → Conta; resize/reorder e paginação abaixo     │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─ Análise da carteira ───────────────────────────────────────────────────┐
+│ Faturamento — últimos 12 meses · toda a carteira ou cliente            │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Vazio:** «Nenhum cliente na carteira. Peça ao administrador para vincular clientes.» + CTA admin se `seller-portfolios.manage`.
+**Componentes importados de `@delpi/plugin-ui`:** `PageHero`,
+`ScopeChipBar`, `FilterBarShell`, `TextField`, `SelectField`, `SectionCard`,
+`DataTable`, `TableColumnVisibilityMenu`, `DataRecordCard`,
+`CompactPagination`, `StatusBadge`, `KpiCard`, `ChartCard`, `StateBanner`,
+`EmptyState` e `LoadingActivityCard`.
+
+**Composições de domínio no `commercial`:** `CustomersPage`,
+`SellerScopeFilter`, `CustomersTable`, `CustomerSummaryCards`,
+`CustomerBillingSeriesChart` e o mapper `CustomerSummary → DataRecordCard`.
+O MFE mantém apenas layout/responsividade e regra comercial; não replica CSS do kit.
+
+### WF-03R-M — Minha carteira (mobile)
+
+```text
+┌ Minha carteira                         [↻] ┐
+│ 24 clientes · R$ 1,9 mi                    │
+│ Atualizado 09:04                            │
+│ Carteira [Todos ▾]                         │
+│ [Todos][Atenção][Inativos][Sem venda] →   │
+│ [Buscar_______________________________]    │
+└─────────────────────────────────────────────┘
+┌ [avatar] ACME                    [Atenção] ┐
+│ 01001 · Loja 01                            │
+│ Última venda 01/08 · Em aberto R$ 90k     │
+│ Atrasos 2 · Próxima entrega 15/08         │
+│ Próxima ação: tratar atraso                │
+└─────────────────────────────────────────────┘
+                1 2 3 ›
+[Análise da carteira]
+```
+
+No mobile, `DataRecordCard` usa o mesmo conjunto filtrado, ordenado e paginado
+da `DataTable`; não existe segundo pipeline nem segundo fetch.
 
 ---
 
-## WF-04 — Conta / Check-up do cliente
+## WF-04R — Conta 360 (desktop)
 
 **Rota:** `/apps/commercial/customers/:code/:store`  
-**Paridade:** `CustomerDetailPage`  
-**Chave:** `customer_key = code|store`
+**PagePath:** `← Minha carteira / {cliente}`, com retorno determinístico para a
+lista e preservação de `q`, `focus` e `seller_id`.
+**Estado URL:** `?secao=resumo|pedidos|historico|oportunidades|atividades`;
+`faturamento` e `contatos` permanecem aliases legados.
 
-```
-┌─ Portal Comercial · Conta ──────────────────────────────────────────────────┐
-│ ← Minha carteira    01001-01 · ACME Ltda                    [Avatar] [⋯]   │
-│ Joinville/SC · Carteira: Ana Silva · Atualizado há 3 min                    │
-│                                                                             │
-│ Abas: [Check-up] [Pedidos] [Faturamento] [Notas]   ← Faturamento/NF se API │
-│                                                                             │
-│ === Aba Check-up ========================================================== │
-│ ┌ Valor aberto ┐ ┌ Pedidos ┐ ┌ Atrasados ┐ ┌ Próx. entrega ┐ ┌ Ticket* ┐ │
-│ │ R$ 180 mil   │ │ 6       │ │ 2         │ │ 08/08         │ │ —      │ │
-│ └──────────────┘ └─────────┘ └───────────┘ └───────────────┘ └────────┘ │
-│ * ticket só após ficha KPI F0                                               │
-│                                                                             │
-│ ┌─ Pontos para a conversa ────────────────────────────────────────────────┐│
-│ │ · 2 itens atrasados (saldo 80 un.)                                      ││
-│ │ · Próxima entrega em 3 dias                                             ││
-│ │ · Pedido 000123 parcial                                                 ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ ┌─ Pedidos em aberto (resumo) ────────────────────────── [Ver todos] ────┐│
-│ │ Pedido │ Item │ Produto │ Saldo │ Entrega │ Status                      ││
-│ │ 000123 │ 01   │ …       │ 50    │ 02/08   │ ⚠ Atrasado                 ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ === Aba Pedidos =========================================================== │
-│ Tabela completa filtrada ao cliente (mesmo contrato open-orders)            │
-│                                                                             │
-│ === Aba Faturamento (se disponível) ======================================= │
-│ Série / período · gráfico ou tabela billing-series                          │
-└─────────────────────────────────────────────────────────────────────────────┘
+```text
+← Minha carteira   /   ACME
+┌─ ACME [Atenção] ─────────────────── [Agendar follow-up] [Atualizar seção] ┐
+│ Código 01001 · Loja 01 · Vendedor Ana · Joinville/SC                     │
+│ Atualizado 09:05                                                         │
+└───────────────────────────────────────────────────────────────────────────┘
+ [Visão geral] [Pedidos 3] [Histórico] [Oportunidades] [Atividades]
+┌─ tabpanel ativo ─────────────────────────────┬─ Dados da conta ───────────┐
+│ Pontos para conversa                        │ Última venda 01/08         │
+│ [Atraso 7d] [Parcial] [R$ 90k em aberto]    │ Fat. 12m R$ 800k          │
+│ Evolução de compras                         │ Situação Atenção          │
+│ Pedidos em aberto (preview)                  │ Próxima entrega 15/08     │
+│ Atividades recentes (preview)                │ Próxima ação              │
+│                                              │ Tratar atraso [Pedidos]   │
+└──────────────────────────────────────────────┴────────────────────────────┘
 ```
 
-**Menu ⋯ (admin):** alterar avatar · transferir cliente (se permissão).
+**Abas:** Pedidos mostra linhas do cliente; Histórico carrega faturamento e NFs
+somente quando ativo; Oportunidades oferece CTA interno apenas com
+`analytics.view`; Atividades carrega timeline real e permite follow-up somente
+com `worklist.view + followups.manage`. Cada fonte mantém loading, erro, vazio,
+retry e atualização independentes.
+
+**Componentes importados de `@delpi/plugin-ui`:** `PagePath`, `PageHero`,
+`InitialsAvatar`, `StatusBadge`, `UnderlineNav` em modo tabs, `DetailCard`,
+`DetailFieldGrid`, `SectionCard`, `KpiCard`, `ChartCard`, `Timeline`,
+`DataTable`, `DataRecordCard`, `ActionButton`, `StateBanner`, `EmptyState` e
+`LoadingActivityCard`.
+
+**Composições de domínio no `commercial`:** `CustomerDetailHeader`,
+`CustomerDetailSections`, `CustomerOverviewSection`, `CustomerAccountRail`,
+`CustomerOrdersTable`, `CustomerBillingPanel`,
+`CustomerPurchaseEvolutionChart` e `CustomerActivityTimelinePanel`.
+
+### WF-04R-M — Conta 360 (mobile)
+
+```text
+← Minha carteira / ACME
+[avatar] ACME [Atenção]
+Código/loja · vendedor
+[Agendar follow-up] [Atualizar seção]
+Tabs com scroll horizontal →
+[Dados da conta]
+┌ tabpanel em uma coluna ┐
+│ KPIs/chips             │
+│ gráfico responsivo     │
+│ tabelas → cards        │
+└────────────────────────┘
+```
+
+O rail vira seção empilhada/recolhível e as tabelas usam cards equivalentes.
+Nenhum conteúdo crítico depende de hover.
+
+### Fronteira de integração
+
+Minha carteira, Conta, OP e OV são páginas SPA nativas do `commercial`. Nenhuma
+delas hospeda plugin externo, usa iframe, monta remote irmão ou oferece URL de
+fallback para outro MFE. Dados de produção, pedidos, faturamento e oportunidades
+são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 
 ---
 
@@ -534,11 +590,11 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Lista pedidos em aberto | WF-02R | `/open-orders` |
 | Detalhe linha (OP + fabril) | WF-02R-D | modal completo + `/open-orders/:filial/:pedido/:linha/op/:op` |
 | Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
-| Minha carteira | WF-03 | `/customers` |
-| Check-up cliente | WF-04 | `/customers/:code/:store` |
+| Minha carteira | WF-03R / WF-03R-M | `/customers` |
+| Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
 | Config vendedores | WF-05 | `/seller-portfolios` |
-| Avatar | WF-04 (⋯) + WF-05 | commercial-api |
-| Deep link codigo+loja | WF-04 | idem |
+| Avatar | WF-04R + WF-05 | commercial-api |
+| URL interna código+loja | WF-04R | idem |
 | Home / entrada | WF-01 | `/` |
 
 ---
@@ -553,6 +609,8 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Loading | `LoadingActivityCard` |
 | Seções | `SectionCard` |
 | Ajuda | `HelpTooltip` / `FieldLabel` |
+| Caminho de detalhe | `PagePath` |
+| Equivalência mobile | `DataRecordCard` |
 | Modal transferir | shell host-contained (`HostContainedDialog`) |
 
 CSS de kit: **zero** no MFE — só tokens `--delpi-ui-*` + layout de página.

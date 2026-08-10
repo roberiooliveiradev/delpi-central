@@ -314,7 +314,7 @@ export function CustomersTable({
               trigger: "Colunas",
               panelTitle: "Colunas da carteira",
               reset: "Restaurar padrão",
-              hint: "Escolha e reordene as colunas exibidas.",
+              hint: CM_HELP.customers.tableColumns,
               columnAriaLabel: (label) => `Exibir coluna ${label}`,
               reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
             }}

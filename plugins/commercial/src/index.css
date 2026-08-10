@@ -550,20 +550,6 @@
   }
 }
 
-.dashboard-commercial .pva-customers-page__list-title,
-.dashboard-commercial .pva-internal-page__title,
-.dashboard-commercial .pva-filter-bar__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dashboard-commercial .pva-customers-toolbar__select-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .dashboard-commercial .cm-page-header-row {
   display: flex;
   align-items: flex-start;
