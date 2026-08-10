@@ -37,4 +37,12 @@ describe("ribbon group divider contract", () => {
     expect(base).not.toMatch(/border-right:\s*1px/);
     expect(base).toMatch(/border-right:\s*none/);
   });
+
+  it("corpo do grupo centraliza itens na horizontal", () => {
+    const body = kit.match(/\.delpi-ui-ribbon-group__body\s*\{[^}]+\}/s)?.[0];
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/justify-content:\s*center/);
+    expect(body).toMatch(/align-items:\s*center/);
+    expect(body).toMatch(/width:\s*100%/);
+  });
 });

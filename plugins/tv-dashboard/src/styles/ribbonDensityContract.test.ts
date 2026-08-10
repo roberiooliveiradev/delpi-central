@@ -100,6 +100,22 @@ describe("ribbon density contract", () => {
     expect(group).not.toMatch(/justify-content:\s*space-between/);
   });
 
+  it("corpo das seções centraliza itens na horizontal (topbar)", () => {
+    const body = css.match(
+      /\.dashboard-tv-dashboard \.td-deck-ribbon__body\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(body).toBeTruthy();
+    expect(body).toMatch(/justify-content:\s*center/);
+    expect(body).toMatch(/align-items:\s*center/);
+    expect(body).toMatch(/width:\s*100%/);
+
+    const compactBody = css.match(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__body\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(compactBody).toBeTruthy();
+    expect(compactBody).toMatch(/justify-content:\s*center/);
+  });
+
   it("inputs de frame têm largura legível (≥72px) em 5 colunas", () => {
     expect(css).toMatch(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*flex-wrap:\s*nowrap/s,

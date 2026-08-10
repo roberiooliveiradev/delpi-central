@@ -57,8 +57,11 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .delpi-ui-ribbon-group__caption {
