@@ -4,6 +4,7 @@ import { shapeBlockAllowsResize } from "./comunicadoShapeGeometry";
 import {
   EFFICIENCY_PIN_OPERATION_ID,
   applyEfficiencyPinBandsToSharedPins,
+  applyEfficiencyPinBandsToSourceAndPins,
   applySharedDataSourceToUnlinkedEfficiencyPins,
   buildEfficiencyPinInfoBlock,
   classifyEfficiencyPinPct,
@@ -12,9 +13,11 @@ import {
   isEfficiencyPinShapeKind,
   listWorkCentersFromResolved,
   normalizeEfficiencyPinBinding,
+  resolveEfficiencyPinBandsForBlock,
   resolveEfficiencyPinInfoMode,
   resolveEfficiencyPinRole,
   resolveEfficiencyPinState,
+  syncEfficiencyPinBandsAcrossSources,
 } from "./efficiencyPin";
 
 describe("efficiencyPin", () => {
@@ -78,6 +81,75 @@ describe("efficiencyPin", () => {
     });
     expect(next[0]?.efficiencyPin?.bands).toEqual({ goodMinPct: 95, warnMinPct: 75 });
     expect(next[1]?.efficiencyPin?.bands).toEqual({ goodMinPct: 95, warnMinPct: 75 });
+  });
+
+  it("grava faixas na data_source e nos pins (canônico do mapa)", () => {
+    const blocks = [
+      {
+        id: "src-1",
+        type: "data_source" as const,
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        style: {},
+        dataBinding: { operationId: EFFICIENCY_PIN_OPERATION_ID, params: {} },
+      },
+      {
+        id: "pin-a",
+        type: "shape" as const,
+        shape: "efficiency-pin" as const,
+        frame: { x: 1, y: 1, w: 8, h: 8 },
+        style: {},
+        content: "",
+        dataSourceId: "src-1",
+        efficiencyPin: { workCenter: "CT-01" },
+      },
+    ];
+    const next = applyEfficiencyPinBandsToSourceAndPins(
+      blocks,
+      { goodMinPct: 95, warnMinPct: 75, validMaxPct: 199 },
+      { sourceId: "src-1" },
+    );
+    expect(next[0]).toMatchObject({
+      id: "src-1",
+      efficiencyPinBands: { goodMinPct: 95, warnMinPct: 75, validMaxPct: 199 },
+    });
+    expect(next[1]?.efficiencyPin?.bands).toEqual({
+      goodMinPct: 95,
+      warnMinPct: 75,
+      validMaxPct: 199,
+    });
+    expect(
+      resolveEfficiencyPinBandsForBlock(
+        { efficiencyPin: {}, dataSourceId: "src-1" },
+        next,
+      ).warnMinPct,
+    ).toBe(75);
+  });
+
+  it("sync promove faixas só nos pins para a fonte", () => {
+    const blocks = [
+      {
+        id: "src-1",
+        type: "data_source" as const,
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        style: {},
+        dataBinding: { operationId: EFFICIENCY_PIN_OPERATION_ID, params: {} },
+      },
+      {
+        id: "pin-a",
+        type: "shape" as const,
+        shape: "efficiency-pin" as const,
+        frame: { x: 1, y: 1, w: 8, h: 8 },
+        style: {},
+        content: "",
+        dataSourceId: "src-1",
+        efficiencyPin: { workCenter: "CT-01", bands: { warnMinPct: 75 } },
+      },
+    ];
+    const next = syncEfficiencyPinBandsAcrossSources(blocks);
+    expect(next[0]).toMatchObject({
+      efficiencyPinBands: { goodMinPct: 95, warnMinPct: 75, validMaxPct: 199 },
+    });
+    expect(next[1]?.efficiencyPin?.bands?.warnMinPct).toBe(75);
   });
 
   it("resolve cor e % pelo work_center na tabela", () => {

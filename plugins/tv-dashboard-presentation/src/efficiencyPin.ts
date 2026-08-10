@@ -175,13 +175,24 @@ export function applyEfficiencyPinBandsToSharedPins(
   });
 }
 
-/** Faixas já gravadas em algum pin da mesma fonte (para herdar ao vincular). */
+/** Faixas já gravadas na fonte ou em algum pin ligado (para herdar ao vincular). */
 export function findSharedEfficiencyPinBands(
   blocks: readonly ComunicadoBlock[],
   sourceId: string | null | undefined,
 ): ComunicadoEfficiencyPinBands | undefined {
   const trimmed = sourceId?.trim();
   if (!trimmed) return undefined;
+  for (const block of blocks) {
+    if (block.type === "data_source" && block.id === trimmed) {
+      const fromSource = (block as ComunicadoDataSourceBlock).efficiencyPinBands;
+      if (
+        fromSource &&
+        (fromSource.goodMinPct != null || fromSource.warnMinPct != null || fromSource.validMaxPct != null)
+      ) {
+        return { ...fromSource };
+      }
+    }
+  }
   for (const block of blocks) {
     if (!isEfficiencyPinBlock(block)) continue;
     if (block.dataSourceId?.trim() !== trimmed) continue;
@@ -191,6 +202,72 @@ export function findSharedEfficiencyPinBands(
     }
   }
   return undefined;
+}
+
+/**
+ * Grava faixas na data_source (canônico) e em todos os pins CT da mesma fonte.
+ * Garante persistência mesmo se um pin individual perder `efficiencyPin.bands` no eco.
+ */
+export function applyEfficiencyPinBandsToSourceAndPins(
+  blocks: readonly ComunicadoBlock[],
+  bands: ComunicadoEfficiencyPinBands,
+  options?: { sourceId?: string | null },
+): ComunicadoBlock[] {
+  const sourceId = options?.sourceId?.trim() || "";
+  const resolved = resolveEfficiencyPinBands(bands);
+  const withSource = blocks.map((block) => {
+    if (block.type !== "data_source") return block;
+    if (sourceId && block.id !== sourceId) return block;
+    if (!sourceId) {
+      /* Sem fonte explícita: só carimba fontes já usadas por algum pin CT. */
+      const used = blocks.some(
+        (pin) => isEfficiencyPinBlock(pin) && pin.dataSourceId?.trim() === block.id,
+      );
+      if (!used) return block;
+    }
+    return {
+      ...block,
+      efficiencyPinBands: { ...resolved },
+    } as ComunicadoDataSourceBlock;
+  });
+  return applyEfficiencyPinBandsToSharedPins(withSource, resolved, { sourceId: sourceId || null });
+}
+
+/**
+ * Após parse/load: espelha `data_source.efficiencyPinBands` ↔ pins (e promove faixas
+ * só nos pins para a fonte, se a fonte ainda não tiver).
+ */
+export function syncEfficiencyPinBandsAcrossSources(
+  blocks: readonly ComunicadoBlock[],
+): ComunicadoBlock[] {
+  const sourceIds = new Set<string>();
+  for (const block of blocks) {
+    if (block.type === "data_source") sourceIds.add(block.id);
+    if (isEfficiencyPinBlock(block)) {
+      const sid = block.dataSourceId?.trim();
+      if (sid) sourceIds.add(sid);
+    }
+  }
+  let next = [...blocks];
+  for (const sourceId of sourceIds) {
+    const shared = findSharedEfficiencyPinBands(next, sourceId);
+    if (!shared) continue;
+    next = applyEfficiencyPinBandsToSourceAndPins(next, shared, { sourceId });
+  }
+  return next;
+}
+
+/** Faixas efetivas do pin: fonte ligada → pin → defaults. */
+export function resolveEfficiencyPinBandsForBlock(
+  block: Pick<ComunicadoShapeBlock, "efficiencyPin" | "dataSourceId">,
+  blocks?: readonly ComunicadoBlock[] | null,
+): Required<ComunicadoEfficiencyPinBands> {
+  const sourceId = block.dataSourceId?.trim();
+  if (sourceId && blocks?.length) {
+    const shared = findSharedEfficiencyPinBands(blocks, sourceId);
+    if (shared) return resolveEfficiencyPinBands(shared);
+  }
+  return resolveEfficiencyPinBands(block.efficiencyPin?.bands);
 }
 
 function finiteNumber(value: unknown): number | null {

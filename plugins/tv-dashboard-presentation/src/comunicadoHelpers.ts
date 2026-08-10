@@ -40,6 +40,8 @@ import {
   ensureEfficiencyPinResizableFrame,
   isEfficiencyPinShapeKind,
   normalizeEfficiencyPinBinding,
+  resolveEfficiencyPinBands,
+  syncEfficiencyPinBandsAcrossSources,
 } from "./efficiencyPin";
 import { normalizeShapeConnector } from "./comunicadoConnectors";
 import {
@@ -141,6 +143,7 @@ import type {
   ComunicadoDataBlockType,
   ComunicadoDataFilters,
   ComunicadoDataResolved,
+  ComunicadoEfficiencyPinBands,
   ComunicadoChartType,
   ComunicadoInputBlock,
   ComunicadoTablePreset,
@@ -767,12 +770,13 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
   // Array explícito (inclusive vazio) — não remigrar headline em blocos padrão.
   if (Array.isArray(cfg.blocks)) {
     const blocks = cfg.blocks as ComunicadoBlock[];
+    const normalized = syncEfficiencyPinBandsAcrossSources(blocks.map(normalizeBlock));
     return {
-      version: Number(cfg.version) || (blocks.length > 0 ? detectConfigVersion(blocks) : 2),
+      version: Number(cfg.version) || (normalized.length > 0 ? detectConfigVersion(normalized) : 2),
       headline: String(cfg.headline ?? ""),
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
-      blocks: blocks.map(normalizeBlock),
+      blocks: normalized,
       groupTransforms: normalizeGroupTransforms(cfg.groupTransforms),
       dataFilters: normalizeDataFilters(cfg.dataFilters),
       customFonts: normalizeCustomFonts(cfg.customFonts),
@@ -951,6 +955,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     }
     const fieldLabels = normalizeFieldLabels(block.fieldLabels);
     if (fieldLabels) base.fieldLabels = fieldLabels;
+    if (block.efficiencyPinBands) {
+      base.efficiencyPinBands = { ...resolveEfficiencyPinBands(block.efficiencyPinBands) };
+    }
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -1240,6 +1247,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       bindingRaw && typeof bindingRaw === "object"
         ? (bindingRaw as ComunicadoDataBinding)
         : { operationId: "" };
+    const bandsRaw = block.efficiencyPinBands;
+    const efficiencyPinBands =
+      bandsRaw && typeof bandsRaw === "object"
+        ? resolveEfficiencyPinBands(bandsRaw as ComunicadoEfficiencyPinBands)
+        : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -1259,6 +1271,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         },
         dataTransform: normalizeDataTransform(block.dataTransform),
         fieldLabels: normalizeFieldLabels(block.fieldLabels),
+        ...(efficiencyPinBands ? { efficiencyPinBands } : {}),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

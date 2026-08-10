@@ -425,6 +425,11 @@ export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
    * Cascata: projeção do visual > fieldLabels > catálogo/resolved > key.
    */
   fieldLabels?: import("./fieldLabelRegistry").FieldLabelsMap;
+  /**
+   * Faixas do radar dos pins CT ligados a esta fonte (canônico do mapa).
+   * Espelhado nos `efficiencyPin.bands` dos pins para a TV/render.
+   */
+  efficiencyPinBands?: ComunicadoEfficiencyPinBands;
   resolved?: ComunicadoDataResolved;
 };
 

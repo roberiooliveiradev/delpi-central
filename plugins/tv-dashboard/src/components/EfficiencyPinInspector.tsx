@@ -4,7 +4,7 @@ import {
   EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT,
   EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT,
   EFFICIENCY_PIN_OPERATION_ID,
-  applyEfficiencyPinBandsToSharedPins,
+  applyEfficiencyPinBandsToSourceAndPins,
   applySharedDataSourceToUnlinkedEfficiencyPins,
   buildEfficiencyPinInfoBlock,
   dataSourceOptionsForInspector,
@@ -15,6 +15,7 @@ import {
   isEfficiencyPinInfoRole,
   listWorkCentersFromResolved,
   resolveEfficiencyPinBands,
+  resolveEfficiencyPinBandsForBlock,
   resolveEfficiencyPinInfoMode,
   resolveEfficiencyPinRole,
   type ComunicadoEfficiencyPinBinding,
@@ -57,6 +58,7 @@ export function EfficiencyPinInspector({
     openDataCatalog,
     addPreparedShapeBlock,
     selectBlock,
+    snapshotEditorConfig,
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
@@ -65,7 +67,10 @@ export function EfficiencyPinInspector({
   const binding = pin?.efficiencyPin ?? {};
   const role = resolveEfficiencyPinRole(binding);
   const infoMode = resolveEfficiencyPinInfoMode(binding);
-  const bands = resolveEfficiencyPinBands(binding.bands);
+  const bands = resolveEfficiencyPinBandsForBlock(
+    { efficiencyPin: binding, dataSourceId: pin?.dataSourceId },
+    blocks,
+  );
   const sourceId = pin?.dataSourceId?.trim() ?? "";
   const sharedSourceId = useMemo(() => findSharedEfficiencyPinDataSourceId(blocks), [blocks]);
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
@@ -126,21 +131,22 @@ export function EfficiencyPinInspector({
 
   function commitEfficiencyPinBands(partial: ComunicadoEfficiencyPinBands) {
     if (!pin) return;
-    /* Sempre grava as 3 faixas resolvidas — evita perder Bom/Máx. e snap ao default na digitação. */
-    const nextBands = resolveEfficiencyPinBands({ ...binding.bands, ...partial });
-    const next: ComunicadoEfficiencyPinBinding = {
-      ...binding,
-      bands: nextBands,
-    };
-    const selectedPatch = {
-      ...pin,
-      efficiencyPin: next,
-      content: next.workCenter?.trim() || pin.content || "",
-    } as ComunicadoShapeBlock;
-    const withSelected = blocks.map((block) => (block.id === pin.id ? selectedPatch : block));
+    /* Fonte canônica = data_source + espelho nos pins (sobrevive eco/snapshot). */
+    const liveBlocks = snapshotEditorConfig().blocks ?? blocks;
+    const livePin = liveBlocks.find((block) => block.id === pin.id);
+    const liveBinding =
+      livePin && isEfficiencyPinBlock(livePin) ? livePin.efficiencyPin ?? {} : binding;
+    const liveSourceId =
+      (livePin && isEfficiencyPinBlock(livePin) ? livePin.dataSourceId : pin.dataSourceId)?.trim() ||
+      "";
+    const currentBands = resolveEfficiencyPinBandsForBlock(
+      { efficiencyPin: liveBinding, dataSourceId: liveSourceId || undefined },
+      liveBlocks,
+    );
+    const nextBands = resolveEfficiencyPinBands({ ...currentBands, ...partial });
     updateBlocks(
-      applyEfficiencyPinBandsToSharedPins(withSelected, nextBands, {
-        sourceId: pin.dataSourceId,
+      applyEfficiencyPinBandsToSourceAndPins(liveBlocks, nextBands, {
+        sourceId: liveSourceId || null,
       }),
     );
   }
@@ -180,10 +186,17 @@ export function EfficiencyPinInspector({
           } as typeof block)
         : block,
     );
+    const propagated = trimmed
+      ? applySharedDataSourceToUnlinkedEfficiencyPins(withSelected, trimmed)
+      : withSelected;
     updateBlocks(
-      trimmed
-        ? applySharedDataSourceToUnlinkedEfficiencyPins(withSelected, trimmed)
-        : withSelected,
+      trimmed && inheritedBands
+        ? applyEfficiencyPinBandsToSourceAndPins(
+            propagated,
+            resolveEfficiencyPinBands(inheritedBands),
+            { sourceId: trimmed },
+          )
+        : propagated,
     );
   }
 
@@ -336,7 +349,7 @@ export function EfficiencyPinInspector({
       </DeckPropertySection>
       <DeckPropertySection title="Faixas do radar" pane={pane} defaultOpen>
         <p className="td-deck-inspector__hint">
-          Compartilhadas com todos os pins da mesma fonte. Digite e saia do campo (Tab/Enter) para
+          Gravadas na fonte do mapa e em todos os pins. Digite e saia do campo (Tab/Enter) para
           aplicar. Verde ≥ Bom · amarelo ≥ Atenção e &lt; Bom · vermelho &lt; Atenção · laranja fora
           do máx. válido.
         </p>
