@@ -133,9 +133,7 @@
     },
     "get_production_oee_series": {
       "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "fixedQueryParams": null,
       "tvConstraints": {
         "requiresBranchPermission": true
       },
@@ -152,9 +150,12 @@
         "oee_filial_02": "number"
       },
       "label": "OEE — série temporal",
-      "description": "Evolução diária do OEE ao longo do período.",
-      "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
+      "description": "Evolução do OEE por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de tendência do OEE na TV. Escolha granularidade mês para visão mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "default": "day"
+        },
         "periodDays": {
           "type": "integer",
           "label": "Período (dias)",

@@ -377,3 +377,42 @@ def test_production_otd_series_exposes_month_granularity():
     assert granularity.get("default") == "day"
     assert granularity.get("optional") is False
 
+
+def test_production_oee_series_exposes_month_granularity():
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item for item in generated if item["operationId"] == "get_production_oee_series"
+    )
+    assert "fixedQueryParams" not in sample or "granularity" not in (
+        sample.get("fixedQueryParams") or {}
+    )
+    granularity = (sample.get("paramSchema") or {}).get("granularity") or {}
+    assert granularity.get("enum") == ["day", "week", "month", "year"]
+    assert granularity.get("default") == "day"
+    assert granularity.get("optional") is False
+
+
+def test_series_routes_do_not_lock_multi_bucket_granularity():
+    """Inspetor TV não pode esconder granularity quando a API admite vários buckets."""
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    locked: list[str] = []
+    for item in generated:
+        schema_g = ((item.get("paramSchema") or {}).get("granularity") or {})
+        enum_vals = [str(v) for v in (schema_g.get("enum") or [])]
+        fixed_g = (item.get("fixedQueryParams") or {}).get("granularity")
+        if fixed_g and len(enum_vals) > 1:
+            locked.append(str(item.get("operationId")))
+        if fixed_g and item.get("seriesField") and not schema_g:
+            locked.append(str(item.get("operationId")))
+    assert locked == [], f"granularity travada esconde o filtro da TV: {locked}"
+
