@@ -1,11 +1,20 @@
-import { MoreHorizontal } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { useEffect, useState, type MouseEvent } from "react";
 
+import {
+  CommercialDataRecordCard,
+  CommercialDataTable,
+  CommercialStatusBadge,
+  CommercialTableColumnVisibilityMenu,
+  type DataTableColumn,
+  type DataTableColumnWidths,
+} from "../../../app/commercialUi";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
-import { PVA_TABLE } from "../../../ui/tableChrome";
-import { navigateCustomerDetail } from "../../../app/pluginNavigation";
+import {
+  buildCustomerDetailPath,
+  navigateCustomerDetail,
+} from "../../../app/pluginNavigation";
 import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 import type {
   CustomerListSortDirection,
@@ -16,9 +25,75 @@ import {
   resolveCustomerStatus,
   statusLabel,
 } from "../utils/customerListPresentation";
-import { BILLING_TREND_HELP } from "../utils/billingTrendPresentation";
+import { CM_HELP } from "../../../content/helpTooltips";
 import { BillingTrendCell } from "./BillingTrendCell";
 import { CustomerAvatar } from "./CustomerAvatar";
+
+const CUSTOMER_TABLE_PREFERENCES_KEY = "commercial:customers:table-columns:v1";
+
+const CUSTOMER_COLUMN_CATALOG = [
+  { key: "nome", label: "Cliente" },
+  { key: "sellerName", label: "Vendedor" },
+  { key: "city", label: "Cidade / UF" },
+  { key: "lastPurchaseDate", label: "Última venda" },
+  { key: "billed12m", label: "Fat. 12 meses" },
+  { key: "billingTrend", label: "Tendência" },
+  { key: "status", label: "Status" },
+  { key: "valorTotalAberto", label: "Em aberto" },
+  { key: "quantidadePedidosAtrasados", label: "Atrasos" },
+  { key: "proximaEntrega", label: "Próxima entrega" },
+] as const;
+
+type CustomerTablePreferences = {
+  visibility: Record<string, boolean>;
+  order: string[];
+  widths: DataTableColumnWidths;
+};
+
+function defaultTablePreferences(): CustomerTablePreferences {
+  return {
+    visibility: Object.fromEntries(CUSTOMER_COLUMN_CATALOG.map((column) => [column.key, true])),
+    order: CUSTOMER_COLUMN_CATALOG.map((column) => column.key),
+    widths: {},
+  };
+}
+
+function loadTablePreferences(): CustomerTablePreferences {
+  const defaults = defaultTablePreferences();
+  if (typeof window === "undefined") return defaults;
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(CUSTOMER_TABLE_PREFERENCES_KEY) ?? "null",
+    ) as Partial<CustomerTablePreferences> | null;
+    if (!parsed) return defaults;
+    const known = new Set(defaults.order);
+    const savedOrder = Array.isArray(parsed.order)
+      ? parsed.order.filter((key, index, values) => known.has(key) && values.indexOf(key) === index)
+      : [];
+    const order = [
+      ...savedOrder,
+      ...defaults.order.filter((key) => !savedOrder.includes(key)),
+    ];
+    const visibility = Object.fromEntries(
+      defaults.order.map((key) => [key, parsed.visibility?.[key] !== false]),
+    );
+    if (!Object.values(visibility).some(Boolean)) visibility.nome = true;
+    return {
+      visibility,
+      order,
+      widths:
+        parsed.widths && typeof parsed.widths === "object"
+          ? Object.fromEntries(
+              Object.entries(parsed.widths).filter(
+                ([key, value]) => known.has(key) && typeof value === "number",
+              ),
+            )
+          : {},
+    };
+  } catch {
+    return defaults;
+  }
+}
 
 type CustomersTableProps = {
   customers: CustomerSummary[];
@@ -28,9 +103,17 @@ type CustomersTableProps = {
   basePath: string;
   listSearch: string;
   sellerAccess: CustomersListSellerAccess;
+  loading?: boolean;
+  emptyMessage?: string;
 };
 
-type SortableKey = Exclude<CustomerListSortKey, "attention">;
+function statusVariant(
+  status: ReturnType<typeof resolveCustomerStatus>,
+): "success" | "warning" | "neutral" {
+  if (status === "ativo") return "success";
+  if (status === "atencao") return "warning";
+  return "neutral";
+}
 
 export function CustomersTable({
   customers,
@@ -40,161 +123,281 @@ export function CustomersTable({
   basePath,
   listSearch,
   sellerAccess,
+  loading = false,
+  emptyMessage = "Nenhum cliente corresponde aos filtros selecionados.",
 }: CustomersTableProps) {
-  const renderSortHeader = (column: SortableKey, label: string) => {
-    const active = sortKey === column;
-    return (
-      <button
-        type="button"
-        className="pva-sort-btn"
-        aria-sort={
-          active ? (sortDirection === "asc" ? "ascending" : "descending") : "none"
-        }
-        onClick={() => onSort(column)}
-      >
-        <span>{label}</span>
-        <span aria-hidden="true">{active ? (sortDirection === "asc" ? "↑" : "↓") : ""}</span>
-      </button>
-    );
+  const [tablePreferences, setTablePreferences] = useState(loadTablePreferences);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        CUSTOMER_TABLE_PREFERENCES_KEY,
+        JSON.stringify(tablePreferences),
+      );
+    } catch {
+      // Preferência local é progressiva; a tabela continua funcional sem storage.
+    }
+  }, [tablePreferences]);
+
+  const detailHref = (customer: CustomerSummary) => {
+    const path = buildCustomerDetailPath(basePath, customer.codigo, customer.loja);
+    return path ? `${path}${listSearch}` : `${basePath}/customers${listSearch}`;
+  };
+
+  const openCustomer = (customer: CustomerSummary) =>
+    navigateCustomerDetail(customer.codigo, customer.loja, {
+      basePath,
+      search: listSearch,
+      sellerAccess,
+    });
+
+  const handleExplicitNavigate = (
+    event: MouseEvent<HTMLAnchorElement>,
+    customer: CustomerSummary,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openCustomer(customer);
+  };
+
+  const columns: DataTableColumn<CustomerSummary>[] = [
+      {
+        key: "nome",
+        header: "Cliente",
+        sortable: true,
+        interactive: true,
+        render: (customer) => {
+          const codeStore =
+            formatEntityCodeStore(customer.codigo, customer.loja) ??
+            `${customer.codigo}-${customer.loja}`;
+          return (
+            <a
+              href={detailHref(customer)}
+              aria-label={`Abrir cliente ${customer.nome || codeStore}`}
+              onClick={(event) => handleExplicitNavigate(event, customer)}
+            >
+              <strong>{customer.nome || codeStore}</strong>
+              <span className="cm-customer-identity__code">
+                {customer.codigo} · Loja {customer.loja}
+              </span>
+            </a>
+          );
+        },
+      },
+      {
+        key: "sellerName",
+        header: "Vendedor",
+        sortable: true,
+        render: (customer) => customer.sellerName?.trim() || "—",
+      },
+      {
+        key: "city",
+        header: "Cidade / UF",
+        sortable: true,
+        render: (customer) =>
+          customer.city || customer.state
+            ? [customer.city, customer.state].filter(Boolean).join(" / ")
+            : "—",
+      },
+      {
+        key: "lastPurchaseDate",
+        header: "Última venda",
+        sortable: true,
+        render: (customer) => formatDisplayDate(customer.lastPurchaseDate ?? null),
+      },
+      {
+        key: "billed12m",
+        header: "Fat. 12 meses",
+        sortable: true,
+        align: "right",
+        render: (customer) => formatCurrency(customer.billed12m ?? 0),
+      },
+      {
+        key: "billingTrend",
+        header: "Tendência",
+        headerHint: CM_HELP.customers.trend,
+        sortable: true,
+        render: (customer) => (
+          <BillingTrendCell trend={customer.billingTrend} pct={customer.billingTrendPct} />
+        ),
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (customer) => {
+          const status = customer.status ?? resolveCustomerStatus(customer);
+          return (
+            <CommercialStatusBadge
+              label={statusLabel(status)}
+              variant={statusVariant(status)}
+            />
+          );
+        },
+      },
+      {
+        key: "valorTotalAberto",
+        header: "Em aberto",
+        sortable: true,
+        align: "right",
+        render: (customer) => formatCurrency(customer.valorTotalAberto),
+      },
+      {
+        key: "quantidadePedidosAtrasados",
+        header: "Atrasos",
+        sortable: true,
+        align: "right",
+        render: (customer) =>
+          customer.quantidadePedidosAtrasados.toLocaleString("pt-BR"),
+      },
+      {
+        key: "proximaEntrega",
+        header: "Próxima entrega",
+        sortable: true,
+        render: (customer) => formatDisplayDate(customer.proximaEntrega),
+      },
+  ];
+  const columnsByKey = new Map(columns.map((column) => [column.key, column]));
+  const visibleColumns = tablePreferences.order
+    .filter((key) => tablePreferences.visibility[key])
+    .map((key) => columnsByKey.get(key))
+    .filter((column): column is DataTableColumn<CustomerSummary> => Boolean(column));
+  const orderedCatalog = tablePreferences.order
+    .map((key) => CUSTOMER_COLUMN_CATALOG.find((column) => column.key === key))
+    .filter((column): column is (typeof CUSTOMER_COLUMN_CATALOG)[number] => Boolean(column));
+
+  const setColumnVisible = (key: string, visible: boolean) => {
+    setTablePreferences((current) => {
+      const visibleCount = current.order.filter((columnKey) => current.visibility[columnKey]).length;
+      if (!visible && current.visibility[key] && visibleCount <= 1) return current;
+      return {
+        ...current,
+        visibility: { ...current.visibility, [key]: visible },
+      };
+    });
+  };
+
+  const reorderColumns = (fromKey: string, toKey: string) => {
+    setTablePreferences((current) => {
+      const fromIndex = current.order.indexOf(fromKey);
+      const toIndex = current.order.indexOf(toKey);
+      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return current;
+      const order = [...current.order];
+      const [moved] = order.splice(fromIndex, 1);
+      order.splice(toIndex, 0, moved);
+      return { ...current, order };
+    });
+  };
+
+  const applyVisibleOrder = (visibleOrder: string[]) => {
+    setTablePreferences((current) => {
+      let visibleIndex = 0;
+      return {
+        ...current,
+        order: current.order.map((key) =>
+          current.visibility[key] ? (visibleOrder[visibleIndex++] ?? key) : key,
+        ),
+      };
+    });
   };
 
   return (
-    <section className="pva-customers-table-wrap" aria-label="Lista de clientes">
-      <table
-        className={`pva-customers-table ${PVA_TABLE.sortableTable} ${PVA_TABLE.compactTable}`}
-      >
-        <thead>
-          <tr>
-            <th scope="col">{renderSortHeader("nome", "Cliente")}</th>
-            <th scope="col">{renderSortHeader("sellerName", "Vendedor")}</th>
-            <th scope="col">{renderSortHeader("city", "Cidade / UF")}</th>
-            <th scope="col">{renderSortHeader("lastPurchaseDate", "Última venda")}</th>
-            <th scope="col" className="pva-col-numeric">
-              {renderSortHeader("billed12m", "Fat. 12 meses")}
-            </th>
-            <th scope="col" className="pva-customers-table__th-with-help">
-              <span className="pva-customers-table__th-label-row">
-                {renderSortHeader("billingTrend", "Tendência")}
-                <HelpTooltip
-                  content={BILLING_TREND_HELP}
-                  ariaLabel="Como a tendência é calculada"
-                  placement="bottom"
+    <>
+      <div className="cm-customers-list__desktop">
+        <div className="cm-customers-list__toolbar">
+          <CommercialTableColumnVisibilityMenu
+            columns={orderedCatalog}
+            visibility={tablePreferences.visibility}
+            onToggleColumn={setColumnVisible}
+            onReset={() => setTablePreferences(defaultTablePreferences())}
+            onReorderColumns={reorderColumns}
+            labels={{
+              trigger: "Colunas",
+              panelTitle: "Colunas da carteira",
+              reset: "Restaurar padrão",
+              hint: "Escolha e reordene as colunas exibidas.",
+              columnAriaLabel: (label) => `Exibir coluna ${label}`,
+              reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
+            }}
+          />
+        </div>
+        <CommercialDataTable
+          rows={customers}
+          columns={visibleColumns}
+          rowKey={(customer) => customer.key}
+          layout="section"
+          loading={loading}
+          emptyMessage={emptyMessage}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={(key) => onSort(key as Exclude<CustomerListSortKey, "attention">)}
+          onRowClick={openCustomer}
+          rowClickRole="button"
+          columnWidths={tablePreferences.widths}
+          onColumnWidthsChange={(widths) =>
+            setTablePreferences((current) => ({ ...current, widths }))
+          }
+          resizableColumns
+          enableColumnReorder
+          onColumnOrderChange={applyVisibleOrder}
+        />
+      </div>
+
+      <div className="cm-customers-list__mobile" aria-label="Clientes da carteira">
+        {customers.map((customer) => {
+          const status = customer.status ?? resolveCustomerStatus(customer);
+          const codeStore =
+            formatEntityCodeStore(customer.codigo, customer.loja) ??
+            `${customer.codigo}-${customer.loja}`;
+          return (
+            <CommercialDataRecordCard
+              key={customer.key}
+              leading={
+                <CustomerAvatar
+                  code={customer.codigo}
+                  store={customer.loja}
+                  name={customer.nome}
+                  hasAvatar={Boolean(customer.hasAvatar)}
+                  size="sm"
                 />
-              </span>
-            </th>
-            <th scope="col" className="pva-customers-table__th-static">
-              Status
-            </th>
-            <th scope="col" className="pva-col-numeric">
-              {renderSortHeader("valorTotalAberto", "Em aberto")}
-            </th>
-            <th scope="col" className="pva-customers-table__th-actions">
-              <span className="visually-hidden">Ações</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {customers.map((customer) => {
-            const codeStore =
-              formatEntityCodeStore(customer.codigo, customer.loja) ??
-              `${customer.codigo}-${customer.loja}`;
-            const openLabel = `Abrir cliente ${customer.nome || codeStore}`;
-            const status = customer.status ?? resolveCustomerStatus(customer);
-            const cityUf =
-              customer.city || customer.state
-                ? [customer.city, customer.state].filter(Boolean).join(" / ")
-                : "—";
-            return (
-              <tr key={customer.key}>
-                <td data-label="Cliente">
-                  <div className="pva-customers-table__client pva-customers-table__client--row">
-                    <CustomerAvatar
-                      code={customer.codigo}
-                      store={customer.loja}
-                      name={customer.nome}
-                      hasAvatar={Boolean(customer.hasAvatar)}
-                      size="sm"
-                    />
-                    <div className="pva-customers-table__client-text">
-                      <span
-                        className="pva-customers-table__client-name"
-                        role="link"
-                        tabIndex={0}
-                        aria-label={openLabel}
-                        onClick={() =>
-                          navigateCustomerDetail(customer.codigo, customer.loja, {
-                            basePath,
-                            search: listSearch,
-                            sellerAccess,
-                          })
-                        }
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            navigateCustomerDetail(customer.codigo, customer.loja, {
-                              basePath,
-                              search: listSearch,
-                              sellerAccess,
-                            });
-                          }
-                        }}
-                      >
-                        {customer.nome || "—"}
-                      </span>
-                      <span className="pva-customers-table__client-id">
-                        {customer.codigo} · Loja {customer.loja}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td data-label="Vendedor" className="pva-customers-table__muted">
-                  {customer.sellerName?.trim() || "—"}
-                </td>
-                <td data-label="Cidade / UF">{cityUf}</td>
-                <td data-label="Última venda" className="pva-customers-table__muted">
-                  {formatDisplayDate(customer.lastPurchaseDate ?? null)}
-                </td>
-                <td data-label="Faturamento 12 meses" className="pva-col-numeric">
-                  {formatCurrency(customer.billed12m ?? 0)}
-                </td>
-                <td data-label="Tendência">
-                  <BillingTrendCell
-                    trend={customer.billingTrend}
-                    pct={customer.billingTrendPct}
-                  />
-                </td>
-                <td data-label="Status">
-                  <span
-                    className={`pva-status-pill pva-status-pill--${status}`}
-                  >
-                    <span className="pva-status-pill__dot" aria-hidden="true" />
-                    {statusLabel(status)}
-                  </span>
-                </td>
-                <td data-label="Valor em aberto" className="pva-col-numeric">
-                  {formatCurrency(customer.valorTotalAberto)}
-                </td>
-                <td data-label="Ações" className="pva-customers-table__td-actions">
-                  <button
-                    type="button"
-                    className="pva-customers-table__menu"
-                    aria-label={openLabel}
-                    onClick={() =>
-                      navigateCustomerDetail(customer.codigo, customer.loja, {
-                        basePath,
-                        search: listSearch,
-                        sellerAccess,
-                      })
-                    }
-                  >
-                    <MoreHorizontal size={16} aria-hidden="true" />
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </section>
+              }
+              title={customer.nome || codeStore}
+              subtitle={`${customer.codigo} · Loja ${customer.loja}`}
+              status={
+                <CommercialStatusBadge
+                  label={statusLabel(status)}
+                  variant={statusVariant(status)}
+                />
+              }
+              fields={[
+                {
+                  id: "last-sale",
+                  label: "Última venda",
+                  value: formatDisplayDate(customer.lastPurchaseDate ?? null),
+                },
+                {
+                  id: "open-value",
+                  label: "Em aberto",
+                  value: formatCurrency(customer.valorTotalAberto),
+                },
+                {
+                  id: "late",
+                  label: "Atrasos",
+                  value: customer.quantidadePedidosAtrasados.toLocaleString("pt-BR"),
+                },
+                {
+                  id: "next-delivery",
+                  label: "Próxima entrega",
+                  value: formatDisplayDate(customer.proximaEntrega),
+                },
+              ]}
+              context={customer.nextAction || "Ver conta"}
+              href={detailHref(customer)}
+              onNavigate={(event) => handleExplicitNavigate(event, customer)}
+              ariaLabel={`Abrir cliente ${customer.nome || codeStore}`}
+            />
+          );
+        })}
+      </div>
+    </>
   );
 }

@@ -447,6 +447,32 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /CustomersTable/);
     assert.doesNotMatch(page, /clientes\/:|navigatePluginView\("customers"/);
   });
+
+  it("usa composicao kit-first no hero, filtros, tabela desktop e cards mobile", () => {
+    const page = readFileSync(join(__dirname, "../pages/CustomersPage.tsx"), "utf8");
+    const table = readFileSync(join(__dirname, "../components/CustomersTable.tsx"), "utf8");
+    assert.match(page, /CommercialPageHero/);
+    assert.match(page, /CommercialScopeChipBar/);
+    assert.match(page, /CommercialFilterBarShell/);
+    assert.match(page, /SellerScopeFilter/);
+    assert.match(page, /CustomerSummaryCards/);
+    assert.ok(page.indexOf("CustomersTable") < page.indexOf("CustomerBillingSeriesChart"));
+    for (const focus of ["all", "attention", "inactive", "growth", "no_sale_60"]) {
+      assert.match(page, new RegExp(`id: "${focus}"`));
+    }
+    assert.match(table, /CommercialDataTable/);
+    assert.match(table, /CommercialDataRecordCard/);
+    assert.match(table, /onRowClick=\{openCustomer\}/);
+    assert.match(table, /event\.stopPropagation\(\)/);
+    assert.match(table, /href=\{detailHref\(customer\)\}/);
+    assert.match(table, /commercial:customers:table-columns:v1/);
+    assert.match(table, /resizableColumns/);
+    assert.match(table, /enableColumnReorder/);
+    assert.match(table, /CommercialTableColumnVisibilityMenu/);
+    assert.doesNotMatch(table, /<table|MoreHorizontal|pva-customers-table/);
+    assert.doesNotMatch(page, /@delpi\/plugin-ui/);
+    assert.doesNotMatch(table, /@delpi\/plugin-ui/);
+  });
 });
 
 describe("customerPortfolioKpis", () => {

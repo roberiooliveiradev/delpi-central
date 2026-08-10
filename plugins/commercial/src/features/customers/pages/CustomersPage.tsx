@@ -1,18 +1,28 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
-import { CommercialTitleWithHelp } from "../../../app/commercialUi";
-import { Pagination } from "../../../components/Pagination";
+import {
+  CommercialActionButton,
+  CommercialFilterBarShell,
+  CommercialLoadingCard,
+  CommercialPageHero,
+  CommercialPagination,
+  CommercialScopeChipBar,
+  CommercialSectionCard,
+  CommercialSectionHintLabel,
+  CommercialStateBanner,
+  CommercialTextField,
+} from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { EmptyState } from "../../../ui/EmptyState";
 import { CustomerSummaryCards } from "../components/CustomerSummaryCards";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
-import { CustomersFilters } from "../components/CustomersFilters";
 import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
+import type { CustomerAttentionFilter } from "../types/customerSummary";
+import { matchesCustomerFilter } from "../utils/customerFilters";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
 import {
   buildCustomersListPath,
@@ -179,129 +189,152 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     aggregation !== null &&
     aggregation.customers.length > 0 &&
     filteredCustomers.length === 0;
+  const focusOptions: Array<{ id: CustomerAttentionFilter; label: string }> = [
+    { id: "all", label: "Todos" },
+    { id: "attention", label: "Atenção" },
+    { id: "inactive", label: "Inativos" },
+    { id: "growth", label: "Em crescimento" },
+    { id: "no_sale_60", label: "Sem venda 60d" },
+  ];
+  const focusChips = focusOptions.map((option) => ({
+    id: option.id,
+    label: `${option.label} (${(aggregation?.customers.filter((customer) => matchesCustomerFilter(customer, option.id)).length ?? 0).toLocaleString("pt-BR")})`,
+    active: filter === option.id,
+    onSelect: () => setFilter(option.id),
+  }));
+  const highlights = [
+    {
+      id: "customers",
+      label: "Clientes no recorte",
+      value: (aggregation?.customers.length ?? 0).toLocaleString("pt-BR"),
+    },
+    {
+      id: "open-value",
+      label: "Valor em aberto",
+      value: aggregation
+        ? aggregation.totalValorAberto.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })
+        : "—",
+    },
+    {
+      id: "filtered",
+      label: "Após filtros",
+      value: filteredCustomers.length.toLocaleString("pt-BR"),
+    },
+  ];
 
   return (
-    <div className="pva-internal-page pva-customers-page">
-      <header className="pva-customers-page__header">
-        <div className="pva-customers-page__titles">
-          <h2 className="pva-internal-page__title">
-            <CommercialTitleWithHelp
-              title="Minha carteira de clientes"
-              hint={CM_HELP.customers.page}
-            />
-          </h2>
-          <p className="pva-internal-page__text">
-            Clientes da sua carteira com pedidos de venda em aberto — priorize atrasos e abra o
-            detalhe do cliente.
-          </p>
-          <p className="pva-customers-page__updated" aria-live="polite">
-            Atualizado em: {formatUpdatedAt(lastSuccessAt)}
-            {refreshing ? " · Atualizando…" : ""}
-          </p>
-        </div>
-        <div className="pva-customers-page__header-actions">
+    <section className="cm-page-stack cm-customers-page">
+      <CommercialPageHero
+        aria-label="Minha carteira"
+        eyebrow="Carteira"
+        title={
+          <CommercialSectionHintLabel
+            label="Minha carteira"
+            hint={CM_HELP.customers.page}
+          />
+        }
+        description="Clientes da carteira com pedidos de venda em aberto — priorize o atendimento e abra a Conta."
+        highlights={highlights}
+        actions={
+          <div className="cm-customers-page__actions">
+            <span className="cm-customers-page__freshness" aria-live="polite">
+              Atualizado em {formatUpdatedAt(lastSuccessAt)}
+              {refreshing ? " · Atualizando…" : ""}
+            </span>
+            <CommercialActionButton
+              variant="ghost"
+              onClick={reload}
+              disabled={loading || refreshing}
+              aria-busy={refreshing || loading}
+            >
+              <RefreshCw
+                size={16}
+                aria-hidden="true"
+                className={refreshing ? "pva-spin" : undefined}
+              />
+              {refreshing || loading ? "Atualizando…" : "Atualizar"}
+            </CommercialActionButton>
+          </div>
+        }
+      >
+        <CommercialScopeChipBar
+          label="Foco"
+          aria-label="Foco da carteira"
+          chips={focusChips}
+        />
+        <CommercialFilterBarShell embedded ariaLabel="Busca e escopo da carteira">
+          <CommercialTextField
+            label="Buscar cliente"
+            hint={CM_HELP.customers.filterSearch}
+            type="search"
+            value={search}
+            onChange={setSearch}
+            placeholder="Código, loja, nome ou pedido"
+          />
           {canUseTeamScope ? (
             <SellerScopeFilter
               sellers={sellers}
               value={sellerIdFilter}
               onChange={setSellerIdFilter}
+              hint={CM_HELP.openOrders.sellerScope}
             />
           ) : null}
-          <button
-            type="button"
-            className="pva-btn pva-btn--secondary"
-            onClick={reload}
-            disabled={loading || refreshing}
-            aria-busy={refreshing || loading}
-          >
-            <RefreshCw
-              size={16}
-              aria-hidden="true"
-              className={refreshing ? "pva-spin" : undefined}
-            />
-            {refreshing || loading ? "Atualizando…" : "Atualizar"}
-          </button>
-        </div>
-      </header>
+          {hasActiveFilters ? (
+            <div className="cm-customers-page__filter-actions">
+              <CommercialActionButton variant="ghost" onClick={resetFilters}>
+                Limpar filtros
+              </CommercialActionButton>
+            </div>
+          ) : null}
+        </CommercialFilterBarShell>
+      </CommercialPageHero>
 
       {portfolioEmpty && portfolioMessage ? (
         <EmptyState title="Carteira vazia" description={portfolioMessage} />
       ) : null}
 
       {showInitialLoading ? (
-        <div
-          className="pva-metrics pva-metrics--portfolio"
-          aria-busy="true"
-          role="status"
-          aria-label="Carregando clientes"
-        >
-          <span className="visually-hidden">Carregando clientes…</span>
-          {Array.from({ length: 5 }, (_, index) => (
-            <div
-              key={index}
-              className={
-                index === 2
-                  ? "pva-card pva-kpi-card delpi-ui-card delpi-ui-kpi-card delpi-ui-kpi-card--wide"
-                  : "pva-card pva-kpi-card delpi-ui-card delpi-ui-kpi-card"
-              }
-            >
-              <div className="pva-skeleton" style={{ height: 14, width: "50%" }} />
-              <div
-                className="pva-skeleton"
-                style={{ height: index === 2 ? 40 : 32, width: "60%", marginTop: 12 }}
-              />
-            </div>
-          ))}
-        </div>
+        <CommercialLoadingCard title="Carregando clientes…" variant="panel" />
       ) : null}
 
       {error && !hasData ? (
-        <div className="pva-alert pva-alert--error" role="alert">
+        <CommercialStateBanner variant="error">
           <p>{error}</p>
-          <button type="button" className="pva-btn pva-btn--secondary" onClick={reload}>
+          <CommercialActionButton variant="ghost" onClick={reload}>
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {error && hasData ? (
-        <div className="pva-alert pva-alert--warning" role="alert">
+        <CommercialStateBanner>
           <p>Não foi possível atualizar os dados: {error}</p>
-          <button
-            type="button"
-            className="pva-btn pva-btn--secondary"
+          <CommercialActionButton
+            variant="ghost"
             onClick={reload}
             disabled={refreshing}
           >
             Tentar novamente
-          </button>
-        </div>
+          </CommercialActionButton>
+        </CommercialStateBanner>
       ) : null}
 
       {aggregation && hasData && !showInitialLoading && !portfolioEmpty ? (
         <>
           <CustomerSummaryCards aggregation={aggregation} loading={refreshing} />
 
-          <CustomerBillingSeriesChart customers={aggregation.customers} />
-
           {aggregation.incompleteLineCount > 0 ? (
-            <div className="pva-alert pva-alert--warning" role="status">
+            <CommercialStateBanner>
               <p>
                 {aggregation.incompleteLineCount.toLocaleString("pt-BR")} linha(s) de pedido não
                 foram agrupadas por ausência de identificação cadastral (código e/ou loja).
                 Essas linhas continuam disponíveis em Pedidos em aberto.
               </p>
-            </div>
+            </CommercialStateBanner>
           ) : null}
-
-          <CustomersFilters
-            search={search}
-            filter={filter}
-            onSearchChange={setSearch}
-            onFilterChange={setFilter}
-            onReset={resetFilters}
-            hasActiveFilters={hasActiveFilters}
-          />
 
           {showEmptyDataset ? (
             <EmptyState
@@ -315,32 +348,23 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               title="Nenhum resultado"
               description="Nenhum cliente corresponde à busca e aos filtros."
               action={
-                <button type="button" className="pva-btn pva-btn--secondary" onClick={resetFilters}>
+                <CommercialActionButton variant="ghost" onClick={resetFilters}>
                   Limpar busca e filtros
-                </button>
+                </CommercialActionButton>
               }
             />
           ) : null}
 
           {!showEmptyDataset && !showFilteredEmpty ? (
-            <section className="pva-section" aria-label="Todos os clientes da carteira">
-              <div className="pva-section__header">
-                <div>
-                  <h2 className="pva-customers-page__list-title">
-                    Clientes da carteira
-                    <HelpTooltip
-                      content={CM_HELP.customers.list}
-                      ariaLabel="Ajuda: Clientes da carteira"
-                      placement="bottom"
-                    />
-                  </h2>
-                  <p className="pva-section__hint">
-                    {filteredCustomers.length === 0
-                      ? "0 clientes"
-                      : `${((page - 1) * 20 + 1).toLocaleString("pt-BR")}–${Math.min(page * 20, filteredCustomers.length).toLocaleString("pt-BR")} de ${filteredCustomers.length.toLocaleString("pt-BR")} clientes`}
-                  </p>
-                </div>
-              </div>
+            <CommercialSectionCard
+              title="Clientes da carteira"
+              subtitle={
+                filteredCustomers.length === 0
+                  ? "0 clientes"
+                  : `${((page - 1) * 20 + 1).toLocaleString("pt-BR")}–${Math.min(page * 20, filteredCustomers.length).toLocaleString("pt-BR")} de ${filteredCustomers.length.toLocaleString("pt-BR")} clientes`
+              }
+              hint={CM_HELP.customers.list}
+            >
               <CustomersTable
                 customers={pagedCustomers}
                 sortKey={sortKey}
@@ -349,19 +373,22 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 basePath={basePath}
                 listSearch={listSearch}
                 sellerAccess={sellerAccess}
+                loading={refreshing}
               />
               {filteredCustomers.length > 20 ? (
-                <Pagination
+                <CommercialPagination
                   page={page}
                   pageSize={20}
                   total={filteredCustomers.length}
                   onPageChange={setPage}
                 />
               ) : null}
-            </section>
+            </CommercialSectionCard>
           ) : null}
+
+          <CustomerBillingSeriesChart customers={aggregation.customers} />
         </>
       ) : null}
-    </div>
+    </section>
   );
 }

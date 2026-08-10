@@ -1,9 +1,12 @@
 import {
+  ActionButton,
   createDashboardAlertQueue,
   createDashboardAttachmentFileList,
   createDashboardAttachmentPreviewStrip,
   createDashboardDetailCard,
   createDashboardDetailFieldGrid,
+  createDashboardSectionCard,
+  createDashboardStatusBadge,
   createDashboardFileDropzone,
   createDashboardFiltersKit,
   createDashboardLoadingActivityCard,
@@ -28,6 +31,7 @@ import {
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
+  DataTable,
   createInitialsAvatar,
   createTimeline,
   createDashboardUnderlineNav,
@@ -50,11 +54,17 @@ import {
   titleWithHelpBemClasses,
   alertQueueBemClasses,
   scopeChipBarBemClasses,
+  SectionHintLabel,
+  TableColumnVisibilityMenu,
   worklistItemBemClasses,
   timelineBemClasses,
   underlineNavBemClasses,
   withBemModifier,
+  type DashboardDataTableProps,
 } from "@delpi/plugin-ui/index";
+import { createElement } from "react";
+
+export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "cm";
 export const CM_PORTAL_SCOPE = "dashboard-commercial";
@@ -77,7 +87,11 @@ export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
 export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
+export const CommercialActionButton = ActionButton;
+export const CommercialSectionHintLabel = SectionHintLabel;
+export const CommercialTableColumnVisibilityMenu = TableColumnVisibilityMenu;
 export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });
+export const CommercialStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const CommercialPagePath = createDashboardPagePath({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
@@ -85,6 +99,14 @@ export const CommercialPagePath = createDashboardPagePath({
 export const CommercialDataRecordCard = createDashboardDataRecordCard({
   prefix: UI_PREFIX,
 });
+
+export function CommercialDataTable<T>(props: DashboardDataTableProps<T>) {
+  return createElement(DataTable<T>, {
+    classNames: cmDataTableClassNames,
+    labels: cmDataTableLabels,
+    ...props,
+  });
+}
 export const CommercialViewTransition = createDashboardViewTransition({
   prefix: UI_PREFIX,
 });
@@ -96,6 +118,11 @@ export const cmSectionLabels = {
   expandAriaLabel: (title: string) => `Expandir ${title}`,
   collapseAriaLabel: (title: string) => `Recolher ${title}`,
 };
+
+export const CommercialSectionCard = createDashboardSectionCard({
+  classNames: cmSectionCardClassNames,
+  labels: cmSectionLabels,
+});
 
 export const CommercialFileDropzone = createDashboardFileDropzone({
   classNames: fileDropzoneBemClasses(UI_PREFIX, "file-dropzone"),

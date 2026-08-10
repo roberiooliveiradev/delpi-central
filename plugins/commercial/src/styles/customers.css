@@ -666,3 +666,55 @@ table.pva-customers-table.delpi-ui-table tbody tr:hover td {
   color: var(--pva-muted);
   margin-bottom: 4px;
 }
+
+/* Minha carteira — somente composição da página; tabela e cards pertencem ao kit. */
+.dashboard-commercial .cm-customers-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial .cm-customers-page__freshness {
+  color: var(--cm-text-muted);
+  font-size: 12px;
+}
+
+.dashboard-commercial .cm-customers-page__filter-actions {
+  display: flex;
+  align-items: end;
+}
+
+.dashboard-commercial .cm-customer-identity__code {
+  display: block;
+  color: var(--cm-text-muted);
+  font-size: 12px;
+}
+
+.dashboard-commercial .cm-customers-list__mobile {
+  display: none;
+}
+
+.dashboard-commercial .cm-customers-list__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--cm-grid-gap);
+}
+
+@media (max-width: 768px) {
+  .dashboard-commercial .cm-customers-page__actions,
+  .dashboard-commercial .cm-customers-page__filter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .dashboard-commercial .cm-customers-list__desktop {
+    display: none;
+  }
+
+  .dashboard-commercial .cm-customers-list__mobile {
+    display: grid;
+    gap: var(--cm-grid-gap);
+  }
+}
