@@ -60,6 +60,11 @@ export type ChartSeriesProjection = {
 export type ChartViewProjection = {
   categoryField?: string;
   series?: ChartSeriesProjection[];
+  /**
+   * Teto de categorias no group-by (resto vira «Outros»).
+   * `undefined` = policy do tipo; `0`/`null` = sem teto (todas as categorias).
+   */
+  maxCategories?: number | null;
 };
 
 export type TableColumnProjection = {
@@ -325,11 +330,18 @@ function buildSeriesFromTable(
   categoryField: string | undefined,
   seriesDefs: ChartSeriesProjection[],
   policy: ChartDataPolicy,
+  maxCategoriesOverride?: number | null,
 ): NonNullable<ComunicadoDataResolved["chart"]> {
   const chartType = policy.chartType;
 
   if (policy.rowMode === "groupByCategory" && categoryField) {
-    return buildGroupedSeriesFromTable(rows, categoryField, seriesDefs, policy);
+    return buildGroupedSeriesFromTable(
+      rows,
+      categoryField,
+      seriesDefs,
+      policy,
+      maxCategoriesOverride,
+    );
   }
 
   // scatter/bubble: categoryField guarda a medida X (rótulo numérico).
@@ -448,6 +460,7 @@ function buildGroupedSeriesFromTable(
   categoryField: string,
   seriesDefs: ChartSeriesProjection[],
   policy: ChartDataPolicy,
+  maxCategoriesOverride?: number | null,
 ): NonNullable<ComunicadoDataResolved["chart"]> {
   const groups = new Map<string, Array<Record<string, unknown>>>();
   for (const row of rows) {
@@ -459,12 +472,18 @@ function buildGroupedSeriesFromTable(
   }
 
   let categoryKeys = [...groups.keys()];
-  if (policy.maxCategories != null && categoryKeys.length > policy.maxCategories) {
+  const maxCategories =
+    maxCategoriesOverride === null || maxCategoriesOverride === 0
+      ? undefined
+      : maxCategoriesOverride != null && Number.isFinite(maxCategoriesOverride)
+        ? Math.max(1, Math.trunc(maxCategoriesOverride))
+        : policy.maxCategories;
+  if (maxCategories != null && categoryKeys.length > maxCategories) {
     // Mantém as maiores categorias por contagem; resto → Outros.
     const ranked = categoryKeys
       .map((key) => ({ key, n: groups.get(key)?.length ?? 0 }))
       .sort((a, b) => b.n - a.n);
-    const keep = new Set(ranked.slice(0, policy.maxCategories - 1).map((item) => item.key));
+    const keep = new Set(ranked.slice(0, maxCategories - 1).map((item) => item.key));
     const others: Array<Record<string, unknown>> = [];
     for (const key of categoryKeys) {
       if (keep.has(key)) continue;
@@ -576,6 +595,7 @@ function applyChartProjection(
       projection?.categoryField,
       seriesDefs,
       policy,
+      projection?.maxCategories,
     );
     return { ...resolved, chart };
   }
@@ -592,6 +612,7 @@ function applyChartProjection(
       projection.categoryField,
       [{ field: projection.categoryField, aggregation: "count", label: "Contagem" }],
       policy,
+      projection.maxCategories,
     );
     return { ...resolved, chart };
   }
