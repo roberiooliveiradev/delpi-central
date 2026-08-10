@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "vitest run src/**/*.test.ts && tsx --test src/api/*.test.mjs src/app/*.test.mjs src/features/**/*.test.mjs src/utils/*.test.mjs",
+    "test": "vitest run src/**/*.test.ts src/features/**/*.test.ts && tsx --test src/api/*.test.mjs src/app/*.test.mjs src/features/**/*.test.mjs src/utils/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 import { ActionButton, EmptyState } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useReducer, useState, type MouseEvent } from "react";
 
 import { getOpenOrdersTotvs } from "../../api/openOrdersTotvsApi";
 import {
@@ -12,12 +12,17 @@ import {
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildOpenOrderOpDetailPath, buildPluginPath } from "../../app/pluginRoutes";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersLineDetailModal";
-import type { OpenOrdersTotvsItem } from "../../types/openOrdersTotvs";
 import {
   buildOpenOrderLineReturnSearch,
   buildOpenOrdersContextSearch,
 } from "../../utils/openOrdersDeepLink";
 import { getLineOpForecast } from "../../utils/opAllocation";
+import {
+  buildOpenOrderOpRouteIdentity,
+  INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
+  reduceOpenOrderOpDetailState,
+  selectOpenOrderOpSnapshot,
+} from "./openOrderOpDetailState";
 
 type OpenOrderOpDetailPageProps = {
   basePath: string;
@@ -43,12 +48,23 @@ export function OpenOrderOpDetailPage({
   productionOrder,
   search,
 }: OpenOrderOpDetailPageProps) {
-  const [item, setItem] = useState<OpenOrdersTotvsItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
+  const [loadState, dispatchLoad] = useReducer(
+    reduceOpenOrderOpDetailState,
+    INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
+  );
   const [reloadKey, setReloadKey] = useState(0);
   const sellerId = useMemo(() => readSellerId(search), [search]);
+  const routeIdentity = buildOpenOrderOpRouteIdentity({
+    branch,
+    orderNumber,
+    lineItem,
+    productionOrder,
+  });
+  const item = selectOpenOrderOpSnapshot(loadState, routeIdentity);
+  const requestBelongsToRoute = loadState.requestIdentity === routeIdentity;
+  const loading =
+    loadState.status === "loading" || (!requestBelongsToRoute && item === null);
+  const refreshing = requestBelongsToRoute && loadState.status === "refreshing";
   const contextSearch = useMemo(() => buildOpenOrdersContextSearch(search), [search]);
   const backHref = buildPluginPath(
     "open_orders",
@@ -62,10 +78,7 @@ export function OpenOrderOpDetailPage({
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-    setEmptyMessage(null);
-    setItem(null);
+    dispatchLoad({ type: "request_started", identity: routeIdentity });
 
     void getOpenOrdersTotvs(controller.signal, { sellerId })
       .then((data) => {
@@ -83,29 +96,38 @@ export function OpenOrderOpDetailPage({
             )
           : false;
         if (!matched || !opExists) {
-          setEmptyMessage(
-            data.portfolio?.empty
+          dispatchLoad({
+            type: "request_not_found",
+            identity: routeIdentity,
+            message: data.portfolio?.empty
               ? data.portfolio.message || "Nenhum pedido disponível neste escopo."
               : "A linha ou a OP não foi encontrada no escopo atual.",
-          );
+          });
           return;
         }
-        setItem(matched);
+        dispatchLoad({ type: "request_succeeded", identity: routeIdentity, item: matched });
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
-        setError(
-          reason instanceof Error
+        dispatchLoad({
+          type: "request_failed",
+          identity: routeIdentity,
+          message: reason instanceof Error
             ? reason.message
             : "Não foi possível carregar o detalhe da OP.",
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        });
       });
 
     return () => controller.abort();
-  }, [branch, orderNumber, lineItem, productionOrder, sellerId, reloadKey]);
+  }, [
+    branch,
+    lineItem,
+    orderNumber,
+    productionOrder,
+    reloadKey,
+    routeIdentity,
+    sellerId,
+  ]);
 
   const navigateBack = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -144,29 +166,51 @@ export function OpenOrderOpDetailPage({
         title={`OP ${productionOrder}`}
         description={`Pedido ${orderNumber} · linha ${lineItem} · filial ${branch}`}
         actions={
-          <ActionButton variant="ghost" onClick={() => setReloadKey((value) => value + 1)}>
-            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          <ActionButton
+            variant="ghost"
+            onClick={() => setReloadKey((value) => value + 1)}
+            disabled={refreshing}
+            aria-busy={refreshing}
+          >
+            <RefreshCw size={16} aria-hidden="true" className={refreshing ? "pva-spin" : undefined} />
+            {refreshing ? "Atualizando…" : "Atualizar"}
           </ActionButton>
         }
       />
 
       {loading ? <CommercialLoadingCard title="Carregando detalhe da OP…" variant="panel" /> : null}
-      {error ? (
+      {loadState.blockingError ? (
         <>
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
+          <EmptyState
+            classNames={cmEmptyStateClassNames}
+            defaultMessage={loadState.blockingError}
+            role="alert"
+          />
           <ActionButton variant="primary" onClick={() => setReloadKey((value) => value + 1)}>
             Tentar novamente
           </ActionButton>
         </>
       ) : null}
-      {!loading && !error && emptyMessage ? (
+      {!loading && !loadState.blockingError && loadState.blockingEmpty ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}
-          defaultMessage={emptyMessage}
+          defaultMessage={loadState.blockingEmpty}
           role="status"
         />
       ) : null}
-      {!loading && !error && item ? (
+      {loadState.refreshNotice && item ? (
+        <div className="pva-alert pva-alert--warning" role="alert">
+          <p>{loadState.refreshNotice}</p>
+          <ActionButton
+            variant="ghost"
+            onClick={() => setReloadKey((value) => value + 1)}
+            disabled={refreshing}
+          >
+            Tentar novamente
+          </ActionButton>
+        </div>
+      ) : null}
+      {item ? (
         <OpenOrdersProductionDetailContent
           item={item}
           basePath={basePath}

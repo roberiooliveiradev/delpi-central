@@ -7,7 +7,7 @@ import {
   HintAction,
   SectionHintLabel,
 } from "@delpi/plugin-ui/index";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -41,18 +41,14 @@ import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import {
   formatDaysFromTodayLabel,
   formatDisplayDate,
-  getDaysFromToday,
-  getDeliveryOverdueDays,
   resolveOpVsPedidoPrazo,
 } from "../utils/dates";
-import { formatCurrency, formatQuantity } from "../utils/format";
+import { formatQuantity } from "../utils/format";
 import { displayApiScalar } from "../utils/displayApiScalar";
 import { forecastKindBadgeVariant, forecastKindLabel } from "../utils/forecastKindLabel";
-import { resolveLineCoverage } from "../utils/openOrdersLineVisual";
-import { getLineOpForecast } from "../utils/opAllocation";
-import { getAllocatedStock } from "../utils/stockAllocation";
-import { getLineStatus } from "../utils/statusBadges";
 import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink";
+import { buildOpenOrdersProductionDetailViewModel } from "../utils/openOrdersProductionDetailViewModel";
+import type { BadgeTone } from "../utils/statusBadges";
 import { OpenOrdersFactoryStatusStrip } from "./OpenOrdersFactoryStatusStrip";
 import { OpenOrdersOpProgressBlock } from "./OpenOrdersOpProgressBlock";
 import { OpenOrdersProductStructureAccordion } from "./OpenOrdersProductStructureAccordion";
@@ -85,7 +81,7 @@ function prazoVariant(
 }
 
 function badgeVariant(
-  tone: ReturnType<typeof getLineStatus>["tone"],
+  tone: BadgeTone,
 ): "neutral" | "info" | "success" | "warning" | "danger" {
   if (tone === "success") return "success";
   if (tone === "warning") return "warning";
@@ -102,8 +98,12 @@ export function OpenOrdersProductionDetailContent({
   onProductionOrderChange,
   onNavigate,
 }: OpenOrdersProductionDetailContentProps) {
-  const previsao = getLineOpForecast(item);
-  const [selectedOp, setSelectedOp] = useState(productionOrder?.trim() ?? "");
+  const detail = useMemo(
+    () => buildOpenOrdersProductionDetailViewModel(item, productionOrder),
+    [item, productionOrder],
+  );
+  const previsao = detail.forecast;
+  const [selectedOp, setSelectedOp] = useState(detail.selectedProductionOrder);
   const extras = useOpenOrdersLineDetailExtras(item, true, selectedOp);
 
   useEffect(() => {
@@ -112,66 +112,33 @@ export function OpenOrdersProductionDetailContent({
       return;
     }
     setSelectedOp((current) => {
-      const requested = productionOrder?.trim();
-      if (requested && previsao.opsUtilizadas.some((op) => op.numero_op === requested)) {
-        return requested;
+      if (productionOrder?.trim() && detail.selectedProductionOrder) {
+        return detail.selectedProductionOrder;
       }
-      if (current && previsao.opsUtilizadas.some((op) => op.numero_op === current)) {
+      if (current && previsao.opsUtilizadas.some((op) => op.numero_op.trim() === current)) {
         return current;
       }
-      return previsao.opsUtilizadas[0].numero_op;
+      return detail.selectedProductionOrder;
     });
-  }, [previsao, productionOrder]);
+  }, [detail.selectedProductionOrder, previsao, productionOrder]);
 
-  const lineStatus = getLineStatus(item);
-  const coverage = resolveLineCoverage(item);
-  const overdueDays = getDeliveryOverdueDays(item.data_entrega);
-  const deliveryDays = getDaysFromToday(item.data_entrega);
-  const forecastDays = getDaysFromToday(previsao.previsaoData);
-  const coverageStacked = (() => {
-    const estoqueQty = Math.max(0, coverage.allocated);
-    const produzirQty = Math.max(0, previsao.saldoNecessarioProducao);
-    const total = estoqueQty + produzirQty;
-    if (total <= 0) {
-      return [
-        {
-          name: "Demanda",
-          estoque: 0,
-          produzir: 0,
-          estoqueQty: 0,
-          produzirQty: 0,
-        },
-      ];
-    }
-    return [
-      {
-        name: "Demanda",
-        estoque: (estoqueQty / total) * 100,
-        produzir: (produzirQty / total) * 100,
-        estoqueQty,
-        produzirQty,
-      },
-    ];
-  })();
-
-  const prazoCompare = [
-    {
-      id: "pedido",
-      label: "Entrega",
-      days: deliveryDays ?? 0,
-      fill: (deliveryDays ?? 0) < 0 ? "#dc2626" : "#089bdb",
-    },
-    {
-      id: "op",
-      label: "Prev. OP",
-      days: forecastDays ?? 0,
-      fill: (forecastDays ?? 0) < 0 ? "#dc2626" : "#16a34a",
-    },
-  ].filter((row) => {
-    if (row.id === "op" && !previsao.previsaoData) return false;
-    if (row.id === "pedido" && !item.data_entrega) return false;
-    return true;
-  });
+  const {
+    lineStatus,
+    coverage,
+    deliveryDays,
+    forecastDays,
+    coverageChart: coverageStacked,
+    deadlineChart: prazoCompare,
+  } = detail;
+  const metricHints = {
+    order_balance: DETAIL.saldo,
+    allocated_stock: DETAIL.estoqueAlocado,
+    production_balance: DETAIL.saldoProduzir,
+    open_value: DETAIL.valorAberto,
+    delay: DETAIL.atraso,
+    dispatch: DETAIL.despacho,
+    remaining_production: DETAIL.coberturaKind,
+  };
 
   const snapshotTone = {
     situacao: lineStatus.tone === "danger" || lineStatus.tone === "warning" ? lineStatus.tone : "neutral",
@@ -347,21 +314,23 @@ export function OpenOrdersProductionDetailContent({
 
         <nav className="cm-open-orders-detail__guide" aria-label="Seções do detalhe">
           <ol className="cm-open-orders-detail__guide-list">
-            <li className="cm-open-orders-detail__guide-step">
-              <SectionHintLabel label="Resumo" hint={DETAIL.guideResumo} />
-            </li>
-            <li className="cm-open-orders-detail__guide-step">
-              <SectionHintLabel label="Fabril" hint={DETAIL.guideFabril} />
-            </li>
-            <li className="cm-open-orders-detail__guide-step">
-              <SectionHintLabel label="Indicadores" hint={DETAIL.guideIndicadores} />
-            </li>
-            <li className="cm-open-orders-detail__guide-step">
-              <SectionHintLabel label="Cobertura / prazo" hint={DETAIL.guideCobertura} />
-            </li>
-            <li className="cm-open-orders-detail__guide-step">
-              <SectionHintLabel label="Produção OP" hint={DETAIL.guideProducao} />
-            </li>
+            {detail.sections
+              .filter((section) => section.guideLabel)
+              .map((section) => {
+                const hints = {
+                  snapshot: DETAIL.guideResumo,
+                  factory: DETAIL.guideFabril,
+                  metrics: DETAIL.guideIndicadores,
+                  coverage_deadline: DETAIL.guideCobertura,
+                  production_order: DETAIL.guideProducao,
+                  product_structure: DETAIL.guideProducao,
+                };
+                return (
+                  <li key={section.id} className="cm-open-orders-detail__guide-step">
+                    <SectionHintLabel label={section.guideLabel ?? section.label} hint={hints[section.id]} />
+                  </li>
+                );
+              })}
           </ol>
         </nav>
 
@@ -379,55 +348,11 @@ export function OpenOrdersProductionDetailContent({
           <CommercialDetailFieldGrid
             valueFallback="—"
             wrapLabels
-            fields={[
-              {
-                label: "Saldo do pedido",
-                hint: DETAIL.saldo,
-                value: formatQuantity(item.saldo),
-              },
-              {
-                label: "Estoque alocado",
-                hint: DETAIL.estoqueAlocado,
-                value: formatQuantity(getAllocatedStock(item)),
-              },
-              {
-                label: "Saldo a produzir",
-                hint: DETAIL.saldoProduzir,
-                value: formatQuantity(previsao.saldoNecessarioProducao),
-              },
-              {
-                label: "Valor aberto",
-                hint: DETAIL.valorAberto,
-                value: formatCurrency(item.valor_aberto),
-              },
-              {
-                label: "Atraso",
-                hint: DETAIL.atraso,
-                value:
-                  overdueDays != null && item.saldo > 0
-                    ? `${overdueDays.toLocaleString("pt-BR")} dia(s)`
-                    : "No prazo",
-              },
-              {
-                label: "Despacho",
-                hint: DETAIL.despacho,
-                value: item.data_despacho
-                  ? formatDisplayDate(item.data_despacho)
-                  : "Não informado",
-              },
-              {
-                label: "Ainda falta produzir",
-                hint: DETAIL.coberturaKind,
-                value:
-                  previsao.kind === "parcial" && previsao.saldoFaltanteProducao > 0
-                    ? formatQuantity(previsao.saldoFaltanteProducao)
-                    : previsao.kind === "estoque" || previsao.kind === "coberto"
-                      ? "0 (estoque / OP cobre)"
-                      : previsao.saldoNecessarioProducao > 0
-                        ? formatQuantity(previsao.saldoNecessarioProducao)
-                        : "Não aplicável",
-              },
-            ]}
+            fields={detail.metrics.map((metric) => ({
+              label: metric.label,
+              hint: metricHints[metric.id],
+              value: metric.value,
+            }))}
           />
         </section>
 
