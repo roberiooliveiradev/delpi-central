@@ -1,7 +1,9 @@
-import { FolderOpen, Upload } from "lucide-react";
+import { FolderOpen, ImageOff, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { useAuthenticatedBlobUrl } from "../../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { resolveEditorMediaUrl } from "../slideCardPreview";
 import { DeckRibbonGroup } from "./DeckRibbonGroup";
 import { DeckRibbonTile } from "./DeckRibbonTile";
 import { TvRibbonColorPicker } from "./TvRibbonColorPicker";
@@ -19,11 +21,23 @@ export const COMUNICADO_BACKGROUND_GRADIENT_PRESETS: Array<{ label: string; from
 
 /** Controles de fundo compactos na faixa da aba Tela (slide personalizado). */
 export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labels }) {
-  const { uploading, background, triggerUpload, openMediaLibrary, setBackgroundColor, setBackgroundGradient } =
-    useComunicadoEditor();
+  const {
+    uploading,
+    background,
+    playlistId,
+    triggerUpload,
+    openMediaLibrary,
+    setBackgroundColor,
+    setBackgroundGradient,
+  } = useComunicadoEditor();
 
   const gradientFrom = background?.type === "gradient" ? background.from : "#0f172a";
   const gradientTo = background?.type === "gradient" ? background.to : "#1e3a5f";
+  const imageApiUrl =
+    background?.type === "image"
+      ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
+      : undefined;
+  const { src: imagePreviewSrc } = useAuthenticatedBlobUrl(imageApiUrl);
 
   return (
     <>
@@ -65,6 +79,33 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
             hint={H.mediaLibrary}
             onClick={() => openMediaLibrary("background")}
           />
+          {background?.type === "image" ? (
+            <>
+              <button
+                type="button"
+                className="td-deck-ribbon__preset-swatch td-deck-ribbon__bg-image-swatch"
+                title="Imagem de fundo atual — preenche a tela"
+                aria-label="Imagem de fundo atual"
+                style={
+                  imagePreviewSrc
+                    ? {
+                        backgroundImage: `url(${JSON.stringify(imagePreviewSrc)})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                      }
+                    : undefined
+                }
+                onClick={() => openMediaLibrary("background")}
+              />
+              <DeckRibbonTile
+                icon={ImageOff}
+                label="Remover"
+                hint={E.clearBackground}
+                onClick={() => setBackgroundColor("#ffffff")}
+              />
+            </>
+          ) : null}
         </div>
       </DeckRibbonGroup>
 

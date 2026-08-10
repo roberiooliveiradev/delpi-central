@@ -17,6 +17,11 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     const root = css.match(/(?:^|[\s,}])\.delpi-ui-comunicado\s*\{([\s\S]*?)\}/m);
     expect(root?.[1] ?? "").toMatch(/overflow:\s*visible/);
     expect(root?.[1] ?? "").toMatch(/font-size:\s*16px/);
+    expect(root?.[1] ?? "").toMatch(/width:\s*100%/);
+    expect(root?.[1] ?? "").toMatch(/height:\s*100%/);
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__background\s*\{[^}]*object-fit:\s*cover[^}]*object-position:\s*center/s,
+    );
     expect(css).toMatch(/\.delpi-ui-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
     expect(css).toMatch(/\.tdp-stage--animate-entrances/);
   });
