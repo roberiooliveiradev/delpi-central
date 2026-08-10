@@ -5,6 +5,7 @@ import {
   buildCustomersListSearch,
   DEFAULT_CUSTOMERS_LIST_DIRECTION,
   DEFAULT_CUSTOMERS_LIST_SORT,
+  isCustomersListPathname,
   parseCustomersListDeepLink,
   type CustomersListDeepLink,
   type CustomersListSellerAccess,
@@ -56,6 +57,7 @@ export function useCustomersListState(options: {
   useEffect(() => {
     if (scopeLoading || typeof window === "undefined") return;
     const applyBrowserState = () => {
+      if (!isCustomersListPathname(window.location.pathname, basePath)) return;
       const next = parseCustomersListDeepLink(window.location.search, sellerAccess);
       setState(next);
       setScopeSellerId(next.sellerId);
@@ -75,7 +77,8 @@ export function useCustomersListState(options: {
     if (
       scopeLoading ||
       typeof window === "undefined" ||
-      hydratedAccessKeyRef.current !== sellerAccessKey
+      hydratedAccessKeyRef.current !== sellerAccessKey ||
+      !isCustomersListPathname(window.location.pathname, basePath)
     ) return;
     const target = buildCustomersListPath(basePath, { ...state, sellerId }, sellerAccess);
     const current = `${window.location.pathname}${window.location.search}`;

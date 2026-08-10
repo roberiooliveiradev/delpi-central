@@ -1,4 +1,8 @@
-import { COMMERCIAL_BASE_PATH, normalizeBasePath } from "../app/pluginRoutes";
+import {
+  COMMERCIAL_BASE_PATH,
+  normalizeBasePath,
+  normalizePathname,
+} from "../app/pluginRoutes";
 import type {
   CustomerListSortDirection,
   CustomerListSortKey,
@@ -149,16 +153,27 @@ export function sanitizeCustomersListSearch(
   return buildCustomersListSearch(parseCustomersListDeepLink(search, access), access);
 }
 
-export function buildCustomersListPath(
-  basePath: string | undefined,
-  value: CustomersListDeepLinkInput,
-  access: CustomersListSellerAccess = DENY_SELLER_ACCESS,
-): string {
+function customersListPathname(basePath: string | undefined): string {
   const normalizedBasePath = normalizeBasePath(basePath);
   const internalBasePath =
     normalizedBasePath.startsWith("/") && !normalizedBasePath.startsWith("//")
       ? normalizedBasePath
       : COMMERCIAL_BASE_PATH;
-  const path = `${internalBasePath}/customers`;
+  return `${internalBasePath}/customers`;
+}
+
+export function isCustomersListPathname(
+  pathname: string | undefined,
+  basePath: string | undefined,
+): boolean {
+  return normalizePathname(pathname ?? "") === customersListPathname(basePath);
+}
+
+export function buildCustomersListPath(
+  basePath: string | undefined,
+  value: CustomersListDeepLinkInput,
+  access: CustomersListSellerAccess = DENY_SELLER_ACCESS,
+): string {
+  const path = customersListPathname(basePath);
   return `${path}${buildCustomersListSearch(value, access)}`;
 }

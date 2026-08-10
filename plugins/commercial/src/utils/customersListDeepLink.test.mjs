@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import {
   buildCustomersListPath,
   buildCustomersListSearch,
+  isCustomersListPathname,
   parseCustomersListDeepLink,
   sanitizeCustomersListSearch,
 } from "./customersListDeepLink.ts";
@@ -98,6 +99,29 @@ describe("customersListDeepLink", () => {
       sanitizeCustomersListSearch("?q=ACME&focus=all&sort=attention&dir=asc&page=1&unknown=1", TEAM_ACCESS),
       "?q=ACME",
     );
+  });
+
+  it("sincroniza a URL somente enquanto a lista da Carteira é a rota ativa", () => {
+    assert.equal(
+      isCustomersListPathname("/apps/commercial/customers", "/apps/commercial"),
+      true,
+    );
+    assert.equal(
+      isCustomersListPathname("/apps/commercial/customers/", "/apps/commercial"),
+      true,
+    );
+    for (const pathname of [
+      "/apps/commercial",
+      "/apps/commercial/open-orders",
+      "/apps/commercial/customers/000001/01",
+      "/apps/commercial/analytics",
+    ]) {
+      assert.equal(
+        isCustomersListPathname(pathname, "/apps/commercial"),
+        false,
+        pathname,
+      );
+    }
   });
 });
 
