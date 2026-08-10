@@ -60,6 +60,16 @@ def test_panel_list_orders_and_paginates() -> None:
     assert "ORDER BY days_diff DESC" in sql
 
 
+def test_panel_list_includes_supplier_short_name_from_sa2() -> None:
+    request = GetPurchaseOrderOtdPanelRequest(page=1, page_size=20)
+    sql = build_purchase_order_otd_lines_list_sql(where_clause="1=1", request=request)
+
+    assert "SA2010" in sql
+    assert "A2_NREDUZ" in sql
+    assert "supplier_short_name" in sql
+    assert "COALESCE" in sql
+
+
 def test_default_order_clause() -> None:
     clause = _list_order_clause(GetPurchaseOrderOtdPanelRequest())
     assert "status DESC" in clause

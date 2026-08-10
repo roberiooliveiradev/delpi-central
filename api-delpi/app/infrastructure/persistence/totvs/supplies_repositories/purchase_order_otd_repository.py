@@ -62,6 +62,7 @@ class PurchaseOrderOtdRepository(BaseRepository, PurchaseOrderOtdRepositoryPort)
             branch=request.branch,
             start_date=request.start_date,
             end_date=request.end_date,
+            table_alias="V",
         )
 
         count_sql = build_purchase_order_otd_lines_count_sql(
