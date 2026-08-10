@@ -155,6 +155,7 @@ export function DisplayFormatRibbonGroup({
         onApply={onChange}
         sampleValue={sampleValue}
         target={target}
+        targetHint={targetHint}
         portalScopeClassName={portalScopeClassName}
       />
     </div>

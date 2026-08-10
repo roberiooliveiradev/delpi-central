@@ -87,7 +87,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: inherit;
+  color: var(--delpi-ui-text, #111);
   text-align: left;
   cursor: pointer;
   font-size: 13px;
@@ -126,6 +126,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: min(560px, 100%);
+  color: var(--delpi-ui-text, #0f172a);
 }
 
 .delpi-ui-display-format__dialog-grid {
@@ -151,7 +152,12 @@
   padding: 10px 12px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 8px;
-  background: var(--delpi-ui-surface-muted, #f8fafc);
+  /* Mistura com o texto — funciona em claro e escuro sem token dedicado. */
+  background: var(
+    --delpi-ui-surface-muted,
+    color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, var(--delpi-ui-surface, #fff))
+  );
+  color: var(--delpi-ui-text, #0f172a);
 }
 
 .delpi-ui-display-format__sample-label {
@@ -162,6 +168,7 @@
 .delpi-ui-display-format__sample-value {
   font-size: 18px;
   font-weight: 600;
+  color: var(--delpi-ui-text, #0f172a);
 }
 
 .delpi-ui-display-format__custom {
@@ -169,6 +176,7 @@
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
+  color: var(--delpi-ui-text, #0f172a);
 }
 
 .delpi-ui-display-format__custom input {
@@ -177,6 +185,8 @@
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 6px;
   font-family: ui-monospace, monospace;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
 }
 
 .delpi-ui-display-format__custom-help,
@@ -190,6 +200,28 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.delpi-ui-shape-theme-host[data-theme="dark"] .delpi-ui-display-format__sample,
+:root[data-theme="dark"] .delpi-ui-shape-theme-host .delpi-ui-display-format__sample {
+  background: var(
+    --delpi-ui-surface-muted,
+    color-mix(in srgb, var(--delpi-ui-text, #f8fafc) 10%, var(--delpi-ui-surface, #1e293b))
+  );
+  border-color: var(--delpi-ui-border, #334155);
+  color: var(--delpi-ui-text, #f8fafc);
+}
+
+.delpi-ui-shape-theme-host[data-theme="dark"] .delpi-ui-display-format__sample-value,
+:root[data-theme="dark"] .delpi-ui-shape-theme-host .delpi-ui-display-format__sample-value {
+  color: var(--delpi-ui-text, #f8fafc);
+}
+
+.delpi-ui-shape-theme-host[data-theme="dark"] .delpi-ui-display-format__custom input,
+:root[data-theme="dark"] .delpi-ui-shape-theme-host .delpi-ui-display-format__custom input {
+  background: var(--delpi-ui-surface, #1e293b);
+  color: var(--delpi-ui-text, #f8fafc);
+  border-color: var(--delpi-ui-border, #334155);
 }
 
 @media (max-width: 640px) {

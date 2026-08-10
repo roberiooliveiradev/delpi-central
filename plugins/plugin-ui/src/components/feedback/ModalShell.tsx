@@ -260,7 +260,14 @@ export function ModalShell({
     <div
       className={overlayClass}
       style={containedOverlayStyle}
-      onClick={onClose}
+      onClick={(event) => {
+        /* Só o backdrop fecha — não depender só de stopPropagation no card
+         * (portais / listeners em captura no palco MFE podem furar o bubble). */
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) event.stopPropagation();
+      }}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
       <div
@@ -272,6 +279,8 @@ export function ModalShell({
         aria-labelledby={titleId}
         aria-describedby={description && classNames.description ? descriptionId : undefined}
         onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
       >
         <header className={classNames.header}>
           {structuredHeader ? (
