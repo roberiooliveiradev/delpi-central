@@ -11,6 +11,7 @@ import {
   type DisplayFormatTarget,
 } from "../../displayFormat";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
+import { dismissActiveExclusiveAnchoredPanel } from "../shape/exclusiveAnchoredPanel";
 import { DisplayFormatDialog } from "./DisplayFormatDialog";
 import { DisplayFormatMenu } from "./DisplayFormatMenu";
 import { DisplayFormatTargetHint } from "./DisplayFormatTargetHint";
@@ -25,6 +26,14 @@ export type DisplayFormatRibbonGroupProps = {
   sampleValue?: unknown;
   density?: "ribbon" | "compact";
   portalScopeClassName?: string;
+  /**
+   * Modal Formatar controlado pelo pai (fora do popover do grupo Número).
+   * Evita desmontar o dialog quando o ribbon colapsado fecha o popover.
+   */
+  formatDialog?: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  };
 };
 
 export function DisplayFormatRibbonGroup({
@@ -35,14 +44,25 @@ export function DisplayFormatRibbonGroup({
   sampleValue,
   density = "ribbon",
   portalScopeClassName,
+  formatDialog,
 }: DisplayFormatRibbonGroupProps) {
   const cn = DEFAULT_DISPLAY_FORMAT_CN;
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [uncontrolledDialogOpen, setUncontrolledDialogOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const numeric = isNumericDisplayCategory(spec.category);
+  const dialogOpen = formatDialog?.open ?? uncontrolledDialogOpen;
+  const setDialogOpen = formatDialog?.onOpenChange ?? setUncontrolledDialogOpen;
+  const dialogOwnedByParent = Boolean(formatDialog);
+
+  const openFormatDialog = () => {
+    setMenuOpen(false);
+    /* Fecha o popover do RibbonGroup colapsado antes de montar o Formatar fora dele. */
+    dismissActiveExclusiveAnchoredPanel();
+    setDialogOpen(true);
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -89,10 +109,7 @@ export function DisplayFormatRibbonGroup({
                 onChange(next);
                 setMenuOpen(false);
               }}
-              onMore={() => {
-                setMenuOpen(false);
-                setDialogOpen(true);
-              }}
+              onMore={openFormatDialog}
             />
           </div>
         </AnchoredPanelPortal>
@@ -143,21 +160,23 @@ export function DisplayFormatRibbonGroup({
           className={cn.launcher}
           title="Mais formatos"
           aria-label="Mais formatos de número"
-          onClick={() => setDialogOpen(true)}
+          onClick={openFormatDialog}
         >
           <Maximize2 size={14} aria-hidden />
         </button>
       </div>
-      <DisplayFormatDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        spec={spec}
-        onApply={onChange}
-        sampleValue={sampleValue}
-        target={target}
-        targetHint={targetHint}
-        portalScopeClassName={portalScopeClassName}
-      />
+      {dialogOwnedByParent ? null : (
+        <DisplayFormatDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          spec={spec}
+          onApply={onChange}
+          sampleValue={sampleValue}
+          target={target}
+          targetHint={targetHint}
+          portalScopeClassName={portalScopeClassName}
+        />
+      )}
     </div>
   );
 }

@@ -41,6 +41,14 @@ export function releaseExclusiveAnchoredPanel(id: symbol): void {
   }
 }
 
+/** Fecha o popover exclusivo ativo (ex.: ao abrir modal Formatar fora do grupo). */
+export function dismissActiveExclusiveAnchoredPanel(): void {
+  if (!activeExclusive) return;
+  const previous = activeExclusive;
+  activeExclusive = null;
+  previous.dismiss();
+}
+
 /** Só para testes — reseta o registro entre casos. */
 export function resetExclusiveAnchoredPanelForTests(): void {
   activeExclusive = null;

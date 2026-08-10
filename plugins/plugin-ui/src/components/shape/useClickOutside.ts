@@ -20,23 +20,22 @@ const NESTED_OVERLAY_SELECTOR = [
 ].join(", ");
 
 /**
- * Overlay é «aninhado» só quando abriu DEPOIS do popover (portal appendado
- * após o painel → visualmente acima). Um modal ancestral ou aberto ANTES
- * (ex.: workbench em ModalShell `aria-modal`) é contexto pai: clique nele,
- * fora do painel, deve fechar o popover normalmente.
+ * Overlay «aninhado» (não fecha o popover) vs. modal pai (fecha).
+ *
+ * Não usar ordem no DOM: ModalShell host-contained vive no root do MFE
+ * (antes do portal do popover no `body`). Ordem faria o Formatar parecer
+ * «pai» e um clique no card fecharia o grupo Número — desmontando o próprio
+ * dialog que ainda estava dentro do popover.
+ *
+ * Regra: se o overlay contém âncora/painel, é contexto ancestral (workbench).
+ * Se não contém nenhum ref, é peer/filho lógico (Formatar, cor, select).
  */
-function isInsideNestedOverlay(target: Node, panels: HTMLElement[]): boolean {
+function isInsideNestedOverlay(target: Node, related: HTMLElement[]): boolean {
   if (!(target instanceof Element)) return false;
   const overlay = target.closest(NESTED_OVERLAY_SELECTOR);
   if (!overlay) return false;
-
-  return panels.every((panel) => {
-    if (overlay.contains(panel)) return false;
-    const position = overlay.compareDocumentPosition(panel);
-    // Painel vem depois do overlay no DOM → overlay abriu antes (é o pai).
-    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return false;
-    return true;
-  });
+  if (related.some((el) => overlay.contains(el))) return false;
+  return true;
 }
 
 /**
