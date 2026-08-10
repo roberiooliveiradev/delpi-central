@@ -15,13 +15,13 @@ const LABELS = {
   multipleSelected: (count: number) => `${count} clientes selecionados`,
 } satisfies MultiSelectFieldLabels;
 
-/* FilterBar já estruturado — root sem pva-filter-box para não aninhar cards. */
+/* FilterBar já estruturado — root sem cm-filter-box para não aninhar cards. */
 export const MultiSelectField = createDashboardMultiSelectField({
   labels: LABELS,
   portalScopeClassName: "dashboard-commercial",
   classNames: {
-    ...multiSelectBemClasses("pva"),
-    root: "pva-field pva-field--clients",
+    ...multiSelectBemClasses("cm"),
+    root: "cm-field cm-field--clients",
   },
 });
 

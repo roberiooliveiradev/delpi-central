@@ -1,7 +1,7 @@
 import { createCompactPagination } from "@delpi/plugin-ui/index";
 
 export const Pagination = createCompactPagination({
-  prefix: "pva",
+  prefix: "cm",
   layout: "flat",
   labels: {
     info: ({ page, totalPages, total }) =>

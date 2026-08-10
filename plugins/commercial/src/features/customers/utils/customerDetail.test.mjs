@@ -433,12 +433,46 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(sections, /openOrdersCount/);
   });
 
-  it("carrega fontes secundarias somente na aba correspondente", () => {
+  it("condiciona fontes secundárias à aba e ao RBAC", async () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const overview = readSrc("features/customers/components/CustomerOverviewSection.tsx");
     const activitiesHook = readSrc("features/customers/hooks/useCustomerActivities.ts");
-    assert.match(page, /Boolean\(customer\) && isHistorySection\(section\)/);
-    assert.match(page, /Boolean\(customer\) && section === "atividades"/);
+    const { resolveCustomerDetailFetchPolicy } = await import("./customerDetailSection.ts");
+    assert.deepEqual(
+      resolveCustomerDetailFetchPolicy({
+        section: "resumo",
+        hasCustomer: true,
+        canViewWorklist: true,
+      }),
+      { billing: false, activities: true },
+    );
+    assert.deepEqual(
+      resolveCustomerDetailFetchPolicy({
+        section: "historico",
+        hasCustomer: true,
+        canViewWorklist: true,
+      }),
+      { billing: true, activities: false },
+    );
+    assert.deepEqual(
+      resolveCustomerDetailFetchPolicy({
+        section: "atividades",
+        hasCustomer: true,
+        canViewWorklist: false,
+      }),
+      { billing: false, activities: false },
+    );
+    assert.deepEqual(
+      resolveCustomerDetailFetchPolicy({
+        section: "historico",
+        hasCustomer: false,
+        canViewWorklist: true,
+      }),
+      { billing: false, activities: false },
+    );
+    assert.match(page, /resolveCustomerDetailFetchPolicy/);
+    assert.match(page, /useCustomerBilling\(codigo, loja, fetchPolicy\.billing\)/);
+    assert.match(page, /fetchPolicy\.activities/);
     assert.match(overview, /useCustomerPurchaseEvolution/);
     assert.match(overview, /CustomerPurchaseEvolutionChart/);
     assert.match(overview, /CustomerActivityTimelinePanel/);

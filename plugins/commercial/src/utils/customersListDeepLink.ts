@@ -169,6 +169,16 @@ export function isCustomersListPathname(
   return normalizePathname(pathname ?? "") === customersListPathname(basePath);
 }
 
+export function parseCustomersListRouteState(
+  pathname: string | undefined,
+  search: string | undefined,
+  basePath: string | undefined,
+  access: CustomersListSellerAccess = DENY_SELLER_ACCESS,
+): CustomersListDeepLink | null {
+  if (!isCustomersListPathname(pathname, basePath)) return null;
+  return parseCustomersListDeepLink(search, access);
+}
+
 export function buildCustomersListPath(
   basePath: string | undefined,
   value: CustomersListDeepLinkInput,

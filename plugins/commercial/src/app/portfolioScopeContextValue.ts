@@ -1,6 +1,6 @@
 import type { SellerPortfolio } from "../types/portfolio";
 
-/** Compat com imports PVA (`reloadScope` ↔ `reload`). */
+/** Compat com imports CM (`reloadScope` ↔ `reload`). */
 export type PortfolioScopeContextValue = {
   loading: boolean;
   error?: string | null;
@@ -17,6 +17,6 @@ export type PortfolioScopeContextValue = {
   sellerIdFilter: string | null;
   setSellerIdFilter: (sellerId: string | null) => void;
   reload: () => void;
-  /** Alias PVA */
+  /** Alias CM */
   reloadScope: () => void;
 };

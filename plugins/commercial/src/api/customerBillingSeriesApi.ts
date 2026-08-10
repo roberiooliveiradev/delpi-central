@@ -54,7 +54,10 @@ export async function fetchCustomerBillingSeries(
   let covered = 0;
   for (const batch of execution.batches) {
     if (!batch.value) continue;
-    covered += batch.inputCount;
+    const reportedCount = Number(batch.value.customer_count);
+    covered += Number.isFinite(reportedCount)
+      ? Math.max(0, Math.min(batch.inputCount, Math.trunc(reportedCount)))
+      : batch.inputCount;
     for (const point of batch.value.points ?? []) {
       const existing = byMonth.get(point.month);
       byMonth.set(point.month, {
@@ -72,7 +75,7 @@ export async function fetchCustomerBillingSeries(
     customer_count: covered,
     points,
     coverage: { covered, total: customers.length, failedBatches: execution.failedBatches },
-    partialError: execution.failedBatches > 0
+    partialError: execution.failedBatches > 0 || covered < customers.length
       ? `Faturamento parcial: ${covered} de ${customers.length} clientes cobertos; ${execution.failedBatches} lote(s) falharam.`
       : null,
   };

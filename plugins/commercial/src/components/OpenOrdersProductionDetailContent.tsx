@@ -196,7 +196,7 @@ export function OpenOrdersProductionDetailContent({
 
   return (
     <div className="cm-open-orders-detail">
-      <div className="cm-drawer-footer-actions" aria-label="Ações do detalhe">
+      <div className="cm-detail-actions" aria-label="Ações do detalhe">
         {selectedOp && showOpenProductionOrderAction ? (
           <ActionButton variant="primary" onClick={openProductionOrder}>
             Abrir página da OP {selectedOp}
@@ -323,7 +323,11 @@ export function OpenOrdersProductionDetailContent({
                 };
                 return (
                   <li key={section.id} className="cm-open-orders-detail__guide-step">
-                    <SectionHintLabel label={section.guideLabel ?? section.label} hint={hints[section.id]} />
+                    <SectionHintLabel
+                      label={section.guideLabel ?? section.label}
+                      hint={hints[section.id]}
+                      className="cm-open-orders-detail__guide-label"
+                    />
                   </li>
                 );
               })}

@@ -126,7 +126,8 @@ describe("CustomerDetailPage billing (fonte)", () => {
   it("mantem pedidos independentes do painel de NF", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     assert.match(page, /CustomerOrdersTable|CustomerAttentionOrders/);
-    assert.match(page, /isHistorySection/);
+    assert.match(page, /resolveCustomerDetailFetchPolicy/);
+    assert.match(page, /fetchPolicy\.billing/);
   });
 
   it("expansao acessivel na tabela de NF", () => {

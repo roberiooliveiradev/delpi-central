@@ -64,6 +64,21 @@ export function isHistorySection(section: CustomerDetailSection): boolean {
   return section === "historico";
 }
 
+export function resolveCustomerDetailFetchPolicy(options: {
+  section: CustomerDetailSection;
+  hasCustomer: boolean;
+  canViewWorklist: boolean;
+}): { billing: boolean; activities: boolean } {
+  const { section, hasCustomer, canViewWorklist } = options;
+  return {
+    billing: hasCustomer && section === "historico",
+    activities:
+      hasCustomer &&
+      canViewWorklist &&
+      (section === "resumo" || section === "atividades"),
+  };
+}
+
 export function customerDetailTabId(section: CustomerDetailSection): string {
   return `customer-tab-${section}`;
 }

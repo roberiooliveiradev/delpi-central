@@ -7,23 +7,23 @@ export const CM_HELP = {
     portal:
       "Portal comercial: Início, Meu dia, pedidos, carteira, propostas, gestão e administração de vendedores — tudo no mesmo app.",
     scope:
-      "Escopo atual da sessão: sua carteira ou a carteira do vendedor selecionado (team.view ou admin). Filtra pedidos, clientes e alertas.",
+      "Escopo atual da sessão: sua carteira ou a carteira de outro vendedor que você pode consultar. Filtra pedidos, clientes e alertas.",
     navHome: "Visão geral: alertas prioritários e atalhos para as áreas do portal.",
     navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
-    navOrders: "Linhas de pedido de venda em aberto no TOTVS, no escopo da carteira.",
+    navOrders: "Itens de pedidos de venda em aberto no escopo da carteira.",
     navCustomers: "Clientes da carteira com pedidos em aberto e indicadores comerciais.",
-    navProposals: "Propostas comerciais (ADY) read-only com emissão de PDF.",
+    navProposals: "Propostas comerciais para consulta e emissão de PDF.",
     navGestao: "KPIs, OTD, equipe e oportunidades comerciais no período filtrado.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },
   home: {
     overview:
-      "Saudação com o nome do usuário (perfil /core-api/me) acima da top bar; chips e alertas abaixo da navegação.",
+      "Saudação personalizada, seguida pelo escopo atual da carteira e pelos alertas prioritários.",
     alerts: "Fila do que precisa de ação agora — CTAs levam direto a Pedidos ou Meu dia.",
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:
-      "KPIs de gestão (ROL, conversão, OTD) via api-delpi e tabela da equipe por carteira. Falha parcial não derruba a Home.",
+      "Indicadores de gestão, conversão e pontualidade, além da visão da equipe por carteira.",
     kpiRol: "ROL da matriz versus meta no mês corrente (Gestão do Portal Comercial).",
     kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
     kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
@@ -31,11 +31,11 @@ export const CM_HELP = {
     analytics:
       "Atalhos internos para Gestão e Propostas no Portal Comercial (sem deep link para MFEs irmãos).",
     scope:
-      "Escopo atual: sua carteira ou a de um vendedor da equipe (team.view ou admin de carteiras).",
+      "Escopo atual: sua carteira ou a de outro vendedor que você pode consultar.",
   },
   myDay: {
     worklist:
-      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois → concluídas. Filtre por tipo; notas aparecem na linha (HubSpot/Pipedrive).",
+      "Fila operacional do dia: atrasadas → hoje → depois → concluídas. Filtre por tipo e consulte as observações em cada atividade.",
     scopeMine: "Só tarefas atribuídas a você.",
     scopeTeam:
       "Fila de todos os vendedores com carteira ativa (gestão). Opcional: filtrar por responsável.",
@@ -45,14 +45,14 @@ export const CM_HELP = {
     bucketLater: "Tarefas com prazo futuro.",
     bucketDone:
       "Histórico das tarefas já concluídas (mais recentes primeiro). Somente leitura — sem editar, adiar ou concluir de novo.",
-    typeFilter: "Filtra a fila pelo tipo de atividade (padrão Pipedrive/HubSpot).",
+    typeFilter: "Filtra a fila pelo tipo de atividade comercial.",
     newTask:
       "Cria follow-up com prazo (fim do dia). Gestores podem atribuir a outro vendedor da equipe.",
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskCompletedAt: "Quando a tarefa foi marcada como concluída.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
-    taskType: "Follow-up, ligar, e-mail, visita ou to-do — alinhado a HubSpot/Pipedrive.",
+    taskType: "Follow-up, ligação, e-mail, visita ou outra ação comercial.",
     taskAssignee:
       "Responsável com carteira ativa. Vazio = você. Só gestores atribuem a outro vendedor.",
     taskAssignedBy:
@@ -60,7 +60,7 @@ export const CM_HELP = {
     taskCustomer:
       "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
-      "Observação interna (notes). Visível no card da tarefa e no histórico da conta — não é e-mail ao cliente.",
+      "Observação interna. Visível no card da tarefa e no histórico da conta — não é e-mail ao cliente.",
     taskAttachment:
       "Adicione ou remova anexos em Nova tarefa / Editar. No card da fila só há prévia (clique para abrir).",
     editTask:
@@ -72,15 +72,15 @@ export const CM_HELP = {
   },
   openOrders: {
     page:
-      "Consulta operacional de pedidos de venda em aberto (TOTVS). Totais e tabela respeitam filtros e o escopo da carteira.",
-    kpiLines: "Quantidade de linhas SC6 em aberto no escopo e filtros atuais.",
+      "Consulta operacional de pedidos de venda em aberto. Totais e tabela respeitam os filtros e o escopo da carteira.",
+    kpiLines: "Quantidade de itens de pedido em aberto no escopo e nos filtros atuais.",
     kpiValue: "Soma do valor em aberto das linhas filtradas (saldo × preço).",
     kpiCanInvoice: "Linhas com estoque suficiente para faturar integralmente.",
     kpiPartialStock: "Linhas com estoque parcial — atendem só parte da quantidade em aberto.",
     kpiLate: "Linhas com data de entrega prometida vencida e ainda em aberto.",
     filters: "Refine a lista por busca, filial, cliente, status de estoque e janela de entrega.",
     filterSearch: "Busca em cliente, pedido, produto e códigos da linha.",
-    filterBranch: "Filial TOTVS do pedido. Vazio = todas as filiais do escopo.",
+    filterBranch: "Filial responsável pelo pedido. Vazio = todas as filiais do escopo.",
     filterClient: "Um ou mais clientes da carteira (código+loja).",
     filterStock:
       "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
@@ -100,11 +100,11 @@ export const CM_HELP = {
     columns: {
       nome_cliente:
         "Nome do cliente no pedido. Clique para abrir a Conta 360 (código + loja).",
-      loja_cadastro: "Loja do cadastro do cliente no TOTVS (A1_LOJA).",
-      filial: "Filial TOTVS em que o pedido foi digitado.",
-      pedido: "Número do pedido de venda e número da linha (item SC6).",
-      pedido_cliente: "Número do pedido no cliente (quando informado no TOTVS).",
-      produto: "Código do produto (B1_COD) da linha em aberto.",
+      loja_cadastro: "Loja vinculada ao cadastro do cliente.",
+      filial: "Filial em que o pedido foi registrado.",
+      pedido: "Número do pedido de venda e identificação do item.",
+      pedido_cliente: "Número de referência informado pelo cliente, quando disponível.",
+      produto: "Código comercial do produto no item em aberto.",
       codigo_cliente: "Código do produto no cliente (quando cadastrado).",
       quantidade: "Quantidade original pedida na linha.",
       entregue: "Quantidade já entregue / faturada desta linha.",
@@ -116,7 +116,7 @@ export const CM_HELP = {
       data_entrega: "Data de entrega prometida no pedido (compromisso comercial).",
       previsao_entrega_op:
         "Previsão de disponibilidade pela cobertura FIFO das OPs abertas. Clique para o detalhe da linha. O badge compara previsão OP × entrega do pedido.",
-      data_despacho: "Data de despacho informada no TOTVS, quando houver.",
+      data_despacho: "Data de despacho registrada para o item, quando houver.",
       valor_aberto: "Valor em aberto da linha (saldo × preço).",
       status:
         "Situação operacional de estoque/atraso calculada no cliente: pode faturar, parcial, sem estoque ou atrasado.",
@@ -124,9 +124,9 @@ export const CM_HELP = {
         "Dias corridos desde a data de entrega prometida, só se ainda houver saldo em aberto.",
     },
     detail: {
-      modal:
-        "Detalhe da linha: status fabril do produto, indicadores, gráficos, timeline da OP e lista das ordens usadas na previsão.",
-      guideResumo: "Cartões de situação, cobertura, entrega do pedido e previsão OP no topo do modal.",
+      page:
+        "Página do item: situação fabril do produto, indicadores, gráficos, evolução da produção e ordens usadas na previsão.",
+      guideResumo: "Cartões de situação, cobertura, entrega do pedido e previsão de produção no início da página.",
       guideFabril: "Status fabril do produto: produção PA/PI, expedição e capacidade de matéria-prima.",
       guideIndicadores: "Saldo, estoque alocado, valor aberto e demais indicadores da linha do pedido.",
       guideCobertura: "Gráficos de cobertura estoque × demanda e prazo (entrega vs previsão OP).",
@@ -141,7 +141,7 @@ export const CM_HELP = {
       factoryInspectionLoss: "Quantidade registrada como perda em inspeção.",
       factoryMpPa:
         "Máximo de PA que o estoque atual de matéria-prima permite produzir.",
-      factoryMpLimiting: "Código da matéria-prima que limita a produção de 1 PA.",
+      factoryMpLimiting: "Matéria-prima que limita a produção de uma unidade do produto acabado.",
       factoryMpWithoutStock:
         "Quantidade de matérias-primas sem saldo suficiente para produzir 1 PA.",
       snapshotSituacao:
@@ -197,7 +197,7 @@ export const CM_HELP = {
       opStatus: "Status da OP ou comparação do fim previsto com a entrega do pedido.",
       opOtd: "On-time delivery da OP (no prazo, atrasada ou em aberto), quando disponível.",
       opObs: "Observação cadastrada na OP, quando houver.",
-      bom: "Estrutura (BOM) do produto desta linha.",
+      bom: "Estrutura de componentes do produto deste item.",
       copyPedido: "Copia o número do pedido para a área de transferência.",
       openAccount: "Abre a Conta 360 do cliente (código + loja) no Portal Comercial.",
       openOv:
@@ -262,7 +262,7 @@ export const CM_HELP = {
       "Usuário Minha Delpi que será o dono da carteira (busca por nome ou e-mail).",
     edit: "Altera o nome de exibição da carteira selecionada.",
     customers:
-      "Clientes (código+loja) vinculados a esta carteira. Use busca TOTVS para incluir.",
+      "Clientes vinculados a esta carteira. Use a busca por código ou nome para incluir.",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
     colUserId: "Nome e e-mail do usuário Minha Delpi dono da carteira.",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
@@ -270,7 +270,7 @@ export const CM_HELP = {
     colActions: "Editar nome, gerenciar clientes ou ativar/desativar a carteira.",
     managePortfolio: "Carteira cujos clientes você vai vincular ou remover.",
     searchCustomers:
-      "Busca clientes ativos no TOTVS por código ou nome (mínimo 2 caracteres).",
+      "Busca clientes ativos por código ou nome (mínimo de dois caracteres).",
     transfer:
       "Move clientes de uma carteira para outra com motivo registrado (auditoria).",
     transferSource: "Carteira de onde os clientes saem.",
@@ -279,15 +279,15 @@ export const CM_HELP = {
     transferReason: "Motivo obrigatório da transferência (fica no histórico).",
   },
   analytics: {
-    ovStatus: "Status atual da OV no Protheus (AD1010).",
-    ovOpen: "Data de abertura da oportunidade (AD1_DATA).",
-    ovClose: "Data de fechamento / assinatura (AD1_DTASSI), quando houver.",
-    ovHeader: "Cabeçalho AD1010: filial, revisão, processo, estágio e descrição.",
-    ovCustomer: "Cliente e vendedor vinculados à OV (SA1 / SA3).",
-    ovProducts: "Itens da OV (ADJ010): código, descrição, grupo, tipo e quantidade.",
-    ovBom: "Estrutura de produto (BOM) via /products/{code}/structure para cada item da OV.",
+    ovStatus: "Etapa atual da oportunidade comercial.",
+    ovOpen: "Data de abertura da oportunidade.",
+    ovClose: "Data de fechamento ou assinatura, quando houver.",
+    ovHeader: "Resumo da oportunidade: filial, revisão, processo, etapa e descrição.",
+    ovCustomer: "Cliente e vendedor responsáveis pela oportunidade.",
+    ovProducts: "Produtos da oportunidade: código, descrição, grupo, tipo e quantidade.",
+    ovBom: "Estrutura de componentes de cada produto da oportunidade.",
     ovHistory:
-      "Histórico AIJ010 da OV — timeline ou tabela. Fonte: GET /commercial/proposals/{n}/history/events.",
+      "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
   },
 } as const;
 

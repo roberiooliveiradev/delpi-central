@@ -28,8 +28,8 @@ import {
   buildCustomerDetailSearch,
   customerDetailPanelId,
   customerDetailTabId,
-  isHistorySection,
   parseCustomerDetailSection,
+  resolveCustomerDetailFetchPolicy,
   type CustomerDetailSection,
 } from "../utils/customerDetailSection";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
@@ -128,15 +128,16 @@ export function CustomerDetailPage({
     [basePath, codigo, loja, search],
   );
 
-  const billing = useCustomerBilling(
-    codigo,
-    loja,
-    Boolean(customer) && isHistorySection(section),
-  );
+  const fetchPolicy = resolveCustomerDetailFetchPolicy({
+    section,
+    hasCustomer: Boolean(customer),
+    canViewWorklist,
+  });
+  const billing = useCustomerBilling(codigo, loja, fetchPolicy.billing);
   const activities = useCustomerActivities(
     codigo,
     loja,
-    Boolean(customer) && section === "atividades" && canViewWorklist,
+    fetchPolicy.activities,
   );
 
   const goBack = () => {

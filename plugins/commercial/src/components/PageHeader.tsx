@@ -28,7 +28,7 @@ export function PageHeader({ loading, onRefresh, totalLoaded }: PageHeaderProps)
   return (
     <PluginPageHeader
       layout="titleRow"
-      classNames={pageHeaderTitleRowBemClasses("pva")}
+      classNames={pageHeaderTitleRowBemClasses("cm")}
       labels={LABELS}
       icon={<ClipboardList size={28} strokeWidth={1.75} />}
       title={

@@ -199,7 +199,7 @@ export function OpenOrderOpDetailPage({
             disabled={refreshing}
             aria-busy={refreshing}
           >
-            <RefreshCw size={16} aria-hidden="true" className={refreshing ? "pva-spin" : undefined} />
+            <RefreshCw size={16} aria-hidden="true" className={refreshing ? "cm-spin" : undefined} />
             {refreshing ? "Atualizando…" : "Atualizar"}
           </ActionButton>
         }
@@ -226,7 +226,7 @@ export function OpenOrderOpDetailPage({
         />
       ) : null}
       {loadState.refreshNotice && item ? (
-        <div className="pva-alert pva-alert--warning" role="alert">
+        <div className="cm-alert cm-alert--warning" role="alert">
           <p>{loadState.refreshNotice}</p>
           <ActionButton
             variant="ghost"

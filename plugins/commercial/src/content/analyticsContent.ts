@@ -30,7 +30,8 @@ export const ANALYTICS_CONTENT = {
   oportunidades: {
     title: "Oportunidades",
     subtitle: "Lista de OVs/propostas comerciais do período.",
-    detail: "Detalhe da OV: KPIs, cabeçalho, cliente/vendedor, produtos, BOM e histórico AIJ (timeline/tabela).",
+    detail:
+      "Detalhe da oportunidade: indicadores, dados comerciais, produtos, estrutura de componentes e histórico.",
   },
   filters: {
     start: "Data inicial",
@@ -47,7 +48,7 @@ export const ANALYTICS_CONTENT = {
 export const PROPOSALS_CONTENT = {
   list: {
     title: "Propostas comerciais",
-    subtitle: "Consulta read-only de propostas ativas do Protheus (ADY).",
+    subtitle: "Consulta de propostas comerciais ativas.",
     search: "Buscar por OV, proposta interna, oportunidade ou cliente.",
     empty: "Nenhuma proposta encontrada.",
     emptySearch: "Ajuste a busca ou limpe o filtro para ver a lista completa.",

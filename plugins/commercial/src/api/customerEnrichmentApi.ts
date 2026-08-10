@@ -1,6 +1,6 @@
 /**
  * Enrichment/avatar via commercial-api (não api-delpi).
- * Mantém a API de superfície do PVA para o código portado.
+ * Mantém a API de superfície do CM para o código portado.
  */
 import {
   customerAvatarUrl as commercialAvatarUrl,

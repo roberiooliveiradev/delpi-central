@@ -340,10 +340,14 @@ Documento canônico do plugin: [kaizometro/docs/UI-PLUGIN-UI.md](../../kaizometr
 | **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
 | **7.8** | `cipa` — botões de ação e voltar compartilhados | ✅ |
 | **7.9** | `cipa` — UI base completa (header, cards, tabela, estados, navegação e formulários) | ✅ |
+| **7.10** | `commercial` — convergência final do legado de pedidos para prefixo `cm` e kit compartilhado | ✅ |
 
-**Checkpoint P-1 (ago/2026):** `PagePath`, `DataRecordCard` e modo `tabs` de
-`UnderlineNav` foram entregues no kit, com wrappers `Commercial*`. Nenhum
-consumidor commercial foi migrado neste checkpoint.
+**Checkpoint Commercial (ago/2026):** `PagePath`, `DataRecordCard`, modo `tabs`
+de `UnderlineNav` e demais wrappers `Commercial*` estão consumidos. O MFE ficou
+com prefixo/root próprios, sem CSS `.delpi-ui-*`, cópias de chrome ou shells de
+detalhe sem uso. Gates: `sourceHygiene.test.mjs`, `npm test`, `npm run lint`,
+`npm run build` e auditor CSS global (Commercial sem ocorrência; resíduos
+globais são reportados separadamente pelo gate).
 
 ### Checklist por plugin (preencher ao fechar onda)
 
@@ -370,6 +374,7 @@ consumidor commercial foi migrado neste checkpoint.
 | `propostas-comerciais` | 7.6 | ✅ | StateBoxPanel dual via kit | ✅ | CSS `.pc-state-box*` removido; table-wrap dual |
 | `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
 | `cipa` | 7.9 | ✅ | ✅ `PageHeader`, `SectionCard`, `ContentCard`, `DataTable`, estados, `NavigationCard`, `IconButton`, actions/forms | ✅ | CSS local reduzido a tokens, layout de página e domínio de ata/assinatura; zero seletor `.delpi-ui-*` |
+| `commercial` | 7.10 | ✅ | ✅ wrappers/factories `Commercial*`; helpers e shells mortos removidos | ✅ | prefixo `cm`; conteúdo de ajuda sem detalhes HTTP/Protheus; gates de source, test, lint e build |
 
 ### DoD de um plugin na Fase 7
 

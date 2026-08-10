@@ -1,49 +1,49 @@
 /* Tokens locais do Portal do Vendedor — alinhados à identidade DELPI / Portal. */
-.dashboard-pedidos-venda-abertos {
-  --pva-page-padding: clamp(16px, 2vw, 28px);
-  --pva-gap: 20px;
-  --pva-gap-sm: 12px;
-  --pva-gap-xs: 8px;
-  --pva-radius: 16px;
-  --pva-radius-sm: 10px;
-  --pva-radius-md: 12px;
-  --pva-radius-lg: 20px;
-  --pva-control-radius: 12px;
-  --pva-control-height: 44px;
-  --pva-max-width: 1480px;
+.dashboard-commercial {
+  --cm-page-padding: clamp(16px, 2vw, 28px);
+  --cm-gap: 20px;
+  --cm-gap-sm: 12px;
+  --cm-gap-xs: 8px;
+  --cm-radius: 16px;
+  --cm-radius-sm: 10px;
+  --cm-radius-md: 12px;
+  --cm-radius-lg: 20px;
+  --cm-control-radius: 12px;
+  --cm-control-height: 44px;
+  --cm-max-width: 1480px;
 
-  --pva-brand: var(--secundary, #003866);
-  --pva-accent: var(--primary, #089bdb);
-  --pva-accent-strong: color-mix(in srgb, var(--pva-accent) 82%, var(--pva-brand));
-  --pva-text: var(--text, #111111);
-  --pva-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
-  --pva-surface: var(--surface, #ffffff);
-  --pva-surface-elevated: color-mix(in srgb, var(--pva-surface) 92%, #fff);
-  --pva-surface-soft: color-mix(in srgb, var(--pva-brand) 3.5%, var(--pva-surface));
-  --pva-border: var(--border, #e6e6e6);
-  --pva-border-strong: color-mix(in srgb, var(--pva-brand) 14%, var(--pva-border));
-  --pva-danger: var(--danger, #b42318);
-  --pva-success: var(--success, #067647);
-  --pva-warning: #b54708;
+  --cm-brand: var(--secundary, #003866);
+  --cm-accent: var(--primary, #089bdb);
+  --cm-accent-strong: color-mix(in srgb, var(--cm-accent) 82%, var(--cm-brand));
+  --cm-text: var(--text, #111111);
+  --cm-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --cm-surface: var(--surface, #ffffff);
+  --cm-surface-elevated: color-mix(in srgb, var(--cm-surface) 92%, #fff);
+  --cm-surface-soft: color-mix(in srgb, var(--cm-brand) 3.5%, var(--cm-surface));
+  --cm-border: var(--border, #e6e6e6);
+  --cm-border-strong: color-mix(in srgb, var(--cm-brand) 14%, var(--cm-border));
+  --cm-danger: var(--danger, #b42318);
+  --cm-success: var(--success, #067647);
+  --cm-warning: #b54708;
 
-  --pva-font-xs: 12px;
-  --pva-font-sm: 13px;
-  --pva-font-md: 14px;
-  --pva-font-lg: 16px;
-  --pva-font-title: clamp(22px, 2.1vw, 30px);
-  --pva-font-kpi: clamp(24px, 2.2vw, 36px);
-  --pva-font-kpi-hero: clamp(28px, 2.6vw, 42px);
+  --cm-font-xs: 12px;
+  --cm-font-sm: 13px;
+  --cm-font-md: 14px;
+  --cm-font-lg: 16px;
+  --cm-font-title: clamp(22px, 2.1vw, 30px);
+  --cm-font-kpi: clamp(24px, 2.2vw, 36px);
+  --cm-font-kpi-hero: clamp(28px, 2.6vw, 42px);
 
-  --pva-shadow-sm: 0 1px 2px rgba(1, 56, 102, 0.04), 0 8px 24px rgba(1, 56, 102, 0.05);
-  --pva-shadow-md: 0 2px 4px rgba(1, 56, 102, 0.05), 0 14px 32px rgba(1, 56, 102, 0.07);
-  --pva-table-head-bg: color-mix(in srgb, var(--pva-brand) 4.5%, var(--pva-surface));
+  --cm-shadow-sm: 0 1px 2px rgba(1, 56, 102, 0.04), 0 8px 24px rgba(1, 56, 102, 0.05);
+  --cm-shadow-md: 0 2px 4px rgba(1, 56, 102, 0.05), 0 14px 32px rgba(1, 56, 102, 0.07);
+  --cm-table-head-bg: color-mix(in srgb, var(--cm-brand) 4.5%, var(--cm-surface));
 
-  --delpi-ui-accent: var(--pva-accent);
-  --delpi-ui-surface: var(--pva-surface);
-  --delpi-ui-text: var(--pva-text);
-  --delpi-ui-border: var(--pva-border);
-  --delpi-ui-muted: var(--pva-muted);
-  --delpi-ui-text-muted: var(--pva-muted);
+  --delpi-ui-accent: var(--cm-accent);
+  --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-text: var(--cm-text);
+  --delpi-ui-border: var(--cm-border);
+  --delpi-ui-muted: var(--cm-muted);
+  --delpi-ui-text-muted: var(--cm-muted);
 }
 
 /*
@@ -51,34 +51,34 @@
  * Mantém o azul destacado do portal (--primary #089bdb) e usa-o no lugar do brand
  * para texto/ícone/botão — sem clarear com branco (evita ciano pastel).
  */
-:root[data-theme="dark"] .dashboard-pedidos-venda-abertos,
-.theme-dark .dashboard-pedidos-venda-abertos {
-  --pva-brand: var(--primary, #089bdb);
-  --pva-accent: var(--primary, #089bdb);
-  --pva-accent-strong: color-mix(in srgb, var(--primary, #089bdb) 82%, #003866);
-  --pva-text: var(--text, rgba(255, 255, 255, 0.92));
-  --pva-muted: var(--text-muted, rgba(255, 255, 255, 0.72));
-  --pva-surface: var(--surface, #121722);
-  --pva-surface-elevated: color-mix(in srgb, var(--pva-surface) 88%, #fff);
-  --pva-surface-soft: color-mix(in srgb, var(--primary, #089bdb) 10%, var(--pva-surface));
-  --pva-border: var(--border, rgba(255, 255, 255, 0.12));
-  --pva-border-strong: color-mix(in srgb, var(--primary, #089bdb) 32%, var(--pva-border));
-  --pva-table-head-bg: color-mix(in srgb, var(--primary, #089bdb) 12%, var(--pva-surface));
-  --pva-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.18);
-  --pva-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px rgba(0, 0, 0, 0.22);
+:root[data-theme="dark"] .dashboard-commercial,
+.theme-dark .dashboard-commercial {
+  --cm-brand: var(--primary, #089bdb);
+  --cm-accent: var(--primary, #089bdb);
+  --cm-accent-strong: color-mix(in srgb, var(--primary, #089bdb) 82%, #003866);
+  --cm-text: var(--text, rgba(255, 255, 255, 0.92));
+  --cm-muted: var(--text-muted, rgba(255, 255, 255, 0.72));
+  --cm-surface: var(--surface, #121722);
+  --cm-surface-elevated: color-mix(in srgb, var(--cm-surface) 88%, #fff);
+  --cm-surface-soft: color-mix(in srgb, var(--primary, #089bdb) 10%, var(--cm-surface));
+  --cm-border: var(--border, rgba(255, 255, 255, 0.12));
+  --cm-border-strong: color-mix(in srgb, var(--primary, #089bdb) 32%, var(--cm-border));
+  --cm-table-head-bg: color-mix(in srgb, var(--primary, #089bdb) 12%, var(--cm-surface));
+  --cm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.18);
+  --cm-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px rgba(0, 0, 0, 0.22);
 
-  --delpi-ui-accent: var(--pva-accent);
-  --delpi-ui-surface: var(--pva-surface);
-  --delpi-ui-text: var(--pva-text);
-  --delpi-ui-border: var(--pva-border);
-  --delpi-ui-muted: var(--pva-muted);
-  --delpi-ui-text-muted: var(--pva-muted);
+  --delpi-ui-accent: var(--cm-accent);
+  --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-text: var(--cm-text);
+  --delpi-ui-border: var(--cm-border);
+  --delpi-ui-muted: var(--cm-muted);
+  --delpi-ui-text-muted: var(--cm-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-pedidos-venda-abertos *,
-  .dashboard-pedidos-venda-abertos *::before,
-  .dashboard-pedidos-venda-abertos *::after {
+  .dashboard-commercial *,
+  .dashboard-commercial *::before,
+  .dashboard-commercial *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

@@ -9,7 +9,7 @@ import {
   type OpenOrdersTotvsFilters,
 } from "../utils/filterItems";
 import {
-  isOpenOrdersListPath,
+  parseOpenOrdersListRouteState,
   parseOpenOrdersListUrlState,
   syncOpenOrdersListStateToUrl,
   type OpenOrdersSellerAccess,
@@ -71,8 +71,13 @@ export function useOpenOrdersDashboard(
 
   useEffect(() => {
     const restoreFromUrl = () => {
-      if (!isOpenOrdersListPath(window.location.pathname, basePath)) return;
-      const state = parseOpenOrdersListUrlState(undefined, sellerAccess);
+      const state = parseOpenOrdersListRouteState(
+        window.location.pathname,
+        window.location.search,
+        basePath,
+        sellerAccess,
+      );
+      if (!state) return;
       setFilters(state.filters);
       setPage(state.page);
       setSortKey(state.sortKey);

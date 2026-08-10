@@ -10,6 +10,7 @@ import {
   isOpenOrdersListPath,
   parseOpenOrdersAttentionDeepLink,
   parseOpenOrdersLineDeepLink,
+  parseOpenOrdersListRouteState,
   parseOpenOrdersListUrlState,
   resolveOpenOrdersSellerId,
   sanitizeOpenOrdersListSearch,
@@ -135,6 +136,34 @@ describe("openOrdersDeepLink", () => {
     } finally {
       globalThis.window = originalWindow;
     }
+  });
+
+  it("ignora popstate de detalhe ou de outra página", () => {
+    const access = { allowSellerId: true, validSellerIds: ["s1"] };
+    for (const pathname of [
+      "/apps/commercial/open-orders/01/123/01",
+      "/apps/commercial/open-orders/01/123/01/op/OP1",
+      "/apps/commercial/customers",
+    ]) {
+      assert.equal(
+        parseOpenOrdersListRouteState(
+          pathname,
+          "?seller_id=s1&q=nao-aplicar",
+          "/apps/commercial",
+          access,
+        ),
+        null,
+      );
+    }
+    assert.equal(
+      parseOpenOrdersListRouteState(
+        "/apps/commercial/open-orders",
+        "?seller_id=s1&page=3",
+        "/apps/commercial",
+        access,
+      )?.sellerId,
+      "s1",
+    );
   });
 
   it("encontra linha na lista", () => {

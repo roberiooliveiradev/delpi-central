@@ -7,6 +7,7 @@ import {
   buildCustomersListSearch,
   isCustomersListPathname,
   parseCustomersListDeepLink,
+  parseCustomersListRouteState,
   sanitizeCustomersListSearch,
 } from "./customersListDeepLink.ts";
 import { updateCustomersListState } from "../features/customers/hooks/useCustomersListState.ts";
@@ -122,6 +123,34 @@ describe("customersListDeepLink", () => {
         pathname,
       );
     }
+  });
+
+  it("ignora popstate de outra página sem alterar o escopo da Carteira", () => {
+    assert.equal(
+      parseCustomersListRouteState(
+        "/apps/commercial/open-orders",
+        "?seller_id=seller-2&q=nao-aplicar",
+        "/apps/commercial",
+        TEAM_ACCESS,
+      ),
+      null,
+    );
+    assert.deepEqual(
+      parseCustomersListRouteState(
+        "/apps/commercial/customers",
+        "?seller_id=seller-2&q=Acme&page=2",
+        "/apps/commercial",
+        TEAM_ACCESS,
+      ),
+      {
+        q: "Acme",
+        focus: "all",
+        sellerId: "seller-2",
+        sort: "attention",
+        dir: "asc",
+        page: 2,
+      },
+    );
   });
 });
 

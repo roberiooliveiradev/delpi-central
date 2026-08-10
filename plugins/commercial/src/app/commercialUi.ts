@@ -20,8 +20,6 @@ import {
   createDashboardTitleWithHelp,
   createDashboardStateBanner,
   createCompactPagination,
-  createHostContainedDrawerShell,
-  createHostContainedModalShell,
   createDashboardInlineMeter,
   createDashboardHorizontalTimeline,
   createFilterBarShell,
@@ -242,22 +240,6 @@ export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
 
 export const CommercialStateBanner = createDashboardStateBanner({
   classNames: cmStateBannerClassNames,
-});
-
-export const CommercialDrawerShell = createHostContainedDrawerShell({
-  prefix: UI_PREFIX,
-  portalScopeClassName: CM_PORTAL_SCOPE,
-  closeAriaLabel: "Fechar painel",
-  backdropAriaLabel: "Fechar painel",
-});
-
-/** Modal workbench (fill) — detalhe de linha / painéis amplos sem cobrir sidebar. */
-export const CommercialWorkbenchModal = createHostContainedModalShell({
-  prefix: UI_PREFIX,
-  portalScopeClassName: CM_PORTAL_SCOPE,
-  containedLayout: "fill",
-  variant: "page",
-  closeAriaLabel: "Fechar",
 });
 
 export const CommercialFilterBarShell = createFilterBarShell({

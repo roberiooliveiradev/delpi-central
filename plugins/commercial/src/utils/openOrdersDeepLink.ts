@@ -195,6 +195,16 @@ export function isOpenOrdersListPath(pathname: string, basePath = COMMERCIAL_BAS
   return normalizedPath === `${normalizedBase}/open-orders`;
 }
 
+export function parseOpenOrdersListRouteState(
+  pathname: string,
+  search: string,
+  basePath = COMMERCIAL_BASE_PATH,
+  sellerAccess: OpenOrdersSellerAccess = DENY_SELLER_ACCESS,
+): OpenOrdersListUrlState | null {
+  if (!isOpenOrdersListPath(pathname, basePath)) return null;
+  return parseOpenOrdersListUrlState(search, sellerAccess);
+}
+
 /** Sincroniza apenas a rota canônica da lista, sem alcançar fichas de linha/OP. */
 export function syncOpenOrdersListStateToUrl(
   state: OpenOrdersListUrlState,

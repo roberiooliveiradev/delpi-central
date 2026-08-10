@@ -6,7 +6,7 @@ import {
   DEFAULT_CUSTOMERS_LIST_DIRECTION,
   DEFAULT_CUSTOMERS_LIST_SORT,
   isCustomersListPathname,
-  parseCustomersListDeepLink,
+  parseCustomersListRouteState,
   type CustomersListDeepLink,
   type CustomersListSellerAccess,
 } from "../../../utils/customersListDeepLink";
@@ -57,8 +57,13 @@ export function useCustomersListState(options: {
   useEffect(() => {
     if (scopeLoading || typeof window === "undefined") return;
     const applyBrowserState = () => {
-      if (!isCustomersListPathname(window.location.pathname, basePath)) return;
-      const next = parseCustomersListDeepLink(window.location.search, sellerAccess);
+      const next = parseCustomersListRouteState(
+        window.location.pathname,
+        window.location.search,
+        basePath,
+        sellerAccess,
+      );
+      if (!next) return;
       setState(next);
       setScopeSellerId(next.sellerId);
       const canonicalPath = buildCustomersListPath(basePath, next, sellerAccess);

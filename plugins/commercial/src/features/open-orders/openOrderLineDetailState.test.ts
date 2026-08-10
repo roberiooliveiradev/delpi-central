@@ -19,6 +19,11 @@ const identity = buildOpenOrderLineRouteIdentity({
   orderNumber: "000123",
   lineItem: "01",
 });
+const nextIdentity = buildOpenOrderLineRouteIdentity({
+  branch: "01",
+  orderNumber: "000456",
+  lineItem: "02",
+});
 
 describe("estado da página de detalhe da linha", () => {
   it("preserva o snapshot durante refresh e falha temporária", () => {
@@ -62,5 +67,29 @@ describe("estado da página de detalhe da linha", () => {
 
     expect(empty.blockingEmpty).toBe("Linha não encontrada.");
     expect(selectOpenOrderLineSnapshot(empty, identity)).toBeNull();
+  });
+
+  it("descarta snapshot e conclusão tardia ao trocar de linha", () => {
+    const loaded = reduceOpenOrderLineDetailState(
+      reduceOpenOrderLineDetailState(INITIAL_OPEN_ORDER_LINE_DETAIL_STATE, {
+        type: "request_started",
+        identity,
+      }),
+      { type: "request_succeeded", identity, item },
+    );
+    const nextRoute = reduceOpenOrderLineDetailState(loaded, {
+      type: "request_started",
+      identity: nextIdentity,
+    });
+    const staleCompletion = reduceOpenOrderLineDetailState(nextRoute, {
+      type: "request_succeeded",
+      identity,
+      item,
+    });
+
+    expect(nextRoute.status).toBe("loading");
+    expect(selectOpenOrderLineSnapshot(nextRoute, identity)).toBeNull();
+    expect(selectOpenOrderLineSnapshot(nextRoute, nextIdentity)).toBeNull();
+    expect(staleCompletion).toBe(nextRoute);
   });
 });

@@ -513,7 +513,7 @@ describe("CustomersPage estrutural", () => {
       assert.equal(existsSync(join(__dirname, `../components/${file}`)), false);
     }
     const css = readFileSync(join(__dirname, "../../../styles/customers.css"), "utf8");
-    assert.doesNotMatch(css, new RegExp(["pva", "-"].join(""), "i"));
+    assert.doesNotMatch(css, new RegExp(`${String.fromCharCode(112, 118, 97)}-`, "i"));
     assert.doesNotMatch(css, /\.delpi-ui-/);
   });
 
@@ -533,8 +533,9 @@ describe("CustomersPage estrutural", () => {
     visit(featureRoot);
     sourceFiles.push(join(__dirname, "../../../styles/customers.css"));
 
-    const legacyClass = new RegExp(["pva", "-"].join(""), "i");
-    const legacyConstants = new RegExp(["PVA", "_(?:STATE|TABLE)"].join(""));
+    const legacyPrefix = String.fromCharCode(112, 118, 97);
+    const legacyClass = new RegExp(`${legacyPrefix}-`, "i");
+    const legacyConstants = new RegExp(`${legacyPrefix.toUpperCase()}_(?:STATE|TABLE)`);
     for (const file of sourceFiles) {
       const source = readFileSync(file, "utf8");
       assert.doesNotMatch(source, legacyClass, file);

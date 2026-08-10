@@ -70,4 +70,38 @@ describe("APIs em lotes de clientes", () => {
     assert.deepEqual(result.coverage, { covered: 200, total: 201, failedBatches: 1 });
     assert.match(result.partialError ?? "", /200 de 201/);
   });
+
+  it("faturamento respeita cobertura parcial reportada por lote bem-sucedido", async () => {
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      const firstCode = body.customers[0].customer_code;
+      const covered = firstCode === "000001" ? 150 : 1;
+      return jsonResponse({ success: true, data: {
+        months: 12,
+        customer_count: covered,
+        points: [
+          {
+            month: "2026-02",
+            label: "Fev/26",
+            value: covered * 2,
+            date_start: "2026-02-01",
+            date_end: "2026-02-28",
+          },
+          {
+            month: "2026-01",
+            label: "Jan/26",
+            value: covered,
+            date_start: "2026-01-01",
+            date_end: "2026-01-31",
+          },
+        ],
+      } });
+    };
+
+    const result = await fetchCustomerBillingSeries(customers(201));
+    assert.deepEqual(result.coverage, { covered: 151, total: 201, failedBatches: 0 });
+    assert.deepEqual(result.points.map((point) => point.month), ["2026-01", "2026-02"]);
+    assert.deepEqual(result.points.map((point) => point.value), [151, 302]);
+    assert.match(result.partialError ?? "", /151 de 201/);
+  });
 });

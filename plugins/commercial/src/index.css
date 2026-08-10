@@ -299,8 +299,7 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-commercial .cm-home-kpi-grid .delpi-ui-kpi-card--wide,
-  .dashboard-commercial .cm-home-kpi-grid .pva-kpi-card--wide {
+  .dashboard-commercial .cm-home-kpi-grid .cm-kpi-card--wide {
     grid-column: auto;
   }
 
@@ -505,12 +504,6 @@
   min-height: 0;
 }
 
-.dashboard-commercial .cm-manage-panel__body .delpi-ui-state-box,
-.dashboard-commercial .cm-manage-panel__body .cm-state-box {
-  background: color-mix(in srgb, var(--cm-surface) 72%, transparent);
-  border: 1px solid color-mix(in srgb, var(--cm-border) 80%, transparent);
-}
-
 .dashboard-commercial .cm-manage-search {
   display: flex;
   flex-wrap: wrap;
@@ -684,15 +677,6 @@
   color: var(--cm-text-muted);
 }
 
-.dashboard-commercial .cm-open-orders-card__field-label.delpi-ui-field-label,
-.dashboard-commercial .cm-open-orders-card__field-label .delpi-ui-field-label__text {
-  font-size: inherit;
-  font-weight: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  color: inherit;
-}
-
 .dashboard-commercial .cm-open-orders-card__badges-head {
   gap: 12px;
 }
@@ -776,10 +760,6 @@
 .dashboard-commercial .cm-cell-danger {
   color: var(--delpi-ui-danger, #dc2626);
   font-weight: 600;
-}
-
-.dashboard-commercial .cm-open-orders-table table.delpi-ui-table td {
-  vertical-align: middle;
 }
 
 .dashboard-commercial .cm-open-orders-client {
@@ -884,7 +864,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.dashboard-commercial .cm-drawer-footer-actions {
+.dashboard-commercial .cm-detail-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -1083,11 +1063,11 @@
   color: var(--cm-text-muted);
 }
 
-.dashboard-commercial .cm-open-orders-detail__snapshot-label.delpi-ui-section-hint-label,
-.dashboard-commercial .cm-open-orders-detail__factory-chip-label.delpi-ui-section-hint-label,
-.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi-label.delpi-ui-section-hint-label,
-.dashboard-commercial .cm-open-orders-detail__otd-pi-title.delpi-ui-section-hint-label,
-.dashboard-commercial .cm-open-orders-detail__timeline-caption.delpi-ui-section-hint-label {
+.dashboard-commercial .cm-open-orders-detail__snapshot-label,
+.dashboard-commercial .cm-open-orders-detail__factory-chip-label,
+.dashboard-commercial .cm-open-orders-detail__otd-pi-kpi-label,
+.dashboard-commercial .cm-open-orders-detail__otd-pi-title,
+.dashboard-commercial .cm-open-orders-detail__timeline-caption {
   display: inline;
 }
 
@@ -1295,7 +1275,7 @@
   min-width: 0;
 }
 
-.dashboard-commercial .cm-open-orders-detail__guide-step .delpi-ui-section-hint-label {
+.dashboard-commercial .cm-open-orders-detail__guide-label {
   color: inherit;
   font: inherit;
 }

@@ -1,5 +1,5 @@
 /**
- * Shim: superfície PVA `sellerPortfolioApi` → commercial-api.
+ * Shim: superfície CM `sellerPortfolioApi` → commercial-api.
  */
 import type {
   DirectoryUser,
@@ -77,7 +77,7 @@ export async function removeSellerCustomer(
 
 export type { TransferSellerCustomersResult };
 
-/** Assinatura PVA: (sourceId, { target_seller_id, customers }) → commercial transfer. */
+/** Assinatura CM: (sourceId, { target_seller_id, customers }) → commercial transfer. */
 export async function transferSellerCustomers(
   sourceSellerId: string,
   input: {

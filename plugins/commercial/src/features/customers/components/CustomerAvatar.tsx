@@ -3,7 +3,7 @@ import { createInitialsAvatar } from "@delpi/plugin-ui/index";
 
 import { fetchCustomerAvatarObjectUrl } from "../../../api/customerEnrichmentApi";
 
-const Avatar = createInitialsAvatar("pva");
+const Avatar = createInitialsAvatar("cm");
 
 type CustomerAvatarProps = {
   code: string;

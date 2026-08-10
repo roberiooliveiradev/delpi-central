@@ -1,2 +1,2 @@
-/** Compat: PVA imports `../app/usePortfolioScope`. */
+/** Compat: CM imports `../app/usePortfolioScope`. */
 export { usePortfolioScope } from "./PortfolioScopeContext";

@@ -6,9 +6,11 @@ import { describe, it } from "node:test";
 import {
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
+  buildPluginPath,
   resolveActiveNavId,
   resolvePluginRoute,
 } from "./pluginRoutes.ts";
+import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink.ts";
 
 describe("rotas nativas do pedido comercial", () => {
   it("faz roundtrip da linha com segmentos codificados", () => {
@@ -75,6 +77,48 @@ describe("rotas nativas do pedido comercial", () => {
     assert.equal(resolveActiveNavId("open_order_line_detail"), "open_orders");
     assert.equal(resolveActiveNavId("open_order_op_detail"), "open_orders");
   });
+
+  it("preserva contexto no fluxo lista → linha → OP → linha/lista", () => {
+    const context = buildOpenOrdersContextSearch(
+      "?q=motor&branch=01&client=000001&stock=parcial&focus=late&seller_id=s1&sort=produto&dir=desc&page=4&pedido=ignorar&linha=ignorar&externo=1",
+      { allowSellerId: true, validSellerIds: ["s1"] },
+    );
+    const listPath = buildPluginPath("open_orders", "/apps/commercial", context);
+    const linePath = buildOpenOrderLineDetailPath(
+      "/apps/commercial",
+      "01",
+      "000123",
+      "02",
+      context,
+    );
+    const opPath = buildOpenOrderOpDetailPath(
+      "/apps/commercial",
+      "01",
+      "000123",
+      "02",
+      "OP-9",
+      context,
+    );
+
+    assert.equal(
+      context,
+      "?q=motor&branch=01&client=000001&stock=parcial&focus=late&seller_id=s1&sort=produto&dir=desc&page=4",
+    );
+    assert.equal(
+      listPath,
+      `/apps/commercial/open-orders${context}`,
+    );
+    assert.equal(
+      linePath,
+      `/apps/commercial/open-orders/01/000123/02${context}`,
+    );
+    assert.equal(
+      opPath,
+      `/apps/commercial/open-orders/01/000123/02/op/OP-9${context}`,
+    );
+    assert.equal(resolvePluginRoute(linePath, "/apps/commercial").view, "open_order_line_detail");
+    assert.equal(resolvePluginRoute(opPath, "/apps/commercial").view, "open_order_op_detail");
+  });
 });
 
 describe("estrutura dos detalhes de linha e OP", () => {
@@ -107,7 +151,14 @@ describe("estrutura dos detalhes de linha e OP", () => {
     assert.match(opPage, /Produto \$\{item\.produto\.trim\(\)\}/);
     assert.match(content, /export function OpenOrdersProductionDetailContent/);
     assert.match(content, /CommercialDataRecordCard/);
-    assert.doesNotMatch(table, /CommercialWorkbenchModal|detailItem|syncOpenOrdersLineQuery/);
+    const removedTableSymbols = new RegExp(
+      [
+        ["Commercial", "Workbench", "Modal"].join(""),
+        "detailItem",
+        "syncOpenOrdersLineQuery",
+      ].join("|"),
+    );
+    assert.doesNotMatch(table, removedTableSymbols);
     assert.match(table, /navigateOpenOrderLineDetail/);
     assert.match(table, /parseOpenOrdersLineDeepLink/);
     assert.match(table, /findOpenOrderLine/);

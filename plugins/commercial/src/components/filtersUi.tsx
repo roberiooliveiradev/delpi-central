@@ -7,7 +7,7 @@ import {
   type FilterInputFieldProps,
 } from "@delpi/plugin-ui/index";
 
-const FIELD_CLASS_NAMES = filtersRowBemClasses("pva");
+const FIELD_CLASS_NAMES = filtersRowBemClasses("cm");
 
 const WIDE_FIELD_CLASS_NAMES = {
   ...FIELD_CLASS_NAMES,
@@ -15,14 +15,14 @@ const WIDE_FIELD_CLASS_NAMES = {
 };
 
 export const FilterBarShell = createFilterBarShell({
-  prefix: "pva",
+  prefix: "cm",
   withGrid: true,
   defaultAriaLabel: "Filtros",
 });
 
 const { FilterSelectField: KitFilterSelectField } = createDashboardFiltersKit({
-  prefix: "pva",
-  portalScopeClassName: "dashboard-pedidos-venda-abertos",
+  prefix: "cm",
+  portalScopeClassName: "dashboard-commercial",
   labels: { filtersAriaLabel: "Filtros" },
 });
 

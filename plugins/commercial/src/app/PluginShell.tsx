@@ -165,7 +165,7 @@ export function PluginShell({
   ];
 
   return (
-    <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
+    <div className="dashboard-commercial dashboard-page">
       <div className="cm-page-stack">
         {showGreeting ? (
           <CommercialViewTransition transitionKey="home-hero" tone="page">

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui/index";
 
-const SimpleKpiCard = createSimpleKpiCard("pva", {
+const SimpleKpiCard = createSimpleKpiCard("cm", {
   withBody: true,
   withSubtitle: true,
   layout: "iconEnd",

@@ -14,7 +14,7 @@ function normalizeCode(value: string | null | undefined): string {
     .toUpperCase();
 }
 
-/** Score de match OV↔linha PVA (filial+cliente; número OV=pedido é bônus forte). */
+/** Score de match OV↔linha CM (filial+cliente; número OV=pedido é bônus forte). */
 export function scoreProposal(
   proposal: CommercialProposal,
   item: OpenOrdersTotvsItem,
@@ -38,7 +38,7 @@ export function scoreProposal(
 }
 
 /**
- * Resolve OV (AD1_NROPOR) a partir do pedido SC5 quando a lista PVA
+ * Resolve OV (AD1_NROPOR) a partir do pedido SC5 quando a lista CM
  * não trouxe `proposal_number`. Usa busca em /commercial/proposals — não
  * trata C5_NUM como path de OV.
  */

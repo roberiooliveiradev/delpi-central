@@ -183,7 +183,7 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 | Permissão | Escopo |
 |-----------|--------|
-| `commercial.accounts.view` | Portal / pedidos / carteira (aliases PVA / api-delpi) |
+| `commercial.accounts.view` | Portal / pedidos / carteira (aliases legados) |
 | `commercial.worklist.view` / `followups.manage` | Meu dia |
 | `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) |
 | `commercial.audit.view` | Auditoria |
@@ -192,7 +192,7 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 | `commercial.accounts.team.view` | Filtro multi-vendedor / Gestão Equipe |
 | `commercial.worklist.team.view` | Meu dia `scope=team` |
 
-Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias PVA. Alias curto `commercial.propostas.*` ainda aceito na API.
+Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias legado. Alias curto `commercial.propostas.*` ainda aceito na API.
 
 Aplicação nas páginas deste fluxo:
 
@@ -233,7 +233,7 @@ Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts
 
 Upload multipart → volume `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
 
-## Cutover PVA (F2c)
+## Cutover F2c
 
 Redirects F2c ativos nos gateways canônicos de produção e desenvolvimento por
 `gateway/snippets/commercial-f2c-redirects.conf`. Artefatos operacionais:

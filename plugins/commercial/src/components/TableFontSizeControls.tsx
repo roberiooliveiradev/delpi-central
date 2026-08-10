@@ -20,24 +20,24 @@ export function TableFontSizeControls({
   onReset,
 }: TableFontSizeControlsProps) {
   return (
-    <div className="pva-table-font-size" aria-label="Tamanho da fonte da tabela">
-      <span className="pva-table-font-size__label">Fonte</span>
-      <div className="pva-table-font-size__controls">
+    <div className="cm-table-font-size" aria-label="Tamanho da fonte da tabela">
+      <span className="cm-table-font-size__label">Fonte</span>
+      <div className="cm-table-font-size__controls">
         <button
           type="button"
-          className="pva-btn pva-btn--ghost pva-btn--sm pva-table-font-size__btn"
+          className="cm-btn cm-btn--ghost cm-btn--sm cm-table-font-size__btn"
           aria-label="Diminuir fonte da tabela"
           disabled={!canDecrease}
           onClick={onDecrease}
         >
           <Minus size={14} aria-hidden="true" />
         </button>
-        <span className="pva-table-font-size__value" aria-live="polite">
+        <span className="cm-table-font-size__value" aria-live="polite">
           {fontSize}px
         </span>
         <button
           type="button"
-          className="pva-btn pva-btn--ghost pva-btn--sm pva-table-font-size__btn"
+          className="cm-btn cm-btn--ghost cm-btn--sm cm-table-font-size__btn"
           aria-label="Aumentar fonte da tabela"
           disabled={!canIncrease}
           onClick={onIncrease}
@@ -47,7 +47,7 @@ export function TableFontSizeControls({
         {!isDefault ? (
           <button
             type="button"
-            className="pva-btn pva-btn--ghost pva-btn--sm pva-table-font-size__btn"
+            className="cm-btn cm-btn--ghost cm-btn--sm cm-table-font-size__btn"
             aria-label="Restaurar fonte padrão da tabela"
             onClick={onReset}
           >
