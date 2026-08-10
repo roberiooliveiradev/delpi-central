@@ -143,21 +143,39 @@ class ChatPresentationProfileResolveService:
         delpi_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         entity_token = str(entity or "").strip() or None
+        shape_token = str(shape or "").strip() or None
+
+        # Shape OpenAPI por entidade — text-first / callers sem meta não caem em
+        # defaults genéricos (text_when_available) e ocultam tabela/árvore.
+        if not shape_token and isinstance(delpi_metadata, dict):
+            shape_token = str(delpi_metadata.get("shape") or "").strip() or None
+
+        if not shape_token and entity_token:
+            shape_token = OpenApiOperationContractService.shape_for_entity(entity_token)
+
         key = presentation_profile_service().resolve_profile_key(path, entity_token)
 
         if OpenApiPresentationProfileDeriverService.should_use_derived_profile(
             profile_key=key,
             entity=entity_token,
-            shape=shape,
+            shape=shape_token,
             delpi_metadata=delpi_metadata,
         ):
             profile = OpenApiPresentationProfileDeriverService.build_profile(
                 entity=entity_token,
-                shape=shape,
+                shape=shape_token,
                 delpi_metadata=delpi_metadata,
             )
 
             return presentation_profile_service()._stamp_openapi_presentation_strategy(profile, delpi_metadata)
+
+        # Fallback pathRules: entidade OpenAPI sem shape ainda mapeia listagens
+        # (ex.: /production/schedule/today → playbook_report) em vez de generic.
+        if key == "generic" and path:
+            path_key = presentation_profile_service().resolve_profile_key(path, None)
+
+            if path_key and path_key != "generic":
+                key = path_key
 
         merged = dict(presentation_profile_service().node("defaults") or {})
         merged.update(cls.profile(key))

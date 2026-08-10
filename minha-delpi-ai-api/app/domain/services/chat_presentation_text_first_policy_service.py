@@ -1,4 +1,10 @@
-"""Política texto-first e visuais sob demanda — Playbook 12 R14."""
+"""Política texto-first e visuais sob demanda — Playbook 12 R14.
+
+Anti-padrão: nunca forçar texto (e ocultar tabela/árvore no renderPlan) quando o
+perfil efetivo do turno pede evidência (`table_when_available`, `tree_when_available`,
+`kpi_when_available`, `stock`). Callers devem passar ``metadata`` para reutilizar o
+``presentationProfile`` cacheado / shape OpenAPI.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +21,14 @@ _AUXILIARY_SLOTS = (
     "kpiPresentation",
     "dashboardPresentation",
 )
+_EVIDENCE_VIEW_POLICIES = frozenset(
+    {
+        "table_when_available",
+        "tree_when_available",
+        "kpi_when_available",
+        "stock",
+    }
+)
 
 
 class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
@@ -22,15 +36,41 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
     _ROOT = ("textFirstPolicy",)
 
     @classmethod
-    def visual_bundle_policy(cls, path: str | None, entity: str | None = None) -> str:
-        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+    def _resolve_profile(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return ChatPresentationProfileService.resolve_profile(
+            path,
+            entity,
+            metadata=metadata,
+        )
+
+    @classmethod
+    def visual_bundle_policy(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        profile = cls._resolve_profile(path, entity, metadata=metadata)
         token = str(profile.get("visualBundlePolicy") or "on_demand").strip().lower()
 
         return token if token in {"eager", "on_demand"} else "on_demand"
 
     @classmethod
-    def stack_layout_policy(cls, path: str | None, entity: str | None = None) -> str:
-        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+    def stack_layout_policy(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        profile = cls._resolve_profile(path, entity, metadata=metadata)
         token = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
 
         return token if token in {"always", "on_demand"} else "on_demand"
@@ -70,11 +110,12 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         entity: str | None = None,
         explicit_format: str | None = None,
         user_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
-        if cls.visual_bundle_policy(path, entity) == "eager":
+        if cls.visual_bundle_policy(path, entity, metadata=metadata) == "eager":
             return True
 
-        if cls.stack_layout_policy(path, entity) == "always":
+        if cls.stack_layout_policy(path, entity, metadata=metadata) == "always":
             return True
 
         normalized = cls.normalize_explicit_format(explicit_format)
@@ -95,6 +136,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         entity: str | None = None,
         explicit_format: str | None = None,
         user_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         normalized = cls.normalize_explicit_format(explicit_format)
 
@@ -104,27 +146,38 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.looks_like_integrated_stack_request(user_message):
             return False
 
-        if cls.visual_bundle_policy(path, entity) == "eager":
+        if cls.visual_bundle_policy(path, entity, metadata=metadata) == "eager":
             return False
 
-        profile = ChatPresentationProfileService.resolve_profile(path, entity)
-        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+        profile = cls._resolve_profile(path, entity, metadata=metadata)
+        policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
+
+        # Evidência tabular/árvore/KPI nunca é ocultada por texto-first automático.
+        if policy in _EVIDENCE_VIEW_POLICIES:
+            return False
+
+        profile_key = str(profile.get("profileKey") or "").strip()
+
+        if not profile_key or profile_key.startswith("openapi:"):
+            profile_key = ChatPresentationProfileService.resolve_effective_profile_key(
+                path,
+                entity,
+                shape=str(profile.get("openapiShape") or "").strip() or None,
+            )
 
         if not normalized and ChatPresentationProfileService.is_text_first_profile(profile_key):
             strategy = str(profile.get("presentationStrategy") or "").strip().lower()
 
             if strategy == "as_delivered":
-                return str(profile.get("defaultViewPolicy") or "").strip().lower() == "text_when_available"
+                return policy == "text_when_available"
 
             return True
-
-        policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
 
         if policy == "text_when_available":
             return True
 
-        if cls.visual_bundle_policy(path, entity) == "on_demand" and not normalized:
-            return policy not in {"tree_when_available", "table_when_available", "stock"}
+        if cls.visual_bundle_policy(path, entity, metadata=metadata) == "on_demand" and not normalized:
+            return policy not in _EVIDENCE_VIEW_POLICIES
 
         return False
 
@@ -137,11 +190,12 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         explicit_format: str | None = None,
         user_message: str | None = None,
         available_view_count: int = 0,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         if available_view_count < 2:
             return False
 
-        if cls.stack_layout_policy(path, entity) == "always":
+        if cls.stack_layout_policy(path, entity, metadata=metadata) == "always":
             return True
 
         if cls.looks_like_integrated_stack_request(user_message):
@@ -158,8 +212,9 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         path: str | None,
         entity: str | None = None,
         has_text: bool = False,
+        metadata: dict[str, Any] | None = None,
     ) -> list[str]:
-        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        profile = cls._resolve_profile(path, entity, metadata=metadata)
         views = [
             str(view).strip().lower()
             for view in (profile.get("viewOrder") or [])
@@ -192,6 +247,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             entity=entity,
             explicit_format=explicit_format,
             user_message=user_message,
+            metadata=metadata,
         ):
             return False
 
@@ -230,6 +286,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             entity=entity,
             explicit_format=explicit_format,
             user_message=user_message,
+            metadata=metadata,
         ):
             cls._strip_auxiliary_presentations(
                 metadata,
@@ -249,9 +306,10 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         entity: str | None = None,
         explicit_format: str | None = None,
     ) -> None:
-        profile = ChatPresentationProfileService.resolve_profile(
+        profile = cls._resolve_profile(
             path or str(metadata.get("path") or ""),
             entity,
+            metadata=metadata,
         )
         keep_tree = profile.get("textEmbedTreeOutline") is True
         explicit_text = cls.normalize_explicit_format(explicit_format) == "text"
@@ -277,6 +335,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             path=path or str(metadata.get("path") or ""),
             entity=entity,
             has_text=bool(metadata.get("textPresentation")),
+            metadata=metadata,
         )
         kept = [
             token
