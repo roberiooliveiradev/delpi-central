@@ -25,7 +25,14 @@ function polar(cx: number, cy: number, r: number, angleRad: number) {
   return { x: cx + r * Math.cos(angleRad), y: cy + r * Math.sin(angleRad) };
 }
 
-function arcPath(
+/** Sweep ≥ 2π − ε: um único `A` SVG com endpoints iguais é omitido (fatia some). */
+const FULL_CIRCLE_EPS = 1e-6;
+
+/**
+ * Path de fatia pizza/rosca. Círculo completo usa dois semicírculos —
+ * senão o anel some quando há só 1 categoria (100%).
+ */
+export function buildPieSlicePath(
   cx: number,
   cy: number,
   outerR: number,
@@ -33,8 +40,35 @@ function arcPath(
   start: number,
   end: number,
 ): string {
-  const large = end - start > Math.PI ? 1 : 0;
+  const sweep = end - start;
   const o0 = polar(cx, cy, outerR, start);
+
+  if (sweep >= Math.PI * 2 - FULL_CIRCLE_EPS) {
+    const mid = start + Math.PI;
+    const oMid = polar(cx, cy, outerR, mid);
+    if (innerR <= 0) {
+      return [
+        `M ${cx} ${cy}`,
+        `L ${o0.x} ${o0.y}`,
+        `A ${outerR} ${outerR} 0 1 1 ${oMid.x} ${oMid.y}`,
+        `A ${outerR} ${outerR} 0 1 1 ${o0.x} ${o0.y}`,
+        "Z",
+      ].join(" ");
+    }
+    const i0 = polar(cx, cy, innerR, start);
+    const iMid = polar(cx, cy, innerR, mid);
+    return [
+      `M ${o0.x} ${o0.y}`,
+      `A ${outerR} ${outerR} 0 1 1 ${oMid.x} ${oMid.y}`,
+      `A ${outerR} ${outerR} 0 1 1 ${o0.x} ${o0.y}`,
+      `L ${i0.x} ${i0.y}`,
+      `A ${innerR} ${innerR} 0 1 0 ${iMid.x} ${iMid.y}`,
+      `A ${innerR} ${innerR} 0 1 0 ${i0.x} ${i0.y}`,
+      "Z",
+    ].join(" ");
+  }
+
+  const large = sweep > Math.PI ? 1 : 0;
   const o1 = polar(cx, cy, outerR, end);
   if (innerR <= 0) {
     return [
@@ -132,7 +166,7 @@ export function ChartSeriesPie({
         return (
           <path
             key={`slice-${point.sourceIndex}`}
-            d={arcPath(cx, cy, outerR, innerR, start, end)}
+            d={buildPieSlicePath(cx, cy, outerR, innerR, start, end)}
             fill={fill}
             stroke="#ffffff"
             strokeWidth={1}
