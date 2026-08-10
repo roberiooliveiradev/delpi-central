@@ -118,11 +118,28 @@ describe("ribbon density contract", () => {
     );
   });
 
-  it("group--wide compacto não estica com flex:1", () => {
+  it("group--wide compacto ocupa folga com flex:1 e pode encolher", () => {
     const block = css.match(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__group--wide\s*\{[^}]+\}/s,
     )?.[0];
     expect(block).toBeTruthy();
-    expect(block).toMatch(/flex:\s*0\s+0\s+auto/);
+    expect(block).toMatch(/flex:\s*1\s+1\s+auto/);
+    expect(block).toMatch(/min-width:\s*0/);
+  });
+
+  it("grupos compactos encolhem (não flex-shrink:0) e sem border-right duplicado", () => {
+    const group = css.match(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__group\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(group).toBeTruthy();
+    expect(group).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(group).not.toMatch(/flex-shrink:\s*0/);
+
+    const baseGroup = css.match(
+      /\.dashboard-tv-dashboard \.td-deck-ribbon__group\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(baseGroup).toBeTruthy();
+    expect(baseGroup).toMatch(/border-right:\s*none/);
+    expect(baseGroup).not.toMatch(/border-right:\s*1px/);
   });
 });

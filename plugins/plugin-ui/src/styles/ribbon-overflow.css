@@ -25,7 +25,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  flex: 0 0 auto;
+  /* Encolhe quando a faixa aperta; --wide cresce para ocupar folga. */
+  flex: 0 1 auto;
   align-items: stretch;
   min-width: 0;
   /* Não comprimir o bbox ao width do host — senão a medida expandida fica subestimada. */
@@ -33,10 +34,11 @@
   box-sizing: border-box;
 }
 
-/* Separador suave entre seções da ribbon (exceto a primeira). */
+/* Separador suave entre seções da ribbon (exceto a primeira).
+ * Única fonte de divisor — MFEs dual-class não devem somar border-right. */
 .delpi-ui-ribbon-group + .delpi-ui-ribbon-group {
   margin-left: 4px;
-  padding-left: 12px;
+  padding-left: 10px;
   border-left: 1px solid color-mix(
     in srgb,
     var(--delpi-ui-border, var(--border, rgba(160, 160, 160, 0.55))) 70%,
@@ -46,7 +48,7 @@
 
 .delpi-ui-ribbon-group--wide {
   flex: 1 1 auto;
-  min-width: 12rem;
+  min-width: min(12rem, 100%);
 }
 
 .delpi-ui-ribbon-group__body {

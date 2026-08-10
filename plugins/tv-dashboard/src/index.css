@@ -3588,21 +3588,22 @@ body.td-composer--marqueeing *{
   width: 100%;
   min-width: 0;
 }
+/* Divisor só via kit (.delpi-ui-ribbon-group + …). Não somar border-right no dual-class. */
 .dashboard-tv-dashboard .td-deck-ribbon__group{
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 4px;
   min-height: 78px;
-  padding: 4px 10px 2px;
-  border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
+  padding: 4px 8px 2px;
+  border-right: none;
   overflow: visible;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__group:last-child{
   border-right: none;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__group--wide{
-  min-width: min(280px, max-content);
+  min-width: min(12rem, 100%);
   position: relative;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__body{
@@ -3617,8 +3618,9 @@ body.td-composer--marqueeing *{
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: 11rem;
+  min-width: 0;
   max-width: 16rem;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__stack .td-field{
   width: 100%;
@@ -4961,7 +4963,7 @@ body.td-composer--marqueeing *{
   height: 28px;
 }
 .dashboard-tv-dashboard .td-ribbon-tile__label{
-  max-width: 64px;
+  max-width: 5.5rem;
   text-align: center;
   line-height: 1.15;
   white-space: nowrap;
@@ -5165,7 +5167,7 @@ body.td-composer--marqueeing *{
   max-width: none;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__group-cluster > .td-deck-ribbon__group{
-  flex: 0 0 auto;
+  flex: 0 1 auto;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__group-cluster > .td-deck-ribbon__group:last-child{
   border-right: none;
@@ -5185,9 +5187,9 @@ body.td-composer--marqueeing *{
   height: auto;
   max-height: none;
   min-height: 0;
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  padding: 2px 6px 0;
+  /* Pode encolher; --wide ocupa folga (kit flex:1). */
+  flex: 0 1 auto;
+  padding: 2px 4px 0;
   justify-content: flex-start;
   gap: 3px;
   overflow: visible;
@@ -5196,8 +5198,8 @@ body.td-composer--marqueeing *{
   height: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group--wide{
-  flex: 0 0 auto;
-  min-width: min(240px, max-content);
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__body{
   flex: 0 1 auto;
@@ -5231,7 +5233,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-tile__label{
   font-size: 10px;
-  max-width: 56px;
+  max-width: 5.25rem;
   line-height: 1.1;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-ribbon-large-btn{
@@ -6724,19 +6726,19 @@ body.td-composer--marqueeing *{
 }
 /* Compacta: sem space-between que abre vazio até a legenda. */
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group{
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   justify-content: flex-start;
   min-height: 0;
   gap: 4px;
-  padding: 4px 10px 4px;
-  border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
+  padding: 4px 8px 4px;
+  border-right: none;
 }
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group:last-child{
   border-right: none;
 }
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group--wide{
-  flex: 0 1 280px;
-  min-width: 180px;
+  flex: 1 1 280px;
+  min-width: min(180px, 100%);
   max-width: 360px;
 }
 .dashboard-tv-dashboard .td-deck-playlist-groups > .td-deck-ribbon__group .td-deck-ribbon__body{
