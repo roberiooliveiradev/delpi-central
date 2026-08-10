@@ -30,20 +30,22 @@ type VitePlugin = {
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
-const REACT_INTERNALS_KEY = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
-
-function reactHookDispatcher(mod: unknown): unknown {
-  return (mod as Record<string, { H?: unknown } | undefined>)?.[REACT_INTERNALS_KEY]?.H;
-}
-
-/** React flatten quebrado expõe useRef mas H=null — tratar como inválido. */
+/**
+ * React canônico para MF: basta expor `useRef`.
+ *
+ * **Não** exigir `internals.H != null` — H (dispatcher) só é preenchido *durante*
+ * o render. Chunks TipTap/recharts (ex.: `ContextMenuToolbarButton-*.js`) chamam o
+ * bridge CJS no *init* do módulo; com o check de H o global era rejeitado e o
+ * shim caía no React bundled → `Cannot access property "useRef", f.H is null`.
+ */
 export function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
-  return typeof (mod as { useRef?: unknown })?.useRef === "function" && reactHookDispatcher(mod) != null;
+  return typeof (mod as { useRef?: unknown })?.useRef === "function";
 }
 
-const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function"&&globalThis.${DELPI_MF_REACT_GLOBAL}.${REACT_INTERNALS_KEY}?.H)`;
+/** Guard runtime: preferir global semeado pelo portal/MFE (sem checar H). */
+const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function")`;
 
-/** Publica React canônico — não sobrescreve instância válida já semeada pelo portal. */
+/** Publica React canônico — não sobrescreve instância já semeada (primeiro vence). */
 export function publishDelpiMfReact(react: unknown): void {
   const g = globalThis as Record<string, unknown>;
   if (isUsableReact(g[DELPI_MF_REACT_GLOBAL])) return;
@@ -261,7 +263,7 @@ export function patchBundledReactCjsBridge(code: string): string {
   }
   return code.replace(
     fnStart,
-    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function"&&__g.${REACT_INTERNALS_KEY}?.H)return __g;return`,
+    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function")return __g;return`,
   );
 }
 
@@ -289,6 +291,10 @@ export function patchRemoteEntryCacheBust(code: string): string {
   return code.replace(/(\/__federation_expose_[^"?]+\.js)/g, `$1${q}`);
 }
 
+function chunkConsumesBundledReactBridge(code: string): boolean {
+  return listBundledReactBridgeImports(code).length > 0;
+}
+
 function applyMfChunkPatches(code: string, fileName: string): string {
   if (fileName.includes("remoteEntry.js")) {
     return patchRemoteEntryCacheBust(code);
@@ -299,8 +305,17 @@ function applyMfChunkPatches(code: string, fileName: string): string {
   if (isBundledReactCoreChunk(code)) {
     return patchBundledReactCjsBridge(code);
   }
-  if (isAppOrExposeChunk(fileName) || fileName.includes("_virtual___federation__")) {
-    return patchMfRuntimeImportCacheBust(patchBundledReactConsumerChunk(code));
+  // App/expose *e* chunks TipTap/recharts (ContextMenuToolbarButton-*.js, etc.)
+  if (
+    isAppOrExposeChunk(fileName) ||
+    fileName.includes("_virtual___federation__") ||
+    chunkConsumesBundledReactBridge(code)
+  ) {
+    const patched = patchBundledReactConsumerChunk(code);
+    if (isAppOrExposeChunk(fileName) || fileName.includes("_virtual___federation__")) {
+      return patchMfRuntimeImportCacheBust(patched);
+    }
+    return patched;
   }
   return code;
 }

@@ -50,6 +50,8 @@ Gateway nginx
 
 O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule` (`__federation_fn_import*.js`), congelando `__CLIENT_INTERNALS.H` (dispatcher de hooks). Sintomas: **#321**, **`useRef` null** em recharts/zustand/dashboards, tela preta até F5.
 
+**Init fora do render (ago/2026 — kaizometro):** o dispatcher `H` só existe *durante* o render. O shim CJS / fallback do consumer **não** pode exigir `internals.H` — chunks TipTap/recharts (`ContextMenuToolbarButton-*.js`) resolvem React no *module init*; com o check de H o global era rejeitado → React bundled paralelo → `Cannot access property "useRef", f.H is null`. Guard canônico: só `typeof useRef=="function"`.
+
 **React #527 (versões divergentes):** portal e MFEs devem usar a **mesma versão exata** de `react` e `react-dom` (`plugins/vite/reactPinnedVersion.ts` → `19.2.7`). Portal em 19.2.4 + MFE em 19.2.6 quebra o par react/react-dom no share scope. Sincronizar: `node plugins/vite/sync-react-pinned-version.mjs` + rebuild portal e MFEs.
 
 **Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). O flatten usa `_delpiMod` local (não reatribui o parâmetro `e` — evita *Assignment to constant variable* em strict). Também redireciona o shim CJS `index-*.js` (React bundled em App/recharts) para `globalThis.__DELPI_MF_REACT__`. Chunks `App-*.js` com `import{r as X}from"./index-*"` recebem fallback no bridge (`Nu()` → global canônico). O `importShared` publica React no global **só se** `!globalThis.__DELPI_MF_REACT__` (não sobrescreve o portal).

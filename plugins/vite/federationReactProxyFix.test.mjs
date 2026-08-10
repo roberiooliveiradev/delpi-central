@@ -30,11 +30,15 @@ function portalReact() {
   };
 }
 
-function brokenReact() {
+function brokenFlattenReact() {
   return {
     useRef: () => "broken",
     [REACT_INTERNALS]: { H: null },
   };
+}
+
+function notReact() {
+  return { version: "0" };
 }
 
 const UNPATCHED_H = String.raw`function H(e,t){return typeof e.default=="function"?(Object.keys(e).forEach(s=>{s!=="default"&&(e.default[s]=e[s])}),w[t]=e.default,e.default):(e.default&&(e=Object.assign({},e.default,e)),w[t]=e,e)}`;
@@ -71,26 +75,51 @@ function testFlattenRuntimeStrict() {
 function testReactShimUsesGlobal() {
   const out = patchBundledReactCjsBridge(REACT_SHIM);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "shim consulta global");
-  assert.ok(out.includes(REACT_INTERNALS), "shim valida dispatcher H");
+  assert.ok(out.includes('typeof __g.useRef=="function"'), "shim valida useRef");
+  assert.ok(!out.includes(`${REACT_INTERNALS}?.H`), "shim não exige H (null fora do render)");
 }
 
 function testPublishDoesNotOverwritePortalReact() {
   globalThis[DELPI_MF_REACT_GLOBAL] = portalReact();
-  publishDelpiMfReact(brokenReact());
+  publishDelpiMfReact(brokenFlattenReact());
   assert.equal(globalThis[DELPI_MF_REACT_GLOBAL].useRef(), "portal");
   delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
-function testBrokenReactNotUsable() {
-  assert.ok(!isUsableReact(brokenReact()));
+function testUsableReactAcceptsModuleOutsideRender() {
+  // H=null é o estado normal fora do render — ainda é React canônico.
+  assert.ok(isUsableReact(brokenFlattenReact()));
   assert.ok(isUsableReact(portalReact()));
+  assert.ok(!isUsableReact(notReact()));
+  assert.ok(!isUsableReact(null));
+}
+
+/** Regressão kaizometro: bridge no init do módulo com global.H=null deve usar o global. */
+function testCjsBridgePrefersGlobalWhenDispatcherHIsNull() {
+  const out = patchBundledReactCjsBridge(REACT_SHIM);
+  globalThis[DELPI_MF_REACT_GLOBAL] = brokenFlattenReact();
+  const bridge = new Function(
+    `${out.replace(/export\{(\w+) as r\}/, "return $1;")}`,
+  )();
+  const mod = bridge();
+  assert.equal(mod.useRef(), "broken", "com H=null ainda retorna o global semeado");
+  delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
 function testAppChunkReactBridgeFallback() {
   const raw = String.raw`import{r as Nu}from"./index-ABC.js";function x(){if(Ws)return al;Ws=1;var e=Nu(),t=DA();return e.useRef}`;
   const out = patchBundledReactConsumerChunk(raw);
-  assert.ok(out.includes(REACT_INTERNALS), "App shim valida dispatcher H");
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "App shim consulta global");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useRef=="function"'), "App shim valida useRef");
   assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
+}
+
+/** TipTap/recharts (chunk ContextMenuToolbarButton) também precisa do fallback — não só App-*. */
+function testRichTextChunkReactBridgeFallback() {
+  const raw = String.raw`import{r as US}from"./index-B4SFKWmm.js";var Jm;function YR(){if(Jm)return Vc;Jm=1;var e=US();return e.useRef}`;
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "chunk rich-text consulta global");
+  assert.ok(!out.includes("var e=US()"), "não chama US() sem fallback");
 }
 
 /** Regressão: `$h`=React e `kh`=react-dom — não redirecionar `kh()` para o global React. */
@@ -184,9 +213,11 @@ testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
 testReactShimUsesGlobal();
 testPublishDoesNotOverwritePortalReact();
-testBrokenReactNotUsable();
+testUsableReactAcceptsModuleOutsideRender();
+testCjsBridgePrefersGlobalWhenDispatcherHIsNull();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
+testRichTextChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
 testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
 testAppChunkSkipsLoneReactDomBridge();
@@ -195,4 +226,4 @@ testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 15 testes passaram");
+console.log("OK: federationReactProxyFix — 17 testes passaram");
