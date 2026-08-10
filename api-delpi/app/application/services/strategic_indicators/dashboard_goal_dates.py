@@ -9,6 +9,12 @@ def normalize_si_branch(branch: str | None) -> str | None:
     if not trimmed:
         return None
 
+    # TV/OpenAPI usam all|Todas = consolidado. SI resolve meta consolidada com
+    # branch vazio/None — o literal "all" não casa com goal_scope_branch ''|01|02
+    # e a Meta (comparable_goal) some do Resumo Transforma Mais / hubs.
+    if trimmed.lower() in {"all", "todas", "todos"}:
+        return None
+
     if trimmed.isdigit() and len(trimmed) <= 2:
         return trimmed.zfill(2)
 
