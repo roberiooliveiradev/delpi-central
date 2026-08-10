@@ -1,8 +1,11 @@
-# Produção — eficiência, OEE e dashboards (jun/2026)
+# Produção — eficiência, OEE e dashboards (jun/2026+)
 
-Registro das mudanças alinhadas entre **api-delpi**, **dashboard-production** e **eficiencia-fabril**.
+Registro das mudanças alinhadas entre **api-delpi**, **dashboard-production**, **eficiencia-fabril** e **strategic-indicators**.
 
-Documentação de faixa válida: [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).
+Documentação de faixa válida: [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).  
+Fórmula canônica (`HY_TEMPAD`): [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md).
+
+> **Estado atual (ago/2026):** KPI OEE, listagem OEE, série OEE e eficiência fabril usam o **mesmo** % recalculado (`setup + HY_TEMPAD × qtd`). A tabela da §1 abaixo descreve o estado de **jun/2026** (ainda lia o % da view no KPI) — ver **§7.2** para o alinhamento.
 
 ---
 
@@ -10,10 +13,11 @@ Documentação de faixa válida: [regras-faixa-eficiencia-producao.md](./regras-
 
 A partir de jun/2026 a plataforma **não usa mais** o campo Protheus `H6_ZEFICI` para medir eficiência.
 
-| Superfície | Fonte da métrica |
-|------------|------------------|
-| KPI OEE, listagem OEE, Eficiência Fabril | `EFICIENCIA_PERCENTUAL` na view `vw_Apontamentos_Eficiencia` = **(tempo previsto ÷ tempo real) × 100** |
-| Detalhe do apontamento (`GET /production/oee/appointments/{id}`) | Mesmo cálculo em SH6010: roteiro (setup + tempo padrão × quantidade) e horários do apontamento |
+| Superfície | Fonte da métrica (jun/2026) | Fonte atual (ago/2026) |
+|------------|-----------------------------|-------------------------|
+| KPI OEE, listagem OEE | `EFICIENCIA_PERCENTUAL` da view | % canônico TEMPAD (`production_fabril_efficiency_sql.py`) |
+| Eficiência Fabril (appointments) | recalcula TEMPAD no SELECT | idem (módulo compartilhado) |
+| Detalhe (`GET /production/oee/appointments/{id}`) | tempos em SH6010 | idem (`production_oee_sql.py`) |
 
 ### API (módulos canônicos)
 
@@ -135,7 +139,7 @@ Alerta **Saúde SQL** (`slow_sql`): a série diária (`OverallEquipmentEffective
 | Artefato | Mudança |
 |----------|---------|
 | `production_fabril_oee_kpi_sql.py` | `OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT` passa a expor componentes brutos `efficiency_sum` (`SUM`) e `efficiency_sample_count` (`COUNT` de não-nulos) |
-| `production_oee_series_aggregation_service.py` | `resolve_period_oee_by_branch` deriva o OEE do período por filial das linhas diárias (`Σsum / Σcount`, arredondado uma única vez) — **exatamente** igual a `ROUND(AVG(EFICIENCIA_PERCENTUAL), 2)` |
+| `production_oee_series_aggregation_service.py` | `resolve_period_oee_by_branch` deriva o OEE do período por filial das linhas diárias (`Σsum / Σcount`, arredondado uma única vez) — equivalente a `ROUND(AVG(efficiency_pct), 2)` sobre o % da agregação diária |
 | `overall_equipment_effectiveness_repository.py` | `_load_overall_equipment_effectiveness_by_branch` deriva da série diária (`list_oee_kpi_by_day_and_branch`, cacheada) — **elimina** o scan separado `OEE_FABRIL_KPI_BY_BRANCH_SELECT`; removido o predicado `FILIAL <> ''` redundante da série diária |
 
 ### Efeito esperado
@@ -159,6 +163,44 @@ docker exec delpi-api-delpi python -m pytest \
   tests/test_get_production_oee_series_use_case.py tests/test_get_production_oee_use_case.py \
   tests/unit/domain/services/test_production_oee_series_aggregation_service.py -q
 ```
+
+---
+
+## 7.2 Alinhamento OEE / SI / eficiência fabril (`HY_TEMPAD`) — ago/2026
+
+**Sintoma:** no mesmo período (ex.: jul/2026, filial SC/`01`), dashboard Produção e Indicadores Estratégicos mostravam OEE **88,31%** enquanto Eficiência Fabril mostrava **~89,5%**.
+
+**Causa raiz:** KPI OEE/SI ainda fazia `AVG(EF.EFICIENCIA_PERCENTUAL)` cru da view (previsto legado `HY_TEMPOM × qtd/C2`). A eficiência fabril já recalculava com `HY_TEMPAD × qtd` no SELECT de appointments.
+
+### Correção (api-delpi)
+
+| Artefato | Mudança |
+|----------|---------|
+| `production_fabril_efficiency_sql.py` | Expressões canônicas únicas (meta/hora, previsto, %, ganho/perda) |
+| `production_fabril_standard_time_sql.py` | CTEs/joins SHY+SG2 compartilhados (OEE + EF) |
+| `production_fabril_oee_kpi_sql.py` | `build_oee_fabril_kpi_*` — AVG do % recalculado na faixa 0–199 |
+| `production_fabril_oee_sql.py` | Listagem OEE usa o mesmo `%` + `status` sobre ele |
+| `production_fabril_ef_items_sql.py` | Consome as expressões compartilhadas (sem duplicar fórmula) |
+| `overall_equipment_effectiveness_repository.py` | KPI/série/listagem via builders; faixa no % recalculado (não no da view) |
+| `production_kpi_cache.py` | Namespaces `*-tempad-v2` (evita servir cache legado) |
+
+### Contrato HTTP
+
+Rotas e `operationId` **inalterados**. Consumidores (dashboard-production, strategic-indicators via `get_oee_pct`, chat) passam a receber o valor alinhado à eficiência fabril sem mudança de path.
+
+### Testes
+
+```bash
+cd api-delpi
+.venv/bin/python -m pytest \
+  tests/test_production_oee_kpi_sql.py \
+  tests/test_production_fabril_canonical_efficiency_sql.py \
+  tests/test_production_fabril_appointment_filters.py \
+  tests/test_ef_fabril_items_list_sql.py \
+  tests/test_production_oee_appointments_batch_sql.py -q
+```
+
+Doc canônica da fórmula: [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md).
 
 ---
 

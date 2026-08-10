@@ -138,12 +138,12 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/direct_labor_cost_pct` | Custo de mão de obra direta % ROL. |
 | GET | `/production/production_cost_pct` | Custo de produção % ROL. |
 | GET | `/production/depreciation_pct` | Depreciação % ROL. |
-| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real). |
-| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
+| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média do % canônico (`setup + HY_TEMPAD × qtd` ÷ tempo real), mesma fórmula da eficiência fabril; faixa 0–199%. SI e dashboard produção consomem esta rota. |
+| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril + % recalculado), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento — roteiro (SG2), estrutura (BOM), análise de tempos e **`time_analysis.findings`** (alertas automáticos). |
-| GET | `/production/oee/series` | Série temporal de OEE por filial. Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
+| GET | `/production/oee/series` | Série temporal de OEE por filial (mesmo % canônico). Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
-| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe; campos `turno`/`turno_label`; filtro opcional `shift=1\|2\|3` ou CSV). |
+| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; % recalculado `HY_TEMPAD`; `appointment_id` para detalhe; campos `turno`/`turno_label`; filtro opcional `shift=1\|2\|3` ou CSV). |
 | GET | `/production/eficiencia-fabril/efficiency-by-work-center` | Média de eficiência (%) por CT — mesma regra do plugin (OK + faixa 0–199%); filtro `shift` opcional. Ideal para gráfico no TV. |
 | GET | `/production/machine-programs/top-intermediates` | Ranking de intermediários (PI) mais produzidos — programas de máquina (Manutenção). Doc: [production-machine-programs.md](./production-machine-programs.md). |
 
@@ -166,16 +166,18 @@ Doc: [production-unproductive-hours.md](./production-unproductive-hours.md). Vie
 
 Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_ORDENS_PRODUCAO` — não confundir com [`/production/orders/*`](./13-producao-operacional.md) (SC2010).
 
-**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
+**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Fórmula canônica (`HY_TEMPAD`): [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md). Changelog jun/2026 + alinhamento ago/2026: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 
-**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` na listagem = `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real); `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
+**Métrica compartilhada (ago/2026):** KPI OEE (`/overall_equipment_effectiveness_pct`), listagem/série OEE e apontamentos da eficiência fabril usam a **mesma** expressão SQL (`production_fabril_efficiency_sql.py`): `tempo_previsto = setup + HY_TEMPAD × qtd_apontada`; `% = previsto ÷ real × 100`. **Não** usar o `EFICIENCIA_PERCENTUAL` cru da view (legado `HY_TEMPOM × qtd/C2`).
+
+**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` = % canônico (TEMPAD); `status` valid/outlier sobre esse %; `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
 
 **Detalhe (`GET /production/oee/appointments/{id}`):** `oee_pct` e `time_analysis.efficiency_from_times_pct` calculados por tempos (roteiro SG2/SHY + horários); diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis`.
 
-**Performance (KPI e séries OEE/OTD — jun/2026):**
+**Performance (KPI e séries OEE/OTD):**
 
-- `GET /production/overall_equipment_effectiveness_pct`: KPI por filial via query agrupada + `NOLOCK` (`production_fabril_oee_kpi_sql.py`); cache `production-oee` e `production-oee-by-branch`. Changelog: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7.
-- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`, `production-oee-by-branch|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
+- `GET /production/overall_equipment_effectiveness_pct`: KPI via `build_oee_fabril_kpi_*` + joins SHY/SG2 + `NOLOCK`; cache versionado `production-oee-tempad-v2` / `production-oee-by-branch-tempad-v2` / `production-oee-series-daily-tempad-v2`. Histórico de performance: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7–§7.2.
+- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa + cache por filial/período nos repositórios. TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
 - Séries usam no máximo **366 buckets** (`MAX_PERIOD_BUCKETS`): cobre um ano bissexto completo com `granularity=day`, preservando um ponto por dia. Intervalos diários multi-ano acima desse limite retornam `truncated=true`; o consumidor não deve reagrupar ou renomear os pontos silenciosamente.
 - OTD: `WITH (NOLOCK)` em SC2/SB1. Console: `get_production_oee_series` / `get_production_otd_series` — após primeiro carregamento, polling do dashboard deve gerar hits na aba **Cache**.
 

@@ -1,6 +1,13 @@
 # Faixa válida de eficiência na produção (0–199%)
 
-Regra única para **OEE** e **Eficiência Fabril** — eficiência calculada como **(tempo previsto ÷ tempo real) × 100** (`EFICIENCIA_PERCENTUAL` na view `vw_Apontamentos_Eficiencia`; no detalhe SH6010, via roteiro e horários do apontamento).
+Regra única para **OEE** e **Eficiência Fabril**. A eficiência é **(tempo previsto ÷ tempo real) × 100**, com previsto canônico:
+
+```text
+tempo_previsto = setup + HY_TEMPAD × qtd_apontada
+```
+
+(fonte SQL: `production_fabril_efficiency_sql.py`; domínio: `production_tempo_previsto.py`).  
+A view `vw_Apontamentos_Eficiencia` ainda expõe `EFICIENCIA_PERCENTUAL` legado (`HY_TEMPOM` parcial) — **KPIs e listagens da API recalculam** e não usam esse valor cru. Detalhe SH6010: mesma lógica via roteiro e horários.
 
 ## Objetivo
 
@@ -22,7 +29,7 @@ A faixa **não** vem de documentação formal do Protheus — é convenção ope
 | Mai/2026 | Eficiência Fabril MVP usava teto **250%** (`max_efficiency_indicator_pct`). |
 | Jun/2026 | Faixa unificada em **0–199%** para OEE e Eficiência Fabril; constante compartilhada na API. |
 | Jun/2026 | Eficiência passa a ser **só por tempos** (fim de `H6_ZEFICI`); fórmulas legíveis em `time_analysis`; auto-refresh 5 min nos dashboards — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md). |
-
+| Ago/2026 | KPI/listagem/série OEE e SI alinhados ao % canônico `HY_TEMPAD` (mesma expressão da eficiência fabril); SQL centralizado em `production_fabril_efficiency_sql.py` + `production_fabril_standard_time_sql.py`. |
 ## Constantes (fonte de verdade)
 
 ### API (`api-delpi`)
@@ -101,7 +108,8 @@ pytest tests/test_get_eficiencia_fabril_dashboard_use_case.py -q
 ## Documentação relacionada
 
 - [06-modulos-departamentais.md](./06-modulos-departamentais.md) — rotas `/production/oee` e eficiência fabril
-- [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh
+- [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) — fórmula `HY_TEMPAD` (único ponto de verdade)
+- [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh, alinhamento OEE/SI
 - [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../../docs/12-roadmap-e-evolucao/eficiencia-fabril/)
 - `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md` — filtro `status` do OEE
 

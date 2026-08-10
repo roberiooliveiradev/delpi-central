@@ -24,7 +24,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Princípios SQL Protheus | [principios-sql.md](./principios-sql.md) | `D_E_L_E_T_`, NOLOCK, `*010`, bind, joins |
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, campos SB1 recorrentes |
-| Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`, previsto/meta de apontamento |
+| Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |
 
 ---
 
@@ -85,7 +85,7 @@ Resumo:
 - Compras válidas / frete MP — changelog + diretivas
 - Datas Protheus `YYYYMMDD` / `YYYYMM` e janelas closed-open
 - Motivos de refugo (`CYO` / `BC_MOTIVO`)
-- Faixas de eficiência OEE (convenção Delpi)
+- Faixas de eficiência OEE — ver [regras-faixa-eficiencia-producao.md](../regras-faixa-eficiencia-producao.md) (já documentado; não é backlog de fórmula)
 
 
 ---

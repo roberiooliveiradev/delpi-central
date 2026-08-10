@@ -65,7 +65,9 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [central-agendamento.md](./central-agendamento.md) | Central de agendamento. |
 | [production-appointments.md](./production-appointments.md) | Apontamentos de produção. |
 | [production-machine-programs.md](./production-machine-programs.md) | Programas de máquina. |
-| [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) | Faixas de eficiência fabril. |
+| [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) | Faixa 0–199% OEE/EF + métrica canônica `HY_TEMPAD`. |
+| [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) | Tempo padrão / eficiência de apontamento (`HY_TEMPAD` vs `HY_TEMPOM`). |
+| [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) | Changelog eficiência/OEE (jun–ago/2026). |
 | [delpi-reports.md](./delpi-reports.md) | Relatórios DELPI. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |

@@ -290,7 +290,7 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `page` (default `1`), `page_size` (default `20`, máx. `1000`).
 - `sort_by`, `sort_dir` — ordenação server-side da listagem.
 
-**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (view fabril: data, início/fim, OP, produto PA/PI, CT, operador, `oee_pct` = `EFICIENCIA_PERCENTUAL`, `status`, `appointment_id` via SH6010). Na UI do dashboard produção, listagem no padrão eficiência fabril (badge **Verificar** / **OK**).
+**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (view fabril: data, início/fim, OP, produto PA/PI, CT, operador, `oee_pct` = % canônico `setup + HY_TEMPAD × qtd` ÷ tempo real — **não** o `EFICIENCIA_PERCENTUAL` cru da view —, `status`, `appointment_id` via SH6010). Na UI do dashboard produção, listagem no padrão eficiência fabril (badge **Verificar** / **OK**).
 
 **Parâmetros (`GET /production/oee/appointments/{appointment_id}`)**
 
@@ -301,9 +301,9 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 
 **`time_analysis.findings` (diagnóstico canônico):** serviço `production_appointment_time_analysis` — exemplos: eficiência fora da faixa 0–199%, tempo previsto/real ausente, intervalo muito curto, roteiro sem fator padrão, fallback em tempo informado no apontamento. Severidade: `error` | `warning` | `info`. Eficiência medida **somente por tempos** (não usa `H6_ZEFICI`). Changelog: `api-delpi/docs/api/producao-eficiencia-changelog-jun2026.md`.
 
-**Não confundir rotas:** `GET /production/oee` (painel + listagem, view fabril) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham `EFICIENCIA_PERCENTUAL` e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa. **Detalhe de apontamento** (roteiro, tempos, alertas): sempre `GET /production/oee/appointments/{appointment_id}` — usado pelo OEE e pela eficiência fabril ao clicar na linha.
+**Não confundir rotas:** `GET /production/oee` (painel + listagem) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham a **mesma** métrica canônica (`setup + HY_TEMPAD × qtd` ÷ tempo real via `production_fabril_efficiency_sql.py`) e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa. KPI escalar: `GET /production/overall_equipment_effectiveness_pct` (também usado pelos Indicadores Estratégicos). **Detalhe de apontamento** (roteiro, tempos, alertas): sempre `GET /production/oee/appointments/{appointment_id}` — usado pelo OEE e pela eficiência fabril ao clicar na linha.
 
-**Faixa válida (OEE e eficiência fabril):** KPIs e gráficos consideram apenas eficiência entre **0% e 199%** (outliers permanecem listáveis). Ver `api-delpi/docs/api/regras-faixa-eficiencia-producao.md`.
+**Faixa válida (OEE e eficiência fabril):** KPIs e gráficos consideram apenas eficiência entre **0% e 199%** (outliers permanecem listáveis). Ver `api-delpi/docs/api/regras-faixa-eficiencia-producao.md` e `api-delpi/docs/api/padroes-totvs/apontamentos-tempo-padrao.md`.
 
 **Parâmetros (`GET /production/eficiencia-fabril/*`)**
 

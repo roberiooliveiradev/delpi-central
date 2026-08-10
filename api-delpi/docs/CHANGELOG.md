@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-08 — OEE alinhado à eficiência fabril (`HY_TEMPAD`)
+
+KPI e listagem/série OEE (`GET /production/overall_equipment_effectiveness_pct`, `/production/oee`, `/production/oee/series`) deixam de usar o `EFICIENCIA_PERCENTUAL` cru da view e passam a recalcular com a mesma fórmula da eficiência fabril:
+
+```text
+tempo_previsto = setup + HY_TEMPAD × qtd_apontada
+eficiencia_%   = tempo_previsto / tempo_real × 100
+```
+
+SQL centralizado em `production_fabril_efficiency_sql.py` + joins `production_fabril_standard_time_sql.py`. Strategic Indicators (gateway `get_oee_pct`) herda o valor sem mudança de rota. Cache OEE versionado `*-tempad-v2`.
+
+Docs: [padroes-totvs/apontamentos-tempo-padrao.md](./api/padroes-totvs/apontamentos-tempo-padrao.md), [regras-faixa-eficiencia-producao.md](./api/regras-faixa-eficiencia-producao.md), [producao-eficiencia-changelog-jun2026.md](./api/producao-eficiencia-changelog-jun2026.md) §7.2, [06-modulos-departamentais.md](./api/06-modulos-departamentais.md).
+
+---
+
 ## 2026-07 — Período HTTP canônico `start_date` / `end_date`
 
 Contrato de query para intervalo genérico: **`start_date` / `end_date`**. Rotas que usavam `date_start`/`date_end`, `dataInicio`/`dataFim` (e demais aliases genéricos) passam a expor o canônico e **aceitam o legado** (dual-read) até **2027-01**.

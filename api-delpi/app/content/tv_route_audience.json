@@ -2310,13 +2310,13 @@
       "locale": {
         "en": {
           "summary": "Overall equipment effectiveness %",
-          "description": "Consolidated OEE for the period (availability × performance × quality).",
-          "whenToUse": "Ideal for a large factory-floor KPI card: one number summarizing availability × performance × quality."
+          "description": "Period average of production efficiency (planned time ÷ actual time × 100), using the canonical HY_TEMPAD × quantity formula shared with factory efficiency. Valid band 0–199%. Not classical OEE A×P×Q.",
+          "whenToUse": "Use for a single factory-floor KPI card or Strategic Indicators; same metric as factory efficiency / OEE listing."
         },
         "pt-BR": {
           "summary": "Eficiência global dos equipamentos (%)",
-          "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
-          "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade."
+          "description": "Média no período da eficiência de produção (tempo previsto ÷ tempo real × 100), com fórmula canônica setup + HY_TEMPAD × qtd — a mesma da eficiência fabril. Faixa válida 0–199%. Não é OEE clássico A×P×Q.",
+          "whenToUse": "Use em card KPI na TV/fábrica ou nos Indicadores Estratégicos; mesma métrica da eficiência fabril e da listagem OEE."
         }
       }
     },
@@ -3124,14 +3124,16 @@
     "get_production_oee": {
       "locale": {
         "en": {
-          "summary": "Production oee",
-          "description": "Production oee.",
-          "label": "Production oee"
+          "summary": "Production OEE — summary and appointments",
+          "description": "Paged listing and summary of production efficiency appointments (canonical HY_TEMPAD planned time ÷ actual time; valid band 0–199%).",
+          "label": "Production OEE",
+          "whenToUse": "Use for OEE table/panel; same efficiency metric as factory efficiency and overall_equipment_effectiveness_pct."
         },
         "pt-BR": {
-          "label": "OEE produção — resumo e apontamentos (view fabril)",
-          "summary": "OEE produção — resumo e apontamentos (view fabril)",
-          "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV."
+          "label": "OEE produção — resumo e apontamentos",
+          "summary": "OEE produção — resumo e apontamentos",
+          "description": "Resumo e listagem paginada de apontamentos com eficiência canônica (setup + HY_TEMPAD × qtd ÷ tempo real; faixa 0–199%).",
+          "whenToUse": "Use no painel/tabela OEE; mesma métrica da eficiência fabril e do KPI overall_equipment_effectiveness_pct."
         }
       },
       "category": "production"
@@ -3156,12 +3158,12 @@
       "locale": {
         "en": {
           "summary": "Production OEE series",
-          "description": "Daily OEE evolution over the period.",
+          "description": "Daily evolution of the canonical production efficiency % (HY_TEMPAD) over the period.",
           "whenToUse": "Choose when the TV needs an OEE trend chart (line/area), not just today's value."
         },
         "pt-BR": {
           "summary": "Série de OEE de produção",
-          "description": "Evolução diária do OEE ao longo do período.",
+          "description": "Evolução diária da eficiência canônica de produção (HY_TEMPAD) ao longo do período.",
           "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia."
         }
       }
