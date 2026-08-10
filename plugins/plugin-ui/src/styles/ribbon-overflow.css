@@ -70,9 +70,10 @@
 .delpi-ui-ribbon-group__caption {
   display: flex;
   flex: 0 0 auto;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 2px;
   min-height: 1.1rem;
 }
 

@@ -36,7 +36,7 @@ describe("ribbon density contract", () => {
     const band = css.match(
       /\.td-deck-ribbon--compact\.td-deck-ribbon--band\s*\{[^}]+\}/s,
     )?.[0];
-    expect(band).toMatch(/--td-ribbon-height:\s*112px/);
+    expect(band).toMatch(/--td-ribbon-height:\s*128px/);
     expect(band).toMatch(/height:\s*var\(--td-ribbon-height\)/);
 
     const fit = css.match(
@@ -44,6 +44,18 @@ describe("ribbon density contract", () => {
     )?.[0];
     expect(fit).toMatch(/height:\s*auto/);
     expect(fit).toMatch(/max-height:\s*min\(240px,\s*38vh\)/);
+  });
+
+  it("caption da ribbon compacta não encolhe (evita corte do rótulo da seção)", () => {
+    const caption = css.match(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__caption\s*\{[^}]+\}/s,
+    )?.[0];
+    expect(caption).toBeTruthy();
+    expect(caption).toMatch(/flex-shrink:\s*0/);
+    expect(caption).toMatch(/min-height:\s*1\.15rem/);
+    expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.delpi-ui-display-format__hint\s*\{[^}]*display:\s*none/s,
+    );
   });
 
   it("Raio/Opacidade na ribbon mantêm slider (full) com largura estreita no host", () => {
