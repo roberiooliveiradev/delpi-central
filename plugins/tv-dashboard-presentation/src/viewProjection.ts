@@ -18,6 +18,7 @@ import {
 } from "./fieldValueProjection";
 import { humanizeFieldKey, isWeakFieldLabel } from "./fieldKeyHumanize";
 import { resolveFieldDisplayLabel } from "./fieldLabelRegistry";
+import { applyExcludeWeekendsToChart } from "./chartWeekendFilter";
 import {
   applyMetricSelectionToResolved,
   normalizeSelectedValueFields,
@@ -78,6 +79,8 @@ export type ViewProjectionSelection = MetricSelection & {
   tableProjection?: TableViewProjection | null;
   /** Tipo do visual — define policy de group-by / wells (Playbook chart-data-policies). */
   chartType?: ComunicadoChartType | null;
+  /** Oculta sáb./dom. no encoding do gráfico (só granularidade diária). */
+  excludeWeekends?: boolean;
 };
 
 function asFiniteNumber(value: unknown): number | null {
@@ -688,6 +691,10 @@ export function applyViewProjection(
         selection.chartType ?? "line",
       );
     }
+  }
+
+  if (selection.excludeWeekends && next.chart) {
+    next = { ...next, chart: applyExcludeWeekendsToChart(next.chart) };
   }
 
   return next;

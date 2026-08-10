@@ -51,6 +51,57 @@ describe("buildDataPreviewFingerprint", () => {
     expect(before).not.toBe(after);
   });
 
+  it("não muda quando só excludeWeekends muda (filtro visual)", () => {
+    const before = buildDataPreviewFingerprint({
+      ...baseConfig,
+      dataFilters: { branch: "01", excludeWeekends: false },
+      blocks: [
+        {
+          ...baseConfig.blocks![0],
+          dataBinding: {
+            operationId: "get_oee",
+            params: { periodDays: 1, granularity: "day", excludeWeekends: false },
+          },
+        },
+      ],
+    });
+    const after = buildDataPreviewFingerprint(
+      {
+        ...baseConfig,
+        dataFilters: { branch: "01", excludeWeekends: true },
+        blocks: [
+          {
+            ...baseConfig.blocks![0],
+            dataBinding: {
+              operationId: "get_oee",
+              params: { periodDays: 1, granularity: "day", excludeWeekends: true },
+            },
+          },
+        ],
+      },
+      { playlistDefaults: { excludeWeekends: true } },
+    );
+    expect(after).toBe(
+      buildDataPreviewFingerprint(
+        {
+          ...baseConfig,
+          dataFilters: { branch: "01" },
+          blocks: [
+            {
+              ...baseConfig.blocks![0],
+              dataBinding: {
+                operationId: "get_oee",
+                params: { periodDays: 1, granularity: "day" },
+              },
+            },
+          ],
+        },
+        { playlistDefaults: {} },
+      ),
+    );
+    expect(before).toBe(after);
+  });
+
   it("não muda quando só posição do bloco muda", () => {
     const before = buildDataPreviewFingerprint(baseConfig);
     const after = buildDataPreviewFingerprint({

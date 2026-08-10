@@ -1,4 +1,9 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  EXCLUDE_WEEKENDS_PARAM,
+  isEffectiveDailyGranularity,
+  routeSupportsDailyGranularity,
+} from "@delpi/tv-dashboard-presentation";
 import type { ReactNode } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import {
@@ -43,6 +48,12 @@ export type DataParamSchemaField = {
 export type DataParamSchema = Record<string, DataParamSchemaField>;
 
 const BRANCH_PARAM_KEYS = new Set(["branch", "filial", "branch_code", "filial_id"]);
+
+const EXCLUDE_WEEKENDS_FIELD: DataParamSchemaField = {
+  type: "boolean",
+  optional: true,
+  enum: [true, false],
+};
 
 const DATE_PARAM_KEYS = new Set([
   "start_date",
@@ -199,6 +210,34 @@ function ClearableControl({
   );
 }
 
+/** Injeta o boolean visual quando a rota admite granularidade diária. */
+export function withExcludeWeekendsSchemaField(
+  schema: DataParamSchema,
+  options?: {
+    fullSchema?: DataParamSchema;
+    fixedQueryParams?: Record<string, unknown> | null;
+  },
+): DataParamSchema {
+  const full = options?.fullSchema ?? schema;
+  if (!routeSupportsDailyGranularity(full, options?.fixedQueryParams)) return schema;
+  if (schema[EXCLUDE_WEEKENDS_PARAM]) return schema;
+  return {
+    ...schema,
+    [EXCLUDE_WEEKENDS_PARAM]: EXCLUDE_WEEKENDS_FIELD,
+  };
+}
+
+function orderedParamEntries(schema: DataParamSchema): Array<[string, DataParamSchemaField]> {
+  const entries = Object.entries(schema);
+  const weekendIdx = entries.findIndex(([key]) => key === EXCLUDE_WEEKENDS_PARAM);
+  const granIdx = entries.findIndex(([key]) => key === "granularity");
+  if (weekendIdx < 0 || granIdx < 0 || weekendIdx === granIdx + 1) return entries;
+  const [weekend] = entries.splice(weekendIdx, 1);
+  const granAfterMove = entries.findIndex(([key]) => key === "granularity");
+  entries.splice(granAfterMove + 1, 0, weekend!);
+  return entries;
+}
+
 export function DataParamFields({
   schema,
   values,
@@ -212,7 +251,8 @@ export function DataParamFields({
   hydrateDefaultPreset = true,
   onChange,
 }: Props) {
-  const entries = Object.entries(schema);
+  const schemaForUi = withExcludeWeekendsSchemaField(schema);
+  const entries = orderedParamEntries(schemaForUi);
   if (entries.length === 0) return null;
 
   const filterLayer = resolveFilterLayer(filterLayerProp, hydrateDefaultPreset);
@@ -255,10 +295,10 @@ export function DataParamFields({
   const compact = layout === "ribbon";
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
   const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
-  const datePair = findDateRangeKeys(Object.keys(schema));
+  const datePair = findDateRangeKeys(Object.keys(schemaForUi));
   // SI / IGD também expõem start_date/end_date — o preset relativo (este mês até hoje,
   // semana, ano…) é o mesmo das demais rotas. `competence` permanece opcional para mês fechado.
-  const hasCompetence = "competence" in schema;
+  const hasCompetence = "competence" in schemaForUi;
   const activeDatePair = datePair;
   const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
   const preset = (presetRaw || "") as DateRangePresetId | "";
@@ -371,6 +411,12 @@ export function DataParamFields({
   const fields = entries.map(([key, field]) => {
     // periodDays só no bloco de preset (Últimos N dias) quando há par de datas.
     if (activeDatePair && key === PERIOD_DAYS_PARAM) return null;
+    if (
+      key === EXCLUDE_WEEKENDS_PARAM &&
+      !isEffectiveDailyGranularity(schemaForUi, values)
+    ) {
+      return null;
+    }
 
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
@@ -381,7 +427,9 @@ export function DataParamFields({
       ? openEndedDateRange
         ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixedOpenEnded
         : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixed
-      : hintForParam(key, field);
+      : key === EXCLUDE_WEEKENDS_PARAM
+        ? TV_DASHBOARD_HELP_TOOLTIPS.data.excludeWeekends
+        : hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
     // Nunca aplicar default OpenAPI na exibição — limpar deve mostrar vazio.
@@ -511,6 +559,14 @@ export function visibleParamSchema(
 ): DataParamSchema {
   const base = (schema ?? {}) as DataParamSchema;
   const fixed = fixedQueryParams ?? {};
-  if (!fixed || Object.keys(fixed).length === 0) return base;
-  return Object.fromEntries(Object.entries(base).filter(([key]) => !(key in fixed)));
+  const visible =
+    !fixed || Object.keys(fixed).length === 0
+      ? base
+      : (Object.fromEntries(
+          Object.entries(base).filter(([key]) => !(key in fixed)),
+        ) as DataParamSchema);
+  return withExcludeWeekendsSchemaField(visible, {
+    fullSchema: base,
+    fixedQueryParams: fixed,
+  });
 }

@@ -7,6 +7,7 @@ from typing import Any, Mapping, Sequence
 
 DATE_RANGE_PRESET_KEY = "dateRangePreset"
 PERIOD_DAYS_KEY = "periodDays"
+EXCLUDE_WEEKENDS_KEY = "excludeWeekends"
 
 # Pares canônicos OpenAPI (ordem = preferência ao detectar no schema).
 # Canônico HTTP api-delpi primeiro; aliases legado depois (remoção planejada 2027-01).
@@ -26,7 +27,7 @@ START_KEYS = tuple(pair[0] for pair in DATE_RANGE_KEY_PAIRS)
 END_KEYS = tuple(pair[1] for pair in DATE_RANGE_KEY_PAIRS)
 
 # Chaves internas — não devem ir na query HTTP da api-delpi.
-INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY})
+INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
 DEFAULT_DATE_RANGE_KEYS = ("start_date", "end_date")
 

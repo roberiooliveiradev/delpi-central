@@ -497,6 +497,45 @@ def test_build_query_params_normalizes_legacy_todas_to_all():
     assert query_pt["filial_id"] == "all"
 
 
+def test_build_query_params_strips_exclude_weekends_visual_filter():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "branch": {"type": "string"},
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "granularity": {"type": "string"},
+            },
+        },
+        {
+            "branch": "01",
+            "start_date": "2026-08-01",
+            "end_date": "2026-08-10",
+            "granularity": "day",
+            "excludeWeekends": True,
+            "dateRangePreset": "custom",
+        },
+    )
+    assert query["granularity"] == "day"
+    assert query["branch"] == "01"
+    assert "excludeWeekends" not in query
+    assert "dateRangePreset" not in query
+
+    direct = _build_query_params(
+        {
+            "paramStrategy": "direct",
+            "paramSchema": {
+                "branch": {"type": "string"},
+                "granularity": {"type": "string"},
+            },
+        },
+        {"branch": "01", "granularity": "day", "excludeWeekends": True},
+    )
+    assert direct == {"branch": "01", "granularity": "day"}
+
+
 def test_resolve_route_path_normalizes_branch_path_param():
     from tv_app.infrastructure.gateways.delpi_operational_gateway import resolve_route_path
 

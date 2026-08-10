@@ -50,6 +50,7 @@ from tv_app.application.services.tv_data_route_catalog_service import (
     TvDataRouteCatalogService,
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
+from tv_app.application.services.tv_date_range_preset_service import EXCLUDE_WEEKENDS_KEY
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
 from tv_app.application.services.series_points_extractor import (
     extract_series_points,
@@ -65,6 +66,19 @@ _DEFAULT_TABLE_MAX_ROWS = 90
 _DEFAULT_SERIES_TABLE_MAX_ROWS = 366
 # Listagens bulk (apontamentos) usadas em AVG por CT/turno: 90 linhas distorce a média.
 _DEFAULT_BULK_LIST_MAX_ROWS = 10000
+
+
+def _view_filter_params_from_merged(merged: Any) -> dict[str, Any]:
+    """Params só de apresentação (cliente aplica no gráfico; não vão na api-delpi)."""
+    if not isinstance(merged, dict):
+        return {}
+    out: dict[str, Any] = {}
+    if EXCLUDE_WEEKENDS_KEY in merged and merged[EXCLUDE_WEEKENDS_KEY] not in (None, ""):
+        out[EXCLUDE_WEEKENDS_KEY] = merged[EXCLUDE_WEEKENDS_KEY]
+    gran = merged.get("granularity")
+    if gran not in (None, ""):
+        out["granularity"] = gran
+    return out
 
 
 def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
@@ -1551,6 +1565,9 @@ class ComunicadoDataEnrichmentService:
             "displayMode": normalize_display_mode(display_mode),
             "label": binding.get("label") or route_info.get("label"),
         }
+        view_filters = _view_filter_params_from_merged(merged_params)
+        if view_filters:
+            resolved["viewFilterParams"] = view_filters
         if server_transform_applied:
             resolved["serverTransformApplied"] = True
         if transform_metadata and transform_metadata.get("version") is not None:

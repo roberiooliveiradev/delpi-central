@@ -111,6 +111,40 @@ def test_enrich_data_kpi_block_resolves_scalar():
     assert call_kwargs["params"]["periodDays"] == 7
 
 
+def test_enrich_stamps_view_filter_params_for_exclude_weekends():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct"},
+        "data": {"value": 80},
+        "route": {"label": "OEE", "allowedDisplayModes": ["kpi", "line_chart", "auto"]},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {
+                    "periodDays": 7,
+                    "granularity": "day",
+                    "excludeWeekends": True,
+                },
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["viewFilterParams"] == {
+        "excludeWeekends": True,
+        "granularity": "day",
+    }
+    assert gateway.fetch_by_operation_id.call_args.kwargs["params"]["excludeWeekends"] is True
+
+
 def test_enrich_dashboard_department_indicators_unwraps_item_wrapper():
     """Ponte SI devolve `{ item: { idd, indicators } }` — preview TV precisa do IDD e da tabela."""
     gateway = MagicMock()

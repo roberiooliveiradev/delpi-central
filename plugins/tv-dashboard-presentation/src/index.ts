@@ -398,6 +398,20 @@ export {
   UNIVERSAL_DISPLAY_MODES,
 } from "./comunicadoDataPresentation";
 export {
+  EXCLUDE_WEEKENDS_PARAM,
+  applyExcludeWeekendsToChart,
+  filterSeriesPointsExcludingWeekends,
+  isDailyGranularityValue,
+  isEffectiveDailyGranularity,
+  isTruthyParam,
+  lookupLinkedDataSourceParams,
+  mergeChartViewFilterParams,
+  omitVisualOnlyDataParams,
+  parseCategoryPointDate,
+  routeSupportsDailyGranularity,
+  shouldApplyExcludeWeekends,
+} from "./chartWeekendFilter";
+export {
   buildDataPreviewFingerprint,
   DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
   DATA_REFRESH_SEC_DEFAULT,

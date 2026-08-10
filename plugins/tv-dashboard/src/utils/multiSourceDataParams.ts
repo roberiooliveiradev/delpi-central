@@ -1,4 +1,5 @@
 import {
+  EXCLUDE_WEEKENDS_PARAM,
   isDataSourceBlockType,
   isFetchableDataBlockType,
   type ComunicadoBlock,
@@ -63,6 +64,9 @@ export function resolveSharedParamDisplayValues(
     keys.add(DATE_RANGE_PRESET_PARAM);
     keys.add(PERIOD_DAYS_PARAM);
   }
+  if ("granularity" in schema) {
+    keys.add(EXCLUDE_WEEKENDS_PARAM);
+  }
   for (const key of keys) {
     if (AGGREGATE_EXCLUDED_PARAM_KEYS.has(key)) continue;
     let shared: string | null = null;
@@ -119,6 +123,9 @@ export function mapUpdatesToTargetSchema(
   }
   if (Object.prototype.hasOwnProperty.call(updates, PERIOD_DAYS_PARAM)) {
     applicable[PERIOD_DAYS_PARAM] = updates[PERIOD_DAYS_PARAM];
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, EXCLUDE_WEEKENDS_PARAM)) {
+    applicable[EXCLUDE_WEEKENDS_PARAM] = updates[EXCLUDE_WEEKENDS_PARAM];
   }
 
   const dateUpdate = readDateRangeUpdateValues(updates);

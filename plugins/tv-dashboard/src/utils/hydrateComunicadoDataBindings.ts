@@ -21,7 +21,7 @@ const PARAM_KEY_REMAP: Record<string, string> = {
   date_to: "end_date",
 };
 
-const INTERNAL_PARAM_KEYS = new Set(["dateRangePreset", "periodDays"]);
+const INTERNAL_PARAM_KEYS = new Set(["dateRangePreset", "periodDays", "excludeWeekends"]);
 
 /** Espelho de `BRANCH_PARAM_KEYS` na TV API (`comunicado_data_params_service`). */
 const BRANCH_PARAM_KEYS = new Set(["branch", "filial", "branch_code", "filial_id"]);

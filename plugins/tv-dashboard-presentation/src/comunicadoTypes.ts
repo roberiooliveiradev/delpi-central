@@ -542,6 +542,11 @@ export type ComunicadoDataResolved = {
    * Chart/table: cliente **reaplica** encoding visual a partir de `table.rows` +
    * projeção do bloco (`chartDataPolicy`) — o bake do servidor não é autoridade do gráfico.
    */
+  /**
+   * Params de apresentação mesclados no enrichment (playlist → slide → fonte).
+   * Ex.: excludeWeekends + granularity — o cliente aplica no applyViewProjection.
+   */
+  viewFilterParams?: Record<string, unknown>;
   serverProjectionApplied?: boolean;
   /** Enrichment aplicou dataTransform.steps antes da View. */
   serverTransformApplied?: boolean;

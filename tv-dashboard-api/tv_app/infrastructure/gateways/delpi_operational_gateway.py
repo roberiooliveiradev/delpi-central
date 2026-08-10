@@ -29,12 +29,16 @@ from tv_app.application.services.series_points_extractor import (
 )
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
+    EXCLUDE_WEEKENDS_KEY,
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
     date_alias_keys,
     read_date_range_values,
     resolve_output_date_range_keys,
 )
+
+# dateRangePreset / excludeWeekends nunca vão na query; periodDays só se estiver no schema.
+_VISUAL_ONLY_QUERY_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
 _PATH_PARAM_RE = re.compile(r"\{([^{}]+)\}")
 
@@ -173,7 +177,7 @@ def _build_query_params(
             query[end_key] = str(end)
         drop_aliases = date_alias_keys(keep=(start_key, end_key))
         for key, value in merged.items():
-            if key in {PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY} | drop_aliases:
+            if key in {PERIOD_DAYS_KEY} | _VISUAL_ONLY_QUERY_KEYS | drop_aliases:
                 continue
             if value is None or value == "":
                 continue
@@ -210,6 +214,8 @@ def _build_query_params(
 
     for key, value in merged.items():
         if key == PERIOD_DAYS_KEY and key not in schema:
+            continue
+        if key in _VISUAL_ONLY_QUERY_KEYS:
             continue
         if key in drop_aliases:
             continue

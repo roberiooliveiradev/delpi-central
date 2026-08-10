@@ -38,6 +38,7 @@ export const DATA_SOURCE_PARAM_LABELS: Record<string, string> = {
   work_center: "Centro de trabalho",
   cost_center: "Centro de custo",
   granularity: "Granularidade",
+  excludeWeekends: "Ocultar fins de semana",
   customer_segment: "Segmento",
   product_type: "Tipo de produto",
   loss_type: "Tipo de perda",

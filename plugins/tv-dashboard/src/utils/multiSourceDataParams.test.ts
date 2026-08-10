@@ -72,6 +72,7 @@ describe("multiSourceDataParams", () => {
       branch: "01",
       periodDays: "",
       granularity: "",
+      excludeWeekends: "",
     });
     expect([...shared.divergedKeys].sort()).toEqual(["periodDays"]);
   });
@@ -263,6 +264,22 @@ describe("multiSourceDataParams", () => {
       expect(params).not.toHaveProperty("dateRangePreset");
       expect(params).not.toHaveProperty("start_date");
       expect(params).not.toHaveProperty("end_date");
+    }
+  });
+
+  it("aplica excludeWeekends em todas as fontes da multi-seleção", () => {
+    const targets = [
+      source("a", "get_refugo", { branch: "01", granularity: "day" }),
+      source("b", "get_retrabalho", { branch: "01", granularity: "day" }),
+    ];
+    const patches = buildMultiSourceParamPatches(targets, routes, {
+      excludeWeekends: "true",
+    });
+    expect(patches).toHaveLength(2);
+    for (const item of patches) {
+      const params = (item.patch as { dataBinding?: { params?: Record<string, unknown> } })
+        .dataBinding?.params;
+      expect(params?.excludeWeekends).toBe(true);
     }
   });
 });

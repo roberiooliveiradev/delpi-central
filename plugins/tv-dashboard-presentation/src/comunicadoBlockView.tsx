@@ -17,6 +17,10 @@ import {
   visualBoxBlockModifierClasses,
 } from "./comunicadoVisualBox";
 import type { ComunicadoBlock, ComunicadoDataBlock, ComunicadoDataFilters } from "./comunicadoTypes";
+import {
+  lookupLinkedDataSourceParams,
+  mergeChartViewFilterParams,
+} from "./chartWeekendFilter";
 import { ChartViewBlockView } from "./chartViewBlockView";
 import { DataSourceBlockView } from "./dataSourceBlockView";
 import { KpiViewBlockView } from "./kpiViewBlockView";
@@ -42,6 +46,8 @@ type Props = {
   dataLoading?: boolean;
   /** Filtros do slide — exibidos no cartão da fonte de dados. */
   slideDataFilters?: ComunicadoDataFilters | null;
+  /** Blocos do palco — resolve params da fonte ligada ao chart_view. */
+  stageBlocks?: ComunicadoBlock[];
   labelForDataParamKey?: (key: string) => string;
   labelForDataParamValue?: (key: string, value: string) => string;
   /** Conteúdo de texto customizado (editor); só caixas visuais. */
@@ -118,6 +124,7 @@ export function ComunicadoBlockView({
   embedded = false,
   dataLoading = false,
   slideDataFilters = null,
+  stageBlocks,
   labelForDataParamKey,
   labelForDataParamValue,
   visualBoxTextContent,
@@ -262,10 +269,19 @@ export function ComunicadoBlockView({
   }
 
   if (block.type === "chart_view") {
+    const chartFilterParams = mergeChartViewFilterParams([
+      slideDataFilters as Record<string, unknown> | null,
+      lookupLinkedDataSourceParams(stageBlocks, block.dataSourceId),
+    ]);
     return mountBlockRoot(
       blockClass("tdp-comunicado__block--chart-view"),
       style,
-      <ChartViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+      <ChartViewBlockView
+        block={block}
+        interactive={interactive}
+        loading={dataLoading}
+        filterParams={chartFilterParams}
+      />,
     );
   }
 

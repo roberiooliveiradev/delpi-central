@@ -37,6 +37,8 @@ import {
   resolveKpiPartFrameRoot,
   upsertKpiPartState,
   isFetchableDataBlockType,
+  lookupLinkedDataSourceParams,
+  mergeChartViewFilterParams,
   clampInputPartFrame,
   getInputPartState,
   inputPartAllowsMove,
@@ -185,6 +187,8 @@ function EditorChartViewBlock({
     snapshotEditorConfig,
     finalizeHistoryGesture,
     blocks,
+    config,
+    playlistDefaults,
     startDrag,
     armMultiDragSelection,
     registerTextEditorBridge,
@@ -511,6 +515,11 @@ function EditorChartViewBlock({
         interactive={Boolean(interaction)}
         loading={dataLoading}
         interaction={interaction}
+        filterParams={mergeChartViewFilterParams([
+          playlistDefaults,
+          config.dataFilters,
+          lookupLinkedDataSourceParams(blocks, block.dataSourceId),
+        ])}
       />
     </div>
   );

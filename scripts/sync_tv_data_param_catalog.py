@@ -26,9 +26,11 @@ PRESENTATION_LABELS = (
 # Chaves TV-only (não estão no OpenAPI).
 TV_ONLY_LABELS = {
     "dateRangePreset": "Período",
+    "excludeWeekends": "Ocultar fins de semana",
 }
 TV_ONLY_HINTS = {
     "dateRangePreset": "Atalho de período (este mês, últimos 30 dias etc.).",
+    "excludeWeekends": "Quando a granularidade é diária, oculta sábado e domingo no gráfico. Não altera a consulta à API.",
 }
 
 # Subconjunto usado no cartão do palco (presentation).
@@ -49,6 +51,7 @@ PRESENTATION_KEYS = (
     "work_center",
     "cost_center",
     "granularity",
+    "excludeWeekends",
     "customer_segment",
     "product_type",
     "loss_type",

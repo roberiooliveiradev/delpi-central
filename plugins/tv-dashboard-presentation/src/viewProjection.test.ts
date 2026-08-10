@@ -76,6 +76,37 @@ describe("applyViewProjection", () => {
     expect(Object.keys(next?.table?.rows?.[0] ?? {})).toEqual(["periodo", "oee"]);
   });
 
+  it("oculta sáb./dom. nos pontos do gráfico quando excludeWeekends", () => {
+    const daily: ComunicadoDataResolved = {
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "oee", label: "OEE" },
+        ],
+        rows: [
+          { periodo: "2026-08-08", oee: 70 },
+          { periodo: "2026-08-10", oee: 80 },
+        ],
+      },
+      chart: {
+        points: [
+          { label: "2026-08-08", value: 70 },
+          { label: "2026-08-10", value: 80 },
+        ],
+        chartType: "bar",
+      },
+    };
+    const next = applyViewProjection(daily, {
+      chartProjection: {
+        categoryField: "periodo",
+        series: [{ field: "oee", label: "OEE" }],
+      },
+      chartType: "bar",
+      excludeWeekends: true,
+    });
+    expect(next?.chart?.points?.map((item) => item.label)).toEqual(["2026-08-10"]);
+  });
+
   it("monta multi-série a partir da tabela", () => {
     const next = applyViewProjection(sampleResolved, {
       chartProjection: {

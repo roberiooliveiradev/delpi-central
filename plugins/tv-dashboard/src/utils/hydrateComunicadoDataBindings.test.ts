@@ -67,6 +67,34 @@ describe("hydrateComunicadoDataBindings", () => {
     expect(result.strippedParamKeys).toContain("obsolete");
   });
 
+  it("preserva excludeWeekends e dateRangePreset (params internos de UI)", () => {
+    const result = hydrateComunicadoDataBindings(
+      {
+        version: 4,
+        blocks: [
+          sourceBlock("get_ppm_internal_summary", {
+            params: {
+              start_date: "2026-08-01",
+              end_date: "2026-08-10",
+              dateRangePreset: "custom",
+              excludeWeekends: true,
+              granularity: "day",
+            },
+          }),
+        ],
+      },
+      [ppmRoute],
+    );
+    const binding =
+      result.config.blocks?.[0] && "dataBinding" in result.config.blocks[0]
+        ? result.config.blocks[0].dataBinding
+        : null;
+    expect(binding?.params?.excludeWeekends).toBe(true);
+    expect(binding?.params?.dateRangePreset).toBe("custom");
+    expect(binding?.params).not.toHaveProperty("granularity");
+    expect(result.strippedParamKeys).toContain("granularity");
+  });
+
   it("preserva rótulo customizado", () => {
     const result = hydrateComunicadoDataBindings(
       {

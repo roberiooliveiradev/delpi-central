@@ -134,6 +134,8 @@ export function RichComunicadoStage({
                 : undefined
             }
             onInputValueChange={onInputValueChange}
+            slideDataFilters={normalized.dataFilters}
+            stageBlocks={normalized.blocks}
           />
         ),
       )}

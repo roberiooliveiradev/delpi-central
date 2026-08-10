@@ -1,3 +1,4 @@
+import { omitVisualOnlyDataParams } from "./chartWeekendFilter";
 import { isComunicadoInputBlock, listFetchableSourceIds, resolveInputRefreshSourceIds } from "./comunicadoInputFilters";
 import { isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
 import type {
@@ -43,7 +44,7 @@ export function resolveDataBlockRefreshSec(
 function serializeBindingForFingerprint(binding: ComunicadoDataBinding): Record<string, unknown> {
   return {
     operationId: binding.operationId,
-    params: binding.params ?? {},
+    params: omitVisualOnlyDataParams(binding.params ?? {}),
     displayMode: binding.displayMode,
     label: binding.label,
     valueField: binding.valueField,
@@ -85,8 +86,8 @@ export function buildDataPreviewFingerprint(
   config: ComunicadoConfig,
   options?: { playlistDefaults?: Record<string, unknown> | null },
 ): string {
-  const dataFilters = config.dataFilters ?? {};
-  const playlistDefaults = options?.playlistDefaults ?? {};
+  const dataFilters = omitVisualOnlyDataParams(config.dataFilters ?? {});
+  const playlistDefaults = omitVisualOnlyDataParams(options?.playlistDefaults ?? {});
   const legacyBlocks = (config.blocks ?? [])
     .filter((block): block is ComunicadoDataBlock => isDataBlockType(block.type))
     .map((block) => ({
