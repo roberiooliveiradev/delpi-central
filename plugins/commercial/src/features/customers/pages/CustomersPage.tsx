@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import {
@@ -21,15 +21,11 @@ import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesC
 import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
+import { useCustomersListState } from "../hooks/useCustomersListState";
 import type { CustomerAttentionFilter } from "../types/customerSummary";
 import { matchesCustomerFilter } from "../utils/customerFilters";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
-import {
-  buildCustomersListPath,
-  buildCustomersListSearch,
-  parseCustomersListDeepLink,
-  type CustomersListSellerAccess,
-} from "../../../utils/customersListDeepLink";
+import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -55,8 +51,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     setSellerIdFilter,
     myPortfolio,
   } = usePortfolioScope();
-  const [hydratedSellerAccessKey, setHydratedSellerAccessKey] = useState<string | null>(null);
-
   const sellerAccess = useMemo<CustomersListSellerAccess>(
     () => ({
       allowSellerId: canUseTeamScope,
@@ -65,6 +59,23 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     [canUseTeamScope, sellers],
   );
   const sellerAccessKey = `${sellerAccess.allowSellerId ? "team" : "own"}:${sellerAccess.validSellerIds.join(",")}`;
+  const {
+    state: listState,
+    setSearch,
+    setFilter,
+    setSellerId,
+    toggleSort,
+    setPage,
+    resetFilters,
+    listSearch,
+  } = useCustomersListState({
+    basePath,
+    scopeLoading,
+    sellerAccess,
+    sellerAccessKey,
+    sellerId: canUseTeamScope ? sellerIdFilter : null,
+    setSellerId: setSellerIdFilter,
+  });
 
   const sellerNameByKey = useMemo(() => {
     if (canUseTeamScope) {
@@ -85,99 +96,36 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     filteredCustomers,
     pagedCustomers,
     page,
-    setPage,
-    search,
-    setSearch,
-    filter,
-    setFilter,
-    sortKey,
-    sortDirection,
-    toggleSort,
-    resetFilters,
     lastSuccessAt,
     reload,
     portfolioMessage,
     portfolioEmpty,
-  } = useCustomersData(canUseTeamScope ? sellerIdFilter : null, { sellerNameByKey });
-
+    enrichment,
+  } = useCustomersData(canUseTeamScope ? sellerIdFilter : null, {
+    sellerNameByKey,
+    listState,
+  });
+  const {
+    q: search,
+    focus: filter,
+    sort: sortKey,
+    dir: sortDirection,
+    page: requestedPage,
+  } = listState;
+  const enrichmentIncomplete =
+    !enrichment.loading &&
+    enrichment.total > 0 &&
+    (enrichment.covered < enrichment.total ||
+      enrichment.failedBatches > 0 ||
+      Boolean(enrichment.error));
   useEffect(() => {
-    if (scopeLoading || typeof window === "undefined") return;
-
-    const applyBrowserState = () => {
-      const deepLink = parseCustomersListDeepLink(window.location.search, sellerAccess);
-      setSearch(deepLink.q);
-      setFilter(deepLink.focus);
-      setSellerIdFilter(deepLink.sellerId);
-
-      const canonicalPath = buildCustomersListPath(basePath, deepLink, sellerAccess);
-      const currentPath = `${window.location.pathname}${window.location.search}`;
-      if (canonicalPath !== currentPath) {
-        window.history.replaceState(window.history.state, "", canonicalPath);
-      }
-    };
-
-    applyBrowserState();
-    setHydratedSellerAccessKey(sellerAccessKey);
-    window.addEventListener("popstate", applyBrowserState);
-    return () => window.removeEventListener("popstate", applyBrowserState);
-  }, [
-    basePath,
-    scopeLoading,
-    sellerAccess,
-    sellerAccessKey,
-    setFilter,
-    setSearch,
-    setSellerIdFilter,
-  ]);
-
-  const listSearch = useMemo(
-    () =>
-      buildCustomersListSearch(
-        {
-          q: search,
-          focus: filter,
-          sellerId: canUseTeamScope ? sellerIdFilter : null,
-        },
-        sellerAccess,
-      ),
-    [canUseTeamScope, filter, search, sellerAccess, sellerIdFilter],
-  );
-
+    if (aggregation && requestedPage !== page) setPage(page);
+  }, [aggregation, page, requestedPage, setPage]);
   useEffect(() => {
-    if (
-      scopeLoading ||
-      typeof window === "undefined" ||
-      hydratedSellerAccessKey !== sellerAccessKey
-    ) {
-      return;
-    }
-    const target = buildCustomersListPath(
-      basePath,
-      {
-        q: search,
-        focus: filter,
-        sellerId: canUseTeamScope ? sellerIdFilter : null,
-      },
-      sellerAccess,
-    );
-    const current = `${window.location.pathname}${window.location.search}`;
-    if (target !== current) {
-      window.history.replaceState(window.history.state, "", target);
-    }
-  }, [
-    basePath,
-    canUseTeamScope,
-    filter,
-    hydratedSellerAccessKey,
-    listSearch,
-    search,
-    sellerAccess,
-    sellerIdFilter,
-    scopeLoading,
-    sellerAccessKey,
-  ]);
-
-  const hasActiveFilters = Boolean(search.trim()) || filter !== "all";
+    if (enrichmentIncomplete && filter === "no_sale_60") setFilter("all");
+  }, [enrichmentIncomplete, filter, setFilter]);
+  const hasActiveFilters =
+    Boolean(search.trim()) || filter !== "all" || listState.sellerId !== null;
   const showInitialLoading = loading && !hasData;
   const showEmptyDataset =
     !loading &&
@@ -198,9 +146,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   ];
   const focusChips = focusOptions.map((option) => ({
     id: option.id,
-    label: `${option.label} (${(aggregation?.customers.filter((customer) => matchesCustomerFilter(customer, option.id)).length ?? 0).toLocaleString("pt-BR")})`,
+    label: `${option.label} (${(aggregation?.customers.filter((customer) => matchesCustomerFilter(customer, option.id)).length ?? 0).toLocaleString("pt-BR")})${option.id === "no_sale_60" && enrichmentIncomplete ? " · indisponível" : ""}`,
     active: filter === option.id,
-    onSelect: () => setFilter(option.id),
+    onSelect: option.id === "no_sale_60" && enrichmentIncomplete
+      ? undefined
+      : () => setFilter(option.id),
   }));
   const highlights = [
     {
@@ -278,7 +228,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             <SellerScopeFilter
               sellers={sellers}
               value={sellerIdFilter}
-              onChange={setSellerIdFilter}
+              onChange={setSellerId}
               hint={CM_HELP.customers.sellerScope}
             />
           ) : null}
@@ -320,6 +270,24 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             Tentar novamente
           </CommercialActionButton>
         </CommercialStateBanner>
+      ) : null}
+
+      {enrichment.error ? (
+        <CommercialStateBanner>
+          <p>
+            Cadastro e faturamento com cobertura parcial
+            {enrichment.total > 0
+              ? ` (${enrichment.covered}/${enrichment.total}; ${enrichment.failedBatches} lote(s) com falha)`
+              : ""}
+            : {enrichment.error}
+          </p>
+        </CommercialStateBanner>
+      ) : null}
+
+      {enrichment.lastSuccessAt ? (
+        <p className="cm-customers-page__freshness" aria-live="polite">
+          Enrichment atualizado em {formatUpdatedAt(enrichment.lastSuccessAt)}
+        </p>
       ) : null}
 
       {aggregation && hasData && !showInitialLoading && !portfolioEmpty ? (

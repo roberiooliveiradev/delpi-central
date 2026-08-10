@@ -13,13 +13,12 @@ type CustomerOverviewKpisProps = {
 };
 
 export function CustomerOverviewKpis({ customer, loading = false }: CustomerOverviewKpisProps) {
-  const billed = customer.billed12m ?? 0;
   return (
     <section className="pva-metrics pva-metrics--overview" aria-label="Indicadores do cliente">
       <MetricCard
         label="Faturamento 12 meses"
         titleHint={CM_HELP.customerDetail.billed12m}
-        value={formatCurrency(billed)}
+        value={customer.billed12m == null ? "—" : formatCurrency(customer.billed12m)}
         icon={<BarChart3 size={18} aria-hidden="true" />}
         loading={loading}
         hint={

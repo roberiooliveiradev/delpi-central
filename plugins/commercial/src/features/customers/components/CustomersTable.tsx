@@ -210,7 +210,8 @@ export function CustomersTable({
         header: "Fat. 12 meses",
         sortable: true,
         align: "right",
-        render: (customer) => formatCurrency(customer.billed12m ?? 0),
+        render: (customer) =>
+          customer.billed12m == null ? "—" : formatCurrency(customer.billed12m),
       },
       {
         key: "billingTrend",

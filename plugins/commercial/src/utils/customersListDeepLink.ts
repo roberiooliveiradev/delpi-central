@@ -1,4 +1,8 @@
 import { COMMERCIAL_BASE_PATH, normalizeBasePath } from "../app/pluginRoutes";
+import type {
+  CustomerListSortDirection,
+  CustomerListSortKey,
+} from "../features/customers/types/customerSummary";
 
 export const CUSTOMER_LIST_FOCUS_VALUES = [
   "all",
@@ -14,12 +18,18 @@ export type CustomersListDeepLink = {
   q: string;
   focus: CustomerListFocus;
   sellerId: string | null;
+  sort: CustomerListSortKey;
+  dir: CustomerListSortDirection;
+  page: number;
 };
 
 export type CustomersListDeepLinkInput = {
   q?: string | null;
   focus?: string | null;
   sellerId?: string | null;
+  sort?: string | null;
+  dir?: string | null;
+  page?: number | string | null;
 };
 
 export type CustomersListSellerAccess = {
@@ -28,6 +38,23 @@ export type CustomersListSellerAccess = {
 };
 
 const FOCUS_VALUES = new Set<string>(CUSTOMER_LIST_FOCUS_VALUES);
+export const CUSTOMER_LIST_SORT_VALUES = [
+  "attention",
+  "nome",
+  "quantidadePedidosAtrasados",
+  "maiorAtrasoDias",
+  "valorTotalAberto",
+  "quantidadePedidosAbertos",
+  "proximaEntrega",
+  "billed12m",
+  "lastPurchaseDate",
+  "city",
+  "sellerName",
+  "billingTrend",
+] as const satisfies readonly CustomerListSortKey[];
+const SORT_VALUES = new Set<string>(CUSTOMER_LIST_SORT_VALUES);
+export const DEFAULT_CUSTOMERS_LIST_SORT: CustomerListSortKey = "attention";
+export const DEFAULT_CUSTOMERS_LIST_DIRECTION: CustomerListSortDirection = "asc";
 
 const DENY_SELLER_ACCESS: CustomersListSellerAccess = {
   allowSellerId: false,
@@ -37,6 +64,22 @@ const DENY_SELLER_ACCESS: CustomersListSellerAccess = {
 function normalizeFocus(value: string | null | undefined): CustomerListFocus {
   const normalized = (value ?? "").trim().toLowerCase();
   return FOCUS_VALUES.has(normalized) ? (normalized as CustomerListFocus) : "all";
+}
+
+function normalizeSort(value: string | null | undefined): CustomerListSortKey {
+  const normalized = (value ?? "").trim();
+  return SORT_VALUES.has(normalized)
+    ? (normalized as CustomerListSortKey)
+    : DEFAULT_CUSTOMERS_LIST_SORT;
+}
+
+function normalizeDirection(value: string | null | undefined): CustomerListSortDirection {
+  return value === "desc" ? "desc" : DEFAULT_CUSTOMERS_LIST_DIRECTION;
+}
+
+function normalizePage(value: number | string | null | undefined): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
 }
 
 function normalizeSellerId(
@@ -59,6 +102,9 @@ export function sanitizeCustomersListDeepLink(
     q: (value.q ?? "").trim(),
     focus: normalizeFocus(value.focus),
     sellerId: normalizeSellerId(value.sellerId, access),
+    sort: normalizeSort(value.sort),
+    dir: normalizeDirection(value.dir),
+    page: normalizePage(value.page),
   };
 }
 
@@ -72,6 +118,9 @@ export function parseCustomersListDeepLink(
       q: params.get("q") ?? "",
       focus: params.get("focus") ?? "all",
       sellerId: params.get("seller_id"),
+      sort: params.get("sort"),
+      dir: params.get("dir"),
+      page: params.get("page"),
     },
     access,
   );
@@ -86,6 +135,9 @@ export function buildCustomersListSearch(
   if (sanitized.q) params.set("q", sanitized.q);
   if (sanitized.focus !== "all") params.set("focus", sanitized.focus);
   if (sanitized.sellerId) params.set("seller_id", sanitized.sellerId);
+  if (sanitized.sort !== DEFAULT_CUSTOMERS_LIST_SORT) params.set("sort", sanitized.sort);
+  if (sanitized.dir !== DEFAULT_CUSTOMERS_LIST_DIRECTION) params.set("dir", sanitized.dir);
+  if (sanitized.page !== 1) params.set("page", String(sanitized.page));
   const query = params.toString();
   return query ? `?${query}` : "";
 }

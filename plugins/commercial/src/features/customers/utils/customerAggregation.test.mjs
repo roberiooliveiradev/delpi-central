@@ -404,7 +404,7 @@ describe("customerSorting e filters", () => {
     const unknown = { ...base, key: "unknown|01", lastPurchaseDate: null };
     assert.deepEqual(
       filterCustomers([recent, old, unknown], "", "no_sale_60").map((customer) => customer.key),
-      ["old|01", "unknown|01"],
+      ["old|01"],
     );
   });
 
@@ -503,7 +503,7 @@ describe("customerPortfolioKpis", () => {
         60,
         today,
       ),
-      2,
+      1,
     );
     assert.equal(
       mod.countActivePortfolioCustomers([

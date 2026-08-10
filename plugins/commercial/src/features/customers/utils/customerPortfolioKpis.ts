@@ -21,7 +21,8 @@ export function daysSinceLastSale(
 }
 
 /**
- * Cliente sem venda há pelo menos `days` dias (ou sem registro de venda).
+ * Cliente sem venda há pelo menos `days` dias.
+ * Ausência de enrichment é desconhecida e não entra no KPI/filtro.
  */
 export function isWithoutSaleForDays(
   customer: Pick<CustomerSummary, "lastPurchaseDate">,
@@ -29,7 +30,7 @@ export function isWithoutSaleForDays(
   today: Date = new Date(),
 ): boolean {
   const elapsed = daysSinceLastSale(customer.lastPurchaseDate, today);
-  if (elapsed === null) return true;
+  if (elapsed === null) return false;
   return elapsed >= days;
 }
 

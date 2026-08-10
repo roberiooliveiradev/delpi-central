@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { enrichPortfolioCustomers } from "../../../api/customerEnrichmentApi";
+import { enrichPortfolioCustomersBatched } from "../../../api/customerEnrichmentApi";
 import { getOpenOrdersTotvs } from "../../../api/openOrdersTotvsApi";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import type {
@@ -21,6 +21,7 @@ import {
   sortCustomers,
   sortCustomersByAttention,
 } from "../utils/customerSorting";
+import type { CustomersListState } from "./useCustomersListState";
 
 const PAGE_SIZE = 20;
 
@@ -35,16 +36,7 @@ export type UseCustomersDataResult = {
   pagedCustomers: CustomerSummary[];
   page: number;
   totalPages: number;
-  setPage: (page: number) => void;
   attentionCustomers: CustomerSummary[];
-  search: string;
-  setSearch: (value: string) => void;
-  filter: CustomerAttentionFilter;
-  setFilter: (value: CustomerAttentionFilter) => void;
-  sortKey: CustomerListSortKey;
-  sortDirection: CustomerListSortDirection;
-  toggleSort: (key: Exclude<CustomerListSortKey, "attention">) => void;
-  resetFilters: () => void;
   lastSuccessAt: Date | null;
   reload: () => void;
   portfolioMessage: string | null;
@@ -54,6 +46,8 @@ export type UseCustomersDataResult = {
     error: string | null;
     covered: number;
     total: number;
+    failedBatches: number;
+    lastSuccessAt: Date | null;
   };
 };
 
@@ -61,6 +55,7 @@ export function useCustomersData(
   sellerId?: string | null,
   options?: {
     sellerNameByKey?: ReadonlyMap<string, string>;
+    listState?: CustomersListState;
   },
 ): UseCustomersDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
@@ -72,7 +67,7 @@ export function useCustomersData(
         city: string | null;
         state: string | null;
         lastPurchaseDate: string | null;
-        billed12m: number;
+        billed12m: number | null;
         hasAvatar: boolean;
         billingTrend: "up" | "down" | "stable" | "insufficient" | null;
         billingTrendPct: number | null;
@@ -89,13 +84,17 @@ export function useCustomersData(
   const [enrichmentError, setEnrichmentError] = useState<string | null>(null);
   const [enrichmentCovered, setEnrichmentCovered] = useState(0);
   const [enrichmentTotal, setEnrichmentTotal] = useState(0);
+  const [enrichmentFailedBatches, setEnrichmentFailedBatches] = useState(0);
+  const [enrichmentLastSuccessAt, setEnrichmentLastSuccessAt] = useState<Date | null>(null);
+  const [enrichmentKnownKeys, setEnrichmentKnownKeys] = useState<Set<string>>(() => new Set());
   const [reloadKey, setReloadKey] = useState(0);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<CustomerAttentionFilter>("all");
-  const [sortKey, setSortKey] = useState<CustomerListSortKey>("attention");
-  const [sortDirection, setSortDirection] = useState<CustomerListSortDirection>("asc");
-  const [page, setPage] = useState(1);
   const hasDataRef = useRef(false);
+  const listState = options?.listState;
+  const search = listState?.q ?? "";
+  const filter: CustomerAttentionFilter = listState?.focus ?? "all";
+  const sortKey: CustomerListSortKey = listState?.sort ?? "attention";
+  const sortDirection: CustomerListSortDirection = listState?.dir ?? "asc";
+  const page = listState?.page ?? 1;
 
   const reload = useCallback(() => {
     setReloadKey((value) => value + 1);
@@ -133,10 +132,13 @@ export function useCustomersData(
           try {
             setEnrichmentLoading(true);
             setEnrichmentError(null);
-            const enriched = await enrichPortfolioCustomers(pairs, controller.signal);
+            const enriched = await enrichPortfolioCustomersBatched(pairs, controller.signal);
             if (controller.signal.aborted) return;
             const map: typeof enrichmentByKey = {};
-            for (const item of enriched) {
+            const knownKeys = new Set<string>();
+            for (const item of enriched.items) {
+              const key = `${item.customer_code}|${item.customer_store}`;
+              knownKeys.add(key);
               map[`${item.customer_code}|${item.customer_store}`] = {
                 city: item.city,
                 state: item.state,
@@ -150,13 +152,12 @@ export function useCustomersData(
                     : Number(item.billing_trend_pct),
               };
             }
-            setEnrichmentByKey(map);
-            setEnrichmentCovered(Object.keys(map).length);
-            if (Object.keys(map).length < pairs.length) {
-              setEnrichmentError(
-                `Cobertura parcial: ${Object.keys(map).length} de ${pairs.length} clientes enriquecidos.`,
-              );
-            }
+            setEnrichmentByKey((current) => ({ ...current, ...map }));
+            setEnrichmentKnownKeys(knownKeys);
+            setEnrichmentCovered(enriched.coverage.covered);
+            setEnrichmentFailedBatches(enriched.coverage.failedBatches);
+            setEnrichmentError(enriched.partialError);
+            if (enriched.coverage.covered > 0) setEnrichmentLastSuccessAt(new Date());
           } catch (err) {
             if (!controller.signal.aborted) {
               setEnrichmentError(
@@ -169,6 +170,8 @@ export function useCustomersData(
         } else {
           setEnrichmentByKey({});
           setEnrichmentCovered(0);
+          setEnrichmentFailedBatches(0);
+          setEnrichmentKnownKeys(new Set());
           setEnrichmentLoading(false);
           setEnrichmentError(null);
         }
@@ -204,10 +207,12 @@ export function useCustomersData(
           city: enrich?.city ?? null,
           state: enrich?.state ?? null,
           lastPurchaseDate: enrich?.lastPurchaseDate ?? null,
-          billed12m: enrich?.billed12m ?? 0,
+          billed12m: enrich?.billed12m ?? null,
           hasAvatar: enrich?.hasAvatar ?? false,
           billingTrend: enrich?.billingTrend ?? null,
           billingTrendPct: enrich?.billingTrendPct ?? null,
+          coverageKnown: enrichmentKnownKeys.has(customer.key),
+          enrichmentAvailable: Boolean(enrich),
         };
         return {
           ...withStatus,
@@ -217,7 +222,7 @@ export function useCustomersData(
         };
       }),
     };
-  }, [items, lastSuccessAt, enrichmentByKey, sellerNameByKey]);
+  }, [items, lastSuccessAt, enrichmentByKey, enrichmentKnownKeys, sellerNameByKey]);
 
   const filteredCustomers = useMemo(() => {
     if (!aggregation) return [];
@@ -232,35 +237,12 @@ export function useCustomersData(
     return filteredCustomers.slice(start, start + PAGE_SIZE);
   }, [filteredCustomers, safePage]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, filter, sortKey, sortDirection, sellerId]);
-
   const attentionCustomers = useMemo(() => {
     if (!aggregation) return [];
     return sortCustomersByAttention(aggregation.customers)
       .filter((customer) => customer.temAtraso)
       .slice(0, ATTENTION_LIST_LIMIT);
   }, [aggregation]);
-
-  const toggleSort = useCallback((key: Exclude<CustomerListSortKey, "attention">) => {
-    setSortKey((current) => {
-      if (current === key) {
-        setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"));
-        return current;
-      }
-      setSortDirection(key === "nome" || key === "city" || key === "sellerName" ? "asc" : "desc");
-      return key;
-    });
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    setSearch("");
-    setFilter("all");
-    setSortKey("attention");
-    setSortDirection("asc");
-    setPage(1);
-  }, []);
 
   return {
     loading,
@@ -273,16 +255,7 @@ export function useCustomersData(
     pagedCustomers,
     page: safePage,
     totalPages,
-    setPage,
     attentionCustomers,
-    search,
-    setSearch,
-    filter,
-    setFilter,
-    sortKey,
-    sortDirection,
-    toggleSort,
-    resetFilters,
     lastSuccessAt,
     reload,
     portfolioMessage,
@@ -292,6 +265,8 @@ export function useCustomersData(
       error: enrichmentError,
       covered: enrichmentCovered,
       total: enrichmentTotal,
+      failedBatches: enrichmentFailedBatches,
+      lastSuccessAt: enrichmentLastSuccessAt,
     },
   };
 }

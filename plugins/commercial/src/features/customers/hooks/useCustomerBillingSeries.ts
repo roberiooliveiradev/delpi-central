@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchCustomerBillingSeries,
@@ -23,6 +23,8 @@ export type UseCustomerBillingSeriesResult = {
   loading: boolean;
   error: string | null;
   totalValue: number;
+  coverage: { covered: number; total: number; failedBatches: number };
+  reload: () => void;
 };
 
 function buildRequestPairs(
@@ -57,6 +59,9 @@ export function useCustomerBillingSeries(
   const [points, setPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState({ covered: 0, total: 0, failedBatches: 0 });
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = useCallback(() => setReloadKey((value) => value + 1), []);
 
   const customerOptions = useMemo(() => {
     return (customers ?? [])
@@ -68,26 +73,19 @@ export function useCustomerBillingSeries(
       }))
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [customers]);
+  const effectiveSelectedKey =
+    selectedKey === ALL_KEY || customerOptions.some((customer) => customer.key === selectedKey)
+      ? selectedKey
+      : ALL_KEY;
 
   const requestPairs = useMemo(
-    () => buildRequestPairs(customers, selectedKey),
-    [customers, selectedKey],
+    () => buildRequestPairs(customers, effectiveSelectedKey),
+    [customers, effectiveSelectedKey],
   );
   const fingerprint = useMemo(() => requestFingerprint(requestPairs), [requestPairs]);
 
   useEffect(() => {
-    if (selectedKey !== ALL_KEY && !customerOptions.some((c) => c.key === selectedKey)) {
-      setSelectedKey(ALL_KEY);
-    }
-  }, [customerOptions, selectedKey]);
-
-  useEffect(() => {
-    if (!fingerprint) {
-      setPoints([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!fingerprint) return;
 
     const pairs = fingerprint.split("|").map((token) => {
       const [customer_code, customer_store] = token.split("\0");
@@ -106,13 +104,14 @@ export function useCustomerBillingSeries(
       .then((payload) => {
         if (cancelled) return;
         setPoints(payload.points ?? []);
+        setCoverage(payload.coverage);
+        setError(payload.partialError);
       })
       .catch((err: unknown) => {
         if (cancelled || controller.signal.aborted) return;
         const message =
           err instanceof Error ? err.message : "Não foi possível carregar o gráfico.";
         setError(message);
-        setPoints([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -122,21 +121,24 @@ export function useCustomerBillingSeries(
       cancelled = true;
       controller.abort();
     };
-  }, [fingerprint]);
+  }, [fingerprint, reloadKey]);
 
+  const displayedPoints = fingerprint ? points : [];
   const totalValue = useMemo(
-    () => points.reduce((sum, point) => sum + (Number(point.value) || 0), 0),
-    [points],
+    () => displayedPoints.reduce((sum, point) => sum + (Number(point.value) || 0), 0),
+    [displayedPoints],
   );
 
   return {
-    selectedKey,
+    selectedKey: effectiveSelectedKey,
     setSelectedKey,
     customerOptions,
-    points,
-    loading,
-    error,
+    points: displayedPoints,
+    loading: fingerprint ? loading : false,
+    error: fingerprint ? error : null,
     totalValue,
+    coverage: fingerprint ? coverage : { covered: 0, total: 0, failedBatches: 0 },
+    reload,
   };
 }
 

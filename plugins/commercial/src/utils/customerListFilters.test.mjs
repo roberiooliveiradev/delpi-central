@@ -48,7 +48,7 @@ describe("filtros da lista de clientes", () => {
     );
   });
 
-  it("considera última compra real e ausência de registro em no_sale_60", () => {
+  it("considera somente última compra conhecida em no_sale_60", () => {
     const customers = [
       customer({ key: "recent" }),
       customer({ key: "old", lastPurchaseDate: "2000-01-01" }),
@@ -56,7 +56,7 @@ describe("filtros da lista de clientes", () => {
     ];
     assert.deepEqual(
       filterCustomers(customers, "", "no_sale_60").map((item) => item.key),
-      ["old", "unknown"],
+      ["old"],
     );
   });
 });

@@ -28,6 +28,10 @@ export type CustomerSummary = {
   /** Tendência: últimos 6m vs. 6m anteriores. */
   billingTrend?: "up" | "down" | "stable" | "insufficient" | null;
   billingTrendPct?: number | null;
+  /** O enrichment da carga atual confirmou os campos derivados. */
+  coverageKnown?: boolean;
+  /** Há último enrichment válido disponível, inclusive de refresh anterior. */
+  enrichmentAvailable?: boolean;
   status?: CustomerCommercialStatus;
   nextAction?: string;
   /** Vendedor responsável pela carteira do cliente. */

@@ -10,7 +10,12 @@ import {
 } from "recharts";
 import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/index";
 
-import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
+import {
+  CommercialActionButton,
+  CommercialSelectField,
+  CommercialStateBanner,
+  cmEmptyStateClassNames,
+} from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import {
@@ -63,6 +68,8 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     loading,
     error,
     totalValue,
+    coverage,
+    reload,
   } = useCustomerBillingSeries(customers);
 
   const chartData = useMemo(
@@ -111,7 +118,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         />
       }
     >
-      {error ? (
+      {error && !hasValues ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}
           defaultMessage={error}
@@ -132,7 +139,16 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
           }
         />
       ) : (
-        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+        <>
+          {error ? (
+            <CommercialStateBanner>
+              <p>{error} Cobertura: {coverage.covered}/{coverage.total}.</p>
+              <CommercialActionButton variant="ghost" onClick={reload} disabled={loading}>
+                Tentar novamente
+              </CommercialActionButton>
+            </CommercialStateBanner>
+          ) : null}
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <AreaChart
             data={chartData}
             margin={{ top: 12, right: 16, left: 4, bottom: 4 }}
@@ -175,7 +191,8 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
               activeDot={{ r: 5 }}
             />
           </AreaChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </>
       )}
     </ChartCard>
   );
