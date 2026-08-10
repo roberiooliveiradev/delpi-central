@@ -567,8 +567,13 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
 
   it("navegacao a partir da tabela de clientes", () => {
     const table = readSrc("features/customers/components/CustomersTable.tsx");
-    assert.match(table, /Abrir cliente/);
+    const card = readSrc("features/customers/components/CustomerListCard.tsx");
     assert.match(table, /navigateCustomerDetail/);
+    assert.match(table, /CustomerListCard/);
+    assert.match(table, /CommercialInteractiveDataCard|onOpenDetail=\{openCustomer\}/);
+    assert.match(card, /CommercialInteractiveDataCard/);
+    assert.match(card, /CM_HELP\.customers\.cardAriaOpen/);
+    assert.match(card, /onActivate=\{openDetail\}/);
   });
 
   it("nenhuma API nova no detalhe", () => {

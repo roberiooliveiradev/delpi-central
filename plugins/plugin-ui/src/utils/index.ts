@@ -9,3 +9,4 @@ export * from "./comunicadoStageBem";
 export * from "./valuesEqual";
 export * from "./chartSeriesWindow";
 export * from "./suggestChartGranularity";
+export * from "./tableFontSizePreferences";

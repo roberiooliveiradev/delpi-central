@@ -22,12 +22,19 @@ import {
   createCompactPagination,
   createDashboardInlineMeter,
   createDashboardHorizontalTimeline,
+  createDashboardDataListToolbar,
+  createDashboardDataCardsGrid,
+  createDashboardDataCardsSortBar,
+  createDashboardInteractiveDataCard,
+  createDashboardTableFontSizeControls,
   createFilterBarShell,
   dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardDataRecordCard,
   ExcelExportButton,
+  usePersistedViewLayout,
+  useTableFontSize,
   createDashboardTopBar,
   createDashboardViewTransition,
   createDashboardWorklistItem,
@@ -68,9 +75,24 @@ import {
 import { createElement, type ReactNode } from "react";
 
 export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
+export { usePersistedViewLayout, useTableFontSize };
 
 export const UI_PREFIX = "cm";
 export const CM_PORTAL_SCOPE = "dashboard-commercial";
+
+export const OPEN_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY =
+  "commercial:open-orders:table-font-size:v1";
+export const OPEN_ORDERS_TABLE_FONT_SIZE_LEGACY_KEYS = [
+  "pedidos-venda-abertos:table-font-size:v1",
+] as const;
+export const CUSTOMERS_TABLE_FONT_SIZE_STORAGE_KEY =
+  "commercial:customers:table-font-size:v1";
+export const CUSTOMERS_TABLE_FONT_SIZE_LEGACY_KEYS = [
+  "commercial:open-orders:table-font-size:v1",
+  "pedidos-venda-abertos:table-font-size:v1",
+] as const;
+export const OPEN_ORDERS_LAYOUT_STORAGE_KEY = "commercial:open-orders:layout";
+export const CUSTOMERS_LAYOUT_STORAGE_KEY = "commercial:customers:layout";
 
 export const cmPageHeaderClassNames = pageHeaderBrandBemClasses(UI_PREFIX);
 export const cmNavCardClassNames = navigationCardBemClasses(UI_PREFIX);
@@ -115,6 +137,21 @@ export const CommercialPagePath = createDashboardPagePath({
   portalScopeClassName: CM_PORTAL_SCOPE,
 });
 export const CommercialDataRecordCard = createDashboardDataRecordCard({
+  prefix: UI_PREFIX,
+});
+export const CommercialTableFontSizeControls = createDashboardTableFontSizeControls({
+  prefix: UI_PREFIX,
+});
+export const CommercialDataListToolbar = createDashboardDataListToolbar({
+  prefix: UI_PREFIX,
+});
+export const CommercialDataCardsGrid = createDashboardDataCardsGrid({
+  prefix: UI_PREFIX,
+});
+export const CommercialDataCardsSortBar = createDashboardDataCardsSortBar({
+  prefix: UI_PREFIX,
+});
+export const CommercialInteractiveDataCard = createDashboardInteractiveDataCard({
   prefix: UI_PREFIX,
 });
 export const CommercialEmptyState = createDashboardEmptyState({

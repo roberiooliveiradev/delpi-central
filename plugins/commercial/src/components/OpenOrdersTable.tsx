@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DataTable,
-  ExcelExportButton,
   HelpTooltip,
   SectionCard,
   SegmentToggle,
@@ -11,14 +10,24 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import {
+  CommercialDataCardsGrid,
+  CommercialDataCardsSortBar,
+  CommercialDataListToolbar,
+  CommercialExcelExportButton,
   CommercialInlineMeter,
   CommercialSelectField,
+  CommercialTableFontSizeControls,
   cmDataTableClassNames,
   cmDataTableLabels,
   cmSectionCardClassNames,
   cmSectionLabels,
   cmStatusBadgeClassNames,
+  OPEN_ORDERS_LAYOUT_STORAGE_KEY,
+  OPEN_ORDERS_TABLE_FONT_SIZE_LEGACY_KEYS,
+  OPEN_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY,
   UI_PREFIX,
+  usePersistedViewLayout,
+  useTableFontSize,
 } from "../app/commercialUi";
 import {
   navigateCustomerDetail,
@@ -31,9 +40,7 @@ import {
   customerAvatarKey,
   useOpenOrdersCustomerAvatars,
 } from "../hooks/useOpenOrdersCustomerAvatars";
-import { useOpenOrdersLayout } from "../hooks/useOpenOrdersLayout";
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
-import { useTableFontSize } from "../hooks/useTableFontSize";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
@@ -60,7 +67,6 @@ import {
 } from "../utils/tableColumns";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
 import { TableColumnSettings } from "./TableColumnSettings";
-import { TableFontSizeControls } from "./TableFontSizeControls";
 
 type OpenOrdersTableProps = {
   rows: OpenOrdersTotvsItem[];
@@ -104,7 +110,9 @@ export function OpenOrdersTable({
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
   const deepLinkHandledRef = useRef(false);
-  const { layout, setLayout } = useOpenOrdersLayout();
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: OPEN_ORDERS_LAYOUT_STORAGE_KEY,
+  });
   const {
     preferences,
     visibleColumns,
@@ -123,7 +131,10 @@ export function OpenOrdersTable({
     canIncrease,
     canDecrease,
     isDefault,
-  } = useTableFontSize();
+  } = useTableFontSize({
+    storageKey: OPEN_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY,
+    legacyStorageKeys: OPEN_ORDERS_TABLE_FONT_SIZE_LEGACY_KEYS,
+  });
   const customerAvatars = useOpenOrdersCustomerAvatars(rows);
 
   useEffect(() => {
@@ -149,7 +160,6 @@ export function OpenOrdersTable({
   };
 
   const tableStyle = {
-    "--cm-table-font-size": `${fontSize}px`,
     "--delpi-ui-table-font-size": `${fontSize}px`,
   } as CSSProperties;
 
@@ -364,83 +374,87 @@ export function OpenOrdersTable({
         labels={cmSectionLabels}
         hint={CM_HELP.openOrders.table}
       >
-        <div className="cm-table-toolbar" style={tableStyle}>
-          <div className="cm-table-toolbar__leading">
-            <div className="cm-table-toolbar__layout">
-              <HelpTooltip
-                content={CM_HELP.openOrders.layoutToggle}
-                ariaLabel="Ajuda: modo Tabela ou Cards"
-                wrap
-                placement="bottom"
-              >
-                <SegmentToggle
-                  prefix={UI_PREFIX}
-                  size="sm"
-                  ariaLabel="Modo de visualização"
-                  idPrefix="open-orders-layout"
-                  value={layout}
-                  onChange={setLayout}
-                  options={[
-                    { value: "table", label: "Tabela" },
-                    { value: "cards", label: "Cards" },
-                  ]}
-                />
-              </HelpTooltip>
-            </div>
-            <p className="cm-table-toolbar__hint">
-              <HelpTooltip
-                content={CM_HELP.openOrders.table}
-                ariaLabel="Ajuda: tabela de pedidos"
-                wrap
-                placement="bottom"
-              >
-                <span className="delpi-ui-section-hint-label">
-                  {visibleColumnCount} coluna(s) ·{" "}
-                  {exportRows.length.toLocaleString("pt-BR")} linha(s)
-                </span>
-              </HelpTooltip>
-            </p>
-          </div>
-          <div className="cm-table-toolbar__actions">
-            <ExcelExportButton
-              onExport={() => void handleExportExcel()}
-              disabled={exportRows.length === 0 || exporting || loading}
-              exporting={exporting}
-            />
-            <TableFontSizeControls
-              fontSize={fontSize}
-              onIncrease={increase}
-              onDecrease={decrease}
-              onReset={reset}
-              canIncrease={canIncrease}
-              canDecrease={canDecrease}
-              isDefault={isDefault}
-            />
-            <TableColumnSettings
-              columns={orderedMenuColumns}
-              visibility={preferences.visibility}
-              onToggleColumn={setColumnVisible}
-              onReorderColumns={reorderColumns}
-              onReset={resetPreferences}
-            />
-          </div>
-        </div>
+        <CommercialDataListToolbar
+          style={tableStyle}
+          leading={
+            <HelpTooltip
+              content={CM_HELP.openOrders.layoutToggle}
+              ariaLabel="Ajuda: modo Tabela ou Cards"
+              wrap
+              placement="bottom"
+            >
+              <SegmentToggle
+                prefix={UI_PREFIX}
+                size="sm"
+                ariaLabel="Modo de visualização"
+                idPrefix="open-orders-layout"
+                value={layout}
+                onChange={setLayout}
+                options={[
+                  { value: "table", label: "Tabela" },
+                  { value: "cards", label: "Cards" },
+                ]}
+              />
+            </HelpTooltip>
+          }
+          hint={
+            <HelpTooltip
+              content={CM_HELP.openOrders.table}
+              ariaLabel="Ajuda: tabela de pedidos"
+              wrap
+              placement="bottom"
+            >
+              <span className="delpi-ui-section-hint-label">
+                {visibleColumnCount} coluna(s) ·{" "}
+                {exportRows.length.toLocaleString("pt-BR")} linha(s)
+              </span>
+            </HelpTooltip>
+          }
+          actions={
+            <>
+              <CommercialExcelExportButton
+                onExport={() => void handleExportExcel()}
+                disabled={exportRows.length === 0 || exporting || loading}
+                exporting={exporting}
+              />
+              <CommercialTableFontSizeControls
+                fontSize={fontSize}
+                onIncrease={increase}
+                onDecrease={decrease}
+                onReset={reset}
+                canIncrease={canIncrease}
+                canDecrease={canDecrease}
+                isDefault={isDefault}
+              />
+              <TableColumnSettings
+                columns={orderedMenuColumns}
+                visibility={preferences.visibility}
+                onToggleColumn={setColumnVisible}
+                onReorderColumns={reorderColumns}
+                onReset={resetPreferences}
+              />
+            </>
+          }
+        />
 
         {layout === "cards" ? (
-          <div className="cm-open-orders-cards-toolbar" style={tableStyle}>
-            <CommercialSelectField
-              id="open-orders-sort"
-              label="Ordenar por"
-              hint={CM_HELP.openOrders.sortBy}
-              value={sortKey}
-              options={SORT_OPTIONS}
-              onChange={(value) => {
-                if (isSortableTableColumnKey(value as TableColumnKey)) {
-                  onSort(value as SortKey);
-                }
-              }}
-            />
-            <div className="cm-open-orders-cards-toolbar__dir">
+          <CommercialDataCardsSortBar
+            style={tableStyle}
+            sortField={
+              <CommercialSelectField
+                id="open-orders-sort"
+                label="Ordenar por"
+                hint={CM_HELP.openOrders.sortBy}
+                value={sortKey}
+                options={SORT_OPTIONS}
+                onChange={(value) => {
+                  if (isSortableTableColumnKey(value as TableColumnKey)) {
+                    onSort(value as SortKey);
+                  }
+                }}
+              />
+            }
+            direction={
               <HelpTooltip
                 content={CM_HELP.openOrders.sortDirection}
                 ariaLabel="Ajuda: direção da ordenação"
@@ -462,8 +476,8 @@ export function OpenOrdersTable({
                   ]}
                 />
               </HelpTooltip>
-            </div>
-          </div>
+            }
+          />
         ) : null}
 
         {layout === "table" ? (
@@ -489,28 +503,27 @@ export function OpenOrdersTable({
             />
           </div>
         ) : (
-          <div className="cm-open-orders-cards" style={tableStyle}>
-            {rows.length === 0 ? (
-              <p className="cm-open-orders-cards__empty">{emptyMessage}</p>
-            ) : (
-              rows.map((row) => (
-                <OpenOrdersLineCard
-                  key={rowKey(row)}
-                  item={row}
-                  visibleColumns={visibleColumns}
-                  basePath={basePath}
-                  hasAvatar={Boolean(
-                    row.codigo_cadastro?.trim() &&
-                      row.loja_cadastro?.trim() &&
-                      customerAvatars.get(
-                        customerAvatarKey(row.codigo_cadastro, row.loja_cadastro),
-                      ),
-                  )}
-                  onOpenDetail={openDetail}
-                />
-              ))
-            )}
-          </div>
+          <CommercialDataCardsGrid
+            style={tableStyle}
+            empty={rows.length === 0 ? emptyMessage : undefined}
+          >
+            {rows.map((row) => (
+              <OpenOrdersLineCard
+                key={rowKey(row)}
+                item={row}
+                visibleColumns={visibleColumns}
+                basePath={basePath}
+                hasAvatar={Boolean(
+                  row.codigo_cadastro?.trim() &&
+                    row.loja_cadastro?.trim() &&
+                    customerAvatars.get(
+                      customerAvatarKey(row.codigo_cadastro, row.loja_cadastro),
+                    ),
+                )}
+                onOpenDetail={openDetail}
+              />
+            ))}
+          </CommercialDataCardsGrid>
         )}
       </SectionCard>
 

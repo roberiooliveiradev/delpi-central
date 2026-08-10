@@ -1,8 +1,9 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
-import { FieldLabel, StatusBadge } from "@delpi/plugin-ui/index";
+import { StatusBadge } from "@delpi/plugin-ui/index";
 
 import {
   CommercialInlineMeter,
+  CommercialInteractiveDataCard,
   cmStatusBadgeClassNames,
 } from "../app/commercialUi";
 import { navigateCustomerDetail } from "../app/pluginNavigation";
@@ -44,29 +45,6 @@ function badgeVariant(
   if (tone === "danger") return "danger";
   if (tone === "info") return "info";
   return "neutral";
-}
-
-function CardField({
-  columnKey,
-  label,
-  children,
-  valueClassName,
-}: {
-  columnKey: TableColumnKey;
-  label: string;
-  children: ReactNode;
-  valueClassName?: string;
-}) {
-  return (
-    <div className="cm-open-orders-card__field">
-      <FieldLabel
-        label={label}
-        hint={openOrdersColumnHelp(columnKey)}
-        className="cm-open-orders-card__field-label"
-      />
-      <div className={valueClassName ?? "cm-open-orders-card__meta"}>{children}</div>
-    </div>
-  );
 }
 
 function renderCardValue(
@@ -234,53 +212,26 @@ export function OpenOrdersLineCard({
   onOpenDetail,
 }: OpenOrdersLineCardProps) {
   const openDetail = () => onOpenDetail(item);
-
-  const onCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openDetail();
-    }
-  };
-
   const customerLabel = item.nome_cliente?.trim() || "linha";
   const pedidoLabel = item.pedido?.trim() || "—";
-  const fields = visibleColumns;
   const valueOptions = { basePath, onOpenDetail };
 
   return (
-    <article
-      className="cm-open-orders-card cm-open-orders-card--interactive"
-      role="button"
-      tabIndex={0}
-      aria-label={`${CM_HELP.openOrders.cardAriaOpen}: ${customerLabel}, pedido ${pedidoLabel}`}
-      onClick={openDetail}
-      onKeyDown={onCardKeyDown}
-    >
-      {fields.map((column) => {
+    <CommercialInteractiveDataCard
+      ariaLabel={`${CM_HELP.openOrders.cardAriaOpen}: ${customerLabel}, pedido ${pedidoLabel}`}
+      onActivate={openDetail}
+      openHint={CM_HELP.openOrders.cardOpenHint}
+      fields={visibleColumns.map((column) => {
         const isTitle = column.key === "nome_cliente";
         const isValue = column.key === "valor_aberto";
-        return (
-          <CardField
-            key={column.key}
-            columnKey={column.key}
-            label={column.label}
-            valueClassName={
-              isTitle
-                ? "cm-open-orders-card__title"
-                : isValue
-                  ? "cm-open-orders-card__value"
-                  : "cm-open-orders-card__meta"
-            }
-          >
-            {renderCardValue(column.key, item, hasAvatar, valueOptions)}
-          </CardField>
-        );
+        return {
+          id: column.key,
+          label: column.label,
+          hint: openOrdersColumnHelp(column.key),
+          valueTone: isTitle ? "title" : isValue ? "value" : "meta",
+          value: renderCardValue(column.key, item, hasAvatar, valueOptions),
+        };
       })}
-      <div className="cm-open-orders-card__actions">
-        <span className="cm-open-orders-card__open-hint" aria-hidden="true">
-          {CM_HELP.openOrders.cardOpenHint}
-        </span>
-      </div>
-    </article>
+    />
   );
 }

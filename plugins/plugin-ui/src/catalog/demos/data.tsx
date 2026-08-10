@@ -11,6 +11,8 @@ import {
   DataRouteCatalogPanel,
   DataRecordCard,
   dataRecordCardBemClasses,
+  InteractiveDataCard,
+  interactiveDataCardBemClasses,
   DataTable,
   dataTableBemClasses,
   DataTableSection,
@@ -47,6 +49,7 @@ const MOCK_ROWS: DemoRow[] = [
 
 const tableCn = dataTableBemClasses(PUC_PREFIX);
 const recordCardCn = dataRecordCardBemClasses(PUC_PREFIX);
+const interactiveCardCn = interactiveDataCardBemClasses(PUC_PREFIX);
 const sectionCn = dataTableSectionBemClasses(PUC_PREFIX);
 const paginationKit = paginationBemClasses(PUC_PREFIX);
 const compactCn = compactPaginationBemClasses(PUC_PREFIX, { ghostBtn: "puc-ghost-btn" });
@@ -166,6 +169,36 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
               ]}
               context="Atualizado há 5 minutos"
               href="#pedido-12345"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "data.InteractiveDataCard",
+    family: "data",
+    exportName: "InteractiveDataCard",
+    title: "InteractiveDataCard",
+    description: "Card operacional interativo para listas em modo cards.",
+    docAnchor: "interactivedatacard",
+    propsSummary: ["fields", "onActivate", "openHint", "valueTone"],
+    demos: [
+      {
+        id: "interactive",
+        label: "Ativável",
+        render: () => (
+          <div style={{ width: "100%", maxWidth: 320 }}>
+            <InteractiveDataCard
+              classNames={interactiveCardCn}
+              ariaLabel="Abrir pedido demo"
+              onActivate={() => undefined}
+              openHint="Abrir"
+              fields={[
+                { id: "cliente", label: "Cliente", value: "ACME Ltda", valueTone: "title" },
+                { id: "valor", label: "Em aberto", value: "R$ 12.340,00", valueTone: "value" },
+                { id: "entrega", label: "Entrega", value: "20/08/2026", valueTone: "meta" },
+              ]}
             />
           </div>
         ),

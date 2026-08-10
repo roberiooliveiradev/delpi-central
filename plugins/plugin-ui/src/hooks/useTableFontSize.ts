@@ -7,14 +7,20 @@ import {
   MAX_TABLE_FONT_SIZE,
   MIN_TABLE_FONT_SIZE,
   saveTableFontSize,
-} from "../utils/tableFontSize";
+  type TableFontSizePreferenceOptions,
+} from "../utils/tableFontSizePreferences";
 
-export function useTableFontSize() {
-  const [fontSize, setFontSize] = useState(() => loadTableFontSize());
+export type UseTableFontSizeOptions = TableFontSizePreferenceOptions;
+
+export function useTableFontSize(options: UseTableFontSizeOptions) {
+  const { storageKey, legacyStorageKeys } = options;
+  const [fontSize, setFontSize] = useState(() =>
+    loadTableFontSize({ storageKey, legacyStorageKeys }),
+  );
 
   useEffect(() => {
-    saveTableFontSize(fontSize);
-  }, [fontSize]);
+    saveTableFontSize(fontSize, { storageKey });
+  }, [fontSize, storageKey]);
 
   const increase = useCallback(() => {
     setFontSize((current) => clampTableFontSize(current + 1));

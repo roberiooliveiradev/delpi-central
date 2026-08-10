@@ -3,29 +3,31 @@ import { useState } from "react";
 import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
 
 import {
+  CommercialDataCardsGrid,
+  CommercialDataCardsSortBar,
   CommercialDataCellValue,
-  CommercialDataRecordCard,
+  CommercialDataListToolbar,
   CommercialDataTable,
   CommercialExcelExportButton,
   CommercialSelectField,
   CommercialStatusBadge,
   CommercialTableColumnVisibilityMenu,
+  CommercialTableFontSizeControls,
+  CUSTOMERS_LAYOUT_STORAGE_KEY,
+  CUSTOMERS_TABLE_FONT_SIZE_LEGACY_KEYS,
+  CUSTOMERS_TABLE_FONT_SIZE_STORAGE_KEY,
   UI_PREFIX,
+  usePersistedViewLayout,
+  useTableFontSize,
   type DataTableColumn,
 } from "../../../app/commercialUi";
-import {
-  buildCustomerDetailPath,
-  navigateCustomerDetail,
-} from "../../../app/pluginNavigation";
-import { TableFontSizeControls } from "../../../components/TableFontSizeControls";
+import { navigateCustomerDetail } from "../../../app/pluginNavigation";
 import { CM_HELP } from "../../../content/helpTooltips";
-import { useTableFontSize } from "../../../hooks/useTableFontSize";
 import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 import { formatDisplayDate } from "../../../utils/dates";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { formatCurrency } from "../../../utils/format";
 import { useCustomerTablePreferences } from "../hooks/useCustomerTablePreferences";
-import { useCustomersListLayout } from "../hooks/useCustomersListLayout";
 import type {
   CustomerListSortDirection,
   CustomerListSortKey,
@@ -41,6 +43,7 @@ import { CUSTOMER_COLUMN_CATALOG } from "../utils/customerTableColumns";
 import { exportCustomersExcel } from "../utils/exportCustomersExcel";
 import { BillingTrendCell } from "./BillingTrendCell";
 import { CustomerAvatar } from "./CustomerAvatar";
+import { CustomerListCard } from "./CustomerListCard";
 
 type CustomersTableProps = {
   customers: CustomerSummary[];
@@ -49,9 +52,9 @@ type CustomersTableProps = {
   sortKey: CustomerListSortKey;
   sortDirection: CustomerListSortDirection;
   onSort: (key: Exclude<CustomerListSortKey, "attention">) => void;
-  basePath: string;
-  listSearch: string;
-  sellerAccess: CustomersListSellerAccess;
+  basePath?: string;
+  listSearch?: string;
+  sellerAccess?: CustomersListSellerAccess;
   loading?: boolean;
   emptyMessage?: string;
 };
@@ -108,7 +111,9 @@ export function CustomersTable({
   emptyMessage = "Nenhum cliente corresponde aos filtros selecionados.",
 }: CustomersTableProps) {
   const [exporting, setExporting] = useState(false);
-  const { layout, setLayout } = useCustomersListLayout();
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: CUSTOMERS_LAYOUT_STORAGE_KEY,
+  });
   const {
     fontSize,
     increase,
@@ -117,7 +122,10 @@ export function CustomersTable({
     canIncrease,
     canDecrease,
     isDefault,
-  } = useTableFontSize();
+  } = useTableFontSize({
+    storageKey: CUSTOMERS_TABLE_FONT_SIZE_STORAGE_KEY,
+    legacyStorageKeys: CUSTOMERS_TABLE_FONT_SIZE_LEGACY_KEYS,
+  });
   const {
     visibility,
     orderedColumns,
@@ -135,14 +143,8 @@ export function CustomersTable({
   ).length;
 
   const tableStyle = {
-    "--cm-table-font-size": `${fontSize}px`,
     "--delpi-ui-table-font-size": `${fontSize}px`,
   } as CSSProperties;
-
-  const detailHref = (customer: CustomerSummary) => {
-    const path = buildCustomerDetailPath(basePath, customer.codigo, customer.loja);
-    return path ? `${path}${listSearch}` : `${basePath}/customers${listSearch}`;
-  };
 
   const openCustomer = (customer: CustomerSummary) =>
     navigateCustomerDetail(customer.codigo, customer.loja, {
@@ -306,89 +308,93 @@ export function CustomersTable({
 
   return (
     <>
-      <div className="cm-table-toolbar" style={tableStyle}>
-        <div className="cm-table-toolbar__leading">
-          <div className="cm-table-toolbar__layout">
-            <HelpTooltip
-              content={CM_HELP.customers.layoutToggle}
-              ariaLabel="Ajuda: modo Tabela ou Cards"
-              wrap
-              placement="bottom"
-            >
-              <SegmentToggle
-                prefix={UI_PREFIX}
-                size="sm"
-                ariaLabel="Modo de visualização"
-                idPrefix="customers-layout"
-                value={layout}
-                onChange={setLayout}
-                options={[
-                  { value: "table", label: "Tabela" },
-                  { value: "cards", label: "Cards" },
-                ]}
-              />
-            </HelpTooltip>
-          </div>
-          <p className="cm-table-toolbar__hint">
-            <HelpTooltip
-              content={CM_HELP.customers.list}
-              ariaLabel="Ajuda: tabela da carteira"
-              wrap
-              placement="bottom"
-            >
-              <span className="delpi-ui-section-hint-label">
-                {visibleColumnCount} coluna(s) ·{" "}
-                {exportRows.length.toLocaleString("pt-BR")} linha(s)
-              </span>
-            </HelpTooltip>
-          </p>
-        </div>
-        <div className="cm-table-toolbar__actions">
-          <CommercialExcelExportButton
-            onExport={() => void handleExportExcel()}
-            disabled={exportRows.length === 0 || exporting || loading}
-            exporting={exporting}
-          />
-          <TableFontSizeControls
-            fontSize={fontSize}
-            onIncrease={increase}
-            onDecrease={decrease}
-            onReset={resetFontSize}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            isDefault={isDefault}
-          />
-          <CommercialTableColumnVisibilityMenu
-            columns={orderedColumns}
-            visibility={visibility}
-            onToggleColumn={setColumnVisible}
-            onReset={reset}
-            onReorderColumns={reorderColumns}
-            labels={{
-              trigger: "Colunas",
-              panelTitle: "Colunas da carteira",
-              reset: "Restaurar padrão",
-              hint: CM_HELP.customers.tableColumns,
-              columnAriaLabel: (label) => `Exibir coluna ${label}`,
-              reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
-            }}
-          />
-        </div>
-      </div>
+      <CommercialDataListToolbar
+        style={tableStyle}
+        leading={
+          <HelpTooltip
+            content={CM_HELP.customers.layoutToggle}
+            ariaLabel="Ajuda: modo Tabela ou Cards"
+            wrap
+            placement="bottom"
+          >
+            <SegmentToggle
+              prefix={UI_PREFIX}
+              size="sm"
+              ariaLabel="Modo de visualização"
+              idPrefix="customers-layout"
+              value={layout}
+              onChange={setLayout}
+              options={[
+                { value: "table", label: "Tabela" },
+                { value: "cards", label: "Cards" },
+              ]}
+            />
+          </HelpTooltip>
+        }
+        hint={
+          <HelpTooltip
+            content={CM_HELP.customers.list}
+            ariaLabel="Ajuda: tabela da carteira"
+            wrap
+            placement="bottom"
+          >
+            <span className="delpi-ui-section-hint-label">
+              {visibleColumnCount} coluna(s) ·{" "}
+              {exportRows.length.toLocaleString("pt-BR")} linha(s)
+            </span>
+          </HelpTooltip>
+        }
+        actions={
+          <>
+            <CommercialExcelExportButton
+              onExport={() => void handleExportExcel()}
+              disabled={exportRows.length === 0 || exporting || loading}
+              exporting={exporting}
+            />
+            <CommercialTableFontSizeControls
+              fontSize={fontSize}
+              onIncrease={increase}
+              onDecrease={decrease}
+              onReset={resetFontSize}
+              canIncrease={canIncrease}
+              canDecrease={canDecrease}
+              isDefault={isDefault}
+            />
+            <CommercialTableColumnVisibilityMenu
+              columns={orderedColumns}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReset={reset}
+              onReorderColumns={reorderColumns}
+              labels={{
+                trigger: "Colunas",
+                panelTitle: "Colunas da carteira",
+                reset: "Restaurar padrão",
+                hint: CM_HELP.customers.tableColumns,
+                columnAriaLabel: (label) => `Exibir coluna ${label}`,
+                reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
+              }}
+            />
+          </>
+        }
+      />
 
       {layout === "cards" ? (
-        <div className="cm-open-orders-cards-toolbar" style={tableStyle}>
-          <CommercialSelectField
-            id="customers-sort"
-            label="Ordenar por"
-            hint={CM_HELP.customers.sortBy}
-            value={isSortableCustomerColumnKey(sortKey) ? sortKey : "nome"}
-            options={SORT_OPTIONS}
-            onChange={(value) => {
-              if (isSortableCustomerColumnKey(value)) onSort(value);
-            }}
-          />
-          <div className="cm-open-orders-cards-toolbar__dir">
+        <CommercialDataCardsSortBar
+          style={tableStyle}
+          sortField={
+            <CommercialSelectField
+              id="customers-sort"
+              label="Ordenar por"
+              hint={CM_HELP.customers.sortBy}
+              value={isSortableCustomerColumnKey(sortKey) ? sortKey : "nome"}
+              options={SORT_OPTIONS}
+              onChange={(value) => {
+                if (isSortableCustomerColumnKey(value)) onSort(value);
+              }}
+            />
+          }
+          direction={
             <HelpTooltip
               content={CM_HELP.customers.sortDirection}
               ariaLabel="Ajuda: direção da ordenação"
@@ -412,8 +418,8 @@ export function CustomersTable({
                 ]}
               />
             </HelpTooltip>
-          </div>
-        </div>
+          }
+        />
       ) : null}
 
       {layout === "table" ? (
@@ -440,77 +446,20 @@ export function CustomersTable({
           />
         </div>
       ) : (
-        <div
-          className="cm-customers-list__cards"
+        <CommercialDataCardsGrid
           style={tableStyle}
-          aria-label="Clientes da carteira"
+          ariaLabel="Clientes da carteira"
+          empty={customers.length === 0 ? emptyMessage : undefined}
         >
-          {customers.length === 0 ? (
-            <p className="cm-customers-list__cards-empty">{emptyMessage}</p>
-          ) : (
-            customers.map((customer) => {
-              const status = customer.status ?? resolveCustomerStatus(customer);
-              const { name, codeStore } = customerIdentity(customer);
-              return (
-                <CommercialDataRecordCard
-                  key={customer.key}
-                  leading={
-                    <CustomerAvatar
-                      code={customer.codigo}
-                      store={customer.loja}
-                      name={name}
-                      hasAvatar={Boolean(customer.hasAvatar)}
-                      size="sm"
-                    />
-                  }
-                  title={name}
-                  subtitle={codeStore}
-                  status={
-                    <CommercialStatusBadge
-                      label={statusLabel(status)}
-                      variant={statusVariant(status)}
-                    />
-                  }
-                  fields={[
-                    {
-                      id: "last-sale",
-                      label: "Última venda",
-                      value: (
-                        <CommercialDataCellValue
-                          value={
-                            customer.lastPurchaseDate
-                              ? formatDisplayDate(customer.lastPurchaseDate)
-                              : null
-                          }
-                          present={hasCustomerEnrichmentCoverage(customer)}
-                        />
-                      ),
-                    },
-                    {
-                      id: "open-value",
-                      label: "Em aberto",
-                      value: formatCurrency(customer.valorTotalAberto),
-                    },
-                    {
-                      id: "late",
-                      label: "Atrasos",
-                      value: customer.quantidadePedidosAtrasados.toLocaleString("pt-BR"),
-                    },
-                    {
-                      id: "next-delivery",
-                      label: "Próxima entrega",
-                      value: formatDisplayDate(customer.proximaEntrega),
-                    },
-                  ]}
-                  context={customer.nextAction || "Ver conta"}
-                  href={detailHref(customer)}
-                  onNavigate={(event) => handleExplicitNavigate(event, customer)}
-                  ariaLabel={`Abrir cliente ${name === "—" ? codeStore : name}`}
-                />
-              );
-            })
-          )}
-        </div>
+          {customers.map((customer) => (
+            <CustomerListCard
+              key={customer.key}
+              customer={customer}
+              visibleColumns={visibleExportColumns}
+              onOpenDetail={openCustomer}
+            />
+          ))}
+        </CommercialDataCardsGrid>
       )}
     </>
   );

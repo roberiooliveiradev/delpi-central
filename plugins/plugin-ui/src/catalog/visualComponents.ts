@@ -187,6 +187,27 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Card genérico de registro com dl/dt/dd e raiz navegável opcional.",
   }),
+  vc("data", "InteractiveDataCard", {
+    addedAt: "2026-08-10",
+    description:
+      "Card operacional interativo (role=button) para listas em modo cards.",
+  }),
+  vc("data", "DataListToolbar", {
+    addedAt: "2026-08-10",
+    description: "Toolbar de lista operacional (leading + hint + actions).",
+  }),
+  vc("data", "DataCardsGrid", {
+    addedAt: "2026-08-10",
+    description: "Grid auto-fill de cards operacionais.",
+  }),
+  vc("data", "DataCardsSortBar", {
+    addedAt: "2026-08-10",
+    description: "Barra de ordenação do modo cards.",
+  }),
+  vc("data", "TableFontSizeControls", {
+    addedAt: "2026-08-10",
+    description: "Controles de tamanho de fonte da tabela/cards.",
+  }),
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
     updatedAt: "2026-07-17",

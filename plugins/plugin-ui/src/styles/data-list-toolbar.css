@@ -1,0 +1,52 @@
+/* Toolbar de lista operacional (layout + hint + ações) */
+
+.delpi-ui-data-list-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-data-list-toolbar__leading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.delpi-ui-data-list-toolbar__layout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-data-list-toolbar__hint {
+  margin: 0;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+  font-size: 13px;
+}
+
+.delpi-ui-data-list-toolbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-data-list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .delpi-ui-data-list-toolbar__actions {
+    width: 100%;
+  }
+}

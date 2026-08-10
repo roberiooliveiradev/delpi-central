@@ -463,21 +463,24 @@ describe("CustomersPage estrutural", () => {
       assert.match(page, new RegExp(`id: "${focus}"`));
     }
     assert.match(table, /CommercialDataTable/);
-    assert.match(table, /CommercialDataRecordCard/);
+    assert.match(table, /CustomerListCard/);
+    assert.match(table, /CommercialDataListToolbar/);
+    assert.match(table, /CommercialDataCardsGrid/);
+    assert.match(table, /CommercialTableFontSizeControls/);
+    assert.match(table, /usePersistedViewLayout/);
     assert.match(table, /cm-open-orders-client/);
     assert.match(table, /CustomerAvatar/);
     assert.match(table, /SegmentToggle/);
-    assert.match(table, /TableFontSizeControls/);
-    assert.match(table, /useCustomersListLayout/);
     assert.match(table, /onRowClick=\{openCustomer\}/);
     assert.match(table, /event\.stopPropagation\(\)/);
-    assert.match(table, /href=\{detailHref\(customer\)\}/);
     assert.match(table, /useCustomerTablePreferences\(canUseTeamScope\)/);
     assert.match(table, /CommercialExcelExportButton/);
     assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns\)/);
     assert.match(table, /resizableColumns/);
     assert.match(table, /enableColumnReorder/);
     assert.match(table, /CommercialTableColumnVisibilityMenu/);
+    assert.doesNotMatch(table, /cm-table-toolbar|cm-open-orders-cards/);
+    assert.doesNotMatch(table, /components\/TableFontSizeControls|useCustomersListLayout/);
     assert.doesNotMatch(table, /<table|MoreHorizontal/);
     assert.doesNotMatch(page, /@delpi\/plugin-ui/);
   });

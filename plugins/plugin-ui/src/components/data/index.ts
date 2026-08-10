@@ -163,6 +163,51 @@ export {
 } from "./DataRecordCard";
 
 export {
+  TableFontSizeControls,
+  createDashboardTableFontSizeControls,
+  tableFontSizeControlsBemClasses,
+  type DashboardTableFontSizeControlsProps,
+  type TableFontSizeControlsClassNames,
+  type TableFontSizeControlsLabels,
+  type TableFontSizeControlsProps,
+} from "./TableFontSizeControls";
+
+export {
+  DataListToolbar,
+  createDashboardDataListToolbar,
+  dataListToolbarBemClasses,
+  type DashboardDataListToolbarProps,
+  type DataListToolbarClassNames,
+  type DataListToolbarProps,
+} from "./DataListToolbar";
+
+export {
+  DataCardsGrid,
+  DataCardsSortBar,
+  createDashboardDataCardsGrid,
+  createDashboardDataCardsSortBar,
+  dataCardsGridBemClasses,
+  dataCardsSortBarBemClasses,
+  type DashboardDataCardsGridProps,
+  type DashboardDataCardsSortBarProps,
+  type DataCardsGridClassNames,
+  type DataCardsGridProps,
+  type DataCardsSortBarClassNames,
+  type DataCardsSortBarProps,
+} from "./DataCardsGrid";
+
+export {
+  InteractiveDataCard,
+  createDashboardInteractiveDataCard,
+  interactiveDataCardBemClasses,
+  type DashboardInteractiveDataCardProps,
+  type InteractiveDataCardClassNames,
+  type InteractiveDataCardField,
+  type InteractiveDataCardProps,
+  type InteractiveDataCardValueTone,
+} from "./InteractiveDataCard";
+
+export {
   isCellSelected,
   isColumnSelected,
   isRowSelected,

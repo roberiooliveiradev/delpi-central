@@ -228,6 +228,8 @@ export const CM_HELP = {
       "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
     sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
     sortDirection: "Crescente ou decrescente no campo de ordenação selecionado.",
+    cardOpenHint: "Abrir conta",
+    cardAriaOpen: "Abrir Conta 360 do cliente",
     tableColumns:
       "Escolha a ordem e as colunas exibidas. A preferência fica salva neste navegador.",
     trend:

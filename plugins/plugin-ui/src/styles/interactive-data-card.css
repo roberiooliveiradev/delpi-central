@@ -1,0 +1,107 @@
+/* Card interativo de lista operacional (tabela ↔ cards) */
+
+.delpi-ui-interactive-data-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  min-width: 0;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-interactive-data-card--interactive {
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.delpi-ui-interactive-data-card--interactive:hover,
+.delpi-ui-interactive-data-card--interactive:focus-visible {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+  );
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 18%, transparent);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.delpi-ui-interactive-data-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.delpi-ui-interactive-data-card__field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+}
+
+.delpi-ui-interactive-data-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  line-height: 1.3;
+}
+
+.delpi-ui-interactive-data-card__meta {
+  margin: 0;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+  font-size: 0.92em;
+}
+
+.delpi-ui-interactive-data-card__value {
+  margin: 0;
+  font-weight: 700;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-interactive-data-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.delpi-ui-interactive-data-card__open-hint {
+  margin-right: auto;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.delpi-ui-interactive-data-card--interactive:hover .delpi-ui-interactive-data-card__open-hint,
+.delpi-ui-interactive-data-card--interactive:focus-visible .delpi-ui-interactive-data-card__open-hint {
+  opacity: 1;
+  transform: translateX(0);
+}
