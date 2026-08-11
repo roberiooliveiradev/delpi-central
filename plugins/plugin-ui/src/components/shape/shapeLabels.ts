@@ -54,6 +54,14 @@ export const DEFAULT_SHAPE_COLOR_LABELS: Required<ShapeColorLabels> = {
   colorModel: "Modelo de Cores:",
   ok: "OK",
   cancel: "Cancelar",
+  fillSolid: "Cor",
+  fillGradient: "Gradiente",
+  fillAngle: "Ângulo",
+  fillStopPosition: "Posição",
+  fillStopOpacity: "Opacidade",
+  fillAddStop: "Adicionar marca",
+  fillRemoveStop: "Remover marca",
+  fillPresets: "Predefinições",
 };
 
 export function mergeShapeColorLabels(labels?: ShapeColorLabels): Required<ShapeColorLabels> {

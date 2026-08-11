@@ -1042,7 +1042,8 @@ Paleta estilo PowerPoint: grade tema 10×6, cores padrão, diálogo RGB/hex/tran
 |--------|-----------|
 | `ColorThemeGrid` | Grade configurável de cores do tema |
 | `ColorStandardRow` | Linha de cores padrão |
-| `ColorPickerPopover` | Popover com paleta + «Mais cores» (popover aninhado) + conta-gotas |
+| `ColorPickerPopover` | Popover com paleta + «Mais cores» + conta-gotas; com `onFillChange` + `allowedFillKinds` inclui Cor \| Gradiente |
+| `FillGradientPanel` | Painel de gradiente linear (presets, ângulo, stops) — usado no modo Gradiente |
 | `ColorDialog` | Modal legado (catálogo); editor usa popover «Mais cores» |
 | `ShapeFillMenu` | Dropdown de preenchimento |
 | `ShapeOutlineMenu` | Dropdown de contorno + espessura |

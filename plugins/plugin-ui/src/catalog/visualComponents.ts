@@ -347,7 +347,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ShapeStyleRibbonStrip"),
   vc("shape", "ShapeStyleGallery"),
   vc("shape", "ColorDialog"),
-  vc("shape", "ColorPickerPopover"),
+  vc("shape", "ColorPickerPopover", {
+    updatedAt: "2026-08-11",
+    changeNote: "FillPicker Cor|Gradiente via onFillChange + allowedFillKinds",
+  }),
+  vc("shape", "FillGradientPanel", {
+    addedAt: "2026-08-11",
+    description: "Painel de gradiente linear (presets, ângulo, stops) no FillPicker",
+  }),
   vc("shape", "RibbonColorPicker"),
   vc("shape", "ColorThemeGrid"),
   vc("shape", "ColorStandardRow"),

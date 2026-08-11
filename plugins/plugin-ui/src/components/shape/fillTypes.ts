@@ -63,6 +63,33 @@ export function fillToCssBackground(fill: DelpiFill | undefined): string {
   return `linear-gradient(${angle}deg, ${stops})`;
 }
 
+export const DEFAULT_LINEAR_GRADIENT_PRESETS: DelpiFillGradient[] = [
+  {
+    kind: "gradient",
+    angle: 180,
+    stops: [
+      { color: "#0f172a", position: 0 },
+      { color: "#1e3a5f", position: 100 },
+    ],
+  },
+  {
+    kind: "gradient",
+    angle: 180,
+    stops: [
+      { color: "#05070a", position: 0 },
+      { color: "#0d2840", position: 100 },
+    ],
+  },
+  {
+    kind: "gradient",
+    angle: 135,
+    stops: [
+      { color: "#1e1b4b", position: 0 },
+      { color: "#be123c", position: 100 },
+    ],
+  },
+];
+
 export function stopsFromLegacyFromTo(from: string, to: string): DelpiGradientStop[] {
   return normalizeGradientStops([
     { color: from, position: 0 },

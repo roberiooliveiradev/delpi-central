@@ -106,4 +106,58 @@ describe("ColorPickerPopover", () => {
     fireEvent.click(screen.getByRole("button", { name: "Conta-gotas" }));
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("#aabbcc"));
   });
+
+  it("sem onFillChange não mostra aba Gradiente", () => {
+    render(<ColorPickerPopover variant="fill" value="#ef4444" onChange={vi.fn()} />);
+    expect(screen.queryByRole("tab", { name: "Gradiente" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Cor" })).toBeNull();
+  });
+
+  it("com onFillChange e allowedFillKinds gradient mostra abas e emite fill", () => {
+    const onChange = vi.fn();
+    const onFillChange = vi.fn();
+    render(
+      <ColorPickerPopover
+        variant="fill"
+        value="#ef4444"
+        onChange={onChange}
+        onFillChange={onFillChange}
+        allowedFillKinds={["solid", "gradient"]}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "Cor" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Gradiente" }));
+    expect(onFillChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "gradient",
+        angle: 180,
+        stops: expect.arrayContaining([
+          expect.objectContaining({ color: "#ef4444", position: 0 }),
+        ]),
+      }),
+    );
+  });
+
+  it("gatilho com fill gradient usa preview CSS do helper", () => {
+    const { container } = render(
+      <ColorPickerPopoverTrigger
+        triggerLabel="Cor de preenchimento"
+        value="#0f172a"
+        fill={{
+          kind: "gradient",
+          angle: 180,
+          stops: [
+            { color: "#0f172a", position: 0 },
+            { color: "#1e3a5f", position: 100 },
+          ],
+        }}
+        onChange={vi.fn()}
+        onFillChange={vi.fn()}
+        allowedFillKinds={["solid", "gradient"]}
+      />,
+    );
+    const preview = container.querySelector(".delpi-ui-color-picker-trigger__preview");
+    expect(preview?.getAttribute("style") ?? "").toContain("linear-gradient");
+  });
 });

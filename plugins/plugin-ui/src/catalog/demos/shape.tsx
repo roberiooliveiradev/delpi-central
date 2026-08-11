@@ -11,6 +11,7 @@ export const shapeCatalogEntries: CatalogEntryDraft[] = [
   "ShapeStyleGallery",
   "ColorDialog",
   "ColorPickerPopover",
+  "FillGradientPanel",
   "RibbonColorPicker",
   "ColorThemeGrid",
   "ColorStandardRow",

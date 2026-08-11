@@ -15,6 +15,7 @@ export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
 export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ColorPickerVariant, ShapeFillMenuProps } from "./ColorPickerPopover";
+export { FillGradientPanel } from "./FillGradientPanel";
 export { RibbonColorPicker } from "./RibbonColorPicker";
 export type { RibbonColorPickerProps } from "./RibbonColorPicker";
 export { ColorDialog } from "./ColorDialog";
@@ -82,6 +83,7 @@ export {
   resolveColorTriggerPreviewMode,
 } from "./colorUtils";
 export {
+  DEFAULT_LINEAR_GRADIENT_PRESETS,
   MAX_GRADIENT_STOPS,
   MIN_GRADIENT_STOPS,
   fillToCssBackground,
