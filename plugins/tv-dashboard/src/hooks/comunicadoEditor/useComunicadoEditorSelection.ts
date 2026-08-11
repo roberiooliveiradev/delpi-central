@@ -298,7 +298,7 @@ export function useComunicadoEditorSelection({
   );
 
   const selectBlocksByIds = useCallback(
-    (blockIds: string[]) => {
+    (blockIds: string[], options?: { keepPanelTab?: boolean }) => {
       flushActiveTextEdit();
       const blocksNow = configRef.current.blocks ?? [];
       const unique = [
@@ -316,7 +316,7 @@ export function useComunicadoEditorSelection({
       clearPartSelections();
       /* Insert/marquee: sincronizar aba de formato com o bloco-alvo (não deixar layers/tableDesign fantasma). */
       const primaryId = unique[unique.length - 1];
-      if (primaryId) {
+      if (primaryId && !options?.keepPanelTab) {
         requestRibbonTab("element", { blockId: primaryId });
       }
     },
@@ -326,7 +326,7 @@ export function useComunicadoEditorSelection({
   const selectBlock = useCallback(
     (
       blockId: string,
-      options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean },
+      options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean; keepPanelTab?: boolean },
     ) => {
       flushActiveTextEdit();
       const blocksNow = configRef.current.blocks ?? [];
@@ -407,27 +407,29 @@ export function useComunicadoEditorSelection({
       }
       setEditingTextId(null);
       clearPartSelections();
-      if (selectedBlockType === "chart_view") {
-        requestRibbonTab("element", { blockId: targetId });
-      } else if (selectedBlockType === "table_view") {
-        requestRibbonTab("element", { blockId: targetId });
-      } else if (
-        selectedBlockType === "shape" ||
-        selectedBlockType === "heading" ||
-        selectedBlockType === "text" ||
-        selectedBlockType === "image" ||
-        selectedBlockType === "video" ||
-        selectedBlockType === "kpi_view" ||
-        selectedBlockType === "canvas_table" ||
-        selectedBlockType === "input" ||
-        selectedBlockType === "icon"
-      ) {
-        requestRibbonTab("element", { blockId: targetId });
-      } else if (
-        selectedBlockType === "data_source" ||
-        selectedBlockType?.startsWith("data_")
-      ) {
-        requestRibbonTab("data", { blockId: targetId });
+      if (!options?.keepPanelTab) {
+        if (selectedBlockType === "chart_view") {
+          requestRibbonTab("element", { blockId: targetId });
+        } else if (selectedBlockType === "table_view") {
+          requestRibbonTab("element", { blockId: targetId });
+        } else if (
+          selectedBlockType === "shape" ||
+          selectedBlockType === "heading" ||
+          selectedBlockType === "text" ||
+          selectedBlockType === "image" ||
+          selectedBlockType === "video" ||
+          selectedBlockType === "kpi_view" ||
+          selectedBlockType === "canvas_table" ||
+          selectedBlockType === "input" ||
+          selectedBlockType === "icon"
+        ) {
+          requestRibbonTab("element", { blockId: targetId });
+        } else if (
+          selectedBlockType === "data_source" ||
+          selectedBlockType?.startsWith("data_")
+        ) {
+          requestRibbonTab("data", { blockId: targetId });
+        }
       }
     },
     [clearPartSelections, configRef, flushActiveTextEdit, requestRibbonTab],

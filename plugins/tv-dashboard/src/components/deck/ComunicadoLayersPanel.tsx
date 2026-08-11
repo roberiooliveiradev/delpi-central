@@ -255,7 +255,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     onDragStart={() => setDragId(row.anchorId)}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={() => onDrop(row.anchorId)}
-                    onClick={() => selectBlocksByIds(row.memberIds)}
+                    onClick={() => selectBlocksByIds(row.memberIds, { keepPanelTab: true })}
                     title="Selecionar grupo inteiro"
                   >
                     <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
@@ -327,6 +327,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     selectBlock(block.id, {
                       additive: event.shiftKey,
                       expandGroup: false,
+                      keepPanelTab: true,
                     })
                   }
                   title={
@@ -377,7 +378,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
           className="td-btn td-btn--sm"
           onClick={() => {
             const primaryId = selectedIds[selectedIds.length - 1];
-            if (primaryId) selectBlocksByIds([primaryId]);
+            if (primaryId) selectBlocksByIds([primaryId], { keepPanelTab: true });
           }}
         >
           {L.focusPrimary}

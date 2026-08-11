@@ -457,4 +457,23 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedIds).toEqual(["a"]);
     expect(result.current.editingTextId).toBe("a");
   });
+
+  it("select na lista de camadas mantém a aba layers", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.setSelectionPanelTab("layers");
+    });
+    act(() => {
+      result.current.selectBlock("a", { keepPanelTab: true });
+    });
+    expect(result.current.selectedIds).toEqual(["a"]);
+    expect(result.current.selectionPanelTab).toBe("layers");
+
+    act(() => {
+      result.current.selectBlocksByIds(["a", "b"], { keepPanelTab: true });
+    });
+    expect(result.current.selectedIds).toEqual(["a", "b"]);
+    expect(result.current.selectionPanelTab).toBe("layers");
+  });
 });

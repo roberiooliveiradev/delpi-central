@@ -109,6 +109,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     const next = selectedIds.length;
     prevSelectionCount.current = next;
     if (next > 0 && prev === 0) {
+      if (selectionPanelTab === "layers") return;
       const formatTab: SelectionPanelTab =
         selected?.type === "table_view" ? "tableDesign" : "element";
       setSelectionPanelTab(formatTab);
@@ -119,7 +120,14 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       setSelectionPanelTab("layers");
       setDataPanelOpen(false);
     }
-  }, [selectedIds.length, selected?.type, requestRibbonTab, setDataPanelOpen, setSelectionPanelTab]);
+  }, [
+    selectedIds.length,
+    selected?.type,
+    selectionPanelTab,
+    requestRibbonTab,
+    setDataPanelOpen,
+    setSelectionPanelTab,
+  ]);
 
   /** Se a aba ativa sumiu do set visível, preferir a aba de formatação. */
   useEffect(() => {
