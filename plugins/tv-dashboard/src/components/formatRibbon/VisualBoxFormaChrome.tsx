@@ -241,7 +241,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
             value={fillValue === "transparent" ? undefined : fillValue}
             fillLabel={primitive === "point" ? "Cor" : "Preench."}
             fill={styleToFill(block.style)}
-            onChange={(color) => patchStyle({ fill: color })}
+            onChange={(color) => patchStyle(fillToFillStylePatch({ kind: "solid", color }))}
             onFillChange={(next) => patchStyle(fillToFillStylePatch(next))}
             allowedFillKinds={TV_ALLOWED_FILL_KINDS}
             onNoFill={() => patchStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -258,10 +258,12 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
             outlineLabel="Contorno"
             fill={styleToStrokeFill(block.style)}
             onColorChange={(color) =>
-              patchStyle({
-                stroke: color,
-                strokeWidth: Math.max(1, strokeWidth || 1),
-              })
+              patchStyle(
+                fillToStrokeStylePatch(
+                  { kind: "solid", color },
+                  { strokeWidth: Math.max(1, strokeWidth || 1) },
+                ),
+              )
             }
             onFillChange={(next) =>
               patchStyle(

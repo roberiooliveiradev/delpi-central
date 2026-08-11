@@ -207,7 +207,7 @@ function KpiShapeChrome({
           value={fillValue}
           fillLabel={boxLabels.fillShort}
           fill={styleToFill(isCardChrome ? cardState?.style : partState?.style)}
-          onChange={(color) => patchChromeStyle({ fill: color })}
+          onChange={(color) => patchChromeStyle(fillToFillStylePatch({ kind: "solid", color }))}
           onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
           onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -221,7 +221,7 @@ function KpiShapeChrome({
           maxWidth={20}
           outlineLabel={boxLabels.strokeShort}
           fill={styleToStrokeFill(isCardChrome ? cardState?.style : partState?.style)}
-          onColorChange={(color) => patchChromeStyle({ stroke: color })}
+          onColorChange={(color) => patchChromeStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
           onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
           onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
@@ -344,7 +344,7 @@ function InputShapeChrome({
           value={fillValue}
           fillLabel={boxLabels.fillShort}
           fill={styleToFill(partState?.style)}
-          onChange={(color) => patchChromeStyle({ fill: color })}
+          onChange={(color) => patchChromeStyle(fillToFillStylePatch({ kind: "solid", color }))}
           onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
           onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -358,7 +358,7 @@ function InputShapeChrome({
           maxWidth={20}
           outlineLabel={boxLabels.strokeShort}
           fill={styleToStrokeFill(partState?.style)}
-          onColorChange={(color) => patchChromeStyle({ stroke: color })}
+          onColorChange={(color) => patchChromeStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
           onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
           onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}

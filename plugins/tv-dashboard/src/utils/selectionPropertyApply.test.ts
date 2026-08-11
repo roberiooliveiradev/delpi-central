@@ -14,6 +14,29 @@ describe("selectionPropertyApply", () => {
     });
   });
 
+  it("sparsePropertyPatch preserva fillPaint undefined para o clear", () => {
+    expect(sparsePropertyPatch({ fill: "#ef4444", fillPaint: undefined })).toEqual({
+      fill: "#ef4444",
+      fillPaint: undefined,
+    });
+  });
+
+  it("mergeSparseStyleProperties apaga fillPaint e não apaga color de tipografia", () => {
+    const cleared = mergeSparseStyleProperties(
+      { fill: "#111111", fillPaint: { kind: "gradient", angle: 90, stops: [] } },
+      { fill: "#ef4444", fillPaint: undefined },
+    );
+    expect(cleared.fill).toBe("#ef4444");
+    expect(cleared.fillPaint).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(cleared, "fillPaint")).toBe(false);
+
+    const typography = mergeSparseStyleProperties(
+      { fontFamily: "Inter", color: "#111" },
+      { fontFamily: "Roboto", color: undefined },
+    );
+    expect(typography).toEqual({ fontFamily: "Roboto", color: "#111" });
+  });
+
   it("mergeSparseStyleProperties não apaga props com patch parcial", () => {
     const next = mergeSparseStyleProperties(
       { fontFamily: "Inter", fontSize: 22, color: "#111", fontWeight: "bold" },

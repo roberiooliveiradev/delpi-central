@@ -112,7 +112,7 @@ export function TableRibbonShapeChrome({
             value={fillValue}
             fillLabel="Preench."
             fill={styleToFill({ fill: fillValue })}
-            onChange={(color) => patchChromeStyle({ fill: color })}
+            onChange={(color) => patchChromeStyle(fillToFillStylePatch({ kind: "solid", color }))}
             onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
             allowedFillKinds={TV_ALLOWED_FILL_KINDS}
             onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -127,7 +127,7 @@ export function TableRibbonShapeChrome({
               maxWidth={20}
               outlineLabel="Contorno"
               fill={styleToStrokeFill({ stroke: strokeValue })}
-              onColorChange={(color) => patchChromeStyle({ stroke: color })}
+              onColorChange={(color) => patchChromeStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
               onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
               allowedFillKinds={TV_ALLOWED_FILL_KINDS}
               onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}

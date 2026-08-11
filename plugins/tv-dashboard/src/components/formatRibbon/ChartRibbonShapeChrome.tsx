@@ -229,7 +229,7 @@ export function ChartRibbonShapeChrome({
                 value={fillValue}
                 fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
                 fill={styleToFill(partState?.style ?? { fill: fillValue })}
-                onChange={(color) => patchPartStyle({ fill: color })}
+                onChange={(color) => patchPartStyle(fillToFillStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => patchPartStyle(fillToFillStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 onNoFill={() => patchPartStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -245,7 +245,7 @@ export function ChartRibbonShapeChrome({
                 maxWidth={chartPartPrimitive === "point" ? 8 : 20}
                 outlineLabel="Contorno"
                 fill={styleToStrokeFill(partState?.style ?? { stroke: strokeValue })}
-                onColorChange={(color) => patchPartStyle({ stroke: color })}
+                onColorChange={(color) => patchPartStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => patchPartStyle(fillToStrokeStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 onNoOutline={() => patchPartStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}

@@ -387,7 +387,7 @@ export function ComunicadoStageContextMenu({
                 ariaLabel={C.fill}
                 value={fillValue}
                 fill={styleToFill(menuSelected.style)}
-                onChange={(color) => updateSelectedStyle({ fill: color })}
+                onChange={(color) => updateSelectedStyle(fillToFillStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
@@ -399,7 +399,7 @@ export function ComunicadoStageContextMenu({
                 label={C.fill}
                 value={fillValue}
                 fill={styleToFill(menuSelected.style)}
-                onChange={(color) => updateSelectedStyle({ backgroundColor: color })}
+                onChange={(color) => updateSelectedStyle(fillToFillStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
@@ -412,7 +412,7 @@ export function ComunicadoStageContextMenu({
                 label={C.outline}
                 value={outlineValue}
                 fill={styleToStrokeFill(menuSelected.style)}
-                onChange={(color) => updateSelectedStyle({ stroke: color })}
+                onChange={(color) => updateSelectedStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
@@ -426,7 +426,7 @@ export function ComunicadoStageContextMenu({
                 label={C.outline}
                 value={outlineValue}
                 fill={styleToStrokeFill(menuSelected.style)}
-                onChange={(color) => updateSelectedStyle({ borderColor: color })}
+                onChange={(color) => updateSelectedStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
                 onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
                 allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline

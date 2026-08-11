@@ -105,7 +105,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
       label="Cor do ícone"
       value={iconColor}
       fill={styleToColorFill(block.style)}
-      onChange={(color) => patchStyle({ color })}
+      onChange={(color) => patchStyle(fillToColorStylePatch({ kind: "solid", color }))}
       onFillChange={(next) => patchStyle(fillToColorStylePatch(next))}
       allowedFillKinds={TV_ALLOWED_FILL_KINDS}
     />
@@ -153,7 +153,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
           value={fillValue === "transparent" ? undefined : fillValue}
           fillLabel="Fundo"
           fill={styleToFill(block.style)}
-          onChange={(color) => patchStyle({ fill: color })}
+          onChange={(color) => patchStyle(fillToFillStylePatch({ kind: "solid", color }))}
           onFillChange={(next) => patchStyle(fillToFillStylePatch(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
           onNoFill={() => patchStyle(fillToFillStylePatch({ kind: "none" }))}
@@ -168,10 +168,12 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
           outlineLabel="Contorno"
           fill={styleToStrokeFill(block.style)}
           onColorChange={(color) =>
-            patchStyle({
-              stroke: color,
-              strokeWidth: Math.max(1, boxStrokeWidth || 1),
-            })
+            patchStyle(
+              fillToStrokeStylePatch(
+                { kind: "solid", color },
+                { strokeWidth: Math.max(1, boxStrokeWidth || 1) },
+              ),
+            )
           }
           onFillChange={(next) =>
             patchStyle(fillToStrokeStylePatch(next, { strokeWidth: Math.max(1, boxStrokeWidth || 1) }))

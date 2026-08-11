@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { createShapeBlock, resolveStyleFillCss } from "@delpi/tv-dashboard-presentation";
+
+import { applyComunicadoBlockStylePatch } from "./applyComunicadoBlockStylePatch";
 import {
   backgroundToFill,
   fillToBackground,
@@ -11,6 +14,7 @@ import {
   styleToFill,
   styleToStrokeFill,
 } from "./delpiFillAdapter";
+import { sparsePropertyPatch } from "./selectionPropertyApply";
 
 const gradient = {
   kind: "gradient" as const,
@@ -79,6 +83,19 @@ describe("delpiFillAdapter", () => {
       fillPaint: gradient,
     });
     expect(styleToFill({ fill: "#111111", fillPaint: gradient })).toEqual(gradient);
+  });
+
+  it("Cor sólida sobre gradient: sparse + patch remove fillPaint", () => {
+    const block = {
+      ...createShapeBlock("rectangle"),
+      style: { fill: "#111111", fillPaint: gradient },
+    };
+    const sparse = sparsePropertyPatch(fillToFillStylePatch({ kind: "solid", color: "#ef4444" }));
+    const next = applyComunicadoBlockStylePatch(block, sparse);
+    expect(styleToFill(next.style)).toEqual({ kind: "solid", color: "#ef4444" });
+    expect(next.style?.fillPaint).toBeUndefined();
+    expect(resolveStyleFillCss(next.style)).toBe("#ef4444");
+    expect(resolveStyleFillCss(next.style)).not.toContain("linear-gradient");
   });
 
   it("borda e texto seguem o mesmo contrato hex + paint", () => {

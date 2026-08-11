@@ -1,3 +1,5 @@
+import { CLEARABLE_STYLE_KEYS } from "./applyComunicadoBlockStylePatch";
+
 /**
  * Aplicação centralizada de propriedades na seleção do editor.
  *
@@ -17,13 +19,16 @@ export type SelectionPropertyApplyOptions = {
   fontSizeDelta?: number;
 };
 
-/** Remove entradas `undefined` — patch seguro para `{ ...prev, ...patch }`. */
+/**
+ * Remove `undefined` — exceto chaves clearable (`fillPaint`, sombra…),
+ * onde `undefined` significa apagar no `applyComunicadoBlockStylePatch`.
+ */
 export function sparsePropertyPatch<T extends Record<string, unknown>>(
   patch: T,
 ): Partial<T> {
   const out: Partial<T> = {};
   for (const [key, value] of Object.entries(patch)) {
-    if (value !== undefined) {
+    if (value !== undefined || CLEARABLE_STYLE_KEYS.has(key)) {
       (out as Record<string, unknown>)[key] = value;
     }
   }
@@ -61,5 +66,14 @@ export function mergeSparseStyleProperties<T extends Record<string, unknown>>(
   patch: Partial<T>,
 ): T {
   const sparse = sparsePropertyPatch(patch as Record<string, unknown>) as Partial<T>;
-  return { ...(prev ?? ({} as T)), ...sparse };
+  const next = { ...(prev ?? ({} as T)), ...sparse };
+  for (const key of CLEARABLE_STYLE_KEYS) {
+    if (
+      Object.prototype.hasOwnProperty.call(sparse, key) &&
+      (sparse as Record<string, unknown>)[key] === undefined
+    ) {
+      delete (next as Record<string, unknown>)[key];
+    }
+  }
+  return next;
 }

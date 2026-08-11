@@ -856,7 +856,7 @@ export function FormatRibbonTypographySections({
                   ? undefined
                   : (currentTextColor ?? "#0f172a")
               }
-              onChange={(color) => applyTextFormatStyle({ color })}
+              onChange={(color) => applyTextFormatStyle(fillToColorStylePatch({ kind: "solid", color }))}
             />
             {showClearFormatting && visualBoxBlock ? (
               <TdRibbonIconButton

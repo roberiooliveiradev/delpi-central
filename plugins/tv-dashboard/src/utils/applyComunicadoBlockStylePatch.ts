@@ -14,7 +14,7 @@ import {
  * Chaves opcionais que o patch pode remover com `undefined` / `null` / string vazia.
  * (Demais `undefined` no patch são ignorados para permitir patches parciais.)
  */
-const CLEARABLE_STYLE_KEYS = new Set<string>([
+export const CLEARABLE_STYLE_KEYS = new Set<string>([
   "boxShadow",
   "textShadow",
   "textStrokeColor",
