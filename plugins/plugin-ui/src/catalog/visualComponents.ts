@@ -380,6 +380,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-28",
     description: "Menu de ações da seção (renomear, colapsar, excluir, propriedades).",
   }),
+  vc("layout", "TransitionGallery", {
+    addedAt: "2026-08-11",
+    description: "Galeria acessível de transições com prévia visual A→B.",
+  }),
+  vc("layout", "TransitionGalleryPopover", {
+    addedAt: "2026-08-11",
+    description: "Popover ancorado para seleção visual de transições.",
+  }),
   // menu
   vc("menu", "FixedPanelPortal", {
     addedAt: "2026-07-17",
