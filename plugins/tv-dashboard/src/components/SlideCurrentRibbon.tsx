@@ -26,7 +26,7 @@ function formatCount(template: string, count: number): string {
   return template.replace("{count}", String(count));
 }
 
-/** Ações da tela atual — aba Tela do editor. Export permanece no primário. */
+/** Ações da tela atual — aba Tela do editor. Export cobre a seleção do filmstrip. */
 export function SlideCurrentRibbon({
   selectedSlide,
   selectedSlides: selectedSlidesProp,
@@ -83,7 +83,7 @@ export function SlideCurrentRibbon({
           <DeckRibbonTile
             icon={Download}
             label={exportBusy ? "…" : "PNG"}
-            hint="Exportar a tela atual como PNG (4E.5)."
+            hint={many ? formatCount(H.exportPngMany, targets.length) : H.exportPng}
             disabled={exportBusy}
             keyTip={K.exportPng}
             onClick={onExportPng}
@@ -93,7 +93,7 @@ export function SlideCurrentRibbon({
           <DeckRibbonTile
             icon={Download}
             label={exportBusy ? "…" : "PDF"}
-            hint="Abrir diálogo para exportar PDF (programação ou slide atual)."
+            hint={many ? formatCount(H.exportPdfMany, targets.length) : H.exportPdf}
             disabled={exportBusy}
             keyTip={K.exportPdf}
             onClick={onExportPdf}
@@ -103,7 +103,7 @@ export function SlideCurrentRibbon({
           <DeckRibbonTile
             icon={Download}
             label={exportBusy ? "…" : "PPTX"}
-            hint="Exportar a tela atual como arquivo PPTX editável (MVP)."
+            hint={many ? H.exportPptxMany : H.exportPptx}
             disabled={exportBusy}
             keyTip={K.exportPptx}
             onClick={onExportPptx}

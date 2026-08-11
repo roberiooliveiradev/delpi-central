@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 
 describe("SlideCurrentRibbon batch actions", () => {
-  it("age na lista do filmstrip e exporta só o primário", () => {
+  it("age na lista do filmstrip e exporta a seleção", () => {
     const ribbon = readFileSync(join(here, "SlideCurrentRibbon.tsx"), "utf8");
     const chrome = readFileSync(join(here, "DeckEditorChrome.tsx"), "utf8");
     const page = readFileSync(join(here, "../pages/PlaylistEditorPage.tsx"), "utf8");
@@ -21,5 +21,8 @@ describe("SlideCurrentRibbon batch actions", () => {
     expect(page).toContain("handleToggleSlidesActive(targets)");
     expect(page).toContain("handleRemoveSlides(targets)");
     expect(page).toContain("slideBatchDuplicated");
+    expect(page).toContain("resolveExportSlideTargets");
+    expect(page).toContain("exportSlidesPptx");
+    expect(page).toContain("exportSlidesToPdf");
   });
 });

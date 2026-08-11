@@ -25,17 +25,15 @@ function color(value: string | undefined, fallback: string): string {
   return normalized && /^[0-9a-f]{6}$/i.test(normalized) ? normalized : fallback;
 }
 
-export async function exportSlidePptx(
-  config: ComunicadoConfig,
-  filename = "slide.pptx",
-): Promise<void> {
-  const { default: PptxGenJS } = await import("pptxgenjs");
-  const pptx = new PptxGenJS();
-  pptx.layout = "LAYOUT_WIDE";
-  pptx.author = "Minha Delpi";
-  pptx.subject = "Tela do TV Dashboard";
-  const slide = pptx.addSlide();
+type PptxDeck = Awaited<ReturnType<typeof loadPptxCtor>> extends new () => infer I ? I : never;
+type PptxSlide = ReturnType<PptxDeck["addSlide"]>;
 
+async function loadPptxCtor() {
+  const mod = await import("pptxgenjs");
+  return mod.default;
+}
+
+function paintPptxSlide(pptx: PptxDeck, slide: PptxSlide, config: ComunicadoConfig) {
   if (config.background?.type === "color") {
     slide.background = { color: color(config.background.value, "FFFFFF") };
   } else if (config.background?.type === "image" && config.background.url) {
@@ -86,16 +84,33 @@ export async function exportSlidePptx(
           })),
         ),
         {
-        ...position,
-        border: { type: "solid", color: color(style.borderColor, "94A3B8"), pt: 1 },
-        color: color(style.color, "1F2937"),
-        fill: { color: color(style.backgroundColor, "FFFFFF") },
-        fontFace: style.fontFamily?.split(",")[0]?.trim() || "Arial",
-        fontSize: style.fontSize ? Math.max(8, style.fontSize * 0.75) : 14,
-        margin: 0.05,
+          ...position,
+          border: { type: "solid", color: color(style.borderColor, "94A3B8"), pt: 1 },
+          color: color(style.color, "1F2937"),
+          fill: { color: color(style.backgroundColor, "FFFFFF") },
+          fontFace: style.fontFamily?.split(",")[0]?.trim() || "Arial",
+          fontSize: style.fontSize ? Math.max(8, style.fontSize * 0.75) : 14,
+          margin: 0.05,
         },
       );
     }
+  }
+}
+
+export async function exportSlidesPptx(
+  configs: ComunicadoConfig[],
+  filename = "slide.pptx",
+): Promise<void> {
+  if (configs.length === 0) {
+    throw new Error("Nenhuma tela personalizada para exportar.");
+  }
+  const PptxGenJS = await loadPptxCtor();
+  const pptx = new PptxGenJS();
+  pptx.layout = "LAYOUT_WIDE";
+  pptx.author = "Minha Delpi";
+  pptx.subject = "Telas do TV Dashboard";
+  for (const config of configs) {
+    paintPptxSlide(pptx, pptx.addSlide(), config);
   }
 
   const output = await pptx.write({ outputType: "blob", compression: true });
@@ -106,4 +121,11 @@ export async function exportSlidePptx(
   anchor.download = filename.endsWith(".pptx") ? filename : `${filename}.pptx`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+export async function exportSlidePptx(
+  config: ComunicadoConfig,
+  filename = "slide.pptx",
+): Promise<void> {
+  await exportSlidesPptx([config], filename);
 }

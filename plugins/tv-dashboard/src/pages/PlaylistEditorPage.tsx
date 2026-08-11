@@ -47,7 +47,11 @@ import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SectionPropertiesPanel } from "../components/SectionPropertiesPanel";
 import { SlideStagePreview } from "../components/SlideStagePreview";
-import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
+import {
+  buildSlideThumbnailNative,
+  enrichComunicadoConfigForEditor,
+  mergeMasterConfigs,
+} from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
 import { relocateFilmstripSlides } from "../utils/relocateFilmstripSlides";
@@ -76,11 +80,24 @@ import {
 } from "../utils/slideDeckClipboard";
 import { ExportPdfDialog } from "../components/ExportPdfDialog";
 import {
+  captureOffscreenNativeToPngDataUrl,
   exportActivePlaylistSlidesToPdf,
+  exportSlidesToPdf,
   resolvePlaylistDesignSize,
 } from "../utils/exportPlaylistPdf";
-import { exportSlideElementToPng, exportSlideElementToPdf, resolveSlideExportTarget } from "../utils/exportSlidePng";
-import { exportSlidePptx } from "../utils/exportSlidePptx";
+import {
+  captureSlideElementToPngDataUrl,
+  downloadPngDataUrls,
+  exportSlideElementToPng,
+  exportSlideElementToPdf,
+  resolveSlideExportTarget,
+} from "../utils/exportSlidePng";
+import { exportSlidesPptx } from "../utils/exportSlidePptx";
+import {
+  resolveExportPptxTargets,
+  resolveExportSlideTargets,
+  uniqueExportFileName,
+} from "../utils/exportSlideSelection";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import { registerPreviewHandoff } from "../utils/previewHandoff";
 import { clearPreviewPayloadCache } from "../utils/previewPayloadCache";
@@ -790,17 +807,90 @@ export function PlaylistEditorPage({
     }
   }
 
+  function formatExportNotice(template: string, values: Record<string, string | number>): string {
+    return Object.entries(values).reduce(
+      (text, [key, value]) => text.replace(`{${key}}`, String(value)),
+      template,
+    );
+  }
+
   async function handleExportPng() {
-    if (!selectedSlide) return;
-    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
-    if (!target) {
-      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+    if (!playlist) return;
+    const targets = resolveExportSlideTargets({
+      scope: "selected",
+      slides,
+      selectedSlides,
+      primary: selectedSlide,
+    });
+    if (targets.length === 0) return;
+    const liveTarget = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+    const onlyPrimary =
+      targets.length === 1 && selectedSlide && targets[0]?.id === selectedSlide.id;
+    if (onlyPrimary) {
+      if (!liveTarget) {
+        tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+        return;
+      }
+      setExportBusy(true);
+      try {
+        await exportSlideElementToPng(liveTarget, {
+          fileName: uniqueExportFileName(selectedSlide.title, new Set(), "png"),
+        });
+      } catch (err) {
+        tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PNG.");
+      } finally {
+        setExportBusy(false);
+      }
       return;
     }
+
+    const designSize = resolvePlaylistDesignSize(playlist);
     setExportBusy(true);
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      await exportSlideElementToPng(target, { fileName: `${safeTitle}.png` });
+      const used = new Set<string>();
+      const pages: Array<{ dataUrl: string; fileName: string }> = [];
+      let skipped = 0;
+      for (const slide of targets) {
+        if (slide.slideType === "external") {
+          skipped += 1;
+          continue;
+        }
+        if (slide.id === selectedSlide?.id && liveTarget) {
+          pages.push({
+            dataUrl: await captureSlideElementToPngDataUrl(liveTarget),
+            fileName: uniqueExportFileName(slide.title, used, "png"),
+          });
+          continue;
+        }
+        const native = buildSlideThumbnailNative(
+          slide,
+          playlist.id,
+          previewBySlideId[slide.id],
+          playlist.masterConfig,
+          playlist.publicToken,
+        );
+        if (!native) {
+          skipped += 1;
+          continue;
+        }
+        pages.push({
+          dataUrl: await captureOffscreenNativeToPngDataUrl(native, designSize),
+          fileName: uniqueExportFileName(slide.title, used, "png"),
+        });
+      }
+      if (pages.length === 0) {
+        tvDashboardNotice("Nenhuma tela exportável (nativa) encontrada.");
+        return;
+      }
+      await downloadPngDataUrls(pages);
+      if (skipped > 0) {
+        tvDashboardNotice(
+          formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportSkipped, {
+            exported: pages.length,
+            skipped,
+          }),
+        );
+      }
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PNG.");
     } finally {
@@ -818,14 +908,14 @@ export function PlaylistEditorPage({
   }
 
   async function handleGenerateExportPdf(options: {
-    scope: "playlist" | "current";
+    scope: "playlist" | "current" | "selected";
     pixelRatio: 1 | 2;
   }) {
     if (!playlist) return;
     const designSize = resolvePlaylistDesignSize(playlist);
     const safePlaylist = playlist.name.replace(/[^\w\-]+/g, "_").slice(0, 40) || "programacao";
     setExportBusy(true);
-    setExportPdfProgress(options.scope === "playlist" ? "Preparando…" : "Capturando slide…");
+    setExportPdfProgress(options.scope === "current" ? "Capturando slide…" : "Preparando…");
     try {
       if (options.scope === "current") {
         if (!selectedSlide) {
@@ -837,32 +927,58 @@ export function PlaylistEditorPage({
           tvDashboardNotice("Não foi possível localizar o palco para exportar.");
           return;
         }
-        const safeTitle =
-          selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
         await exportSlideElementToPdf(target, {
-          fileName: `${safeTitle}.pdf`,
+          fileName: uniqueExportFileName(selectedSlide.title, new Set(), "pdf"),
           pixelRatio: options.pixelRatio,
           designSize,
         });
       } else {
-        const result = await exportActivePlaylistSlidesToPdf({
-          playlistId: playlist.id,
-          slides,
-          designSize,
-          previewBySlideId,
-          masterConfig: playlist.masterConfig,
-          publicToken: playlist.publicToken,
-          pixelRatio: options.pixelRatio,
-          fileName: `${safePlaylist}.pdf`,
-          onProgress: ({ current, total, slideTitle }) => {
-            setExportPdfProgress(
-              `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
-            );
-          },
-        });
+        const targets =
+          options.scope === "selected"
+            ? resolveExportSlideTargets({
+                scope: "selected",
+                slides,
+                selectedSlides,
+                primary: selectedSlide,
+              })
+            : slides;
+        const result =
+          options.scope === "selected"
+            ? await exportSlidesToPdf(targets, {
+                playlistId: playlist.id,
+                designSize,
+                previewBySlideId,
+                masterConfig: playlist.masterConfig,
+                publicToken: playlist.publicToken,
+                pixelRatio: options.pixelRatio,
+                fileName: `${safePlaylist}-selecao.pdf`,
+                onProgress: ({ current, total, slideTitle }) => {
+                  setExportPdfProgress(
+                    `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
+                  );
+                },
+              })
+            : await exportActivePlaylistSlidesToPdf({
+                playlistId: playlist.id,
+                slides: targets,
+                designSize,
+                previewBySlideId,
+                masterConfig: playlist.masterConfig,
+                publicToken: playlist.publicToken,
+                pixelRatio: options.pixelRatio,
+                fileName: `${safePlaylist}.pdf`,
+                onProgress: ({ current, total, slideTitle }) => {
+                  setExportPdfProgress(
+                    `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
+                  );
+                },
+              });
         if (result.skipped > 0) {
           tvDashboardNotice(
-            `PDF gerado com ${result.pageCount} página(s); ${result.skipped} tela(s) ignorada(s).`,
+            formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportSkipped, {
+              exported: result.pageCount,
+              skipped: result.skipped,
+            }),
           );
         }
       }
@@ -878,19 +994,35 @@ export function PlaylistEditorPage({
   }
 
   async function handleExportPptx() {
-    if (!selectedSlide) return;
-    if (selectedSlide.nativeScreenKey !== "custom_message") {
-      tvDashboardNotice("A exportação PPTX MVP está disponível para telas personalizadas.");
+    if (!playlist) return;
+    const { targets, skipped } = resolveExportPptxTargets(
+      selectedSlides,
+      selectedSlide,
+      slides,
+    );
+    if (targets.length === 0) {
+      tvDashboardNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportPptxCustomOnly);
       return;
     }
     setExportBusy(true);
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      const rawConfig = liveComunicadoConfigRef.current ?? selectedSlide.nativeConfig ?? {};
-      await exportSlidePptx(
-        enrichComunicadoConfigForEditor(rawConfig, playlistId),
-        `${safeTitle}.pptx`,
-      );
+      const configs = targets.map((slide) => {
+        const raw =
+          slide.id === selectedSlide?.id
+            ? (liveComunicadoConfigRef.current ?? slide.nativeConfig ?? {})
+            : (slide.nativeConfig ?? {});
+        return enrichComunicadoConfigForEditor(raw, playlistId);
+      });
+      const fileName =
+        targets.length === 1
+          ? uniqueExportFileName(targets[0]?.title ?? "slide", new Set(), "pptx")
+          : uniqueExportFileName(playlist.name, new Set(), "pptx");
+      await exportSlidesPptx(configs, fileName);
+      if (skipped > 0) {
+        tvDashboardNotice(
+          formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportPptxSkipped, { skipped }),
+        );
+      }
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PPTX.");
     } finally {
@@ -1954,7 +2086,9 @@ export function PlaylistEditorPage({
     onRemove: (targets: Slide[]) => void handleRemoveSlides(targets),
     onExportPng: () => void handleExportPng(),
     onExportPdf: () => void handleExportPdf(),
-    onExportPptx: isCustomSlide ? () => void handleExportPptx() : undefined,
+    onExportPptx: selectedSlides.some(isCustomMessageSlide)
+      ? () => void handleExportPptx()
+      : undefined,
     exportBusy,
     playlistChrome: {
       playlistName: playlist.name,
@@ -2146,6 +2280,7 @@ export function PlaylistEditorPage({
         }}
         onGenerate={(opts) => handleGenerateExportPdf(opts)}
         activeSlideCount={activeSlideCount}
+        selectedSlideCount={selectedSlides.length}
         hasCurrentSlide={Boolean(selectedSlide)}
         progressLabel={exportPdfProgress}
         busy={exportBusy}

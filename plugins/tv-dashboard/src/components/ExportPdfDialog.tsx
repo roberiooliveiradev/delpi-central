@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { HostContainedDialog } from "./ui/Modal";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ExportPdfScope } from "../utils/exportPlaylistPdf";
 
 export type ExportPdfDialogGenerateOptions = {
@@ -14,32 +15,41 @@ type Props = {
   onGenerate: (options: ExportPdfDialogGenerateOptions) => Promise<void>;
   activeSlideCount: number;
   hasCurrentSlide: boolean;
+  selectedSlideCount?: number;
   progressLabel?: string | null;
   busy?: boolean;
 };
 
-/** Diálogo de impressão/PDF — escopo programação ou slide atual. */
+function formatCount(template: string, count: number): string {
+  return template.replace("{count}", String(count));
+}
+
+/** Diálogo de impressão/PDF — escopo programação, seleção ou slide atual. */
 export function ExportPdfDialog({
   open,
   onClose,
   onGenerate,
   activeSlideCount,
   hasCurrentSlide,
+  selectedSlideCount = 0,
   progressLabel = null,
   busy = false,
 }: Props) {
   const [scope, setScope] = useState<ExportPdfScope>("playlist");
   const [pixelRatio, setPixelRatio] = useState<1 | 2>(2);
+  const hasSelection = selectedSlideCount > 1;
 
   useEffect(() => {
     if (!open) return;
-    setScope(hasCurrentSlide ? "current" : "playlist");
+    if (hasSelection) setScope("selected");
+    else setScope(hasCurrentSlide ? "current" : "playlist");
     setPixelRatio(2);
-  }, [open, hasCurrentSlide]);
+  }, [open, hasCurrentSlide, hasSelection]);
 
   async function submit() {
     if (busy) return;
     if (scope === "current" && !hasCurrentSlide) return;
+    if (scope === "selected" && !hasSelection) return;
     if (scope === "playlist" && activeSlideCount <= 0) return;
     await onGenerate({ scope, pixelRatio });
   }
@@ -64,6 +74,20 @@ export function ExportPdfDialog({
             Programação ({activeSlideCount} tela{activeSlideCount === 1 ? "" : "s"} ativa
             {activeSlideCount === 1 ? "" : "s"})
           </label>
+          {hasSelection ? (
+            <label className="td-export-pdf-dialog__option">
+              <input
+                type="radio"
+                name="td-export-pdf-scope"
+                checked={scope === "selected"}
+                onChange={() => setScope("selected")}
+              />
+              {formatCount(
+                TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportSelectedScope,
+                selectedSlideCount,
+              )}
+            </label>
+          ) : null}
           <label className="td-export-pdf-dialog__option">
             <input
               type="radio"
@@ -120,6 +144,7 @@ export function ExportPdfDialog({
             disabled={
               busy ||
               (scope === "current" && !hasCurrentSlide) ||
+              (scope === "selected" && !hasSelection) ||
               (scope === "playlist" && activeSlideCount <= 0)
             }
           >

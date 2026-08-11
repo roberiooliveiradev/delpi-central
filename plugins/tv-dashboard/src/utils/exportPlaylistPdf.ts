@@ -14,9 +14,11 @@ import {
   exportPngDataUrlsToPdf,
   type ExportSlideCaptureOptions,
 } from "./exportSlidePng";
+import type { ExportSlideScope } from "./exportSlideSelection";
 import { resolveViewportPixelSize, type ViewportPixelSize } from "./viewportPixelSize";
 
-export type ExportPdfScope = "playlist" | "current";
+export type { ExportSlideScope };
+export type ExportPdfScope = ExportSlideScope;
 
 export type ExportPlaylistPdfProgress = {
   current: number;
@@ -126,24 +128,20 @@ function resolveNativeForExport(
 }
 
 /**
- * Gera PDF com uma página por slide ativo nativo (ordem de apresentação).
+ * Gera PDF com uma página por slide nativo da lista (já filtrada/ordenada).
  * Slides externos ou sem canvas visual são ignorados.
  */
-export async function exportActivePlaylistSlidesToPdf(
-  options: ExportPlaylistPdfOptions,
+export async function exportSlidesToPdf(
+  slides: Slide[],
+  options: Omit<ExportPlaylistPdfOptions, "slides">,
 ): Promise<{ pageCount: number; skipped: number }> {
-  const active = options.slides
-    .filter((slide) => slide.isActive !== false)
-    .slice()
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
   const pages: string[] = [];
   let skipped = 0;
-  const total = active.length;
+  const total = slides.length;
 
-  for (let index = 0; index < active.length; index += 1) {
+  for (let index = 0; index < slides.length; index += 1) {
     assertNotAborted(options.signal);
-    const slide = active[index];
+    const slide = slides[index];
     options.onProgress?.({
       current: index + 1,
       total,
@@ -159,29 +157,37 @@ export async function exportActivePlaylistSlidesToPdf(
       skipped += 1;
       continue;
     }
-    const dataUrl = await captureOffscreenNativeToPngDataUrl(
-      native,
-      options.designSize,
-      {
-        pixelRatio: options.pixelRatio,
-        backgroundColor: options.backgroundColor,
-      },
-    );
+    const dataUrl = await captureOffscreenNativeToPngDataUrl(native, options.designSize, {
+      pixelRatio: options.pixelRatio,
+      backgroundColor: options.backgroundColor,
+    });
     pages.push(dataUrl);
   }
 
   if (!pages.length) {
-    throw new Error("Nenhuma tela ativa exportável (nativa) encontrada.");
+    throw new Error("Nenhuma tela exportável (nativa) encontrada.");
   }
 
-  const safeName =
-    options.fileName ??
-    `programacao-${Date.now()}.pdf`;
+  const safeName = options.fileName ?? `programacao-${Date.now()}.pdf`;
   await exportPngDataUrlsToPdf(pages, {
     fileName: safeName,
     designSize: options.designSize,
   });
   return { pageCount: pages.length, skipped };
+}
+
+/**
+ * Gera PDF com uma página por slide ativo nativo (ordem de apresentação).
+ * Slides externos ou sem canvas visual são ignorados.
+ */
+export async function exportActivePlaylistSlidesToPdf(
+  options: ExportPlaylistPdfOptions,
+): Promise<{ pageCount: number; skipped: number }> {
+  const active = options.slides
+    .filter((slide) => slide.isActive !== false)
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  return exportSlidesToPdf(active, options);
 }
 
 export function resolvePlaylistDesignSize(playlist: {

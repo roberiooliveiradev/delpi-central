@@ -24,6 +24,23 @@ function downloadDataUrl(dataUrl: string, fileName: string) {
   link.click();
 }
 
+const MULTI_DOWNLOAD_GAP_MS = 120;
+
+/** Dispara um download por PNG; intervalo curto evita o browser bloquear o segundo clique. */
+export async function downloadPngDataUrls(
+  pages: Array<{ dataUrl: string; fileName: string }>,
+): Promise<void> {
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index];
+    downloadDataUrl(page.dataUrl, page.fileName);
+    if (index < pages.length - 1) {
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, MULTI_DOWNLOAD_GAP_MS);
+      });
+    }
+  }
+}
+
 function shouldSkipNode(node: HTMLElement): boolean {
   if (node.classList?.contains("td-composer__stage-grid")) return true;
   if (node.classList?.contains("td-composer__stage-guide")) return true;
