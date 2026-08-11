@@ -20,6 +20,10 @@ type Props = {
   viewportWidth?: number | null;
   viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
+  /** Duração padrão da programação — filmstrip resolve o badge efetivo. */
+  defaultDurationSec?: number;
+  /** Transição padrão da programação — tooltip do badge. */
+  defaultTransitionStyle?: string | null;
   publicToken?: string | null;
   onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
   onLongPressSelect?: (slideId: string) => void;
@@ -68,6 +72,8 @@ export function DeckWorkspace({
   viewportWidth = null,
   viewportHeight = null,
   masterConfig,
+  defaultDurationSec,
+  defaultTransitionStyle,
   publicToken,
   onSelect,
   onLongPressSelect,
@@ -123,6 +129,8 @@ export function DeckWorkspace({
         viewportWidth={viewportWidth}
         viewportHeight={viewportHeight}
         masterConfig={masterConfig}
+        defaultDurationSec={defaultDurationSec}
+        defaultTransitionStyle={defaultTransitionStyle}
         publicToken={publicToken}
         onSelect={onSelect}
         onLongPressSelect={onLongPressSelect}

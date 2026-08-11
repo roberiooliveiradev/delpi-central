@@ -19,4 +19,14 @@ describe("slide timing UX contract", () => {
     expect(css).toMatch(/\.td-deck-filmstrip__timing--override\s*\{/);
     expect(css).toMatch(/\.td-deck-slide-timing__badge\s*\{/);
   });
+
+  it("DeckWorkspace encaminha a duração da programação ao filmstrip", () => {
+    const workspace = readFileSync(join(here, "DeckWorkspace.tsx"), "utf8");
+    const page = readFileSync(join(here, "../pages/PlaylistEditorPage.tsx"), "utf8");
+
+    expect(page).toContain("defaultDurationSec: playlist.defaultDurationSec");
+    expect(workspace).toContain("defaultDurationSec");
+    expect(workspace).toContain("defaultDurationSec={defaultDurationSec}");
+    expect(workspace).toContain("defaultTransitionStyle={defaultTransitionStyle}");
+  });
 });
