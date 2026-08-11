@@ -12,6 +12,7 @@ import {
   type PresentationPayload,
   type Slide,
 } from "../api/tvDashboardApi";
+import { overlaySharedCustomSlideConfig } from "../utils/applySlideBatchPatch";
 import { isPublicPresentMediaUrl } from "../utils/overlayLivePreviewPayload";
 
 /** URL de mídia para render nativo (miniatura / CSS / img / vídeo). */
@@ -226,11 +227,7 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
       if (slide.slideType !== "native" || slide.nativeScreenKey !== "custom_message") {
         return slide;
       }
-      const cached = cache[slide.id];
-      if (cached) {
-        return { ...slide, nativeConfig: cached };
-      }
-      return slide;
+      return applyThumbnailCacheKeepingShared(slide, cache);
     });
   }
 
@@ -260,12 +257,20 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
     if (slide.id === selectedSlideId) {
       return { ...slide, nativeConfig: selectedNativeConfig };
     }
-    const cached = cache[slide.id];
-    if (cached) {
-      return { ...slide, nativeConfig: cached };
-    }
-    return slide;
+    return applyThumbnailCacheKeepingShared(slide, cache);
   });
+}
+
+function applyThumbnailCacheKeepingShared(
+  slide: Slide,
+  cache: Record<string, Record<string, unknown>>,
+): Slide {
+  const cached = cache[slide.id];
+  if (!cached) return slide;
+  const live = slide.nativeConfig ?? {};
+  const merged = overlaySharedCustomSlideConfig(cached, live);
+  if (merged !== cached) cache[slide.id] = merged;
+  return { ...slide, nativeConfig: merged };
 }
 
 export function resolveMasterForPreview(

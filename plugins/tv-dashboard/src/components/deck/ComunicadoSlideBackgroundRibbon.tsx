@@ -1,7 +1,9 @@
 import { FolderOpen, ImageOff, Upload } from "lucide-react";
 
+import type { Slide } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useAuthenticatedBlobUrl } from "../../hooks/useAuthenticatedBlobUrl";
+import { isCustomMessageSlide } from "../../utils/applySlideBatchPatch";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "../slideCardPreview";
 import { DeckRibbonGroup } from "./DeckRibbonGroup";
@@ -19,8 +21,18 @@ export const COMUNICADO_BACKGROUND_GRADIENT_PRESETS: Array<{ label: string; from
   { label: "Pôr do sol", from: "#1e1b4b", to: "#be123c" },
 ];
 
+function formatCount(template: string, count: number): string {
+  return template.replace("{count}", String(count));
+}
+
 /** Controles de fundo compactos na faixa da aba Tela (slide personalizado). */
-export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labels }) {
+export function ComunicadoSlideBackgroundRibbon({
+  labels = {},
+  selectedSlides,
+}: {
+  labels?: Labels;
+  selectedSlides?: Slide[];
+}) {
   const {
     uploading,
     background,
@@ -30,6 +42,8 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
     setBackgroundColor,
     setBackgroundGradient,
   } = useComunicadoEditor();
+  const customCount = (selectedSlides ?? []).filter(isCustomMessageSlide).length;
+  const many = customCount > 1;
 
   const gradientFrom = background?.type === "gradient" ? background.from : "#0f172a";
   const gradientTo = background?.type === "gradient" ? background.to : "#1e3a5f";
@@ -43,8 +57,12 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
     <>
       <DeckRibbonGroup
         groupId="slide-background"
-        label={labels.comunicadoBackground ?? "Fundo"}
-        hint={E.backgroundColor}
+        label={
+          many
+            ? formatCount(H.backgroundSlides, customCount)
+            : (labels.comunicadoBackground ?? "Fundo")
+        }
+        hint={many ? formatCount(H.backgroundSlidesHint, customCount) : E.backgroundColor}
       >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
           <TvRibbonColorPicker

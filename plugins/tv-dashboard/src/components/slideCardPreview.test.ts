@@ -305,6 +305,81 @@ describe("slideCardPreview", () => {
     expect(afterSwitch[1]?.nativeConfig?.background).toEqual({ type: "color", value: "#ffffff" });
   });
 
+  it("fan-out de fundo atualiza prévia em cache sem perder resolved", () => {
+    const cache: Record<string, Record<string, unknown>> = {};
+    const chartWithWhite = {
+      version: 4,
+      background: { type: "color" as const, value: "#ffffff" },
+      blocks: [
+        {
+          id: "chart-2",
+          type: "chart_view",
+          resolved: { chart: { points: [{ label: "B", value: 2 }] } },
+        },
+      ],
+    };
+    const slides: Slide[] = [
+      {
+        id: "primary",
+        playlistId: "p1",
+        sortOrder: 0,
+        slideType: "native",
+        title: "Primária",
+        nativeScreenKey: "custom_message",
+        nativeConfig: { version: 4, background: { type: "color", value: "#111111" } },
+        isActive: true,
+      },
+      {
+        id: "other",
+        playlistId: "p1",
+        sortOrder: 1,
+        slideType: "native",
+        title: "Outra",
+        nativeScreenKey: "custom_message",
+        nativeConfig: {
+          version: 4,
+          background: { type: "color", value: "#ffffff" },
+          blocks: [{ id: "chart-2", type: "chart_view" }],
+        },
+        isActive: true,
+      },
+    ];
+
+    buildFilmstripSlidesWithThumbnailCache({
+      slides,
+      selectedSlideId: "other",
+      liveThumbnailConfig: chartWithWhite,
+      cache,
+    });
+
+    const afterFanOut = buildFilmstripSlidesWithThumbnailCache({
+      slides: [
+        slides[0]!,
+        {
+          ...slides[1]!,
+          nativeConfig: {
+            version: 4,
+            background: { type: "color", value: "#111111" },
+            blocks: [{ id: "chart-2", type: "chart_view" }],
+          },
+        },
+      ],
+      selectedSlideId: "primary",
+      liveThumbnailConfig: {
+        version: 4,
+        background: { type: "color", value: "#111111" },
+        blocks: [],
+      },
+      cache,
+    });
+
+    expect(afterFanOut[1]?.nativeConfig?.background).toEqual({ type: "color", value: "#111111" });
+    const chartBlocks = afterFanOut[1]?.nativeConfig?.blocks as Array<{
+      resolved?: { chart?: { points?: unknown[] } };
+    }>;
+    expect(chartBlocks?.[0]?.resolved?.chart?.points).toHaveLength(1);
+  });
+
   it("não sobrescreve print com resolved ao reentrar sem dados ainda", () => {
     const cache: Record<string, Record<string, unknown>> = {};
     const chartConfig = {

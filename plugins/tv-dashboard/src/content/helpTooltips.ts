@@ -23,6 +23,22 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Adiciona elementos ao slide personalizado: textos, mídias e formas. Clique no palco para selecionar e editar.",
     background:
       "Define a cor, o gradiente ou a imagem de fundo do slide. A imagem preenche toda a tela (cobertura, sem repetir).",
+    backgroundSlides: "Fundo das {count} telas livres selecionadas.",
+    backgroundSlidesHint:
+      "Cor, gradiente ou imagem aplicados às {count} telas personalizadas. O layout de cada tela permanece independente.",
+    exportPng: "Exportar a tela atual como PNG.",
+    exportPngMany: "Exportar as {count} telas selecionadas como PNG (um arquivo por tela).",
+    exportPdf: "Abrir diálogo para exportar PDF (programação ou slide atual).",
+    exportPdfMany:
+      "Abrir diálogo para exportar PDF das {count} telas selecionadas ou da programação.",
+    exportPptx: "Exportar a tela atual como arquivo PPTX editável.",
+    exportPptxMany: "Exportar as telas livres selecionadas como um PPTX.",
+    exportSelectedScope: "Telas selecionadas ({count})",
+    exportSkipped:
+      "{exported} arquivo(s) gerado(s); {skipped} tela(s) ignorada(s) (externa ou sem visual).",
+    exportPptxCustomOnly:
+      "A exportação PPTX MVP está disponível para telas personalizadas.",
+    exportPptxSkipped: "PPTX gerado só com telas livres; {skipped} tela(s) ignorada(s).",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
     textEffects: "Sombra, contorno e reflexo tipográfico no texto selecionado.",
     textStroke: "Cor e espessura do contorno ao redor das letras.",

@@ -5,6 +5,7 @@ import {
   applySlideBatchPatch,
   buildSparseSlidePatch,
   isCustomMessageSlide,
+  overlaySharedCustomSlideConfig,
   pickSharedCustomSlideConfig,
   resolveMixedSlideField,
   resolveSelectedSlides,
@@ -147,5 +148,21 @@ describe("slideBatchFieldApplicability / mixed", () => {
         { blocks: [{ id: "velho" }], background: { type: "color", value: "#fff" } },
       ),
     ).toBeNull();
+  });
+
+  it("overlay de fundo no cache não descarta resolved dos blocos", () => {
+    const cached = {
+      background: { type: "color", value: "#fff" },
+      blocks: [{ id: "c1", type: "chart_view", resolved: { chart: { points: [1] } } }],
+    };
+    const live = {
+      background: { type: "color", value: "#111" },
+      blocks: [{ id: "c1", type: "chart_view" }],
+    };
+    expect(overlaySharedCustomSlideConfig(cached, live)).toEqual({
+      background: { type: "color", value: "#111" },
+      blocks: cached.blocks,
+    });
+    expect(overlaySharedCustomSlideConfig(cached, cached)).toBe(cached);
   });
 });

@@ -356,7 +356,10 @@ export function DeckEditorChrome({
                     />
                   ) : null}
                   {activeTab === "slide" && isCustomSlide ? (
-                    <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+                    <ComunicadoSlideBackgroundRibbon
+                      labels={adminLabels}
+                      selectedSlides={selectedSlides}
+                    />
                   ) : null}
                   <DeckSettingsPanel
                     activeTab={activeTab}

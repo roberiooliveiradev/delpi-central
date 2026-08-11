@@ -155,6 +155,24 @@ export function pickSharedCustomSlideConfig(
   return Object.keys(slice).length > 0 ? slice : null;
 }
 
+/**
+ * Atualiza fundo/filtros do print em cache sem descartar `resolved` dos blocos.
+ * O cache do filmstrip existe para gráficos; não pode congelar o fundo após fan-out.
+ */
+export function overlaySharedCustomSlideConfig(
+  cached: Record<string, unknown>,
+  live: Record<string, unknown>,
+): Record<string, unknown> {
+  let next: Record<string, unknown> | null = null;
+  for (const key of SHARED_CUSTOM_SLIDE_KEYS) {
+    if (stableJson(live[key]) === stableJson(cached[key])) continue;
+    if (!next) next = { ...cached };
+    if (live[key] === undefined) delete next[key];
+    else next[key] = live[key];
+  }
+  return next ?? cached;
+}
+
 export function resolveSelectedSlides(
   slides: readonly Slide[],
   selectedIds: readonly string[],
