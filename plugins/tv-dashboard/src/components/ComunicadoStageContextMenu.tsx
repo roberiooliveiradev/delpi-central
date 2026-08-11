@@ -174,7 +174,7 @@ export function ComunicadoStageContextMenu({
     return [targetBlockId];
   }, [selectedIds, sessionSelectedIds, targetBlockId]);
 
-  /** Cancela tap-deselect armado pelo pointerdown; não força seleção no right-click. */
+  /** Cancela tap-deselect armado pelo pointerdown; a seleção live já veio do apply no open. */
   useEffect(() => {
     if (!open) return;
     cancelPendingTapDeselect();

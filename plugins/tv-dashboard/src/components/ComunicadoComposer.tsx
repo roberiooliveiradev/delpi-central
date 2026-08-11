@@ -46,7 +46,10 @@ import { BlockSelectionChromeOverlay } from "./BlockSelectionChromeOverlay";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
-import { resolveContextMenuSessionSelectedIds } from "../utils/contextMenuSelectionGuard";
+import {
+  resolveContextMenuSelectionApply,
+  resolveContextMenuSessionSelectedIds,
+} from "../utils/contextMenuSelectionGuard";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   measureVisualBoxContentSizePx,
@@ -645,18 +648,28 @@ export function ComunicadoComposerCanvas() {
         eventTarget: event.target,
       });
       /*
-       * Botão direito só abre opções — não altera a seleção (só o esquerdo seleciona).
-       * O alvo do menu vai em targetBlockId; ações do menu aplicam seleção sob demanda.
+       * Mercado (Figma/PPT/Canva): direito em objeto fora da seleção substitui
+       * a seleção (grupo do alvo) e abre o menu com chrome visível. Direito em
+       * item já selecionado preserva o conjunto. Fundo = menu de canvas, sem apply.
        */
       cancelPendingTapDeselect();
       if (hit.type === "block") {
         event.stopPropagation();
+        const apply = resolveContextMenuSelectionApply({
+          selectedIds,
+          targetBlockId: hit.blockId,
+          blocks,
+        });
+        if (apply.nextSelectedIds) {
+          selectBlocksByIds(apply.nextSelectedIds);
+        }
+        const liveIds = apply.nextSelectedIds ?? selectedIds;
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
           targetBlockId: hit.blockId,
           sessionSelectedIds: resolveContextMenuSessionSelectedIds({
-            selectedIds,
+            selectedIds: liveIds,
             targetBlockId: hit.blockId,
             blocks,
           }),
@@ -680,6 +693,7 @@ export function ComunicadoComposerCanvas() {
       editingTextId,
       lastPartialTextEditSelection,
       openTextFormatContextMenu,
+      selectBlocksByIds,
       selectedIds,
     ],
   );

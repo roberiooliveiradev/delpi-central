@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   resolveContextMenuIconPickerTargetId,
+  resolveContextMenuSelectionApply,
   resolveContextMenuSessionSelectedIds,
   sameSelectedIdSet,
   shouldCancelTapDeselectOnContextMenu,
@@ -75,6 +76,43 @@ describe("contextMenuSelectionGuard", () => {
         ],
       }).sort(),
     ).toEqual(["a", "b"]);
+  });
+
+  it("apply: fundo e alvo já selecionado não mudam a live", () => {
+    expect(
+      resolveContextMenuSelectionApply({
+        selectedIds: ["a", "b"],
+        targetBlockId: null,
+        blocks: [{ id: "a" }, { id: "b" }],
+      }),
+    ).toEqual({ nextSelectedIds: null });
+    expect(
+      resolveContextMenuSelectionApply({
+        selectedIds: ["a", "b"],
+        targetBlockId: "a",
+        blocks: [{ id: "a" }, { id: "b" }],
+      }),
+    ).toEqual({ nextSelectedIds: null });
+  });
+
+  it("apply: alvo fora substitui e deixa o alvo por último", () => {
+    expect(
+      resolveContextMenuSelectionApply({
+        selectedIds: ["x"],
+        targetBlockId: "a",
+        blocks: [
+          { id: "a", groupId: "g1" },
+          { id: "b", groupId: "g1" },
+        ],
+      }),
+    ).toEqual({ nextSelectedIds: ["b", "a"] });
+    expect(
+      resolveContextMenuSelectionApply({
+        selectedIds: [],
+        targetBlockId: "solo",
+        blocks: [{ id: "solo" }],
+      }),
+    ).toEqual({ nextSelectedIds: ["solo"] });
   });
 
   it("sameSelectedIdSet ignora ordem", () => {
