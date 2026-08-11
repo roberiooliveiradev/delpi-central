@@ -60,6 +60,10 @@ function isIsoDate(value: string): boolean {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
+export function openOrdersSellerAccessKey(access: OpenOrdersSellerAccess): string {
+  return `${access.allowSellerId ? "team" : "own"}:${access.validSellerIds.join(",")}`;
+}
+
 export function resolveOpenOrdersSellerId(
   rawSellerId: string | null | undefined,
   access: OpenOrdersSellerAccess = DENY_SELLER_ACCESS,

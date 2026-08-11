@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   collectDistinctClients,
@@ -9,6 +9,7 @@ import {
   type OpenOrdersTotvsFilters,
 } from "../utils/filterItems";
 import {
+  openOrdersSellerAccessKey,
   parseOpenOrdersListRouteState,
   parseOpenOrdersListUrlState,
   syncOpenOrdersListStateToUrl,
@@ -62,15 +63,15 @@ export function useOpenOrdersDashboard(
     }
   }, [loading, data]);
 
-  useEffect(() => {
-    if (sellerScopeLoading) return;
-    if (initialUrlState.sellerId !== sellerId) {
-      onSellerIdChange?.(initialUrlState.sellerId);
-    }
-  }, [initialUrlState.sellerId, onSellerIdChange, sellerId, sellerScopeLoading]);
+  const sellerAccessKey = sellerAccess
+    ? openOrdersSellerAccessKey(sellerAccess)
+    : "deny:";
+  const hydratedAccessKeyRef = useRef<string | null>(null);
+  const [urlHydrated, setUrlHydrated] = useState(false);
 
   useEffect(() => {
-    const restoreFromUrl = () => {
+    if (sellerScopeLoading || typeof window === "undefined") return;
+    const applyBrowserState = () => {
       const state = parseOpenOrdersListRouteState(
         window.location.pathname,
         window.location.search,
@@ -84,9 +85,14 @@ export function useOpenOrdersDashboard(
       setSortDirection(state.sortDirection);
       onSellerIdChange?.(state.sellerId);
     };
-    window.addEventListener("popstate", restoreFromUrl);
-    return () => window.removeEventListener("popstate", restoreFromUrl);
-  }, [basePath, onSellerIdChange, sellerAccess]);
+    if (hydratedAccessKeyRef.current !== sellerAccessKey) {
+      applyBrowserState();
+      hydratedAccessKeyRef.current = sellerAccessKey;
+      setUrlHydrated(true);
+    }
+    window.addEventListener("popstate", applyBrowserState);
+    return () => window.removeEventListener("popstate", applyBrowserState);
+  }, [basePath, onSellerIdChange, sellerAccess, sellerAccessKey, sellerScopeLoading]);
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
@@ -136,7 +142,7 @@ export function useOpenOrdersDashboard(
   const currentPage = Math.min(page, totalPages);
 
   useEffect(() => {
-    if (loading || sellerScopeLoading) return;
+    if (!urlHydrated || sellerScopeLoading) return;
     syncOpenOrdersListStateToUrl(
       {
         filters,
@@ -151,11 +157,11 @@ export function useOpenOrdersDashboard(
     basePath,
     currentPage,
     filters,
-    loading,
     sellerId,
     sellerScopeLoading,
     sortDirection,
     sortKey,
+    urlHydrated,
   ]);
 
   const paginatedItems = useMemo(() => {

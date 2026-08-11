@@ -12,6 +12,7 @@ import {
   parseOpenOrdersLineDeepLink,
   parseOpenOrdersListRouteState,
   parseOpenOrdersListUrlState,
+  openOrdersSellerAccessKey,
   resolveOpenOrdersSellerId,
   sanitizeOpenOrdersListSearch,
   syncOpenOrdersListStateToUrl,
@@ -186,5 +187,46 @@ describe("openOrdersDeepLink", () => {
       { pedido: "A" },
     );
     assert.equal(hit?.linha, "01");
+  });
+
+  it("chave de acesso muda só quando o escopo de vendedores muda", () => {
+    assert.equal(
+      openOrdersSellerAccessKey({
+        allowSellerId: true,
+        validSellerIds: ["a", "b"],
+      }),
+      "team:a,b",
+    );
+    assert.equal(
+      openOrdersSellerAccessKey({
+        allowSellerId: false,
+        validSellerIds: [],
+      }),
+      "own:",
+    );
+  });
+
+  it("resolve seller_id da URL só quando o vendedor está no escopo", () => {
+    assert.equal(
+      resolveOpenOrdersSellerId("2869fcd2-a365-48bc-b311-714576720016", {
+        allowSellerId: true,
+        validSellerIds: ["2869fcd2-a365-48bc-b311-714576720016"],
+      }),
+      "2869fcd2-a365-48bc-b311-714576720016",
+    );
+    assert.equal(
+      resolveOpenOrdersSellerId("2869fcd2-a365-48bc-b311-714576720016", {
+        allowSellerId: true,
+        validSellerIds: ["outra-carteira"],
+      }),
+      null,
+    );
+    assert.equal(
+      resolveOpenOrdersSellerId("2869fcd2-a365-48bc-b311-714576720016", {
+        allowSellerId: false,
+        validSellerIds: ["2869fcd2-a365-48bc-b311-714576720016"],
+      }),
+      null,
+    );
   });
 });
