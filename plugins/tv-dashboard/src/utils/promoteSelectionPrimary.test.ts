@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  orderBlocksBySelectedIds,
   promoteSelectionPrimary,
   resolveSelectionPrimaryId,
   resolveStageBlockSelection,
@@ -18,6 +19,14 @@ describe("promoteSelectionPrimary", () => {
     expect(resolveStageBlockSelection({ selectedIds: ["x", "y"], clickedId: "x" })).toEqual([
       "y",
       "x",
+    ]);
+  });
+
+  it("ordena blocos pela seleção, não pelo documento", () => {
+    const blocks = [{ id: "a" }, { id: "b" }, { id: "c" }];
+    expect(orderBlocksBySelectedIds(blocks, ["c", "a"]).map((item) => item.id)).toEqual([
+      "c",
+      "a",
     ]);
   });
 });

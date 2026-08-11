@@ -22,3 +22,13 @@ export function resolveStageBlockSelection(input: {
 export function resolveSelectionPrimaryId(selectedIds: readonly string[]): string | null {
   return selectedIds[selectedIds.length - 1] ?? null;
 }
+
+/** Blocos da seleção na ordem de `selectedIds` (último = primário). */
+export function orderBlocksBySelectedIds<T extends { id: string }>(
+  blocks: readonly T[],
+  selectedIds: readonly string[],
+): T[] {
+  return selectedIds
+    .map((id) => blocks.find((block) => block.id === id))
+    .filter((block): block is T => Boolean(block));
+}

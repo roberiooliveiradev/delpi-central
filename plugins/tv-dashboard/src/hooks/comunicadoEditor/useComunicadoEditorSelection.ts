@@ -53,6 +53,7 @@ import {
 } from "../../utils/normalizeSelectionRibbonTab";
 import { resolveFormatSelectionPanelTab } from "../../utils/resolveTableSelectionPanelTab";
 import { toggleCompositePartSelection } from "../../utils/compositePartSelection";
+import { orderBlocksBySelectedIds } from "../../utils/promoteSelectionPrimary";
 import {
   reconcileChartSeriesPartAfterSeriesFieldsChange,
   reconcileTableHeaderPartsAfterVisibleKeysChange,
@@ -749,7 +750,7 @@ export function useComunicadoEditorSelection({
   );
 
   const selectedBlocks = useMemo(
-    () => blocks.filter((block) => selectedIds.includes(block.id)),
+    () => orderBlocksBySelectedIds(blocks, selectedIds),
     [blocks, selectedIds],
   );
 

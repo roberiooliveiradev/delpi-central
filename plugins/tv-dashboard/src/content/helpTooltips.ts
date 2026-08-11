@@ -72,6 +72,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Camadas, alinhamento, agrupamento e rotação — mesmo padrão Organizar do Excel.",
+    closedGroupSelection:
+      "Grupo fechado: a ribbon vale para todos os membros. Arrastar a moldura move o conjunto; clique num membro define a referência.",
     selectionPane:
       "Abre o painel Seleção com a lista de elementos, visibilidade e ordem de camadas.",
     rotateMenu: "Girar 90°, inverter ou abrir o campo de rotação em Tamanho e posição.",

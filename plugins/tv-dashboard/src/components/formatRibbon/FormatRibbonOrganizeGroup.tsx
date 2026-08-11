@@ -22,7 +22,7 @@ import {
 import { canConnectBlocks } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { selectedHasGroup } from "../../utils/comunicadoGrouping";
+import { resolveClosedGroupSelection, selectedHasGroup } from "../../utils/comunicadoGrouping";
 import type { LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonMenuTile, type DeckRibbonMenuItem } from "../deck/DeckRibbonMenuTile";
@@ -71,6 +71,9 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
   } = useComunicadoEditor();
 
   if (!selected) return null;
+
+  const closedGroup = resolveClosedGroupSelection(blocks, selectedIds);
+  const organizeHint = closedGroup ? H.closedGroupSelection : H.organize;
 
   const canDistribute = selectedIds.length >= 3;
   const canAlignSelection = selectedIds.length >= 2;
@@ -248,7 +251,7 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
     <DeckRibbonGroup
       groupId="organize"
       label="Organizar"
-      hint={H.organize}
+      hint={organizeHint}
       captionPlacement={embed ? "none" : "below"}
     >
       <div className="td-deck-ribbon__organize-grid">
