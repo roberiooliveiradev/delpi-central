@@ -411,6 +411,18 @@ não existe schema de billing duplicado no gateway `commercial-api`.
 
 Doc: [delpi-reports.md](./delpi-reports.md)
 
+## Mural de Acessos — `/mural-acessos`
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/mural-acessos/hubs` | `mural-acessos.access` |
+| POST | `/mural-acessos/hubs` | `mural-acessos.manage` |
+| GET | `/mural-acessos/hubs/{id}/links` | access |
+| POST | `/mural-acessos/hubs/{id}/links` | manage |
+| GET | `/public/mural-acessos/menu/{token}` | público |
+
+Doc: [mural-acessos.md](./mural-acessos.md)
+
 ## Indicadores Estratégicos
 
 Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../../strategic-indicators-api/docs/API.md).

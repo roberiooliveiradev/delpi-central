@@ -635,6 +635,22 @@ Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo 
 
 **Fonte analítica:** `GET /quality/kaizens/summary` e `GET /quality/kaizens/{kaizen_id}` leem PostgreSQL (`PostgresKaizenQueryRepository`). Cálculo temporal por revisão: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
 
+## Mural de Acessos — `/mural-acessos`
+
+Vários murais de links, cada um com QR e menu público. Admin no portal; leitura pública sem JWT.
+
+Doc: [mural-acessos.md](./mural-acessos.md) · Plugin: [plugins/mural-acessos/README.md](../../../plugins/mural-acessos/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| GET | `/mural-acessos/hubs` | `list_mural_acessos_hubs` |
+| POST | `/mural-acessos/hubs` | `create_mural_acessos_hub` |
+| GET | `/mural-acessos/hubs/{id}` | `get_mural_acessos_hub` |
+| GET | `/mural-acessos/hubs/{id}/links` | `list_mural_acessos_links` |
+| GET | `/public/mural-acessos/menu/{token}` | `list_public_mural_acessos_menu_by_token` |
+
+Página pública: `/p/mural-acessos/menu/{token}` (o mural inicial usa `mural`).
+
 ## Delpi Reports — `/reports`
 
 Cadastro de definições de relatório, histórico de runs e catálogo de providers (e-mail via Graph na Fase 3).

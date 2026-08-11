@@ -135,6 +135,7 @@ FASE_MFE=(
   guias-procedimentos
   central-agendamento
   canal-denuncia
+  mural-acessos
   reports
   planejamento-orcamentario
   cipa

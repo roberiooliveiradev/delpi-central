@@ -72,6 +72,10 @@ CANAL_DENUNCIA_ACCESS = "canal-denuncia.access"
 GUIAS_PROCEDIMENTOS_ACCESS = "guias-procedimentos.access"
 GUIAS_PROCEDIMENTOS_MANAGE = "guias-procedimentos.manage"
 
+# --- mural de acessos ---
+MURAL_ACESSOS_ACCESS = "mural-acessos.access"
+MURAL_ACESSOS_MANAGE = "mural-acessos.manage"
+
 # --- planejamento orçamentário ---
 PLANEJAMENTO_ORCAMENTARIO_ACCESS = "planejamento-orcamentario.access"
 PLANEJAMENTO_ORCAMENTARIO_GUIDANCE_VIEW = "planejamento-orcamentario.guidance.view"
@@ -504,6 +508,15 @@ GUIAS_PROCEDIMENTOS_READ_PERMISSIONS = [
 
 GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS = [
     GUIAS_PROCEDIMENTOS_MANAGE,
+]
+
+MURAL_ACESSOS_READ_PERMISSIONS = [
+    MURAL_ACESSOS_ACCESS,
+    MURAL_ACESSOS_MANAGE,
+]
+
+MURAL_ACESSOS_WRITE_PERMISSIONS = [
+    MURAL_ACESSOS_MANAGE,
 ]
 
 LANCAMENTO_NOTAS_FISCAIS_BRANCH_VIEW_PERMS = {

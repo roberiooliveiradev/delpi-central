@@ -989,6 +989,22 @@ services:
     networks:
       - delpi-network
 
+  mural-acessos:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: mural-acessos/Dockerfile
+      target: production
+
+    container_name: delpi-mural-acessos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   reports:
     <<: *plugin-ui-federated
     build:
@@ -1234,6 +1250,7 @@ services:
       COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-commercial}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
+      MURAL_ACESSOS_UPLOAD_DIR: ${MURAL_ACESSOS_UPLOAD_DIR:-/app/data/mural-acessos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
@@ -1288,6 +1305,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/guias-procedimentos:/app/data/guias-procedimentos
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/mural-acessos:/app/data/mural-acessos
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr

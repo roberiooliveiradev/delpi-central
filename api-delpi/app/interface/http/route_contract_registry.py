@@ -776,6 +776,27 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "reject_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "cancel_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "create_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
+    "list_mural_acessos_hubs": RouteContract("mural_access_hub", "paged_list"),
+    "create_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "get_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "update_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "delete_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "get_mural_acessos_hub_qr": RouteContract("mural_access_hub_qr", "scalar"),
+    "list_mural_acessos_links": RouteContract("mural_access_link", "paged_list"),
+    "create_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "update_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "delete_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "reorder_mural_acessos_links": RouteContract("mural_access_link", "paged_list"),
+    "upload_mural_acessos_link_image": RouteContract("mural_access_link", "scalar"),
+    "delete_mural_acessos_link_image": RouteContract("mural_access_link", "scalar"),
+    "get_mural_acessos_link_image": RouteContract("mural_access_link_image", "scalar"),
+    "list_public_mural_acessos_menu": RouteContract("mural_access_menu", "paged_list"),
+    "list_public_mural_acessos_menu_by_token": RouteContract(
+        "mural_access_menu", "paged_list"
+    ),
+    "get_public_mural_acessos_link_image": RouteContract(
+        "mural_access_link_image", "scalar"
+    ),
     "list_guias_procedimentos_departments": RouteContract(
         "guias_procedimentos_department", "paged_list"
     ),

@@ -82,6 +82,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
+| `plugins/mural-acessos` | `mural-acessos` | microfrontend | plugin | `/apps/mural-acessos` | `delpi-mural-acessos` |
 | `plugins/reports` | `reports` | microfrontend | plugin | `/apps/reports` | `delpi-reports` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -133,6 +134,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
 | CIPA | `/apps/cipa-api/*` (atas, membros, SIPAT); público `/p/cipa/sipat/{token}` — [README](../../plugins/cipa/README.md) · [API](../../cipa-api/README.md) · [playbook](../12-roadmap-e-evolucao/cipa/PLAYBOOK.md) |
+| Mural de Acessos | `/apps/api-delpi/mural-acessos/*` + público `/public/mural-acessos/*` — [README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) |
 
 ---
 
@@ -183,6 +185,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | estoque-seguranca | `estoque-seguranca` |
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
+| mural-acessos | `mural-acessos` |
 | reports | `reports` |
 | commercial | `commercial` |
 
@@ -209,6 +212,7 @@ Declaradas no manifesto e persistidas na Core API:
 | estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
+| mural-acessos | `mural-acessos.access`, `mural-acessos.manage` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 
@@ -234,6 +238,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Acompanhamento de Refugos | [Plugin README](../../plugins/scrap-monitoring/README.md) · [API](../../api-delpi/docs/api/scrap-monitoring.md) |
 | Apontamento de Produção | [Plugin README](../../plugins/production-appointments/README.md) · [API](../../api-delpi/docs/api/production-appointments.md) |
 | Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) |
+| Mural de Acessos | [Plugin README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) · [público `/p/mural-acessos/menu/{token}`](../../plugins/public-hub/README.md) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 

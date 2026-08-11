@@ -187,6 +187,18 @@ O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), pá
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Mural de Acessos (`mural-acessos`)
+
+Menu estilo smartphone por mural (token na URL):
+
+| Página | Rota | `load` |
+|---|---|---|
+| Menu | `/p/mural-acessos/menu/{token}` | `GET /apps/api-delpi/public/mural-acessos/menu/{token}` |
+
+O mural inicial usa o token `mural`. Cadastro, novos murais e QR imprimível ficam no MFE autenticado `mural-acessos`.
+
+Ver `src/apps/mural-acessos/` · doc: [plugins/mural-acessos/README.md](../mural-acessos/README.md).
+
 ### Kaizen — sugestão pública (`kaizen`)
 
 Formulário aberto (token estático `aberto`) para colaboradores enviarem ideias:

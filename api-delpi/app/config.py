@@ -131,6 +131,10 @@ class Settings:
         "GUIAS_PROCEDIMENTOS_UPLOAD_DIR",
         default="/app/data/guias-procedimentos",
     )
+    MURAL_ACESSOS_UPLOAD_DIR: str = _get_env(
+        "MURAL_ACESSOS_UPLOAD_DIR",
+        default="/app/data/mural-acessos",
+    )
     PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR: str = _get_env(
         "PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR",
         default="/app/data/planejamento-orcamentario",
