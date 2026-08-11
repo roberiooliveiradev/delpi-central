@@ -63,6 +63,40 @@ describe("comunicadoHelpers", () => {
     });
   });
 
+  it("persiste hidden=true no round-trip e omite hidden falso", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [
+        {
+          id: "h1",
+          type: "heading",
+          content: "Oculto",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          hidden: true,
+        },
+        {
+          id: "t1",
+          type: "text",
+          content: "Visível",
+          frame: { x: 0, y: 12, w: 20, h: 10 },
+          hidden: false,
+        },
+      ],
+    });
+    expect(parsed.blocks?.[0]?.hidden).toBe(true);
+    expect(parsed.blocks?.[1]?.hidden).toBeUndefined();
+
+    const serialized = serializeComunicadoConfig(parsed) as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(serialized.blocks[0]?.hidden).toBe(true);
+    expect(serialized.blocks[1]?.hidden).toBeUndefined();
+
+    const roundtrip = parseComunicadoConfig(serialized);
+    expect(roundtrip.blocks?.[0]?.hidden).toBe(true);
+    expect(roundtrip.blocks?.[1]?.hidden).toBeUndefined();
+  });
+
   it("mescla estilo padrão quando bloco vem com style vazio", () => {
     const parsed = parseComunicadoConfig({
       version: 2,
