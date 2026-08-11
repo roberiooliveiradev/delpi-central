@@ -316,12 +316,13 @@
 }
 
 .delpi-ui-shape-menu__trigger-swatch--outline {
+  /* Mesmo canal que o preenchimento: `background` (hex ou linear-gradient).
+     `border-color` não pinta gradiente e cai em currentColor (branco no tema escuro). */
   background: transparent;
-  border: 2px solid currentColor;
-  box-shadow: none;
-  height: 0;
+  border: none;
+  height: 4px;
   width: 18px;
-  bottom: 3px;
+  bottom: 1px;
 }
 
 .delpi-ui-shape-menu__trigger-swatch--none {

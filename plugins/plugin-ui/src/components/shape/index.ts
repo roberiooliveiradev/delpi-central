@@ -89,6 +89,8 @@ export {
   fillToCssBackground,
   normalizeFillAngle,
   normalizeGradientStops,
+  resolveFillKindTabChange,
+  resolveFillTriggerPreview,
   solidFromFill,
   stopsFromLegacyFromTo,
 } from "./fillTypes";
@@ -99,6 +101,7 @@ export type {
   DelpiFillNone,
   DelpiFillSolid,
   DelpiGradientStop,
+  FillTriggerPreview,
 } from "./fillTypes";
 export { applyTextEffectStyleToCss } from "./textEffectStyle";
 export type { TextEffectStyleFields } from "./textEffectStyle";

@@ -6,12 +6,12 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor, resolveColorTriggerPreviewMode } from "./colorUtils";
+import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor } from "./colorUtils";
 import { FillGradientPanel } from "./FillGradientPanel";
 import {
-  fillToCssBackground,
   normalizeGradientStops,
-  solidFromFill,
+  resolveFillKindTabChange,
+  resolveFillTriggerPreview,
   type DelpiFill,
   type DelpiFillKind,
 } from "./fillTypes";
@@ -141,25 +141,9 @@ export function ColorPickerPopover({
   const switchMode = (next: DelpiFillKind) => {
     setMode(next);
     if (!onFillChange) return;
-    if (next === "solid") {
-      const color = solidFromFill(fill) === "transparent" ? value || "#0f172a" : solidFromFill(fill);
-      onFillChange({ kind: "solid", color });
-      onChange(color);
-      return;
-    }
-    if (fill?.kind === "gradient") {
-      onFillChange(fill);
-      return;
-    }
-    const base = value && value !== "transparent" && value !== "auto" ? value : "#0f172a";
-    onFillChange({
-      kind: "gradient",
-      angle: 180,
-      stops: normalizeGradientStops([
-        { color: base, position: 0 },
-        { color: "#1e3a5f", position: 100 },
-      ]),
-    });
+    const nextFill = resolveFillKindTabChange(next, fill, value);
+    if (!nextFill) return;
+    onFillChange(nextFill);
   };
 
   const handleEyedropper = async () => {
@@ -404,14 +388,11 @@ export function ColorPickerPopoverTrigger({
     onClose?.();
   };
 
-  const previewMode =
-    popoverProps.fill?.kind === "gradient" ? "color" : resolveColorTriggerPreviewMode(value, variant);
-  const previewBackground =
-    popoverProps.fill?.kind === "gradient"
-      ? fillToCssBackground(popoverProps.fill)
-      : previewMode === "color" && value
-        ? value
-        : undefined;
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    popoverProps.fill,
+    value,
+    variant,
+  );
 
   return (
     <div
@@ -501,14 +482,11 @@ export function ShapeFillMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const previewMode =
-    fill?.kind === "gradient" ? "color" : resolveColorTriggerPreviewMode(value, "fill");
-  const previewBackground =
-    fill?.kind === "gradient"
-      ? fillToCssBackground(fill)
-      : previewMode === "color" && value
-        ? value
-        : undefined;
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    fill,
+    value,
+    "fill",
+  );
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>

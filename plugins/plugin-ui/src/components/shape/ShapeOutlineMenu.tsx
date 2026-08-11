@@ -5,8 +5,7 @@ import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceCont
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import { resolveColorTriggerPreviewMode } from "./colorUtils";
-import { fillToCssBackground, type DelpiFill, type DelpiFillKind } from "./fillTypes";
+import { resolveFillTriggerPreview, type DelpiFill, type DelpiFillKind } from "./fillTypes";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 
@@ -59,14 +58,11 @@ export function ShapeOutlineMenu({
     setSubmenu(null);
   };
 
-  const previewMode =
-    fill?.kind === "gradient" ? "color" : resolveColorTriggerPreviewMode(color, "outline");
-  const previewBorder =
-    fill?.kind === "gradient"
-      ? fillToCssBackground(fill)
-      : previewMode === "color" && color
-        ? color
-        : undefined;
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    fill,
+    color,
+    "outline",
+  );
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -88,7 +84,7 @@ export function ShapeOutlineMenu({
             ]
               .filter(Boolean)
               .join(" ")}
-            style={previewBorder ? { borderColor: previewBorder } : undefined}
+            style={previewBackground ? { background: previewBackground } : undefined}
           />
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{outlineLabel ?? L.outline}</span>

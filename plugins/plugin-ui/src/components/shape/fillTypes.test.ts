@@ -4,6 +4,8 @@ import {
   fillToCssBackground,
   normalizeFillAngle,
   normalizeGradientStops,
+  resolveFillKindTabChange,
+  resolveFillTriggerPreview,
   solidFromFill,
   stopsFromLegacyFromTo,
 } from "./fillTypes";
@@ -45,6 +47,70 @@ describe("fillTypes", () => {
         stops: stopsFromLegacyFromTo("#111", "#eee"),
       }),
     ).toBe("#111");
+  });
+
+  it("resolveFillTriggerPreview: fill sólido manda mesmo sem value", () => {
+    const preview = resolveFillTriggerPreview({ kind: "solid", color: "#089bdb" }, undefined, "fill");
+    expect(preview.mode).toBe("color");
+    expect(preview.background).toBe("#089bdb");
+  });
+
+  it("resolveFillTriggerPreview: gradiente usa background CSS, não borderColor", () => {
+    const preview = resolveFillTriggerPreview(
+      {
+        kind: "gradient",
+        angle: 135,
+        stops: [
+          { color: "#089bdb", position: 0 },
+          { color: "#be123c", position: 100 },
+        ],
+      },
+      undefined,
+      "outline",
+    );
+    expect(preview.mode).toBe("color");
+    expect(preview.background).toContain("linear-gradient(135deg");
+    expect(preview.background).toContain("#089bdb");
+  });
+
+  it("resolveFillTriggerPreview: none e value transparent → sem prévia", () => {
+    expect(resolveFillTriggerPreview({ kind: "none" }, "#fff", "fill")).toEqual({ mode: "none" });
+    expect(resolveFillTriggerPreview(undefined, "transparent", "outline").mode).toBe("none");
+  });
+
+  it("aba Cor sobre gradiente não emite sólido", () => {
+    const current = {
+      kind: "gradient" as const,
+      angle: 135,
+      stops: [
+        { color: "#089bdb", position: 0 },
+        { color: "#be123c", position: 100 },
+      ],
+    };
+    expect(resolveFillKindTabChange("solid", current, "#089bdb")).toBeNull();
+  });
+
+  it("aba Gradiente sobre sólido emite gradiente a partir do hex", () => {
+    const next = resolveFillKindTabChange("gradient", { kind: "solid", color: "#ef4444" }, "#ef4444");
+    expect(next).toEqual(
+      expect.objectContaining({
+        kind: "gradient",
+        angle: 180,
+        stops: expect.arrayContaining([expect.objectContaining({ color: "#ef4444", position: 0 })]),
+      }),
+    );
+  });
+
+  it("re-clicar Gradiente devolve o fill atual", () => {
+    const current = {
+      kind: "gradient" as const,
+      angle: 45,
+      stops: [
+        { color: "#111111", position: 0 },
+        { color: "#eeeeee", position: 100 },
+      ],
+    };
+    expect(resolveFillKindTabChange("gradient", current)).toBe(current);
   });
 
   it("aplica opacidade do stop no CSS", () => {

@@ -1,4 +1,10 @@
-import { clampAlpha, colorToCss, cssToColorValue } from "./colorUtils";
+import {
+  clampAlpha,
+  colorToCss,
+  cssToColorValue,
+  resolveColorTriggerPreviewMode,
+  type ColorTriggerPreviewMode,
+} from "./colorUtils";
 
 export const MAX_GRADIENT_STOPS = 8;
 export const MIN_GRADIENT_STOPS = 2;
@@ -61,6 +67,66 @@ export function fillToCssBackground(fill: DelpiFill | undefined): string {
     .map((stop) => `${stopCssColor(stop)} ${stop.position}%`)
     .join(", ");
   return `linear-gradient(${angle}deg, ${stops})`;
+}
+
+export type FillTriggerPreview = {
+  mode: ColorTriggerPreviewMode;
+  /**
+   * Sempre `background` (hex ou linear-gradient).
+   * `borderColor` não aceita gradiente e cai em `currentColor` (branco no tema escuro).
+   */
+  background?: string;
+};
+
+/**
+ * Prévia do gatilho: `fill` manda; hex `value` só entra se não houver paint rico.
+ * Contorno e preenchimento usam o mesmo CSS `background`.
+ */
+export function resolveFillTriggerPreview(
+  fill?: DelpiFill,
+  value?: string | null,
+  variant?: "default" | "fill" | "outline" | "text",
+): FillTriggerPreview {
+  if (fill?.kind === "gradient") {
+    return { mode: "color", background: fillToCssBackground(fill) };
+  }
+  if (fill?.kind === "solid") {
+    const mode = resolveColorTriggerPreviewMode(fill.color, variant);
+    return { mode, background: mode === "color" ? fillToCssBackground(fill) : undefined };
+  }
+  if (fill?.kind === "none") {
+    return { mode: "none" };
+  }
+  const mode = resolveColorTriggerPreviewMode(value, variant);
+  return {
+    mode,
+    background: mode === "color" && value ? value : undefined,
+  };
+}
+
+/**
+ * Troca de aba Cor/Gradiente.
+ * `null` = só UI: Cor sobre gradiente não aplica sólido até o usuário escolher a cor.
+ */
+export function resolveFillKindTabChange(
+  next: DelpiFillKind,
+  current: DelpiFill | undefined,
+  fallbackHex?: string,
+): DelpiFill | null {
+  if (next === "solid") return null;
+  if (current?.kind === "gradient") return current;
+  const base =
+    fallbackHex && fallbackHex !== "transparent" && fallbackHex !== "auto"
+      ? fallbackHex
+      : "#0f172a";
+  return {
+    kind: "gradient",
+    angle: 180,
+    stops: normalizeGradientStops([
+      { color: base, position: 0 },
+      { color: "#1e3a5f", position: 100 },
+    ]),
+  };
 }
 
 export const DEFAULT_LINEAR_GRADIENT_PRESETS: DelpiFillGradient[] = [
