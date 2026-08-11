@@ -238,6 +238,35 @@ def deactivate_seller_portfolio(
         )
 
 
+@router.delete("/{portfolio_id}/permanent", operation_id="purge_seller_portfolio")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def purge_seller_portfolio(
+    request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+):
+    try:
+        portfolio = _use_case().purge_portfolio(
+            portfolio_id,
+            actor_user_id=_current_user_id(request),
+        )
+        return ok(
+            portfolio_to_dict(portfolio),
+            message="Carteira excluída em definitivo.",
+            operation_id="purge_seller_portfolio",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="purge_seller_portfolio")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="purge_seller_portfolio")
+    except Exception:
+        logger.exception("purge_seller_portfolio_failed")
+        return fail(
+            "Erro interno ao excluir carteira.",
+            500,
+            operation_id="purge_seller_portfolio",
+        )
+
+
 @router.put("/{portfolio_id}/customers", operation_id="replace_seller_customers")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def replace_seller_customers(

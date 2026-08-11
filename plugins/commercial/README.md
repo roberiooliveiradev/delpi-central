@@ -168,6 +168,22 @@ modal de OV nem navegação para outro plugin.
 
 **Empty / freshness:** `portfolio.empty` → empty state + CTA Carteiras; toolbar com «Atualizado às HH:MM» após carga.
 
+## Administração de carteiras — WF-05R
+
+`/apps/commercial/seller-portfolios` é lista + detalhe (kit). O estado
+compartilhável usa `replaceState` só nesta rota:
+
+| Query | Efeito |
+|-------|--------|
+| `q` | Busca por nome, usuário ou e-mail |
+| `filter=active\|inactive` | Recorte de situação (`all` é omitido) |
+| `id` | UUID da carteira aberta no painel |
+
+`DELETE /seller-portfolios/{id}` **inativa** (soft). Excluir de verdade é
+`DELETE /seller-portfolios/{id}/permanent` (`purge_seller_portfolio`): apaga a
+linha, desvincula clientes (`ON DELETE CASCADE`) e libera o `user_id`. Contrato
+em [`src/utils/sellerPortfoliosDeepLink.ts`](./src/utils/sellerPortfoliosDeepLink.ts).
+
 ## APIs
 
 | Base / path | Uso |

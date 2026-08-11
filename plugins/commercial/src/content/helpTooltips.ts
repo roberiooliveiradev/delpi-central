@@ -268,6 +268,8 @@ export const CM_HELP = {
     list: "Carteiras cadastradas (usuário Minha Delpi + nome de exibição).",
     filter: "Filtre a lista por status: todas, só ativas ou só inativas.",
     create: "Cria carteira vinculada a um usuário do diretório. O nome aparece no seletor de escopo.",
+    createDialog:
+      "Vincule um usuário do diretório e defina o nome no seletor de escopo.",
     displayName:
       "Nome amigável no portal. Se vazio ao criar, usa o nome do usuário Minha Delpi.",
     directoryUser:
@@ -279,10 +281,14 @@ export const CM_HELP = {
     colUserId: "Nome e e-mail do usuário Minha Delpi dono da carteira.",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
-    colActions: "Editar nome, gerenciar clientes ou ativar/desativar a carteira.",
-    managePortfolio: "Carteira cujos clientes você vai vincular ou remover.",
+    layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
+    cardOpenHint: "Abrir carteira",
     searchCustomers:
       "Busca clientes ativos por código ou nome (mínimo de dois caracteres).",
+    deactivate:
+      "A carteira sai do escopo operacional. Os clientes continuam vinculados.",
+    purge:
+      "Apaga a carteira em definitivo. Os clientes vinculados serão desvinculados.",
     transfer:
       "Move clientes de uma carteira para outra com motivo registrado (auditoria).",
     transferSource: "Carteira de onde os clientes saem.",

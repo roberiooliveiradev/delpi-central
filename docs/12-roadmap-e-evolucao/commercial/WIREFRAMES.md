@@ -441,48 +441,41 @@ são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 
 ---
 
-## WF-05 — Administração de carteiras
+## WF-05R — Administração de carteiras
 
 **Rota:** `/apps/commercial/seller-portfolios`  
-**Paridade:** `SellerConfigPage`  
+**URL:** `q`, `filter=all|active|inactive`, `id` (uuid). Defaults omitidos.  
 **Dados:** commercial-api `seller-portfolios`  
-**Permissão:** `commercial.seller-portfolios.manage` (espelha admin legado)
+**Permissão:** `commercial.seller-portfolios.manage`  
+**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`.
 
 ```
-┌─ Portal Comercial · Carteiras ──────────────────────────────────────────────┐
-│ Breadcrumb: Portal Comercial › Administração › Carteiras                    │
-│                                                                             │
-│ [+ Nova carteira]   Busca vendedor ·········                                │
-│                                                                             │
-│ ┌ Lista de carteiras ───────────────┐  ┌ Detalhe / edição ────────────────┐│
-│ │ Ana Silva      42 clientes  Ativa │  │ Vendedor: Ana Silva              ││
-│ │ Bruno Costa    28 clientes  Ativa │  │ Keycloak: ana.silva@…            ││
-│ │ …                                 │  │ Status: (•) Ativa  ( ) Inativa   ││
-│ │                                   │  │                                  ││
-│ │                                   │  │ Clientes vinculados              ││
-│ │                                   │  │ Busca TOTVS ······· [Adicionar]  ││
-│ │                                   │  │ ┌──────────────────────────────┐ ││
-│ │                                   │  │ │ 01001-01 ACME    [Remover]   │ ││
-│ │                                   │  │ │ 01002-01 Beta    [Remover]   │ ││
-│ │                                   │  │ └──────────────────────────────┘ ││
-│ │                                   │  │                                  ││
-│ │                                   │  │ [Substituir lista] [Transferir…] ││
-│ │                                   │  │ [Salvar]                         ││
-│ └───────────────────────────────────┘  └──────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
+← Portal Comercial / Administração / Carteiras
+
+┌─ PageHero · Carteiras ──────────────── [+ Nova carteira] [Atualizar] ─┐
+│ 1 carteira │ 0 ativas │ 1 inativa │ 0 clientes                       │
+│ Situação [Todas 1] [Ativas 0] [Inativas 1]                           │
+│ Buscar vendedor, usuário ou e-mail [________________]                │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌─ Carteiras (1) ── [Tabela|Cards] ──┐  ┌─ Conta ─────────────────────────┐
+│ Carteira   Usuário       Cli Status│  │ Robério Oliveira     [Inativa]  │
+│ Robério ●  r***@delpi      0 Inativa│  │ Nome [Robério Oliveira] [Salvar]│
+│                                    │  │ Buscar cadastro [________]      │
+│                                    │  │ hits · [Vincular]               │
+│                                    │  │ Na carteira: empty / DataTable  │
+│                                    │  │ [Reativar][Transferir][Excluir] │
+└────────────────────────────────────┘  └─────────────────────────────────┘
 ```
 
-**Modal Transferir (host-contained):**
+Linha selecionada = `?id=`. Sem coluna Ações. Sem `id`: empty «Selecione uma carteira».
 
-```
-┌─ Transferir clientes ─────────────────────────────┐
-│ De: Ana Silva                                     │
-│ Para: [Bruno Costa ▾]                             │
-│ Clientes: [x] 01001-01  [x] 01002-01  [Todos]     │
-│ Motivo (obrigatório) ···························  │
-│                    [Cancelar]  [Transferir]       │
-└───────────────────────────────────────────────────┘
-```
+**Card da lista (mobile / modo Cards):** nome, usuário, contagem, `StatusBadge`. O card inteiro seleciona.
+
+**Dialog Nova carteira** — `UserDirectoryPicker` + nome + Cancelar / Criar.  
+**Dialog Transferir** — origem travada, destino ativo, clientes pré-marcados, motivo obrigatório.  
+**Inativar** — sai do escopo; vínculos ficam (`DELETE /{id}`).  
+**Excluir** — apaga de vez (`DELETE /{id}/permanent`); «N clientes serão desvinculados» se `customer_count > 0`.
 
 ---
 

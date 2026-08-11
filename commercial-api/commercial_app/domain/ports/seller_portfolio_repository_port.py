@@ -47,6 +47,10 @@ class SellerPortfolioRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def replace_customers(
         self,
         *,

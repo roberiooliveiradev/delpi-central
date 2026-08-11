@@ -139,6 +139,35 @@ class ManageSellerPortfolioUseCase:
             raise LookupError("Vendedor não encontrado.")
         return updated
 
+    def purge_portfolio(
+        self,
+        portfolio_id: str,
+        *,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        portfolio_id = _normalize_code(portfolio_id)
+        if not portfolio_id:
+            raise ValueError("portfolio_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        deleted = self._repository.delete_portfolio(portfolio_id)
+        if deleted is None:
+            raise LookupError("Vendedor não encontrado.")
+        if self._audit is not None and actor_user_id:
+            self._audit.append(
+                actor_user_id=actor_user_id,
+                action="seller_portfolio.purge",
+                entity_type="seller_portfolio",
+                entity_id=portfolio_id,
+                payload={
+                    "user_id": current.user_id,
+                    "display_name": current.display_name,
+                    "customer_count": len(current.customers),
+                },
+            )
+        return deleted
+
     def replace_customers(
         self,
         *,

@@ -28,6 +28,7 @@ import {
   createDashboardInteractiveDataCard,
   createDashboardTableFontSizeControls,
   createFilterBarShell,
+  createHostContainedModalShell,
   dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
@@ -95,6 +96,7 @@ export const CUSTOMERS_TABLE_FONT_SIZE_LEGACY_KEYS = [
 ] as const;
 export const OPEN_ORDERS_LAYOUT_STORAGE_KEY = "commercial:open-orders:layout";
 export const CUSTOMERS_LAYOUT_STORAGE_KEY = "commercial:customers:layout";
+export const PORTFOLIOS_LAYOUT_STORAGE_KEY = "commercial:seller-portfolios:layout";
 
 export const cmPageHeaderClassNames = pageHeaderBrandBemClasses(UI_PREFIX);
 export const cmNavCardClassNames = navigationCardBemClasses(UI_PREFIX);
@@ -137,6 +139,11 @@ export const CommercialStatusBadge = createDashboardStatusBadge({ prefix: UI_PRE
 export const CommercialPagePath = createDashboardPagePath({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
+});
+export const CommercialHostDialog = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+  containedLayout: "dialog",
 });
 export const CommercialDataRecordCard = createDashboardDataRecordCard({
   prefix: UI_PREFIX,

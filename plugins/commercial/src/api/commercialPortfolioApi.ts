@@ -228,11 +228,29 @@ export async function deleteCustomerAvatar(code: string, store: string): Promise
   unwrapEnvelope(response, "Erro ao remover logo do cliente.");
 }
 
+export async function getSellerPortfolio(
+  portfolioId: string,
+  signal?: AbortSignal,
+): Promise<SellerPortfolio> {
+  const response = await httpGet<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}`),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar carteira.");
+}
+
 export async function deactivateSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {
   const response = await httpDelete<ApiSuccessResponse<SellerPortfolio>>(
     commercialApiUrl(`/seller-portfolios/${encodeURIComponent(sellerId)}`),
   );
   return unwrapEnvelope(response, "Erro ao desativar carteira.");
+}
+
+export async function purgeSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {
+  const response = await httpDelete<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(sellerId)}/permanent`),
+  );
+  return unwrapEnvelope(response, "Erro ao excluir carteira.");
 }
 
 export async function updateSellerPortfolio(

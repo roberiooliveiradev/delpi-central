@@ -190,7 +190,7 @@ function AppRoutes({
       ) : null}
       {view === "seller_portfolios" ? (
         isAdmin ? (
-          <SellerPortfoliosPage />
+          <SellerPortfoliosPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

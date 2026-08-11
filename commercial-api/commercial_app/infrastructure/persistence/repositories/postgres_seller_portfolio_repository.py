@@ -114,6 +114,22 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
     def deactivate_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
         return self.update_portfolio(portfolio_id=portfolio_id, active=False)
 
+    def delete_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
+        current = self.get_by_id(portfolio_id)
+        if current is None:
+            return None
+        deleted = self.execute_returning_one(
+            """
+            DELETE FROM commercial.seller_portfolios
+             WHERE id = %s
+         RETURNING id
+            """,
+            (portfolio_id,),
+        )
+        if deleted is None:
+            return None
+        return current
+
     def replace_customers(
         self,
         *,

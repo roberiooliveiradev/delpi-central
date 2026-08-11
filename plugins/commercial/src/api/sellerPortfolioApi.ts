@@ -34,6 +34,13 @@ export async function listSellerPortfolios(options?: {
   return commercial.listSellerPortfolios(options);
 }
 
+export async function getSellerPortfolio(
+  portfolioId: string,
+  signal?: AbortSignal,
+): Promise<SellerPortfolio> {
+  return commercial.getSellerPortfolio(portfolioId, signal);
+}
+
 export async function createSellerPortfolio(input: {
   user_id: string;
   display_name: string;
@@ -51,6 +58,10 @@ export async function updateSellerPortfolio(
 
 export async function deactivateSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {
   return commercial.deactivateSellerPortfolio(sellerId);
+}
+
+export async function purgeSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {
+  return commercial.purgeSellerPortfolio(sellerId);
 }
 
 export async function replaceSellerCustomers(
