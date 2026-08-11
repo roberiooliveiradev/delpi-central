@@ -9,6 +9,9 @@ export const PAGE_EYEBROW = "Institucional · Conduta";
 export const PAGE_INTRO =
   "Consulte o Código de Ética da DELPI. O documento orienta princípios, valores e condutas esperadas no ambiente de trabalho.";
 
+export const PUBLIC_LINK_HELP =
+  "Quem não tem conta no Minha DELPI pode consultar o documento pelo link público.";
+
 export const PDF_LOADING_MESSAGE = "Carregando o Código de Ética…";
 
 export const PDF_ERROR_MESSAGE =

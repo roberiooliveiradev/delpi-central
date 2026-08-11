@@ -187,6 +187,18 @@ O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), pá
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Código de Ética (`codigo-etica`)
+
+Leitura do PDF institucional (token estático `aberto`) para quem **não tem conta** no Minha DELPI:
+
+| Página | Rota | Conteúdo |
+|---|---|---|
+| Código | `/p/codigo-etica/codigo/aberto` | PDF `/apps/codigo-etica/documents/codigo-de-etica.pdf` |
+
+Sem API e sem login. O link também aparece no MFE autenticado `codigo-etica` para copiar.
+
+Ver `src/apps/codigo-etica/` · doc: [plugins/codigo-etica/README.md](../codigo-etica/README.md).
+
 ### Canal de Denúncia (`canal-denuncia`)
 
 Formulário aberto (token estático `aberto`) para quem **não tem conta** no Minha DELPI:
