@@ -10,6 +10,9 @@ export const ERROR_MESSAGE =
 export const PRIVACY_NOTICE =
   "Seu relato será enviado de forma anônima à Ouvidoria, sem nome, e-mail ou identificação pessoal no conteúdo da denúncia. A mensagem parte do remetente canal-denuncia@delpi.com.br — não do seu e-mail pessoal. Evite incluir no texto informações que possam identificá-lo caso deseje preservar sua identidade.";
 
+export const PUBLIC_LINK_HELP =
+  "Quem não tem conta no Minha DELPI pode enviar pelo link público. O relato continua anônimo.";
+
 export const RESPONSIBILITY_NOTICE =
   "Use este canal de forma responsável e forneça informações suficientes para que a Ouvidoria possa compreender o ocorrido.";
 

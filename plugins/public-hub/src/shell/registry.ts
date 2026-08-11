@@ -6,6 +6,7 @@ import { kaizenPages } from "../apps/kaizen/pages";
 import { cipaPages } from "../apps/cipa/pages";
 import { transformometroPages } from "../apps/transformometro/pages";
 import { muralAcessosPages } from "../apps/mural-acessos/pages";
+import { canalDenunciaPages } from "../apps/canal-denuncia/pages";
 
 /**
  * Registro de páginas públicas por app. Para adicionar um novo app público,
@@ -19,4 +20,5 @@ export const publicRegistry: PublicRegistry = {
   cipa: cipaPages,
   transformometro: transformometroPages,
   "mural-acessos": muralAcessosPages,
+  "canal-denuncia": canalDenunciaPages,
 };

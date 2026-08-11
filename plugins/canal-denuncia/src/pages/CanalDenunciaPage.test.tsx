@@ -30,8 +30,9 @@ describe("CanalDenunciaPage", () => {
     ).toBeTruthy();
     expect(screen.getByText("Escreva o relato")).toBeTruthy();
     expect(screen.getByText("Análise responsável")).toBeTruthy();
-
-
+    expect(screen.getByRole("link", { name: "Abrir formulário público" }).getAttribute("href")).toContain(
+      "/p/canal-denuncia/denuncia/aberto",
+    );
 
     expect(
       (screen.getByRole("button", { name: "Enviar denúncia" }) as HTMLButtonElement)

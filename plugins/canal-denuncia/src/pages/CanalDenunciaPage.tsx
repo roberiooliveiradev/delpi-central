@@ -17,9 +17,11 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MIN_DESCRIPTION_LENGTH,
   PRIVACY_NOTICE,
+  PUBLIC_LINK_HELP,
   RESPONSIBILITY_NOTICE,
   SUCCESS_MESSAGE,
 } from "../constants/form";
+import { resolveCanalDenunciaPublicUrl } from "../utils/publicLink";
 
 const FLOW_ICONS = [FilePenLine, ShieldCheck, Mail, Scale] as const;
 
@@ -29,6 +31,8 @@ export function CanalDenunciaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const publicUrl = resolveCanalDenunciaPublicUrl();
 
   const trimmedLength = description.trim().length;
   const canSubmit =
@@ -52,6 +56,15 @@ export function CanalDenunciaPage() {
       setErrorMessage(ERROR_MESSAGE);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleCopyPublicLink() {
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopyNotice("Link público copiado.");
+    } catch {
+      setCopyNotice("Não foi possível copiar. Selecione o endereço e copie manualmente.");
     }
   }
 
@@ -88,6 +101,24 @@ export function CanalDenunciaPage() {
           Este espaço é destinado ao envio de relatos à Ouvidoria da DELPI. Seu
           relato será recebido de forma sigilosa para análise responsável.
         </p>
+      </section>
+
+      <section className="cd-public-link" aria-label="Link público">
+        <p className="cd-public-link__help">{PUBLIC_LINK_HELP}</p>
+        <p className="cd-public-link__url">{publicUrl}</p>
+        <div className="cd-public-link__actions">
+          <button type="button" className="cd-public-link__copy" onClick={() => void handleCopyPublicLink()}>
+            Copiar link
+          </button>
+          <a className="cd-public-link__open" href={publicUrl} target="_blank" rel="noreferrer">
+            Abrir formulário público
+          </a>
+        </div>
+        {copyNotice ? (
+          <p className="cd-public-link__notice" role="status">
+            {copyNotice}
+          </p>
+        ) : null}
       </section>
 
       <div className="cd-layout">

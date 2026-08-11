@@ -776,6 +776,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "reject_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "cancel_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "create_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
+    "create_public_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
     "list_mural_acessos_hubs": RouteContract("mural_access_hub", "paged_list"),
     "create_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
     "get_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),

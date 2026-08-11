@@ -635,6 +635,19 @@ Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo 
 
 **Fonte analítica:** `GET /quality/kaizens/summary` e `GET /quality/kaizens/{kaizen_id}` leem PostgreSQL (`PostgresKaizenQueryRepository`). Cálculo temporal por revisão: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
 
+## Canal de Denúncia — `/canal-denuncia`
+
+Relato anônimo à Ouvidoria. Quem tem conta usa o plugin; quem não tem usa o formulário público.
+
+Doc: [canal-denuncia.md](./canal-denuncia.md) · Plugin: [plugins/canal-denuncia/README.md](../../../plugins/canal-denuncia/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| POST | `/canal-denuncia/denuncias` | `create_canal_denuncia` |
+| POST | `/public/canal-denuncia/denuncias` | `create_public_canal_denuncia` |
+
+Página pública: `/p/canal-denuncia/denuncia/aberto`.
+
 ## Mural de Acessos — `/mural-acessos`
 
 Vários murais de links, cada um com QR e menu público. Admin no portal; leitura pública sem JWT.

@@ -10,11 +10,13 @@ Microfrontend (Module Federation) para envio de **denúncias anônimas** à Ouvi
 | **api-delpi** `POST /canal-denuncia/denuncias` | Persistência + notificação Microsoft Graph |
 
 ```text
-Portal → /apps/canal-denuncia
-           ↓ Module Federation (remoteEntry.js)
-         MFE canal-denuncia
-           ↓ JWT + X-Delpi-Caller-App: canal-denuncia
-Gateway → /apps/api-delpi/canal-denuncia/denuncias
+Portal (com conta)
+  → /apps/canal-denuncia
+      → POST /apps/api-delpi/canal-denuncia/denuncias   (JWT)
+
+Público (sem conta)
+  → /p/canal-denuncia/denuncia/aberto
+      → POST /apps/api-delpi/public/canal-denuncia/denuncias
 ```
 
 ## Permissão
@@ -25,13 +27,20 @@ Gateway → /apps/api-delpi/canal-denuncia/denuncias
 
 ## API
 
-`POST /apps/api-delpi/canal-denuncia/denuncias`
+Doc: [api-delpi/docs/api/canal-denuncia.md](../../api-delpi/docs/api/canal-denuncia.md)
+
+| Método | Endpoint | Quem |
+|--------|----------|------|
+| POST | `/canal-denuncia/denuncias` | autenticado (`canal-denuncia.access`) |
+| POST | `/public/canal-denuncia/denuncias` | público (sem JWT) |
 
 ```json
 { "description": "Texto da denúncia" }
 ```
 
 Body contém **somente** `description` (10–8000 caracteres). Sem nome, e-mail ou identificação no payload.
+
+Link público: `/p/canal-denuncia/denuncia/aberto` (copiável no próprio plugin).
 
 ## Desenvolvimento local
 

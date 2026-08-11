@@ -187,6 +187,18 @@ O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), pá
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Canal de Denúncia (`canal-denuncia`)
+
+Formulário aberto (token estático `aberto`) para quem **não tem conta** no Minha DELPI:
+
+| Página | Rota | `load` / submit |
+|---|---|---|
+| Denúncia | `/p/canal-denuncia/denuncia/aberto` | `POST /apps/api-delpi/public/canal-denuncia/denuncias` |
+
+O relato continua anônimo. O link também aparece no MFE autenticado `canal-denuncia` para copiar.
+
+Ver `src/apps/canal-denuncia/` · doc: [plugins/canal-denuncia/README.md](../canal-denuncia/README.md).
+
 ### Mural de Acessos (`mural-acessos`)
 
 Menu estilo smartphone por mural (token na URL):

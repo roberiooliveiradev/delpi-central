@@ -411,6 +411,15 @@ não existe schema de billing duplicado no gateway `commercial-api`.
 
 Doc: [delpi-reports.md](./delpi-reports.md)
 
+## Canal de Denúncia — `/canal-denuncia`
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| POST | `/canal-denuncia/denuncias` | `canal-denuncia.access` |
+| POST | `/public/canal-denuncia/denuncias` | público |
+
+Doc: [canal-denuncia.md](./canal-denuncia.md)
+
 ## Mural de Acessos — `/mural-acessos`
 
 | Método | Endpoint | Perm. |
