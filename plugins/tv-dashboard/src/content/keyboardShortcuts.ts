@@ -106,6 +106,14 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     showAltTip: false,
   },
   {
+    id: "select-all",
+    group: "selecao",
+    label: "Selecionar tudo",
+    keys: "Ctrl+A",
+    description: "Seleciona todos os elementos visíveis do slide. Em campo de texto, seleciona o texto",
+    showAltTip: true,
+  },
+  {
     id: "multi-select-click",
     group: "selecao",
     label: "Multi-seleção (clique)",

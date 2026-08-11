@@ -200,6 +200,7 @@ export {
 export {
   filterBlocksVisibleOnStage,
   filterStageSelectableIds,
+  listStageSelectableIds,
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,

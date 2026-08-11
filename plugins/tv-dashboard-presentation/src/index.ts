@@ -534,6 +534,7 @@ export {
   shouldHideDataSourceOnStage,
   filterBlocksVisibleOnStage,
   filterStageSelectableIds,
+  listStageSelectableIds,
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,

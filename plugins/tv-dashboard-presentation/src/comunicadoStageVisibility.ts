@@ -46,6 +46,11 @@ export function filterStageSelectableIds(ids: string[], blocks: ComunicadoBlock[
   });
 }
 
+/** Todos os blocos que o palco aceita na seleção (Ctrl+A / «Selecionar tudo»). */
+export function listStageSelectableIds(blocks: ComunicadoBlock[]): string[] {
+  return filterBlocksVisibleOnStage(blocks).map((block) => block.id);
+}
+
 /** Visuais ligados a uma `data_source` (para redirecionar seleção / painel Dados). */
 export function listViewsLinkedToDataSource(
   dataSourceId: string,

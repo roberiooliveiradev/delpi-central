@@ -1,4 +1,7 @@
-import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  listStageSelectableIds,
+  type ComunicadoBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
@@ -156,6 +159,12 @@ export function useComunicadoEditorKeyboard({
       if (mod && key === "v") {
         // Colar é tratado pelo listener `paste` (SO + clipboard interno).
         return;
+      }
+
+      if (mod && key === "a" && !event.shiftKey) {
+        if (!selectBlocksByIds) return;
+        selectBlocksByIds(listStageSelectableIds(blocks));
+        return { handled: true };
       }
 
       if (mod && key === "d") {
