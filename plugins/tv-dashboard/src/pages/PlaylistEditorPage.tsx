@@ -929,7 +929,8 @@ export function PlaylistEditorPage({
         nativeConfig: serializeComunicadoConfig(
           parseComunicadoConfig({ headline: "", blocks: [] }),
         ),
-        durationSec: customCatalogItem?.defaultDurationSec ?? 30,
+        durationSec: null,
+        transitionStyle: null,
         sectionId: anchorSectionId,
       });
       let placed = slide;
