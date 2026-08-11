@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 
@@ -6,6 +6,7 @@ export type FormatPaneSectionProps = {
   title: string;
   /** Balão explicativo no título da seção (ícone de ajuda). */
   hint?: string;
+  /** Só o estado inicial — o pai não controla `open` (senão o chevron não fecha). */
   defaultOpen?: boolean;
   children: ReactNode;
   className?: string;
@@ -19,19 +20,27 @@ export function FormatPaneSection({
   children,
   className,
 }: FormatPaneSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const rootClass = ["delpi-ui-format-pane__section", className].filter(Boolean).join(" ");
 
   return (
-    /* `defaultOpen` (não `open`) — controlado sem onToggle remonta o corpo e zera inputs. */
-    <details
-      className={rootClass}
-      {...({ defaultOpen } as HTMLAttributes<HTMLDetailsElement>)}
-    >
-      <summary className="delpi-ui-format-pane__section-summary">
+    <details className={rootClass} open={open}>
+      <summary
+        className="delpi-ui-format-pane__section-summary"
+        onClick={(event) => {
+          event.preventDefault();
+          setOpen((current) => !current);
+        }}
+      >
         <span className="delpi-ui-format-pane__section-title-row">
           <span className="delpi-ui-format-pane__section-title-text">{title}</span>
           {hint ? (
-            <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} placement="bottom" />
+            <span
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} placement="bottom" />
+            </span>
           ) : null}
         </span>
       </summary>

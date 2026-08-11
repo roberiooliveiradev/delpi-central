@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { FormatPaneSection } from "./FormatPaneSection";
@@ -25,5 +25,19 @@ describe("FormatPaneSection", () => {
       </FormatPaneSection>,
     );
     expect(screen.getByLabelText("Ajuda: Ordem de construção")).toBeTruthy();
+  });
+
+  it("abre e fecha com defaultOpen (não controlado)", () => {
+    const { container } = render(
+      <FormatPaneSection title="Seleção" defaultOpen>
+        <p>Lista</p>
+      </FormatPaneSection>,
+    );
+    const details = container.querySelector("details");
+    expect(details?.open).toBe(true);
+    fireEvent.click(screen.getByText("Seleção"));
+    expect(details?.open).toBe(false);
+    fireEvent.click(screen.getByText("Seleção"));
+    expect(details?.open).toBe(true);
   });
 });
