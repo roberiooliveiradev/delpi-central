@@ -49,7 +49,21 @@ describe("comunicadoBackgroundStyle", () => {
     });
     expect(comunicadoBackgroundCssProperties({ type: "gradient", from: "#000", to: "#fff", angle: 90 }))
       .toMatchObject({
-        backgroundImage: "linear-gradient(90deg, #000, #fff)",
+        backgroundImage: "linear-gradient(90deg, #000 0%, #fff 100%)",
       });
+    expect(
+      comunicadoBackgroundCssProperties({
+        type: "gradient",
+        from: "#111",
+        to: "#eee",
+        angle: 90,
+        stops: [
+          { color: "#000", position: 0 },
+          { color: "#fff", position: 100 },
+        ],
+      }),
+    ).toMatchObject({
+      backgroundImage: "linear-gradient(90deg, #000 0%, #fff 100%)",
+    });
   });
 });

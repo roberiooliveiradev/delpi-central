@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { fillToCssBackground } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoBackground } from "./comunicadoTypes";
 
@@ -41,9 +42,19 @@ export function comunicadoBackgroundCssProperties(
   }
 
   if (bg.type === "gradient") {
-    const angle = bg.angle ?? 180;
+    const stops =
+      bg.stops && bg.stops.length >= 2
+        ? bg.stops
+        : [
+            { color: bg.from, position: 0 },
+            { color: bg.to, position: 100 },
+          ];
     return {
-      backgroundImage: `linear-gradient(${angle}deg, ${bg.from}, ${bg.to})`,
+      backgroundImage: fillToCssBackground({
+        kind: "gradient",
+        angle: bg.angle ?? 180,
+        stops,
+      }),
     };
   }
 

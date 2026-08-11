@@ -716,7 +716,13 @@ export type ComunicadoScreenData = {
 export type ComunicadoBackground =
   | { type: "color"; value: string }
   | { type: "image"; assetId?: string; url?: string; value?: string }
-  | { type: "gradient"; from: string; to: string; angle?: number };
+  | {
+      type: "gradient";
+      from: string;
+      to: string;
+      angle?: number;
+      stops?: Array<{ color: string; position: number; opacity?: number }>;
+    };
 
 export const COMUNICADO_FONT_FAMILIES = [
   "Inter, system-ui, sans-serif",

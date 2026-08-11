@@ -840,6 +840,9 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
             from: background.from,
             to: background.to,
             angle: background.angle ?? 180,
+            ...(background.stops && background.stops.length >= 2
+              ? { stops: background.stops }
+              : {}),
           }
         : { type: "color", value: background.value || "#ffffff" };
   const blocks = (config.blocks ?? []).map(serializeBlock);
@@ -1078,7 +1081,31 @@ function normalizeBackground(value: unknown): ComunicadoBackground {
     const from = typeof bg.from === "string" && bg.from.trim() ? bg.from : "#0f172a";
     const to = typeof bg.to === "string" && bg.to.trim() ? bg.to : "#1e3a5f";
     const angle = typeof bg.angle === "number" ? bg.angle : 180;
-    return { type: "gradient", from, to, angle };
+    const rawStops = Array.isArray(bg.stops) ? bg.stops : [];
+    const parsedStops = rawStops.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const stop = item as Record<string, unknown>;
+      if (typeof stop.color !== "string" || !stop.color.trim()) return [];
+      const position = Number(stop.position);
+      return [
+        {
+          color: stop.color.trim(),
+          position: Number.isFinite(position) ? position : 0,
+          ...(typeof stop.opacity === "number" ? { opacity: stop.opacity } : {}),
+        },
+      ];
+    });
+    const stops = parsedStops.length >= 2 ? parsedStops : [
+      { color: from, position: 0 },
+      { color: to, position: 100 },
+    ];
+    return {
+      type: "gradient",
+      from: stops[0]?.color ?? from,
+      to: stops[stops.length - 1]?.color ?? to,
+      angle,
+      stops,
+    };
   }
   const color = typeof bg.value === "string" && bg.value.trim() ? bg.value : "#ffffff";
   return { type: "color", value: color };

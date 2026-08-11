@@ -81,6 +81,23 @@ export {
   resolveSelectedSwatchHex,
   resolveColorTriggerPreviewMode,
 } from "./colorUtils";
+export {
+  MAX_GRADIENT_STOPS,
+  MIN_GRADIENT_STOPS,
+  fillToCssBackground,
+  normalizeFillAngle,
+  normalizeGradientStops,
+  solidFromFill,
+  stopsFromLegacyFromTo,
+} from "./fillTypes";
+export type {
+  DelpiFill,
+  DelpiFillGradient,
+  DelpiFillKind,
+  DelpiFillNone,
+  DelpiFillSolid,
+  DelpiGradientStop,
+} from "./fillTypes";
 export { applyTextEffectStyleToCss } from "./textEffectStyle";
 export type { TextEffectStyleFields } from "./textEffectStyle";
 export { DEFAULT_SHAPE_COLOR_LABELS, mergeShapeColorLabels } from "./shapeLabels";
