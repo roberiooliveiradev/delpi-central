@@ -7,6 +7,7 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import { selectedHasGroup } from "./comunicadoGrouping";
 import type { LayoutAlignCommand } from "./comunicadoLayoutAlign";
+import { canApplySameSize } from "./comunicadoSameSize";
 
 export type ComunicadoContextMenuActionId =
   | "cut"
@@ -22,6 +23,9 @@ export type ComunicadoContextMenuActionId =
   | "ungroup"
   | "regroup"
   | LayoutAlignCommand
+  | "same-size-width"
+  | "same-size-height"
+  | "same-size-both"
   | "rotateCw"
   | "rotateCcw"
   | "flipH"
@@ -50,6 +54,7 @@ export type ComunicadoContextMenuActionState = {
   canUngroup: boolean;
   canRegroup: boolean;
   canAlignSelection: boolean;
+  canSameSize: boolean;
   canDistribute: boolean;
   canRotate: boolean;
   /** Forma / título / texto — «Alterar forma». */
@@ -140,6 +145,7 @@ export function resolveContextMenuActionState(input: {
     canUngroup: selectedHasGroup(blocks, selectedIds),
     canRegroup: lastUngroupedIds.filter((id) => blockIdSet.has(id)).length >= 2,
     canAlignSelection: selectionCount >= 2,
+    canSameSize: canApplySameSize(blocks, selectedIds),
     canDistribute: selectionCount >= 3,
     canRotate: hasSelection,
     canChangeShape,
@@ -178,6 +184,10 @@ export function isContextMenuActionEnabled(
       return state.canUngroup;
     case "regroup":
       return state.canRegroup;
+    case "same-size-width":
+    case "same-size-height":
+    case "same-size-both":
+      return state.canSameSize;
     case "rotateCw":
     case "rotateCcw":
     case "flipH":

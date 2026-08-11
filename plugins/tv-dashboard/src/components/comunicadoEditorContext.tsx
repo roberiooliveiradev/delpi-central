@@ -868,6 +868,7 @@ export function ComunicadoEditorProvider({
     replaceSlideNativeConfig: blockActions.replaceSlideNativeConfig,
     applySlideTheme: blockActions.applySlideTheme,
     alignSelected: blockActions.alignSelected,
+    sameSizeSelected: blockActions.sameSizeSelected,
     rotateSelected: blockActions.rotateSelected,
     flipSelectedHorizontal: blockActions.flipSelectedHorizontal,
     flipSelectedVertical: blockActions.flipSelectedVertical,

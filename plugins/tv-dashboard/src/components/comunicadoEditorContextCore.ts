@@ -28,6 +28,7 @@ import type {
 import type { MediaAsset } from "../api/tvDashboardApi";
 import type { ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import type { SameSizeAxis } from "../utils/comunicadoSameSize";
 import type { StageGroupGesture } from "../utils/stageGroupGesture";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
@@ -430,6 +431,7 @@ export type ComunicadoEditorContextValue = {
   replaceSlideNativeConfig: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
+  sameSizeSelected: (axis: SameSizeAxis) => void;
   rotateSelected: (deltaDeg: number) => void;
   flipSelectedHorizontal: () => void;
   flipSelectedVertical: () => void;

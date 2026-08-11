@@ -113,6 +113,7 @@ describe("comunicadoStageContextMenuActions", () => {
     expect(isContextMenuActionEnabled("rotateCw", single)).toBe(true);
     expect(isContextMenuActionEnabled("group", single)).toBe(false);
     expect(isContextMenuActionEnabled("align-left", single)).toBe(false);
+    expect(isContextMenuActionEnabled("same-size-both", single)).toBe(false);
     expect(isContextMenuActionEnabled("align-slide-left", single)).toBe(true);
     expect(isContextMenuActionEnabled("distribute-h", single)).toBe(false);
     expect(isContextMenuActionEnabled("editText", single)).toBe(true);
@@ -125,6 +126,7 @@ describe("comunicadoStageContextMenuActions", () => {
     });
     expect(isContextMenuActionEnabled("group", multi)).toBe(true);
     expect(isContextMenuActionEnabled("align-left", multi)).toBe(true);
+    expect(isContextMenuActionEnabled("same-size-both", multi)).toBe(true);
     expect(isContextMenuActionEnabled("distribute-h", multi)).toBe(false);
     expect(isContextMenuActionEnabled("editText", multi)).toBe(false);
 

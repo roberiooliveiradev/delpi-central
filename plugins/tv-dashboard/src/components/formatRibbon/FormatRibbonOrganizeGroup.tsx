@@ -13,7 +13,10 @@ import {
   Group,
   Magnet,
   MousePointer2,
+  RectangleHorizontal,
+  RectangleVertical,
   RotateCcw,
+  Scaling,
   RotateCw,
   SendToBack,
   Spline,
@@ -24,6 +27,7 @@ import { canConnectBlocks } from "@delpi/tv-dashboard-presentation";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { resolveClosedGroupSelection, selectedHasGroup } from "../../utils/comunicadoGrouping";
 import type { LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
+import { canApplySameSize } from "../../utils/comunicadoSameSize";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonMenuTile, type DeckRibbonMenuItem } from "../deck/DeckRibbonMenuTile";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -53,6 +57,7 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
     sendToBack,
     openLayersPanel,
     alignSelected,
+    sameSizeSelected,
     groupSelected,
     ungroupSelected,
     regroupSelected,
@@ -77,6 +82,7 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
 
   const canDistribute = selectedIds.length >= 3;
   const canAlignSelection = selectedIds.length >= 2;
+  const canSameSize = canApplySameSize(blocks, selectedIds);
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedHasGroup(blocks, selectedIds);
   const blockIdSet = new Set(blocks.map((block) => block.id));
@@ -211,6 +217,33 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
     },
   ];
 
+  const sameSizeItems: DeckRibbonMenuItem[] = [
+    {
+      id: "same-size-both",
+      label: H.sameSizeBoth,
+      icon: Scaling,
+      disabled: !canSameSize,
+      hint: H.sameSizeBothHint,
+      onSelect: () => sameSizeSelected("both"),
+    },
+    {
+      id: "same-size-width",
+      label: H.sameSizeWidth,
+      icon: RectangleHorizontal,
+      disabled: !canSameSize,
+      hint: H.sameSizeWidthHint,
+      onSelect: () => sameSizeSelected("width"),
+    },
+    {
+      id: "same-size-height",
+      label: H.sameSizeHeight,
+      icon: RectangleVertical,
+      disabled: !canSameSize,
+      hint: H.sameSizeHeightHint,
+      onSelect: () => sameSizeSelected("height"),
+    },
+  ];
+
   const rotateItems: DeckRibbonMenuItem[] = [
     {
       id: "rotate-90-cw",
@@ -277,6 +310,14 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
           hint={H.alignSelection}
           items={alignItems}
           menuAriaLabel="Alinhar"
+        />
+        <DeckRibbonMenuTile
+          icon={Scaling}
+          label={H.sameSize}
+          hint={H.sameSizeHint}
+          onPrimaryClick={canSameSize ? () => sameSizeSelected("both") : undefined}
+          items={sameSizeItems}
+          menuAriaLabel={H.sameSize}
         />
         <DeckRibbonMenuTile
           icon={Group}

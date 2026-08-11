@@ -95,6 +95,10 @@ import type {
   OpenDataCatalogOptions,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
+import {
+  resizeComunicadoBlocksSameSize,
+  type SameSizeAxis,
+} from "../../utils/comunicadoSameSize";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
 import { DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM } from "../../utils/dateRangePresets";
 import { renameKpiMetricFieldLabel } from "../../utils/renameKpiMetricFieldLabel";
@@ -1304,6 +1308,16 @@ export function useComunicadoEditorBlocks({
     [configRef, getActionSelectedIds, updateBlocks],
   );
 
+  const sameSizeSelected = useCallback(
+    (axis: SameSizeAxis) => {
+      const ids = getActionSelectedIds();
+      if (ids.length === 0) return;
+      const resized = resizeComunicadoBlocksSameSize(configRef.current.blocks ?? [], ids, axis);
+      updateBlocks(reconcileConnectorsAfterDrag(resized, new Set(ids)));
+    },
+    [configRef, getActionSelectedIds, updateBlocks],
+  );
+
   const rotateSelected = useCallback(
     (deltaDeg: number) => {
       const ids = getActionSelectedIds();
@@ -1562,6 +1576,7 @@ export function useComunicadoEditorBlocks({
     replaceSlideNativeConfig,
     applySlideTheme,
     alignSelected,
+    sameSizeSelected,
     rotateSelected,
     flipSelectedHorizontal,
     flipSelectedVertical,

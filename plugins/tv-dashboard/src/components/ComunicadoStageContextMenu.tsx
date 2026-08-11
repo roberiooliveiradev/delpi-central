@@ -44,8 +44,11 @@ import {
   Monitor,
   RefreshCw,
   Replace,
+  RectangleHorizontal,
+  RectangleVertical,
   RotateCcw,
   RotateCw,
+  Scaling,
   Scissors,
   SendToBack,
   Sparkles,
@@ -127,6 +130,7 @@ export function ComunicadoStageContextMenu({
     ungroupSelected,
     regroupSelected,
     alignSelected,
+    sameSizeSelected,
     rotateSelected,
     flipSelectedHorizontal,
     flipSelectedVertical,
@@ -687,6 +691,27 @@ export function ComunicadoStageContextMenu({
               icon={AlignVerticalJustifyEnd}
               disabled={!enabled("align-slide-bottom")}
               onSelect={() => runAlign("align-slide-bottom")}
+            />
+          </ContextMenuSub>
+
+          <ContextMenuSub label={C.sameSize} icon={Scaling}>
+            <ContextMenuItem
+              label={C.sameSizeBoth}
+              icon={Scaling}
+              disabled={!enabled("same-size-both")}
+              onSelect={() => run(() => sameSizeSelected("both"))}
+            />
+            <ContextMenuItem
+              label={C.sameSizeWidth}
+              icon={RectangleHorizontal}
+              disabled={!enabled("same-size-width")}
+              onSelect={() => run(() => sameSizeSelected("width"))}
+            />
+            <ContextMenuItem
+              label={C.sameSizeHeight}
+              icon={RectangleVertical}
+              disabled={!enabled("same-size-height")}
+              onSelect={() => run(() => sameSizeSelected("height"))}
             />
           </ContextMenuSub>
 
