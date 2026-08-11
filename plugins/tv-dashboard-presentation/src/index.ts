@@ -169,6 +169,8 @@ export type {
 } from "./types";
 export type { UsePresentationEngineOptions } from "./usePresentationEngine";
 export {
+  formatPresentationTransitionLabel,
+  PRESENTATION_TRANSITION_LABELS,
   PRESENTATION_TRANSITION_STYLES,
   isPresentationTransitionStyle,
   resolveSlideTransitionStyle,
