@@ -213,6 +213,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
     list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Filhos do grupo ficam indentados à direita do pai. Clique no filho seleciona só ele; no nó do grupo seleciona todos. No palco: clique duplo isola o subitem; 2º toque sem arrastar limpa; Esc sobe a hierarquia. Shift+clique multi-seleciona.",
+    focusPrimary: "Focar a referência (último selecionado)",
   },
   ribbonTabs: {
     home: "Lista de programações (hub): criar, abrir e filtrar. No editor, use Programação e Tela.",

@@ -2509,6 +2509,12 @@ body.td-composer--marqueeing *{
     color-mix(in srgb, var(--td-accent) 55%, #fff)
   );
 }
+.dashboard-tv-dashboard .td-composer__block-chrome--primary{
+  outline-width: 2.5px;
+}
+.dashboard-tv-dashboard .td-composer__block-chrome--primary .td-composer__resize{
+  background: var(--td-selection-handle-border, var(--td-accent, #089bdb));
+}
 .dashboard-tv-dashboard .td-composer__block-chrome .td-composer__block-handles{
   pointer-events: none;
 }

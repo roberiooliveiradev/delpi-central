@@ -21,6 +21,8 @@ type Props = {
   designHeight: number;
   stageZoom?: number;
   isPrimarySelection: boolean;
+  /** N≥2: primário ganha handles preenchidos; secundários usam `--multi`. */
+  isMultiSelection?: boolean;
   onPointerDown: (
     event: ReactPointerEvent<HTMLElement>,
     block: ComunicadoBlock,
@@ -43,6 +45,7 @@ export function BlockSelectionChromeOverlay({
   designHeight,
   stageZoom = 1,
   isPrimarySelection,
+  isMultiSelection = false,
   onPointerDown,
   onResizeHandleDoubleClick,
 }: Props) {
@@ -79,6 +82,7 @@ export function BlockSelectionChromeOverlay({
       className={[
         "td-composer__block-chrome",
         isPrimarySelection ? "" : "td-composer__block-chrome--multi",
+        isPrimarySelection && isMultiSelection ? "td-composer__block-chrome--primary" : "",
       ]
         .filter(Boolean)
         .join(" ")}

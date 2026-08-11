@@ -1363,6 +1363,7 @@ export function ComunicadoComposerCanvas() {
                 designHeight={designSize.height}
                 stageZoom={stageZoom}
                 isPrimarySelection={block.id === primarySelected}
+                isMultiSelection={selectedIds.length > 1}
                 onPointerDown={startDragRespectingPan}
                 onResizeHandleDoubleClick={
                   isComunicadoVisualBoxBlock(block) ? hugSelectedVisualBoxToText : undefined

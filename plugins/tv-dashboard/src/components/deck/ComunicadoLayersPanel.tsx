@@ -372,8 +372,15 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
         </ul>
       )}
       {selectedIds.length > 1 ? (
-        <button type="button" className="td-btn td-btn--sm" onClick={() => selectBlocksByIds([selectedIds[0]!])}>
-          Focar primeiro selecionado
+        <button
+          type="button"
+          className="td-btn td-btn--sm"
+          onClick={() => {
+            const primaryId = selectedIds[selectedIds.length - 1];
+            if (primaryId) selectBlocksByIds([primaryId]);
+          }}
+        >
+          {L.focusPrimary}
         </button>
       ) : null}
     </>

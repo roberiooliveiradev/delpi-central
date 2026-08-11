@@ -25,6 +25,16 @@ describe("selection chrome stacking contract", () => {
     "utf8",
   );
 
+  it("multi-seleção: secundário --multi e primário --primary com handle preenchido", () => {
+    expect(overlay).toContain("td-composer__block-chrome--multi");
+    expect(overlay).toContain("td-composer__block-chrome--primary");
+    expect(overlay).toContain("isMultiSelection");
+    expect(css).toMatch(/\.td-composer__block-chrome--primary\s*\{/);
+    expect(css).toMatch(
+      /\.td-composer__block-chrome--primary \.td-composer__resize\s*\{[^}]*background:/s,
+    );
+  });
+
   it("composer usa overlay de chrome e wrap só com z do modelo", () => {
     expect(composer).toMatch(/BlockSelectionChromeOverlay/);
     expect(composer).toMatch(/resolveBlockWrapStackZIndex\(\{\s*modelZIndex:/);
