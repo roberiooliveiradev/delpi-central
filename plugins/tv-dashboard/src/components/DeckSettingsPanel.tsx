@@ -332,7 +332,7 @@ export function DeckSettingsPanel({
               label="Transição"
               hint={F.slideTransition}
               panelLabel="Transição da tela"
-              panelClassName="td-deck-ribbon-tile-popover--narrow"
+              panelClassName="td-deck-ribbon-tile-popover--transition"
             >
               <TransitionGallery
                 ariaLabel="Transição do slide"
@@ -477,7 +477,7 @@ export function DeckSettingsPanel({
               label="Transição"
               hint={F.transition}
               panelLabel="Transição da programação"
-              panelClassName="td-deck-ribbon-tile-popover--narrow"
+              panelClassName="td-deck-ribbon-tile-popover--transition"
             >
               <TransitionGallery
                 ariaLabel="Transição da programação"

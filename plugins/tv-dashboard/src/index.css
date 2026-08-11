@@ -6163,6 +6163,13 @@ body.td-composer--marqueeing *{
   min-width: min(220px, 70vw);
   max-width: min(280px, 86vw);
 }
+.dashboard-tv-dashboard .td-deck-ribbon-tile-popover--transition{
+  min-width: min(328px, 86vw);
+  max-width: min(360px, 92vw);
+  padding: 10px;
+  max-height: none;
+  overflow: visible;
+}
 .dashboard-tv-dashboard .td-viewport-resolution-fields{
   display: flex;
   flex-direction: column;

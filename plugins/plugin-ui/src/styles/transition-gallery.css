@@ -1,36 +1,52 @@
 .delpi-ui-transition-gallery {
   display: grid;
-  grid-template-columns: repeat(2, minmax(124px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   gap: 8px;
-  width: min(360px, calc(100vw - 32px));
-  max-width: 100%;
+  width: 100%;
   box-sizing: border-box;
-  padding: 8px;
+  padding: 0;
 }
 
 .delpi-ui-transition-gallery__item {
+  appearance: none;
   display: grid;
-  grid-template-rows: 58px auto auto;
+  grid-template-rows: 52px auto minmax(2.4em, auto);
   gap: 4px;
   min-width: 0;
-  padding: 7px;
-  border: 1px solid var(--delpi-border, #cbd5e1);
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #cbd5e1));
   border-radius: 8px;
-  color: var(--delpi-text, #0f172a);
-  background: var(--delpi-surface, #fff);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, #0f172a) 4%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+  font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .delpi-ui-transition-gallery__item:hover,
 .delpi-ui-transition-gallery__item:focus-visible {
-  border-color: var(--delpi-primary, #089bdb);
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, var(--delpi-ui-border, #cbd5e1));
   outline: none;
 }
 
 .delpi-ui-transition-gallery__item--active {
-  border-color: var(--delpi-primary, #089bdb);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--delpi-primary, #089bdb) 22%, transparent);
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 16%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+  box-shadow: 0 0 0 1px var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-transition-gallery__item--active .delpi-ui-transition-gallery__label {
+  color: var(--delpi-ui-accent, #089bdb);
 }
 
 .delpi-ui-transition-gallery__preview {
@@ -160,9 +176,13 @@
 }
 
 .delpi-ui-transition-gallery__description {
-  color: var(--delpi-text-muted, #64748b);
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
   font-size: 10px;
   line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .delpi-ui-transition-gallery-popover {
