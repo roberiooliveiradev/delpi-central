@@ -45,7 +45,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     selectBlock,
     selectBlocksByIds,
     reorderBlockLayer,
-    updateBlock,
+    updateBlocksAtomically,
     toggleBlockHidden,
     setBlocksHidden,
     showAllBlocks,
@@ -53,7 +53,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     bringForward,
     sendBackward,
   } = useComunicadoEditor();
-  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragIds, setDragIds] = useState<string[] | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
   const isRibbon = layout === "ribbon";
 
@@ -77,18 +77,18 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
   );
 
   function onDrop(targetId: string) {
-    if (!dragId || dragId === targetId) return;
-    const sorted = sortBlocksByZIndex(blocks);
-    const targetIndex = sorted.findIndex((block) => block.id === targetId);
-    if (targetIndex < 0) return;
-    reorderBlockLayer(dragId, targetIndex);
-    setDragId(null);
+    if (!dragIds || dragIds.length === 0 || dragIds.includes(targetId)) return;
+    reorderBlockLayer(dragIds, targetId);
+    setDragIds(null);
   }
 
   function applyBuildMap(map: Map<string, ComunicadoBlockAnimation[] | undefined>) {
-    for (const [id, animations] of map.entries()) {
-      updateBlock(id, { animations });
-    }
+    updateBlocksAtomically(
+      [...map.entries()].map(([blockId, animations]) => ({
+        blockId,
+        patch: { animations },
+      })),
+    );
   }
 
   function toggleGroupCollapsed(groupId: string) {
@@ -248,7 +248,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                       .filter(Boolean)
                       .join(" ")}
                     draggable
-                    onDragStart={() => setDragId(row.anchorId)}
+                    onDragStart={() => setDragIds(row.memberIds)}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={() => onDrop(row.anchorId)}
                     onClick={() => selectBlocksByIds(row.memberIds, { keepPanelTab: true })}
@@ -316,7 +316,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     .filter(Boolean)
                     .join(" ")}
                   draggable
-                  onDragStart={() => setDragId(block.id)}
+                  onDragStart={() => setDragIds([block.id])}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => onDrop(block.id)}
                   onClick={(event) =>
