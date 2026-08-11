@@ -1055,7 +1055,7 @@ export async function addSlide(
   body: {
     slideType: "native" | "external";
     title: string;
-    durationSec?: number;
+    durationSec?: number | null;
     nativeScreenKey?: string;
     nativeConfig?: Record<string, unknown>;
     externalUrl?: string;
