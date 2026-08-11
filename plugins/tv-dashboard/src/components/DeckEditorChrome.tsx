@@ -8,6 +8,7 @@ import {
   isSelectionPanelTab,
   normalizeSelectionRibbonTab,
 } from "../utils/normalizeSelectionRibbonTab";
+import { resolveSlideBatchRibbonTab } from "../utils/resolveSlideBatchRibbonTab";
 import { DECK_TAB_KEYTIPS } from "../utils/deckKeyTips";
 import { useOptionalTvCopilotDock } from "../context/tvCopilotDockContext";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
@@ -58,6 +59,8 @@ type Props = {
   adminLabels?: Record<string, string>;
   slideTabExtra?: ReactNode;
   slideDeck: SlideDeckProps;
+  /** Telas do filmstrip com seleção múltipla; 1 = primária apenas. */
+  selectedSlideCount?: number;
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
@@ -123,6 +126,7 @@ export function DeckEditorChrome({
   adminLabels = {},
   slideTabExtra,
   slideDeck,
+  selectedSlideCount = 1,
   onSavePlaylistSettings,
   onSaveSlide,
   variant = "playlist",
@@ -225,6 +229,14 @@ export function DeckEditorChrome({
       setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
     }
   }, [activeTab, slide, tabs, isCustomSlide]);
+
+  useEffect(() => {
+    const nextTab = resolveSlideBatchRibbonTab({
+      selectedSlideCount,
+      currentTab: activeTab,
+    });
+    if (nextTab) setActiveTab(nextTab);
+  }, [selectedSlideCount, activeTab]);
 
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {

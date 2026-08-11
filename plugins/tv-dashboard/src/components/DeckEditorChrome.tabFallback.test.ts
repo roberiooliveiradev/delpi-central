@@ -56,4 +56,12 @@ describe("deck chrome tab fallback contract", () => {
     expect(chrome).toMatch(/copilotDock\?\.openDock/);
     expect(tabsMeta).toMatch(/id: "copilot"/);
   });
+
+  it("multi-seleção de telas abre a aba Tela, não Elemento", () => {
+    expect(chrome).toContain("resolveSlideBatchRibbonTab");
+    expect(chrome).toContain("selectedSlideCount");
+    expect(chrome).not.toMatch(
+      /selectedSlideCount\s*>\s*1[\s\S]{0,80}setActiveTab\("element"\)/,
+    );
+  });
 });

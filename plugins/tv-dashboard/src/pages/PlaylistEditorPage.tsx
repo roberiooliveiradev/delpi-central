@@ -1881,6 +1881,12 @@ export function PlaylistEditorPage({
     isCustomSlide,
     adminLabels: admin,
     slideDeck: slideDeckProps,
+    selectedSlideCount:
+      selectedSlideIds.length > 0
+        ? selectedSlideIds.length
+        : selectedSlide
+          ? 1
+          : 0,
     onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
       void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
