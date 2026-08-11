@@ -278,9 +278,21 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Unidade dos campos L×A (px, cm, mm, in, pt, pc). Conversão CSS a 96 dpi; o canvas grava sempre em pixels.",
     viewportCustomHint:
       "Valores físicos usam referência CSS 96 dpi (1 in = 96 px). Limites: 64–7680 px por eixo.",
-    transition: "Efeito visual ao trocar de tela na exibição (fade, deslizar ou corte direto).",
+    transition: "Efeito visual ao trocar de tela na exibição. Passe o mouse nas opções para pré-visualizar.",
     slideTransition:
       "Substitui a transição padrão só nesta tela. «Herdar» usa a seção (se houver) ou a programação.",
+    transitionInheritLabel: "Herdar (seção / programação)",
+    transitionSectionInheritLabel: "Herdar programação",
+    transitionInheritDescription: "Usa a transição definida na seção ou na programação.",
+    transitionDescriptions: {
+      fade: "Entrada suave por opacidade.",
+      dissolve: "Mistura leve com desfoque.",
+      slide: "A nova tela desliza pela lateral.",
+      push: "Deslocamento lateral curto.",
+      wipe: "Revelação progressiva da esquerda.",
+      zoom: "Aproximação sutil.",
+      none: "Troca imediata, sem movimento.",
+    },
     defaultDuration:
       "Duração padrão da programação: vale para telas que herdam (sem tempo individual).",
     refreshInterval:

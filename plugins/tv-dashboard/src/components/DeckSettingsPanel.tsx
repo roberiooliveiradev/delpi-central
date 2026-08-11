@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { NativeCheckboxControl, ToolbarSelectField } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, TransitionGallery } from "@delpi/plugin-ui/index";
+import {
+  formatPresentationTransitionLabel,
+  PRESENTATION_TRANSITION_STYLES,
+  type PresentationTransitionStyle,
+} from "@delpi/tv-dashboard-presentation";
 import {
   ArrowLeftRight,
   Building2,
@@ -41,7 +46,6 @@ import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { DeckRibbonTilePopover } from "./deck/DeckRibbonTilePopover";
 import { PlaylistDataFiltersFields } from "./PlaylistDataFiltersFields";
 import { TdNativeTextField } from "./tdFormFields";
-import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { ViewportResolutionFields } from "./ViewportResolutionFields";
 
@@ -68,19 +72,24 @@ type Props = {
   ) => void;
 };
 
-const TRANSITION_OPTIONS = [
-  { value: "fade", label: "Fade" },
-  { value: "slide", label: "Deslizar" },
-  { value: "none", label: "Sem transição" },
-];
-
-const SLIDE_TRANSITION_OPTIONS = [
-  { value: "", label: "Herdar (seção / programação)" },
-  ...TRANSITION_OPTIONS,
-];
-
 const F = TV_DASHBOARD_HELP_TOOLTIPS.fields;
 const R = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+const TRANSITION_OPTIONS = PRESENTATION_TRANSITION_STYLES.map((id) => ({
+  id,
+  label: formatPresentationTransitionLabel(id),
+  description: F.transitionDescriptions[id as PresentationTransitionStyle],
+}));
+
+const SLIDE_TRANSITION_OPTIONS = [
+  {
+    id: "",
+    label: F.transitionInheritLabel,
+    description: F.transitionInheritDescription,
+    previewStyle: "fade",
+  },
+  ...TRANSITION_OPTIONS,
+];
 
 function patchMaster(
   current: PlaylistMasterConfig | undefined,
@@ -325,11 +334,10 @@ export function DeckSettingsPanel({
               panelLabel="Transição da tela"
               panelClassName="td-deck-ribbon-tile-popover--narrow"
             >
-              <TdRibbonSelect
-                id="td-slide-transition"
-                aria-label="Transição do slide"
+              <TransitionGallery
+                ariaLabel="Transição do slide"
                 value={transitionStyle}
-                onChange={(value) => {
+                onChange={(value: string) => {
                   setTransitionStyle(value);
                   saveSlidePatch({ transitionStyle: value });
                 }}
@@ -471,12 +479,9 @@ export function DeckSettingsPanel({
               panelLabel="Transição da programação"
               panelClassName="td-deck-ribbon-tile-popover--narrow"
             >
-              <ToolbarSelectField
-                label="Transição"
-                title={F.transition}
+              <TransitionGallery
+                ariaLabel="Transição da programação"
                 value={playlist.transitionStyle}
-                allowEmptyOption={false}
-                searchable={false}
                 options={TRANSITION_OPTIONS}
                 onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
               />

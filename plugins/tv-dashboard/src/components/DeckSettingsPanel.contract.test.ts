@@ -9,9 +9,11 @@ describe("DeckSettingsPanel kit controls", () => {
     "utf8",
   );
 
-  it("usa ToolbarSelectField / TdRibbonSelect em vez de NativeSelect na ribbon", () => {
-    expect(source).toContain("ToolbarSelectField");
-    expect(source).toContain("TdRibbonSelect");
+  it("usa a galeria visual do kit para transições", () => {
+    expect(source).toContain("TransitionGallery");
+    expect(source).toContain("PRESENTATION_TRANSITION_STYLES");
+    expect(source).not.toContain("ToolbarSelectField");
+    expect(source).not.toContain("TdRibbonSelect");
     expect(source).not.toContain("TdNativeSelectField");
   });
 });
@@ -24,7 +26,8 @@ describe("SectionPropertiesPanel kit controls", () => {
 
   it("não usa select/input HTML crus", () => {
     expect(source).toContain("HostContainedDialog");
-    expect(source).toContain("TdRibbonSelect");
+    expect(source).toContain("TransitionGallery");
+    expect(source).toContain("PRESENTATION_TRANSITION_STYLES");
     expect(source).toContain("NativeCheckboxControl");
     expect(source).not.toMatch(/<select\b/);
     expect(source).not.toMatch(/<input\b/);
