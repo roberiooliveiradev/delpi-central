@@ -42,6 +42,35 @@ export function bringForward(blocks: ComunicadoBlock[], selectedIds: string[]): 
   return changed ? reindexZ(next) : blocks;
 }
 
+/**
+ * Move um ou mais ids (grupo = todos os memberIds) para o alvo, no espaço z-asc.
+ * Ordem relativa dos movidos é preservada. Drop no próprio conjunto é no-op.
+ */
+export function reorderLayerIds(
+  blocks: ComunicadoBlock[],
+  movedIds: readonly string[],
+  targetId: string,
+): ComunicadoBlock[] {
+  if (movedIds.length === 0) return blocks;
+  const moveSet = new Set(movedIds);
+  if (moveSet.has(targetId)) return blocks;
+
+  const sorted = sortBlocksByZIndex(blocks);
+  const fromIndexes = movedIds
+    .map((id) => sorted.findIndex((block) => block.id === id))
+    .filter((index) => index >= 0);
+  const targetIndex = sorted.findIndex((block) => block.id === targetId);
+  if (fromIndexes.length === 0 || targetIndex < 0) return blocks;
+
+  const fromIndex = Math.min(...fromIndexes);
+  const moving = sorted.filter((block) => moveSet.has(block.id));
+  const rest = sorted.filter((block) => !moveSet.has(block.id));
+  const targetInRest = rest.findIndex((block) => block.id === targetId);
+  if (targetInRest < 0) return blocks;
+  const insertAt = fromIndex < targetIndex ? targetInRest + 1 : targetInRest;
+  return reindexZ([...rest.slice(0, insertAt), ...moving, ...rest.slice(insertAt)]);
+}
+
 export function sendBackward(blocks: ComunicadoBlock[], selectedIds: string[]): ComunicadoBlock[] {
   if (selectedIds.length === 0) return blocks;
   const selectedSet = new Set(selectedIds);

@@ -105,6 +105,7 @@ import { renameKpiMetricFieldLabel } from "../../utils/renameKpiMetricFieldLabel
 import {
   bringForward,
   bringToFront,
+  reorderLayerIds,
   sendBackward,
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
@@ -1190,18 +1191,9 @@ export function useComunicadoEditorBlocks({
   }, [applyLayerOrder]);
 
   const reorderBlockLayer = useCallback(
-    (blockId: string, targetIndex: number) => {
-      const sorted = sortBlocksByZIndex(configRef.current.blocks ?? []);
-      const fromIndex = sorted.findIndex((block) => block.id === blockId);
-      if (fromIndex < 0 || fromIndex === targetIndex) return;
-      const reordered = [...sorted];
-      const [moved] = reordered.splice(fromIndex, 1);
-      reordered.splice(targetIndex, 0, moved);
-      const nextBlocks = reordered.map((block, index) => ({
-        ...block,
-        style: { ...block.style, zIndex: index + 1 },
-      }));
-      updateBlocks(nextBlocks);
+    (movedIds: string[], targetId: string) => {
+      const next = reorderLayerIds(configRef.current.blocks ?? [], movedIds, targetId);
+      updateBlocks(next);
     },
     [configRef, updateBlocks],
   );
