@@ -17,6 +17,9 @@ describe("slide ribbon layout contract", () => {
     expect(panel).toContain('label="Duração"');
     expect(panel).toContain('label="Transição"');
     expect(panel).toContain("Herdar duração");
+    expect(panel).toContain("buildSparseSlidePatch");
+    expect(panel).toContain("onSaveSlides");
+    expect(panel).toContain("titleMixed");
     expect(panel).not.toContain("td-deck-ribbon__prop-cols");
     expect(panel).not.toContain("td-deck-settings-chip");
   });

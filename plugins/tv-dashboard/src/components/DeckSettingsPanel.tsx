@@ -34,6 +34,14 @@ import { adminMediaUrl, uploadPlaylistMedia } from "../api/tvDashboardApi";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  applySlideBatchPatch,
+  buildSparseSlidePatch,
+  isNativeOperationalSlide,
+  resolveMixedSlideField,
+  slideBatchFieldApplicability,
+  type SlideBatchInput,
+} from "../utils/applySlideBatchPatch";
+import {
   resolveSlideDurationSec,
   slideDurationIsOverride,
 } from "../utils/slideTimingInheritance";
@@ -59,6 +67,8 @@ type Props = {
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
   slideTabExtra?: ReactNode;
+  /** Telas do filmstrip na ordem da seleção (último = primária). */
+  selectedSlides?: Slide[];
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
@@ -70,6 +80,7 @@ type Props = {
       transitionStyle?: string | null;
     },
   ) => void;
+  onSaveSlides?: (slides: Slide[], patch: SlideBatchInput) => void;
 };
 
 const F = TV_DASHBOARD_HELP_TOOLTIPS.fields;
@@ -110,17 +121,31 @@ export function DeckSettingsPanel({
   catalog,
   branchScope,
   slideTabExtra,
+  selectedSlides: selectedSlidesProp,
   onSavePlaylistSettings,
   onSaveSlide,
+  onSaveSlides,
 }: Props) {
   const slides = slidesProp ?? playlist.slides ?? [];
+  const selectedSlides =
+    selectedSlidesProp && selectedSlidesProp.length > 0
+      ? selectedSlidesProp
+      : slide
+        ? [slide]
+        : [];
   const [title, setTitle] = useState("");
+  const [titleMixed, setTitleMixed] = useState(false);
   const [durationSec, setDurationSec] = useState(playlist.defaultDurationSec);
   const [durationInherit, setDurationInherit] = useState(true);
+  const [durationInheritMixed, setDurationInheritMixed] = useState(false);
   const [transitionStyle, setTransitionStyle] = useState("");
+  const [transitionMixed, setTransitionMixed] = useState(false);
   const [externalUrl, setExternalUrl] = useState("");
+  const [externalUrlMixed, setExternalUrlMixed] = useState(false);
   const [branch, setBranch] = useState("");
+  const [branchMixed, setBranchMixed] = useState(false);
   const [periodDays, setPeriodDays] = useState(30);
+  const [periodMixed, setPeriodMixed] = useState(false);
   const [masterUploading, setMasterUploading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -135,27 +160,64 @@ export function DeckSettingsPanel({
     playlistDefault: playlist.defaultDurationSec,
   });
   const effectiveDuration = durationInherit ? inheritedDuration : durationSec;
+  const fieldApplicability = slideBatchFieldApplicability(selectedSlides);
+  const mixedLabel = F.mixedValue;
+  const showPeriod = selectedSlides.some(
+    (item) => isNativeOperationalSlide(item) && item.nativeScreenKey !== "supplies_stock_value",
+  );
+  const typeKey = resolveMixedSlideField(
+    selectedSlides.map((item) => item.nativeScreenKey ?? item.slideType),
+  );
 
   useEffect(() => {
-    if (!slide) return;
-    setTitle(slide.title);
-    const inherit = !slideDurationIsOverride(slide.durationSec);
-    setDurationInherit(inherit);
-    setDurationSec(
+    if (selectedSlides.length === 0) return;
+    const titles = resolveMixedSlideField(selectedSlides.map((item) => item.title));
+    setTitleMixed(titles.mixed);
+    setTitle(titles.mixed ? "" : (titles.value ?? ""));
+
+    const inheritFlags = selectedSlides.map((item) => !slideDurationIsOverride(item.durationSec));
+    const inheritState = resolveMixedSlideField(inheritFlags);
+    setDurationInheritMixed(inheritState.mixed);
+    setDurationInherit(!inheritState.mixed && Boolean(inheritState.value));
+
+    const durationValues = selectedSlides.map((item) =>
       resolveSlideDurationSec({
-        slideDuration: slide.durationSec,
-        sectionDefault: slide.sectionId
-          ? sections.find((section) => section.id === slide.sectionId)?.defaultDurationSec
+        slideDuration: item.durationSec,
+        sectionDefault: item.sectionId
+          ? sections.find((section) => section.id === item.sectionId)?.defaultDurationSec
           : null,
         playlistDefault: playlist.defaultDurationSec,
       }),
     );
-    setTransitionStyle(slide.transitionStyle ?? "");
-    setExternalUrl(slide.externalUrl ?? "");
-    const cfg = slide.nativeConfig ?? {};
-    setBranch(String(cfg.branch ?? ""));
-    setPeriodDays(Number(cfg.periodDays ?? 30));
-  }, [slide, playlist.defaultDurationSec, sections]);
+    const durationState = resolveMixedSlideField(durationValues);
+    setDurationSec(
+      durationState.mixed
+        ? playlist.defaultDurationSec
+        : (durationState.value ?? playlist.defaultDurationSec),
+    );
+
+    const transitions = resolveMixedSlideField(
+      selectedSlides.map((item) => item.transitionStyle ?? ""),
+    );
+    setTransitionMixed(transitions.mixed);
+    setTransitionStyle(transitions.mixed ? "" : (transitions.value ?? ""));
+
+    const urls = resolveMixedSlideField(selectedSlides.map((item) => item.externalUrl ?? ""));
+    setExternalUrlMixed(urls.mixed);
+    setExternalUrl(urls.mixed ? "" : (urls.value ?? ""));
+
+    const branches = resolveMixedSlideField(
+      selectedSlides.map((item) => String(item.nativeConfig?.branch ?? "")),
+    );
+    setBranchMixed(branches.mixed);
+    setBranch(branches.mixed ? "" : (branches.value ?? ""));
+
+    const periods = resolveMixedSlideField(
+      selectedSlides.map((item) => Number(item.nativeConfig?.periodDays ?? 30)),
+    );
+    setPeriodMixed(periods.mixed);
+    setPeriodDays(periods.mixed ? 30 : (periods.value ?? 30));
+  }, [selectedSlides, playlist.defaultDurationSec, sections]);
 
   const catalogItem = slide?.nativeScreenKey
     ? catalog.find((item) => item.key === slide.nativeScreenKey)
@@ -210,54 +272,35 @@ export function DeckSettingsPanel({
       branch: string;
       periodDays: number;
       transitionStyle: string;
-    }> = {},
+    }>,
   ) {
-    if (!slide) return;
-    const nextTitle = patch.title ?? title;
-    const nextInherit = patch.durationInherit ?? durationInherit;
-    const nextDurationValue = patch.durationSec !== undefined ? patch.durationSec : durationSec;
-    const durationPayload: number | null = nextInherit
-      ? null
-      : typeof nextDurationValue === "number"
-        ? nextDurationValue
-        : effectiveDuration;
-    const nextBranch = patch.branch ?? branch;
-    const nextPeriod = patch.periodDays ?? periodDays;
-    const nextTransition = patch.transitionStyle ?? transitionStyle;
-    const transitionPayload =
-      nextTransition.trim() === "" ? null : nextTransition.trim();
-    if (slide.slideType === "external") {
-      onSaveSlide(slide, {
-        title: nextTitle.trim() || slide.title,
-        durationSec: durationPayload,
-        externalUrl: (patch.externalUrl ?? externalUrl).trim(),
-        transitionStyle: transitionPayload,
-      });
+    if (selectedSlides.length === 0) return;
+    const input = buildSparseSlidePatch(patch);
+    if (Object.keys(input).length === 0) return;
+    if (onSaveSlides) {
+      onSaveSlides(selectedSlides, input);
       return;
     }
-    const nativeConfig: Record<string, unknown> = { ...(slide.nativeConfig ?? {}) };
-    const screenKey = slide.nativeScreenKey ?? "";
-    if (screenKey !== "custom_message") {
-      if (nextBranch.trim()) nativeConfig.branch = nextBranch.trim();
-      else delete nativeConfig.branch;
-      nativeConfig.periodDays = nextPeriod;
-      if (screenKey === "quality_ppm_summary") {
-        nativeConfig.ppmType = slide.nativeConfig?.ppmType ?? "internal";
-      }
-    }
+    if (!slide) return;
+    const applied = applySlideBatchPatch([slide], input).applied[0];
+    if (!applied) return;
     onSaveSlide(slide, {
-      title: nextTitle.trim() || slide.title,
-      durationSec: durationPayload,
-      nativeConfig,
-      transitionStyle: transitionPayload,
+      title: applied.payload.title ?? slide.title,
+      durationSec:
+        applied.payload.durationSec !== undefined
+          ? applied.payload.durationSec
+          : (slide.durationSec ?? null),
+      nativeConfig: applied.payload.nativeConfig,
+      externalUrl: applied.payload.externalUrl,
+      transitionStyle: applied.payload.transitionStyle,
     });
   }
 
-  if (activeTab === "slide" && !slide) {
+  if (activeTab === "slide" && selectedSlides.length === 0) {
     return <p className="td-subtitle">Selecione uma tela para editar propriedades.</p>;
   }
 
-  if (activeTab === "slide" && slide) {
+  if (activeTab === "slide" && selectedSlides.length > 0) {
     return (
       <>
         <DeckRibbonGroup groupId="slide-properties" label="Propriedades" hint={F.slideTitle}>
@@ -273,8 +316,15 @@ export function DeckSettingsPanel({
                 id="td-slide-title"
                 label="Título"
                 value={title}
-                onChange={setTitle}
-                onBlur={() => saveSlidePatch({ title })}
+                placeholder={titleMixed ? mixedLabel : undefined}
+                onChange={(value) => {
+                  setTitle(value);
+                  setTitleMixed(false);
+                }}
+                onBlur={() => {
+                  if (titleMixed && !title.trim()) return;
+                  saveSlidePatch({ title });
+                }}
               />
             </DeckRibbonTilePopover>
 
@@ -288,10 +338,11 @@ export function DeckSettingsPanel({
               <div className="td-deck-slide-timing">
                 <NativeCheckboxControl
                   id="td-slide-duration-inherit"
-                  checked={durationInherit}
-                  label="Herdar duração"
+                  checked={durationInherit && !durationInheritMixed}
+                  label={durationInheritMixed ? `Herdar duração (${mixedLabel})` : "Herdar duração"}
                   onChange={(checked) => {
                     setDurationInherit(checked);
+                    setDurationInheritMixed(false);
                     if (checked) {
                       setDurationSec(effectiveDuration);
                       saveSlidePatch({ durationInherit: true, durationSec: null });
@@ -304,7 +355,7 @@ export function DeckSettingsPanel({
                     });
                   }}
                 />
-                {durationInherit ? (
+                {durationInherit && !durationInheritMixed ? (
                   <p className="td-deck-slide-timing__inherited" aria-live="polite">
                     Efetivo: <strong>{effectiveDuration}s</strong>
                     <span className="td-deck-slide-timing__badge">Herdado</span>
@@ -320,6 +371,7 @@ export function DeckSettingsPanel({
                     onChange={(value) => {
                       setDurationSec(value);
                       setDurationInherit(false);
+                      setDurationInheritMixed(false);
                       saveSlidePatch({ durationInherit: false, durationSec: value });
                     }}
                   />
@@ -336,16 +388,17 @@ export function DeckSettingsPanel({
             >
               <TransitionGallery
                 ariaLabel="Transição do slide"
-                value={transitionStyle}
+                value={transitionMixed ? null : transitionStyle}
                 onChange={(value: string) => {
                   setTransitionStyle(value);
+                  setTransitionMixed(false);
                   saveSlidePatch({ transitionStyle: value });
                 }}
                 options={SLIDE_TRANSITION_OPTIONS}
               />
             </DeckRibbonTilePopover>
 
-            {slide.slideType === "external" ? (
+            {fieldApplicability.externalUrl ? (
               <DeckRibbonTilePopover
                 icon={Globe}
                 label="URL"
@@ -358,52 +411,19 @@ export function DeckSettingsPanel({
                   label="URL"
                   className="td-deck-tabs__field--wide"
                   value={externalUrl}
-                  onChange={setExternalUrl}
-                  onBlur={() => saveSlidePatch({ externalUrl })}
+                  placeholder={externalUrlMixed ? mixedLabel : undefined}
+                  onChange={(value) => {
+                    setExternalUrl(value);
+                    setExternalUrlMixed(false);
+                  }}
+                  onBlur={() => {
+                    if (externalUrlMixed && !externalUrl.trim()) return;
+                    saveSlidePatch({ externalUrl });
+                  }}
                 />
               </DeckRibbonTilePopover>
-            ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
-              <>
-                <DeckRibbonTilePopover
-                  icon={Building2}
-                  label="Filial"
-                  hint={F.slideBranch}
-                  panelLabel="Filial da tela"
-                  panelClassName="td-deck-ribbon-tile-popover--narrow"
-                >
-                  <BranchField
-                    id="td-slide-branch"
-                    label="Filial"
-                    scope={branchScope}
-                    value={branch}
-                    onChange={(value) => {
-                      setBranch(value);
-                      saveSlidePatch({ branch: value });
-                    }}
-                  />
-                </DeckRibbonTilePopover>
-                <DeckRibbonTilePopover
-                  icon={Clock}
-                  label="Período"
-                  hint={F.slidePeriod}
-                  panelLabel="Período em dias"
-                  panelClassName="td-deck-ribbon-tile-popover--narrow"
-                >
-                  <DeckRangeField
-                    id="td-slide-period"
-                    label="Período (dias)"
-                    hint={F.slidePeriod}
-                    min={1}
-                    max={365}
-                    value={periodDays}
-                    onChange={(value) => {
-                      setPeriodDays(value);
-                      saveSlidePatch({ periodDays: value });
-                    }}
-                  />
-                </DeckRibbonTilePopover>
-              </>
-            ) : !isCustomSlide ? (
+            ) : null}
+            {fieldApplicability.branch ? (
               <DeckRibbonTilePopover
                 icon={Building2}
                 label="Filial"
@@ -412,20 +432,46 @@ export function DeckSettingsPanel({
                 panelClassName="td-deck-ribbon-tile-popover--narrow"
               >
                 <BranchField
-                  id="td-slide-branch-stock"
+                  id="td-slide-branch"
                   label="Filial"
                   scope={branchScope}
                   value={branch}
+                  diverged={branchMixed}
+                  divergedLabel={mixedLabel}
                   onChange={(value) => {
                     setBranch(value);
+                    setBranchMixed(false);
                     saveSlidePatch({ branch: value });
+                  }}
+                />
+              </DeckRibbonTilePopover>
+            ) : null}
+            {showPeriod ? (
+              <DeckRibbonTilePopover
+                icon={Clock}
+                label="Período"
+                hint={F.slidePeriod}
+                panelLabel="Período em dias"
+                panelClassName="td-deck-ribbon-tile-popover--narrow"
+              >
+                <DeckRangeField
+                  id="td-slide-period"
+                  label={periodMixed ? `Período (dias) — ${mixedLabel}` : "Período (dias)"}
+                  hint={F.slidePeriod}
+                  min={1}
+                  max={365}
+                  value={periodDays}
+                  onChange={(value) => {
+                    setPeriodDays(value);
+                    setPeriodMixed(false);
+                    saveSlidePatch({ periodDays: value });
                   }}
                 />
               </DeckRibbonTilePopover>
             ) : null}
           </div>
         </DeckRibbonGroup>
-        {isCustomSlide || catalogItem ? (
+        {!typeKey.mixed && (isCustomSlide || catalogItem) ? (
           <DeckRibbonGroup groupId="slide-type" label="Tipo" hint={F.customSlideType}>
             <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
               <DeckRibbonTile

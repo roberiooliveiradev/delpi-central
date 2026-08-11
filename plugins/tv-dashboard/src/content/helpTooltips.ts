@@ -7,6 +7,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     prevSlide: "Volta para a tela anterior na ordem de exibição.",
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
+    currentSlides: "Ações sobre as {count} telas selecionadas no filmstrip.",
+    slideBatchSaved: "{count} telas atualizadas.",
+    mixedValue: "Misto",
     playlistChrome:
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
     playlistFilters:
@@ -267,6 +270,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   fields: {
     slideTitle: "Nome curto para identificar a tela no filmstrip e nos relatórios internos.",
+    mixedValue: "Misto",
     slideDuration:
       "Tempo em segundos nesta tela. Marque «Herdar» para usar o padrão da seção ou da programação (5–600 s).",
     slideUrl: "Endereço HTTPS exibido em tela cheia nesta slide (página externa ou dashboard embutido).",

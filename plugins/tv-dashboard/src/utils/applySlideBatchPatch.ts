@@ -106,6 +106,44 @@ function hasCommonOrNativeFields(patch: SlideBatchInput): boolean {
   );
 }
 
+/** Converte o patch da ribbon (um campo por vez) no input do lote. */
+export function buildSparseSlidePatch(patch: {
+  title?: string;
+  durationSec?: number | null;
+  durationInherit?: boolean;
+  transitionStyle?: string;
+  externalUrl?: string;
+  branch?: string;
+  periodDays?: number;
+}): SlideBatchInput {
+  const input: SlideBatchInput = {};
+  if (patch.title !== undefined) {
+    const title = patch.title.trim();
+    if (title) input.title = title;
+  }
+  if (patch.durationInherit === true) input.durationSec = null;
+  else if (patch.durationSec !== undefined) input.durationSec = patch.durationSec;
+  if (patch.transitionStyle !== undefined) {
+    const style = patch.transitionStyle.trim();
+    input.transitionStyle = style === "" ? null : style;
+  }
+  if (patch.externalUrl !== undefined) input.externalUrl = patch.externalUrl.trim();
+  if (patch.branch !== undefined) input.branch = patch.branch;
+  if (patch.periodDays !== undefined) input.periodDays = patch.periodDays;
+  return input;
+}
+
+export function resolveSelectedSlides(
+  slides: readonly Slide[],
+  selectedIds: readonly string[],
+  primary: Slide | null,
+): Slide[] {
+  const ids = selectedIds.length > 0 ? selectedIds : primary ? [primary.id] : [];
+  return ids
+    .map((id) => slides.find((item) => item.id === id))
+    .filter((item): item is Slide => Boolean(item));
+}
+
 export function applySlideBatchPatch(
   slides: readonly Slide[],
   patch: SlideBatchInput,

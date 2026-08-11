@@ -16,6 +16,7 @@ import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckKeyTip } from "./DeckKeyTip";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
+import type { SlideBatchInput } from "../utils/applySlideBatchPatch";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideCurrentRibbon } from "./SlideCurrentRibbon";
@@ -61,6 +62,7 @@ type Props = {
   slideDeck: SlideDeckProps;
   /** Telas do filmstrip com seleção múltipla; 1 = primária apenas. */
   selectedSlideCount?: number;
+  selectedSlides?: Slide[];
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
@@ -72,6 +74,7 @@ type Props = {
       transitionStyle?: string | null;
     },
   ) => void;
+  onSaveSlides?: (slides: Slide[], patch: SlideBatchInput) => void;
   /** Template: sem aba Programação / multi-página. */
   variant?: "playlist" | "template";
 };
@@ -127,8 +130,10 @@ export function DeckEditorChrome({
   slideTabExtra,
   slideDeck,
   selectedSlideCount = 1,
+  selectedSlides,
   onSavePlaylistSettings,
   onSaveSlide,
+  onSaveSlides,
   variant = "playlist",
 }: Props) {
   const editor = useOptionalComunicadoEditor();
@@ -357,12 +362,14 @@ export function DeckEditorChrome({
                     playlist={playlist}
                     slide={slide}
                     slides={slides ?? slideDeck.slides}
+                    selectedSlides={selectedSlides}
                     sections={sections}
                     catalog={catalog}
                     branchScope={branchScope}
                     slideTabExtra={slideTabExtra}
                     onSavePlaylistSettings={onSavePlaylistSettings}
                     onSaveSlide={onSaveSlide}
+                    onSaveSlides={onSaveSlides}
                   />
                 </DeckRibbonGroups>
               ) : null}

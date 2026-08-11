@@ -112,7 +112,13 @@ import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
+import {
+  applySlideBatchPatch,
+  resolveSelectedSlides,
+  type SlideBatchInput,
+} from "../utils/applySlideBatchPatch";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -395,6 +401,11 @@ export function PlaylistEditorPage({
   const selectedSlide = useMemo(
     () => slides.find((slide) => slide.id === selectedSlideId) ?? slides[0] ?? null,
     [slides, selectedSlideId],
+  );
+
+  const selectedSlides = useMemo(
+    () => resolveSelectedSlides(slides, selectedSlideIds, selectedSlide),
+    [slides, selectedSlideIds, selectedSlide],
   );
 
   const sectionPropertiesTarget = useMemo(
@@ -1476,6 +1487,38 @@ export function PlaylistEditorPage({
     }
   }
 
+  async function handleSaveSlides(targets: Slide[], patch: SlideBatchInput) {
+    if (!playlist || targets.length === 0) return;
+    const { applied } = applySlideBatchPatch(targets, patch);
+    if (applied.length === 0) return;
+    deckHistory.recordBeforeChange();
+    try {
+      const updates = new Map<string, Slide>();
+      for (const item of applied) {
+        updates.set(item.slideId, await updateSlide(playlist.id, item.slideId, item.payload));
+      }
+      setPlaylist((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slides: (current.slides ?? []).map((item) => updates.get(item.id) ?? item),
+        };
+      });
+      await deckHistory.confirmChange();
+      if (applied.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchSaved.replace(
+            "{count}",
+            String(applied.length),
+          ),
+        );
+      }
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
   const persistComunicadoPending = useCallback(
     async (
       captured: {
@@ -1881,16 +1924,13 @@ export function PlaylistEditorPage({
     isCustomSlide,
     adminLabels: admin,
     slideDeck: slideDeckProps,
-    selectedSlideCount:
-      selectedSlideIds.length > 0
-        ? selectedSlideIds.length
-        : selectedSlide
-          ? 1
-          : 0,
+    selectedSlideCount: selectedSlides.length,
+    selectedSlides,
     onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
       void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
       void handleSaveSlide(slide, payload, { recordHistory: true }),
+    onSaveSlides: (targets: Slide[], patch: SlideBatchInput) => void handleSaveSlides(targets, patch),
   };
 
   const workspaceProps = {

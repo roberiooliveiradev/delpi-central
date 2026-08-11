@@ -16,6 +16,8 @@ describe("DeckSettingsPanel kit controls", () => {
     expect(source).not.toContain("TdRibbonSelect");
     expect(source).not.toContain("TdNativeSelectField");
     expect(source).toContain("td-deck-ribbon-tile-popover--transition");
+    expect(source).toContain("buildSparseSlidePatch");
+    expect(source).toContain("onSaveSlides");
     expect(source).not.toMatch(
       /panelLabel="Transição da (tela|programação)"\s+panelClassName="td-deck-ribbon-tile-popover--narrow"/,
     );

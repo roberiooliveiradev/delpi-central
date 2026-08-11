@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { Slide } from "../api/tvDashboardApi";
 import {
   applySlideBatchPatch,
+  buildSparseSlidePatch,
   isCustomMessageSlide,
   resolveMixedSlideField,
+  resolveSelectedSlides,
   slideBatchFieldApplicability,
 } from "./applySlideBatchPatch";
 
@@ -100,5 +102,23 @@ describe("slideBatchFieldApplicability / mixed", () => {
     expect(resolveMixedSlideField(["a", "a"])).toEqual({ mixed: false, value: "a" });
     expect(resolveMixedSlideField(["a", "b"])).toEqual({ mixed: true });
     expect(isCustomMessageSlide({ nativeScreenKey: "custom_message" })).toBe(true);
+  });
+
+  it("monta patch esparso e resolve a seleção na ordem dos ids", () => {
+    expect(buildSparseSlidePatch({ transitionStyle: "wipe" })).toEqual({
+      transitionStyle: "wipe",
+    });
+    expect(buildSparseSlidePatch({ durationInherit: true, title: "  " })).toEqual({
+      durationSec: null,
+    });
+    expect(buildSparseSlidePatch({ transitionStyle: "" })).toEqual({
+      transitionStyle: null,
+    });
+    const a = slide({ id: "a", title: "A" });
+    const b = slide({ id: "b", title: "B" });
+    expect(resolveSelectedSlides([a, b], ["b", "a"], a).map((item) => item.id)).toEqual([
+      "b",
+      "a",
+    ]);
   });
 });
