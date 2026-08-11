@@ -195,7 +195,8 @@ export function useComunicadoEditorSelection({
 
   const requestRibbonTab = useCallback(
     (tab: ComunicadoRibbonTabRequest, options?: { blockId?: string }) => {
-      const blockId = options?.blockId ?? selectedIdsRef.current[0];
+      const liveIds = selectedIdsRef.current;
+      const blockId = options?.blockId ?? liveIds[liveIds.length - 1];
       const block = blockId
         ? configRef.current.blocks?.find((item) => item.id === blockId)
         : undefined;

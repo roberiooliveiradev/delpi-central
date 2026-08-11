@@ -106,6 +106,20 @@ describe("comunicadoGrouping", () => {
     expect(units.find((unit) => unit.key === "g1")?.frame).toEqual({ x: 0, y: 0, w: 20, h: 20 });
   });
 
+  it("expande grupo fechado em uma unidade por membro", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    a.frame = { x: 0, y: 0, w: 10, h: 10 };
+    b.frame = { x: 10, y: 10, w: 10, h: 10 };
+    const units = partitionSelectionIntoLayoutUnits([a, b], [a.id, b.id], {
+      expandClosedGroups: true,
+    });
+    expect(units.map((unit) => unit.key).sort()).toEqual([a.id, b.id].sort());
+    expect(units.every((unit) => unit.memberIds.length === 1)).toBe(true);
+  });
+
   it("filho isolado permanece unidade própria", () => {
     const a = createBlock("text", "A");
     const b = createBlock("text", "B");

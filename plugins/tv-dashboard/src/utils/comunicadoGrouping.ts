@@ -181,12 +181,13 @@ export type ComunicadoLayoutUnit = {
 
 /**
  * Particiona a seleção em unidades para align/distribute/move em lote.
- * Grupo com todos os membros selecionados → 1 unidade (bounding box).
- * Filho isolado ou bloco sem grupo → 1 unidade cada.
+ * Default: grupo fechado → 1 unidade (bbox) — move/resize da moldura.
+ * `expandClosedGroups`: cada membro é unidade (align / mesmo tamanho).
  */
 export function partitionSelectionIntoLayoutUnits(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: { expandClosedGroups?: boolean },
 ): ComunicadoLayoutUnit[] {
   const idSet = new Set(selectedIds);
   const selected = blocks.filter((block) => idSet.has(block.id));
@@ -199,6 +200,7 @@ export function partitionSelectionIntoLayoutUnits(
     selected.map((block) => block.groupId).filter((id): id is string => Boolean(id)),
   );
   for (const groupId of groupIds) {
+    if (options?.expandClosedGroups) continue;
     const members = membersOfGroup(blocks, groupId);
     if (members.length < 2) continue;
     if (!members.every((member) => idSet.has(member.id))) continue;
