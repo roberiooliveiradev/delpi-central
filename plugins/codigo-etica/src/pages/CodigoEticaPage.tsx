@@ -18,7 +18,9 @@ import {
   PDF_ZOOM_MAX,
   PDF_ZOOM_MIN,
   PDF_ZOOM_STEP,
+  PUBLIC_LINK_HELP,
 } from "../constants/document";
+import { resolveCodigoEticaPublicUrl } from "../utils/publicLink";
 
 function openPdfInNewTab() {
   window.open(CODIGO_ETICA_PDF_PATH, "_blank", "noopener,noreferrer");
@@ -30,6 +32,8 @@ function clampZoom(value: number): number {
 
 export function CodigoEticaPage() {
   const [zoomPercent, setZoomPercent] = useState(PDF_ZOOM_FIT);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const publicUrl = resolveCodigoEticaPublicUrl();
 
   const zoomOut = useCallback(() => {
     setZoomPercent((prev) => clampZoom(prev - PDF_ZOOM_STEP));
@@ -42,6 +46,15 @@ export function CodigoEticaPage() {
   const zoomFit = useCallback(() => {
     setZoomPercent(PDF_ZOOM_FIT);
   }, []);
+
+  async function handleCopyPublicLink() {
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopyNotice("Link público copiado.");
+    } catch {
+      setCopyNotice("Não foi possível copiar. Selecione o endereço e copie manualmente.");
+    }
+  }
 
   return (
     <div className="dashboard-codigo-etica ce-page">
@@ -66,6 +79,24 @@ export function CodigoEticaPage() {
       </header>
 
       <p className="ce-intro">{PAGE_INTRO}</p>
+
+      <section className="ce-public-link" aria-label="Link público">
+        <p className="ce-public-link__help">{PUBLIC_LINK_HELP}</p>
+        <p className="ce-public-link__url">{publicUrl}</p>
+        <div className="ce-public-link__actions">
+          <button type="button" className="ce-public-link__copy" onClick={() => void handleCopyPublicLink()}>
+            Copiar link
+          </button>
+          <a className="ce-public-link__open" href={publicUrl} target="_blank" rel="noreferrer">
+            Abrir documento público
+          </a>
+        </div>
+        {copyNotice ? (
+          <p className="ce-public-link__notice" role="status">
+            {copyNotice}
+          </p>
+        ) : null}
+      </section>
 
       <div className="ce-toolbar">
         <button

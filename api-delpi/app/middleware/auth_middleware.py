@@ -12,6 +12,7 @@ _PUBLIC_PREFIXES = (
     "/public/quality-labels/",
     "/public/kaizen/",
     "/public/mural-acessos/",
+    "/public/canal-denuncia/",
 )
 
 # root_path possíveis (o gateway costuma remover, mas mantemos robustez).

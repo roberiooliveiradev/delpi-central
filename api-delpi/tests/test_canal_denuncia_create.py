@@ -72,6 +72,63 @@ def _configured_mail_client(http_client: Any) -> MicrosoftGraphMailClient:
     )
 
 
+def test_create_public_canal_denuncia_returns_meta() -> None:
+    from unittest.mock import patch
+
+    from app.interface.http.routes.canal_denuncia.canal_denuncia_public_router import (
+        PublicDenunciaBody,
+        create_public_canal_denuncia,
+    )
+    from tests.support.route_contract_smoke import assert_envelope_meta, body_json
+
+    with patch(
+        "app.interface.http.routes.canal_denuncia.canal_denuncia_public_router.build_create_anonymous_denuncia_use_case"
+    ) as mock_build:
+        use_case = MagicMock()
+        use_case.execute.return_value = {
+            "id": "den-public-1",
+            "createdAt": "2026-01-01T00:00:00Z",
+        }
+        mock_build.return_value = use_case
+        response = create_public_canal_denuncia(
+            body=PublicDenunciaBody(
+                description="Relato anônimo enviado pelo link público."
+            )
+        )
+        assert_envelope_meta(
+            body_json(response),
+            operation_id="create_public_canal_denuncia",
+            shape="scalar",
+        )
+        use_case.execute.assert_called_once()
+
+
+def test_create_public_canal_denuncia_honeypot_skips_persist() -> None:
+    from unittest.mock import patch
+
+    from app.interface.http.routes.canal_denuncia.canal_denuncia_public_router import (
+        PublicDenunciaBody,
+        create_public_canal_denuncia,
+    )
+    from tests.support.route_contract_smoke import assert_envelope_meta, body_json
+
+    with patch(
+        "app.interface.http.routes.canal_denuncia.canal_denuncia_public_router.build_create_anonymous_denuncia_use_case"
+    ) as mock_build:
+        response = create_public_canal_denuncia(
+            body=PublicDenunciaBody(
+                description="Relato anônimo enviado pelo link público.",
+                website="https://spam.example",
+            )
+        )
+        assert_envelope_meta(
+            body_json(response),
+            operation_id="create_public_canal_denuncia",
+            shape="scalar",
+        )
+        mock_build.assert_not_called()
+
+
 def test_canal_denuncia_access_permission_constant() -> None:
     assert perms.CANAL_DENUNCIA_ACCESS == "canal-denuncia.access"
     assert perms.CANAL_DENUNCIA_ACCESS in perms.CANAL_DENUNCIA_SUBMIT_PERMISSIONS

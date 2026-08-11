@@ -361,6 +361,22 @@
         }
       }
     },
+    "create_public_canal_denuncia": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "Submit public whistleblowing report",
+          "description": "Anonymous report from the public form. No Minha DELPI account required.",
+          "whenToUse": "Use for the public Canal de Denúncia form."
+        },
+        "pt-BR": {
+          "summary": "Enviar denúncia pública",
+          "description": "Relato anônimo pelo formulário público, sem conta no Minha DELPI.",
+          "whenToUse": "Use no formulário público do Canal de Denúncia.",
+          "label": "Enviar denúncia pública"
+        }
+      }
+    },
     "create_guias_procedimentos_admin_department": {
       "category": "quality",
       "locale": {

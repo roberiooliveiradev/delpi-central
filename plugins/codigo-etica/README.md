@@ -9,11 +9,13 @@ Microfrontend (Module Federation) para consulta ao **Código de Ética** institu
 | **MFE** `codigo-etica` | Cabeçalho institucional + visualização do PDF |
 
 ```text
-Portal → /apps/codigo-etica
-           ↓ Module Federation (remoteEntry.js)
-         MFE codigo-etica
-           ↓ iframe (leitor nativo)
-         /apps/codigo-etica/documents/codigo-de-etica.pdf
+Portal (com conta)
+  → /apps/codigo-etica
+      → PDF /apps/codigo-etica/documents/codigo-de-etica.pdf
+
+Público (sem conta)
+  → /p/codigo-etica/codigo/aberto
+      → o mesmo PDF, sem login
 ```
 
 ## Permissão
@@ -25,6 +27,8 @@ Portal → /apps/codigo-etica
 ## Documento PDF
 
 Arquivo esperado em `public/documents/codigo-de-etica.pdf` (ver README nessa pasta).
+
+Link público: `/p/codigo-etica/codigo/aberto` (copiável no próprio plugin). O PDF em `/apps/codigo-etica/documents/` já é servido pelo gateway sem JWT.
 
 ## Desenvolvimento local
 
@@ -45,4 +49,4 @@ TOKEN=$(bash infra/scripts/get-dev-token.sh) bash plugins/codigo-etica/scripts/r
 
 ## Docker
 
-Container previsto: `delpi-codigo-etica` (Compose ainda não configurado nesta etapa).
+Container: `delpi-codigo-etica` (Compose profile `plugins` em dev).

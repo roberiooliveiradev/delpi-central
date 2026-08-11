@@ -1,0 +1,116 @@
+.cd-pub {
+  --cd-accent: var(--pub-accent, #089bdb);
+  --cd-title: var(--pub-title, #003866);
+  --cd-text: var(--pub-text, #111111);
+  --cd-muted: var(--pub-muted, rgba(17, 17, 17, 0.68));
+  --cd-surface: var(--pub-surface, #ffffff);
+  --cd-border: var(--pub-border, #e5e7eb);
+  box-sizing: border-box;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  color: var(--cd-text);
+}
+
+.cd-pub *,
+.cd-pub *::before,
+.cd-pub *::after {
+  box-sizing: border-box;
+}
+
+.cd-pub__header h1 {
+  margin: 4px 0 10px;
+  font-size: 1.7rem;
+  line-height: 1.2;
+  color: var(--cd-title);
+}
+
+.cd-pub__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cd-accent);
+}
+
+.cd-pub__lead,
+.cd-pub__success {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--cd-muted);
+}
+
+.cd-pub__success {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  color: #0f7b4a;
+  background: color-mix(in srgb, #0f7b4a 12%, transparent);
+}
+
+.cd-pub__form {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.cd-pub__label {
+  font-weight: 600;
+}
+
+.cd-pub__textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px 14px;
+  border: 1px solid var(--cd-border);
+  border-radius: 14px;
+  resize: vertical;
+  font: inherit;
+  background: var(--cd-surface);
+  color: inherit;
+}
+
+.cd-pub__textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--cd-accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.cd-pub__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--cd-muted);
+}
+
+.cd-pub__hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.cd-pub__error {
+  margin: 0;
+  color: #b42318;
+}
+
+.cd-pub__submit {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cd-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cd-pub__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
