@@ -9,6 +9,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
     currentSlides: "Ações sobre as {count} telas selecionadas no filmstrip.",
     slideBatchSaved: "{count} telas atualizadas.",
+    slideBatchDuplicated: "{count} telas duplicadas.",
     mixedValue: "Misto",
     playlistChrome:
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",

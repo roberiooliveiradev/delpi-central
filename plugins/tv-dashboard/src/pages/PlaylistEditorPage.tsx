@@ -1300,10 +1300,6 @@ export function PlaylistEditorPage({
     }
   }
 
-  async function handleRemoveSlide(slide: Slide) {
-    await handleRemoveSlides([slide]);
-  }
-
   async function handleRemoveSlides(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     const unique = targets.filter(
@@ -1697,10 +1693,6 @@ export function PlaylistEditorPage({
     };
   }, [flushPendingComunicadoSave]);
 
-  async function handleDuplicateSlide(slide: Slide) {
-    await handleDuplicateSlides([slide]);
-  }
-
   async function handleDuplicateSlides(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     await flushPendingComunicadoSave();
@@ -1717,6 +1709,14 @@ export function PlaylistEditorPage({
       }
       if (lastPlaced) selectSlide(lastPlaced.id, lastPlaced);
       await deckHistory.confirmChange();
+      if (unique.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchDuplicated.replace(
+            "{count}",
+            String(unique.length),
+          ),
+        );
+      }
     } catch (caught) {
       deckHistory.cancelChange();
       throw caught;
@@ -1767,10 +1767,6 @@ export function PlaylistEditorPage({
   const canPasteSlide = slideClipboardRef.current != null;
   void slideClipboardRevision;
 
-  async function handleToggleSlideActive(slide: Slide) {
-    await handleToggleSlidesActive([slide]);
-  }
-
   async function handleToggleSlidesActive(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     const unique = targets.filter(
@@ -1788,6 +1784,14 @@ export function PlaylistEditorPage({
         slides: (playlist.slides ?? []).map((item) => updates.get(item.id) ?? item),
       });
       await deckHistory.confirmChange();
+      if (unique.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchSaved.replace(
+            "{count}",
+            String(unique.length),
+          ),
+        );
+      }
     } catch (caught) {
       deckHistory.cancelChange();
       throw caught;
@@ -1883,9 +1887,9 @@ export function PlaylistEditorPage({
     selectedSlide,
     onAdd: () => void handleAddCustomSlide(),
     onSelect: selectSlide,
-    onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
-    onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
-    onRemove: (slide: Slide) => void handleRemoveSlide(slide),
+    onDuplicate: (targets: Slide[]) => void handleDuplicateSlides(targets),
+    onToggleActive: (targets: Slide[]) => void handleToggleSlidesActive(targets),
+    onRemove: (targets: Slide[]) => void handleRemoveSlides(targets),
     onExportPng: () => void handleExportPng(),
     onExportPdf: () => void handleExportPdf(),
     onExportPptx: isCustomSlide ? () => void handleExportPptx() : undefined,

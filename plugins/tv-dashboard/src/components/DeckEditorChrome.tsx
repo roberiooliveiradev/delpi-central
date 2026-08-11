@@ -39,9 +39,9 @@ type SlideDeckProps = {
   selectedSlide: Slide | null;
   onAdd: () => void;
   onSelect: (slideId: string) => void;
-  onDuplicate?: (slide: Slide) => void;
-  onToggleActive?: (slide: Slide) => void;
-  onRemove?: (slide: Slide) => void;
+  onDuplicate?: (targets: Slide[]) => void;
+  onToggleActive?: (targets: Slide[]) => void;
+  onRemove?: (targets: Slide[]) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
   onExportPptx?: () => void;
@@ -345,6 +345,7 @@ export function DeckEditorChrome({
                   {activeTab === "slide" ? (
                     <SlideCurrentRibbon
                       selectedSlide={slideDeck.selectedSlide}
+                      selectedSlides={selectedSlides}
                       onDuplicate={slideDeck.onDuplicate}
                       onToggleActive={slideDeck.onToggleActive}
                       onRemove={slideDeck.onRemove}

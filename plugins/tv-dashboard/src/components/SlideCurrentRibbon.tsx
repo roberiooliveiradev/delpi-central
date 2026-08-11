@@ -8,9 +8,10 @@ import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 type Props = {
   selectedSlide: Slide | null;
-  onDuplicate?: (slide: Slide) => void;
-  onToggleActive?: (slide: Slide) => void;
-  onRemove?: (slide: Slide) => void;
+  selectedSlides?: Slide[];
+  onDuplicate?: (targets: Slide[]) => void;
+  onToggleActive?: (targets: Slide[]) => void;
+  onRemove?: (targets: Slide[]) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
   onExportPptx?: () => void;
@@ -18,11 +19,17 @@ type Props = {
 };
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+const C = TV_DASHBOARD_HELP_TOOLTIPS.filmstripContextMenu;
 const K = DECK_HOME_ACTION_KEYTIPS;
 
-/** Ações da tela atual — aba Tela do editor. */
+function formatCount(template: string, count: number): string {
+  return template.replace("{count}", String(count));
+}
+
+/** Ações da tela atual — aba Tela do editor. Export permanece no primário. */
 export function SlideCurrentRibbon({
   selectedSlide,
+  selectedSlides: selectedSlidesProp,
   onDuplicate,
   onToggleActive,
   onRemove,
@@ -31,31 +38,45 @@ export function SlideCurrentRibbon({
   onExportPptx,
   exportBusy = false,
 }: Props) {
-  if (!selectedSlide) return null;
+  const targets =
+    selectedSlidesProp && selectedSlidesProp.length > 0
+      ? selectedSlidesProp
+      : selectedSlide
+        ? [selectedSlide]
+        : [];
+  const primary = selectedSlide ?? targets[targets.length - 1] ?? null;
+  if (!primary || targets.length === 0) return null;
 
   const hasDeckActions = Boolean(onDuplicate || onToggleActive || onRemove);
   const hasExport = Boolean(onExportPng || onExportPdf || onExportPptx);
   if (!hasDeckActions && !hasExport) return null;
 
+  const many = targets.length > 1;
+  const allInactive = targets.every((slide) => !slide.isActive);
+
   return (
-    <DeckRibbonGroup groupId="slide-current" label="Tela atual" hint={H.currentSlide}>
+    <DeckRibbonGroup
+      groupId="slide-current"
+      label={many ? formatCount(H.currentSlides, targets.length) : "Tela atual"}
+      hint={many ? formatCount(H.currentSlides, targets.length) : H.currentSlide}
+    >
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         {onToggleActive ? (
           <DeckRibbonTile
-            icon={selectedSlide.isActive ? Eye : EyeOff}
-            label={selectedSlide.isActive ? "Pausar" : "Ativar"}
-            hint={selectedSlide.isActive ? H.pause : H.activate}
+            icon={allInactive ? EyeOff : Eye}
+            label={allInactive ? "Ativar" : "Pausar"}
+            hint={allInactive ? H.activate : H.pause}
             keyTip={K.toggleActive}
-            onClick={() => onToggleActive(selectedSlide)}
+            onClick={() => onToggleActive(targets)}
           />
         ) : null}
         {onDuplicate ? (
           <DeckRibbonTile
             icon={Copy}
-            label="Duplicar"
-            hint={H.duplicate}
+            label={many ? formatCount(C.duplicateMany, targets.length) : "Duplicar"}
+            hint={many ? formatCount(C.duplicateMany, targets.length) : H.duplicate}
             keyTip={K.duplicate}
-            onClick={() => onDuplicate(selectedSlide)}
+            onClick={() => onDuplicate(targets)}
           />
         ) : null}
         {onExportPng ? (
@@ -91,10 +112,10 @@ export function SlideCurrentRibbon({
         {onRemove ? (
           <DeckRibbonTile
             icon={Trash2}
-            label="Excluir"
-            hint={H.delete}
+            label={many ? formatCount(C.deleteMany, targets.length) : "Excluir"}
+            hint={many ? formatCount(C.deleteMany, targets.length) : H.delete}
             keyTip={K.remove}
-            onClick={() => onRemove(selectedSlide)}
+            onClick={() => onRemove(targets)}
           />
         ) : null}
       </div>
