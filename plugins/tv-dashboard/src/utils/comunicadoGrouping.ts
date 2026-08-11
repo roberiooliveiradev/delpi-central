@@ -163,8 +163,37 @@ export function ungroupBlocks(blocks: ComunicadoBlock[], selectedIds: string[]):
   const idSet = new Set(selectedIds);
   return blocks.map((block) => {
     if (!idSet.has(block.id) || !block.groupId) return block;
-    const { groupId: _omit, ...rest } = block;
+    const { groupId: _omit, groupName: _name, ...rest } = block;
     return rest as ComunicadoBlock;
+  });
+}
+
+export function resolveGroupDisplayName(
+  members: readonly ComunicadoBlock[],
+  fallback = "Grupo",
+): string {
+  for (const member of members) {
+    const name = member.groupName?.trim();
+    if (name) return name;
+  }
+  return fallback;
+}
+
+export function renameGroupBlocks(
+  blocks: ComunicadoBlock[],
+  groupId: string,
+  name: string,
+): ComunicadoBlock[] {
+  if (!groupId) return blocks;
+  const trimmed = name.trim();
+  return blocks.map((block) => {
+    if (block.groupId !== groupId) return block;
+    if (!trimmed) {
+      if (!block.groupName) return block;
+      const { groupName: _omit, ...rest } = block;
+      return rest as ComunicadoBlock;
+    }
+    return { ...block, groupName: trimmed };
   });
 }
 

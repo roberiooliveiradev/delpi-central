@@ -50,6 +50,7 @@ export function reorderLayerIds(
   blocks: ComunicadoBlock[],
   movedIds: readonly string[],
   targetId: string,
+  edge?: "before" | "after",
 ): ComunicadoBlock[] {
   if (movedIds.length === 0) return blocks;
   const moveSet = new Set(movedIds);
@@ -67,7 +68,15 @@ export function reorderLayerIds(
   const rest = sorted.filter((block) => !moveSet.has(block.id));
   const targetInRest = rest.findIndex((block) => block.id === targetId);
   if (targetInRest < 0) return blocks;
-  const insertAt = fromIndex < targetIndex ? targetInRest + 1 : targetInRest;
+  /* Lista visual é z-desc: before = acima = z maior = depois do alvo no array asc. */
+  const insertAt =
+    edge === "before"
+      ? targetInRest + 1
+      : edge === "after"
+        ? targetInRest
+        : fromIndex < targetIndex
+          ? targetInRest + 1
+          : targetInRest;
   return reindexZ([...rest.slice(0, insertAt), ...moving, ...rest.slice(insertAt)]);
 }
 

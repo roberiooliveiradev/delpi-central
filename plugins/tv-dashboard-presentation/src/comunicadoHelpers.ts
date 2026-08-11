@@ -886,6 +886,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     style,
   };
   if (block.groupId) base.groupId = block.groupId;
+  if (block.groupName?.trim()) base.groupName = block.groupName.trim();
   if (block.hidden === true) base.hidden = true;
   const serializedAnimations = serializeBlockAnimations(block.animations);
   if (serializedAnimations) base.animations = serializedAnimations;
@@ -1117,8 +1118,11 @@ function attachBlockAnimations<T extends ComunicadoBlock>(
   raw: Record<string, unknown>,
 ): T {
   const animations = normalizeBlockAnimations(raw.animations);
-  const withAnim = animations?.length ? { ...block, animations } : block;
-  return raw.hidden === true ? { ...withAnim, hidden: true } : withAnim;
+  let next = animations?.length ? { ...block, animations } : block;
+  if (raw.hidden === true) next = { ...next, hidden: true };
+  const groupName = typeof raw.groupName === "string" ? raw.groupName.trim() : "";
+  if (groupName) next = { ...next, groupName };
+  return next;
 }
 
 function normalizeBlock(value: unknown): ComunicadoBlock {

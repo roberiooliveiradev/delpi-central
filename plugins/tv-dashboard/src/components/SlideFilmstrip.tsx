@@ -30,6 +30,13 @@ import { buildPresentationOrderIndexBySlideId } from "../utils/presentationSlide
 import { shouldShowSectionChrome, shouldShowSectionInFilmstrip } from "../utils/sectionChromeVisibility";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
 import {
+  attachListDragGhost,
+  listDropHintClassName,
+  resolveListDropEdge,
+  type ListDropEdge,
+  type ListDropHint,
+} from "../utils/listReorderDrag";
+import {
   formatSlideTransitionLabel,
   resolveSlideDurationSec,
   resolveSlideTransitionStyle,
@@ -68,7 +75,7 @@ type Props = {
   onLongPressSelect?: (slideId: string) => void;
   onClearMultiSelection?: () => void;
   onDragStart: (index: number) => void;
-  onDrop: (index: number) => void;
+  onDrop: (index: number, edge?: ListDropEdge) => void;
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
@@ -177,6 +184,7 @@ export function SlideFilmstrip({
   }, [selectedSlideId, selectedSlideIds]);
 
   const draggingIdSet = useMemo(() => new Set(dragSlideIds ?? []), [dragSlideIds]);
+  const [dropHint, setDropHint] = useState<ListDropHint | null>(null);
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current != null) {
@@ -375,8 +383,9 @@ export function SlideFilmstrip({
       inMulti && !isPrimary ? "td-deck-filmstrip__item--multi-selected" : "",
       !slide.isActive ? "td-deck-filmstrip__item--inactive" : "",
       draggingIdSet.has(slide.id) || dragIndex === filmstripIndex
-        ? "td-deck-filmstrip__item--dragging"
+        ? "td-deck-filmstrip__item--dragging td-reorder--source"
         : "",
+      listDropHintClassName(dropHint, slide.id),
     ]
       .filter(Boolean)
       .join(" ");
@@ -385,6 +394,7 @@ export function SlideFilmstrip({
       <div
         key={slide.id}
         className={itemClass}
+        data-reorder-id={slide.id}
         draggable={!renaming}
         onDragStart={(event) => {
           if (renaming) return;
@@ -394,11 +404,33 @@ export function SlideFilmstrip({
             return;
           }
           clearLongPressTimer();
+          attachListDragGhost(event);
           onDragStart(filmstripIndex);
         }}
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={() => onDrop(filmstripIndex)}
-        onDragEnd={onDragEnd}
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (draggingIdSet.has(slide.id)) {
+            setDropHint(null);
+            return;
+          }
+          const edge = resolveListDropEdge(event.clientY, event.currentTarget.getBoundingClientRect());
+          setDropHint((current) =>
+            current?.id === slide.id && current.edge === edge ? current : { id: slide.id, edge },
+          );
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          const edge =
+            dropHint?.id === slide.id
+              ? dropHint.edge
+              : resolveListDropEdge(event.clientY, event.currentTarget.getBoundingClientRect());
+          setDropHint(null);
+          onDrop(filmstripIndex, edge);
+        }}
+        onDragEnd={() => {
+          setDropHint(null);
+          onDragEnd();
+        }}
       >
         <div
           className="td-deck-filmstrip__select"
@@ -535,6 +567,11 @@ export function SlideFilmstrip({
         className="td-deck-filmstrip__list"
         role="list"
         onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          setDropHint(null);
+        }}
       >
         {slides.map((slide) => renderSlideItem(slide))}
       </div>
@@ -543,6 +580,11 @@ export function SlideFilmstrip({
         ref={listRef}
         className="td-deck-filmstrip__list"
         onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          setDropHint(null);
+        }}
       >
         <DeckSectionList
           prefix="td"

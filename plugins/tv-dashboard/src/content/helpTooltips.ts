@@ -240,7 +240,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
     buildNoAnimation: "sem animação",
-    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Filhos do grupo ficam indentados à direita do pai. Clique no filho seleciona só ele; no nó do grupo seleciona todos. No palco: clique duplo isola o subitem; 2º toque sem arrastar limpa; Esc sobe a hierarquia. Shift+clique multi-seleciona.",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar — a linha azul indica o ponto de soltura. O chevron recolhe os filhos do grupo; duplo clique ou F2 no nome do grupo renomeia. Clique no filho seleciona só ele; no nó do grupo seleciona todos. No palco: clique duplo isola o subitem; 2º toque sem arrastar limpa; Esc sobe a hierarquia. Shift+clique multi-seleciona.",
     focusPrimary: "Focar a referência (último selecionado)",
   },
   ribbonTabs: {

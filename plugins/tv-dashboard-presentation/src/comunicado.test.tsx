@@ -97,6 +97,38 @@ describe("comunicadoHelpers", () => {
     expect(roundtrip.blocks?.[1]?.hidden).toBeUndefined();
   });
 
+  it("persiste groupName no round-trip e omite vazio", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [
+        {
+          id: "g1",
+          type: "shape",
+          shape: "rectangle",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          groupId: "grp_a",
+          groupName: "  Cabeçalho  ",
+        },
+        {
+          id: "g2",
+          type: "shape",
+          shape: "rectangle",
+          frame: { x: 0, y: 12, w: 20, h: 10 },
+          groupId: "grp_a",
+          groupName: "   ",
+        },
+      ],
+    });
+    expect(parsed.blocks?.[0]?.groupName).toBe("Cabeçalho");
+    expect(parsed.blocks?.[1]?.groupName).toBeUndefined();
+
+    const serialized = serializeComunicadoConfig(parsed) as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(serialized.blocks[0]?.groupName).toBe("Cabeçalho");
+    expect(serialized.blocks[1]?.groupName).toBeUndefined();
+  });
+
   it("mescla estilo padrão quando bloco vem com style vazio", () => {
     const parsed = parseComunicadoConfig({
       version: 2,

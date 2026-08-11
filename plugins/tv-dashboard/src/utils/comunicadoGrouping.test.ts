@@ -4,6 +4,8 @@ import { createBlock } from "@delpi/tv-dashboard-presentation";
 import {
   expandSelectionWithGroups,
   groupBlocks,
+  renameGroupBlocks,
+  resolveGroupDisplayName,
   isIsolatedGroupChildSelection,
   partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
@@ -33,6 +35,21 @@ describe("comunicadoGrouping", () => {
     expect(selectedHasGroup(grouped, [a.id])).toBe(true);
     const ungrouped = ungroupBlocks(grouped, [a.id, b.id]);
     expect(ungrouped.every((block) => !block.groupId)).toBe(true);
+  });
+
+  it("renomeia o grupo em todos os membros e remove o nome vazio", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    const named = renameGroupBlocks([a, b], "g1", "  KPI  ");
+    expect(named.every((block) => block.groupName === "KPI")).toBe(true);
+    expect(resolveGroupDisplayName(named)).toBe("KPI");
+    const cleared = renameGroupBlocks(named, "g1", "   ");
+    expect(cleared.every((block) => block.groupName == null)).toBe(true);
+    expect(resolveGroupDisplayName(cleared)).toBe("Grupo");
+    const ungrouped = ungroupBlocks(named, [a.id, b.id]);
+    expect(ungrouped.every((block) => !block.groupName && !block.groupId)).toBe(true);
   });
 
   it("detecta seleção pai fechada do grupo", () => {

@@ -1192,8 +1192,8 @@ export function useComunicadoEditorBlocks({
   }, [applyLayerOrder]);
 
   const reorderBlockLayer = useCallback(
-    (movedIds: string[], targetId: string) => {
-      const next = reorderLayerIds(configRef.current.blocks ?? [], movedIds, targetId);
+    (movedIds: string[], targetId: string, edge?: "before" | "after") => {
+      const next = reorderLayerIds(configRef.current.blocks ?? [], movedIds, targetId, edge);
       updateBlocks(next);
     },
     [configRef, updateBlocks],

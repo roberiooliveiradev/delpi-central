@@ -20,4 +20,12 @@ describe("entradas e ordem — contrato de source", () => {
     expect(panel).toContain("updateBlocksAtomically");
     expect(panel).not.toMatch(/updateBlock\(id,\s*\{\s*animations/);
   });
+
+  it("grupo tem twist visível e rename inline", () => {
+    const panel = readFileSync(join(here, "ComunicadoLayersPanel.tsx"), "utf8");
+    expect(panel).toContain("td-layers-list__twist");
+    expect(panel).toContain("beginRenameGroup");
+    expect(panel).toContain("td-layers-list__rename");
+    expect(panel).toContain("attachListDragGhost");
+  });
 });

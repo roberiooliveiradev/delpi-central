@@ -1,7 +1,7 @@
 import type { Slide } from "../api/tvDashboardApi";
 
 export type FilmstripRelocateTarget =
-  | { kind: "index"; targetIndex: number }
+  | { kind: "index"; targetIndex: number; edge?: "before" | "after" }
   | { kind: "section"; sectionId: string | null };
 
 /**
@@ -55,6 +55,7 @@ export function relocateFilmstripSlides(
     return ordered.map((slide, sortOrder) => ({ ...slide, sortOrder }));
   }
   const next = [...remaining];
-  next.splice(insertAt, 0, ...updatedMoving);
+  const spliceAt = target.edge === "after" ? insertAt + 1 : insertAt;
+  next.splice(spliceAt, 0, ...updatedMoving);
   return next.map((slide, sortOrder) => ({ ...slide, sortOrder }));
 }

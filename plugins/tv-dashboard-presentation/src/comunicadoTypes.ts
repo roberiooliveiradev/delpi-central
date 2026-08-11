@@ -263,6 +263,8 @@ export type ComunicadoBlockBase = {
   frame: ComunicadoFrame;
   style?: ComunicadoBlockStyle;
   groupId?: string;
+  /** Nome exibido no painel Seleção (compartilhado pelos membros). */
+  groupName?: string;
   /** Oculto no palco pelo usuário (Painel de Seleção). */
   hidden?: boolean;
   /** Animações do bloco (4E.2) — entrada na TV. */

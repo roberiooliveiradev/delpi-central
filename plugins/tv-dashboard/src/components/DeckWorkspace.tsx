@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 
 import type { PlaylistMasterConfig, PlaylistSection, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
+import type { ListDropEdge } from "../utils/listReorderDrag";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 
 type Props = {
@@ -29,7 +30,7 @@ type Props = {
   onLongPressSelect?: (slideId: string) => void;
   onClearMultiSelection?: () => void;
   onDragStart: (index: number) => void;
-  onDrop: (index: number) => void;
+  onDrop: (index: number, edge?: ListDropEdge) => void;
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;

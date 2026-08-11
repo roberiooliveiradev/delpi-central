@@ -55,6 +55,7 @@ import {
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
 import { relocateFilmstripSlides } from "../utils/relocateFilmstripSlides";
+import type { ListDropEdge } from "../utils/listReorderDrag";
 import { claimSlidesForNewSection } from "../utils/claimSlidesForNewSection";
 import {
   DeckEditorHistoryProvider,
@@ -2007,7 +2008,7 @@ export function PlaylistEditorPage({
     return "td-badge td-badge--inactive";
   }
 
-  async function handleDropSlide(targetIndex: number) {
+  async function handleDropSlide(targetIndex: number, edge?: ListDropEdge) {
     if (!playlist) return;
     const movingIds =
       dragSlideIds.length > 0
@@ -2023,6 +2024,7 @@ export function PlaylistEditorPage({
     const ordered = relocateFilmstripSlides(slides, movingIds, {
       kind: "index",
       targetIndex,
+      edge,
     });
     const unchanged =
       ordered.length === slides.length &&
@@ -2161,7 +2163,7 @@ export function PlaylistEditorPage({
     onLongPressSelect: handleFilmstripLongPress,
     onClearMultiSelection: clearFilmstripMultiSelection,
     onDragStart: beginFilmstripDrag,
-    onDrop: (index: number) => void handleDropSlide(index),
+    onDrop: (index, edge) => void handleDropSlide(index, edge),
     onDragEnd: endFilmstripDrag,
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),

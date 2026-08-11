@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -25,7 +25,17 @@ import {
   filterCollapsedSelectionRows,
   selectionTreeRowIsActive,
 } from "../../utils/buildSelectionTreeRows";
-import { membersOfGroup } from "../../utils/comunicadoGrouping";
+import {
+  membersOfGroup,
+  renameGroupBlocks,
+  resolveGroupDisplayName,
+} from "../../utils/comunicadoGrouping";
+import {
+  attachListDragGhost,
+  listDropHintClassName,
+  resolveListDropEdge,
+  type ListDropHint,
+} from "../../utils/listReorderDrag";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { comunicadoBlockSummary, comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -54,7 +64,11 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     sendBackward,
   } = useComunicadoEditor();
   const [dragIds, setDragIds] = useState<string[] | null>(null);
+  const [dropHint, setDropHint] = useState<ListDropHint | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
   const isRibbon = layout === "ribbon";
 
   const treeRows = useMemo(() => buildSelectionTreeRows(blocks), [blocks]);
@@ -76,10 +90,41 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     [blocks],
   );
 
-  function onDrop(targetId: string) {
-    if (!dragIds || dragIds.length === 0 || dragIds.includes(targetId)) return;
-    reorderBlockLayer(dragIds, targetId);
+  function beginLayerDrag(event: DragEvent<HTMLElement>, ids: string[]) {
+    setDragIds(ids);
+    attachListDragGhost(event);
+  }
+
+  function updateLayerDropHint(event: DragEvent<HTMLElement>, targetId: string) {
+    event.preventDefault();
+    if (dragIds?.includes(targetId)) {
+      setDropHint(null);
+      return;
+    }
+    const edge = resolveListDropEdge(event.clientY, event.currentTarget.getBoundingClientRect());
+    setDropHint((current) =>
+      current?.id === targetId && current.edge === edge ? current : { id: targetId, edge },
+    );
+  }
+
+  function onDrop(event: DragEvent<HTMLElement>, targetId: string) {
+    event.preventDefault();
+    const edge =
+      dropHint?.id === targetId
+        ? dropHint.edge
+        : resolveListDropEdge(event.clientY, event.currentTarget.getBoundingClientRect());
+    setDropHint(null);
+    if (!dragIds || dragIds.length === 0 || dragIds.includes(targetId)) {
+      setDragIds(null);
+      return;
+    }
+    reorderBlockLayer(dragIds, targetId, edge);
     setDragIds(null);
+  }
+
+  function endLayerDrag() {
+    setDragIds(null);
+    setDropHint(null);
   }
 
   function applyBuildMap(map: Map<string, ComunicadoBlockAnimation[] | undefined>) {
@@ -98,6 +143,37 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
       else next.add(groupId);
       return next;
     });
+  }
+
+  function beginRenameGroup(groupId: string) {
+    const members = membersOfGroup(blocks, groupId);
+    setRenamingGroupId(groupId);
+    setRenameDraft(resolveGroupDisplayName(members));
+    requestAnimationFrame(() => renameInputRef.current?.select());
+  }
+
+  function commitRenameGroup() {
+    if (!renamingGroupId) return;
+    const groupId = renamingGroupId;
+    const next = renameGroupBlocks(blocks, groupId, renameDraft);
+    setRenamingGroupId(null);
+    updateBlocksAtomically(
+      membersOfGroup(next, groupId).map((member) => ({
+        blockId: member.id,
+        patch: { groupName: member.groupName },
+      })),
+    );
+  }
+
+  function onRenameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commitRenameGroup();
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setRenamingGroupId(null);
+    }
   }
 
   function toggleGroupHidden(groupId: string) {
@@ -214,55 +290,111 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
       {visibleRows.length === 0 ? (
         <p className="td-subtitle">Nenhum elemento no slide.</p>
       ) : (
-        <ul className="td-layers-list td-layers-list--tree">
+        <ul
+          className="td-layers-list td-layers-list--tree"
+          onDragLeave={(event) => {
+            const next = event.relatedTarget;
+            if (next instanceof Node && event.currentTarget.contains(next)) return;
+            setDropHint(null);
+          }}
+        >
           {visibleRows.map((row) => {
             if (row.kind === "group") {
               const active = selectionTreeRowIsActive(row, selectedIds);
               const members = membersOfGroup(blocks, row.groupId);
               const allHidden = members.length > 0 && members.every((m) => m.hidden === true);
               const collapsed = collapsedGroups.has(row.groupId);
+              const displayName = resolveGroupDisplayName(members);
+              const renaming = renamingGroupId === row.groupId;
+              const dragging = Boolean(dragIds?.some((id) => row.memberIds.includes(id)));
               return (
                 <li
                   key={`group:${row.groupId}`}
-                  className="td-layers-list__row td-layers-list__row--group"
+                  className={[
+                    "td-layers-list__row",
+                    "td-layers-list__row--group",
+                    listDropHintClassName(dropHint, row.anchorId),
+                    dragging ? "td-reorder--source" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
                   <button
                     type="button"
                     className="td-layers-list__twist"
+                    aria-expanded={!collapsed}
                     aria-label={collapsed ? "Expandir grupo" : "Recolher grupo"}
+                    title={collapsed ? "Expandir grupo" : "Recolher grupo"}
                     onClick={() => toggleGroupCollapsed(row.groupId)}
                   >
                     {collapsed ? (
-                      <ChevronRight size={14} aria-hidden="true" />
+                      <ChevronRight size={16} aria-hidden="true" />
                     ) : (
-                      <ChevronDown size={14} aria-hidden="true" />
+                      <ChevronDown size={16} aria-hidden="true" />
                     )}
                   </button>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     className={[
                       "td-layers-list__item",
                       "td-layers-list__item--group-node",
                       active ? "td-layers-list__item--active" : "",
+                      dragging ? "td-layers-list__item--dragging" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
-                    draggable
-                    onDragStart={() => setDragIds(row.memberIds)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => onDrop(row.anchorId)}
-                    onClick={() => selectBlocksByIds(row.memberIds, { keepPanelTab: true })}
-                    title="Selecionar grupo inteiro"
+                    data-reorder-id={row.anchorId}
+                    draggable={!renaming}
+                    onDragStart={(event) => beginLayerDrag(event, row.memberIds)}
+                    onDragOver={(event) => updateLayerDropHint(event, row.anchorId)}
+                    onDrop={(event) => onDrop(event, row.anchorId)}
+                    onDragEnd={endLayerDrag}
+                    onClick={() => {
+                      if (renaming) return;
+                      selectBlocksByIds(row.memberIds, { keepPanelTab: true });
+                    }}
+                    onKeyDown={(event) => {
+                      if (renaming) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        selectBlocksByIds(row.memberIds, { keepPanelTab: true });
+                      }
+                      if (event.key === "F2") {
+                        event.preventDefault();
+                        beginRenameGroup(row.groupId);
+                      }
+                    }}
+                    onDoubleClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      beginRenameGroup(row.groupId);
+                    }}
+                    title="Selecionar grupo · duplo clique ou F2 para renomear"
                   >
                     <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
                     <FolderOpen size={14} className="td-layers-list__group-icon" aria-hidden="true" />
                     <span className="td-layers-list__meta">
-                      <span className="td-layers-list__type">Grupo · {row.memberIds.length}</span>
+                      {renaming ? (
+                        <input
+                          ref={renameInputRef}
+                          className="td-layers-list__rename"
+                          value={renameDraft}
+                          aria-label="Renomear grupo"
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={(event) => setRenameDraft(event.target.value)}
+                          onBlur={commitRenameGroup}
+                          onKeyDown={onRenameKeyDown}
+                        />
+                      ) : (
+                        <span className="td-layers-list__type">{displayName}</span>
+                      )}
                       <span className="td-layers-list__summary">
+                        {row.memberIds.length} ·{" "}
                         {members.map((member) => comunicadoBlockTypeLabel(member.type)).join(" · ")}
                       </span>
                     </span>
-                  </button>
+                  </div>
                   <HintAction hint={L.toggleVisibility} ariaLabel="Ajuda: Visibilidade do grupo">
                     <button
                       type="button"
@@ -289,12 +421,15 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
             const hideReason = resolveBlockStageHideReason(block, blocks);
             const hiddenOnStage = hideReason != null;
             const userHidden = block.hidden === true;
+            const dragging = Boolean(dragIds?.includes(block.id));
             return (
               <li
                 key={block.id}
                 className={[
                   "td-layers-list__row",
                   row.depth > 0 ? "td-layers-list__row--child" : "td-layers-list__row--root",
+                  listDropHintClassName(dropHint, block.id),
+                  dragging ? "td-reorder--source" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -312,13 +447,16 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     active ? "td-layers-list__item--active" : "",
                     row.depth > 0 ? "td-layers-list__item--child" : "",
                     userHidden ? "td-layers-list__item--user-hidden" : "",
+                    dragging ? "td-layers-list__item--dragging" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
+                  data-reorder-id={block.id}
                   draggable
-                  onDragStart={() => setDragIds([block.id])}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => onDrop(block.id)}
+                  onDragStart={(event) => beginLayerDrag(event, [block.id])}
+                  onDragOver={(event) => updateLayerDropHint(event, block.id)}
+                  onDrop={(event) => onDrop(event, block.id)}
+                  onDragEnd={endLayerDrag}
                   onClick={(event) =>
                     selectBlock(block.id, {
                       additive: event.shiftKey,
