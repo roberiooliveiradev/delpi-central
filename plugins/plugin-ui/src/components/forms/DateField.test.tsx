@@ -23,6 +23,8 @@ describe("DateField", () => {
     const input = screen.getByLabelText("Data implantação") as HTMLInputElement;
     expect(input.type).toBe("date");
     expect(input.value).toBe("2026-06-15");
+    expect(input.closest(".delpi-ui-filter-box")).toBeTruthy();
+    expect(input.className).toContain("kz-field__control");
 
     fireEvent.change(input, { target: { value: "2026-07-01" } });
     expect(onChange).toHaveBeenCalledWith("2026-07-01");

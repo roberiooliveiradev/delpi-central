@@ -8,15 +8,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { EmptyState } from "@delpi/plugin-ui/index";
+import { EmptyState, SegmentToggle } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
   CommercialChartToolbar,
   CommercialDateField,
+  CommercialFilterBarShell,
   CommercialSectionCard,
   CommercialSelectField,
   CommercialStateBanner,
+  UI_PREFIX,
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
@@ -166,32 +168,39 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         }
       >
       <div className="cm-billing-series-chart__controls">
-        <div className="cm-nav-row" role="group" aria-label={CM_HELP.customers.billingSeriesPeriod}>
-          {BILLING_SERIES_PRESET_OPTIONS.map((item) => (
-            <CommercialActionButton
-              key={item.id}
-              variant={preset === item.id ? "primary" : "ghost"}
-              aria-pressed={preset === item.id}
-              onClick={() => setPreset(item.id)}
-            >
-              {item.label}
-            </CommercialActionButton>
-          ))}
-        </div>
-        {preset === "custom" ? (
-          <div className="cm-billing-series-chart__dates">
-            <CommercialDateField
-              label="Data inicial"
-              value={customStart}
-              onChange={setCustomStart}
+        <CommercialFilterBarShell
+          embedded
+          layout={preset === "custom" ? "grid" : "inline"}
+          ariaLabel={CM_HELP.customers.billingSeriesPeriod}
+          leading={
+            <SegmentToggle
+              prefix={UI_PREFIX}
+              ariaLabel={CM_HELP.customers.billingSeriesPeriod}
+              idPrefix="customers-billing-period"
+              value={preset}
+              onChange={setPreset}
+              options={BILLING_SERIES_PRESET_OPTIONS.map((item) => ({
+                value: item.id,
+                label: item.label,
+              }))}
             />
-            <CommercialDateField
-              label="Data final"
-              value={customEnd}
-              onChange={setCustomEnd}
-            />
-          </div>
-        ) : null}
+          }
+        >
+          {preset === "custom" ? (
+            <>
+              <CommercialDateField
+                label="Data inicial"
+                value={customStart}
+                onChange={setCustomStart}
+              />
+              <CommercialDateField
+                label="Data final"
+                value={customEnd}
+                onChange={setCustomEnd}
+              />
+            </>
+          ) : null}
+        </CommercialFilterBarShell>
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
         ) : (

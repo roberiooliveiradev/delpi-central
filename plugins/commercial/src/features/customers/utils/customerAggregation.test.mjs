@@ -475,7 +475,8 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /CustomerAvatar/);
     assert.match(table, /SegmentToggle/);
     assert.match(table, /onRowClick=\{openCustomer\}/);
-    assert.match(table, /event\.stopPropagation\(\)/);
+    assert.match(table, /<strong className="cm-open-orders-client__name">/);
+    assert.doesNotMatch(table, /<button/);
     assert.match(table, /useCustomerTablePreferences\(canUseTeamScope\)/);
     assert.match(table, /CommercialExcelExportButton/);
     assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns\)/);
@@ -508,6 +509,9 @@ describe("CustomersPage estrutural", () => {
     assert.match(chart, /collapsible/);
     assert.match(chart, /useCustomerBillingSeries\(customers, \{/);
     assert.match(chart, /CommercialChartToolbar/);
+    assert.match(chart, /CommercialFilterBarShell/);
+    assert.match(chart, /SegmentToggle/);
+    assert.doesNotMatch(chart, /cm-nav-row/);
     assert.match(chart, /startDate: range\.startDate/);
     assert.match(seriesHook, /startDate, endDate, granularity/);
     assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);

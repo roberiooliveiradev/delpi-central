@@ -145,5 +145,8 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /Últimos 90 dias/);
     assert.match(filters, /Devoluções/);
     assert.match(filters, /exclusão lógica/);
+    assert.match(filters, /SegmentToggle/);
+    assert.match(filters, /CommercialDateField/);
+    assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
   });
 });

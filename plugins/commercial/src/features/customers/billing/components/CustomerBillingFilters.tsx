@@ -1,9 +1,12 @@
-import { ActionButton, HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
 
 import {
+  CommercialDateField,
+  CommercialFilterBarShell,
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTextField,
+  UI_PREFIX,
 } from "../../../../app/commercialUi";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
@@ -67,31 +70,33 @@ export function CustomerBillingFilters({
         />
       </p>
 
-      <div className="cm-nav-row" role="group" aria-label="Período">
-        {PRESETS.map((item) => (
-          <ActionButton
-            key={item.id}
-            variant={preset === item.id ? "primary" : "ghost"}
-            aria-pressed={preset === item.id}
+      <CommercialFilterBarShell
+        embedded
+        layout="grid"
+        ariaLabel="Período"
+        leading={
+          <SegmentToggle
+            prefix={UI_PREFIX}
+            ariaLabel="Período"
+            idPrefix="customer-billing-period"
+            value={preset}
             disabled={disabled}
-            onClick={() => onPresetChange(item.id)}
-          >
-            {item.label}
-          </ActionButton>
-        ))}
-      </div>
-
-      <div className="cm-form-grid cm-customer-billing-filters__dates">
-        <CommercialTextField
+            onChange={onPresetChange}
+            options={PRESETS.map((item) => ({
+              value: item.id,
+              label: item.label,
+            }))}
+          />
+        }
+      >
+        <CommercialDateField
           label="Data inicial"
-          type="date"
           value={startDate}
           onChange={onStartDateChange}
           disabled={disabled}
         />
-        <CommercialTextField
+        <CommercialDateField
           label="Data final"
-          type="date"
           value={endDate}
           onChange={onEndDateChange}
           disabled={disabled}
@@ -112,7 +117,7 @@ export function CustomerBillingFilters({
           placeholder="Nota, série, pedido ou produto"
           disabled={disabled}
         />
-      </div>
+      </CommercialFilterBarShell>
 
       {validationError ? (
         <CommercialStateBanner>

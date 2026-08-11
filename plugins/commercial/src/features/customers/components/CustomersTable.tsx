@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent } from "react";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
 
@@ -153,15 +153,6 @@ export function CustomersTable({
       sellerAccess,
     });
 
-  const handleExplicitNavigate = (
-    event: MouseEvent<HTMLElement>,
-    customer: CustomerSummary,
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openCustomer(customer);
-  };
-
   const columns: DataTableColumn<CustomerSummary>[] = [
     {
       key: "nome",
@@ -180,13 +171,7 @@ export function CustomersTable({
               size="sm"
             />
             <div className="cm-open-orders-client__text">
-              <button
-                type="button"
-                className="cm-open-orders-client__name"
-                onClick={(event) => handleExplicitNavigate(event, customer)}
-              >
-                {name}
-              </button>
+              <strong className="cm-open-orders-client__name">{name}</strong>
               <span className="cm-open-orders-client__id">{codeStore}</span>
             </div>
           </div>

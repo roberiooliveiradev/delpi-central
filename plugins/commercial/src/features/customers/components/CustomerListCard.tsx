@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
   CommercialDataCellValue,
@@ -25,10 +25,6 @@ type CustomerListCardProps = {
   onOpenDetail: (customer: CustomerSummary) => void;
 };
 
-function stopCardBubble(event: MouseEvent | KeyboardEvent) {
-  event.stopPropagation();
-}
-
 function statusVariant(
   status: ReturnType<typeof resolveCustomerStatus>,
 ): "success" | "warning" | "neutral" {
@@ -40,7 +36,6 @@ function statusVariant(
 function renderCardValue(
   key: CustomerColumnKey,
   customer: CustomerSummary,
-  onOpenDetail: (customer: CustomerSummary) => void,
 ): ReactNode {
   const name = customer.nome?.trim() || "—";
   const codeStore =
@@ -60,17 +55,7 @@ function renderCardValue(
             size="sm"
           />
           <div className="cm-open-orders-client__text">
-            <button
-              type="button"
-              className="cm-open-orders-client__name"
-              onClick={(event) => {
-                stopCardBubble(event);
-                onOpenDetail(customer);
-              }}
-              onKeyDown={stopCardBubble}
-            >
-              {name}
-            </button>
+            <strong className="cm-open-orders-client__name">{name}</strong>
             <span className="cm-open-orders-client__id">{codeStore}</span>
           </div>
         </div>
@@ -157,7 +142,7 @@ export function CustomerListCard({
           hint:
             column.key === "billingTrend" ? CM_HELP.customers.trend : undefined,
           valueTone: isTitle ? "title" : isValue ? "value" : "meta",
-          value: renderCardValue(column.key, customer, onOpenDetail),
+          value: renderCardValue(column.key, customer),
         };
       })}
     />

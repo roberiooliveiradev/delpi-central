@@ -38,12 +38,6 @@
   margin-bottom: 8px;
 }
 
-.dashboard-commercial .cm-billing-series-chart__dates {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
 .dashboard-commercial .cm-billing-series-chart .recharts-responsive-container,
 .dashboard-commercial .cm-purchase-evolution .recharts-responsive-container {
   width: 100% !important;
@@ -211,10 +205,6 @@
   gap: 12px;
 }
 
-.dashboard-commercial .cm-customer-billing-filters__dates {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .dashboard-commercial .cm-customer-orders__mobile,
 .dashboard-commercial .cm-customer-orders-preview__mobile,
 .dashboard-commercial .cm-customer-order-lines__mobile,
@@ -239,11 +229,6 @@
   }
 }
 
-@media (max-width: 1100px) {
-  .dashboard-commercial .cm-customer-billing-filters__dates {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 
 @media (max-width: 768px) {
   .dashboard-commercial .cm-customers-page__actions,
@@ -270,8 +255,6 @@
     gap: var(--cm-grid-gap);
   }
 
-  .dashboard-commercial .cm-customer-billing-filters__dates,
-  .dashboard-commercial .cm-billing-series-chart__dates,
   .dashboard-commercial .cm-customer-metrics {
     grid-template-columns: 1fr;
   }

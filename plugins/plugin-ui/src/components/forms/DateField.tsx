@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type DateFieldClassNames = {
   root: string;
@@ -25,10 +26,11 @@ export type DateFieldProps = {
 
 export function dateFieldBemClasses(prefix: string): DateFieldClassNames {
   return {
-    root: `${prefix}-field`,
-    labelClass: `${prefix}-field__label`,
+    root: delpiUiClass(`${prefix}-field`, "delpi-ui-filter-box"),
+    labelClass: delpiUiClass(`${prefix}-field__label`, "delpi-ui-field__label"),
+    input: `${prefix}-field__control`,
     wideModifier: `${prefix}-span-2`,
-    required: `${prefix}-field__required`,
+    required: delpiUiClass(`${prefix}-field__required`, "delpi-ui-field__required"),
   };
 }
 
