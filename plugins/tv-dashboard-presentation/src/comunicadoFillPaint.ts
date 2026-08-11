@@ -56,6 +56,45 @@ export function resolveSvgPaintRef(
   return hex;
 }
 
+/**
+ * Contorno em caixa CSS: `border-color` não aceita gradiente.
+ * Camada 1 = preenchimento (padding-box); camada 2 = stroke (border-box).
+ */
+export function applyCssShapePaints(
+  css: CSSProperties,
+  params: {
+    fillPaint?: DelpiFill;
+    strokePaint?: DelpiFill;
+    fillHex?: string;
+    strokeHex?: string;
+    strokeWidth: number;
+  },
+): void {
+  const { fillPaint, strokePaint, fillHex, strokeHex = "transparent", strokeWidth } = params;
+  if (strokePaint?.kind === "gradient" && strokeWidth > 0) {
+    const fillColor =
+      fillPaint?.kind === "solid"
+        ? fillPaint.color
+        : fillPaint?.kind === "none"
+          ? "transparent"
+          : (fillHex ?? "transparent");
+    const fillLayer =
+      fillPaint?.kind === "gradient"
+        ? fillToCssBackground(fillPaint)
+        : `linear-gradient(${fillColor}, ${fillColor})`;
+    css.border = `${strokeWidth}px solid transparent`;
+    css.backgroundImage = `${fillLayer}, ${fillToCssBackground(strokePaint)}`;
+    css.backgroundOrigin = "border-box";
+    css.backgroundClip = "padding-box, border-box";
+    css.backgroundColor = "transparent";
+    return;
+  }
+  css.border = `${strokeWidth}px solid ${
+    strokePaint?.kind === "none" ? "transparent" : strokeHex
+  }`;
+  applyFillPaintBackground(css, fillPaint, fillHex);
+}
+
 export function applyFillPaintBackground(
   css: CSSProperties,
   paint: DelpiFill | undefined,

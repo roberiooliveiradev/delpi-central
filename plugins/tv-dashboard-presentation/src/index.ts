@@ -434,6 +434,7 @@ export {
 } from "./comunicadoBackgroundStyle";
 export {
   applyColorPaintToCss,
+  applyCssShapePaints,
   applyFillPaintBackground,
   cssAngleToSvgGradientLine,
   createSvgLinearGradientDef,
