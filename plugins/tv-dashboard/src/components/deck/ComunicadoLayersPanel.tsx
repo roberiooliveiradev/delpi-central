@@ -22,8 +22,8 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   buildSelectionTreeRows,
+  filterCollapsedSelectionRows,
   selectionTreeRowIsActive,
-  type SelectionTreeRow,
 } from "../../utils/buildSelectionTreeRows";
 import { membersOfGroup } from "../../utils/comunicadoGrouping";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -59,16 +59,10 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
 
   const treeRows = useMemo(() => buildSelectionTreeRows(blocks), [blocks]);
 
-  const visibleRows = useMemo(() => {
-    const rows: SelectionTreeRow[] = [];
-    for (const row of treeRows) {
-      if (row.kind === "block" && row.groupId && collapsedGroups.has(row.groupId)) {
-        continue;
-      }
-      rows.push(row);
-    }
-    return rows;
-  }, [collapsedGroups, treeRows]);
+  const visibleRows = useMemo(
+    () => filterCollapsedSelectionRows(treeRows, collapsedGroups),
+    [collapsedGroups, treeRows],
+  );
 
   const buildOrder = useMemo(
     () =>
@@ -129,7 +123,9 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                 <span className="td-build-order__type">{item.type}</span>
                 <span className="td-build-order__summary">{item.label}</span>
               </span>
-              <span className="td-build-order__delay">{item.hasAnim ? `${item.delayMs} ms` : "—"}</span>
+              <span className="td-build-order__delay">
+                {item.hasAnim ? `${item.delayMs} ms` : L.buildNoAnimation}
+              </span>
             </li>
           ))}
         </ol>

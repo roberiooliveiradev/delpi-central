@@ -62,6 +62,16 @@ export function buildSelectionTreeRows(blocks: ComunicadoBlock[]): SelectionTree
   return rows;
 }
 
+/** Esconde filhos `depth: 1` de grupos recolhidos. O twist não seleciona. */
+export function filterCollapsedSelectionRows(
+  rows: readonly SelectionTreeRow[],
+  collapsedGroupIds: ReadonlySet<string>,
+): SelectionTreeRow[] {
+  return rows.filter(
+    (row) => !(row.kind === "block" && row.groupId && collapsedGroupIds.has(row.groupId)),
+  );
+}
+
 export function selectionTreeRowIsActive(
   row: SelectionTreeRow,
   selectedIds: string[],
