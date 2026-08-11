@@ -139,6 +139,32 @@ describe("ColorPickerPopover", () => {
     );
   });
 
+  it("re-clicar Gradiente não zera ângulo nem stops", () => {
+    const onFillChange = vi.fn();
+    const fill = {
+      kind: "gradient" as const,
+      angle: 45,
+      stops: [
+        { color: "#111111", position: 0 },
+        { color: "#abcdef", position: 50 },
+        { color: "#eeeeee", position: 100 },
+      ],
+    };
+    render(
+      <ColorPickerPopover
+        variant="fill"
+        value="#111111"
+        fill={fill}
+        onChange={vi.fn()}
+        onFillChange={onFillChange}
+        allowedFillKinds={["solid", "gradient"]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Gradiente" }));
+    expect(onFillChange).toHaveBeenCalledWith(fill);
+    expect(onFillChange.mock.calls.some((call) => call[0]?.angle === 180)).toBe(false);
+  });
+
   it("gatilho com fill gradient usa preview CSS do helper", () => {
     const { container } = render(
       <ColorPickerPopoverTrigger

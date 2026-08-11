@@ -32,6 +32,13 @@ export function backgroundToFill(background: ComunicadoBackground | undefined): 
   };
 }
 
+/** Hex da aba Cor não pode apagar um fundo já em gradiente (onChange residual). */
+export function shouldApplyBackgroundSolidHex(
+  background: ComunicadoBackground | undefined,
+): boolean {
+  return background?.type !== "gradient";
+}
+
 export function fillToBackground(fill: DelpiFill): ComunicadoBackground {
   if (fill.kind === "none") return { type: "color", value: "transparent" };
   if (fill.kind === "solid") return { type: "color", value: fill.color };

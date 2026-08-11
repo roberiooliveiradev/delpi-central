@@ -147,6 +147,10 @@ export function ColorPickerPopover({
       onChange(color);
       return;
     }
+    if (fill?.kind === "gradient") {
+      onFillChange(fill);
+      return;
+    }
     const base = value && value !== "transparent" && value !== "auto" ? value : "#0f172a";
     onFillChange({
       kind: "gradient",

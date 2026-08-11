@@ -1,5 +1,5 @@
 import { Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
 import {
@@ -37,6 +37,33 @@ export function FillGradientPanel({
   const [activeIndex, setActiveIndex] = useState(0);
   const safeIndex = Math.min(activeIndex, stops.length - 1);
   const active = stops[safeIndex] ?? stops[0]!;
+  const barRef = useRef<HTMLDivElement>(null);
+  const dragIndexRef = useRef<number | null>(null);
+
+  function positionFromClientX(clientX: number): number {
+    const bar = barRef.current;
+    if (!bar) return 0;
+    const rect = bar.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+  }
+
+  function moveStopAt(index: number, position: number) {
+    const nextStops = stops.map((stop, stopIndex) =>
+      stopIndex === index ? { ...stop, position } : stop,
+    );
+    const normalized = normalizeGradientStops(nextStops);
+    const color = stops[index]?.color;
+    const nextIndex = normalized.findIndex(
+      (stop) => stop.color === color && Math.abs(stop.position - position) < 0.51,
+    );
+    emit({ stops: nextStops });
+    const resolved = nextIndex >= 0 ? nextIndex : normalized.findIndex((stop) => stop.color === color);
+    if (resolved >= 0) {
+      setActiveIndex(resolved);
+      dragIndexRef.current = resolved;
+    }
+  }
 
   function emit(next: Partial<DelpiFillGradient> & { stops?: DelpiGradientStop[] }) {
     onChange({
@@ -103,12 +130,24 @@ export function FillGradientPanel({
 
       <div className="delpi-ui-fill-stops">
         <div
+          ref={barRef}
           className="delpi-ui-fill-stops__bar"
           style={{ background: fillToCssBackground({ ...value, stops }) }}
+          onPointerMove={(event: ReactPointerEvent<HTMLDivElement>) => {
+            const dragIndex = dragIndexRef.current;
+            if (dragIndex == null) return;
+            moveStopAt(dragIndex, positionFromClientX(event.clientX));
+          }}
+          onPointerUp={() => {
+            dragIndexRef.current = null;
+          }}
+          onPointerCancel={() => {
+            dragIndexRef.current = null;
+          }}
         >
           {stops.map((stop, index) => (
             <button
-              key={`${stop.position}-${index}`}
+              key={`${stop.color}-${index}`}
               type="button"
               className={[
                 "delpi-ui-fill-stops__mark",
@@ -117,8 +156,14 @@ export function FillGradientPanel({
                 .filter(Boolean)
                 .join(" ")}
               style={{ left: `${stop.position}%`, background: stop.color }}
-              aria-label={`${L.fillStopPosition} ${stop.position}%`}
-              onClick={() => setActiveIndex(index)}
+              aria-label={`${L.fillStopPosition} ${Math.round(stop.position)}%`}
+              onPointerDown={(event: ReactPointerEvent<HTMLButtonElement>) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setActiveIndex(index);
+                dragIndexRef.current = index;
+                barRef.current?.setPointerCapture?.(event.pointerId);
+              }}
             />
           ))}
         </div>

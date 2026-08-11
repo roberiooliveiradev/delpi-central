@@ -9,6 +9,7 @@ import {
   TV_ALLOWED_FILL_KINDS,
   backgroundToFill,
   fillToBackground,
+  shouldApplyBackgroundSolidHex,
 } from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "../slideCardPreview";
@@ -69,7 +70,10 @@ export function ComunicadoSlideBackgroundRibbon({
           ariaLabel="Cor de fundo do slide"
           value={solidFromFill(fill)}
           fill={fill}
-          onChange={setBackgroundColor}
+          onChange={(color) => {
+            if (!shouldApplyBackgroundSolidHex(background)) return;
+            setBackgroundColor(color);
+          }}
           onFillChange={(next) => setBackground(fillToBackground(next))}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
         />

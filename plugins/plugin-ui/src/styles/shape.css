@@ -1138,6 +1138,7 @@
   border: 1px solid var(--delpi-ui-border, #cbd5e1);
   border-radius: 8px;
   box-sizing: border-box;
+  touch-action: none;
 }
 
 .delpi-ui-fill-stops__mark {
@@ -1150,7 +1151,8 @@
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--delpi-ui-border, #cbd5e1);
   transform: translate(-50%, -50%);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
 }
 
 .delpi-ui-fill-stops__mark--active {

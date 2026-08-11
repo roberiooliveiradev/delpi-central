@@ -219,6 +219,26 @@ class ComunicadoEnrichmentService:
                 }
                 if isinstance(angle, (int, float)):
                     payload["angle"] = int(angle)
+                raw_stops = background.get("stops")
+                if isinstance(raw_stops, list):
+                    stops: list[dict[str, Any]] = []
+                    for item in raw_stops:
+                        if not isinstance(item, dict):
+                            continue
+                        color = item.get("color")
+                        if not isinstance(color, str) or not color.strip():
+                            continue
+                        position = item.get("position")
+                        stop: dict[str, Any] = {
+                            "color": color.strip(),
+                            "position": float(position) if isinstance(position, (int, float)) else 0,
+                        }
+                        opacity = item.get("opacity")
+                        if isinstance(opacity, (int, float)):
+                            stop["opacity"] = float(opacity)
+                        stops.append(stop)
+                    if len(stops) >= 2:
+                        payload["stops"] = stops
                 return payload
         return {"type": "color", "value": "#ffffff"}
 

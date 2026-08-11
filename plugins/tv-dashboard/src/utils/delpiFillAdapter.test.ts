@@ -6,6 +6,7 @@ import {
   fillToColorStylePatch,
   fillToFillStylePatch,
   fillToStrokeStylePatch,
+  shouldApplyBackgroundSolidHex,
   styleToColorFill,
   styleToFill,
   styleToStrokeFill,
@@ -45,6 +46,25 @@ describe("delpiFillAdapter", () => {
     if (background.type !== "gradient") throw new Error("expected gradient");
     expect(background.stops).toEqual(gradient.stops);
     expect(backgroundToFill(background)).toEqual(gradient);
+  });
+
+  it("ida e volta de ângulo 45 e stop em 50%", () => {
+    const fill = {
+      kind: "gradient" as const,
+      angle: 45,
+      stops: [
+        { color: "#112233", position: 0 },
+        { color: "#445566", position: 50 },
+        { color: "#778899", position: 100 },
+      ],
+    };
+    const background = fillToBackground(fill);
+    expect(background).toMatchObject({ type: "gradient", angle: 45 });
+    if (background.type !== "gradient") throw new Error("expected gradient");
+    expect(background.stops?.[1]).toEqual({ color: "#445566", position: 50 });
+    expect(backgroundToFill(background)).toEqual(fill);
+    expect(shouldApplyBackgroundSolidHex(background)).toBe(false);
+    expect(shouldApplyBackgroundSolidHex({ type: "color", value: "#fff" })).toBe(true);
   });
 
   it("sólido limpa fillPaint; gradiente grava paint + hex do primeiro stop", () => {
