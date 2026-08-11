@@ -5,6 +5,7 @@ import {
   applySlideBatchPatch,
   buildSparseSlidePatch,
   isCustomMessageSlide,
+  pickSharedCustomSlideConfig,
   resolveMixedSlideField,
   resolveSelectedSlides,
   slideBatchFieldApplicability,
@@ -120,5 +121,31 @@ describe("slideBatchFieldApplicability / mixed", () => {
       "b",
       "a",
     ]);
+  });
+
+  it("fan-out de tela livre só leva fundo e filtros, nunca blocks", () => {
+    expect(
+      pickSharedCustomSlideConfig(
+        {
+          background: { type: "color", value: "#111" },
+          dataFilters: { branch: "02" },
+          blocks: [{ id: "b1" }],
+        },
+        {
+          background: { type: "color", value: "#fff" },
+          dataFilters: { branch: "01" },
+          blocks: [{ id: "b0" }],
+        },
+      ),
+    ).toEqual({
+      background: { type: "color", value: "#111" },
+      dataFilters: { branch: "02" },
+    });
+    expect(
+      pickSharedCustomSlideConfig(
+        { blocks: [{ id: "novo" }], background: { type: "color", value: "#fff" } },
+        { blocks: [{ id: "velho" }], background: { type: "color", value: "#fff" } },
+      ),
+    ).toBeNull();
   });
 });

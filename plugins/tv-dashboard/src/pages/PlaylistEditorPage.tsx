@@ -114,6 +114,8 @@ import {
 } from "../utils/editorPresence";
 import {
   applySlideBatchPatch,
+  isCustomMessageSlide,
+  pickSharedCustomSlideConfig,
   resolveSelectedSlides,
   type SlideBatchInput,
 } from "../utils/applySlideBatchPatch";
@@ -174,6 +176,11 @@ export function PlaylistEditorPage({
     nativeConfig: Record<string, unknown>;
     version: number;
   } | null>(null);
+  const customFanOutBaselineRef = useRef<{
+    slideId: string;
+    nativeConfig: Record<string, unknown>;
+  } | null>(null);
+  const selectedSlidesRef = useRef<Slide[]>([]);
   const comunicadoAutosaveVersionRef = useRef<Map<string, number>>(new Map());
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
@@ -407,6 +414,7 @@ export function PlaylistEditorPage({
     () => resolveSelectedSlides(slides, selectedSlideIds, selectedSlide),
     [slides, selectedSlideIds, selectedSlide],
   );
+  selectedSlidesRef.current = selectedSlides;
 
   const sectionPropertiesTarget = useMemo(
     () => sections.find((section) => section.id === sectionPropertiesId) ?? null,
@@ -1483,6 +1491,37 @@ export function PlaylistEditorPage({
     }
   }
 
+  async function persistSharedCustomFanOut(
+    source: Slide,
+    nextConfig: Record<string, unknown>,
+  ) {
+    const pl = playlistRef.current;
+    if (!pl) return;
+    const baseline =
+      customFanOutBaselineRef.current?.slideId === source.id
+        ? customFanOutBaselineRef.current.nativeConfig
+        : source.nativeConfig;
+    const slice = pickSharedCustomSlideConfig(nextConfig, baseline);
+    if (!slice) return;
+    const others = selectedSlidesRef.current.filter(
+      (item) => item.id !== source.id && isCustomMessageSlide(item),
+    );
+    if (others.length === 0) return;
+    const { applied } = applySlideBatchPatch(others, { nativeConfig: slice });
+    if (applied.length === 0) return;
+    const updates = new Map<string, Slide>();
+    for (const item of applied) {
+      updates.set(item.slideId, await updateSlide(pl.id, item.slideId, item.payload));
+    }
+    setPlaylist((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        slides: (current.slides ?? []).map((item) => updates.get(item.id) ?? item),
+      };
+    });
+  }
+
   async function handleSaveSlides(targets: Slide[], patch: SlideBatchInput) {
     if (!playlist || targets.length === 0) return;
     const { applied } = applySlideBatchPatch(targets, patch);
@@ -1609,6 +1648,7 @@ export function PlaylistEditorPage({
         pendingComunicadoSaveRef.current = null;
       }
       await persistComunicadoPending(pending, options);
+      await persistSharedCustomFanOut(pending.slide, pending.nativeConfig);
     },
     [persistComunicadoPending],
   );
@@ -1631,21 +1671,42 @@ export function PlaylistEditorPage({
       }
       pendingComunicadoSaveRef.current = null;
       void persistComunicadoPending(previous);
+      void persistSharedCustomFanOut(previous.slide, previous.nativeConfig);
+      customFanOutBaselineRef.current = null;
+    }
+    if (!previous || previous.slide.id !== slide.id) {
+      customFanOutBaselineRef.current = {
+        slideId: slide.id,
+        nativeConfig: { ...(slide.nativeConfig ?? {}) },
+      };
     }
 
     liveComunicadoConfigRef.current = nativeConfig;
     const version = bumpComunicadoAutosaveVersion(comunicadoAutosaveVersionRef.current, slide.id);
     writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig, Date.now(), version);
     pendingComunicadoSaveRef.current = { slide, nativeConfig, version };
+    const sharedSlice = pickSharedCustomSlideConfig(
+      nativeConfig,
+      customFanOutBaselineRef.current?.nativeConfig,
+    );
+    const fanOutIds = new Set(
+      selectedSlidesRef.current
+        .filter((item) => item.id !== slide.id && isCustomMessageSlide(item))
+        .map((item) => item.id),
+    );
     // Otimista: atualiza nativeConfig no estado já — o save API continua debounced.
     // Sem isso, re-renders (WS/thumbnails) reaplicam o config antigo no editor mid-drag.
     setPlaylist((current) => {
       if (!current) return current;
       return {
         ...current,
-        slides: (current.slides ?? []).map((item) =>
-          item.id === slide.id ? { ...item, nativeConfig } : item,
-        ),
+        slides: (current.slides ?? []).map((item) => {
+          if (item.id === slide.id) return { ...item, nativeConfig };
+          if (sharedSlice && fanOutIds.has(item.id)) {
+            return { ...item, nativeConfig: { ...(item.nativeConfig ?? {}), ...sharedSlice } };
+          }
+          return item;
+        }),
       };
     });
     if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
@@ -1665,6 +1726,7 @@ export function PlaylistEditorPage({
             : "Falha ao salvar o slide. Suas alterações ficaram guardadas localmente.",
         );
       });
+      void persistSharedCustomFanOut(slide, nativeConfig);
     }, 400);
 
     if (wsDraftTimerRef.current) window.clearTimeout(wsDraftTimerRef.current);

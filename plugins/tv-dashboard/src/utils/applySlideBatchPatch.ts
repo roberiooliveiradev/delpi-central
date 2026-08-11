@@ -133,6 +133,28 @@ export function buildSparseSlidePatch(patch: {
   return input;
 }
 
+const SHARED_CUSTOM_SLIDE_KEYS = ["background", "dataFilters"] as const;
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+/**
+ * Fatia compartilhada da tela livre (fundo / filtros).
+ * Não inclui blocks — o layout de cada tela permanece independente.
+ */
+export function pickSharedCustomSlideConfig(
+  next: Record<string, unknown>,
+  previous?: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  const slice: Record<string, unknown> = {};
+  for (const key of SHARED_CUSTOM_SLIDE_KEYS) {
+    if (stableJson(next[key]) === stableJson(previous?.[key])) continue;
+    slice[key] = next[key];
+  }
+  return Object.keys(slice).length > 0 ? slice : null;
+}
+
 export function resolveSelectedSlides(
   slides: readonly Slide[],
   selectedIds: readonly string[],

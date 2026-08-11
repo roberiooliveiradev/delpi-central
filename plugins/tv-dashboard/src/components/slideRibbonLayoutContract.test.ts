@@ -50,4 +50,16 @@ describe("slide ribbon layout contract", () => {
       /\.td-deck-settings-accordion__body\{[^}]*box-shadow:\s*0 8px 24px/s,
     );
   });
+
+  it("fan-out de fundo/filtros fica na página, sem API no hook do editor", () => {
+    const page = readFileSync(join(here, "../pages/PlaylistEditorPage.tsx"), "utf8");
+    const hook = readFileSync(
+      join(here, "../hooks/comunicadoEditor/useComunicadoEditorBlocks.ts"),
+      "utf8",
+    );
+    expect(page).toContain("pickSharedCustomSlideConfig");
+    expect(page).toContain("persistSharedCustomFanOut");
+    expect(hook).not.toContain("updateSlide(");
+    expect(hook).not.toContain("applySlideBatchPatch");
+  });
 });
