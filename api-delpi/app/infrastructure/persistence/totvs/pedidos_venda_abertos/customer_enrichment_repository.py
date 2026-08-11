@@ -9,6 +9,9 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
     CustomerGeoRow,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    build_customer_billing_series_sql,
+)
 
 
 def _trim(value: Any) -> str:
@@ -173,6 +176,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         customers: Sequence[tuple[str, str]],
         start_date: str,
         end_date: str,
+        granularity: str = "month",
     ) -> list[CustomerBillingMonthRow]:
         pairs = [(c.strip(), s.strip()) for c, s in customers if c.strip() and s.strip()]
         if not pairs:
@@ -185,46 +189,10 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             pair_params.extend([code, store])
         where_pairs = " OR ".join(clauses)
 
-        sql = f"""
-            WITH note_base AS (
-                SELECT
-                    D2.D2_CLIENTE AS customer_code,
-                    D2.D2_LOJA AS customer_store,
-                    D2.D2_FILIAL AS branch,
-                    D2.D2_DOC AS invoice_number,
-                    D2.D2_SERIE AS invoice_series,
-                    MAX(D2.D2_EMISSAO) AS issue_date,
-                    MAX(CONVERT(FLOAT, ISNULL(F2.F2_VALBRUT, 0))) AS note_value,
-                    MAX(ISNULL(F2.F2_TIPO, D2.D2_TIPO)) AS doc_type
-                  FROM SD2010 D2 WITH (NOLOCK)
-                  INNER JOIN SF2010 F2 WITH (NOLOCK)
-                    ON F2.F2_FILIAL = D2.D2_FILIAL
-                   AND F2.F2_DOC = D2.D2_DOC
-                   AND F2.F2_SERIE = D2.D2_SERIE
-                   AND F2.D_E_L_E_T_ = ''
-                 WHERE D2.D_E_L_E_T_ = ''
-                   AND ({where_pairs})
-                   AND D2.D2_EMISSAO >= ?
-                   AND D2.D2_EMISSAO <= ?
-                 GROUP BY
-                    D2.D2_CLIENTE,
-                    D2.D2_LOJA,
-                    D2.D2_FILIAL,
-                    D2.D2_DOC,
-                    D2.D2_SERIE
-            )
-            SELECT
-                LEFT(LTRIM(RTRIM(CONVERT(VARCHAR(8), issue_date))), 6) AS year_month,
-                SUM(
-                    CASE
-                        WHEN ISNULL(doc_type, '') = 'D' THEN 0
-                        ELSE note_value
-                    END
-                ) AS billed_value
-              FROM note_base
-             GROUP BY LEFT(LTRIM(RTRIM(CONVERT(VARCHAR(8), issue_date))), 6)
-             ORDER BY year_month ASC
-        """
+        sql = build_customer_billing_series_sql(
+            where_pairs=where_pairs,
+            granularity=granularity,
+        )
         params = tuple(pair_params + [start_date, end_date])
         with self as repo:
             rows = repo.execute_query(sql, params)

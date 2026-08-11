@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case import (
     ListCustomerBillingSeriesRequest,
     ListCustomerBillingSeriesUseCase,
@@ -13,6 +15,11 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
 from app.domain.services.pedidos_venda_abertos.billing_series_service import (
     fill_billing_monthly_series,
     month_key_from_protheus,
+    period_key_from_protheus,
+)
+from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    billing_series_period_expr,
+    build_customer_billing_series_sql,
 )
 
 
@@ -20,6 +27,13 @@ def test_month_key_from_protheus() -> None:
     assert month_key_from_protheus("202608") == "2026-08"
     assert month_key_from_protheus("2026-08-15") == "2026-08"
     assert month_key_from_protheus("") is None
+
+
+def test_period_key_from_protheus_by_grain() -> None:
+    assert period_key_from_protheus("20260811", granularity="day") == "2026-08-11"
+    assert period_key_from_protheus("20260810", granularity="week") == "2026-08-10"
+    assert period_key_from_protheus("202608", granularity="month") == "2026-08"
+    assert period_key_from_protheus("2026", granularity="year") == "2026"
 
 
 def test_fill_billing_monthly_series_pads_zeros() -> None:
@@ -34,6 +48,28 @@ def test_fill_billing_monthly_series_pads_zeros() -> None:
     assert points[1].label == "jul/26"
     assert points[1].date_start == "2026-07-01"
     assert points[1].date_end == "2026-07-31"
+
+
+def test_billing_series_sql_buckets_by_granularity() -> None:
+    month_sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="month",
+    )
+    day_sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="day",
+    )
+    week_sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="week",
+    )
+    assert "LEFT(" in month_sql
+    assert ", 6)" in month_sql
+    assert billing_series_period_expr("day") in day_sql
+    assert "19000101" in week_sql
+    assert "GROUP BY" in day_sql
+    with pytest.raises(ValueError):
+        billing_series_period_expr("hour")
 
 
 def test_list_customer_billing_series_aggregates_and_fills() -> None:
@@ -62,12 +98,15 @@ def test_list_customer_billing_series_aggregates_and_fills() -> None:
 
     assert result.customer_count == 1
     assert result.months == 3
+    assert result.granularity == "month"
     assert [p.month for p in result.points] == ["2026-06", "2026-07", "2026-08"]
     assert result.points[1].value == 150.0
     call_kwargs = repo.fetch_billing_monthly_series.call_args.kwargs
     assert call_kwargs["customers"] == [("100", "01")]
+    assert call_kwargs["granularity"] == "month"
     payload = result.to_dict()
     assert payload["points"][1]["value"] == 150.0
+    assert payload["granularity"] == "month"
 
 
 def test_list_customer_billing_series_empty_customers_still_returns_months() -> None:
@@ -80,6 +119,43 @@ def test_list_customer_billing_series_empty_customers_still_returns_months() -> 
     repo.fetch_billing_monthly_series.assert_not_called()
 
 
+def test_list_customer_billing_series_day_range_fills_holes() -> None:
+    repo = MagicMock()
+    repo.fetch_billing_monthly_series.return_value = [
+        CustomerBillingMonthRow("20260802", 80.0),
+    ]
+    use_case = ListCustomerBillingSeriesUseCase(repo)
+    result = use_case.execute(
+        ListCustomerBillingSeriesRequest(
+            customers=[("100", "01")],
+            start_date="2026-08-01",
+            end_date="2026-08-03",
+            granularity="day",
+        )
+    )
+    assert result.granularity == "day"
+    assert [p.month for p in result.points] == [
+        "2026-08-01",
+        "2026-08-02",
+        "2026-08-03",
+    ]
+    assert [p.value for p in result.points] == [0.0, 80.0, 0.0]
+    assert repo.fetch_billing_monthly_series.call_args.kwargs["granularity"] == "day"
+
+
+def test_list_customer_billing_series_rejects_day_window_over_limit() -> None:
+    use_case = ListCustomerBillingSeriesUseCase(MagicMock())
+    with pytest.raises(ValueError, match="93"):
+        use_case.execute(
+            ListCustomerBillingSeriesRequest(
+                customers=[],
+                start_date="2026-01-01",
+                end_date="2026-08-01",
+                granularity="day",
+            )
+        )
+
+
 def test_list_customer_billing_series_operation_id_in_router() -> None:
     router = open(
         "app/interface/http/routes/pedidos_venda_abertos/pedidos_venda_abertos_router.py",
@@ -87,3 +163,5 @@ def test_list_customer_billing_series_operation_id_in_router() -> None:
     ).read()
     assert "list_customer_billing_series" in router
     assert "/customers/billing-series" in router
+    assert "start_date" in router
+    assert "granularity" in router

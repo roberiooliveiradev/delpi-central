@@ -28,23 +28,35 @@ function customer(overrides = {}) {
 }
 
 describe("filtros da lista de clientes", () => {
-  it("usa status e tendência comerciais existentes", () => {
+  it("separa status operacional e tendência de faturamento", () => {
     const customers = [
-      customer({ key: "attention", status: "atencao" }),
-      customer({ key: "inactive", status: "inativo" }),
-      customer({ key: "growth", billingTrend: "up" }),
+      customer({ key: "attention-up", status: "atencao", billingTrend: "up" }),
+      customer({ key: "attention-stable", status: "atencao", billingTrend: "stable" }),
+      customer({ key: "active-down", status: "ativo", billingTrend: "down" }),
+      customer({ key: "active-up", status: "ativo", billingTrend: "up" }),
     ];
     assert.deepEqual(
       filterCustomers(customers, "", "attention").map((item) => item.key),
-      ["attention"],
+      ["attention-up", "attention-stable"],
     );
     assert.deepEqual(
-      filterCustomers(customers, "", "inactive").map((item) => item.key),
-      ["inactive"],
+      filterCustomers(customers, "", "active").map((item) => item.key),
+      ["active-down", "active-up"],
     );
     assert.deepEqual(
-      filterCustomers(customers, "", "growth").map((item) => item.key),
-      ["growth"],
+      filterCustomers(customers, "", "all", "up").map((item) => item.key),
+      ["attention-up", "active-up"],
+    );
+    assert.deepEqual(
+      filterCustomers(customers, "", "attention", "up").map((item) => item.key),
+      ["attention-up"],
+    );
+    assert.deepEqual(
+      filterCustomers(customers, "", "all", "down").map((item) => item.key),
+      ["active-down"],
+    );
+    assert.ok(
+      !filterCustomers(customers, "", "all", "down").some((item) => item.billingTrend !== "down"),
     );
   });
 

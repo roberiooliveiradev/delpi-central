@@ -7758,14 +7758,14 @@
     "list_customer_billing_series": {
       "locale": {
         "en": {
-          "summary": "Customer billing monthly series",
-          "description": "Monthly billed totals for the last N months for selected portfolio customers.",
+          "summary": "Customer billing series",
+          "description": "Billed totals for selected portfolio customers, bucketed by day, week, month or year. Optional start_date/end_date; months remains the fallback window.",
           "label": "Billing series"
         },
         "pt-BR": {
           "label": "Série de faturamento",
-          "summary": "Série mensal de faturamento",
-          "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira."
+          "summary": "Série de faturamento da carteira",
+          "description": "Totais faturados dos clientes selecionados, agrupados por dia, semana, mês ou ano. start_date/end_date opcionais; months continua como janela padrão."
         }
       },
       "category": "commercial"

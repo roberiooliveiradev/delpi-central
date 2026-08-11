@@ -1,7 +1,8 @@
 import type {
-  CustomerAttentionFilter,
-  CustomerSummary,
-} from "../types/customerSummary.ts";
+  CustomerListFocus,
+  CustomerListTrend,
+} from "../../../utils/customersListDeepLink.ts";
+import type { CustomerSummary } from "../types/customerSummary.ts";
 import { normalizeCadastroPart } from "./customerIdentity.ts";
 import { isWithoutSaleForDays } from "./customerPortfolioKpis.ts";
 
@@ -36,25 +37,43 @@ export function matchesCustomerSearch(
   return false;
 }
 
+export function matchesOperationalFocus(
+  customer: CustomerSummary,
+  focus: CustomerListFocus,
+): boolean {
+  if (focus === "all") return true;
+  if (focus === "attention") return customer.status === "atencao";
+  if (focus === "active") return customer.status === "ativo";
+  if (focus === "no_sale_60") return isWithoutSaleForDays(customer, 60);
+  return true;
+}
+
+export function matchesBillingTrend(
+  customer: CustomerSummary,
+  trend: CustomerListTrend,
+): boolean {
+  if (trend === "all") return true;
+  return customer.billingTrend === trend;
+}
+
+/** Compatível com o recorte operacional; tendência entra em `filterCustomers`. */
 export function matchesCustomerFilter(
   customer: CustomerSummary,
-  filter: CustomerAttentionFilter,
+  filter: CustomerListFocus,
 ): boolean {
-  if (filter === "all") return true;
-  if (filter === "attention") return customer.status === "atencao";
-  if (filter === "inactive") return customer.status === "inativo";
-  if (filter === "growth") return customer.billingTrend === "up";
-  if (filter === "no_sale_60") return isWithoutSaleForDays(customer, 60);
-  return true;
+  return matchesOperationalFocus(customer, filter);
 }
 
 export function filterCustomers(
   customers: readonly CustomerSummary[],
   search: string,
-  filter: CustomerAttentionFilter,
+  focus: CustomerListFocus,
+  trend: CustomerListTrend = "all",
 ): CustomerSummary[] {
   return customers.filter(
     (customer) =>
-      matchesCustomerFilter(customer, filter) && matchesCustomerSearch(customer, search),
+      matchesOperationalFocus(customer, focus) &&
+      matchesBillingTrend(customer, trend) &&
+      matchesCustomerSearch(customer, search),
   );
 }

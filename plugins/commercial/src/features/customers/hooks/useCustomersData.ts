@@ -92,6 +92,7 @@ export function useCustomersData(
   const listState = options?.listState;
   const search = listState?.q ?? "";
   const filter: CustomerAttentionFilter = listState?.focus ?? "all";
+  const trend = listState?.trend ?? "all";
   const sortKey: CustomerListSortKey = listState?.sort ?? "attention";
   const sortDirection: CustomerListSortDirection = listState?.dir ?? "asc";
   const page = listState?.page ?? 1;
@@ -226,9 +227,9 @@ export function useCustomersData(
 
   const filteredCustomers = useMemo(() => {
     if (!aggregation) return [];
-    const filtered = filterCustomers(aggregation.customers, search, filter);
+    const filtered = filterCustomers(aggregation.customers, search, filter, trend);
     return sortCustomers(filtered, sortKey, sortDirection);
-  }, [aggregation, search, filter, sortKey, sortDirection]);
+  }, [aggregation, search, filter, trend, sortKey, sortDirection]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);

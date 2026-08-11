@@ -21,12 +21,13 @@ describe("customersListDeepLink", () => {
   it("parseia somente o estado reconhecido", () => {
     assert.deepEqual(
       parseCustomersListDeepLink(
-        "?q=%20Acme%20&focus=growth&seller_id=seller-2&sort=billed12m&dir=desc&page=3&external=https://example.com",
+        "?q=%20Acme%20&focus=active&trend=down&seller_id=seller-2&sort=billed12m&dir=desc&page=3&external=https://example.com",
         TEAM_ACCESS,
       ),
       {
         q: "Acme",
-        focus: "growth",
+        focus: "active",
+        trend: "down",
         sellerId: "seller-2",
         sort: "billed12m",
         dir: "desc",
@@ -41,6 +42,7 @@ describe("customersListDeepLink", () => {
       {
         q: "",
         focus: "all",
+        trend: "all",
         sellerId: null,
         sort: "attention",
         dir: "asc",
@@ -65,6 +67,7 @@ describe("customersListDeepLink", () => {
       {
         q: "",
         focus: "all",
+        trend: "all",
         sellerId: null,
         sort: "attention",
         dir: "asc",
@@ -73,28 +76,50 @@ describe("customersListDeepLink", () => {
     );
   });
 
+  it("mapeia focus=growth legado para tendência de alta", () => {
+    assert.deepEqual(
+      parseCustomersListDeepLink("?focus=growth", TEAM_ACCESS),
+      {
+        q: "",
+        focus: "all",
+        trend: "up",
+        sellerId: null,
+        sort: "attention",
+        dir: "asc",
+        page: 1,
+      },
+    );
+    assert.equal(sanitizeCustomersListSearch("?focus=growth", TEAM_ACCESS), "?trend=up");
+    assert.equal(sanitizeCustomersListSearch("?focus=inactive", TEAM_ACCESS), "");
+    assert.equal(
+      sanitizeCustomersListSearch("?focus=growth&trend=down", TEAM_ACCESS),
+      "?trend=down",
+    );
+  });
+
   it("mantém roundtrip canônico e rota interna", () => {
     const state = {
       q: "Metalúrgica A",
       focus: "attention",
+      trend: "down",
       sellerId: "seller-1",
       sort: "lastPurchaseDate",
       dir: "desc",
       page: 4,
     };
     const search = buildCustomersListSearch(state, TEAM_ACCESS);
-    assert.equal(search, "?q=Metal%C3%BArgica+A&focus=attention&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4");
+    assert.equal(search, "?q=Metal%C3%BArgica+A&focus=attention&trend=down&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4");
     assert.deepEqual(parseCustomersListDeepLink(search, TEAM_ACCESS), state);
     assert.equal(
       buildCustomersListPath("https://malicioso.example", state, TEAM_ACCESS),
-      "/apps/commercial/customers?q=Metal%C3%BArgica+A&focus=attention&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4",
+      "/apps/commercial/customers?q=Metal%C3%BArgica+A&focus=attention&trend=down&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4",
     );
   });
 
   it("aplica defaults e remove toda query fora da allowlist", () => {
     assert.deepEqual(
       parseCustomersListDeepLink("?focus=x&sort=__proto__&dir=up&page=-2&unknown=1", TEAM_ACCESS),
-      { q: "", focus: "all", sellerId: null, sort: "attention", dir: "asc", page: 1 },
+      { q: "", focus: "all", trend: "all", sellerId: null, sort: "attention", dir: "asc", page: 1 },
     );
     assert.equal(
       sanitizeCustomersListSearch("?q=ACME&focus=all&sort=attention&dir=asc&page=1&unknown=1", TEAM_ACCESS),
@@ -145,6 +170,7 @@ describe("customersListDeepLink", () => {
       {
         q: "Acme",
         focus: "all",
+        trend: "all",
         sellerId: "seller-2",
         sort: "attention",
         dir: "asc",
@@ -156,12 +182,13 @@ describe("customersListDeepLink", () => {
 
 describe("updateCustomersListState", () => {
   const state = {
-    q: "ACME", focus: "growth", sellerId: "seller-1",
+    q: "ACME", focus: "active", trend: "up", sellerId: "seller-1",
     sort: "nome", dir: "asc", page: 7,
   };
   for (const change of [
     { q: "BETA" },
     { focus: "attention" },
+    { trend: "down" },
     { sellerId: "seller-2" },
     { sort: "billed12m", dir: "desc" },
   ]) {

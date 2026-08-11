@@ -69,10 +69,13 @@ Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido 
 ## Minha carteira — WF-03R
 
 A lista representa **clientes da carteira com pedidos de venda em aberto**; não é
-a base SA1 completa. O `PageHero` concentra escopo, recortes e busca. A lista usa
-`DataTable` no desktop e `DataRecordCard` no mobile, com a mesma paginação e
-ordenação em memória. Colunas, ordem e larguras são preferências locais
-versionadas; a análise de faturamento vem depois da lista.
+a base SA1 completa. O `PageHero` concentra escopo, recortes e busca. Há dois
+eixos independentes: **Foco** operacional (`focus`) e **Tendência** de NF
+(`trend`). A lista usa `DataTable` no desktop e `DataRecordCard` no mobile, com
+a mesma paginação e ordenação em memória. Colunas, ordem e larguras são
+preferências locais versionadas; o gráfico de faturamento fica acima da lista,
+com presets de calendário e `ChartToolbar` (dia/semana/mês/ano) na rota
+existente `customers/billing-series`.
 
 O estado compartilhável é sincronizado na URL por `replaceState`, sem recarregar
 o MFE:
@@ -80,16 +83,17 @@ o MFE:
 | Query | Efeito |
 |-------|--------|
 | `q` | Busca por cliente, código, loja, vendedor ou pedido |
-| `focus=attention\|inactive\|growth\|no_sale_60` | Recorte comercial fixo da lista |
+| `focus=attention\|active\|no_sale_60` | Recorte operacional (atraso/parcial, em dia, sem venda 60d) |
+| `trend=up\|stable\|down` | Tendência de faturamento; combina com o foco |
 | `seller_id` | Carteira selecionada; aceito apenas para escopo de equipe e vendedor válido |
 | `sort` | Ordenação allowlisted da carteira |
 | `dir=asc\|desc` | Direção da ordenação |
 | `page` | Página da lista em memória |
 
-Somente `q`, `focus`, `seller_id`, `sort`, `dir` e `page` são preservados ao
-abrir e retornar do detalhe. Valores
-inválidos são removidos, e o estado padrão `focus=all` é omitido da URL. O
-contrato canônico está em
+Somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir` e `page` são
+preservados ao abrir e retornar do detalhe. Valores inválidos são removidos, e
+os defaults `focus=all` / `trend=all` são omitidos da URL. `focus=growth` legado
+vira `trend=up`; `focus=inactive` vira `all`. O contrato canônico está em
 [`src/utils/customersListDeepLink.ts`](./src/utils/customersListDeepLink.ts).
 
 As colunas visíveis por padrão seguem o WF-03R: Cliente, Última venda,
@@ -105,8 +109,8 @@ evolução com contrato de persistência e visibilidade próprio.
 ## Conta 360 — WF-04R
 
 `/apps/commercial/customers/:codigo/:loja` é a página canônica da conta. Usa
-`CommercialPagePath` para retornar à Minha carteira preservando `q`, `focus` e
-`seller_id`, e sincroniza a aba ativa em `?secao=`:
+`CommercialPagePath` para retornar à Minha carteira preservando `q`, `focus`,
+`trend` e `seller_id`, e sincroniza a aba ativa em `?secao=`:
 
 | `secao` | Conteúdo |
 |---------|----------|
@@ -124,8 +128,9 @@ Os CTAs aparecem apenas quando o usuário possui a capacidade necessária.
 
 No resumo, `Pontos para conversa` apresenta badges derivados do snapshot real
 (atrasos, cobertura cadastral parcial e valor em aberto), com vazio explícito
-quando nenhum fato está disponível. A próxima ação tem fonte visual única no
-rail `Dados da conta`. Pedidos e previews abrem a página nativa da primeira
+quando nenhum fato está disponível. Identidade, KPIs e próxima ação ficam no
+`PageHero` da conta — sem rail sticky nem faixa de KPI duplicada. Pedidos e
+previews abrem a página nativa da primeira
 linha com chaves completas; o CTA `Ver OV n` só aparece com
 `proposal_number` recebido no payload e `commercial.analytics.view`, sem probe
 adicional e sem modal.
@@ -211,10 +216,10 @@ localmente apenas composição, responsividade e regra de domínio.
 - Navegação/detalhe: `PagePath`, `UnderlineNav` em modo tabs, `PageHero`;
 - dados: `DataTable`, `DataRecordCard`, `DetailCard`, `DetailFieldGrid`,
   `Timeline`, `StatusBadge`, `KpiCard` e `ChartCard`;
-- operação: `SectionCard`, `ScopeChipBar`, `FilterBarShell`,
+- operação: `SectionCard`, `ScopeChipBar`, `FilterBarShell`, `ChartToolbar`,
   `TableColumnVisibilityMenu`, `CompactPagination`, `ActionButton`,
   `StateBanner`, `EmptyState` e `LoadingActivityCard`;
-- composições do domínio: `CustomersTable`, `CustomerAccountRail`,
+- composições do domínio: `CustomersTable`, `CustomerDetailHeader`,
   `CustomerOrdersTable`, `CustomerBillingPanel`,
   `CustomerBillingSeriesChart`, `CustomerPurchaseEvolutionChart` e
   `OpenOrdersProductionDetailContent`.

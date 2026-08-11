@@ -355,8 +355,8 @@ describe("customerSorting e filters", () => {
     const growth = { ...overdue, key: "growth|01", status: "ativo", billingTrend: "up" };
     const customers = [attention, inactive, growth];
     assert.equal(filterCustomers(customers, "", "attention").length, 1);
-    assert.equal(filterCustomers(customers, "", "inactive").length, 1);
-    assert.equal(filterCustomers(customers, "", "growth").length, 1);
+    assert.equal(filterCustomers(customers, "", "active", "up").length, 1);
+    assert.equal(filterCustomers(customers, "", "all", "up").length, 1);
     assert.equal(filterCustomers(customers, "", "all").length, 3);
   });
 
@@ -459,8 +459,11 @@ describe("CustomersPage estrutural", () => {
     assert.ok(
       page.indexOf("<CustomerBillingSeriesChart") < page.indexOf("<CustomersTable"),
     );
-    for (const focus of ["all", "attention", "inactive", "growth", "no_sale_60"]) {
+    for (const focus of ["all", "attention", "active", "no_sale_60"]) {
       assert.match(page, new RegExp(`id: "${focus}"`));
+    }
+    for (const trend of ["up", "stable", "down"]) {
+      assert.match(page, new RegExp(`id: "${trend}"`));
     }
     assert.match(table, /CommercialDataTable/);
     assert.match(table, /CustomerListCard/);
@@ -503,7 +506,10 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /canUseTeamScope=\{canUseTeamScope\}/);
     assert.match(chart, /CommercialSectionCard/);
     assert.match(chart, /collapsible/);
-    assert.match(chart, /useCustomerBillingSeries\(customers, \{ enabled \}\)/);
+    assert.match(chart, /useCustomerBillingSeries\(customers, \{/);
+    assert.match(chart, /CommercialChartToolbar/);
+    assert.match(chart, /startDate: range\.startDate/);
+    assert.match(seriesHook, /startDate, endDate, granularity/);
     assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);
     assert.match(lazyHook, /IntersectionObserver/);
     assert.match(lazyHook, /if \(mobile\)/);
@@ -516,6 +522,8 @@ describe("CustomersPage estrutural", () => {
       "CustomerCommercialStatus.tsx",
       "CustomerContactsStub.tsx",
       "CustomerSummaryCards.tsx",
+      "CustomerAccountRail.tsx",
+      "CustomerOverviewKpis.tsx",
     ]) {
       assert.equal(existsSync(join(__dirname, `../components/${file}`)), false);
     }

@@ -516,13 +516,6 @@
   text-decoration: underline;
 }
 
-.cm-customer-overview__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.9fr);
-  gap: var(--cm-gap);
-  align-items: start;
-}
-
 .cm-customer-overview__main,
 .cm-customer-overview__side {
   display: flex;

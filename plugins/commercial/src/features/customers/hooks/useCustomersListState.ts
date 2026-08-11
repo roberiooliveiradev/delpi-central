@@ -10,7 +10,11 @@ import {
   type CustomersListDeepLink,
   type CustomersListSellerAccess,
 } from "../../../utils/customersListDeepLink";
-import type { CustomerAttentionFilter, CustomerListSortKey } from "../types/customerSummary";
+import type {
+  CustomerAttentionFilter,
+  CustomerListSortKey,
+  CustomerTrendFilter,
+} from "../types/customerSummary";
 
 export type CustomersListState = CustomersListDeepLink;
 
@@ -21,6 +25,7 @@ export function updateCustomersListState(
   const resetsPage =
     change.q !== undefined ||
     change.focus !== undefined ||
+    change.trend !== undefined ||
     change.sellerId !== undefined ||
     change.sort !== undefined;
   return { ...current, ...change, page: change.page ?? (resetsPage ? 1 : current.page) };
@@ -29,6 +34,7 @@ export function updateCustomersListState(
 const DEFAULT_STATE: CustomersListState = {
   q: "",
   focus: "all",
+  trend: "all",
   sellerId: null,
   sort: DEFAULT_CUSTOMERS_LIST_SORT,
   dir: DEFAULT_CUSTOMERS_LIST_DIRECTION,
@@ -98,6 +104,10 @@ export function useCustomersListState(options: {
     (focus: CustomerAttentionFilter) => mutate({ focus }),
     [mutate],
   );
+  const setTrend = useCallback(
+    (trend: CustomerTrendFilter) => mutate({ trend }),
+    [mutate],
+  );
   const setSellerId = useCallback((nextSellerId: string | null) => {
     setScopeSellerId(nextSellerId);
     mutate({ sellerId: nextSellerId });
@@ -123,6 +133,7 @@ export function useCustomersListState(options: {
     state: { ...state, sellerId },
     setSearch,
     setFilter,
+    setTrend,
     setSellerId,
     toggleSort,
     setPage,

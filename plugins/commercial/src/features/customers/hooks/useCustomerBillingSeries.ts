@@ -52,11 +52,21 @@ function requestFingerprint(
     .join("|");
 }
 
+export type UseCustomerBillingSeriesOptions = {
+  enabled?: boolean;
+  startDate?: string;
+  endDate?: string;
+  granularity?: "day" | "week" | "month" | "year";
+};
+
 export function useCustomerBillingSeries(
   customers: CustomerSummary[] | undefined,
-  options?: { enabled?: boolean },
+  options?: UseCustomerBillingSeriesOptions,
 ): UseCustomerBillingSeriesResult {
   const enabled = options?.enabled ?? true;
+  const startDate = options?.startDate;
+  const endDate = options?.endDate;
+  const granularity = options?.granularity;
   const [selectedKey, setSelectedKey] = useState(ALL_KEY);
   const [points, setPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,7 +110,10 @@ export function useCustomerBillingSeries(
     setError(null);
 
     void fetchCustomerBillingSeries(pairs, {
-      months: 12,
+      months: startDate && endDate ? undefined : 12,
+      startDate,
+      endDate,
+      granularity,
       signal: controller.signal,
     })
       .then((payload) => {
@@ -123,7 +136,7 @@ export function useCustomerBillingSeries(
       cancelled = true;
       controller.abort();
     };
-  }, [enabled, fingerprint, reloadKey]);
+  }, [enabled, fingerprint, reloadKey, startDate, endDate, granularity]);
 
   const displayedPoints = useMemo(
     () => (enabled && fingerprint ? points : []),

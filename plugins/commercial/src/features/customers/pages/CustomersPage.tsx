@@ -21,8 +21,14 @@ import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
 import { useCustomersListState } from "../hooks/useCustomersListState";
-import type { CustomerAttentionFilter } from "../types/customerSummary";
-import { matchesCustomerFilter } from "../utils/customerFilters";
+import type {
+  CustomerAttentionFilter,
+  CustomerTrendFilter,
+} from "../types/customerSummary";
+import {
+  matchesBillingTrend,
+  matchesOperationalFocus,
+} from "../utils/customerFilters";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
 import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 
@@ -62,6 +68,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     state: listState,
     setSearch,
     setFilter,
+    setTrend,
     setSellerId,
     toggleSort,
     setPage,
@@ -107,6 +114,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   const {
     q: search,
     focus: filter,
+    trend,
     sort: sortKey,
     dir: sortDirection,
     page: requestedPage,
@@ -123,8 +131,14 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   useEffect(() => {
     if (enrichmentIncomplete && filter === "no_sale_60") setFilter("all");
   }, [enrichmentIncomplete, filter, setFilter]);
+  useEffect(() => {
+    if (enrichmentIncomplete && trend !== "all") setTrend("all");
+  }, [enrichmentIncomplete, setTrend, trend]);
   const hasActiveFilters =
-    Boolean(search.trim()) || filter !== "all" || listState.sellerId !== null;
+    Boolean(search.trim()) ||
+    filter !== "all" ||
+    trend !== "all" ||
+    listState.sellerId !== null;
   const showInitialLoading = loading && !hasData;
   const showEmptyDataset =
     !loading &&
@@ -139,18 +153,44 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   const focusOptions: Array<{ id: CustomerAttentionFilter; label: string }> = [
     { id: "all", label: "Todos" },
     { id: "attention", label: "Atenção" },
-    { id: "inactive", label: "Inativos" },
-    { id: "growth", label: "Em crescimento" },
+    { id: "active", label: "Em dia" },
     { id: "no_sale_60", label: "Sem venda 60d" },
   ];
-  const focusChips = focusOptions.map((option) => ({
-    id: option.id,
-    label: `${option.label} (${(aggregation?.customers.filter((customer) => matchesCustomerFilter(customer, option.id)).length ?? 0).toLocaleString("pt-BR")})${option.id === "no_sale_60" && enrichmentIncomplete ? " · indisponível" : ""}`,
-    active: filter === option.id,
-    onSelect: option.id === "no_sale_60" && enrichmentIncomplete
-      ? undefined
-      : () => setFilter(option.id),
-  }));
+  const trendOptions: Array<{ id: CustomerTrendFilter; label: string }> = [
+    { id: "all", label: "Todas" },
+    { id: "up", label: "Crescimento" },
+    { id: "stable", label: "Estável" },
+    { id: "down", label: "Queda" },
+  ];
+  const scopedCustomers = aggregation?.customers ?? [];
+  const focusChips = focusOptions.map((option) => {
+    const count = scopedCustomers.filter(
+      (customer) =>
+        matchesOperationalFocus(customer, option.id) &&
+        matchesBillingTrend(customer, trend),
+    ).length;
+    const unavailable = option.id === "no_sale_60" && enrichmentIncomplete;
+    return {
+      id: option.id,
+      label: `${option.label} (${count.toLocaleString("pt-BR")})${unavailable ? " · indisponível" : ""}`,
+      active: filter === option.id,
+      onSelect: unavailable ? undefined : () => setFilter(option.id),
+    };
+  });
+  const trendChips = trendOptions.map((option) => {
+    const count = scopedCustomers.filter(
+      (customer) =>
+        matchesOperationalFocus(customer, filter) &&
+        matchesBillingTrend(customer, option.id),
+    ).length;
+    const unavailable = option.id !== "all" && enrichmentIncomplete;
+    return {
+      id: option.id,
+      label: `${option.label} (${count.toLocaleString("pt-BR")})${unavailable ? " · indisponível" : ""}`,
+      active: trend === option.id,
+      onSelect: unavailable ? undefined : () => setTrend(option.id),
+    };
+  });
   const highlights = [
     {
       id: "customers",
@@ -210,9 +250,24 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
         }
       >
         <CommercialScopeChipBar
-          label="Foco"
-          aria-label="Foco da carteira"
+          label={
+            <CommercialSectionHintLabel
+              label="Foco"
+              hint={CM_HELP.customers.filterFocus}
+            />
+          }
+          aria-label="Foco operacional da carteira"
           chips={focusChips}
+        />
+        <CommercialScopeChipBar
+          label={
+            <CommercialSectionHintLabel
+              label="Tendência"
+              hint={CM_HELP.customers.filterTrend}
+            />
+          }
+          aria-label="Tendência de faturamento da carteira"
+          chips={trendChips}
         />
         <CommercialFilterBarShell embedded ariaLabel="Busca e escopo da carteira">
           <CommercialTextField

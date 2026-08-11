@@ -298,32 +298,36 @@ Pedido+OP permanece nas páginas nativas WF-02R-D.
 
 **Rota:** `/apps/commercial/customers`  
 **Papel:** priorizar clientes da carteira com pedidos de venda em aberto; não representa a SA1 completa.
-**Estado URL:** somente `q`, `focus`, `seller_id`, `sort`, `dir` e `page`
-allowlisted; presets fixos agora, saved views customizadas depois. Valores
-inválidos são normalizados e defaults são omitidos.
+**Estado URL:** somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir` e
+`page` allowlisted; presets fixos agora, saved views customizadas depois.
+Valores inválidos são normalizados e defaults são omitidos. `focus=growth`
+legado vira `trend=up`; `focus=inactive` vira `all`.
 
 ```text
 ┌─ PageHero · Minha carteira ─────────────────────────── [Atualizar] ──────┐
 │ Clientes no recorte 24 │ Valor aberto R$ 1,9 mi │ Após filtros 7        │
 │ Atualizado 09:04                                                       │
 │ Carteira [Todos os vendedores ▾]                                      │
-│ Foco [Todos] [Atenção] [Inativos] [Em crescimento] [Sem venda 60d]     │
+│ Foco [Todos] [Atenção] [Em dia] [Sem venda 60d]                       │
+│ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
 │ Buscar cliente, código, loja ou pedido [___________________________]    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─ Faturamento — últimos 12 meses ────────────────────────────────────────┐
+│ [Hoje][Semana][Mês][Trimestre][Ano][12 meses][Personalizado]           │
+│ ChartToolbar [Dia] [Semana] [Mês] [Ano] · cliente ▾                    │
+│ Área do faturamento (Recharts)                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard · Clientes (1–20 de 24) ─────────────── [Colunas] ────────┐
 │ Cliente       Vendedor  Última venda  Fat.12m  Em aberto  Atrasos      │
 │ ACME 01001/01 Ana       01/08/26      R$ 800k  R$ 90k     2            │
 │ … clique/Enter na linha → Conta; resize/reorder e paginação abaixo     │
 └─────────────────────────────────────────────────────────────────────────┘
-┌─ Análise da carteira ───────────────────────────────────────────────────┐
-│ Faturamento — últimos 12 meses · toda a carteira ou cliente            │
-└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Componentes importados de `@delpi/plugin-ui`:** `PageHero`,
-`ScopeChipBar`, `FilterBarShell`, `TextField`, `SelectField`, `SectionCard`,
-`DataTable`, `TableColumnVisibilityMenu`, `DataRecordCard`,
-`CompactPagination`, `StatusBadge`, `KpiCard`, `ChartCard`, `StateBanner`,
+`ScopeChipBar`, `FilterBarShell`, `TextField`, `SelectField`, `DateField`,
+`SectionCard`, `ChartToolbar`, `DataTable`, `TableColumnVisibilityMenu`,
+`DataRecordCard`, `CompactPagination`, `StatusBadge`, `KpiCard`, `StateBanner`,
 `EmptyState` e `LoadingActivityCard`.
 
 **Composições de domínio no `commercial`:** `CustomersPage`,
@@ -349,7 +353,8 @@ agrega a cobertura. Campo derivado sem lote coberto mostra
 │ 24 clientes · R$ 1,9 mi                    │
 │ Atualizado 09:04                            │
 │ Carteira [Todos ▾]                         │
-│ [Todos][Atenção][Inativos][Sem venda] →   │
+│ Foco [Todos][Atenção][Em dia][Sem venda] → │
+│ Tendência [Todas][Alta][Estável][Queda] →  │
 │ [Buscar_______________________________]    │
 └─────────────────────────────────────────────┘
 ┌ [avatar] ACME                    [Atenção] ┐
@@ -371,25 +376,22 @@ da `DataTable`; não existe segundo pipeline nem segundo fetch.
 
 **Rota:** `/apps/commercial/customers/:code/:store`  
 **PagePath:** `← Minha carteira / {cliente}`, com retorno determinístico para a
-lista e preservação de `q`, `focus` e `seller_id`.
+lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 **Estado URL:** `?secao=resumo|pedidos|historico|oportunidades|atividades`;
 `faturamento` e `contatos` permanecem aliases legados.
 
 ```text
 ← Minha carteira   /   ACME
-┌─ ACME [Atenção] ─────────────────── [Agendar follow-up] [Atualizar seção] ┐
-│ Código 01001 · Loja 01 · Vendedor Ana · Joinville/SC                     │
-│ Atualizado 09:05                                                         │
-└───────────────────────────────────────────────────────────────────────────┘
+┌─ PageHero · Conta ────────────── [Follow-up] [Propostas] [Atualizar] ─┐
+│ ACME  [Atenção]                                                      │
+│ 000006 · Loja 01 · cidade/UF · vendedor · atualizado                 │
+│ Fat. 12m  │  Em aberto  │  Pedidos  │  Próx. entrega                 │
+│ Próxima ação: Tratar atraso                                          │
+└──────────────────────────────────────────────────────────────────────┘
  [Visão geral] [Pedidos 3] [Histórico] [Oportunidades] [Atividades]
-┌─ tabpanel ativo ─────────────────────────────┬─ Dados da conta ───────────┐
-│ Pontos para conversa                        │ Última venda 01/08         │
-│ [Atraso 7d] [Parcial] [R$ 90k em aberto]    │ Fat. 12m R$ 800k          │
-│ Evolução de compras                         │ Situação Atenção          │
-│ Pedidos em aberto (preview)                  │ Próxima entrega 15/08     │
-│ Atividades recentes (preview)                │ Próxima ação              │
-│                                              │ Tratar atraso [Pedidos]   │
-└──────────────────────────────────────────────┴────────────────────────────┘
+┌─ tabpanel full-width ────────────────────────────────────────────────┐
+│ Pontos para conversa · Evolução · preview pedidos/atividades         │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 **Abas:** Pedidos mostra linhas do cliente; Histórico carrega faturamento e NFs
@@ -405,7 +407,7 @@ retry e atualização independentes.
 `LoadingActivityCard`.
 
 **Composições de domínio no `commercial`:** `CustomerDetailHeader`,
-`CustomerDetailSections`, `CustomerOverviewSection`, `CustomerAccountRail`,
+`CustomerDetailSections`, `CustomerOverviewSection`,
 `CustomerOrdersTable`, `CustomerBillingPanel`,
 `CustomerPurchaseEvolutionChart` e `CustomerActivityTimelinePanel`.
 
@@ -413,19 +415,21 @@ retry e atualização independentes.
 
 ```text
 ← Minha carteira / ACME
-[avatar] ACME [Atenção]
-Código/loja · vendedor
-[Agendar follow-up] [Atualizar seção]
+┌─ PageHero · Conta ─────────────────────────┐
+│ ACME [Atenção]                             │
+│ código · loja · vendedor · atualizado      │
+│ Fat. 12m · Em aberto · Pedidos · Entrega   │
+│ Próxima ação: Tratar atraso                │
+│ [Follow-up] [Atualizar]                    │
+└────────────────────────────────────────────┘
 Tabs com scroll horizontal →
-[Dados da conta]
 ┌ tabpanel em uma coluna ┐
-│ KPIs/chips             │
-│ gráfico responsivo     │
+│ pontos / evolução      │
 │ tabelas → cards        │
 └────────────────────────┘
 ```
 
-O rail vira seção empilhada/recolhível e as tabelas usam cards equivalentes.
+O kit empilha os highlights do `PageHero`; não há accordion nem coluna sticky.
 Nenhum conteúdo crítico depende de hover.
 
 ### Fronteira de integração

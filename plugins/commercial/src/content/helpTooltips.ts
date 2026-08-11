@@ -217,10 +217,16 @@ export const CM_HELP = {
     kpiOpenOrders: "Quantidade de pedidos distintos em aberto na carteira filtrada.",
     kpiLateCustomers: "Clientes com ao menos uma linha de pedido vencida.",
     billingSeries:
-      "Soma das notas fiscais de saída nos últimos 12 meses. Selecione um cliente para ver só a curva dele.",
+      "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a curva dele.",
+    billingSeriesPeriod:
+      "Recorte do gráfico: hoje, semana, mês, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
+    billingSeriesGrain:
+      "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
-    filterSituation:
-      "Atalhos de atenção: todos, com atraso ou parcialmente atendidos nos pedidos em aberto.",
+    filterFocus:
+      "Situação do pedido em aberto. Atenção = atraso ou atendimento parcial. Em dia = aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto.",
+    filterTrend:
+      "Tendência de faturamento (últimos 6 meses vs. os 6 anteriores). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
     sellerScope:
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",

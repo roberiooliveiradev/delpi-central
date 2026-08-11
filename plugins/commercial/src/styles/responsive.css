@@ -37,10 +37,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .cm-customer-overview__grid {
-    grid-template-columns: 1fr;
-  }
-
   .cm-billing-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

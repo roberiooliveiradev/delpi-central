@@ -389,12 +389,14 @@ Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02
 
 A lista base retorna a carteira completa de pedidos em aberto, sem paginação na
 origem. `customers/enrichment` e `customers/billing-series` aceitam no máximo
-200 clientes por requisição (`customers.max_length=200`). Consumidores com
-carteiras maiores devem dividir em lotes de até 200 e preservar a semântica de
-cobertura parcial: falha de um lote não transforma campos ausentes em zero nem
-invalida os dados cobertos pelos demais lotes. O MFE `commercial` chama billing
-diretamente na `api-delpi`; não existe schema de billing duplicado no gateway
-`commercial-api`.
+200 clientes por requisição (`customers.max_length=200`). `billing-series`
+aceita `start_date`/`end_date` (`YYYY-MM-DD`) e `granularity`
+(`day|week|month|year`); `months` permanece o fallback quando o intervalo
+não vem no body. Consumidores com carteiras maiores devem dividir em lotes
+de até 200 e preservar a semântica de cobertura parcial: falha de um lote
+não transforma campos ausentes em zero nem invalida os dados cobertos pelos
+demais lotes. O MFE `commercial` chama billing diretamente na `api-delpi`;
+não existe schema de billing duplicado no gateway `commercial-api`.
 
 ## Delpi Reports (`/reports`)
 

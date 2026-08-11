@@ -44,6 +44,8 @@ import {
   createInitialsAvatar,
   createTimeline,
   createDashboardUnderlineNav,
+  createDashboardChartToolbarKit,
+  useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
   dataTableBemClasses,
@@ -75,7 +77,7 @@ import {
 import { createElement, type ReactNode } from "react";
 
 export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
-export { usePersistedViewLayout, useTableFontSize };
+export { usePersistedViewLayout, useTableFontSize, useChartGranularitySelection };
 
 export const UI_PREFIX = "cm";
 export const CM_PORTAL_SCOPE = "dashboard-commercial";
@@ -368,3 +370,14 @@ export const cmFiltersRowWideClassNames = {
   ...cmFiltersRowClassNames,
   filterBox: withBemModifier(cmFiltersRowClassNames.filterBox, "wide"),
 };
+
+const commercialChartToolbarKit = createDashboardChartToolbarKit({
+  prefix: UI_PREFIX,
+  labels: {
+    groupAriaLabel: "Agrupamento do gráfico",
+    exportSeries: "Exportar série",
+    exportSeriesAriaLabel: "Exportar série do gráfico em CSV",
+  },
+});
+
+export const CommercialChartToolbar = commercialChartToolbarKit.ChartToolbar;

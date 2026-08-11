@@ -1,4 +1,3 @@
-import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
@@ -6,7 +5,6 @@ import {
   CommercialActionButton,
   CommercialEmptyState,
   CommercialLoadingCard,
-  CommercialPagePath,
   CommercialStateBanner,
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -15,7 +13,6 @@ import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
 import { CustomerDetailHeader } from "../components/CustomerDetailHeader";
-import { CustomerAccountRail } from "../components/CustomerAccountRail";
 import { CustomerActivityTimelinePanel } from "../components/CustomerActivityTimelinePanel";
 import { CustomerOrdersTable } from "../components/CustomerOrdersTable";
 import { CustomerOverviewSection } from "../components/CustomerOverviewSection";
@@ -171,53 +168,21 @@ export function CustomerDetailPage({
 
   return (
     <div className="cm-customer-detail-page">
-      {!customer ? (
-        <header className="cm-customer-detail-header cm-customer-detail-header--minimal">
-          <CommercialPagePath
-            back={{
-              label: "Minha carteira",
-              href: buildCustomersListPath(basePath, listDeepLink, sellerAccess),
-              onNavigate: (event) => {
-                event.preventDefault();
-                goBack();
-              },
-            }}
-            current={notFound ? "Cliente não encontrado" : `Carregando ${codeStore}…`}
-          />
-          <div className="cm-customer-detail-header__row">
-            <div>
-              <h1 className="cm-customer-detail-header__name">Cliente</h1>
-              <p className="cm-customer-detail__code">Código / loja: {codeStore}</p>
-            </div>
-            {!notFound ? (
-              <CommercialActionButton
-                variant="ghost"
-                onClick={refreshActiveSection}
-                disabled={loading || refreshing}
-                aria-busy={refreshing || loading}
-              >
-                <RefreshCw
-                  size={16}
-                  aria-hidden="true"
-                  className={refreshing ? "cm-spin" : undefined}
-                />
-                {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
-              </CommercialActionButton>
-            ) : null}
-          </div>
-        </header>
-      ) : (
-        <CustomerDetailHeader
-          customer={customer}
-          lastSuccessAt={lastSuccessAt}
-          refreshing={refreshing}
-          loading={loading}
-          onBack={goBack}
-          backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
-          onReload={refreshActiveSection}
-          onScheduleFollowUp={scheduleFollowUp}
-        />
-      )}
+      <CustomerDetailHeader
+        customer={customer}
+        codigo={codigo}
+        loja={loja}
+        lastSuccessAt={lastSuccessAt}
+        refreshing={refreshing}
+        loading={loading}
+        notFound={notFound}
+        onBack={goBack}
+        backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
+        onReload={refreshActiveSection}
+        onScheduleFollowUp={scheduleFollowUp}
+        canViewProposals={canViewProposals}
+        basePath={basePath}
+      />
 
       {showInitialLoading ? (
         <CommercialLoadingCard title="Carregando dados do cliente…" variant="panel" />
@@ -288,16 +253,7 @@ export function CustomerDetailPage({
             openOrdersCount={customer.quantidadePedidosAbertos}
           />
 
-          <div className="cm-customer-overview__grid">
-            <div className="cm-customer-account-rail-slot--mobile">
-              <CustomerAccountRail
-                customer={customer}
-                basePath={basePath}
-                canViewProposals={canViewProposals}
-                onViewOrders={() => changeSection("pedidos")}
-              />
-            </div>
-            <main
+          <main
               className="cm-customer-overview__main"
               id={customerDetailPanelId(section)}
               role="tabpanel"
@@ -357,15 +313,6 @@ export function CustomerDetailPage({
                 />
               ) : null}
             </main>
-            <aside className="cm-customer-overview__side cm-customer-account-rail-slot--desktop">
-              <CustomerAccountRail
-                customer={customer}
-                basePath={basePath}
-                canViewProposals={canViewProposals}
-                onViewOrders={() => changeSection("pedidos")}
-              />
-            </aside>
-          </div>
         </>
       ) : null}
     </div>

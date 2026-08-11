@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -12,19 +12,32 @@ import { EmptyState } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
+  CommercialChartToolbar,
+  CommercialDateField,
   CommercialSectionCard,
   CommercialSelectField,
   CommercialStateBanner,
   cmEmptyStateClassNames,
+  useChartGranularitySelection,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
+import { validateBillingPeriod } from "../billing/utils/billingPeriod";
 import {
   BILLING_SERIES_ALL_KEY,
   useCustomerBillingSeries,
 } from "../hooks/useCustomerBillingSeries";
 import { useLazyBillingSeriesActivation } from "../hooks/useLazyBillingSeriesActivation";
 import type { CustomerSummary } from "../types/customerSummary";
+import {
+  BILLING_SERIES_GRANULARITY_OPTIONS,
+  BILLING_SERIES_PRESET_OPTIONS,
+  DEFAULT_BILLING_SERIES_PRESET,
+  allowedBillingSeriesGranularities,
+  billingSeriesPresetLabel,
+  periodRangeFromBillingPreset,
+  type BillingSeriesPeriodPreset,
+} from "../utils/billingSeriesPeriod";
 
 /** Mesma altura do gráfico ROL do dashboard comercial. */
 const CHART_HEIGHT = 320;
@@ -53,11 +66,37 @@ function formatChartCurrency(value: number): string {
 }
 
 /**
- * Faturamento mensal (12 meses) — Recharts (mesmo padrão do dashboard comercial).
+ * Faturamento da carteira — período e granularidade reais via API existente.
  */
 export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesChartProps) {
   const gradientId = useId().replace(/:/g, "");
   const { anchorRef, open, setOpen, enabled } = useLazyBillingSeriesActivation();
+  const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
+  const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
+    DEFAULT_BILLING_SERIES_PRESET,
+  );
+  const [customStart, setCustomStart] = useState(defaultRange.startDate);
+  const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
+
+  const range =
+    preset === "custom"
+      ? { startDate: customStart, endDate: customEnd }
+      : periodRangeFromBillingPreset(preset);
+  const periodError =
+    preset === "custom" ? validateBillingPeriod(range.startDate, range.endDate) : null;
+  const queryEnabled = enabled && !periodError;
+  const allowedGrains = allowedBillingSeriesGranularities(
+    range.startDate,
+    range.endDate,
+  );
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    range.startDate,
+    range.endDate,
+  );
+  const effectiveGrain = allowedGrains.includes(granularity)
+    ? granularity
+    : (allowedGrains[0] ?? "month");
+
   const {
     selectedKey,
     setSelectedKey,
@@ -68,7 +107,12 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     totalValue,
     coverage,
     reload,
-  } = useCustomerBillingSeries(customers, { enabled });
+  } = useCustomerBillingSeries(customers, {
+    enabled: queryEnabled,
+    startDate: range.startDate,
+    endDate: range.endDate,
+    granularity: effectiveGrain,
+  });
 
   const chartData = useMemo(
     () =>
@@ -84,11 +128,12 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     selectedKey === BILLING_SERIES_ALL_KEY
       ? "Toda a carteira"
       : customerOptions.find((c) => c.key === selectedKey)?.nome ?? "Cliente";
+  const periodLabel = billingSeriesPresetLabel(preset);
 
   return (
     <div ref={anchorRef} className="cm-billing-series-chart">
       <CommercialSectionCard
-        title="Faturamento — últimos 12 meses"
+        title={`Faturamento — ${periodLabel}`}
         hint={CM_HELP.customers.billingSeries}
         subtitle={
           loading
@@ -120,6 +165,45 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
           ) : undefined
         }
       >
+      <div className="cm-billing-series-chart__controls">
+        <div className="cm-nav-row" role="group" aria-label={CM_HELP.customers.billingSeriesPeriod}>
+          {BILLING_SERIES_PRESET_OPTIONS.map((item) => (
+            <CommercialActionButton
+              key={item.id}
+              variant={preset === item.id ? "primary" : "ghost"}
+              aria-pressed={preset === item.id}
+              onClick={() => setPreset(item.id)}
+            >
+              {item.label}
+            </CommercialActionButton>
+          ))}
+        </div>
+        {preset === "custom" ? (
+          <div className="cm-billing-series-chart__dates">
+            <CommercialDateField
+              label="Data inicial"
+              value={customStart}
+              onChange={setCustomStart}
+            />
+            <CommercialDateField
+              label="Data final"
+              value={customEnd}
+              onChange={setCustomEnd}
+            />
+          </div>
+        ) : null}
+        {periodError ? (
+          <CommercialStateBanner>{periodError}</CommercialStateBanner>
+        ) : (
+          <CommercialChartToolbar
+            granularity={effectiveGrain}
+            onGranularityChange={setGranularity}
+            options={BILLING_SERIES_GRANULARITY_OPTIONS}
+            modes={allowedGrains}
+            granularityHelp={CM_HELP.customers.billingSeriesGrain}
+          />
+        )}
+      </div>
       {error && !hasValues ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}
@@ -136,8 +220,8 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
           classNames={cmEmptyStateClassNames}
           defaultMessage={
             selectedKey === BILLING_SERIES_ALL_KEY
-              ? "Sem faturamento registrado nos últimos 12 meses para a carteira."
-              : "Sem faturamento registrado nos últimos 12 meses para este cliente."
+              ? `Sem faturamento registrado em ${periodLabel.toLocaleLowerCase("pt-BR")} para a carteira.`
+              : `Sem faturamento registrado em ${periodLabel.toLocaleLowerCase("pt-BR")} para este cliente.`
           }
         />
       ) : (

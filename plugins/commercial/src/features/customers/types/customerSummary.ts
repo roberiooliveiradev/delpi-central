@@ -1,5 +1,8 @@
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
-import type { CustomerListFocus } from "../../../utils/customersListDeepLink";
+import type {
+  CustomerListFocus,
+  CustomerListTrend,
+} from "../../../utils/customersListDeepLink";
 
 export type CustomerCommercialStatus = "ativo" | "atencao" | "inativo";
 
@@ -48,6 +51,7 @@ export type CustomerAggregationResult = {
 };
 
 export type CustomerAttentionFilter = CustomerListFocus;
+export type CustomerTrendFilter = CustomerListTrend;
 
 export type CustomerListSortKey =
   | "attention"

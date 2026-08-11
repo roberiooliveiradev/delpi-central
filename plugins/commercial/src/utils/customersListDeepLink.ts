@@ -11,16 +11,19 @@ import type {
 export const CUSTOMER_LIST_FOCUS_VALUES = [
   "all",
   "attention",
-  "inactive",
-  "growth",
+  "active",
   "no_sale_60",
 ] as const;
 
+export const CUSTOMER_LIST_TREND_VALUES = ["all", "up", "stable", "down"] as const;
+
 export type CustomerListFocus = (typeof CUSTOMER_LIST_FOCUS_VALUES)[number];
+export type CustomerListTrend = (typeof CUSTOMER_LIST_TREND_VALUES)[number];
 
 export type CustomersListDeepLink = {
   q: string;
   focus: CustomerListFocus;
+  trend: CustomerListTrend;
   sellerId: string | null;
   sort: CustomerListSortKey;
   dir: CustomerListSortDirection;
@@ -30,6 +33,7 @@ export type CustomersListDeepLink = {
 export type CustomersListDeepLinkInput = {
   q?: string | null;
   focus?: string | null;
+  trend?: string | null;
   sellerId?: string | null;
   sort?: string | null;
   dir?: string | null;
@@ -42,6 +46,9 @@ export type CustomersListSellerAccess = {
 };
 
 const FOCUS_VALUES = new Set<string>(CUSTOMER_LIST_FOCUS_VALUES);
+const TREND_VALUES = new Set<string>(CUSTOMER_LIST_TREND_VALUES);
+const LEGACY_FOCUS_GROWTH = "growth";
+const LEGACY_FOCUS_INACTIVE = "inactive";
 export const CUSTOMER_LIST_SORT_VALUES = [
   "attention",
   "nome",
@@ -68,6 +75,11 @@ const DENY_SELLER_ACCESS: CustomersListSellerAccess = {
 function normalizeFocus(value: string | null | undefined): CustomerListFocus {
   const normalized = (value ?? "").trim().toLowerCase();
   return FOCUS_VALUES.has(normalized) ? (normalized as CustomerListFocus) : "all";
+}
+
+function normalizeTrend(value: string | null | undefined): CustomerListTrend {
+  const normalized = (value ?? "").trim().toLowerCase();
+  return TREND_VALUES.has(normalized) ? (normalized as CustomerListTrend) : "all";
 }
 
 function normalizeSort(value: string | null | undefined): CustomerListSortKey {
@@ -102,9 +114,17 @@ export function sanitizeCustomersListDeepLink(
   value: CustomersListDeepLinkInput,
   access: CustomersListSellerAccess = DENY_SELLER_ACCESS,
 ): CustomersListDeepLink {
+  const rawFocus = (value.focus ?? "").trim().toLowerCase();
+  const hasExplicitTrend = Boolean((value.trend ?? "").trim());
   return {
     q: (value.q ?? "").trim(),
-    focus: normalizeFocus(value.focus),
+    focus: rawFocus === LEGACY_FOCUS_GROWTH || rawFocus === LEGACY_FOCUS_INACTIVE
+      ? "all"
+      : normalizeFocus(value.focus),
+    trend:
+      rawFocus === LEGACY_FOCUS_GROWTH && !hasExplicitTrend
+        ? "up"
+        : normalizeTrend(value.trend),
     sellerId: normalizeSellerId(value.sellerId, access),
     sort: normalizeSort(value.sort),
     dir: normalizeDirection(value.dir),
@@ -121,6 +141,7 @@ export function parseCustomersListDeepLink(
     {
       q: params.get("q") ?? "",
       focus: params.get("focus") ?? "all",
+      trend: params.get("trend"),
       sellerId: params.get("seller_id"),
       sort: params.get("sort"),
       dir: params.get("dir"),
@@ -138,6 +159,7 @@ export function buildCustomersListSearch(
   const params = new URLSearchParams();
   if (sanitized.q) params.set("q", sanitized.q);
   if (sanitized.focus !== "all") params.set("focus", sanitized.focus);
+  if (sanitized.trend !== "all") params.set("trend", sanitized.trend);
   if (sanitized.sellerId) params.set("seller_id", sanitized.sellerId);
   if (sanitized.sort !== DEFAULT_CUSTOMERS_LIST_SORT) params.set("sort", sanitized.sort);
   if (sanitized.dir !== DEFAULT_CUSTOMERS_LIST_DIRECTION) params.set("dir", sanitized.dir);

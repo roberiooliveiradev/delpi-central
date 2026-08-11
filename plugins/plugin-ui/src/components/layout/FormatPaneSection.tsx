@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 
@@ -23,7 +23,10 @@ export function FormatPaneSection({
 
   return (
     /* `defaultOpen` (não `open`) — controlado sem onToggle remonta o corpo e zera inputs. */
-    <details className={rootClass} defaultOpen={defaultOpen}>
+    <details
+      className={rootClass}
+      {...({ defaultOpen } as HTMLAttributes<HTMLDetailsElement>)}
+    >
       <summary className="delpi-ui-format-pane__section-summary">
         <span className="delpi-ui-format-pane__section-title-row">
           <span className="delpi-ui-format-pane__section-title-text">{title}</span>

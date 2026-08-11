@@ -1,19 +1,17 @@
-import {
-  Calendar,
-  MapPin,
-  RefreshCw,
-  UserRound,
-} from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { Calendar, RefreshCw } from "lucide-react";
 
 import {
   CommercialActionButton,
+  CommercialPageHero,
   CommercialPagePath,
+  CommercialSectionHintLabel,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
+import { navigatePluginView } from "../../../app/pluginNavigation";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
+import { buildCustomerHeroHighlights } from "../utils/customerHeroHighlights";
 import {
   resolveCustomerStatus,
   statusLabel,
@@ -21,14 +19,19 @@ import {
 import { CustomerAvatar } from "./CustomerAvatar";
 
 type CustomerDetailHeaderProps = {
-  customer: CustomerSummary;
+  customer?: CustomerSummary | null;
+  codigo: string;
+  loja: string;
   lastSuccessAt: Date | null;
   refreshing: boolean;
   loading: boolean;
+  notFound?: boolean;
   onBack: () => void;
   backHref: string;
   onReload: () => void;
   onScheduleFollowUp?: () => void;
+  canViewProposals?: boolean;
+  basePath: string;
 };
 
 function formatUpdatedAt(value: Date | null): string {
@@ -48,27 +51,45 @@ function locationLabel(customer: CustomerSummary): string | null {
   return null;
 }
 
-/**
- * Header de perfil do cliente — breadcrumb, avatar, meta e ações.
- */
+function buildDescription(customer: CustomerSummary, lastSuccessAt: Date | null, refreshing: boolean): string {
+  const codeStore =
+    formatEntityCodeStore(customer.codigo, customer.loja) ??
+    `${customer.codigo}-${customer.loja}`;
+  const parts = [
+    codeStore,
+    locationLabel(customer),
+    customer.sellerName?.trim() ? `Vendedor ${customer.sellerName.trim()}` : null,
+    `Atualizado em ${formatUpdatedAt(lastSuccessAt)}${refreshing ? " · Atualizando…" : ""}`,
+  ];
+  return parts.filter(Boolean).join(" · ");
+}
+
 export function CustomerDetailHeader({
   customer,
+  codigo,
+  loja,
   lastSuccessAt,
   refreshing,
   loading,
+  notFound = false,
   onBack,
   backHref,
   onReload,
   onScheduleFollowUp,
+  canViewProposals = false,
+  basePath,
 }: CustomerDetailHeaderProps) {
-  const status = customer.status ?? resolveCustomerStatus(customer);
-  const codeStore =
-    formatEntityCodeStore(customer.codigo, customer.loja) ??
-    `${customer.codigo}-${customer.loja}`;
-  const place = locationLabel(customer);
+  const status = customer
+    ? customer.status ?? resolveCustomerStatus(customer)
+    : null;
+  const hero = customer ? buildCustomerHeroHighlights(customer) : null;
+  const currentLabel = notFound
+    ? "Cliente não encontrado"
+    : customer?.nome || "Cliente";
+  const codeStore = formatEntityCodeStore(codigo, loja) ?? `${codigo}-${loja}`;
 
   return (
-    <header className="cm-customer-detail-header">
+    <div className="cm-customer-detail-header">
       <CommercialPagePath
         back={{
           label: "Minha carteira",
@@ -78,91 +99,91 @@ export function CustomerDetailHeader({
             onBack();
           },
         }}
-        current={customer.nome || "Cliente"}
+        current={currentLabel}
       />
-
-      <div className="cm-customer-detail-header__row">
-        <div className="cm-customer-detail-header__identity">
-          <CustomerAvatar
-            code={customer.codigo}
-            store={customer.loja}
-            name={customer.nome}
-            hasAvatar={customer.hasAvatar}
-            size="lg"
+      <CommercialPageHero
+        aria-label="Conta do cliente"
+        eyebrow="Conta"
+        title={
+          <CommercialSectionHintLabel
+            label={customer?.nome || (notFound ? "Cliente não encontrado" : "Cliente")}
+            hint={CM_HELP.customerDetail.header}
           />
-          <div className="cm-customer-detail-header__titles">
-            <div className="cm-customer-detail-header__name-row">
-              <h1 className="cm-customer-detail-header__name">
-                {customer.nome || "Cliente sem nome"}
-              </h1>
-              <HelpTooltip
-                content={CM_HELP.customerDetail.header}
-                ariaLabel="Ajuda: Conta do cliente"
-              />
-              <CommercialStatusBadge
-                variant={
-                  status === "ativo"
-                    ? "success"
-                    : status === "atencao"
-                      ? "warning"
-                      : "neutral"
-                }
-                label={statusLabel(status)}
-              />
-            </div>
-            <ul className="cm-customer-detail-header__meta">
-              <li>
-                Código: {customer.codigo}
-                <span className="visually-hidden"> ({codeStore})</span>
-                {" · "}
-                Loja {customer.loja}
-              </li>
-              {place ? (
-                <li>
-                  <MapPin size={14} aria-hidden="true" />
-                  {place}
-                </li>
-              ) : null}
-              {customer.sellerName ? (
-                <li>
-                  <UserRound size={14} aria-hidden="true" />
-                  Vendedor: {customer.sellerName}
-                </li>
-              ) : null}
-              <li>
-                <Calendar size={14} aria-hidden="true" />
-                Última atualização: {formatUpdatedAt(lastSuccessAt)}
-                {refreshing ? " · Atualizando…" : ""}
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="cm-customer-detail-header__actions">
-          {onScheduleFollowUp ? (
-            <CommercialActionButton
-              variant="primary"
-              onClick={onScheduleFollowUp}
-              aria-label={CM_HELP.customerDetail.scheduleFollowUp}
-            >
-              <Calendar size={16} aria-hidden="true" />
-              Agendar follow-up
-            </CommercialActionButton>
-          ) : null}
-          <CommercialActionButton
-            variant="ghost"
-            disabled={loading || refreshing}
-            onClick={onReload}
-          >
-            <RefreshCw
-              size={16}
-              aria-hidden="true"
-              className={refreshing ? "cm-spin" : undefined}
+        }
+        badge={
+          status ? (
+            <CommercialStatusBadge
+              variant={
+                status === "ativo"
+                  ? "success"
+                  : status === "atencao"
+                    ? "warning"
+                    : "neutral"
+              }
+              label={statusLabel(status)}
             />
-            {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
-          </CommercialActionButton>
-        </div>
-      </div>
-    </header>
+          ) : undefined
+        }
+        description={
+          customer
+            ? buildDescription(customer, lastSuccessAt, refreshing)
+            : `Código / loja: ${codeStore}`
+        }
+        highlights={hero?.highlights}
+        actions={
+          <div className="cm-customer-detail-header__actions">
+            {onScheduleFollowUp ? (
+              <CommercialActionButton
+                variant="primary"
+                onClick={onScheduleFollowUp}
+                aria-label={CM_HELP.customerDetail.scheduleFollowUp}
+              >
+                <Calendar size={16} aria-hidden="true" />
+                Agendar follow-up
+              </CommercialActionButton>
+            ) : null}
+            {canViewProposals ? (
+              <CommercialActionButton
+                variant="ghost"
+                onClick={() => navigatePluginView("proposals", { basePath })}
+              >
+                Propostas gerais
+              </CommercialActionButton>
+            ) : null}
+            {!notFound ? (
+              <CommercialActionButton
+                variant="ghost"
+                disabled={loading || refreshing}
+                onClick={onReload}
+              >
+                <RefreshCw
+                  size={16}
+                  aria-hidden="true"
+                  className={refreshing ? "cm-spin" : undefined}
+                />
+                {refreshing || loading ? "Atualizando…" : "Atualizar seção"}
+              </CommercialActionButton>
+            ) : null}
+          </div>
+        }
+      >
+        {customer ? (
+          <div className="cm-customer-detail-header__body">
+            <CustomerAvatar
+              code={customer.codigo}
+              store={customer.loja}
+              name={customer.nome}
+              hasAvatar={customer.hasAvatar}
+              size="lg"
+            />
+            {hero?.nextAction ? (
+              <p className="cm-customer-detail-header__next-action">
+                Próxima ação: {hero.nextAction}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </CommercialPageHero>
+    </div>
   );
 }

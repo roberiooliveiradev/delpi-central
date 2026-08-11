@@ -5,7 +5,6 @@ import { useCustomerPurchaseEvolution } from "../hooks/useCustomerPurchaseEvolut
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 import { CustomerConversationPoints } from "./CustomerConversationPoints";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
-import { CustomerOverviewKpis } from "./CustomerOverviewKpis";
 import { CustomerPurchaseEvolutionChart } from "./CustomerPurchaseEvolutionChart";
 
 type CustomerOverviewSectionProps = {
@@ -22,12 +21,11 @@ type CustomerOverviewSectionProps = {
 };
 
 /**
- * Visão geral do cliente — KPIs, fatos, evolução, pedidos e atividades.
+ * Visão geral do cliente — fatos, evolução, pedidos e atividades.
  */
 export function CustomerOverviewSection({
   customer,
   orders,
-  loading = false,
   activities,
   canViewActivities,
   canViewAnalytics,
@@ -40,7 +38,6 @@ export function CustomerOverviewSection({
 
   return (
     <div className="cm-customer-overview">
-      <CustomerOverviewKpis customer={customer} loading={loading} />
       <CustomerConversationPoints
         customer={customer}
         coveragePartial={coveragePartial}

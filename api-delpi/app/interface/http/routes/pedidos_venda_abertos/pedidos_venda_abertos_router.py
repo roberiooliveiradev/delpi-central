@@ -101,6 +101,21 @@ class EnrichCustomersBody(BaseModel):
 class BillingSeriesBody(BaseModel):
     customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=200)
     months: int = Field(default=12, ge=1, le=24)
+    start_date: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Inclusive start date (YYYY-MM-DD). Requires end_date.",
+    )
+    end_date: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Inclusive end date (YYYY-MM-DD). Requires start_date.",
+    )
+    granularity: Optional[str] = Field(
+        default=None,
+        pattern=r"^(day|week|month|year)$",
+        description="Series bucket size: day, week, month or year.",
+    )
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
@@ -265,13 +280,19 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
 )
 @require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
-    """Série mensal de faturamento (últimos N meses) para clientes da carteira."""
+    """Série de faturamento da carteira (período, granularidade e fallback months)."""
     try:
         pairs = [
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
         result = build_list_customer_billing_series_use_case().execute(
-            ListCustomerBillingSeriesRequest(customers=pairs, months=body.months)
+            ListCustomerBillingSeriesRequest(
+                customers=pairs,
+                months=body.months,
+                start_date=body.start_date,
+                end_date=body.end_date,
+                granularity=body.granularity,
+            )
         )
         return api_delpi_success(
             result.to_dict(),

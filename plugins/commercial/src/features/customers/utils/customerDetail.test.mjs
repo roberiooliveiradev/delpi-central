@@ -483,16 +483,17 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(activitiesHook, /reload/);
   });
 
-  it("overview usa pontos factuais e mantém próxima ação somente no rail", () => {
+  it("overview usa pontos factuais e mantém próxima ação somente no hero", () => {
     const overview = readSrc("features/customers/components/CustomerOverviewSection.tsx");
     const points = readSrc("features/customers/components/CustomerConversationPoints.tsx");
-    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
+    const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     assert.match(overview, /CustomerConversationPoints/);
-    assert.doesNotMatch(overview, /CustomerAttentionBanner|CustomerNextActionCard/);
+    assert.doesNotMatch(overview, /CustomerAttentionBanner|CustomerNextActionCard|CustomerOverviewKpis/);
     assert.match(points, /Pontos para conversa/);
     assert.match(points, /CommercialStatusBadge/);
     assert.match(points, /Nenhum ponto objetivo identificado/);
-    assert.match(rail, /label: "Próxima ação"/);
+    assert.match(header, /Próxima ação:/);
+    assert.match(header, /buildCustomerHeroHighlights/);
   });
 
   it("header oferece atualização direta sem duplicar menu", () => {
@@ -507,7 +508,6 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     const opportunities = readSrc("features/customers/components/CustomerSectionComingSoon.tsx");
     const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
-    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
     assert.match(page, /canViewWorklist && canManageFollowups/);
     assert.doesNotMatch(header, /Registrar contato|onRegisterContact/);
     assert.match(opportunities, /canViewAnalytics && customerCode\.trim\(\)/);
@@ -519,28 +519,29 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(lines, /navigateAnalyticsOpportunityDetail/);
     assert.match(lines, /Ver OV \{proposalNumber\}/);
     assert.match(lines, /buildOpenOrdersContextSearch/);
-    assert.match(rail, /canViewProposals/);
-    assert.match(rail, /Propostas gerais/);
-    assert.match(rail, /quantidadePedidosAbertos > 0/);
-    assert.doesNotMatch(rail, /customerCode|customer_code|search:/);
+    assert.match(header, /canViewProposals/);
+    assert.match(header, /Propostas gerais/);
+    assert.doesNotMatch(header, /Ver pedidos/);
+    assert.doesNotMatch(page, /CustomerAccountRail|cm-customer-overview__grid/);
     assert.doesNotMatch(page, /iframe|dashboard-production|production-appointments/);
   });
 
-  it("rail mobile usa accordion do kit e desktop persistente", () => {
-    const rail = readSrc("features/customers/components/CustomerAccountRail.tsx");
+  it("hero da conta substitui o rail flutuante", () => {
+    const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const css = readSrc("styles/customers.css");
-    assert.match(rail, /CommercialSectionCard/);
-    assert.match(rail, /collapsible/);
-    assert.match(rail, /defaultOpen=\{false\}/);
-    assert.match(page, /cm-customer-account-rail-slot--mobile/);
-    assert.match(page, /cm-customer-account-rail-slot--desktop/);
+    assert.match(header, /CommercialPageHero/);
+    assert.match(header, /CommercialPagePath/);
+    assert.doesNotMatch(page, /cm-customer-account-rail/);
+    assert.doesNotMatch(css, /cm-customer-account-rail-slot--desktop/);
     assert.match(css, /@media \(max-width: 768px\)/);
   });
 
   it("usa PagePath inclusive sem customer e tabpanel rotulado", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
-    assert.match(page, /<CommercialPagePath/);
+    const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
+    assert.match(header, /<CommercialPagePath/);
+    assert.match(page, /notFound=\{notFound\}/);
     assert.doesNotMatch(page, /detail-breadcrumb/);
     assert.match(page, /role="tabpanel"/);
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
@@ -634,7 +635,7 @@ describe("navigateCustomerDetail", () => {
     assert.equal(
       navigateCustomerDetail("000123", "01", {
         search:
-          "?q=Acme&focus=no_sale_60&seller_id=seller-1&redirect=https://example.com",
+          "?q=Acme&focus=no_sale_60&trend=down&seller_id=seller-1&redirect=https://example.com",
         sellerAccess: {
           allowSellerId: true,
           validSellerIds: ["seller-1"],
@@ -643,7 +644,7 @@ describe("navigateCustomerDetail", () => {
       true,
     );
     assert.deepEqual(pushed, [
-      `${COMMERCIAL_BASE_PATH}/customers/000123/01?q=Acme&focus=no_sale_60&seller_id=seller-1`,
+      `${COMMERCIAL_BASE_PATH}/customers/000123/01?q=Acme&focus=no_sale_60&trend=down&seller_id=seller-1`,
     ]);
   });
 

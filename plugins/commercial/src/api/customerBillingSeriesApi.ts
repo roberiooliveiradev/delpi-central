@@ -14,23 +14,44 @@ export type CustomerBillingSeriesPoint = {
   date_end: string;
 };
 
+export type CustomerBillingSeriesQuery = {
+  months?: number;
+  startDate?: string;
+  endDate?: string;
+  granularity?: "day" | "week" | "month" | "year";
+  signal?: AbortSignal;
+};
+
 export type CustomerBillingSeriesPayload = {
   months: number;
   customer_count: number;
+  granularity?: string;
+  start_date?: string;
+  end_date?: string;
   points: CustomerBillingSeriesPoint[];
   coverage: { covered: number; total: number; failedBatches: number };
   partialError: string | null;
 };
 
+function billingSeriesBody(options?: CustomerBillingSeriesQuery) {
+  return {
+    months: options?.months ?? 12,
+    ...(options?.startDate && options?.endDate
+      ? { start_date: options.startDate, end_date: options.endDate }
+      : {}),
+    ...(options?.granularity ? { granularity: options.granularity } : {}),
+  };
+}
+
 async function fetchCustomerBillingSeriesBatch(
   customers: Array<{ customer_code: string; customer_store: string }>,
-  options?: { months?: number; signal?: AbortSignal },
+  options?: CustomerBillingSeriesQuery,
 ): Promise<Omit<CustomerBillingSeriesPayload, "coverage" | "partialError">> {
   const response = await httpPost<ApiSuccessResponse<CustomerBillingSeriesPayload>>(
     apiDelpiUrl("/pedidos-venda-abertos/customers/billing-series"),
     {
       customers,
-      months: options?.months ?? 12,
+      ...billingSeriesBody(options),
     },
     { signal: options?.signal },
   );
@@ -39,7 +60,7 @@ async function fetchCustomerBillingSeriesBatch(
 
 export async function fetchCustomerBillingSeries(
   customers: Array<{ customer_code: string; customer_store: string }>,
-  options?: { months?: number; signal?: AbortSignal },
+  options?: CustomerBillingSeriesQuery,
 ): Promise<CustomerBillingSeriesPayload> {
   const execution = await runDeterministicBatches(customers, {
     chunkSize: CUSTOMER_BATCH_SIZE,
@@ -47,6 +68,9 @@ export async function fetchCustomerBillingSeries(
     signal: options?.signal,
     execute: (batch) => fetchCustomerBillingSeriesBatch([...batch], {
       months: options?.months,
+      startDate: options?.startDate,
+      endDate: options?.endDate,
+      granularity: options?.granularity,
       signal: options?.signal,
     }),
   });
