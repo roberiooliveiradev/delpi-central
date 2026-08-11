@@ -47,6 +47,7 @@ export {
   resolvePresentationFitMode,
   measurePresentationViewportSize,
   presentationSurfaceFromViewMode,
+  presentationStageEntranceClass,
   resolvePresentationScaleMethod,
   isHostFitMeasurementSafe,
   hostFitPaintedSize,

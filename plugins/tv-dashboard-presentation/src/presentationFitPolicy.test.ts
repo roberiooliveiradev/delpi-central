@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   measurePresentationViewportSize,
+  presentationStageEntranceClass,
   presentationSurfaceFromViewMode,
   resolvePresentationFitMode,
   resolvePresentationScaleMethod,
@@ -49,6 +50,15 @@ describe("presentationSurfaceFromViewMode", () => {
   it("public → kiosk; preview → preview", () => {
     expect(presentationSurfaceFromViewMode("public")).toBe("kiosk");
     expect(presentationSurfaceFromViewMode("preview")).toBe("preview");
+  });
+});
+
+describe("presentationStageEntranceClass", () => {
+  it("liga entradas só em preview e kiosk", () => {
+    expect(presentationStageEntranceClass("preview")).toBe("tdp-stage--animate-entrances");
+    expect(presentationStageEntranceClass("kiosk")).toBe("tdp-stage--animate-entrances");
+    expect(presentationStageEntranceClass("thumbnail")).toBeNull();
+    expect(presentationStageEntranceClass("editor")).toBeNull();
   });
 });
 

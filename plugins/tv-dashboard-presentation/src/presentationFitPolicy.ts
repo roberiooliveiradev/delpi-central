@@ -57,6 +57,15 @@ export function presentationSurfaceFromViewMode(
 }
 
 /**
+ * Entradas de bloco só na prévia/TV — nunca no palco do editor (WYSIWYG).
+ */
+export function presentationStageEntranceClass(
+  surface: PresentationFitSurface | "editor",
+): "tdp-stage--animate-entrances" | null {
+  return surface === "preview" || surface === "kiosk" ? "tdp-stage--animate-entrances" : null;
+}
+
+/**
  * Kiosk → zoom (layout = visual para Adeus Pendrive).
  * Preview/thumbnail → transform (sem afetar medição do host).
  */

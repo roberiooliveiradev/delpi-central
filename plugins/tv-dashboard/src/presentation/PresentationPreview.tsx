@@ -7,6 +7,7 @@ import {
   PresentationPlaybackProvider,
   NativeSlideView,
   DesignViewportStage,
+  presentationStageEntranceClass,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
   applyRuntimeInputValue,
@@ -175,6 +176,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       className={[
         "tdp-stage",
         "tdp-stage--preview-shell",
+        presentationStageEntranceClass("preview"),
         presenterMode ? "tdp-stage--presenter" : null,
         booting ? "tdp-stage--boot" : null,
       ]
