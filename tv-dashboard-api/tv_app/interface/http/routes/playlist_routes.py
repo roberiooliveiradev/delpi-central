@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
 from tv_app.application.services.presentation_sync_service import build_presentation_content_revision
@@ -52,7 +53,7 @@ class UpdatePlaylistBody(BaseModel):
     viewportProfile: str | None = None
     viewportWidth: int | None = Field(default=None, ge=64, le=7680)
     viewportHeight: int | None = Field(default=None, ge=64, le=7680)
-    transitionStyle: str | None = None
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
     globalRefreshSec: int | None = Field(default=None, ge=30, le=3600)
     dataDefaults: dict[str, Any] | None = None

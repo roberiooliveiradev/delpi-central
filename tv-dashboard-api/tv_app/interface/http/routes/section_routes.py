@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     MainSectionProtectedError,
@@ -35,7 +36,7 @@ class CreateSectionBody(BaseModel):
     isActive: bool | None = None
     isMain: bool | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     masterConfig: dict[str, Any] | None = None
 
 
@@ -45,7 +46,7 @@ class UpdateSectionBody(BaseModel):
     isCollapsed: bool | None = None
     isActive: bool | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     masterConfig: dict[str, Any] | None = None
 
 

@@ -14,6 +14,7 @@ from tv_app.application.services.comunicado_data_enrichment_service import Comun
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
     resolve_preset_slide,
@@ -48,7 +49,7 @@ class CreateSlideBody(BaseModel):
     nativeConfig: dict | None = None
     externalUrl: str | None = None
     externalSandbox: str | None = None
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     sectionId: UUID | None = None
 
     @field_validator("durationSec")
@@ -87,7 +88,7 @@ class UpdateSlideBody(BaseModel):
     externalUrl: str | None = None
     externalSandbox: str | None = None
     isActive: bool | None = None
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     sectionId: UUID | None = None
 
     @field_validator("durationSec")
