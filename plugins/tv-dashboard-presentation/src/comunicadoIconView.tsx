@@ -7,6 +7,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 
+import { applyFillPaintBackground } from "./comunicadoFillPaint";
 import type { ComunicadoIconBlock } from "./comunicadoTypes";
 
 /** Cores legadas tratadas como «sem escolha explícita» → accent das formas. */
@@ -71,8 +72,8 @@ export function resolveComunicadoIconChromeStyle(
   };
 
   const fill = style.fill;
-  if (typeof fill === "string" && fill.trim() && fill !== "transparent") {
-    css.backgroundColor = fill;
+  if (style.fillPaint?.kind === "gradient" || (typeof fill === "string" && fill.trim() && fill !== "transparent")) {
+    applyFillPaintBackground(css, style.fillPaint, fill);
   }
 
   const stroke = style.stroke;

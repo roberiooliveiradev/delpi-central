@@ -65,6 +65,7 @@ import {
   resolveBlockPasteDataPolicy,
   staticLabelFromTextBoundBlock,
   translateLineEndpoints,
+  type ComunicadoBackground,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -1448,21 +1449,25 @@ export function useComunicadoEditorBlocks({
     });
   }, [requestRibbonTab, setRibbonTabRequest]);
 
-  const setBackgroundColor = useCallback(
-    (color: string) => {
-      commitWithHistory({ ...configRef.current, background: { type: "color", value: color } });
+  const setBackground = useCallback(
+    (background: ComunicadoBackground) => {
+      commitWithHistory({ ...configRef.current, background });
     },
     [commitWithHistory, configRef],
   );
 
+  const setBackgroundColor = useCallback(
+    (color: string) => {
+      setBackground({ type: "color", value: color });
+    },
+    [setBackground],
+  );
+
   const setBackgroundGradient = useCallback(
     (from: string, to: string, angle = 180) => {
-      commitWithHistory({
-        ...configRef.current,
-        background: { type: "gradient", from, to, angle },
-      });
+      setBackground({ type: "gradient", from, to, angle });
     },
-    [commitWithHistory, configRef],
+    [setBackground],
   );
 
   const bindSelectedVisualBoxToData = useCallback(() => {
@@ -1579,6 +1584,7 @@ export function useComunicadoEditorBlocks({
     focusFrameRotationField,
     setBackgroundColor,
     setBackgroundGradient,
+    setBackground,
     bindSelectedVisualBoxToData,
     insertTextDataFieldBlock,
   };

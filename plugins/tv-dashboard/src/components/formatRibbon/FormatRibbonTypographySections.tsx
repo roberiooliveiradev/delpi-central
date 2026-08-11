@@ -55,6 +55,11 @@ import {
   aggregateVisualBoxTextFormatStyle,
   isHomogeneousVisualBoxSelection,
 } from "../../utils/selectionStyleAggregate";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToColorStylePatch,
+  styleToColorFill,
+} from "../../utils/delpiFillAdapter";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { DynamicContentInsertControl } from "../DynamicContentInsertControl";
@@ -820,6 +825,12 @@ export function FormatRibbonTypographySections({
               ariaLabel="Cor do texto"
               inline
               variant="text"
+              fill={styleToColorFill({
+                color: currentTextColor,
+                colorPaint: selected?.style?.colorPaint,
+              })}
+              onFillChange={(next) => applyTextFormatStyle(fillToColorStylePatch(next))}
+              allowedFillKinds={TV_ALLOWED_FILL_KINDS}
               contrastBackground={
                 (selected?.type === "kpi_view"
                   ? (selected.kpiParts?.card?.style?.fill ??

@@ -1,4 +1,4 @@
-import { buildLucideIconOptions, DECK_QUICK_LUCIDE_ICON_NAMES } from "@delpi/plugin-ui/index";
+import { buildLucideIconOptions, DECK_QUICK_LUCIDE_ICON_NAMES, type DelpiFill } from "@delpi/plugin-ui/index";
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartPartsMap } from "./comunicadoChartParts";
@@ -221,6 +221,12 @@ export type ComunicadoBlockStyle = {
   zIndex?: number;
   fill?: string;
   stroke?: string;
+  /** Preenchimento rico; o renderer usa `fillPaint ?? fill`. */
+  fillPaint?: DelpiFill;
+  /** Cor de texto rica (`background-clip: text` no presentation). */
+  colorPaint?: DelpiFill;
+  /** Contorno rico; se o motor não pintar gradiente, cai no primeiro stop. */
+  strokePaint?: DelpiFill;
   strokeWidth?: number;
   /**
    * Espessura do traço Lucide (glifo) — distinta de `strokeWidth` (contorno da caixa).

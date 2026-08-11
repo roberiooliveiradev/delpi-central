@@ -50,6 +50,7 @@ import {
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
 import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
+import { applyColorPaintToCss } from "./comunicadoFillPaint";
 import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
 import {
   normalizeBlockAnimations,
@@ -1635,11 +1636,13 @@ export function comunicadoTextInnerStyle(
   if (style.textHighlight) css.backgroundColor = style.textHighlight;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
-    unsetIsAutomatic: false,
-  });
-  if (paintColor) css.color = paintColor;
-  else if (style.color && style.color !== "auto") css.color = style.color;
+  if (!applyColorPaintToCss(css, style.colorPaint)) {
+    const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
+      unsetIsAutomatic: false,
+    });
+    if (paintColor) css.color = paintColor;
+    else if (style.color && style.color !== "auto") css.color = style.color;
+  }
   if (style.fontFamily) css.fontFamily = style.fontFamily;
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -1749,13 +1752,15 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-      const textPaint = resolvePaintTextColor(
-        style.color,
-        style.backgroundColor ?? style.fill ?? "#ffffff",
-        { unsetIsAutomatic: false },
-      );
-      if (textPaint) css.color = textPaint;
-      else if (style.color && style.color !== "auto") css.color = style.color;
+      if (!applyColorPaintToCss(css, style.colorPaint)) {
+        const textPaint = resolvePaintTextColor(
+          style.color,
+          style.backgroundColor ?? style.fill ?? "#ffffff",
+          { unsetIsAutomatic: false },
+        );
+        if (textPaint) css.color = textPaint;
+        else if (style.color && style.color !== "auto") css.color = style.color;
+      }
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -1767,7 +1772,9 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
       const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;
-      css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
+      if (!applyColorPaintToCss(css, style.colorPaint)) {
+        css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
+      }
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontWeight) css.fontWeight = style.fontWeight;

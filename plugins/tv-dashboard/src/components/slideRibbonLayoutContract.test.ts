@@ -29,8 +29,12 @@ describe("slide ribbon layout contract", () => {
     const background = readFileSync(join(here, "deck/ComunicadoSlideBackgroundRibbon.tsx"), "utf8");
     expect(accordion).toContain("DeckRibbonTile");
     expect(accordion).not.toContain("td-deck-settings-accordion__summary");
-    expect(background).toContain('label="Início"');
-    expect(background).toContain('label="Fim"');
+    expect(background).toContain('label="Cor"');
+    expect(background).toContain("onFillChange");
+    expect(background).toContain("TV_ALLOWED_FILL_KINDS");
+    expect(background).not.toContain('label="Início"');
+    expect(background).not.toContain('label="Fim"');
+    expect(background).not.toContain("slide-presets");
     expect(background).toContain("td-deck-ribbon__tiles");
     expect(background).toContain("selectedSlides");
     expect(background).toContain("backgroundSlides");

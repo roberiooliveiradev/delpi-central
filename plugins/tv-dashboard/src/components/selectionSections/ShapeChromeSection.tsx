@@ -31,6 +31,13 @@ import {
   isPartSelectionChrome,
   resolveSelectionChromeMode,
 } from "../../utils/resolveSelectionChromeMode";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { VisualBoxFormaChrome } from "../formatRibbon/VisualBoxFormaChrome";
@@ -199,8 +206,11 @@ function KpiShapeChrome({
         <ShapeFillMenu
           value={fillValue}
           fillLabel={boxLabels.fillShort}
+          fill={styleToFill(isCardChrome ? cardState?.style : partState?.style)}
           onChange={(color) => patchChromeStyle({ fill: color })}
-          onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+          onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
         />
       </ShapeMenuHint>
       <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
@@ -210,8 +220,11 @@ function KpiShapeChrome({
           minWidth={0}
           maxWidth={20}
           outlineLabel={boxLabels.strokeShort}
+          fill={styleToStrokeFill(isCardChrome ? cardState?.style : partState?.style)}
           onColorChange={(color) => patchChromeStyle({ stroke: color })}
-          onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
           onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
         />
       </ShapeMenuHint>
@@ -330,8 +343,11 @@ function InputShapeChrome({
         <ShapeFillMenu
           value={fillValue}
           fillLabel={boxLabels.fillShort}
+          fill={styleToFill(partState?.style)}
           onChange={(color) => patchChromeStyle({ fill: color })}
-          onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+          onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
         />
       </ShapeMenuHint>
       <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
@@ -341,8 +357,11 @@ function InputShapeChrome({
           minWidth={0}
           maxWidth={20}
           outlineLabel={boxLabels.strokeShort}
+          fill={styleToStrokeFill(partState?.style)}
           onColorChange={(color) => patchChromeStyle({ stroke: color })}
-          onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
           onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
         />
       </ShapeMenuHint>

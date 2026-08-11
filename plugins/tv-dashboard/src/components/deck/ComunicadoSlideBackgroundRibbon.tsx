@@ -1,9 +1,15 @@
 import { FolderOpen, ImageOff, Upload } from "lucide-react";
+import { solidFromFill } from "@delpi/plugin-ui/index";
 
 import type { Slide } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useAuthenticatedBlobUrl } from "../../hooks/useAuthenticatedBlobUrl";
 import { isCustomMessageSlide } from "../../utils/applySlideBatchPatch";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  backgroundToFill,
+  fillToBackground,
+} from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "../slideCardPreview";
 import { DeckRibbonGroup } from "./DeckRibbonGroup";
@@ -14,12 +20,6 @@ const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 type Labels = Record<string, string>;
-
-export const COMUNICADO_BACKGROUND_GRADIENT_PRESETS: Array<{ label: string; from: string; to: string }> = [
-  { label: "Azul profundo", from: "#0f172a", to: "#1e3a5f" },
-  { label: "DELPI", from: "#05070a", to: "#0d2840" },
-  { label: "Pôr do sol", from: "#1e1b4b", to: "#be123c" },
-];
 
 function formatCount(template: string, count: number): string {
   return template.replace("{count}", String(count));
@@ -40,13 +40,12 @@ export function ComunicadoSlideBackgroundRibbon({
     triggerUpload,
     openMediaLibrary,
     setBackgroundColor,
-    setBackgroundGradient,
+    setBackground,
   } = useComunicadoEditor();
   const customCount = (selectedSlides ?? []).filter(isCustomMessageSlide).length;
   const many = customCount > 1;
+  const fill = backgroundToFill(background);
 
-  const gradientFrom = background?.type === "gradient" ? background.from : "#0f172a";
-  const gradientTo = background?.type === "gradient" ? background.to : "#1e3a5f";
   const imageApiUrl =
     background?.type === "image"
       ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
@@ -54,98 +53,67 @@ export function ComunicadoSlideBackgroundRibbon({
   const { src: imagePreviewSrc } = useAuthenticatedBlobUrl(imageApiUrl);
 
   return (
-    <>
-      <DeckRibbonGroup
-        groupId="slide-background"
-        label={
-          many
-            ? formatCount(H.backgroundSlides, customCount)
-            : (labels.comunicadoBackground ?? "Fundo")
-        }
-        hint={many ? formatCount(H.backgroundSlidesHint, customCount) : E.backgroundColor}
-      >
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
-          <TvRibbonColorPicker
-            hint={E.backgroundColor}
-            label="Cor"
-            ariaLabel="Cor sólida de fundo do slide"
-            value={background?.type === "color" ? background.value : "#ffffff"}
-            onChange={setBackgroundColor}
-          />
-          <TvRibbonColorPicker
-            label="Início"
-            ariaLabel="Gradiente — cor inicial"
-            value={gradientFrom}
-            onChange={(color) => setBackgroundGradient(color, gradientTo)}
-          />
-          <TvRibbonColorPicker
-            label="Fim"
-            ariaLabel="Gradiente — cor final"
-            value={gradientTo}
-            onChange={(color) => setBackgroundGradient(gradientFrom, color)}
-          />
-          <DeckRibbonTile
-            icon={Upload}
-            label={labels.comunicadoUpload ?? "Enviar"}
-            hint={E.uploadBackground}
-            disabled={uploading}
-            onClick={() => triggerUpload("background")}
-          />
-          <DeckRibbonTile
-            icon={FolderOpen}
-            label="Biblioteca"
-            hint={H.mediaLibrary}
-            onClick={() => openMediaLibrary("background")}
-          />
-          {background?.type === "image" ? (
-            <>
-              <button
-                type="button"
-                className="td-deck-ribbon__preset-swatch td-deck-ribbon__bg-image-swatch"
-                title="Imagem de fundo atual — preenche a tela"
-                aria-label="Imagem de fundo atual"
-                style={
-                  imagePreviewSrc
-                    ? {
-                        backgroundImage: `url(${JSON.stringify(imagePreviewSrc)})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
-                      }
-                    : undefined
-                }
-                onClick={() => openMediaLibrary("background")}
-              />
-              <DeckRibbonTile
-                icon={ImageOff}
-                label="Remover"
-                hint={E.clearBackground}
-                onClick={() => setBackgroundColor("#ffffff")}
-              />
-            </>
-          ) : null}
-        </div>
-      </DeckRibbonGroup>
-
-      <DeckRibbonGroup
-        groupId="slide-presets"
-        label="Presets"
-        hint="Gradientes prontos para o fundo do slide."
-      >
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__controls--presets">
-          {COMUNICADO_BACKGROUND_GRADIENT_PRESETS.map((preset) => (
+    <DeckRibbonGroup
+      groupId="slide-background"
+      label={
+        many
+          ? formatCount(H.backgroundSlides, customCount)
+          : (labels.comunicadoBackground ?? "Fundo")
+      }
+      hint={many ? formatCount(H.backgroundSlidesHint, customCount) : E.backgroundColor}
+    >
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+        <TvRibbonColorPicker
+          hint={E.backgroundColor}
+          label="Cor"
+          ariaLabel="Cor de fundo do slide"
+          value={solidFromFill(fill)}
+          fill={fill}
+          onChange={setBackgroundColor}
+          onFillChange={(next) => setBackground(fillToBackground(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+        />
+        <DeckRibbonTile
+          icon={Upload}
+          label={labels.comunicadoUpload ?? "Enviar"}
+          hint={E.uploadBackground}
+          disabled={uploading}
+          onClick={() => triggerUpload("background")}
+        />
+        <DeckRibbonTile
+          icon={FolderOpen}
+          label="Biblioteca"
+          hint={H.mediaLibrary}
+          onClick={() => openMediaLibrary("background")}
+        />
+        {background?.type === "image" ? (
+          <>
             <button
-              key={preset.label}
               type="button"
-              className="td-deck-ribbon__preset-swatch"
-              title={preset.label}
-              aria-label={preset.label}
-              style={{ backgroundImage: `linear-gradient(135deg, ${preset.from}, ${preset.to})` }}
-              onClick={() => setBackgroundGradient(preset.from, preset.to)}
+              className="td-deck-ribbon__preset-swatch td-deck-ribbon__bg-image-swatch"
+              title="Imagem de fundo atual — preenche a tela"
+              aria-label="Imagem de fundo atual"
+              style={
+                imagePreviewSrc
+                  ? {
+                      backgroundImage: `url(${JSON.stringify(imagePreviewSrc)})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }
+                  : undefined
+              }
+              onClick={() => openMediaLibrary("background")}
             />
-          ))}
-        </div>
-      </DeckRibbonGroup>
-    </>
+            <DeckRibbonTile
+              icon={ImageOff}
+              label="Remover"
+              hint={E.clearBackground}
+              onClick={() => setBackgroundColor("#ffffff")}
+            />
+          </>
+        ) : null}
+      </div>
+    </DeckRibbonGroup>
   );
 }

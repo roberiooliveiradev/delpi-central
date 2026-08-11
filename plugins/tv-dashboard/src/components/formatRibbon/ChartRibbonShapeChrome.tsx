@@ -31,6 +31,13 @@ import {
   resolveChartSeriesAppearanceColor,
   resolveChartSeriesColorIndex,
 } from "../../utils/chartSeriesAppearance";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
@@ -221,8 +228,11 @@ export function ChartRibbonShapeChrome({
               <ShapeFillMenu
                 value={fillValue}
                 fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
+                fill={styleToFill(partState?.style ?? { fill: fillValue })}
                 onChange={(color) => patchPartStyle({ fill: color })}
-                onNoFill={() => patchPartStyle({ fill: "transparent" })}
+                onFillChange={(next) => patchPartStyle(fillToFillStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+                onNoFill={() => patchPartStyle(fillToFillStylePatch({ kind: "none" }))}
               />
             </ShapeMenuHint>
           ) : null}
@@ -234,8 +244,11 @@ export function ChartRibbonShapeChrome({
                 minWidth={0}
                 maxWidth={chartPartPrimitive === "point" ? 8 : 20}
                 outlineLabel="Contorno"
+                fill={styleToStrokeFill(partState?.style ?? { stroke: strokeValue })}
                 onColorChange={(color) => patchPartStyle({ stroke: color })}
-                onNoOutline={() => patchPartStyle({ stroke: "transparent", strokeWidth: 0 })}
+                onFillChange={(next) => patchPartStyle(fillToStrokeStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+                onNoOutline={() => patchPartStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
                 onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
               />
             </ShapeMenuHint>

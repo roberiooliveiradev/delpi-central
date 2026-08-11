@@ -2,6 +2,7 @@ import { createContext, useContext, type RefObject } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
 import type {
+  ComunicadoBackground,
   ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoDataFilters,
@@ -422,6 +423,7 @@ export type ComunicadoEditorContextValue = {
   replaceSelectedMediaFromClipboard: () => Promise<boolean>;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
+  setBackground: (background: ComunicadoBackground) => void;
   /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */
   bindSelectedVisualBoxToData: () => void;
   /** Insere bloco de texto e vincula campo dinâmico quando há fonte no slide. */

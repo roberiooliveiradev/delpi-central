@@ -73,6 +73,13 @@ import {
 import { resolveContextMenuIconPickerTargetId, sameSelectedIdSet } from "../utils/contextMenuSelectionGuard";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../utils/delpiFillAdapter";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.contextMenu;
@@ -379,7 +386,10 @@ export function ComunicadoStageContextMenu({
                 label={C.fill}
                 ariaLabel={C.fill}
                 value={fillValue}
+                fill={styleToFill(menuSelected.style)}
                 onChange={(color) => updateSelectedStyle({ fill: color })}
+                onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="fill"
               />
@@ -388,7 +398,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeFill}
                 label={C.fill}
                 value={fillValue}
+                fill={styleToFill(menuSelected.style)}
                 onChange={(color) => updateSelectedStyle({ backgroundColor: color })}
+                onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="fill"
               />
@@ -398,7 +411,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
+                fill={styleToStrokeFill(menuSelected.style)}
                 onChange={(color) => updateSelectedStyle({ stroke: color })}
+                onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="outline"
               />
@@ -409,7 +425,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
+                fill={styleToStrokeFill(menuSelected.style)}
                 onChange={(color) => updateSelectedStyle({ borderColor: color })}
+                onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="outline"
               />

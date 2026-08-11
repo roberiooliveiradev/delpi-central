@@ -18,6 +18,13 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
@@ -104,8 +111,11 @@ export function TableRibbonShapeChrome({
           <ShapeFillMenu
             value={fillValue}
             fillLabel="Preench."
+            fill={styleToFill({ fill: fillValue })}
             onChange={(color) => patchChromeStyle({ fill: color })}
-            onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+            onFillChange={(next) => patchChromeStyle(fillToFillStylePatch(next))}
+            allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+            onNoFill={() => patchChromeStyle(fillToFillStylePatch({ kind: "none" }))}
           />
         </ShapeMenuHint>
         {showStroke ? (
@@ -116,8 +126,11 @@ export function TableRibbonShapeChrome({
               minWidth={0}
               maxWidth={20}
               outlineLabel="Contorno"
+              fill={styleToStrokeFill({ stroke: strokeValue })}
               onColorChange={(color) => patchChromeStyle({ stroke: color })}
-              onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+              onFillChange={(next) => patchChromeStyle(fillToStrokeStylePatch(next))}
+              allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+              onNoOutline={() => patchChromeStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
               onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
             />
           </ShapeMenuHint>

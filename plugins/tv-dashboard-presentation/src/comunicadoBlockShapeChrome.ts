@@ -29,7 +29,7 @@ import {
   mergeTablePartsWithOptions,
   upsertTablePartState,
 } from "./comunicadoTableParts";
-import type { ComunicadoBlock } from "./comunicadoTypes";
+import type { ComunicadoBlock, ComunicadoBlockStyle } from "./comunicadoTypes";
 import { isAreaShapeKind, resolveShapePrimitive } from "./comunicadoVisualPrimitive";
 import {
   isComunicadoVisualBoxBlock,
@@ -301,6 +301,8 @@ export type BlockShapeChromeStylePatch = {
   stroke?: string;
   fill?: string;
   backgroundColor?: string;
+  fillPaint?: ComunicadoBlockStyle["fillPaint"];
+  strokePaint?: ComunicadoBlockStyle["strokePaint"];
   /**
    * Sombra da moldura (chartArea / card / frame).
    * Vazio / undefined / "none" → sentinel `"none"` (remove sombra; não reverte ao default Office).
@@ -377,6 +379,8 @@ export function applyBlockShapeChromeStyle(
     strokeWidth?: number;
     stroke?: string;
     fill?: string;
+    fillPaint?: ComunicadoBlockStyle["fillPaint"];
+    strokePaint?: ComunicadoBlockStyle["strokePaint"];
     boxShadow?: string;
   } = {};
   if (typeof patch.borderRadius === "number") {
@@ -390,6 +394,12 @@ export function applyBlockShapeChromeStyle(
   }
   if (typeof fill === "string") {
     partStyle.fill = fill;
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "fillPaint")) {
+    partStyle.fillPaint = patch.fillPaint;
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "strokePaint")) {
+    partStyle.strokePaint = patch.strokePaint;
   }
   if (hasBoxShadowKey) {
     partStyle.boxShadow = normalizeBlockShapeChromeBoxShadow(patch.boxShadow);
@@ -416,6 +426,14 @@ export function applyBlockShapeChromeStyle(
     if (typeof fill === "string") {
       style.backgroundColor = fill;
       style.fill = fill;
+    }
+    if (Object.prototype.hasOwnProperty.call(partStyle, "fillPaint")) {
+      if (partStyle.fillPaint) style.fillPaint = partStyle.fillPaint;
+      else delete style.fillPaint;
+    }
+    if (Object.prototype.hasOwnProperty.call(partStyle, "strokePaint")) {
+      if (partStyle.strokePaint) style.strokePaint = partStyle.strokePaint;
+      else delete style.strokePaint;
     }
     if (hasBoxShadowKey) {
       if (clearShadowOnBlock) delete style.boxShadow;
@@ -484,6 +502,14 @@ export function applyBlockShapeChromeStyle(
         style.backgroundColor = fill;
         style.fill = fill;
       }
+      if (Object.prototype.hasOwnProperty.call(partStyle, "fillPaint")) {
+        if (partStyle.fillPaint) style.fillPaint = partStyle.fillPaint;
+        else delete style.fillPaint;
+      }
+      if (Object.prototype.hasOwnProperty.call(partStyle, "strokePaint")) {
+        if (partStyle.strokePaint) style.strokePaint = partStyle.strokePaint;
+        else delete style.strokePaint;
+      }
     }
     if (hasBoxShadowKey) {
       if (clearShadowOnBlock) delete style.boxShadow;
@@ -505,6 +531,8 @@ export function isInnerShapeChromeStyleKey(key: string): boolean {
     key === "stroke" ||
     key === "fill" ||
     key === "backgroundColor" ||
+    key === "fillPaint" ||
+    key === "strokePaint" ||
     key === "boxShadow"
   );
 }

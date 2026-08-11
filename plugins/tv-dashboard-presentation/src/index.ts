@@ -433,6 +433,15 @@ export {
   comunicadoBackgroundRootStyle,
 } from "./comunicadoBackgroundStyle";
 export {
+  applyColorPaintToCss,
+  applyFillPaintBackground,
+  cssAngleToSvgGradientLine,
+  createSvgLinearGradientDef,
+  resolveStyleFillCss,
+  resolveStyleStrokeCss,
+  resolveSvgPaintRef,
+} from "./comunicadoFillPaint";
+export {
   blockTypeForDisplayMode,
   defaultDisplayModeForInsert,
   displayModeLabel,

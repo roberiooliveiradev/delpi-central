@@ -862,6 +862,7 @@ export function ComunicadoEditorProvider({
     replaceSelectedMediaFromClipboard: media.replaceSelectedMediaFromClipboard,
     setBackgroundColor: blockActions.setBackgroundColor,
     setBackgroundGradient: blockActions.setBackgroundGradient,
+    setBackground: blockActions.setBackground,
     bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,
     insertTextDataFieldBlock: blockActions.insertTextDataFieldBlock,
     applySlideTemplate: blockActions.applySlideTemplate,

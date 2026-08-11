@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useId } from "react";
 
 import type { ComunicadoShapeGeometry } from "./comunicadoShapeGeometry";
 import {
@@ -64,6 +65,12 @@ import {
   wavePath,
 } from "./comunicadoShapePaths";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+import {
+  applyFillPaintBackground,
+  createSvgLinearGradientDef,
+  resolveStyleStrokeCss,
+  resolveSvgPaintRef,
+} from "./comunicadoFillPaint";
 
 export type ShapeGraphicColors = {
   fill: string;
@@ -1033,16 +1040,21 @@ export function ComunicadoShapeGraphic({
   /** Roteamento do conector (curva/elbow) — só linhas. */
   lineRouting?: ComunicadoConnectorRouting;
 }) {
+  const fillGradId = `tdp-fill-${useId().replace(/:/g, "")}`;
   const resolvedAdj =
     adjustments ?? resolveShapeAdjustments(kind, style ?? { borderRadius, adjustments });
+  const paintedFill = resolveSvgPaintRef(style?.fillPaint, fill, fillGradId);
+  const paintedStroke = resolveStyleStrokeCss(style, stroke);
+  const fillDef = createSvgLinearGradientDef(fillGradId, style?.fillPaint ?? { kind: "none" });
+  const colors: ShapeGraphicColors = { fill: paintedFill, stroke: paintedStroke, strokeWidth };
 
   if (geometry?.primitive === "point") {
-    return renderPointMarker(fill, stroke, strokeWidth, markerRadius);
+    return renderPointMarker(paintedFill, paintedStroke, strokeWidth, markerRadius);
   }
 
   if (geometry?.primitive === "line") {
     /* SVG próprio com viewBox = bbox do palco (evita normalizar 0–100 e esmagar a seta). */
-    return renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth }, lineRouting);
+    return renderLineGeometry(geometry, kind, colors, lineRouting);
   }
 
   if (
@@ -1062,13 +1074,14 @@ export function ComunicadoShapeGraphic({
         preserveAspectRatio="none"
         style={{ overflow: "visible" }}
       >
-        {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj)}
+        {fillDef ? <defs>{fillDef}</defs> : null}
+        {renderSvgShape(kind, colors, resolvedAdj)}
       </svg>
     );
   }
 
   if (kind === "point") {
-    return renderPointMarker(fill, stroke, strokeWidth, markerRadius);
+    return renderPointMarker(paintedFill, paintedStroke, strokeWidth, markerRadius);
   }
 
   const cssKinds: ComunicadoShapeKind[] = ["rectangle", "rounded-rect", "ellipse", "flowchart-process"];
@@ -1077,8 +1090,7 @@ export function ComunicadoShapeGraphic({
     const shapeStyle: CSSProperties = {
       width: "100%",
       height: "100%",
-      backgroundColor: fill,
-      border: `${strokeWidth}px solid ${stroke}`,
+      border: `${strokeWidth}px solid ${paintedStroke}`,
       borderRadius:
         kind === "ellipse"
           ? "50%"
@@ -1086,6 +1098,7 @@ export function ComunicadoShapeGraphic({
             ? borderRadius
             : `${cornerAdj * 50}%`,
     };
+    applyFillPaintBackground(shapeStyle, style?.fillPaint, fill);
     return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
 
@@ -1093,10 +1106,10 @@ export function ComunicadoShapeGraphic({
     const shapeStyle: CSSProperties = {
       width: "100%",
       height: "100%",
-      backgroundColor: fill,
-      border: `${strokeWidth}px solid ${stroke}`,
+      border: `${strokeWidth}px solid ${paintedStroke}`,
       borderRadius: 9999,
     };
+    applyFillPaintBackground(shapeStyle, style?.fillPaint, fill);
     return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
 
@@ -1109,7 +1122,8 @@ export function ComunicadoShapeGraphic({
       aria-hidden="true"
       style={{ overflow: "visible" }}
     >
-      {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj, borderRadius)}
+      {fillDef ? <defs>{fillDef}</defs> : null}
+      {renderSvgShape(kind, colors, resolvedAdj, borderRadius)}
     </svg>
   );
 }
