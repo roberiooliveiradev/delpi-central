@@ -11,10 +11,14 @@ export type DateFieldClassNames = {
   required?: string;
 };
 
+export type DateFieldInputType = "date" | "month";
+
 export type DateFieldProps = {
   id?: string;
   label: string;
   hint?: string;
+  /** `month` = competência YYYY-MM (mesmo padrão dos dashboards). Default `date`. */
+  type?: DateFieldInputType;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
@@ -38,6 +42,7 @@ export function DateField({
   id,
   label,
   hint,
+  type = "date",
   value,
   onChange,
   required = false,
@@ -66,7 +71,7 @@ export function DateField({
       />
       <input
         id={fieldId}
-        type="date"
+        type={type}
         value={value}
         required={required}
         disabled={disabled}

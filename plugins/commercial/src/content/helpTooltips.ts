@@ -348,7 +348,8 @@ export const CM_HELP = {
       "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
-    filterCompetence: "Competência mensal (opcional). Livre = só as datas informadas.",
+    filterCompetence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Vazio = só as datas informadas.",
     filterBranch:
       "Unidades incluídas no consolidado (Santa Catarina / Espírito Santo). Vazio = todas as unidades do escopo.",
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",

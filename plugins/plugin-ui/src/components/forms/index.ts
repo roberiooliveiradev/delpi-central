@@ -99,6 +99,7 @@ export {
   dateFieldBemClasses,
   type DashboardDateFieldProps,
   type DateFieldClassNames,
+  type DateFieldInputType,
   type DateFieldProps,
 } from "./DateField";
 

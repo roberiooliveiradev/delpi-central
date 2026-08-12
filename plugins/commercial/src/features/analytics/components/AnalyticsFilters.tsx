@@ -62,13 +62,11 @@ export function AnalyticsFilters({
         onChange={onDateEnd}
         hint={CM_HELP.analytics.filterDateEnd}
       />
-      <CommercialSelectField
+      <CommercialDateField
+        type="month"
         label={ANALYTICS_CONTENT.filters.competence}
         value={competence}
         onChange={onCompetence}
-        options={buildCompetenceOptions()}
-        allowEmpty
-        emptyLabel="Livre"
         hint={CM_HELP.analytics.filterCompetence}
       />
       <CommercialMultiSelectField
@@ -103,16 +101,4 @@ export function AnalyticsFilters({
       ) : null}
     </FiltersRow>
   );
-}
-
-function buildCompetenceOptions() {
-  const now = new Date();
-  const options: { value: string; label: string }[] = [];
-  for (let offset = 0; offset < 18; offset += 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-    options.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
-  }
-  return options;
 }
