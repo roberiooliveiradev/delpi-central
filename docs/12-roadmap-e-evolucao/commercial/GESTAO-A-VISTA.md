@@ -1,16 +1,16 @@
 # Gestão à vista — Portal Comercial (consolidação nativa)
 
-> **Status:** IA hub 2026 — top nav Início · Visão geral · Minhas tarefas · … · Administração · zero hosteamento · `commercial.analytics.view` para BI  
+> **Status:** IA hub 2026 — top nav + Visão geral BI + Início launcher · zero hosteamento · `commercial.analytics.view` para BI  
 > **Produto:** `plugins/commercial` · `/apps/commercial`  
-> **Plano:** Início launcher + Visão geral top-level + Administração hub + deep pages (OTD/Opp/Equipe/Propostas)
+> **Plano:** refino visual + IA de informação (Equipe→Admin; Opp Conta+Início; OTD Início; filtro carteira analytics)
 
 ## Norte
 
 | Camada | Papel |
 |--------|--------|
 | MFE `commercial` | Única UX de produto a evoluir — páginas **nativas** |
-| `commercial-api` | Estado Delpi (carteiras, Minhas tarefas, avatars, realtime) |
-| `api-delpi` | TOTVS HTTP (`/commercial/*`, `/propostas-comerciais`, `/pedidos-venda-abertos`) |
+| `commercial-api` | Estado Delpi (carteiras, Minhas tarefas, avatars, realtime); resolve clientes da carteira para filtro analytics |
+| `api-delpi` | TOTVS HTTP (`/commercial/*`, …); filtro opcional **`customer_codes`** (sem `portfolio_id` / membership) |
 | MFEs irmãos | Permanecem no menu; **não** hostear/deep-link como entrega |
 
 **Proibido:** iframe / Module Federation / deep link obrigatório para `dashboard-commercial`, `propostas-comerciais` ou PVA.
@@ -32,36 +32,50 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | Minha Carteira | `/customers` | membership ou team/manage |
 | Administração | `/administration` | `seller-portfolios.manage` |
 
-**Fora da top bar** (launcher Início e/ou drill da Visão geral):
+**Fora da top bar** (launcher Início):
 
 | Página | Path |
 |--------|------|
 | Propostas ADY | `/proposals` |
 | OTD | `/analytics/otd` |
 | Oportunidades OV | `/analytics/opportunities` |
-| Equipe (analítica) | `/analytics/team` |
 
-**Redirects:** `/analytics` e `/gestao` → `/overview`. `/seller-portfolios` → `/administration/seller-portfolios`.
+**Depreciado:** Equipe (`/analytics/team`) → **redirect** `/administration`.
+
+**Redirects:** `/analytics` e `/gestao` → `/overview`. `/seller-portfolios` → `/administration/seller-portfolios`. `/analytics/team` → `/administration`.
 
 **Administração subnav:** Painel · Carteiras · Membros.
+
+## Catálogo de informação por página
+
+| Página | Pergunta | Obrigatório | Não trazer |
+|--------|----------|-------------|------------|
+| Início | O que fazer agora / para onde ir? | Saudação; KPIs carteira; eventos; launcher | BI ROL/funil |
+| Visão geral | Como está o comercial no período? | Filtros (+**carteira**); KPIs; ROL; funil | Aprofundar; prévia OV |
+| Minhas tarefas | Qual minha fila? | Buckets; CRUD tarefa | Pedidos / ROL |
+| Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; tabela | Série OTD histórica |
+| Minha Carteira | Quem são os clientes? | Lista; clique→Conta | BI período |
+| Conta · Opp | Quais OVs deste cliente? | Lista filtrada por código/loja | Placeholder CTA |
+| OTD | Pontualidade no período? | %; série SC/ES; linhas | Chip do dia (Pedidos) |
+| Oportunidades | Quais OVs no período (global)? | Lista + busca | ADY |
+| Propostas | Documentos ADY / PDF? | Lista + detalhe | OV AD1010 |
+| Administração | Como gerir carteiras? | Painel / Carteiras / Membros | Ranking Equipe separado |
 
 ## Início vs Visão geral
 
 | | Início `/` | Visão geral `/overview` |
 |--|------------|-------------------------|
-| Papel | Launcher + eventos/interações (worklist preview) | BI: KPIs, filtros, charts ROL/funil |
-| Não fazer | Duplicar faixa BI completa | Hospedar CRUD de carteiras |
+| Papel | Launcher (main) + eventos (side) | BI: filtros, KPIs, charts ROL/funil |
+| Não fazer | Duplicar faixa BI completa | Faixa Aprofundar; hospedar CRUD carteiras |
 
 ## Duas “propostas”
 
 | Nome no Portal | TOTVS | API | Uso |
 |----------------|-------|-----|-----|
-| **Oportunidades (OV)** | AD1010 | `/commercial/proposals` | Funil / ciclo — drill Gestão/Visão geral |
-| **Propostas (documento)** | ADY010 | `/propostas-comerciais` | Documento + PDF — launcher (não top nav) |
+| **Oportunidades (OV)** | AD1010 | `/commercial/proposals` | Lista global (Início) + aba Conta |
+| **Propostas (documento)** | ADY010 | `/propostas-comerciais` | Documento + PDF — launcher |
 
-Escopo ADY: **sem** filtro membership nesta wave (lista global com `proposals.view`).
-O chip Escopo no chrome = **identidade da sessão**, não filtro desta lista
-(`PROPOSALS_CONTENT.list.scopeNote` / `CM_HELP.proposals.scopeNote`).
+Escopo ADY: **sem** filtro membership nesta wave. Chip Escopo chrome = identidade (`PROPOSALS_CONTENT.list.scopeNote`).
 
 ## Catálogo de métricas (Visão geral)
 
@@ -76,7 +90,8 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 | `new_business` | Novos negócios |
 | `rol_series` | Evolução de ROL |
 | `funnel` | Funil |
-| `ov_table` | Oportunidades |
+
+(`ov_table` removido do hub — lista OV não na Overview.)
 
 ## Permissões (capacidades — sem cargo)
 
@@ -84,84 +99,74 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 |------|--------|
 | `commercial.accounts.view` | Portal, pedidos, carteira, conta |
 | `commercial.worklist.view` / `followups.manage` | Minhas tarefas |
-| `commercial.seller-portfolios.manage` | Administração (Painel/Carteiras/Membros) |
+| `commercial.seller-portfolios.manage` | Administração |
 | `commercial.audit.view` | Auditoria |
 | `commercial.analytics.view` | Visão geral + OTD + Oportunidades |
-| `commercial.proposals.view` / `.export` | Propostas ADY (launcher) |
-| `commercial.accounts.team.view` | Filtro multi-vendedor / Equipe analítica |
+| `commercial.proposals.view` / `.export` | Propostas ADY |
+| `commercial.accounts.team.view` | Filtro multi-vendedor / admin team scope |
 | `commercial.worklist.team.view` | Minhas tarefas `scope=team` |
-
-### Equipe (analítica)
-
-Universo = carteiras **ativas**. Filtro MFE: `accounts.team.view || manage`. CTA admin manage-gated → Administração.
 
 ## Filtros Visão geral / OTD / Opp
 
 | | |
 |--|--|
-| URL | `competence`, `start_date`, `end_date`, `branch`, `customer_segment` |
+| URL | `competence`, `start_date`, `end_date`, `branch`, `customer_segment`, **`seller_id`** (carteira) |
 | sessionStorage | `delpi.commercial.analytics.filters` |
-| Hook | `useAnalyticsFilters` |
+| Hook | `useAnalyticsFilters` + sync `PortfolioScopeContext.sellerIdFilter` |
+| Carteira → dados | commercial-api clientes → api-delpi `customer_codes` (TOTVS puro) |
 | Datas v1 | **2× DateField** (+ competence) — sem DateRangeField |
+
+Ver [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md): membership no Portal; api-delpi sem `portfolio_id`.
 
 ## Backend P0 (realtime)
 
-`portfolio.changed` deve fan-out para sala WS **`team`** (gestores manage), além de `user:{member}`.
+`portfolio.changed` → sala WS **`team`** + `user:{member}`.  
 **Status:** entregue em `commercial_realtime_notify.notify_portfolio_changed`.
 
 ## Backlog — export (não nesta wave)
 
 Decisão D13: **não** implementar export OTD/Opp / Visão geral nesta wave.
 
-| Superfície | Formato desejado (futuro) | Notas |
-|------------|---------------------------|--------|
-| Visão geral (KPIs / série ROL) | CSV ou Excel | Respeitar filtros `useAnalyticsFilters` |
-| OTD (painel + linhas) | Excel | Incluir status/promessa; detalhe linha fora |
-| Oportunidades OV | Excel | Colunas da lista + filtros do período |
-| WEG / novos negócios | CSV | Só se houver pedido de produto |
+## Backlog (outros)
 
-Já existe export na Administração: **Exportar matriz** (org / load-summary) — não confundir com este backlog.
-
-## Backlog (outros — não nesta wave)
-
-- `GET /me/worklist` preview leve; list portfolios sem `customers[]`
-- Membership em ADY/OTD/OV
+- `GET /me/worklist` preview leve
+- Membership automático ADY (lista)
+- Ranking Equipe **dentro** de Administração (se produto pedir)
+- Paridade KPI WEG / NB absoluto
 - P3 CRM; remoção de plugins irmãos
 
 ## Conteúdo PT
 
-Textos de UI em `plugins/commercial/src/content/` (não hardcode em JSX).
+`plugins/commercial/src/content/` + `helpTooltips.ts` (`CM_HELP`).
 
 ## Bloqueios explícitos
 
 - **P3 CRM** só com pedido explícito
 - **DateRangeField** fora da v1
-- **Remoção** de plugins irmãos só no futuro (`cleanup-later`)
+- **Remoção** de plugins irmãos só no futuro
 - Endpoints `new-clients-*` / `rol/by-customer` fora
 - PVA membership / regras novas no PVA
+- `portfolio_id` em rotas api-delpi
 
 ## Referências
 
 - [WIREFRAMES.md](./WIREFRAMES.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)
 - [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)
 
-## Homologação (wave top nav + hub — smoke)
-
-Checklist pós-deploy (papéis):
+## Homologação (refino visual)
 
 | # | Papel / cap | Conferir |
 |---|-------------|----------|
-| 1 | Vendedor (`accounts` + `worklist`) | Top sem Administração; Início launcher + Eventos; Minhas tarefas |
-| 2 | Analytics (`analytics.view`) | Top Visão geral; drills OTD/Opp; breadcrumb volta à Visão geral |
-| 3 | Team (`accounts.team.view`) | Equipe + filtro carteira; empty sem manage sem CTA admin |
-| 4 | Manage (`seller-portfolios.manage`) | Administração Painel/Carteiras/Membros; empty pedidos → Abrir Administração |
-| 5 | Dois browsers (membro + gestor) | CRUD carteira → toast/refetch no membro; gestor em `team` recebe `portfolio.changed` |
-
-Rebuild MFE/kit (dev):
+| 1 | Vendedor | Início 2 colunas; sem Equipe no launcher; Minhas tarefas |
+| 2 | Analytics | Visão geral sem Aprofundar; filtro carteira†; OTD/Opp via Início |
+| 3 | Team | Filtro carteira; `/analytics/team` → Admin |
+| 4 | Manage | Administração; empty pedidos → Admin |
+| 5 | Carteira tabela | Clique linha **e** coluna Cliente → Conta |
+| 6 | Conta Opp | Lista OV real (não placeholder) |
 
 ```bash
 ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build commercial
+# se C8.7 api-delpi:
+./infra/scripts/up-dev-sequential.sh --fase api --build api-delpi
 ```
-
-API realtime (se alterou `commercial-api`): rebuild do serviço na fase `api` do script sequencial.

@@ -32,7 +32,7 @@
 | `GET /open-orders/ops-abertas` | Proxy (sem membership) | MFE → commercial-api → api-delpi |
 | `POST /customers/billing-series` | commercial-api (filter_pairs) | MFE → commercial-api → api-delpi (path TOTVS sem gate PVA) |
 | `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`ensure_allows`) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
-| KPIs `/commercial/*`, propostas, production | Sem membership de carteira | MFE → api-delpi (OK) |
+| KPIs `/commercial/*`, propostas, production | Filtro opcional `customer_codes` (TOTVS); **sem** `portfolio_id` — membership resolve no Portal (MFE/commercial-api) | MFE → api-delpi (codes) ou consolidado |
 | PVA `GET /pedidos-venda-abertos/` | Legado: membership + **`for_open_orders`** (sem vínculo → consolidado) | Só plugin PVA |
 | PVA `…/clientes/…/notas-fiscais` | Legado: `customer_allowed` / membership clássico | Só plugin PVA |
 

@@ -1,21 +1,38 @@
 # Design / IA — Portal Comercial
 
-> **Status:** IA hub 2026 — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
+> **Status:** IA hub 2026 — refino visual + IA de informação  
 > **Produto:** Portal Comercial · `id` `commercial` · `/apps/commercial`  
 > **UI kit:** `@delpi/plugin-ui` · prefixo MFE `cm-` · root `.dashboard-commercial`  
-> **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
+> **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) · **Gestão:** [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
 
-O Portal Comercial é o hub operacional e de diagnóstico: **Início** (launcher), **Visão geral** (BI), **Minhas tarefas**, pedidos, Conta 360, deep pages (Propostas ADY, OTD, OV, Equipe) e **Administração** — páginas **nativas**.
+O Portal Comercial é o hub operacional e de diagnóstico: **Início** (launcher), **Visão geral** (dashboard BI), **Minhas tarefas**, pedidos, Conta 360, deep pages via Início (Propostas ADY, OTD, Oportunidades) e **Administração** — páginas **nativas**.
 
 ## Princípios de informação
 
 | Camada | Superfície | Objetivo |
 |--------|------------|----------|
-| **Launcher** | Início (`/`) | Hero + eventos/interações + grid de funcionalidades (gated) |
-| **Diagnosis** | Visão geral (`/overview`) | KPIs, filtros, charts; drills OTD/Opp/Equipe |
-| **Focus / Action** | Minhas tarefas, Pedidos, Propostas ADY | Filas e documentos |
-| **Detail** | Minha Carteira, Conta, detalhe OV/ADY/OTD | Investigation |
+| **Launcher** | Início (`/`) | Hero + **Funcionalidades (main)** + **Eventos (side)** |
+| **Diagnosis** | Visão geral (`/overview`) | Filtros + KPIs ≤8 + evolução ROL + funil — **sem** faixa Aprofundar |
+| **Focus / Action** | Minhas tarefas, Meus pedidos, OTD, Oportunidades, Propostas ADY | Filas e listas (entrada: top ou Início) |
+| **Detail** | Conta, detalhe OV/ADY/linha/OP | Investigation |
 | **Admin** | Administração (`/administration/*`) | Painel · Carteiras · Membros (`seller-portfolios.manage`) |
+
+## Catálogo rápido (o que cada página traz)
+
+| Página | Traz | Não traz |
+|--------|------|----------|
+| Início | Saudação, KPIs carteira, eventos, launcher | BI ROL/funil |
+| Visão geral | Filtros (+carteira), KPIs, ROL, funil | Drills Aprofundar, prévia OV, Equipe |
+| Minhas tarefas | Fila follow-ups | Pedidos / ROL |
+| Meus pedidos | Linhas abertas, chip Atraso | Série OTD histórica |
+| Minha Carteira / Conta | Clientes; Conta com aba **Oportunidades** real | BI consolidado do período |
+| OTD (Início) | OTD% período, série SC/ES, linhas | Chip operacional do dia |
+| Oportunidades (Início) | Lista OV global | Documentos ADY |
+| Propostas | ADY + PDF | OV AD1010 |
+| Administração | Carteiras / membros | Ranking «Equipe» separado |
+| `/analytics/team` | **Redirect → Administração** | — |
+
+Detalhe: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) § Catálogo de informação.
 
 ## Navegação (alvo)
 
@@ -24,24 +41,43 @@ Shell: TopBar flush + UnderlineNav
 Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Administração†
 ```
 
-- **Início:** `PageHero` + card Eventos (worklist preview) + launcher — **sem** duplicar BI da Visão geral.
-- **Visão geral:** filtros analytics + KPIs ≤8 + charts; atalhos drill.
-- **Minhas tarefas:** antigo «Meu dia»; path `/my-tasks` (alias `/my-day`); badge = overdue+today.
-- Escopo via chip no chrome (identidade, não filtro de página).
-- Propostas / OTD / Opp / Equipe: **não** na top — só launcher ou drill.
+- **Início:** PageHero (shell) + Funcionalidades + Eventos — **sem** BI da Visão geral.
+- **Visão geral:** PageHero + filtros (datas, competência, filial, segmento, **carteira**) + KPIs + charts; **sem** Aprofundar.
+- **Minhas tarefas:** `/my-tasks` (alias `/my-day`).
+- Escopo no chrome = **identidade**; filtro de carteira nas listas/analytics = `SellerScopeFilter`.
+- Propostas / OTD / Oportunidades: **não** na top — **launcher Início** (não drill Overview).
+- Equipe analítica: **depreciada** → Administração.
 
 ### Administração
 
 Subnav: **Painel · Carteiras · Membros**. Alias `/seller-portfolios` → aba Carteiras.
 
+## Chrome de página (contrato)
+
+```text
+[PagePath?] → [UnderlineNav?] → PageHero (actions)
+  → filtros (FiltersKit | FilterBarShell | SellerScopeFilter | chips)
+→ SectionCard · MetricCard · charts · DataTable · Empty/Loading · StatusBadge
+```
+
+- Deprecar `cm-page-header-row` como chrome raiz.
+- Clique tabela→detalhe: `onRowClick` + coluna identidade link; `interactive: true` só com ação própria distinta.
+
+## Helps
+
+Fonte única: `plugins/commercial/src/content/helpTooltips.ts` (`CM_HELP`). PageHero, SectionCard.hint, Field.hint, titleHint KPI, shell nav — sem literais PT de help no JSX.
+
 ## Alinhamento mercado
 
 | Tema | Referência | Decisão Delpi |
 |------|------------|---------------|
-| Top nav curta + home launcher | Portal RH (IA) | Sim — visual Comercial (não clonar CSS RH) |
-| Eventos no home | Feed de interações | Worklist/tarefas — não aniversários RH |
-| BI em página própria | Manager dashboard | `/overview` |
-| Worklist | Pipedrive Activities | Label «Minhas tarefas» |
+| Top nav + home launcher | Portal RH (IA) | Sim — visual Comercial (**não** clonar CSS RH) |
+| Apps main + eventos side | Portal RH | Início 2 colunas |
+| Home = ação | HubSpot Sales Workspace | Eventos + atalhos; BI em `/overview` |
+| Filtros + KPIs + funil | dashboard-comercial (legado) | Visão geral nativa (**não** hostear) |
+| Tiles hierárquicos | Bento / Linear–Notion | NavigationCard `featured` |
+| Worklist | Pipedrive Activities | «Minhas tarefas» / Eventos Início |
+| Row → detalhe | Grids admin + link identidade | C17 DataTable |
 
 ## Alinhamento `.cursor`
 
@@ -50,7 +86,7 @@ Subnav: **Painel · Carteiras · Membros**. Alias `/seller-portfolios` → aba C
 | `plugins-reusable-components` | Kit-first; zero CSS `.delpi-ui-*` no MFE |
 | `plugins-visual-design-system` | Tokens `--cm-*` → `--delpi-ui-*` |
 | `english-code-identifiers` | Paths EN; labels PT |
-| `application-bounded-context-decoupling` | Membership só commercial-api; ADY/OTD/OV sem membership |
+| `application-bounded-context-decoupling` | Membership só commercial-api; analytics com `customer_codes` TOTVS (sem `portfolio_id` na api-delpi) |
 | `mfe-modal-host-contained` | Dialogs admin |
 | `infra-sequential-container-startup` | Rebuild remote → mfe |
 | `test-and-commit` | Cada subetapa: test → commit → push |
@@ -59,12 +95,15 @@ Subnav: **Painel · Carteiras · Membros**. Alias `/seller-portfolios` → aba C
 
 | Componente | Uso |
 |------------|-----|
-| `PageHero` | Início, Minhas tarefas, Visão geral, Admin |
-| `TopBar` + `UnderlineNav` | Shell |
+| `PageHero` | Início (shell), Overview, listas, Admin, deep pages |
+| `TopBar` + `UnderlineNav` | Shell / Admin / Conta |
+| `NavigationCard` (+ `density=featured`) | Launcher Início |
 | `ViewTransition` | Troca de telas |
-| `SectionCard` / `SimpleKpiCard` | Launcher cards / KPIs |
+| `SectionCard` / `MetricKpiCard` | Seções / KPIs |
 | `AlertQueue` / worklist items | Eventos Início + Minhas tarefas |
-| `EmptyState` + `ActionButton` | Empties manage-gated |
+| `EmptyState` + `ActionButton` | Empties |
+| `DataTable` (`onRowClick`) | Listagens → detalhe |
+| `HelpTooltip` | Helps |
 | `OrgMembershipFlow` | Organização Carteiras |
 
 ## UX
@@ -79,5 +118,7 @@ Subnav: **Painel · Carteiras · Membros**. Alias `/seller-portfolios` → aba C
 | Item | Doc |
 |------|-----|
 | Export OTD/Opp; worklist summary leve | GESTAO-A-VISTA backlog |
+| Paridade KPI WEG / NB absoluto | GESTAO-A-VISTA |
+| Ranking Equipe (só se dentro de Admin) | futuro |
 | Observação, anexos, reminder | UX-E-TASKS-EVOLUTION |
 | F2c PVA, Wave H | IMPLEMENTATION-PLAN |

@@ -36,9 +36,9 @@
 | `/apps/commercial/seller-portfolios` | (alias → administration/…) | — | manage |
 | `/apps/commercial/proposals` | Propostas ADY | launcher | proposals.view |
 | `/apps/commercial/analytics` | (redirect → /overview) | — | analytics.view |
-| `/apps/commercial/analytics/otd` | OTD | launcher/drill | analytics.view |
-| `/apps/commercial/analytics/team` | Equipe | launcher/drill | analytics + team |
-| `/apps/commercial/analytics/opportunities` | Oportunidades | launcher/drill | analytics.view |
+| `/apps/commercial/analytics/otd` | OTD | launcher Início | analytics.view |
+| `/apps/commercial/analytics/team` | (redirect → administration) | — | — |
+| `/apps/commercial/analytics/opportunities` | Oportunidades | launcher Início | analytics.view |
 
 ### Shell comum
 
@@ -60,39 +60,34 @@
 
 ### WF-01R-L — Início `/`
 
-**Objetivo:** launcher + eventos/interações. **Não** replica BI da Visão geral.
+**Objetivo:** launcher + eventos. **Não** replica BI. Layout: **Funcionalidades main** · **Eventos side** (IA RH).
 
 ```text
 ┌─ PageHero ──────────────────────────────────────────────────────────────────┐
-│ PORTAL COMERCIAL                                                            │
-│ Bem-vindo, {nome} · Escopo: {carteira}                                      │
+│ PORTAL COMERCIAL · Boa tarde, {nome} · Escopo badge                         │
+│ Highlights: Follow-ups | Valor em aberto | Atrasos                          │
 │ “Selecione uma funcionalidade para começar.”                                │
 └─────────────────────────────────────────────────────────────────────────────┘
+┌─ Top nav 6 ──────────────────────────────────────────────── Escopo ─────────┐
 
-┌─ Eventos e interações ───────────────────────────── [Abrir Minhas tarefas] ─┐
-│ Subtitle: Tarefas e alertas do seu dia                                      │
-│ ┌ Atrasadas N ┐ ┌ Hoje M ┐ ┌ Depois K ┐                                     │
-│ │ lista curta (máx 5): título · prazo · cliente · [Abrir]                   │
-│ empty: “Nenhuma interação pendente.” + CTA Minhas tarefas / Meus pedidos    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─ Funcionalidades ───────────────────────────────────────────────────────────┐
-│ Grid 2–3 colunas · card omitido se sem capability                           │
-│ Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira                │
-│ Propostas | OTD | Oportunidades | Equipe†team | Administração†manage        │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Funcionalidades (main ~2/3) ──────────┬─ Eventos (side ~1/3) ─────────────┐
+│ Cards featured + secondary             │ [Atualizar] [Abrir Minhas tarefas]│
+│ Visão geral · Tarefas · Pedidos · …    │ Chips só se count>0               │
+│ Propostas · OTD · Opp · Admin†         │ Lista / quiet «Em dia»            │
+│ (sem Equipe)                           │ CTA só no header                  │
+└────────────────────────────────────────┴───────────────────────────────────┘
 ```
 
 ### WF-OV — Visão geral `/overview`
 
+**Objetivo:** dashboard BI (filtros + indicadores + ROL + funil). **Sem** Aprofundar / prévia OV.
+
 ```text
-┌─ Header ────────────────────────────────────────────────────── [Atualizar] ─┐
-│ Visão geral · Indicadores comerciais do período                             │
-│ Filtros: Data inicial | Data final | Competência | Filial | Segmento        │
-│ KPIs ≤8 (ROL vs meta · ROL filial · Conversão · OTD · Novos negócios · …)   │
-│ Charts: Evolução ROL | Funil conversão                                      │
-│ Drills: [OTD] [Oportunidades] [Equipe †team]                                │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─ PageHero «Visão geral» ──────────────────────────────────── [Atualizar] ─┐
+┌─ Filtros: Data ini | Data fim | Competência | Filial | Segmento | Carteira† ┐
+┌─ Indicadores (KPIs ≤8) ────────────────────────────────────────────────────┐
+┌─ Evolução ROL ──────────────────────────┬─ Funil de conversão ─────────────┐
+† SellerScopeFilter se canFilterPortfolios
 ```
 
 ### WF-TASKS — Minhas tarefas `/my-tasks`
@@ -115,16 +110,16 @@ Carteiras: lista/org (WF-05R) sob /administration/seller-portfolios
 Membros: roster pessoa × carteiras → detalhe
 ```
 
-### Deep pages (launcher / drill)
+### Deep pages (launcher Início)
 
 | WF | Path | Notas |
 |----|------|-------|
-| WF-02R | `/open-orders` | Empty carteira → Administração†manage |
-| WF-03R / WF-04 | `/customers` · Conta | Follow-up → Minhas tarefas |
+| WF-02R | `/open-orders` | Chip Atraso = pontualidade operacional |
+| WF-03R / WF-04 | `/customers` · Conta | Aba Oportunidades = lista OV do cliente; clique linha→Conta |
 | WF-PROP | `/proposals` | Escopo chrome ≠ filtro ADY |
-| WF-OTD | `/analytics/otd` | Filtros analytics |
-| WF-OPP | `/analytics/opportunities` | OV AD1010 |
-| WF-EQ | `/analytics/team` | Empty + CTA Administração† |
+| WF-OTD | `/analytics/otd` | % + série SC/ES; entrada Início |
+| WF-OPP | `/analytics/opportunities` | OV global; entrada Início |
+| WF-EQ | `/analytics/team` | **Redirect → /administration** |
 
 ---
 
@@ -137,13 +132,14 @@ Portal Comercial
 ├── Minhas tarefas                 /my-tasks
 ├── Meus pedidos                   /open-orders
 ├── Minha Carteira                 /customers
-│   └── Conta                      /customers/:code/:store
+│   └── Conta                      /customers/:code/:store  (aba oportunidades)
 ├── Administração†
 │   ├── Painel                     /administration
 │   ├── Carteiras                  /administration/seller-portfolios
 │   ├── Carteira detalhe           /administration/seller-portfolios/:id
 │   └── Membros                    /administration/team
-└── (launcher) Propostas, OTD, Oportunidades, Equipe
+└── (launcher Início) Propostas, OTD, Oportunidades
+    (Equipe → redirect Admin)
 ```
 
 ---
