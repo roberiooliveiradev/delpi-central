@@ -100,7 +100,9 @@ export function useAnchoredPanelPosition(
         right: "auto",
         zIndex: PANEL_Z_INDEX,
         visibility: "visible",
-        ...(matchAnchorWidth ? { minWidth: rect.width } : null),
+        ...(matchAnchorWidth
+          ? { width: rect.width, minWidth: rect.width, maxWidth: rect.width }
+          : null),
       });
     };
 

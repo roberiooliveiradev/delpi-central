@@ -70,6 +70,7 @@ export function AnalyticsFilters({
         hint={CM_HELP.analytics.filterCompetence}
       />
       <CommercialMultiSelectField
+        className="cm-analytics-unit-filter"
         label={ANALYTICS_CONTENT.filters.branch}
         selectedValues={branches}
         onChange={onBranches}

@@ -263,18 +263,8 @@
   border-radius: 8px;
 }
 
-.dashboard-commercial .cm-overview-kpi-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
 .dashboard-commercial .cm-overview-kpi-grid .cm-kpi-card--wide {
-  grid-column: span 2;
-}
-
-@media (max-width: 768px) {
-  .dashboard-commercial .cm-overview-kpi-grid .cm-kpi-card--wide {
-    grid-column: auto;
-  }
+  grid-column: auto;
 }
 
 /* Meu dia */

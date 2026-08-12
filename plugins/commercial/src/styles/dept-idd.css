@@ -38,8 +38,40 @@
   text-overflow: ellipsis;
 }
 
+/* Combina com .cm-home-kpi-grid (auto-fit) — especificidade maior para não voltar a 6 na linha. */
+.dashboard-commercial .cm-home-kpi-grid.cm-overview-kpi-grid,
 .dashboard-commercial .cm-overview-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--cm-grid-gap, 16px);
+}
+
+@media (max-width: 1100px) {
+  .dashboard-commercial .cm-home-kpi-grid.cm-overview-kpi-grid,
+  .dashboard-commercial .cm-overview-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-commercial .cm-home-kpi-grid.cm-overview-kpi-grid,
+  .dashboard-commercial .cm-overview-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/** Filtros da Visão geral — multi-selects mais compactos na grade. */
+.dashboard-commercial .cm-page-hero [class*="filters-row--extended"],
+.dashboard-commercial .cm-page-hero .delpi-ui-filters-row--extended {
+  --delpi-ui-filter-grid-min: 9.25rem;
+}
+
+.dashboard-commercial .cm-customer-seller-scope {
+  max-width: 14rem;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-analytics-unit-filter {
+  max-width: 14rem;
+  min-width: 0;
 }

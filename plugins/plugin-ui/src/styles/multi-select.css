@@ -90,9 +90,11 @@
   right: auto;
   top: auto;
   left: auto;
-  min-width: 12rem;
-  width: max(100%, 240px);
-  max-width: min(420px, calc(100vw - 16px));
+  /* Largura canônica = gatilho (matchAnchorWidth no portal); evita painel “largo demais”. */
+  width: auto;
+  min-width: 0;
+  max-width: none; /* sobrescreve max(100%, 240px) do painel não-portal */
+  box-sizing: border-box;
 }
 
 .delpi-ui-multi-select__search {
@@ -209,11 +211,13 @@
 
 .delpi-ui-multi-select__action.delpi-ui-multi-select__action {
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
   justify-content: center;
   gap: 6px;
   box-sizing: border-box;
   margin: 0;
+  min-width: 0;
   min-height: 28px;
   padding: 4px 8px;
   border-radius: var(--delpi-ui-radius-sm, 8px);
