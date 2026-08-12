@@ -367,6 +367,15 @@ export {
   type SectionRouteItem,
 } from "./SectionRouteCard";
 export {
+  CatalogSearchBar,
+  createDashboardCatalogSearchBar,
+  catalogSearchBarBemClasses,
+  type CatalogSearchBarClassNames,
+  type CatalogSearchBarProps,
+  type CatalogSearchHit,
+  type DashboardCatalogSearchBarProps,
+} from "./CatalogSearchBar";
+export {
   PreviewDetailCard,
   createDashboardPreviewDetailCard,
   previewDetailCardBemClasses,

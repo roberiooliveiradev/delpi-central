@@ -114,6 +114,34 @@ CSS: `styles/section-route-card.css` (tokens `--delpi-ui-*` apenas).
 
 ---
 
+## `CatalogSearchBar`
+
+Campo de busca de catálogo com listbox de hits (grupo + label), limpar, Esc e
+seleção por teclado. O consumidor filtra e monta `hits`; o kit só renderiza.
+
+```tsx
+const CommercialCatalogSearchBar = createDashboardCatalogSearchBar({
+  classNames: catalogSearchBarBemClasses("cm"),
+});
+
+<CommercialCatalogSearchBar
+  value={query}
+  onChange={setQuery}
+  hits={[{ id: "proposals", label: "Propostas comerciais", groupLabel: "Documentos" }]}
+  onSelectHit={openRoute}
+  placeholder="Buscar caminhos…"
+  emptyHitsLabel="Nenhum caminho encontrado"
+  clearLabel="Limpar busca"
+/>
+```
+
+Props principais: `value`, `onChange`, `hits`, `onSelectHit`, `placeholder`,
+`emptyHitsLabel`, `clearLabel`, `aria-label`, `classNames`.
+
+CSS: `styles/catalog-search-bar.css`.
+
+---
+
 ## `PagePath`
 
 Breadcrumb semântico (`nav` + `ol`) para páginas internas. `back` e `current` são

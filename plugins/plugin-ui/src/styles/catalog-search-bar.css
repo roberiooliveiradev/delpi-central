@@ -1,0 +1,123 @@
+/**
+ * CatalogSearchBar — busca de caminhos/funcionalidades (controlled).
+ */
+
+.delpi-ui-catalog-search-bar {
+  position: relative;
+  width: 100%;
+}
+
+.delpi-ui-catalog-search-bar__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-height: 44px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 6px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+.delpi-ui-catalog-search-bar__field:focus-within {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
+  );
+}
+
+.delpi-ui-catalog-search-bar__icon {
+  display: inline-flex;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+  flex-shrink: 0;
+}
+
+.delpi-ui-catalog-search-bar__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.delpi-ui-catalog-search-bar__input::placeholder {
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-catalog-search-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+  cursor: pointer;
+}
+
+.delpi-ui-catalog-search-bar__clear:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+}
+
+.delpi-ui-catalog-search-bar__listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 6px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+}
+
+.delpi-ui-catalog-search-bar__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-catalog-search-bar__option--active,
+.delpi-ui-catalog-search-bar__option:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+}
+
+.delpi-ui-catalog-search-bar__option-group {
+  font-size: 0.75rem;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-catalog-search-bar__empty {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
