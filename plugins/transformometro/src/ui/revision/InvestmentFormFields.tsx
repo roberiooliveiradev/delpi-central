@@ -10,9 +10,9 @@ import {
 } from "../../utils/catalogLabels";
 import { formatCurrency } from "../../utils/format";
 import {
-  investimentoFormTotal,
+  investmentFormTotal,
   type InvestimentoFormState,
-} from "./investimentoForm";
+} from "./investmentForm";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_WIDE_MOD } from "../../components/filterChrome";
 
 const I = TM_HELP_TOOLTIPS.investimentos;
@@ -24,9 +24,9 @@ type Props = {
   idPrefix?: string;
 };
 
-export function InvestimentoFormFields({ form, options, onChange, idPrefix = "tm-inv" }: Props) {
+export function InvestmentFormFields({ form, options, onChange, idPrefix = "tm-inv" }: Props) {
   const set = (patch: Partial<InvestimentoFormState>) => onChange({ ...form, ...patch });
-  const total = investimentoFormTotal(form);
+  const total = investmentFormTotal(form);
 
   return (
     <div className={`${DS_FILTERS_ROW} tm-investimento-form`}>

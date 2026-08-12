@@ -10,7 +10,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   resyncVersion?: number;
 };
 
-export function RevisaoEvidenciasSection({
+export function RevisionEvidenceSection({
   revisaoId,
   getAccessToken,
   readOnly = false,

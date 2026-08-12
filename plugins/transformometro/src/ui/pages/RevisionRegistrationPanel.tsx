@@ -36,21 +36,21 @@ import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { buildRevisaoDiagramaEditPath } from "../../utils/routeParser";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { parseApiEnvelope } from "../../data/api/transformometroHttp";
-import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
+import { RevisionEvidenceSection } from "../revision/registration/RevisionEvidenceSection";
 import { RevisaoDiagramSection } from "../../components/diagram/sections/RevisaoDiagramSection";
 import { RevisaoDecompositionSection } from "../../components/decomposition/RevisaoDecompositionSection";
-import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
-import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
-import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
-import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
-import { RevisaoMatrizImpactoSection } from "../revisao/RevisaoMatrizImpactoSection";
+import { RevisionInvestmentsSection } from "../revision/registration/RevisionInvestmentsSection";
+import { RevisionActivateToolbar } from "../revision/registration/RevisionActivateToolbar";
+import { RevisionMeasurementSection } from "../revision/registration/RevisionMeasurementSection";
+import { RevisionSharedResourcesSection } from "../revision/registration/RevisionSharedResourcesSection";
+import { RevisionImpactEffortMatrixSection } from "../revision/RevisionImpactEffortMatrixSection";
 import { RevisionWorkspaceSectionPanel } from "../processes/RevisionWorkspaceSectionPanel";
 import type { RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import {
   buildRevisaoVigenciaFromRevisao,
-  RevisaoVigenciaSection,
+  RevisionValiditySection,
   revisaoPayloadFromVigenciaForm,
-} from "../revisao/cadastro/RevisaoVigenciaSection";
+} from "../revision/registration/RevisionValiditySection";
 
 type RateioDiagnostic = {
   revisao_id: string;
@@ -102,7 +102,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate?: (path: string) => void;
 };
 
-export function RevisaoCadastroPanel({
+export function RevisionRegistrationPanel({
   revisao,
   revisoesReferencia = [],
   options,
@@ -434,7 +434,7 @@ export function RevisaoCadastroPanel({
 
   return (
     <div className="ds-cadastro-panel ds-cadastro-panel--cards">
-      <RevisaoAtivarToolbar
+      <RevisionActivateToolbar
         revisao={revisao}
         onError={onError}
         onActivate={handleActivate}
@@ -472,7 +472,7 @@ export function RevisaoCadastroPanel({
       <div className="tm-processo-workspace__sections">
       {revisao.cenario_tipo !== "baseline" ? (
         <RevisionWorkspaceSectionPanel active={activeSection === "matriz"} sectionId="matriz">
-          <RevisaoMatrizImpactoSection
+          <RevisionImpactEffortMatrixSection
             revisao={revisao}
             revisoesReferencia={revisoesReferencia}
             getAccessToken={getAccessToken}
@@ -496,7 +496,7 @@ export function RevisaoCadastroPanel({
         saving={savingVigencia}
         dirty={vigenciaDirty}
         readContent={
-          <RevisaoVigenciaSection
+          <RevisionValiditySection
             embeddedInCard
             readOnly
             revisaoId={revisao.revisao_id}
@@ -508,7 +508,7 @@ export function RevisaoCadastroPanel({
           />
         }
         editContent={
-          <RevisaoVigenciaSection
+          <RevisionValiditySection
             embeddedInCard
             hideSubmit
             revisaoId={revisao.revisao_id}
@@ -615,7 +615,7 @@ export function RevisaoCadastroPanel({
         saving={savingMedicao}
         dirty={medicaoDirty}
         readContent={
-          <RevisaoMedicaoSection
+          <RevisionMeasurementSection
             embeddedInCard
             readOnly
             medicao={medicao}
@@ -626,7 +626,7 @@ export function RevisaoCadastroPanel({
           />
         }
         editContent={
-          <RevisaoMedicaoSection
+          <RevisionMeasurementSection
             embeddedInCard
             hideSubmit
             medicao={medicao}
@@ -650,7 +650,7 @@ export function RevisaoCadastroPanel({
         onEdit={() => void sectionEdit.startEdit("investimentos")}
         onCancel={() => sectionEdit.cancelEdit("investimentos")}
         readContent={
-          <RevisaoInvestimentosSection
+          <RevisionInvestmentsSection
             embeddedInCard
             readOnly
             revisaoId={revisao.revisao_id}
@@ -662,7 +662,7 @@ export function RevisaoCadastroPanel({
           />
         }
         editContent={
-          <RevisaoInvestimentosSection
+          <RevisionInvestmentsSection
             embeddedInCard
             revisaoId={revisao.revisao_id}
             options={options}
@@ -683,7 +683,7 @@ export function RevisaoCadastroPanel({
         onEdit={() => void sectionEdit.startEdit("recursos")}
         onCancel={() => sectionEdit.cancelEdit("recursos")}
         readContent={
-          <RevisaoRecursosSection
+          <RevisionSharedResourcesSection
             embeddedInCard
             readOnly
             revisaoId={revisao.revisao_id}
@@ -696,7 +696,7 @@ export function RevisaoCadastroPanel({
           />
         }
         editContent={
-          <RevisaoRecursosSection
+          <RevisionSharedResourcesSection
             embeddedInCard
             revisaoId={revisao.revisao_id}
             options={options}
@@ -718,7 +718,7 @@ export function RevisaoCadastroPanel({
         onEdit={() => void sectionEdit.startEdit("evidencias")}
         onCancel={() => sectionEdit.cancelEdit("evidencias")}
         readContent={
-          <RevisaoEvidenciasSection
+          <RevisionEvidenceSection
             embeddedInCard
             readOnly
             revisaoId={revisao.revisao_id}
@@ -729,7 +729,7 @@ export function RevisaoCadastroPanel({
           />
         }
         editContent={
-          <RevisaoEvidenciasSection
+          <RevisionEvidenceSection
             embeddedInCard
             revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}

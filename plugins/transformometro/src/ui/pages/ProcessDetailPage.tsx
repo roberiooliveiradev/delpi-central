@@ -63,7 +63,7 @@ import { ProcessoDecompositionSection } from "../../components/decomposition/Pro
 import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
-import { ProcessoArquivosSection } from "../process/ProcessoArquivosSection";
+import { ProcessFilesSection } from "../process/ProcessFilesSection";
 import {
   masterPayloadFromProcessoForm,
   processFormFromEntity,
@@ -593,7 +593,7 @@ export function ProcessDetailPage({
             onEdit={() => void sectionEdit.startEdit("arquivos")}
             onCancel={() => sectionEdit.cancelEdit("arquivos")}
             readContent={
-              <ProcessoArquivosSection
+              <ProcessFilesSection
                 embeddedInCard
                 readOnly
                 processoId={processoId}
@@ -603,7 +603,7 @@ export function ProcessDetailPage({
               />
             }
             editContent={
-              <ProcessoArquivosSection
+              <ProcessFilesSection
                 embeddedInCard
                 processoId={processoId}
                 getAccessToken={getAccessToken}

@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   emptyInvestimentoForm,
-  investimentoFormFromEntity,
-  investimentoFormTotal,
+  investmentFormFromEntity,
+  investmentFormTotal,
   parseInvestimentoNumber,
   payloadFromInvestimentoForm,
-} from "./investimentoForm";
+} from "./investmentForm";
 import type { Investimento, OptionsData } from "../../data/api/transformometroApi";
 
 const options: OptionsData = {
@@ -15,7 +15,7 @@ const options: OptionsData = {
   categorias: ["software", "horas_internas"],
 } as OptionsData;
 
-describe("investimentoForm", () => {
+describe("investmentForm", () => {
   it("aceita valor unitário decimal no payload", () => {
     const form = {
       ...emptyInvestimentoForm(options),
@@ -26,7 +26,7 @@ describe("investimentoForm", () => {
     const payload = payloadFromInvestimentoForm(form);
     expect(payload.quantidade).toBe(120);
     expect(payload.valor_unitario).toBeCloseTo(38.61);
-    expect(investimentoFormTotal(form)).toBeCloseTo(4633.2);
+    expect(investmentFormTotal(form)).toBeCloseTo(4633.2);
   });
 
   it("aceita vírgula como separador decimal na digitação", () => {
@@ -47,7 +47,7 @@ describe("investimentoForm", () => {
       data_investimento: null,
       meses_vigencia: null,
     } as Investimento;
-    const form = investimentoFormFromEntity(inv);
+    const form = investmentFormFromEntity(inv);
     expect(form.valor_unitario).toBe("38.61");
     expect(form.quantidade).toBe("120");
   });

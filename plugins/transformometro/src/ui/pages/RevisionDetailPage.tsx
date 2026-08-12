@@ -26,7 +26,7 @@ import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { cenarioLabel } from "../../content/cenarioLabels";
-import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
+import { RevisionRegistrationPanel } from "./RevisionRegistrationPanel";
 import { ProcessWorkspaceShell, useRevisaoWorkspaceSection } from "../processes/ProcessWorkspaceShell";
 import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
@@ -43,7 +43,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   activeSection?: RevisaoWorkspaceSectionId;
 };
 
-export function RevisaoDetailPage({
+export function RevisionDetailPage({
   getAccessToken,
   processoId,
   instanciaId,
@@ -175,7 +175,7 @@ export function RevisaoDetailPage({
   const resolvedInstanciaId = revisao.instancia_id ?? instanciaId;
 
   const revisaoMain = (
-    <RevisaoCadastroPanel
+    <RevisionRegistrationPanel
       revisao={revisao}
       revisoesReferencia={revisoesInstancia}
       options={options}

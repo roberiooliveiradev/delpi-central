@@ -20,13 +20,13 @@ import {
   labelTipoInvestimento,
 } from "../../../utils/catalogLabels";
 import { formatCurrency, formatDecimal } from "../../../utils/format";
-import { InvestimentoFormFields } from "../InvestimentoFormFields";
+import { InvestmentFormFields } from "../InvestmentFormFields";
 import {
   emptyInvestimentoForm,
-  investimentoFormFromEntity,
+  investmentFormFromEntity,
   payloadFromInvestimentoForm,
-} from "../investimentoForm";
-import { CadastroSection } from "./CadastroSection";
+} from "../investmentForm";
+import { RegistrationSection } from "./RegistrationSection";
 import { useConfirm } from "../../../components/ui/ConfirmDialogProvider";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../../components/ghostChrome";
 import { EMPTY_STATE_CLASS } from "../../../components/emptyStateUi";
@@ -46,7 +46,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onReload: () => Promise<void>;
 };
 
-export function RevisaoInvestimentosSection({
+export function RevisionInvestmentsSection({
   revisaoId,
   options,
   investimentos,
@@ -75,7 +75,7 @@ export function RevisaoInvestimentosSection({
       setPage(Math.floor(index / CADASTRO_TABLE_PAGE_SIZE) + 1);
     }
     setEditingInvestimentoId(inv.investimento_id);
-    setEditInvForm(investimentoFormFromEntity(inv));
+    setEditInvForm(investmentFormFromEntity(inv));
   }
 
   function cancelEditInvestimento() {
@@ -235,7 +235,7 @@ export function RevisaoInvestimentosSection({
           <h4 className="ds-cadastro-subsection__title">
             Editar investimento — {editingInvestimento.descricao_item}
           </h4>
-          <InvestimentoFormFields
+          <InvestmentFormFields
             form={editInvForm}
             options={options}
             onChange={setEditInvForm}
@@ -258,7 +258,7 @@ export function RevisaoInvestimentosSection({
           onSubmit={handleAddInvestimento}
         >
           <h4 className="ds-cadastro-subsection__title">Adicionar investimento</h4>
-          <InvestimentoFormFields
+          <InvestmentFormFields
             form={invForm}
             options={options}
             onChange={setInvForm}
@@ -277,13 +277,13 @@ export function RevisaoInvestimentosSection({
   if (embeddedInCard) return body;
 
   return (
-    <CadastroSection
+    <RegistrationSection
       embedded
       title="Investimentos"
       hint="Custos únicos ou recorrentes ligados a esta revisão (software, equipamento, horas, etc.)."
       badge={`${investimentos.length}`}
     >
       {body}
-    </CadastroSection>
+    </RegistrationSection>
   );
 }

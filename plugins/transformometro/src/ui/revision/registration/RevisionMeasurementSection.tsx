@@ -3,7 +3,7 @@ import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { medicaoCategoriaHints } from "../../../content/beneficioCalculoLabels";
 import { toMonthInputValue } from "../../../utils/dateInputs";
-import { CadastroSection } from "./CadastroSection";
+import { RegistrationSection } from "./RegistrationSection";
 import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN } from "../../../components/filterChrome";
 
@@ -61,7 +61,7 @@ function MedicaoReadContent({
   );
 }
 
-export function RevisaoMedicaoSection({
+export function RevisionMeasurementSection({
   medicao,
   beneficioCalculoCategoria,
   volumeReferencia,
@@ -81,9 +81,9 @@ export function RevisaoMedicaoSection({
     const content = <MedicaoReadContent medicao={medicao} hints={hints} />;
     if (embeddedInCard) return content;
     return (
-      <CadastroSection embedded title="Medição operacional">
+      <RegistrationSection embedded title="Medição operacional">
         {content}
-      </CadastroSection>
+      </RegistrationSection>
     );
   }
 
@@ -241,12 +241,12 @@ export function RevisaoMedicaoSection({
   if (embeddedInCard) return form;
 
   return (
-    <CadastroSection
+    <RegistrationSection
       embedded
       title="Medição operacional"
       hint="Volume, tempos e custos usados para calcular economia bruta da revisão."
     >
       {form}
-    </CadastroSection>
+    </RegistrationSection>
   );
 }

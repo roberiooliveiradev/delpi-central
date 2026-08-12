@@ -26,8 +26,8 @@ import { SelectField } from "../../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
-import { CadastroSection } from "./CadastroSection";
-import { RecursoPreviewCard } from "./RecursoPreviewCard";
+import { RegistrationSection } from "./RegistrationSection";
+import { SharedResourcePreviewCard } from "./SharedResourcePreviewCard";
 import { DS_GHOST_BTN } from "../../../components/ghostChrome";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE, DS_FILTER_BOX_WIDE_MOD } from "../../../components/filterChrome";
 import { EMPTY_STATE_CLASS } from "../../../components/emptyStateUi";
@@ -57,7 +57,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onReload: () => Promise<void>;
 };
 
-export function RevisaoRecursosSection({
+export function RevisionSharedResourcesSection({
   revisaoId,
   options,
   recursos,
@@ -424,7 +424,7 @@ export function RevisaoRecursosSection({
           />
         </label>
 
-        {recursoSelecionado ? <RecursoPreviewCard recurso={recursoSelecionado} /> : null}
+        {recursoSelecionado ? <SharedResourcePreviewCard recurso={recursoSelecionado} /> : null}
 
         <div className="ds-cadastro-form__actions">
           <button type="submit" className="ds-primary-btn" disabled={!vinculoForm.recurso_compartilhado_id}>
@@ -462,13 +462,13 @@ export function RevisaoRecursosSection({
   if (embeddedInCard) return body;
 
   return (
-    <CadastroSection
+    <RegistrationSection
       embedded
       title="Recursos compartilhados"
       hint="Vincule ferramentas do catálogo (ChatGPT, licenças, etc.). O custo entra no rateio conforme o critério do recurso."
       badge={`${vinculos.length} vínculo(s)`}
     >
       {body}
-    </CadastroSection>
+    </RegistrationSection>
   );
 }

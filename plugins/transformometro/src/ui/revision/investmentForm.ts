@@ -32,7 +32,7 @@ export function emptyInvestimentoForm(options?: OptionsData): InvestimentoFormSt
   };
 }
 
-export function investimentoFormFromEntity(inv: Investimento): InvestimentoFormState {
+export function investmentFormFromEntity(inv: Investimento): InvestimentoFormState {
   return {
     tipo_investimento: inv.tipo_investimento,
     descricao_item: inv.descricao_item,
@@ -52,7 +52,7 @@ export function parseInvestimentoNumber(raw: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-export function investimentoFormTotal(form: InvestimentoFormState): number | null {
+export function investmentFormTotal(form: InvestimentoFormState): number | null {
   const quantidade = parseInvestimentoNumber(form.quantidade);
   const unitario = parseInvestimentoNumber(form.valor_unitario);
   if (quantidade == null || unitario == null) return null;

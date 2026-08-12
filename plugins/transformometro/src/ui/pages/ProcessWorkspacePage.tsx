@@ -22,7 +22,7 @@ import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEnt
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { InstanceDetailPage } from "../pages/InstanceDetailPage";
 import { ProcessDetailPage } from "../pages/ProcessDetailPage";
-import { RevisaoDetailPage } from "../pages/RevisaoDetailPage";
+import { RevisionDetailPage } from "../pages/RevisionDetailPage";
 import { ProcessWorkspacePanel } from "../processes/ProcessWorkspacePanel";
 import {
   ProcessWorkspaceShell,
@@ -295,7 +295,7 @@ export function ProcessWorkspacePage({
 
     if (view === "revisao" && revisaoId) {
       return (
-        <RevisaoDetailPage
+        <RevisionDetailPage
           embedded
           embeddedActive={isActive}
           activeSection={activeRevisaoSection}

@@ -10,7 +10,7 @@ type Props = {
   onDelete?: () => void | Promise<void>;
 };
 
-export function RevisaoAtivarToolbar({ revisao, onError, onActivate, onDelete }: Props) {
+export function RevisionActivateToolbar({ revisao, onError, onActivate, onDelete }: Props) {
   const [busy, setBusy] = useState(false);
 
   async function handleActivate() {

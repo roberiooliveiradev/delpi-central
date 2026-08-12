@@ -17,7 +17,7 @@ type Props = {
   children: ReactNode;
 };
 
-export function CadastroTabs({ tabs, activeTab, onTabChange, children }: Props) {
+export function RegistrationTabs({ tabs, activeTab, onTabChange, children }: Props) {
   return (
     <div className="ds-cadastro-tabs">
       <div className="ds-cadastro-tabs__list" role="tablist" aria-label="Cadastro da revisão">

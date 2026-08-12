@@ -10,7 +10,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onChanged?: () => void;
 };
 
-export function ProcessoArquivosSection({
+export function ProcessFilesSection({
   processoId,
   getAccessToken,
   readOnly = false,

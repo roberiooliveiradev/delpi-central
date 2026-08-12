@@ -12,7 +12,7 @@ import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components
 import { revisaoDisplayLabel } from "../../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
-import { CadastroSection } from "./CadastroSection";
+import { RegistrationSection } from "./RegistrationSection";
 import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../../components/filterChrome";
 
@@ -92,7 +92,7 @@ function VigenciaReadContent({
   );
 }
 
-export function RevisaoVigenciaSection({
+export function RevisionValiditySection({
   revisaoVigencia,
   options,
   revisoesReferencia = [],
@@ -114,9 +114,9 @@ export function RevisaoVigenciaSection({
     );
     if (embeddedInCard) return content;
     return (
-      <CadastroSection embedded title="Vigência e identificação">
+      <RegistrationSection embedded title="Vigência e identificação">
         {content}
-      </CadastroSection>
+      </RegistrationSection>
     );
   }
 
@@ -290,13 +290,13 @@ export function RevisaoVigenciaSection({
   if (embeddedInCard) return form;
 
   return (
-    <CadastroSection
+    <RegistrationSection
       embedded
       title="Vigência e identificação"
       hint="Versão, cenário, categoria de cálculo e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
     >
       {form}
-    </CadastroSection>
+    </RegistrationSection>
   );
 }
 

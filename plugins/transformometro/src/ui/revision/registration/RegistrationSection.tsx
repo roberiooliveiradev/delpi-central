@@ -10,7 +10,7 @@ type Props = {
   embedded?: boolean;
 };
 
-export function CadastroSection({
+export function RegistrationSection({
   title,
   hint,
   badge,

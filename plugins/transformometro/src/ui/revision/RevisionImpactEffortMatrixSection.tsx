@@ -134,7 +134,7 @@ function ScaleField({ label, hint, value, onChange, idPrefix }: ScaleFieldProps)
   );
 }
 
-export function RevisaoMatrizImpactoSection({
+export function RevisionImpactEffortMatrixSection({
   revisao,
   revisoesReferencia = [],
   getAccessToken,

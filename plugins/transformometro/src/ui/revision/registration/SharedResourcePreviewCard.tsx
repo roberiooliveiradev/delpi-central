@@ -7,7 +7,7 @@ type Props = {
   recurso: RecursoCompartilhado;
 };
 
-export function RecursoPreviewCard({ recurso }: Props) {
+export function SharedResourcePreviewCard({ recurso }: Props) {
   return (
     <div className="ds-resource-preview" role="region" aria-label="Dados do recurso selecionado">
       <p className="ds-resource-preview__title">
