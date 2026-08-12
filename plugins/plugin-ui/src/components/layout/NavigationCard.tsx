@@ -2,9 +2,13 @@ import type { ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
+export type NavigationCardDensity = "default" | "featured";
+
 export type NavigationCardClassNames = {
   root: string;
   rootHorizontal: string;
+  rootFeatured: string;
+  rootFeaturedHorizontal: string;
   icon: string;
   body: string;
   eyebrow: string;
@@ -22,6 +26,11 @@ export type NavigationCardProps = {
   meta?: string;
   disabled?: boolean;
   orientation?: "vertical" | "horizontal";
+  /**
+   * `featured` — hierarquia visual maior (launcher primary / bento hero tile).
+   * CSS: `.delpi-ui-nav-card--featured`.
+   */
+  density?: NavigationCardDensity;
   className?: string;
   "aria-label"?: string;
   classNames: NavigationCardClassNames;
@@ -38,6 +47,11 @@ export function navigationCardBemClasses(prefix: string): NavigationCardClassNam
     rootHorizontal: pair(
       `${base} ${base}--horizontal`,
       `${ui} ${ui}--horizontal`,
+    ),
+    rootFeatured: pair(`${base} ${base}--featured`, `${ui} ${ui}--featured`),
+    rootFeaturedHorizontal: pair(
+      `${base} ${base}--horizontal ${base}--featured`,
+      `${ui} ${ui}--horizontal ${ui}--featured`,
     ),
     icon: pair(`${base}__icon`, `${ui}__icon`),
     body: pair(`${base}__body`, `${ui}__body`),
@@ -62,16 +76,21 @@ export function NavigationCard({
   meta,
   disabled = false,
   orientation = "vertical",
+  density = "default",
   className,
   "aria-label": ariaLabel,
   classNames,
 }: NavigationCardProps) {
-  const rootClass = [
-    orientation === "horizontal" ? classNames.rootHorizontal : classNames.root,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const featured = density === "featured";
+  const baseRoot =
+    orientation === "horizontal"
+      ? featured
+        ? classNames.rootFeaturedHorizontal
+        : classNames.rootHorizontal
+      : featured
+        ? classNames.rootFeatured
+        : classNames.root;
+  const rootClass = [baseRoot, className].filter(Boolean).join(" ");
 
   return (
     <button
@@ -80,6 +99,7 @@ export function NavigationCard({
       disabled={disabled}
       onClick={onClick}
       aria-label={ariaLabel ?? title}
+      data-density={density}
     >
       {icon ? (
         <span className={classNames.icon} aria-hidden={true}>

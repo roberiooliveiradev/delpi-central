@@ -95,7 +95,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "NavigationCard", {
     addedAt: "2026-07-16",
-    description: "Card clicável de navegação/atalho (unidades, submódulos).",
+    description:
+      "Card clicável de navegação/atalho (unidades, submódulos); density featured para launcher primary.",
   }),
   vc("layout", "PreviewDetailCard", {
     addedAt: "2026-07-31",

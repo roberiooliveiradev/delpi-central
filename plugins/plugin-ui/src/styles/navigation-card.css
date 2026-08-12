@@ -34,6 +34,35 @@
   gap: 12px;
 }
 
+/** Launcher primary / bento — mais padding, título e ícone maiores. */
+.delpi-ui-nav-card--featured {
+  gap: 14px;
+  padding: 22px 20px;
+  min-height: 132px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 86%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%
+  );
+}
+
+.delpi-ui-nav-card--featured .delpi-ui-nav-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.delpi-ui-nav-card--featured .delpi-ui-nav-card__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.delpi-ui-nav-card--featured .delpi-ui-nav-card__description {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
 .delpi-ui-nav-card:focus-visible {
   outline: none;
   box-shadow: var(
