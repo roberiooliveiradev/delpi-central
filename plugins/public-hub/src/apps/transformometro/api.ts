@@ -47,7 +47,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 
 export async function fetchPublicSignContext(token: string): Promise<PublicSignContext | null> {
   const response = await fetch(
-    `${API_BASE}/public/atas/sign-invites/${encodeURIComponent(token)}`,
+    `${API_BASE}/public/meeting-minutes/sign-invites/${encodeURIComponent(token)}`,
     { headers: { Accept: "application/json" } },
   );
   if (response.status === 404) return null;
@@ -69,7 +69,7 @@ export async function submitPublicSign(
   form.append("terms_accepted", "true");
   form.append("session_id", crypto.randomUUID());
   const response = await fetch(
-    `${API_BASE}/public/atas/sign-invites/${encodeURIComponent(token)}/sign`,
+    `${API_BASE}/public/meeting-minutes/sign-invites/${encodeURIComponent(token)}/sign`,
     { method: "POST", body: form, headers: { Accept: "application/json" } },
   );
   if (response.ok) return { ok: true };
@@ -85,7 +85,7 @@ export async function submitPublicRefuse(
   reason: string,
 ): Promise<PublicActionResult> {
   const response = await fetch(
-    `${API_BASE}/public/atas/sign-invites/${encodeURIComponent(token)}/refuse`,
+    `${API_BASE}/public/meeting-minutes/sign-invites/${encodeURIComponent(token)}/refuse`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
