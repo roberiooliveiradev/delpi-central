@@ -12,7 +12,9 @@
   touch-action: none;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 12px;
-  background: #fff;
+  background:
+    linear-gradient(transparent 78%, rgba(148, 163, 184, 0.35) 78%, rgba(148, 163, 184, 0.35) 79%, transparent 79%),
+    #fff;
   cursor: crosshair;
 }
 
@@ -26,6 +28,14 @@
   color: var(--delpi-ui-muted, #64748b);
 }
 
+.delpi-ui-signature-pad__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.delpi-ui-signature-pad__btn,
 .delpi-ui-signature-pad__clear {
   align-self: flex-start;
   min-height: 44px;
@@ -35,6 +45,45 @@
   background: var(--delpi-ui-surface, #fff);
   color: var(--delpi-ui-text, #111);
   cursor: pointer;
+  font: inherit;
+}
+
+.delpi-ui-signature-pad__btn:disabled,
+.delpi-ui-signature-pad__clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-signature-pad__stroke {
+  display: inline-flex;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.delpi-ui-signature-pad__stroke-btn {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-right: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  cursor: pointer;
+  font: inherit;
+}
+
+.delpi-ui-signature-pad__stroke-btn:last-child {
+  border-right: 0;
+}
+
+.delpi-ui-signature-pad__stroke-btn.is-active {
+  background: var(--delpi-ui-primary-soft, #e2e8f0);
+  font-weight: 600;
+}
+
+.delpi-ui-signature-pad__stroke-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .delpi-ui-user-directory-picker,
