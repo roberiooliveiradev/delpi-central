@@ -57,4 +57,36 @@ describe("Wave G worklist surface", () => {
     expect(screen.getByText("Confirmar NF e prazo de entrega")).toBeTruthy();
     expect(wlCn.detail).toContain("delpi-ui-worklist-item__detail");
   });
+
+  it("AlertQueue e WorklistItem renderizam leadingIcon", () => {
+    const alertCn = alertQueueBemClasses("cm");
+    const wlCn = worklistItemBemClasses("cm");
+    expect(alertCn.icon).toContain("delpi-ui-alert-queue__icon");
+    expect(wlCn.icon).toContain("delpi-ui-worklist-item__icon");
+
+    const { container: alertRoot } = render(
+      <AlertQueue
+        classNames={alertCn}
+        items={[
+          {
+            id: "1",
+            title: "Atraso",
+            leadingIcon: <span data-testid="alert-leading-icon">A</span>,
+          },
+        ]}
+      />,
+    );
+    expect(alertRoot.querySelector('[data-testid="alert-leading-icon"]')).toBeTruthy();
+    expect(alertRoot.querySelector(".delpi-ui-alert-queue__icon")).toBeTruthy();
+
+    const { container: wlRoot } = render(
+      <WorklistItem
+        classNames={wlCn}
+        title="Follow-up"
+        leadingIcon={<span data-testid="worklist-leading-icon">W</span>}
+      />,
+    );
+    expect(wlRoot.querySelector('[data-testid="worklist-leading-icon"]')).toBeTruthy();
+    expect(wlRoot.querySelector(".delpi-ui-worklist-item__icon")).toBeTruthy();
+  });
 });
