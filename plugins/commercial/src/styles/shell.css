@@ -27,24 +27,6 @@
   font: inherit;
 }
 
-.dashboard-commercial button:focus-visible,
-.dashboard-commercial input:focus-visible,
-.dashboard-commercial select:focus-visible,
-.dashboard-commercial a:focus-visible {
-  outline: 2px solid var(--cm-accent);
-  outline-offset: 2px;
-}
-
-/* CatalogSearchBar: chrome de foco só na borda do __field (kit) — não no input. */
-.dashboard-commercial .delpi-ui-catalog-search-bar__input:focus,
-.dashboard-commercial .delpi-ui-catalog-search-bar__input:focus-visible,
-.dashboard-commercial .cm-catalog-search__input:focus,
-.dashboard-commercial .cm-catalog-search__input:focus-visible {
-  outline: none;
-  outline-offset: 0;
-  box-shadow: none;
-}
-
 .cm-app-shell {
   max-width: var(--cm-max-width);
   margin: 0 auto;
