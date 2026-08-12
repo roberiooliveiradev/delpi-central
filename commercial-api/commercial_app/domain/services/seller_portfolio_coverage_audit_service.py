@@ -11,13 +11,17 @@ from commercial_app.domain.entities.portfolio_coverage import (
     PortfolioCoverageAudit,
     PortfolioCoverageRef,
     PortfolioOverlapSummary,
+    UncoveredCustomer,
 )
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
 )
+from commercial_app.domain.ports.open_orders_metrics_port import CustomerOpenOrderMetric
 
 _GAP_UNAVAILABLE_REASON = "customer_universe_not_available"
+_GAP_UNIVERSE_OPEN_ORDERS = "open_orders"
+_UNCOVERED_LIST_CAP = 100
 _OVERLAP_WARNING_CODE = "customer_in_other_portfolios"
 _OVERLAP_WARNING_MESSAGE = (
     "Este cliente já está vinculado a outra(s) carteira(s) ativa(s). "
@@ -34,15 +38,17 @@ def customer_coverage_key(code: str, store: str) -> tuple[str, str]:
 
 
 class SellerPortfolioCoverageAuditService:
-    """Auditoria de cobertura entre carteiras ativas (overlapping).
+    """Auditoria de cobertura entre carteiras ativas (overlapping + gap).
 
-    Gap (cobertura 0) depende de universo de clientes operacional (ex.: TOTVS);
-    sem essa fonte, o relatório marca gap como indisponível.
+    Gap (cobertura 0) usa universo operacional de clientes com pedido aberto.
     """
 
     def audit_active_portfolios(
         self,
         portfolios: Sequence[SellerPortfolio],
+        *,
+        universe_metrics: Sequence[CustomerOpenOrderMetric] | None = None,
+        uncovered_list_cap: int = _UNCOVERED_LIST_CAP,
     ) -> PortfolioCoverageAudit:
         active = [item for item in portfolios if item.active]
         by_customer: dict[
@@ -50,6 +56,7 @@ class SellerPortfolioCoverageAuditService:
             list[tuple[PortfolioCoverageRef, str | None]],
         ] = defaultdict(list)
 
+        covered_keys: set[tuple[str, str]] = set()
         for portfolio in active:
             ref = PortfolioCoverageRef(
                 id=portfolio.id,
@@ -64,6 +71,7 @@ class SellerPortfolioCoverageAuditService:
                 if not key[0] or not key[1] or key in seen_in_portfolio:
                     continue
                 seen_in_portfolio.add(key)
+                covered_keys.add(key)
                 by_customer[key].append((ref, customer.customer_name))
 
         overlapping: list[OverlappingCustomerCoverage] = []
@@ -74,7 +82,6 @@ class SellerPortfolioCoverageAuditService:
             by_customer.items(),
             key=lambda item: (item[0][0], item[0][1]),
         ):
-            # Dedup por portfolio_id (mesmo cliente listado 2x na mesma carteira).
             unique_refs: dict[str, PortfolioCoverageRef] = {}
             preferred_name: str | None = None
             for ref, name in entries:
@@ -108,13 +115,54 @@ class SellerPortfolioCoverageAuditService:
             )
         )
 
+        gap = self._build_gap(
+            covered_keys=covered_keys,
+            universe_metrics=universe_metrics,
+            uncovered_list_cap=uncovered_list_cap,
+        )
+
         return PortfolioCoverageAudit(
             overlapping=tuple(overlapping),
             portfolios_with_overlap=portfolios_with_overlap,
-            gap=CoverageGapStatus(
+            gap=gap,
+        )
+
+    def _build_gap(
+        self,
+        *,
+        covered_keys: set[tuple[str, str]],
+        universe_metrics: Sequence[CustomerOpenOrderMetric] | None,
+        uncovered_list_cap: int,
+    ) -> CoverageGapStatus:
+        if universe_metrics is None:
+            return CoverageGapStatus(
                 available=False,
                 reason=_GAP_UNAVAILABLE_REASON,
-            ),
+            )
+
+        uncovered_candidates: list[UncoveredCustomer] = []
+        for metric in universe_metrics:
+            key = customer_coverage_key(metric.customer_code, metric.customer_store)
+            if not key[0] or not key[1] or key in covered_keys:
+                continue
+            uncovered_candidates.append(
+                UncoveredCustomer(
+                    customer_code=key[0],
+                    customer_store=key[1],
+                    customer_name=metric.customer_name,
+                    open_value=float(metric.open_value or 0),
+                )
+            )
+
+        uncovered_candidates.sort(
+            key=lambda item: (-(item.open_value or 0.0), item.customer_code, item.customer_store)
+        )
+        cap = max(0, int(uncovered_list_cap))
+        return CoverageGapStatus(
+            available=True,
+            universe=_GAP_UNIVERSE_OPEN_ORDERS,
+            uncovered_count=len(uncovered_candidates),
+            uncovered=tuple(uncovered_candidates[:cap]),
         )
 
     def find_other_active_portfolios_for_customer(

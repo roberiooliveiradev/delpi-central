@@ -66,6 +66,41 @@ def test_load_summary_counts_customers_and_members() -> None:
     assert summary.totvs_metrics.reason == "open_orders_aggregation_not_wired"
 
 
+def test_load_summary_fills_totvs_metrics_from_port_rows() -> None:
+    from commercial_app.domain.ports.open_orders_metrics_port import CustomerOpenOrderMetric
+
+    service = SellerPortfolioLoadSummaryService()
+    summary = service.summarize(
+        [
+            _portfolio(
+                portfolio_id="p1",
+                name="Sul",
+                customers=(
+                    SellerCustomerAssignment("100", "01", "A"),
+                    SellerCustomerAssignment("200", "01", "B"),
+                ),
+                members=(
+                    SellerPortfolioMember(user_id="ana", role="owner"),
+                    SellerPortfolioMember(user_id="pedro", role="member"),
+                ),
+            ),
+        ],
+        metrics=[
+            CustomerOpenOrderMetric("100", "01", "A", 1000.0, True),
+            CustomerOpenOrderMetric("200", "01", "B", 250.0, False),
+        ],
+        totvs_available=True,
+    )
+    item = summary.portfolios[0]
+    assert item.open_value == 1250.0
+    assert item.attention_count == 1
+    assert summary.totvs_metrics.available is True
+    assert summary.totvs_metrics.reason is None
+    by_user = {row.user_id: row for row in summary.by_person}
+    assert by_user["ana"].open_value == 1250.0
+    assert by_user["ana"].attention_count == 1
+
+
 def test_load_summary_aggregates_by_person_with_customer_union() -> None:
     service = SellerPortfolioLoadSummaryService()
     summary = service.summarize(

@@ -29,11 +29,22 @@ class PortfolioOverlapSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class UncoveredCustomer:
+    customer_code: str
+    customer_store: str
+    customer_name: str | None = None
+    open_value: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class CoverageGapStatus:
-    """Gap (clientes em 0 carteiras) exige universo operacional externo."""
+    """Gap = clientes do universo operacional em 0 carteiras ativas."""
 
     available: bool
     reason: str | None = None
+    universe: str | None = None
+    uncovered_count: int = 0
+    uncovered: tuple[UncoveredCustomer, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

@@ -41,6 +41,18 @@ class Settings:
     DELPI_API_TIMEOUT: str = _get_env("DELPI_API_TIMEOUT", default="30")
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="commercial-api")
 
+    CORE_API_BASE_URL: str = _get_env(
+        "CORE_API_BASE_URL",
+        "DELPI_AUTH_CORE_API_URL",
+        default="http://core-api:8000",
+    )
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN",
+        "CORE_API_SERVICE_TOKEN",
+        default="",
+    )
+    CORE_API_TIMEOUT: str = _get_env("CORE_API_TIMEOUT", default="10")
+
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
     PLUGINS_DB_NAME: str | None = _get_env("PLUGINS_DB_NAME")

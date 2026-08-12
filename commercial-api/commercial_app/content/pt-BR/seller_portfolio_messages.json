@@ -8,7 +8,8 @@
     "targetNotFound": "Vendedor de destino não encontrado.",
     "targetInactive": "Não é possível transferir para um vendedor inativo.",
     "customerCodeStoreRequired": "Cada cliente precisa de customer_code e customer_store.",
-    "customerNotInSource": "Cliente {code}/{store} não pertence à carteira de origem."
+    "customerNotInSource": "Cliente {code}/{store} não pertence à carteira de origem.",
+    "portalAccessDenied": "Usuário sem acesso ao Portal Comercial."
   },
   "bulk": {
     "itemOk": "ok",

@@ -14,7 +14,13 @@ from commercial_app.domain.ports.task_repository_port import (
     ActivityRepositoryPort,
     TaskRepositoryPort,
 )
+from commercial_app.infrastructure.gateways.core_api_portal_access import (
+    CoreApiPortalAccessPort,
+)
 from commercial_app.infrastructure.gateways.delpi_commercial_gateway import DelpiCommercialGateway
+from commercial_app.infrastructure.gateways.delpi_open_orders_metrics_adapter import (
+    DelpiOpenOrdersMetricsAdapter,
+)
 from commercial_app.infrastructure.persistence.repositories.legacy_postgres_customer_avatar_repository import (
     LegacyPostgresCustomerAvatarRepository,
 )
@@ -30,6 +36,7 @@ from commercial_app.infrastructure.persistence.repositories.postgres_audit_log_r
 from commercial_app.infrastructure.security.permissive_portal_access import (
     PermissivePortalAccessPort,
 )
+from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.infrastructure.persistence.repositories.postgres_customer_avatar_repository import (
     PostgresCustomerAvatarRepository,
 )
@@ -71,13 +78,23 @@ def build_audit_log_repository() -> PostgresAuditLogRepository:
     return PostgresAuditLogRepository()
 
 
+def build_portal_access_port() -> PortalAccessPort:
+    port = CoreApiPortalAccessPort()
+    if port.configured():
+        return port
+    return PermissivePortalAccessPort()
+
+
 def build_manage_seller_portfolio_use_case() -> ManageSellerPortfolioUseCase:
     global _portfolio_use_case
     if _portfolio_use_case is None:
         _portfolio_use_case = ManageSellerPortfolioUseCase(
             repository=build_seller_portfolio_repository(),
             audit_repository=build_audit_log_repository(),
-            portal_access=PermissivePortalAccessPort(),
+            portal_access=build_portal_access_port(),
+            open_orders_metrics=DelpiOpenOrdersMetricsAdapter(
+                gateway=build_delpi_commercial_gateway(),
+            ),
         )
     return _portfolio_use_case
 

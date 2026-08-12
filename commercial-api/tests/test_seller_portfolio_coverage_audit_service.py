@@ -63,6 +63,32 @@ def test_audit_detects_overlapping_customers_across_active_portfolios() -> None:
     assert audit.gap.reason == "customer_universe_not_available"
 
 
+def test_audit_gap_uses_open_orders_universe() -> None:
+    from commercial_app.domain.ports.open_orders_metrics_port import CustomerOpenOrderMetric
+
+    service = SellerPortfolioCoverageAuditService()
+    audit = service.audit_active_portfolios(
+        [
+            _portfolio(
+                portfolio_id="p1",
+                name="Carteira A",
+                customers=(SellerCustomerAssignment("100", "01", "Cliente 100"),),
+            ),
+        ],
+        universe_metrics=[
+            CustomerOpenOrderMetric("100", "01", "Cliente 100", 50.0, False),
+            CustomerOpenOrderMetric("999", "01", "Sem cobertura", 900.0, True),
+            CustomerOpenOrderMetric("888", "01", "Outro", 100.0, False),
+        ],
+        uncovered_list_cap=10,
+    )
+    assert audit.gap.available is True
+    assert audit.gap.universe == "open_orders"
+    assert audit.gap.uncovered_count == 2
+    assert [item.customer_code for item in audit.gap.uncovered] == ["999", "888"]
+    assert audit.gap.uncovered[0].open_value == 900.0
+
+
 def test_audit_ignores_duplicate_customer_within_same_portfolio() -> None:
     service = SellerPortfolioCoverageAuditService()
     audit = service.audit_active_portfolios(

@@ -29,7 +29,6 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     customer_shared_coverage_to_dict,
     load_summary_to_dict,
     parse_customer_assignments,
-    portfolio_to_dict,
 )
 from commercial_app.composition.commercial_composer import build_manage_seller_portfolio_use_case
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
@@ -87,14 +86,16 @@ def get_my_seller_portfolio(request: Request):
         user_id = _current_user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="get_my_seller_portfolio")
-        portfolios = _use_case().get_me_portfolios(user_id)
+        use_case = _use_case()
+        portfolios = use_case.get_me_portfolios(user_id)
         first = portfolios[0] if portfolios else None
+        serialized = use_case.serialize_portfolios(portfolios)
         user = current_user_from_request(request)
         return ok(
             {
                 "user_id": user_id,
-                "portfolio": portfolio_to_dict(first) if first else None,
-                "portfolios": [portfolio_to_dict(item) for item in portfolios],
+                "portfolio": serialized[0] if serialized else None,
+                "portfolios": serialized,
                 # is_admin = somente manage (CRUD). Filtro equipe = team_scope no MFE.
                 "is_admin": can_manage_portfolios(user),
                 "capabilities": {
@@ -216,7 +217,7 @@ def list_seller_portfolios(
         )
         portfolios = _use_case().list_portfolios(active_only=force_active)
         return ok(
-            {"items": [portfolio_to_dict(item) for item in portfolios]},
+            {"items": _use_case().serialize_portfolios(portfolios)},
             message="Carteiras carregadas com sucesso.",
             operation_id="list_seller_portfolios",
         )
@@ -247,7 +248,7 @@ def create_seller_portfolio(request: Request, body: CreatePortfolioBody = Body(.
             )
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira cadastrada com sucesso.",
             status_code=201,
             operation_id="create_seller_portfolio",
@@ -276,7 +277,7 @@ def get_seller_portfolio(
         if not _can_access_portfolio(request, portfolio):
             return fail("Sem permissão para esta carteira.", 403, operation_id="get_seller_portfolio")
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira carregada com sucesso.",
             operation_id="get_seller_portfolio",
         )
@@ -350,7 +351,7 @@ def update_seller_portfolio(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira atualizada com sucesso.",
             operation_id="update_seller_portfolio",
         )
@@ -379,7 +380,7 @@ def deactivate_seller_portfolio(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira desativada com sucesso.",
             operation_id="deactivate_seller_portfolio",
         )
@@ -406,7 +407,7 @@ def purge_seller_portfolio(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira excluída em definitivo.",
             operation_id="purge_seller_portfolio",
         )
@@ -439,7 +440,7 @@ def replace_seller_customers(
             customers=customers,
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Carteira de clientes atualizada.",
             operation_id="replace_seller_customers",
         )
@@ -513,7 +514,7 @@ def remove_seller_customer(
             customer_store=customer_store,
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Cliente removido da carteira.",
             operation_id="remove_seller_customer",
         )
@@ -547,7 +548,7 @@ def replace_seller_portfolio_members(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Membros da carteira atualizados.",
             operation_id="replace_seller_portfolio_members",
         )
@@ -579,7 +580,7 @@ def add_seller_portfolio_member(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Membro adicionado à carteira.",
             operation_id="add_seller_portfolio_member",
         )
@@ -613,7 +614,7 @@ def remove_seller_portfolio_member(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Membro removido da carteira.",
             operation_id="remove_seller_portfolio_member",
         )
@@ -644,7 +645,7 @@ def set_seller_portfolio_owner(
             actor_user_id=_current_user_id(request),
         )
         return ok(
-            portfolio_to_dict(portfolio),
+            _use_case().serialize_portfolio(portfolio),
             message="Owner da carteira atualizado.",
             operation_id="set_seller_portfolio_owner",
         )
@@ -677,8 +678,8 @@ def transfer_seller_customers(request: Request, body: TransferCustomersBody = Bo
         )
         return ok(
             {
-                "source": portfolio_to_dict(source),
-                "target": portfolio_to_dict(target),
+                "source": _use_case().serialize_portfolio(source),
+                "target": _use_case().serialize_portfolio(target),
                 "transferred_count": len(customers),
             },
             message="Clientes transferidos com sucesso.",

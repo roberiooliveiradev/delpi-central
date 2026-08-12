@@ -1556,6 +1556,10 @@ services:
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
       DELPI_API_CALLER_APP: commercial-api
 
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
@@ -1574,6 +1578,7 @@ services:
       - keycloak
       - postgres-plugins
       - api-delpi
+      - core-api
 
     networks:
       - delpi-network

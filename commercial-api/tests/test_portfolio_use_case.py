@@ -121,7 +121,7 @@ def test_replace_members_success() -> None:
 def test_create_portfolio_rejects_without_portal_access() -> None:
     repository = MagicMock()
     portal = MagicMock()
-    portal.has_commercial_portal_access.return_value = False
+    portal.has_commercial_portal_access_batch.return_value = {"u1": False}
     use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
 
     try:
@@ -137,7 +137,7 @@ def test_create_portfolio_rejects_without_portal_access() -> None:
 def test_add_member_rejects_without_portal_access() -> None:
     repository = MagicMock()
     portal = MagicMock()
-    portal.has_commercial_portal_access.return_value = False
+    portal.has_commercial_portal_access_batch.return_value = {"u2": False}
     use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
 
     try:
@@ -266,9 +266,56 @@ def test_portfolio_to_dict_includes_members_and_owner() -> None:
     )
     assert payload["owner_user_id"] == "u1"
     assert payload["members"] == [
-        {"user_id": "u1", "role": "owner"},
-        {"user_id": "u2", "role": "member"},
+        {"user_id": "u1", "role": "owner", "has_portal_access": True},
+        {"user_id": "u2", "role": "member", "has_portal_access": True},
     ]
+
+
+def test_portfolio_to_dict_includes_portal_access_from_map() -> None:
+    payload = portfolio_to_dict(
+        _portfolio(
+            members=(
+                SellerPortfolioMember(user_id="u1", role="owner"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            )
+        ),
+        portal_access_by_user={"u1": True, "u2": False},
+    )
+    assert payload["members"][0]["has_portal_access"] is True
+    assert payload["members"][1]["has_portal_access"] is False
+
+
+def test_serialize_portfolio_batches_portal_lookup() -> None:
+    repository = MagicMock()
+    portal = MagicMock()
+    portal.has_commercial_portal_access_batch.return_value = {
+        "u1": True,
+        "u2": False,
+    }
+    use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
+    payload = use_case.serialize_portfolio(
+        _portfolio(
+            members=(
+                SellerPortfolioMember(user_id="u1", role="owner"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            )
+        )
+    )
+    portal.has_commercial_portal_access_batch.assert_called_once()
+    assert payload["members"][1]["has_portal_access"] is False
+
+
+def test_ensure_portal_access_uses_batch_and_content_message() -> None:
+    repository = MagicMock()
+    portal = MagicMock()
+    portal.has_commercial_portal_access_batch.return_value = {"u-blocked": False}
+    use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
+    try:
+        use_case._ensure_portal_access(["u-blocked"])
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "Portal Comercial" in str(exc)
+    portal.has_commercial_portal_access_batch.assert_called_once_with(["u-blocked"])
 
 
 def test_transfer_customers_requires_reason_note() -> None:

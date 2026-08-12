@@ -46,6 +46,17 @@ class DelpiCommercialGateway:
             json_body=payload,
         )
 
+    def list_customer_open_order_metrics(
+        self,
+        *,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/pedidos-venda-abertos/customers/open-order-metrics",
+            json_body=payload or {},
+        )
+
     def _request(
         self,
         method: str,

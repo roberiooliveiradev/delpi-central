@@ -17,6 +17,7 @@ from commercial_app.domain.entities.seller_portfolio import (
     SellerPortfolioMember,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
+from commercial_app.domain.ports.open_orders_metrics_port import OpenOrdersMetricsPort
 from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -37,8 +38,6 @@ from commercial_app.domain.services.seller_portfolio_messages_content_service im
 _ENTITY_SELLER_PORTFOLIO = "seller_portfolio"
 _TRANSFER_TARGET_KEY = "target_portfolio_id"
 
-_PORTAL_ACCESS_DENIED = "Usuário sem acesso ao Portal Comercial."
-
 
 def _normalize_code(value: str) -> str:
     return str(value or "").strip()
@@ -48,11 +47,40 @@ def customer_key(code: str, store: str) -> tuple[str, str]:
     return (_normalize_code(code), _normalize_code(store))
 
 
-def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
+def _member_user_ids(portfolio: SellerPortfolio) -> list[str]:
     members = [
-        {"user_id": member.user_id, "role": member.role}
+        _normalize_code(member.user_id)
         for member in portfolio.members
+        if _normalize_code(member.user_id)
     ]
+    if members:
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for user_id in members:
+            if user_id in seen:
+                continue
+            seen.add(user_id)
+            ordered.append(user_id)
+        return ordered
+    owner = _normalize_code(portfolio.owner_user_id or portfolio.user_id)
+    return [owner] if owner else []
+
+
+def portfolio_to_dict(
+    portfolio: SellerPortfolio,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    members = []
+    for member in portfolio.members:
+        item: dict[str, Any] = {"user_id": member.user_id, "role": member.role}
+        if portal_access_by_user is not None:
+            item["has_portal_access"] = bool(
+                portal_access_by_user.get(_normalize_code(member.user_id), False)
+            )
+        else:
+            item["has_portal_access"] = True
+        members.append(item)
     member_count = len(members)
     if member_count == 0 and portfolio.user_id:
         member_count = 1
@@ -194,6 +222,17 @@ def coverage_audit_to_dict(audit: PortfolioCoverageAudit) -> dict[str, Any]:
         "gap": {
             "available": audit.gap.available,
             "reason": audit.gap.reason,
+            "universe": audit.gap.universe,
+            "uncovered_count": audit.gap.uncovered_count,
+            "uncovered": [
+                {
+                    "customer_code": item.customer_code,
+                    "customer_store": item.customer_store,
+                    "customer_name": item.customer_name,
+                    "open_value": item.open_value,
+                }
+                for item in audit.gap.uncovered
+            ],
         },
     }
 
@@ -233,8 +272,15 @@ def customer_shared_coverage_to_dict(
     }
 
 
-def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
-    payload = portfolio_to_dict(result.portfolio)
+def add_customer_result_to_dict(
+    result: AddCustomerResult,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    payload = portfolio_to_dict(
+        result.portfolio,
+        portal_access_by_user=portal_access_by_user,
+    )
     warning = customer_overlap_warning_to_dict(result.warning)
     if warning is not None:
         payload["warnings"] = [warning]
@@ -245,10 +291,20 @@ def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
     return payload
 
 
-def bulk_transfer_result_to_dict(result: BulkTransferResult) -> dict[str, Any]:
+def bulk_transfer_result_to_dict(
+    result: BulkTransferResult,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
     return {
-        "source": portfolio_to_dict(result.source),
-        "target": portfolio_to_dict(result.target),
+        "source": portfolio_to_dict(
+            result.source,
+            portal_access_by_user=portal_access_by_user,
+        ),
+        "target": portfolio_to_dict(
+            result.target,
+            portal_access_by_user=portal_access_by_user,
+        ),
         "transferred_count": result.transferred_count,
         "failed_count": result.failed_count,
         "results": [
@@ -308,6 +364,7 @@ class ManageSellerPortfolioUseCase:
         coverage_audit: SellerPortfolioCoverageAuditService | None = None,
         load_summary: SellerPortfolioLoadSummaryService | None = None,
         audit_formatter: SellerPortfolioAuditFormatterService | None = None,
+        open_orders_metrics: OpenOrdersMetricsPort | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
@@ -316,13 +373,54 @@ class ManageSellerPortfolioUseCase:
         self._coverage_audit = coverage_audit or SellerPortfolioCoverageAuditService()
         self._load_summary = load_summary or SellerPortfolioLoadSummaryService()
         self._audit_formatter = audit_formatter or SellerPortfolioAuditFormatterService()
+        self._open_orders_metrics = open_orders_metrics
+
+    def _fetch_open_order_metrics(self):
+        if self._open_orders_metrics is None:
+            return None, False, "open_orders_aggregation_not_wired"
+        try:
+            metrics = self._open_orders_metrics.list_customer_metrics(None)
+            return metrics, True, None
+        except Exception:
+            return None, False, "open_orders_metrics_fetch_failed"
+
+    def _portal_access_map(self, user_ids: Sequence[str]) -> dict[str, bool] | None:
+        if self._portal_access is None:
+            return None
+        ids = [_normalize_code(uid) for uid in user_ids if _normalize_code(uid)]
+        if not ids:
+            return {}
+        return self._portal_access.has_commercial_portal_access_batch(ids)
+
+    def serialize_portfolio(self, portfolio: SellerPortfolio) -> dict[str, Any]:
+        access_map = self._portal_access_map(_member_user_ids(portfolio))
+        return portfolio_to_dict(portfolio, portal_access_by_user=access_map)
+
+    def serialize_portfolios(
+        self,
+        portfolios: Sequence[SellerPortfolio],
+    ) -> list[dict[str, Any]]:
+        all_ids: list[str] = []
+        for portfolio in portfolios:
+            all_ids.extend(_member_user_ids(portfolio))
+        access_map = self._portal_access_map(all_ids)
+        return [
+            portfolio_to_dict(item, portal_access_by_user=access_map)
+            for item in portfolios
+        ]
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
             return
+        access_map = self._portal_access.has_commercial_portal_access_batch(user_ids)
         for uid in user_ids:
-            if not self._portal_access.has_commercial_portal_access(uid):
-                raise ValueError(_PORTAL_ACCESS_DENIED)
+            normalized = _normalize_code(uid)
+            if not normalized:
+                continue
+            if not access_map.get(normalized, False):
+                raise ValueError(
+                    SellerPortfolioMessagesContentService.error("portalAccessDenied")
+                )
 
     def _append_audit(
         self,
@@ -392,9 +490,13 @@ class ManageSellerPortfolioUseCase:
         return self._repository.get_by_id(portfolio_id)
 
     def audit_customer_coverage(self) -> PortfolioCoverageAudit:
-        """Relatório de overlapping entre carteiras ativas (gap só se houver universo)."""
+        """Relatório de overlapping + gap (universo = clientes com pedido aberto)."""
         portfolios = self._repository.list_portfolios(active_only=True)
-        return self._coverage_audit.audit_active_portfolios(portfolios)
+        metrics, available, _reason = self._fetch_open_order_metrics()
+        return self._coverage_audit.audit_active_portfolios(
+            portfolios,
+            universe_metrics=metrics if available else None,
+        )
 
     def lookup_customer_shared_coverage(
         self,
@@ -438,9 +540,15 @@ class ManageSellerPortfolioUseCase:
         )
 
     def summarize_portfolio_load(self, *, active_only: bool = False) -> PortfolioLoadSummary:
-        """KPIs de carga (clientes/membros; TOTVS stub até wiring)."""
+        """KPIs de carga (clientes/membros + métricas TOTVS quando disponíveis)."""
         portfolios = self._repository.list_portfolios(active_only=active_only)
-        return self._load_summary.summarize(portfolios)
+        metrics, available, reason = self._fetch_open_order_metrics()
+        return self._load_summary.summarize(
+            portfolios,
+            metrics=metrics if available else None,
+            totvs_available=available,
+            totvs_reason=reason,
+        )
 
     def create_portfolio(self, request: CreatePortfolioRequest) -> SellerPortfolio:
         display_name = _normalize_code(request.display_name)
