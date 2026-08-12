@@ -117,7 +117,12 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
   return (
     <section className="cm-page-stack">
-      <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.otd.title} />
+      <AnalyticsDeepPagePath
+        basePath={basePath}
+        current={ANALYTICS_CONTENT.otd.title}
+        backTo="home"
+        viewId="analytics_otd"
+      />
       <CommercialPageHero
         aria-label={ANALYTICS_CONTENT.otd.title}
         title={

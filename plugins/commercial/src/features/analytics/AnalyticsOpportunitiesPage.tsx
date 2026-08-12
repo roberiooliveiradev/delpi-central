@@ -97,6 +97,8 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
       <AnalyticsDeepPagePath
         basePath={basePath}
         current={ANALYTICS_CONTENT.oportunidades.title}
+        backTo="home"
+        viewId="analytics_opportunities"
       />
       <CommercialPageHero
         aria-label={ANALYTICS_CONTENT.oportunidades.title}

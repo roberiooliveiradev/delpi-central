@@ -27,7 +27,7 @@ export const ANALYTICS_CONTENT = {
     },
   },
   otd: {
-    title: "OTD de pedidos",
+    title: "Pontualidade (OTD)",
     subtitle: "Painel de on-time delivery por linha de pedido de venda.",
     lineDetail: "Detalhe da linha de pedido selecionada.",
   },

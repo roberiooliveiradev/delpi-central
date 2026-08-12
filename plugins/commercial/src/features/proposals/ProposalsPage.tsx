@@ -106,6 +106,7 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         basePath={basePath}
         current={PROPOSALS_CONTENT.list.title}
         backTo="home"
+        viewId="proposals"
       />
       <CommercialPageHero
         aria-label={PROPOSALS_CONTENT.list.title}
