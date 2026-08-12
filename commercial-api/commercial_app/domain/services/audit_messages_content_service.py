@@ -24,6 +24,10 @@ class AuditMessagesContentService:
     """Loader canônico de textos PT-BR de auditoria (JSON)."""
 
     @classmethod
+    def clear_cache(cls) -> None:
+        load_audit_messages.cache_clear()
+
+    @classmethod
     def bundle(cls) -> dict[str, Any]:
         return load_audit_messages()
 

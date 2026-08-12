@@ -1,5 +1,7 @@
 {
   "titles": {
+    "seller_portfolio.create": "Carteira criada",
+    "seller_portfolio.rename": "Nome alterado",
     "seller_portfolio.add_member": "Membro adicionado",
     "seller_portfolio.remove_member": "Membro removido",
     "seller_portfolio.replace_members": "Membros atualizados",
@@ -7,10 +9,15 @@
     "seller_portfolio.deactivate": "Carteira inativada",
     "seller_portfolio.reactivate": "Carteira reativada",
     "seller_portfolio.purge": "Carteira excluída",
+    "seller_portfolio.add_customer": "Cliente vinculado",
+    "seller_portfolio.remove_customer": "Cliente desvinculado",
+    "seller_portfolio.replace_customers": "Clientes atualizados",
     "seller_portfolio.transfer_customers": "Clientes transferidos",
     "seller_portfolio.transfer_customers_bulk": "Transferência em massa"
   },
   "messages": {
+    "seller_portfolio.create": "Carteira «{display_name}» criada com {member_count} usuário(s).",
+    "seller_portfolio.rename": "Nome alterado de «{previous_display_name}» para «{display_name}».",
     "seller_portfolio.add_member": "Usuário {user_id} adicionado como {role_label}.",
     "seller_portfolio.remove_member": "Usuário {user_id} removido da carteira.",
     "seller_portfolio.replace_members": "Composição de membros atualizada ({member_count} usuário(s)).",
@@ -18,6 +25,9 @@
     "seller_portfolio.deactivate": "Carteira saiu do escopo operacional.",
     "seller_portfolio.reactivate": "Carteira voltou ao escopo operacional.",
     "seller_portfolio.purge": "Carteira «{display_name}» excluída em definitivo ({customer_count} cliente(s) desvinculados).",
+    "seller_portfolio.add_customer": "Cliente {customer_label} ({customer_code}/{customer_store}) vinculado à carteira.",
+    "seller_portfolio.remove_customer": "Cliente {customer_label} ({customer_code}/{customer_store}) desvinculado da carteira.",
+    "seller_portfolio.replace_customers": "Lista de clientes substituída ({customer_count} vínculo(s)).",
     "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos da origem {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}.",
     "seller_portfolio.transfer_customers_bulk": "Transferência em massa: {transferred_count} ok, {failed_count} falha(s) de {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}."
   },
@@ -26,6 +36,8 @@
     "member": "membro"
   },
   "tones": {
+    "seller_portfolio.create": "success",
+    "seller_portfolio.rename": "info",
     "seller_portfolio.add_member": "success",
     "seller_portfolio.remove_member": "warning",
     "seller_portfolio.replace_members": "info",
@@ -33,6 +45,9 @@
     "seller_portfolio.deactivate": "warning",
     "seller_portfolio.reactivate": "success",
     "seller_portfolio.purge": "danger",
+    "seller_portfolio.add_customer": "success",
+    "seller_portfolio.remove_customer": "warning",
+    "seller_portfolio.replace_customers": "info",
     "seller_portfolio.transfer_customers": "info",
     "seller_portfolio.transfer_customers_bulk": "info"
   },

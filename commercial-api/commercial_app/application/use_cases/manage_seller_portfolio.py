@@ -586,7 +586,18 @@ class ManageSellerPortfolioUseCase:
                 customers=request.customers,
             )
             if updated is not None:
-                return updated
+                portfolio = updated
+        self._append_audit(
+            actor_user_id=request.created_by_user_id,
+            action="seller_portfolio.create",
+            entity_id=portfolio.id,
+            payload={
+                "display_name": portfolio.display_name,
+                "member_count": len(portfolio.members) or len(all_new),
+                "customer_count": len(portfolio.customers),
+                "owner_user_id": portfolio.owner_user_id or owner,
+            },
+        )
         return portfolio
 
     def update_portfolio(
@@ -599,7 +610,11 @@ class ManageSellerPortfolioUseCase:
     ) -> SellerPortfolio:
         if display_name is not None and not _normalize_code(display_name):
             raise ValueError("display_name não pode ser vazio.")
-        previous = self._repository.get_by_id(portfolio_id) if active is not None else None
+        previous = (
+            self._repository.get_by_id(portfolio_id)
+            if active is not None or display_name is not None
+            else None
+        )
         updated = self._repository.update_portfolio(
             portfolio_id=portfolio_id,
             display_name=_normalize_code(display_name) if display_name is not None else None,
@@ -619,6 +634,20 @@ class ManageSellerPortfolioUseCase:
                 action=action,
                 entity_id=portfolio_id,
                 payload={"active": updated.active},
+            )
+        if (
+            previous is not None
+            and display_name is not None
+            and previous.display_name != updated.display_name
+        ):
+            self._append_audit(
+                actor_user_id=actor_user_id,
+                action="seller_portfolio.rename",
+                entity_id=portfolio_id,
+                payload={
+                    "previous_display_name": previous.display_name,
+                    "display_name": updated.display_name,
+                },
             )
         return updated
 
@@ -671,6 +700,7 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         customers: Sequence[SellerCustomerAssignment],
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         updated = self._repository.replace_customers(
             portfolio_id=portfolio_id,
@@ -678,6 +708,12 @@ class ManageSellerPortfolioUseCase:
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.replace_customers",
+            entity_id=portfolio_id,
+            payload={"customer_count": len(updated.customers)},
+        )
         return updated
 
     def add_customer(
@@ -685,6 +721,7 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         customer: SellerCustomerAssignment,
+        actor_user_id: str | None = None,
     ) -> AddCustomerResult:
         if not customer.customer_code or not customer.customer_store:
             raise ValueError("customer_code e customer_store são obrigatórios.")
@@ -700,6 +737,17 @@ class ManageSellerPortfolioUseCase:
         updated = self._repository.add_customer(portfolio_id=portfolio_id, customer=customer)
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.add_customer",
+            entity_id=portfolio_id,
+            payload={
+                "customer_code": customer.customer_code,
+                "customer_store": customer.customer_store,
+                "customer_name": customer.customer_name,
+                "overlap_portfolio_ids": [item.id for item in other],
+            },
+        )
         return AddCustomerResult(portfolio=updated, warning=warning)
 
     def remove_customer(
@@ -708,10 +756,19 @@ class ManageSellerPortfolioUseCase:
         portfolio_id: str,
         customer_code: str,
         customer_store: str,
+        actor_user_id: str | None = None,
+        customer_name: str | None = None,
     ) -> SellerPortfolio:
         code, store = customer_key(customer_code, customer_store)
         if not code or not store:
             raise ValueError("customer_code e customer_store são obrigatórios.")
+        current = self._repository.get_by_id(portfolio_id)
+        resolved_name = customer_name
+        if current is not None and not resolved_name:
+            for item in current.customers:
+                if item.customer_code == code and item.customer_store == store:
+                    resolved_name = item.customer_name
+                    break
         updated = self._repository.remove_customer(
             portfolio_id=portfolio_id,
             customer_code=code,
@@ -719,6 +776,16 @@ class ManageSellerPortfolioUseCase:
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.remove_customer",
+            entity_id=portfolio_id,
+            payload={
+                "customer_code": code,
+                "customer_store": store,
+                "customer_name": resolved_name,
+            },
+        )
         return updated
 
     def replace_members(

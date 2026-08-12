@@ -31,12 +31,40 @@ def _portfolio(**kwargs) -> SellerPortfolio:
 
 
 def test_audit_messages_content_has_portfolio_actions() -> None:
+    AuditMessagesContentService.clear_cache()
     bundle = AuditMessagesContentService.bundle()
     assert "seller_portfolio.add_member" in bundle["titles"]
     assert "seller_portfolio.transfer_customers" in bundle["messages"]
     assert "seller_portfolio.transfer_customers_bulk" in bundle["titles"]
     assert "seller_portfolio.transfer_customers_bulk" in bundle["messages"]
+    assert "seller_portfolio.add_customer" in bundle["titles"]
+    assert "seller_portfolio.remove_customer" in bundle["messages"]
+    assert "seller_portfolio.create" in bundle["titles"]
+    assert "seller_portfolio.rename" in bundle["titles"]
+    assert "seller_portfolio.replace_customers" in bundle["titles"]
     assert AuditMessagesContentService.role_label("owner") == "responsável"
+
+
+def test_formatter_add_customer_uses_customer_name() -> None:
+    AuditMessagesContentService.clear_cache()
+    formatted = SellerPortfolioAuditFormatterService().format_entry(
+        AuditLogEntry(
+            id="a1",
+            actor_user_id="admin",
+            action="seller_portfolio.add_customer",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={
+                "customer_code": "000240",
+                "customer_store": "01",
+                "customer_name": "BUHLER DO BRASIL LTDA.",
+            },
+            created_at=None,
+        )
+    )
+    assert formatted["title"] == "Cliente vinculado"
+    assert "BUHLER DO BRASIL LTDA." in formatted["message"]
+    assert "000240/01" in formatted["message"]
 
 
 def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:

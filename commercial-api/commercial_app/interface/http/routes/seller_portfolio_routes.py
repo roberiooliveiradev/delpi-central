@@ -427,7 +427,7 @@ def purge_seller_portfolio(
 @router.put("/{portfolio_id}/customers", operation_id="replace_seller_customers")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def replace_seller_customers(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: ReplaceCustomersBody = Body(...),
 ):
@@ -438,6 +438,7 @@ def replace_seller_customers(
         portfolio = _use_case().replace_customers(
             portfolio_id=portfolio_id,
             customers=customers,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             _use_case().serialize_portfolio(portfolio),
@@ -460,7 +461,7 @@ def replace_seller_customers(
 @router.post("/{portfolio_id}/customers", operation_id="add_seller_customer")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def add_seller_customer(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: AddCustomerBody = Body(...),
 ):
@@ -472,6 +473,7 @@ def add_seller_customer(
                 customer_store=body.customer_store.strip(),
                 customer_name=(body.customer_name or "").strip() or None,
             ),
+            actor_user_id=_current_user_id(request),
         )
         message = (
             "Cliente adicionado à carteira (já estava em outra carteira ativa)."
@@ -502,7 +504,7 @@ def add_seller_customer(
 )
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def remove_seller_customer(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
@@ -512,6 +514,7 @@ def remove_seller_customer(
             portfolio_id=portfolio_id,
             customer_code=customer_code,
             customer_store=customer_store,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             _use_case().serialize_portfolio(portfolio),

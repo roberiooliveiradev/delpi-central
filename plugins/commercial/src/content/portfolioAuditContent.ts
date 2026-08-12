@@ -3,7 +3,7 @@
  */
 export const PORTFOLIO_AUDIT_CONTENT = {
   title: "Histórico",
-  subtitle: "Alterações de membros, responsável, transferência e status.",
+  subtitle: "Vínculos de clientes, membros, responsável, transferência e status.",
   loading: "Carregando histórico…",
   empty: "Ainda não há eventos de auditoria nesta carteira.",
   errorRetry: "Tentar novamente",

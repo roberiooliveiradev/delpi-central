@@ -174,6 +174,38 @@ def test_add_member_writes_audit_when_configured() -> None:
     assert kwargs["payload"]["user_id"] == "u2"
 
 
+def test_add_and_remove_customer_write_audit() -> None:
+    repository = MagicMock()
+    portfolio = _portfolio()
+    repository.list_portfolios.return_value = [portfolio]
+    repository.get_by_id.return_value = portfolio
+    repository.add_customer.return_value = portfolio
+    repository.remove_customer.return_value = portfolio
+    audit = MagicMock()
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    use_case.add_customer(
+        portfolio_id="p1",
+        customer=SellerCustomerAssignment(
+            customer_code="000240",
+            customer_store="01",
+            customer_name="BUHLER DO BRASIL LTDA.",
+        ),
+        actor_user_id="admin-1",
+    )
+    assert audit.append.call_args.kwargs["action"] == "seller_portfolio.add_customer"
+    assert audit.append.call_args.kwargs["payload"]["customer_code"] == "000240"
+
+    use_case.remove_customer(
+        portfolio_id="p1",
+        customer_code="000240",
+        customer_store="01",
+        actor_user_id="admin-1",
+    )
+    assert audit.append.call_args.kwargs["action"] == "seller_portfolio.remove_customer"
+    assert audit.append.call_args.kwargs["entity_id"] == "p1"
+
+
 def test_deactivate_portfolio_writes_audit() -> None:
     repository = MagicMock()
     repository.deactivate_portfolio.return_value = _portfolio(active=False)
