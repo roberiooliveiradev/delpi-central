@@ -87,12 +87,13 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         <button
           type="button"
           className="cm-link-button"
-          onClick={() =>
+          onClick={(event) => {
+            event.stopPropagation();
             navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
               basePath,
               search: buildAnalyticsFilterSearchParams(filters.filterState),
-            })
-          }
+            });
+          }}
         >
           {row.order_number}/{row.line_item}
         </button>
@@ -220,6 +221,13 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           columns={columns}
           rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}`}
           layout="section"
+          onRowClick={(row) =>
+            navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
+              basePath,
+              search: buildAnalyticsFilterSearchParams(filters.filterState),
+            })
+          }
+          rowClickRole="button"
         />
       </SectionCard>
     </section>

@@ -79,7 +79,10 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         <button
           type="button"
           className="cm-link-button"
-          onClick={() => navigateProposalDetail(row.proposta_interna, { basePath })}
+          onClick={(event) => {
+            event.stopPropagation();
+            navigateProposalDetail(row.proposta_interna, { basePath });
+          }}
         >
           {row.numero_ov || row.proposta_interna}
         </button>
@@ -155,6 +158,10 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
             columns={columns}
             rowKey={(row) => row.proposta_interna}
             layout="section"
+            onRowClick={(row) =>
+              navigateProposalDetail(row.proposta_interna, { basePath })
+            }
+            rowClickRole="button"
           />
         ) : null}
       </SectionCard>

@@ -208,7 +208,10 @@ export function OpenOrdersTable({
                 <button
                   type="button"
                   className="cm-open-orders-client__name"
-                  onClick={() => navigateCustomerDetail(code, store, { basePath })}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigateCustomerDetail(code, store, { basePath });
+                  }}
                 >
                   {name}
                 </button>
@@ -348,10 +351,7 @@ export function OpenOrdersTable({
       headerHint: openOrdersColumnHelp(column.key),
       sortable: Boolean(column.sortable),
       interactive:
-        column.key === "nome_cliente" ||
-        column.key === "previsao_entrega_op" ||
-        column.key === "status" ||
-        column.key === "cobertura",
+        column.key === "nome_cliente" || column.key === "previsao_entrega_op",
       align:
         column.key === "atraso_dias"
           ? ("center" as const)

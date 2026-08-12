@@ -163,7 +163,6 @@ export function CustomersTable({
       key: "nome",
       header: "Cliente",
       sortable: true,
-      interactive: true,
       render: (customer) => {
         const { name, codeStore } = customerIdentity(customer);
         const coverage = sharedCoverageByKey?.get(
@@ -179,7 +178,16 @@ export function CustomersTable({
               size="sm"
             />
             <div className="cm-open-orders-client__text">
-              <strong className="cm-open-orders-client__name">{name}</strong>
+              <button
+                type="button"
+                className="cm-link-button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openCustomer(customer);
+                }}
+              >
+                <strong className="cm-open-orders-client__name">{name}</strong>
+              </button>
               <span className="cm-open-orders-client__id">{codeStore}</span>
               <CustomerSharedCoverageBadge coverage={coverage} compact />
             </div>
@@ -327,7 +335,7 @@ export function CustomersTable({
         }
         hint={
           <HelpTooltip
-            content={CM_HELP.customers.list}
+            content={CM_HELP.customers.tableRowOpensDetail}
             ariaLabel="Ajuda: tabela da carteira"
             wrap
             placement="bottom"

@@ -46,8 +46,19 @@ export type DataTableColumn<T> = {
   render: (row: T) => ReactNode;
   className?: string;
   align?: "left" | "right" | "center";
-  /** Impede propagação do clique da linha (ex.: coluna de ações). */
+  /**
+   * Cell hosts its own pointer target (link/button/control).
+   * Default: stops `onRowClick` (`rowClick: "stop"`).
+   * Use only when the cell destination differs from the row detail,
+   * or set `rowClick: "propagate"` when the cell intentionally shares the row action.
+   * Never set `interactive: true` without a real handler (orphans cancel row navigation).
+   */
   interactive?: boolean;
+  /**
+   * Whether cell click stops the row click.
+   * Defaults to `"stop"` when `interactive` is true; `"propagate"` keeps row navigation.
+   */
+  rowClick?: "stop" | "propagate";
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   mobileLabel?: string;
@@ -725,9 +736,15 @@ export function DataTable<T>({
                     aria-selected={cellSelected || undefined}
                     tabIndex={onCellClick || onSelectionChange ? 0 : undefined}
                     onClick={
-                      column.interactive || onCellClick || onSelectionChange
+                      column.interactive ||
+                      column.rowClick === "stop" ||
+                      onCellClick ||
+                      onSelectionChange
                         ? (event) => {
-                            if (column.interactive) event.stopPropagation();
+                            const stopRowClick =
+                              column.rowClick === "stop" ||
+                              (Boolean(column.interactive) && column.rowClick !== "propagate");
+                            if (stopRowClick) event.stopPropagation();
                             handleCellSelect(
                               row,
                               column,

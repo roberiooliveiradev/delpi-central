@@ -115,3 +115,80 @@ describe("DataTable grid-preview", () => {
     expect(onColumnOrderChange).toHaveBeenCalledWith(["b", "a"]);
   });
 });
+
+describe("DataTable row click × interactive", () => {
+  it("interactive padrão impede onRowClick (stop)", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            interactive: true,
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("rowClick propagate permite onRowClick mesmo com interactive", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            interactive: true,
+            rowClick: "propagate",
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("célula sem interactive dispara onRowClick", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+});

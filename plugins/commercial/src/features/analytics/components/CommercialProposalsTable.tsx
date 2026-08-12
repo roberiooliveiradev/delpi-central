@@ -28,7 +28,14 @@ export function buildCommercialProposalColumns(
       key: "ov",
       header: "OV",
       render: (row) => (
-        <button type="button" className="cm-link-button" onClick={() => openDetail(row)}>
+        <button
+          type="button"
+          className="cm-link-button"
+          onClick={(event) => {
+            event.stopPropagation();
+            openDetail(row);
+          }}
+        >
           {row.proposal_number}
         </button>
       ),
@@ -93,6 +100,7 @@ export function CommercialProposalsTable({
             search: detailSearch,
           }))
       }
+      rowClickRole="button"
     />
   );
 }
