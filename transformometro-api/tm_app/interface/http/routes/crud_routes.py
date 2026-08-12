@@ -29,57 +29,57 @@ from tm_app.core.catalogs import (
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import row_to_json, rows_to_json
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
-from tm_app.infrastructure.persistence.repositories.investimento_repository import (
+from tm_app.infrastructure.persistence.repositories.investment_repository import (
     InvestimentoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
-from tm_app.domain.services.processo_escopo_service import ProcessoEscopoDomainError
-from tm_app.domain.services.processo_instancia_service import ProcessoInstanciaDomainError
-from tm_app.infrastructure.persistence.repositories.processo_escopo_repository import (
+from tm_app.infrastructure.persistence.repositories.measurement_repository import MedicaoRepository
+from tm_app.domain.services.process_scope_service import ProcessoEscopoDomainError
+from tm_app.domain.services.process_instance_service import ProcessoInstanciaDomainError
+from tm_app.infrastructure.persistence.repositories.process_scope_repository import (
     ProcessoEscopoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
-from tm_app.infrastructure.persistence.repositories.recurso_custo_repository import (
+from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.resource_cost_repository import (
     RecursoCustoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.recurso_repository import (
+from tm_app.infrastructure.persistence.repositories.shared_resource_repository import (
     RecursoRepository,
     VinculoRepository,
 )
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
-from tm_app.application.services.processo_setup_stats_service import (
+from tm_app.application.services.process_setup_stats_service import (
     ProcessoSetupStatsService,
 )
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
-from tm_app.application.services.processo_duplicate_service import (
+from tm_app.application.services.process_duplicate_service import (
     ProcessoDuplicateService,
     ProcessoNotFoundError,
 )
-from tm_app.application.services.instancia_duplicate_service import (
+from tm_app.application.services.instance_duplicate_service import (
     InstanciaDuplicateService,
     InstanciaNotFoundError,
 )
-from tm_app.application.services.revisao_duplicate_service import (
+from tm_app.application.services.revision_duplicate_service import (
     RevisaoDuplicateService,
     RevisaoNotFoundError,
 )
-from tm_app.application.services.revisao_rateio_diagnostic_service import (
+from tm_app.application.services.revision_allocation_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
-from tm_app.application.services.revisao_impact_effort_matrix_service import (
+from tm_app.application.services.revision_impact_effort_matrix_service import (
     RevisaoImpactEffortMatrixService,
 )
-from tm_app.domain.services.filial_catalog_service import assert_filial_ativa
+from tm_app.domain.services.branch_catalog_service import assert_filial_ativa
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
-from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
-from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
-from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
+from tm_app.infrastructure.persistence.repositories.branch_repository import FilialRepository
+from tm_app.infrastructure.persistence.repositories.revision_repository import RevisaoRepository
+from tm_app.infrastructure.persistence.repositories.department_repository import SetorRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     FilialBody,
     FilialUpdateBody,
@@ -103,7 +103,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     VinculoBody,
     VinculoUpdateBody,
 )
-from tm_app.interface.http.filial_access_http import (
+from tm_app.interface.http.branch_access_http import (
     check_instancia_view_access,
     check_manage_filial_access,
     check_processo_view_access,
@@ -283,13 +283,13 @@ def _validate_processo_body(body: ProcessoCreateBody):
 def _validate_filial_body(body: FilialBody | FilialUpdateBody, *, is_create: bool):
     assert_in(body.status_filial, STATUS_FILIAL, "status_filial")
     if is_create and isinstance(body, FilialBody):
-        from tm_app.domain.services.filial_catalog_service import normalize_codigo_filial
+        from tm_app.domain.services.branch_catalog_service import normalize_codigo_filial
 
         normalize_codigo_filial(body.codigo_filial)
 
 
 def _validate_setor_body(body: SetorBody | SetorUpdateBody, *, is_create: bool):
-    from tm_app.infrastructure.persistence.repositories.setor_repository import (
+    from tm_app.infrastructure.persistence.repositories.department_repository import (
         normalize_setor_id,
     )
 

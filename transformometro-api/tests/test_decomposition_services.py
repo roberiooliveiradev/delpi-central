@@ -3,7 +3,7 @@ from __future__ import annotations
 from tm_app.application.services.decomposition_flat_export_service import (
     DecompositionFlatExportService,
 )
-from tm_app.application.services.revisao_decomposicao_merge_service import (
+from tm_app.application.services.revision_decomposition_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
 from tm_app.domain.decomposition.decomposition_tree_v1 import DecompositionValidationError

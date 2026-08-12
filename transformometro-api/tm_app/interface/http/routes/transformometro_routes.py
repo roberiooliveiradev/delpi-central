@@ -2,14 +2,14 @@ from fastapi import APIRouter, Request
 
 import logging
 
-from tm_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.core.catalogs import DEFAULT_SETORES, FILIAIS, options_payload
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import ok
-from tm_app.interface.http.filial_access_http import resolve_access_scope
-from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
-from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
-from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
+from tm_app.interface.http.branch_access_http import resolve_access_scope
+from tm_app.infrastructure.persistence.repositories.branch_repository import FilialRepository
+from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.department_repository import SetorRepository
 
 logger = logging.getLogger(__name__)
 

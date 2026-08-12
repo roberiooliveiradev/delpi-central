@@ -656,13 +656,13 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        from tm_app.infrastructure.persistence.repositories.instancia_diagram_escopo_repository import (
+        from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
             InstanciaDiagramEscopoRepository,
         )
-        from tm_app.infrastructure.persistence.repositories.processo_diagram_repository import (
+        from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
             ProcessoDiagramRepository,
         )
-        from tm_app.infrastructure.persistence.repositories.revisao_diagram_overlay_repository import (
+        from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
             RevisaoDiagramOverlayRepository,
         )
 
@@ -691,13 +691,13 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        from tm_app.infrastructure.persistence.repositories.instancia_decomposicao_escopo_repository import (
+        from tm_app.infrastructure.persistence.repositories.instance_scope_decomposition_repository import (
             InstanciaDecomposicaoEscopoRepository,
         )
-        from tm_app.infrastructure.persistence.repositories.processo_decomposicao_repository import (
+        from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
             ProcessoDecomposicaoRepository,
         )
-        from tm_app.infrastructure.persistence.repositories.revisao_decomposicao_overlay_repository import (
+        from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
             RevisaoDecomposicaoOverlayRepository,
         )
 

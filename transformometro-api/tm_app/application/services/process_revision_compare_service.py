@@ -8,10 +8,10 @@ from tm_app.domain.services.dashboard_calculator import DashboardCalculatorServi
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardDataRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_repository import (
+from tm_app.infrastructure.persistence.repositories.process_repository import (
     ProcessoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.revisao_repository import (
+from tm_app.infrastructure.persistence.repositories.revision_repository import (
     RevisaoRepository,
 )
 

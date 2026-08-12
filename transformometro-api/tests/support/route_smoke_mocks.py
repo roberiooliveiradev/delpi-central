@@ -295,13 +295,13 @@ _ROUTE_MODULES = (
     "tm_app.interface.http.routes.dashboard_routes",
     "tm_app.interface.http.routes.integrations_routes",
     "tm_app.interface.http.routes.json_backup_routes",
-    "tm_app.interface.http.routes.revisao_evidence_routes",
-    "tm_app.interface.http.routes.processo_arquivo_routes",
+    "tm_app.interface.http.routes.revision_evidence_routes",
+    "tm_app.interface.http.routes.process_file_routes",
     "tm_app.interface.http.routes.diagram_routes",
     "tm_app.interface.http.routes.decomposition_routes",
     "tm_app.interface.http.routes.collaboration_routes",
     "tm_app.interface.http.routes.transformometro_routes",
-    "tm_app.interface.http.filial_access_http",
+    "tm_app.interface.http.branch_access_http",
 )
 
 _NOTIFY_TARGETS = (
@@ -310,8 +310,8 @@ _NOTIFY_TARGETS = (
     "tm_app.interface.http.routes.json_backup_routes.notify_entity_updated",
     "tm_app.interface.http.routes.diagram_routes.notify_entity_updated",
     "tm_app.interface.http.routes.decomposition_routes.notify_entity_updated",
-    "tm_app.interface.http.routes.revisao_evidence_routes.notify_entity_updated",
-    "tm_app.interface.http.routes.processo_arquivo_routes.notify_entity_updated",
+    "tm_app.interface.http.routes.revision_evidence_routes.notify_entity_updated",
+    "tm_app.interface.http.routes.process_file_routes.notify_entity_updated",
     "tm_app.interface.http.routes.dashboard_routes.notify_catalog_updated",
 )
 

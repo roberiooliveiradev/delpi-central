@@ -115,7 +115,7 @@ def test_enrich_realtime_scope_payload_revisao_looks_up_processo(monkeypatch):
             return {"processo_id": "proc-9", "instancia_id": "inst-9"}
 
     monkeypatch.setattr(
-        "tm_app.infrastructure.persistence.repositories.revisao_repository.RevisaoRepository",
+        "tm_app.infrastructure.persistence.repositories.revision_repository.RevisaoRepository",
         FakeRepo,
     )
     body = mod.enrich_realtime_scope_payload("revisao", "rev-9", {"overrides": 2})
@@ -131,7 +131,7 @@ def test_enrich_realtime_scope_payload_instancia_looks_up_processo(monkeypatch):
             return {"processo_id": "proc-8"}
 
     monkeypatch.setattr(
-        "tm_app.infrastructure.persistence.repositories.processo_instancia_repository.ProcessoInstanciaRepository",
+        "tm_app.infrastructure.persistence.repositories.process_instance_repository.ProcessoInstanciaRepository",
         FakeRepo,
     )
     body = mod.enrich_realtime_scope_payload(

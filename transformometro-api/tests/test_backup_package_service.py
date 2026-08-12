@@ -148,7 +148,7 @@ def test_export_package_includes_manifest_evidence_and_processo_arquivos():
     service = TransformometroBackupPackageService(
         json_backup=json_backup,
         storage=evidence_storage,
-        processo_arquivo_storage=processo_storage,
+        process_file_storage=processo_storage,
     )
     payload = service.export_package()
 
@@ -178,7 +178,7 @@ def test_export_package_fails_when_processo_arquivo_missing_on_disk():
     service = TransformometroBackupPackageService(
         json_backup=json_backup,
         storage=evidence_storage,
-        processo_arquivo_storage=processo_storage,
+        process_file_storage=processo_storage,
     )
     with pytest.raises(ValueError, match="arquivo do processo"):
         service.export_package()
@@ -198,7 +198,7 @@ def test_preview_package_rejects_missing_evidence_file():
     service = TransformometroBackupPackageService(
         json_backup=json_backup,
         storage=MagicMock(),
-        processo_arquivo_storage=MagicMock(),
+        process_file_storage=MagicMock(),
     )
     result = service.preview_package(raw, "merge", "modern")
     assert result["valid"] is False
@@ -219,7 +219,7 @@ def test_preview_package_rejects_missing_processo_arquivo():
     service = TransformometroBackupPackageService(
         json_backup=json_backup,
         storage=MagicMock(),
-        processo_arquivo_storage=MagicMock(),
+        process_file_storage=MagicMock(),
     )
     result = service.preview_package(raw, "merge", "modern")
     assert result["valid"] is False
@@ -257,7 +257,7 @@ def test_apply_package_restores_files_on_replace():
     service = TransformometroBackupPackageService(
         json_backup=json_backup,
         storage=evidence_storage,
-        processo_arquivo_storage=processo_storage,
+        process_file_storage=processo_storage,
     )
     import shutil
 

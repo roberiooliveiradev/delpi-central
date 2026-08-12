@@ -9,9 +9,9 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
-from tm_app.application.services.diagrama_composition_service import DiagramaCompositionService
+from tm_app.application.services.diagram_composition_service import DiagramaCompositionService
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
-from tm_app.application.services.revisao_diagram_merge_service import RevisaoDiagramMergeService
+from tm_app.application.services.revision_diagram_merge_service import RevisaoDiagramMergeService
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
 from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
@@ -29,20 +29,20 @@ from tm_app.domain.diagram.flowchart_v1 import (
     validate_overlay_v1,
 )
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
-from tm_app.infrastructure.persistence.repositories.instancia_diagram_escopo_repository import (
+from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
     InstanciaDiagramEscopoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_diagram_repository import (
+from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
     ProcessoDiagramRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
-from tm_app.infrastructure.persistence.repositories.revisao_diagram_overlay_repository import (
+from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
     RevisaoDiagramOverlayRepository,
 )
-from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
+from tm_app.infrastructure.persistence.repositories.revision_repository import RevisaoRepository
 
 logger = logging.getLogger(__name__)
 

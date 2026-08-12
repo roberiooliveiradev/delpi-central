@@ -21,8 +21,8 @@ from tm_app.interface.http.routes.json_backup_routes import router as json_backu
 from tm_app.interface.http.routes.collaboration_routes import router as collaboration_router
 from tm_app.interface.http.routes.decomposition_routes import router as decomposition_router
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
-from tm_app.interface.http.routes.revisao_evidence_routes import router as revisao_evidence_router
-from tm_app.interface.http.routes.processo_arquivo_routes import router as processo_arquivo_router
+from tm_app.interface.http.routes.revision_evidence_routes import router as revision_evidence_router
+from tm_app.interface.http.routes.process_file_routes import router as process_file_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
 from tm_app.interface.http.routes.public_meeting_minutes_routes import public_router as public_meeting_minutes_router
@@ -129,8 +129,8 @@ app.include_router(crud_router)
 app.include_router(dashboard_router)
 app.include_router(integrations_router)
 app.include_router(json_backup_router)
-app.include_router(revisao_evidence_router)
-app.include_router(processo_arquivo_router)
+app.include_router(revision_evidence_router)
+app.include_router(process_file_router)
 app.include_router(diagram_router)
 app.include_router(decomposition_router)
 app.include_router(collaboration_router)

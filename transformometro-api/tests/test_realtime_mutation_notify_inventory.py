@@ -13,8 +13,8 @@ MUTATING_ROUTE_FILES = (
     "decomposition_routes.py",
     "dashboard_routes.py",
     "json_backup_routes.py",
-    "processo_arquivo_routes.py",
-    "revisao_evidence_routes.py",
+    "process_file_routes.py",
+    "revision_evidence_routes.py",
 )
 
 NOTIFY_MARKERS = (

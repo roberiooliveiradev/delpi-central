@@ -34,8 +34,8 @@ from tm_app.interface.http.routes.decomposition_routes import router as decompos
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
-from tm_app.interface.http.routes.processo_arquivo_routes import router as processo_arquivo_router
-from tm_app.interface.http.routes.revisao_evidence_routes import router as revisao_evidence_router
+from tm_app.interface.http.routes.process_file_routes import router as processo_arquivo_router
+from tm_app.interface.http.routes.revision_evidence_routes import router as revisao_evidence_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 
 TEST_USER = SimpleNamespace(

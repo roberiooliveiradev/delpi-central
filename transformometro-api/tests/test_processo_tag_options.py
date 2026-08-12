@@ -1,6 +1,6 @@
 import pytest
 
-from tm_app.infrastructure.persistence.repositories.processo_repository import (
+from tm_app.infrastructure.persistence.repositories.process_repository import (
     ProcessoRepository,
 )
 

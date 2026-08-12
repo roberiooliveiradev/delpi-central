@@ -14,7 +14,7 @@ from tm_app.core.business_days import (
 from tm_app.core.catalogs import BENEFICIO_CALCULO_CATEGORIA_DEFAULT
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
-from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
+from tm_app.domain.services.resource_cost_resolver import resolve_recurso_valor_mensal
 from tm_app.domain.services.dashboard_cache_denorm_service import (
     resolve_cache_scope_for_review,
 )

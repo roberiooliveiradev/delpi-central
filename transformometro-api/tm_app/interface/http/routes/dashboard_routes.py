@@ -17,7 +17,7 @@ from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import rows_to_json
-from tm_app.interface.http.filial_access_http import check_dashboard_filial_access
+from tm_app.interface.http.branch_access_http import check_dashboard_filial_access
 
 router = APIRouter(prefix="/transformometro/dashboard", tags=["Transformômetro Dashboard"])
 logger = logging.getLogger(__name__)

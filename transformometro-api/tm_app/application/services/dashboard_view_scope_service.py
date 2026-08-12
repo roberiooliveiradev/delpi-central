@@ -10,7 +10,7 @@ from tm_app.domain.services.dashboard_calculator import DashboardCalculatorServi
 
 def count_active_filiais() -> int:
     """Nº de filiais ativas no cadastro (mínimo 1 para evitar zerar economia)."""
-    from tm_app.infrastructure.persistence.repositories.filial_repository import (
+    from tm_app.infrastructure.persistence.repositories.branch_repository import (
         FilialRepository,
     )
 

@@ -15,10 +15,10 @@ from tm_app.application.services.decomposition_flat_export_service import (
 from tm_app.application.services.decomposition_flowchart_link_validator import (
     DecompositionFlowchartLinkValidator,
 )
-from tm_app.application.services.decomposicao_composition_service import (
+from tm_app.application.services.decomposition_composition_service import (
     DecomposicaoCompositionService,
 )
-from tm_app.application.services.revisao_decomposicao_merge_service import (
+from tm_app.application.services.revision_decomposition_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
@@ -38,23 +38,23 @@ from tm_app.domain.decomposition.decomposition_tree_v1 import (
 )
 from tm_app.domain.diagram.flowchart_v1 import empty_flowchart
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
-from tm_app.infrastructure.persistence.repositories.instancia_decomposicao_escopo_repository import (
+from tm_app.infrastructure.persistence.repositories.instance_scope_decomposition_repository import (
     InstanciaDecomposicaoEscopoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_decomposicao_repository import (
+from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
     ProcessoDecomposicaoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_diagram_repository import (
+from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
     ProcessoDiagramRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
 )
-from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
-from tm_app.infrastructure.persistence.repositories.revisao_decomposicao_overlay_repository import (
+from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
     RevisaoDecomposicaoOverlayRepository,
 )
-from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
+from tm_app.infrastructure.persistence.repositories.revision_repository import RevisaoRepository
 
 logger = logging.getLogger(__name__)
 

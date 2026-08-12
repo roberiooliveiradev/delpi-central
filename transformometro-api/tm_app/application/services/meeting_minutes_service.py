@@ -12,7 +12,7 @@ from tm_app.application.services.tm_meeting_minute_sign_invite_service import (
     TmMeetingMinuteSignInviteService,
 )
 from tm_app.application.services.tm_sign_pending_mail_service import TmSignPendingMailService
-from tm_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.domain.services.minute_status_transition_service import MinuteStatusTransitionError, MinuteStatusTransitionService
 from tm_app.infrastructure.pdf.minute_pdf_renderer import MinutePdfRenderer
 from tm_app.infrastructure.persistence.repositories.meeting_minute_repository import MeetingMinuteRepository
