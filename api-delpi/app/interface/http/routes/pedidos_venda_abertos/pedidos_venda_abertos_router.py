@@ -132,19 +132,16 @@ class BillingSeriesBody(BaseModel):
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
-    """Legado PVA: membership JWT + dual-read commercial. Portal usa commercial-api BFF."""
+    """Escopo PVA (membership JWT). Portal Comercial NÃO usa esta rota para listagem TOTVS."""
+    can_filter = can_filter_by_seller_id()
     seller_filter = (seller_id or "").strip() or None
-    # manage | team.view = consolidado; seller_id filtra uma carteira (team/manage).
+    # team.view pode filtrar uma carteira; manage sem filtro vê consolidado.
+    unrestricted = is_portfolio_unrestricted() or (can_filter and bool(seller_filter))
     return build_resolve_portfolio_scope_use_case().execute(
         user_id=current_user_id(),
-        is_unrestricted=is_portfolio_unrestricted(),
-        seller_id_filter=seller_filter if can_filter_by_seller_id() else None,
+        is_unrestricted=unrestricted,
+        seller_id_filter=seller_filter if can_filter else None,
     )
-
-
-def _resolve_open_orders_scope(seller_id: Optional[str] = None):
-    """Pedidos em aberto: sem carteira → vê todos os clientes (consolidado)."""
-    return _resolve_scope(seller_id).for_open_orders()
 
 
 @router.get(
@@ -167,7 +164,7 @@ def list_pedidos_venda_abertos_route(
                 "Filtro por vendedor disponível apenas para equipe ou gerentes.",
                 status_code=403,
             )
-        scope = _resolve_open_orders_scope(seller_id)
+        scope = _resolve_scope(seller_id)
         use_case = build_list_pedidos_venda_abertos_use_case()
         result = use_case.execute(scope)
 
@@ -187,6 +184,38 @@ def list_pedidos_venda_abertos_route(
         log_error(f"Erro ao listar pedidos de venda em aberto: {exc}")
         return error_response(
             "Erro interno ao carregar pedidos de venda em aberto.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-open-orders",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_open_orders",
+        path="/pedidos-venda-abertos/totvs-open-orders",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_open_orders_route():
+    """
+    Leitura TOTVS pura (sem membership/carteira) — consumo BFF commercial-api.
+    Reusa ListPedidosVendaAbertosUseCase com scope=None. Não altera regras da rota `/`.
+    """
+    try:
+        use_case = build_list_pedidos_venda_abertos_use_case()
+        result = use_case.execute(scope=None)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_totvs_open_orders",
+            message="Pedidos de venda em aberto (TOTVS) carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar pedidos TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos de venda em aberto (TOTVS).",
             status_code=500,
         )
 
@@ -772,6 +801,103 @@ def remove_seller_customer_route(
         return error_response("Erro interno ao remover cliente.", status_code=500)
 
 
+def _execute_outbound_invoices(
+    *,
+    customer_code: str,
+    customer_store: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    page: int,
+    page_size: int,
+    situation: Optional[str],
+    search: Optional[str],
+    operation_id: str,
+):
+    use_case = build_list_customer_outbound_invoices_use_case()
+    result = use_case.execute(
+        ListCustomerOutboundInvoicesRequest(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
+        )
+    )
+    return api_delpi_success(
+        result.to_dict(),
+        operation_id=operation_id,
+        message="Notas fiscais de saída do cliente carregadas com sucesso.",
+    )
+
+
+@router.get(
+    "/totvs-outbound-invoices/{customer_code}/{customer_store}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_outbound_invoices",
+        path="/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_outbound_invoices_route(
+    customer_code: str = Path(
+        ...,
+        min_length=1,
+        description="Customer code (A1_COD / D2_CLIENTE)",
+    ),
+    customer_store: str = Path(
+        ...,
+        min_length=1,
+        description="Customer store (A1_LOJA / D2_LOJA)",
+    ),
+    start_date: Optional[str] = Query(
+        None,
+        description="Period start (YYYY-MM-DD). Default: last 90 days.",
+    ),
+    end_date: Optional[str] = Query(
+        None,
+        description="Period end (YYYY-MM-DD). Default: today.",
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    situation: Optional[str] = Query(
+        "all",
+        description="all | emitted | return. Soft-deleted cancelled invoices omitted.",
+    ),
+    search: Optional[str] = Query(
+        None,
+        description="Search by NF number, series, sales order, customer PO or product.",
+    ),
+):
+    """
+    Leitura TOTVS pura (sem membership PVA) — consumo BFF commercial-api.
+    Reusa ListCustomerOutboundInvoicesUseCase. Não altera regras da rota legada NF.
+    """
+    try:
+        return _execute_outbound_invoices(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
+            operation_id="list_totvs_outbound_invoices",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar NF TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar NF TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar notas fiscais de saída do cliente (TOTVS).",
+            status_code=500,
+        )
+
+
 @router.get(
     "/clientes/{codigo}/{loja}/notas-fiscais",
     **OpenApiAgentMetadataBuilder.from_contract(
@@ -803,25 +929,27 @@ def list_cliente_notas_fiscais_saida_route(
     ),
 ):
     try:
-        # Sem membership commercial: escopo do Portal fica no BFF commercial-api.
-        # PVA legado ainda chama esta rota; gate de carteira Portal = outbound-invoices.
-        use_case = build_list_customer_outbound_invoices_use_case()
-        result = use_case.execute(
-            ListCustomerOutboundInvoicesRequest(
-                customer_code=codigo,
-                customer_store=loja,
-                start_date=start_date,
-                end_date=end_date,
-                page=page,
-                page_size=page_size,
-                situation=situation,
-                search=search,
-            )
+        scope = _resolve_scope(None)
+        allowed = build_resolve_portfolio_scope_use_case().customer_allowed(
+            scope,
+            customer_code=codigo,
+            customer_store=loja,
         )
-        return api_delpi_success(
-            result.to_dict(),
+        if not allowed:
+            return error_response(
+                "Cliente fora da sua carteira.",
+                status_code=404,
+            )
+        return _execute_outbound_invoices(
+            customer_code=codigo,
+            customer_store=loja,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
             operation_id="list_cliente_notas_fiscais_saida",
-            message="Notas fiscais de saída do cliente carregadas com sucesso.",
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao listar NF saída do cliente: {exc}")

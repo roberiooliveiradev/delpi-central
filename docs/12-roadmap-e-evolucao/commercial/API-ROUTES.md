@@ -118,12 +118,12 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 
 | Method | Path | operationId | Fase | Permissão | entity | shape | Notas |
 |--------|------|-------------|------|-----------|--------|-------|-------|
-| GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; query `seller_id` = PK carteira (team/manage) |
+| GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; proxy → `GET …/totvs-open-orders` |
 | GET | `/open-orders/ops-abertas` | `list_commercial_open_ops` | F2b | `commercial.accounts.view` | `open_ops` | `list` | Proxy TOTVS sem membership |
 | POST | `/customers/billing-series` | `list_commercial_customer_billing_series` | F2b | accounts.view | `billing_series` | `scalar` | `filter_pairs` antes do gateway |
-| GET | `/customers/{customer_code}/{store}/outbound-invoices` | `list_commercial_customer_outbound_invoices` | F2b | accounts.view | `outbound_invoice` | `paged_list` | `ensure_allows` → api-delpi NF |
+| GET | `/customers/{customer_code}/{store}/outbound-invoices` | `list_commercial_customer_outbound_invoices` | F2b | accounts.view | `outbound_invoice` | `paged_list` | `ensure_allows` → `GET …/totvs-outbound-invoices/{c}/{s}` |
 
-MFE Portal **não** chama `GET /pedidos-venda-abertos/` / billing-series / NF na api-delpi.
+MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series / NF legada na api-delpi — só paths TOTVS via commercial-api.
 
 ### 3.5 Accounts / Conta 360 (F5; leitura TOTVS via gateway)
 

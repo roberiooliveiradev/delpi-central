@@ -539,6 +539,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),
+    "list_totvs_open_orders": RouteContract(
+        "open_sales_order", "composite_analysis"
+    ),
     "list_customer_open_order_metrics": RouteContract(
         "customer_open_order_metrics", "paged_list"
     ),
@@ -546,6 +549,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "open_production_order", "composite_analysis"
     ),
     "list_cliente_notas_fiscais_saida": RouteContract(
+        "customer_outbound_invoice", "playbook_report"
+    ),
+    "list_totvs_outbound_invoices": RouteContract(
         "customer_outbound_invoice", "playbook_report"
     ),
     "get_my_seller_portfolio": RouteContract("seller_portfolio", "scalar"),

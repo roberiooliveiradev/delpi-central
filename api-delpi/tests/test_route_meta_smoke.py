@@ -480,11 +480,45 @@ async def test_data_sql_returns_meta(mock_build) -> None:
     )
 
 @patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_resolve_portfolio_scope_use_case"
+)
+@patch(
     "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_pedidos_venda_abertos_use_case"
 )
-def test_pedidos_venda_abertos_returns_meta(mock_build) -> None:
+def test_pedidos_venda_abertos_returns_meta(mock_build, mock_scope_build) -> None:
     from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
         list_pedidos_venda_abertos_route,
+    )
+
+    mock_scope = MagicMock()
+    mock_scope_uc = MagicMock()
+    mock_scope_uc.execute.return_value = mock_scope
+    mock_scope_build.return_value = mock_scope_uc
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "summary": {"total_linhas": 0},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_pedidos_venda_abertos_route(seller_id=None)
+    mock_use_case.execute.assert_called_once_with(mock_scope)
+    _assert_meta(
+        _body(response),
+        operation_id="list_pedidos_venda_abertos",
+        shape="composite_analysis",
+    )
+
+
+@patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_pedidos_venda_abertos_use_case"
+)
+def test_totvs_open_orders_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_totvs_open_orders_route,
     )
 
     mock_result = MagicMock()
@@ -496,11 +530,47 @@ def test_pedidos_venda_abertos_returns_meta(mock_build) -> None:
     mock_use_case.execute.return_value = mock_result
     mock_build.return_value = mock_use_case
 
-    response = list_pedidos_venda_abertos_route()
+    response = list_totvs_open_orders_route()
+    mock_use_case.execute.assert_called_once_with(scope=None)
     _assert_meta(
         _body(response),
-        operation_id="list_pedidos_venda_abertos",
+        operation_id="list_totvs_open_orders",
         shape="composite_analysis",
+    )
+
+
+@patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_customer_outbound_invoices_use_case"
+)
+def test_totvs_outbound_invoices_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_totvs_outbound_invoices_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "summary": {"total": 0},
+        "pagination": {"page": 1, "page_size": 20, "total": 0},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_totvs_outbound_invoices_route(
+        customer_code="C001",
+        customer_store="01",
+        start_date=None,
+        end_date=None,
+        page=1,
+        page_size=20,
+        situation="all",
+        search=None,
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="list_totvs_outbound_invoices",
+        shape="playbook_report",
     )
 
 

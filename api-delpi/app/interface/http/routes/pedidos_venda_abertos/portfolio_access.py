@@ -21,16 +21,15 @@ def current_user_id() -> str:
 
 
 def is_portfolio_unrestricted() -> bool:
-    """manage ou team.view — consolidado sem membership (alinhado commercial-api)."""
+    """Somente manage canônico — vê todas as carteiras sem filtro de membership."""
     user = get_current_user()
-    return has_permission(user, COMMERCIAL_SELLER_PORTFOLIOS_MANAGE) or has_permission(
-        user, COMMERCIAL_ACCOUNTS_TEAM_VIEW
-    )
+    return has_permission(user, COMMERCIAL_SELLER_PORTFOLIOS_MANAGE)
 
 
 def can_filter_by_seller_id() -> bool:
     """team.view ou manage — permite query seller_id nos pedidos em aberto."""
-    return is_portfolio_unrestricted()
+    user = get_current_user()
+    return is_portfolio_unrestricted() or has_permission(user, COMMERCIAL_ACCOUNTS_TEAM_VIEW)
 
 
 def is_portfolio_admin() -> bool:

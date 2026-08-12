@@ -4964,6 +4964,21 @@
       },
       "category": "commercial"
     },
+    "list_totvs_outbound_invoices": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS outbound invoices (no portfolio membership)",
+          "description": "Pure TOTVS outbound invoices for commercial-api BFF. Portfolio scope is applied upstream.",
+          "label": "TOTVS outbound invoices"
+        },
+        "pt-BR": {
+          "label": "Notas fiscais TOTVS (sem membership)",
+          "summary": "Notas fiscais de saída TOTVS para o BFF commercial-api",
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api."
+        }
+      },
+      "category": "commercial"
+    },
     "list_pedidos_venda_abertos": {
       "locale": {
         "en": {
@@ -4975,6 +4990,21 @@
           "label": "Análise consolidada — Pedidos de venda em aberto",
           "summary": "Análise consolidada — Pedidos de venda em aberto",
           "description": "Análise composta: «Análise consolidada — Pedidos de venda em aberto»."
+        }
+      },
+      "category": "commercial"
+    },
+    "list_totvs_open_orders": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS open sales orders (no portfolio membership)",
+          "description": "Pure TOTVS open sales orders for commercial-api BFF. Portfolio scope is applied upstream.",
+          "label": "TOTVS open sales orders"
+        },
+        "pt-BR": {
+          "label": "Pedidos em aberto TOTVS (sem membership)",
+          "summary": "Pedidos de venda em aberto TOTVS para o BFF commercial-api",
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api."
         }
       },
       "category": "commercial"

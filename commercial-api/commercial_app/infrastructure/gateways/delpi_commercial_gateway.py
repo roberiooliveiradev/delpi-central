@@ -59,8 +59,12 @@ class DelpiCommercialGateway:
         )
 
     def list_open_orders(self, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        # Barra final: FastAPI redirect; service-to-service evita Mixed Content no browser.
-        return self._request("GET", "/pedidos-venda-abertos/", params=params)
+        # TOTVS puro (sem membership PVA) — escopo fica no BFF commercial.
+        return self._request(
+            "GET",
+            "/pedidos-venda-abertos/totvs-open-orders",
+            params=params,
+        )
 
     def list_ops_abertas(self) -> dict[str, Any]:
         return self._request("GET", "/pedidos-venda-abertos/ops-abertas")
@@ -79,11 +83,12 @@ class DelpiCommercialGateway:
         customer_store: str,
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        # TOTVS puro (sem membership PVA) — escopo fica no BFF commercial.
         code = quote(str(customer_code or "").strip(), safe="")
         store = quote(str(customer_store or "").strip(), safe="")
         return self._request(
             "GET",
-            f"/pedidos-venda-abertos/clientes/{code}/{store}/notas-fiscais",
+            f"/pedidos-venda-abertos/totvs-outbound-invoices/{code}/{store}",
             params=params,
         )
 
