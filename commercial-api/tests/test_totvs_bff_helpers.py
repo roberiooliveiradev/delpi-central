@@ -5,7 +5,10 @@ from __future__ import annotations
 from commercial_app.application.services.resolve_commercial_customer_scope_service import (
     CommercialCustomerScope,
 )
-from commercial_app.interface.http.routes.totvs_bff_helpers import merge_totvs_params
+from commercial_app.interface.http.routes.totvs_bff_helpers import (
+    merge_totvs_params,
+    parse_portfolio_id_csv,
+)
 
 
 def test_merge_injects_codes_and_drops_empty():
@@ -33,3 +36,8 @@ def test_merge_unrestricted_omits_codes():
     params = merge_totvs_params(scope, {"branch": "01"})
     assert params == {"branch": "01"}
     assert "customer_codes" not in params
+
+
+def test_parse_portfolio_id_csv_dedupes_and_splits():
+    assert parse_portfolio_id_csv("a, b", "b,c", None, "") == ["a", "b", "c"]
+    assert parse_portfolio_id_csv(None, None) == []

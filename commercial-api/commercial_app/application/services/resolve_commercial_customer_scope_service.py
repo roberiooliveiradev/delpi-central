@@ -66,9 +66,21 @@ class ResolveCommercialCustomerScopeService:
         user_id: str,
         unrestricted: bool,
         portfolio_id: str | None = None,
+        portfolio_ids: list[str] | None = None,
     ) -> CommercialCustomerScope:
-        pid = (portfolio_id or "").strip() or None
-        if pid:
+        ids = self._normalize_portfolio_ids(portfolio_ids=portfolio_ids, portfolio_id=portfolio_id)
+        if len(ids) > 1:
+            scopes = [
+                (
+                    self._scope_from_portfolio_id(pid)
+                    if unrestricted
+                    else self._scope_from_owned_portfolio_id(user_id=user_id, portfolio_id=pid)
+                )
+                for pid in ids
+            ]
+            return self._union_portfolio_scopes(scopes)
+        if len(ids) == 1:
+            pid = ids[0]
             if unrestricted:
                 return self._scope_from_portfolio_id(pid)
             return self._scope_from_owned_portfolio_id(user_id=user_id, portfolio_id=pid)
@@ -118,6 +130,52 @@ class ResolveCommercialCustomerScopeService:
             unrestricted=False,
             allowed_customers=allowed,
             portfolio_id=portfolios[0].id,
+        )
+
+    @staticmethod
+    def _normalize_portfolio_ids(
+        *,
+        portfolio_ids: list[str] | None,
+        portfolio_id: str | None,
+    ) -> list[str]:
+        raw: list[str] = []
+        if portfolio_ids:
+            raw.extend(portfolio_ids)
+        elif portfolio_id:
+            raw.append(portfolio_id)
+        seen: set[str] = set()
+        out: list[str] = []
+        for item in raw:
+            for part in str(item or "").split(","):
+                pid = part.strip()
+                if not pid or pid in seen:
+                    continue
+                seen.add(pid)
+                out.append(pid)
+        return out
+
+    def _union_portfolio_scopes(
+        self, scopes: list[CommercialCustomerScope]
+    ) -> CommercialCustomerScope:
+        allowed: set[tuple[str, str]] = set()
+        for scope in scopes:
+            if scope.allowed_customers:
+                allowed.update(scope.allowed_customers)
+        if not allowed:
+            first = scopes[0] if scopes else None
+            return CommercialCustomerScope(
+                unrestricted=False,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                portfolio_id=first.portfolio_id if first else None,
+                message=SellerPortfolioMessagesContentService.error(
+                    "emptyPortfolioCustomers"
+                ),
+            )
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=frozenset(allowed),
+            portfolio_id=None,
         )
 
     def _scope_from_owned_portfolio_id(

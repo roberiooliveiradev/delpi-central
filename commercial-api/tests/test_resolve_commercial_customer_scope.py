@@ -118,6 +118,76 @@ def test_portfolio_id_filter_scopes_to_portfolio_customers() -> None:
     repo.list_by_user_id.assert_not_called()
 
 
+def test_multi_portfolio_ids_union_customers_for_unrestricted() -> None:
+    p1 = _portfolio(
+        id="p1",
+        customers=(SellerCustomerAssignment("100", "01", "A"),),
+    )
+    p2 = _portfolio(
+        id="p2",
+        customers=(SellerCustomerAssignment("200", "01", "B"),),
+    )
+    repo = MagicMock()
+    repo.get_by_id.side_effect = lambda pid: p1 if pid == "p1" else p2 if pid == "p2" else None
+    service = ResolveCommercialCustomerScopeService(repo)
+
+    scope = service.execute(
+        user_id="mgr",
+        unrestricted=True,
+        portfolio_ids=["p1", "p2"],
+    )
+    assert not scope.unrestricted
+    assert scope.allows("100", "01")
+    assert scope.allows("200", "01")
+    assert not scope.allows("999", "01")
+    assert scope.portfolio_id is None
+
+
+def test_multi_portfolio_ids_union_owned_for_member() -> None:
+    p1 = _portfolio(
+        id="p1",
+        customers=(SellerCustomerAssignment("100", "01", "A"),),
+    )
+    p2 = _portfolio(
+        id="p2",
+        customers=(SellerCustomerAssignment("200", "01", "B"),),
+    )
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [p1, p2]
+    service = ResolveCommercialCustomerScopeService(repo)
+
+    scope = service.execute(
+        user_id="u1",
+        unrestricted=False,
+        portfolio_ids=["p1", "p2"],
+    )
+    assert scope.allows("100", "01")
+    assert scope.allows("200", "01")
+    repo.get_by_id.assert_not_called()
+
+
+def test_portfolio_id_csv_string_is_normalized() -> None:
+    p1 = _portfolio(
+        id="p1",
+        customers=(SellerCustomerAssignment("100", "01", "A"),),
+    )
+    p2 = _portfolio(
+        id="p2",
+        customers=(SellerCustomerAssignment("200", "01", "B"),),
+    )
+    repo = MagicMock()
+    repo.get_by_id.side_effect = lambda pid: p1 if pid == "p1" else p2 if pid == "p2" else None
+    service = ResolveCommercialCustomerScopeService(repo)
+
+    scope = service.execute(
+        user_id="mgr",
+        unrestricted=True,
+        portfolio_id="p1, p2",
+    )
+    assert scope.allows("100", "01")
+    assert scope.allows("200", "01")
+
+
 def test_ensure_allows_raises_outside_portfolio() -> None:
     repo = MagicMock()
     repo.list_by_user_id.return_value = [_portfolio()]

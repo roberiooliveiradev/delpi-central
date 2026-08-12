@@ -20,6 +20,22 @@ from commercial_app.core.auth_actor import (
 )
 
 
+def parse_portfolio_id_csv(*values: str | None) -> list[str]:
+    """Parse one or more CSV strings of portfolio UUIDs (seller_id / portfolio_id)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for raw in values:
+        if not raw:
+            continue
+        for part in str(raw).split(","):
+            pid = part.strip()
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            out.append(pid)
+    return out
+
+
 def resolve_portfolio_scope(
     request: Request,
     *,
@@ -34,11 +50,11 @@ def resolve_portfolio_scope(
     user = current_user_from_request(request)
     unrestricted = can_manage_portfolios(user) or can_use_team_scope(user)
     user_id = actor_sub_from_request(request) or ""
-    pid = (portfolio_id or seller_id or "").strip() or None
+    portfolio_ids = parse_portfolio_id_csv(portfolio_id, seller_id)
     return build_resolve_commercial_customer_scope_service().execute(
         user_id=user_id,
         unrestricted=unrestricted,
-        portfolio_id=pid,
+        portfolio_ids=portfolio_ids or None,
     )
 
 

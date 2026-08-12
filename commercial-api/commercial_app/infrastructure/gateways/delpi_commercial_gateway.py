@@ -102,6 +102,14 @@ class DelpiCommercialGateway:
         normalized = path if path.startswith("/") else f"/{path}"
         return self._request("GET", f"/commercial{normalized}", params=params)
 
+    def get_dashboard_department_idd(
+        self,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Proxy GET `/dashboard/department-idd` (SI via api-delpi)."""
+        return self._request("GET", "/dashboard/department-idd", params=params)
+
     def get_commercial_proposal_document(
         self,
         path: str = "",

@@ -143,6 +143,163 @@ def bff_branch_rol(
     )
 
 
+@router.get(
+    "/head_office_weg_rol_target_pct",
+    operation_id="bff_get_head_office_weg_rol_target_pct",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_head_office_weg_rol(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_head_office_weg_rol_target_pct",
+        path="/head_office_weg_rol_target_pct",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        ),
+        message="ROL WEG matriz carregado.",
+    )
+
+
+@router.get(
+    "/branch_weg_rol_target_pct",
+    operation_id="bff_get_branch_weg_rol_target_pct",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_branch_weg_rol(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_branch_weg_rol_target_pct",
+        path="/branch_weg_rol_target_pct",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        ),
+        message="ROL WEG filial carregado.",
+    )
+
+
+@router.get(
+    "/head_office_new_business_rol_target_pct",
+    operation_id="bff_get_head_office_new_business_rol_target_pct",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_head_office_new_business_rol(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_head_office_new_business_rol_target_pct",
+        path="/head_office_new_business_rol_target_pct",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        ),
+        message="ROL novos negócios matriz carregado.",
+    )
+
+
+@router.get(
+    "/branch_new_business_rol_target_pct",
+    operation_id="bff_get_branch_new_business_rol_target_pct",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_branch_new_business_rol(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_branch_new_business_rol_target_pct",
+        path="/branch_new_business_rol_target_pct",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        ),
+        message="ROL novos negócios filial carregado.",
+    )
+
+
+@router.get("/department-idd", operation_id="bff_get_dashboard_department_idd")
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_department_idd(
+    request: Request,
+    department_id: str = Query(default="commercial"),
+    competence: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+):
+    """IDD departamental (SI) — sem filtro de carteira; período/unidade no SI."""
+    operation_id = "bff_get_dashboard_department_idd"
+    try:
+        params: dict[str, Any] = {"department_id": department_id}
+        if competence:
+            params["competence"] = competence
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+        if branch:
+            params["branch"] = branch
+        payload = build_delpi_commercial_gateway().get_dashboard_department_idd(
+            params=params
+        )
+        return ok(
+            unwrap_gateway_data(payload),
+            message="IDD departamental carregado.",
+            operation_id=operation_id,
+        )
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
+
+
 @router.get("/closing-rate", operation_id="bff_get_closing_rate")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
 def bff_closing_rate(
