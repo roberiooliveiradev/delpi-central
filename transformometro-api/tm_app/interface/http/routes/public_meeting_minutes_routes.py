@@ -26,7 +26,7 @@ def _handle(exc: Exception):
     raise exc
 
 
-@public_router.get("/{token}")
+@public_router.get("/{token}", operation_id="get_public_meeting_minute_sign_invite")
 def public_sign_context(token: str):
     try:
         return ok(service.public_sign_context(token))
@@ -34,7 +34,7 @@ def public_sign_context(token: str):
         return _handle(exc)
 
 
-@public_router.post("/{token}/sign")
+@public_router.post("/{token}/sign", operation_id="sign_public_meeting_minute_invite")
 async def public_sign(
     request: Request,
     token: str,
@@ -62,7 +62,7 @@ async def public_sign(
         return _handle(exc)
 
 
-@public_router.post("/{token}/refuse")
+@public_router.post("/{token}/refuse", operation_id="refuse_public_meeting_minute_invite")
 def public_refuse(token: str, body: PublicRefuseRequest):
     try:
         return ok(service.public_refuse(token, body.reason))

@@ -102,7 +102,7 @@ def _handle(exc: Exception):
     raise exc
 
 
-@router.get("")
+@router.get("", operation_id="list_meeting_minutes")
 def list_minutes(
     request: Request,
     unit_code: str | None = None,
@@ -136,7 +136,7 @@ def list_minutes(
         return _handle(exc)
 
 
-@router.get("/pending-signatures")
+@router.get("/pending-signatures", operation_id="list_meeting_minutes_pending_signatures")
 def pending_signatures(request: Request):
     try:
         return ok(service.pending_signatures(request.state.user))
@@ -144,7 +144,7 @@ def pending_signatures(request: Request):
         return _handle(exc)
 
 
-@router.post("/generate-from-transcript")
+@router.post("/generate-from-transcript", operation_id="generate_meeting_minute_from_transcript")
 def generate_from_transcript(request: Request, body: GenerateFromTranscriptRequest):
     """Gera as 5 seções HTML via Kimi — não salva no banco."""
     try:
@@ -166,7 +166,7 @@ def generate_from_transcript(request: Request, body: GenerateFromTranscriptReque
         return _handle(exc)
 
 
-@router.post("")
+@router.post("", operation_id="create_meeting_minute")
 def create(request: Request, body: CreateMinuteRequest):
     try:
         return ok(service.create(request.state.user, body.model_dump()), status_code=201)
@@ -174,7 +174,7 @@ def create(request: Request, body: CreateMinuteRequest):
         return _handle(exc)
 
 
-@router.get("/{minute_id}")
+@router.get("/{minute_id}", operation_id="get_meeting_minute")
 def detail(request: Request, minute_id: str):
     try:
         return ok(service.get_detail(request.state.user, minute_id))
@@ -182,7 +182,7 @@ def detail(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.patch("/{minute_id}")
+@router.patch("/{minute_id}", operation_id="update_meeting_minute")
 def update(request: Request, minute_id: str, body: UpdateMinuteRequest):
     try:
         payload = {key: value for key, value in body.model_dump().items() if value is not None}
@@ -191,7 +191,7 @@ def update(request: Request, minute_id: str, body: UpdateMinuteRequest):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/versions")
+@router.post("/{minute_id}/versions", operation_id="create_meeting_minute_version")
 def version(request: Request, minute_id: str, body: VersionRequest):
     try:
         return ok(service.create_version(request.state.user, minute_id, body.model_dump()), status_code=201)
@@ -199,7 +199,7 @@ def version(request: Request, minute_id: str, body: VersionRequest):
         return _handle(exc)
 
 
-@router.put("/{minute_id}/participants")
+@router.put("/{minute_id}/participants", operation_id="replace_meeting_minute_participants")
 def participants(request: Request, minute_id: str, body: dict[str, Any]):
     try:
         return ok(service.set_participants(request.state.user, minute_id, body.get("participants") or []))
@@ -207,7 +207,7 @@ def participants(request: Request, minute_id: str, body: dict[str, Any]):
         return _handle(exc)
 
 
-@router.put("/{minute_id}/signers")
+@router.put("/{minute_id}/signers", operation_id="replace_meeting_minute_signers")
 def signers(request: Request, minute_id: str, body: SignersRequest):
     try:
         return ok(service.set_signers(request.state.user, minute_id, body.signers))
@@ -215,7 +215,7 @@ def signers(request: Request, minute_id: str, body: SignersRequest):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/send-for-signature")
+@router.post("/{minute_id}/send-for-signature", operation_id="send_meeting_minute_for_signature")
 def send(request: Request, minute_id: str):
     try:
         return ok(service.send_for_signature(request.state.user, minute_id))
@@ -223,7 +223,7 @@ def send(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.get("/{minute_id}/sign-context")
+@router.get("/{minute_id}/sign-context", operation_id="get_meeting_minute_sign_context")
 def sign_context(request: Request, minute_id: str):
     try:
         return ok(service.sign_context(request.state.user, minute_id))
@@ -231,7 +231,7 @@ def sign_context(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/signatures")
+@router.post("/{minute_id}/signatures", operation_id="sign_meeting_minute")
 async def sign(
     request: Request,
     minute_id: str,
@@ -260,7 +260,7 @@ async def sign(
         return _handle(exc)
 
 
-@router.get("/{minute_id}/signatures/{signature_id}/image")
+@router.get("/{minute_id}/signatures/{signature_id}/image", operation_id="get_meeting_minute_signature_image")
 def image(request: Request, minute_id: str, signature_id: str):
     try:
         return Response(service.signature_image(request.state.user, minute_id, signature_id), media_type="image/png")
@@ -268,7 +268,7 @@ def image(request: Request, minute_id: str, signature_id: str):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/signatures/refuse")
+@router.post("/{minute_id}/signatures/refuse", operation_id="refuse_meeting_minute_signature")
 def refuse(request: Request, minute_id: str, body: RefuseRequest):
     try:
         return ok(service.refuse(request.state.user, minute_id, body.reason))
@@ -276,7 +276,7 @@ def refuse(request: Request, minute_id: str, body: RefuseRequest):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/finalize")
+@router.post("/{minute_id}/finalize", operation_id="finalize_meeting_minute")
 def finalize(request: Request, minute_id: str):
     try:
         return ok(service.finalize(request.state.user, minute_id))
@@ -284,7 +284,7 @@ def finalize(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.post("/{minute_id}/cancel")
+@router.post("/{minute_id}/cancel", operation_id="cancel_meeting_minute")
 def cancel(request: Request, minute_id: str, body: CancelRequest | None = None):
     try:
         return ok(service.cancel(request.state.user, minute_id, (body.reason if body else None)))
@@ -292,7 +292,7 @@ def cancel(request: Request, minute_id: str, body: CancelRequest | None = None):
         return _handle(exc)
 
 
-@router.get("/{minute_id}/export.pdf")
+@router.get("/{minute_id}/export.pdf", operation_id="export_meeting_minute_pdf")
 def export(request: Request, minute_id: str):
     try:
         raw, name = service.export_pdf(request.state.user, minute_id)
@@ -305,7 +305,7 @@ def export(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.get("/{minute_id}/audit")
+@router.get("/{minute_id}/audit", operation_id="get_meeting_minute_audit")
 def audit(request: Request, minute_id: str):
     try:
         return ok(service.audit(request.state.user, minute_id))
@@ -313,7 +313,7 @@ def audit(request: Request, minute_id: str):
         return _handle(exc)
 
 
-@router.delete("/{minute_id}")
+@router.delete("/{minute_id}", operation_id="delete_meeting_minute")
 def delete(request: Request, minute_id: str):
     try:
         return ok(service.soft_delete(request.state.user, minute_id))
