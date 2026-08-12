@@ -27,6 +27,7 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CommercialActionButton,
   CommercialLoadingCard,
+  CommercialPageHero,
   CommercialPagePath,
   CommercialStateBanner,
 } from "../../app/commercialUi";
@@ -500,6 +501,18 @@ export function SellerPortfolioDetailPage({
           },
         ]}
         current={portfolio?.display_name ?? "Detalhe"}
+      />
+
+      <CommercialPageHero
+        aria-label={portfolio?.display_name ?? "Detalhe da carteira"}
+        title={portfolio?.display_name ?? "Detalhe da carteira"}
+        description={
+          portfolio
+            ? `${portfolio.customer_count.toLocaleString("pt-BR")} cliente(s) · ${
+                portfolio.active ? "Ativa" : "Inativa"
+              }`
+            : "Clientes, membros e ações da carteira."
+        }
       />
 
       {loading && !portfolio ? (

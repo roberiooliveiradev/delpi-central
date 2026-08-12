@@ -1,4 +1,4 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { FileDown, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -13,7 +13,8 @@ import {
   CommercialLoadingCard,
   CommercialPagePath,
   CommercialTextAreaField,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
+  CommercialActionButton,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
@@ -135,31 +136,32 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
         }}
         current={cabecalho?.numero_ov || `Proposta ${propostaId}`}
       />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={cabecalho?.numero_ov || PROPOSALS_CONTENT.detail.title}
-          hint={
-            data
-              ? `${displayValue(data.cliente.nome)} · ${displayValue(data.cabecalho.proposta_interna)}`
-              : `Proposta ${propostaId}`
-          }
-        />
-        <div className="cm-nav-row">
-          {canExportProposals ? (
-            <ActionButton
-              variant="primary"
-              onClick={() => void handleExportPdf()}
-              disabled={loading || !data || pdfLoading}
-            >
-              <FileDown size={16} aria-hidden="true" />
-              {pdfLoading ? "Gerando…" : PROPOSALS_CONTENT.detail.exportPdf}
-            </ActionButton>
-          ) : null}
-          <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-            <RefreshCw size={16} aria-hidden="true" /> Atualizar
-          </ActionButton>
-        </div>
-      </header>
+      <CommercialPageHero
+        aria-label={cabecalho?.numero_ov || PROPOSALS_CONTENT.detail.title}
+        title={cabecalho?.numero_ov || PROPOSALS_CONTENT.detail.title}
+        description={
+          data
+            ? `${displayValue(data.cliente.nome)} · ${displayValue(data.cabecalho.proposta_interna)}`
+            : `Proposta ${propostaId}`
+        }
+        actions={
+          <div className="cm-nav-row">
+            {canExportProposals ? (
+              <CommercialActionButton
+                variant="primary"
+                onClick={() => void handleExportPdf()}
+                disabled={loading || !data || pdfLoading}
+              >
+                <FileDown size={16} aria-hidden="true" />
+                {pdfLoading ? "Gerando…" : PROPOSALS_CONTENT.detail.exportPdf}
+              </CommercialActionButton>
+            ) : null}
+            <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+              <RefreshCw size={16} aria-hidden="true" /> Atualizar
+            </CommercialActionButton>
+          </div>
+        }
+      />
 
       {pdfError ? (
         <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={pdfError} role="alert" />

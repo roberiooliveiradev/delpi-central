@@ -1,4 +1,4 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -12,11 +12,11 @@ import {
   CommercialLoadingCard,
   CommercialStateBanner,
   CommercialTextField,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
+  CommercialActionButton,
 } from "../../app/commercialUi";
 import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
-import { CM_HELP } from "../../content/helpTooltips";
 import type { ProposalDocumentListData, ProposalDocumentListItem } from "../../types/proposalsDocument";
 import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
 
@@ -103,15 +103,16 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         current={PROPOSALS_CONTENT.list.title}
         backTo="home"
       />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={PROPOSALS_CONTENT.list.title}
-          hint={CM_HELP.proposals.scopeNote}
-        />
-        <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </header>
+      <CommercialPageHero
+        aria-label={PROPOSALS_CONTENT.list.title}
+        title={PROPOSALS_CONTENT.list.title}
+        description={PROPOSALS_CONTENT.list.subtitle}
+        actions={
+          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          </CommercialActionButton>
+        }
+      />
 
       <CommercialStateBanner>{PROPOSALS_CONTENT.list.scopeNote}</CommercialStateBanner>
 
