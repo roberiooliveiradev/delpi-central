@@ -19,9 +19,9 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 | Detalhe / check-up do cliente | `/apps/commercial/customers/:codigo/:loja` (pedidos + faturamento/NF + avatar) | [x] |
 | Configuração de vendedores e carteiras (admin) | `/apps/commercial/seller-portfolios` via `commercial-api` | [x] |
 | Avatar de cliente | GET/PUT/DELETE `/apps/commercial-api/customers/{code}/{store}/avatar` | [x] |
-| Deep links `codigo`+`loja` | Rotas commercial; redirects PVA ativos no gateway | [x] |
+| Deep links `codigo`+`loja` | Rotas commercial; redirects PVA no snippet (desativados no nginx até flip RBAC) | [x] |
 | Permissões (access / admin) mapeadas | `commercial.accounts.view` / `commercial.seller-portfolios.manage` (+ aliases) | [x] |
-| Favoritos / URLs antigas | Redirects em `nginx.conf` / `nginx.dev.conf` (espelho do snippet) | [x] |
+| Favoritos / URLs antigas | Snippet `commercial-f2c-redirects.conf` pronto; include nginx **comentado** até cutover | [x] |
 
 ---
 
@@ -77,7 +77,7 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 ## Comunicação (cutover)
 
 Entrada canônica do domínio: **Portal Comercial** (`/apps/commercial`).  
-URLs antigas de `/apps/pedidos-venda-abertos/*` redirecionam automaticamente.  
+URLs antigas de `/apps/pedidos-venda-abertos/*` redirecionam automaticamente **após** o flip F2c (include do snippet no gateway + RBAC `commercial.*`).  
 Permissões legadas `pedidos-venda-abertos.access` / `.admin` continuam válidas como aliases.
 
 ---

@@ -12,6 +12,7 @@ import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import { useSocket } from "../hooks/useSocket";
 import { resetAppLauncherAppearanceRegistry } from "../components/appLauncherAppearance";
+import { resolveLoginRedirectUri } from "../utils/loginRedirectUri";
 
 import type {
   MeResponse,
@@ -169,13 +170,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const bootstrapPhaseRef = useRef(true);
 
   const getCurrentRedirectUri = () => {
-    const configured = import.meta.env.VITE_KC_REDIRECT_URI as string | undefined;
-
-    if (configured?.trim()) {
-      return configured.trim();
-    }
-
-    return `${window.location.origin}/`;
+    const { origin, pathname, search } = window.location;
+    return resolveLoginRedirectUri({
+      origin,
+      pathname,
+      search,
+      configuredFallback: import.meta.env.VITE_KC_REDIRECT_URI as string | undefined,
+    });
   };
 
   const getAccessToken = useCallback(() => tokenRef.current, []);

@@ -57,6 +57,8 @@ Fluxo em `App.tsx`:
 2. `!isAuthenticated` → apenas `/login`
 3. Autenticado → `AppShell` com sidebar e rotas
 
+`resolveLoginRedirectUri` (`portal/src/utils/loginRedirectUri.ts`) preserva o path atual (`/apps/...`, `/admin/...`) no `keycloak.login({ redirectUri })`. O env `VITE_KC_REDIRECT_URI` (home) só vale como fallback a partir de `/login` — assim F5/reauth não mandam o usuário para a home do portal.
+
 ---
 
 ## 4. Envio do token às APIs

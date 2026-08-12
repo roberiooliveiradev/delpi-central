@@ -9,13 +9,23 @@ const root = dirname(fileURLToPath(import.meta.url));
 const include = "include /etc/nginx/snippets/commercial-f2c-redirects.conf;";
 
 describe("redirects F2c do gateway", () => {
-  it("ativa o snippet nos gateways canônicos", () => {
+  it("mantém o snippet disponível, mas desativado até o flip do runbook", () => {
     for (const config of ["nginx.conf", "nginx.dev.conf"]) {
-      assert.match(readFileSync(join(root, config), "utf8"), new RegExp(include.replaceAll(".", "\\.")));
+      const text = readFileSync(join(root, config), "utf8");
+      assert.doesNotMatch(
+        text,
+        new RegExp(`^\\s*${include.replaceAll(".", "\\.")}`, "m"),
+        `${config} não deve incluir redirects F2c ativos antes do cutover RBAC`,
+      );
+      assert.match(
+        text,
+        /commercial-f2c-redirects\.conf/,
+        `${config} deve documentar o snippet comentado para o flip`,
+      );
     }
   });
 
-  it("mantém os redirects das entradas legadas", () => {
+  it("mantém os redirects das entradas legadas no snippet", () => {
     const snippet = readFileSync(
       join(root, "snippets", "commercial-f2c-redirects.conf"),
       "utf8",

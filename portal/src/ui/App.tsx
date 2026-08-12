@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Link, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
 import { PortalMobileNavBar } from "../layout/PortalMobileNavBar";
@@ -312,7 +312,29 @@ function AppShell() {
               />
             ))}
 
-            {/* fallback */}
+            {/*
+              Deep links /apps/* sem app autorizado: não mandar para a home
+              (F5 + redirect legado PVA→commercial sem commercial.accounts.view).
+            */}
+            <Route
+              path="/apps/*"
+              element={
+                <AnimatedWrapper>
+                  <div className="app-not-found" style={{ padding: 24 }}>
+                    <h2>Aplicação indisponível</h2>
+                    <p>
+                      Esta rota não está disponível na sua conta ou o plugin
+                      ainda não foi liberado. Volte à home e abra pelo menu.
+                    </p>
+                    <p>
+                      <Link to="/">Ir para a home</Link>
+                    </p>
+                  </div>
+                </AnimatedWrapper>
+              }
+            />
+
+            {/* fallback de rotas do shell (não /apps) */}
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

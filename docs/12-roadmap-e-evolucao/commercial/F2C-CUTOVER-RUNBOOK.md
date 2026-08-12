@@ -2,7 +2,7 @@
 
 **Pré-requisito:** [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 100% ✅ + [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
-**Status (ago/2026):** paridade UX portada para `plugins/commercial`. PVA permanece no menu até assinatura Comercial/QA. Snippet de redirects **não** está ativo no nginx.
+**Status (ago/2026):** paridade UX portada para `plugins/commercial`. PVA permanece no menu até assinatura Comercial/QA. Snippet de redirects **não** está ativo no nginx (include comentado em `gateway/nginx.conf` / `nginx.dev.conf` — F5 em PVA sem `commercial.accounts.view` mandava para a home do portal).
 
 ---
 
