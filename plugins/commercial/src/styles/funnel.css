@@ -1,0 +1,183 @@
+/**
+ * Funil de conversão — trapézio (domínio commercial, prefixo cm-funnel).
+ * Espelha o layout do dashboard-commercial sem espelhar classes do kit.
+ */
+
+.dashboard-commercial .cm-funnel {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px 32px;
+  align-items: start;
+}
+
+.dashboard-commercial .cm-funnel--loading,
+.dashboard-commercial .cm-funnel--empty {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-commercial .cm-funnel__visual {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-funnel__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-commercial .cm-funnel__rate,
+.dashboard-commercial .cm-funnel__goal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--cm-border, var(--border, #e6e6e6));
+  background: color-mix(in srgb, var(--cm-surface, #fff) 90%, var(--cm-accent) 10%);
+}
+
+.dashboard-commercial .cm-funnel__rate-label,
+.dashboard-commercial .cm-funnel__goal-label {
+  font-size: var(--cm-font-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--cm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-commercial .cm-funnel__rate-value {
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.1;
+  color: var(--cm-text);
+}
+
+.dashboard-commercial .cm-funnel__rate-detail {
+  font-size: var(--cm-font-sm, 0.875rem);
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-funnel__goal strong {
+  font-size: 22px;
+  color: var(--cm-text);
+}
+
+.dashboard-commercial .cm-funnel__goal-gap {
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-funnel__goal-gap--ok {
+  color: var(--cm-success, #15803d);
+}
+
+.dashboard-commercial .cm-funnel__goal-gap--below {
+  color: var(--cm-danger, #b91c1c);
+}
+
+.dashboard-commercial .cm-funnel__stages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding: 8px 0 4px;
+}
+
+.dashboard-commercial .cm-funnel__stage-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-commercial .cm-funnel__arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-funnel__arrow-line {
+  width: 2px;
+  height: 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cm-accent) 55%, var(--cm-border));
+}
+
+.dashboard-commercial .cm-funnel__arrow-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cm-accent);
+}
+
+.dashboard-commercial .cm-funnel__stage {
+  width: min(100%, var(--cm-funnel-width, 100%));
+  min-width: min(100%, 280px);
+  transition: width 0.35s ease;
+}
+
+.dashboard-commercial .cm-funnel__stage-inner {
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+  padding: 16px 24px 18px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cm-funnel-accent) 88%, white),
+    var(--cm-funnel-accent)
+  );
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--cm-funnel-accent) 28%, transparent);
+}
+
+.dashboard-commercial .cm-funnel__stage--proposals .cm-funnel__stage-inner {
+  clip-path: polygon(3% 0, 97% 0, 92% 100%, 8% 100%);
+}
+
+.dashboard-commercial .cm-funnel__stage--lost .cm-funnel__stage-inner {
+  opacity: 0.92;
+}
+
+.dashboard-commercial .cm-funnel__stage-value {
+  display: block;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.dashboard-commercial .cm-funnel__stage-label {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-funnel__stage-share {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.dashboard-commercial .cm-funnel__footnote {
+  margin: 0;
+  font-size: 11px;
+  color: var(--cm-text-muted);
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .dashboard-commercial .cm-funnel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-commercial .cm-funnel__stage {
+    transition: none;
+  }
+}

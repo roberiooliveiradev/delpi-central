@@ -31,6 +31,9 @@ export type ClosingRateData = {
   qtd_proposals: number;
   qtd_won: number;
   sales_conversion_rate_pct: number | null;
+  /** Meta % do período (quando a API envia). */
+  target?: number | null;
+  comparable_goal?: number | null;
 };
 
 export type SalesOrderOtdData = {

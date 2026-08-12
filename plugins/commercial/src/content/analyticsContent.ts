@@ -19,6 +19,8 @@ export const ANALYTICS_CONTENT = {
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período.",
     funnel: "Funil de conversão (propostas → ganhas).",
+    funnelFootnote:
+      "Largura das etapas proporcional ao volume; números absolutos em cada faixa. Ganhas = propostas com status TOTVS 9 e aceite (AD1_DTASSI) no período filtrado.",
     chartEmpty: {
       rolLoading: "Carregando evolução de ROL…",
       rolError: "Erro ao carregar série de ROL.",
