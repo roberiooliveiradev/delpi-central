@@ -34,14 +34,16 @@ Portal Minha DELPI
 | `/apps/commercial/analytics/team` | Equipe — drill da Visão geral | `analytics.view` (+ team) |
 | `/apps/commercial/analytics/opportunities` | Oportunidades OV | `analytics.view` |
 | `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `analytics.view` |
-| `/apps/commercial/administration` | Administração — hub de carteiras | `seller-portfolios.manage` |
-| `/apps/commercial/seller-portfolios` | Carteiras (admin) | `seller-portfolios.manage` |
+| `/apps/commercial/administration` | Administração — Painel | `seller-portfolios.manage` |
+| `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `seller-portfolios.manage` |
+| `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `seller-portfolios.manage` |
+| `/apps/commercial/administration/team` | Administração — Membros | `seller-portfolios.manage` |
+| `/apps/commercial/seller-portfolios` (legado) | Alias → Carteiras do hub | `seller-portfolios.manage` |
 
 Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
 († `analytics.view` · ‡ `worklist.view` · ° `seller-portfolios.manage`). Propostas, OTD, Oportunidades
 e Equipe saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
-As rotas `/administration/seller-portfolios` e `/administration/members` já resolvem e, até o hub
-dedicado existir, entregam a gestão de carteiras atual.
+Alias `/administration/members` → Membros; detalhe legado `/seller-portfolios/:id` permanece válido.
 
 ## Pedidos em aberto
 
@@ -181,8 +183,8 @@ modal de OV nem navegação para outro plugin.
 
 ## Administração de carteiras — WF-05R
 
-`/apps/commercial/seller-portfolios` é lista + detalhe (kit). O estado
-compartilhável usa `replaceState` só nesta rota:
+`/apps/commercial/administration/seller-portfolios` é lista + detalhe (kit). Alias
+legado `/seller-portfolios`. O estado compartilhável usa `replaceState` nestas rotas:
 
 | Query | Efeito |
 |-------|--------|
@@ -191,7 +193,7 @@ compartilhável usa `replaceState` só nesta rota:
 | `view=list\|org` | Lista ou organização |
 | `axis=portfolio\|person` | Eixo da visão organização |
 
-Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na lista migra para o path.
+Detalhe: `/administration/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na lista migra para o path.
 
 **E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) usa universo de clientes com pedido aberto (`gap.universe=open_orders`). Chip «Sem cobertura» (`?filter=uncovered`) troca a lista por painel de clientes descobertos. Ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
 

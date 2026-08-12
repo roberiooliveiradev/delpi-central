@@ -141,13 +141,25 @@ describe("navegação da arquitetura de informação 2026", () => {
   it("Administração tem hub, carteiras e membros", () => {
     assert.equal(viewOf("/administration"), "administration");
     assert.equal(viewOf("/administration/seller-portfolios"), "administration_portfolios");
+    assert.equal(viewOf("/administration/team"), "administration_members");
     assert.equal(viewOf("/administration/members"), "administration_members");
-    assert.equal(viewOf("/seller-portfolios"), "seller_portfolios");
+    assert.equal(viewOf("/seller-portfolios"), "administration_portfolios");
     assert.equal(buildPluginPath("administration", base), `${base}/administration`);
     assert.equal(
       buildPluginPath("administration_portfolios", base),
       `${base}/administration/seller-portfolios`,
     );
+    assert.equal(buildPluginPath("administration_members", base), `${base}/administration/team`);
+    assert.equal(
+      buildPluginPath("seller_portfolios", base),
+      `${base}/administration/seller-portfolios`,
+    );
+  });
+
+  it("detalhe de carteira aceita path admin e alias legado", () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    assert.equal(viewOf(`/administration/seller-portfolios/${id}`), "seller_portfolio_detail");
+    assert.equal(viewOf(`/seller-portfolios/${id}`), "seller_portfolio_detail");
   });
 
   it("destaca o item de topo certo e não destaca páginas profundas", () => {

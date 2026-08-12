@@ -98,20 +98,31 @@ export function sanitizeSellerPortfoliosSearch(search: string | undefined): stri
   return buildSellerPortfoliosSearch(parseSellerPortfoliosDeepLink(search));
 }
 
-function sellerPortfoliosPathname(basePath: string | undefined): string {
+function commercialInternalBase(basePath: string | undefined): string {
   const normalizedBasePath = normalizeBasePath(basePath);
-  const internalBasePath =
-    normalizedBasePath.startsWith("/") && !normalizedBasePath.startsWith("//")
-      ? normalizedBasePath
-      : COMMERCIAL_BASE_PATH;
-  return `${internalBasePath}/seller-portfolios`;
+  return normalizedBasePath.startsWith("/") && !normalizedBasePath.startsWith("//")
+    ? normalizedBasePath
+    : COMMERCIAL_BASE_PATH;
+}
+
+/** Path canônico da lista de carteiras no hub Administração. */
+function sellerPortfoliosPathname(basePath: string | undefined): string {
+  return `${commercialInternalBase(basePath)}/administration/seller-portfolios`;
+}
+
+function sellerPortfoliosLegacyPathname(basePath: string | undefined): string {
+  return `${commercialInternalBase(basePath)}/seller-portfolios`;
 }
 
 export function isSellerPortfoliosPathname(
   pathname: string | undefined,
   basePath: string | undefined,
 ): boolean {
-  return normalizePathname(pathname ?? "") === sellerPortfoliosPathname(basePath);
+  const normalized = normalizePathname(pathname ?? "");
+  return (
+    normalized === sellerPortfoliosPathname(basePath) ||
+    normalized === sellerPortfoliosLegacyPathname(basePath)
+  );
 }
 
 export function parseSellerPortfoliosRouteState(
@@ -141,7 +152,7 @@ export function replaceSellerPortfoliosSearch(
   if (target !== current) window.history.replaceState(window.history.state, "", target);
 }
 
-/** `/base/seller-portfolios/:id` preservando o recorte da lista na query. */
+/** `/base/administration/seller-portfolios/:id` preservando o recorte da lista na query. */
 export function buildSellerPortfolioDetailPath(
   basePath: string | undefined,
   portfolioId: string,
@@ -153,13 +164,11 @@ export function buildSellerPortfolioDetailPath(
   return `${sellerPortfoliosPathname(basePath)}/${encodeURIComponent(id)}${search}`;
 }
 
-export function parseSellerPortfolioDetailRouteState(
-  pathname: string | undefined,
+function parseDetailUnderListPath(
+  normalized: string,
+  listPath: string,
   search: string | undefined,
-  basePath: string | undefined,
 ): { portfolioId: string; list: SellerPortfoliosDeepLink } | null {
-  const normalized = normalizePathname(pathname ?? "");
-  const listPath = sellerPortfoliosPathname(basePath);
   if (!normalized.startsWith(`${listPath}/`)) return null;
   const rawId = normalized.slice(listPath.length + 1);
   if (!rawId || rawId.includes("/")) return null;
@@ -174,8 +183,20 @@ export function parseSellerPortfolioDetailRouteState(
   return { portfolioId, list: parseSellerPortfoliosDeepLink(search) };
 }
 
+export function parseSellerPortfolioDetailRouteState(
+  pathname: string | undefined,
+  search: string | undefined,
+  basePath: string | undefined,
+): { portfolioId: string; list: SellerPortfoliosDeepLink } | null {
+  const normalized = normalizePathname(pathname ?? "");
+  return (
+    parseDetailUnderListPath(normalized, sellerPortfoliosPathname(basePath), search) ??
+    parseDetailUnderListPath(normalized, sellerPortfoliosLegacyPathname(basePath), search)
+  );
+}
+
 /**
- * Legado `?id=<uuid>` na lista → `/seller-portfolios/:id`.
+ * Legado `?id=<uuid>` na lista → detalhe canônico sob Administração.
  * Retorna o path canônico quando houve migração (o chamador navega com replace).
  */
 export function migrateLegacySellerPortfolioIdParam(

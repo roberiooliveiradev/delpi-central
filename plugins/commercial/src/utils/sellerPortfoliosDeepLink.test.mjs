@@ -16,6 +16,8 @@ import {
 } from "./sellerPortfoliosDeepLink.ts";
 
 const PORTFOLIO_ID = "11111111-1111-4111-8111-111111111111";
+const ADMIN_LIST = "/apps/commercial/administration/seller-portfolios";
+const LEGACY_LIST = "/apps/commercial/seller-portfolios";
 
 describe("sellerPortfoliosDeepLink", () => {
   it("parseia somente o estado reconhecido da lista (sem id)", () => {
@@ -70,13 +72,11 @@ describe("sellerPortfoliosDeepLink", () => {
     );
   });
 
-  it("só reconhece a rota exata de carteiras (lista)", () => {
+  it("reconhece lista canônica admin e alias legado", () => {
+    assert.equal(isSellerPortfoliosPathname(ADMIN_LIST, "/apps/commercial"), true);
+    assert.equal(isSellerPortfoliosPathname(LEGACY_LIST, "/apps/commercial"), true);
     assert.equal(
-      isSellerPortfoliosPathname("/apps/commercial/seller-portfolios", "/apps/commercial"),
-      true,
-    );
-    assert.equal(
-      isSellerPortfoliosPathname("/apps/commercial/seller-portfolios/extra", "/apps/commercial"),
+      isSellerPortfoliosPathname(`${ADMIN_LIST}/extra`, "/apps/commercial"),
       false,
     );
     assert.equal(
@@ -89,11 +89,11 @@ describe("sellerPortfoliosDeepLink", () => {
     );
     assert.equal(
       buildSellerPortfoliosPath("/apps/commercial", { filter: "active", q: "bruno", view: "org" }),
-      "/apps/commercial/seller-portfolios?q=bruno&filter=active&view=org",
+      `${ADMIN_LIST}?q=bruno&filter=active&view=org`,
     );
   });
 
-  it("monta e parseia detalhe /seller-portfolios/:id preservando query da lista", () => {
+  it("monta e parseia detalhe admin/:id preservando query da lista", () => {
     assert.equal(
       buildSellerPortfolioDetailPath("/apps/commercial", PORTFOLIO_ID, {
         filter: "active",
@@ -101,11 +101,11 @@ describe("sellerPortfoliosDeepLink", () => {
         view: "org",
         axis: "person",
       }),
-      `/apps/commercial/seller-portfolios/${PORTFOLIO_ID}?q=ana&filter=active&view=org&axis=person`,
+      `${ADMIN_LIST}/${PORTFOLIO_ID}?q=ana&filter=active&view=org&axis=person`,
     );
     assert.deepEqual(
       parseSellerPortfolioDetailRouteState(
-        `/apps/commercial/seller-portfolios/${PORTFOLIO_ID}`,
+        `${ADMIN_LIST}/${PORTFOLIO_ID}`,
         "?filter=inactive&view=org",
         "/apps/commercial",
       ),
@@ -114,36 +114,39 @@ describe("sellerPortfoliosDeepLink", () => {
         list: { q: "", filter: "inactive", view: "org", axis: "portfolio" },
       },
     );
-    assert.equal(
+    assert.deepEqual(
       parseSellerPortfolioDetailRouteState(
-        "/apps/commercial/seller-portfolios",
-        `?id=${PORTFOLIO_ID}`,
-        "/apps/commercial",
-      ),
-      null,
-    );
-  });
-
-  it("migra legado ?id= na lista para o path de detalhe", () => {
-    assert.equal(
-      migrateLegacySellerPortfolioIdParam(
-        "/apps/commercial/seller-portfolios",
-        `?id=${PORTFOLIO_ID}&filter=active&view=org`,
-        "/apps/commercial",
-      ),
-      `/apps/commercial/seller-portfolios/${PORTFOLIO_ID}?filter=active&view=org`,
-    );
-    assert.equal(
-      migrateLegacySellerPortfolioIdParam(
-        "/apps/commercial/seller-portfolios",
+        `${LEGACY_LIST}/${PORTFOLIO_ID}`,
         "?filter=active",
         "/apps/commercial",
       ),
+      {
+        portfolioId: PORTFOLIO_ID,
+        list: { q: "", filter: "active", view: "list", axis: "portfolio" },
+      },
+    );
+    assert.equal(
+      parseSellerPortfolioDetailRouteState(ADMIN_LIST, `?id=${PORTFOLIO_ID}`, "/apps/commercial"),
+      null,
+    );
+  });
+
+  it("migra legado ?id= na lista para o path de detalhe admin", () => {
+    assert.equal(
+      migrateLegacySellerPortfolioIdParam(
+        LEGACY_LIST,
+        `?id=${PORTFOLIO_ID}&filter=active&view=org`,
+        "/apps/commercial",
+      ),
+      `${ADMIN_LIST}/${PORTFOLIO_ID}?filter=active&view=org`,
+    );
+    assert.equal(
+      migrateLegacySellerPortfolioIdParam(ADMIN_LIST, "?filter=active", "/apps/commercial"),
       null,
     );
     assert.equal(
       migrateLegacySellerPortfolioIdParam(
-        `/apps/commercial/seller-portfolios/${PORTFOLIO_ID}`,
+        `${ADMIN_LIST}/${PORTFOLIO_ID}`,
         `?id=${PORTFOLIO_ID}`,
         "/apps/commercial",
       ),
@@ -151,7 +154,7 @@ describe("sellerPortfoliosDeepLink", () => {
     );
   });
 
-  it("faz replaceState somente na lista /seller-portfolios", () => {
+  it("faz replaceState na lista admin ou legado (canonicaliza para admin)", () => {
     const replacements = [];
     const original = {
       pathname: "/apps/commercial/customers",
@@ -170,15 +173,12 @@ describe("sellerPortfoliosDeepLink", () => {
     assert.equal(replacements.length, 0);
 
     globalThis.window.location = {
-      pathname: "/apps/commercial/seller-portfolios",
+      pathname: LEGACY_LIST,
       search: "",
     };
     replaceSellerPortfoliosSearch("/apps/commercial", { filter: "active", view: "org" });
     assert.equal(replacements.length, 1);
-    assert.equal(
-      replacements[0][2],
-      "/apps/commercial/seller-portfolios?filter=active&view=org",
-    );
+    assert.equal(replacements[0][2], `${ADMIN_LIST}?filter=active&view=org`);
 
     globalThis.window.history = original.history;
     globalThis.window.location = original.location;

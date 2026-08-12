@@ -208,8 +208,8 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {/* Hub de Administração (Painel · Carteiras · Membros) entra em E2; até lá as três
-          rotas entregam a gestão de carteiras já existente. */}
+      {/* Hub Administração (Painel · Carteiras · Membros): páginas dedicadas em E2.S2–S3.
+          Até lá, as rotas do hub e o alias legado entregam a gestão de carteiras. */}
       {view === "administration" ||
       view === "administration_portfolios" ||
       view === "administration_members" ||

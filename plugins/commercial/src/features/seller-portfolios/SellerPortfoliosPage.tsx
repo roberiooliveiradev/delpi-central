@@ -424,7 +424,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           {
             id: "admin",
             label: "Administração",
-            href: `${basePath}/seller-portfolios`,
+            href: `${basePath}/administration/seller-portfolios`,
             onNavigate: (event) => event.preventDefault(),
           },
         ]}

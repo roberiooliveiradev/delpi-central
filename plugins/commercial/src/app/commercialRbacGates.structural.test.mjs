@@ -84,5 +84,8 @@ describe("commercial RBAC gates (sem aliases)", () => {
       manifest,
       /"path": "\/apps\/commercial\/analytics\/team"[\s\S]*?"permission": "commercial\.accounts\.team\.view"/,
     );
+    assert.match(manifest, /"path": "\/apps\/commercial\/administration"/);
+    assert.match(manifest, /"path": "\/apps\/commercial\/administration\/seller-portfolios"/);
+    assert.match(manifest, /"path": "\/apps\/commercial\/administration\/team"/);
   });
 });

@@ -155,12 +155,28 @@ export function resolvePluginRoute(
     return { view: "administration_portfolios", pathname: path, relativePath };
   }
 
-  if (relativePath === "administration/members") {
+  // Canônico `/administration/team`; alias `/administration/members`.
+  if (relativePath === "administration/team" || relativePath === "administration/members") {
     return { view: "administration_members", pathname: path, relativePath };
   }
 
+  const adminPortfolioDetail = /^administration\/seller-portfolios\/([^/]+)$/.exec(relativePath);
+  if (adminPortfolioDetail) {
+    const portfolioId = safeDecodeSegment(adminPortfolioDetail[1] ?? "");
+    if (!portfolioId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "seller_portfolio_detail",
+      pathname: path,
+      relativePath,
+      portfolioId: portfolioId.trim(),
+    };
+  }
+
+  // Alias legado: lista e detalhe flat sob `/seller-portfolios`.
   if (relativePath === "seller-portfolios") {
-    return { view: "seller_portfolios", pathname: path, relativePath };
+    return { view: "administration_portfolios", pathname: path, relativePath };
   }
 
   const sellerPortfolioDetail = /^seller-portfolios\/([^/]+)$/.exec(relativePath);
@@ -359,8 +375,9 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   analytics_opportunities: "analytics/opportunities",
   administration: "administration",
   administration_portfolios: "administration/seller-portfolios",
-  administration_members: "administration/members",
-  seller_portfolios: "seller-portfolios",
+  administration_members: "administration/team",
+  /** Alias legado — resolve para a aba Carteiras do hub. */
+  seller_portfolios: "administration/seller-portfolios",
 };
 
 export function buildPluginPath(
@@ -384,7 +401,7 @@ export function buildSellerPortfolioDetailPath(
 ): string | null {
   const id = portfolioId.trim();
   if (!id) return null;
-  const path = `${normalizeBasePath(basePath)}/seller-portfolios/${encodeURIComponent(id)}`;
+  const path = `${normalizeBasePath(basePath)}/administration/seller-portfolios/${encodeURIComponent(id)}`;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;

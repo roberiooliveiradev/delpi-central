@@ -168,11 +168,27 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/commercial/seller-portfolios",
+      "path": "/apps/commercial/administration/seller-portfolios",
       "label": "Carteiras",
       "permission": "commercial.seller-portfolios.manage",
       "icon": "settings",
       "order": 25,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration/team",
+      "label": "Membros",
+      "permission": "commercial.seller-portfolios.manage",
+      "icon": "users",
+      "order": 26,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/seller-portfolios",
+      "label": "Carteiras",
+      "permission": "commercial.seller-portfolios.manage",
+      "icon": "settings",
+      "order": 27,
       "showInMenu": false
     }
   ],
