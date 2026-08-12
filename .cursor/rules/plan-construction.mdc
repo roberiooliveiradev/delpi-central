@@ -1,0 +1,54 @@
+---
+description: Método de construção e execução de planos multi-etapa (E*.S*, pesquisa, wireframes, impacto, test→commit)
+alwaysApply: true
+---
+
+# Construção de planos (Delpi)
+
+Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e entregas multi-commit.
+
+## Checklist obrigatório (nesta ordem)
+
+1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `plugins-reusable-components`, `centralized-rules-first`, etc.).
+2. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar.
+3. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões.
+4. **Fluxos** — diagramas mermaid (estados, happy path, erros) no corpo do plano.
+5. **Wireframes de UI** — esboço textual, ASCII, seções de tela ou referência a `docs/**/WIREFRAMES.md` (layout, ações, vazios); UI branded respeita design system / `plugin-ui`.
+6. **Impacto transversal** — consumidores, aliases, RBAC, MFEs, APIs, docs, regressões; etapa explícita se a mudança espalha.
+7. **Estrutura do plano** — ver abaixo.
+8. **Protocolo de execução** — ver abaixo.
+9. **Sempre testar antes de commit** — unitários/build do escopo **antes** de cada commit (alinhado a `test-and-commit.mdc`).
+
+## Estrutura obrigatória do plano
+
+| Bloco | Conteúdo |
+|-------|----------|
+| Overview | 1–2 frases do resultado |
+| Decisões travadas | Tabela sem Option A/B / TBD |
+| Etapas `E1…En` | Agrupamento lógico |
+| Subetapas `E*.S*` | Trabalho atomicamente entregável |
+| Critérios de pronto | Verificável |
+| Fora do escopo | Explícito |
+| Todos YAML | ids `eN-sM-slug` alinhados às subetapas |
+
+Citar arquivos canônicos com caminhos reais. Plan mode: iterar o documento do plano; só executar após pedido explícito do usuário.
+
+## Protocolo de execução (quando o plano declarar)
+
+Quando o plano aprovado disser «cada **E*.S*** = commit + push»:
+
+1. Marcar subetapa `in_progress`.
+2. Implementar só o escopo da subetapa.
+3. **Testar/build** do pacote alterado.
+4. **Commit** (mensagem em PT, focando o *porquê*) + **push**.
+5. Não agrupar duas subetapas no mesmo commit.
+6. Subetapa de verify-final: commit **só** se houver fix de regressão.
+
+No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuário pedir — `test-and-commit.mdc`.
+
+## O que NÃO fazer
+
+- Plano com alternativas abertas («A ou B», «opcional se…») — decidir e travar.
+- Pular inventário / regras Cursor / impacto e ir direto a código.
+- Commit sem testes do escopo.
+- Patch local que ignora módulo canônico já mapeado no inventário.
