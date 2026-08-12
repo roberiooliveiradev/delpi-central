@@ -12,6 +12,7 @@ import {
 } from "../../../app/commercialUi";
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
+import { CM_HELP } from "../../../content/helpTooltips";
 import type { CommercialProposal } from "../../../types/analytics";
 import { CommercialProposalsTable } from "../../analytics/components/CommercialProposalsTable";
 
@@ -99,7 +100,7 @@ export function CustomerOpportunitiesSection({
   return (
     <SectionCard
       title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
-      hint={ANALYTICS_CONTENT.oportunidades.accountHint}
+      hint={CM_HELP.customerDetail.opportunities}
       classNames={cmSectionCardClassNames}
       labels={cmSectionLabels}
       actions={

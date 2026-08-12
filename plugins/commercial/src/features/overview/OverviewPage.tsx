@@ -9,8 +9,10 @@ import {
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
+  CommercialSectionHintLabel,
 } from "../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
+import { CM_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
 import { formatCurrency } from "../../utils/format";
 import { AnalyticsFilters } from "../analytics/components/AnalyticsFilters";
@@ -38,7 +40,9 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
       <CommercialPageHero
         aria-label={copy.title}
         eyebrow="Portal Comercial"
-        title={copy.title}
+        title={
+          <CommercialSectionHintLabel label={copy.title} hint={CM_HELP.overview.page} />
+        }
         description={copy.subtitle}
         actions={
           <CommercialActionButton variant="ghost" onClick={dashboard.reload}>
@@ -67,7 +71,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
 
       <SectionCard
         title="Indicadores"
-        hint={copy.filters}
+        hint={CM_HELP.overview.kpis}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -130,7 +134,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
       <div className="cm-gestao-charts-grid">
         <SectionCard
           title={OVERVIEW_METRIC_BY_ID.rol_series.label}
-          hint={OVERVIEW_METRIC_BY_ID.rol_series.tooltip}
+          hint={CM_HELP.overview.rolSeries}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
@@ -145,7 +149,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
         </SectionCard>
         <SectionCard
           title={OVERVIEW_METRIC_BY_ID.funnel.label}
-          hint={OVERVIEW_METRIC_BY_ID.funnel.tooltip}
+          hint={CM_HELP.overview.funnel}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >

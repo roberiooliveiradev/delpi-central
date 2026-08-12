@@ -10,9 +10,11 @@ import {
   CommercialActionButton,
   CommercialLoadingCard,
   CommercialPageHero,
+  CommercialSectionHintLabel,
   CommercialTextField,
 } from "../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
+import { CM_HELP } from "../../content/helpTooltips";
 import type { CommercialProposal } from "../../types/analytics";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
@@ -98,7 +100,12 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
       />
       <CommercialPageHero
         aria-label={ANALYTICS_CONTENT.oportunidades.title}
-        title={ANALYTICS_CONTENT.oportunidades.title}
+        title={
+          <CommercialSectionHintLabel
+            label={ANALYTICS_CONTENT.oportunidades.title}
+            hint={CM_HELP.analytics.opportunitiesPage}
+          />
+        }
         description={ANALYTICS_CONTENT.oportunidades.subtitle}
         actions={
           <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
@@ -134,6 +141,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
 
       <SectionCard
         title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
+        hint={CM_HELP.analytics.opportunitiesList}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >

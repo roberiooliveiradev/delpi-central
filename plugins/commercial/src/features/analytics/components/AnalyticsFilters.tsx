@@ -54,11 +54,13 @@ export function AnalyticsFilters({
         label={ANALYTICS_CONTENT.filters.start}
         value={dateStart}
         onChange={onDateStart}
+        hint={CM_HELP.analytics.filterDateStart}
       />
       <CommercialDateField
         label={ANALYTICS_CONTENT.filters.end}
         value={dateEnd}
         onChange={onDateEnd}
+        hint={CM_HELP.analytics.filterDateEnd}
       />
       <CommercialSelectField
         label={ANALYTICS_CONTENT.filters.competence}
@@ -67,12 +69,14 @@ export function AnalyticsFilters({
         options={buildCompetenceOptions()}
         allowEmpty
         emptyLabel="Livre"
+        hint={CM_HELP.analytics.filterCompetence}
       />
       <CommercialMultiSelectField
         label={ANALYTICS_CONTENT.filters.branch}
         selectedValues={branches}
         onChange={onBranches}
         options={ANALYTICS_BRANCH_OPTIONS}
+        hint={CM_HELP.analytics.filterBranch}
       />
       <CommercialSelectField
         label={ANALYTICS_CONTENT.filters.segment}
@@ -86,6 +90,7 @@ export function AnalyticsFilters({
         ]}
         allowEmpty
         emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
+        hint={CM_HELP.analytics.filterSegment}
       />
       {canFilterPortfolios && onSellerId ? (
         <SellerScopeFilter

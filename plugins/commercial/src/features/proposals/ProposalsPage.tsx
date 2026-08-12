@@ -13,9 +13,11 @@ import {
   CommercialPageHero,
   CommercialActionButton,
   CommercialDataTable,
+  CommercialSectionHintLabel,
 } from "../../app/commercialUi";
 import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
+import { CM_HELP } from "../../content/helpTooltips";
 import type { ProposalDocumentListData, ProposalDocumentListItem } from "../../types/proposalsDocument";
 import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
 
@@ -104,7 +106,12 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
       />
       <CommercialPageHero
         aria-label={PROPOSALS_CONTENT.list.title}
-        title={PROPOSALS_CONTENT.list.title}
+        title={
+          <CommercialSectionHintLabel
+            label={PROPOSALS_CONTENT.list.title}
+            hint={CM_HELP.proposals.page}
+          />
+        }
         description={PROPOSALS_CONTENT.list.subtitle}
         actions={
           <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
@@ -113,11 +120,11 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         }
       />
 
-      <CommercialStateBanner>{PROPOSALS_CONTENT.list.scopeNote}</CommercialStateBanner>
+      <CommercialStateBanner>{CM_HELP.proposals.scopeNote}</CommercialStateBanner>
 
       <CommercialTextField
         label="Busca"
-        hint={PROPOSALS_CONTENT.list.search}
+        hint={CM_HELP.proposals.search}
         value={search}
         onChange={setSearch}
         placeholder="OV, proposta, cliente…"
@@ -125,6 +132,7 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
 
       <SectionCard
         title={`Propostas (${filtered.length.toLocaleString("pt-BR")})`}
+        hint={CM_HELP.proposals.list}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >

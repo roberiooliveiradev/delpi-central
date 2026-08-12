@@ -12,9 +12,11 @@ import {
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
+  CommercialSectionHintLabel,
 } from "../../app/commercialUi";
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
+import { CM_HELP } from "../../content/helpTooltips";
 import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
@@ -117,7 +119,12 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.otd.title} />
       <CommercialPageHero
         aria-label={ANALYTICS_CONTENT.otd.title}
-        title={ANALYTICS_CONTENT.otd.title}
+        title={
+          <CommercialSectionHintLabel
+            label={ANALYTICS_CONTENT.otd.title}
+            hint={CM_HELP.analytics.otdPage}
+          />
+        }
         description={ANALYTICS_CONTENT.otd.subtitle}
         actions={
           <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
@@ -153,16 +160,19 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         <div className="cm-home-kpi-grid" aria-label="KPIs OTD">
           <CommercialMetricCard
             label="OTD %"
+            titleHint={CM_HELP.analytics.otdKpi}
             value={formatPct(summary.sales_order_otd_pct)}
             icon={<CircleGauge size={22} />}
           />
           <CommercialMetricCard
             label="No prazo"
+            titleHint={CM_HELP.analytics.otdKpi}
             value={(summary.on_time_lines ?? 0).toLocaleString("pt-BR")}
             icon={<PackageCheck size={22} />}
           />
           <CommercialMetricCard
             label="Atrasadas"
+            titleHint={CM_HELP.analytics.otdKpi}
             value={(summary.late_lines ?? 0).toLocaleString("pt-BR")}
             icon={<Truck size={22} />}
           />
@@ -171,6 +181,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
       <SectionCard
         title="Série OTD (tabela)"
+        hint={CM_HELP.analytics.otdSeries}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -200,6 +211,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
       <SectionCard
         title="Linhas"
+        hint={CM_HELP.analytics.otdLines}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >

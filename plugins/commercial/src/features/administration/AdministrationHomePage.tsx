@@ -23,10 +23,12 @@ import {
   CommercialMetricCard,
   CommercialPageHero,
   CommercialPagePath,
+  CommercialSectionHintLabel,
   CommercialStateBanner,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
+import { CM_HELP } from "../../content/helpTooltips";
 import type { SellerPortfolio, SellerPortfoliosCoverageAudit } from "../../types/portfolio";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
@@ -103,7 +105,12 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
       <CommercialPageHero
         aria-label={copy.panel.title}
         eyebrow={copy.panel.eyebrow}
-        title={copy.panel.title}
+        title={
+          <CommercialSectionHintLabel
+            label={copy.panel.title}
+            hint={CM_HELP.administration.panel}
+          />
+        }
         description={loading ? copy.panel.loading : copy.panel.description}
         actions={
           <CommercialActionButton

@@ -92,7 +92,9 @@ export const CM_HELP = {
     sellerScope:
       "Filtra pedidos pela carteira do vendedor selecionado. Vazio = todas as carteiras que você pode ver.",
     table:
-      "Cada linha é um item de pedido em aberto. Use colunas, ordenação e exportação Excel conforme a preferência salva.",
+      "Cada linha é um item de pedido em aberto. Clique abre o detalhe da linha. Use colunas, ordenação e exportação Excel conforme a preferência salva.",
+    tableRowOpensDetail:
+      "Clique na linha (exceto ações/links com destino próprio, como Cliente→Conta) abre o detalhe do item.",
     layoutToggle:
       "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
     sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
@@ -234,6 +236,8 @@ export const CM_HELP = {
     portfolioAudit:
       "Linha do tempo das alterações na carteira (clientes, membros, responsável). Com «Todas» no filtro, escolha qual carteira acompanhar.",
     list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",
+    tableRowOpensDetail:
+      "Clique na linha ou no nome do cliente abre a Conta 360. Controles internos com destino diferente não propagam o clique.",
     layoutToggle:
       "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
     sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
@@ -267,6 +271,10 @@ export const CM_HELP = {
     billingLastDate: "Data da nota mais recente no período filtrado.",
     billingLastValue: "Valor da nota mais recente no período filtrado.",
     billingFilters: "Período e opções da consulta de faturamento deste cliente.",
+    opportunities:
+      "Oportunidades de venda (OV) só deste cliente. Clique na linha ou no número da OV para abrir o detalhe.",
+    tableRowOpensDetail:
+      "Clique na linha ou na OV abre o detalhe da oportunidade. Controles internos com destino diferente não propagam o clique.",
   },
   sellerPortfolios: {
     list: "Carteiras cadastradas (usuários com acesso ao Portal Comercial + nome de exibição).",
@@ -330,6 +338,23 @@ export const CM_HELP = {
   analytics: {
     portfolioFilter:
       "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. Escopo no topo é identidade da sessão.",
+    filters:
+      "Período, competência, filial, segmento e carteira aplicados aos painéis e listas desta página.",
+    filterDateStart: "Início do período analítico.",
+    filterDateEnd: "Fim do período analítico.",
+    filterCompetence: "Competência mensal (opcional). Livre = só as datas informadas.",
+    filterBranch: "Filiais incluídas no consolidado. Vazio = todas as filiais do escopo.",
+    filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
+    otdPage:
+      "Pontualidade de linhas de pedido no período: KPIs, série SC/ES e linhas com status/promessa.",
+    otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado.",
+    otdSeries: "Evolução do OTD por filial (SC e ES) no período.",
+    otdLines: "Linhas do período. Clique abre o detalhe de pontualidade da linha.",
+    opportunitiesPage:
+      "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
+    opportunitiesList: "OVs do período. Clique na linha ou no número da OV para abrir o detalhe.",
+    tableRowOpensDetail:
+      "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
     ovStatus: "Etapa atual da oportunidade comercial.",
     ovOpen: "Data de abertura da oportunidade.",
     ovClose: "Data de fechamento ou assinatura, quando houver.",
@@ -340,9 +365,29 @@ export const CM_HELP = {
     ovHistory:
       "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
   },
+  overview: {
+    page:
+      "Dashboard do período: filtros, indicadores (≤8), evolução ROL e funil. Sem lista de OVs nem faixa Aprofundar.",
+    filters:
+      "Datas, competência, filial, segmento e carteira (quando permitido) aplicados a todos os painéis.",
+    kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios.",
+    rolSeries: "Evolução do ROL no período selecionado.",
+    funnel: "Funil de conversão de propostas no período (propostas → ganhas).",
+  },
+  administration: {
+    panel:
+      "Resumo de cobertura das carteiras e atalhos para cadastro, transferência e membros.",
+    portfolios: "CRUD de carteiras, organização, membros e transferência de clientes.",
+    members: "Roster de pessoas com acesso às carteiras ativas do Portal.",
+  },
   proposals: {
+    page: "Propostas-documento: lista e emissão de PDF. Não confundir com OVs em Oportunidades.",
+    list: "Catálogo de propostas-documento. Clique na linha ou na proposta interna para abrir o detalhe.",
+    search: "Busca por OV, proposta interna, oportunidade ou cliente.",
     scopeNote:
       "O chip Escopo no topo identifica sua sessão de carteira; a lista de propostas documento não filtra por carteira — é o catálogo com permissão de propostas.",
+    tableRowOpensDetail:
+      "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.",
   },
 } as const;
 
