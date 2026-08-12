@@ -169,13 +169,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px 8px;
   min-width: 0;
+  row-gap: 8px;
 }
 
 .dashboard-commercial .cm-home-chip-row__label {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 32px;
   font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1.25;
   color: var(--cm-text-muted, var(--delpi-ui-text-muted, #64748b));
   margin-inline-end: 4px;
 }
