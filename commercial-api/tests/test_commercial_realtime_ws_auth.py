@@ -34,7 +34,7 @@ def test_resolve_websocket_user_loads_rbac_permissions(monkeypatch):
     assert "commercial.worklist.view" in user.permissions
 
 
-def test_resolve_websocket_user_rejects_without_worklist_permission(monkeypatch):
+def test_resolve_websocket_user_accepts_accounts_view_without_worklist(monkeypatch):
     monkeypatch.setattr(
         "commercial_app.interface.http.routes.realtime_routes.validate_token",
         lambda _token: {"sub": "user-1", "email": "a@b.c"},
@@ -46,6 +46,30 @@ def test_resolve_websocket_user_rejects_without_worklist_permission(monkeypatch)
                 "id": "user-1",
                 "email": "a@b.c",
                 "permissions": ["commercial.accounts.view"],
+                "roles": [],
+                "groups": [],
+                "is_superadmin": False,
+            }
+        ),
+    )
+
+    user = asyncio.run(resolve_websocket_user("fake-token"))
+    assert user.id == "user-1"
+    assert "commercial.accounts.view" in user.permissions
+
+
+def test_resolve_websocket_user_rejects_without_commercial_read_or_worklist(monkeypatch):
+    monkeypatch.setattr(
+        "commercial_app.interface.http.routes.realtime_routes.validate_token",
+        lambda _token: {"sub": "user-1", "email": "a@b.c"},
+    )
+    monkeypatch.setattr(
+        "commercial_app.interface.http.routes.realtime_routes.load_user_rbac",
+        AsyncMock(
+            return_value={
+                "id": "user-1",
+                "email": "a@b.c",
+                "permissions": ["unrelated.permission"],
                 "roles": [],
                 "groups": [],
                 "is_superadmin": False,

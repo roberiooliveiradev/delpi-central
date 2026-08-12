@@ -429,16 +429,68 @@ class ManageSellerPortfolioUseCase:
         action: str,
         entity_id: str,
         payload: dict[str, Any] | None = None,
+        member_user_ids: Sequence[str] | None = None,
+        related_portfolio_ids: Sequence[str] | None = None,
+        display_name: str | None = None,
+        actor_client_id: str | None = None,
     ) -> None:
         if self._audit is None or not actor_user_id:
             return
+        safe_payload = payload or {}
         self._audit.append(
             actor_user_id=actor_user_id,
             action=action,
             entity_type=_ENTITY_SELLER_PORTFOLIO,
             entity_id=entity_id,
-            payload=payload or {},
+            payload=safe_payload,
         )
+        try:
+            from commercial_app.application.services.commercial_realtime_notify import (
+                notify_portfolio_changed,
+            )
+
+            members = [
+                _normalize_code(uid)
+                for uid in (member_user_ids or ())
+                if _normalize_code(uid)
+            ]
+            portfolio_label = display_name
+            if not members or not portfolio_label:
+                portfolio = self._repository.get_by_id(entity_id)
+                if portfolio is not None:
+                    if not members:
+                        members = _member_user_ids(portfolio)
+                    if not portfolio_label:
+                        portfolio_label = portfolio.display_name
+            related = [
+                _normalize_code(pid)
+                for pid in (related_portfolio_ids or ())
+                if _normalize_code(pid)
+            ]
+            for related_id in related:
+                if related_id == entity_id:
+                    continue
+                related_portfolio = self._repository.get_by_id(related_id)
+                if related_portfolio is None:
+                    continue
+                for uid in _member_user_ids(related_portfolio):
+                    if uid not in members:
+                        members.append(uid)
+            if not members:
+                return
+            notify_portfolio_changed(
+                reason=action,
+                portfolio_id=entity_id,
+                member_user_ids=members,
+                portfolio_ids=related or None,
+                display_name=portfolio_label
+                or str(safe_payload.get("display_name") or "")
+                or None,
+                actor_user_id=actor_user_id,
+                actor_client_id=actor_client_id,
+            )
+        except Exception:  # noqa: BLE001 — realtime não pode falhar a mutação
+            pass
 
     def list_portfolio_audit(
         self,
@@ -692,6 +744,8 @@ class ManageSellerPortfolioUseCase:
                 "display_name": current.display_name,
                 "customer_count": len(current.customers),
             },
+            member_user_ids=_member_user_ids(current),
+            display_name=current.display_name,
         )
         return deleted
 
@@ -1015,6 +1069,8 @@ class ManageSellerPortfolioUseCase:
                 ],
                 "reason_note": reason_note.strip(),
             },
+            related_portfolio_ids=[target_id],
+            display_name=source.display_name,
         )
 
         return result
@@ -1151,6 +1207,8 @@ class ManageSellerPortfolioUseCase:
                 ],
                 "reason_note": reason_note.strip(),
             },
+            related_portfolio_ids=[target_id],
+            display_name=source.display_name,
         )
 
         return BulkTransferResult(

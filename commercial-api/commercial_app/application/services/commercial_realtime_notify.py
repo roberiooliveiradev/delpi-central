@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import re
-from typing import Literal
+from typing import Literal, Sequence
 
 from commercial_app.application.services.commercial_realtime_hub import (
     commercial_realtime_hub,
 )
+from commercial_app.domain.services.seller_portfolio_messages_content_service import (
+    SellerPortfolioMessagesContentService,
+)
+
 
 WorklistChangeReason = Literal[
     "task.created",
@@ -122,6 +126,27 @@ def build_worklist_notification(
     }
 
 
+def build_portfolio_notification(
+    *,
+    reason: str,
+    display_name: str | None = None,
+    actor_display_name: str | None = None,
+) -> dict[str, str]:
+    content = SellerPortfolioMessagesContentService
+    actor = _safe_label(actor_display_name) or "Alguém"
+    label = _safe_label(display_name) or "carteira"
+    template = content.realtime_message_template(reason)
+    try:
+        message = template.format(actor=actor, display_name=label)
+    except Exception:
+        message = f"{actor} alterou a carteira «{label}»."
+    return {
+        "title": content.realtime_title(reason),
+        "message": message,
+        "variant": content.realtime_tone(reason),
+    }
+
+
 def notify_worklist_changed(
     *,
     reason: WorklistChangeReason,
@@ -149,7 +174,6 @@ def notify_worklist_changed(
         _safe_label(assignee_display_name)
         or resolve_user_display_name(current_assignee_id)
     )
-    # Mensagem «team» no fio; MFE troca para assignee/previous quando couber.
     notification = build_worklist_notification(
         reason=reason,
         task_title=task_title,
@@ -172,5 +196,54 @@ def notify_worklist_changed(
     rooms: set[str] = {TEAM_ROOM}
     for uid in assignees:
         rooms.add(user_room(uid))
+    for room in rooms:
+        commercial_realtime_hub.schedule_broadcast(room, payload)
+
+
+def notify_portfolio_changed(
+    *,
+    reason: str,
+    portfolio_id: str,
+    member_user_ids: Sequence[str],
+    portfolio_ids: Sequence[str] | None = None,
+    display_name: str | None = None,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Broadcast para salas `user:` dos membros das carteiras afetadas (sem team room)."""
+    members = [uid.strip() for uid in member_user_ids if uid and str(uid).strip()]
+    if not members:
+        return
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    portfolio_label = _safe_label(display_name) or "carteira"
+    primary_id = (portfolio_id or "").strip()
+    related = [
+        pid.strip()
+        for pid in (portfolio_ids or [])
+        if pid and str(pid).strip()
+    ]
+    if primary_id and primary_id not in related:
+        related = [primary_id, *related]
+    notification = build_portfolio_notification(
+        reason=reason,
+        display_name=portfolio_label,
+        actor_display_name=actor_label,
+    )
+    payload = {
+        "type": "portfolio.changed",
+        "reason": reason,
+        "portfolioId": primary_id or None,
+        "portfolioIds": related,
+        "displayName": portfolio_label,
+        "memberUserIds": members,
+        "actorUserId": (actor_user_id or "").strip() or None,
+        "actorDisplayName": actor_label,
+        "actorClientId": (actor_client_id or "").strip() or None,
+        "notification": notification,
+    }
+    rooms = {user_room(uid) for uid in members}
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, payload)

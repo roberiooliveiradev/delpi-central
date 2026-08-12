@@ -131,8 +131,66 @@ def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):
     assert "Ana Gestora reatribuiu" in body["notification"]["message"]
 
 
-def test_user_room_key():
-    assert user_room("seller-a") == "user:seller-a"
+def test_notify_portfolio_changed_schedules_member_rooms_only(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.resolve_user_display_name",
+        lambda _uid: "Ana Gestora",
+    )
+
+    from commercial_app.application.services.commercial_realtime_notify import (
+        notify_portfolio_changed,
+    )
+    from commercial_app.domain.services.seller_portfolio_messages_content_service import (
+        SellerPortfolioMessagesContentService,
+    )
+
+    SellerPortfolioMessagesContentService.clear_cache()
+    notify_portfolio_changed(
+        reason="seller_portfolio.add_customer",
+        portfolio_id="p1",
+        member_user_ids=["seller-a", "helper-1"],
+        display_name="Sul",
+        actor_user_id="manager-1",
+        actor_client_id="client-9",
+    )
+
+    by_room = {room: payload for room, payload in scheduled}
+    assert set(by_room) == {user_room("seller-a"), user_room("helper-1")}
+    assert TEAM_ROOM not in by_room
+    body = by_room[user_room("seller-a")]
+    assert body["type"] == "portfolio.changed"
+    assert body["reason"] == "seller_portfolio.add_customer"
+    assert body["portfolioId"] == "p1"
+    assert body["displayName"] == "Sul"
+    assert body["actorClientId"] == "client-9"
+    assert body["notification"]["title"] == "Cliente vinculado"
+    assert "Ana Gestora vinculou" in body["notification"]["message"]
+
+
+def test_build_portfolio_notification_uses_json():
+    from commercial_app.application.services.commercial_realtime_notify import (
+        build_portfolio_notification,
+    )
+    from commercial_app.domain.services.seller_portfolio_messages_content_service import (
+        SellerPortfolioMessagesContentService,
+    )
+
+    SellerPortfolioMessagesContentService.clear_cache()
+    note = build_portfolio_notification(
+        reason="seller_portfolio.deactivate",
+        display_name="Norte",
+        actor_display_name="Robério",
+    )
+    assert note["title"] == "Carteira inativada"
+    assert note["message"] == "Robério inativou a carteira «Norte»."
+    assert note["variant"] == "warning"
 
 
 def test_resolve_user_display_name_uses_first_portfolio_from_membership(monkeypatch):

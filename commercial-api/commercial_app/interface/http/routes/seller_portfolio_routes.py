@@ -291,7 +291,7 @@ def get_seller_portfolio(
 
 
 @router.get("/{portfolio_id}/audit", operation_id="list_seller_portfolio_audit")
-@require_any_permission(*COMMERCIAL_AUDIT_PERMISSIONS)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_AUDIT_PERMISSIONS)
 def list_seller_portfolio_audit(
     request: Request,
     portfolio_id: str = Path(..., min_length=1),

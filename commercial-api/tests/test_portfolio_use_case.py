@@ -174,7 +174,37 @@ def test_add_member_writes_audit_when_configured() -> None:
     assert kwargs["payload"]["user_id"] == "u2"
 
 
-def test_add_and_remove_customer_write_audit() -> None:
+def test_append_audit_notifies_portfolio_members(monkeypatch):
+    repository = MagicMock()
+    portfolio = _portfolio(
+        members=(
+            SellerPortfolioMember(user_id="u1", role="owner"),
+            SellerPortfolioMember(user_id="u2", role="member"),
+        )
+    )
+    repository.get_by_id.return_value = portfolio
+    audit = MagicMock()
+    notified: list[dict] = []
+
+    def capture(**kwargs):
+        notified.append(kwargs)
+
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.notify_portfolio_changed",
+        capture,
+    )
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+    use_case._append_audit(  # noqa: SLF001
+        actor_user_id="admin-1",
+        action="seller_portfolio.add_customer",
+        entity_id="p1",
+        payload={"customer_code": "1", "customer_store": "01"},
+    )
+    assert audit.append.called
+    assert len(notified) == 1
+    assert set(notified[0]["member_user_ids"]) == {"u1", "u2"}
+    assert notified[0]["reason"] == "seller_portfolio.add_customer"
+
     repository = MagicMock()
     portfolio = _portfolio()
     repository.list_portfolios.return_value = [portfolio]

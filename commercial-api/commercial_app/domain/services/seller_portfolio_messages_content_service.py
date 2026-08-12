@@ -24,7 +24,11 @@ def load_seller_portfolio_messages() -> dict[str, Any]:
 
 
 class SellerPortfolioMessagesContentService:
-    """Loader canônico de textos PT-BR de carteiras (erros / bulk)."""
+    """Loader canônico de textos PT-BR de carteiras (erros / bulk / realtime)."""
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        load_seller_portfolio_messages.cache_clear()
 
     @classmethod
     def bundle(cls) -> dict[str, Any]:
@@ -40,3 +44,29 @@ class SellerPortfolioMessagesContentService:
             return template.format(**values)
         except Exception:
             return template
+
+    @classmethod
+    def _realtime_section(cls) -> dict[str, Any]:
+        section = cls.bundle().get("realtime") or {}
+        return section if isinstance(section, dict) else {}
+
+    @classmethod
+    def realtime_title(cls, action: str) -> str:
+        titles = cls._realtime_section().get("titles") or {}
+        fallback = (cls._realtime_section().get("fallback") or {}).get("title") or "Carteira atualizada"
+        return str(titles.get(action) or fallback)
+
+    @classmethod
+    def realtime_message_template(cls, action: str) -> str:
+        messages = cls._realtime_section().get("messages") or {}
+        fallback = (
+            (cls._realtime_section().get("fallback") or {}).get("message")
+            or "{actor} alterou a carteira «{display_name}»."
+        )
+        return str(messages.get(action) or fallback)
+
+    @classmethod
+    def realtime_tone(cls, action: str) -> str:
+        tones = cls._realtime_section().get("tones") or {}
+        fallback = (cls._realtime_section().get("fallback") or {}).get("tone") or "info"
+        return str(tones.get(action) or fallback)
