@@ -204,7 +204,7 @@ def get_seller_portfolio(
 @router.patch("/{portfolio_id}", operation_id="update_seller_portfolio")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def update_seller_portfolio(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: UpdatePortfolioBody = Body(...),
 ):
@@ -213,6 +213,7 @@ def update_seller_portfolio(
             portfolio_id=portfolio_id,
             display_name=body.display_name,
             active=body.active,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             portfolio_to_dict(portfolio),
@@ -235,11 +236,14 @@ def update_seller_portfolio(
 @router.delete("/{portfolio_id}", operation_id="deactivate_seller_portfolio")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def deactivate_seller_portfolio(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
 ):
     try:
-        portfolio = _use_case().deactivate_portfolio(portfolio_id)
+        portfolio = _use_case().deactivate_portfolio(
+            portfolio_id,
+            actor_user_id=_current_user_id(request),
+        )
         return ok(
             portfolio_to_dict(portfolio),
             message="Carteira desativada com sucesso.",
@@ -390,7 +394,7 @@ def remove_seller_customer(
 @router.put("/{portfolio_id}/members", operation_id="replace_seller_portfolio_members")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def replace_seller_portfolio_members(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: ReplaceMembersBody = Body(...),
 ):
@@ -401,6 +405,7 @@ def replace_seller_portfolio_members(
                 SellerPortfolioMember(user_id=item.user_id, role=item.role)
                 for item in body.members
             ],
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             portfolio_to_dict(portfolio),
@@ -423,7 +428,7 @@ def replace_seller_portfolio_members(
 @router.post("/{portfolio_id}/members", operation_id="add_seller_portfolio_member")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def add_seller_portfolio_member(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: AddMemberBody = Body(...),
 ):
@@ -432,6 +437,7 @@ def add_seller_portfolio_member(
             portfolio_id=portfolio_id,
             user_id=body.user_id,
             role=body.role,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             portfolio_to_dict(portfolio),
@@ -457,7 +463,7 @@ def add_seller_portfolio_member(
 )
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def remove_seller_portfolio_member(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     user_id: str = Path(..., min_length=1),
 ):
@@ -465,6 +471,7 @@ def remove_seller_portfolio_member(
         portfolio = _use_case().remove_member(
             portfolio_id=portfolio_id,
             user_id=user_id,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             portfolio_to_dict(portfolio),
@@ -487,7 +494,7 @@ def remove_seller_portfolio_member(
 @router.post("/{portfolio_id}/owner", operation_id="set_seller_portfolio_owner")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def set_seller_portfolio_owner(
-    _request: Request,
+    request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: SetOwnerBody = Body(...),
 ):
@@ -495,6 +502,7 @@ def set_seller_portfolio_owner(
         portfolio = _use_case().set_owner(
             portfolio_id=portfolio_id,
             user_id=body.user_id,
+            actor_user_id=_current_user_id(request),
         )
         return ok(
             portfolio_to_dict(portfolio),

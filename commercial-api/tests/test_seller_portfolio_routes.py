@@ -33,3 +33,13 @@ def test_member_routes_paths_exist() -> None:
     assert '"/{portfolio_id}/members/{user_id}"' in ROUTES
     assert '"/{portfolio_id}/owner"' in ROUTES
     assert '"portfolios"' in ROUTES or "'portfolios'" in ROUTES
+
+
+def test_member_owner_deactivate_pass_actor_user_id() -> None:
+    assert "actor_user_id=_current_user_id(request)" in ROUTES
+    assert "def add_seller_portfolio_member(" in ROUTES
+    assert "def remove_seller_portfolio_member(" in ROUTES
+    assert "def replace_seller_portfolio_members(" in ROUTES
+    assert "def set_seller_portfolio_owner(" in ROUTES
+    assert "def deactivate_seller_portfolio(" in ROUTES
+    assert "def update_seller_portfolio(" in ROUTES

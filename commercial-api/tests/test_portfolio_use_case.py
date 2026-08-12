@@ -92,6 +92,7 @@ def test_replace_members_requires_exactly_one_owner() -> None:
 
 def test_replace_members_success() -> None:
     repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio()
     updated = _portfolio(
         members=(
             SellerPortfolioMember(user_id="u1", role="owner"),
@@ -111,6 +112,95 @@ def test_replace_members_success() -> None:
 
     assert len(result.members) == 2
     repository.replace_members.assert_called_once()
+
+
+def test_create_portfolio_rejects_without_portal_access() -> None:
+    repository = MagicMock()
+    portal = MagicMock()
+    portal.has_commercial_portal_access.return_value = False
+    use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
+
+    try:
+        use_case.create_portfolio(
+            CreatePortfolioRequest(user_id="u1", display_name="Novo")
+        )
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "Portal Comercial" in str(exc)
+    repository.create_portfolio.assert_not_called()
+
+
+def test_add_member_rejects_without_portal_access() -> None:
+    repository = MagicMock()
+    portal = MagicMock()
+    portal.has_commercial_portal_access.return_value = False
+    use_case = ManageSellerPortfolioUseCase(repository, portal_access=portal)
+
+    try:
+        use_case.add_member(portfolio_id="p1", user_id="u2")
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "Portal Comercial" in str(exc)
+    repository.add_member.assert_not_called()
+
+
+def test_add_member_writes_audit_when_configured() -> None:
+    repository = MagicMock()
+    updated = _portfolio(
+        members=(
+            SellerPortfolioMember(user_id="u1", role="owner"),
+            SellerPortfolioMember(user_id="u2", role="member"),
+        )
+    )
+    repository.add_member.return_value = updated
+    audit = MagicMock()
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    result = use_case.add_member(
+        portfolio_id="p1",
+        user_id="u2",
+        actor_user_id="admin-1",
+    )
+
+    assert result.id == "p1"
+    audit.append.assert_called_once()
+    kwargs = audit.append.call_args.kwargs
+    assert kwargs["action"] == "seller_portfolio.add_member"
+    assert kwargs["entity_id"] == "p1"
+    assert kwargs["payload"]["user_id"] == "u2"
+
+
+def test_deactivate_portfolio_writes_audit() -> None:
+    repository = MagicMock()
+    repository.deactivate_portfolio.return_value = _portfolio(active=False)
+    audit = MagicMock()
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    result = use_case.deactivate_portfolio("p1", actor_user_id="admin-1")
+
+    assert result.active is False
+    audit.append.assert_called_once()
+    kwargs = audit.append.call_args.kwargs
+    assert kwargs["action"] == "seller_portfolio.deactivate"
+    assert kwargs["entity_id"] == "p1"
+
+
+def test_update_portfolio_audits_active_flip() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio(active=True)
+    repository.update_portfolio.return_value = _portfolio(active=False)
+    audit = MagicMock()
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    use_case.update_portfolio(
+        portfolio_id="p1",
+        active=False,
+        actor_user_id="admin-1",
+    )
+
+    audit.append.assert_called_once()
+    assert audit.append.call_args.kwargs["action"] == "seller_portfolio.deactivate"
+
 
 
 def test_remove_member_rejects_last_owner() -> None:

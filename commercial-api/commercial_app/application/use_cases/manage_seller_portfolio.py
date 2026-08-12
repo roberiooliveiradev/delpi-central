@@ -9,9 +9,12 @@ from commercial_app.domain.entities.seller_portfolio import (
     SellerPortfolioMember,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
+from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
+
+_PORTAL_ACCESS_DENIED = "Usuário sem acesso ao Portal Comercial."
 
 
 def _normalize_code(value: str) -> str:
@@ -86,11 +89,40 @@ class ManageSellerPortfolioUseCase:
         self,
         repository: SellerPortfolioRepositoryPort,
         audit_repository: AuditLogRepositoryPort | None = None,
+        portal_access: PortalAccessPort | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
+        # None = permissivo (mesmo efeito de PermissivePortalAccessPort).
+        self._portal_access = portal_access
+
+    def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
+        if self._portal_access is None:
+            return
+        for uid in user_ids:
+            if not self._portal_access.has_commercial_portal_access(uid):
+                raise ValueError(_PORTAL_ACCESS_DENIED)
+
+    def _append_audit(
+        self,
+        *,
+        actor_user_id: str | None,
+        action: str,
+        entity_id: str,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        if self._audit is None or not actor_user_id:
+            return
+        self._audit.append(
+            actor_user_id=actor_user_id,
+            action=action,
+            entity_type="seller_portfolio",
+            entity_id=entity_id,
+            payload=payload or {},
+        )
 
     def get_me_portfolios(self, user_id: str) -> list[SellerPortfolio]:
+        # /me só lista carteiras ativas — desativadas ficam fora do escopo do vendedor.
         return self._repository.list_by_user_id(user_id, active_only=True)
 
     def get_me(self, user_id: str) -> SellerPortfolio | None:
@@ -123,6 +155,9 @@ class ManageSellerPortfolioUseCase:
         if not owner:
             raise ValueError("owner_user_id inválido.")
 
+        all_new = list(dict.fromkeys([owner, *user_ids]))
+        self._ensure_portal_access(all_new)
+
         extras = [uid for uid in user_ids if uid != owner]
         portfolio = self._repository.create_portfolio(
             user_id=owner,
@@ -145,9 +180,11 @@ class ManageSellerPortfolioUseCase:
         portfolio_id: str,
         display_name: str | None = None,
         active: bool | None = None,
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         if display_name is not None and not _normalize_code(display_name):
             raise ValueError("display_name não pode ser vazio.")
+        previous = self._repository.get_by_id(portfolio_id) if active is not None else None
         updated = self._repository.update_portfolio(
             portfolio_id=portfolio_id,
             display_name=_normalize_code(display_name) if display_name is not None else None,
@@ -155,12 +192,36 @@ class ManageSellerPortfolioUseCase:
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        # Auditoria quando active flipa (desativa ou reativa); /me já exclui inactive.
+        if previous is not None and active is not None and previous.active != updated.active:
+            action = (
+                "seller_portfolio.deactivate"
+                if not updated.active
+                else "seller_portfolio.reactivate"
+            )
+            self._append_audit(
+                actor_user_id=actor_user_id,
+                action=action,
+                entity_id=portfolio_id,
+                payload={"active": updated.active},
+            )
         return updated
 
-    def deactivate_portfolio(self, portfolio_id: str) -> SellerPortfolio:
+    def deactivate_portfolio(
+        self,
+        portfolio_id: str,
+        *,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
         updated = self._repository.deactivate_portfolio(portfolio_id)
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.deactivate",
+            entity_id=portfolio_id,
+            payload={"active": False},
+        )
         return updated
 
     def purge_portfolio(
@@ -178,18 +239,16 @@ class ManageSellerPortfolioUseCase:
         deleted = self._repository.delete_portfolio(portfolio_id)
         if deleted is None:
             raise LookupError("Vendedor não encontrado.")
-        if self._audit is not None and actor_user_id:
-            self._audit.append(
-                actor_user_id=actor_user_id,
-                action="seller_portfolio.purge",
-                entity_type="seller_portfolio",
-                entity_id=portfolio_id,
-                payload={
-                    "user_id": current.user_id,
-                    "display_name": current.display_name,
-                    "customer_count": len(current.customers),
-                },
-            )
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.purge",
+            entity_id=portfolio_id,
+            payload={
+                "user_id": current.user_id,
+                "display_name": current.display_name,
+                "customer_count": len(current.customers),
+            },
+        )
         return deleted
 
     def replace_customers(
@@ -243,6 +302,7 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         members: Sequence[SellerPortfolioMember],
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         normalized: list[SellerPortfolioMember] = []
         seen: set[str] = set()
@@ -258,12 +318,32 @@ class ManageSellerPortfolioUseCase:
         owners = [item for item in normalized if item.role == "owner"]
         if len(owners) != 1:
             raise ValueError("A carteira deve ter exatamente um owner.")
+
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        existing_ids = {member.user_id for member in current.members}
+        if not existing_ids and current.user_id:
+            existing_ids = {current.user_id}
+        new_ids = [item.user_id for item in normalized if item.user_id not in existing_ids]
+        self._ensure_portal_access(new_ids)
+
         updated = self._repository.replace_members(
             portfolio_id=portfolio_id,
             members=normalized,
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.replace_members",
+            entity_id=portfolio_id,
+            payload={
+                "members": [
+                    {"user_id": item.user_id, "role": item.role} for item in normalized
+                ]
+            },
+        )
         return updated
 
     def add_member(
@@ -272,11 +352,13 @@ class ManageSellerPortfolioUseCase:
         portfolio_id: str,
         user_id: str,
         role: str = "member",
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         uid = _normalize_code(user_id)
         if not uid:
             raise ValueError("user_id é obrigatório.")
         next_role = "owner" if role == "owner" else "member"
+        self._ensure_portal_access([uid])
         updated = self._repository.add_member(
             portfolio_id=portfolio_id,
             user_id=uid,
@@ -284,6 +366,12 @@ class ManageSellerPortfolioUseCase:
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.add_member",
+            entity_id=portfolio_id,
+            payload={"user_id": uid, "role": next_role},
+        )
         return updated
 
     def remove_member(
@@ -291,6 +379,7 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         user_id: str,
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         uid = _normalize_code(user_id)
         if not uid:
@@ -314,6 +403,12 @@ class ManageSellerPortfolioUseCase:
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.remove_member",
+            entity_id=portfolio_id,
+            payload={"user_id": uid},
+        )
         return updated
 
     def set_owner(
@@ -321,17 +416,32 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         user_id: str,
+        actor_user_id: str | None = None,
     ) -> SellerPortfolio:
         uid = _normalize_code(user_id)
         if not uid:
             raise ValueError("user_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        existing_ids = {member.user_id for member in current.members}
+        if not existing_ids and current.user_id:
+            existing_ids = {current.user_id}
         # Se o usuário ainda não for membro, o repositório o inclui como owner.
+        if uid not in existing_ids:
+            self._ensure_portal_access([uid])
         updated = self._repository.set_owner(
             portfolio_id=portfolio_id,
             user_id=uid,
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.set_owner",
+            entity_id=portfolio_id,
+            payload={"user_id": uid},
+        )
         return updated
 
     def transfer_customers(
@@ -396,25 +506,23 @@ class ManageSellerPortfolioUseCase:
         if result is None:
             raise LookupError("Vendedor de origem ou destino não encontrado.")
 
-        if self._audit is not None and actor_user_id:
-            self._audit.append(
-                actor_user_id=actor_user_id,
-                action="seller_portfolio.transfer_customers",
-                entity_type="seller_portfolio",
-                entity_id=source_id,
-                payload={
-                    "source_portfolio_id": source_id,
-                    "target_portfolio_id": target_id,
-                    "transferred_count": len(to_move),
-                    "customers": [
-                        {
-                            "customer_code": item.customer_code,
-                            "customer_store": item.customer_store,
-                        }
-                        for item in to_move
-                    ],
-                    "reason_note": reason_note.strip(),
-                },
-            )
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.transfer_customers",
+            entity_id=source_id,
+            payload={
+                "source_portfolio_id": source_id,
+                "target_portfolio_id": target_id,
+                "transferred_count": len(to_move),
+                "customers": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                    }
+                    for item in to_move
+                ],
+                "reason_note": reason_note.strip(),
+            },
+        )
 
         return result

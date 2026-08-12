@@ -27,6 +27,9 @@ from commercial_app.infrastructure.persistence.repositories.postgres_attachment_
 from commercial_app.infrastructure.persistence.repositories.postgres_audit_log_repository import (
     PostgresAuditLogRepository,
 )
+from commercial_app.infrastructure.security.permissive_portal_access import (
+    PermissivePortalAccessPort,
+)
 from commercial_app.infrastructure.persistence.repositories.postgres_customer_avatar_repository import (
     PostgresCustomerAvatarRepository,
 )
@@ -74,6 +77,7 @@ def build_manage_seller_portfolio_use_case() -> ManageSellerPortfolioUseCase:
         _portfolio_use_case = ManageSellerPortfolioUseCase(
             repository=build_seller_portfolio_repository(),
             audit_repository=build_audit_log_repository(),
+            portal_access=PermissivePortalAccessPort(),
         )
     return _portfolio_use_case
 
