@@ -112,6 +112,9 @@ export function SellerPortfoliosOrgView({
             <CommercialOrgMembershipFlow
               nodes={flowModel.nodes}
               edges={flowModel.edges}
+              portalScopeClassName="dashboard-commercial"
+              fullscreenTitle="Organização"
+              fullscreenSubtitle="Relação entre carteiras e usuários com acesso ao Portal Comercial."
               aria-label={
                 axis === "portfolio"
                   ? "Organização por carteira"

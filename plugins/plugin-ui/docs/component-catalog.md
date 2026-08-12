@@ -453,8 +453,12 @@ Código: `src/components/org/`. CSS: `styles/org-membership-flow.css` (classes `
 | `classNames` | BEM dual-class | Via `orgMembershipFlowBemClasses(prefix)` ou factory |
 | `emptyMessage` | `string?` | Empty state no kit |
 | `onNodeClick` | `(payload) => void` | Clique tipado por `kind` + `entityId` |
+| `colorMode` | `"light" \| "dark"?` | Força tema; default segue `data-theme` Delpi |
+| `fullscreen` | `boolean?` | Botão + modal tela cheia (`DiagramFullscreenFrame`). Default `true` |
+| `fullscreenTitle` / `fullscreenSubtitle` | `string?` | Título do modal |
+| `portalScopeClassName` | `string?` | Escopo MFE (ex.: `dashboard-commercial`) |
 
-Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`.
+Interação: pan (arrastar), zoom (scroll/pinch/controles), fit-view, minimapa. Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`.
 
 ```tsx
 import { createDashboardOrgMembershipFlow } from "@delpi/plugin-ui/index";

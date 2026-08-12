@@ -68,6 +68,7 @@ describe("seller-portfolios kit-first", () => {
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /CommercialOrgMembershipFlow/);
     assert.match(orgSource, /buildSellerPortfoliosOrgFlowModel/);
+    assert.match(orgSource, /fullscreenTitle|portalScopeClassName/);
     assert.doesNotMatch(orgSource, /cm-portfolios-org-tree/);
   });
 

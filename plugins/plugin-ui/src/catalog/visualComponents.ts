@@ -341,8 +341,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   // org — organograma membership (read-only React Flow)
   vc("org", "OrgMembershipFlow", {
     addedAt: "2026-08-12",
+    updatedAt: "2026-08-12",
+    changeNote: "Claro/escuro, tela cheia, controles pan/zoom/fit e nós temáticos",
     description:
-      "Canvas read-only carteira↔pessoa (@xyflow/react): pan/zoom, fit-view, clique tipado; factory createDashboardOrgMembershipFlow.",
+      "Canvas read-only carteira↔pessoa (@xyflow/react): pan/zoom, fit-view, fullscreen, tema Delpi; factory createDashboardOrgMembershipFlow.",
   }),
   // shape
   vc("shape", "ShapeFillMenu"),

@@ -1,30 +1,85 @@
+/* Org membership flow — canvas + nós + controles React Flow (claro/escuro). */
+
 .delpi-ui-org-flow {
+  --org-flow-canvas-bg: var(--delpi-ui-surface-muted, #f8fafc);
+  --org-flow-node-bg: var(--delpi-ui-surface, #ffffff);
+  --org-flow-node-border: color-mix(in srgb, var(--delpi-ui-border, #cbd5e1) 85%, transparent);
+  --org-flow-node-fg: var(--delpi-ui-fg, #0f172a);
+  --org-flow-node-muted: var(--delpi-ui-muted, #64748b);
+  --org-flow-node-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --org-flow-node-shadow-hover: 0 4px 16px rgba(37, 99, 235, 0.16);
+  --org-flow-icon-bg: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 12%, #fff);
+  --org-flow-person-icon-bg: color-mix(in srgb, var(--delpi-ui-success, #059669) 14%, #fff);
+  --org-flow-controls-bg: var(--delpi-ui-surface, #fff);
+  --org-flow-controls-border: var(--delpi-ui-border, rgba(15, 23, 42, 0.14));
+  --org-flow-controls-fg: var(--delpi-ui-fg, #0f172a);
+  --org-flow-controls-hover: var(--delpi-ui-surface-muted, #f1f5f9);
+  --org-flow-minimap-bg: var(--delpi-ui-surface, #fff);
+
   display: flex;
   flex-direction: column;
-  min-height: 420px;
+  min-height: 440px;
   width: 100%;
   border: 1px solid var(--delpi-ui-border, rgba(15, 23, 42, 0.12));
   border-radius: var(--delpi-ui-radius-md, 12px);
-  background: var(--delpi-ui-surface, #fff);
+  background: var(--org-flow-canvas-bg);
   overflow: hidden;
+  color: var(--org-flow-node-fg);
+}
+
+.delpi-ui-org-flow--dark,
+.delpi-ui-org-flow[data-color-mode="dark"] {
+  --org-flow-canvas-bg: color-mix(in srgb, #0b1220 92%, #1e293b);
+  --org-flow-node-bg: color-mix(in srgb, #111827 88%, #1f2937);
+  --org-flow-node-border: rgba(148, 163, 184, 0.28);
+  --org-flow-node-fg: #e2e8f0;
+  --org-flow-node-muted: #94a3b8;
+  --org-flow-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
+  --org-flow-node-shadow-hover: 0 6px 20px rgba(37, 99, 235, 0.28);
+  --org-flow-icon-bg: color-mix(in srgb, #3b82f6 28%, #0f172a);
+  --org-flow-person-icon-bg: color-mix(in srgb, #10b981 26%, #0f172a);
+  --org-flow-controls-bg: #111827;
+  --org-flow-controls-border: rgba(148, 163, 184, 0.28);
+  --org-flow-controls-fg: #e2e8f0;
+  --org-flow-controls-hover: #1e293b;
+  --org-flow-minimap-bg: #0f172a;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+/* Modal tela cheia — canvas ocupa altura útil */
+.delpi-ui-bpmn-workspace--modal-body .delpi-ui-org-flow,
+.delpi-ui-bpmn-workspace--modal-body .delpi-ui-org-flow__canvas,
+.delpi-ui-bpmn-workspace--modal-body .delpi-ui-org-flow__canvas .react-flow {
+  min-height: min(78vh, 900px);
+  height: 100%;
 }
 
 .delpi-ui-org-flow__canvas {
   flex: 1 1 auto;
-  min-height: 420px;
+  min-height: 440px;
   width: 100%;
+  position: relative;
 }
 
 .delpi-ui-org-flow__canvas .react-flow {
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 440px;
+  background: transparent;
+}
+
+.delpi-ui-org-flow__canvas .react-flow__viewport {
+  cursor: grab;
+}
+
+.delpi-ui-org-flow__canvas .react-flow__viewport:active {
+  cursor: grabbing;
 }
 
 .delpi-ui-org-flow__empty {
   margin: 0;
   padding: 2rem 1.25rem;
-  color: var(--delpi-ui-muted, #64748b);
+  color: var(--org-flow-node-muted);
   font-size: 0.95rem;
   text-align: center;
 }
@@ -32,20 +87,25 @@
 .delpi-ui-org-flow__node {
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  min-width: 200px;
-  max-width: 240px;
-  padding: 0.7rem 0.85rem;
-  border-radius: var(--delpi-ui-radius-md, 12px);
-  border: 1px solid var(--delpi-ui-border, rgba(15, 23, 42, 0.14));
-  background: var(--delpi-ui-surface-elevated, #fff);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  gap: 0.7rem;
+  min-width: 212px;
+  max-width: 260px;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid var(--org-flow-node-border);
+  background: var(--org-flow-node-bg);
+  box-shadow: var(--org-flow-node-shadow);
   cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 .delpi-ui-org-flow__node:hover {
-  border-color: var(--delpi-ui-accent, #2563eb);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 55%, var(--org-flow-node-border));
+  box-shadow: var(--org-flow-node-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .delpi-ui-org-flow__node--portfolio {
@@ -68,43 +128,40 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 999px;
-  background: var(--delpi-ui-surface-muted, #f1f5f9);
-  color: var(--delpi-ui-fg, #0f172a);
+  background: var(--org-flow-icon-bg);
+  color: var(--delpi-ui-accent, #2563eb);
   flex: 0 0 auto;
 }
 
-.delpi-ui-org-flow__node--portfolio .delpi-ui-org-flow__node-icon {
-  color: var(--delpi-ui-accent, #2563eb);
-}
-
 .delpi-ui-org-flow__node--person .delpi-ui-org-flow__node-icon {
+  background: var(--org-flow-person-icon-bg);
   color: var(--delpi-ui-success, #059669);
 }
 
 .delpi-ui-org-flow__node-body {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.22rem;
   min-width: 0;
 }
 
 .delpi-ui-org-flow__node-title {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 650;
   line-height: 1.25;
-  color: var(--delpi-ui-fg, #0f172a);
+  color: var(--org-flow-node-fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .delpi-ui-org-flow__node-subtitle {
-  font-size: 0.75rem;
-  line-height: 1.3;
-  color: var(--delpi-ui-muted, #64748b);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--org-flow-node-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -118,14 +175,66 @@
   pointer-events: none;
 }
 
+/* Controles zoom / fit — ícones visíveis em claro e escuro */
 .delpi-ui-org-flow .react-flow__controls {
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 12px !important;
+  padding: 0;
+  border: 1px solid var(--org-flow-controls-border);
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  background: var(--org-flow-controls-bg);
+}
+
+.delpi-ui-org-flow .react-flow__controls-button {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--org-flow-controls-border);
+  border-radius: 0;
+  background: var(--org-flow-controls-bg) !important;
+  color: var(--org-flow-controls-fg) !important;
+  fill: currentColor !important;
+}
+
+.delpi-ui-org-flow .react-flow__controls-button:last-child {
+  border-bottom: 0;
+}
+
+.delpi-ui-org-flow .react-flow__controls-button:hover {
+  background: var(--org-flow-controls-hover) !important;
+}
+
+.delpi-ui-org-flow .react-flow__controls-button svg {
+  max-width: 14px;
+  max-height: 14px;
+  fill: currentColor !important;
+  color: inherit;
+}
+
+.delpi-ui-org-flow .react-flow__controls-button path {
+  fill: currentColor !important;
 }
 
 .delpi-ui-org-flow .react-flow__minimap {
-  border-radius: 8px;
+  margin: 12px !important;
+  width: 140px !important;
+  height: 96px !important;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--delpi-ui-border, rgba(15, 23, 42, 0.12));
+  border: 1px solid var(--org-flow-controls-border);
+  background: var(--org-flow-minimap-bg) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+
+.delpi-ui-org-flow .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.delpi-ui-org-flow .react-flow__attribution {
+  display: none;
 }

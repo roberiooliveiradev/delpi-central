@@ -540,11 +540,13 @@ Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` n
 │ │                                                                    │ │
 │ │ (Por pessoa inverte raiz↔filhos: pessoa no topo, carteiras abaixo) │ │
 │ └────────────────────────────────────────────────────────────────────┘ │
-│ Controles: zoom +/- · minimap · clique na carteira → detalhe           │
+│ Controles: zoom +/- · fit · minimap · tela cheia · pan (arrastar)      │
+│ Tema: claro/escuro via data-theme Delpi                                 │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Canvas:** `OrgMembershipFlow` (`@delpi/plugin-ui`) + `@xyflow/react` — não é árvore HTML nem editor BPMN.
+**Tela cheia:** `DiagramFullscreenFrame` no kit (botão acima do canvas).
 **E6.2 — KPIs de carga:** snippet no subtítulo do nó (`cli · valor aberto · Atenção · membros|carteiras`).
 `customer_count` / `member_count` vêm de `GET /seller-portfolios/load-summary` (Postgres).
 `open_value` / `attention_count` ficam `null` (UI «—») até agregação TOTVS barata

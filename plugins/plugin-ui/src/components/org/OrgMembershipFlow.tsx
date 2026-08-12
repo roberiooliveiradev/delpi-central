@@ -1,7 +1,14 @@
 import { Briefcase, User } from "lucide-react";
-import { memo, useEffect, useMemo, type CSSProperties, type MouseEvent } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  type CSSProperties,
+  type MouseEvent,
+} from "react";
 import {
   Background,
+  BackgroundVariant,
   Controls,
   Handle,
   MarkerType,
@@ -16,6 +23,9 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
+import { withBemModifier } from "../../utils/delpiUiClass";
+import { useDelpiDarkMode } from "../bpmn/hooks/useDelpiDarkMode";
+import { DiagramFullscreenFrame } from "../bpmn/shell/DiagramFullscreenFrame";
 import { layoutOrgMembershipForest } from "./layoutOrgMembershipForest";
 import {
   orgMembershipFlowBemClasses,
@@ -62,7 +72,7 @@ function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps)
     >
       <Handle type="target" position={Position.Top} className="delpi-ui-org-flow__handle" />
       <span className={classNames.nodeIcon} aria-hidden="true">
-        <Icon size={18} strokeWidth={2} />
+        <Icon size={18} strokeWidth={2.25} />
       </span>
       <div className={classNames.nodeBody}>
         <strong className={classNames.nodeTitle}>{data.title}</strong>
@@ -79,8 +89,8 @@ function FitViewOnChange({ revision }: { revision: string }) {
   const { fitView } = useReactFlow();
   useEffect(() => {
     const id = window.setTimeout(() => {
-      void fitView({ padding: 0.18, duration: 200 });
-    }, 40);
+      void fitView({ padding: 0.2, duration: 220 });
+    }, 50);
     return () => window.clearTimeout(id);
   }, [fitView, revision]);
   return null;
@@ -95,9 +105,16 @@ export type OrgMembershipFlowProps = {
   style?: CSSProperties;
   "aria-label"?: string;
   onNodeClick?: (payload: OrgMembershipFlowNodeClick) => void;
+  /** Força tema; default segue `data-theme` Delpi. */
+  colorMode?: "light" | "dark";
+  /** Botão + modal de tela cheia (kit DiagramFullscreenFrame). Default true. */
+  fullscreen?: boolean;
+  fullscreenTitle?: string;
+  fullscreenSubtitle?: string;
+  portalScopeClassName?: string;
 };
 
-function OrgMembershipFlowInner({
+function OrgMembershipCanvas({
   nodes,
   edges,
   classNames,
@@ -106,7 +123,12 @@ function OrgMembershipFlowInner({
   style,
   "aria-label": ariaLabel = "Organização",
   onNodeClick,
+  colorMode,
 }: OrgMembershipFlowProps) {
+  const isDarkFromHook = useDelpiDarkMode();
+  const isDark = colorMode ? colorMode === "dark" : isDarkFromHook;
+  const colorModeAttr = isDark ? "dark" : "light";
+
   const positions = useMemo(
     () => layoutOrgMembershipForest(nodes, edges),
     [nodes, edges],
@@ -134,6 +156,8 @@ function OrgMembershipFlowInner({
     [nodes, positions],
   );
 
+  const edgeStroke = isDark ? "rgba(148, 163, 184, 0.75)" : "rgba(100, 116, 139, 0.7)";
+
   const flowEdges: Edge[] = useMemo(
     () =>
       edges.map((edge) => ({
@@ -143,9 +167,15 @@ function OrgMembershipFlowInner({
         type: "smoothstep",
         selectable: false,
         focusable: false,
-        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
+        style: { stroke: edgeStroke, strokeWidth: 1.75 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 18,
+          height: 18,
+          color: edgeStroke,
+        },
       })),
-    [edges],
+    [edges, edgeStroke],
   );
 
   const nodeTypes = useMemo(
@@ -157,16 +187,20 @@ function OrgMembershipFlowInner({
     [classNames],
   );
 
-  const revision = `${nodes.map((n) => n.id).join(",")}|${edges.map((e) => e.id).join(",")}`;
+  const revision = `${colorModeAttr}|${nodes.map((n) => n.id).join(",")}|${edges
+    .map((e) => e.id)
+    .join(",")}`;
+
+  const rootClass = [
+    withBemModifier(classNames.root, isDark ? "dark" : "light"),
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (nodes.length === 0) {
     return (
-      <div
-        className={[classNames.root, className].filter(Boolean).join(" ")}
-        style={style}
-        role="status"
-        aria-label={ariaLabel}
-      >
+      <div className={rootClass} style={style} role="status" aria-label={ariaLabel}>
         <p className={classNames.empty}>{emptyMessage}</p>
       </div>
     );
@@ -180,32 +214,56 @@ function OrgMembershipFlowInner({
     });
   };
 
+  const minimapMask = isDark ? "rgba(15, 23, 42, 0.72)" : "rgba(248, 250, 252, 0.78)";
+  const minimapNode = (node: Node) => {
+    const kind = (node.data as OrgMembershipFlowNodeData | undefined)?.kind;
+    if (kind === "person") return isDark ? "#34d399" : "#059669";
+    return isDark ? "#60a5fa" : "#2563eb";
+  };
+
   return (
-    <div
-      className={[classNames.root, className].filter(Boolean).join(" ")}
-      style={style}
-      aria-label={ariaLabel}
-    >
+    <div className={rootClass} style={style} aria-label={ariaLabel} data-color-mode={colorModeAttr}>
       <div className={classNames.canvas}>
         <ReactFlow
           nodes={flowNodes}
           edges={flowEdges}
           nodeTypes={nodeTypes}
+          colorMode={colorModeAttr}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
           edgesFocusable={false}
+          panOnDrag
           panOnScroll
           zoomOnScroll
+          zoomOnPinch
+          zoomOnDoubleClick
           fitView
-          minZoom={0.35}
-          maxZoom={1.6}
+          minZoom={0.25}
+          maxZoom={1.85}
           proOptions={{ hideAttribution: true }}
           onNodeClick={handleNodeClick}
         >
-          <Background gap={18} size={1} />
-          <Controls showInteractive={false} />
-          <MiniMap pannable zoomable nodeStrokeWidth={2} />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={20}
+            size={1.35}
+            color={isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.35)"}
+          />
+          <Controls
+            showInteractive={false}
+            position="bottom-left"
+            aria-label="Controles de zoom e enquadramento"
+          />
+          <MiniMap
+            pannable
+            zoomable
+            position="bottom-right"
+            nodeStrokeWidth={2}
+            nodeColor={minimapNode}
+            maskColor={minimapMask}
+            ariaLabel="Minimapa da organização"
+          />
           <FitViewOnChange revision={revision} />
         </ReactFlow>
       </div>
@@ -214,10 +272,38 @@ function OrgMembershipFlowInner({
 }
 
 export function OrgMembershipFlow(props: OrgMembershipFlowProps) {
-  return (
+  const {
+    fullscreen = true,
+    fullscreenTitle = "Organização",
+    fullscreenSubtitle,
+    portalScopeClassName,
+  } = props;
+
+  const canvas = (
     <ReactFlowProvider>
-      <OrgMembershipFlowInner {...props} />
+      <OrgMembershipCanvas {...props} />
     </ReactFlowProvider>
+  );
+
+  if (!fullscreen) {
+    return canvas;
+  }
+
+  return (
+    <DiagramFullscreenFrame
+      title={fullscreenTitle}
+      subtitle={fullscreenSubtitle}
+      portalScopeClassName={portalScopeClassName}
+      labels={{
+        expand: "Tela cheia",
+        exit: "Sair da tela cheia",
+        expandHint:
+          "Abre o organograma em tela cheia. Use pan (arrastar), scroll para zoom e os controles no canto. Esc ou «Sair da tela cheia» para voltar.",
+        closeAriaLabel: "Fechar tela cheia",
+      }}
+    >
+      {canvas}
+    </DiagramFullscreenFrame>
   );
 }
 
