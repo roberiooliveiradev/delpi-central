@@ -54,13 +54,32 @@ class MeetingMinutesService:
     def _permissions(self, user: Any) -> set[str]:
         return set(getattr(user, "permissions", []) or [])
 
+    def _has_any_permission(self, user: Any, *codes: str) -> bool:
+        if getattr(user, "is_superadmin", False):
+            return True
+        permissions = self._permissions(user)
+        return any(code in permissions for code in codes)
+
     def _assert(self, user: Any, action: str, unit_code: str) -> None:
         permissions = self._permissions(user)
         if getattr(user, "is_superadmin", False):
             return
-        required = {"view": perms.TRANSFORMOMETRO_ATAS_VIEW, "manage": perms.TRANSFORMOMETRO_ATAS_MANAGE, "sign": perms.TRANSFORMOMETRO_ATAS_SIGN}[action]
-        if required not in permissions:
-            raise PermissionError("Sem permissão para esta operação de atas.")
+        if action == "view":
+            # Leitura: view, manage ou sign (sign-only precisa de detalhe/imagem no fluxo de assinar).
+            allowed_codes = (
+                perms.TRANSFORMOMETRO_ATAS_VIEW,
+                perms.TRANSFORMOMETRO_ATAS_MANAGE,
+                perms.TRANSFORMOMETRO_ATAS_SIGN,
+            )
+            if not any(code in permissions for code in allowed_codes):
+                raise PermissionError("Sem permissão para esta operação de atas.")
+        else:
+            required = {
+                "manage": perms.TRANSFORMOMETRO_ATAS_MANAGE,
+                "sign": perms.TRANSFORMOMETRO_ATAS_SIGN,
+            }[action]
+            if required not in permissions:
+                raise PermissionError("Sem permissão para esta operação de atas.")
         scope = self.scope_service.resolve(user)
         if action == "view":
             allowed = self.scope_service.can_view_filial(scope, unit_code)
@@ -82,8 +101,20 @@ class MeetingMinutesService:
             end_time=str(minute["end_time"]) if minute.get("end_time") else None, location=minute.get("location"), **content))
 
     def list_minutes(self, user: Any, filters: dict[str, Any]) -> dict[str, Any]:
-        permissions = self._permissions(user)
-        if not getattr(user, "is_superadmin", False) and perms.TRANSFORMOMETRO_ATAS_VIEW not in permissions:
+        pending_for_me = bool(filters.get("pending_for_me"))
+        if pending_for_me:
+            if not self._has_any_permission(
+                user,
+                perms.TRANSFORMOMETRO_ATAS_VIEW,
+                perms.TRANSFORMOMETRO_ATAS_MANAGE,
+                perms.TRANSFORMOMETRO_ATAS_SIGN,
+            ):
+                raise PermissionError("Sem permissão para consultar atas.")
+        elif not self._has_any_permission(
+            user,
+            perms.TRANSFORMOMETRO_ATAS_VIEW,
+            perms.TRANSFORMOMETRO_ATAS_MANAGE,
+        ):
             raise PermissionError("Sem permissão para consultar atas.")
         scope = self.scope_service.resolve(user)
         units = ["01", "02"] if scope.is_unrestricted else sorted(scope.allowed_codigos)
@@ -97,7 +128,7 @@ class MeetingMinutesService:
             status=filters.get("status"),
             meeting_type=filters.get("meeting_type"),
             q=filters.get("q"),
-            pending_for_user_id=self._user_id(user) if filters.get("pending_for_me") else None,
+            pending_for_user_id=self._user_id(user) if pending_for_me else None,
             date_from=filters.get("date_from"),
             date_to=filters.get("date_to"),
             limit=int(filters.get("limit") or 50),
