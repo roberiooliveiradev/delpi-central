@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -14,25 +14,27 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { buildConfiguracoesSectionPath } from "../../ui/configuracoes/configuracoesWorkspaceNav";
 import {
-  deleteFilial,
-  fetchFiliais,
+  deleteSetor,
   fetchOptions,
-  type Filial,
+  fetchSetores,
   type OptionsData,
+  type Setor,
 } from "../../data/api/transformometroApi";
+import { SelectField } from "../../components/ui/SelectField";
+import { mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { buildSettingsSectionPath } from "../../ui/settings/settingsWorkspaceNav";
+import { buildSetorPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { renderTableStatus } from "../../utils/tablePresentation";
-import { buildFilialPath } from "../../utils/routeParser";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW } from "../../components/filterChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
-const F = TM_HELP_TOOLTIPS.filiais;
+const S = TM_HELP_TOOLTIPS.setores;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -40,88 +42,100 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embedded?: boolean;
 };
 
-export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
+export function DepartmentsPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
   const confirm = useConfirm();
-  const [items, setItems] = useState<Filial[]>([]);
+  const [items, setItems] = useState<Setor[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [includeInactive, setIncludeInactive] = useState(true);
+  const [filialFilter, setFilialFilter] = useState("");
 
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
       const [list, opts] = await Promise.all([
-        fetchFiliais(getAccessToken, includeInactive),
+        fetchSetores(getAccessToken, filialFilter || undefined),
         fetchOptions(getAccessToken),
       ]);
       setItems(list.items);
       setOptions(opts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar unidades");
+      setError(err instanceof Error ? err.message : "Erro ao carregar departamentos");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getAccessToken, includeInactive]);
+  }, [filialFilter, getAccessToken]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useTransformometroCatalogWatch({
-    catalogId: "filial",
+    catalogId: "setor",
     getAccessToken,
     onUpdated: () => {
       void load();
     },
   });
 
-  async function handleDelete(filial: Filial) {
+  const filialLabels = useMemo(() => {
+    const map = new Map((options?.filiais ?? []).map((filial) => [filial.id, filial.label]));
+    return map;
+  }, [options?.filiais]);
+
+  async function handleDelete(setor: Setor) {
     const confirmed = await confirm({
-      title: "Excluir unidade",
-      message: `Excluir unidade ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`,
+      title: "Excluir departamento",
+      message: `Excluir departamento ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`,
       confirmLabel: "Excluir",
       variant: "danger",
     });
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
     setError(null);
     try {
-      await deleteFilial(filial.filial_id, getAccessToken);
+      await deleteSetor(setor.setor_id, getAccessToken);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir unidade");
+      setError(err instanceof Error ? err.message : "Erro ao excluir departamento");
     }
   }
 
-  const columns: DataTableColumn<Filial>[] = [
+  const columns: DataTableColumn<Setor>[] = [
     {
-      key: "codigo_filial",
+      key: "codigo_setor",
       header: "Código",
-      headerHint: C.codigoTotvs,
+      headerHint: C.codigo,
       sortable: true,
-      sortValue: (row) => row.codigo_filial ?? row.filial_id,
-      render: (row) => row.codigo_filial ?? row.filial_id,
+      sortValue: (row) => row.codigo_setor ?? row.setor_id,
+      render: (row) => row.codigo_setor ?? row.setor_id,
     },
     {
-      key: "nome_filial",
-      header: "Unidade",
-      headerHint: C.unidade,
+      key: "nome_setor",
+      header: "Departamento",
+      headerHint: C.setor,
       sortable: true,
       className: "ds-table__col--wide",
-      sortValue: (row) => row.nome_filial,
-      render: (row) => <strong>{row.nome_filial}</strong>,
+      sortValue: (row) => row.nome_setor,
+      render: (row) => <strong>{row.nome_setor}</strong>,
     },
     {
-      key: "status_filial",
+      key: "filiais",
+      header: "Unidades",
+      headerHint: C.unidades,
+      render: (row) =>
+        (row.filiais ?? [])
+          .map((filialId) => filialLabels.get(filialId) ?? "—")
+          .join(", ") || "—",
+    },
+    {
+      key: "status_setor",
       header: "Status",
       headerHint: C.status,
       sortable: true,
       className: "ds-table__col--status",
-      render: (row) => renderTableStatus(row.status_filial),
+      render: (row) => renderTableStatus(row.status_setor),
     },
     {
       key: "acoes",
@@ -135,7 +149,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
             className={DS_GHOST_BTN}
             onClick={(event) => {
               event.stopPropagation();
-              onNavigate(buildFilialPath(row.filial_id));
+              onNavigate(buildSetorPath(row.setor_id));
             }}
           >
             Abrir
@@ -161,8 +175,8 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
   if (loading && !options) {
     const loader = (
       <LoadingActivityCard
-        title="Carregando unidades"
-        description="Catálogo de unidades operacionais."
+        title="Carregando departamentos"
+        description="Catálogo de departamentos vinculados às unidades."
         progressPercent={catalogLoadingProgress}
       />
     );
@@ -184,15 +198,15 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
       />
 
       <p className="ds-hint">
-        Unidades ativas aparecem nos formulários de{" "}
+        Departamentos ativos e vinculados à unidade aparecem no formulário de{" "}
         <button
           type="button"
           className={DS_GHOST_BTN}
-          onClick={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
+          onClick={() => onNavigate(buildSettingsSectionPath("unidades"))}
         >
-          Departamentos
-        </button>{" "}
-        e{" "}
+          Unidades
+        </button>
+        {" "}e{" "}
         <button
           type="button"
           className={DS_GHOST_BTN}
@@ -204,29 +218,41 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
       </p>
 
       <DataTableSection
-        columnPreferencesKey="transformometro:FiliaisPage:cat-logo-de-unidades:v1"
-        title="Catálogo de unidades"
+        columnPreferencesKey="transformometro:DepartmentsPage:cat-logo-de-departamentos:v1"
+        title="Catálogo de departamentos"
         filters={
-          <NativeCheckboxControl
-           
-            checked={includeInactive}
-            onChange={setIncludeInactive}
-            label={<span className="tm-field__label">
-              Incluir unidades inativas
-              <HelpTooltip content={F.incluirInativas} ariaLabel="Ajuda: Incluir unidades inativas" />
-            </span>}
-          />
+          <div className={DS_FILTERS_ROW}>
+            <SelectField
+              id="tm-setor-list-filial"
+              label="Unidade"
+              hint={S.filtroUnidade}
+              value={filialFilter}
+              onChange={setFilialFilter}
+              allowEmpty
+              emptyLabel="Todas"
+              options={mapSelectOptionsFromItems(
+                options?.filiais ?? [],
+                (filial) => filial.id,
+                (filial) => filial.label
+              )}
+            />
+          </div>
         }
         columns={columns}
         rows={items}
-        rowKey={(row) => row.filial_id}
+        rowKey={(row) => row.setor_id}
         loading={loading}
         refreshing={refreshing}
         hideSearch
         pageSize={15}
-        emptyMessage="Nenhuma unidade cadastrada. Use Nova unidade para incluir."
-        onRowClick={(row) => onNavigate(buildFilialPath(row.filial_id))}
-        footer={<p className="ds-hint">{items.length} registro(s)</p>}
+        emptyMessage="Nenhum departamento cadastrado. Use Novo departamento para incluir."
+        onRowClick={(row) => onNavigate(buildSetorPath(row.setor_id))}
+        footer={
+          <p className="ds-hint">
+            {items.length} registro(s)
+            {filialFilter ? ` · filtrados para unidade ${filialLabels.get(filialFilter) ?? filialFilter}` : ""}
+          </p>
+        }
       />
     </>
   );
@@ -236,9 +262,9 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
   return (
     <TransformometroShell>
       <PageHeader
-        title="Unidades"
-        subtitle="Cadastro de unidades — base para instâncias, departamentos e escopo do dashboard"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
+        title="Departamentos"
+        subtitle="Cadastro de departamentos e vínculo com unidades — usado nos processos"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
         refreshing={refreshing}
@@ -246,10 +272,10 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
           <button
             type="button"
             className="ds-primary-btn"
-            onClick={() => onNavigate(buildFilialPath(CATALOG_CREATE.filial))}
+            onClick={() => onNavigate(buildSetorPath(CATALOG_CREATE.setor))}
           >
             <Plus size={16} />
-            Nova unidade
+            Novo departamento
           </button>
         }
       />

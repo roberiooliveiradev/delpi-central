@@ -1,6 +1,6 @@
 import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
-import type { RecursoWorkspaceSectionId } from "../ui/configuracoes/configuracoesWorkspaceNav";
-import { defaultRecursoSection } from "../ui/configuracoes/configuracoesWorkspaceNav";
+import type { RecursoWorkspaceSectionId } from "../ui/settings/settingsWorkspaceNav";
+import { defaultRecursoSection } from "../ui/settings/settingsWorkspaceNav";
 
 export type TransformometroView =
   | "dashboard"
@@ -274,7 +274,7 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   return { view: "dashboard" };
 }
 
-export function isConfiguracoesWorkspaceRoute(route: ParsedTransformometroRoute): boolean {
+export function isSettingsWorkspaceRoute(route: ParsedTransformometroRoute): boolean {
   return (
     route.view === "configuracoes" ||
     route.view === "filial" ||

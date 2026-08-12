@@ -39,7 +39,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embedded?: boolean;
 };
 
-export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
+export function SharedResourcesPage({ getAccessToken, pathname, onNavigate, embedded = false }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<RecursoCompartilhado[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +224,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
       </p>
 
       <DataTableSection
-        columnPreferencesKey="transformometro:RecursosPage:cat-logo-de-recursos:v1"
+        columnPreferencesKey="transformometro:SharedResourcesPage:cat-logo-de-recursos:v1"
         title="Catálogo de recursos"
         columns={columns}
         rows={items}

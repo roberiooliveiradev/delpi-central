@@ -7,9 +7,9 @@ import {
   SIDEBAR_WIDTH_COLLAPSED,
   writeConfiguracoesSidebarCollapsed,
   writeConfiguracoesSidebarWidth,
-} from "./configuracoesWorkspaceSidebarLayout";
+} from "./settingsWorkspaceSidebarLayout";
 
-export function useConfiguracoesWorkspaceSidebarLayout() {
+export function useSettingsWorkspaceSidebarLayout() {
   const [width, setWidthState] = useState(readConfiguracoesSidebarWidth);
   const [collapsed, setCollapsedState] = useState(readConfiguracoesSidebarCollapsed);
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { RecursoWorkspaceSectionId } from "./configuracoesWorkspaceNav";
+import type { RecursoWorkspaceSectionId } from "./settingsWorkspaceNav";
 
 type Props = {
   active: boolean;
@@ -8,7 +8,7 @@ type Props = {
   children: ReactNode;
 };
 
-export function RecursoWorkspaceSectionPanel({ active, sectionId, children }: Props) {
+export function SharedResourceWorkspaceSectionPanel({ active, sectionId, children }: Props) {
   return (
     <div
       className={`tm-processo-workspace-section${active ? " tm-processo-workspace-section--active" : ""}`}

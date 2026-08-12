@@ -12,23 +12,23 @@ import {
   buildSetorPath,
   type ParsedTransformometroRoute,
 } from "../../utils/routeParser";
-import { FiliaisPage } from "./FiliaisPage";
-import { FilialDetailPage } from "./FilialDetailPage";
-import { RecursosPage } from "./RecursosPage";
-import { RecursoDetailPage } from "./RecursoDetailPage";
-import { SetoresPage } from "./SetoresPage";
-import { SetorDetailPage } from "./SetorDetailPage";
+import { BranchesPage } from "./BranchesPage";
+import { BranchDetailPage } from "./BranchDetailPage";
+import { SharedResourcesPage } from "./SharedResourcesPage";
+import { SharedResourceDetailPage } from "./SharedResourceDetailPage";
+import { DepartmentsPage } from "./DepartmentsPage";
+import { DepartmentDetailPage } from "./DepartmentDetailPage";
 import {
-  ConfiguracoesWorkspaceShell,
+  SettingsWorkspaceShell,
   useRecursoWorkspaceSection,
-} from "../configuracoes/ConfiguracoesWorkspaceShell";
+} from "../settings/SettingsWorkspaceShell";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
-  buildConfiguracoesSectionPath,
-  parseConfiguracoesSectionFromPath,
-  resolveActiveConfiguracoesNodeId,
-  type ConfiguracoesSectionId,
-} from "../configuracoes/configuracoesWorkspaceNav";
+  buildSettingsSectionPath,
+  parseSettingsSectionFromPath,
+  resolveActiveSettingsNodeId,
+  type SettingsSectionId,
+} from "../settings/settingsWorkspaceNav";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   route: ParsedTransformometroRoute;
@@ -36,14 +36,14 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
-function sectionFromRoute(route: ParsedTransformometroRoute, pathname: string): ConfiguracoesSectionId {
+function sectionFromRoute(route: ParsedTransformometroRoute, pathname: string): SettingsSectionId {
   if (route.view === "filial") return "unidades";
   if (route.view === "setor") return "departamentos";
   if (route.view === "recurso") return "recursos";
-  return parseConfiguracoesSectionFromPath(pathname);
+  return parseSettingsSectionFromPath(pathname);
 }
 
-export function isConfiguracoesWorkspaceRoute(route: ParsedTransformometroRoute): boolean {
+export function isSettingsWorkspaceRoute(route: ParsedTransformometroRoute): boolean {
   return (
     route.view === "configuracoes" ||
     route.view === "filial" ||
@@ -52,13 +52,13 @@ export function isConfiguracoesWorkspaceRoute(route: ParsedTransformometroRoute)
   );
 }
 
-export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, onNavigate }: Props) {
+export function SettingsWorkspacePage({ getAccessToken, route, pathname, onNavigate }: Props) {
   const section = sectionFromRoute(route, pathname ?? "");
   const activeRecursoSection = useRecursoWorkspaceSection();
 
   const activeNodeId = useMemo(
     () =>
-      resolveActiveConfiguracoesNodeId({
+      resolveActiveSettingsNodeId({
         view:
           route.view === "configuracoes"
             ? "configuracoes"
@@ -124,7 +124,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
       <button
         type="button"
         className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-        onClick={() => onNavigate(buildConfiguracoesSectionPath("unidades"))}
+        onClick={() => onNavigate(buildSettingsSectionPath("unidades"))}
       >
         <ArrowLeft size={16} />
         Unidades
@@ -133,7 +133,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
       <button
         type="button"
         className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-        onClick={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
+        onClick={() => onNavigate(buildSettingsSectionPath("departamentos"))}
       >
         <ArrowLeft size={16} />
         Departamentos
@@ -142,7 +142,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
       <button
         type="button"
         className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-        onClick={() => onNavigate(buildConfiguracoesSectionPath("recursos"))}
+        onClick={() => onNavigate(buildSettingsSectionPath("recursos"))}
       >
         <ArrowLeft size={16} />
         Recursos
@@ -152,53 +152,53 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
   function renderMain() {
     if (route.view === "filial" && route.filialId) {
       return (
-        <FilialDetailPage
+        <BranchDetailPage
           embedded
           getAccessToken={getAccessToken}
           filialId={route.filialId}
           pathname={pathname}
           onNavigate={onNavigate}
-          onBack={() => onNavigate(buildConfiguracoesSectionPath("unidades"))}
+          onBack={() => onNavigate(buildSettingsSectionPath("unidades"))}
         />
       );
     }
     if (route.view === "setor" && route.setorId) {
       return (
-        <SetorDetailPage
+        <DepartmentDetailPage
           embedded
           getAccessToken={getAccessToken}
           setorId={route.setorId}
           pathname={pathname}
           onNavigate={onNavigate}
-          onBack={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
+          onBack={() => onNavigate(buildSettingsSectionPath("departamentos"))}
         />
       );
     }
     if (route.view === "recurso" && route.recursoId) {
       return (
-        <RecursoDetailPage
+        <SharedResourceDetailPage
           embedded
           activeSection={activeRecursoSection}
           getAccessToken={getAccessToken}
           recursoId={route.recursoId}
           pathname={pathname}
           onNavigate={onNavigate}
-          onBack={() => onNavigate(buildConfiguracoesSectionPath("recursos"))}
+          onBack={() => onNavigate(buildSettingsSectionPath("recursos"))}
         />
       );
     }
     if (section === "departamentos") {
       return (
-        <SetoresPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+        <DepartmentsPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
       );
     }
     if (section === "recursos") {
       return (
-        <RecursosPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+        <SharedResourcesPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
       );
     }
     return (
-      <FiliaisPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+      <BranchesPage embedded getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
   }
 
@@ -211,7 +211,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
         onNavigate={onNavigate}
       />
 
-      <ConfiguracoesWorkspaceShell
+      <SettingsWorkspaceShell
         activeNodeId={activeNodeId}
         getAccessToken={getAccessToken}
         onNavigate={onNavigate}
@@ -219,7 +219,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
         footerActions={sidebarActions}
       >
         {renderMain()}
-      </ConfiguracoesWorkspaceShell>
+      </SettingsWorkspaceShell>
     </TransformometroShell>
   );
 }

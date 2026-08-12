@@ -8,7 +8,7 @@ type Props = {
   filial: Filial;
 };
 
-export function FilialReadView({ filial }: Props) {
+export function BranchReadView({ filial }: Props) {
   return (
     <dl className="ds-dl-grid">
       <div>

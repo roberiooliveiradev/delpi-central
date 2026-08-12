@@ -13,7 +13,7 @@ type Props = {
   vinculosAtivos?: number;
 };
 
-export function RecursoReadView({ recurso, vinculosAtivos }: Props) {
+export function SharedResourceReadView({ recurso, vinculosAtivos }: Props) {
   const vigencia = `${toDateInputValue(recurso.data_inicio_vigencia) || "…"} → ${toDateInputValue(recurso.data_fim_vigencia) || "…"}`;
 
   return (

@@ -9,13 +9,13 @@ import {
   type Setor,
 } from "../../data/api/transformometroApi";
 import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
-import { ConfiguracoesWorkspaceSidebar } from "./ConfiguracoesWorkspaceSidebar";
+import { SettingsWorkspaceSidebar } from "./SettingsWorkspaceSidebar";
 import {
-  buildConfiguracoesWorkspaceTree,
+  buildSettingsWorkspaceTree,
   parseRecursoSectionFromHash,
   type RecursoWorkspaceSectionId,
-} from "./configuracoesWorkspaceNav";
-import { useConfiguracoesWorkspaceSidebarLayout } from "./useConfiguracoesWorkspaceSidebarLayout";
+} from "./settingsWorkspaceNav";
+import { useSettingsWorkspaceSidebarLayout } from "./useSettingsWorkspaceSidebarLayout";
 
 type Props = {
   activeNodeId: string;
@@ -26,7 +26,7 @@ type Props = {
   children: ReactNode;
 };
 
-export function ConfiguracoesWorkspaceShell({
+export function SettingsWorkspaceShell({
   activeNodeId,
   getAccessToken,
   onNavigate,
@@ -60,12 +60,12 @@ export function ConfiguracoesWorkspaceShell({
   }, [loadSidebarData]);
 
   const treeNodes = useMemo(
-    () => buildConfiguracoesWorkspaceTree({ filiais, setores, recursos }),
+    () => buildSettingsWorkspaceTree({ filiais, setores, recursos }),
     [filiais, recursos, setores]
   );
 
   const { collapsed, toggleCollapsed, startResize, sidebarWidthPx } =
-    useConfiguracoesWorkspaceSidebarLayout();
+    useSettingsWorkspaceSidebarLayout();
 
   const workspaceStyle = {
     "--tm-workspace-sidebar-width": `${sidebarWidthPx}px`,
@@ -77,7 +77,7 @@ export function ConfiguracoesWorkspaceShell({
       style={workspaceStyle}
     >
       <div className="tm-processo-workspace-sidebar-shell">
-        <ConfiguracoesWorkspaceSidebar
+        <SettingsWorkspaceSidebar
           nodes={treeNodes}
           activeNodeId={activeNodeId}
           onNavigate={onNavigate}

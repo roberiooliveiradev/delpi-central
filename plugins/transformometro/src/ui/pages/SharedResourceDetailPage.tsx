@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Search, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { RecursoReadView } from "../../components/recurso/RecursoReadView";
+import { SharedResourceReadView } from "../../components/shared-resource/SharedResourceReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
@@ -38,9 +38,9 @@ import {
 } from "../../data/api/transformometroApi";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
 import { buildProcessoPath, buildRecursoPath } from "../../utils/routeParser";
-import { RecursoWorkspaceSectionPanel } from "../configuracoes/RecursoWorkspaceSectionPanel";
-import type { RecursoWorkspaceSectionId } from "../configuracoes/configuracoesWorkspaceNav";
-import { defaultRecursoSection } from "../configuracoes/configuracoesWorkspaceNav";
+import { SharedResourceWorkspaceSectionPanel } from "../settings/SharedResourceWorkspaceSectionPanel";
+import type { RecursoWorkspaceSectionId } from "../settings/settingsWorkspaceNav";
+import { defaultRecursoSection } from "../settings/settingsWorkspaceNav";
 import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
@@ -85,7 +85,7 @@ function formFromVinculo(vinculo: VinculoRecurso): VinculoEditForm {
   };
 }
 
-export function RecursoDetailPage({
+export function SharedResourceDetailPage({
   recursoId,
   pathname,
   getAccessToken,
@@ -390,7 +390,7 @@ export function RecursoDetailPage({
 
       <div className={`ds-cadastro-panel ds-cadastro-panel--cards${embedded ? " ds-cadastro-panel--workspace" : ""}`}>
         {options && showSection("identificacao") ? (
-          <RecursoWorkspaceSectionPanel
+          <SharedResourceWorkspaceSectionPanel
             active={!embedded || isCreate || activeSection === "identificacao"}
             sectionId="identificacao"
           >
@@ -405,7 +405,7 @@ export function RecursoDetailPage({
               dirty={!valuesEqual(form, formBaseline)}
               editable={!isCreate}
               readContent={
-                recurso ? <RecursoReadView recurso={recurso} vinculosAtivos={ativos} /> : null
+                recurso ? <SharedResourceReadView recurso={recurso} vinculosAtivos={ativos} /> : null
               }
               editContent={
                 <form
@@ -424,11 +424,11 @@ export function RecursoDetailPage({
                 </form>
               }
             />
-          </RecursoWorkspaceSectionPanel>
+          </SharedResourceWorkspaceSectionPanel>
         ) : null}
 
         {!isCreate && showSection("custos") ? (
-          <RecursoWorkspaceSectionPanel active={!embedded || activeSection === "custos"} sectionId="custos">
+          <SharedResourceWorkspaceSectionPanel active={!embedded || activeSection === "custos"} sectionId="custos">
             <EditableSectionCard
               title="Custos ao longo do tempo"
               description="Histórico de vigências de custo mensal usado no dashboard."
@@ -455,11 +455,11 @@ export function RecursoDetailPage({
                 />
               }
             />
-          </RecursoWorkspaceSectionPanel>
+          </SharedResourceWorkspaceSectionPanel>
         ) : null}
 
         {!isCreate && showSection("vinculos") ? (
-          <RecursoWorkspaceSectionPanel active={!embedded || activeSection === "vinculos"} sectionId="vinculos">
+          <SharedResourceWorkspaceSectionPanel active={!embedded || activeSection === "vinculos"} sectionId="vinculos">
             <section className={sectionCn.section} aria-busy={loading || refreshing}>
               <div className={sectionCn.header}>
                 <h2 className={sectionCn.title}>Processos vinculados</h2>
@@ -641,7 +641,7 @@ export function RecursoDetailPage({
                 </div>
               )}
             </section>
-          </RecursoWorkspaceSectionPanel>
+          </SharedResourceWorkspaceSectionPanel>
         ) : null}
       </div>
     </>

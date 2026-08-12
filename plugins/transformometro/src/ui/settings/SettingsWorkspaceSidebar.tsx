@@ -5,14 +5,14 @@ import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { ProcessWorkspaceTreeIcon } from "../processes/ProcessWorkspaceTreeIcon";
 import {
-  collectConfiguracoesExpandedNodeIds,
-  filterConfiguracoesTree,
-  type ConfiguracoesNavNode,
-} from "./configuracoesWorkspaceNav";
+  collectSettingsExpandedNodeIds,
+  filterSettingsTree,
+  type SettingsNavNode,
+} from "./settingsWorkspaceNav";
 import { handleSpaLinkClick } from "../../utils/spaLink";
 
 type Props = {
-  nodes: ConfiguracoesNavNode[];
+  nodes: SettingsNavNode[];
   activeNodeId: string;
   onNavigate: (href: string) => void;
   backActions?: ReactNode;
@@ -28,7 +28,7 @@ function TreeNode({
   onToggle,
   onNavigate,
 }: {
-  node: ConfiguracoesNavNode;
+  node: SettingsNavNode;
   activeNodeId: string;
   expandedIds: Set<string>;
   onToggle: (nodeId: string) => void;
@@ -95,7 +95,7 @@ function TreeNode({
   );
 }
 
-export function ConfiguracoesWorkspaceSidebar({
+export function SettingsWorkspaceSidebar({
   nodes,
   activeNodeId,
   onNavigate,
@@ -105,10 +105,10 @@ export function ConfiguracoesWorkspaceSidebar({
   onToggleCollapsed,
 }: Props) {
   const [query, setQuery] = useState("");
-  const filteredNodes = useMemo(() => filterConfiguracoesTree(nodes, query), [nodes, query]);
+  const filteredNodes = useMemo(() => filterSettingsTree(nodes, query), [nodes, query]);
 
   const autoExpanded = useMemo(
-    () => collectConfiguracoesExpandedNodeIds(nodes, activeNodeId),
+    () => collectSettingsExpandedNodeIds(nodes, activeNodeId),
     [activeNodeId, nodes]
   );
 

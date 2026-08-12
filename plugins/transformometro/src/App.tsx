@@ -9,9 +9,9 @@ import {
 import { FloatingNoticeProvider } from "./components/ui/FloatingNoticeProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import {
-  ConfiguracoesWorkspacePage,
-  isConfiguracoesWorkspaceRoute,
-} from "./ui/pages/ConfiguracoesWorkspacePage";
+  SettingsWorkspacePage,
+  isSettingsWorkspaceRoute,
+} from "./ui/pages/SettingsWorkspacePage";
 import { ProcessWorkspacePage, isProcessWorkspaceRoute } from "./ui/pages/ProcessWorkspacePage";
 import { ProcessesPage } from "./ui/pages/ProcessesPage";
 import { DataTransferPage } from "./ui/pages/DataTransferPage";
@@ -119,9 +119,9 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
         onNavigate={onNavigate}
       />
     );
-  } else if (isConfiguracoesWorkspaceRoute(route)) {
+  } else if (isSettingsWorkspaceRoute(route)) {
     page = (
-      <ConfiguracoesWorkspacePage
+      <SettingsWorkspacePage
         getAccessToken={getAccessToken}
         route={route}
         pathname={pathname}

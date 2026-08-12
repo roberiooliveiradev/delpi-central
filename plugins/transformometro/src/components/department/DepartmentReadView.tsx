@@ -9,7 +9,7 @@ type Props = {
   filialLabels: Map<string, string>;
 };
 
-export function SetorReadView({ setor, filialLabels }: Props) {
+export function DepartmentReadView({ setor, filialLabels }: Props) {
   const unidades =
     (setor.filiais ?? [])
       .map((filialId) => filialLabels.get(filialId) ?? "—")

@@ -8,24 +8,24 @@ import {
   buildSetorPath,
 } from "../../utils/routeParser";
 
-export type ConfiguracoesSectionId = "unidades" | "departamentos" | "recursos";
+export type SettingsSectionId = "unidades" | "departamentos" | "recursos";
 
 export type RecursoWorkspaceSectionId = "identificacao" | "custos" | "vinculos";
 
-export type ConfiguracoesNavNodeKind = "section" | "filial" | "setor" | "recurso" | "recurso-section";
+export type SettingsNavNodeKind = "section" | "filial" | "setor" | "recurso" | "recurso-section";
 
-export type ConfiguracoesNavNode = {
+export type SettingsNavNode = {
   id: string;
-  kind: ConfiguracoesNavNodeKind;
+  kind: SettingsNavNodeKind;
   label: string;
   searchText: string;
   href: string;
   depth: number;
   badge?: string;
-  children?: ConfiguracoesNavNode[];
+  children?: SettingsNavNode[];
 };
 
-export const CONFIGURACOES_SECTIONS: Array<{ id: ConfiguracoesSectionId; label: string }> = [
+export const SETTINGS_SECTIONS: Array<{ id: SettingsSectionId; label: string }> = [
   { id: "unidades", label: "Unidades" },
   { id: "departamentos", label: "Departamentos" },
   { id: "recursos", label: "Recursos compartilhados" },
@@ -37,10 +37,10 @@ export const RECURSO_WORKSPACE_SECTIONS: Array<{ id: RecursoWorkspaceSectionId; 
   { id: "vinculos", label: "Processos vinculados" },
 ];
 
-const SECTION_IDS = new Set<string>(CONFIGURACOES_SECTIONS.map((item) => item.id));
+const SECTION_IDS = new Set<string>(SETTINGS_SECTIONS.map((item) => item.id));
 const RECURSO_SECTION_IDS = new Set<string>(RECURSO_WORKSPACE_SECTIONS.map((item) => item.id));
 
-export function isConfiguracoesSectionId(value: string): value is ConfiguracoesSectionId {
+export function isSettingsSectionId(value: string): value is SettingsSectionId {
   return SECTION_IDS.has(value);
 }
 
@@ -48,7 +48,7 @@ export function isRecursoWorkspaceSectionId(value: string): value is RecursoWork
   return RECURSO_SECTION_IDS.has(value);
 }
 
-export function defaultConfiguracoesSection(): ConfiguracoesSectionId {
+export function defaultSettingsSection(): SettingsSectionId {
   return "unidades";
 }
 
@@ -56,13 +56,13 @@ export function defaultRecursoSection(): RecursoWorkspaceSectionId {
   return "identificacao";
 }
 
-export function buildConfiguracoesSectionPath(section: ConfiguracoesSectionId): string {
+export function buildSettingsSectionPath(section: SettingsSectionId): string {
   if (section === "unidades") return TRANSFORMOMETRO_ROUTES.configuracoesUnidades;
   if (section === "departamentos") return TRANSFORMOMETRO_ROUTES.configuracoesDepartamentos;
   return TRANSFORMOMETRO_ROUTES.configuracoesRecursos;
 }
 
-function isConfiguracoesWorkspacePath(path: string): boolean {
+function isSettingsWorkspacePath(path: string): boolean {
   return (
     path.includes("/settings") ||
     path.includes("/configuracoes") ||
@@ -74,7 +74,7 @@ function isConfiguracoesWorkspacePath(path: string): boolean {
   );
 }
 
-export function parseConfiguracoesSectionFromPath(pathname: string): ConfiguracoesSectionId {
+export function parseSettingsSectionFromPath(pathname: string): SettingsSectionId {
   const path = pathname.replace(/\/$/, "");
   if (
     path.includes("/settings/departments") ||
@@ -101,8 +101,8 @@ export function parseConfiguracoesSectionFromPath(pathname: string): Configuraco
   ) {
     return "unidades";
   }
-  if (isConfiguracoesWorkspacePath(path)) return defaultConfiguracoesSection();
-  return defaultConfiguracoesSection();
+  if (isSettingsWorkspacePath(path)) return defaultSettingsSection();
+  return defaultSettingsSection();
 }
 
 export function parseRecursoSectionFromHash(hash: string): RecursoWorkspaceSectionId {
@@ -129,7 +129,7 @@ function recursoLabel(recurso: RecursoCompartilhado): string {
   return `${code} · ${name}`;
 }
 
-function buildRecursoSectionNodes(recursoId: string): ConfiguracoesNavNode[] {
+function buildRecursoSectionNodes(recursoId: string): SettingsNavNode[] {
   return RECURSO_WORKSPACE_SECTIONS.map((section) => ({
     id: `recurso-section:${recursoId}:${section.id}`,
     kind: "recurso-section" as const,
@@ -140,16 +140,16 @@ function buildRecursoSectionNodes(recursoId: string): ConfiguracoesNavNode[] {
   }));
 }
 
-export function buildConfiguracoesWorkspaceTree(input: {
+export function buildSettingsWorkspaceTree(input: {
   filiais: Filial[];
   setores: Setor[];
   recursos: RecursoCompartilhado[];
-}): ConfiguracoesNavNode[] {
+}): SettingsNavNode[] {
   const { filiais, setores, recursos } = input;
 
-  return CONFIGURACOES_SECTIONS.map((section) => {
+  return SETTINGS_SECTIONS.map((section) => {
     if (section.id === "unidades") {
-      const children: ConfiguracoesNavNode[] = filiais.map((filial) => ({
+      const children: SettingsNavNode[] = filiais.map((filial) => ({
         id: `filial:${filial.filial_id}`,
         kind: "filial",
         label: filialLabel(filial),
@@ -162,7 +162,7 @@ export function buildConfiguracoesWorkspaceTree(input: {
         kind: "section" as const,
         label: section.label,
         searchText: section.label.toLowerCase(),
-        href: buildConfiguracoesSectionPath("unidades"),
+        href: buildSettingsSectionPath("unidades"),
         depth: 1,
         badge: filiais.length ? String(filiais.length) : undefined,
         children,
@@ -170,7 +170,7 @@ export function buildConfiguracoesWorkspaceTree(input: {
     }
 
     if (section.id === "departamentos") {
-      const children: ConfiguracoesNavNode[] = setores.map((setor) => ({
+      const children: SettingsNavNode[] = setores.map((setor) => ({
         id: `setor:${setor.setor_id}`,
         kind: "setor",
         label: setorLabel(setor),
@@ -183,14 +183,14 @@ export function buildConfiguracoesWorkspaceTree(input: {
         kind: "section" as const,
         label: section.label,
         searchText: section.label.toLowerCase(),
-        href: buildConfiguracoesSectionPath("departamentos"),
+        href: buildSettingsSectionPath("departamentos"),
         depth: 1,
         badge: setores.length ? String(setores.length) : undefined,
         children,
       };
     }
 
-    const children: ConfiguracoesNavNode[] = recursos.map((recurso) => {
+    const children: SettingsNavNode[] = recursos.map((recurso) => {
       const label = recursoLabel(recurso);
       return {
         id: `recurso:${recurso.recurso_compartilhado_id}`,
@@ -208,7 +208,7 @@ export function buildConfiguracoesWorkspaceTree(input: {
       kind: "section" as const,
       label: section.label,
       searchText: section.label.toLowerCase(),
-      href: buildConfiguracoesSectionPath("recursos"),
+      href: buildSettingsSectionPath("recursos"),
       depth: 1,
       badge: recursos.length ? String(recursos.length) : undefined,
       children,
@@ -216,33 +216,33 @@ export function buildConfiguracoesWorkspaceTree(input: {
   });
 }
 
-export function filterConfiguracoesTree(
-  nodes: ConfiguracoesNavNode[],
+export function filterSettingsTree(
+  nodes: SettingsNavNode[],
   query: string
-): ConfiguracoesNavNode[] {
+): SettingsNavNode[] {
   const q = query.trim().toLowerCase();
   if (!q) return nodes;
 
-  function filterNode(node: ConfiguracoesNavNode): ConfiguracoesNavNode | null {
+  function filterNode(node: SettingsNavNode): SettingsNavNode | null {
     const childMatches = (node.children ?? [])
       .map(filterNode)
-      .filter((item): item is ConfiguracoesNavNode => item != null);
+      .filter((item): item is SettingsNavNode => item != null);
     const selfMatch = node.searchText.includes(q) || node.label.toLowerCase().includes(q);
     if (selfMatch) return { ...node, children: node.children };
     if (childMatches.length) return { ...node, children: childMatches };
     return null;
   }
 
-  return nodes.map(filterNode).filter((item): item is ConfiguracoesNavNode => item != null);
+  return nodes.map(filterNode).filter((item): item is SettingsNavNode => item != null);
 }
 
-export function collectConfiguracoesExpandedNodeIds(
-  nodes: ConfiguracoesNavNode[],
+export function collectSettingsExpandedNodeIds(
+  nodes: SettingsNavNode[],
   activeNodeId: string
 ): Set<string> {
   const expanded = new Set<string>();
 
-  function walk(nodeList: ConfiguracoesNavNode[]): boolean {
+  function walk(nodeList: SettingsNavNode[]): boolean {
     for (const node of nodeList) {
       if (node.id === activeNodeId) {
         return true;
@@ -270,9 +270,9 @@ export function collectConfiguracoesExpandedNodeIds(
   return expanded;
 }
 
-export function resolveActiveConfiguracoesNodeId(input: {
+export function resolveActiveSettingsNodeId(input: {
   view: "configuracoes" | "filial" | "setor" | "recurso";
-  section?: ConfiguracoesSectionId;
+  section?: SettingsSectionId;
   filialId?: string;
   setorId?: string;
   recursoId?: string;
@@ -293,5 +293,5 @@ export function resolveActiveConfiguracoesNodeId(input: {
     }
     return `recurso:${input.recursoId}`;
   }
-  return `section:${input.section ?? defaultConfiguracoesSection()}`;
+  return `section:${input.section ?? defaultSettingsSection()}`;
 }

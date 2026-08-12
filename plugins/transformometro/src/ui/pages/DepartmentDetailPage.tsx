@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { FilialReadView } from "../../components/filial/FilialReadView";
+import { DepartmentReadView } from "../../components/department/DepartmentReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
@@ -20,82 +20,105 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
-  createFilial,
-  deleteFilial,
-  fetchFilial,
+  createSetor,
+  deleteSetor,
   fetchOptions,
-  updateFilial,
-  type Filial,
+  fetchSetor,
+  updateSetor,
   type OptionsData,
+  type Setor,
 } from "../../data/api/transformometroApi";
-import { buildFilialPath } from "../../utils/routeParser";
+import { buildSetorPath } from "../../utils/routeParser";
 import { valuesEqual } from "@delpi/plugin-ui/index";
-import { FilialFormFields } from "../filiais/FilialFormFields";
+import { SetorFormFields } from "../setores/SetorFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
-  emptyFilialForm,
-  filialFormFromEntity,
-  payloadFromFilialForm,
-  type FilialFormState,
-} from "../filiais/filialCatalogForm";
+  createPayloadFromSetorForm,
+  emptySetorForm,
+  payloadFromSetorForm,
+  setorFormFromEntity,
+  type SetorFormState,
+} from "../setores/setorCatalogForm";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
-  filialId: string;
+  setorId: string;
   pathname?: string;
   onNavigate: (path: string) => void;
   onBack: () => void;
   embedded?: boolean;
 };
 
-export function FilialDetailPage({
+export function DepartmentDetailPage({
   getAccessToken,
-  filialId,
+  setorId,
   pathname,
   onNavigate,
   onBack,
   embedded = false,
 }: Props) {
   const confirm = useConfirm();
-  const isCreate = isCatalogCreateId("filial", filialId);
-  const [filial, setFilial] = useState<Filial | null>(null);
+  const isCreate = isCatalogCreateId("setor", setorId);
+  const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
-  const [form, setForm] = useState<FilialFormState>(() => emptyFilialForm());
-  const [formBaseline, setFormBaseline] = useState<FilialFormState>(() => emptyFilialForm());
-  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
+  const [formBaseline, setFormBaseline] = useState<SetorFormState>(() => emptySetorForm());
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
   const [saving, setSaving] = useState(false);
 
+  const filialLabels = useMemo(
+    () => new Map((options?.filiais ?? []).map((filial) => [filial.id, filial.label])),
+    [options?.filiais]
+  );
+
+  useEffect(() => {
+    setLoadError(null);
+    setSaveError(null);
+    setSetor(null);
+    setLoading(!isCreate);
+  }, [isCreate, setorId]);
+
   const load = useCallback(async () => {
     if (isCreate) {
-      const opts = await fetchOptions(getAccessToken);
-      setOptions(opts);
-      const empty = emptyFilialForm();
-      setForm(empty);
-      setFormBaseline(empty);
-      setLoading(false);
+      setLoading(true);
+      try {
+        const opts = await fetchOptions(getAccessToken);
+        setOptions(opts);
+        const empty = emptySetorForm();
+        setForm(empty);
+        setFormBaseline(empty);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Erro ao carregar opções");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
+    setLoadError(null);
+    setLoading(true);
     try {
       const [row, opts] = await Promise.all([
-        fetchFilial(filialId, getAccessToken),
+        fetchSetor(setorId, getAccessToken),
         fetchOptions(getAccessToken),
       ]);
-      setFilial(row);
+      setSetor(row);
       setOptions(opts);
-      const next = filialFormFromEntity(row);
+      const next = setorFormFromEntity(row);
       setForm(next);
       setFormBaseline(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar unidade");
+      setSetor(null);
+      setLoadError(err instanceof Error ? err.message : "Erro ao carregar departamento");
     } finally {
       setLoading(false);
     }
-  }, [filialId, getAccessToken, isCreate]);
+  }, [getAccessToken, isCreate, setorId]);
 
   const sectionEdit = useCollaborativeSectionEdit({
-    entityType: "filial",
-    entityId: filialId,
+    entityType: "setor",
+    entityId: setorId,
     getAccessToken,
     enabled: !isCreate,
     onResync: () => void load(),
@@ -105,46 +128,45 @@ export function FilialDetailPage({
     void load();
   }, [load]);
 
-  const editingFilial = sectionEdit.isEditing("filial");
+  const editingSetor = sectionEdit.isEditing("setor");
 
   useEffect(() => {
     if (isCreate) {
-      sectionEdit.startEdit("filial");
+      sectionEdit.startEdit("setor");
     }
   }, [isCreate, sectionEdit.startEdit]);
 
   useEffect(() => {
-    if (!filial || editingFilial) return;
-    const next = filialFormFromEntity(filial);
+    if (!setor || editingSetor) return;
+    const next = setorFormFromEntity(setor);
     setForm(next);
     setFormBaseline(next);
-  }, [filial, editingFilial]);
+  }, [setor, editingSetor]);
 
   async function handleSave() {
+    if (form.filiais.length === 0) {
+      setSaveError("Selecione ao menos uma unidade para o departamento.");
+      return;
+    }
     setSaving(true);
-    setError(null);
-    const payload = payloadFromFilialForm(form, !isCreate);
+    setSaveError(null);
+    const payload = payloadFromSetorForm(form);
     try {
       if (isCreate) {
-        const created = await createFilial(
-          {
-            codigo_filial: form.codigo_filial.trim(),
-            nome_filial: payload.nome_filial,
-            status_filial: payload.status_filial,
-          },
-          getAccessToken
-        );
-        onNavigate(buildFilialPath(created.filial_id));
+        const created = await createSetor(createPayloadFromSetorForm(form), getAccessToken);
+        setSetor(created);
+        setForm(setorFormFromEntity(created));
+        onNavigate(buildSetorPath(created.setor_id));
         return;
       }
-      const updated = await updateFilial(filialId, payload, getAccessToken);
-      setFilial(updated);
-      const saved = filialFormFromEntity(updated);
+      const updated = await updateSetor(setorId, payload, getAccessToken);
+      setSetor(updated);
+      const saved = setorFormFromEntity(updated);
       setForm(saved);
       setFormBaseline(saved);
-      sectionEdit.stopEdit("filial");
+      sectionEdit.stopEdit("setor");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
+      setSaveError(err instanceof Error ? err.message : "Erro ao salvar departamento");
       throw err;
     } finally {
       setSaving(false);
@@ -152,21 +174,21 @@ export function FilialDetailPage({
   }
 
   async function handleDelete() {
-    if (!filial) return;
-    const label = `${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}`;
+    if (!setor) return;
+    const label = `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}`;
     const confirmed = await confirm({
-      title: "Excluir unidade",
-      message: `Excluir unidade ${label}?`,
+      title: "Excluir departamento",
+      message: `Excluir departamento ${label}?`,
       confirmLabel: "Excluir",
       variant: "danger",
     });
     if (!confirmed) return;
-    setError(null);
+    setSaveError(null);
     try {
-      await deleteFilial(filial.filial_id, getAccessToken);
+      await deleteSetor(setor.setor_id, getAccessToken);
       onBack();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir unidade");
+      setSaveError(err instanceof Error ? err.message : "Erro ao excluir departamento");
     }
   }
 
@@ -176,25 +198,25 @@ export function FilialDetailPage({
       return;
     }
     setForm(formBaseline);
-    sectionEdit.cancelEdit("filial");
+    sectionEdit.cancelEdit("setor");
   }
 
   useUnsavedChangesGuard({
-    id: `filial:${filialId}`,
-    editing: isCreate || sectionEdit.isEditing("filial"),
+    id: `setor:${setorId}`,
+    editing: isCreate || sectionEdit.isEditing("setor"),
     dirty: !valuesEqual(form, formBaseline),
     onSave: handleSave,
     onDiscard: cancelEdit,
   });
 
-  const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !filial);
-  const loadingProgress = useLoadingProgress(loading && !isCreate && !filial, fetchProgress);
+  const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !setor);
+  const loadingProgress = useLoadingProgress(loading && !isCreate && !setor, fetchProgress);
 
-  if (loading && !isCreate && !filial) {
+  if (loading && !isCreate && !setor) {
     const loader = (
       <LoadingActivityCard
-        title="Carregando unidade"
-        description="Dados da unidade operacional."
+        title="Carregando departamento"
+        description="Dados do departamento e unidades vinculadas."
         progressPercent={loadingProgress}
       />
     );
@@ -202,13 +224,13 @@ export function FilialDetailPage({
     return <TransformometroShell>{loader}</TransformometroShell>;
   }
 
-  if (!isCreate && !filial && !loading) {
+  if (!isCreate && !setor && !loading) {
     const errorView = (
       <InlineErrorState
-        title={error ? "Não foi possível carregar a unidade" : "Unidade não encontrada"}
+        title={loadError ? "Não foi possível carregar o departamento" : "Departamento não encontrado"}
         message={
-          error ??
-          "Esta unidade pode ter sido excluída ou você não tem acesso."
+          loadError ??
+          "Este departamento pode ter sido excluído ou você não tem acesso."
         }
         actionLabel="Voltar à lista"
         onAction={onBack}
@@ -219,20 +241,20 @@ export function FilialDetailPage({
   }
 
   const title = isCreate
-    ? "Nova unidade"
-    : `${filial?.codigo_filial ?? filialId} — ${filial?.nome_filial ?? ""}`;
+    ? "Novo departamento"
+    : `${setor?.codigo_setor ?? setorId} — ${setor?.nome_setor ?? ""}`;
 
   const pageBody = (
     <>
-      {!embedded ? null : (
+      {embedded ? (
         <div className="tm-cadastro-detail-toolbar">
           <div>
             <h2 className="ds-section-title">{title}</h2>
-            {!isCreate ? (
-              <p className="ds-hint">Status: {filial?.status_filial ?? "ativo"}</p>
-            ) : (
-              <p className="ds-hint">Cadastre uma unidade para instâncias, departamentos e escopo do dashboard</p>
-            )}
+            <p className="ds-hint">
+              {isCreate
+                ? "Cadastre departamento e vínculo com unidades"
+                : `Status: ${setor?.status_setor ?? "ativo"}`}
+            </p>
           </div>
           {!isCreate ? (
             <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
@@ -241,17 +263,24 @@ export function FilialDetailPage({
             </button>
           ) : null}
         </div>
-      )}
+      ) : null}
 
       <StatusAlerts
-        error={error}
+        error={saveError ?? loadError}
         loading={false}
         hasData
+        onDismissError={() => {
+          setSaveError(null);
+          setLoadError(null);
+        }}
         onRetry={() => {
-          setError(null);
+          if (saveError) {
+            void handleSave();
+            return;
+          }
+          setLoadError(null);
           void load();
         }}
-        onDismissError={() => setError(null)}
       />
 
       <CollaborativePresenceBanner
@@ -263,17 +292,19 @@ export function FilialDetailPage({
 
       {options ? (
         <EditableSectionCard
-          title="Dados da unidade"
-          hint={TM_HELP_TOOLTIPS.filiais.nome}
-          description="Código TOTVS, nome e status usados em departamentos e processos."
-          isEditing={isCreate || sectionEdit.isEditing("filial")}
-          onEdit={() => void sectionEdit.startEdit("filial")}
+          title="Dados do departamento"
+          hint={TM_HELP_TOOLTIPS.setores.nome}
+          description="Código, nome, status e unidades onde o departamento aparece nos processos."
+          isEditing={isCreate || sectionEdit.isEditing("setor")}
+          onEdit={() => void sectionEdit.startEdit("setor")}
           onCancel={cancelEdit}
           onSave={() => void handleSave()}
           saving={saving}
           dirty={!valuesEqual(form, formBaseline)}
           editable={!isCreate}
-          readContent={filial ? <FilialReadView filial={filial} /> : null}
+          readContent={
+            setor ? <DepartmentReadView setor={setor} filialLabels={filialLabels} /> : null
+          }
           editContent={
             <form
               onSubmit={(event) => {
@@ -281,12 +312,7 @@ export function FilialDetailPage({
                 void handleSave();
               }}
             >
-              <FilialFormFields
-                form={form}
-                options={options}
-                editing={!isCreate}
-                onChange={setForm}
-              />
+              <SetorFormFields form={form} options={options} onChange={setForm} />
             </form>
           }
         />
@@ -302,10 +328,10 @@ export function FilialDetailPage({
         title={title}
         subtitle={
           isCreate
-            ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
-            : `Status: ${filial?.status_filial ?? "ativo"}`
+            ? "Cadastre departamento e vínculo com unidades"
+            : `Status: ${setor?.status_setor ?? "ativo"}`
         }
-        currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
+        currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
         onNavigate={onNavigate}
         actions={
           <>
