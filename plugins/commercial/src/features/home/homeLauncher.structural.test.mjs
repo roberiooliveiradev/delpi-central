@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/**
+ * Hub Início — stack seções + busca (não colunas legacy).
+ */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -7,125 +10,44 @@ import { describe, it } from "node:test";
 
 const src = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-function readSrc(relativePath) {
-  return readFileSync(join(src, relativePath), "utf8");
+function readSrc(relative) {
+  return readFileSync(join(src, relative), "utf8");
 }
 
-const LAUNCHER_CARD_IDS = [
-  "overview",
-  "my_tasks",
-  "open_orders",
-  "customers",
-  "proposals",
-  "analytics_otd",
-  "analytics_opportunities",
-  "administration",
-];
-
-describe("Início launcher (IA 2026)", () => {
-  it("catálogo de cards é orientado a conteúdo e capacidade", () => {
-    const launcher = readSrc("content/homeLauncher.ts");
-    assert.match(launcher, /export const HOME_LAUNCHER_CARDS/);
-    assert.match(launcher, /export const HOME_LAUNCHER_CONTENT/);
-    assert.match(launcher, /export function resolveHomeLauncherCards/);
-    assert.match(launcher, /tier: "primary"/);
-    assert.match(launcher, /tier: "secondary"/);
-    assert.match(launcher, /formatHomeLauncherMeta/);
-    assert.doesNotMatch(launcher, /analytics_team/);
-    assert.doesNotMatch(launcher, /"team"/);
-
-    for (const id of LAUNCHER_CARD_IDS) {
-      assert.match(launcher, new RegExp(`id: "${id}"`), id);
-    }
-    for (const capability of [
-      "analytics",
-      "worklist",
-      "proposals",
-      "customers",
-      "admin",
-      "always",
-    ]) {
-      assert.match(launcher, new RegExp(`"${capability}"`), capability);
-    }
-    assert.match(launcher, /quickLinks\?:/);
+describe("home hub stack", () => {
+  it("catálogo canônico exporta seções e filtros", () => {
+    const catalog = readSrc("content/pluginRouteCatalog.ts");
+    assert.match(catalog, /export const HUB_SECTIONS/);
+    assert.match(catalog, /export function filterRouteCatalog/);
+    assert.match(catalog, /export function collectSearchHits/);
+    assert.match(catalog, /create_task/);
+    assert.match(catalog, /Propostas comerciais/);
   });
 
-  it("prévia da worklist é uma chamada compartilhada", () => {
-    const hook = readSrc("hooks/useWorklistPreview.ts");
-    assert.match(hook, /export function useWorklistPreview/);
-    assert.match(hook, /getMyWorklist/);
-    assert.match(hook, /useCommercialWorklistSync/);
-    // Ordem da prévia: atrasadas → hoje → depois
-    assert.match(
-      hook,
-      /\["overdue"[\s\S]*?\["today"[\s\S]*?\["later"/,
-    );
-    assert.match(hook, /WORKLIST_PREVIEW_LIMIT = 5/);
-    assert.equal((hook.match(/getMyWorklist\(/g) ?? []).length, 1);
-  });
-
-  it("Home consome launcher e prévia sem duplicar a fila", () => {
+  it("HomePage usa stack vertical e SectionRouteCard", () => {
     const home = readSrc("features/home/HomePage.tsx");
-    assert.match(home, /useWorklistPreview/);
-    assert.match(home, /resolveHomeLauncherCards/);
-    assert.match(home, /HOME_LAUNCHER_CONTENT/);
-    assert.match(home, /CommercialNavigationCard/);
-    assert.doesNotMatch(home, /getMyWorklist/);
+    assert.match(home, /cm-home-stack/);
+    assert.match(home, /CommercialSectionRouteCard/);
+    assert.match(home, /CommercialCatalogSearchBar/);
+    assert.match(home, /cm-home-queue-ok/);
+    assert.match(home, /cm-home-sections-grid/);
+    assert.doesNotMatch(home, /cm-home-columns/);
+    assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);
+    assert.doesNotMatch(home, /cm-home-grid--primary/);
   });
 
-  it("Home usa layout apps main + eventos side (C3)", () => {
-    const home = readSrc("features/home/HomePage.tsx");
-    assert.match(home, /cm-home-columns/);
-    assert.match(home, /cm-home-columns__main/);
-    assert.match(home, /cm-home-columns__side/);
-    assert.match(home, /cm-empty-quiet/);
-    assert.match(home, /queueChips\.length > 0/);
+  it("CSS define stack e grid de seções", () => {
+    const css = readSrc("index.css");
+    assert.match(css, /\.cm-home-stack\b/);
+    assert.match(css, /\.cm-home-sections-grid\b/);
+    assert.match(css, /\.cm-home-queue-ok\b/);
+    assert.doesNotMatch(css, /\.cm-home-columns\b/);
   });
 
-  it("Home é launcher: sem faixa BI nem tabela da equipe", () => {
-    const home = readSrc("features/home/HomePage.tsx");
-    assert.doesNotMatch(home, /Seus n(?:ú|u)meros/);
-    assert.doesNotMatch(home, /getHeadOfficeRolTargetPct|getClosingRate|getSalesOrderOtd/);
-    assert.doesNotMatch(home, /DataTable|KpiCard/);
-    assert.doesNotMatch(home, /cm-home-kpi-grid/);
-  });
-
-  it("Home navega pelos alvos da IA 2026 (sem carteiras direto)", () => {
-    const home = readSrc("features/home/HomePage.tsx");
-    assert.doesNotMatch(home, /seller_portfolios/);
-    assert.doesNotMatch(home, /"my_day"/);
-    assert.match(home, /navigatePluginView\("my_tasks"/);
-
-    const launcher = readSrc("content/homeLauncher.ts");
-    assert.doesNotMatch(launcher, /seller_portfolios/);
-    assert.match(launcher, /viewId: "administration"/);
-    assert.match(launcher, /viewId: "overview"/);
-  });
-
-  it("alvos de navegação novos resolvem para uma rota existente", () => {
-    const routes = readSrc("app/pluginRoutes.ts");
-    assert.match(routes, /export type PluginNavigationTarget/);
-    assert.match(routes, /"overview"/);
-    assert.match(routes, /"my_tasks"/);
-    assert.match(routes, /"administration"/);
-
-    const navigation = readSrc("app/pluginNavigation.ts");
-    assert.match(navigation, /view: PluginNavigationTarget/);
-  });
-
-  it("Home aplica tiers featured + meta e sem Equipe no launcher", () => {
-    const home = readSrc("features/home/HomePage.tsx");
-    assert.match(home, /density=\{card\.tier === "primary" \? "featured" : "default"\}/);
-    assert.match(home, /formatHomeLauncherMeta/);
-    assert.match(home, /cm-home-grid--primary/);
-    assert.match(home, /cm-home-grid--secondary/);
-    assert.doesNotMatch(home, /analytics_team/);
-    assert.doesNotMatch(home, /canUseTeamScope/);
-  });
-
-  it("App passa capacidades de carteira para a Home", () => {
-    const app = readSrc("App.tsx");
-    assert.match(app, /showCustomers=\{canAccessMyPortfolio\}/);
-    assert.doesNotMatch(app, /canUseTeamScope=\{canUseTeamScope\}/);
+  it("bindings kit no commercialUi", () => {
+    const ui = readSrc("app/commercialUi.ts");
+    assert.match(ui, /CommercialSectionRouteCard/);
+    assert.match(ui, /CommercialCatalogSearchBar/);
+    assert.match(ui, /CommercialCommandPalette/);
   });
 });

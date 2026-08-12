@@ -77,6 +77,9 @@ Fonte única: `plugins/commercial/src/content/helpTooltips.ts` (`CM_HELP`). Page
 | Home = ação | HubSpot / Linear | Eventos + catálogo + Ctrl+K; BI em `/overview` |
 | Tiles hierárquicos | SAP Fiori / hub SaaS | `SectionRouteCard` (seção → rotas) |
 | Busca de apps | Notion / Linear | `CatalogSearchBar` + `?q=` + CommandPalette |
+| Filtros + KPIs + funil | dashboard-comercial (legado) | Visão geral nativa (**não** hostear) |
+| Worklist | Pipedrive Activities | «Minhas tarefas» / Eventos Início |
+| Row → detalhe | Grids admin + link identidade | C17 DataTable |
 
 ## Alinhamento `.cursor`
 
