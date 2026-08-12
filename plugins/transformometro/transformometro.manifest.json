@@ -135,7 +135,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/processos",
+      "path": "/apps/transformometro/processes",
       "label": "Processos",
       "permission": "transformometro.processes.manage",
       "icon": "list",
@@ -144,7 +144,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/configuracoes/unidades",
+      "path": "/apps/transformometro/settings/units",
       "label": "Configurações",
       "permission": "transformometro.processes.manage",
       "icon": "folder-tree",
@@ -153,7 +153,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/atas",
+      "path": "/apps/transformometro/meeting-minutes",
       "label": "Atas",
       "permission": "transformometro.meeting-minutes.view",
       "icon": "file-text",
@@ -162,7 +162,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/minha-assinatura",
+      "path": "/apps/transformometro/my-signature",
       "label": "Minha assinatura",
       "permission": "transformometro.meeting-minutes.view",
       "icon": "pen-line",
@@ -171,7 +171,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/dados",
+      "path": "/apps/transformometro/data",
       "label": "Exportar / Importar",
       "permission": "transformometro.data.transfer",
       "icon": "arrow-down-up",

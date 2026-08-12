@@ -1,4 +1,4 @@
-import { normalizeTransformometroPath } from "./routeParser";
+import { canonicalizeTransformometroPath, normalizeTransformometroPath } from "./routeParser";
 
 export const TRANSFORMOMETRO_WORKSPACE_HASH_EVENT = "transformometro:workspace-hash";
 /** Árvore do processo (melhorias/revisões) ficou desatualizada após mutação. */
@@ -10,10 +10,10 @@ const TREE_REFRESH_CHANNEL = "transformometro-workspace";
 function splitPathAndHash(path: string): { pathname: string; hash: string } {
   const hashIndex = path.indexOf("#");
   if (hashIndex === -1) {
-    return { pathname: normalizeTransformometroPath(path), hash: "" };
+    return { pathname: canonicalizeTransformometroPath(path), hash: "" };
   }
   return {
-    pathname: normalizeTransformometroPath(path.slice(0, hashIndex)),
+    pathname: canonicalizeTransformometroPath(path.slice(0, hashIndex)),
     hash: path.slice(hashIndex),
   };
 }
