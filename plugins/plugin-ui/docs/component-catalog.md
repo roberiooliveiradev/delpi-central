@@ -142,6 +142,42 @@ CSS: `styles/catalog-search-bar.css`.
 
 ---
 
+## `RouteChip` / `HubChipRow`
+
+Chips de navegação do hub (Favoritos pinned + Recentes) e faixa rotulada.
+
+```tsx
+const CommercialHubChipRow = createDashboardHubChipRow({ prefix: "cm" });
+const CommercialRouteChip = createDashboardRouteChip({ prefix: "cm" });
+
+<CommercialHubChipRow label="Favoritos" aria-label="Favoritos">
+  <CommercialRouteChip
+    tone="pinned"
+    label="Minhas tarefas"
+    onNavigate={open}
+    onRemove={unpin}
+    removeLabel="Remover dos favoritos"
+  />
+</CommercialHubChipRow>
+
+<CommercialHubChipRow label="Últimos acessos">
+  <CommercialRouteChip
+    tone="recent"
+    label="Oportunidades"
+    leadingIcon={<Target size={14} />}
+    onNavigate={open}
+  />
+</CommercialHubChipRow>
+```
+
+- `tone="pinned"`: Star fill + botão remove opcional (`stopPropagation`)
+- `tone="recent"`: `leadingIcon` opcional
+- CSS: `styles/hub-route-chips.css`
+
+`AlertQueue` / `WorklistItem` aceitam `leadingIcon?: ReactNode` (tile 36×36).
+
+---
+
 ## `CommandPalette`
 
 Modal de busca global (Ctrl/Cmd+K no shell do MFE). Preferir
