@@ -8,8 +8,10 @@ from tm_app.middleware.auth_middleware import _is_public
 
 def test_is_public_paths():
     assert _is_public("/public/atas/sign-invites/abc") is True
+    assert _is_public("/public/meeting-minutes/sign-invites/abc") is True
     assert _is_public("/health") is True
     assert _is_public("/transformometro/atas") is False
+    assert _is_public("/transformometro/meeting-minutes") is False
 
 
 def test_send_for_signature_issues_invites_notifies_and_mails():

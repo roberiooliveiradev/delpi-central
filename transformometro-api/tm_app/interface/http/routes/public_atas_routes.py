@@ -7,8 +7,7 @@ from tm_app.application.services.meeting_minutes_service import MeetingMinutesSe
 from tm_app.core.responses import fail, ok
 
 public_router = APIRouter(
-    prefix="/public/atas/sign-invites",
-    tags=["Transformômetro Atas Public"],
+    tags=["Transformômetro Meeting Minutes Public"],
 )
 service = MeetingMinutesService()
 

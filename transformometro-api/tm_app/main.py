@@ -118,8 +118,10 @@ def health():
 
 
 app.include_router(transformometro_router)
-app.include_router(minutes_router)
-app.include_router(public_atas_router)
+app.include_router(minutes_router, prefix="/transformometro/meeting-minutes")
+app.include_router(minutes_router, prefix="/transformometro/atas")
+app.include_router(public_atas_router, prefix="/public/meeting-minutes/sign-invites")
+app.include_router(public_atas_router, prefix="/public/atas/sign-invites")
 app.include_router(signature_profile_router)
 app.include_router(crud_router)
 app.include_router(dashboard_router)

@@ -11,7 +11,7 @@ from tm_app.application.services.meeting_minutes_service import MeetingMinutesSe
 from tm_app.core.responses import fail, ok
 from tm_app.infrastructure.llm.kimi_llm_gateway import AtaGenerationError, KimiLlmGateway
 
-router = APIRouter(prefix="/transformometro/atas", tags=["Transformômetro Atas"])
+router = APIRouter(tags=["Transformômetro Meeting Minutes"])
 service = MeetingMinutesService()
 kimi_gateway = KimiLlmGateway()
 
