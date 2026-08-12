@@ -4,7 +4,7 @@ import {
   NativeCheckboxControl,
   NativeTextAreaControl,
   NativeTextControl,
-  SignaturePad,
+  SignatureCapturePanel,
 } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
@@ -84,7 +84,7 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
 
   async function signDrawn() {
     if (!png) {
-      setError("Desenhe a assinatura antes de confirmar.");
+      setError("Capture a assinatura antes de confirmar.");
       return;
     }
     await submit(png);
@@ -155,15 +155,20 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
           ) : null}
           {!showPad ? (
             <ActionButton variant="link" onClick={() => setShowPad(true)}>
-              Desenhar outra assinatura
+              Usar outra assinatura
             </ActionButton>
           ) : null}
         </div>
 
         {showPad ? (
           <>
-            <SignaturePad className="delpi-ui-signature-pad--tall" onChange={setPng} />
-            <ActionButton variant="primary" disabled={busy} onClick={() => void signDrawn()}>
+            <SignatureCapturePanel
+              displayName={name}
+              showPreview
+              padProps={{ className: "delpi-ui-signature-pad--tall" }}
+              onChange={setPng}
+            />
+            <ActionButton variant="primary" disabled={busy || !png} onClick={() => void signDrawn()}>
               Confirmar assinatura
             </ActionButton>
           </>
