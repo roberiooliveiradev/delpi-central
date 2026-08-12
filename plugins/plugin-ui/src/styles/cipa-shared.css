@@ -109,10 +109,13 @@
   gap: 10px;
 }
 
+/* Dupla classe vence `.delpi-ui-icon-btn { padding: 0 }` (mesma especificidade BEM). */
+.delpi-ui-signature-pad__icon-btn.delpi-ui-icon-btn,
 .delpi-ui-signature-pad__icon-btn {
   min-width: auto;
   min-height: 44px;
-  padding: 10px 16px;
+  padding: 10px 20px;
+  padding-inline: 20px;
   gap: 8px;
   border-radius: 10px;
   box-sizing: border-box;
@@ -147,7 +150,8 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding: 10px 16px;
+  padding: 10px 20px;
+  padding-inline: 20px;
   box-sizing: border-box;
   border-radius: 10px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
