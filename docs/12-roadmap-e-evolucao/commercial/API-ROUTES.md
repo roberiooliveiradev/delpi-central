@@ -85,6 +85,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | GET | `/seller-portfolios/me` | `get_my_seller_portfolio` | F2 | `commercial.accounts.view` | `seller_portfolio` | `scalar` | WF-03 |
 | GET | `/seller-portfolios` | `list_seller_portfolios` | F2 | `commercial.seller-portfolios.manage` | `seller_portfolio` | `paged_list` | WF-05 |
 | GET | `/seller-portfolios/coverage-audit` | `get_seller_portfolios_coverage_audit` | E6.1 | manage | `portfolio_coverage` | `scalar` | WF-05R |
+| POST | `/seller-portfolios/customer-coverage` | `lookup_seller_portfolios_customer_coverage` | E6.4 | accounts.view | `portfolio_coverage` | `list` | WF-03 / Conta |
 | GET | `/seller-portfolios/load-summary` | `get_seller_portfolios_load_summary` | E6.2 | manage | `portfolio_load` | `scalar` | WF-05R / ORG |
 | GET | `/seller-portfolios/{seller_id}` | `get_seller_portfolio` | F2 | manage ou own | `seller_portfolio` | `scalar` | WF-05 |
 | POST | `/seller-portfolios` | `create_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |

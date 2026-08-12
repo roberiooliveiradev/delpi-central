@@ -24,6 +24,7 @@ import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesC
 import { CustomersTable } from "../components/CustomersTable";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
+import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
 import { useCustomersListState } from "../hooks/useCustomersListState";
 import type {
   CustomerAttentionFilter,
@@ -92,6 +93,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     return new Map<string, string>();
   }, [canUseTeamScope, sellers, myPortfolios]);
 
+  const scopePortfolioIds = useMemo(
+    () => filterablePortfolios.map((portfolio) => portfolio.id).filter(Boolean),
+    [filterablePortfolios],
+  );
+
   const {
     loading,
     refreshing,
@@ -110,6 +116,19 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerNameByKey,
     listState,
   });
+
+  const coverageCustomers = useMemo(
+    () =>
+      (aggregation?.customers ?? []).map((customer) => ({
+        codigo: customer.codigo,
+        loja: customer.loja,
+      })),
+    [aggregation],
+  );
+  const sharedCoverage = useCustomerSharedCoverage(
+    coverageCustomers,
+    scopePortfolioIds,
+  );
   const {
     q: search,
     focus: filter,
@@ -391,6 +410,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 listSearch={listSearch}
                 sellerAccess={sellerAccess}
                 loading={refreshing}
+                sharedCoverageByKey={sharedCoverage.byKey}
               />
               {filteredCustomers.length > 20 ? (
                 <CommercialPagination

@@ -11,12 +11,14 @@ import { navigatePluginView } from "../../../app/pluginNavigation";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
+import type { CustomerSharedCoverageItem } from "../../../types/portfolio";
 import { buildCustomerHeroHighlights } from "../utils/customerHeroHighlights";
 import {
   resolveCustomerStatus,
   statusLabel,
 } from "../utils/customerListPresentation";
 import { CustomerAvatar } from "./CustomerAvatar";
+import { CustomerSharedCoverageBadge } from "./CustomerSharedCoverageBadge";
 
 type CustomerDetailHeaderProps = {
   customer?: CustomerSummary | null;
@@ -32,6 +34,7 @@ type CustomerDetailHeaderProps = {
   onScheduleFollowUp?: () => void;
   canViewProposals?: boolean;
   basePath: string;
+  sharedCoverage?: CustomerSharedCoverageItem | null;
 };
 
 function formatUpdatedAt(value: Date | null): string {
@@ -78,6 +81,7 @@ export function CustomerDetailHeader({
   onScheduleFollowUp,
   canViewProposals = false,
   basePath,
+  sharedCoverage,
 }: CustomerDetailHeaderProps) {
   const status = customer
     ? customer.status ?? resolveCustomerStatus(customer)
@@ -111,17 +115,22 @@ export function CustomerDetailHeader({
           />
         }
         badge={
-          status ? (
-            <CommercialStatusBadge
-              variant={
-                status === "ativo"
-                  ? "success"
-                  : status === "atencao"
-                    ? "warning"
-                    : "neutral"
-              }
-              label={statusLabel(status)}
-            />
+          status || sharedCoverage?.shared ? (
+            <span className="cm-row-actions">
+              {status ? (
+                <CommercialStatusBadge
+                  variant={
+                    status === "ativo"
+                      ? "success"
+                      : status === "atencao"
+                        ? "warning"
+                        : "neutral"
+                  }
+                  label={statusLabel(status)}
+                />
+              ) : null}
+              <CustomerSharedCoverageBadge coverage={sharedCoverage} />
+            </span>
           ) : undefined
         }
         description={

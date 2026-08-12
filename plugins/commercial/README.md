@@ -186,6 +186,8 @@ Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na 
 
 **E6.3 histórico:** `GET /seller-portfolios/{id}/audit` (manage ou `audit.view`) — timeline paginada do `audit_log` (membros, responsável, transferência, ativar/inativar) no detalhe da carteira.
 
+**E6.4 compartilhado:** `POST /seller-portfolios/customer-coverage` (accounts.view) — batch por códigos no escopo; Minha Carteira / Conta exibem badge «Compartilhado» + «Também em: …».
+
 `DELETE /seller-portfolios/{id}` **inativa** (soft). Excluir de verdade é
 `DELETE /seller-portfolios/{id}/permanent` (`purge_seller_portfolio`): apaga a
 linha, desvincula clientes (`ON DELETE CASCADE`) e libera o `user_id`. Contrato

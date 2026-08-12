@@ -71,3 +71,13 @@ class EnrichmentBody(BaseModel):
         default_factory=list,
         max_length=200,
     )
+
+
+class CustomerCoverageLookupBody(BaseModel):
+    """Lookup batch de cobertura compartilhada (E6.4)."""
+
+    customers: list[CustomerAssignmentBody] = Field(
+        default_factory=list,
+        max_length=200,
+    )
+    portfolio_ids: list[str] = Field(default_factory=list, max_length=200)

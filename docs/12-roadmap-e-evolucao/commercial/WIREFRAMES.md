@@ -560,7 +560,8 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 | Item | Nota |
 |------|------|
 | **E6.2** — KPIs de carga (clientes/membros; TOTVS stub) | Entregue — `load-summary` + lista/org |
-| **E6** restante — timeline, badge Conta, bulk | Planejado |
+| **E6.4** — Badge «Compartilhado» + «Também em» na Conta / Minha Carteira | Entregue — `POST /customer-coverage` |
+| **E6** restante — bulk | Planejado |
 | **E7** — mapa territorial, carve/IA de carteira, rotação, inbox compartilhado | Futuro; não wireframear como entregue |
 
 ---

@@ -442,6 +442,15 @@
   align-items: center;
 }
 
+.dashboard-commercial .cm-customer-shared-coverage__also-in {
+  color: var(--cm-text-muted, var(--delpi-ui-muted, #64748b));
+  font-size: 0.85em;
+}
+
+.dashboard-commercial .cm-customer-shared-coverage--compact {
+  margin-top: 4px;
+}
+
 .dashboard-commercial .cm-ops-abertas-list,
 .dashboard-commercial .cm-billing-series-list {
   display: flex;

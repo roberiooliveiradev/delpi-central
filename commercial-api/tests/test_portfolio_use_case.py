@@ -5,6 +5,7 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     ManageSellerPortfolioUseCase,
     add_customer_result_to_dict,
     coverage_audit_to_dict,
+    customer_shared_coverage_to_dict,
     load_summary_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
@@ -428,6 +429,72 @@ def test_audit_customer_coverage_uses_active_portfolios() -> None:
     assert payload["overlapping_count"] == 1
     assert payload["gap"]["available"] is False
     assert payload["portfolios_with_overlap"][0]["overlapping_customer_count"] == 1
+
+
+def test_lookup_customer_shared_coverage_team_scope_filters_portfolio_ids() -> None:
+    repository = MagicMock()
+    repository.list_portfolios.return_value = [
+        _portfolio(
+            id="p1",
+            display_name="Sul",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+        _portfolio(
+            id="p2",
+            display_name="Ana",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+        _portfolio(
+            id="p3",
+            display_name="Fora",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+    ]
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    items = use_case.lookup_customer_shared_coverage(
+        customers=[("100", "01")],
+        portfolio_ids=["p1", "p2"],
+        team_scope=True,
+    )
+    payload = customer_shared_coverage_to_dict(items)
+
+    repository.list_portfolios.assert_called_once_with(active_only=True)
+    repository.list_by_user_id.assert_not_called()
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["shared"] is True
+    assert [ref["display_name"] for ref in payload["items"][0]["also_in_portfolios"]] == [
+        "Sul",
+        "Ana",
+    ]
+
+
+def test_lookup_customer_shared_coverage_seller_uses_own_portfolios() -> None:
+    repository = MagicMock()
+    repository.list_by_user_id.return_value = [
+        _portfolio(
+            id="p1",
+            display_name="Minha A",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+        _portfolio(
+            id="p2",
+            display_name="Minha B",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+    ]
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    items = use_case.lookup_customer_shared_coverage(
+        customers=[("100", "01"), ("200", "01")],
+        actor_user_id="u1",
+        team_scope=False,
+    )
+
+    repository.list_by_user_id.assert_called_once_with("u1", active_only=True)
+    repository.list_portfolios.assert_not_called()
+    assert len(items) == 1
+    assert items[0].customer_code == "100"
 
 
 def test_summarize_portfolio_load_returns_stubbed_totvs_metrics() -> None:

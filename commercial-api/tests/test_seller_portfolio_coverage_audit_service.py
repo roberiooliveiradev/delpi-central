@@ -112,3 +112,30 @@ def test_find_other_active_portfolios_for_customer() -> None:
     assert warning is not None
     assert warning.code == "customer_in_other_portfolios"
     assert "outra" in warning.message.lower()
+
+
+def test_lookup_shared_customer_memberships_batch_only_returns_shared() -> None:
+    service = SellerPortfolioCoverageAuditService()
+    portfolios = [
+        _portfolio(
+            portfolio_id="p1",
+            name="Sul",
+            customers=(
+                SellerCustomerAssignment("100", "01", "Shared"),
+                SellerCustomerAssignment("200", "01", "Solo"),
+            ),
+        ),
+        _portfolio(
+            portfolio_id="p2",
+            name="Ana",
+            customers=(SellerCustomerAssignment("100", "01", "Shared"),),
+        ),
+    ]
+    items = service.lookup_shared_customer_memberships(
+        portfolios,
+        [("100", "01"), ("200", "01"), ("999", "01")],
+    )
+    assert len(items) == 1
+    assert items[0].customer_code == "100"
+    assert items[0].shared is True
+    assert [ref.display_name for ref in items[0].portfolios] == ["Sul", "Ana"]

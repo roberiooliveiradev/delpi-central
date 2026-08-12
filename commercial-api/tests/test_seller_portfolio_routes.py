@@ -52,6 +52,15 @@ def test_coverage_audit_route_is_registered_before_portfolio_id() -> None:
     assert ROUTES.index('"/coverage-audit"') < ROUTES.index('"/{portfolio_id}"')
 
 
+def test_customer_coverage_lookup_route_is_registered_before_portfolio_id() -> None:
+    assert 'operation_id="lookup_seller_portfolios_customer_coverage"' in ROUTES
+    assert '"/customer-coverage"' in ROUTES
+    assert "def lookup_seller_portfolios_customer_coverage(" in ROUTES
+    assert "customer_shared_coverage_to_dict" in ROUTES
+    assert "COMMERCIAL_READ_PERMISSIONS" in ROUTES
+    assert ROUTES.index('"/customer-coverage"') < ROUTES.index('"/{portfolio_id}"')
+
+
 def test_load_summary_route_is_registered_before_portfolio_id() -> None:
     assert 'operation_id="get_seller_portfolios_load_summary"' in ROUTES
     assert '"/load-summary"' in ROUTES

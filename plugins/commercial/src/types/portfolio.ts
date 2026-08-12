@@ -113,6 +113,17 @@ export type SellerPortfoliosCoverageAudit = {
   gap: PortfolioCoverageGapStatus;
 };
 
+export type CustomerSharedCoverageItem = {
+  customer_code: string;
+  customer_store: string;
+  shared: boolean;
+  also_in_portfolios: PortfolioCoverageRef[];
+};
+
+export type CustomerSharedCoverageLookup = {
+  items: CustomerSharedCoverageItem[];
+};
+
 export type TotvsLoadMetricsStatus = {
   available: boolean;
   reason: string | null;

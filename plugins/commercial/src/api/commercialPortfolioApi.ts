@@ -11,6 +11,7 @@ import type {
   SellerPortfoliosCoverageAudit,
   SellerPortfoliosLoadSummary,
   SellerPortfolioAuditPage,
+  CustomerSharedCoverageLookup,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -96,6 +97,28 @@ export async function getSellerPortfoliosCoverageAudit(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar auditoria de cobertura.");
+}
+
+export async function lookupCustomerSharedCoverage(
+  input: {
+    customers: Array<{ customer_code: string; customer_store: string }>;
+    portfolio_ids?: string[];
+  },
+  signal?: AbortSignal,
+): Promise<CustomerSharedCoverageLookup> {
+  if (input.customers.length === 0) {
+    return { items: [] };
+  }
+  const response = await httpPost<ApiSuccessResponse<CustomerSharedCoverageLookup>>(
+    commercialApiUrl("/seller-portfolios/customer-coverage"),
+    {
+      customers: input.customers,
+      portfolio_ids: input.portfolio_ids ?? [],
+    },
+    { signal },
+  );
+  const data = unwrapEnvelope(response, "Erro ao carregar cobertura compartilhada.");
+  return { items: data.items ?? [] };
 }
 
 export async function getSellerPortfoliosLoadSummary(options?: {

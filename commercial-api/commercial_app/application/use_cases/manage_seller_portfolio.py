@@ -7,6 +7,7 @@ from typing import Any, Sequence
 from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
 from commercial_app.domain.entities.portfolio_coverage import (
     CustomerOverlapWarning,
+    CustomerSharedCoverageItem,
     PortfolioCoverageAudit,
 )
 from commercial_app.domain.entities.portfolio_load import PortfolioLoadSummary
@@ -192,6 +193,26 @@ def customer_overlap_warning_to_dict(
     }
 
 
+def customer_shared_coverage_to_dict(
+    items: Sequence[CustomerSharedCoverageItem],
+) -> dict[str, Any]:
+    return {
+        "items": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "shared": True,
+                "also_in_portfolios": [
+                    {"id": ref.id, "display_name": ref.display_name}
+                    for ref in item.portfolios
+                ],
+            }
+            for item in items
+            if item.shared
+        ]
+    }
+
+
 def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
     payload = portfolio_to_dict(result.portfolio)
     warning = customer_overlap_warning_to_dict(result.warning)
@@ -336,6 +357,47 @@ class ManageSellerPortfolioUseCase:
         """Relatório de overlapping entre carteiras ativas (gap só se houver universo)."""
         portfolios = self._repository.list_portfolios(active_only=True)
         return self._coverage_audit.audit_active_portfolios(portfolios)
+
+    def lookup_customer_shared_coverage(
+        self,
+        *,
+        customers: Sequence[tuple[str, str]],
+        portfolio_ids: Sequence[str] | None = None,
+        actor_user_id: str | None = None,
+        team_scope: bool = False,
+    ) -> tuple[CustomerSharedCoverageItem, ...]:
+        """Batch: clientes em 2+ carteiras do escopo (Minha Carteira / Conta)."""
+        keys = [
+            customer_key(code, store)
+            for code, store in customers
+            if _normalize_code(code) and _normalize_code(store)
+        ]
+        if not keys:
+            return ()
+
+        wanted_ids = {
+            _normalize_code(portfolio_id)
+            for portfolio_id in (portfolio_ids or ())
+            if _normalize_code(portfolio_id)
+        }
+
+        if team_scope:
+            universe = self._repository.list_portfolios(active_only=True)
+        else:
+            actor = _normalize_code(actor_user_id or "")
+            if not actor:
+                return ()
+            universe = self._repository.list_by_user_id(actor, active_only=True)
+
+        if wanted_ids:
+            portfolios = [item for item in universe if item.id in wanted_ids]
+        else:
+            portfolios = list(universe)
+
+        return self._coverage_audit.lookup_shared_customer_memberships(
+            portfolios,
+            keys,
+        )
 
     def summarize_portfolio_load(self, *, active_only: bool = False) -> PortfolioLoadSummary:
         """KPIs de carga (clientes/membros; TOTVS stub até wiring)."""

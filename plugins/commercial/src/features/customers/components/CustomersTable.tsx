@@ -44,6 +44,9 @@ import { exportCustomersExcel } from "../utils/exportCustomersExcel";
 import { BillingTrendCell } from "./BillingTrendCell";
 import { CustomerAvatar } from "./CustomerAvatar";
 import { CustomerListCard } from "./CustomerListCard";
+import { CustomerSharedCoverageBadge } from "./CustomerSharedCoverageBadge";
+import type { CustomerSharedCoverageItem } from "../../../types/portfolio";
+import { customerKey } from "../../../shared/format";
 
 type CustomersTableProps = {
   customers: CustomerSummary[];
@@ -57,6 +60,7 @@ type CustomersTableProps = {
   sellerAccess?: CustomersListSellerAccess;
   loading?: boolean;
   emptyMessage?: string;
+  sharedCoverageByKey?: ReadonlyMap<string, CustomerSharedCoverageItem>;
 };
 
 const SORTABLE_COLUMN_KEYS = new Set<CustomerColumnKey>(
@@ -109,6 +113,7 @@ export function CustomersTable({
   sellerAccess,
   loading = false,
   emptyMessage = "Nenhum cliente corresponde aos filtros selecionados.",
+  sharedCoverageByKey,
 }: CustomersTableProps) {
   const [exporting, setExporting] = useState(false);
   const { layout, setLayout } = usePersistedViewLayout({
@@ -161,6 +166,9 @@ export function CustomersTable({
       interactive: true,
       render: (customer) => {
         const { name, codeStore } = customerIdentity(customer);
+        const coverage = sharedCoverageByKey?.get(
+          customerKey(customer.codigo, customer.loja),
+        );
         return (
           <div className="cm-open-orders-client">
             <CustomerAvatar
@@ -173,6 +181,7 @@ export function CustomersTable({
             <div className="cm-open-orders-client__text">
               <strong className="cm-open-orders-client__name">{name}</strong>
               <span className="cm-open-orders-client__id">{codeStore}</span>
+              <CustomerSharedCoverageBadge coverage={coverage} compact />
             </div>
           </div>
         );
@@ -442,6 +451,9 @@ export function CustomersTable({
               customer={customer}
               visibleColumns={visibleExportColumns}
               onOpenDetail={openCustomer}
+              sharedCoverage={sharedCoverageByKey?.get(
+                customerKey(customer.codigo, customer.loja),
+              )}
             />
           ))}
         </CommercialDataCardsGrid>

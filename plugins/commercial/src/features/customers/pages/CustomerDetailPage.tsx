@@ -21,6 +21,7 @@ import { CustomerSectionComingSoon } from "../components/CustomerSectionComingSo
 import { useCustomerBilling } from "../billing/hooks/useCustomerBilling";
 import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
 import { useCustomerActivities } from "../hooks/useCustomerActivities";
+import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
 import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
 import {
   buildCustomerDetailSearch,
@@ -31,6 +32,7 @@ import {
   type CustomerDetailSection,
 } from "../utils/customerDetailSection";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
+import { customerKey } from "../../../shared/format";
 import {
   buildCustomersListPath,
   parseCustomersListDeepLink,
@@ -56,6 +58,7 @@ export function CustomerDetailPage({
     canUseTeamScope,
     sellers,
     myPortfolios,
+    filterablePortfolios,
     canViewWorklist,
     canManageFollowups,
     canViewAnalytics,
@@ -73,6 +76,17 @@ export function CustomerDetailPage({
     if (myPortfolios.length > 0) return buildSellerNameByCustomerKey(myPortfolios);
     return new Map<string, string>();
   }, [canUseTeamScope, sellers, myPortfolios]);
+
+  const scopePortfolioIds = useMemo(
+    () => filterablePortfolios.map((portfolio) => portfolio.id).filter(Boolean),
+    [filterablePortfolios],
+  );
+  const sharedCoverage = useCustomerSharedCoverage(
+    [{ codigo: codigo, loja: loja }],
+    scopePortfolioIds,
+  );
+  const customerSharedCoverage =
+    sharedCoverage.byKey.get(customerKey(codigo, loja)) ?? null;
 
   const {
     loading,
@@ -176,6 +190,7 @@ export function CustomerDetailPage({
         onScheduleFollowUp={scheduleFollowUp}
         canViewProposals={canViewProposals}
         basePath={basePath}
+        sharedCoverage={customerSharedCoverage}
       />
 
       {showInitialLoading ? (

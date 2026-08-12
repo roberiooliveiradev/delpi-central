@@ -1,9 +1,12 @@
 /**
- * Helpers para consumir o contrato de coverage-audit / add-customer warning.
+ * Helpers para consumir o contrato de coverage-audit / add-customer warning / E6.4.
  */
+import { PORTFOLIO_COVERAGE_CONTENT } from "../content/portfolioCoverageContent";
 import type {
   AddSellerCustomerResult,
   CoverageLinkWarning,
+  CustomerSharedCoverageItem,
+  PortfolioCoverageRef,
   SellerPortfolio,
   SellerPortfoliosCoverageAudit,
 } from "../types/portfolio";
@@ -67,4 +70,29 @@ export function otherPortfolioNamesForCustomer(
       .map((ref) => ref.display_name.trim() || ref.id);
   }
   return [];
+}
+
+export function portfolioDisplayNames(
+  portfolios: readonly PortfolioCoverageRef[] | null | undefined,
+): string[] {
+  return (portfolios ?? [])
+    .map((ref) => ref.display_name.trim() || ref.id)
+    .filter(Boolean);
+}
+
+export function formatAlsoInPortfolios(names: readonly string[]): string {
+  const labels = names.map((name) => name.trim()).filter(Boolean);
+  if (labels.length === 0) return "";
+  return `${PORTFOLIO_COVERAGE_CONTENT.alsoInPrefix}: ${labels.join(", ")}`;
+}
+
+export function sharedCoverageByCustomerKey(
+  items: readonly CustomerSharedCoverageItem[] | null | undefined,
+): Map<string, CustomerSharedCoverageItem> {
+  const map = new Map<string, CustomerSharedCoverageItem>();
+  for (const item of items ?? []) {
+    if (!item.shared) continue;
+    map.set(customerKey(item.customer_code, item.customer_store), item);
+  }
+  return map;
 }

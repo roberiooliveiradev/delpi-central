@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  formatAlsoInPortfolios,
   overlappingCustomerKeySetForPortfolio,
   overlappingPortfolioIdSet,
   otherPortfolioNamesForCustomer,
+  portfolioDisplayNames,
   readCoverageLinkWarning,
+  sharedCoverageByCustomerKey,
   stripPortfolioCoverageFields,
 } from "./portfolioCoverage.ts";
 
@@ -41,6 +44,32 @@ describe("portfolioCoverage helpers", () => {
     assert.deepEqual(otherPortfolioNamesForCustomer(AUDIT, "p1", "100", "01"), [
       "Carteira B",
     ]);
+  });
+
+  it("formata Também em e indexa cobertura compartilhada (E6.4)", () => {
+    assert.equal(formatAlsoInPortfolios(["Sul", "Ana"]), "Também em: Sul, Ana");
+    assert.deepEqual(portfolioDisplayNames([{ id: "p1", display_name: "Sul" }]), [
+      "Sul",
+    ]);
+    const map = sharedCoverageByCustomerKey([
+      {
+        customer_code: "100",
+        customer_store: "01",
+        shared: true,
+        also_in_portfolios: [
+          { id: "p1", display_name: "Sul" },
+          { id: "p2", display_name: "Ana" },
+        ],
+      },
+      {
+        customer_code: "200",
+        customer_store: "01",
+        shared: false,
+        also_in_portfolios: [],
+      },
+    ]);
+    assert.equal(map.size, 1);
+    assert.equal(map.get("100|01")?.also_in_portfolios.length, 2);
   });
 
   it("remove campos de warning do payload de add-customer", () => {

@@ -16,13 +16,16 @@ import {
   statusLabel,
 } from "../utils/customerListPresentation";
 import type { CustomerColumnKey } from "../utils/customerTableColumns";
+import type { CustomerSharedCoverageItem } from "../../../types/portfolio";
 import { BillingTrendCell } from "./BillingTrendCell";
 import { CustomerAvatar } from "./CustomerAvatar";
+import { CustomerSharedCoverageBadge } from "./CustomerSharedCoverageBadge";
 
 type CustomerListCardProps = {
   customer: CustomerSummary;
   visibleColumns: ReadonlyArray<{ key: CustomerColumnKey; label: string }>;
   onOpenDetail: (customer: CustomerSummary) => void;
+  sharedCoverage?: CustomerSharedCoverageItem | null;
 };
 
 function statusVariant(
@@ -36,6 +39,7 @@ function statusVariant(
 function renderCardValue(
   key: CustomerColumnKey,
   customer: CustomerSummary,
+  sharedCoverage?: CustomerSharedCoverageItem | null,
 ): ReactNode {
   const name = customer.nome?.trim() || "—";
   const codeStore =
@@ -57,6 +61,7 @@ function renderCardValue(
           <div className="cm-open-orders-client__text">
             <strong className="cm-open-orders-client__name">{name}</strong>
             <span className="cm-open-orders-client__id">{codeStore}</span>
+            <CustomerSharedCoverageBadge coverage={sharedCoverage} compact />
           </div>
         </div>
       );
@@ -123,6 +128,7 @@ export function CustomerListCard({
   customer,
   visibleColumns,
   onOpenDetail,
+  sharedCoverage,
 }: CustomerListCardProps) {
   const openDetail = () => onOpenDetail(customer);
   const name = customer.nome?.trim() || customer.codigo || "cliente";
@@ -142,7 +148,7 @@ export function CustomerListCard({
           hint:
             column.key === "billingTrend" ? CM_HELP.customers.trend : undefined,
           valueTone: isTitle ? "title" : isValue ? "value" : "meta",
-          value: renderCardValue(column.key, customer),
+          value: renderCardValue(column.key, customer, sharedCoverage),
         };
       })}
     />

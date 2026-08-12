@@ -6,6 +6,7 @@ from typing import Iterable, Sequence
 from commercial_app.domain.entities.portfolio_coverage import (
     CoverageGapStatus,
     CustomerOverlapWarning,
+    CustomerSharedCoverageItem,
     OverlappingCustomerCoverage,
     PortfolioCoverageAudit,
     PortfolioCoverageRef,
@@ -170,6 +171,55 @@ class SellerPortfolioCoverageAuditService:
             if pid in item.portfolio_ids:
                 keys.add((item.customer_code, item.customer_store))
         return keys
+
+    def lookup_shared_customer_memberships(
+        self,
+        portfolios: Sequence[SellerPortfolio],
+        customer_keys: Sequence[tuple[str, str]],
+    ) -> tuple[CustomerSharedCoverageItem, ...]:
+        """Batch: para as chaves pedidas, retorna só as que estão em 2+ carteiras ativas."""
+        wanted = {
+            customer_coverage_key(code, store)
+            for code, store in customer_keys
+            if _normalize(code) and _normalize(store)
+        }
+        if not wanted:
+            return ()
+
+        by_customer: dict[tuple[str, str], dict[str, PortfolioCoverageRef]] = defaultdict(
+            dict
+        )
+        for portfolio in portfolios:
+            if not portfolio.active:
+                continue
+            ref = PortfolioCoverageRef(
+                id=portfolio.id,
+                display_name=portfolio.display_name,
+            )
+            seen_in_portfolio: set[tuple[str, str]] = set()
+            for customer in portfolio.customers:
+                key = customer_coverage_key(
+                    customer.customer_code,
+                    customer.customer_store,
+                )
+                if key not in wanted or key in seen_in_portfolio:
+                    continue
+                seen_in_portfolio.add(key)
+                by_customer[key][ref.id] = ref
+
+        items: list[CustomerSharedCoverageItem] = []
+        for code, store in sorted(wanted, key=lambda item: (item[0], item[1])):
+            refs = tuple(by_customer.get((code, store), {}).values())
+            if len(refs) < 2:
+                continue
+            items.append(
+                CustomerSharedCoverageItem(
+                    customer_code=code,
+                    customer_store=store,
+                    portfolios=refs,
+                )
+            )
+        return tuple(items)
 
 
 def assignment_key(customer: SellerCustomerAssignment) -> tuple[str, str]:

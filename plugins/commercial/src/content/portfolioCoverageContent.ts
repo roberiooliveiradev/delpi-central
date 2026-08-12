@@ -1,5 +1,5 @@
 /**
- * Textos de cobertura / overlapping de carteiras (E6.1).
+ * Textos de cobertura / overlapping de carteiras (E6.1 / E6.4).
  */
 export const PORTFOLIO_COVERAGE_CONTENT = {
   filterAll: "Todas",
@@ -12,6 +12,8 @@ export const PORTFOLIO_COVERAGE_CONTENT = {
     "Filtre por situação (ativas/inativas) ou por carteiras com clientes em overlapping.",
   overlappingBadge: "Overlapping",
   overlappingAlsoIn: "Também em",
+  sharedBadge: "Compartilhado",
+  alsoInPrefix: "Também em",
   linkWarningTitle: "Cliente em outra carteira",
   heroOverlapping: "Overlapping",
 } as const;

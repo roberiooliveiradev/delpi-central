@@ -25,6 +25,7 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     ManageSellerPortfolioUseCase,
     add_customer_result_to_dict,
     coverage_audit_to_dict,
+    customer_shared_coverage_to_dict,
     load_summary_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
@@ -41,6 +42,7 @@ from commercial_app.interface.http.schemas.portfolio_schemas import (
     AddCustomerBody,
     AddMemberBody,
     CreatePortfolioBody,
+    CustomerCoverageLookupBody,
     ReplaceCustomersBody,
     ReplaceMembersBody,
     SetOwnerBody,
@@ -134,6 +136,43 @@ def get_seller_portfolios_coverage_audit(_request: Request):
             "Erro interno ao auditar cobertura de carteiras.",
             500,
             operation_id="get_seller_portfolios_coverage_audit",
+        )
+
+
+@router.post(
+    "/customer-coverage",
+    operation_id="lookup_seller_portfolios_customer_coverage",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
+def lookup_seller_portfolios_customer_coverage(
+    request: Request,
+    body: CustomerCoverageLookupBody = Body(...),
+):
+    """Batch: quais clientes do lote estão em 2+ carteiras do escopo (E6.4)."""
+    try:
+        user = current_user_from_request(request)
+        team_scope = can_use_team_scope(user) or can_manage_portfolios(user)
+        keys = [
+            (item.customer_code, item.customer_store)
+            for item in body.customers
+        ]
+        items = _use_case().lookup_customer_shared_coverage(
+            customers=keys,
+            portfolio_ids=body.portfolio_ids,
+            actor_user_id=_current_user_id(request),
+            team_scope=team_scope,
+        )
+        return ok(
+            customer_shared_coverage_to_dict(items),
+            message="Cobertura compartilhada dos clientes carregada.",
+            operation_id="lookup_seller_portfolios_customer_coverage",
+        )
+    except Exception:
+        logger.exception("lookup_seller_portfolios_customer_coverage_failed")
+        return fail(
+            "Erro interno ao consultar cobertura compartilhada.",
+            500,
+            operation_id="lookup_seller_portfolios_customer_coverage",
         )
 
 

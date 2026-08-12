@@ -52,3 +52,16 @@ class CustomerOverlapWarning:
     code: str
     message: str
     other_portfolios: tuple[PortfolioCoverageRef, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CustomerSharedCoverageItem:
+    """Cliente presente em 2+ carteiras ativas do escopo (E6.4)."""
+
+    customer_code: str
+    customer_store: str
+    portfolios: tuple[PortfolioCoverageRef, ...]
+
+    @property
+    def shared(self) -> bool:
+        return len(self.portfolios) >= 2
