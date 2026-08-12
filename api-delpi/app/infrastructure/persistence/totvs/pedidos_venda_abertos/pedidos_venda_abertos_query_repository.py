@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 from app.domain.ports.pedidos_venda_abertos.pedidos_venda_abertos_query_repository_port import (
     PedidosVendaAbertosQueryRepositoryPort,
 )
@@ -65,3 +67,61 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
             )
 
         return items, summary_row or {}
+
+    def aggregate_customer_open_order_metrics(
+        self,
+        customer_keys: Sequence[tuple[str, str]] | None = None,
+    ) -> list[dict]:
+        """Agrega valor aberto e atraso por (codigo_cadastro, loja_cadastro).
+
+        Overdue = data_entrega < hoje e saldo > 0 (mesma regra do MFE commercial).
+        """
+        params: list = []
+        filter_sql = ""
+        if customer_keys:
+            pairs = [
+                (str(code or "").strip(), str(store or "").strip())
+                for code, store in customer_keys
+                if str(code or "").strip() and str(store or "").strip()
+            ]
+            if pairs:
+                clauses = []
+                for code, store in pairs:
+                    clauses.append(
+                        "("
+                        "NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ? "
+                        "AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?"
+                        ")"
+                    )
+                    params.extend([code, store])
+                filter_sql = "AND (" + " OR ".join(clauses) + ")"
+
+        sql = f"""
+            SELECT
+                NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') AS customer_code,
+                NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS customer_store,
+                MAX(NULLIF(LTRIM(RTRIM(v.nome_cliente)), '')) AS customer_name,
+                ISNULL(SUM(v.valor_aberto), 0) AS open_value,
+                CASE
+                    WHEN SUM(
+                        CASE
+                            WHEN v.data_entrega IS NOT NULL
+                             AND CAST(v.data_entrega AS date) < CAST(GETDATE() AS date)
+                             AND ISNULL(v.saldo, 0) > 0
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) > 0 THEN 1
+                    ELSE 0
+                END AS has_overdue
+            {_ITEMS_FROM}
+            WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') IS NOT NULL
+              AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') IS NOT NULL
+              {filter_sql}
+            GROUP BY
+                NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), ''),
+                NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '')
+            ORDER BY open_value DESC
+        """
+        with self:
+            return self.execute_query(sql, tuple(params))

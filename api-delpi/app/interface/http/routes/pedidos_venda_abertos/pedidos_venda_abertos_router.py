@@ -16,6 +16,9 @@ from app.application.use_cases.pedidos_venda_abertos.enrich_portfolio_customers_
 from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case import (
     ListCustomerBillingSeriesRequest,
 )
+from app.application.use_cases.pedidos_venda_abertos.list_customer_open_order_metrics_use_case import (
+    ListCustomerOpenOrderMetricsRequest,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesRequest,
 )
@@ -30,6 +33,7 @@ from app.application.use_cases.pedidos_venda_abertos.search_active_customers_use
 from app.composition.pedidos_venda_abertos_composer import (
     build_enrich_portfolio_customers_use_case,
     build_list_customer_billing_series_use_case,
+    build_list_customer_open_order_metrics_use_case,
     build_list_customer_outbound_invoices_use_case,
     build_list_ops_abertas_use_case,
     build_list_pedidos_venda_abertos_use_case,
@@ -96,6 +100,12 @@ class EnrichCustomerRefBody(BaseModel):
 
 class EnrichCustomersBody(BaseModel):
     customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=200)
+
+
+class OpenOrderMetricsBody(BaseModel):
+    """Optional customer keys; empty/omitted = full open-orders universe."""
+
+    customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=500)
 
 
 class BillingSeriesBody(BaseModel):
@@ -269,6 +279,40 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
     except Exception as exc:
         log_error(f"Erro ao enriquecer clientes da carteira: {exc}")
         return error_response("Erro interno ao enriquecer clientes.", status_code=500)
+
+
+@router.post(
+    "/customers/open-order-metrics",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_customer_open_order_metrics",
+        path="/pedidos-venda-abertos/customers/open-order-metrics",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_customer_open_order_metrics_route(
+    body: OpenOrderMetricsBody = Body(default_factory=OpenOrderMetricsBody),
+):
+    """Agrega valor aberto e flag de atraso por cliente (pedidos em aberto)."""
+    try:
+        pairs = tuple(
+            (item.customer_code, item.customer_store) for item in (body.customers or [])
+        )
+        items = build_list_customer_open_order_metrics_use_case().execute(
+            ListCustomerOpenOrderMetricsRequest(customers=pairs)
+        )
+        return api_delpi_success(
+            {"items": [item.to_dict() for item in items]},
+            operation_id="list_customer_open_order_metrics",
+            message="Métricas de pedidos em aberto por cliente carregadas.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao agregar métricas de pedidos em aberto: {exc}")
+        return error_response(
+            "Erro interno ao agregar métricas de pedidos em aberto.",
+            status_code=500,
+        )
 
 
 @router.post(

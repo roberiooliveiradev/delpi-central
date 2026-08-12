@@ -7,6 +7,9 @@ from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_serie
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesUseCase,
 )
+from app.application.use_cases.pedidos_venda_abertos.list_customer_open_order_metrics_use_case import (
+    ListCustomerOpenOrderMetricsUseCase,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_ops_abertas_use_case import (
     ListOpsAbertasUseCase,
 )
@@ -99,6 +102,12 @@ def build_list_customer_billing_series_use_case() -> ListCustomerBillingSeriesUs
 
 def build_list_pedidos_venda_abertos_use_case() -> ListPedidosVendaAbertosUseCase:
     return ListPedidosVendaAbertosUseCase(
+        repository=PedidosVendaAbertosQueryRepository(),
+    )
+
+
+def build_list_customer_open_order_metrics_use_case() -> ListCustomerOpenOrderMetricsUseCase:
+    return ListCustomerOpenOrderMetricsUseCase(
         repository=PedidosVendaAbertosQueryRepository(),
     )
 
