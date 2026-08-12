@@ -90,7 +90,7 @@
     {
       "code": "transformometro.atas.view",
       "name": "Consultar atas Transforma+",
-      "description": "Permite listar e visualizar atas de reunião do Transforma+.",
+      "description": "Permite listar e visualizar atas de reunião do Transforma+ e gerenciar a assinatura pessoal.",
       "module": "transformometro"
     },
     {
@@ -102,7 +102,7 @@
     {
       "code": "transformometro.atas.sign",
       "name": "Assinar atas Transforma+",
-      "description": "Permite assinar ou recusar atas e gerenciar a assinatura pessoal.",
+      "description": "Permite assinar ou recusar atas autenticadas.",
       "module": "transformometro"
     }
   ],
@@ -141,6 +141,15 @@
       "icon": "file-text",
       "entry": null,
       "order": 24,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/minha-assinatura",
+      "label": "Minha assinatura",
+      "permission": "transformometro.atas.view",
+      "icon": "pen-line",
+      "entry": null,
+      "order": 25,
       "showInMenu": false
     },
     {
