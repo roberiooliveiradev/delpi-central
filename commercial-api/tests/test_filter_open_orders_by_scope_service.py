@@ -60,6 +60,26 @@ def test_filter_open_orders_membership() -> None:
     assert data["summary"]["valor_total_aberto"] == 10.0
 
 
+def test_filter_open_orders_unrestricted_after_for_open_orders() -> None:
+    """Sem carteira → for_open_orders; filtro não pode zerar por empty residual."""
+    scope = CommercialCustomerScope(
+        unrestricted=True,
+        allowed_customers=None,
+        empty_portfolio=False,
+    )
+    data = FilterOpenOrdersByScopeService().apply(
+        {
+            "items": [{"codigo_cadastro": "1", "loja_cadastro": "01"}],
+            "summary": {"total_linhas": 1},
+            "portfolio": {"empty": True, "message": "legado"},
+        },
+        scope,
+    )
+    assert len(data["items"]) == 1
+    assert data["portfolio"]["empty"] is False
+    assert data["portfolio"]["message"] is None
+
+
 def test_filter_open_orders_unrestricted_keeps_items() -> None:
     scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
     raw = {

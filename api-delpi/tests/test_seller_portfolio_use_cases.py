@@ -182,6 +182,18 @@ def test_resolve_scope_seller_without_portfolio() -> None:
     repo.list_by_user_id.assert_called_once_with("u1", active_only=True)
 
 
+def test_open_orders_scope_without_portfolio_is_unrestricted() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = []
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="u1",
+        is_unrestricted=False,
+    ).for_open_orders()
+    assert scope.unrestricted is True
+    assert scope.empty_portfolio is False
+    assert scope.allowed_customers is None
+
+
 def test_resolve_scope_seller_unions_customers_across_portfolios() -> None:
     repo = MagicMock()
     repo.list_by_user_id.return_value = [

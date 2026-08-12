@@ -31,7 +31,8 @@
 | `POST /customers/billing-series` | commercial-api (filter_pairs) | MFE → commercial-api → api-delpi (path TOTVS sem gate PVA) |
 | `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`ensure_allows`) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
 | KPIs `/commercial/*`, propostas, production | Sem membership de carteira | MFE → api-delpi (OK) |
-| PVA `GET /pedidos-venda-abertos/` + `…/clientes/…/notas-fiscais` | Legado: `ResolvePortfolioScope` na api-delpi até F2c | Só plugin PVA — **não** alterar regras para o Portal |
+| PVA `GET /pedidos-venda-abertos/` | Legado: membership + **`for_open_orders`** (sem vínculo → consolidado) | Só plugin PVA |
+| PVA `…/clientes/…/notas-fiscais` | Legado: `customer_allowed` / membership clássico | Só plugin PVA |
 
 ## Gate de PR (Portal)
 

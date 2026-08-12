@@ -505,7 +505,9 @@ def test_pedidos_venda_abertos_returns_meta(mock_build, mock_scope_build) -> Non
     mock_build.return_value = mock_use_case
 
     response = list_pedidos_venda_abertos_route(seller_id=None)
-    mock_use_case.execute.assert_called_once_with(mock_scope)
+    mock_use_case.execute.assert_called_once()
+    called_scope = mock_use_case.execute.call_args.args[0]
+    assert called_scope is mock_scope.for_open_orders.return_value
     _assert_meta(
         _body(response),
         operation_id="list_pedidos_venda_abertos",

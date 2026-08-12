@@ -164,7 +164,9 @@ def list_pedidos_venda_abertos_route(
                 "Filtro por vendedor disponível apenas para equipe ou gerentes.",
                 status_code=403,
             )
-        scope = _resolve_scope(seller_id)
+        # Só nesta listagem: sem vínculo de carteira → consolidado.
+        # NF e demais rotas PVA mantêm membership clássico.
+        scope = _resolve_scope(seller_id).for_open_orders()
         use_case = build_list_pedidos_venda_abertos_use_case()
         result = use_case.execute(scope)
 

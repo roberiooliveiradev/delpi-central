@@ -65,6 +65,18 @@ class FilterOpenOrdersByScopeService:
         scope: CommercialCustomerScope,
     ) -> dict[str, Any]:
         base = dict(data or {})
+        # Irrestrito (ex.: for_open_orders sem carteira) prevalece sobre empty_portfolio.
+        if scope.unrestricted or scope.allowed_customers is None:
+            portfolio = base.get("portfolio") if isinstance(base.get("portfolio"), dict) else {}
+            return {
+                **base,
+                "portfolio": {
+                    "empty": False,
+                    "message": None,
+                    "seller_id": scope.portfolio_id or (portfolio.get("seller_id") if portfolio else None),
+                },
+            }
+
         if scope.empty_portfolio:
             empty_summary = _recompute_summary([])
             return {
@@ -74,17 +86,6 @@ class FilterOpenOrdersByScopeService:
                     "empty": True,
                     "message": scope.message,
                     "seller_id": scope.portfolio_id,
-                },
-            }
-
-        if scope.unrestricted or scope.allowed_customers is None:
-            portfolio = base.get("portfolio") if isinstance(base.get("portfolio"), dict) else {}
-            return {
-                **base,
-                "portfolio": {
-                    "empty": bool(portfolio.get("empty")) if portfolio else False,
-                    "message": portfolio.get("message") if portfolio else None,
-                    "seller_id": scope.portfolio_id or portfolio.get("seller_id"),
                 },
             }
 
