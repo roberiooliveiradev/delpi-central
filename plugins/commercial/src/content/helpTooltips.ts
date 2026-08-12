@@ -7,7 +7,7 @@ export const CM_HELP = {
     portal:
       "Portal comercial: Início, Visão geral, Minhas tarefas, pedidos, carteira e administração de vendedores — tudo no mesmo app.",
     scope:
-      "Identidade da sessão: mostra as carteiras em que você participa. Não é filtro — nas listas de pedidos e clientes use o seletor de carteira quando houver mais de uma opção.",
+      "Identidade da sessão: mostra as carteiras em que você participa. Não é filtro — nas listas de pedidos e clientes use o seletor de carteira quando houver mais de uma opção. Em Propostas a lista de documentos também não usa este escopo.",
     navHome: "Alertas prioritários, eventos do dia e atalhos para as áreas do portal.",
     navOverview:
       "Indicadores comerciais do período: receita, conversão e pontualidade, com atalhos de aprofundamento.",
@@ -337,6 +337,10 @@ export const CM_HELP = {
     ovBom: "Estrutura de componentes de cada produto da oportunidade.",
     ovHistory:
       "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
+  },
+  proposals: {
+    scopeNote:
+      "O chip Escopo no topo identifica sua sessão de carteira; a lista de propostas documento não filtra por carteira — é o catálogo com permissão de propostas.",
   },
 } as const;
 

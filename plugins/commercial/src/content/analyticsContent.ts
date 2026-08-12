@@ -52,7 +52,9 @@ export const ANALYTICS_CONTENT = {
 export const PROPOSALS_CONTENT = {
   list: {
     title: "Propostas comerciais",
-    subtitle: "Consulta de propostas comerciais ativas.",
+    subtitle: "Consulta de propostas comerciais ativas (documentos).",
+    scopeNote:
+      "O chip Escopo no topo identifica sua sessão de carteira; esta lista de propostas documento não filtra por carteira — é o catálogo com permissão de propostas.",
     search: "Buscar por OV, proposta interna, oportunidade ou cliente.",
     empty: "Nenhuma proposta encontrada.",
     emptySearch: "Ajuste a busca ou limpe o filtro para ver a lista completa.",

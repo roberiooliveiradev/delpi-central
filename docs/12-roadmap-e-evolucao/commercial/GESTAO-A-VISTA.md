@@ -60,6 +60,23 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | **Propostas (documento)** | ADY010 | `/propostas-comerciais` | Documento + PDF — launcher (não top nav) |
 
 Escopo ADY: **sem** filtro membership nesta wave (lista global com `proposals.view`).
+O chip Escopo no chrome = **identidade da sessão**, não filtro desta lista
+(`PROPOSALS_CONTENT.list.scopeNote` / `CM_HELP.proposals.scopeNote`).
+
+## Catálogo de métricas (Visão geral)
+
+Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
+
+| id | Label |
+|----|-------|
+| `rol_head_office` | ROL vs meta |
+| `rol_branch` | ROL filial |
+| `closing_rate` | Conversão |
+| `otd` | OTD |
+| `new_business` | Novos negócios |
+| `rol_series` | Evolução de ROL |
+| `funnel` | Funil |
+| `ov_table` | Oportunidades |
 
 ## Permissões (capacidades — sem cargo)
 

@@ -17,6 +17,7 @@ import { navigateAnalyticsOpportunityDetail, navigatePluginView } from "../../ap
 import type { PluginNavigationTarget } from "../../app/pluginRoutes";
 import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
+import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
 import type { CommercialProposal } from "../../types/analytics";
 import { formatCurrency } from "../../utils/format";
 import { formatDisplayDate } from "../../utils/dates";
@@ -167,8 +168,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         {!dashboard.loading ? (
           <div className="cm-home-kpi-grid" aria-label="KPIs da visão geral">
             <KpiCard
-              title="ROL vs meta"
-              titleHint={ANALYTICS_CONTENT.overview.rolKpi}
+              title={OVERVIEW_METRIC_BY_ID.rol_head_office.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.rol_head_office.tooltip}
               value={formatPct(dashboard.headOfficeRol?.rol_target_pct)}
               subtitle={
                 dashboard.headOfficeRol
@@ -178,8 +179,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               icon={<Banknote size={22} />}
             />
             <KpiCard
-              title="ROL filial"
-              titleHint={ANALYTICS_CONTENT.overview.branchRolKpi}
+              title={OVERVIEW_METRIC_BY_ID.rol_branch.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.rol_branch.tooltip}
               value={formatPct(dashboard.branchRol?.rol_target_pct)}
               subtitle={
                 dashboard.branchRol ? `ROL ${formatCurrency(dashboard.branchRol.rol)}` : undefined
@@ -187,8 +188,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               icon={<Banknote size={22} />}
             />
             <KpiCard
-              title="Conversão"
-              titleHint={ANALYTICS_CONTENT.overview.closingKpi}
+              title={OVERVIEW_METRIC_BY_ID.closing_rate.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.closing_rate.tooltip}
               value={formatPct(dashboard.closingRate?.sales_conversion_rate_pct)}
               subtitle={
                 dashboard.closingRate
@@ -198,14 +199,14 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               icon={<Percent size={22} />}
             />
             <KpiCard
-              title="OTD"
-              titleHint={ANALYTICS_CONTENT.overview.otdKpi}
+              title={OVERVIEW_METRIC_BY_ID.otd.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.otd.tooltip}
               value={formatPct(dashboard.salesOrderOtd?.sales_order_otd_pct)}
               icon={<PackageCheck size={22} />}
             />
             <KpiCard
-              title="Novos negócios"
-              titleHint={ANALYTICS_CONTENT.overview.newBusinessKpi}
+              title={OVERVIEW_METRIC_BY_ID.new_business.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.new_business.tooltip}
               value={formatPct(dashboard.newBusinessRol?.new_business_rol_pct)}
               icon={<Sparkles size={22} />}
             />
@@ -215,8 +216,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
 
       <div className="cm-gestao-charts-grid">
         <SectionCard
-          title="Evolução de ROL"
-          hint={ANALYTICS_CONTENT.overview.rolSeries}
+          title={OVERVIEW_METRIC_BY_ID.rol_series.label}
+          hint={OVERVIEW_METRIC_BY_ID.rol_series.tooltip}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
@@ -229,8 +230,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           />
         </SectionCard>
         <SectionCard
-          title="Funil de conversão"
-          hint={ANALYTICS_CONTENT.overview.funnel}
+          title={OVERVIEW_METRIC_BY_ID.funnel.label}
+          hint={OVERVIEW_METRIC_BY_ID.funnel.tooltip}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
@@ -239,8 +240,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       </div>
 
       <SectionCard
-        title="OVs recentes"
-        hint={ANALYTICS_CONTENT.overview.ovTable}
+        title={OVERVIEW_METRIC_BY_ID.ov_table.label}
+        hint={OVERVIEW_METRIC_BY_ID.ov_table.tooltip}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
