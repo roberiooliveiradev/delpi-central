@@ -45,6 +45,16 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(source, /analytics_team/);
   });
 
+  it("pedidos em aberto: CTA Abrir carteiras só com manage", () => {
+    const source = readFileSync(join(src, "pages/OpenOrdersPageImpl.tsx"), "utf8");
+    assert.match(source, /canOpenSellerPortfolios/);
+    assert.match(source, /canManagePortfolios \|\| isAdmin/);
+    assert.match(
+      source,
+      /canOpenSellerPortfolios \? \(\s*<ActionButton[\s\S]*?Abrir carteiras/,
+    );
+  });
+
   it("manifest sem texto de alias legado e team route canônica", () => {
     const manifest = readFileSync(join(root, "commercial.manifest.json"), "utf8");
     assert.doesNotMatch(manifest, /Alias legado|Alias:/);

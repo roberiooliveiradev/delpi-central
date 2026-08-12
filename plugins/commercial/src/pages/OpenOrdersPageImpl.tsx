@@ -45,10 +45,14 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     loading: sellerScopeLoading,
     canFilterPortfolios,
     canUseTeamScope,
+    canManagePortfolios,
+    isAdmin,
     filterablePortfolios,
     sellerIdFilter,
     setSellerIdFilter,
   } = usePortfolioScope();
+
+  const canOpenSellerPortfolios = canManagePortfolios || isAdmin;
 
   const sellerAccess = usePortfolioSellerAccess();
   const restoreSellerFromUrl = useCallback(
@@ -238,15 +242,19 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
           classNames={cmEmptyStateClassNames}
           defaultMessage={
             portfolioMessage ||
-            "Carteira sem clientes. Inclua clientes em Carteiras para ver pedidos em aberto."
+            (canOpenSellerPortfolios
+              ? "Carteira sem clientes. Inclua clientes em Carteiras para ver pedidos em aberto."
+              : "Sua carteira ainda não possui clientes vinculados. Peça ao gerente para incluir clientes.")
           }
         >
-          <ActionButton
-            variant="primary"
-            onClick={() => navigatePluginView("seller_portfolios")}
-          >
-            Abrir carteiras
-          </ActionButton>
+          {canOpenSellerPortfolios ? (
+            <ActionButton
+              variant="primary"
+              onClick={() => navigatePluginView("seller_portfolios")}
+            >
+              Abrir carteiras
+            </ActionButton>
+          ) : null}
         </EmptyState>
       ) : null}
 
