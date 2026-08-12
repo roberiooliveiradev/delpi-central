@@ -60,6 +60,17 @@ Rodar a partir da raiz do monorepo:
 | 14 | Cutover: com `source=commercial`, escopo não cai no legado vazio | |
 | 15 | Tema claro/escuro + mobile na lista/detalhe/org | |
 
+## Checklist E6 (mercado)
+
+| # | Caso | Resultado |
+|---|------|-----------|
+| 16 | Chip **Com overlapping** filtra carteiras; badge na lista | |
+| 17 | Vincular cliente já em outra carteira: vínculo OK + aviso soft | |
+| 18 | Lista/org mostram carga (clientes/membros); valor/atenção «—» se stub | |
+| 19 | Detalhe: seção Histórico com eventos de members/owner/transfer | |
+| 20 | Minha Carteira / Conta: badge **Compartilhado** + «Também em» | |
+| 21 | Wizard transfer em massa + **Exportar matriz** Excel | |
+
 ## Assinatura
 
 | Papel | Nome | Data | OK |

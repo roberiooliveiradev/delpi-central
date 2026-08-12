@@ -1,6 +1,6 @@
 # Portal Comercial — documentação
 
-> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **E5.1 multi-membro** (lista + detalhe + org + escopo) entregue — ver [WIREFRAMES.md](./WIREFRAMES.md) WF-05R  
+> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **E1–E6 carteiras** (multi-membro + mercado) entregue — ver [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md)  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
