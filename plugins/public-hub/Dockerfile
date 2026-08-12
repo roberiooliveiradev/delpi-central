@@ -1,5 +1,5 @@
-# Shell público (/p/) — @delpi/plugin-ui via Module Federation; tv-dashboard-presentation bundled.
-# Doc: plugins/plugin-ui/docs/module-federation.md
+# Shell público (/p/) — splash/styles via MF; assinatura bundled do kit (fatia signature).
+# Doc: plugins/plugin-ui/docs/module-federation.md · public-hub/README.md
 
 FROM node:20-alpine AS builder
 
@@ -18,9 +18,13 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY public-hub ./public-hub
 COPY vite ./vite
+# @delpi/signature-kit → plugin-ui/src/components/signature (+ overlayLayers).
+# Não COPY do plugin-ui inteiro — só a fatia usada no /sign (evita HelpTooltip/MF).
+COPY plugin-ui/src/components/signature ./plugin-ui/src/components/signature
+COPY plugin-ui/src/overlayLayers.ts ./plugin-ui/src/overlayLayers.ts
 
 WORKDIR /app/public-hub
-# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+# tsc roda no CI/local; Docker bundla signature-kit + MF styles/splash.
 RUN npx vite build
 
 FROM nginx:alpine AS production

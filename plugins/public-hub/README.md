@@ -41,6 +41,9 @@ O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /
 **Assinatura pública (`/p/transformometro/sign/…`):** o painel vem de `@delpi/signature-kit`
 (source do `plugin-ui` **bundled** no hub). Não usa o remote MF `./signature` — evita
 crash de `createPortal`/HelpTooltip no share `react-dom`.
+
+No Docker, o `Dockerfile` copia só `plugin-ui/src/components/signature` + `overlayLayers.ts`
+(contexto `plugins/`). Não é `COPY plugin-ui` completo.
 ```
 
 - **Shell (transversal)** — `src/shell/`. Cuida de tudo que é comum: fundo/branding (`pub-*` no `shell.css`), spinner, estados de erro/página-não-encontrada, `document.title`, `noindex`. **Não** conhece nenhum app específico.
