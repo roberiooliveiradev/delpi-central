@@ -19,7 +19,6 @@ const LAUNCHER_CARD_IDS = [
   "proposals",
   "analytics_otd",
   "analytics_opportunities",
-  "analytics_team",
   "administration",
 ];
 
@@ -29,6 +28,11 @@ describe("Início launcher (IA 2026)", () => {
     assert.match(launcher, /export const HOME_LAUNCHER_CARDS/);
     assert.match(launcher, /export const HOME_LAUNCHER_CONTENT/);
     assert.match(launcher, /export function resolveHomeLauncherCards/);
+    assert.match(launcher, /tier: "primary"/);
+    assert.match(launcher, /tier: "secondary"/);
+    assert.match(launcher, /formatHomeLauncherMeta/);
+    assert.doesNotMatch(launcher, /analytics_team/);
+    assert.doesNotMatch(launcher, /"team"/);
 
     for (const id of LAUNCHER_CARD_IDS) {
       assert.match(launcher, new RegExp(`id: "${id}"`), id);
@@ -38,7 +42,6 @@ describe("Início launcher (IA 2026)", () => {
       "worklist",
       "proposals",
       "customers",
-      "team",
       "admin",
       "always",
     ]) {
@@ -110,9 +113,19 @@ describe("Início launcher (IA 2026)", () => {
     assert.match(navigation, /view: PluginNavigationTarget/);
   });
 
-  it("App passa capacidades de carteira e equipe para a Home", () => {
+  it("Home aplica tiers featured + meta e sem Equipe no launcher", () => {
+    const home = readSrc("features/home/HomePage.tsx");
+    assert.match(home, /density=\{card\.tier === "primary" \? "featured" : "default"\}/);
+    assert.match(home, /formatHomeLauncherMeta/);
+    assert.match(home, /cm-home-grid--primary/);
+    assert.match(home, /cm-home-grid--secondary/);
+    assert.doesNotMatch(home, /analytics_team/);
+    assert.doesNotMatch(home, /canUseTeamScope/);
+  });
+
+  it("App passa capacidades de carteira para a Home", () => {
     const app = readSrc("App.tsx");
     assert.match(app, /showCustomers=\{canAccessMyPortfolio\}/);
-    assert.match(app, /canUseTeamScope=\{canUseTeamScope\}/);
+    assert.doesNotMatch(app, /canUseTeamScope=\{canUseTeamScope\}/);
   });
 });

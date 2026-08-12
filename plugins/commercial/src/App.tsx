@@ -90,7 +90,6 @@ function AppRoutes({
           showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
           showCustomers={canAccessMyPortfolio}
-          canUseTeamScope={canUseTeamScope}
         />
       ) : null}
       {view === "overview" ? (

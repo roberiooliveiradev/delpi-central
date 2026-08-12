@@ -175,6 +175,20 @@
   gap: var(--cm-grid-gap);
 }
 
+.dashboard-commercial .cm-home-launcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-grid-gap, 16px);
+}
+
+.dashboard-commercial .cm-home-grid--primary {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.dashboard-commercial .cm-home-grid--secondary {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .dashboard-commercial .cm-launcher-cell {
   display: flex;
   flex-direction: column;

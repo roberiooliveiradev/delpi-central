@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
-  BriefcaseBusiness,
   CalendarCheck,
   ClipboardList,
   FileText,
@@ -14,6 +13,7 @@ import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../../content/helpTooltips";
 import {
+  formatHomeLauncherMeta,
   HOME_LAUNCHER_CONTENT,
   resolveHomeLauncherCards,
   type HomeLauncherCardId,
@@ -43,7 +43,6 @@ type HomePageProps = {
   showProposals?: boolean;
   showAnalytics?: boolean;
   showCustomers?: boolean;
-  canUseTeamScope?: boolean;
 };
 
 type HomeOrdersSummary = {
@@ -65,7 +64,6 @@ const LAUNCHER_ICONS: Record<HomeLauncherCardId, ReactNode> = {
   proposals: <FileText size={22} strokeWidth={1.75} aria-hidden="true" />,
   analytics_otd: <Timer size={22} strokeWidth={1.75} aria-hidden="true" />,
   analytics_opportunities: <Target size={22} strokeWidth={1.75} aria-hidden="true" />,
-  analytics_team: <BriefcaseBusiness size={22} strokeWidth={1.75} aria-hidden="true" />,
   administration: <Settings size={22} strokeWidth={1.75} aria-hidden="true" />,
 };
 
@@ -98,7 +96,6 @@ export function HomePage({
   showProposals = false,
   showAnalytics = false,
   showCustomers = false,
-  canUseTeamScope = false,
 }: HomePageProps) {
   const { sellerIdFilter } = usePortfolioScope();
   const { setMetrics, resetMetrics } = useHomeHeroMetrics();
@@ -242,13 +239,78 @@ export function HomePage({
         worklist: showWorklist,
         proposals: showProposals,
         customers: showCustomers,
-        team: showAnalytics && canUseTeamScope,
         admin: showAdmin,
       }),
-    [canUseTeamScope, showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+  );
+
+  const launcherMetaCounts = useMemo(
+    () => ({
+      followUpsOpen: showWorklist && !worklist.error ? worklist.counts.open : null,
+      openOrderLines: ordersError ? null : summary.totalLinhas,
+      lateLines: ordersError ? null : summary.atrasos,
+    }),
+    [
+      ordersError,
+      showWorklist,
+      summary.atrasos,
+      summary.totalLinhas,
+      worklist.counts.open,
+      worklist.error,
+    ],
+  );
+
+  const primaryCards = useMemo(
+    () => launcherCards.filter((card) => card.tier === "primary"),
+    [launcherCards],
+  );
+  const secondaryCards = useMemo(
+    () => launcherCards.filter((card) => card.tier === "secondary"),
+    [launcherCards],
   );
 
   const hasEvents = alerts.length > 0 || worklist.items.length > 0;
+
+  const renderLauncherCard = (card: (typeof launcherCards)[number]) => {
+    const meta = formatHomeLauncherMeta(card.id, launcherMetaCounts);
+    return (
+      <div
+        key={card.id}
+        className={
+          card.tier === "primary"
+            ? "cm-launcher-cell cm-launcher-cell--featured"
+            : "cm-launcher-cell cm-launcher-cell--secondary"
+        }
+      >
+        <CommercialNavigationCard
+          title={card.title}
+          description={card.description}
+          meta={meta}
+          icon={LAUNCHER_ICONS[card.id]}
+          density={card.tier === "primary" ? "featured" : "default"}
+          onClick={() => navigatePluginView(card.viewId, { basePath })}
+        />
+        {card.quickLinks?.length ? (
+          <div className="cm-nav-row">
+            {card.quickLinks.map((link) => (
+              <ActionButton
+                key={link.id}
+                variant="ghost"
+                onClick={() =>
+                  navigatePluginView(link.viewId, {
+                    basePath,
+                    search: link.search,
+                  })
+                }
+              >
+                {link.label}
+              </ActionButton>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <section className="cm-page-stack cm-home-layout" aria-label="Início">
@@ -267,35 +329,23 @@ export function HomePage({
                 defaultMessage={FEATURES.empty}
               />
             ) : (
-              <div className="cm-home-grid" aria-label={FEATURES.gridAriaLabel}>
-                {launcherCards.map((card) => (
-                  <div key={card.id} className="cm-launcher-cell">
-                    <CommercialNavigationCard
-                      title={card.title}
-                      description={card.description}
-                      icon={LAUNCHER_ICONS[card.id]}
-                      onClick={() => navigatePluginView(card.viewId, { basePath })}
-                    />
-                    {card.quickLinks?.length ? (
-                      <div className="cm-nav-row">
-                        {card.quickLinks.map((link) => (
-                          <ActionButton
-                            key={link.id}
-                            variant="ghost"
-                            onClick={() =>
-                              navigatePluginView(link.viewId, {
-                                basePath,
-                                search: link.search,
-                              })
-                            }
-                          >
-                            {link.label}
-                          </ActionButton>
-                        ))}
-                      </div>
-                    ) : null}
+              <div className="cm-home-launcher" aria-label={FEATURES.gridAriaLabel}>
+                {primaryCards.length > 0 ? (
+                  <div
+                    className="cm-home-grid cm-home-grid--primary"
+                    aria-label={FEATURES.primaryAriaLabel}
+                  >
+                    {primaryCards.map(renderLauncherCard)}
                   </div>
-                ))}
+                ) : null}
+                {secondaryCards.length > 0 ? (
+                  <div
+                    className="cm-home-grid cm-home-grid--secondary"
+                    aria-label={FEATURES.secondaryAriaLabel}
+                  >
+                    {secondaryCards.map(renderLauncherCard)}
+                  </div>
+                ) : null}
               </div>
             )}
           </SectionCard>
