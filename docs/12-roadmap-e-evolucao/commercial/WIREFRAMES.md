@@ -538,12 +538,12 @@ são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 
 ## WF-05R — Administração de carteiras (lista full-page)
 
-**Rota:** `/apps/commercial/seller-portfolios`  
+**Rota:** `/apps/commercial/administration/seller-portfolios` (alias legado `/seller-portfolios`)  
 **URL:** `q`, `filter=all|active|inactive`, `view=list|org`, `axis=portfolio|person` (só com `view=org`). Defaults omitidos. **Sem** `?id=` — detalhe é rota própria (WF-05R-D).  
 **Dados:** commercial-api `seller-portfolios` (+ `members[]`)  
 **Permissão:** `commercial.seller-portfolios.manage` (CRUD). Gestor com só `accounts.team.view` **não** vê esta tela — só filtro de carteira nas bancadas.  
 **Modelo:** carteira compartilhada = 1 owner + N members; mesma lista de clientes. Usuário pode estar em N carteiras.  
-**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `SegmentToggle`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`, `UserDirectoryPicker`.
+**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `SegmentToggle`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`, `UserDirectoryPicker`. Subnav Administração: Painel · Carteiras · Membros.
 
 ```
 ← Portal Comercial / Administração / Carteiras
@@ -563,7 +563,7 @@ são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` no retorno via PagePath). Sem painel split. Sem coluna Ações na lista.
+Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` no retorno via PagePath). Sem painel split. Sem coluna Ações na lista.
 
 **Card da lista (mobile / modo Cards):** nome, owner, contagem de membros, clientes, `StatusBadge`. O card inteiro navega ao detalhe.
 
@@ -573,8 +573,8 @@ Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` n
 
 ### WF-05R-D — Detalhe da carteira
 
-**Rota:** `/apps/commercial/seller-portfolios/:id`  
-**PagePath:** `← Carteiras / {nome}` (volta à lista com estado URL allowlisted).  
+**Rota:** `/apps/commercial/administration/seller-portfolios/:id` (alias legado `/seller-portfolios/:id`)  
+**PagePath:** `← Administração / Carteiras / {nome}` (volta à lista com estado URL allowlisted).  
 **Permissão:** `seller-portfolios.manage`.
 
 ```
@@ -807,10 +807,9 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
 | Minha Carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
-| Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/seller-portfolios` + `/seller-portfolios/:id` |
-| Avatar | WF-04R + WF-05 | commercial-api |
-| URL interna código+loja | WF-04R | idem |
-| Home / entrada | WF-01 | `/` |
+| Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/administration/seller-portfolios` (+ alias legado) |
+| Home / Visão geral / Administração | WF-01R-L / WF-OV / WF-ADM-* | `/` · `/overview` · `/administration/*` |
+| Minhas tarefas | WF-06R | `/my-tasks` (alias `/my-day`) |
 
 ---
 

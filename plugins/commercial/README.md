@@ -2,7 +2,7 @@
 
 Microfrontend federado do domínio comercial. Reúne, no próprio Portal Comercial,
 as bancadas e fichas de Minha carteira, Conta 360, pedidos, OP, oportunidades OV,
-propostas e gestão.
+propostas, Visão geral e Administração.
 
 > Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md)
 
@@ -279,7 +279,7 @@ TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-mani
 
 ## Conteúdo PT
 
-Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts` + bundles Gestão/Propostas). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
+Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts`, `shellNav`, `homeLauncher`, `overviewMetricsCatalog`, `administration`). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
 
 ## Anexos de tarefa
 
@@ -344,7 +344,7 @@ src/
   app/           — rotas, shell, navegação, portfolio scope
   components/    — open-orders (tabela, conteúdo de detalhe, strips) e UI compartilhada
   content/       — textos PT (help + nav de topo + launcher + analytics + proposals)
-  features/      — home, overview, my-day, open-orders, customers, analytics, proposals, seller-portfolios
+  features/      — home, overview, my-day (Minhas tarefas), open-orders, customers, analytics, proposals, administration, seller-portfolios
   hooks/         — dashboard open-orders, extras do detalhe, layout
   pages/         — implementações de página (ex.: OpenOrdersPageImpl)
   utils/         — deep links, OV, timeline OP, formatação
