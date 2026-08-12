@@ -475,6 +475,8 @@ Assinaturas PNG e PDF final das atas (metadado em `transformometro.tm_meeting_*`
 |----------|----------------------|---------------|
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
 | `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
+> **Exceção operacional:** o path físico `…/transformometro/atas/…` no host/container permanece (não migrar volume). Só HTTP/código usam `meeting-minutes`.
+
 
 ### Notificações portal + e-mail Graph + magic link
 
@@ -493,11 +495,11 @@ No `send-for-signature`:
 | `GRAPH_REPORTS_*` | — | Mesmas credenciais do Delpi Reports / CEC |
 | `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | S2S Core (notificações + directory) |
 
-Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/atas/sign-invites/{token}`.
+Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/meeting-minutes/sign-invites/{token}`.
 
 ### Kimi / OpenRouter (geração de ata)
 
-Opcional no boot; **obrigatório** para `POST /transformometro/atas/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
+Opcional no boot; **obrigatório** para `POST /transformometro/meeting-minutes/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
 
 | Variável | Default | Notas |
 |----------|---------|-------|

@@ -33,12 +33,12 @@ Fluxo núcleo:
 ## Arquitetura
 
 ```text
-Portal ──► MFE transformometro (/apps/transformometro/atas*)
+Portal ──► MFE transformometro (/apps/transformometro/meeting-minutes*)
               │  JWT
               ▼
          transformometro-api
-              │  /transformometro/atas/*
-              │  /public/atas/sign-invites/{token}  (sem JWT)
+              │  /transformometro/meeting-minutes/*
+              │  /public/meeting-minutes/sign-invites/{token}  (sem JWT)
               ├─► Postgres (tm_meeting_minutes* + sign_invites)
               ├─► disco (assinaturas PNG / PDF)
               ├─► Core (notifications + directory)
@@ -83,13 +83,13 @@ public-hub ──► /p/transformometro/sign/{token} ──► API pública
 
 | Path | Página |
 |------|--------|
-| `/apps/transformometro/atas` | Lista (filtros, badges de status) |
-| `/apps/transformometro/atas/new` · `…/{id}/edit` | Editor (preencher / importar + IA + signatários) |
-| `/apps/transformometro/atas/{id}` | Detalhe — leitor de documento + ações |
-| `/apps/transformometro/atas/{id}/sign` | Assinatura autenticada (`.sign`) |
+| `/apps/transformometro/meeting-minutes` | Lista (filtros, badges de status) |
+| `/apps/transformometro/meeting-minutes/new` · `…/{id}/edit` | Editor (preencher / importar + IA + signatários) |
+| `/apps/transformometro/meeting-minutes/{id}` | Detalhe — leitor de documento + ações |
+| `/apps/transformometro/meeting-minutes/{id}/sign` | Assinatura autenticada (`.sign`) |
 | `/p/transformometro/sign/{token}` | Assinatura pública (magic link) |
-| `/apps/transformometro/atas/pending` | Pendências do usuário |
-| `/apps/transformometro/minha-assinatura` | Perfil de assinatura |
+| `/apps/transformometro/meeting-minutes/pending` | Pendências do usuário |
+| `/apps/transformometro/my-signature` | Perfil de assinatura |
 
 ---
 
@@ -99,9 +99,9 @@ Códigos no manifesto (`transformometro.manifest.json`):
 
 | Código | Uso |
 |--------|-----|
-| `transformometro.atas.view` | Listar / ler |
-| `transformometro.atas.manage` | Criar, editar, enviar, cancelar, gerar com IA, finalizar |
-| `transformometro.atas.sign` | Assinar / recusar autenticado |
+| `transformometro.meeting-minutes.view` | Listar / ler |
+| `transformometro.meeting-minutes.manage` | Criar, editar, enviar, cancelar, gerar com IA, finalizar |
+| `transformometro.meeting-minutes.sign` | Assinar / recusar autenticado |
 
 Escopo de filial: `transformometro.view.filial-*` / `manage.filial-*` (mesmo mecanismo do restante do plugin). Atribuir na **Core API** RBAC, não no Keycloak. A página pública **não** exige permissão Transformômetro — só o token do convite.
 
@@ -145,3 +145,10 @@ Produção: `./infra/scripts/up-prod-sequential.sh` com `--build` nos mesmos ser
 - Export ZIP / vínculo explícito a processo Transformômetro
 - Assinatura ICP-Brasil
 - Cron de lembretes automáticos de assinatura pendente
+
+## Migração EN (dual)
+
+- Canônico: `transformometro.meeting-minutes.*` e paths `/meeting-minutes`, `/my-signature`.
+- Alias legado: `transformometro.atas.*` e `/atas` (API + redirect MFE) permanecem até re-grant RBAC.
+- Volumes host `…/transformometro/atas/{signatures,pdfs}` **não** migram.
+- Core: mudança de path/permission exige **nova versão** via `plugins/transformometro/scripts/register-manifest.sh` (não PUT cosmético).

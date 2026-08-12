@@ -16,12 +16,12 @@ Definidas em `src/constants/routes.ts` e registradas no manifesto / router do ap
 
 | Path | Componente |
 |------|------------|
-| `/apps/transformometro/atas` | `AtasPage` |
-| `/apps/transformometro/atas/new` · `…/{id}/edit` | `AtaEditorPage` |
-| `/apps/transformometro/atas/{id}` | `AtaDetailPage` |
-| `/apps/transformometro/atas/{id}/sign` | `AtaSignPage` |
-| `/apps/transformometro/atas/pending` | `AtasPendingPage` |
-| `/apps/transformometro/minha-assinatura` | `MinhaAssinaturaPage` |
+| `/apps/transformometro/meeting-minutes` | `AtasPage` |
+| `/apps/transformometro/meeting-minutes/new` · `…/{id}/edit` | `AtaEditorPage` |
+| `/apps/transformometro/meeting-minutes/{id}` | `AtaDetailPage` |
+| `/apps/transformometro/meeting-minutes/{id}/sign` | `AtaSignPage` |
+| `/apps/transformometro/meeting-minutes/pending` | `AtasPendingPage` |
+| `/apps/transformometro/my-signature` | `MinhaAssinaturaPage` |
 
 Assinatura **sem** login no módulo: `/p/transformometro/sign/{token}` (public-hub).
 
@@ -134,9 +134,9 @@ Após salvar: atalhos para enviar / ver ata / continuar editando.
 ## Permissões (manifesto)
 
 ```text
-transformometro.atas.view
-transformometro.atas.manage
-transformometro.atas.sign
+transformometro.meeting-minutes.view
+transformometro.meeting-minutes.manage
+transformometro.meeting-minutes.sign
 ```
 
 Menu Atas exige `.view`. Detalhe no README do plugin e em `transformometro.manifest.json`.
@@ -149,4 +149,4 @@ Menu Atas exige `.view`. Detalhe no README do plugin e em `transformometro.manif
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro
 ```
 
-Smoke: abrir `/apps/transformometro/atas`, criar rascunho, importar DOCX curto, gerar com IA (com `KIMI_API_KEY` na API), conferir logo + faixa no detalhe.
+Smoke: abrir `/apps/transformometro/meeting-minutes`, criar rascunho, importar DOCX curto, gerar com IA (com `KIMI_API_KEY` na API), conferir logo + faixa no detalhe.

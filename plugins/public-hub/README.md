@@ -181,7 +181,7 @@ Páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
 |---|---|---|
 | Agradecimento | `/p/customer-experience/thanks/{token}` (alias `/welcome/{token}`) | `GET /apps/customer-experience-api/public/participants/{token}` |
 | Formulário | `/p/customer-experience/form/{token}` | `GET /apps/customer-experience-api/public/forms/{token}` |
-| Assinatura de ata Transforma+ | `/p/transformometro/sign/{token}` | `GET/POST /apps/transformometro-api/public/atas/sign-invites/{token}` |
+| Assinatura de ata Transforma+ | `/p/transformometro/sign/{token}` | `GET/POST /apps/transformometro-api/public/meeting-minutes/sign-invites/{token}` |
 
 O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), páginas com fundo/ilustração, barra de progresso, layout centralizado, fundo em viewport e modo escuro. Ver `FormPage.tsx` + `form.css`.
 
