@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from app.application.services.directory_user_eligibility_service import (
+    DirectoryUserEligibilityService,
+)
 from app.application.unit_of_work import UnitOfWork
 from app.application.use_cases.search_directory_users_use_case import _mask_email
 
@@ -8,7 +11,13 @@ class LookupDirectoryUsersUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, *, user_ids: list[str], mask_email: bool = True) -> list[dict]:
+    def execute(
+        self,
+        *,
+        user_ids: list[str],
+        mask_email: bool = True,
+        app_id: str | None = None,
+    ) -> list[dict]:
         normalized_ids: list[UUID] = []
 
         for value in user_ids:
@@ -21,13 +30,25 @@ class LookupDirectoryUsersUseCase:
             return []
 
         users = self.uow.users.get_by_ids(normalized_ids)
+        normalized_app = (app_id or "").strip() or None
+        eligibility = (
+            DirectoryUserEligibilityService(self.uow) if normalized_app else None
+        )
 
-        return [
-            {
+        results: list[dict] = []
+        for user in users:
+            if not user.active:
+                continue
+            item = {
                 "id": str(user.id),
                 "name": user.name,
                 "email": _mask_email(user.email) if mask_email else user.email,
             }
-            for user in users
-            if user.active
-        ]
+            if eligibility is not None and normalized_app:
+                item["has_app_access"] = eligibility.matches(
+                    user,
+                    app_id=normalized_app,
+                )
+            results.append(item)
+
+        return results
