@@ -58,6 +58,8 @@ O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule
 
 **React incompleto no global (ago/2026 — public-hub `/sign`):** exigir só `useRef` aceitava um `__DELPI_MF_REACT__` parcial; o chunk rich-text faz `const {useMemo:BA}=await O("react")` → `BA is not a function`. Guard canônico: `typeof useRef` **e** `useMemo` **e** `useState` == `"function"`. Bump `DELPI_MF_PATCH_VERSION` quando o guard mudar.
 
+**Shared react-dom ≠ React (ago/2026 — HelpTooltip `/sign`):** o consumer patch redirecionava `__federation_shared_react-dom*` para `__DELPI_MF_REACT__` → `createPortal` sumia → `X is not a function`. Nunca patchar esse interop (`getDefaultExportFromCjs(bridge())`).
+
 **React #527 (versões divergentes):** portal e MFEs devem usar a **mesma versão exata** de `react` e `react-dom` (`plugins/vite/reactPinnedVersion.ts` → `19.2.7`). Portal em 19.2.4 + MFE em 19.2.6 quebra o par react/react-dom no share scope. Sincronizar: `node plugins/vite/sync-react-pinned-version.mjs` + rebuild portal e MFEs.
 
 **Canônico:** `federationReactProxyFixPlugin()` em todo `vite.config.ts` federado (substitui `Object.assign` por `Proxy` — equivalente ao upstream PR #743). O flatten usa `_delpiMod` local (não reatribui o parâmetro `e` — evita *Assignment to constant variable* em strict). Também redireciona o shim CJS `index-*.js` (React bundled em App/recharts) para `globalThis.__DELPI_MF_REACT__`. Chunks `App-*.js` com `import{r as X}from"./index-*"` recebem fallback no bridge (`Nu()` → global canônico). O `importShared` publica React no global **só se** `!globalThis.__DELPI_MF_REACT__` (não sobrescreve o portal).

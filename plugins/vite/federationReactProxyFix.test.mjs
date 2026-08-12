@@ -16,6 +16,7 @@ import {
   listBundledReactBridgeImports,
   resolveBundledReactBridgeName,
   upgradeUnconditionalReactGlobalPublish,
+  isFederationSharedReactDomInterop,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
@@ -171,6 +172,19 @@ function testAppChunkSkipsLoneReactDomBridge() {
 }
 
 /**
+ * Regressão public-hub /sign (HelpTooltip): shared react-dom era redirecionado para
+ * __DELPI_MF_REACT__ → createPortal undefined → «X is not a function».
+ */
+function testSharedReactDomInteropNotRedirectedToReact() {
+  const raw = String.raw`import{g as r}from"./_commonjsHelpers-CqkleIqs.js";import{r as o}from"./index-q540vByz.js";var t=o();const m=r(t);export{m as default};`;
+  assert.ok(isFederationSharedReactDomInterop(raw), "detecta interop shared react-dom");
+  assert.equal(resolveBundledReactBridgeName(raw), null, "não escolhe bridge para redirect");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.equal(out, raw, "não injeta __DELPI_MF_REACT__ no shared react-dom");
+  assert.ok(!out.includes(DELPI_MF_REACT_GLOBAL), "shared react-dom intacto");
+}
+
+/**
  * Regressão ReDoS (?v=7): `(?:[^}"']*,)*r as` travava vite build do plugin-ui
  * (milhares de `import{a,b,…}`) em "rendering chunks…".
  */
@@ -237,9 +251,10 @@ testRichTextChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
 testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
 testAppChunkSkipsLoneReactDomBridge();
+testSharedReactDomInteropNotRedirectedToReact();
 testBridgeImportScanIsLinearOnCommaHeavyImports();
 testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 17 testes passaram");
+console.log("OK: federationReactProxyFix — 18 testes passaram");

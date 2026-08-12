@@ -162,8 +162,15 @@ export function listBundledReactBridgeImports(code: string): string[] {
  *
  * Também casa imports multi-spec (`import{r as Lv,g as Xv}from…`) — o React core
  * costuma exportar `r` + `g`; regex só `{r as X}` ignorava esse bridge (api-delpi-console).
+ *
+ * **Não** redirecionar o wrapper `__federation_shared_react-dom` (`getDefaultExportFromCjs(o())`
+ * sem CLIENT_INTERNALS) — virava React e `createPortal` sumia → HelpTooltip `X is not a function`.
  */
 export function resolveBundledReactBridgeName(code: string): string | null {
+  if (isFederationSharedReactDomInterop(code)) {
+    return null;
+  }
+
   const bridges = listBundledReactBridgeImports(code);
   if (bridges.length === 0) return null;
 
@@ -185,6 +192,23 @@ export function resolveBundledReactBridgeName(code: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Chunk Vite `__federation_shared_react-dom-*`: só faz
+ * `getDefaultExportFromCjs(reactDomCjsBridge())` e exporta default.
+ */
+export function isFederationSharedReactDomInterop(code: string): boolean {
+  return (
+    code.includes("_commonjsHelpers") &&
+    /export\{\w+ as default\}/.test(code) &&
+    !code.includes(REACT_CLIENT_INTERNALS) &&
+    !code.includes("n.useRef=function")
+  );
+}
+
+export function isFederationSharedReactDomFileName(fileName: string): boolean {
+  return /__federation_shared_react-dom/i.test(fileName);
 }
 
 /**
@@ -315,6 +339,10 @@ function chunkConsumesBundledReactBridge(code: string): boolean {
 function applyMfChunkPatches(code: string, fileName: string): string {
   if (fileName.includes("remoteEntry.js")) {
     return patchRemoteEntryCacheBust(code);
+  }
+  // Nunca redirecionar shared react-dom → React (createPortal some).
+  if (isFederationSharedReactDomFileName(fileName) || isFederationSharedReactDomInterop(code)) {
+    return code;
   }
   if (fileName.includes("__federation_fn_import")) {
     return patchMfRuntimeImportCacheBust(patchFederationImportPublishReact(code));
