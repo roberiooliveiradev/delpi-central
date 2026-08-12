@@ -2,10 +2,11 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** aplicado em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`). Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
-> **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)
+> **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
+> **Cutover F2c / multi-membro:** [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
 **Fora deste documento:** tabelas TOTVS (SC5/SC6/SA1/AD*…). Pedidos, propostas e cadastro de cliente continuam na api-delpi; aqui só há **referências** (`customer_code`+`customer_store`, `order_branch`+`order_number`+`line_item`, etc.).
 
@@ -35,6 +36,7 @@
 | Onda | Fase | Tabelas |
 |------|------|---------|
 | **M1** | F2 | Carteira + avatars (+ `audit_log` mínimo) |
+| **M1+** | E5.1 | `seller_portfolio_members` (N:N) — `V005` |
 | **M2** | F5 | Tasks, activities (+ Wave G `V003`); visits leves / outbox / task_deps = futuro |
 | **M3** | F6 | Opportunities, pipeline refs, forecast |
 | **M4** | F7 | Samples, order confirmations, delivery exceptions |
@@ -46,6 +48,7 @@
 
 ```mermaid
 erDiagram
+  seller_portfolios ||--o{ seller_portfolio_members : has
   seller_portfolios ||--o{ seller_customers : has
   seller_customers }o--|| customer_ref : "code+store"
   customer_avatars }o--|| customer_ref : "code+store"
@@ -70,7 +73,8 @@ erDiagram
   sla_policies ||--o{ tasks : may_govern
 ```
 
-`customer_ref` não é tabela — é o par TOTVS referenciado.
+`customer_ref` não é tabela — é o par TOTVS referenciado.  
+Membership canônico: `seller_portfolio_members` (owner + members). `seller_portfolios.user_id` espelha o owner (legado / denormalizado).
 
 ---
 
@@ -81,13 +85,13 @@ No alvo: schema `commercial`, nomes EN alinhados ao playbook.
 
 ### 3.1 `seller_portfolios`
 
-Carteira de um usuário Minha DELPI (antes: `pedidos_venda_abertos.sellers`).
+Carteira compartilhada (antes: `pedidos_venda_abertos.sellers`). Uma carteira = uma lista de clientes (`seller_customers`) + N usuários (`seller_portfolio_members`).
 
 | Coluna | Tipo | Constraints / notas |
 |--------|------|---------------------|
 | `id` | UUID | PK, default `gen_random_uuid()` |
-| `user_id` | TEXT | NOT NULL, **UNIQUE** — Keycloak sub |
-| `display_name` | TEXT | NOT NULL — nome exibido |
+| `user_id` | TEXT | NOT NULL — **owner denormalizado** (espelho do membro `role=owner`). **Não** é UNIQUE global após `V005` (mesmo usuário pode ser owner/membro em várias carteiras; a unicidade de membership está em `seller_portfolio_members`) |
+| `display_name` | TEXT | NOT NULL — nome exibido (seletor de escopo / filtros) |
 | `active` | BOOLEAN | NOT NULL, default `TRUE` |
 | `created_by_user_id` | TEXT | NULL |
 | `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
@@ -95,9 +99,30 @@ Carteira de um usuário Minha DELPI (antes: `pedidos_venda_abertos.sellers`).
 | `version` | INT | NOT NULL, default `1` |
 | `deleted_at` | TIMESTAMPTZ | NULL — soft deactivate preferencial via `active=false`; `deleted_at` se purge lógico |
 
-**Índices:** `(active)`; `(user_id)` já único.
+**Índices:** `(active)`; `(user_id)` — índice não único após `V005` (constraint `seller_portfolios_user_id_key` removida).
 
-**Migração:** `INSERT … SELECT` de `pedidos_venda_abertos.sellers` → mapear `id` preservado se possível (mesmo UUID).
+**Fonte de verdade de membership:** tabela `seller_portfolio_members` (§ 3.1b). Manter `user_id` alinhado ao owner ao criar/trocar responsável.
+
+**Migração:** `INSERT … SELECT` de `pedidos_venda_abertos.sellers` → mapear `id` preservado se possível (mesmo UUID). Multi-membro: `V005__seller_portfolio_members.sql`.
+
+### 3.1b `seller_portfolio_members` (E5.1 — `V005`)
+
+Membership N:N — usuários compartilham a **mesma** lista de clientes da carteira.
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK, default `gen_random_uuid()` |
+| `seller_portfolio_id` | UUID | NOT NULL, FK → `seller_portfolios(id)` ON DELETE CASCADE |
+| `user_id` | TEXT | NOT NULL — Keycloak sub |
+| `role` | TEXT | NOT NULL, default `member` — check `IN ('owner', 'member')` |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+
+**Único:** `(seller_portfolio_id, user_id)`.  
+**Índices:** `(user_id)`; `(seller_portfolio_id)`.  
+**Um owner por carteira:** unique parcial `WHERE role = 'owner'` em `(seller_portfolio_id)`.
+
+**Backfill (`V005`):** cada `seller_portfolios.user_id` vira linha `role='owner'`.  
+**Produto:** usuário pode aparecer em N carteiras; filtro «Todas as carteiras» = união dedupe dos clientes; chip Escopo no shell = identidade (`N carteiras` se >1), não filtro.
 
 ### 3.2 `seller_customers`
 
@@ -725,11 +750,12 @@ Padrão comum:
 | Legado (`pedidos_venda_abertos`) | Alvo (`commercial`) |
 |---------------------------------|---------------------|
 | `sellers` | `seller_portfolios` |
-| `sellers.user_id` | `seller_portfolios.user_id` |
+| `sellers.user_id` (1:1 UNIQUE) | `seller_portfolios.user_id` (owner denormalizado) + `seller_portfolio_members` (N:N canônico, `V005`) |
 | `seller_customers.seller_id` | `seller_customers.seller_portfolio_id` |
 | `customer_avatars` | `customer_avatars` (+ `storage_key`, `byte_size`) |
 
-Preservar UUIDs no cutover quando possível para não quebrar favoritos/logs.
+Preservar UUIDs no cutover quando possível para não quebrar favoritos/logs.  
+Multi-membro **não** cabe no schema PVA (`sellers.user_id UNIQUE`) — ver [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md).
 
 ---
 
@@ -758,5 +784,6 @@ Preservar UUIDs no cutover quando possível para não quebrar favoritos/logs.
 ## 12. Referências
 
 - SQL legado: `api-delpi/migrations/plugins/pedidos-venda-abertos/V001__*.sql`, `V002__*.sql`
+- Multi-membro: `commercial-api/migrations/V005__seller_portfolio_members.sql`
 - Estilo documental: [delpi-reports/SCHEMA.md](../delpi-reports/SCHEMA.md)
-- Wireframes: [WIREFRAMES.md](./WIREFRAMES.md)
+- Wireframes: [WIREFRAMES.md](./WIREFRAMES.md) (WF-05R / D / ORG)

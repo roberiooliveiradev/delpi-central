@@ -5,7 +5,7 @@
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
 > **Paridade:** § 2.1.1 (Portal do Vendedor → Portal Comercial)  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
-> **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais  
+> **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais · **E5.1** WF-05R lista/detalhe/org multi-membro  
 > **Wave G / G+:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md). UX polish + backlog de tarefas: [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md). IDs canônicos WF-01…10; **Wave G+** adiciona WF-00 (shell UnderlineNav), WF-01R (Home hero), WF-06R (Meu dia CRM). Rota `/my-day` implementada.
 
 ## Convenções
@@ -26,10 +26,11 @@
 | Rota | Label (menu) | Fase | Persona |
 |------|--------------|------|---------|
 | `/apps/commercial` | Início | F2b | Todos |
-| `/apps/commercial/open-orders` | Pedidos em aberto | F2b | Vendedor+ |
-| `/apps/commercial/customers` | Minha carteira | F2b | Vendedor+ |
+| `/apps/commercial/open-orders` | Meus pedidos | F2b | Vendedor+ |
+| `/apps/commercial/customers` | Minha Carteira | F2b | Vendedor+ |
 | `/apps/commercial/customers/:code/:store` | Conta (detalhe) | F2b | Vendedor+ |
-| `/apps/commercial/seller-portfolios` | Carteiras | F2b | Admin |
+| `/apps/commercial/seller-portfolios` | Carteiras (lista / org) | E5.1 | Admin |
+| `/apps/commercial/seller-portfolios/:id` | Carteira (detalhe) | E5.1 | Admin |
 | `/apps/commercial/my-day` | Meu dia | Wave G+ | worklist.view |
 | `/apps/commercial/proposals` | Propostas (ADY) | Consolidação | proposals.view |
 | `/apps/commercial/proposals/:id` | Detalhe + PDF | Consolidação | proposals.view |
@@ -43,7 +44,7 @@
 ### WF-G — Gestão visão geral (`/gestao`) — ASCII
 
 ```text
-[UnderlineNav] Início | Meu dia | Pedidos | Carteira | Propostas | Gestão | Carteiras†
+[UnderlineNav] Início | Meu dia | Meus pedidos | Minha Carteira | Propostas | Gestão | Carteiras†
 [Subnav Gestão] Visão geral · OTD · Equipe · Oportunidades
 [FilterBar] Competence | Start DateField | End DateField | Branch | Segment | [Atualizar]
 [KPI row ×6] ROL | Meta | Conversão | OTD | Ticket | Funil
@@ -59,18 +60,19 @@ Wireframes ASCII detalhados + matriz `@delpi/plugin-ui`: [GESTAO-A-VISTA.md](./G
 
 ---
 
-## Mapa de navegação (F2b)
+## Mapa de navegação (F2b + E5.1)
 
 ```text
 Portal Comercial
 ├── Início                         /apps/commercial
 ├── Pedidos e entregas
-│   └── Pedidos em aberto          /apps/commercial/open-orders
+│   └── Meus pedidos               /apps/commercial/open-orders
 ├── Contas
-│   ├── Minha carteira             /apps/commercial/customers
+│   ├── Minha Carteira             /apps/commercial/customers
 │   └── Conta (detalhe)            /apps/commercial/customers/:code/:store   ← fora do menu
 └── Administração
-    └── Carteiras                  /apps/commercial/seller-portfolios        ← admin
+    ├── Carteiras (lista / org)    /apps/commercial/seller-portfolios        ← admin
+    └── Carteira (detalhe)         /apps/commercial/seller-portfolios/:id    ← admin
 ```
 
 ---
@@ -83,14 +85,16 @@ Nav secundária do plugin = **UnderlineNav** (padrão GitHub Primer / SAP), **n�
 
 ```text
 ┌─ plugin ────────────────────────────────────────────────────────────────────┐
-│ [icon] Portal Comercial [?]                    Escopo: Carteira própria     │
+│ [icon] Portal Comercial [?]          Escopo: Carteira: Sul  │ ou  «2 carteiras» │
 │ ─────────────────────────────────────────────────────────────────────────── │
-│ Início   Meu dia (3)   Pedidos em aberto   Minha carteira   Carteiras†      │
+│ Início   Meu dia (3)   Meus pedidos   Minha Carteira   Carteiras†           │
 │ ═══════                                                                     │
 │   ↑ underline accent #089bdb; badge Meu dia = overdue+today                 │
 │ … página …                                                                  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Chip Escopo (identidade, não filtro):** 1 carteira → `Carteira: {nome}`; N>1 → `N carteiras`. Seleção operacional («Todas as carteiras» = união dedupe, ou carteira específica) fica no filtro da página (Pedidos / Minha Carteira), não no chip.
 
 ### WF-01R — Início (hero + permissões)
 
@@ -111,7 +115,7 @@ Nav secundária do plugin = **UnderlineNav** (padrão GitHub Primer / SAP), **n�
 │ ROL · Conversão · OTD + tabela equipe                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ┌─ ATALHOS ───────────────────────────────────────────────────────────────────┐
-│ Meu dia* · Pedidos · Carteira · Carteiras†                                  │
+│ Meu dia* · Meus pedidos · Minha Carteira · Carteiras†                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -144,7 +148,7 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 │            ├──────────────────────────────────────────────────────────────┤
 │ Comercial  │ Início                                                         │
 │  · Início  │                                                                │
-│  · Pedidos │ Olá, {nome} · Carteira própria · Atualizado há 4 min           │
+│  · Pedidos │ Olá, {nome} · Escopo: Carteira: Sul · Atualizado há 4 min      │
 │  · Carteira│                                                                │
 │  · …       │ ┌─ Precisa de atenção ─────────────────────────────────────┐ │
 │            │ │  ⚠ 3 pedidos atrasados     [Ver pedidos]                   │ │
@@ -153,8 +157,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 │            │ └────────────────────────────────────────────────────────────┘ │
 │            │                                                                │
 │            │ ┌─ Atalhos ─────────────┐  ┌─ Resumo da carteira ──────────┐ │
-│            │ │ [Pedidos em aberto]   │  │ Clientes     42               │ │
-│            │ │ [Minha carteira]      │  │ Valor em aberto  R$ 1,2 mi    │ │
+│            │ │ [Meus pedidos]        │  │ Clientes     42               │ │
+│            │ │ [Minha Carteira]      │  │ Valor em aberto  R$ 1,2 mi    │ │
 │            │ │ [Propostas]           │  │ Atrasados     5               │ │
 │            │ │   (página nativa)     │  │ Próxima entrega  08/08        │ │
 │            │ └───────────────────────┘  └───────────────────────────────┘ │
@@ -294,20 +298,22 @@ Pedido+OP permanece nas páginas nativas WF-02R-D.
 
 ---
 
-## WF-03R — Minha carteira (desktop)
+## WF-03R — Minha Carteira (desktop)
 
 **Rota:** `/apps/commercial/customers`  
-**Papel:** priorizar clientes da carteira com pedidos de venda em aberto; não representa a SA1 completa.
+**Papel:** priorizar clientes da(s) carteira(s) com pedidos de venda em aberto; não representa a SA1 completa.
 **Estado URL:** somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir` e
 `page` allowlisted; presets fixos agora, saved views customizadas depois.
 Valores inválidos são normalizados e defaults são omitidos. `focus=growth`
 legado vira `trend=up`; `focus=inactive` vira `all`.
+Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N carteiras
+(ou gestão com team scope).
 
 ```text
-┌─ PageHero · Minha carteira ─────────────────────────── [Atualizar] ──────┐
+┌─ PageHero · Minha Carteira ─────────────────────────── [Atualizar] ──────┐
 │ Clientes no recorte 24 │ Valor aberto R$ 1,9 mi │ Após filtros 7        │
 │ Atualizado 09:04                                                       │
-│ Carteira [Todos os vendedores ▾]                                      │
+│ Carteira [Todas as carteiras ▾]                                       │
 │ Foco [Todos] [Atenção] [Em dia] [Sem venda 60d]                       │
 │ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
 │ Buscar cliente, código, loja ou pedido [___________________________]    │
@@ -346,13 +352,13 @@ divide enrichment e billing em lotes determinísticos de até 200 clientes e
 agrega a cobertura. Campo derivado sem lote coberto mostra
 `Dado indisponível`; export deixa a célula vazia, sem converter ausência em zero.
 
-### WF-03R-M — Minha carteira (mobile)
+### WF-03R-M — Minha Carteira (mobile)
 
 ```text
-┌ Minha carteira                         [↻] ┐
+┌ Minha Carteira                         [↻] ┐
 │ 24 clientes · R$ 1,9 mi                    │
 │ Atualizado 09:04                            │
-│ Carteira [Todos ▾]                         │
+│ Carteira [Todas ▾]                         │
 │ Foco [Todos][Atenção][Em dia][Sem venda] → │
 │ Tendência [Todas][Alta][Estável][Queda] →  │
 │ [Buscar_______________________________]    │
@@ -375,13 +381,13 @@ da `DataTable`; não existe segundo pipeline nem segundo fetch.
 ## WF-04R — Conta 360 (desktop)
 
 **Rota:** `/apps/commercial/customers/:code/:store`  
-**PagePath:** `← Minha carteira / {cliente}`, com retorno determinístico para a
+**PagePath:** `← Minha Carteira / {cliente}`, com retorno determinístico para a
 lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 **Estado URL:** `?secao=resumo|pedidos|historico|oportunidades|atividades`;
 `faturamento` e `contatos` permanecem aliases legados.
 
 ```text
-← Minha carteira   /   ACME
+← Minha Carteira   /   ACME
 ┌─ PageHero · Conta ────────────── [Follow-up] [Propostas] [Atualizar] ─┐
 │ ACME  [Atenção]                                                      │
 │ 000006 · Loja 01 · cidade/UF · vendedor · atualizado                 │
@@ -414,7 +420,7 @@ retry e atualização independentes.
 ### WF-04R-M — Conta 360 (mobile)
 
 ```text
-← Minha carteira / ACME
+← Minha Carteira / ACME
 ┌─ PageHero · Conta ─────────────────────────┐
 │ ACME [Atenção]                             │
 │ código · loja · vendedor · atualizado      │
@@ -434,48 +440,122 @@ Nenhum conteúdo crítico depende de hover.
 
 ### Fronteira de integração
 
-Minha carteira, Conta, OP e OV são páginas SPA nativas do `commercial`. Nenhuma
+Minha Carteira, Conta, OP e OV são páginas SPA nativas do `commercial`. Nenhuma
 delas hospeda plugin externo, usa iframe, monta remote irmão ou oferece URL de
 fallback para outro MFE. Dados de produção, pedidos, faturamento e oportunidades
 são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 
 ---
 
-## WF-05R — Administração de carteiras
+## WF-05R — Administração de carteiras (lista full-page)
 
 **Rota:** `/apps/commercial/seller-portfolios`  
-**URL:** `q`, `filter=all|active|inactive`, `id` (uuid). Defaults omitidos.  
-**Dados:** commercial-api `seller-portfolios`  
-**Permissão:** `commercial.seller-portfolios.manage`  
-**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`.
+**URL:** `q`, `filter=all|active|inactive`, `view=list|org`, `axis=portfolio|person` (só com `view=org`). Defaults omitidos. **Sem** `?id=` — detalhe é rota própria (WF-05R-D).  
+**Dados:** commercial-api `seller-portfolios` (+ `members[]`)  
+**Permissão:** `commercial.seller-portfolios.manage` (CRUD). Gestor com só `accounts.team.view` **não** vê esta tela — só filtro de carteira nas bancadas.  
+**Modelo:** carteira compartilhada = 1 owner + N members; mesma lista de clientes. Usuário pode estar em N carteiras.  
+**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `SegmentToggle`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`, `UserDirectoryPicker`.
 
 ```
 ← Portal Comercial / Administração / Carteiras
 
 ┌─ PageHero · Carteiras ──────────────── [+ Nova carteira] [Atualizar] ─┐
-│ 1 carteira │ 0 ativas │ 1 inativa │ 0 clientes                       │
-│ Situação [Todas 1] [Ativas 0] [Inativas 1]                           │
-│ Buscar vendedor, usuário ou e-mail [________________]                │
-└──────────────────────────────────────────────────────────────────────┘
+│ 3 carteiras │ 2 ativas │ 1 inativa │ 48 clientes                       │
+│ Visão [Lista] [Organização]                                            │
+│ Situação [Todas 3] [Ativas 2] [Inativas 1]                             │
+│ Buscar nome, usuário ou membro [________________]                      │
+└────────────────────────────────────────────────────────────────────────┘
 
-┌─ Carteiras (1) ── [Tabela|Cards] ──┐  ┌─ Conta ─────────────────────────┐
-│ Carteira   Usuário       Cli Status│  │ Robério Oliveira     [Inativa]  │
-│ Robério ●  r***@delpi      0 Inativa│  │ Nome [Robério Oliveira] [Salvar]│
-│                                    │  │ Buscar cadastro [________]      │
-│                                    │  │ hits · [Vincular]               │
-│                                    │  │ Na carteira: empty / DataTable  │
-│                                    │  │ [Reativar][Transferir][Excluir] │
-└────────────────────────────────────┘  └─────────────────────────────────┘
+┌─ Carteiras (3) ── [Tabela|Cards] ──────────────────────────────────────┐
+│ Carteira        Owner / membros     Cli   Status                       │
+│ Sul ●           Ana (+2)             18   Ativa    → clique abre detalhe│
+│ Norte ●         Bruno (+1)           22   Ativa                        │
+│ Especial ●      Carla                8    Inativa                      │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-Linha selecionada = `?id=`. Sem coluna Ações. Sem `id`: empty «Selecione uma carteira».
+Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` no retorno via PagePath). Sem painel split. Sem coluna Ações na lista.
 
-**Card da lista (mobile / modo Cards):** nome, usuário, contagem, `StatusBadge`. O card inteiro seleciona.
+**Card da lista (mobile / modo Cards):** nome, owner, contagem de membros, clientes, `StatusBadge`. O card inteiro navega ao detalhe.
 
-**Dialog Nova carteira** — `UserDirectoryPicker` + nome + Cancelar / Criar.  
-**Dialog Transferir** — origem travada, destino ativo, clientes pré-marcados, motivo obrigatório.  
-**Inativar** — sai do escopo; vínculos ficam (`DELETE /{id}`).  
-**Excluir** — apaga de vez (`DELETE /{id}/permanent`); «N clientes serão desvinculados» se `customer_count > 0`.
+**Dialog Nova carteira** — `UserDirectoryPicker` (só usuários com acesso ao portal, `app=commercial`) + nome + Cancelar / Criar. Owner inicial = usuário escolhido.  
+**Dialog Transferir** — na página de detalhe (WF-05R-D).  
+**Inativar / Excluir** — no detalhe.
+
+### WF-05R-D — Detalhe da carteira
+
+**Rota:** `/apps/commercial/seller-portfolios/:id`  
+**PagePath:** `← Carteiras / {nome}` (volta à lista com estado URL allowlisted).  
+**Permissão:** `seller-portfolios.manage`.
+
+```
+← Carteiras   /   Sul
+
+┌─ PageHero · Sul ───────────────────────── [Ativa] [Atualizar] ────────┐
+│ Owner: Ana Silva · 3 membros · 18 clientes                             │
+│ Nome [Sul____________________] [Salvar]                                │
+│ [Reativar|Inativar] [Transferir clientes] [Excluir permanente]         │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Membros ──────────────────────────────────────────────────────────────┐
+│ UserDirectoryPicker (portal commercial) · [Adicionar]                  │
+│ Usuário          Papel     Ações                                       │
+│ Ana Silva        owner     [Definir owner] (já é)                      │
+│ Pedro Costa      member    [Tornar owner] [Remover]                    │
+│ Lia Mendes       member    [Tornar owner] [Remover]                    │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Clientes na carteira ─────────────────────────────────────────────────┐
+│ Buscar cadastro [________]  hits · [Vincular]                          │
+│ Na carteira: empty / DataTable (código · loja · nome) · [Remover]      │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**Regras:** mesma lista de clientes para todos os membros; trocar owner mantém membership N:N; remover membro não apaga clientes; picker de diretório filtra quem **não** tem app `commercial`.
+
+### WF-05R-ORG — Visão Organização
+
+**Rota:** mesma lista com `?view=org&axis=portfolio|person`  
+**Toggle shell:** Lista | Organização. **Eixo:** Por carteira | Por pessoa.
+
+```
+┌─ Organização ──────────────────────────────────────────────────────────┐
+│ Eixo [Por carteira] [Por pessoa]                                       │
+│                                                                        │
+│ (Por carteira)                                                         │
+│ · Sul                                                                  │
+│     Ana Silva · Pedro Costa · Lia Mendes                               │
+│ · Norte                                                                │
+│     Bruno Alves · Carla Dias                                           │
+│                                                                        │
+│ (Por pessoa)                                                           │
+│ · Ana Silva                                                            │
+│     Sul · Especial                                                     │
+│ · Pedro Costa                                                          │
+│     Sul                                                                │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+Clique no nome da carteira → WF-05R-D. Empty + CTA Nova carteira se filtro zerar a árvore.
+
+### Escopo operacional (bancadas)
+
+Filtro de página em Meus pedidos / Minha Carteira:
+
+| Opção | Efeito |
+|-------|--------|
+| Todas as carteiras | União dos clientes das carteiras visíveis (dedupe `code\|store`) |
+| Carteira X | Só clientes daquela carteira |
+| (gestão) carteira de outro | Requer `accounts.team.view` ou `seller-portfolios.manage` |
+
+Chip Escopo no shell = **só identidade** (ver WF-00).
+
+### Futuro (não implementado)
+
+| Item | Nota |
+|------|------|
+| **E6** — features de mercado (após MVP multi-membro) | Planejado; fora do escopo E5.1 |
+| **E7** — mapa territorial, carve/IA de carteira, rotação, inbox compartilhado | Futuro; não wireframear como entregue |
 
 ---
 
@@ -609,9 +689,9 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Lista pedidos em aberto | WF-02R | `/open-orders` |
 | Detalhe linha (OP + fabril) | WF-02R-D | `/open-orders/:filial/:pedido/:linha` + `/open-orders/:filial/:pedido/:linha/op/:op` |
 | Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
-| Minha carteira | WF-03R / WF-03R-M | `/customers` |
+| Minha Carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
-| Config vendedores | WF-05 | `/seller-portfolios` |
+| Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/seller-portfolios` + `/seller-portfolios/:id` |
 | Avatar | WF-04R + WF-05 | commercial-api |
 | URL interna código+loja | WF-04R | idem |
 | Home / entrada | WF-01 | `/` |
