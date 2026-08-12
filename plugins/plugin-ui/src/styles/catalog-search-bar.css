@@ -19,12 +19,9 @@
 }
 
 .delpi-ui-catalog-search-bar__field:focus-within {
-  /* Um único anel — não alterar border-color (evita “duas linhas”). */
-  border-color: var(--delpi-ui-border, var(--border, #e6e6e6));
-  box-shadow: var(
-    --delpi-ui-focus-ring,
-    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
-  );
+  /* Só a borda do container — sem box-shadow/ring (evita “duas linhas” / outline no input). */
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  box-shadow: none;
 }
 
 .delpi-ui-catalog-search-bar__icon {
@@ -50,6 +47,13 @@
   line-height: 1.35;
   outline: none;
   box-shadow: none;
+}
+
+.delpi-ui-catalog-search-bar__input:focus,
+.delpi-ui-catalog-search-bar__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 
 .delpi-ui-catalog-search-bar__input::placeholder {
