@@ -507,12 +507,16 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
   it("CTAs da conta respeitam identidade e permissoes reais", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
-    const opportunities = readSrc("features/customers/components/CustomerSectionComingSoon.tsx");
+    const opportunities = readSrc(
+      "features/customers/components/CustomerOpportunitiesSection.tsx",
+    );
     const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
     assert.match(page, /canViewWorklist && canManageFollowups/);
     assert.doesNotMatch(header, /Registrar contato|onRegisterContact/);
-    assert.match(opportunities, /canViewAnalytics && customerCode\.trim\(\)/);
-    assert.match(opportunities, /search: customerCode\.trim\(\)/);
+    assert.match(page, /CustomerOpportunitiesSection/);
+    assert.match(opportunities, /getCommercialProposals/);
+    assert.match(opportunities, /CommercialProposalsTable/);
+    assert.match(opportunities, /canViewAnalytics/);
     assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
     assert.match(lines, /getLineOpForecast/);
     assert.match(lines, /navigateOpenOrderOpDetail/);

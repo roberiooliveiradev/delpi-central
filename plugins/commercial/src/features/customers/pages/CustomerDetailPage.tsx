@@ -15,9 +15,9 @@ import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
 import { CustomerDetailHeader } from "../components/CustomerDetailHeader";
 import { CustomerActivityTimelinePanel } from "../components/CustomerActivityTimelinePanel";
+import { CustomerOpportunitiesSection } from "../components/CustomerOpportunitiesSection";
 import { CustomerOrdersTable } from "../components/CustomerOrdersTable";
 import { CustomerOverviewSection } from "../components/CustomerOverviewSection";
-import { CustomerSectionComingSoon } from "../components/CustomerSectionComingSoon";
 import { useCustomerBilling } from "../billing/hooks/useCustomerBilling";
 import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
 import { useCustomerActivities } from "../hooks/useCustomerActivities";
@@ -307,7 +307,7 @@ export function CustomerDetailPage({
               {section === "historico" ? <CustomerBillingPanel billing={billing} /> : null}
 
               {section === "oportunidades" ? (
-                <CustomerSectionComingSoon
+                <CustomerOpportunitiesSection
                   basePath={basePath}
                   customerCode={codigo}
                   canViewAnalytics={canViewAnalytics}

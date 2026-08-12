@@ -38,6 +38,8 @@ export const ANALYTICS_CONTENT = {
   oportunidades: {
     title: "Oportunidades",
     subtitle: "Lista de OVs/propostas comerciais do período.",
+    accountHint:
+      "Oportunidades (OV) deste cliente. Clique na linha ou no número para abrir o detalhe.",
     detail:
       "Detalhe da oportunidade: indicadores, dados comerciais, produtos, estrutura de componentes e histórico.",
   },

@@ -265,15 +265,19 @@ describe("estrutura dos detalhes de linha e OP", () => {
   });
 
   it("mantém OV exclusivamente como página navegada pelo helper", async () => {
-    const files = await Promise.all(
+    const [opportunitiesPage, proposalsTable, overview, productionDetail] = await Promise.all(
       [
         "../features/analytics/AnalyticsOpportunitiesPage.tsx",
+        "../features/analytics/components/CommercialProposalsTable.tsx",
         "../features/overview/OverviewPage.tsx",
         "../components/OpenOrdersProductionDetailContent.tsx",
       ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
     );
-    for (const source of files) {
-      assert.match(source, /navigateAnalyticsOpportunityDetail/);
+    assert.match(opportunitiesPage, /CommercialProposalsTable/);
+    assert.match(proposalsTable, /navigateAnalyticsOpportunityDetail/);
+    assert.match(productionDetail, /navigateAnalyticsOpportunityDetail/);
+    assert.doesNotMatch(overview, /navigateAnalyticsOpportunityDetail|getCommercialProposals/);
+    for (const source of [opportunitiesPage, proposalsTable, productionDetail, overview]) {
       assert.doesNotMatch(source, /OpportunityDetailModal|OvDetailModal/);
     }
   });

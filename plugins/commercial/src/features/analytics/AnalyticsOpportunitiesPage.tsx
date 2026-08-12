@@ -1,11 +1,9 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getCommercialProposals } from "../../api/analyticsApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
@@ -13,12 +11,11 @@ import {
   CommercialTextField,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigateAnalyticsOpportunityDetail } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProposal } from "../../types/analytics";
-import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
+import { CommercialProposalsTable } from "./components/CommercialProposalsTable";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import {
   buildAnalyticsOpportunityBackSearch,
@@ -91,32 +88,6 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     reloadKey,
   ]);
 
-  const columns: DataTableColumn<CommercialProposal>[] = [
-    {
-      key: "ov",
-      header: "OV",
-      render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={() =>
-            navigateAnalyticsOpportunityDetail(row.proposal_number, {
-              basePath,
-              search: buildAnalyticsOpportunityBackSearch(),
-            })
-          }
-        >
-          {row.proposal_number}
-        </button>
-      ),
-    },
-    { key: "rev", header: "Rev.", render: (row) => row.revision || "—" },
-    { key: "customer", header: "Cliente", render: (row) => row.customer_code || "—" },
-    { key: "status", header: "Status", render: (row) => row.status_label || row.status_code || "—" },
-    { key: "stage", header: "Etapa", render: (row) => row.stage || "—" },
-    { key: "date", header: "Data", render: (row) => formatDisplayDate(row.proposal_date) },
-  ];
-
   return (
     <section className="cm-page-stack">
       <AnalyticsDeepPagePath
@@ -163,13 +134,10 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
         ) : null}
         {!loading && !error ? (
-          <DataTable
+          <CommercialProposalsTable
             rows={items}
-            columns={columns}
-            rowKey={(row) => `${row.branch}-${row.proposal_number}-${row.revision}`}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
-            layout="section"
+            basePath={basePath}
+            detailSearch={buildAnalyticsOpportunityBackSearch()}
           />
         ) : null}
       </SectionCard>
