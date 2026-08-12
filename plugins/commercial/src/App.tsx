@@ -15,7 +15,7 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
-import { AnalyticsTeamPage } from "./features/analytics/AnalyticsTeamPage";
+import { AnalyticsTeamRedirect } from "./features/analytics/AnalyticsTeamRedirect";
 import { AnalyticsOpportunityDetailPage } from "./features/analytics/AnalyticsOpportunityDetailPage";
 import { AnalyticsOpportunitiesPage } from "./features/analytics/AnalyticsOpportunitiesPage";
 import { AnalyticsOtdLineDetailPage } from "./features/analytics/AnalyticsOtdLineDetailPage";
@@ -58,7 +58,6 @@ function AppRoutes({
     canViewWorklist,
     canViewAnalytics,
     canViewProposals,
-    canUseTeamScope,
     canAccessMyPortfolio,
     loading: scopeLoading,
     myPortfolios,
@@ -184,13 +183,7 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "analytics_team" ? (
-        canViewAnalytics && canUseTeamScope ? (
-          <AnalyticsTeamPage basePath={basePath} />
-        ) : (
-          <NotFoundPage basePath={basePath} />
-        )
-      ) : null}
+      {view === "analytics_team" ? <AnalyticsTeamRedirect basePath={basePath} /> : null}
       {view === "analytics_opportunities" ? (
         canViewAnalytics ? (
           <AnalyticsOpportunitiesPage basePath={basePath} />

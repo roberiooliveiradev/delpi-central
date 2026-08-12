@@ -1,5 +1,4 @@
 import {
-  ActionButton,
   DataTable,
   EmptyState,
   SectionCard,
@@ -25,9 +24,10 @@ import {
   CommercialActivityTimeline,
   CommercialDataRecordCard,
   CommercialDetailFieldGrid,
+  CommercialActionButton,
   CommercialLoadingCard,
+  CommercialPageHero,
   CommercialPagePath,
-  CommercialTitleWithHelp,
   UI_PREFIX,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
@@ -284,17 +284,16 @@ export function AnalyticsOpportunityDetailPage({
         }}
         current={`OV ${proposalNumber}`}
       />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={`OV ${proposalNumber}`}
-          hint={ANALYTICS_CONTENT.oportunidades.detail}
-        />
-        <div className="cm-nav-row">
-          <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+      <CommercialPageHero
+        aria-label={`OV ${proposalNumber}`}
+        title={`OV ${proposalNumber}`}
+        description={ANALYTICS_CONTENT.oportunidades.detail}
+        actions={
+          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
-          </ActionButton>
-        </div>
-      </header>
+          </CommercialActionButton>
+        }
+      />
 
       {loading ? <CommercialLoadingCard title="Carregando OV…" variant="panel" /> : null}
       {error ? (

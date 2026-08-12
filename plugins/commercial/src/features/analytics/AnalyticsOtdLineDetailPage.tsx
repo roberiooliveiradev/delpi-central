@@ -1,5 +1,4 @@
-import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
-import { RefreshCw } from "lucide-react";
+import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 
 import { getSalesOrderOtdLineDetail } from "../../api/analyticsApi";
@@ -10,7 +9,7 @@ import {
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
   CommercialPagePath,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
@@ -94,17 +93,11 @@ export function AnalyticsOtdLineDetailPage({
         }}
         current={`Pedido ${orderNumber} · item ${lineItem}`}
       />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={`Pedido ${orderNumber} · item ${lineItem}`}
-          hint={ANALYTICS_CONTENT.otd.lineDetail}
-        />
-        <div className="cm-nav-row">
-          <ActionButton variant="ghost" onClick={() => window.location.reload()}>
-            <RefreshCw size={16} aria-hidden="true" /> Atualizar
-          </ActionButton>
-        </div>
-      </header>
+      <CommercialPageHero
+        aria-label={ANALYTICS_CONTENT.otd.lineDetail}
+        title={ANALYTICS_CONTENT.otd.lineDetail}
+        description={`${branch} · ${orderNumber} · ${lineItem}`}
+      />
 
       {loading ? <CommercialLoadingCard title="Carregando detalhe…" variant="panel" /> : null}
       {error ? (

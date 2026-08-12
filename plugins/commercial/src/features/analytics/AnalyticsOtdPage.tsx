@@ -1,4 +1,4 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { CircleGauge, PackageCheck, RefreshCw, Truck } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -9,8 +9,9 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialActionButton,
   CommercialLoadingCard,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
 } from "../../app/commercialUi";
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { KpiCard } from "../../components/KpiCard";
@@ -115,16 +116,16 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
   return (
     <section className="cm-page-stack">
       <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.otd.title} />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={ANALYTICS_CONTENT.otd.title}
-          hint={ANALYTICS_CONTENT.otd.subtitle}
-        />
-        <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </header>
-
+      <CommercialPageHero
+        aria-label={ANALYTICS_CONTENT.otd.title}
+        title={ANALYTICS_CONTENT.otd.title}
+        description={ANALYTICS_CONTENT.otd.subtitle}
+        actions={
+          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          </CommercialActionButton>
+        }
+      >
       <AnalyticsFilters
         dateStart={filters.dateStart}
         dateEnd={filters.dateEnd}
@@ -142,6 +143,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         onCustomerSegment={filters.setCustomerSegment}
         onSellerId={filters.setSellerId}
       />
+      </CommercialPageHero>
 
       {loading ? <CommercialLoadingCard title="Carregando OTD…" variant="panel" /> : null}
       {error ? (

@@ -92,10 +92,12 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(manifest, /"path": "\/apps\/commercial\/administration\/team"/);
   });
 
-  it("Equipe empty CTA Administração só com manage", () => {
-    const source = readFileSync(join(src, "features/analytics/AnalyticsTeamPage.tsx"), "utf8");
-    assert.match(source, /canOpenAdmin/);
-    assert.match(source, /Abrir Administração/);
+  it("Equipe redireciona para Administração", () => {
+    const source = readFileSync(join(src, "features/analytics/AnalyticsTeamRedirect.tsx"), "utf8");
     assert.match(source, /navigatePluginView\("administration"/);
+    assert.match(source, /replace: true/);
+    const app = readFileSync(join(src, "App.tsx"), "utf8");
+    assert.match(app, /AnalyticsTeamRedirect/);
+    assert.doesNotMatch(app, /AnalyticsTeamPage/);
   });
 });

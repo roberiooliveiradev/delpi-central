@@ -1,4 +1,4 @@
-import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -7,9 +7,10 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialActionButton,
   CommercialLoadingCard,
+  CommercialPageHero,
   CommercialTextField,
-  CommercialTitleWithHelp,
 } from "../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProposal } from "../../types/analytics";
@@ -95,16 +96,16 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         basePath={basePath}
         current={ANALYTICS_CONTENT.oportunidades.title}
       />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={ANALYTICS_CONTENT.oportunidades.title}
-          hint={ANALYTICS_CONTENT.oportunidades.subtitle}
-        />
-        <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </header>
-
+      <CommercialPageHero
+        aria-label={ANALYTICS_CONTENT.oportunidades.title}
+        title={ANALYTICS_CONTENT.oportunidades.title}
+        description={ANALYTICS_CONTENT.oportunidades.subtitle}
+        actions={
+          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          </CommercialActionButton>
+        }
+      >
       <AnalyticsFilters
         dateStart={filters.dateStart}
         dateEnd={filters.dateEnd}
@@ -122,6 +123,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         onCustomerSegment={filters.setCustomerSegment}
         onSellerId={filters.setSellerId}
       />
+      </CommercialPageHero>
 
       <CommercialTextField
         label="Busca"

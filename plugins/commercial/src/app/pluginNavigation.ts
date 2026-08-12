@@ -37,10 +37,10 @@ export function navigatePluginPath(
 
 export function navigatePluginView(
   view: PluginNavigationTarget,
-  options?: { basePath?: string; search?: string },
+  options?: { basePath?: string; search?: string; replace?: boolean },
 ): void {
   const target = buildPluginPath(view, options?.basePath, options?.search);
-  navigatePluginPath(target);
+  navigatePluginPath(target, { replace: options?.replace });
 }
 
 export function navigateCustomerDetail(
