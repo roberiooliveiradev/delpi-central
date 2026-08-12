@@ -1,7 +1,7 @@
-import type { DataTableColumn } from "@delpi/plugin-ui/index";
 import {
   OPERATIONAL_UNIT_COLUMN_LABEL,
   formatOperationalUnitCode,
+  type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 import { type ReactNode, useId, useState } from "react";
 

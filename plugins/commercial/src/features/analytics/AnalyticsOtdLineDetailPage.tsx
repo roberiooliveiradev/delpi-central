@@ -1,6 +1,7 @@
-import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import {
+  EmptyState,
   OPERATIONAL_UNIT_COLUMN_LABEL,
+  SectionCard,
   formatOperationalUnitCode,
 } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
