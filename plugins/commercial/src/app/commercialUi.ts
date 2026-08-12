@@ -16,6 +16,8 @@ import {
   createDashboardSectionRouteCard,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
+  createDashboardHubChipRow,
+  createDashboardRouteChip,
   createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
@@ -137,6 +139,8 @@ export const CommercialSectionRouteCard = createDashboardSectionRouteCard({
 export const CommercialCatalogSearchBar = createDashboardCatalogSearchBar({
   classNames: cmCatalogSearchClassNames,
 });
+export const CommercialHubChipRow = createDashboardHubChipRow({ prefix: UI_PREFIX });
+export const CommercialRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX });
 export const CommercialCommandPalette = createDashboardCommandPalette({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
