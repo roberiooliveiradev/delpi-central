@@ -48,7 +48,7 @@ def list_commercial_open_orders(
     request: Request,
     seller_id: str | None = Query(
         default=None,
-        description="PK da carteira (filtro team/manage). Alias histórico seller_id.",
+        description="PK da carteira. Team/manage: qualquer; membro: só carteira própria. Alias histórico seller_id.",
     ),
     portfolio_id: str | None = Query(
         default=None,

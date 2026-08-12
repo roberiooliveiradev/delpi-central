@@ -76,14 +76,34 @@ def test_member_without_portfolios_is_empty() -> None:
     assert not scope.allows("100", "01")
 
 
-def test_portfolio_id_filter_requires_unrestricted() -> None:
+def test_portfolio_id_filter_rejects_outside_membership() -> None:
     repo = MagicMock()
+    repo.list_by_user_id.return_value = [_portfolio(id="p1")]
     service = ResolveCommercialCustomerScopeService(repo)
     try:
-        service.execute(user_id="u1", unrestricted=False, portfolio_id="p1")
+        service.execute(user_id="u1", unrestricted=False, portfolio_id="other")
         assert False, "expected PermissionError"
-    except PermissionError:
-        pass
+    except PermissionError as exc:
+        assert "participa" in str(exc).lower()
+    repo.get_by_id.assert_not_called()
+
+
+def test_portfolio_id_filter_allows_owned_portfolio_for_member() -> None:
+    """Usuário comum multi-carteira pode filtrar uma carteira própria."""
+    owned = _portfolio(id="p-own", customers=(SellerCustomerAssignment("100", "01", "A"),))
+    other = _portfolio(
+        id="p-other",
+        customers=(SellerCustomerAssignment("200", "01", "B"),),
+    )
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [owned, other]
+    service = ResolveCommercialCustomerScopeService(repo)
+
+    scope = service.execute(user_id="u1", unrestricted=False, portfolio_id="p-own")
+    assert not scope.unrestricted
+    assert scope.portfolio_id == "p-own"
+    assert scope.allows("100", "01")
+    assert not scope.allows("200", "01")
     repo.get_by_id.assert_not_called()
 
 

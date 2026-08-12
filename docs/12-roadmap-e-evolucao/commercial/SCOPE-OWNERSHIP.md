@@ -17,7 +17,7 @@
 |-----------|---------------------|
 | `commercial.seller-portfolios.manage` | Irrestrito (consolidado) |
 | `commercial.accounts.team.view` | Irrestrito no Portal; pode filtrar por `portfolio_id` / `seller_id` (PK da carteira) |
-| Demais (`accounts.view` etc.) **com** membership | Union dos clientes das carteiras do JWT |
+| Demais (`accounts.view` etc.) **com** membership | Union dos clientes das carteiras do JWT; com **2+ carteiras** pode filtrar por PK **própria** (`portfolio_id` / `seller_id`) |
 | Demais **sem** membership | Em **pedidos em aberto** → consolidado (todos os clientes); demais superfícies (NF/billing/avatar) seguem `ensure_allows` / filter_pairs |
 
 ## Matriz rota × dono da regra

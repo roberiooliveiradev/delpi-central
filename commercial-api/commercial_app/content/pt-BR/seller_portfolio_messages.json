@@ -14,6 +14,7 @@
     "emptyPortfolioLink": "Nenhuma carteira de clientes cadastrada para o seu usuário. Peça ao gerente para vincular seus clientes na Configuração.",
     "emptyPortfolioCustomers": "Sua carteira ainda não possui clientes vinculados.",
     "portfolioFilterRequiresTeam": "Filtro por vendedor disponível apenas para equipe ou gerentes.",
+    "portfolioFilterOutsideMembership": "Você só pode filtrar pelas carteiras em que participa.",
     "portfolioNotFound": "Vendedor não encontrado para filtro de carteira.",
     "portfolioInactiveFilter": "Vendedor inativo não pode ser usado como filtro."
   },

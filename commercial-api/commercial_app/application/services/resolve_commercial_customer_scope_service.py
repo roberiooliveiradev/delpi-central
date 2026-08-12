@@ -50,8 +50,11 @@ class CommercialCustomerScope:
 class ResolveCommercialCustomerScopeService:
     """
     Fonte de verdade do Portal Comercial: só clientes das carteiras do usuário,
-    salvo escopo manage/team (irrestrito). Filtro opcional por PK da carteira
-    (team/manage).
+    salvo escopo manage/team (irrestrito).
+
+    Filtro opcional por PK da carteira:
+    - manage/team: qualquer carteira ativa;
+    - membro comum: apenas carteira em que participa (multi-própria).
     """
 
     def __init__(self, repository: SellerPortfolioRepositoryPort) -> None:
@@ -66,13 +69,9 @@ class ResolveCommercialCustomerScopeService:
     ) -> CommercialCustomerScope:
         pid = (portfolio_id or "").strip() or None
         if pid:
-            if not unrestricted:
-                raise PermissionError(
-                    SellerPortfolioMessagesContentService.error(
-                        "portfolioFilterRequiresTeam"
-                    )
-                )
-            return self._scope_from_portfolio_id(pid)
+            if unrestricted:
+                return self._scope_from_portfolio_id(pid)
+            return self._scope_from_owned_portfolio_id(user_id=user_id, portfolio_id=pid)
 
         if unrestricted:
             return CommercialCustomerScope(
@@ -120,6 +119,30 @@ class ResolveCommercialCustomerScopeService:
             allowed_customers=allowed,
             portfolio_id=portfolios[0].id,
         )
+
+    def _scope_from_owned_portfolio_id(
+        self, *, user_id: str, portfolio_id: str
+    ) -> CommercialCustomerScope:
+        uid = (user_id or "").strip()
+        if not uid:
+            raise PermissionError(
+                SellerPortfolioMessagesContentService.error(
+                    "portfolioFilterOutsideMembership"
+                )
+            )
+        portfolios = self._repository.list_by_user_id(uid, active_only=True)
+        owned = next((item for item in portfolios if item.id == portfolio_id), None)
+        if owned is None:
+            raise PermissionError(
+                SellerPortfolioMessagesContentService.error(
+                    "portfolioFilterOutsideMembership"
+                )
+            )
+        if not owned.active:
+            raise ValueError(
+                SellerPortfolioMessagesContentService.error("portfolioInactiveFilter")
+            )
+        return self._scope_from_portfolio(owned)
 
     def _scope_from_portfolio_id(self, portfolio_id: str) -> CommercialCustomerScope:
         portfolio = self._repository.get_by_id(portfolio_id)

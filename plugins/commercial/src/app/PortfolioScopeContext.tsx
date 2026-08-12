@@ -132,7 +132,21 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
           setSellers(portfolios);
         } else {
           setSellers([]);
-          setSellerIdFilterState(null);
+          const mineIds = new Set(
+            (
+              response.portfolios?.length
+                ? response.portfolios
+                : response.portfolio
+                  ? [response.portfolio]
+                  : []
+            )
+              .map((portfolio) => portfolio.id)
+              .filter(Boolean),
+          );
+          // Multi-própria: manter filtro se ainda for carteira do usuário.
+          setSellerIdFilterState((current) =>
+            current && mineIds.has(current) ? current : null,
+          );
         }
       })
       .catch((err: unknown) => {
