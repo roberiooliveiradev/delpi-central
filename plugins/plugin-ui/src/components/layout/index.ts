@@ -375,6 +375,16 @@ export {
   type CatalogSearchHit,
   type DashboardCatalogSearchBarProps,
 } from "./CatalogSearchBar";
+
+export {
+  RouteChip,
+  createDashboardRouteChip,
+  routeChipBemClasses,
+  type DashboardRouteChipProps,
+  type RouteChipClassNames,
+  type RouteChipProps,
+  type RouteChipTone,
+} from "./RouteChip";
 export {
   CommandPalette,
   createDashboardCommandPalette,

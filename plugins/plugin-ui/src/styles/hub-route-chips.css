@@ -1,0 +1,147 @@
+/**
+ * HubRouteChip / HubChipRow — faixas Favoritos e Recentes do hub.
+ */
+
+.delpi-ui-hub-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.delpi-ui-hub-chip-row__label {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 32px;
+  margin-inline-end: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-hub-chip-row__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.delpi-ui-route-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 999px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-route-chip--pinned {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 40%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+}
+
+.delpi-ui-route-chip__main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-route-chip--pinned .delpi-ui-route-chip__main {
+  padding-inline-end: 6px;
+}
+
+.delpi-ui-route-chip__main:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    transparent
+  );
+}
+
+.delpi-ui-route-chip__main:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
+  );
+}
+
+.delpi-ui-route-chip__leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-route-chip--pinned .delpi-ui-route-chip__leading {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-route-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-route-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+  cursor: pointer;
+}
+
+.delpi-ui-route-chip__remove:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-route-chip__remove:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
+  );
+}
