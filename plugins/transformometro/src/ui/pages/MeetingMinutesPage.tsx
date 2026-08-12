@@ -8,15 +8,15 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { SelectField } from "../../components/ui/SelectField";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { listAtas, type AtaListItem } from "../../data/api/transformometroAtaApi";
-import { ATA_STATUS_LABELS } from "../atas/ataLabels";
+import { listAtas, type AtaListItem } from "../../data/api/transformometroMeetingMinutesApi";
+import { ATA_STATUS_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
   ataStatusLabel,
   ataStatusVariant,
   formatAtaMeetingDate,
   tmAtaStatusBadgeClassNames,
-} from "../atas/ataStatusUi";
+} from "../meeting-minutes/meetingMinuteStatusUi";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -37,7 +37,7 @@ function countByStatus(items: AtaListItem[], status: string): number {
   return items.filter((item) => item.status === status).length;
 }
 
-export function AtasPage({ getAccessToken, pathname, onNavigate }: Props) {
+export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [items, setItems] = useState<AtaListItem[]>([]);
   const [unitCode, setUnitCode] = useState("");
   const [status, setStatus] = useState("");

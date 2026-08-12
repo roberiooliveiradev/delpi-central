@@ -23,16 +23,16 @@ import {
   getAta,
   sendAta,
   type AtaDetail,
-} from "../../data/api/transformometroAtaApi";
-import { AtaDocumentView } from "../atas/AtaDocumentView";
-import { ATA_MEETING_TYPE_LABELS, ATA_PARTICIPANT_ROLE_LABELS } from "../atas/ataLabels";
+} from "../../data/api/transformometroMeetingMinutesApi";
+import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
+import { ATA_MEETING_TYPE_LABELS, ATA_PARTICIPANT_ROLE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
   ataSignatureProgress,
   ataStatusLabel,
   ataStatusVariant,
   formatAtaMeetingDate,
   tmAtaStatusBadgeClassNames,
-} from "../atas/ataStatusUi";
+} from "../meeting-minutes/meetingMinuteStatusUi";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   ataId: string;
@@ -44,7 +44,7 @@ function signerIsDone(status: string): boolean {
   return status === "signed";
 }
 
-export function AtaDetailPage({ getAccessToken, ataId, pathname, onNavigate }: Props) {
+export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNavigate }: Props) {
   const [detail, setDetail] = useState<AtaDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -307,7 +307,7 @@ export function AtaDetailPage({ getAccessToken, ataId, pathname, onNavigate }: P
           </aside>
 
           <section className="tm-atas-view__document" aria-label="Documento da ata">
-            <AtaDocumentView
+            <MeetingMinuteDocumentView
               detail={detail}
               getAccessToken={getAccessToken}
               pdfUrl={exportAtaPdfUrl(ataId)}

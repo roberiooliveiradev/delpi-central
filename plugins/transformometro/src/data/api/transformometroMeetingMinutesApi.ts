@@ -1,7 +1,7 @@
 import type {
   AtaGenerationRequest,
   AtaGenerationResult,
-} from "../../ai/ataGenerationPort";
+} from "../../ai/meetingMinuteGenerationPort";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
 import { parseApiEnvelope } from "./transformometroHttp";
 

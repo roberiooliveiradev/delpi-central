@@ -3,7 +3,7 @@ import {
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
 
-import { ATA_STATUS_LABELS } from "./ataLabels";
+import { ATA_STATUS_LABELS } from "./meetingMinuteLabels";
 
 export const tmAtaStatusBadgeClassNames = statusBadgeBemClasses("ds");
 

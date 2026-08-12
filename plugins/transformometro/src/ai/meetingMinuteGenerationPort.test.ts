@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ATA_GENERATION_UNAVAILABLE_MESSAGE,
   requestAtaGenerationFromTranscript,
-  resetAtaGenerationPort,
-} from "./ataGenerationPort";
+  resetMeetingMinuteGenerationPort,
+} from "./meetingMinuteGenerationPort";
 
-describe("ataGenerationPort", () => {
+describe("meetingMinuteGenerationPort", () => {
   it("stub rejeita com mensagem estável", async () => {
-    resetAtaGenerationPort();
+    resetMeetingMinuteGenerationPort();
     await expect(
       requestAtaGenerationFromTranscript({
         unitCode: "01",

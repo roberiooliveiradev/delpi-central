@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { isHtmlEmpty, mergeAtaContentHtml, splitAtaContentForSave } from "./ataContent";
+import { isHtmlEmpty, mergeAtaContentHtml, splitAtaContentForSave } from "./meetingMinuteContent";
 
-describe("ataContent", () => {
+describe("meetingMinuteContent", () => {
   it("detecta HTML vazio", () => {
     expect(isHtmlEmpty("<p></p>")).toBe(true);
     expect(isHtmlEmpty("<p>Olá</p>")).toBe(false);

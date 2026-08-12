@@ -32,16 +32,16 @@ import {
   searchDirectoryUsers,
   sendAta,
   updateAta,
-} from "../../data/api/transformometroAtaApi";
+} from "../../data/api/transformometroMeetingMinutesApi";
 import {
   ATA_GENERATION_UNAVAILABLE_MESSAGE,
   requestAtaGenerationFromTranscript,
-  resetAtaGenerationPort,
-  setAtaGenerationPort,
-} from "../../ai/ataGenerationPort";
-import { createHttpAtaGenerationPort } from "../../ai/httpAtaGenerationPort";
-import { mergeAtaContentHtml, splitAtaContentForSave } from "../atas/ataContent";
-import { ATA_MEETING_TYPE_LABELS } from "../atas/ataLabels";
+  resetMeetingMinuteGenerationPort,
+  setMeetingMinuteGenerationPort,
+} from "../../ai/meetingMinuteGenerationPort";
+import { createHttpMeetingMinuteGenerationPort } from "../../ai/httpMeetingMinuteGenerationPort";
+import { mergeAtaContentHtml, splitAtaContentForSave } from "../meeting-minutes/meetingMinuteContent";
+import { ATA_MEETING_TYPE_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   ataId?: string;
@@ -72,7 +72,7 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
+export function MeetingMinuteEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
   const [mode, setMode] = useState<EditorMode>("fill");
   const [title, setTitle] = useState("");
   const [unitCode, setUnitCode] = useState("01");
@@ -99,8 +99,8 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setAtaGenerationPort(createHttpAtaGenerationPort(() => getAccessToken?.()));
-    return () => resetAtaGenerationPort();
+    setMeetingMinuteGenerationPort(createHttpMeetingMinuteGenerationPort(() => getAccessToken?.()));
+    return () => resetMeetingMinuteGenerationPort();
   }, [getAccessToken]);
 
   useEffect(() => {

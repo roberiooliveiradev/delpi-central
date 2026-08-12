@@ -8,11 +8,11 @@ import {
   getSignatureProfile,
   updateSignatureProfile,
   uploadSignature,
-} from "../../data/api/transformometroAtaApi";
+} from "../../data/api/transformometroMeetingMinutesApi";
 
 type Props = Pick<AppProps, "getAccessToken"> & { onNavigate?: (path: string) => void };
 
-export function MinhaAssinaturaPage({ getAccessToken, onNavigate }: Props) {
+export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
   const [name, setName] = useState("");
   const [png, setPng] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);

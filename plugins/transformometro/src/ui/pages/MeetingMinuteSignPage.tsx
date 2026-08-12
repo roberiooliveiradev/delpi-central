@@ -17,15 +17,15 @@ import {
   refuseAta,
   signAta,
   type AtaDetail,
-} from "../../data/api/transformometroAtaApi";
-import { AtaDocumentView } from "../atas/AtaDocumentView";
+} from "../../data/api/transformometroMeetingMinutesApi";
+import { MeetingMinuteDocumentView } from "../meeting-minutes/MeetingMinuteDocumentView";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   ataId: string;
   onNavigate: (path: string) => void;
 };
 
-export function AtaSignPage({ getAccessToken, ataId, onNavigate }: Props) {
+export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Props) {
   const [context, setContext] = useState<Record<string, unknown> | null>(null);
   const [name, setName] = useState("");
   const [accepted, setAccepted] = useState(false);
@@ -132,7 +132,7 @@ export function AtaSignPage({ getAccessToken, ataId, onNavigate }: Props) {
         <h1>Assinar ata</h1>
         <p className="ds-muted">Leia o documento, confirme seu nome e assine.</p>
         {error ? <p role="alert">{error}</p> : null}
-        {detail ? <AtaDocumentView detail={detail} /> : null}
+        {detail ? <MeetingMinuteDocumentView detail={detail} /> : null}
 
         <label className="ds-field">
           <span>Seu nome na ata</span>

@@ -11,18 +11,18 @@ import { Download, Printer } from "lucide-react";
 import {
   fetchAtaSignatureImageBlob,
   type AtaDetail,
-} from "../../data/api/transformometroAtaApi";
-import { AtaBrandBar, transformaMaisLogoSrc } from "./ataBrand";
-import { isHtmlEmpty, mergeAtaContentHtml } from "./ataContent";
+} from "../../data/api/transformometroMeetingMinutesApi";
+import { AtaBrandBar, transformaMaisLogoSrc } from "./meetingMinuteBrand";
+import { isHtmlEmpty, mergeAtaContentHtml } from "./meetingMinuteContent";
 import {
   ATA_MEETING_TYPE_LABELS,
   ATA_PARTICIPANT_ROLE_LABELS,
-} from "./ataLabels";
+} from "./meetingMinuteLabels";
 import {
   ataSignatureStatusLabel,
   ataStatusLabel,
   formatAtaMeetingDate,
-} from "./ataStatusUi";
+} from "./meetingMinuteStatusUi";
 
 type Props = {
   detail: AtaDetail;
@@ -59,7 +59,7 @@ function unitCity(unitCode: string): string {
   return unitCode || "—";
 }
 
-export function AtaDocumentView({ detail, getAccessToken, pdfUrl }: Props) {
+export function MeetingMinuteDocumentView({ detail, getAccessToken, pdfUrl }: Props) {
   const minute = detail.minute;
   const version = detail.version ?? {};
   const minuteId = String(minute.id ?? "");

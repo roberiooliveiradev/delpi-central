@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createHttpAtaGenerationPort } from "./httpAtaGenerationPort";
-import * as ataApi from "../data/api/transformometroAtaApi";
+import { createHttpMeetingMinuteGenerationPort } from "./httpMeetingMinuteGenerationPort";
+import * as ataApi from "../data/api/transformometroMeetingMinutesApi";
 
-describe("createHttpAtaGenerationPort", () => {
+describe("createHttpMeetingMinuteGenerationPort", () => {
   it("delega para generateAtaFromTranscript com o getAccessToken", async () => {
     const getAccessToken = () => "token-test";
     const spy = vi.spyOn(ataApi, "generateAtaFromTranscript").mockResolvedValue({
@@ -15,7 +15,7 @@ describe("createHttpAtaGenerationPort", () => {
       title: "Título",
     });
 
-    const port = createHttpAtaGenerationPort(getAccessToken);
+    const port = createHttpMeetingMinuteGenerationPort(getAccessToken);
     const request = {
       unitCode: "01",
       meetingDate: "2026-07-28",
