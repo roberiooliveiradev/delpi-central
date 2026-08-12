@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Star } from "lucide-react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
@@ -140,7 +141,12 @@ export function SectionRouteCard({
                       route.onPinClick?.();
                     }}
                   >
-                    ★
+                    <Star
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden={true}
+                      fill={route.pinned ? "currentColor" : "none"}
+                    />
                   </button>
                 ) : null}
               </div>

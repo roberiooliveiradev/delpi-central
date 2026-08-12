@@ -141,18 +141,23 @@
 
 .delpi-ui-section-route-card__route-pin {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--delpi-ui-muted, var(--muted, #666666));
-  font-size: 0.95rem;
-  line-height: 1;
   cursor: pointer;
 }
 
 .delpi-ui-section-route-card__route-pin:hover {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
@@ -160,7 +165,25 @@
   );
 }
 
+.delpi-ui-section-route-card__route-pin:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
 .delpi-ui-section-route-card__route-pin--pressed,
 .delpi-ui-section-route-card__route-pin[aria-pressed="true"] {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    transparent
+  );
+}
+
+.delpi-ui-section-route-card__route-pin svg {
+  display: block;
+  flex-shrink: 0;
 }
