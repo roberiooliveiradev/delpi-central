@@ -69,6 +69,8 @@ Rodar a partir da raiz do monorepo:
 | 17 | Vincular cliente já em outra carteira: vínculo OK + aviso soft | |
 | 18 | Lista/org mostram carga (clientes/membros); valor/atenção «—» se stub | |
 | 19 | Detalhe: seção Histórico com eventos de members/owner/transfer | |
+| 19b | **Minha Carteira:** Histórico da carteira (membro; HTTP 200); estranho → 403 | |
+| 19c | Mutação em um browser → outro membro recebe toast `portfolio.changed` sem F5; admin refetch lista/detalhe | |
 | 20 | Minha Carteira / Conta: badge **Compartilhado** + «Também em» | |
 | 21 | Wizard transfer em massa + **Exportar matriz** Excel | |
 

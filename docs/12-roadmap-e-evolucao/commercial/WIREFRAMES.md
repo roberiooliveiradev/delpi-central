@@ -328,7 +328,16 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 │ ACME 01001/01 Ana       01/08/26      R$ 800k  R$ 90k     2            │
 │ … clique/Enter na linha → Conta; resize/reorder e paginação abaixo     │
 └─────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard · Histórico da carteira ───────────────────────────────────┐
+│ (filtro Carteira = id; se «Todas» e N carteiras → seletor obrigatório) │
+│ Timeline GET /seller-portfolios/{id}/audit (membro ou audit/manage)    │
+│ Toast + refetch via WS `portfolio.changed`                             │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Realtime (carteiras):** mutações auditadas emitem `portfolio.changed` para
+salas `user:{memberId}`. Auth WS: `accounts.view` **ou** `worklist.view`.
+Admin (lista/detalhe) refetch silencioso; membro vê Histórico em Minha Carteira.
 
 **Componentes importados de `@delpi/plugin-ui`:** `PageHero`,
 `ScopeChipBar`, `FilterBarShell`, `TextField`, `SelectField`, `DateField`,
@@ -337,7 +346,7 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 `EmptyState` e `LoadingActivityCard`.
 
 **Composições de domínio no `commercial`:** `CustomersPage`,
-`SellerScopeFilter`, `CustomersTable`, `CustomerSummaryCards`,
+`SellerScopeFilter`, `CustomersTable`, `MyPortfolioAuditSection`,
 `CustomerBillingSeriesChart` e o mapper `CustomerSummary → DataRecordCard`.
 O MFE mantém apenas layout/responsividade e regra comercial; não replica CSS do kit.
 
@@ -561,7 +570,7 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 |------|------|
 | **E6.1** — Overlapping | Chip «Com overlapping»; aviso soft ao vincular; gap `filter=uncovered` (universo open-orders) |
 | **E6.2** — KPIs de carga | `load-summary` com `open_value` / `attention_count` via agregação TOTVS (fallback «—» se falhar) |
-| **E6.3** — Timeline | Histórico no detalhe via `GET …/audit` |
+| **E6.3** — Timeline | Histórico no detalhe **e** em Minha Carteira (membro); WS `portfolio.changed` |
 | **E6.4** — Badge Conta | «Compartilhado» + «Também em» (`POST /customer-coverage`) |
 | **E6.5** — Bulk + Excel | Wizard transfer + export matriz org |
 
