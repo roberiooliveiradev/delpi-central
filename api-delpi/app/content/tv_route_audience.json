@@ -8065,6 +8065,74 @@
           "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto."
         }
       }
+    },
+    "get_supplies_third_party_materials_shipments": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party material shipments",
+          "description": "Paged inbound processing shipments with pending balance and linked returns.",
+          "whenToUse": "Track customer materials received for processing and remaining quantity to return.",
+          "label": "Third-party shipments"
+        },
+        "pt-BR": {
+          "summary": "Remessas de materiais de terceiros",
+          "description": "Lista paginada de remessas de beneficiamento com saldo pendente e retornos vinculados.",
+          "whenToUse": "Acompanhar materiais recebidos de clientes para beneficiamento e o saldo ainda a devolver.",
+          "label": "Remessas de terceiros"
+        }
+      }
+    },
+    "get_supplies_third_party_materials_shipment": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party material shipment detail",
+          "description": "One inbound processing shipment with all linked return invoices.",
+          "whenToUse": "Inspect a specific receipt invoice and its returns.",
+          "label": "Shipment detail"
+        },
+        "pt-BR": {
+          "summary": "Detalhe da remessa de materiais de terceiros",
+          "description": "Uma remessa de beneficiamento com todas as notas de retorno vinculadas.",
+          "whenToUse": "Consultar uma NF de recebimento específica e seus retornos.",
+          "label": "Detalhe da remessa"
+        }
+      }
+    },
+    "get_supplies_third_party_materials_summary": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party materials summary",
+          "description": "Open shipments, partial returns and pending quantity for third-party materials.",
+          "whenToUse": "KPI of remaining quantity still to return to customers.",
+          "label": "Third-party summary"
+        },
+        "pt-BR": {
+          "summary": "Resumo de materiais de terceiros",
+          "description": "Remessas abertas, parciais e saldo pendente de materiais de terceiros.",
+          "whenToUse": "KPI da quantidade ainda a devolver aos clientes.",
+          "label": "Resumo de terceiros"
+        }
+      }
+    },
+    "export_supplies_third_party_materials_returns": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Export third-party material returns",
+          "description": "CSV/XLSX export with one row per return. Shipment balance repeats per row.",
+          "whenToUse": "Download return lines for audit without summing repeated balances.",
+          "label": "Export returns"
+        },
+        "pt-BR": {
+          "summary": "Exportar retornos de materiais de terceiros",
+          "description": "Exportação CSV/XLSX com uma linha por retorno. O saldo da remessa se repete.",
+          "whenToUse": "Baixar linhas de retorno para auditoria sem somar saldos repetidos.",
+          "label": "Exportar retornos"
+        }
+      }
     }
   }
 }

@@ -21819,6 +21819,371 @@
       }
     },
     {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "httpMethod": "GET",
+      "label": "Exportar retornos",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/returns/export",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "document_export",
+      "description": "Exportação CSV/XLSX com uma linha por retorno. O saldo da remessa se repete.",
+      "whenToUse": "Baixar linhas de retorno para auditoria sem somar saldos repetidos.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        },
+        "export_format": {
+          "type": "string",
+          "optional": true,
+          "label": "Formato de exportação",
+          "default": "csv",
+          "enum": [
+            "csv",
+            "xlsx"
+          ],
+          "description": "Formato do arquivo: csv ou xlsx."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "httpMethod": "GET",
+      "label": "Remessas de terceiros",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/shipments",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de remessas de beneficiamento com saldo pendente e retornos vinculados.",
+      "whenToUse": "Acompanhar materiais recebidos de clientes para beneficiamento e o saldo ainda a devolver.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "httpMethod": "GET",
+      "label": "Detalhe da remessa",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Uma remessa de beneficiamento com todas as notas de retorno vinculadas.",
+      "whenToUse": "Consultar uma NF de recebimento específica e seus retornos.",
+      "paramSchema": {
+        "shipment_recno": {
+          "type": "integer",
+          "optional": false,
+          "label": "Shipment recno",
+          "in": "path"
+        },
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de terceiros",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Remessas abertas, parciais e saldo pendente de materiais de terceiros.",
+      "whenToUse": "KPI da quantidade ainda a devolver aos clientes.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_caller_stats",
       "httpMethod": "GET",
       "label": "Breakdown de requests por X-Delpi-Caller-App",

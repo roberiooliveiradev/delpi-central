@@ -218,6 +218,7 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase core --build
 ./infra/scripts/up-dev-sequential.sh --fase remote --build
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build controle-retrabalhos public-hub transformometro
+./infra/scripts/up-dev-sequential.sh --fase mfe --build materiais-terceiros
 ```
 
 ### Parar stack inflada (recuperação)

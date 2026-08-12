@@ -80,6 +80,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/comite-etica-conduta` | `comite-etica-conduta` | microfrontend | plugin | `/apps/comite-etica-conduta` | `delpi-comite-etica-conduta` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
+| `plugins/materiais-terceiros` | `materiais-terceiros` | microfrontend | plugin | `/apps/materiais-terceiros` | `delpi-materiais-terceiros` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
 | `plugins/codigo-etica` | `codigo-etica` | microfrontend | plugin | `/apps/codigo-etica` | `delpi-codigo-etica` |
@@ -125,6 +126,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4/SD3; UI: monitoramento + `/analise-consumo`) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
+| Materiais de Terceiros | `/apps/api-delpi/supplies/third-party-materials/*` (TOTVS SB6 / VW_PD3_BENEF_RETORNOS) — [README](../../plugins/materiais-terceiros/README.md) · [API](../../api-delpi/docs/api/materiais-terceiros.md) |
 | Portal Comercial | `/apps/commercial-api/*` + `/apps/api-delpi/pedidos-venda-abertos/*`, `/commercial/*`, `/commercial-proposals/*`, `/products/*` e `/production/*` — [README](../../plugins/commercial/README.md) · [wireframes](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
@@ -184,6 +186,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | controle-retrabalhos | `controle-retrabalhos` |
 | scrap-monitoring | `scrap-monitoring` |
 | estoque-seguranca | `estoque-seguranca` |
+| materiais-terceiros | `materiais-terceiros` |
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
 | mural-acessos | `mural-acessos` |
@@ -211,6 +214,7 @@ Declaradas no manifesto e persistidas na Core API:
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
+| materiais-terceiros | `materiais-terceiros.access`, `.view.filial-sc`, `.view.filial-es`, `.export` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
 | mural-acessos | `mural-acessos.access`, `mural-acessos.manage` |

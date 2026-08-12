@@ -967,6 +967,22 @@ services:
     networks:
       - delpi-network
 
+  materiais-terceiros:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: materiais-terceiros/Dockerfile
+
+    container_name: delpi-materiais-terceiros
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     depends_on:
       - plugin-ui
@@ -1910,6 +1926,7 @@ services:
       - controle-retrabalhos
       - scrap-monitoring
       - estoque-seguranca
+      - materiais-terceiros
       - production-appointments
       - canal-denuncia
       - mural-acessos

@@ -3817,6 +3817,22 @@
           "pt-BR": {
             "label": "Ganha"
           }
+        },
+        "partial": {
+          "en": {
+            "label": "Partial"
+          },
+          "pt-BR": {
+            "label": "Parcial"
+          }
+        },
+        "no_return": {
+          "en": {
+            "label": "No return"
+          },
+          "pt-BR": {
+            "label": "Sem retorno"
+          }
         }
       }
     },
@@ -4388,6 +4404,120 @@
           "pt-BR": {
             "label": "Não possui inspeção cadastrada"
           }
+        }
+      }
+    },
+    "export_format": {
+      "locale": {
+        "en": {
+          "label": "Export format",
+          "description": "File format: csv or xlsx."
+        },
+        "pt-BR": {
+          "label": "Formato de exportação",
+          "description": "Formato do arquivo: csv ou xlsx."
+        }
+      },
+      "enumLabels": {
+        "csv": {
+          "en": {
+            "label": "CSV"
+          },
+          "pt-BR": {
+            "label": "CSV"
+          }
+        },
+        "xlsx": {
+          "en": {
+            "label": "Excel"
+          },
+          "pt-BR": {
+            "label": "Excel"
+          }
+        }
+      }
+    },
+    "issued_from": {
+      "locale": {
+        "en": {
+          "label": "Issued from",
+          "description": "Issue date from (inclusive, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        }
+      }
+    },
+    "issued_to": {
+      "locale": {
+        "en": {
+          "label": "Issued to",
+          "description": "Issue date to (inclusive, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
+        }
+      }
+    },
+    "only_with_balance": {
+      "locale": {
+        "en": {
+          "label": "Only with balance",
+          "description": "When true, only shipments still pending delivery."
+        },
+        "pt-BR": {
+          "label": "Somente com saldo",
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        }
+      }
+    },
+    "partner_code": {
+      "locale": {
+        "en": {
+          "label": "Partner code",
+          "description": "Customer code (SA1)."
+        },
+        "pt-BR": {
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        }
+      }
+    },
+    "partner_store": {
+      "locale": {
+        "en": {
+          "label": "Partner store",
+          "description": "Customer store / loja (SA1)."
+        },
+        "pt-BR": {
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        }
+      }
+    },
+    "receipt_number": {
+      "locale": {
+        "en": {
+          "label": "Receipt invoice",
+          "description": "Inbound receipt invoice number."
+        },
+        "pt-BR": {
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        }
+      }
+    },
+    "return_number": {
+      "locale": {
+        "en": {
+          "label": "Return invoice",
+          "description": "Return invoice number."
+        },
+        "pt-BR": {
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
         }
       }
     }

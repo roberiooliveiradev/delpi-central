@@ -238,6 +238,10 @@ Legenda de permissões:
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | A |
 | GET | `/supplies/safety-stock/consumption-analysis/items` | A |
 | GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | A |
+| GET | `/supplies/third-party-materials/shipments` | A |
+| GET | `/supplies/third-party-materials/shipments/{shipment_recno}` | A |
+| GET | `/supplies/third-party-materials/summary` | A |
+| GET | `/supplies/third-party-materials/returns/export` | A |
 
 ---
 

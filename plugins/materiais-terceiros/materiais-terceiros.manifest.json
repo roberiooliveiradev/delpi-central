@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "materiais-terceiros",
+  "name": "Materiais de Terceiros",
+  "description": "Controle de remessas e retornos de materiais de clientes em beneficiamento (SB6).",
+  "icon": "package-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/materiais-terceiros",
+  "entry": "/apps/materiais-terceiros/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "materiais-terceiros.access",
+      "name": "Acessar Materiais de Terceiros",
+      "description": "Permite abrir o app de materiais de terceiros no portal.",
+      "module": "materiais-terceiros"
+    },
+    {
+      "code": "materiais-terceiros.view.filial-sc",
+      "name": "Materiais de Terceiros — Filial SC",
+      "description": "Visualizar remessas e retornos da Filial SC (01).",
+      "module": "materiais-terceiros"
+    },
+    {
+      "code": "materiais-terceiros.view.filial-es",
+      "name": "Materiais de Terceiros — Filial ES",
+      "description": "Visualizar remessas e retornos da Filial ES (02).",
+      "module": "materiais-terceiros"
+    },
+    {
+      "code": "materiais-terceiros.export",
+      "name": "Exportar Materiais de Terceiros",
+      "description": "Permite exportar retornos em CSV ou Excel.",
+      "module": "materiais-terceiros"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/materiais-terceiros",
+      "label": "Materiais de Terceiros",
+      "permission": "materiais-terceiros.access",
+      "icon": "package-icon",
+      "order": 25,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -1,0 +1,156 @@
+.dashboard-materiais-terceiros,
+.dashboard-materiais-terceiros * {
+  box-sizing: border-box;
+}
+
+.dashboard-materiais-terceiros {
+  --mt-page-padding: 24px;
+  --mt-section-gap: 20px;
+  --mt-grid-gap: 16px;
+  --mt-card-radius: 18px;
+  --mt-card-padding: 20px;
+  --mt-control-radius: 12px;
+  --mt-control-height: 42px;
+  --mt-accent: var(--primary, #089bdb);
+  --mt-title: var(--secundary, #003866);
+  --mt-text: var(--text, #111111);
+  --mt-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --mt-surface: var(--surface, #ffffff);
+  --mt-border: var(--border, #e6e6e6);
+  --mt-danger: var(--danger, #b42318);
+  --mt-kpi-icon-size: 44px;
+  --mt-font-md: 14px;
+  --mt-font-hero: clamp(24px, 2vw, 36px);
+
+  --delpi-ui-accent: var(--mt-accent);
+  --delpi-ui-title: var(--mt-title);
+  --delpi-ui-surface: var(--mt-surface);
+  --delpi-ui-text: var(--mt-text);
+  --delpi-ui-text-muted: var(--mt-text-muted);
+  --delpi-ui-border: var(--mt-border);
+  --delpi-ui-muted: var(--mt-text-muted);
+  --delpi-ui-danger: var(--mt-danger);
+  --delpi-ui-card-padding: var(--mt-card-padding);
+  --delpi-ui-radius: var(--mt-card-radius);
+  --delpi-ui-grid-gap: var(--mt-grid-gap);
+  --delpi-ui-section-gap: var(--mt-section-gap);
+  --delpi-ui-control-height: var(--mt-control-height);
+  --delpi-ui-control-radius: var(--mt-control-radius);
+  --delpi-ui-kpi-icon-size: var(--mt-kpi-icon-size);
+}
+
+.dashboard-materiais-terceiros.dashboard-page,
+.dashboard-materiais-terceiros.mt-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mt-section-gap);
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: var(--mt-page-padding);
+  color: var(--mt-text);
+  background-color: var(--app-canvas, var(--bg, #f4f7fb));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mt-accent) 4%, var(--app-canvas, var(--bg, #f4f7fb))),
+    var(--app-canvas, var(--bg, #f4f7fb)) 220px
+  );
+}
+
+.dashboard-materiais-terceiros .mt-app-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mt-section-gap);
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+:root[data-theme="dark"] .dashboard-materiais-terceiros {
+  --mt-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --mt-text: rgba(255, 255, 255, 0.88);
+  --mt-text-muted: rgba(255, 255, 255, 0.72);
+  --mt-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --mt-border: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-materiais-terceiros button,
+.dashboard-materiais-terceiros input,
+.dashboard-materiais-terceiros select {
+  font: inherit;
+}
+
+.dashboard-materiais-terceiros .mt-btn {
+  border: 1px solid transparent;
+  border-radius: var(--mt-control-radius);
+  padding: 0.5rem 0.9rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.dashboard-materiais-terceiros .mt-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-materiais-terceiros .mt-btn--primary {
+  background: var(--mt-accent);
+  color: #fff;
+}
+
+.dashboard-materiais-terceiros .mt-btn--secondary {
+  background: var(--mt-surface);
+  border-color: var(--mt-border);
+  color: var(--mt-text);
+}
+
+.dashboard-materiais-terceiros .mt-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--mt-grid-gap);
+  width: 100%;
+}
+
+.dashboard-materiais-terceiros .mt-filters__primary,
+.dashboard-materiais-terceiros .mt-filters__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mt-grid-gap);
+  align-items: flex-end;
+}
+
+.dashboard-materiais-terceiros .mt-filters__actions {
+  display: flex;
+  align-items: flex-end;
+  min-height: var(--mt-control-height);
+}
+
+.dashboard-materiais-terceiros .mt-export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-materiais-terceiros .mt-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mt-section-gap);
+}
+
+@media (max-width: 768px) {
+  .dashboard-materiais-terceiros.dashboard-page {
+    --mt-page-padding: 16px;
+  }
+
+  .dashboard-materiais-terceiros .mt-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#root:has(> .dashboard-materiais-terceiros) {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  background: var(--app-canvas, var(--bg, #ffffff));
+}
