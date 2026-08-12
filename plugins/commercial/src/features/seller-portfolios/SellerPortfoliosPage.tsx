@@ -12,6 +12,7 @@ import {
 import {
   useCommercialFloatingNotice,
 } from "../../app/CommercialFloatingNoticeProvider";
+import { useCommercialPortfolioSync } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
@@ -225,6 +226,10 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useCommercialPortfolioSync(() => {
+    reload({ silent: true });
+  });
 
   const overlapIds = useMemo(
     () => overlappingPortfolioIdSet(coverageAudit),

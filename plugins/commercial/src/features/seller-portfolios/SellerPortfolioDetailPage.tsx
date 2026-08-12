@@ -20,6 +20,7 @@ import {
   useCommercialFloatingNotice,
   FORM_VALIDATION_AUTO_DISMISS_MS,
 } from "../../app/CommercialFloatingNoticeProvider";
+import { useCommercialPortfolioSync } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
@@ -180,6 +181,14 @@ export function SellerPortfolioDetailPage({
     reloadAudit({ signal: controller.signal });
     return () => controller.abort();
   }, [reload, reloadAudit]);
+
+  useCommercialPortfolioSync(
+    () => {
+      reload({ silent: true });
+      reloadAudit();
+    },
+    { portfolioId },
+  );
 
   async function handleSaveName(displayName: string) {
     if (!portfolio) return;

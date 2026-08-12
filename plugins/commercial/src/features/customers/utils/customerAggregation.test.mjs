@@ -445,6 +445,7 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(page, /CustomerSummaryCards/);
     assert.doesNotMatch(page, /CustomerAttentionList/);
     assert.match(page, /CustomersTable/);
+    assert.match(page, /MyPortfolioAuditSection/);
     assert.doesNotMatch(page, /clientes\/:|navigatePluginView\("customers"/);
   });
 

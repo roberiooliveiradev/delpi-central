@@ -30,8 +30,22 @@ export type CommercialWorklistChangedEvent = {
   notification?: CommercialRealtimeNotification | null;
 };
 
+export type CommercialPortfolioChangedEvent = {
+  type: "portfolio.changed";
+  reason: string;
+  portfolioId?: string | null;
+  portfolioIds?: string[];
+  displayName?: string | null;
+  memberUserIds?: string[];
+  actorUserId?: string | null;
+  actorDisplayName?: string | null;
+  actorClientId?: string | null;
+  notification?: CommercialRealtimeNotification | null;
+};
+
 export type CommercialRealtimeEvent =
   | CommercialWorklistChangedEvent
+  | CommercialPortfolioChangedEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
 
@@ -70,7 +84,7 @@ export function isGenericActorDisplayName(value: string | null | undefined): boo
   return GENERIC_ACTOR_LABELS.has(name.toLowerCase());
 }
 
-function actorLabel(event: CommercialWorklistChangedEvent): string {
+function actorLabel(event: { actorDisplayName?: string | null }): string {
   const name = (event.actorDisplayName || "").trim();
   if (name && !isGenericActorDisplayName(name)) return name;
   return "Alguém da equipe";
@@ -193,4 +207,45 @@ export function fallbackWorklistNotification(
         variant: "info",
       };
   }
+}
+
+export function resolvePortfolioNotification(
+  event: CommercialPortfolioChangedEvent,
+): CommercialRealtimeNotification {
+  const fromServer = event.notification;
+  if (
+    fromServer &&
+    typeof fromServer.title === "string" &&
+    typeof fromServer.message === "string"
+  ) {
+    const variant =
+      fromServer.variant === "success" ||
+      fromServer.variant === "warning" ||
+      fromServer.variant === "error" ||
+      fromServer.variant === "info"
+        ? fromServer.variant
+        : "info";
+    return {
+      title: fromServer.title,
+      message: fromServer.message,
+      variant,
+    };
+  }
+  const actor = actorLabel(event);
+  const name = (event.displayName || "").trim() || "carteira";
+  return {
+    title: "Carteira atualizada",
+    message: `${actor} alterou a carteira «${name}».`,
+    variant: "info",
+  };
+}
+
+export function portfolioEventTouchesId(
+  event: CommercialPortfolioChangedEvent,
+  portfolioId: string | null | undefined,
+): boolean {
+  const id = (portfolioId || "").trim();
+  if (!id) return false;
+  if ((event.portfolioId || "").trim() === id) return true;
+  return (event.portfolioIds || []).some((item) => (item || "").trim() === id);
 }

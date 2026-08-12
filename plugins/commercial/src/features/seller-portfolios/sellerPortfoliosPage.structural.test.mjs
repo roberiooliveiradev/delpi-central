@@ -52,8 +52,10 @@ describe("seller-portfolios kit-first", () => {
     assert.match(pageSource, /transferSellerCustomersBulk/);
     assert.match(pageSource, /filter:\s*"overlapping"|overlapping/);
     assert.match(pageSource, /filter:\s*"uncovered"|UncoveredCustomersPanel|filterUncovered/);
+    assert.match(pageSource, /useCommercialPortfolioSync/);
     assert.match(detailPageSource, /SellerPortfolioDetail/);
     assert.match(detailPageSource, /SellerPortfolioAuditTimeline/);
+    assert.match(detailPageSource, /useCommercialPortfolioSync/);
     assert.match(detailPageSource, /SellerPortfolioBulkTransferWizard/);
     assert.match(detailPageSource, /listSellerPortfolioAudit/);
     assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);

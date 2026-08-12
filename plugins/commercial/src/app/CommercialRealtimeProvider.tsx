@@ -16,7 +16,10 @@ import {
   buildCommercialRealtimeWsUrl,
   isGenericActorDisplayName,
   parseCommercialRealtimeEvent,
+  portfolioEventTouchesId,
+  resolvePortfolioNotification,
   resolveWorklistNotification,
+  type CommercialPortfolioChangedEvent,
   type CommercialWorklistChangedEvent,
 } from "../constants/realtime";
 import { formatDirectoryUserLabel } from "../shared/directoryUserLabel";
@@ -25,11 +28,13 @@ const PING_MS = 25_000;
 const RECONNECT_MS = 4_000;
 
 type WorklistChangedHandler = (event: CommercialWorklistChangedEvent) => void;
+type PortfolioChangedHandler = (event: CommercialPortfolioChangedEvent) => void;
 
 type CommercialRealtimeContextValue = {
   connected: boolean;
   connectionError: string | null;
   subscribeWorklistChanged: (handler: WorklistChangedHandler) => () => void;
+  subscribePortfolioChanged: (handler: PortfolioChangedHandler) => () => void;
 };
 
 const CommercialRealtimeContext = createContext<CommercialRealtimeContextValue | null>(null);
@@ -49,7 +54,8 @@ export function CommercialRealtimeProvider({
   const reconnectTimerRef = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
   const clientIdRef = useRef(getCommercialClientId());
-  const handlersRef = useRef(new Set<WorklistChangedHandler>());
+  const worklistHandlersRef = useRef(new Set<WorklistChangedHandler>());
+  const portfolioHandlersRef = useRef(new Set<PortfolioChangedHandler>());
   const getAccessTokenRef = useRef(getAccessToken);
 
   const [connected, setConnected] = useState(false);
@@ -60,9 +66,16 @@ export function CommercialRealtimeProvider({
   }, [getAccessToken]);
 
   const subscribeWorklistChanged = useCallback((handler: WorklistChangedHandler) => {
-    handlersRef.current.add(handler);
+    worklistHandlersRef.current.add(handler);
     return () => {
-      handlersRef.current.delete(handler);
+      worklistHandlersRef.current.delete(handler);
+    };
+  }, []);
+
+  const subscribePortfolioChanged = useCallback((handler: PortfolioChangedHandler) => {
+    portfolioHandlersRef.current.add(handler);
+    return () => {
+      portfolioHandlersRef.current.delete(handler);
     };
   }, []);
 
@@ -137,9 +150,17 @@ export function CommercialRealtimeProvider({
       socket.onmessage = (message) => {
         if (typeof message.data !== "string") return;
         const event = parseCommercialRealtimeEvent(message.data);
-        if (!event || event.type !== "worklist.changed") return;
-        for (const handler of handlersRef.current) {
-          handler(event);
+        if (!event) return;
+        if (event.type === "worklist.changed") {
+          for (const handler of worklistHandlersRef.current) {
+            handler(event);
+          }
+          return;
+        }
+        if (event.type === "portfolio.changed") {
+          for (const handler of portfolioHandlersRef.current) {
+            handler(event);
+          }
         }
       };
 
@@ -171,6 +192,7 @@ export function CommercialRealtimeProvider({
     connected,
     connectionError,
     subscribeWorklistChanged,
+    subscribePortfolioChanged,
   };
 
   return (
@@ -214,12 +236,49 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
 }
 
 /**
+ * Refetch silencioso quando chega `portfolio.changed` (lista admin / detalhe / Minha Carteira).
+ * Opcionalmente filtra por `portfolioId` aberto.
+ */
+export function useCommercialPortfolioSync(
+  onChanged: (event: CommercialPortfolioChangedEvent) => void,
+  options?: { enabled?: boolean; portfolioId?: string | null },
+) {
+  const { subscribePortfolioChanged } = useCommercialRealtime();
+  const onChangedRef = useRef(onChanged);
+  const portfolioId = options?.portfolioId ?? null;
+  const enabled = options?.enabled ?? true;
+
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  }, [onChanged]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let timer: number | null = null;
+    const unsubscribe = subscribePortfolioChanged((event) => {
+      if (portfolioId && !portfolioEventTouchesId(event, portfolioId)) {
+        return;
+      }
+      if (timer != null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        onChangedRef.current(event);
+      }, 400);
+    });
+    return () => {
+      unsubscribe();
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [enabled, portfolioId, subscribePortfolioChanged]);
+}
+
+/**
  * Toast in-app para eventos WS de outros clientes (anti-eco por clientId).
- * Mensagem personalizada: responsável vê «{ator} atribuiu a você».
- * Refetch da fila fica em `useCommercialWorklistSync`.
+ * Worklist: mensagem personalizada por audiência.
+ * Portfolio: usa notification do servidor / fallback local.
  */
 export function useCommercialRealtimeNotices(enabled = true) {
-  const { subscribeWorklistChanged } = useCommercialRealtime();
+  const { subscribeWorklistChanged, subscribePortfolioChanged } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
   const { myPortfolio, currentUserId } = usePortfolioScope();
   const clientId = getCommercialClientId();
@@ -228,7 +287,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
   useEffect(() => {
     if (!enabled) return;
 
-    const publish = (event: CommercialWorklistChangedEvent) => {
+    const publishWorklist = (event: CommercialWorklistChangedEvent) => {
       const payload = resolveWorklistNotification(event, resolvedUserId);
       const options = {
         title: payload.title,
@@ -246,7 +305,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
       notifyInfo(payload.message, options);
     };
 
-    return subscribeWorklistChanged((event) => {
+    const unsubWorklist = subscribeWorklistChanged((event) => {
       if (event.actorClientId && event.actorClientId === clientId) {
         return;
       }
@@ -259,7 +318,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
       ].filter(Boolean);
 
       if (ids.length === 0) {
-        publish(event);
+        publishWorklist(event);
         return;
       }
 
@@ -283,12 +342,60 @@ export function useCommercialRealtimeNotices(enabled = true) {
               next = { ...next, assigneeDisplayName: label };
             }
           }
-          publish(next);
+          publishWorklist(next);
         })
         .catch(() => {
-          publish(event);
+          publishWorklist(event);
         });
     });
+
+    const publishPortfolio = (event: CommercialPortfolioChangedEvent) => {
+      const payload = resolvePortfolioNotification(event);
+      const pid = (event.portfolioId || "").trim() || "portfolio";
+      const options = {
+        title: payload.title,
+        id: `cm-rt-pf-${pid}-${event.reason}`,
+        autoDismissMs: 6500 as number | null,
+      };
+      if (payload.variant === "success") {
+        notifySuccess(payload.message, options);
+        return;
+      }
+      if (payload.variant === "warning") {
+        notifyWarning(payload.message, options);
+        return;
+      }
+      notifyInfo(payload.message, options);
+    };
+
+    const unsubPortfolio = subscribePortfolioChanged((event) => {
+      if (event.actorClientId && event.actorClientId === clientId) {
+        return;
+      }
+
+      const needActor = isGenericActorDisplayName(event.actorDisplayName);
+      const actorId = needActor ? (event.actorUserId || "").trim() : "";
+      if (!actorId) {
+        publishPortfolio(event);
+        return;
+      }
+
+      void lookupDirectoryUsers([actorId])
+        .then((items) => {
+          const label = formatDirectoryUserLabel(items[0] || {});
+          publishPortfolio(
+            label ? { ...event, actorDisplayName: label } : event,
+          );
+        })
+        .catch(() => {
+          publishPortfolio(event);
+        });
+    });
+
+    return () => {
+      unsubWorklist();
+      unsubPortfolio();
+    };
   }, [
     clientId,
     resolvedUserId,
@@ -297,5 +404,6 @@ export function useCommercialRealtimeNotices(enabled = true) {
     notifySuccess,
     notifyWarning,
     subscribeWorklistChanged,
+    subscribePortfolioChanged,
   ]);
 }

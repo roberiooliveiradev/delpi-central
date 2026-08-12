@@ -230,6 +230,8 @@ export const CM_HELP = {
       "Tendência de faturamento (últimos 6 meses vs. os 6 anteriores). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
     sellerScope:
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
+    portfolioAudit:
+      "Linha do tempo das alterações na carteira (clientes, membros, responsável). Com «Todas» no filtro, escolha qual carteira acompanhar.",
     list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",
     layoutToggle:
       "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  resolvePortfolioNotification,
   resolveWorklistNotification,
   resolveWorklistNotificationAudience,
+  portfolioEventTouchesId,
+  type CommercialPortfolioChangedEvent,
   type CommercialWorklistChangedEvent,
 } from "./realtime";
 
@@ -60,5 +63,50 @@ describe("resolveWorklistNotification", () => {
       "manager-1",
     );
     expect(note.message).toBe("Ana Gestora concluiu: Ligar ACME");
+  });
+});
+
+describe("resolvePortfolioNotification", () => {
+  it("prioriza notification do servidor", () => {
+    const event: CommercialPortfolioChangedEvent = {
+      type: "portfolio.changed",
+      reason: "seller_portfolio.add_customer",
+      portfolioId: "p1",
+      displayName: "Sul",
+      actorDisplayName: "Ana",
+      notification: {
+        title: "Cliente vinculado",
+        message: "Ana vinculou um cliente em Sul.",
+        variant: "info",
+      },
+    };
+    expect(resolvePortfolioNotification(event)).toEqual(event.notification);
+  });
+
+  it("usa fallback local sem notification", () => {
+    const note = resolvePortfolioNotification({
+      type: "portfolio.changed",
+      reason: "seller_portfolio.add_member",
+      portfolioId: "p1",
+      displayName: "Norte",
+      actorDisplayName: "Bruno",
+    });
+    expect(note.title).toBe("Carteira atualizada");
+    expect(note.message).toContain("Bruno");
+    expect(note.message).toContain("Norte");
+  });
+});
+
+describe("portfolioEventTouchesId", () => {
+  it("bate portfolioId e portfolioIds", () => {
+    const event: CommercialPortfolioChangedEvent = {
+      type: "portfolio.changed",
+      reason: "transfer",
+      portfolioId: "a",
+      portfolioIds: ["a", "b"],
+    };
+    expect(portfolioEventTouchesId(event, "a")).toBe(true);
+    expect(portfolioEventTouchesId(event, "b")).toBe(true);
+    expect(portfolioEventTouchesId(event, "c")).toBe(false);
   });
 });

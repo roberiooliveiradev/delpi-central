@@ -22,6 +22,7 @@ import {
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { CustomersTable } from "../components/CustomersTable";
+import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
 import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
@@ -424,6 +425,12 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           ) : null}
         </>
       ) : null}
+
+      <MyPortfolioAuditSection
+        sellerIdFilter={canFilterPortfolios ? sellerIdFilter : null}
+        myPortfolios={myPortfolios}
+        filterablePortfolios={filterablePortfolios}
+      />
     </section>
   );
 }

@@ -16,6 +16,9 @@ type SellerPortfolioAuditTimelineProps = {
   events: SellerPortfolioAuditEvent[];
   directoryLabelFor: (userId: string, fallback?: string | null) => string;
   onRetry: () => void;
+  title?: string;
+  subtitle?: string;
+  hint?: string;
 };
 
 export function SellerPortfolioAuditTimeline({
@@ -24,16 +27,15 @@ export function SellerPortfolioAuditTimeline({
   events,
   directoryLabelFor,
   onRetry,
+  title = PORTFOLIO_AUDIT_CONTENT.title,
+  subtitle = PORTFOLIO_AUDIT_CONTENT.subtitle,
+  hint = CM_HELP.sellerPortfolios.auditTimeline,
 }: SellerPortfolioAuditTimelineProps) {
   const items = mapPortfolioAuditEventsToTimelineItems(events);
   const hasData = items.length > 0;
 
   return (
-    <CommercialSectionCard
-      title={PORTFOLIO_AUDIT_CONTENT.title}
-      subtitle={PORTFOLIO_AUDIT_CONTENT.subtitle}
-      hint={CM_HELP.sellerPortfolios.auditTimeline}
-    >
+    <CommercialSectionCard title={title} subtitle={subtitle} hint={hint}>
       {loading && !hasData ? (
         <CommercialLoadingCard title={PORTFOLIO_AUDIT_CONTENT.loading} variant="panel" />
       ) : null}
