@@ -386,6 +386,14 @@ export {
   type RouteChipTone,
 } from "./RouteChip";
 export {
+  HubChipRow,
+  createDashboardHubChipRow,
+  hubChipRowBemClasses,
+  type DashboardHubChipRowProps,
+  type HubChipRowClassNames,
+  type HubChipRowProps,
+} from "./HubChipRow";
+export {
   CommandPalette,
   createDashboardCommandPalette,
   commandPaletteBemClasses,
