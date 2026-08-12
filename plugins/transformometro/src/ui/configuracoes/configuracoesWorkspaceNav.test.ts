@@ -7,7 +7,16 @@ import {
 } from "./configuracoesWorkspaceNav";
 
 describe("parseConfiguracoesSectionFromPath", () => {
-  it("resolve seção por path canônico", () => {
+  it("resolve seção por path canônico EN e legado PT", () => {
+    expect(parseConfiguracoesSectionFromPath("/apps/transformometro/settings/units")).toBe(
+      "unidades",
+    );
+    expect(parseConfiguracoesSectionFromPath("/apps/transformometro/settings/departments")).toBe(
+      "departamentos",
+    );
+    expect(parseConfiguracoesSectionFromPath("/apps/transformometro/settings/shared-resources")).toBe(
+      "recursos",
+    );
     expect(parseConfiguracoesSectionFromPath("/apps/transformometro/configuracoes/unidades")).toBe(
       "unidades"
     );

@@ -64,17 +64,20 @@ export function buildConfiguracoesSectionPath(section: ConfiguracoesSectionId): 
 
 function isConfiguracoesWorkspacePath(path: string): boolean {
   return (
+    path.includes("/settings") ||
     path.includes("/configuracoes") ||
     path.includes("/cadastros") ||
     path.endsWith("/filiais") ||
     path.endsWith("/setores") ||
-    (path.endsWith("/recursos") && !path.includes("/processos"))
+    (path.endsWith("/recursos") && !path.includes("/processos") && !path.includes("/processes")) ||
+    path.endsWith("/shared-resources")
   );
 }
 
 export function parseConfiguracoesSectionFromPath(pathname: string): ConfiguracoesSectionId {
   const path = pathname.replace(/\/$/, "");
   if (
+    path.includes("/settings/departments") ||
     path.includes("/configuracoes/departamentos") ||
     path.includes("/cadastros/departamentos") ||
     path.endsWith("/setores")
@@ -82,13 +85,16 @@ export function parseConfiguracoesSectionFromPath(pathname: string): Configuraco
     return "departamentos";
   }
   if (
+    path.includes("/settings/shared-resources") ||
     path.includes("/configuracoes/recursos") ||
     path.includes("/cadastros/recursos") ||
-    (path.endsWith("/recursos") && !path.includes("/processos"))
+    (path.endsWith("/recursos") && !path.includes("/processos") && !path.includes("/processes")) ||
+    path.endsWith("/shared-resources")
   ) {
     return "recursos";
   }
   if (
+    path.includes("/settings/units") ||
     path.includes("/configuracoes/unidades") ||
     path.includes("/cadastros/unidades") ||
     path.endsWith("/filiais")
