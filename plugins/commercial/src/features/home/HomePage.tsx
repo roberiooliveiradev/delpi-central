@@ -69,9 +69,9 @@ const LAUNCHER_ICONS: Record<HomeLauncherCardId, ReactNode> = {
   administration: <Settings size={22} strokeWidth={1.75} aria-hidden="true" />,
 };
 
-const cmEmptyCompactClassNames = {
+const cmEmptyQuietClassNames = {
   ...cmEmptyStateClassNames,
-  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-quiet`,
   withTitle: true,
 };
 
@@ -211,27 +211,29 @@ export function HomePage({
     worklist.counts.overdue,
   ]);
 
-  const queueChips = useMemo(
-    () => [
+  const queueChips = useMemo(() => {
+    const { overdue, today, later } = worklist.counts;
+    const total = overdue + today + later;
+    if (total === 0) return [];
+    return [
       {
         id: "overdue",
-        label: `${EVENTS.buckets.overdue} ${worklist.counts.overdue.toLocaleString("pt-BR")}`,
-        active: worklist.counts.overdue > 0,
+        label: `${EVENTS.buckets.overdue} ${overdue.toLocaleString("pt-BR")}`,
+        active: overdue > 0,
         onSelect: () => openMyTasks("overdue"),
       },
       {
         id: "today",
-        label: `${EVENTS.buckets.today} ${worklist.counts.today.toLocaleString("pt-BR")}`,
+        label: `${EVENTS.buckets.today} ${today.toLocaleString("pt-BR")}`,
         onSelect: () => openMyTasks("today"),
       },
       {
         id: "later",
-        label: `${EVENTS.buckets.later} ${worklist.counts.later.toLocaleString("pt-BR")}`,
+        label: `${EVENTS.buckets.later} ${later.toLocaleString("pt-BR")}`,
         onSelect: () => openMyTasks(),
       },
-    ],
-    [openMyTasks, worklist.counts.later, worklist.counts.overdue, worklist.counts.today],
-  );
+    ];
+  }, [openMyTasks, worklist.counts]);
 
   const launcherCards = useMemo(
     () =>
@@ -249,149 +251,149 @@ export function HomePage({
   const hasEvents = alerts.length > 0 || worklist.items.length > 0;
 
   return (
-    <section className="cm-page-stack">
-      <SectionCard
-        title={EVENTS.title}
-        subtitle={EVENTS.subtitle}
-        hint={CM_HELP.home.alerts}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-        actions={
-          <>
-            <ActionButton
-              variant="ghost"
-              onClick={() => {
-                reloadOrders();
-                worklist.reload();
-              }}
-            >
-              {EVENTS.refresh}
-            </ActionButton>
-            {showWorklist ? (
-              <ActionButton variant="primary" onClick={() => openMyTasks()}>
-                {EVENTS.cta}
-              </ActionButton>
-            ) : null}
-          </>
-        }
-      >
-        {!eventsReady ? (
-          <CommercialLoadingCard title={EVENTS.loading} variant="panel" />
-        ) : (
-          <>
-            {ordersError ? (
+    <section className="cm-page-stack cm-home-layout" aria-label="Início">
+      <div className="cm-home-columns">
+        <div className="cm-home-columns__main">
+          <SectionCard
+            title={FEATURES.title}
+            subtitle={FEATURES.subtitle}
+            hint={CM_HELP.home.shortcuts}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            {launcherCards.length === 0 ? (
               <EmptyState
                 classNames={cmEmptyStateClassNames}
-                defaultMessage={`Pedidos: ${ordersError}`}
-                role="alert"
+                defaultMessage={FEATURES.empty}
               />
-            ) : null}
-            {worklist.error ? (
-              <EmptyState
-                classNames={cmEmptyStateClassNames}
-                defaultMessage={`Minhas tarefas: ${worklist.error}`}
-                role="alert"
-              />
-            ) : null}
-            {showWorklist && !worklist.error ? (
-              <CommercialScopeChipBar
-                label={EVENTS.queueLabel}
-                aria-label={EVENTS.queueLabel}
-                chips={queueChips}
-              />
-            ) : null}
-            {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
-            {worklist.items.length > 0 ? (
-              <div className="cm-home-events-list" aria-label={EVENTS.listAriaLabel}>
-                {worklist.items.map(({ task, bucket }) => (
-                  <CommercialWorklistItem
-                    key={task.id}
-                    title={task.title}
-                    tone={
-                      bucket === "overdue"
-                        ? "danger"
-                        : bucket === "today"
-                          ? "warning"
-                          : "neutral"
-                    }
-                    meta={[
-                      EVENTS.buckets[bucket],
-                      task.due_at ? formatDisplayDate(task.due_at) : EVENTS.noDueDate,
-                      task.customer_code ? `Cliente ${task.customer_code}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                    detail={task.description ?? undefined}
-                    primaryActionLabel={EVENTS.openTask}
-                    onPrimaryAction={() =>
-                      openMyTasks(bucket === "later" ? undefined : bucket)
-                    }
-                  />
+            ) : (
+              <div className="cm-home-grid" aria-label={FEATURES.gridAriaLabel}>
+                {launcherCards.map((card) => (
+                  <div key={card.id} className="cm-launcher-cell">
+                    <CommercialNavigationCard
+                      title={card.title}
+                      description={card.description}
+                      icon={LAUNCHER_ICONS[card.id]}
+                      onClick={() => navigatePluginView(card.viewId, { basePath })}
+                    />
+                    {card.quickLinks?.length ? (
+                      <div className="cm-nav-row">
+                        {card.quickLinks.map((link) => (
+                          <ActionButton
+                            key={link.id}
+                            variant="ghost"
+                            onClick={() =>
+                              navigatePluginView(link.viewId, {
+                                basePath,
+                                search: link.search,
+                              })
+                            }
+                          >
+                            {link.label}
+                          </ActionButton>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 ))}
               </div>
-            ) : null}
-            {!hasEvents ? (
-              <EmptyState
-                classNames={cmEmptyCompactClassNames}
-                defaultTitle={EVENTS.emptyTitle}
-                defaultMessage={EVENTS.emptyMessage}
-              >
+            )}
+          </SectionCard>
+        </div>
+
+        <aside className="cm-home-columns__side">
+          <SectionCard
+            title={EVENTS.title}
+            subtitle={EVENTS.subtitle}
+            hint={CM_HELP.home.alerts}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+            actions={
+              <>
+                <ActionButton
+                  variant="ghost"
+                  onClick={() => {
+                    reloadOrders();
+                    worklist.reload();
+                  }}
+                >
+                  {EVENTS.refresh}
+                </ActionButton>
                 {showWorklist ? (
-                  <ActionButton variant="ghost" onClick={() => openMyTasks()}>
+                  <ActionButton variant="primary" onClick={() => openMyTasks()}>
                     {EVENTS.cta}
                   </ActionButton>
                 ) : null}
-              </EmptyState>
-            ) : null}
-          </>
-        )}
-      </SectionCard>
-
-      <SectionCard
-        title={FEATURES.title}
-        subtitle={FEATURES.subtitle}
-        hint={CM_HELP.home.shortcuts}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        {launcherCards.length === 0 ? (
-          <EmptyState
-            classNames={cmEmptyStateClassNames}
-            defaultMessage={FEATURES.empty}
-          />
-        ) : (
-          <div className="cm-home-grid" aria-label={FEATURES.gridAriaLabel}>
-            {launcherCards.map((card) => (
-              <div key={card.id} className="cm-launcher-cell">
-                <CommercialNavigationCard
-                  title={card.title}
-                  description={card.description}
-                  icon={LAUNCHER_ICONS[card.id]}
-                  onClick={() => navigatePluginView(card.viewId, { basePath })}
-                />
-                {card.quickLinks?.length ? (
-                  <div className="cm-nav-row">
-                    {card.quickLinks.map((link) => (
-                      <ActionButton
-                        key={link.id}
-                        variant="ghost"
-                        onClick={() =>
-                          navigatePluginView(link.viewId, {
-                            basePath,
-                            search: link.search,
-                          })
+              </>
+            }
+          >
+            {!eventsReady ? (
+              <CommercialLoadingCard title={EVENTS.loading} variant="panel" />
+            ) : (
+              <div className="cm-home-events-panel">
+                {ordersError ? (
+                  <EmptyState
+                    classNames={cmEmptyStateClassNames}
+                    defaultMessage={`Pedidos: ${ordersError}`}
+                    role="alert"
+                  />
+                ) : null}
+                {worklist.error ? (
+                  <EmptyState
+                    classNames={cmEmptyStateClassNames}
+                    defaultMessage={`Minhas tarefas: ${worklist.error}`}
+                    role="alert"
+                  />
+                ) : null}
+                {showWorklist && !worklist.error && queueChips.length > 0 ? (
+                  <CommercialScopeChipBar
+                    label={EVENTS.queueLabel}
+                    aria-label={EVENTS.queueLabel}
+                    chips={queueChips}
+                  />
+                ) : null}
+                {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
+                {worklist.items.length > 0 ? (
+                  <div className="cm-home-events-list" aria-label={EVENTS.listAriaLabel}>
+                    {worklist.items.map(({ task, bucket }) => (
+                      <CommercialWorklistItem
+                        key={task.id}
+                        title={task.title}
+                        tone={
+                          bucket === "overdue"
+                            ? "danger"
+                            : bucket === "today"
+                              ? "warning"
+                              : "neutral"
                         }
-                      >
-                        {link.label}
-                      </ActionButton>
+                        meta={[
+                          EVENTS.buckets[bucket],
+                          task.due_at ? formatDisplayDate(task.due_at) : EVENTS.noDueDate,
+                          task.customer_code ? `Cliente ${task.customer_code}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                        detail={task.description ?? undefined}
+                        primaryActionLabel={EVENTS.openTask}
+                        onPrimaryAction={() =>
+                          openMyTasks(bucket === "later" ? undefined : bucket)
+                        }
+                      />
                     ))}
                   </div>
                 ) : null}
+                {!hasEvents ? (
+                  <EmptyState
+                    classNames={cmEmptyQuietClassNames}
+                    defaultTitle={EVENTS.emptyTitle}
+                    defaultMessage={EVENTS.emptyMessage}
+                  />
+                ) : null}
               </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
+            )}
+          </SectionCard>
+        </aside>
+      </div>
     </section>
   );
 }

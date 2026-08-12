@@ -70,6 +70,15 @@ describe("Início launcher (IA 2026)", () => {
     assert.doesNotMatch(home, /getMyWorklist/);
   });
 
+  it("Home usa layout apps main + eventos side (C3)", () => {
+    const home = readSrc("features/home/HomePage.tsx");
+    assert.match(home, /cm-home-columns/);
+    assert.match(home, /cm-home-columns__main/);
+    assert.match(home, /cm-home-columns__side/);
+    assert.match(home, /cm-empty-quiet/);
+    assert.match(home, /queueChips\.length > 0/);
+  });
+
   it("Home é launcher: sem faixa BI nem tabela da equipe", () => {
     const home = readSrc("features/home/HomePage.tsx");
     assert.doesNotMatch(home, /Seus n(?:ú|u)meros/);

@@ -149,6 +149,26 @@
   gap: 12px;
 }
 
+/* Início: Funcionalidades (main) + Eventos (side) — IA RH / hub */
+.dashboard-commercial .cm-home-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--cm-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-commercial .cm-home-columns__main,
+.dashboard-commercial .cm-home-columns__side {
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-home-columns__side {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+}
+
 .dashboard-commercial .cm-home-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -162,11 +182,22 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-home-events-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-home-events-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+}
+
+.dashboard-commercial .cm-empty-quiet {
+  padding-block: 12px;
 }
 
 /* Meu dia */
@@ -367,6 +398,16 @@
 
 
 @media (max-width: 768px) {
+  .dashboard-commercial .cm-home-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-home-columns__side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
   .dashboard-commercial .cm-home-kpi-grid {
     grid-template-columns: 1fr;
   }

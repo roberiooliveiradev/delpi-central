@@ -177,23 +177,22 @@ export function AdministrationMembersPage({ basePath }: AdministrationMembersPag
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
       ) : null}
 
-      {loading ? <CommercialLoadingCard label={copy.members.loading} /> : null}
+      {loading ? <CommercialLoadingCard title={copy.members.loading} /> : null}
 
       {!loading && (!hasActivePortfolio || roster.length === 0) ? (
         <EmptyState
-          classNames={cmEmptyStateClassNames}
-          title={copy.members.emptyTitle}
-          description={copy.members.emptyDescription}
-          action={
-            <ActionButton
-              variant="primary"
-              onClick={() => navigatePluginView("administration_portfolios", { basePath })}
-            >
-              <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />
-              {copy.members.openPortfolios}
-            </ActionButton>
-          }
-        />
+          classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+          defaultTitle={copy.members.emptyTitle}
+          defaultMessage={copy.members.emptyDescription}
+        >
+          <ActionButton
+            variant="primary"
+            onClick={() => navigatePluginView("administration_portfolios", { basePath })}
+          >
+            <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />
+            {copy.members.openPortfolios}
+          </ActionButton>
+        </EmptyState>
       ) : null}
 
       {!loading && hasActivePortfolio && roster.length > 0 ? (

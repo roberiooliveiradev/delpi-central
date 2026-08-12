@@ -145,7 +145,7 @@ export const HOME_LAUNCHER_CONTENT = {
     queueLabel: "Fila",
     listAriaLabel: "Eventos e interações pendentes",
     emptyTitle: "Nenhuma interação pendente",
-    emptyMessage: "Sua fila está em dia. Use as funcionalidades abaixo para operar.",
+    emptyMessage: "Sua fila está em dia. Use as funcionalidades ao lado para operar.",
     alertsEmpty: "Nada precisa de atenção agora. Bom trabalho!",
     openTask: "Abrir",
     openOverdue: "Ver atrasadas",

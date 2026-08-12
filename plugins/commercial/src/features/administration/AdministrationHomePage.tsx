@@ -121,7 +121,7 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
       ) : null}
 
-      {loading ? <CommercialLoadingCard label={copy.panel.loading} /> : null}
+      {loading ? <CommercialLoadingCard title={copy.panel.loading} /> : null}
 
       {!loading ? (
         <div className="cm-home-kpi-grid" aria-label="Resumo de carteiras">
@@ -173,16 +173,15 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
       >
         {stats.total === 0 && !loading ? (
           <EmptyState
-            classNames={cmEmptyStateClassNames}
-            title="Nenhuma carteira cadastrada"
-            description="Cadastre a primeira carteira para começar a cobrir clientes."
-            action={
-              <ActionButton variant="primary" onClick={() => openPortfolios()}>
-                <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
-                {copy.panel.newPortfolio}
-              </ActionButton>
-            }
-          />
+            classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+            defaultTitle="Nenhuma carteira cadastrada"
+            defaultMessage="Cadastre a primeira carteira para começar a cobrir clientes."
+          >
+            <ActionButton variant="primary" onClick={() => openPortfolios()}>
+              <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+              {copy.panel.newPortfolio}
+            </ActionButton>
+          </EmptyState>
         ) : (
           <div className="cm-portfolios-page__actions">
             <CommercialActionButton variant="primary" onClick={() => openPortfolios()}>
