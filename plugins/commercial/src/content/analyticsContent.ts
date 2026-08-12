@@ -7,12 +7,9 @@ export const ANALYTICS_CONTENT = {
   },
   overview: {
     title: "Visão geral",
-    subtitle: "KPIs, evolução de ROL, funil de conversão e resumo de OVs.",
-    drillsAriaLabel: "Aprofundar a análise",
-    drillOtd: "Pontualidade (OTD)",
-    drillOpportunities: "Oportunidades",
-    drillTeam: "Equipe",
-    filters: "Período, filial e segmento aplicados a todos os painéis de gestão.",
+    subtitle:
+      "Indicadores do período, evolução de ROL e funil de conversão. OTD e Oportunidades abrem pelo Início.",
+    filters: "Período, filial e segmento aplicados a todos os painéis desta página.",
     rolKpi: "ROL da matriz versus meta no período filtrado.",
     branchRolKpi: "ROL da filial selecionada versus meta.",
     closingKpi: "Taxa de conversão: propostas ganhas ÷ total de propostas.",
@@ -20,7 +17,6 @@ export const ANALYTICS_CONTENT = {
     newBusinessKpi: "Participação de novos negócios no ROL do período.",
     rolSeries: "Evolução do ROL matriz e filial no período.",
     funnel: "Funil de conversão (propostas → ganhas).",
-    ovTable: "Resumo das oportunidades/OVs no período.",
   },
   otd: {
     title: "OTD de pedidos",

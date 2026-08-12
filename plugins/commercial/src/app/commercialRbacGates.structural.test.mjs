@@ -48,12 +48,13 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.doesNotMatch(shell, /Gestão|AnalyticsSubNav|my_day/);
   });
 
-  it("Visão geral só oferece drill de Equipe com canUseTeamScope", () => {
+  it("Visão geral é dashboard BI sem faixa Aprofundar nem prévia OV", () => {
     const source = readFileSync(join(src, "features/overview/OverviewPage.tsx"), "utf8");
-    assert.match(source, /canUseTeamScope/);
-    assert.match(source, /analytics_otd/);
-    assert.match(source, /analytics_opportunities/);
-    assert.match(source, /canUseTeamScope[\s\S]*?analytics_team/);
+    assert.match(source, /CommercialPageHero/);
+    assert.match(source, /AnalyticsFilters/);
+    assert.doesNotMatch(source, /cm-overview-drills|cm-page-header-row/);
+    assert.doesNotMatch(source, /analytics_otd|analytics_opportunities|analytics_team/);
+    assert.doesNotMatch(source, /getCommercialProposals|ov_table/);
   });
 
   it("SellerScopeFilter diferencia emptyLabel team vs minhas", () => {

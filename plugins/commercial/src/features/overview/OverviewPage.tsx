@@ -1,32 +1,23 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import { Banknote, PackageCheck, Percent, RefreshCw, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
 
-import { getCommercialProposals } from "../../api/analyticsApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialActionButton,
   CommercialLoadingCard,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
 } from "../../app/commercialUi";
-import { usePortfolioScope } from "../../app/PortfolioScopeContext";
-import { navigateAnalyticsOpportunityDetail, navigatePluginView } from "../../app/pluginNavigation";
-import type { PluginNavigationTarget } from "../../app/pluginRoutes";
 import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
-import type { CommercialProposal } from "../../types/analytics";
 import { formatCurrency } from "../../utils/format";
-import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "../analytics/components/AnalyticsFilters";
 import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelChart";
 import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSeriesChart";
 import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
 import { useAnalyticsFilters } from "../analytics/hooks/useAnalyticsFilters";
-import { buildAnalyticsFilterSearchParams } from "../analytics/utils/analyticsFilterUrl";
 
 function formatPct(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -37,125 +28,41 @@ type OverviewPageProps = {
   basePath: string;
 };
 
-export function OverviewPage({ basePath }: OverviewPageProps) {
-  const { canUseTeamScope } = usePortfolioScope();
+export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
-  const [proposals, setProposals] = useState<CommercialProposal[]>([]);
-  const [proposalsLoading, setProposalsLoading] = useState(true);
-  const [proposalsError, setProposalsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setProposalsLoading(true);
-    setProposalsError(null);
-    void getCommercialProposals(
-      { ...filters.apiParams, page: 1, page_size: 15, sort_by: "proposal_date", sort_dir: "desc" },
-      controller.signal,
-    )
-      .then((page) => {
-        if (!controller.signal.aborted) setProposals(page.items ?? []);
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setProposalsError(err instanceof Error ? err.message : "Erro ao carregar OVs.");
-        setProposals([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setProposalsLoading(false);
-      });
-    return () => controller.abort();
-  }, [
-    filters.apiParams.start_date,
-    filters.apiParams.end_date,
-    filters.apiParams.branch,
-    filters.apiParams.customer_segment,
-  ]);
-
-  const filterSearch = buildAnalyticsFilterSearchParams(filters.filterState);
-  const openDrill = (view: PluginNavigationTarget) =>
-    navigatePluginView(view, { basePath, search: filterSearch });
-
-  const drills: Array<{ id: PluginNavigationTarget; label: string }> = [
-    { id: "analytics_otd", label: ANALYTICS_CONTENT.overview.drillOtd },
-    { id: "analytics_opportunities", label: ANALYTICS_CONTENT.overview.drillOpportunities },
-    ...(canUseTeamScope
-      ? [{ id: "analytics_team" as const, label: ANALYTICS_CONTENT.overview.drillTeam }]
-      : []),
-  ];
-
-  const columns: DataTableColumn<CommercialProposal>[] = [
-    {
-      key: "proposal",
-      header: "OV",
-      render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={() =>
-            navigateAnalyticsOpportunityDetail(row.proposal_number, {
-              basePath,
-              search: filterSearch,
-            })
-          }
-        >
-          {row.proposal_number}
-        </button>
-      ),
-    },
-    {
-      key: "customer",
-      header: "Cliente",
-      render: (row) => row.customer_code || "—",
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (row) => row.status_label || row.status_code || "—",
-    },
-    {
-      key: "date",
-      header: "Data",
-      render: (row) => formatDisplayDate(row.proposal_date),
-    },
-  ];
+  const copy = ANALYTICS_CONTENT.overview;
 
   return (
     <section className="cm-page-stack">
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={ANALYTICS_CONTENT.overview.title}
-          hint={ANALYTICS_CONTENT.overview.subtitle}
+      <CommercialPageHero
+        aria-label={copy.title}
+        eyebrow="Portal Comercial"
+        title={copy.title}
+        description={copy.subtitle}
+        actions={
+          <CommercialActionButton variant="ghost" onClick={dashboard.reload}>
+            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          </CommercialActionButton>
+        }
+      >
+        <AnalyticsFilters
+          dateStart={filters.dateStart}
+          dateEnd={filters.dateEnd}
+          competence={filters.competence}
+          branches={filters.branches}
+          customerSegment={filters.customerSegment}
+          onDateStart={filters.setDateStart}
+          onDateEnd={filters.setDateEnd}
+          onCompetence={filters.setCompetence}
+          onBranches={filters.setBranches}
+          onCustomerSegment={filters.setCustomerSegment}
         />
-        <ActionButton variant="ghost" onClick={dashboard.reload}>
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </header>
-
-      <AnalyticsFilters
-        dateStart={filters.dateStart}
-        dateEnd={filters.dateEnd}
-        competence={filters.competence}
-        branches={filters.branches}
-        customerSegment={filters.customerSegment}
-        onDateStart={filters.setDateStart}
-        onDateEnd={filters.setDateEnd}
-        onCompetence={filters.setCompetence}
-        onBranches={filters.setBranches}
-        onCustomerSegment={filters.setCustomerSegment}
-      />
-
-      <nav className="cm-overview-drills" aria-label={ANALYTICS_CONTENT.overview.drillsAriaLabel}>
-        {drills.map((drill) => (
-          <ActionButton key={drill.id} variant="ghost" onClick={() => openDrill(drill.id)}>
-            {drill.label}
-          </ActionButton>
-        ))}
-      </nav>
+      </CommercialPageHero>
 
       <SectionCard
         title="Indicadores"
-        hint={ANALYTICS_CONTENT.overview.filters}
+        hint={copy.filters}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -238,30 +145,6 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           <AnalyticsFunnelChart closingRate={dashboard.closingRate} />
         </SectionCard>
       </div>
-
-      <SectionCard
-        title={OVERVIEW_METRIC_BY_ID.ov_table.label}
-        hint={OVERVIEW_METRIC_BY_ID.ov_table.tooltip}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        {proposalsLoading ? (
-          <CommercialLoadingCard title="Carregando OVs…" variant="panel" />
-        ) : null}
-        {proposalsError ? (
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={proposalsError} role="alert" />
-        ) : null}
-        {!proposalsLoading && !proposalsError ? (
-          <DataTable
-            rows={proposals}
-            columns={columns}
-            rowKey={(row) => `${row.branch}-${row.proposal_number}-${row.revision}`}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
-            layout="section"
-          />
-        ) : null}
-      </SectionCard>
     </section>
   );
 }

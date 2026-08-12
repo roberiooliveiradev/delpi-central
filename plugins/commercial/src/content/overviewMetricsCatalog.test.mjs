@@ -16,7 +16,6 @@ const REQUIRED_IDS = [
   "new_business",
   "rol_series",
   "funnel",
-  "ov_table",
 ];
 
 describe("overviewMetricsCatalog", () => {

@@ -9,8 +9,7 @@ export type OverviewMetricId =
   | "otd"
   | "new_business"
   | "rol_series"
-  | "funnel"
-  | "ov_table";
+  | "funnel";
 
 export type OverviewMetricDefinition = {
   id: OverviewMetricId;
@@ -53,11 +52,6 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     id: "funnel",
     label: "Funil",
     tooltip: "Funil de conversão (propostas → ganhas).",
-  },
-  {
-    id: "ov_table",
-    label: "Oportunidades",
-    tooltip: "Resumo das oportunidades/OVs no período.",
   },
 ] as const;
 

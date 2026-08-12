@@ -10,7 +10,7 @@ export const CM_HELP = {
       "Identidade da sessão: mostra as carteiras em que você participa. Não é filtro — nas listas de pedidos e clientes use o seletor de carteira quando houver mais de uma opção. Em Propostas a lista de documentos também não usa este escopo.",
     navHome: "Alertas prioritários, eventos do dia e atalhos para as áreas do portal.",
     navOverview:
-      "Indicadores comerciais do período: receita, conversão e pontualidade, com atalhos de aprofundamento.",
+      "Dashboard do período: filtros, indicadores, evolução ROL e funil. Sem lista de OVs — use Oportunidades no Início ou na Conta.",
     navMyTasks: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
     navCustomers:
