@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 
-import { SignatureCapturePanel } from "@delpi/plugin-ui/signature";
+import { SignatureCapturePanel } from "@delpi/signature-kit";
 
 import {
   submitPublicRefuse,

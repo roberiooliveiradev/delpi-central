@@ -37,6 +37,10 @@ O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /
         │
         ▼
   page.load(ctx) → page.render(data, ctx)   (a view do app)
+
+**Assinatura pública (`/p/transformometro/sign/…`):** o painel vem de `@delpi/signature-kit`
+(source do `plugin-ui` **bundled** no hub). Não usa o remote MF `./signature` — evita
+crash de `createPortal`/HelpTooltip no share `react-dom`.
 ```
 
 - **Shell (transversal)** — `src/shell/`. Cuida de tudo que é comum: fundo/branding (`pub-*` no `shell.css`), spinner, estados de erro/página-não-encontrada, `document.title`, `noindex`. **Não** conhece nenhum app específico.

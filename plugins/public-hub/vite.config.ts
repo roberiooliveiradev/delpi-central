@@ -10,7 +10,9 @@ import {
   reactResolveAliases,
 } from "../vite/federation.shared";
 
-// Shell público (/p/) — consome @delpi/plugin-ui via MF; tv-dashboard-presentation bundled.
+const PLUGIN_UI_SRC = path.resolve(__dirname, "../plugin-ui/src");
+
+// Shell público (/p/) — styles/splash via MF; assinatura BUNDLED (sem share createPortal).
 export default defineConfig({
   plugins: [
     federation({
@@ -25,6 +27,8 @@ export default defineConfig({
     alias: {
       ...reactResolveAliases(__dirname),
       "lucide-react": path.resolve(__dirname, "node_modules/lucide-react"),
+      // Fora do remote `@delpi/plugin-ui` — evita HelpTooltip/createPortal no /sign.
+      "@delpi/signature-kit": path.resolve(PLUGIN_UI_SRC, "components/signature/index.ts"),
       "@delpi/tv-dashboard-presentation": path.resolve(
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
