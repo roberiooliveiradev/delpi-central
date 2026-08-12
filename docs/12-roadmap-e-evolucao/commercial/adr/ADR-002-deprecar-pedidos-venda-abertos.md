@@ -16,7 +16,7 @@
 ## Consequências
 
 - Favoritos `/apps/pedidos-venda-abertos/*` precisam de redirect (ver [F2C-CUTOVER-RUNBOOK.md](../F2C-CUTOVER-RUNBOOK.md)).
-- Permissões legadas `pedidos-venda-abertos.access/admin` continuam aliases na commercial-api até migração RBAC completa para `commercial.*`.
+- Permissões: gates comerciais usam **somente** `commercial.*` (aliases PVA/`api-delpi.access` removidos dos OR-lists — re-grant obrigatório). Ver [PERFIS-E-PERMISSOES.md](../PERFIS-E-PERMISSOES.md).
 - Não dual-write entre schemas.
 
 ## Não fazer neste ADR

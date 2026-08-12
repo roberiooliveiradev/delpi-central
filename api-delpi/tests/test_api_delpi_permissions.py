@@ -76,12 +76,14 @@ def test_financeiro_centro_custo_export_permissions_include_export() -> None:
 
 
 def test_pedidos_venda_abertos_accepts_commercial_aliases() -> None:
-    """Portal Comercial (papel Vendedor) usa commercial.accounts.view — não o legado."""
+    """Portal Comercial usa commercial.accounts.view; admin de carteira só manage canônico."""
     assert perms.COMMERCIAL_ACCOUNTS_VIEW in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
-    assert (
-        perms.COMMERCIAL_SELLER_PORTFOLIOS_MANAGE
-        in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
-    )
+    assert perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS == [
+        perms.COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
+    ]
+    assert perms.API_DELPI_ACCESS not in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert perms.API_DELPI_ACCESS not in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
+    assert perms.PEDIDOS_VENDA_ABERTOS_ADMIN not in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
     assert perms.PEDIDOS_VENDA_ABERTOS_ACCESS in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
 
 

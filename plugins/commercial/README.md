@@ -222,23 +222,26 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## RBAC (capacidades)
 
+Somente codes canônicos `commercial.*` (aliases PVA / `api-delpi.access` / `commercial.propostas.*` **removidos** dos gates). Detalhe: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md).
+
 | Permissão | Escopo |
 |-----------|--------|
-| `commercial.accounts.view` | Portal / pedidos / carteira (aliases legados) |
+| `commercial.accounts.view` | Portal / pedidos / conta |
 | `commercial.worklist.view` / `followups.manage` | Meu dia |
-| `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) |
+| `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) + escopo irrestrito |
 | `commercial.audit.view` | Auditoria |
-| `commercial.analytics.view` | **Toda** a Gestão (`/analytics/*`) |
+| `commercial.analytics.view` | Gestão (visão geral, OTD, OV) |
 | `commercial.proposals.view` / `.export` | ADY + PDF (`/proposals/*`) |
 | `commercial.accounts.team.view` | Filtro multi-vendedor / Gestão Equipe |
 | `commercial.worklist.team.view` | Meu dia `scope=team` |
 
-Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Team **sem** alias legado. Alias curto `commercial.propostas.*` ainda aceito na API.
+Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Minha Carteira exige membership **ou** team/manage.
 
 Aplicação nas páginas deste fluxo:
 
-- Minha carteira, Conta e OP: `commercial.accounts.view`;
-- `seller_id`: somente `commercial.accounts.team.view` (ou administração de carteiras);
+- Meus pedidos / Conta / OP: `commercial.accounts.view`;
+- Minha Carteira: `accounts.view` + (membership \| team \| manage);
+- `seller_id` equipe: `commercial.accounts.team.view` (ou manage);
 - OV e CTA Oportunidades: `commercial.analytics.view`;
 - atividades: `commercial.worklist.view`;
 - criar follow-up: `commercial.worklist.view` + `commercial.followups.manage`;

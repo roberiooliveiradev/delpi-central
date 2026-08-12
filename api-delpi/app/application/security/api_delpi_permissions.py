@@ -345,17 +345,17 @@ EFICIENCIA_FABRIL_ACCESS = [
     DASHBOARD_PRODUCTION_VIEW,
 ]
 
+# Portal Comercial: accounts.view | manage. Plugin irmão PVA: .access | .admin.
+# api-delpi.access NÃO concede acesso a pedidos/carteira (evita unrestricted indevido).
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
-    API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
     COMMERCIAL_ACCOUNTS_VIEW,
     COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
 ]
 
+# Admin de carteira / escopo irrestrito: somente manage canônico.
 PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS = [
-    API_DELPI_ACCESS,
-    PEDIDOS_VENDA_ABERTOS_ADMIN,
     COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
 ]
 

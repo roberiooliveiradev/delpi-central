@@ -44,6 +44,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const {
     loading: sellerScopeLoading,
     canFilterPortfolios,
+    canUseTeamScope,
     filterablePortfolios,
     sellerIdFilter,
     setSellerIdFilter,
@@ -169,6 +170,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
               value={sellerIdFilter}
               onChange={changeSeller}
               hint={CM_HELP.openOrders.sellerScope}
+              teamScope={canUseTeamScope}
             />
           </div>
         ) : null}

@@ -12,7 +12,7 @@
     {
       "code": "commercial.accounts.view",
       "name": "Acessar Portal Comercial",
-      "description": "Acesso ao Portal (carteira, pedidos, conta). Alias legado: pedidos-venda-abertos.access.",
+      "description": "Acesso ao Portal (pedidos, conta). Minha Carteira exige membership ou team/manage.",
       "module": "commercial"
     },
     {
@@ -30,7 +30,7 @@
     {
       "code": "commercial.seller-portfolios.manage",
       "name": "Administrar carteiras comerciais",
-      "description": "CRUD de carteiras e transferências. Alias legado: pedidos-venda-abertos.admin.",
+      "description": "CRUD de carteiras, transferências e escopo irrestrito de pedidos/carteira.",
       "module": "commercial"
     },
     {
@@ -42,31 +42,31 @@
     {
       "code": "commercial.analytics.view",
       "name": "Ver Gestão à vista",
-      "description": "Acesso a toda a área Gestão (visão geral, OTD, equipe, oportunidades OV). Alias: dashboard-commercial.view.",
+      "description": "Acesso à área Gestão (visão geral, OTD, oportunidades OV).",
       "module": "commercial"
     },
     {
       "code": "commercial.proposals.view",
       "name": "Ver propostas documento",
-      "description": "Listar e abrir propostas ADY. Alias: propostas-comerciais.view; legado curto: commercial.propostas.view.",
+      "description": "Listar e abrir propostas ADY.",
       "module": "commercial"
     },
     {
       "code": "commercial.proposals.export",
       "name": "Exportar PDF de proposta",
-      "description": "Gerar PDF revisável de proposta ADY com overrides. Alias legado: commercial.propostas.export.",
+      "description": "Gerar PDF revisável de proposta ADY com overrides.",
       "module": "commercial"
     },
     {
       "code": "commercial.accounts.team.view",
       "name": "Ver carteira da equipe",
-      "description": "Filtrar pedidos/carteira por vendedor e ver Gestão Equipe. Sem alias legado.",
+      "description": "Filtrar pedidos/carteira por vendedor e ver Gestão Equipe.",
       "module": "commercial"
     },
     {
       "code": "commercial.worklist.team.view",
       "name": "Ver worklist da equipe",
-      "description": "Meu dia com escopo equipe (scope=team). Sem alias legado.",
+      "description": "Meu dia com escopo equipe (scope=team).",
       "module": "commercial"
     }
   ],
@@ -130,7 +130,7 @@
     {
       "path": "/apps/commercial/analytics/team",
       "label": "Gestão Equipe",
-      "permission": "commercial.analytics.view",
+      "permission": "commercial.accounts.team.view",
       "icon": "users",
       "order": 20,
       "showInMenu": false

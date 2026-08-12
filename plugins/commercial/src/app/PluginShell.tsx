@@ -35,6 +35,7 @@ type PluginShellProps = {
   showWorklist?: boolean;
   showProposals?: boolean;
   showAnalytics?: boolean;
+  showCustomers?: boolean;
   scopeLabel?: string;
   children: ReactNode;
 };
@@ -73,6 +74,7 @@ export function PluginShell({
   showWorklist = false,
   showProposals = false,
   showAnalytics = false,
+  showCustomers = false,
   scopeLabel,
   children,
 }: PluginShellProps) {
@@ -118,7 +120,7 @@ export function PluginShell({
       ? [{ id: "my_day" as const, label: "Meu dia", count: myDayBadge || undefined }]
       : []),
     { id: "open_orders", label: "Meus pedidos" },
-    { id: "customers", label: "Minha Carteira" },
+    ...(showCustomers ? [{ id: "customers" as const, label: "Minha Carteira" }] : []),
     ...(showProposals ? [{ id: "proposals" as const, label: "Propostas" }] : []),
     ...(showAnalytics ? [{ id: "analytics" as const, label: "Gestão" }] : []),
     ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),

@@ -15,13 +15,17 @@ type PortfolioScopeValue = {
   loading: boolean;
   error: string | null;
   isAdmin: boolean;
+  canManagePortfolios: boolean;
   canViewWorklist: boolean;
   canManageFollowups: boolean;
   canViewAnalytics: boolean;
   canViewProposals: boolean;
   canExportProposals: boolean;
   canUseTeamScope: boolean;
+  canViewAccountsTeam: boolean;
   canViewWorklistTeam: boolean;
+  /** Minha Carteira: membership, team.view ou manage. */
+  canAccessMyPortfolio: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
   currentUserId: string | null;
   /** Compat single-portfolio: primeira carteira de `myPortfolios`. */
@@ -30,8 +34,8 @@ type PortfolioScopeValue = {
   myPortfolios: SellerPortfolio[];
   sellers: SellerPortfolio[];
   /**
-   * Fonte única do «pode escolher carteira»: equipe (team.view) ou
-   * usuário em mais de uma carteira própria.
+   * Pode escolher carteira: team/manage (universo equipe) ou
+   * mais de uma carteira própria.
    */
   canFilterPortfolios: boolean;
   /** Universo do seletor de carteira: equipe → todas; senão → carteiras próprias. */
@@ -56,22 +60,20 @@ const EMPTY_CAPABILITIES: CommercialCapabilities = {
   team_scope: false,
 };
 
+/** Confia no payload da API — não inventa team.view a partir de admin. */
 function resolveCapabilities(
   raw: SellerPortfolioMeCapabilities | undefined,
-  admin: boolean,
 ): CommercialCapabilities {
-  // manage implica team_scope na prática (G4); analytics/proposals NÃO herdam de admin.
-  const teamScope = Boolean(raw?.team_scope ?? admin);
   return {
     worklist_view: Boolean(raw?.worklist_view),
     followups_manage: Boolean(raw?.followups_manage),
-    seller_portfolios_manage: Boolean(raw?.seller_portfolios_manage ?? admin),
+    seller_portfolios_manage: Boolean(raw?.seller_portfolios_manage),
     analytics_view: Boolean(raw?.analytics_view),
     proposals_view: Boolean(raw?.proposals_view),
     proposals_export: Boolean(raw?.proposals_export ?? raw?.proposals_view),
-    accounts_team_view: Boolean(raw?.accounts_team_view ?? teamScope),
+    accounts_team_view: Boolean(raw?.accounts_team_view),
     worklist_team_view: Boolean(raw?.worklist_team_view),
-    team_scope: teamScope,
+    team_scope: Boolean(raw?.team_scope),
   };
 }
 
@@ -108,7 +110,6 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         const fromMe = (response.user_id || "").trim();
         const fromPortfolio = (response.portfolio?.user_id || "").trim();
         setCurrentUserId(fromMe || fromPortfolio || null);
-        // `portfolios` é o contrato N:N; `portfolio` fica só como compat de API antiga.
         setMyPortfolios(
           response.portfolios?.length
             ? response.portfolios
@@ -116,10 +117,14 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
               ? [response.portfolio]
               : [],
         );
-        const nextCapabilities = resolveCapabilities(response.capabilities, admin);
+        const nextCapabilities = resolveCapabilities(response.capabilities);
         setCapabilities(nextCapabilities);
 
-        if (nextCapabilities.team_scope || admin) {
+        const canListAll =
+          nextCapabilities.team_scope ||
+          nextCapabilities.seller_portfolios_manage ||
+          admin;
+        if (canListAll) {
           const portfolios = await listSellerPortfolios({
             activeOnly: true,
             signal: controller.signal,
@@ -147,19 +152,27 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   }, [reloadToken]);
 
   const value = useMemo(() => {
-    const canUseTeamScope = capabilities.team_scope;
+    const canManagePortfolios =
+      capabilities.seller_portfolios_manage || isAdmin;
+    const canUseTeamScope = Boolean(capabilities.team_scope);
+    const canViewAccountsTeam = Boolean(capabilities.accounts_team_view);
     const filterablePortfolios = canUseTeamScope ? sellers : myPortfolios;
+    const canAccessMyPortfolio =
+      myPortfolios.length > 0 || canUseTeamScope || canManagePortfolios;
     return {
       loading,
       error,
-      isAdmin,
+      isAdmin: canManagePortfolios,
+      canManagePortfolios,
       canViewWorklist: capabilities.worklist_view,
       canManageFollowups: capabilities.followups_manage,
       canViewAnalytics: capabilities.analytics_view,
       canViewProposals: capabilities.proposals_view,
       canExportProposals: capabilities.proposals_export,
       canUseTeamScope,
+      canViewAccountsTeam,
       canViewWorklistTeam: capabilities.worklist_team_view,
+      canAccessMyPortfolio,
       currentUserId,
       myPortfolio: myPortfolios[0] ?? null,
       myPortfolios,

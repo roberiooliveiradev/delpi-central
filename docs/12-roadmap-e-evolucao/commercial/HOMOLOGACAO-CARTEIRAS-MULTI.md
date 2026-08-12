@@ -39,9 +39,11 @@ Rodar a partir da raiz do monorepo:
 
 | # | Caso | Resultado |
 |---|------|-----------|
-| 1 | Nav: **Meus pedidos** / **Minha Carteira**; **Carteiras** só com `manage` | |
+| 1 | Nav: **Meus pedidos**; **Minha Carteira** só com membership ou team/manage; **Carteiras** só com `manage` | |
+| 1b | Papel tipo João (accounts+worklist+analytics+proposals+audit+followups, **sem** manage/team, **sem** membership): sem Carteiras; sem Minha Carteira; sem «Todas as carteiras» de equipe | |
+| 1c | `api-delpi.access` / PVA.admin **não** elevam mais `is_admin` nem unrestricted | |
 | 2 | Chip Escopo: 1 carteira → `Carteira: {nome}`; N → `{N} carteiras` (só identidade) | |
-| 3 | Filtro Carteira em pedidos/carteira: opções do usuário + **Todas as carteiras** (união) | |
+| 3 | Filtro Carteira: team/manage → «Todas as carteiras»; multi-própria → «Todas as minhas carteiras» | |
 | 4 | `team.view` sem `manage`: vê todas no filtro; tela `/seller-portfolios` oculta / 404 | |
 | 5 | Lista Carteiras full-page (sem split); clique → `/seller-portfolios/{id}` | |
 | 6 | Legado `?id=` na lista redireciona para path de detalhe | |

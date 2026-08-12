@@ -303,6 +303,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               value={sellerIdFilter}
               onChange={setSellerId}
               hint={CM_HELP.customers.sellerScope}
+              teamScope={canUseTeamScope}
             />
           ) : null}
           {hasActiveFilters ? (

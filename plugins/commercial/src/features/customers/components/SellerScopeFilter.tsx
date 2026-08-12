@@ -5,9 +5,17 @@ type SellerScopeFilterProps = {
   value: string | null;
   onChange: (sellerId: string | null) => void;
   hint?: string;
+  /** team/manage → «Todas as carteiras»; multi-própria → «Todas as minhas carteiras». */
+  teamScope?: boolean;
 };
 
-export function SellerScopeFilter({ sellers, value, onChange, hint }: SellerScopeFilterProps) {
+export function SellerScopeFilter({
+  sellers,
+  value,
+  onChange,
+  hint,
+  teamScope = false,
+}: SellerScopeFilterProps) {
   const options = sellers.map((seller) => ({
     value: seller.id,
     label: seller.display_name,
@@ -22,7 +30,7 @@ export function SellerScopeFilter({ sellers, value, onChange, hint }: SellerScop
         value={value ?? ""}
         onChange={(next) => onChange(next || null)}
         allowEmpty
-        emptyLabel="Todas as carteiras"
+        emptyLabel={teamScope ? "Todas as carteiras" : "Todas as minhas carteiras"}
         searchable={options.length > 8}
       />
     </div>

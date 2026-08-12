@@ -52,12 +52,16 @@ function AppRoutes({
   const { view } = route;
   const {
     isAdmin,
+    canManagePortfolios,
     canViewWorklist,
     canViewAnalytics,
     canViewProposals,
     canUseTeamScope,
+    canAccessMyPortfolio,
+    loading: scopeLoading,
     myPortfolios,
   } = usePortfolioScope();
+  const showCustomers = scopeLoading || canAccessMyPortfolio;
   const scopeLabel =
     myPortfolios.length > 1
       ? `${myPortfolios.length} carteiras`
@@ -70,16 +74,17 @@ function AppRoutes({
       view={view}
       basePath={basePath}
       search={search}
-      showAdmin={isAdmin}
+      showAdmin={canManagePortfolios || isAdmin}
       showWorklist={canViewWorklist}
       showProposals={canViewProposals}
       showAnalytics={canViewAnalytics}
+      showCustomers={showCustomers}
       scopeLabel={scopeLabel}
     >
       {view === "home" ? (
         <HomePage
           basePath={basePath}
-          showAdmin={isAdmin}
+          showAdmin={canManagePortfolios || isAdmin}
           showWorklist={canViewWorklist}
           showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
@@ -115,14 +120,24 @@ function AppRoutes({
           search={search}
         />
       ) : null}
-      {view === "customers" ? <CustomersPage basePath={basePath} /> : null}
+      {view === "customers" ? (
+        scopeLoading || canAccessMyPortfolio ? (
+          <CustomersPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
       {view === "customer_detail" && route.codigo && route.loja ? (
-        <CustomerDetailPage
-          codigo={route.codigo}
-          loja={route.loja}
-          basePath={basePath}
-          search={search}
-        />
+        scopeLoading || canAccessMyPortfolio ? (
+          <CustomerDetailPage
+            codigo={route.codigo}
+            loja={route.loja}
+            basePath={basePath}
+            search={search}
+          />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
       ) : null}
       {view === "proposals" ? (
         canViewProposals ? (
@@ -193,14 +208,14 @@ function AppRoutes({
         )
       ) : null}
       {view === "seller_portfolios" ? (
-        isAdmin ? (
+        canManagePortfolios || isAdmin ? (
           <SellerPortfoliosPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
       {view === "seller_portfolio_detail" && route.portfolioId ? (
-        isAdmin ? (
+        canManagePortfolios || isAdmin ? (
           <SellerPortfolioDetailPage
             basePath={basePath}
             portfolioId={route.portfolioId}
