@@ -41,6 +41,14 @@ class DualReadSellerPortfolioRepository(SellerPortfolioRepositoryPort):
             user_id
         )
 
+    def list_by_user_id(
+        self, user_id: str, *, active_only: bool = True
+    ) -> list[SellerPortfolio]:
+        commercial = self._commercial.list_by_user_id(user_id, active_only=active_only)
+        if commercial:
+            return commercial
+        return self._legacy.list_by_user_id(user_id, active_only=active_only)
+
     def list_sellers(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         primary = self._write.list_sellers(active_only=active_only)
         if primary:

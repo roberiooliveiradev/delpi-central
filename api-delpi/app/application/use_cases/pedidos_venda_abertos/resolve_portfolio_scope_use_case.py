@@ -27,6 +27,13 @@ class PortfolioScope:
     message: str | None = None
 
 
+_EMPTY_LINK_MESSAGE = (
+    "Nenhuma carteira de clientes cadastrada para o seu usuário. "
+    "Peça ao gerente para vincular seus clientes na Configuração."
+)
+_EMPTY_CUSTOMERS_MESSAGE = "Sua carteira ainda não possui clientes vinculados."
+
+
 class ResolvePortfolioScopeUseCase:
     def __init__(self, repository: SellerPortfolioRepositoryPort):
         self._repository = repository
@@ -49,31 +56,56 @@ class ResolvePortfolioScopeUseCase:
                 message=None,
             )
 
-        portfolio: SellerPortfolio | None
         if is_unrestricted and seller_filter:
-            # Aceita id da carteira (PK) ou user_id (legado / callers equivocados).
-            portfolio = self._repository.get_by_id(seller_filter)
-            if portfolio is None:
-                portfolio = self._repository.get_by_user_id(seller_filter)
-            if portfolio is None:
-                raise LookupError("Vendedor não encontrado para filtro de carteira.")
-            if not portfolio.active:
-                raise ValueError("Vendedor inativo não pode ser usado como filtro.")
-        else:
-            portfolio = self._repository.get_by_user_id(user_id)
+            return self._scope_from_seller_filter(seller_filter)
 
-        if portfolio is None or not portfolio.active:
+        return self._scope_from_user_membership(user_id)
+
+    def _scope_from_seller_filter(self, seller_filter: str) -> PortfolioScope:
+        # Aceita id da carteira (PK) ou user_id (legado / callers equivocados).
+        portfolio = self._repository.get_by_id(seller_filter)
+        if portfolio is None:
+            portfolio = self._repository.get_by_user_id(seller_filter)
+        if portfolio is None:
+            raise LookupError("Vendedor não encontrado para filtro de carteira.")
+        if not portfolio.active:
+            raise ValueError("Vendedor inativo não pode ser usado como filtro.")
+        return self._scope_from_portfolio(portfolio)
+
+    def _scope_from_user_membership(self, user_id: str) -> PortfolioScope:
+        portfolios = self._repository.list_by_user_id(user_id, active_only=True)
+        if not portfolios:
             return PortfolioScope(
                 unrestricted=False,
                 seller_id=None,
                 allowed_customers=frozenset(),
                 empty_portfolio=True,
-                message=(
-                    "Nenhuma carteira de clientes cadastrada para o seu usuário. "
-                    "Peça ao gerente para vincular seus clientes na Configuração."
-                ),
+                message=_EMPTY_LINK_MESSAGE,
             )
 
+        allowed = frozenset(
+            (item.customer_code, item.customer_store)
+            for portfolio in portfolios
+            for item in portfolio.customers
+        )
+        if not allowed:
+            return PortfolioScope(
+                unrestricted=False,
+                seller_id=portfolios[0].id,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                message=_EMPTY_CUSTOMERS_MESSAGE,
+            )
+
+        return PortfolioScope(
+            unrestricted=False,
+            seller_id=portfolios[0].id,
+            allowed_customers=allowed,
+            empty_portfolio=False,
+            message=None,
+        )
+
+    def _scope_from_portfolio(self, portfolio: SellerPortfolio) -> PortfolioScope:
         allowed = frozenset(
             (item.customer_code, item.customer_store) for item in portfolio.customers
         )
@@ -83,9 +115,8 @@ class ResolvePortfolioScopeUseCase:
                 seller_id=portfolio.id,
                 allowed_customers=frozenset(),
                 empty_portfolio=True,
-                message="Sua carteira ainda não possui clientes vinculados.",
+                message=_EMPTY_CUSTOMERS_MESSAGE,
             )
-
         return PortfolioScope(
             unrestricted=False,
             seller_id=portfolio.id,

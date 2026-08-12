@@ -56,3 +56,31 @@ def test_dual_read_get_by_user_id_falls_back() -> None:
     )
     found = repo.get_by_user_id("u-legacy")
     assert found is not None and found.user_id == "u-legacy"
+
+
+def test_dual_read_list_by_user_id_prefers_commercial() -> None:
+    commercial = MagicMock()
+    legacy = MagicMock()
+    commercial.list_by_user_id.return_value = [_portfolio("c1"), _portfolio("c2")]
+    legacy.list_by_user_id.return_value = [_portfolio("l1")]
+    repo = DualReadSellerPortfolioRepository(
+        commercial=commercial, legacy=legacy, write_source="commercial"
+    )
+    found = repo.list_by_user_id("u1", active_only=True)
+    assert [p.id for p in found] == ["c1", "c2"]
+    commercial.list_by_user_id.assert_called_once_with("u1", active_only=True)
+    legacy.list_by_user_id.assert_not_called()
+
+
+def test_dual_read_list_by_user_id_falls_back_to_legacy() -> None:
+    commercial = MagicMock()
+    legacy = MagicMock()
+    commercial.list_by_user_id.return_value = []
+    legacy.list_by_user_id.return_value = [_portfolio("l1", user_id="u-legacy")]
+    repo = DualReadSellerPortfolioRepository(
+        commercial=commercial, legacy=legacy, write_source="commercial"
+    )
+    found = repo.list_by_user_id("u-legacy", active_only=True)
+    assert len(found) == 1 and found[0].id == "l1"
+    commercial.list_by_user_id.assert_called_once_with("u-legacy", active_only=True)
+    legacy.list_by_user_id.assert_called_once_with("u-legacy", active_only=True)

@@ -172,13 +172,68 @@ def test_resolve_scope_admin_filter_missing_raises() -> None:
 
 def test_resolve_scope_seller_without_portfolio() -> None:
     repo = MagicMock()
-    repo.get_by_user_id.return_value = None
+    repo.list_by_user_id.return_value = []
     scope = ResolvePortfolioScopeUseCase(repo).execute(
         user_id="u1",
         is_unrestricted=False,
     )
     assert scope.empty_portfolio is True
     assert scope.allowed_customers == frozenset()
+    repo.list_by_user_id.assert_called_once_with("u1", active_only=True)
+
+
+def test_resolve_scope_seller_unions_customers_across_portfolios() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(
+                SellerCustomerAssignment("100", "01", "A"),
+                SellerCustomerAssignment("200", "01", "B"),
+            ),
+        ),
+        _portfolio(
+            id="p2",
+            user_id="u1",
+            display_name="Carteira compartilhada",
+            customers=(
+                SellerCustomerAssignment("200", "01", "B"),  # overlap → dedupe
+                SellerCustomerAssignment("300", "02", "C"),
+            ),
+        ),
+    ]
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="u1",
+        is_unrestricted=False,
+    )
+    assert scope.empty_portfolio is False
+    assert scope.seller_id == "p1"
+    assert scope.allowed_customers == frozenset(
+        {("100", "01"), ("200", "01"), ("300", "02")}
+    )
+    repo.list_by_user_id.assert_called_once_with("u1", active_only=True)
+    repo.get_by_user_id.assert_not_called()
+
+
+def test_resolve_scope_admin_filter_single_seller_id() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = _portfolio(
+        id="s1",
+        customers=(
+            SellerCustomerAssignment("100", "01", "A"),
+            SellerCustomerAssignment("200", "01", "B"),
+        ),
+    )
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="admin",
+        is_unrestricted=True,
+        seller_id_filter="s1",
+    )
+    assert scope.unrestricted is False
+    assert scope.seller_id == "s1"
+    assert scope.allowed_customers == frozenset({("100", "01"), ("200", "01")})
+    repo.get_by_id.assert_called_once_with("s1")
+    repo.list_by_user_id.assert_not_called()
 
 
 def test_manage_create_and_parse_customers() -> None:

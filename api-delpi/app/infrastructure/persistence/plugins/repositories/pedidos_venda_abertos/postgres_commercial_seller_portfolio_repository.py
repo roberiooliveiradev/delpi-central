@@ -23,6 +23,10 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 _PORTFOLIO_COLUMNS = (
     "id, user_id, display_name, active, created_by_user_id, created_at, updated_at"
 )
+_PORTFOLIO_COLUMNS_SP = (
+    "sp.id, sp.user_id, sp.display_name, sp.active, "
+    "sp.created_by_user_id, sp.created_at, sp.updated_at"
+)
 _CUSTOMER_COLUMNS = (
     "id, seller_portfolio_id, customer_code, customer_store, customer_name, created_at"
 )
@@ -41,15 +45,27 @@ class PostgresCommercialSellerPortfolioRepository(
         return self._hydrate(row)
 
     def get_by_user_id(self, user_id: str) -> SellerPortfolio | None:
-        row = self.fetch_one(
+        """Primeira carteira via membership (compat); preferir list_by_user_id."""
+        portfolios = self.list_by_user_id(user_id, active_only=False)
+        return portfolios[0] if portfolios else None
+
+    def list_by_user_id(
+        self, user_id: str, *, active_only: bool = True
+    ) -> list[SellerPortfolio]:
+        where_active = "AND sp.active = TRUE" if active_only else ""
+        rows = self.fetch_all(
             f"""
-            SELECT {_PORTFOLIO_COLUMNS}
-              FROM commercial.seller_portfolios
-             WHERE user_id = %s
+            SELECT {_PORTFOLIO_COLUMNS_SP}
+              FROM commercial.seller_portfolios sp
+              INNER JOIN commercial.seller_portfolio_members m
+                ON m.seller_portfolio_id = sp.id
+             WHERE m.user_id = %s
+               {where_active}
+             ORDER BY sp.active DESC, sp.display_name ASC
             """,
             (user_id,),
         )
-        return self._hydrate(row)
+        return [portfolio for row in rows if (portfolio := self._hydrate(row)) is not None]
 
     def list_sellers(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         if active_only:
