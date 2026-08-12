@@ -10,19 +10,35 @@ from commercial_app.application.security.auth_dependencies import require_any_pe
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_MANAGE_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
+    can_manage_portfolios,
+    can_use_team_scope,
 )
 from commercial_app.application.use_cases.manage_seller_portfolio import parse_customer_assignments
 from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
     build_manage_customer_avatar_use_case,
+    build_resolve_commercial_customer_scope_service,
 )
-from commercial_app.core.auth_actor import actor_sub_from_request
+from commercial_app.core.auth_actor import (
+    actor_sub_from_request,
+    current_user_from_request,
+)
 from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.schemas.portfolio_schemas import EnrichmentBody
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/customers", tags=["Customers"])
+
+
+def _customer_scope_for_request(request: Request):
+    user = current_user_from_request(request)
+    unrestricted = can_manage_portfolios(user) or can_use_team_scope(user)
+    user_id = actor_sub_from_request(request) or ""
+    return build_resolve_commercial_customer_scope_service().execute(
+        user_id=user_id,
+        unrestricted=unrestricted,
+    )
 
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
@@ -47,18 +63,24 @@ def search_active_customers(
 
 @router.post("/enrichment", operation_id="enrich_portfolio_customers")
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
-def enrich_portfolio_customers(_request: Request, body: EnrichmentBody = Body(...)):
+def enrich_portfolio_customers(request: Request, body: EnrichmentBody = Body(...)):
     try:
         customers = parse_customer_assignments(
             [item.model_dump() for item in body.customers]
         )
+        scope_service = build_resolve_commercial_customer_scope_service()
+        scope = _customer_scope_for_request(request)
+        allowed_pairs = scope_service.filter_pairs(
+            scope,
+            [(item.customer_code, item.customer_store) for item in customers],
+        )
         payload: dict[str, Any] = {
             "customers": [
                 {
-                    "customer_code": item.customer_code,
-                    "customer_store": item.customer_store,
+                    "customer_code": code,
+                    "customer_store": store,
                 }
-                for item in customers
+                for code, store in allowed_pairs
             ]
         }
         result = build_delpi_commercial_gateway().enrich_portfolio_customers(payload=payload)
@@ -103,11 +125,17 @@ def enrich_portfolio_customers(_request: Request, body: EnrichmentBody = Body(..
 )
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
 def get_customer_avatar(
-    _request: Request,
+    request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):
     try:
+        scope = _customer_scope_for_request(request)
+        build_resolve_commercial_customer_scope_service().ensure_allows(
+            scope,
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
         avatar_file = build_manage_customer_avatar_use_case().get_file(
             customer_code=customer_code,
             customer_store=customer_store,

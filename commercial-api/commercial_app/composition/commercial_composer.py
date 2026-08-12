@@ -126,6 +126,14 @@ def build_manage_customer_avatar_use_case() -> ManageCustomerAvatarUseCase:
     return _avatar_use_case
 
 
+def build_resolve_commercial_customer_scope_service():
+    from commercial_app.application.services.resolve_commercial_customer_scope_service import (
+        ResolveCommercialCustomerScopeService,
+    )
+
+    return ResolveCommercialCustomerScopeService(build_seller_portfolio_repository())
+
+
 def build_delpi_commercial_gateway() -> DelpiCommercialGateway:
     global _commercial_gateway
     if _commercial_gateway is None:

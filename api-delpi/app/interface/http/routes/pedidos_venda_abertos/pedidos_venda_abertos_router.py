@@ -140,28 +140,6 @@ def _resolve_scope(seller_id: Optional[str] = None):
     )
 
 
-def _customer_in_scope(codigo: str, loja: str, seller_id: Optional[str] = None) -> bool:
-    scope = _resolve_scope(seller_id)
-    return build_resolve_portfolio_scope_use_case().customer_allowed(
-        scope,
-        customer_code=codigo,
-        customer_store=loja,
-    )
-
-
-def _filter_customers_in_scope(
-    pairs: list[tuple[str, str]],
-    seller_id: Optional[str] = None,
-) -> list[tuple[str, str]]:
-    scope = _resolve_scope(seller_id)
-    resolver = build_resolve_portfolio_scope_use_case()
-    return [
-        (code, store)
-        for code, store in pairs
-        if resolver.customer_allowed(scope, customer_code=code, customer_store=store)
-    ]
-
-
 @router.get(
     "/",
     **OpenApiAgentMetadataBuilder.from_contract(
@@ -288,7 +266,6 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
         pairs = [
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
-        pairs = _filter_customers_in_scope(pairs)
         items = build_enrich_portfolio_customers_use_case().execute(
             EnrichCustomersRequest(customers=pairs)
         )
@@ -318,12 +295,7 @@ def list_customer_open_order_metrics_route(
     """Agrega valor aberto e flag de atraso por cliente (pedidos em aberto)."""
     try:
         pairs = tuple(
-            _filter_customers_in_scope(
-                [
-                    (item.customer_code, item.customer_store)
-                    for item in (body.customers or [])
-                ]
-            )
+            (item.customer_code, item.customer_store) for item in (body.customers or [])
         )
         items = build_list_customer_open_order_metrics_use_case().execute(
             ListCustomerOpenOrderMetricsRequest(customers=pairs)
@@ -354,12 +326,9 @@ def list_customer_open_order_metrics_route(
 def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
     """Série de faturamento da carteira (período, granularidade e fallback months)."""
     try:
-        pairs = _filter_customers_in_scope(
-            [
-                (item.customer_code, item.customer_store)
-                for item in (body.customers or [])
-            ]
-        )
+        pairs = [
+            (item.customer_code, item.customer_store) for item in (body.customers or [])
+        ]
         result = build_list_customer_billing_series_use_case().execute(
             ListCustomerBillingSeriesRequest(
                 customers=pairs,
@@ -397,8 +366,6 @@ def get_customer_avatar_route(
     loja: str = Path(..., min_length=1),
 ):
     try:
-        if not _customer_in_scope(codigo, loja):
-            return error_response("Cliente fora da sua carteira.", status_code=404)
         avatar = build_manage_customer_avatar_use_case().get_file(
             customer_code=codigo,
             customer_store=loja,
@@ -431,8 +398,6 @@ async def upsert_customer_avatar_route(
     file: UploadFile = File(...),
 ):
     try:
-        if not _customer_in_scope(codigo, loja):
-            return error_response("Cliente fora da sua carteira.", status_code=404)
         content = await file.read()
         record = build_manage_customer_avatar_use_case().upsert(
             customer_code=codigo,
@@ -476,8 +441,6 @@ def delete_customer_avatar_route(
     loja: str = Path(..., min_length=1),
 ):
     try:
-        if not _customer_in_scope(codigo, loja):
-            return error_response("Cliente fora da sua carteira.", status_code=404)
         build_manage_customer_avatar_use_case().delete(
             customer_code=codigo,
             customer_store=loja,
