@@ -30,14 +30,14 @@ import {
 } from "../../data/api/transformometroApi";
 import { buildFilialPath } from "../../utils/routeParser";
 import { valuesEqual } from "@delpi/plugin-ui/index";
-import { FilialFormFields } from "../filiais/FilialFormFields";
+import { FilialFormFields } from "../branches/FilialFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   emptyFilialForm,
   filialFormFromEntity,
   payloadFromFilialForm,
   type FilialFormState,
-} from "../filiais/filialCatalogForm";
+} from "../branches/filialCatalogForm";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   filialId: string;

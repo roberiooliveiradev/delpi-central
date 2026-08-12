@@ -12,11 +12,11 @@ import {
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { labelCriterioRateio, labelSimNao } from "../../../utils/catalogLabels";
 import { formatCurrency } from "../../../utils/format";
-import { RecursoCatalogFormFields } from "../../recursos/RecursoCatalogFormFields";
+import { RecursoCatalogFormFields } from "../../shared-resources/RecursoCatalogFormFields";
 import {
   emptyRecursoForm,
   payloadFromRecursoForm,
-} from "../../recursos/recursoCatalogForm";
+} from "../../shared-resources/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { DS_TABLE_CLASS_NAMES } from "../../../components/dataTableUi";

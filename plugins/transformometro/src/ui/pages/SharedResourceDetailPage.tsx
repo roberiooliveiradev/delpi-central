@@ -41,8 +41,8 @@ import { buildProcessoPath, buildRecursoPath } from "../../utils/routeParser";
 import { SharedResourceWorkspaceSectionPanel } from "../settings/SharedResourceWorkspaceSectionPanel";
 import type { RecursoWorkspaceSectionId } from "../settings/settingsWorkspaceNav";
 import { defaultRecursoSection } from "../settings/settingsWorkspaceNav";
-import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
-import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
+import { RecursoCatalogFormFields } from "../shared-resources/RecursoCatalogFormFields";
+import { RecursoCustosSection } from "../shared-resources/RecursoCustosSection";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
@@ -51,7 +51,7 @@ import {
   payloadFromRecursoForm,
   recursoFormFromEntity,
   type RecursoCatalogFormState,
-} from "../recursos/recursoCatalogForm";
+} from "../shared-resources/recursoCatalogForm";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;

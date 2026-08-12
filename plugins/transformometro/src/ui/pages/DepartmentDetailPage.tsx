@@ -30,7 +30,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { buildSetorPath } from "../../utils/routeParser";
 import { valuesEqual } from "@delpi/plugin-ui/index";
-import { SetorFormFields } from "../setores/SetorFormFields";
+import { SetorFormFields } from "../departments/SetorFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   createPayloadFromSetorForm,
@@ -38,7 +38,7 @@ import {
   payloadFromSetorForm,
   setorFormFromEntity,
   type SetorFormState,
-} from "../setores/setorCatalogForm";
+} from "../departments/setorCatalogForm";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   setorId: string;
