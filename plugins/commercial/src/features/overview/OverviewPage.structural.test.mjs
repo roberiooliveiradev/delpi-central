@@ -15,7 +15,7 @@ describe("OverviewPage — paridade dashboard", () => {
     assert.match(source, /buildRolPerUnitKpiView/);
     assert.match(source, /buildKpiGoalPresentationWithBranchIdd/);
     assert.doesNotMatch(source, /apiDelpiUrl|\/apps\/api-delpi/);
-    const kpiCount = (source.match(/CommercialDashboardKpiCard/g) ?? []).length;
+    const kpiCount = (source.match(/<CommercialDashboardKpiCard/g) ?? []).length;
     assert.equal(kpiCount, 6);
   });
 });
