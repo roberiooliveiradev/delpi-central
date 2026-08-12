@@ -28,6 +28,8 @@ import { OpenOrderLineDetailPage } from "./features/open-orders/OpenOrderLineDet
 import { OpenOrderOpDetailPage } from "./features/open-orders/OpenOrderOpDetailPage";
 import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
 import { ProposalsPage } from "./features/proposals/ProposalsPage";
+import { AdministrationHomePage } from "./features/administration/AdministrationHomePage";
+import { AdministrationMembersPage } from "./features/administration/AdministrationMembersPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
@@ -208,14 +210,23 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {/* Hub Administração (Painel · Carteiras · Membros): páginas dedicadas em E2.S2–S3.
-          Até lá, as rotas do hub e o alias legado entregam a gestão de carteiras. */}
-      {view === "administration" ||
-      view === "administration_portfolios" ||
-      view === "administration_members" ||
-      view === "seller_portfolios" ? (
+      {view === "administration" ? (
+        canManagePortfolios || isAdmin ? (
+          <AdministrationHomePage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "administration_portfolios" || view === "seller_portfolios" ? (
         canManagePortfolios || isAdmin ? (
           <SellerPortfoliosPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "administration_members" ? (
+        canManagePortfolios || isAdmin ? (
+          <AdministrationMembersPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

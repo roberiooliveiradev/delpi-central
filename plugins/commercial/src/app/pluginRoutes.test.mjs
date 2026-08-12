@@ -190,6 +190,7 @@ describe("navegação da arquitetura de informação 2026", () => {
     assert.match(app, /<OverviewPage/);
     assert.match(app, /view === "my_tasks"/);
     assert.match(app, /view === "administration"/);
+    assert.match(app, /<AdministrationHomePage/);
     assert.doesNotMatch(shell, /AnalyticsSubNav/);
   });
 });

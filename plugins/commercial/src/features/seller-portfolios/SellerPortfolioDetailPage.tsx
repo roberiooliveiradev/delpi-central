@@ -473,6 +473,15 @@ export function SellerPortfolioDetailPage({
           },
           {
             id: "admin",
+            label: "Administração",
+            href: `${basePath}/administration`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePluginView("administration", { basePath });
+            },
+          },
+          {
+            id: "portfolios",
             label: "Carteiras",
             href: listHref,
             onNavigate: (event) => {

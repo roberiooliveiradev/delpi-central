@@ -55,6 +55,7 @@ import { SellerPortfolioCreateDialog } from "./SellerPortfolioCreateDialog";
 import { SellerPortfoliosList } from "./SellerPortfoliosList";
 import { SellerPortfoliosOrgView } from "./SellerPortfoliosOrgView";
 import { UncoveredCustomersPanel } from "./UncoveredCustomersPanel";
+import { AdministrationSubNav } from "../administration/AdministrationSubNav";
 
 const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: string }> = {
   all: { label: PORTFOLIO_COVERAGE_CONTENT.filterAll, emptyHint: "Cadastre a primeira carteira." },
@@ -424,12 +425,17 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           {
             id: "admin",
             label: "Administração",
-            href: `${basePath}/administration/seller-portfolios`,
-            onNavigate: (event) => event.preventDefault(),
+            href: `${basePath}/administration`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePluginView("administration", { basePath });
+            },
           },
         ]}
         current="Carteiras"
       />
+
+      <AdministrationSubNav basePath={basePath} active="portfolios" />
 
       <CommercialPageHero
         aria-label="Resumo das carteiras"
