@@ -8,7 +8,6 @@ import {
   type CSSProperties,
 } from "react";
 
-import { HelpTooltip } from "../help/HelpTooltip";
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
 
@@ -349,18 +348,14 @@ export function SignaturePad({
           {fullscreen ? "Assinatura em tela cheia" : null}
         </div>
         <div className="delpi-ui-signature-pad__chrome-actions">
-          <HelpTooltip
-            content={
-              labels?.expandHelp ||
-              "Abre a área de assinatura em tela cheia para facilitar o traço no mouse ou no toque. Esc fecha."
-            }
-            ariaLabel="Ajuda da tela cheia"
-            placement="bottom"
-          />
           <button
             type="button"
             className="delpi-ui-icon-btn delpi-ui-signature-pad__icon-btn"
             aria-label={fullscreen ? exitLabel : expandLabel}
+            title={
+              labels?.expandHelp ||
+              "Abre a área de assinatura em tela cheia para facilitar o traço no mouse ou no toque. Esc fecha."
+            }
             aria-pressed={fullscreen}
             onClick={() => setFullscreen((value) => !value)}
             data-testid="signature-pad-fullscreen"
@@ -385,17 +380,15 @@ export function SignaturePad({
         />
       </div>
       <div className="delpi-ui-signature-pad__hint-row">
-        <p className="delpi-ui-signature-pad__hint">
-          {labels?.hint || "Assine dentro da área acima"}
-        </p>
-        <HelpTooltip
-          content={
+        <p
+          className="delpi-ui-signature-pad__hint"
+          title={
             labels?.toolsHelp ||
             "Desenhe com o mouse ou o dedo. Use desfazer/refazer por traço e escolha a espessura antes de assinar."
           }
-          ariaLabel="Ajuda da assinatura manuscrita"
-          placement="bottom"
-        />
+        >
+          {labels?.hint || "Assine dentro da área acima"}
+        </p>
       </div>
       <div className="delpi-ui-signature-pad__actions" role="toolbar" aria-label="Ferramentas de assinatura">
         <div className="delpi-ui-signature-pad__action-group">
@@ -433,16 +426,16 @@ export function SignaturePad({
             <span className="delpi-ui-signature-pad__btn-label">{clearLabel}</span>
           </button>
         </div>
-        <div className="delpi-ui-signature-pad__stroke" role="group" aria-label="Espessura do traço">
+        <div
+          className="delpi-ui-signature-pad__stroke"
+          role="group"
+          aria-label="Espessura do traço"
+          title={
+            labels?.strokeHelp ||
+            "Fino, médio ou grosso altera a largura do próximo traço. A espessura também varia levemente com a velocidade."
+          }
+        >
           <span className="delpi-ui-signature-pad__stroke-label">Espessura</span>
-          <HelpTooltip
-            content={
-              labels?.strokeHelp ||
-              "Fino, médio ou grosso altera a largura do próximo traço. A espessura também varia levemente com a velocidade."
-            }
-            ariaLabel="Ajuda da espessura"
-            placement="bottom"
-          />
           {(
             [
               ["thin", labels?.strokeThin || "Fino", "delpi-ui-signature-pad__stroke-swatch--thin"],

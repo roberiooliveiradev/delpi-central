@@ -16,9 +16,7 @@ import {
 import * as ReactDOM from "react-dom";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
-import { resolveCreatePortal } from "../../utils/resolveCreatePortal";
-
-const createPortal = resolveCreatePortal(ReactDOM);
+import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 export type HelpTooltipPlacement = "top" | "bottom";
 
 export type HelpTooltipProps = {
@@ -365,7 +363,12 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible && !isSuppressed() ? createPortal(bubble, document.body) : null}
+      {visible && !isSuppressed()
+        ? (() => {
+            const createPortal = tryResolveCreatePortal(ReactDOM);
+            return createPortal ? createPortal(bubble, document.body) : null;
+          })()
+        : null}
     </span>
   );
 }

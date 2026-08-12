@@ -1,7 +1,6 @@
 import { Keyboard, PenLine, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { HelpTooltip } from "../help/HelpTooltip";
 import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
 import { SignaturePad, type SignaturePadProps } from "./SignaturePad";
 
@@ -147,7 +146,15 @@ export function SignatureCapturePanel({
   return (
     <div className={["delpi-ui-signature-capture", className].filter(Boolean).join(" ")}>
       <div className="delpi-ui-signature-capture__modes-row">
-        <div className="delpi-ui-signature-capture__modes" role="tablist" aria-label="Modo de assinatura">
+        <div
+          className="delpi-ui-signature-capture__modes"
+          role="tablist"
+          aria-label="Modo de assinatura"
+          title={
+            labels?.modesHelp ||
+            "Desenhar: traço manuscrito. Digitar: gera assinatura em fonte script. Upload: PNG ou JPEG da assinatura."
+          }
+        >
           {availableModes.includes("draw") ? (
             <button
               type="button"
@@ -197,14 +204,6 @@ export function SignatureCapturePanel({
             </button>
           ) : null}
         </div>
-        <HelpTooltip
-          content={
-            labels?.modesHelp ||
-            "Desenhar: traço manuscrito. Digitar: gera assinatura em fonte script. Upload: PNG ou JPEG da assinatura."
-          }
-          ariaLabel="Ajuda dos modos de assinatura"
-          placement="bottom"
-        />
       </div>
 
       {mode === "draw" ? (
@@ -259,14 +258,12 @@ export function SignatureCapturePanel({
       {showPreview ? (
         <div className="delpi-ui-signature-capture__preview">
           <div className="delpi-ui-signature-capture__preview-title-row">
-            <p className="delpi-ui-signature-capture__preview-title">
+            <p
+              className="delpi-ui-signature-capture__preview-title"
+              title="A prévia mostra como o nome e o traço aparecem juntos antes de salvar."
+            >
               {labels?.previewTitle || "Prévia"}
             </p>
-            <HelpTooltip
-              content="A prévia mostra como o nome e o traço aparecem juntos antes de salvar."
-              ariaLabel="Ajuda da prévia"
-              placement="bottom"
-            />
           </div>
           <div className="delpi-ui-signature-capture__preview-card">
             {displayName || typedName ? (

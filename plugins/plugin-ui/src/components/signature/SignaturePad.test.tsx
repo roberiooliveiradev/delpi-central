@@ -147,7 +147,7 @@ describe("SignaturePad", () => {
     expect(container.querySelector(".delpi-ui-signature-pad--fullscreen")).toBeTruthy();
   });
 
-  it("entra e sai de tela cheia sem crash (HelpTooltip + createPortal)", () => {
+  it("entra e sai de tela cheia sem crash", () => {
     mockCanvasContext();
     const { container } = render(<SignaturePad />);
     const toggle = screen.getByTestId("signature-pad-fullscreen");
@@ -155,13 +155,6 @@ describe("SignaturePad", () => {
     fireEvent.click(toggle);
     expect(container.querySelector(".delpi-ui-signature-pad--fullscreen")).toBeTruthy();
     expect(document.documentElement.dataset.delpiSignatureFullscreen).toBe("1");
-
-    // Simula hover no help (balão usa createPortal) e saída da tela cheia.
-    const helps = container.querySelectorAll(".delpi-ui-help-tooltip__trigger, button[aria-label^='Ajuda']");
-    if (helps.length > 0) {
-      fireEvent.mouseEnter(helps[0]!);
-      fireEvent.focus(helps[0]!);
-    }
 
     fireEvent.click(toggle);
     expect(container.querySelector(".delpi-ui-signature-pad--fullscreen")).toBeFalsy();

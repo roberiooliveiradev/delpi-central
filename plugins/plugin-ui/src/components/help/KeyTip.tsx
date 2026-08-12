@@ -10,15 +10,13 @@ import {
 import * as ReactDOM from "react-dom";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
-import { resolveCreatePortal } from "../../utils/resolveCreatePortal";
+import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 import { resolveMfePortalScopeClassName } from "../shape/delpiUiPortalTheme";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
 import {
   resolveKeyTipPosition,
   type KeyTipPlacement,
 } from "./keyTipPosition";
-
-const createPortal = resolveCreatePortal(ReactDOM);
 export type KeyTipVariant = "shortcut" | "letter";
 
 export type KeyTipProps = {
@@ -115,8 +113,10 @@ export function KeyTip({
     .filter(Boolean)
     .join(" ");
 
-  const badge = active
-    ? createPortal(
+  const createPortal = tryResolveCreatePortal(ReactDOM);
+  const badge =
+    active && createPortal
+      ? createPortal(
         <div
           className={["delpi-ui-keytip-layer", scopeClass].filter(Boolean).join(" ")}
           style={portalTheme.style}

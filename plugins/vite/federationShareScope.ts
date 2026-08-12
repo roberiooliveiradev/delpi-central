@@ -9,7 +9,7 @@ import React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as LucideReact from "lucide-react";
-import { publishDelpiMfReact } from "./federationReactProxyFix";
+import { publishDelpiMfReact, publishDelpiMfReactDom } from "./federationReactProxyFix";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 /** Amarrado ao bundle — invalida hash quando o patch MF muda. */
@@ -139,6 +139,7 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   publishDelpiMfReact(React);
 
   const reactDomShared = buildReactDomSharedExport();
+  publishDelpiMfReactDom(reactDomShared);
 
   let preservePortalPair =
     hasPortalHostEntry(scope, "react") && hasPortalHostEntry(scope, "react-dom");
@@ -147,8 +148,10 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
     preservePortalPair = false;
   }
 
+  // Sempre reassert react-dom do host com createPortal (remote não pode sobrescrever
+  // com shared quebrado sem portal).
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
-  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", preservePortalPair);
+  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
 }
 
@@ -161,6 +164,7 @@ export function ensureMfeFederationShareScope(): void {
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
   publishDelpiMfReact(React);
+  publishDelpiMfReactDom(reactDomShared);
 }
 
 /** createRoot/hydrateRoot via share scope — mesma instância que importShared('react'). */
@@ -179,4 +183,6 @@ export async function getReactDomClient(): Promise<typeof import("react-dom/clie
 export async function preparePluginUiRemote(): Promise<void> {
   await ensureMfeFederationShareScopeReady();
   await import("@delpi/plugin-ui/styles");
+  // Init do remote pode poluir o share — reasserta react-dom + global createPortal.
+  await ensureMfeFederationShareScopeReady();
 }

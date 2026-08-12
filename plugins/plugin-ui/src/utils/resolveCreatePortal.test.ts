@@ -1,6 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { resolveCreatePortal } from "./resolveCreatePortal";
+import { resolveCreatePortal, tryResolveCreatePortal } from "./resolveCreatePortal";
+
+afterEach(() => {
+  delete (globalThis as Record<string, unknown>).__DELPI_MF_REACT_DOM__;
+});
 
 describe("resolveCreatePortal", () => {
   it("usa createPortal nomeado quando existe", () => {
@@ -13,15 +17,17 @@ describe("resolveCreatePortal", () => {
     expect(resolveCreatePortal({ default: { createPortal } })).toBe(createPortal);
   });
 
-  it("prefere named sobre default", () => {
-    const named = vi.fn();
-    const nested = vi.fn();
-    expect(resolveCreatePortal({ createPortal: named, default: { createPortal: nested } })).toBe(
-      named,
-    );
+  it("usa global __DELPI_MF_REACT_DOM__ semeado pelo host", () => {
+    const createPortal = vi.fn();
+    (globalThis as Record<string, unknown>).__DELPI_MF_REACT_DOM__ = { createPortal };
+    expect(tryResolveCreatePortal({ useRef: () => null })).toBe(createPortal);
   });
 
-  it("falha com mensagem clara se React foi registrado no lugar de react-dom", () => {
+  it("tryResolve retorna null em vez de lançar (não derruba a página)", () => {
+    expect(tryResolveCreatePortal({ useRef: () => null })).toBeNull();
+  });
+
+  it("resolveCreatePortal falha com mensagem clara se React no lugar de react-dom", () => {
     expect(() => resolveCreatePortal({ useRef: () => null, useMemo: () => null })).toThrow(
       /createPortal indisponível/,
     );

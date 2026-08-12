@@ -30,6 +30,9 @@ type VitePlugin = {
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
+/** Instância canônica de react-dom (createPortal) — host semeia antes do remote. */
+export const DELPI_MF_REACT_DOM_GLOBAL = "__DELPI_MF_REACT_DOM__";
+
 /**
  * React canônico para MF: exige hooks usados em runtime pelos chunks remotos.
  *
@@ -68,6 +71,30 @@ export function publishDelpiMfReact(react: unknown): void {
   if (isUsableReact(g[DELPI_MF_REACT_GLOBAL])) return;
   if (isUsableReact(react)) {
     g[DELPI_MF_REACT_GLOBAL] = react;
+  }
+}
+
+function extractCreatePortal(mod: unknown): ((...args: unknown[]) => unknown) | null {
+  if (!mod || typeof mod !== "object") return null;
+  const record = mod as {
+    createPortal?: unknown;
+    default?: { createPortal?: unknown };
+  };
+  for (const candidate of [record.createPortal, record.default?.createPortal]) {
+    if (typeof candidate === "function") {
+      return candidate as (...args: unknown[]) => unknown;
+    }
+  }
+  return null;
+}
+
+/** Publica react-dom com createPortal — sobrescreve se o share atual não tiver portal. */
+export function publishDelpiMfReactDom(reactDom: unknown): void {
+  const g = globalThis as Record<string, unknown>;
+  const existing = g[DELPI_MF_REACT_DOM_GLOBAL];
+  if (extractCreatePortal(existing)) return;
+  if (extractCreatePortal(reactDom)) {
+    g[DELPI_MF_REACT_DOM_GLOBAL] = reactDom;
   }
 }
 
