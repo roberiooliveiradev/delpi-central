@@ -79,6 +79,7 @@ function AppRoutes({
       showWorklist={canViewWorklist}
       showAnalytics={canViewAnalytics}
       showCustomers={showCustomers}
+      showProposals={canViewProposals}
       scopeLabel={scopeLabel}
     >
       {view === "home" ? (

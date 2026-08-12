@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
   BriefcaseBusiness,
@@ -12,6 +12,12 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
+import {
+  collectSearchHits,
+  findHubRouteById,
+  HUB_CONTENT,
+  resolveHubSections,
+} from "../content/pluginRouteCatalog";
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
 import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
@@ -19,6 +25,7 @@ import { navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
   CommercialActionButton,
+  CommercialCommandPalette,
   CommercialPageHero,
   CommercialScopeChipBar,
   CommercialStatusBadge,
@@ -34,6 +41,7 @@ type PluginShellProps = {
   showWorklist?: boolean;
   showAnalytics?: boolean;
   showCustomers?: boolean;
+  showProposals?: boolean;
   scopeLabel?: string;
   children: ReactNode;
 };
@@ -63,6 +71,13 @@ function greetingForNow(date = new Date()): string {
   return "Boa noite";
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
 export function PluginShell({
   view,
   basePath,
@@ -70,11 +85,14 @@ export function PluginShell({
   showWorklist = false,
   showAnalytics = false,
   showCustomers = false,
+  showProposals = false,
   scopeLabel,
   children,
 }: PluginShellProps) {
   const [myTasksBadge, setMyTasksBadge] = useState(0);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
   const homeMetrics = useHomeHeroMetricsOptional()?.metrics;
 
   useEffect(() => {
@@ -104,6 +122,19 @@ export function PluginShell({
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isPaletteChord =
+        (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
+      if (!isPaletteChord) return;
+      if (isEditableTarget(event.target) && !paletteOpen) return;
+      event.preventDefault();
+      setPaletteOpen((open) => !open);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paletteOpen]);
 
   const items = resolveShellNavItems({
     analytics: showAnalytics,
@@ -159,6 +190,38 @@ export function PluginShell({
 
   const contextualCta = homeMetrics?.ready ? homeMetrics.contextualCta : null;
 
+  const catalogCaps = useMemo(
+    () => ({
+      analytics: showAnalytics,
+      worklist: showWorklist,
+      proposals: showProposals,
+      customers: showCustomers,
+      admin: showAdmin,
+    }),
+    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+  );
+
+  const paletteSections = useMemo(
+    () => resolveHubSections(catalogCaps),
+    [catalogCaps],
+  );
+
+  const paletteHits = useMemo(
+    () => collectSearchHits(paletteSections, paletteQuery, 8),
+    [paletteQuery, paletteSections],
+  );
+
+  const onSelectPaletteHit = useCallback(
+    (routeId: string) => {
+      const route = findHubRouteById(paletteSections, routeId);
+      if (!route) return;
+      navigatePluginView(route.viewId, { basePath, search: route.search });
+      setPaletteOpen(false);
+      setPaletteQuery("");
+    },
+    [basePath, paletteSections],
+  );
+
   return (
     <div className="dashboard-commercial dashboard-page">
       <div className="cm-page-stack">
@@ -212,8 +275,7 @@ export function PluginShell({
             title: NAV_HELP[item.id]
               ? `${item.label}. ${NAV_HELP[item.id]}`
               : item.label,
-            onSelect: () =>
-              navigatePluginView(item.id, { basePath }),
+            onSelect: () => navigatePluginView(item.id, { basePath }),
           }))}
           actions={
             scopeLabel ? (
@@ -235,6 +297,27 @@ export function PluginShell({
           {children}
         </CommercialViewTransition>
       </div>
+
+      <CommercialCommandPalette
+        open={paletteOpen}
+        onClose={() => {
+          setPaletteOpen(false);
+          setPaletteQuery("");
+        }}
+        title={HUB_CONTENT.palette.title}
+        value={paletteQuery}
+        onChange={setPaletteQuery}
+        hits={paletteHits.map((hit) => ({
+          id: hit.id,
+          label: hit.label,
+          groupLabel: hit.groupLabel,
+        }))}
+        onSelectHit={onSelectPaletteHit}
+        placeholder={HUB_CONTENT.palette.placeholder}
+        emptyHitsLabel={HUB_CONTENT.palette.empty}
+        closeAriaLabel={HUB_CONTENT.palette.closeAriaLabel}
+        aria-label={CM_HELP.home.palette}
+      />
     </div>
   );
 }

@@ -60,4 +60,11 @@ describe("home hub stack", () => {
     assert.match(ui, /CommercialCatalogSearchBar/);
     assert.match(ui, /CommercialCommandPalette/);
   });
+
+  it("PluginShell abre CommandPalette com Ctrl/Cmd+K", () => {
+    const shell = readSrc("app/PluginShell.tsx");
+    assert.match(shell, /CommercialCommandPalette/);
+    assert.match(shell, /metaKey \|\| event\.ctrlKey/);
+    assert.match(shell, /HUB_CONTENT\.palette/);
+  });
 });
