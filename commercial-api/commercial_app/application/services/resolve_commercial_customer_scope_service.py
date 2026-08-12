@@ -37,6 +37,15 @@ class CommercialCustomerScope:
             return False
         return key in self.allowed_customers
 
+    def for_open_orders(self) -> CommercialCustomerScope:
+        """Pedidos em aberto: sem vínculo de carteira → consolidado (todos os clientes)."""
+        if self.empty_portfolio and not self.portfolio_id:
+            return CommercialCustomerScope(
+                unrestricted=True,
+                allowed_customers=None,
+            )
+        return self
+
 
 class ResolveCommercialCustomerScopeService:
     """

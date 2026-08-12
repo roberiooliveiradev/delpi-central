@@ -26,6 +26,18 @@ class PortfolioScope:
 
     message: str | None = None
 
+    def for_open_orders(self) -> PortfolioScope:
+        """Pedidos em aberto: sem vínculo de carteira → consolidado (todos os clientes)."""
+        if self.empty_portfolio and not self.seller_id:
+            return PortfolioScope(
+                unrestricted=True,
+                seller_id=None,
+                allowed_customers=None,
+                empty_portfolio=False,
+                message=None,
+            )
+        return self
+
 
 _EMPTY_LINK_MESSAGE = (
     "Nenhuma carteira de clientes cadastrada para o seu usuário. "

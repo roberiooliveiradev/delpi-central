@@ -39,7 +39,7 @@ def _open_orders_scope(request: Request, *, portfolio_id: str | None):
         user_id=user_id,
         unrestricted=unrestricted,
         portfolio_id=portfolio_id,
-    )
+    ).for_open_orders()
 
 
 @router.get("/", operation_id="list_commercial_open_orders")
@@ -58,9 +58,6 @@ def list_commercial_open_orders(
     try:
         pid = (portfolio_id or seller_id or "").strip() or None
         scope = _open_orders_scope(request, portfolio_id=pid)
-        if scope.empty_portfolio:
-            data = FilterOpenOrdersByScopeService().apply(None, scope)
-            return ok(data, message="Pedidos de venda em aberto carregados.")
         # api-delpi: sem seller_id — commercial filtra no BFF (opção a do plano).
         payload = build_delpi_commercial_gateway().list_open_orders()
         raw = payload.get("data", payload) if isinstance(payload, dict) else {}

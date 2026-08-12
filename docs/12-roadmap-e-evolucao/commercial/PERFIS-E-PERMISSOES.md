@@ -54,7 +54,7 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 - `is_admin` no `/seller-portfolios/me` = **apenas** `commercial.seller-portfolios.manage`.
 - **Admin (`seller-portfolios.manage`):** lista full-page, detalhe, org, membros, clientes, transferir, inativar/excluir.
 - **Gestor (`accounts.team.view` sem `manage`):** vê **todas** as carteiras ativas nos filtros das bancadas; **não** acessa `/seller-portfolios` (nav oculta / 404).
-- **Operacional sem membership:** Meus pedidos com carteira vazia; **Minha Carteira** oculta / 404.
+- **Operacional sem membership:** **Pedidos em aberto** vê consolidado (todos os clientes); **Minha Carteira** / Conta detalhe ainda exigem vínculo ou team/manage para gates de NF/avatar.
 - **Operacional com membership:** só a(s) sua(s) carteira(s); chip Escopo = identidade.
 - **Directory picker (criar carteira / adicionar membro):** só usuários com acesso ao portal (`app=commercial` no diretório).
 

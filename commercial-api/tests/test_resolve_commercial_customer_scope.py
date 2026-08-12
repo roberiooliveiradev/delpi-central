@@ -108,3 +108,25 @@ def test_ensure_allows_raises_outside_portfolio() -> None:
         assert False, "expected LookupError"
     except LookupError as exc:
         assert "carteira" in str(exc).lower()
+
+
+def test_open_orders_without_portfolio_becomes_unrestricted() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = []
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.execute(user_id="u1", unrestricted=False)
+    assert scope.empty_portfolio is True
+    open_orders = scope.for_open_orders()
+    assert open_orders.unrestricted is True
+    assert open_orders.empty_portfolio is False
+    assert open_orders.allows("999", "01")
+
+
+def test_open_orders_keeps_membership_filter() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [_portfolio()]
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.execute(user_id="u1", unrestricted=False).for_open_orders()
+    assert not scope.unrestricted
+    assert scope.allows("100", "01")
+    assert not scope.allows("999", "01")

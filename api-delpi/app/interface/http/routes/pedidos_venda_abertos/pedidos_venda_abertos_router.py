@@ -142,6 +142,11 @@ def _resolve_scope(seller_id: Optional[str] = None):
     )
 
 
+def _resolve_open_orders_scope(seller_id: Optional[str] = None):
+    """Pedidos em aberto: sem carteira → vê todos os clientes (consolidado)."""
+    return _resolve_scope(seller_id).for_open_orders()
+
+
 @router.get(
     "/",
     **OpenApiAgentMetadataBuilder.from_contract(
@@ -162,7 +167,7 @@ def list_pedidos_venda_abertos_route(
                 "Filtro por vendedor disponível apenas para equipe ou gerentes.",
                 status_code=403,
             )
-        scope = _resolve_scope(seller_id)
+        scope = _resolve_open_orders_scope(seller_id)
         use_case = build_list_pedidos_venda_abertos_use_case()
         result = use_case.execute(scope)
 
