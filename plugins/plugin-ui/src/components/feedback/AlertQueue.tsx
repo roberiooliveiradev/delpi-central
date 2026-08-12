@@ -9,6 +9,7 @@ export type AlertQueueItem = {
   title: ReactNode;
   description?: ReactNode;
   tone?: AlertQueueTone;
+  leadingIcon?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
 };
@@ -17,6 +18,7 @@ export type AlertQueueClassNames = {
   root: string;
   list: string;
   item: string;
+  icon: string;
   body: string;
   title: string;
   description: string;
@@ -37,6 +39,7 @@ export function alertQueueBemClasses(prefix: string): AlertQueueClassNames {
     root: delpiUiClass(`${prefix}-alert-queue`, "delpi-ui-alert-queue"),
     list: delpiUiClass(`${prefix}-alert-queue__list`, "delpi-ui-alert-queue__list"),
     item: delpiUiClass(`${prefix}-alert-queue__item`, "delpi-ui-alert-queue__item"),
+    icon: delpiUiClass(`${prefix}-alert-queue__icon`, "delpi-ui-alert-queue__icon"),
     body: delpiUiClass(`${prefix}-alert-queue__body`, "delpi-ui-alert-queue__body"),
     title: delpiUiClass(`${prefix}-alert-queue__title`, "delpi-ui-alert-queue__title"),
     description: delpiUiClass(
@@ -73,6 +76,11 @@ export function AlertQueue({
           const itemClass = withBemModifier(classNames.item, tone);
           return (
             <li key={item.id} className={itemClass}>
+              {item.leadingIcon ? (
+                <span className={classNames.icon} aria-hidden="true">
+                  {item.leadingIcon}
+                </span>
+              ) : null}
               <div className={classNames.body}>
                 <div className={classNames.title}>{item.title}</div>
                 {item.description ? (

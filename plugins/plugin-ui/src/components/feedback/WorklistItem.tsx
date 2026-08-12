@@ -6,6 +6,7 @@ export type WorklistItemTone = "neutral" | "info" | "warning" | "danger" | "succ
 
 export type WorklistItemClassNames = {
   root: string;
+  icon: string;
   body: string;
   title: string;
   meta: string;
@@ -20,6 +21,7 @@ export type WorklistItemProps = {
   /** Nota / observação (padrão CRM: notes visíveis na fila). */
   detail?: ReactNode;
   tone?: WorklistItemTone;
+  leadingIcon?: ReactNode;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   secondaryActionLabel?: string;
@@ -37,6 +39,7 @@ export type WorklistItemProps = {
 export function worklistItemBemClasses(prefix: string): WorklistItemClassNames {
   return {
     root: delpiUiClass(`${prefix}-worklist-item`, "delpi-ui-worklist-item"),
+    icon: delpiUiClass(`${prefix}-worklist-item__icon`, "delpi-ui-worklist-item__icon"),
     body: delpiUiClass(`${prefix}-worklist-item__body`, "delpi-ui-worklist-item__body"),
     title: delpiUiClass(`${prefix}-worklist-item__title`, "delpi-ui-worklist-item__title"),
     meta: delpiUiClass(`${prefix}-worklist-item__meta`, "delpi-ui-worklist-item__meta"),
@@ -51,6 +54,7 @@ export function WorklistItem({
   meta,
   detail,
   tone = "neutral",
+  leadingIcon,
   primaryActionLabel,
   onPrimaryAction,
   secondaryActionLabel,
@@ -76,6 +80,11 @@ export function WorklistItem({
 
   return (
     <div className={rootClass}>
+      {leadingIcon ? (
+        <span className={classNames.icon} aria-hidden="true">
+          {leadingIcon}
+        </span>
+      ) : null}
       <div className={classNames.body}>
         <div className={classNames.title}>{title}</div>
         {meta ? <div className={classNames.meta}>{meta}</div> : null}
