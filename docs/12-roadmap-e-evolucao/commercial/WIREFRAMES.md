@@ -808,6 +808,8 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Minha Carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
 | Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/administration/seller-portfolios` (+ alias legado) |
+| Avatar | WF-04R + WF-05 | commercial-api |
+| URL interna código+loja | WF-04R | idem |
 | Home / Visão geral / Administração | WF-01R-L / WF-OV / WF-ADM-* | `/` · `/overview` · `/administration/*` |
 | Minhas tarefas | WF-06R | `/my-tasks` (alias `/my-day`) |
 
