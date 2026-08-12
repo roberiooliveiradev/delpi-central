@@ -957,6 +957,22 @@ services:
     networks:
       - delpi-network
 
+  materiais-terceiros:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: materiais-terceiros/Dockerfile
+      target: production
+
+    container_name: delpi-materiais-terceiros
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     <<: *plugin-ui-federated
     build:

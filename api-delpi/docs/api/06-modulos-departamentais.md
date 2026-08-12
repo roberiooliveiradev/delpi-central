@@ -204,6 +204,10 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | KPIs da análise consumo × ESTSEG sugerido (12 meses). |
 | GET | `/supplies/safety-stock/consumption-analysis/items` | Lista paginada da simulação de ESTSEG por consumo SD3 + lead time `BZ_PE`. |
 | GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | Detalhe com série mensal, comparativo anual (3 anos) e memória de cálculo. |
+| GET | `/supplies/third-party-materials/shipments` | Remessas paginadas de materiais de terceiros (SB6). Ver [materiais-terceiros.md](./materiais-terceiros.md). |
+| GET | `/supplies/third-party-materials/shipments/{shipment_recno}` | Detalhe da remessa + retornos. |
+| GET | `/supplies/third-party-materials/summary` | KPIs de remessas únicas (abertas, parciais, saldo pendente). |
+| GET | `/supplies/third-party-materials/returns/export` | Exportação CSV/XLSX (1 linha por retorno; saldo se repete). |
 
 **Performance (`/supplies/otd`):**
 

@@ -201,6 +201,14 @@ class Settings:
     )
 
     # ==========================
+    # Materiais de terceiros (SB6 / VW_PD3_BENEF_RETORNOS)
+    # ==========================
+    THIRD_PARTY_MATERIALS_IGNORED_PRODUCTS: str = _get_env(
+        "THIRD_PARTY_MATERIALS_IGNORED_PRODUCTS",
+        default="99999999",
+    )
+
+    # ==========================
     # Cache compartilhado (LMP / estoque)
     # ==========================
     QUERY_CACHE_BACKEND: str = _get_env("QUERY_CACHE_BACKEND", default="memory")

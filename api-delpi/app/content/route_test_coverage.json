@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-07",
-  "baselineOperationCount": 613,
-  "operationCount": 613,
-  "coveredCount": 541,
+  "generatedAt": "2026-08-11",
+  "baselineOperationCount": 617,
+  "operationCount": 617,
+  "coveredCount": 545,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -182,8 +182,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 19,
-      "covered": 19,
+      "total": 23,
+      "covered": 23,
       "gap": 0,
       "exempt": 0
     },
@@ -5539,6 +5539,42 @@
       "path": "/supplies/stock-value",
       "module": "supplies",
       "entity": "supplies_stock_value",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/returns/export",
+      "module": "supplies",
+      "entity": "third_party_material_return_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments",
+      "module": "supplies",
+      "entity": "third_party_material_shipment",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "module": "supplies",
+      "entity": "third_party_material_shipment",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/summary",
+      "module": "supplies",
+      "entity": "third_party_material_summary",
       "shape": "scalar",
       "status": "covered"
     },

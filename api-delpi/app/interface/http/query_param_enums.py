@@ -665,6 +665,18 @@ INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES = (
 )
 
 
+THIRD_PARTY_MATERIALS_STATUS_VALUES = ("completed", "partial", "no_return")
+
+
+def THIRD_PARTY_MATERIALS_STATUS_QUERY():
+    return Query(
+        None,
+        description="Shipment status: completed, partial or no_return.",
+        pattern=_enum_pattern(THIRD_PARTY_MATERIALS_STATUS_VALUES),
+        enum=list(THIRD_PARTY_MATERIALS_STATUS_VALUES),
+    )
+
+
 def INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY():
     return Query(
         "all",

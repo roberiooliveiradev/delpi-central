@@ -99,6 +99,13 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_safety_stock_consumption_analysis_detail": (
         "detalhe da análise de consumo com série mensal e memória de cálculo"
     ),
+    "third_party_material_shipment": (
+        "remessas de materiais de terceiros para beneficiamento"
+    ),
+    "third_party_material_summary": "resumo de materiais de terceiros",
+    "third_party_material_return_export": (
+        "exportação de retornos de materiais de terceiros"
+    ),
 }
 
 _SHAPE_SUMMARY_PREFIX: dict[str, str] = {

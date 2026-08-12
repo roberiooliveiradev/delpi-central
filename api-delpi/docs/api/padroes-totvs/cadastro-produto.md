@@ -14,6 +14,7 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 | `B1_CUSTD` | Custo padrão | Fallback de valoração quando `B2_CM1` do almoxarifado falta — [armazem-custo.md](./armazem-custo.md) |
 | `B1_TPMAT` | Produto de terceiro (SX3) | `1` = Não · `2` = Sim |
 | `B1_TIPO` | Tipo de produto | `MP` matéria-prima · `PA` acabado · `PI` intermediário — constante `PRODUCT_TYPE_RAW_MATERIAL` em `protheus_product_types.py` |
+| `B1_REFEREN` | Ref. Cliente | Código do produto no cliente (`customer_reference` na API). Não confundir com SA1. Filtro: prefixo `LIKE` + `Latin1_General_CI_AI` |
 
 ---
 
@@ -52,3 +53,4 @@ Constante de domínio (refugos): `THIRD_PARTY_PRODUCT_TPMAT = "2"` em `refugos_s
 - Refugos: [scrap-monitoring.md](../scrap-monitoring.md)
 - Custo: [armazem-custo.md](./armazem-custo.md)
 - Produtos (API geral): [02-produtos.md](../02-produtos.md)
+- Poder de terceiros na `SB6` (beneficiamento, **não** é `B1_TPMAT`): [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md)

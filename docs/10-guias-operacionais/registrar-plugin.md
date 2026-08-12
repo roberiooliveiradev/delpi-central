@@ -41,6 +41,7 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 | Central de Agendamento | `plugins/central-agendamento/central-agendamento.manifest.json` |
 | Cultura DELPI | `plugins/cultura-delpi/cultura-delpi.manifest.json` |
 | Mural de Acessos | `plugins/mural-acessos/mural-acessos.manifest.json` |
+| Materiais de Terceiros | `plugins/materiais-terceiros/materiais-terceiros.manifest.json` |
 | API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
 
 Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  

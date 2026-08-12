@@ -103,6 +103,7 @@ append_kv "TM_RUN_MIGRATIONS_ON_STARTUP" "true"
 append_kv "SUPPLIES_IDD_SHEET_ID" "1wMykPetGruyoxfsrsW_K1ugYmCFx-DaiyQYVorSS9Kc"
 append_kv "SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID" "770318923"
 append_kv "DELPI_DATA_HOST_DIR" "/var/lib/delpi"
+append_kv "THIRD_PARTY_MATERIALS_IGNORED_PRODUCTS" "99999999"
 
 echo
 echo "Concluído. Recrie os serviços que leem .env:"
