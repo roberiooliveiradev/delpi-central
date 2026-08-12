@@ -34,6 +34,15 @@ describe("administration hub (Painel + SubNav + Carteiras)", () => {
     assert.match(source, /openPortfolios/);
   });
 
+  it("Membros monta roster a partir de members[] e load-summary", () => {
+    const source = readFileSync(join(feature, "AdministrationMembersPage.tsx"), "utf8");
+    assert.match(source, /buildAdministrationMembersRoster/);
+    assert.match(source, /getSellerPortfoliosLoadSummary/);
+    assert.match(source, /listSellerPortfolios/);
+    assert.match(source, /active="members"/);
+    assert.match(source, /CommercialDataTableSection/);
+  });
+
   it("App roteia Painel, Carteiras e Membros", () => {
     const app = readFileSync(join(root, "src/App.tsx"), "utf8");
     assert.match(app, /AdministrationHomePage/);
