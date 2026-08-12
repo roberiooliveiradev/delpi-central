@@ -1,6 +1,6 @@
 # Portal Comercial — documentação
 
-> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **E1–E6 carteiras** (multi-membro + mercado) entregue — ver [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md)  
+> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **E1–E6 carteiras** (multi-membro + mercado) entregue — ver [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md) · **Refino visual + IA** (Início launcher, Overview BI, C16/C17) entregue — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
@@ -51,6 +51,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | F2c (ocultar PVA + redirects) | **Adiado** — só após Comercial ≥ PVA + pedido; checklist [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
 | **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 (sem implementação neste ciclo) |
 | Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Entregue** — universo = clientes com pedido aberto; `filter=uncovered` + métricas no load-summary |
+| **Refino visual + IA** — Início apps\|eventos, Overview BI, filtro carteira, Equipe→Admin, Conta Opp, CM_HELP, C17 row→detalhe | **Entregue** — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) § Homologação |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 

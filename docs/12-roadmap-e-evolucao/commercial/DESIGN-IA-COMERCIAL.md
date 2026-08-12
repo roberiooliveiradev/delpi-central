@@ -91,20 +91,27 @@ Fonte única: `plugins/commercial/src/content/helpTooltips.ts` (`CM_HELP`). Page
 | `infra-sequential-container-startup` | Rebuild remote → mfe |
 | `test-and-commit` | Cada subetapa: test → commit → push |
 
-## Componentes kit
+## Componentes kit (reconciliado — wave refino)
 
-| Componente | Uso |
-|------------|-----|
-| `PageHero` | Início (shell), Overview, listas, Admin, deep pages |
-| `TopBar` + `UnderlineNav` | Shell / Admin / Conta |
-| `NavigationCard` (+ `density=featured`) | Launcher Início |
-| `ViewTransition` | Troca de telas |
-| `SectionCard` / `MetricKpiCard` | Seções / KPIs |
-| `AlertQueue` / worklist items | Eventos Início + Minhas tarefas |
-| `EmptyState` + `ActionButton` | Empties |
-| `DataTable` (`onRowClick`) | Listagens → detalhe |
-| `HelpTooltip` | Helps |
-| `OrgMembershipFlow` | Organização Carteiras |
+Bindings via `plugins/commercial/src/app/commercialUi.ts` (`Commercial*` / `createDashboard*`). **Zero** CSS `.delpi-ui-*` no MFE.
+
+| Área | Kit | Binding | Estado |
+|------|-----|---------|--------|
+| Hero / Path / Subnav | PageHero, PagePath, UnderlineNav | CommercialPageHero/Path/UnderlineNav | Usar |
+| Top / Escopo | TopBar, ScopeChipBar, StatusBadge | Commercial* | Usar |
+| Filtros | FiltersKit, Date/Select/MultiSelect | cmFiltersKit, Commercial*Field | Usar |
+| Carteira (filtro) | SelectField | SellerScopeFilter | Usar |
+| Launcher card | NavigationCard `density=featured` | CommercialNavigationCard | Usar |
+| Ações | ActionButton | CommercialActionButton | Usar |
+| KPI | MetricKpiCard | CommercialMetricCard (`onClick` opcional) | Usar |
+| Seção / Empty / Loading | SectionCard, EmptyState, LoadingActivityCard | Commercial* | Usar |
+| Tabela / Badge | DataTable (`onRowClick`, `rowClick` stop/propagate), StatusBadge | CommercialDataTable, CommercialStatusBadge | Usar |
+| Alertas / Worklist | AlertQueue, WorklistItem | Commercial* | Usar |
+| Help | HelpTooltip + `CM_HELP` | — | Usar |
+| Charts | Recharts + EmptyState | SectionCard | MFE-only |
+| Layout Início 2 colunas | — | CSS `cm-home-*` | MFE-only |
+
+**Não criar** componentes novos no kit nesta wave. `components/KpiCard.tsx` reexporta `CommercialKpiCard` (deprecated).
 
 ## UX
 
