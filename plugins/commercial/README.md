@@ -184,9 +184,15 @@ Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na 
 
 **E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) fica `available: false` até existir universo de clientes. Chip «Com overlapping» na lista; ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
 
+**E6.2 carga:** `GET /seller-portfolios/load-summary` — `customer_count` / `member_count` por carteira e por pessoa; `open_value` / `attention_count` ainda stub (`—`) até agregação TOTVS.
+
 **E6.3 histórico:** `GET /seller-portfolios/{id}/audit` (manage ou `audit.view`) — timeline paginada do `audit_log` (membros, responsável, transferência, ativar/inativar) no detalhe da carteira.
 
 **E6.4 compartilhado:** `POST /seller-portfolios/customer-coverage` (accounts.view) — batch por códigos no escopo; Minha Carteira / Conta exibem badge «Compartilhado» + «Também em: …».
+
+**E6.5 bulk + export:** `POST /seller-portfolios/transfer-customers-bulk` — wizard origem→clientes→destino; botão **Exportar matriz** (Excel client-side a partir do load-summary).
+
+**E7 (backlog, não implementar aqui):** mapa territorial, AI carve, rotate de leads, inbox e-mail — ver [UX-E-TASKS-EVOLUTION.md § 6](../../docs/12-roadmap-e-evolucao/commercial/UX-E-TASKS-EVOLUTION.md).
 
 `DELETE /seller-portfolios/{id}` **inativa** (soft). Excluir de verdade é
 `DELETE /seller-portfolios/{id}/permanent` (`purge_seller_portfolio`): apaga a

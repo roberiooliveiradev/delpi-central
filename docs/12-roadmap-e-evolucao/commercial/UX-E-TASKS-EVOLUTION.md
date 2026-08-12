@@ -153,7 +153,7 @@ Deep link: `?bucket=done`. Filtro por período (hoje / 7 dias) permanece backlog
 
 ## 4. Fora de escopo (explícito)
 
-- Substituir Meu dia por inbox multi-canal (e-mail/WhatsApp nativo).
+- Substituir Meu dia por inbox multi-canal (e-mail/WhatsApp nativo) — ver também § 6 (E7).
 - Analytics de produtividade de tarefas no Início (permanece deep link BI).
 - Anexos em `/tmp` ou sem volume — **proibido**.
 
@@ -168,3 +168,23 @@ Deep link: `?bucket=done`. Filtro por período (hoje / 7 dias) permanece backlog
 | P2 Anexos | Upload → metadado + binário no volume; download após recreate do container |
 
 Homologação visual continua em [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md).
+
+---
+
+## 6. Backlog futuro — carteiras E7 (fora do ciclo E1–E6)
+
+Itens de mercado **não** entregues com o MVP multi-membro / E6. Registrados aqui para priorização futura; **não** iniciar implementação sem plano dedicado.
+
+| ID | Tema | Problema de produto | Dependências / notas |
+|----|------|---------------------|----------------------|
+| E7.1 | Mapa de territórios | Visualizar clientes/carteiras em mapa; desenhar polígonos | Geo no cadastro TOTVS/SA1; lib de mapa no MFE; RBAC manage |
+| E7.2 | AI carve | Sugerir redistribuição equilibrando carga/região | Precisa E6.2 com valor TOTVS real + política de aceite humano |
+| E7.3 | Rotate de leads | Round-robin / rotação periódica de contas novas | Regras Comercial + audit; não misturar com owner estático |
+| E7.4 | Inbox e-mail compartilhado | Caixa da carteira (não só tarefas Meu dia) | Integração e-mail; volume persistente; ≠ WhatsApp nativo |
+
+Wireframes placeholder: [WIREFRAMES.md](./WIREFRAMES.md) § WF-05R «E7 — backlog futuro».
+
+**Dívida técnica pós-E6 (pode vir antes do E7):**
+
+- Gap «sem cobertura» (`coverage-audit.gap`) — exige universo de clientes canônico.
+- `open_value` / `attention_count` no `load-summary` — exige agregação barata de pedidos abertos por escopo.

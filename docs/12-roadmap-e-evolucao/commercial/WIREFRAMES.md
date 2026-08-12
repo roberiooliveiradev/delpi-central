@@ -555,14 +555,32 @@ Filtro de página em Meus pedidos / Minha Carteira:
 
 Chip Escopo no shell = **só identidade** (ver WF-00).
 
-### Futuro (não implementado)
+### Mercado E6 (entregue)
 
 | Item | Nota |
 |------|------|
-| **E6.2** — KPIs de carga (clientes/membros; TOTVS stub) | Entregue — `load-summary` + lista/org |
-| **E6.4** — Badge «Compartilhado» + «Também em» na Conta / Minha Carteira | Entregue — `POST /customer-coverage` |
-| **E6.5** — Transferência em massa + export matriz Excel | Entregue — wizard + `transfer-customers-bulk` + export client-side |
-| **E7** — mapa territorial, carve/IA de carteira, rotação, inbox compartilhado | Futuro; não wireframear como entregue |
+| **E6.1** — Overlapping | Chip «Com overlapping»; aviso soft ao vincular; gap TOTVS ainda indisponível |
+| **E6.2** — KPIs de carga | `load-summary` (clientes/membros); valor/atenção TOTVS = «—» |
+| **E6.3** — Timeline | Histórico no detalhe via `GET …/audit` |
+| **E6.4** — Badge Conta | «Compartilhado» + «Também em» (`POST /customer-coverage`) |
+| **E6.5** — Bulk + Excel | Wizard transfer + export matriz org |
+
+### E7 — backlog futuro (não implementar neste ciclo)
+
+Fora do MVP E1–E6. Detalhe em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6.
+
+```text
+WF-05R-MAP (futuro)   Mapa/território · polígonos · carve assistido
+WF-05R-ROT (futuro)   Rotação automática de leads / round-robin
+WF-06-INBOX (futuro)  Inbox compartilhado (e-mail) ≠ Meu dia atual
+```
+
+| Item | Intenção | Não confundir com |
+|------|----------|-------------------|
+| Mapa de territórios | Visualizar/editar cobertura geográfica | Org Lista\|Organização (E4.3) |
+| AI carve | Sugestão de redistribuição de clientes | Transfer bulk manual (E6.5) |
+| Rotate de leads | Atribuição automática periódica | Owner/membros estáticos (E1) |
+| Inbox e-mail | Caixa compartilhada da carteira | Meu dia / worklist (Wave G+) |
 
 ---
 

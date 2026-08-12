@@ -39,7 +39,8 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 |---------|--------|
 | `commercial-api/` (health, JWT, portfolios, avatars, proxy search/enrich) | **Entregue** |
 | `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
-| **E5.1 multi-membro** — `V005`, lista full-page, detalhe `/seller-portfolios/:id`, org Lista\|Organização, escopo chip identidade + filtro «Todas» | **Entregue** (MVP) — [WIREFRAMES.md](./WIREFRAMES.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) |
+| **E5 multi-membro** — `V005`, lista full-page, detalhe `/seller-portfolios/:id`, org, escopo | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md) |
+| **E6 mercado** — overlapping, carga, timeline, badge Conta, bulk+Excel | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [API-ROUTES.md](./API-ROUTES.md) |
 | Wave G+ — Meu dia CRM / Conta follow-up / Home gestão / UnderlineNav | **Entregue** (P0+P1; M2 parcial `V003`) |
 | UX polish Home + Meu dia (PageHero, anti-redundância) | **Entregue** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
 | Tasks: observação UI · responsável · anexos | **Backlog** P0–P2 — mesmo doc § 3 |
@@ -48,7 +49,8 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |
 | **Consolidação nativa** (Gestão + ADY + elevar ops) | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
 | F2c (ocultar PVA + redirects) | **Adiado** — só após Comercial ≥ PVA + pedido; checklist [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
-| E6 features de mercado / E7 mapa·carve·rotação·inbox | **Futuro** — nota em [WIREFRAMES.md](./WIREFRAMES.md) |
+| **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 (sem implementação neste ciclo) |
+| Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Backlog técnico** — depende de universo clientes / open-orders barato |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 

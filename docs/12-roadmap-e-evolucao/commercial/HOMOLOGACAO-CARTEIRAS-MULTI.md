@@ -1,6 +1,6 @@
-# Homologação — carteiras multi-membro (MVP E1–E5)
+# Homologação — carteiras multi-membro (E1–E6)
 
-> Smoke pós-`V005` + UI lista/detalhe/org + escopo união.  
+> Smoke pós-`V005` + UI lista/detalhe/org + escopo união + mercado E6.  
 > Docs: [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [DATA-MODEL.md](./DATA-MODEL.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
 ## Pré-requisitos (gate ops)
