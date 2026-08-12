@@ -1,4 +1,4 @@
-import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import {
   ArrowLeftRight,
   BriefcaseBusiness,
@@ -20,12 +20,12 @@ import {
   cmSectionLabels,
   CommercialActionButton,
   CommercialLoadingCard,
+  CommercialMetricCard,
   CommercialPageHero,
   CommercialPagePath,
   CommercialStateBanner,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
-import { KpiCard } from "../../components/KpiCard";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 import type { SellerPortfolio, SellerPortfoliosCoverageAudit } from "../../types/portfolio";
 import { AdministrationSubNav } from "./AdministrationSubNav";
@@ -125,38 +125,38 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
 
       {!loading ? (
         <div className="cm-home-kpi-grid" aria-label="Resumo de carteiras">
-          <KpiCard
-            title={copy.metrics.total}
+          <CommercialMetricCard
+            label={copy.metrics.total}
             value={stats.total.toLocaleString("pt-BR")}
             icon={<BriefcaseBusiness size={22} />}
             onClick={() => openPortfolios()}
           />
-          <KpiCard
-            title={copy.metrics.active}
+          <CommercialMetricCard
+            label={copy.metrics.active}
             value={stats.active.toLocaleString("pt-BR")}
             icon={<UsersRound size={22} />}
             onClick={() => openPortfolios("?filter=active")}
           />
-          <KpiCard
-            title={copy.metrics.inactive}
+          <CommercialMetricCard
+            label={copy.metrics.inactive}
             value={stats.inactive.toLocaleString("pt-BR")}
             icon={<Users size={22} />}
             onClick={() => openPortfolios("?filter=inactive")}
           />
-          <KpiCard
-            title={copy.metrics.customers}
+          <CommercialMetricCard
+            label={copy.metrics.customers}
             value={stats.customers.toLocaleString("pt-BR")}
             icon={<Users size={22} />}
             onClick={() => openPortfolios()}
           />
-          <KpiCard
-            title={copy.metrics.overlapping}
+          <CommercialMetricCard
+            label={copy.metrics.overlapping}
             value={stats.overlappingCustomers.toLocaleString("pt-BR")}
             icon={<UsersRound size={22} />}
             onClick={() => openPortfolios("?filter=overlapping")}
           />
-          <KpiCard
-            title={copy.metrics.uncovered}
+          <CommercialMetricCard
+            label={copy.metrics.uncovered}
             value={
               stats.uncoveredCount === null ? "—" : stats.uncoveredCount.toLocaleString("pt-BR")
             }
@@ -177,10 +177,10 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
             defaultTitle="Nenhuma carteira cadastrada"
             defaultMessage="Cadastre a primeira carteira para começar a cobrir clientes."
           >
-            <ActionButton variant="primary" onClick={() => openPortfolios()}>
+            <CommercialActionButton variant="primary" onClick={() => openPortfolios()}>
               <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
               {copy.panel.newPortfolio}
-            </ActionButton>
+            </CommercialActionButton>
           </EmptyState>
         ) : (
           <div className="cm-portfolios-page__actions">

@@ -1,11 +1,9 @@
-import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { listProposalsDocuments } from "../../api/commercialProposalsApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
@@ -14,6 +12,7 @@ import {
   CommercialTextField,
   CommercialPageHero,
   CommercialActionButton,
+  CommercialDataTable,
 } from "../../app/commercialUi";
 import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
@@ -143,12 +142,10 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
           />
         ) : null}
         {!loading && !error && filtered.length > 0 ? (
-          <DataTable
+          <CommercialDataTable
             rows={filtered}
             columns={columns}
             rowKey={(row) => row.proposta_interna}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
             layout="section"
           />
         ) : null}

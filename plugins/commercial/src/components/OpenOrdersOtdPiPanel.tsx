@@ -1,6 +1,6 @@
-import { SectionHintLabel, StatusBadge } from "@delpi/plugin-ui/index";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 
-import { cmStatusBadgeClassNames } from "../app/commercialUi";
+import { CommercialStatusBadge } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
 import type { ProductionOrderByOpData } from "../types/productionExtras";
 import { formatDisplayDate } from "../utils/dates";
@@ -63,8 +63,7 @@ export function OpenOrdersOtdPiPanel({
             hint={help.otdStatus}
             className="cm-open-orders-detail__otd-pi-kpi-label"
           />
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
+          <CommercialStatusBadge
             label={formatOtdStatusLabel(order.otd_status)}
             variant={otdStatusBadgeVariant(order.otd_status)}
           />
@@ -142,8 +141,7 @@ export function OpenOrdersOtdPiPanel({
                     return (
                       <tr key={opId}>
                         <td>
-                          <StatusBadge
-                            classNames={cmStatusBadgeClassNames}
+                          <CommercialStatusBadge
                             label={formatOtdStatusLabel(row.otd_status)}
                             variant={otdStatusBadgeVariant(row.otd_status)}
                           />

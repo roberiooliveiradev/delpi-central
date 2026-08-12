@@ -73,7 +73,7 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(source, /canManagePortfolios \|\| isAdmin/);
     assert.match(
       source,
-      /canOpenSellerPortfolios \? \(\s*<ActionButton[\s\S]*?Abrir Administração/,
+      /canOpenSellerPortfolios \? \(\s*<CommercialActionButton[\s\S]*?Abrir Administração/,
     );
     assert.match(source, /navigatePluginView\("administration"\)/);
     assert.doesNotMatch(source, /navigatePluginView\("seller_portfolios"\)/);

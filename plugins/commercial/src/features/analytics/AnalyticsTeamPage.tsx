@@ -1,16 +1,16 @@
-import { ActionButton, DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getOpenOrders } from "../../api/openOrdersApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialActionButton,
+  CommercialDataTable,
   CommercialLoadingCard,
-  CommercialTitleWithHelp,
+  CommercialPageHero,
 } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
@@ -125,7 +125,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
       key: "actions",
       header: "",
       render: (row) => (
-        <ActionButton
+        <CommercialActionButton
           variant="ghost"
           onClick={() =>
             navigatePluginView("open_orders", {
@@ -135,7 +135,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
           }
         >
           Pedidos
-        </ActionButton>
+        </CommercialActionButton>
       ),
     },
   ];
@@ -143,21 +143,22 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
   return (
     <section className="cm-page-stack">
       <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.equipe.title} />
-      <header className="cm-page-header-row">
-        <CommercialTitleWithHelp
-          title={ANALYTICS_CONTENT.equipe.title}
-          hint={ANALYTICS_CONTENT.equipe.subtitle}
-        />
-        <ActionButton
-          variant="ghost"
-          onClick={() => {
-            reloadScope();
-            setReloadKey((v) => v + 1);
-          }}
-        >
-          <RefreshCw size={16} aria-hidden="true" /> Atualizar
-        </ActionButton>
-      </header>
+      <CommercialPageHero
+        aria-label={ANALYTICS_CONTENT.equipe.title}
+        title={ANALYTICS_CONTENT.equipe.title}
+        description={ANALYTICS_CONTENT.equipe.subtitle}
+        actions={
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() => {
+              reloadScope();
+              setReloadKey((v) => v + 1);
+            }}
+          >
+            <RefreshCw size={16} aria-hidden="true" /> Atualizar
+          </CommercialActionButton>
+        }
+      />
 
       <SectionCard
         title="Carteiras ativas"
@@ -181,22 +182,20 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
             }
           >
             {canOpenAdmin ? (
-              <ActionButton
+              <CommercialActionButton
                 variant="primary"
                 onClick={() => navigatePluginView("administration", { basePath })}
               >
                 Abrir Administração
-              </ActionButton>
+              </CommercialActionButton>
             ) : null}
           </EmptyState>
         ) : null}
         {!loading && rows.length > 0 ? (
-          <DataTable
+          <CommercialDataTable
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
             layout="section"
           />
         ) : null}

@@ -149,6 +149,25 @@
   gap: 12px;
 }
 
+.dashboard-commercial .cm-metric-card-button {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+}
+
+.dashboard-commercial .cm-metric-card-button:focus-visible {
+  outline: 2px solid var(--cm-accent, #2563eb);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 .dashboard-commercial .cm-overview-kpi-grid {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }

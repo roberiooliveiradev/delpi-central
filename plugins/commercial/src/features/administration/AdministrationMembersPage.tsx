@@ -1,4 +1,4 @@
-import { ActionButton, EmptyState } from "@delpi/plugin-ui/index";
+import { EmptyState } from "@delpi/plugin-ui/index";
 import { BriefcaseBusiness, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -185,13 +185,13 @@ export function AdministrationMembersPage({ basePath }: AdministrationMembersPag
           defaultTitle={copy.members.emptyTitle}
           defaultMessage={copy.members.emptyDescription}
         >
-          <ActionButton
+          <CommercialActionButton
             variant="primary"
             onClick={() => navigatePluginView("administration_portfolios", { basePath })}
           >
             <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />
             {copy.members.openPortfolios}
-          </ActionButton>
+          </CommercialActionButton>
         </EmptyState>
       ) : null}
 

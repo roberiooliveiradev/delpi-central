@@ -1,8 +1,9 @@
 import { useCallback } from "react";
-import { ActionButton, EmptyState, SectionHintLabel } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
 import {
+  CommercialActionButton,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialPagination,
@@ -159,10 +160,10 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
                 Atualizado às {formatUpdatedAt(lastUpdatedAt)}
               </span>
             ) : null}
-            <ActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
+            <CommercialActionButton variant="ghost" onClick={() => reload()} disabled={loading}>
               <RefreshCw size={16} aria-hidden="true" />
               <span>Atualizar</span>
-            </ActionButton>
+            </CommercialActionButton>
           </div>
         }
         highlights={highlights}
@@ -231,9 +232,9 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
       {!loading && error ? (
         <CommercialStateBanner variant="error">
           <p>{error}</p>
-          <ActionButton variant="ghost" onClick={() => reload()}>
+          <CommercialActionButton variant="ghost" onClick={() => reload()}>
             Tentar novamente
-          </ActionButton>
+          </CommercialActionButton>
         </CommercialStateBanner>
       ) : null}
 
@@ -248,12 +249,12 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
           }
         >
           {canOpenSellerPortfolios ? (
-            <ActionButton
+            <CommercialActionButton
               variant="primary"
               onClick={() => navigatePluginView("administration")}
             >
               Abrir Administração
-            </ActionButton>
+            </CommercialActionButton>
           ) : null}
         </EmptyState>
       ) : null}

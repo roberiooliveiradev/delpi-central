@@ -1,9 +1,7 @@
 import {
-  DataTable,
   EmptyState,
   SectionCard,
   SegmentToggle,
-  StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 import { CalendarCheck, CalendarPlus, Flag, RefreshCw } from "lucide-react";
@@ -15,24 +13,23 @@ import {
 } from "../../api/analyticsApi";
 import { fetchOptional, fetchProductStructure } from "../../api/productionExtrasApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
-  cmStatusBadgeClassNames,
   CommercialActivityTimeline,
   CommercialDataRecordCard,
+  CommercialDataTable,
   CommercialDetailFieldGrid,
   CommercialActionButton,
   CommercialLoadingCard,
+  CommercialMetricCard,
   CommercialPageHero,
   CommercialPagePath,
+  CommercialStatusBadge,
   UI_PREFIX,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
-import { KpiCard } from "../../components/KpiCard";
 import { ProductStructureTree } from "../../components/ProductStructureTree";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -210,8 +207,7 @@ export function AnalyticsOpportunityDetailPage({
         header: "Tipo",
         render: (row) =>
           row.type ? (
-            <StatusBadge
-              classNames={cmStatusBadgeClassNames}
+            <CommercialStatusBadge
               label={row.type}
               variant={row.type === "PA" ? "success" : "info"}
             />
@@ -303,20 +299,20 @@ export function AnalyticsOpportunityDetailPage({
       {!loading && data ? (
         <>
           <div className="cm-ov-kpi-row">
-            <KpiCard
-              title="Status"
+            <CommercialMetricCard
+              label="Status"
               titleHint={CM_HELP.analytics.ovStatus}
               value={data.status_label || data.status_code || "—"}
               icon={<Flag size={22} aria-hidden="true" />}
             />
-            <KpiCard
-              title="Abertura"
+            <CommercialMetricCard
+              label="Abertura"
               titleHint={CM_HELP.analytics.ovOpen}
               value={formatDisplayDate(data.proposal_date)}
               icon={<CalendarPlus size={22} aria-hidden="true" />}
             />
-            <KpiCard
-              title="Fechamento"
+            <CommercialMetricCard
+              label="Fechamento"
               titleHint={CM_HELP.analytics.ovClose}
               value={formatDisplayDate(data.end_date)}
               icon={<CalendarCheck size={22} aria-hidden="true" />}
@@ -338,8 +334,7 @@ export function AnalyticsOpportunityDetailPage({
                   {
                     label: "Status",
                     value: (
-                      <StatusBadge
-                        classNames={cmStatusBadgeClassNames}
+                      <CommercialStatusBadge
                         label={data.status_label || data.status_code || "—"}
                         variant="info"
                       />
@@ -385,12 +380,10 @@ export function AnalyticsOpportunityDetailPage({
             labels={cmSectionLabels}
           >
             <div className="cm-responsive-records__desktop">
-              <DataTable
+              <CommercialDataTable
                 rows={data.list_products ?? []}
                 columns={productColumns}
                 rowKey={(row, index) => `${row.code}-${index}`}
-                classNames={cmDataTableClassNames}
-                labels={cmDataTableLabels}
                 layout="section"
               />
             </div>
@@ -402,8 +395,7 @@ export function AnalyticsOpportunityDetailPage({
                   subtitle={product.description || "Sem descrição"}
                   status={
                     product.type ? (
-                      <StatusBadge
-                        classNames={cmStatusBadgeClassNames}
+                      <CommercialStatusBadge
                         label={product.type}
                         variant={product.type === "PA" ? "success" : "info"}
                       />
@@ -471,12 +463,10 @@ export function AnalyticsOpportunityDetailPage({
             ) : (
               <>
                 <div className="cm-responsive-records__desktop">
-                  <DataTable
+                  <CommercialDataTable
                     rows={history}
                     columns={historyColumns}
                     rowKey={(row, index) => historyEventKey(row, index)}
-                    classNames={cmDataTableClassNames}
-                    labels={cmDataTableLabels}
                     layout="section"
                   />
                 </div>

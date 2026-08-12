@@ -9,7 +9,7 @@ import {
   Timer,
   Users,
 } from "lucide-react";
-import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../../content/helpTooltips";
 import {
@@ -25,6 +25,7 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialActionButton,
   CommercialAlertQueue,
   CommercialLoadingCard,
   CommercialNavigationCard,
@@ -293,7 +294,7 @@ export function HomePage({
         {card.quickLinks?.length ? (
           <div className="cm-nav-row">
             {card.quickLinks.map((link) => (
-              <ActionButton
+              <CommercialActionButton
                 key={link.id}
                 variant="ghost"
                 onClick={() =>
@@ -304,7 +305,7 @@ export function HomePage({
                 }
               >
                 {link.label}
-              </ActionButton>
+              </CommercialActionButton>
             ))}
           </div>
         ) : null}
@@ -360,7 +361,7 @@ export function HomePage({
             labels={cmSectionLabels}
             actions={
               <>
-                <ActionButton
+                <CommercialActionButton
                   variant="ghost"
                   onClick={() => {
                     reloadOrders();
@@ -368,11 +369,11 @@ export function HomePage({
                   }}
                 >
                   {EVENTS.refresh}
-                </ActionButton>
+                </CommercialActionButton>
                 {showWorklist ? (
-                  <ActionButton variant="primary" onClick={() => openMyTasks()}>
+                  <CommercialActionButton variant="primary" onClick={() => openMyTasks()}>
                     {EVENTS.cta}
-                  </ActionButton>
+                  </CommercialActionButton>
                 ) : null}
               </>
             }

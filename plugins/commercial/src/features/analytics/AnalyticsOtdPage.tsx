@@ -1,20 +1,19 @@
-import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { CircleGauge, PackageCheck, RefreshCw, Truck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getSalesOrderOtdPanel, getSalesOrderOtdSeries } from "../../api/analyticsApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialActionButton,
+  CommercialDataTable,
   CommercialLoadingCard,
+  CommercialMetricCard,
   CommercialPageHero,
 } from "../../app/commercialUi";
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
-import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
@@ -152,18 +151,18 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
       {!loading && summary ? (
         <div className="cm-home-kpi-grid" aria-label="KPIs OTD">
-          <KpiCard
-            title="OTD %"
+          <CommercialMetricCard
+            label="OTD %"
             value={formatPct(summary.sales_order_otd_pct)}
             icon={<CircleGauge size={22} />}
           />
-          <KpiCard
-            title="No prazo"
+          <CommercialMetricCard
+            label="No prazo"
             value={(summary.on_time_lines ?? 0).toLocaleString("pt-BR")}
             icon={<PackageCheck size={22} />}
           />
-          <KpiCard
-            title="Atrasadas"
+          <CommercialMetricCard
+            label="Atrasadas"
             value={(summary.late_lines ?? 0).toLocaleString("pt-BR")}
             icon={<Truck size={22} />}
           />
@@ -178,7 +177,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         {series.length === 0 ? (
           <p className="cm-muted">Sem pontos na série.</p>
         ) : (
-          <DataTable
+          <CommercialDataTable
             rows={series}
             columns={[
               { key: "periodo", header: "Período", render: (row) => row.periodo },
@@ -194,8 +193,6 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
               },
             ]}
             rowKey={(row) => row.sort_key}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
             layout="section"
           />
         )}
@@ -206,12 +203,10 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        <DataTable
+        <CommercialDataTable
           rows={panel?.lines.items ?? []}
           columns={columns}
           rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}`}
-          classNames={cmDataTableClassNames}
-          labels={cmDataTableLabels}
           layout="section"
         />
       </SectionCard>

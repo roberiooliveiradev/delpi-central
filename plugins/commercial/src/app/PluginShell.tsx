@@ -7,7 +7,7 @@ import {
   Home,
   Users,
 } from "lucide-react";
-import { HelpTooltip, StatusBadge } from "@delpi/plugin-ui/index";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
@@ -20,9 +20,9 @@ import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
   CommercialPageHero,
   CommercialScopeChipBar,
+  CommercialStatusBadge,
   CommercialTopBar,
   CommercialViewTransition,
-  cmStatusBadgeClassNames,
 } from "./commercialUi";
 
 type PluginShellProps = {
@@ -173,17 +173,9 @@ export function PluginShell({
               description={heroCopy.description}
               badge={
                 scopeLabel ? (
-                  <StatusBadge
-                    classNames={cmStatusBadgeClassNames}
-                    label={scopeLabel}
-                    variant="info"
-                  />
+                  <CommercialStatusBadge label={scopeLabel} variant="info" />
                 ) : (
-                  <StatusBadge
-                    classNames={cmStatusBadgeClassNames}
-                    label={heroCopy.scopeOwn}
-                    variant="neutral"
-                  />
+                  <CommercialStatusBadge label={heroCopy.scopeOwn} variant="neutral" />
                 )
               }
               highlights={heroHighlights}

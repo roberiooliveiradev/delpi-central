@@ -1,17 +1,2 @@
-import type { ReactNode } from "react";
-
-import { createSimpleKpiCard, type DashboardSimpleKpiCardProps } from "@delpi/plugin-ui/index";
-
-const SimpleKpiCard = createSimpleKpiCard("cm", {
-  withBody: true,
-  withSubtitle: true,
-  layout: "iconEnd",
-});
-
-export type KpiCardProps = DashboardSimpleKpiCardProps & {
-  icon: ReactNode;
-};
-
-export function KpiCard(props: KpiCardProps) {
-  return <SimpleKpiCard {...props} />;
-}
+/** @deprecated Prefer `CommercialMetricCard` / `CommercialKpiCard` from `app/commercialUi`. */
+export { CommercialKpiCard as KpiCard } from "../app/commercialUi";

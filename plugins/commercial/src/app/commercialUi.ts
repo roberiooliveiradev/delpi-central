@@ -42,6 +42,7 @@ import {
   createDashboardViewTransition,
   createDashboardWorklistItem,
   createMetricKpiCard,
+  createSimpleKpiCard,
   DataCellValue,
   DataTable,
   createInitialsAvatar,
@@ -188,6 +189,8 @@ type CommercialMetricCardProps = {
   hero?: boolean;
   tone?: "default" | "danger";
   loading?: boolean;
+  onClick?: () => void;
+  "aria-label"?: string;
 };
 export function CommercialMetricCard({
   label,
@@ -198,8 +201,10 @@ export function CommercialMetricCard({
   hero = false,
   tone = "default",
   loading = false,
+  onClick,
+  "aria-label": ariaLabel,
 }: CommercialMetricCardProps) {
-  return createElement(CommercialMetricKpiBase, {
+  const card = createElement(CommercialMetricKpiBase, {
     label,
     value: loading ? "…" : value,
     hint,
@@ -209,7 +214,25 @@ export function CommercialMetricCard({
     fitValue: hero,
     className: hero ? "cm-kpi-card--wide" : undefined,
   });
+  if (!onClick) return card;
+  return createElement(
+    "button",
+    {
+      type: "button",
+      className: "cm-metric-card-button",
+      onClick,
+      "aria-label": ariaLabel ?? label,
+    },
+    card,
+  );
 }
+
+/** KPI acionável (SimpleKpiCard do kit) — preferir CommercialMetricCard em telas novas. */
+export const CommercialKpiCard = createSimpleKpiCard(UI_PREFIX, {
+  withBody: true,
+  withSubtitle: true,
+  layout: "iconEnd",
+});
 
 export function CommercialDataTable<T>(props: DashboardDataTableProps<T>) {
   return createElement(DataTable<T>, {

@@ -1,9 +1,6 @@
-import { DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
+import type { DataTableColumn } from "@delpi/plugin-ui/index";
 
-import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
-} from "../../../app/commercialUi";
+import { CommercialDataTable } from "../../../app/commercialUi";
 import { navigateAnalyticsOpportunityDetail } from "../../../app/pluginNavigation";
 import type { CommercialProposal } from "../../../types/analytics";
 import { formatDisplayDate } from "../../../utils/dates";
@@ -83,12 +80,10 @@ export function CommercialProposalsTable({
   });
 
   return (
-    <DataTable
+    <CommercialDataTable
       rows={rows}
       columns={columns}
       rowKey={(row) => `${row.branch}-${row.proposal_number}-${row.revision}`}
-      classNames={cmDataTableClassNames}
-      labels={cmDataTableLabels}
       layout="section"
       onRowClick={
         onRowClick ??

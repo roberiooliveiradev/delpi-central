@@ -1,14 +1,13 @@
-import { DataTable, EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { FileDown, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getProposalDocument, openProposalDocumentPdf } from "../../api/commercialProposalsApi";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  CommercialDataTable,
   CommercialDetailFieldGrid,
   CommercialLoadingCard,
   CommercialPagePath,
@@ -252,12 +251,10 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <DataTable
+            <CommercialDataTable
               rows={data.itens}
               columns={itemColumns}
               rowKey={(row) => row.item}
-              classNames={cmDataTableClassNames}
-              labels={cmDataTableLabels}
               layout="section"
             />
           </SectionCard>

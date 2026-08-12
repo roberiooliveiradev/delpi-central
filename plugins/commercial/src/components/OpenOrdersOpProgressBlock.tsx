@@ -1,8 +1,8 @@
 import {
   cmSectionCardClassNames,
   cmSectionLabels,
-  cmStatusBadgeClassNames,
   CommercialHorizontalTimeline,
+  CommercialStatusBadge,
   CommercialInlineMeter,
   CommercialLoadingCard,
   UI_PREFIX,
@@ -18,7 +18,7 @@ import {
   formatOtdStatusLabel,
   otdStatusBadgeVariant,
 } from "../utils/productionOtdLink";
-import { SectionCard, SegmentToggle, StatusBadge, SectionHintLabel } from "@delpi/plugin-ui/index";
+import { SectionCard, SegmentToggle, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useMemo } from "react";
 import { OpenOrdersOtdPiPanel } from "./OpenOrdersOtdPiPanel";
 
@@ -115,21 +115,18 @@ export function OpenOrdersOpProgressBlock({
       <div className="cm-open-orders-detail__op-card">
         <div className="cm-open-orders-detail__op-header">
           <strong>OP {current.numero_op}</strong>
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
+          <CommercialStatusBadge
             label={displayApiScalar(order?.order_status, "Status —")}
             variant="neutral"
           />
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
+          <CommercialStatusBadge
             label={`OTD: ${formatOtdStatusLabel(order?.otd_status)}`}
             variant={otdStatusBadgeVariant(order?.otd_status)}
           />
           {displayApiScalar(order?.warehouse || current.armazem, "") ? (
             <span>Armazém {displayApiScalar(order?.warehouse || current.armazem)}</span>
           ) : null}
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
+          <CommercialStatusBadge
             label={
               prazo.status === "atrasado"
                 ? "Fim OP atrasado vs pedido"
