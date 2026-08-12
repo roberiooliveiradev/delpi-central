@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type ComponentProps } from "react";
-import { EmptyState } from "@delpi/plugin-ui/index";
-import type { ChartGranularity } from "@delpi/plugin-ui/index";
+import {
+  EmptyState,
+  runTabularExport,
+  type ChartGranularity,
+} from "@delpi/plugin-ui/index";
 import {
   CartesianGrid,
   Legend,
@@ -17,8 +20,10 @@ import {
   cmEmptyStateClassNames,
   CommercialChartToolbar,
   CommercialLoadingCard,
+  CommercialTabularExportButtons,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
+import { buildOverviewRolSeriesPayload } from "../../overview/overviewExportBuilders";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import type {
@@ -120,7 +125,20 @@ export function AnalyticsRolSeriesChart({
 
   return (
     <div className="cm-rol-series">
-      <p className="cm-rol-series__hint">{CM_HELP.overview.rolSeries}</p>
+      <div className="cm-rol-series__toolbar">
+        <p className="cm-rol-series__hint">{CM_HELP.overview.rolSeries}</p>
+        <CommercialTabularExportButtons
+          compact
+          disabled={points.length === 0 || loading}
+          onExport={(format) => {
+            runTabularExport({
+              kind: "table",
+              format,
+              payload: buildOverviewRolSeriesPayload(points),
+            });
+          }}
+        />
+      </div>
       <CommercialChartToolbar
         granularity={granularity}
         onGranularityChange={setGranularity}

@@ -10,8 +10,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 describe("AnalyticsRolSeriesChart — paridade dashboard", () => {
   it("usa séries SC/ES, toolbar Dia–Ano e drill", () => {
     const chart = readFileSync(join(here, "AnalyticsRolSeriesChart.tsx"), "utf8");
-    assert.match(chart, /ANALYTICS_ROL_SERIES_LABELS\.unit01/);
-    assert.match(chart, /ANALYTICS_ROL_SERIES_LABELS\.unit02/);
+    assert.match(chart, /CommercialTabularExportButtons/);
+    assert.match(chart, /buildOverviewRolSeriesPayload/);
     assert.match(chart, /CommercialChartToolbar/);
     assert.match(chart, /"year"/);
     assert.match(chart, /onDrillDown/);

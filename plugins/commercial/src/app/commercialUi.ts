@@ -54,6 +54,7 @@ import {
   createTimeline,
   createDashboardUnderlineNav,
   createDashboardChartToolbarKit,
+  createDashboardTabularExportButtons,
   useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
@@ -440,3 +441,8 @@ const commercialChartToolbarKit = createDashboardChartToolbarKit({
 });
 
 export const CommercialChartToolbar = commercialChartToolbarKit.ChartToolbar;
+
+export const CommercialTabularExportButtons = createDashboardTabularExportButtons({
+  prefix: UI_PREFIX,
+  groupAriaLabel: "Exportar dados",
+});

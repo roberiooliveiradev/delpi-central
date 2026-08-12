@@ -681,6 +681,15 @@
   font-size: var(--cm-font-sm, 0.875rem);
   color: var(--cm-muted, var(--muted, #64748b));
   line-height: 1.4;
+  flex: 1 1 12rem;
+}
+
+.dashboard-commercial .cm-rol-series__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
 }
 
 .dashboard-commercial .cm-open-orders-page__scope {
