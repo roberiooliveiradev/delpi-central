@@ -65,6 +65,15 @@ for (const file of fs.readdirSync(distDir)) {
       failed = true;
     }
   }
+
+  if (file.includes("__federation_shared_react-dom")) {
+    if (code.includes("__DELPI_MF_REACT__")) {
+      console.error(
+        `FAIL ${file}: shared react-dom redirecionado para React (createPortal some → HelpTooltip «X is not a function»)`,
+      );
+      failed = true;
+    }
+  }
 }
 
 if (failed) {

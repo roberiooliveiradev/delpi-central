@@ -50,11 +50,20 @@ function getShareScope(): FederationShareScope {
 }
 
 function buildReactDomSharedExport() {
-  return {
+  const shared = {
     ...ReactDOM,
     createRoot: ReactDOMClient.createRoot,
     hydrateRoot: ReactDOMClient.hydrateRoot,
   };
+  // Garante named createPortal mesmo se o spread ESM/CJS omitir a chave.
+  if (typeof shared.createPortal !== "function") {
+    const fromDefault = (ReactDOM as { default?: { createPortal?: unknown } }).default
+      ?.createPortal;
+    if (typeof fromDefault === "function") {
+      (shared as { createPortal: unknown }).createPortal = fromDefault;
+    }
+  }
+  return shared;
 }
 
 function shareEntry(mod: unknown, from: FederationShareFrom): FederationShareEntry {

@@ -13,10 +13,12 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
+import * as ReactDOM from "react-dom";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
+import { resolveCreatePortal } from "../../utils/resolveCreatePortal";
 
+const createPortal = resolveCreatePortal(ReactDOM);
 export type HelpTooltipPlacement = "top" | "bottom";
 
 export type HelpTooltipProps = {

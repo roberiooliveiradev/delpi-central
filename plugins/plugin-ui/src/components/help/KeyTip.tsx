@@ -7,9 +7,10 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
+import * as ReactDOM from "react-dom";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
+import { resolveCreatePortal } from "../../utils/resolveCreatePortal";
 import { resolveMfePortalScopeClassName } from "../shape/delpiUiPortalTheme";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
 import {
@@ -17,6 +18,7 @@ import {
   type KeyTipPlacement,
 } from "./keyTipPosition";
 
+const createPortal = resolveCreatePortal(ReactDOM);
 export type KeyTipVariant = "shortcut" | "letter";
 
 export type KeyTipProps = {
