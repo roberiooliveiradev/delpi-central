@@ -353,6 +353,7 @@ export {
   navigationCardBemClasses,
   type DashboardNavigationCardProps,
   type NavigationCardClassNames,
+  type NavigationCardDensity,
   type NavigationCardProps,
 } from "./NavigationCard";
 export {
