@@ -131,7 +131,7 @@ def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):
     assert "Ana Gestora reatribuiu" in body["notification"]["message"]
 
 
-def test_notify_portfolio_changed_schedules_member_rooms_only(monkeypatch):
+def test_notify_portfolio_changed_schedules_member_and_team_rooms(monkeypatch):
     hub = MagicMock()
     scheduled: list[tuple[str, dict]] = []
     hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
@@ -162,8 +162,7 @@ def test_notify_portfolio_changed_schedules_member_rooms_only(monkeypatch):
     )
 
     by_room = {room: payload for room, payload in scheduled}
-    assert set(by_room) == {user_room("seller-a"), user_room("helper-1")}
-    assert TEAM_ROOM not in by_room
+    assert set(by_room) == {TEAM_ROOM, user_room("seller-a"), user_room("helper-1")}
     body = by_room[user_room("seller-a")]
     assert body["type"] == "portfolio.changed"
     assert body["reason"] == "seller_portfolio.add_customer"
@@ -172,6 +171,7 @@ def test_notify_portfolio_changed_schedules_member_rooms_only(monkeypatch):
     assert body["actorClientId"] == "client-9"
     assert body["notification"]["title"] == "Cliente vinculado"
     assert "Ana Gestora vinculou" in body["notification"]["message"]
+    assert by_room[TEAM_ROOM]["portfolioId"] == "p1"
 
 
 def test_build_portfolio_notification_uses_json():

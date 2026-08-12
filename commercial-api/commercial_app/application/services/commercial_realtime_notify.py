@@ -203,15 +203,15 @@ def notify_portfolio_changed(
     actor_display_name: str | None = None,
     actor_client_id: str | None = None,
 ) -> None:
-    """Broadcast para salas `user:` dos membros das carteiras afetadas (sem team room)."""
+    """Broadcast para salas `user:` dos membros e para a sala `team` (gestores)."""
     members = [uid.strip() for uid in member_user_ids if uid and str(uid).strip()]
-    if not members:
+    primary_id = (portfolio_id or "").strip()
+    if not members and not primary_id:
         return
     actor_label = (
         _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
     )
     portfolio_label = _safe_label(display_name) or "carteira"
-    primary_id = (portfolio_id or "").strip()
     related = [
         pid.strip()
         for pid in (portfolio_ids or [])
@@ -237,5 +237,6 @@ def notify_portfolio_changed(
         "notification": notification,
     }
     rooms = {user_room(uid) for uid in members}
+    rooms.add(TEAM_ROOM)
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, payload)

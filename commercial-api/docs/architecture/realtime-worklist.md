@@ -75,7 +75,12 @@ Emitido após gravar `audit_log` em mutações de carteira (`_append_audit`).
 ```
 
 Fan-out: salas `user:{id}` dos **membros ativos** da(s) carteira(s) afetada(s)
-(transferência: união origem + destino). Textos em `seller_portfolio_messages.json` → `realtime`.
+**e** sala `team` (gestores com `seller-portfolios.manage` / team scope no WS).
+Transferência: união origem + destino nos `memberUserIds`. Textos em
+`seller_portfolio_messages.json` → `realtime`.
+
+Gestores em `team` passam a receber `portfolio.changed` mesmo sem membership na
+carteira mutada — necessário para `reloadScope` / Equipe fresca no MFE.
 
 ## Fan-out worklist
 
@@ -92,7 +97,9 @@ O MFE:
 ## Fan-out carteira
 
 1. **Toast** via `resolvePortfolioNotification` (anti-eco `actorClientId`).
-2. **Refetch** lista/detalhe admin e Histórico em Minha Carteira (`useCommercialPortfolioSync`).
+2. **Refetch** lista/detalhe admin, Histórico em Minha Carteira e **escopo**
+   (`reloadScope` no MFE via `useCommercialPortfolioSync` + bridge global).
+3. Gestores na sala `team` recebem o mesmo evento (além dos membros em `user:`).
 
 ## Anti-eco
 
