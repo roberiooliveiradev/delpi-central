@@ -19,7 +19,20 @@
 
 - [ ] Homologação Comercial/QA assinada
 - [ ] `COMMERCIAL_PORTFOLIO_SOURCE=commercial` + backfill/reconcile
+- [ ] Migration `V005__seller_portfolio_members` aplicada (`up` só — nunca `reset`)
 - [ ] Smoke: open-orders, customers, detail, seller-portfolios
+- [ ] Smoke multi-membro: usuário em 2 carteiras; `/me.portfolios[]`; filtro «Todas»; member secundário vê clientes
+
+### Multi-membro (obrigatório)
+
+Membership N:N vive **somente** em `commercial.seller_portfolio_members`. O schema legado `pedidos_venda_abertos.sellers.user_id UNIQUE` **não** comporta o mesmo usuário em várias carteiras nem vários membros por carteira.
+
+Antes de promover multi-membro em produção:
+
+1. `COMMERCIAL_PORTFOLIO_SOURCE=commercial` em api-delpi e commercial-api
+2. Writes de carteira **só** via commercial-api (sem dual-write N:N para PVA)
+3. Confirmar V005 + backfill de owners
+4. PVA no launcher: se ainda ativo, escopo 1:1 pode divergir — preferir commercial-only no flip
 
 ## 1. Redirects (gateway)
 
