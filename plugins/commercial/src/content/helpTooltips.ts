@@ -328,6 +328,8 @@ export const CM_HELP = {
       "Registro completo da carteira: vínculo/desvínculo de clientes, membros, responsável, transferência, nome e ativação.",
   },
   analytics: {
+    portfolioFilter:
+      "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. Escopo no topo é identidade da sessão.",
     ovStatus: "Etapa atual da oportunidade comercial.",
     ovOpen: "Data de abertura da oportunidade.",
     ovClose: "Data de fechamento ou assinatura, quando houver.",

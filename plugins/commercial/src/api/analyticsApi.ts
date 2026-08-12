@@ -28,6 +28,9 @@ function buildQuery(
   if (params.customer_segment) {
     searchParams.set("customer_segment", params.customer_segment);
   }
+  if (params.customer_codes?.trim()) {
+    searchParams.set("customer_codes", params.customer_codes.trim());
+  }
   if (params.granularity) searchParams.set("granularity", params.granularity);
   if (params.status) searchParams.set("status", params.status);
   if (params.page != null) searchParams.set("page", String(params.page));

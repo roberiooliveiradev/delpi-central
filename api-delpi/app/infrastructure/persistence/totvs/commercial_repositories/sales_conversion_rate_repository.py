@@ -4,6 +4,9 @@ from app.domain.ports.commercial.sales_conversion_rate_repository_port import Sa
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
+from app.domain.services.commercial_customer_codes_filter_service import (
+    CommercialCustomerCodesFilterService,
+)
 from app.domain.services.commercial_proposal_status import WON_STATUS_CODE
 from app.domain.services.commercial_proposal_acceptance_date_service import (
     CommercialProposalAcceptanceDateService,
@@ -31,6 +34,11 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
             "AD1.AD1_CODCLI",
             request.customer_segment,
         )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            opened_qb,
+            "AD1.AD1_CODCLI",
+            request.customer_codes,
+            )
 
         opened_where, opened_params = opened_qb.build()
 
@@ -54,6 +62,11 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
             "AD1.AD1_CODCLI",
             request.customer_segment,
         )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            won_qb,
+            "AD1.AD1_CODCLI",
+            request.customer_codes,
+            )
 
         won_where, won_params = won_qb.build()
 

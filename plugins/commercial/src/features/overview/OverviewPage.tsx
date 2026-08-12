@@ -52,11 +52,16 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           competence={filters.competence}
           branches={filters.branches}
           customerSegment={filters.customerSegment}
+          sellerId={filters.sellerId}
+          canFilterPortfolios={filters.canFilterPortfolios}
+          canUseTeamScope={filters.canUseTeamScope}
+          filterablePortfolios={filters.filterablePortfolios}
           onDateStart={filters.setDateStart}
           onDateEnd={filters.setDateEnd}
           onCompetence={filters.setCompetence}
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
+          onSellerId={filters.setSellerId}
         />
       </CommercialPageHero>
 
@@ -134,6 +139,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               start_date: filters.apiParams.start_date,
               end_date: filters.apiParams.end_date,
               customer_segment: filters.apiParams.customer_segment,
+              customer_codes: filters.apiParams.customer_codes,
             }}
           />
         </SectionCard>

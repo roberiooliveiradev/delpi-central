@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { usePortfolioScope } from "../../../app/PortfolioScopeContext";
+import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
 import type { AnalyticsFilterParams } from "../../../types/analytics";
 import {
   applyCompetenceChange,
@@ -8,6 +10,10 @@ import {
   type LinkedDateFilters,
 } from "../utils/competenceFilters";
 import { resolveAnalyticsApiBranch } from "../utils/analyticsBranchFilters";
+import {
+  resolvePortfolioCustomerCodes,
+  serializeCustomerCodesCsv,
+} from "../utils/portfolioCustomerCodes";
 import {
   readAnalyticsFilters,
   subscribeAnalyticsFilterRouteSync,
@@ -68,6 +74,14 @@ function useCompetenceLinkedDates(initial: LinkedDateFilters) {
   };
 }
 
+function sanitizeSellerId(
+  sellerId: string | null,
+  access: { allowSellerId: boolean; validSellerIds: readonly string[] },
+): string | null {
+  if (!access.allowSellerId || !sellerId) return null;
+  return access.validSellerIds.includes(sellerId) ? sellerId : null;
+}
+
 export function useAnalyticsFilters() {
   const initial = readAnalyticsFilters();
   const {
@@ -81,6 +95,31 @@ export function useAnalyticsFilters() {
   } = useCompetenceLinkedDates(initial);
   const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
+  const [sellerId, setSellerIdState] = useState(initial.sellerId);
+
+  const sellerAccess = usePortfolioSellerAccess();
+  const {
+    canFilterPortfolios,
+    canUseTeamScope,
+    filterablePortfolios,
+    sellerIdFilter,
+    setSellerIdFilter,
+  } = usePortfolioScope();
+
+  const effectiveSellerId = sanitizeSellerId(sellerId, sellerAccess);
+
+  useEffect(() => {
+    const sanitized = sanitizeSellerId(sellerId, sellerAccess);
+    if (sanitized !== sellerId) setSellerIdState(sanitized);
+  }, [sellerAccess, sellerId]);
+
+  // Sync analytics seller_id with portfolio scope identity when filtering.
+  useEffect(() => {
+    if (!canFilterPortfolios) return;
+    if (effectiveSellerId !== sellerIdFilter) {
+      setSellerIdFilter(effectiveSellerId);
+    }
+  }, [canFilterPortfolios, effectiveSellerId, sellerIdFilter, setSellerIdFilter]);
 
   useEffect(() => {
     writeAnalyticsFiltersToUrl({
@@ -89,8 +128,9 @@ export function useAnalyticsFilters() {
       competence,
       branches,
       customerSegment,
+      sellerId: effectiveSellerId,
     });
-  }, [dateStart, dateEnd, competence, branches, customerSegment]);
+  }, [dateStart, dateEnd, competence, branches, customerSegment, effectiveSellerId]);
 
   useEffect(() => {
     return subscribeAnalyticsFilterRouteSync(() => {
@@ -98,14 +138,24 @@ export function useAnalyticsFilters() {
       replaceAll(next);
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
+      setSellerIdState(sanitizeSellerId(next.sellerId, sellerAccess));
     });
-  }, [replaceAll]);
+  }, [replaceAll, sellerAccess]);
+
+  const customerCodes = useMemo(
+    () =>
+      canFilterPortfolios
+        ? resolvePortfolioCustomerCodes(effectiveSellerId, filterablePortfolios)
+        : null,
+    [canFilterPortfolios, effectiveSellerId, filterablePortfolios],
+  );
 
   const apiParams: AnalyticsFilterParams = {
     start_date: dateStart || undefined,
     end_date: dateEnd || undefined,
     branch: resolveAnalyticsApiBranch(branches),
     customer_segment: customerSegment || undefined,
+    customer_codes: serializeCustomerCodesCsv(customerCodes),
   };
 
   const filterState: AnalyticsFilterUrlState = {
@@ -114,6 +164,7 @@ export function useAnalyticsFilters() {
     competence,
     branches,
     customerSegment,
+    sellerId: effectiveSellerId,
   };
 
   return {
@@ -122,6 +173,10 @@ export function useAnalyticsFilters() {
     competence,
     branches,
     customerSegment,
+    sellerId: effectiveSellerId,
+    canFilterPortfolios,
+    canUseTeamScope,
+    filterablePortfolios,
     setDateStart,
     setDateEnd,
     setCompetence,
@@ -130,6 +185,7 @@ export function useAnalyticsFilters() {
       (v: AnalyticsFilterUrlState["customerSegment"]) => setCustomerSegmentState(v),
       [],
     ),
+    setSellerId: useCallback((v: string | null) => setSellerIdState(v), []),
     apiParams,
     filterState,
   };

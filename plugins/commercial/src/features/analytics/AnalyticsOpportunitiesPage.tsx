@@ -84,6 +84,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.end_date,
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
+    filters.apiParams.customer_codes,
     search,
     reloadKey,
   ]);
@@ -110,11 +111,16 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         competence={filters.competence}
         branches={filters.branches}
         customerSegment={filters.customerSegment}
+        sellerId={filters.sellerId}
+        canFilterPortfolios={filters.canFilterPortfolios}
+        canUseTeamScope={filters.canUseTeamScope}
+        filterablePortfolios={filters.filterablePortfolios}
         onDateStart={filters.setDateStart}
         onDateEnd={filters.setDateEnd}
         onCompetence={filters.setCompetence}
         onBranches={filters.setBranches}
         onCustomerSegment={filters.setCustomerSegment}
+        onSellerId={filters.setSellerId}
       />
 
       <CommercialTextField

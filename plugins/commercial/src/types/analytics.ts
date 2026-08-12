@@ -5,6 +5,8 @@ export type AnalyticsFilterParams = {
   end_date?: string;
   branch?: string;
   customer_segment?: AnalyticsCustomerSegment;
+  /** CSV de códigos TOTVS — membership resolve no MFE. */
+  customer_codes?: string;
   status?: string;
   page?: number;
   page_size?: number;

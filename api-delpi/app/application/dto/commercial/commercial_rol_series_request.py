@@ -11,6 +11,7 @@ class CommercialRolSeriesRequest:
     date_start: Optional[str] = None
     date_end: Optional[str] = None
     customer_segment: Optional[str] = None
+    customer_codes: Optional[list[str]] = None
 
     def validate(self) -> None:
         normalized = (self.granularity or "").strip().lower()

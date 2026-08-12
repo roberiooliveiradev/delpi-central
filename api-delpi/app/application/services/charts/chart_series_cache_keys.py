@@ -25,6 +25,7 @@ def commercial_rol_series_cache_key(request: CommercialRolSeriesRequest) -> str:
             request.date_start or "",
             request.date_end or "",
             request.customer_segment or "",
+            ",".join(request.customer_codes or []),
         ]
     )
 
@@ -52,6 +53,7 @@ def commercial_sales_order_otd_series_cache_key(
             request.date_end or "",
             request.branch or "",
             request.customer_segment or "",
+            ",".join(getattr(request, "customer_codes", None) or []),
         ]
     )
 

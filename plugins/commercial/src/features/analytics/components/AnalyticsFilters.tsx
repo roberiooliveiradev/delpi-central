@@ -4,9 +4,12 @@ import {
   CommercialSelectField,
   cmFiltersKit,
 } from "../../../app/commercialUi";
+import { CM_HELP } from "../../../content/helpTooltips";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
+import { SellerScopeFilter } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
+import type { SellerPortfolio } from "../../../types/portfolio";
 
 type AnalyticsFiltersProps = {
   dateStart: string;
@@ -14,11 +17,16 @@ type AnalyticsFiltersProps = {
   competence: string;
   branches: string[];
   customerSegment: AnalyticsFilterUrlState["customerSegment"];
+  sellerId?: string | null;
+  canFilterPortfolios?: boolean;
+  canUseTeamScope?: boolean;
+  filterablePortfolios?: SellerPortfolio[];
   onDateStart: (value: string) => void;
   onDateEnd: (value: string) => void;
   onCompetence: (value: string) => void;
   onBranches: (value: string[]) => void;
   onCustomerSegment: (value: AnalyticsFilterUrlState["customerSegment"]) => void;
+  onSellerId?: (value: string | null) => void;
 };
 
 export function AnalyticsFilters({
@@ -27,11 +35,16 @@ export function AnalyticsFilters({
   competence,
   branches,
   customerSegment,
+  sellerId = null,
+  canFilterPortfolios = false,
+  canUseTeamScope = false,
+  filterablePortfolios = [],
   onDateStart,
   onDateEnd,
   onCompetence,
   onBranches,
   onCustomerSegment,
+  onSellerId,
 }: AnalyticsFiltersProps) {
   const { FiltersRow } = cmFiltersKit;
 
@@ -74,18 +87,27 @@ export function AnalyticsFilters({
         allowEmpty
         emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
       />
+      {canFilterPortfolios && onSellerId ? (
+        <SellerScopeFilter
+          sellers={filterablePortfolios}
+          value={sellerId}
+          onChange={onSellerId}
+          teamScope={canUseTeamScope}
+          hint={CM_HELP.analytics.portfolioFilter}
+        />
+      ) : null}
     </FiltersRow>
   );
 }
 
-function buildCompetenceOptions(): Array<{ value: string; label: string }> {
+function buildCompetenceOptions() {
   const now = new Date();
-  const options: Array<{ value: string; label: string }> = [];
-  for (let i = 0; i < 18; i += 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const options: { value: string; label: string }[] = [];
+  for (let offset = 0; offset < 18; offset += 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const label = date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-    options.push({ value, label });
+    const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    options.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
   }
   return options;
 }

@@ -79,6 +79,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     filters.end_date,
     filters.branch,
     filters.customer_segment,
+    filters.customer_codes,
     reloadKey,
   ]);
 

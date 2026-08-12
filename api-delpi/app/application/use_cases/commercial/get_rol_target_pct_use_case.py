@@ -18,6 +18,7 @@ class GetRolTargetPctUseCase:
             start_date=request.start_date,
             end_date=request.end_date,
             customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
         )
 
         rol_result = self._financial_query_repository.get_rol(rol_request)

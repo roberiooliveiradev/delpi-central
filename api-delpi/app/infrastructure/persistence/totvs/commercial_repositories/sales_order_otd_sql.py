@@ -83,9 +83,13 @@ def build_sales_order_otd_filters(
     start_date: Optional[str],
     end_date: Optional[str],
     customer_segment: Optional[str],
+    customer_codes: Optional[list[str]] = None,
 ) -> Tuple[str, tuple]:
     from app.domain.services.commercial_customer_segment_service import (
         CommercialCustomerSegmentService,
+    )
+    from app.domain.services.commercial_customer_codes_filter_service import (
+        CommercialCustomerCodesFilterService,
     )
 
     qb = QueryBuilder()
@@ -106,6 +110,11 @@ def build_sales_order_otd_filters(
         qb,
         "C5.C5_CLIENTE",
         customer_segment,
+    )
+    CommercialCustomerCodesFilterService.apply_to_query_builder(
+        qb,
+        "C5.C5_CLIENTE",
+        customer_codes,
     )
 
     return qb.build()
@@ -277,12 +286,14 @@ def build_sales_order_otd_line_detail_where(
     start_date: Optional[str],
     end_date: Optional[str],
     customer_segment: Optional[str],
+    customer_codes: Optional[list[str]] = None,
 ) -> Tuple[str, tuple]:
     where_clause, where_params = build_sales_order_otd_filters(
         branch=branch,
         start_date=start_date,
         end_date=end_date,
         customer_segment=customer_segment,
+        customer_codes=customer_codes,
     )
     where_clause = (
         f"{where_clause} "

@@ -28,6 +28,9 @@ from app.domain.services.commercial_proposal_acceptance_date_service import (
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
+from app.domain.services.commercial_customer_codes_filter_service import (
+    CommercialCustomerCodesFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
@@ -105,6 +108,11 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             qb,
             "AD1.AD1_CODCLI",
             request.customer_segment,
+        )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            qb,
+            "AD1.AD1_CODCLI",
+            request.customer_codes,
         )
 
         where_clause, where_params = qb.build()

@@ -12,6 +12,8 @@ import {
 export type AnalyticsFilterUrlState = LinkedDateFilters & {
   branches: string[];
   customerSegment: "" | "weg" | "new_business";
+  /** Carteira selecionada (id commercial-api); null = consolidado. */
+  sellerId: string | null;
 };
 
 const SESSION_STORAGE_KEY = "delpi.commercial.analytics.filters";
@@ -21,6 +23,7 @@ const ANALYTICS_OPPORTUNITY_BACK_KEYS = [
   "competence",
   "branch",
   "customer_segment",
+  "seller_id",
   "search",
 ] as const;
 
@@ -43,6 +46,7 @@ function defaultFilterState(): AnalyticsFilterUrlState {
     ...defaults,
     branches: [],
     customerSegment: "",
+    sellerId: null,
   };
 }
 
@@ -73,12 +77,14 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
   const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const customerSegmentParam = params.get("customer_segment") ?? "";
+  const sellerIdParam = (params.get("seller_id") ?? "").trim();
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
     isValidCompetence(competenceParam) ||
     branchParam.length > 0 ||
-    customerSegmentParam.length > 0;
+    customerSegmentParam.length > 0 ||
+    sellerIdParam.length > 0;
 
   if (!hasAny) return null;
 
@@ -95,6 +101,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
     ...dates,
     branches: parseAnalyticsBranchCsv(branchParam),
     customerSegment: parseCustomerSegment(customerSegmentParam),
+    sellerId: sellerIdParam || null,
   };
 }
 
@@ -132,6 +139,10 @@ export function readAnalyticsFilters(
           customerSegment: parseCustomerSegment(
             typeof data.customerSegment === "string" ? data.customerSegment : null,
           ),
+          sellerId:
+            typeof data.sellerId === "string" && data.sellerId.trim()
+              ? data.sellerId.trim()
+              : null,
         };
       }
     } catch {
@@ -150,6 +161,7 @@ export function buildAnalyticsFilterSearchParams(state: AnalyticsFilterUrlState)
   const branch = serializeAnalyticsBranchCsv(state.branches);
   if (branch) params.set("branch", branch);
   if (state.customerSegment) params.set("customer_segment", state.customerSegment);
+  if (state.sellerId) params.set("seller_id", state.sellerId);
   const query = params.toString();
   return query ? `?${query}` : "";
 }

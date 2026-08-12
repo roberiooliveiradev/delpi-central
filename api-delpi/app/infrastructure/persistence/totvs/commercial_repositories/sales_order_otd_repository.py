@@ -32,6 +32,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             start_date=request.start_date,
             end_date=request.end_date,
             customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
         )
 
         sql, reference_params = build_sales_order_otd_sql(
@@ -73,6 +74,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             start_date=request.start_date,
             end_date=request.end_date,
             customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
         )
 
         count_sql, _ = build_sales_order_otd_lines_count_sql(
@@ -120,6 +122,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             start_date=request.start_date,
             end_date=request.end_date,
             customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
         )
         sql = build_sales_order_otd_line_detail_sql(where_clause=where_clause)
         params = compose_sales_order_otd_lines_params(
