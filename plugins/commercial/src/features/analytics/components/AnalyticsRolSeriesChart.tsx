@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { EmptyState } from "@delpi/plugin-ui/index";
 import {
   CartesianGrid,
   Legend,
@@ -11,6 +12,8 @@ import {
 } from "recharts";
 
 import { getCommercialRolSeries } from "../../../api/analyticsApi";
+import { cmEmptyStateClassNames, CommercialLoadingCard } from "../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import type { ChartGranularity, CommercialRolSeriesPoint, AnalyticsFilterParams } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 
@@ -26,6 +29,7 @@ export function AnalyticsRolSeriesChart({
   const [points, setPoints] = useState<CommercialRolSeriesPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -37,18 +41,30 @@ export function AnalyticsRolSeriesChart({
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Erro ao carregar série de ROL.");
+        setError(err instanceof Error ? err.message : emptyCopy.rolError);
         setPoints([]);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [filters.start_date, filters.end_date, filters.customer_segment, granularity]);
+  }, [emptyCopy.rolError, filters.start_date, filters.end_date, filters.customer_segment, granularity]);
 
-  if (loading) return <p className="cm-muted">Carregando evolução de ROL…</p>;
-  if (error) return <p className="cm-muted" role="alert">{error}</p>;
-  if (points.length === 0) return <p className="cm-muted">Sem pontos no período.</p>;
+  if (loading) {
+    return <CommercialLoadingCard title={emptyCopy.rolLoading} variant="panel" />;
+  }
+  if (error) {
+    return <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />;
+  }
+  if (points.length === 0) {
+    return (
+      <EmptyState
+        classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+        defaultTitle={emptyCopy.rolTitle}
+        defaultMessage={emptyCopy.rolMessage}
+      />
+    );
+  }
 
   return (
     <div className="cm-chart-wrap" style={{ width: "100%", height: 280 }}>

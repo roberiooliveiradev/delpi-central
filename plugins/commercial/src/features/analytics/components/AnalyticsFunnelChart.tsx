@@ -1,5 +1,8 @@
+import { EmptyState } from "@delpi/plugin-ui/index";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { cmEmptyStateClassNames } from "../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import type { ClosingRateData } from "../../../types/analytics";
 
 type AnalyticsFunnelChartProps = {
@@ -7,8 +10,16 @@ type AnalyticsFunnelChartProps = {
 };
 
 export function AnalyticsFunnelChart({ closingRate }: AnalyticsFunnelChartProps) {
-  if (!closingRate) {
-    return <p className="cm-muted">Sem dados de conversão no período.</p>;
+  const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
+
+  if (!closingRate || ((closingRate.qtd_proposals ?? 0) === 0 && (closingRate.qtd_won ?? 0) === 0)) {
+    return (
+      <EmptyState
+        classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+        defaultTitle={emptyCopy.funnelTitle}
+        defaultMessage={emptyCopy.funnelMessage}
+      />
+    );
   }
 
   const data = [

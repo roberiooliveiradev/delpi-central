@@ -7,9 +7,9 @@ import {
   cmSectionLabels,
   CommercialActionButton,
   CommercialLoadingCard,
+  CommercialMetricCard,
   CommercialPageHero,
 } from "../../app/commercialUi";
-import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
 import { formatCurrency } from "../../utils/format";
@@ -73,49 +73,50 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={dashboard.error} role="alert" />
         ) : null}
         {!dashboard.loading ? (
-          <div className="cm-home-kpi-grid" aria-label="KPIs da visão geral">
-            <KpiCard
-              title={OVERVIEW_METRIC_BY_ID.rol_head_office.label}
+          <div className="cm-home-kpi-grid cm-overview-kpi-grid" aria-label="KPIs da visão geral">
+            <CommercialMetricCard
+              hero
+              label={OVERVIEW_METRIC_BY_ID.rol_head_office.label}
               titleHint={OVERVIEW_METRIC_BY_ID.rol_head_office.tooltip}
               value={formatPct(dashboard.headOfficeRol?.rol_target_pct)}
-              subtitle={
+              hint={
                 dashboard.headOfficeRol
                   ? `ROL ${formatCurrency(dashboard.headOfficeRol.rol)}`
                   : undefined
               }
-              icon={<Banknote size={22} />}
+              icon={<Banknote size={18} aria-hidden="true" />}
             />
-            <KpiCard
-              title={OVERVIEW_METRIC_BY_ID.rol_branch.label}
+            <CommercialMetricCard
+              label={OVERVIEW_METRIC_BY_ID.rol_branch.label}
               titleHint={OVERVIEW_METRIC_BY_ID.rol_branch.tooltip}
               value={formatPct(dashboard.branchRol?.rol_target_pct)}
-              subtitle={
+              hint={
                 dashboard.branchRol ? `ROL ${formatCurrency(dashboard.branchRol.rol)}` : undefined
               }
-              icon={<Banknote size={22} />}
+              icon={<Banknote size={18} aria-hidden="true" />}
             />
-            <KpiCard
-              title={OVERVIEW_METRIC_BY_ID.closing_rate.label}
+            <CommercialMetricCard
+              label={OVERVIEW_METRIC_BY_ID.closing_rate.label}
               titleHint={OVERVIEW_METRIC_BY_ID.closing_rate.tooltip}
               value={formatPct(dashboard.closingRate?.sales_conversion_rate_pct)}
-              subtitle={
+              hint={
                 dashboard.closingRate
                   ? `${dashboard.closingRate.qtd_won}/${dashboard.closingRate.qtd_proposals}`
                   : undefined
               }
-              icon={<Percent size={22} />}
+              icon={<Percent size={18} aria-hidden="true" />}
             />
-            <KpiCard
-              title={OVERVIEW_METRIC_BY_ID.otd.label}
+            <CommercialMetricCard
+              label={OVERVIEW_METRIC_BY_ID.otd.label}
               titleHint={OVERVIEW_METRIC_BY_ID.otd.tooltip}
               value={formatPct(dashboard.salesOrderOtd?.sales_order_otd_pct)}
-              icon={<PackageCheck size={22} />}
+              icon={<PackageCheck size={18} aria-hidden="true" />}
             />
-            <KpiCard
-              title={OVERVIEW_METRIC_BY_ID.new_business.label}
+            <CommercialMetricCard
+              label={OVERVIEW_METRIC_BY_ID.new_business.label}
               titleHint={OVERVIEW_METRIC_BY_ID.new_business.tooltip}
               value={formatPct(dashboard.newBusinessRol?.new_business_rol_pct)}
-              icon={<Sparkles size={22} />}
+              icon={<Sparkles size={18} aria-hidden="true" />}
             />
           </div>
         ) : null}

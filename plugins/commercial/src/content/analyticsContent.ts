@@ -17,6 +17,14 @@ export const ANALYTICS_CONTENT = {
     newBusinessKpi: "Participação de novos negócios no ROL do período.",
     rolSeries: "Evolução do ROL matriz e filial no período.",
     funnel: "Funil de conversão (propostas → ganhas).",
+    chartEmpty: {
+      rolLoading: "Carregando evolução de ROL…",
+      rolError: "Erro ao carregar série de ROL.",
+      rolTitle: "Sem evolução no período",
+      rolMessage: "Não há pontos de ROL para os filtros atuais. Ajuste datas, filial ou segmento.",
+      funnelTitle: "Sem funil no período",
+      funnelMessage: "Não há propostas no período filtrado para montar o funil de conversão.",
+    },
   },
   otd: {
     title: "OTD de pedidos",
