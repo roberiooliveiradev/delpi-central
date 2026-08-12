@@ -216,15 +216,12 @@ em [`src/utils/sellerPortfoliosDeepLink.ts`](./src/utils/sellerPortfoliosDeepLin
 
 | Base / path | Uso |
 |-------------|-----|
-| `/apps/commercial-api` | Carteiras, avatars, worklist, anexos, enrichment (`X-Delpi-Caller-App: commercial`) |
-| `/apps/api-delpi/pedidos-venda-abertos/` | Lista pedidos em aberto (+ `portfolio.empty`) |
-| `/apps/api-delpi/commercial/*` | KPIs, ROL, OTD, propostas OV |
-| `/apps/api-delpi/commercial-proposals` | Documento ADY + PDF (EN; alias legado: `/propostas-comerciais`) |
-| `GET /apps/api-delpi/products/{code}/factory-status` | Status fabril no modal (`?branch=`) |
-| `GET /apps/api-delpi/production/orders/by-op/{op}` | Detalhe OP / OTD / PIs vinculadas |
-| `GET /apps/api-delpi/production/appointments/by-op` | Apontamentos agregados da OP |
-| `GET /apps/api-delpi/products/{code}/structure` | BOM no accordion |
-| `GET /apps/api-delpi/commercial/proposals` | Probe OV (`?search=&branch=`) |
+| `/apps/commercial-api` | Carteiras, avatars, worklist, anexos, enrichment, open-orders BFF |
+| `/apps/commercial-api/analytics/*` | KPIs, ROL, OTD, propostas OV (escopo `seller_id`/membership no BFF) |
+| `/apps/commercial-api/proposal-documents*` | Documento ADY + PDF |
+| `/apps/commercial-api/production/*` e `/products/*` | OP, apontamentos, status fabril, BOM |
+
+O MFE **nunca** chama `/apps/api-delpi` — só a `commercial-api` faz gateway TOTVS. Diretriz: `.cursor/rules/mfe-own-api-no-direct-api-delpi.mdc`.
 
 Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
@@ -310,12 +307,12 @@ Rebuild sequencial: `./infra/scripts/up-dev-sequential.sh --fase mfe --build com
 
 Smoke: `curl -I http://localhost/apps/commercial/assets/remoteEntry.js`
 
-Smoke autenticado da API operacional:
+Smoke autenticado do BFF commercial (open-orders):
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
   -H "X-Delpi-Caller-App: commercial" \
-  "http://localhost/apps/api-delpi/pedidos-venda-abertos/"
+  "http://localhost/apps/commercial-api/open-orders/"
 ```
 
 Validação do checkpoint Carteira/Conta:

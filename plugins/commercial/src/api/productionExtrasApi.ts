@@ -1,11 +1,11 @@
-import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
+import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   ProductFactoryStatusData,
   ProductStructureData,
   ProductionAppointmentsByOpData,
   ProductionOrderByOpData,
 } from "../types/productionExtras";
-import { apiDelpiUrl, httpGet } from "./httpClient";
+import { commercialApiUrl, httpGet } from "./httpClient";
 
 export async function fetchProductionOrderByOp(
   productionOrder: string,
@@ -17,10 +17,10 @@ export async function fetchProductionOrderByOp(
   if (params.branch?.trim()) search.set("branch", params.branch.trim());
   const qs = search.toString();
   const response = await httpGet<ApiSuccessResponse<ProductionOrderByOpData>>(
-    `${apiDelpiUrl(`/production/orders/by-op/${encoded}`)}${qs ? `?${qs}` : ""}`,
+    `${commercialApiUrl(`/production/orders/by-op/${encoded}`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
-  return unwrapApiDelpiEnvelope(response, "Erro ao carregar OP.");
+  return unwrapEnvelope(response, "Erro ao carregar OP.");
 }
 
 export async function fetchProductFactoryStatus(
@@ -33,10 +33,10 @@ export async function fetchProductFactoryStatus(
   if (params?.branch?.trim()) search.set("branch", params.branch.trim());
   const qs = search.toString();
   const response = await httpGet<ApiSuccessResponse<ProductFactoryStatusData>>(
-    `${apiDelpiUrl(`/products/${encoded}/factory-status`)}${qs ? `?${qs}` : ""}`,
+    `${commercialApiUrl(`/products/${encoded}/factory-status`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
-  return unwrapApiDelpiEnvelope(response, "Erro ao carregar status fabril.");
+  return unwrapEnvelope(response, "Erro ao carregar status fabril.");
 }
 
 export async function fetchAppointmentsByOp(
@@ -49,10 +49,10 @@ export async function fetchAppointmentsByOp(
   search.set("page", "1");
   search.set("page_size", String(params.page_size ?? 50));
   const response = await httpGet<ApiSuccessResponse<ProductionAppointmentsByOpData>>(
-    `${apiDelpiUrl("/production/appointments/by-op")}?${search.toString()}`,
+    `${commercialApiUrl("/production/appointments/by-op")}?${search.toString()}`,
     { signal },
   );
-  return unwrapApiDelpiEnvelope(response, "Erro ao carregar apontamentos.");
+  return unwrapEnvelope(response, "Erro ao carregar apontamentos.");
 }
 
 export async function fetchProductStructure(
@@ -61,10 +61,10 @@ export async function fetchProductStructure(
 ): Promise<ProductStructureData> {
   const encoded = encodeURIComponent(productCode.trim());
   const response = await httpGet<ApiSuccessResponse<ProductStructureData>>(
-    `${apiDelpiUrl(`/products/${encoded}/structure`)}?max_depth=6&page_size=200`,
+    `${commercialApiUrl(`/products/${encoded}/structure`)}?max_depth=6&page_size=200`,
     { signal },
   );
-  return unwrapApiDelpiEnvelope(response, "Erro ao carregar estrutura do produto.");
+  return unwrapEnvelope(response, "Erro ao carregar estrutura do produto.");
 }
 
 /** GET que devolve null em 403/404 sem lançar (RBAC / recurso ausente). */

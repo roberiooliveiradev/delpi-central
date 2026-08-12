@@ -1,0 +1,64 @@
+"""Helpers BFF TOTVS — escopo commercial → customer_codes para api-delpi."""
+
+from __future__ import annotations
+
+from starlette.requests import Request
+
+from commercial_app.application.security.commercial_permissions import (
+    can_manage_portfolios,
+    can_use_team_scope,
+)
+from commercial_app.application.services.analytics_customer_codes_service import (
+    AnalyticsCustomerCodesService,
+)
+from commercial_app.application.services.resolve_commercial_customer_scope_service import (
+    CommercialCustomerScope,
+)
+from commercial_app.core.auth_actor import (
+    actor_sub_from_request,
+    current_user_from_request,
+)
+
+
+def resolve_portfolio_scope(
+    request: Request,
+    *,
+    seller_id: str | None = None,
+    portfolio_id: str | None = None,
+) -> CommercialCustomerScope:
+    # Lazy: evita import de gateway/delpi_auth em testes unitários de merge.
+    from commercial_app.composition.commercial_composer import (
+        build_resolve_commercial_customer_scope_service,
+    )
+
+    user = current_user_from_request(request)
+    unrestricted = can_manage_portfolios(user) or can_use_team_scope(user)
+    user_id = actor_sub_from_request(request) or ""
+    pid = (portfolio_id or seller_id or "").strip() or None
+    return build_resolve_commercial_customer_scope_service().execute(
+        user_id=user_id,
+        unrestricted=unrestricted,
+        portfolio_id=pid,
+    )
+
+
+def merge_totvs_params(
+    scope: CommercialCustomerScope,
+    base: dict[str, object | None],
+) -> dict[str, object]:
+    """Insere customer_codes a partir do escopo; remove seller_id/portfolio_id."""
+    params: dict[str, object] = {
+        key: value
+        for key, value in base.items()
+        if value is not None and value != "" and key not in {"seller_id", "portfolio_id"}
+    }
+    codes = AnalyticsCustomerCodesService.codes_param(scope)
+    if codes is not None:
+        params["customer_codes"] = codes
+    return params
+
+
+def unwrap_gateway_data(payload: object) -> object:
+    if isinstance(payload, dict) and "data" in payload:
+        return payload.get("data")
+    return payload

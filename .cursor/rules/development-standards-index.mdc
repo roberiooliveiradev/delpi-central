@@ -11,6 +11,7 @@ alwaysApply: true
 |-------|------------------|
 | `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
 | `application-bounded-context-decoupling.mdc` | **Sempre** — apps da Minha Delpi sem acoplamento de regra; cada bounded context é dono |
+| `mfe-own-api-no-direct-api-delpi.mdc` | **Sempre** — MFE com API própria **nunca** chama api-delpi; só via BFF/`*-api` do módulo |
 | `plan-construction.mdc` | **CreatePlan / multi-etapa** — Cursor rules, inventário, mercado, fluxos/wireframes, impacto, E*.S*, test→commit |
 | `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
@@ -106,7 +107,8 @@ Bug apresentação chat   → root-cause-generalized-fix → schema-first-presen
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Regra de negócio entre apps / ownership → application-bounded-context-decoupling (dono do contexto; HTTP só)
-Regra Portal Comercial / escopo carteira → commercial-api (nunca PVA) · SCOPE-OWNERSHIP
+MFE com API própria → api-delpi → **proibido direto** — `mfe-own-api-no-direct-api-delpi.mdc` (BFF na `*-api` do módulo)
+Regra Portal Comercial / escopo carteira → commercial-api (nunca PVA) · SCOPE-OWNERSHIP · MFE só commercial-api
 TOTVS para o Portal sem membership PVA → path `totvs-*` na api-delpi + BFF commercial-api
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json

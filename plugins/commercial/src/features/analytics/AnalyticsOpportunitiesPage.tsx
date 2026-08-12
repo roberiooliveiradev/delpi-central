@@ -87,7 +87,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.end_date,
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
-    filters.apiParams.customer_codes,
+    filters.apiParams.seller_id,
     search,
     reloadKey,
   ]);

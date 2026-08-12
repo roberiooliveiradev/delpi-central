@@ -4,10 +4,10 @@ import type {
   ProposalDocumentListData,
   ProposalDocumentPdfExportOverrides,
 } from "../types/proposalsDocument";
-import { apiDelpiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
+import { commercialApiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
 
-/** Commercial proposals (ADY). Path EN completo; legado PT: `/propostas-comerciais`. */
-export const COMMERCIAL_PROPOSALS_API_BASE = apiDelpiUrl("/commercial-proposals");
+/** BFF commercial-api → api-delpi commercial-proposals (ADY). */
+export const COMMERCIAL_PROPOSALS_API_BASE = commercialApiUrl("/proposal-documents");
 
 export async function listProposalsDocuments(
   limit = 100,
@@ -15,7 +15,7 @@ export async function listProposalsDocuments(
 ): Promise<ProposalDocumentListData> {
   const query = new URLSearchParams({ limit: String(limit) });
   const response = await httpGet<ApiSuccessResponse<ProposalDocumentListData>>(
-    `${COMMERCIAL_PROPOSALS_API_BASE}?${query.toString()}`,
+    `${COMMERCIAL_PROPOSALS_API_BASE}/?${query.toString()}`,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao listar propostas comerciais.");

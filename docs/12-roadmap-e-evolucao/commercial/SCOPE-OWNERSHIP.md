@@ -1,7 +1,7 @@
 # Portal Comercial — dono do escopo de clientes
 
 > **Status:** canônico (ago/2026) · ADRs [ADR-001](./adr/ADR-001-commercial-api.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)  
-> **Diretriz Cursor:** `.cursor/rules/application-bounded-context-decoupling.mdc` — **todas** as apps da Minha Delpi sem acoplamento; neste domínio: PVA congelado e regras novas só em `commercial-api`.
+> **Diretriz Cursor:** `.cursor/rules/application-bounded-context-decoupling.mdc` + `.cursor/rules/mfe-own-api-no-direct-api-delpi.mdc` — MFE do Portal **nunca** chama api-delpi; regra/membership só em `commercial-api`.
 
 ## Princípio
 
@@ -32,14 +32,16 @@
 | `GET /open-orders/ops-abertas` | Proxy (sem membership) | MFE → commercial-api → api-delpi |
 | `POST /customers/billing-series` | commercial-api (filter_pairs) | MFE → commercial-api → api-delpi (path TOTVS sem gate PVA) |
 | `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`ensure_allows`) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
-| KPIs `/commercial/*`, propostas, production | Filtro opcional `customer_codes` (TOTVS); **sem** `portfolio_id` — membership resolve no Portal (MFE/commercial-api) | MFE → api-delpi (codes) ou consolidado |
+| KPIs `/analytics/*`, OV, OTD | commercial-api (`seller_id`/`membership` → `customer_codes`) | MFE → commercial-api → `GET …/commercial/*` |
+| Propostas ADY `/proposal-documents*` | commercial-api (RBAC) | MFE → commercial-api → api-delpi `commercial-proposals` |
+| Production / products BFF | commercial-api (RBAC) | MFE → commercial-api → api-delpi production/products |
 | PVA `GET /pedidos-venda-abertos/` | Legado: membership + **`for_open_orders`** (sem vínculo → consolidado) | Só plugin PVA |
 | PVA `…/clientes/…/notas-fiscais` | Legado: `customer_allowed` / membership clássico | Só plugin PVA |
 
 ## Gate de PR (Portal)
 
-- [ ] MFE `plugins/commercial` **não** chama `billing-series` / open-orders / NF **direto** na api-delpi (só via `/apps/commercial-api`).
-- [ ] Rotas BFF do Portal aplicam `ResolveCommercialCustomerScopeService` (ou helper `_customer_scope_for_request`) antes do gateway.
+- [ ] MFE `plugins/commercial` **nunca** chama `/apps/api-delpi` (grep zero: `apiDelpiUrl|API_DELPI_BASE|/apps/api-delpi` no `src/`).
+- [ ] Rotas BFF do Portal aplicam `ResolveCommercialCustomerScopeService` (ou helper `resolve_portfolio_scope`) antes do gateway quando há membership.
 - [ ] api-delpi **não** reintroduz `list_by_user_id` / dual-read commercial em enrichment, billing-series, avatar ou NF para o path do Portal.
 - [ ] Portal usa paths TOTVS puros (`totvs-open-orders`, `totvs-outbound-invoices`) — rotas PVA com membership ficam só para o plugin PVA.
 - [ ] Semântica `team.view` = irrestrito testada só na commercial-api.
@@ -49,5 +51,4 @@
 ## Fora deste contrato
 
 - Delete físico PVA / dual-read completo (F2c).
-- Migrar KPIs `/commercial/*` para commercial-api.
 - Mover SQL Protheus para commercial-api.

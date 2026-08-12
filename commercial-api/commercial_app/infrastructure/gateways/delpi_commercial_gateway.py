@@ -92,6 +92,103 @@ class DelpiCommercialGateway:
             params=params,
         )
 
+    def get_commercial_analytics(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Proxy GET `/commercial/...` na api-delpi (KPIs / OTD / OV)."""
+        normalized = path if path.startswith("/") else f"/{path}"
+        return self._request("GET", f"/commercial{normalized}", params=params)
+
+    def get_commercial_proposal_document(
+        self,
+        path: str = "",
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Proxy GET `/commercial-proposals` (+ path) na api-delpi."""
+        suffix = path if not path or path.startswith("/") else f"/{path}"
+        return self._request("GET", f"/commercial-proposals{suffix}", params=params)
+
+    def get_commercial_proposal_document_pdf(
+        self,
+        proposta_interna: str,
+    ) -> tuple[bytes, str | None]:
+        code = quote(str(proposta_interna or "").strip(), safe="")
+        return self._request_bytes("GET", f"/commercial-proposals/{code}/pdf")
+
+    def post_commercial_proposal_document_pdf(
+        self,
+        proposta_interna: str,
+        *,
+        payload: dict[str, Any],
+    ) -> tuple[bytes, str | None]:
+        code = quote(str(proposta_interna or "").strip(), safe="")
+        return self._request_bytes(
+            "POST",
+            f"/commercial-proposals/{code}/pdf",
+            json_body=payload,
+        )
+
+    def get_production(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized = path if path.startswith("/") else f"/{path}"
+        return self._request("GET", f"/production{normalized}", params=params)
+
+    def get_product(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized = path if path.startswith("/") else f"/{path}"
+        return self._request("GET", f"/products{normalized}", params=params)
+
+    def _request_bytes(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json_body: dict[str, Any] | None = None,
+    ) -> tuple[bytes, str | None]:
+        url = f"{self._base_url}{path}"
+        clean_params = {
+            key: value
+            for key, value in (params or {}).items()
+            if value is not None and value != ""
+        }
+        headers = self._headers()
+        if json_body is not None:
+            headers = {**headers, "Content-Type": "application/json"}
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.request(
+                method,
+                url,
+                params=clean_params or None,
+                json=json_body,
+                headers=headers,
+            )
+        if response.status_code >= 400:
+            message = "Erro ao consultar api-delpi."
+            try:
+                body = response.json()
+                message = body.get("message") or body.get("detail") or message
+            except Exception:
+                pass
+            raise RuntimeError(message)
+        filename = None
+        disposition = response.headers.get("content-disposition") or ""
+        if "filename=" in disposition:
+            filename = disposition.split("filename=", 1)[1].strip().strip('"')
+        return response.content, filename
+
     def _request(
         self,
         method: str,

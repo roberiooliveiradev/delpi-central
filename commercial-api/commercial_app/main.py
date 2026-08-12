@@ -17,9 +17,16 @@ from commercial_app.application.services.commercial_realtime_hub import (
 )
 from commercial_app.interface.http.routes.realtime_routes import router as realtime_router
 from commercial_app.interface.http.routes.attachment_routes import router as attachment_router
+from commercial_app.interface.http.routes.analytics_routes import router as analytics_router
 from commercial_app.interface.http.routes.customer_routes import router as customer_router
 from commercial_app.interface.http.routes.open_orders_routes import (
     router as open_orders_router,
+)
+from commercial_app.interface.http.routes.production_bff_routes import (
+    router as production_bff_router,
+)
+from commercial_app.interface.http.routes.proposal_documents_routes import (
+    router as proposal_documents_router,
 )
 from commercial_app.interface.http.routes.seller_portfolio_routes import (
     router as seller_portfolio_router,
@@ -152,6 +159,9 @@ def ready():
 app.include_router(seller_portfolio_router)
 app.include_router(customer_router)
 app.include_router(open_orders_router)
+app.include_router(analytics_router)
+app.include_router(proposal_documents_router)
+app.include_router(production_bff_router)
 app.include_router(worklist_me_router)
 app.include_router(tasks_router)
 app.include_router(activities_router)

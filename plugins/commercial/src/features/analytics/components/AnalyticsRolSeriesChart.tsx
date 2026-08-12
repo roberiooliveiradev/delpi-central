@@ -20,7 +20,7 @@ import { formatCurrency } from "../../../utils/format";
 type RolSeriesChartProps = {
   filters: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "customer_segment" | "customer_codes"
+    "start_date" | "end_date" | "customer_segment" | "seller_id"
   >;
   granularity?: ChartGranularity;
 };
@@ -51,7 +51,7 @@ export function AnalyticsRolSeriesChart({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [emptyCopy.rolError, filters.start_date, filters.end_date, filters.customer_segment, filters.customer_codes, granularity]);
+  }, [emptyCopy.rolError, filters.start_date, filters.end_date, filters.customer_segment, filters.seller_id, granularity]);
 
   if (loading) {
     return <CommercialLoadingCard title={emptyCopy.rolLoading} variant="panel" />;

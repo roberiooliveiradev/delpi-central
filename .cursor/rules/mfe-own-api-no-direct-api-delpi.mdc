@@ -1,0 +1,53 @@
+---
+description: MFE com API própria nunca chama api-delpi direto — só via BFF do bounded context
+globs: plugins/**/*,*-api/**/*,commercial-api/**/*,tv-dashboard-api/**/*,transformometro-api/**/*
+alwaysApply: true
+---
+
+# MFE + API própria — sem chamada direta à api-delpi
+
+## Princípio
+
+Todo plugin/MFE que tiver **API própria** (`*-api`, BFF do módulo) **nunca** chama `/apps/api-delpi` direto (nem helper `apiDelpiUrl`, nem `fetch` ao gateway da api-delpi).
+
+```text
+MFE do módulo ──HTTP──▶ API do módulo (regra / membership / escopo)
+                              │
+                              └──gateway──▶ api-delpi (contrato TOTVS puro, sem regra do consumidor)
+```
+
+Vale para **todos** os bounded contexts (Commercial, Transformômetro, TV Dashboard, Maintenance, chat BFF se aplicável, etc.) — não só Portal Comercial.
+
+Regra irmã: `application-bounded-context-decoupling.mdc`.
+
+## O que NÃO fazer
+
+- MFE com API própria → `api-delpi` / `API_DELPI_BASE` / `apiDelpiUrl`.
+- Montar no browser a fonte de verdade de membership/escopo (codes, filiais de carteira, etc.) e mandar “pronto” para a api-delpi.
+- Passar `portfolio_id` / membership / regra de produto do módulo para a api-delpi.
+- Feature nova do módulo “só na api-delpi” sem rota BFF na API dona.
+- Exceção ad hoc «este MFE pode chamar api-delpi porque é só KPI/read».
+
+## O que fazer
+
+| Necessidade | Onde |
+|-------------|------|
+| Regra / membership / escopo do produto | API do módulo (`*-api`) |
+| SQL / envelope TOTVS | api-delpi (path puro, sem regra do consumidor) |
+| Leitura TOTVS no MFE | Rota BFF na API do módulo + gateway HTTP + MFE via base da **própria** API |
+| MFE **sem** API própria (legado raro) | Justificar no PR; preferir criar BFF ou consumir só contrato já dono |
+
+## Exemplos
+
+| MFE | API dona | api-delpi |
+|-----|----------|-----------|
+| `plugins/commercial` | `commercial-api` | Só via gateway da commercial-api |
+| `plugins/transformometro` | `transformometro-api` | Só via transformometro-api |
+| `plugins/tv-dashboard` | `tv-dashboard-api` | Só via tv-dashboard-api |
+| Demais `plugins/*` com `*-api` | A `*-api` do manifesto | Idem |
+
+## Gate de PR
+
+- [ ] Grep zero no MFE do módulo: `apiDelpiUrl|API_DELPI_BASE|/apps/api-delpi` (salvo doc/teste que afirme a proibição)
+- [ ] Nova leitura TOTVS → rota na API dona + gateway, não fetch no MFE
+- [ ] Doc de ownership / SCOPE do módulo atualizado se a matriz mudar

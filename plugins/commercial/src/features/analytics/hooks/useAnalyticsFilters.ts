@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { usePortfolioScope } from "../../../app/PortfolioScopeContext";
 import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
@@ -10,10 +10,6 @@ import {
   type LinkedDateFilters,
 } from "../utils/competenceFilters";
 import { resolveAnalyticsApiBranch } from "../utils/analyticsBranchFilters";
-import {
-  resolvePortfolioCustomerCodes,
-  serializeCustomerCodesCsv,
-} from "../utils/portfolioCustomerCodes";
 import {
   readAnalyticsFilters,
   subscribeAnalyticsFilterRouteSync,
@@ -142,20 +138,12 @@ export function useAnalyticsFilters() {
     });
   }, [replaceAll, sellerAccess]);
 
-  const customerCodes = useMemo(
-    () =>
-      canFilterPortfolios
-        ? resolvePortfolioCustomerCodes(effectiveSellerId, filterablePortfolios)
-        : null,
-    [canFilterPortfolios, effectiveSellerId, filterablePortfolios],
-  );
-
   const apiParams: AnalyticsFilterParams = {
     start_date: dateStart || undefined,
     end_date: dateEnd || undefined,
     branch: resolveAnalyticsApiBranch(branches),
     customer_segment: customerSegment || undefined,
-    customer_codes: serializeCustomerCodesCsv(customerCodes),
+    seller_id: effectiveSellerId || undefined,
   };
 
   const filterState: AnalyticsFilterUrlState = {

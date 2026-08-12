@@ -11,6 +11,8 @@ Toda API, plugin `*-api`, MFE e serviço da **Minha Delpi** é um **bounded cont
 
 **Proibido** compartilhar entre apps: regra de domínio, membership/escopo de usuário, use case, “helper” de negócio ou import de `domain`/`application` de outro pacote de app.
 
+**Proibido (HTTP):** MFE que possui API própria chamar `api-delpi` direto — ver `mfe-own-api-no-direct-api-delpi.mdc`.
+
 **Permitido:** contrato HTTP estável (envelope, `operationId`, payload); libs **neutras** em `shared/` (`delpi_auth`, authz, utilidades sem regra de produto); Compose/gateway só como infraestrutura.
 
 ```
@@ -31,6 +33,7 @@ App A ──HTTP contrato──▶ App B
 - Alterar app B “para alinhar” com regra nova do app A (acoplamento regressivo).
 - Duplicar a mesma semântica de negócio em dois apps (manter uma fonte; o outro só consome HTTP).
 - MFE chamar API de outro contexto bypassando o BFF/API dona.
+- MFE com `*-api` própria chamar `/apps/api-delpi` direto (`mfe-own-api-no-direct-api-delpi.mdc`).
 - Pedir patch no legado/vizinho em vez de evoluir o contexto canônico.
 
 ## O que fazer
@@ -44,9 +47,9 @@ App A ──HTTP contrato──▶ App B
 
 | Contexto dono | Não acoplar em |
 |---------------|----------------|
-| `commercial-api` (Portal Comercial) | PVA / membership em rotas api-delpi do Portal |
-| `transformometro-api` | api-delpi ou outro plugin para regra do Transformômetro |
+| `commercial-api` (Portal Comercial) | PVA / membership em rotas api-delpi do Portal; MFE só via commercial-api |
+| `transformometro-api` | api-delpi ou outro plugin para regra do Transformômetro; MFE só via transformometro-api |
 | `minha-delpi-ai-api` (chat) | Prompt/regra só em agente quando a regra é transversal do chat base |
-| `maintenance-api`, `tv-dashboard-api`, demais `*-api` | Domínio irmão via import ou dual-write de regra |
+| `maintenance-api`, `tv-dashboard-api`, demais `*-api` | Domínio irmão via import ou dual-write de regra; MFE do módulo não chama api-delpi direto |
 
 Caso Portal × PVA (congelar PVA; regras novas só em commercial-api): `docs/12-roadmap-e-evolucao/commercial/SCOPE-OWNERSHIP.md`.

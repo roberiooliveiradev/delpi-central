@@ -1,0 +1,13 @@
+---
+description: (legado) → ver mfe-own-api-no-direct-api-delpi.mdc — vale para todos os MFEs com API própria
+globs: plugins/commercial/**/*,commercial-api/**/*
+alwaysApply: false
+---
+
+# Legado — use a regra geral
+
+**Substituída por:** [`mfe-own-api-no-direct-api-delpi.mdc`](./mfe-own-api-no-direct-api-delpi.mdc)
+
+O desacoplamento MFE → API própria → api-delpi **não** é só do Portal Comercial: aplica-se a **todo** app com API própria.
+
+Portal Comercial (exemplo): doc `docs/12-roadmap-e-evolucao/commercial/SCOPE-OWNERSHIP.md`.

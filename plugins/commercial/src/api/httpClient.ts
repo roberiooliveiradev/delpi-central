@@ -10,7 +10,6 @@ type RequestOptions = {
 type JsonBody = Record<string, unknown> | unknown[];
 
 export const COMMERCIAL_API_BASE = "/apps/commercial-api";
-export const API_DELPI_BASE = "/apps/api-delpi";
 
 const DELPI_CALLER_APP = "commercial";
 
@@ -74,11 +73,6 @@ async function parseError(response: Response): Promise<string> {
 export function commercialApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${COMMERCIAL_API_BASE}${normalized}`;
-}
-
-export function apiDelpiUrl(path: string): string {
-  const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${API_DELPI_BASE}${normalized}`;
 }
 
 export async function httpGet<T>(url: string, options: RequestOptions = {}): Promise<T> {

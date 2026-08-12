@@ -14,9 +14,10 @@ import type {
   SalesOrderOtdPanelData,
   SalesOrderOtdSeriesData,
 } from "../types/analytics";
-import { apiDelpiUrl, httpGet } from "./httpClient";
+import { commercialApiUrl, httpGet } from "./httpClient";
 
-const COMMERCIAL_PATH = "/commercial";
+/** BFF commercial-api — membership/seller_id no servidor; TOTVS via gateway. */
+const ANALYTICS_PATH = "/analytics";
 
 function buildQuery(
   params: AnalyticsFilterParams & { granularity?: ChartGranularity },
@@ -28,8 +29,8 @@ function buildQuery(
   if (params.customer_segment) {
     searchParams.set("customer_segment", params.customer_segment);
   }
-  if (params.customer_codes?.trim()) {
-    searchParams.set("customer_codes", params.customer_codes.trim());
+  if (params.seller_id?.trim()) {
+    searchParams.set("seller_id", params.seller_id.trim());
   }
   if (params.granularity) searchParams.set("granularity", params.granularity);
   if (params.status) searchParams.set("status", params.status);
@@ -48,7 +49,7 @@ async function fetchAnalyticsData<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const response = await httpGet<ApiSuccessResponse<T>>(
-    `${apiDelpiUrl(`${COMMERCIAL_PATH}${path}`)}${buildQuery(params)}`,
+    `${commercialApiUrl(`${ANALYTICS_PATH}${path}`)}${buildQuery(params)}`,
     { signal },
   );
   return unwrapEnvelope(response, "Erro na API comercial");
@@ -75,7 +76,7 @@ export function getNewBusinessRolPct(params: AnalyticsFilterParams, signal?: Abo
 }
 
 export function getCommercialRolSeries(
-  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment"> & {
+  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment" | "seller_id"> & {
     granularity: ChartGranularity;
   },
   signal?: AbortSignal,
@@ -89,16 +90,17 @@ export function getCommercialProposals(params: AnalyticsFilterParams, signal?: A
 
 export function getCommercialProposalByNumber(
   proposalNumber: string,
-  params: { branch: string; revision?: string },
+  params: { branch: string; revision?: string; seller_id?: string },
   signal?: AbortSignal,
 ) {
   const searchParams = new URLSearchParams();
   searchParams.set("branch", params.branch);
   if (params.revision) searchParams.set("revision", params.revision);
+  if (params.seller_id?.trim()) searchParams.set("seller_id", params.seller_id.trim());
   const encoded = encodeURIComponent(proposalNumber.trim());
   const query = searchParams.toString();
   return httpGet<ApiSuccessResponse<CommercialProposalDetail>>(
-    `${apiDelpiUrl(`${COMMERCIAL_PATH}/proposals/${encoded}`)}${query ? `?${query}` : ""}`,
+    `${commercialApiUrl(`${ANALYTICS_PATH}/proposals/${encoded}`)}${query ? `?${query}` : ""}`,
     { signal },
   ).then((response) => unwrapEnvelope(response, "Erro ao carregar detalhe da OV"));
 }
@@ -110,6 +112,7 @@ export function getCommercialProposalHistoryEvents(
     revision?: string;
     start_date?: string;
     end_date?: string;
+    seller_id?: string;
   },
   signal?: AbortSignal,
 ) {
@@ -118,10 +121,11 @@ export function getCommercialProposalHistoryEvents(
   if (params.revision) searchParams.set("revision", params.revision);
   if (params.start_date) searchParams.set("start_date", params.start_date);
   if (params.end_date) searchParams.set("end_date", params.end_date);
+  if (params.seller_id?.trim()) searchParams.set("seller_id", params.seller_id.trim());
   const encoded = encodeURIComponent(proposalNumber.trim());
   const query = searchParams.toString();
   return httpGet<ApiSuccessResponse<CommercialProposalHistoryEventsData>>(
-    `${apiDelpiUrl(`${COMMERCIAL_PATH}/proposals/${encoded}/history/events`)}${
+    `${commercialApiUrl(`${ANALYTICS_PATH}/proposals/${encoded}/history/events`)}${
       query ? `?${query}` : ""
     }`,
     { signal },
@@ -135,7 +139,10 @@ export function getSalesOrderOtdPanel(params: AnalyticsFilterParams, signal?: Ab
 }
 
 export function getSalesOrderOtdSeries(
-  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "branch" | "customer_segment"> & {
+  params: Pick<
+    AnalyticsFilterParams,
+    "start_date" | "end_date" | "branch" | "customer_segment" | "seller_id"
+  > & {
     granularity: ChartGranularity;
   },
   signal?: AbortSignal,
@@ -147,15 +154,15 @@ export function getSalesOrderOtdLineDetail(
   branch: string,
   orderNumber: string,
   lineItem: string,
-  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment">,
+  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment" | "seller_id">,
   signal?: AbortSignal,
 ) {
   const encodedBranch = encodeURIComponent(branch);
   const encodedOrder = encodeURIComponent(orderNumber);
   const encodedLine = encodeURIComponent(lineItem);
   return httpGet<ApiSuccessResponse<SalesOrderOtdLineDetailData>>(
-    `${apiDelpiUrl(
-      `${COMMERCIAL_PATH}/sales-order-otd/lines/${encodedBranch}/${encodedOrder}/${encodedLine}`,
+    `${commercialApiUrl(
+      `${ANALYTICS_PATH}/sales-order-otd/lines/${encodedBranch}/${encodedOrder}/${encodedLine}`,
     )}${buildQuery(params)}`,
     { signal },
   ).then((response) =>

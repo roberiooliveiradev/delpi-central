@@ -143,7 +143,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               start_date: filters.apiParams.start_date,
               end_date: filters.apiParams.end_date,
               customer_segment: filters.apiParams.customer_segment,
-              customer_codes: filters.apiParams.customer_codes,
+              seller_id: filters.apiParams.seller_id,
             }}
           />
         </SectionCard>
