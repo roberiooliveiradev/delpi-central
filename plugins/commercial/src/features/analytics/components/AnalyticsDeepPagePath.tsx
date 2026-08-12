@@ -1,6 +1,6 @@
-import { CommercialPagePath } from "../../app/commercialUi";
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
+import { CommercialPagePath } from "../../../app/commercialUi";
+import { navigatePluginView } from "../../../app/pluginNavigation";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 
 type AnalyticsDeepPagePathProps = {
   basePath: string;
