@@ -376,6 +376,14 @@ export {
   type DashboardCatalogSearchBarProps,
 } from "./CatalogSearchBar";
 export {
+  CommandPalette,
+  createDashboardCommandPalette,
+  commandPaletteBemClasses,
+  type CommandPaletteClassNames,
+  type CommandPaletteProps,
+  type DashboardCommandPaletteProps,
+} from "./CommandPalette";
+export {
   PreviewDetailCard,
   createDashboardPreviewDetailCard,
   previewDetailCardBemClasses,

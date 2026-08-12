@@ -142,6 +142,38 @@ CSS: `styles/catalog-search-bar.css`.
 
 ---
 
+## `CommandPalette`
+
+Modal de busca global (Ctrl/Cmd+K no shell do MFE). Preferir
+`createDashboardCommandPalette` com `createHostContainedModalShell` para não
+cobrir a sidebar do portal.
+
+```tsx
+const CommercialCommandPalette = createDashboardCommandPalette({
+  prefix: "cm",
+  portalScopeClassName: "dashboard-commercial",
+});
+
+<CommercialCommandPalette
+  open={open}
+  onClose={close}
+  title="Buscar no Portal Comercial"
+  value={query}
+  onChange={setQuery}
+  hits={hits}
+  onSelectHit={openRoute}
+  placeholder="Ir para caminho…"
+  emptyHitsLabel="Nenhum resultado"
+/>
+```
+
+Props principais: `open`, `onClose`, `title`, `value`, `onChange`, `hits`,
+`onSelectHit`, `placeholder`, `emptyHitsLabel`, `closeAriaLabel`.
+
+CSS: `styles/command-palette.css`.
+
+---
+
 ## `PagePath`
 
 Breadcrumb semântico (`nav` + `ol`) para páginas internas. `back` e `current` são
