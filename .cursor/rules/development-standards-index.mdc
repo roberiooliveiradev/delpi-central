@@ -94,6 +94,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 ## Fluxo por tipo de tarefa
 
 ```
+Plano multi-etapa / CreatePlan → plan-construction (checklist + E*.S* + test→commit) → test-and-commit
 Nova rota REST          → api-delpi-openapi-route-standards → api-delpi-response-contract → new-api-route-checklist → smoke Nível A + audit_route_test_coverage → playbook-22
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
 Convenção TOTVS / produto → totvs-product-patterns (usar hub) → padroes-totvs/README.md
