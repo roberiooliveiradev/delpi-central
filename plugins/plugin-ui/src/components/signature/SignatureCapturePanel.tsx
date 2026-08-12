@@ -105,8 +105,22 @@ export function SignatureCapturePanel({
   }, [previewUrl]);
 
   function publish(blob: Blob | null) {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(blob ? URL.createObjectURL(blob) : null);
+    if (previewUrl) {
+      try {
+        URL.revokeObjectURL(previewUrl);
+      } catch {
+        /* jsdom */
+      }
+    }
+    let nextUrl: string | null = null;
+    if (blob) {
+      try {
+        nextUrl = URL.createObjectURL(blob);
+      } catch {
+        nextUrl = null;
+      }
+    }
+    setPreviewUrl(nextUrl);
     onChange?.(blob);
   }
 

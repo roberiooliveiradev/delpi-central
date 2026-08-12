@@ -1112,7 +1112,8 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 
 | Export | Uso |
 |--------|-----|
-| `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
+| `SignaturePad` | Canvas de assinatura manuscrita (PNG) com undo/redo, espessura e DPI |
+| `SignatureCapturePanel` | Painel Desenhar / Digitar / Upload + prévia nome+traço |
 | `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; toggle **HTML/Visual** (fonte monoespaçada); sugestão de tags/`style` CSS + auto-fechamento de tags; paste de tabelas normalizado; link via `RichTextLinkDialog` |
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
 | `RichTextSourceEditor` | Textarea da fonte HTML com autocomplete de tags e propriedades CSS allowlisted |
