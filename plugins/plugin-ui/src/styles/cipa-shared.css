@@ -86,6 +86,117 @@
   cursor: not-allowed;
 }
 
+.delpi-ui-signature-capture {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delpi-ui-signature-capture__modes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.delpi-ui-signature-capture__mode {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  cursor: pointer;
+  font: inherit;
+}
+
+.delpi-ui-signature-capture__mode:last-child {
+  border-right: 0;
+}
+
+.delpi-ui-signature-capture__mode.is-active {
+  background: var(--delpi-ui-primary-soft, #e2e8f0);
+  font-weight: 600;
+}
+
+.delpi-ui-signature-capture__mode:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-signature-capture__type,
+.delpi-ui-signature-capture__upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-signature-capture__type-input {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  padding: 0 12px;
+  font: inherit;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-signature-capture__type-apply {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  cursor: pointer;
+  font: inherit;
+}
+
+.delpi-ui-signature-capture__type-apply:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-signature-capture__upload-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-signature-capture__preview-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-signature-capture__preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+}
+
+.delpi-ui-signature-capture__preview-name {
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-signature-capture__preview-image {
+  max-width: 100%;
+  height: auto;
+  background: transparent;
+}
+
+.delpi-ui-signature-capture__preview-empty {
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
 .delpi-ui-user-directory-picker,
 .delpi-ui-rich-text {
   width: 100%;
