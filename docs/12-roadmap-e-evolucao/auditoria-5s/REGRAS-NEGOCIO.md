@@ -144,11 +144,20 @@ Critérios com nota 1 ou 3 **não exigem** NC obrigatória para fechar a auditor
 | Área auditada | Sim | Seleção em `audit_5s_areas` |
 | Turno | Sim | Enum fixo (seção 1) |
 | Responsável pela área | Sim | Texto no cabeçalho |
-| Auditores | Sim (≥1) | Usuários vinculados à auditoria |
+| Auditores | Sim (≥1) | Usuários **cadastrados no cabeçalho** (create/update). Abrir, visualizar ou entrar na sala de colaboração **não** adiciona auditor. |
 
 ### 7.1 Edição do cabeçalho
 
 O cabeçalho permanece **editável** enquanto a auditoria **não** estiver em status terminal (`closed` ou `closed_without_nc_treatment`). Após o encerramento, a edição é bloqueada na UI e na API.
+
+### 7.2 Auditores vs. presença
+
+| Conceito | Onde | Quem aparece |
+|----------|------|--------------|
+| Auditores oficiais | `quality.audit_5s_auditors` / coluna «Auditores» | Só quem foi informado no cabeçalho (create/update) |
+| Colaboração ativa | Socket `audit5s.presence` (memória) | Quem está com a auditoria aberta agora — **não** grava como auditor |
+
+`POST /audits/{id}/join` e o evento Socket `audit5s.join` **somente** abrem/recarregam ou atualizam presença; **não** fazem `INSERT` em `audit_5s_auditors`.
 
 ---
 
@@ -182,6 +191,7 @@ Endpoint: `POST /quality/audit-5s/audits/{id}/close-without-nc-treatment` (exige
 
 | Data | Nota |
 |------|------|
+| 2026-08-12 | Join/visualização e Socket `audit5s.join` **não** inserem em `audit_5s_auditors` — auditores só pelo cabeçalho |
 | 2026-05-28 | Turnos: 1º, 2º, 3º, administrativo |
 | 2026-05-28 | Área auditada: cadastro sob demanda por filial |
 | 2026-05-28 | Validação: 100% dos critérios com nota (incl. NA) para concluir avaliação |

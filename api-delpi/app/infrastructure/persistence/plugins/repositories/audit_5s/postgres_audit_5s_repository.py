@@ -621,6 +621,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         user_id: str,
         display_name: str,
     ) -> None:
+        """Insere auditor se ainda não existir.
+
+        Uso restrito a fluxos explícitos de cabeçalho. Não chamar em join HTTP
+        nem em presença Socket — visualizar/colaborar ≠ ser auditor oficial.
+        """
         normalized_name = format_person_name(display_name)
         self.execute(
             """
