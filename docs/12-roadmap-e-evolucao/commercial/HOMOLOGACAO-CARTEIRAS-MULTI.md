@@ -65,6 +65,7 @@ Rodar a partir da raiz do monorepo:
 | # | Caso | Resultado |
 |---|------|-----------|
 | 16 | Chip **Com overlapping** filtra carteiras; badge na lista | |
+| 17 | Chip **Sem cobertura** (`?filter=uncovered`) lista clientes com pedido aberto fora de qualquer carteira | |
 | 17 | Vincular cliente já em outra carteira: vínculo OK + aviso soft | |
 | 18 | Lista/org mostram carga (clientes/membros); valor/atenção «—» se stub | |
 | 19 | Detalhe: seção Histórico com eventos de members/owner/transfer | |

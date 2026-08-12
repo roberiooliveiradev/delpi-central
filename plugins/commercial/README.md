@@ -176,15 +176,15 @@ compartilhável usa `replaceState` só nesta rota:
 | Query | Efeito |
 |-------|--------|
 | `q` | Busca por nome, usuário ou e-mail |
-| `filter=active\|inactive\|overlapping` | Recorte de situação ou carteiras com clientes em overlapping (`all` é omitido) |
+| `filter=active\|inactive\|overlapping\|uncovered` | Recorte de situação, overlapping ou painel de clientes sem cobertura (`all` é omitido) |
 | `view=list\|org` | Lista ou organização |
 | `axis=portfolio\|person` | Eixo da visão organização |
 
 Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na lista migra para o path.
 
-**E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) fica `available: false` até existir universo de clientes. Chip «Com overlapping» na lista; ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
+**E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) usa universo de clientes com pedido aberto (`gap.universe=open_orders`). Chip «Sem cobertura» (`?filter=uncovered`) troca a lista por painel de clientes descobertos. Ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
 
-**E6.2 carga:** `GET /seller-portfolios/load-summary` — `customer_count` / `member_count` por carteira e por pessoa; `open_value` / `attention_count` ainda stub (`—`) até agregação TOTVS.
+**E6.2 carga:** `GET /seller-portfolios/load-summary` — `customer_count` / `member_count` por carteira e por pessoa; `open_value` / `attention_count` via agregação TOTVS (`totvs_metrics.available`); fallback «—» se a chamada falhar.
 
 **E6.3 histórico:** `GET /seller-portfolios/{id}/audit` (manage ou `audit.view`) — timeline paginada do `audit_log` (membros, responsável, transferência, ativar/inativar) no detalhe da carteira.
 

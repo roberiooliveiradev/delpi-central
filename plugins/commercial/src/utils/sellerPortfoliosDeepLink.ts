@@ -10,6 +10,7 @@ export const SELLER_PORTFOLIOS_FILTER_VALUES = [
   "active",
   "inactive",
   "overlapping",
+  "uncovered",
 ] as const;
 
 export const SELLER_PORTFOLIOS_VIEW_VALUES = ["list", "org"] as const;

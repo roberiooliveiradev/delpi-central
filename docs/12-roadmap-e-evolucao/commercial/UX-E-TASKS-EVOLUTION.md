@@ -178,13 +178,10 @@ Itens de mercado **não** entregues com o MVP multi-membro / E6. Registrados aqu
 | ID | Tema | Problema de produto | Dependências / notas |
 |----|------|---------------------|----------------------|
 | E7.1 | Mapa de territórios | Visualizar clientes/carteiras em mapa; desenhar polígonos | Geo no cadastro TOTVS/SA1; lib de mapa no MFE; RBAC manage |
-| E7.2 | AI carve | Sugerir redistribuição equilibrando carga/região | Precisa E6.2 com valor TOTVS real + política de aceite humano |
+| E7.2 | AI carve | Sugerir redistribuição equilibrando carga/região | Usa `load-summary` TOTVS (open_value/atenção) + política de aceite humano |
 | E7.3 | Rotate de leads | Round-robin / rotação periódica de contas novas | Regras Comercial + audit; não misturar com owner estático |
 | E7.4 | Inbox e-mail compartilhado | Caixa da carteira (não só tarefas Meu dia) | Integração e-mail; volume persistente; ≠ WhatsApp nativo |
 
 Wireframes placeholder: [WIREFRAMES.md](./WIREFRAMES.md) § WF-05R «E7 — backlog futuro».
 
-**Dívida técnica pós-E6 (pode vir antes do E7):**
-
-- Gap «sem cobertura» (`coverage-audit.gap`) — exige universo de clientes canônico.
-- `open_value` / `attention_count` no `load-summary` — exige agregação barata de pedidos abertos por escopo.
+**Dívidas E6 (fechadas):** gap `filter=uncovered` (universo = open-orders), `open_value`/`attention_count` via `list_customer_open_order_metrics`, badge `has_portal_access` no detalhe (+ gate core-api).

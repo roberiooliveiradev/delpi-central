@@ -559,8 +559,8 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 
 | Item | Nota |
 |------|------|
-| **E6.1** — Overlapping | Chip «Com overlapping»; aviso soft ao vincular; gap TOTVS ainda indisponível |
-| **E6.2** — KPIs de carga | `load-summary` (clientes/membros); valor/atenção TOTVS = «—» |
+| **E6.1** — Overlapping | Chip «Com overlapping»; aviso soft ao vincular; gap `filter=uncovered` (universo open-orders) |
+| **E6.2** — KPIs de carga | `load-summary` com `open_value` / `attention_count` via agregação TOTVS (fallback «—» se falhar) |
 | **E6.3** — Timeline | Histórico no detalhe via `GET …/audit` |
 | **E6.4** — Badge Conta | «Compartilhado» + «Também em» (`POST /customer-coverage`) |
 | **E6.5** — Bulk + Excel | Wizard transfer + export matriz org |

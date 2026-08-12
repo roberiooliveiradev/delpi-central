@@ -87,6 +87,9 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | GET | `/seller-portfolios/coverage-audit` | `get_seller_portfolios_coverage_audit` | E6.1 | manage | `portfolio_coverage` | `scalar` | WF-05R |
 | POST | `/seller-portfolios/customer-coverage` | `lookup_seller_portfolios_customer_coverage` | E6.4 | accounts.view | `portfolio_coverage` | `list` | WF-03 / Conta |
 | GET | `/seller-portfolios/load-summary` | `get_seller_portfolios_load_summary` | E6.2 | manage | `portfolio_load` | `scalar` | WF-05R / ORG |
+
+**Dependência TOTVS (api-delpi):** `POST /pedidos-venda-abertos/customers/open-order-metrics` (`list_customer_open_order_metrics`) — agrega `open_value` + `has_overdue` por cliente; alimenta load-summary e gap «sem cobertura» (universo = clientes com pedido aberto).
+
 | GET | `/seller-portfolios/{seller_id}` | `get_seller_portfolio` | F2 | manage ou own | `seller_portfolio` | `scalar` | WF-05 |
 | POST | `/seller-portfolios` | `create_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
 | PATCH | `/seller-portfolios/{seller_id}` | `update_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
@@ -318,6 +321,7 @@ Consumidas pelo Portal Comercial (F2b), dashboard e/ou gateway da commercial-api
 | `list_ops_abertas_pedidos_venda` | `GET /pedidos-venda-abertos/ops-abertas` | KPIs operacionais |
 | `search_active_customers_for_portfolio` | `GET .../customers/search` | WF-05 add customer |
 | `enrich_portfolio_customers` | `POST .../customers/enrichment` | WF-03/05 nomes/cidade |
+| `list_customer_open_order_metrics` | `POST .../customers/open-order-metrics` | E6 load-summary + gap uncovered |
 | `list_customer_billing_series` | `POST .../customers/billing-series` | WF-04 faturamento |
 | `list_cliente_notas_fiscais_saida` | `GET .../clientes/{codigo}/{loja}/notas-fiscais` | WF-04 NF |
 

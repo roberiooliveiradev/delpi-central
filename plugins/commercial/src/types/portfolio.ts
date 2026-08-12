@@ -15,6 +15,8 @@ export type SellerPortfolioMemberRole = "owner" | "member";
 export type SellerPortfolioMember = {
   user_id: string;
   role: SellerPortfolioMemberRole;
+  /** false = usuário ativo no diretório sem acesso ao app commercial. */
+  has_portal_access?: boolean;
 };
 
 export type SellerPortfolio = {
@@ -116,9 +118,19 @@ export type PortfolioOverlapSummary = {
   overlapping_customer_count: number;
 };
 
+export type UncoveredCustomerGapItem = {
+  customer_code: string;
+  customer_store: string;
+  customer_name: string | null;
+  open_value: number | null;
+};
+
 export type PortfolioCoverageGapStatus = {
   available: boolean;
   reason: string | null;
+  universe?: string | null;
+  uncovered_count?: number;
+  uncovered?: UncoveredCustomerGapItem[];
 };
 
 export type SellerPortfoliosCoverageAudit = {

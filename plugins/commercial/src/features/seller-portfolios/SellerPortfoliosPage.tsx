@@ -53,6 +53,7 @@ import { SellerPortfolioBulkTransferWizard } from "./SellerPortfolioBulkTransfer
 import { SellerPortfolioCreateDialog } from "./SellerPortfolioCreateDialog";
 import { SellerPortfoliosList } from "./SellerPortfoliosList";
 import { SellerPortfoliosOrgView } from "./SellerPortfoliosOrgView";
+import { UncoveredCustomersPanel } from "./UncoveredCustomersPanel";
 
 const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: string }> = {
   all: { label: PORTFOLIO_COVERAGE_CONTENT.filterAll, emptyHint: "Cadastre a primeira carteira." },
@@ -67,6 +68,10 @@ const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: st
   overlapping: {
     label: PORTFOLIO_COVERAGE_CONTENT.filterOverlapping,
     emptyHint: PORTFOLIO_COVERAGE_CONTENT.filterOverlappingEmpty,
+  },
+  uncovered: {
+    label: PORTFOLIO_COVERAGE_CONTENT.filterUncovered,
+    emptyHint: PORTFOLIO_COVERAGE_CONTENT.filterUncoveredEmpty,
   },
 };
 
@@ -243,6 +248,9 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     const overlapping = portfolios.filter(
       (item) => item.active && overlapIds.has(item.id),
     ).length;
+    const uncoveredCount = coverageAudit?.gap?.available
+      ? coverageAudit.gap.uncovered_count ?? 0
+      : null;
     return {
       total: portfolios.length,
       active,
@@ -250,10 +258,12 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       customers,
       overlapping,
       overlappingCustomers: coverageAudit?.overlapping_count ?? 0,
+      uncoveredCount,
     };
-  }, [coverageAudit?.overlapping_count, overlapIds, portfolios]);
+  }, [coverageAudit?.gap, coverageAudit?.overlapping_count, overlapIds, portfolios]);
 
   const filteredPortfolios = useMemo(() => {
+    if (link.filter === "uncovered") return [];
     return portfolios.filter((item) => {
       if (link.filter === "active" && !item.active) return false;
       if (link.filter === "inactive" && item.active) return false;
@@ -270,12 +280,21 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       ["active", stats.active] as const,
       ["inactive", stats.inactive] as const,
       ["overlapping", stats.overlapping] as const,
+      [
+        "uncovered",
+        stats.uncoveredCount ?? 0,
+      ] as const,
     ] as const
   ).map(([id, count]) => ({
     id,
     label: `${FILTER_META[id].label} (${count})`,
     active: link.filter === id,
-    onSelect: () => applyLink({ ...link, filter: id }),
+    onSelect: () =>
+      applyLink({
+        ...link,
+        filter: id,
+        view: id === "uncovered" ? "list" : link.view,
+      }),
   }));
 
   async function handleCreate(input: { userIds: string[]; displayName: string }) {
@@ -448,6 +467,14 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
             label: PORTFOLIO_COVERAGE_CONTENT.heroOverlapping,
             value: loading ? "—" : stats.overlappingCustomers.toLocaleString("pt-BR"),
           },
+          {
+            id: "uncovered",
+            label: PORTFOLIO_COVERAGE_CONTENT.heroUncovered,
+            value:
+              loading || stats.uncoveredCount === null
+                ? "—"
+                : stats.uncoveredCount.toLocaleString("pt-BR"),
+          },
         ]}
         actions={
           <div className="cm-portfolios-page__actions">
@@ -563,7 +590,14 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
         </CommercialStateBanner>
       ) : null}
 
-      {link.view === "org" ? (
+      {link.filter === "uncovered" ? (
+        <UncoveredCustomersPanel
+          items={coverageAudit?.gap?.uncovered ?? []}
+          uncoveredCount={coverageAudit?.gap?.uncovered_count ?? 0}
+          available={Boolean(coverageAudit?.gap?.available)}
+          loading={loading && !coverageAudit}
+        />
+      ) : link.view === "org" ? (
         <SellerPortfoliosOrgView
           portfolios={filteredPortfolios}
           axis={link.axis}

@@ -9,7 +9,9 @@ export const PORTFOLIO_LOAD_CONTENT = {
   openValueUnavailable: "—",
   attentionUnavailable: "—",
   totvsUnavailableHint:
-    "Valor aberto e linhas em atenção ainda não agregados nesta tela (TOTVS).",
+    "Valor aberto e clientes em atraso indisponíveis quando a agregação TOTVS falha ou ainda não responde.",
+  totvsAvailableHint:
+    "Valor aberto = soma dos pedidos em aberto; Atenção = clientes da carteira com entrega em atraso.",
   colMembers: "Membros",
   colOpenValue: "Valor aberto",
   colAttention: "Atenção",

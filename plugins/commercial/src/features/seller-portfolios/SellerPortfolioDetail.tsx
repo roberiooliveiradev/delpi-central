@@ -20,6 +20,7 @@ import {
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
+import { PORTFOLIO_MEMBERS_CONTENT } from "../../content/portfolioMembersContent";
 import { customerKey } from "../../shared/format";
 import type {
   SellerCustomer,
@@ -255,14 +256,30 @@ export function SellerPortfolioDetail({
       {
         key: "user",
         header: "Usuário",
-        render: (row) => directoryLabelFor(row.user_id),
+        render: (row) => (
+          <div className="cm-row-actions">
+            <span>{directoryLabelFor(row.user_id)}</span>
+            {row.has_portal_access === false ? (
+              <span title={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessHint}>
+                <CommercialStatusBadge
+                  label={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessBadge}
+                  variant="warning"
+                />
+              </span>
+            ) : null}
+          </div>
+        ),
       },
       {
         key: "role",
         header: "Papel",
         render: (row) => (
           <CommercialStatusBadge
-            label={row.role === "owner" ? "Responsável" : "Membro"}
+            label={
+              row.role === "owner"
+                ? PORTFOLIO_MEMBERS_CONTENT.roleOwner
+                : PORTFOLIO_MEMBERS_CONTENT.roleMember
+            }
             variant={row.role === "owner" ? "info" : "neutral"}
           />
         ),

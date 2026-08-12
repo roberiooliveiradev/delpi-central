@@ -51,12 +51,17 @@ describe("seller-portfolios kit-first", () => {
     assert.match(pageSource, /exportOrgMatrixExcel|Exportar matriz/);
     assert.match(pageSource, /transferSellerCustomersBulk/);
     assert.match(pageSource, /filter:\s*"overlapping"|overlapping/);
+    assert.match(pageSource, /filter:\s*"uncovered"|UncoveredCustomersPanel|filterUncovered/);
     assert.match(detailPageSource, /SellerPortfolioDetail/);
     assert.match(detailPageSource, /SellerPortfolioAuditTimeline/);
     assert.match(detailPageSource, /SellerPortfolioBulkTransferWizard/);
     assert.match(detailPageSource, /listSellerPortfolioAudit/);
     assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);
     assert.match(detailPageSource, /coverage_warning|readCoverageLinkWarning|notifyWarning/);
+    assert.match(
+      readFileSync(join(featureDirectory, "SellerPortfolioDetail.tsx"), "utf8"),
+      /PORTFOLIO_MEMBERS_CONTENT|has_portal_access/,
+    );
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /formatPortfolioLoadSnippet|cm-portfolios-org-tree__load/);

@@ -45,6 +45,16 @@ describe("sellerPortfoliosDeepLink", () => {
       view: "list",
       axis: "portfolio",
     });
+    assert.deepEqual(parseSellerPortfoliosDeepLink("?filter=uncovered"), {
+      q: "",
+      filter: "uncovered",
+      view: "list",
+      axis: "portfolio",
+    });
+    assert.equal(
+      buildSellerPortfoliosSearch({ q: "", filter: "uncovered", view: "list", axis: "portfolio" }),
+      "?filter=uncovered",
+    );
     assert.equal(
       sanitizeSellerPortfoliosSearch(`?filter=all&view=list&axis=portfolio&id=${PORTFOLIO_ID}&redirect=/apps/other`),
       "",

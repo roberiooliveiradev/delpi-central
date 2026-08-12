@@ -50,7 +50,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **Consolidação nativa** (Gestão + ADY + elevar ops) | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
 | F2c (ocultar PVA + redirects) | **Adiado** — só após Comercial ≥ PVA + pedido; checklist [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
 | **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 (sem implementação neste ciclo) |
-| Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Backlog técnico** — depende de universo clientes / open-orders barato |
+| Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Entregue** — universo = clientes com pedido aberto; `filter=uncovered` + métricas no load-summary |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 

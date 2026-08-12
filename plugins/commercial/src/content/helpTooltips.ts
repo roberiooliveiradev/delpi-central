@@ -267,9 +267,11 @@ export const CM_HELP = {
   },
   sellerPortfolios: {
     list: "Carteiras cadastradas (usuários com acesso ao Portal Comercial + nome de exibição).",
-    filter: "Filtre por situação (ativas/inativas) ou por carteiras com clientes em overlapping.",
+    filter: "Filtre por situação (ativas/inativas), overlapping ou clientes sem cobertura.",
     filterOverlapping:
       "Mostra só carteiras ativas que compartilham ao menos um cliente (código+loja) com outra carteira.",
+    filterUncovered:
+      "Lista clientes com pedido em aberto que não estão em nenhuma carteira ativa (gap global).",
     overlappingCustomer:
       "Este cliente também está em outra carteira ativa. Revise a cobertura se for necessário.",
     create: "Cria carteira vinculada a um ou mais usuários do diretório. O nome aparece no seletor de escopo.",
@@ -293,9 +295,9 @@ export const CM_HELP = {
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
     colMemberCount: "Quantidade de usuários com acesso a esta carteira (responsável + membros).",
     colOpenValue:
-      "Soma do valor em aberto dos pedidos da carteira (TOTVS). Indisponível até agregação ligada.",
+      "Soma do valor em aberto dos pedidos da carteira (TOTVS). Exibe — se a agregação falhar.",
     colAttentionCount:
-      "Linhas de pedido em atenção (atraso/estoque) na carteira. Indisponível até agregação ligada.",
+      "Clientes da carteira com pedido em atraso (entrega < hoje e saldo > 0). Exibe — se a agregação falhar.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
     layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
     shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra a árvore carteira ↔ pessoa.",
