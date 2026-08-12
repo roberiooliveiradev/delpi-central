@@ -1,11 +1,13 @@
-import { Eraser, Redo2, Undo2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Eraser, Maximize2, Minimize2, Redo2, Undo2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
 
 export type SignatureStrokeWidth = "thin" | "medium" | "thick";
 
 export type SignaturePadProps = {
+  /** Largura lógica de referência (proporção / fallback). O canvas acompanha o container. */
   width?: number;
   height?: number;
   disabled?: boolean;
@@ -23,11 +25,15 @@ export type SignaturePadProps = {
     strokeThick?: string;
     strokeHelp?: string;
     toolsHelp?: string;
+    expand?: string;
+    exitFullscreen?: string;
+    expandHelp?: string;
   };
 };
 
 type Point = { x: number; y: number; lineWidth: number };
 type Stroke = Point[];
+type PadSize = { width: number; height: number };
 
 const STROKE_BASE: Record<SignatureStrokeWidth, number> = {
   thin: 1.6,
@@ -44,6 +50,20 @@ function velocityWidth(base: number, prev: Point | null, next: { x: number; y: n
   return base * factor;
 }
 
+function scaleStrokes(strokes: Stroke[], from: PadSize, to: PadSize): Stroke[] {
+  if (from.width <= 0 || from.height <= 0) return strokes;
+  const sx = to.width / from.width;
+  const sy = to.height / from.height;
+  const sw = (sx + sy) / 2;
+  return strokes.map((stroke) =>
+    stroke.map((point) => ({
+      x: point.x * sx,
+      y: point.y * sy,
+      lineWidth: point.lineWidth * sw,
+    })),
+  );
+}
+
 export function SignaturePad({
   width = 640,
   height = 220,
@@ -54,13 +74,18 @@ export function SignaturePad({
   className,
   labels,
 }: SignaturePadProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const currentStroke = useRef<Stroke>([]);
   const strokesRef = useRef<Stroke[]>([]);
   const redoRef = useRef<Stroke[]>([]);
+  const sizeRef = useRef<PadSize>({ width, height });
+  const [size, setSize] = useState<PadSize>({ width, height });
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [redoStack, setRedoStack] = useState<Stroke[]>([]);
+  const [fullscreen, setFullscreen] = useState(false);
   const [internalStrokeWidth, setInternalStrokeWidth] = useState<SignatureStrokeWidth>("medium");
   const strokeWidth = strokeWidthProp ?? internalStrokeWidth;
 
@@ -72,51 +97,89 @@ export function SignaturePad({
     [onStrokeWidthChange, strokeWidthProp],
   );
 
-  const syncCanvasSize = useCallback(() => {
+  const redraw = useCallback((nextStrokes: Stroke[], padSize: PadSize) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const cssWidth = width;
-    const cssHeight = height;
-    canvas.width = Math.round(cssWidth * dpr);
-    canvas.height = Math.round(cssHeight * dpr);
-    canvas.style.width = `${cssWidth}px`;
-    canvas.style.height = `${cssHeight}px`;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#0f172a";
-  }, [width, height]);
+    ctx.clearRect(0, 0, padSize.width, padSize.height);
+    for (const stroke of nextStrokes) {
+      if (stroke.length === 0) continue;
+      for (let i = 1; i < stroke.length; i += 1) {
+        const prev = stroke[i - 1];
+        const point = stroke[i];
+        ctx.beginPath();
+        ctx.lineWidth = point.lineWidth;
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
+    }
+  }, []);
 
-  const redraw = useCallback(
-    (nextStrokes: Stroke[]) => {
+  const applyCanvasBitmap = useCallback(
+    (padSize: PadSize, nextStrokes: Stroke[]) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.round(padSize.width * dpr);
+      canvas.height = Math.round(padSize.height * dpr);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.clearRect(0, 0, width, height);
-      for (const stroke of nextStrokes) {
-        if (stroke.length === 0) continue;
-        for (let i = 1; i < stroke.length; i += 1) {
-          const prev = stroke[i - 1];
-          const point = stroke[i];
-          ctx.beginPath();
-          ctx.lineWidth = point.lineWidth;
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(point.x, point.y);
-          ctx.stroke();
-        }
-      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#0f172a";
+      redraw(nextStrokes, padSize);
     },
-    [height, width],
+    [redraw],
   );
 
+  const measureAndSync = useCallback(() => {
+    const paper = paperRef.current;
+    const ratio = height / Math.max(width, 1);
+    let nextW = width;
+    let nextH = height;
+    if (paper) {
+      const measured = Math.round(paper.clientWidth);
+      if (measured > 0) {
+        nextW = measured;
+        nextH = fullscreen
+          ? Math.max(Math.round(window.innerHeight * 0.52), Math.round(measured * ratio))
+          : Math.max(height, Math.round(measured * ratio));
+      }
+    }
+    const nextSize = { width: nextW, height: nextH };
+    const prev = sizeRef.current;
+    let nextStrokes = strokesRef.current;
+    if (prev.width !== nextSize.width || prev.height !== nextSize.height) {
+      nextStrokes = scaleStrokes(nextStrokes, prev, nextSize);
+      strokesRef.current = nextStrokes;
+      setStrokes(nextStrokes);
+      if (redoRef.current.length) {
+        const nextRedo = scaleStrokes(redoRef.current, prev, nextSize);
+        redoRef.current = nextRedo;
+        setRedoStack(nextRedo);
+      }
+      sizeRef.current = nextSize;
+      setSize(nextSize);
+    }
+    if (paper) {
+      paper.style.minHeight = `${nextSize.height}px`;
+    }
+    applyCanvasBitmap(nextSize, nextStrokes);
+  }, [applyCanvasBitmap, fullscreen, height, width]);
+
   useEffect(() => {
-    syncCanvasSize();
-    redraw(strokesRef.current);
-  }, [syncCanvasSize, redraw]);
+    measureAndSync();
+    const paper = paperRef.current;
+    if (!paper || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => measureAndSync());
+    observer.observe(paper);
+    return () => observer.disconnect();
+  }, [measureAndSync]);
 
   useEffect(() => {
     strokesRef.current = strokes;
@@ -126,12 +189,31 @@ export function SignaturePad({
     redoRef.current = redoStack;
   }, [redoStack]);
 
+  useEffect(() => {
+    if (!fullscreen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
+
+  useEffect(() => {
+    measureAndSync();
+  }, [fullscreen, measureAndSync]);
+
   function pointFromEvent(event: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
+    const pad = sizeRef.current;
     return {
-      x: ((event.clientX - rect.left) / rect.width) * width,
-      y: ((event.clientY - rect.top) / rect.height) * height,
+      x: ((event.clientX - rect.left) / Math.max(rect.width, 1)) * pad.width,
+      y: ((event.clientY - rect.top) / Math.max(rect.height, 1)) * pad.height,
     };
   }
 
@@ -201,7 +283,7 @@ export function SignaturePad({
     const removed = strokes[strokes.length - 1];
     setStrokes(next);
     setRedoStack([...redoStack, removed]);
-    redraw(next);
+    redraw(next, sizeRef.current);
     emitPng(next.length > 0);
   }
 
@@ -212,7 +294,7 @@ export function SignaturePad({
     const next = [...strokes, restored];
     setStrokes(next);
     setRedoStack(nextRedo);
-    redraw(next);
+    redraw(next, sizeRef.current);
     emitPng(true);
   }
 
@@ -220,7 +302,7 @@ export function SignaturePad({
     if (disabled) return;
     setStrokes([]);
     setRedoStack([]);
-    redraw([]);
+    redraw([], sizeRef.current);
     onChange?.(null);
   }
 
@@ -228,13 +310,60 @@ export function SignaturePad({
   const undoLabel = labels?.undo || "Desfazer";
   const redoLabel = labels?.redo || "Refazer";
   const clearLabel = labels?.clear || "Limpar";
+  const expandLabel = labels?.expand || "Tela cheia";
+  const exitLabel = labels?.exitFullscreen || "Sair da tela cheia";
 
   return (
-    <div className={["delpi-ui-signature-pad", className].filter(Boolean).join(" ")}>
-      <div className="delpi-ui-signature-pad__paper">
+    <div
+      ref={rootRef}
+      className={[
+        "delpi-ui-signature-pad",
+        fullscreen ? "delpi-ui-signature-pad--fullscreen" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={
+        fullscreen
+          ? ({ ["--delpi-ui-signature-overlay-z" as string]: DELPI_UI_OVERLAY_Z_INDEX.modal } as CSSProperties)
+          : undefined
+      }
+    >
+      <div className="delpi-ui-signature-pad__chrome">
+        <div className="delpi-ui-signature-pad__chrome-title">
+          {fullscreen ? "Assinatura em tela cheia" : null}
+        </div>
+        <div className="delpi-ui-signature-pad__chrome-actions">
+          <HelpTooltip
+            content={
+              labels?.expandHelp ||
+              "Abre a área de assinatura em tela cheia para facilitar o traço no mouse ou no toque. Esc fecha."
+            }
+            ariaLabel="Ajuda da tela cheia"
+            placement="bottom"
+          />
+          <button
+            type="button"
+            className="delpi-ui-icon-btn delpi-ui-signature-pad__icon-btn"
+            aria-label={fullscreen ? exitLabel : expandLabel}
+            aria-pressed={fullscreen}
+            onClick={() => setFullscreen((value) => !value)}
+            data-testid="signature-pad-fullscreen"
+          >
+            {fullscreen ? <Minimize2 size={18} aria-hidden /> : <Maximize2 size={18} aria-hidden />}
+            <span className="delpi-ui-signature-pad__btn-label">
+              {fullscreen ? exitLabel : expandLabel}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div ref={paperRef} className="delpi-ui-signature-pad__paper">
         <canvas
           ref={canvasRef}
           className="delpi-ui-signature-pad__canvas"
+          width={size.width}
+          height={size.height}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

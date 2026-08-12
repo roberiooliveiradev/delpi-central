@@ -56,11 +56,19 @@ describe("SignaturePad", () => {
 
     const { container } = render(<SignaturePad width={640} height={220} />);
     const canvas = container.querySelector(".delpi-ui-signature-pad__canvas") as HTMLCanvasElement;
+    const paper = container.querySelector(".delpi-ui-signature-pad__paper") as HTMLElement;
 
     expect(context.clearRect).toHaveBeenCalled();
     expect(context.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
-    expect(canvas.width).toBe(1280);
-    expect(canvas.height).toBe(440);
+    expect(canvas.width).toBeGreaterThan(0);
+    expect(canvas.height).toBeGreaterThan(0);
+    expect(paper.className).toContain("delpi-ui-signature-pad__paper");
+  });
+
+  it("expõe controle de tela cheia", () => {
+    mockCanvasContext();
+    render(<SignaturePad />);
+    expect(screen.getByTestId("signature-pad-fullscreen")).toBeTruthy();
   });
 
   it("desfaz e refaz traços e limpa com onChange(null)", () => {

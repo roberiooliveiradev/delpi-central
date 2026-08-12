@@ -4,31 +4,83 @@
   gap: 12px;
 }
 
+.delpi-ui-signature-pad--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--delpi-ui-signature-overlay-z, 10400);
+  box-sizing: border-box;
+  padding: 16px;
+  gap: 14px;
+  background: var(--delpi-ui-surface, #f8fafc);
+  overflow: auto;
+}
+
+.delpi-ui-signature-pad__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-signature-pad__chrome-title {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-signature-pad__chrome-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
 .delpi-ui-signature-pad__paper,
 .delpi-ui-signature-capture__paper {
+  position: relative;
+  width: 100%;
   border-radius: 12px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   background: #fff;
   overflow: hidden;
 }
 
+/* Linha-guia em 100% do container (não no bitmap fixo do canvas) */
+.delpi-ui-signature-pad__paper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 78%;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.55);
+  pointer-events: none;
+}
+
 .delpi-ui-signature-pad__canvas {
   display: block;
   width: 100%;
-  max-width: 100%;
-  height: auto;
+  height: 100%;
   min-height: var(--delpi-ui-signature-pad-min-height, 180px);
   touch-action: none;
   border: 0;
   border-radius: 0;
-  background:
-    linear-gradient(transparent 78%, rgba(148, 163, 184, 0.45) 78%, rgba(148, 163, 184, 0.45) 79%, transparent 79%),
-    #fff;
+  background: transparent;
   cursor: crosshair;
 }
 
-.delpi-ui-signature-pad--tall .delpi-ui-signature-pad__canvas {
+.delpi-ui-signature-pad--tall .delpi-ui-signature-pad__paper {
   min-height: var(--delpi-ui-signature-pad-tall-min-height, 240px);
+}
+
+.delpi-ui-signature-pad--fullscreen .delpi-ui-signature-pad__paper {
+  flex: 1 1 auto;
+  min-height: min(52vh, 420px);
+}
+
+:root[data-theme="dark"] .delpi-ui-signature-pad--fullscreen {
+  background: var(--delpi-ui-surface, #0b1220);
 }
 
 .delpi-ui-signature-pad__hint-row {
