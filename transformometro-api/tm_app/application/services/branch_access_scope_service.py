@@ -7,6 +7,8 @@ from delpi_auth.authz_core import has_any_permission, has_permission
 
 from tm_app.application.security.transformometro_permissions import (
     BRANCH_MANAGE_PERMISSIONS,
+    BRANCH_SCOPE_PERMISSION_CODES,
+    BRANCH_SCOPE_PERMISSIONS,
     BRANCH_VIEW_PERMISSIONS,
     GLOBAL_MANAGE_PERMISSIONS,
     MANAGE_FILIAL_PERMISSIONS,
@@ -39,7 +41,13 @@ class FilialAccessScope:
 
 
 class FilialAccessScopeService:
-    """Resolve e aplica RBAC por filial (server-side)."""
+    """Resolve e aplica RBAC por filial (server-side).
+
+    Escopo canônico: `transformometro.branch.filial-*`.
+    Legado: `view.filial-*` / `manage.filial-*` também contribuem ao escopo.
+    Capacidade de escrita: `manage.filial-*` (legado) **ou** capacidade global
+    (`GLOBAL_MANAGE_PERMISSIONS`) combinada com o escopo.
+    """
 
     def resolve(self, user: Any | None) -> FilialAccessScope:
         if user is None:
@@ -59,21 +67,26 @@ class FilialAccessScopeService:
             )
 
         permissions = list(getattr(user, "permissions", []) or [])
-        branch_view = self._branch_codes_from_permissions(
-            permissions,
-            VIEW_FILIAL_PERMISSIONS,
+        scope_codes = sorted(
+            set(
+                self._branch_codes_from_permissions(permissions, BRANCH_SCOPE_PERMISSIONS)
+                + self._branch_codes_from_permissions(permissions, VIEW_FILIAL_PERMISSIONS)
+                + self._branch_codes_from_permissions(permissions, MANAGE_FILIAL_PERMISSIONS)
+            )
         )
         branch_manage = self._branch_codes_from_permissions(
             permissions,
             MANAGE_FILIAL_PERMISSIONS,
         )
+        has_global_manage = any(perm in permissions for perm in GLOBAL_MANAGE_PERMISSIONS)
+        scoped_manage = bool(branch_manage) or (bool(scope_codes) and has_global_manage)
 
-        if branch_view:
+        if scope_codes:
             return FilialAccessScope(
                 mode="scoped",
-                allowed_codigos=frozenset(branch_view),
+                allowed_codigos=frozenset(scope_codes),
                 can_view_consolidated=TRANSFORMOMETRO_VIEW_CONSOLIDATED in permissions,
-                scoped_manage=bool(branch_manage),
+                scoped_manage=scoped_manage,
             )
 
         return FilialAccessScope(
@@ -119,17 +132,16 @@ class FilialAccessScopeService:
             return False
         if user is not None and getattr(user, "is_superadmin", False):
             return True
+        if not self.can_view_filial(scope, codigo):
+            return False
 
         permissions = list(getattr(user, "permissions", []) or []) if user else []
-
-        if scope.is_unrestricted and not scope.scoped_manage:
-            return has_any_permission(user, GLOBAL_MANAGE_PERMISSIONS) if user else False
 
         manage_perm = MANAGE_FILIAL_PERMISSIONS.get(codigo)
         if manage_perm and manage_perm in permissions:
             return True
 
-        if scope.is_unrestricted and has_any_permission(user, GLOBAL_MANAGE_PERMISSIONS):
+        if user is not None and has_any_permission(user, GLOBAL_MANAGE_PERMISSIONS):
             return True
 
         return False
@@ -171,7 +183,14 @@ class FilialAccessScopeService:
         if user is None:
             return False
         permissions = getattr(user, "permissions", []) or []
-        return any(perm in permissions for perm in BRANCH_VIEW_PERMISSIONS)
+        return any(
+            perm in permissions
+            for perm in (
+                *BRANCH_SCOPE_PERMISSION_CODES,
+                *BRANCH_VIEW_PERMISSIONS,
+                *BRANCH_MANAGE_PERMISSIONS,
+            )
+        )
 
     def user_has_legacy_view(self, user: Any | None) -> bool:
         if user is None:

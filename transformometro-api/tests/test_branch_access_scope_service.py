@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from tm_app.application.security.transformometro_permissions import (
+    TRANSFORMOMETRO_BRANCH_FILIAL_01,
     TRANSFORMOMETRO_MANAGE_FILIAL_01,
     TRANSFORMOMETRO_PROCESSES_MANAGE,
     TRANSFORMOMETRO_VIEW_CONSOLIDATED,
@@ -46,6 +47,36 @@ def test_branch_view_scopes_allowed_filiais():
     assert scope.mode == "scoped"
     assert scope.allowed_codigos == frozenset({"01"})
     assert scope.can_view_consolidated is False
+
+
+def test_canonical_branch_scope_permission():
+    scope = FilialAccessScopeService().resolve(
+        _user(permissions=[TRANSFORMOMETRO_BRANCH_FILIAL_01])
+    )
+    assert scope.mode == "scoped"
+    assert scope.allowed_codigos == frozenset({"01"})
+
+
+def test_branch_scope_plus_global_manage():
+    svc = FilialAccessScopeService()
+    user = _user(
+        permissions=[
+            TRANSFORMOMETRO_BRANCH_FILIAL_01,
+            TRANSFORMOMETRO_PROCESSES_MANAGE,
+        ]
+    )
+    scope = svc.resolve(user)
+    assert scope.mode == "scoped"
+    assert scope.scoped_manage is True
+    assert svc.can_manage_filial(scope, "01", user=user) is True
+    assert svc.can_manage_filial(scope, "02", user=user) is False
+
+
+def test_branch_scope_without_manage_capability():
+    svc = FilialAccessScopeService()
+    user = _user(permissions=[TRANSFORMOMETRO_BRANCH_FILIAL_01])
+    scope = svc.resolve(user)
+    assert svc.can_manage_filial(scope, "01", user=user) is False
 
 
 def test_branch_view_with_consolidated_permission():
