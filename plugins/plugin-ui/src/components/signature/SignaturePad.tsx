@@ -1,4 +1,7 @@
+import { Eraser, Redo2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { HelpTooltip } from "../help/HelpTooltip";
 
 export type SignatureStrokeWidth = "thin" | "medium" | "thick";
 
@@ -18,6 +21,8 @@ export type SignaturePadProps = {
     strokeThin?: string;
     strokeMedium?: string;
     strokeThick?: string;
+    strokeHelp?: string;
+    toolsHelp?: string;
   };
 };
 
@@ -85,25 +90,28 @@ export function SignaturePad({
     ctx.strokeStyle = "#0f172a";
   }, [width, height]);
 
-  const redraw = useCallback((nextStrokes: Stroke[]) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, width, height);
-    for (const stroke of nextStrokes) {
-      if (stroke.length === 0) continue;
-      for (let i = 1; i < stroke.length; i += 1) {
-        const prev = stroke[i - 1];
-        const point = stroke[i];
-        ctx.beginPath();
-        ctx.lineWidth = point.lineWidth;
-        ctx.moveTo(prev.x, prev.y);
-        ctx.lineTo(point.x, point.y);
-        ctx.stroke();
+  const redraw = useCallback(
+    (nextStrokes: Stroke[]) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+      for (const stroke of nextStrokes) {
+        if (stroke.length === 0) continue;
+        for (let i = 1; i < stroke.length; i += 1) {
+          const prev = stroke[i - 1];
+          const point = stroke[i];
+          ctx.beginPath();
+          ctx.lineWidth = point.lineWidth;
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(point.x, point.y);
+          ctx.stroke();
+        }
       }
-    }
-  }, [height, width]);
+    },
+    [height, width],
+  );
 
   useEffect(() => {
     syncCanvasSize();
@@ -143,7 +151,7 @@ export function SignaturePad({
     try {
       canvasRef.current?.setPointerCapture?.(event.pointerId);
     } catch {
-      /* jsdom / browsers sem PointerEvent capture */
+      /* jsdom */
     }
     drawing.current = true;
     const base = STROKE_BASE[strokeWidth];
@@ -217,57 +225,89 @@ export function SignaturePad({
   }
 
   const hasDrawing = strokes.length > 0;
+  const undoLabel = labels?.undo || "Desfazer";
+  const redoLabel = labels?.redo || "Refazer";
+  const clearLabel = labels?.clear || "Limpar";
 
   return (
     <div className={["delpi-ui-signature-pad", className].filter(Boolean).join(" ")}>
-      <canvas
-        ref={canvasRef}
-        className="delpi-ui-signature-pad__canvas"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      />
-      <p className="delpi-ui-signature-pad__hint">
-        {labels?.hint || "Assine dentro da área acima"}
-      </p>
+      <div className="delpi-ui-signature-pad__paper">
+        <canvas
+          ref={canvasRef}
+          className="delpi-ui-signature-pad__canvas"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        />
+      </div>
+      <div className="delpi-ui-signature-pad__hint-row">
+        <p className="delpi-ui-signature-pad__hint">
+          {labels?.hint || "Assine dentro da área acima"}
+        </p>
+        <HelpTooltip
+          content={
+            labels?.toolsHelp ||
+            "Desenhe com o mouse ou o dedo. Use desfazer/refazer por traço e escolha a espessura antes de assinar."
+          }
+          ariaLabel="Ajuda da assinatura manuscrita"
+          placement="bottom"
+        />
+      </div>
       <div className="delpi-ui-signature-pad__actions" role="toolbar" aria-label="Ferramentas de assinatura">
-        <button
-          type="button"
-          className="delpi-ui-signature-pad__btn"
-          onClick={undo}
-          disabled={disabled || strokes.length === 0}
-          data-testid="signature-pad-undo"
-        >
-          {labels?.undo || "Desfazer"}
-        </button>
-        <button
-          type="button"
-          className="delpi-ui-signature-pad__btn"
-          onClick={redo}
-          disabled={disabled || redoStack.length === 0}
-          data-testid="signature-pad-redo"
-        >
-          {labels?.redo || "Refazer"}
-        </button>
-        <button
-          type="button"
-          className="delpi-ui-signature-pad__clear delpi-ui-signature-pad__btn"
-          onClick={clear}
-          disabled={disabled || !hasDrawing}
-          data-testid="signature-pad-clear"
-        >
-          {labels?.clear || "Limpar"}
-        </button>
-        <div className="delpi-ui-signature-pad__stroke" role="group" aria-label="Espessura">
+        <div className="delpi-ui-signature-pad__action-group">
+          <button
+            type="button"
+            className="delpi-ui-icon-btn delpi-ui-signature-pad__icon-btn"
+            aria-label={undoLabel}
+            disabled={disabled || strokes.length === 0}
+            onClick={undo}
+            data-testid="signature-pad-undo"
+          >
+            <Undo2 size={18} aria-hidden />
+            <span className="delpi-ui-signature-pad__btn-label">{undoLabel}</span>
+          </button>
+          <button
+            type="button"
+            className="delpi-ui-icon-btn delpi-ui-signature-pad__icon-btn"
+            aria-label={redoLabel}
+            disabled={disabled || redoStack.length === 0}
+            onClick={redo}
+            data-testid="signature-pad-redo"
+          >
+            <Redo2 size={18} aria-hidden />
+            <span className="delpi-ui-signature-pad__btn-label">{redoLabel}</span>
+          </button>
+          <button
+            type="button"
+            className="delpi-ui-icon-btn delpi-ui-icon-btn--danger delpi-ui-signature-pad__icon-btn delpi-ui-signature-pad__clear"
+            aria-label={clearLabel}
+            disabled={disabled || !hasDrawing}
+            onClick={clear}
+            data-testid="signature-pad-clear"
+          >
+            <Eraser size={18} aria-hidden />
+            <span className="delpi-ui-signature-pad__btn-label">{clearLabel}</span>
+          </button>
+        </div>
+        <div className="delpi-ui-signature-pad__stroke" role="group" aria-label="Espessura do traço">
+          <span className="delpi-ui-signature-pad__stroke-label">Espessura</span>
+          <HelpTooltip
+            content={
+              labels?.strokeHelp ||
+              "Fino, médio ou grosso altera a largura do próximo traço. A espessura também varia levemente com a velocidade."
+            }
+            ariaLabel="Ajuda da espessura"
+            placement="bottom"
+          />
           {(
             [
-              ["thin", labels?.strokeThin || "Fino"],
-              ["medium", labels?.strokeMedium || "Médio"],
-              ["thick", labels?.strokeThick || "Grosso"],
+              ["thin", labels?.strokeThin || "Fino", "delpi-ui-signature-pad__stroke-swatch--thin"],
+              ["medium", labels?.strokeMedium || "Médio", "delpi-ui-signature-pad__stroke-swatch--medium"],
+              ["thick", labels?.strokeThick || "Grosso", "delpi-ui-signature-pad__stroke-swatch--thick"],
             ] as const
-          ).map(([value, label]) => (
+          ).map(([value, label, swatchClass]) => (
             <button
               key={value}
               type="button"
@@ -280,9 +320,12 @@ export function SignaturePad({
               onClick={() => setStrokeWidth(value)}
               disabled={disabled}
               aria-pressed={strokeWidth === value}
+              aria-label={label}
+              title={label}
               data-testid={`signature-pad-stroke-${value}`}
             >
-              {label}
+              <span className={["delpi-ui-signature-pad__stroke-swatch", swatchClass].join(" ")} />
+              <span className="delpi-ui-signature-pad__btn-label">{label}</span>
             </button>
           ))}
         </div>

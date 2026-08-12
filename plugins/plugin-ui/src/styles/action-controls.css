@@ -171,13 +171,23 @@
 
 .delpi-ui-form-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .delpi-ui-form-actions--end {
   justify-content: flex-end;
+}
+
+/* Segurança: ActionButtons irmãos fora de form-actions não ficam colados */
+.delpi-ui-action-btn + .delpi-ui-action-btn {
+  margin-inline-start: 12px;
+}
+
+.delpi-ui-form-actions > .delpi-ui-action-btn + .delpi-ui-action-btn,
+.delpi-ui-form-actions--end > .delpi-ui-action-btn + .delpi-ui-action-btn {
+  margin-inline-start: 0;
 }
 
 @media (max-width: 768px) {

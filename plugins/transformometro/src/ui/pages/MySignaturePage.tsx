@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { ActionButton, NativeTextControl, SignatureCapturePanel } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  NativeTextControl,
+  SignatureCapturePanel,
+} from "@delpi/plugin-ui/index";
+import { ArrowLeft, Save } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -88,18 +93,23 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
           <span>Nome exibido</span>
           <NativeTextControl value={name} onChange={setName} />
         </label>
-        <ActionButton variant="primary" onClick={() => void saveName()}>
-          Salvar nome
-        </ActionButton>
+        <div className="delpi-ui-form-actions">
+          <ActionButton variant="primary" onClick={() => void saveName()}>
+            <Save size={16} aria-hidden />
+            Salvar nome
+          </ActionButton>
+        </div>
 
         {savedPreviewUrl ? (
-          <div className="ds-field">
-            <span>Assinatura salva</span>
-            <img
-              src={savedPreviewUrl}
-              alt="Assinatura pessoal salva"
-              style={{ maxWidth: "100%", height: "auto", display: "block" }}
-            />
+          <div className="delpi-ui-signature-saved">
+            <span className="delpi-ui-signature-saved__label">Assinatura salva</span>
+            <div className="delpi-ui-signature-saved__paper">
+              <img
+                src={savedPreviewUrl}
+                alt="Assinatura pessoal salva"
+                className="delpi-ui-signature-saved__image"
+              />
+            </div>
           </div>
         ) : null}
 
@@ -110,14 +120,18 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
           padProps={{ className: "delpi-ui-signature-pad--tall" }}
           onChange={setPng}
         />
-        <ActionButton variant="primary" disabled={!png} onClick={() => void saveSignature()}>
-          Salvar assinatura
-        </ActionButton>
-        {onNavigate ? (
-          <ActionButton variant="link" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
-            Voltar às atas
+        <div className="delpi-ui-form-actions">
+          <ActionButton variant="primary" disabled={!png} onClick={() => void saveSignature()}>
+            <Save size={16} aria-hidden />
+            Salvar assinatura
           </ActionButton>
-        ) : null}
+          {onNavigate ? (
+            <ActionButton variant="ghost" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.atas)}>
+              <ArrowLeft size={16} aria-hidden />
+              Voltar às atas
+            </ActionButton>
+          ) : null}
+        </div>
       </section>
     </TransformometroShell>
   );

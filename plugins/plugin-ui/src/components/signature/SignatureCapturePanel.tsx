@@ -1,5 +1,7 @@
+import { Keyboard, PenLine, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
 import { SignaturePad, type SignaturePadProps } from "./SignaturePad";
 
 export type SignatureCaptureMode = "draw" | "type" | "upload";
@@ -20,6 +22,7 @@ export type SignatureCapturePanelProps = {
     typeApply?: string;
     uploadHint?: string;
     previewTitle?: string;
+    modesHelp?: string;
     pad?: SignaturePadProps["labels"];
   };
 };
@@ -138,52 +141,65 @@ export function SignatureCapturePanel({
 
   return (
     <div className={["delpi-ui-signature-capture", className].filter(Boolean).join(" ")}>
-      <div className="delpi-ui-signature-capture__modes" role="tablist" aria-label="Modo de assinatura">
-        {availableModes.includes("draw") ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "draw"}
-            className={["delpi-ui-signature-capture__mode", mode === "draw" ? "is-active" : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => setMode("draw")}
-            disabled={disabled}
-            data-testid="signature-capture-mode-draw"
-          >
-            {labels?.modeDraw || "Desenhar"}
-          </button>
-        ) : null}
-        {availableModes.includes("type") ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "type"}
-            className={["delpi-ui-signature-capture__mode", mode === "type" ? "is-active" : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => setMode("type")}
-            disabled={disabled}
-            data-testid="signature-capture-mode-type"
-          >
-            {labels?.modeType || "Digitar"}
-          </button>
-        ) : null}
-        {availableModes.includes("upload") ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "upload"}
-            className={["delpi-ui-signature-capture__mode", mode === "upload" ? "is-active" : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => setMode("upload")}
-            disabled={disabled}
-            data-testid="signature-capture-mode-upload"
-          >
-            {labels?.modeUpload || "Upload"}
-          </button>
-        ) : null}
+      <div className="delpi-ui-signature-capture__modes-row">
+        <div className="delpi-ui-signature-capture__modes" role="tablist" aria-label="Modo de assinatura">
+          {availableModes.includes("draw") ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "draw"}
+              className={["delpi-ui-signature-capture__mode", mode === "draw" ? "is-active" : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setMode("draw")}
+              disabled={disabled}
+              data-testid="signature-capture-mode-draw"
+            >
+              <PenLine size={16} aria-hidden />
+              <span>{labels?.modeDraw || "Desenhar"}</span>
+            </button>
+          ) : null}
+          {availableModes.includes("type") ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "type"}
+              className={["delpi-ui-signature-capture__mode", mode === "type" ? "is-active" : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setMode("type")}
+              disabled={disabled}
+              data-testid="signature-capture-mode-type"
+            >
+              <Keyboard size={16} aria-hidden />
+              <span>{labels?.modeType || "Digitar"}</span>
+            </button>
+          ) : null}
+          {availableModes.includes("upload") ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "upload"}
+              className={["delpi-ui-signature-capture__mode", mode === "upload" ? "is-active" : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setMode("upload")}
+              disabled={disabled}
+              data-testid="signature-capture-mode-upload"
+            >
+              <Upload size={16} aria-hidden />
+              <span>{labels?.modeUpload || "Upload"}</span>
+            </button>
+          ) : null}
+        </div>
+        <HelpTooltip
+          content={
+            labels?.modesHelp ||
+            "Desenhar: traço manuscrito. Digitar: gera assinatura em fonte script. Upload: PNG ou JPEG da assinatura."
+          }
+          ariaLabel="Ajuda dos modos de assinatura"
+          placement="bottom"
+        />
       </div>
 
       {mode === "draw" ? (
@@ -208,11 +224,12 @@ export function SignatureCapturePanel({
           />
           <button
             type="button"
-            className="delpi-ui-signature-capture__type-apply"
+            className="delpi-ui-action-btn delpi-ui-action-btn--primary"
             disabled={disabled || !typedName.trim()}
             onClick={() => void applyTyped()}
             data-testid="signature-capture-type-apply"
           >
+            <PenLine size={16} aria-hidden />
             {labels?.typeApply || "Gerar assinatura"}
           </button>
         </div>
@@ -236,9 +253,16 @@ export function SignatureCapturePanel({
 
       {showPreview ? (
         <div className="delpi-ui-signature-capture__preview">
-          <p className="delpi-ui-signature-capture__preview-title">
-            {labels?.previewTitle || "Prévia"}
-          </p>
+          <div className="delpi-ui-signature-capture__preview-title-row">
+            <p className="delpi-ui-signature-capture__preview-title">
+              {labels?.previewTitle || "Prévia"}
+            </p>
+            <HelpTooltip
+              content="A prévia mostra como o nome e o traço aparecem juntos antes de salvar."
+              ariaLabel="Ajuda da prévia"
+              placement="bottom"
+            />
+          </div>
           <div className="delpi-ui-signature-capture__preview-card">
             {displayName || typedName ? (
               <strong className="delpi-ui-signature-capture__preview-name">
@@ -246,11 +270,13 @@ export function SignatureCapturePanel({
               </strong>
             ) : null}
             {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Prévia da assinatura"
-                className="delpi-ui-signature-capture__preview-image"
-              />
+              <div className="delpi-ui-signature-capture__paper">
+                <img
+                  src={previewUrl}
+                  alt="Prévia da assinatura"
+                  className="delpi-ui-signature-capture__preview-image"
+                />
+              </div>
             ) : (
               <span className="delpi-ui-signature-capture__preview-empty">Sem assinatura ainda</span>
             )}

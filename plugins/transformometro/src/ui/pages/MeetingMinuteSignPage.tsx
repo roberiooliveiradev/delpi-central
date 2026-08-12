@@ -6,6 +6,7 @@ import {
   NativeTextControl,
   SignatureCapturePanel,
 } from "@delpi/plugin-ui/index";
+import { Check, PenLine } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -147,14 +148,16 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
           )}
         />
 
-        <div className="ds-cadastro-form__actions">
+        <div className="delpi-ui-form-actions ds-cadastro-form__actions">
           {hasSavedSignature ? (
             <ActionButton variant="primary" disabled={busy} onClick={() => void signSaved()}>
+              <Check size={16} aria-hidden />
               Assinar com minha assinatura salva
             </ActionButton>
           ) : null}
           {!showPad ? (
-            <ActionButton variant="link" onClick={() => setShowPad(true)}>
+            <ActionButton variant="ghost" onClick={() => setShowPad(true)}>
+              <PenLine size={16} aria-hidden />
               Usar outra assinatura
             </ActionButton>
           ) : null}
@@ -168,9 +171,12 @@ export function MeetingMinuteSignPage({ getAccessToken, ataId, onNavigate }: Pro
               padProps={{ className: "delpi-ui-signature-pad--tall" }}
               onChange={setPng}
             />
-            <ActionButton variant="primary" disabled={busy || !png} onClick={() => void signDrawn()}>
-              Confirmar assinatura
-            </ActionButton>
+            <div className="delpi-ui-form-actions">
+              <ActionButton variant="primary" disabled={busy || !png} onClick={() => void signDrawn()}>
+                <Check size={16} aria-hidden />
+                Confirmar assinatura
+              </ActionButton>
+            </div>
           </>
         ) : null}
 
