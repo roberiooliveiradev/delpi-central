@@ -65,5 +65,6 @@ describe("CatalogSearchBar", () => {
     );
     expect(container.querySelector(".delpi-ui-catalog-search-bar__field")).toBeTruthy();
     expect(container.querySelector(".cm-catalog-search__field")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-catalog-search-bar__input")).toBeTruthy();
   });
 });

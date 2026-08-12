@@ -40,18 +40,34 @@
   padding: 0;
   margin: 0;
   border: none;
+  border-radius: 0;
   background: transparent;
   color: var(--delpi-ui-text, var(--text, #111111));
   font: inherit;
   font-size: 0.95rem;
   line-height: 1.35;
   outline: none;
+  outline-offset: 0;
   box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
+.delpi-ui-catalog-search-bar__input::-webkit-search-decoration,
+.delpi-ui-catalog-search-bar__input::-webkit-search-cancel-button,
+.delpi-ui-catalog-search-bar__input::-webkit-search-results-button,
+.delpi-ui-catalog-search-bar__input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Especificidade > host MFE (ex.: `.dashboard-* input:focus-visible`). */
+.delpi-ui-catalog-search-bar .delpi-ui-catalog-search-bar__input:focus,
+.delpi-ui-catalog-search-bar .delpi-ui-catalog-search-bar__input:focus-visible,
 .delpi-ui-catalog-search-bar__input:focus,
 .delpi-ui-catalog-search-bar__input:focus-visible {
   outline: none;
+  outline-offset: 0;
   box-shadow: none;
   border: none;
 }
