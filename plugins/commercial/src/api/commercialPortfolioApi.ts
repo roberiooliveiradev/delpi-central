@@ -9,6 +9,7 @@ import type {
   SellerPortfolioMember,
   SellerPortfolioMemberRole,
   SellerPortfoliosCoverageAudit,
+  SellerPortfoliosLoadSummary,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -94,6 +95,20 @@ export async function getSellerPortfoliosCoverageAudit(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar auditoria de cobertura.");
+}
+
+export async function getSellerPortfoliosLoadSummary(options?: {
+  activeOnly?: boolean;
+  signal?: AbortSignal;
+}): Promise<SellerPortfoliosLoadSummary> {
+  const params = new URLSearchParams();
+  if (options?.activeOnly) params.set("active_only", "true");
+  const qs = params.toString();
+  const response = await httpGet<ApiSuccessResponse<SellerPortfoliosLoadSummary>>(
+    `${commercialApiUrl("/seller-portfolios/load-summary")}${qs ? `?${qs}` : ""}`,
+    { signal: options?.signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar resumo de carga das carteiras.");
 }
 
 export async function removeSellerCustomer(

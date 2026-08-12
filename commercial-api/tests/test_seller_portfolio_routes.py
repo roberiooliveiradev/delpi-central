@@ -52,6 +52,14 @@ def test_coverage_audit_route_is_registered_before_portfolio_id() -> None:
     assert ROUTES.index('"/coverage-audit"') < ROUTES.index('"/{portfolio_id}"')
 
 
+def test_load_summary_route_is_registered_before_portfolio_id() -> None:
+    assert 'operation_id="get_seller_portfolios_load_summary"' in ROUTES
+    assert '"/load-summary"' in ROUTES
+    assert "def get_seller_portfolios_load_summary(" in ROUTES
+    assert ROUTES.index('"/load-summary"') < ROUTES.index('"/{portfolio_id}"')
+    assert "load_summary_to_dict" in ROUTES
+
+
 def test_add_seller_customer_returns_soft_warning_payload() -> None:
     assert "add_customer_result_to_dict" in ROUTES
     assert "já estava em outra carteira ativa" in ROUTES

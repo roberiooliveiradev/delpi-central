@@ -9,6 +9,7 @@ import type {
   SellerPortfolioMeResponse,
   SellerPortfolioMemberRole,
   SellerPortfoliosCoverageAudit,
+  SellerPortfoliosLoadSummary,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -20,6 +21,7 @@ export type {
   SellerPortfolio,
   SellerPortfolioMeResponse,
   SellerPortfoliosCoverageAudit,
+  SellerPortfoliosLoadSummary,
   TotvsCustomerHit,
 };
 
@@ -115,6 +117,13 @@ export async function getSellerPortfoliosCoverageAudit(
   signal?: AbortSignal,
 ): Promise<SellerPortfoliosCoverageAudit> {
   return commercial.getSellerPortfoliosCoverageAudit(signal);
+}
+
+export async function getSellerPortfoliosLoadSummary(options?: {
+  activeOnly?: boolean;
+  signal?: AbortSignal;
+}): Promise<SellerPortfoliosLoadSummary> {
+  return commercial.getSellerPortfoliosLoadSummary(options);
 }
 
 export async function removeSellerCustomer(

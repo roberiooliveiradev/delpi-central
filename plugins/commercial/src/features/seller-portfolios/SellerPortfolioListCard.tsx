@@ -4,25 +4,48 @@ import {
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
-import type { SellerPortfolio } from "../../types/portfolio";
+import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
+import type { PortfolioLoadItem, SellerPortfolio } from "../../types/portfolio";
+import {
+  formatCompactOpenValue,
+  formatMemberCountShort,
+} from "../../utils/portfolioLoad";
 
 type SellerPortfolioListCardProps = {
   portfolio: SellerPortfolio;
   userLabel: string;
   hasOverlappingCustomers?: boolean;
+  load?: PortfolioLoadItem | null;
   onSelect: (portfolio: SellerPortfolio) => void;
 };
+
+function resolveMemberCount(
+  portfolio: SellerPortfolio,
+  load: PortfolioLoadItem | null | undefined,
+): number {
+  if (load?.member_count != null) return load.member_count;
+  if (portfolio.member_count != null) return portfolio.member_count;
+  const fromMembers = portfolio.members?.length ?? 0;
+  if (fromMembers > 0) return fromMembers;
+  return 1;
+}
 
 export function SellerPortfolioListCard({
   portfolio,
   userLabel,
   hasOverlappingCustomers = false,
+  load = null,
   onSelect,
 }: SellerPortfolioListCardProps) {
+  const customerCount = load?.customer_count ?? portfolio.customer_count;
+  const memberCount = resolveMemberCount(portfolio, load);
+  const openValue = load?.open_value ?? null;
+  const attentionCount = load?.attention_count ?? null;
+
   const customerLabel =
-    portfolio.customer_count === 1
+    customerCount === 1
       ? "1 cliente"
-      : `${portfolio.customer_count.toLocaleString("pt-BR")} clientes`;
+      : `${customerCount.toLocaleString("pt-BR")} clientes`;
 
   return (
     <CommercialInteractiveDataCard
@@ -57,6 +80,27 @@ export function SellerPortfolioListCard({
           label: "Clientes",
           valueTone: "value",
           value: customerLabel,
+        },
+        {
+          id: "members",
+          label: PORTFOLIO_LOAD_CONTENT.colMembers,
+          valueTone: "meta",
+          value: formatMemberCountShort(memberCount),
+        },
+        {
+          id: "open_value",
+          label: PORTFOLIO_LOAD_CONTENT.colOpenValue,
+          valueTone: "meta",
+          value: formatCompactOpenValue(openValue),
+        },
+        {
+          id: "attention",
+          label: PORTFOLIO_LOAD_CONTENT.colAttention,
+          valueTone: "meta",
+          value:
+            attentionCount == null
+              ? PORTFOLIO_LOAD_CONTENT.attentionUnavailable
+              : attentionCount.toLocaleString("pt-BR"),
         },
         {
           id: "status",

@@ -24,6 +24,7 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     ManageSellerPortfolioUseCase,
     add_customer_result_to_dict,
     coverage_audit_to_dict,
+    load_summary_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
 )
@@ -132,6 +133,29 @@ def get_seller_portfolios_coverage_audit(_request: Request):
             "Erro interno ao auditar cobertura de carteiras.",
             500,
             operation_id="get_seller_portfolios_coverage_audit",
+        )
+
+
+@router.get("/load-summary", operation_id="get_seller_portfolios_load_summary")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def get_seller_portfolios_load_summary(
+    _request: Request,
+    active_only: bool = Query(False, description="Se true, resume apenas ativas."),
+):
+    """KPIs de carga por carteira/pessoa (clientes, membros; TOTVS stub)."""
+    try:
+        summary = _use_case().summarize_portfolio_load(active_only=active_only)
+        return ok(
+            load_summary_to_dict(summary),
+            message="Resumo de carga das carteiras carregado.",
+            operation_id="get_seller_portfolios_load_summary",
+        )
+    except Exception:
+        logger.exception("get_seller_portfolios_load_summary_failed")
+        return fail(
+            "Erro interno ao resumir carga das carteiras.",
+            500,
+            operation_id="get_seller_portfolios_load_summary",
         )
 
 

@@ -291,10 +291,17 @@ export const CM_HELP = {
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
     colUserId: "Responsável da carteira (usuário Minha Delpi).",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
+    colMemberCount: "Quantidade de usuários com acesso a esta carteira (responsável + membros).",
+    colOpenValue:
+      "Soma do valor em aberto dos pedidos da carteira (TOTVS). Indisponível até agregação ligada.",
+    colAttentionCount:
+      "Linhas de pedido em atenção (atraso/estoque) na carteira. Indisponível até agregação ligada.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
     layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
     shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra a árvore carteira ↔ pessoa.",
     orgAxisToggle: "Agrupe a organização por carteira (membros abaixo) ou por pessoa (carteiras abaixo).",
+    orgLoadSnippet:
+      "Carga compacta: clientes, valor aberto, atenção e membros (ou carteiras no eixo pessoa).",
     cardOpenHint: "Abrir carteira",
     searchCustomers:
       "Busca clientes ativos por código ou nome (mínimo de dois caracteres).",

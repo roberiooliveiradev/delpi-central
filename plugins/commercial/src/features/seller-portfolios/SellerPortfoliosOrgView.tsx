@@ -10,8 +10,18 @@ import {
   UI_PREFIX,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
-import type { SellerPortfolio } from "../../types/portfolio";
+import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
+import type {
+  PersonLoadItem,
+  PortfolioLoadItem,
+  SellerPortfolio,
+} from "../../types/portfolio";
 import type { SellerPortfoliosAxis } from "../../utils/sellerPortfoliosDeepLink";
+import {
+  formatPersonLoadSnippet,
+  formatPortfolioLoadSnippet,
+  resolvePortfolioLoad,
+} from "../../utils/portfolioLoad";
 
 type OrgPersonNode = {
   userId: string;
@@ -29,6 +39,8 @@ type SellerPortfoliosOrgViewProps = {
   loading: boolean;
   emptyTitle: string;
   emptyMessage: string;
+  loadByPortfolioId?: ReadonlyMap<string, PortfolioLoadItem>;
+  loadByPersonId?: ReadonlyMap<string, PersonLoadItem>;
   onAxisChange: (axis: SellerPortfoliosAxis) => void;
   onOpenPortfolio: (portfolio: SellerPortfolio) => void;
   onCreate: () => void;
@@ -65,12 +77,29 @@ function buildPersonNodes(portfolios: SellerPortfolio[]): OrgPersonNode[] {
     .sort((a, b) => a.userId.localeCompare(b.userId));
 }
 
+function portfolioLoadSnippet(
+  portfolio: SellerPortfolio,
+  loadByPortfolioId?: ReadonlyMap<string, PortfolioLoadItem>,
+): string {
+  const load =
+    loadByPortfolioId?.get(portfolio.id) ??
+    resolvePortfolioLoad(null, portfolio.id, {
+      customer_count: portfolio.customer_count,
+      member_count:
+        portfolio.member_count ??
+        (portfolio.members?.length ? portfolio.members.length : 1),
+    });
+  return formatPortfolioLoadSnippet(load);
+}
+
 export function SellerPortfoliosOrgView({
   portfolios,
   axis,
   loading,
   emptyTitle,
   emptyMessage,
+  loadByPortfolioId,
+  loadByPersonId,
   onAxisChange,
   onOpenPortfolio,
   onCreate,
@@ -126,14 +155,22 @@ export function SellerPortfoliosOrgView({
             <ul className="cm-portfolios-org-tree" aria-label="Organização por carteira">
               {portfolioNodes.map(({ portfolio, memberIds }) => (
                 <li key={portfolio.id} className="cm-portfolios-org-tree__node">
-                  <CommercialActionButton
-                    variant="ghost"
-                    onClick={() => onOpenPortfolio(portfolio)}
-                    aria-label={`${CM_HELP.sellerPortfolios.cardOpenHint}: ${portfolio.display_name}`}
-                  >
-                    {portfolio.display_name}
-                    {portfolio.active ? "" : " (inativa)"}
-                  </CommercialActionButton>
+                  <div className="cm-portfolios-org-tree__heading">
+                    <CommercialActionButton
+                      variant="ghost"
+                      onClick={() => onOpenPortfolio(portfolio)}
+                      aria-label={`${CM_HELP.sellerPortfolios.cardOpenHint}: ${portfolio.display_name}`}
+                    >
+                      {portfolio.display_name}
+                      {portfolio.active ? "" : " (inativa)"}
+                    </CommercialActionButton>
+                    <span
+                      className="cm-portfolios-org-tree__load"
+                      title={PORTFOLIO_LOAD_CONTENT.totvsUnavailableHint}
+                    >
+                      {portfolioLoadSnippet(portfolio, loadByPortfolioId)}
+                    </span>
+                  </div>
                   {memberIds.length === 0 ? (
                     <p className="cm-portfolios-org-tree__empty">Sem usuários vinculados.</p>
                   ) : (
@@ -148,27 +185,52 @@ export function SellerPortfoliosOrgView({
             </ul>
           ) : (
             <ul className="cm-portfolios-org-tree" aria-label="Organização por pessoa">
-              {personNodes.map(({ userId, portfolios: personPortfolios }) => (
-                <li key={userId} className="cm-portfolios-org-tree__node">
-                  <span className="cm-portfolios-org-tree__person">
-                    {directoryLabelFor(userId)}
-                  </span>
-                  <ul className="cm-portfolios-org-tree__children">
-                    {personPortfolios.map((portfolio) => (
-                      <li key={portfolio.id}>
-                        <CommercialActionButton
-                          variant="ghost"
-                          onClick={() => onOpenPortfolio(portfolio)}
-                          aria-label={`${CM_HELP.sellerPortfolios.cardOpenHint}: ${portfolio.display_name}`}
-                        >
-                          {portfolio.display_name}
-                          {portfolio.active ? "" : " (inativa)"}
-                        </CommercialActionButton>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
+              {personNodes.map(({ userId, portfolios: personPortfolios }) => {
+                const personLoad = loadByPersonId?.get(userId);
+                const loadLabel = personLoad
+                  ? formatPersonLoadSnippet(personLoad)
+                  : formatPersonLoadSnippet({
+                      customer_count: personPortfolios.reduce(
+                        (sum, item) => sum + (item.customer_count ?? 0),
+                        0,
+                      ),
+                      portfolio_count: personPortfolios.length,
+                      open_value: null,
+                      attention_count: null,
+                    });
+                return (
+                  <li key={userId} className="cm-portfolios-org-tree__node">
+                    <div className="cm-portfolios-org-tree__heading">
+                      <span className="cm-portfolios-org-tree__person">
+                        {directoryLabelFor(userId)}
+                      </span>
+                      <span
+                        className="cm-portfolios-org-tree__load"
+                        title={PORTFOLIO_LOAD_CONTENT.totvsUnavailableHint}
+                      >
+                        {loadLabel}
+                      </span>
+                    </div>
+                    <ul className="cm-portfolios-org-tree__children">
+                      {personPortfolios.map((portfolio) => (
+                        <li key={portfolio.id}>
+                          <CommercialActionButton
+                            variant="ghost"
+                            onClick={() => onOpenPortfolio(portfolio)}
+                            aria-label={`${CM_HELP.sellerPortfolios.cardOpenHint}: ${portfolio.display_name}`}
+                          >
+                            {portfolio.display_name}
+                            {portfolio.active ? "" : " (inativa)"}
+                          </CommercialActionButton>
+                          <span className="cm-portfolios-org-tree__load cm-portfolios-org-tree__load--child">
+                            {portfolioLoadSnippet(portfolio, loadByPortfolioId)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CommercialViewTransition>

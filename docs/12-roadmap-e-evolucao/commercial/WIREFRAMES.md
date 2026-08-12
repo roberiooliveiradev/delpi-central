@@ -523,18 +523,23 @@ Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` n
 │ Eixo [Por carteira] [Por pessoa]                                       │
 │                                                                        │
 │ (Por carteira)                                                         │
-│ · Sul                                                                  │
+│ · Sul · 18 cli · — · Atenção — · 3 membros                             │
 │     Ana Silva · Pedro Costa · Lia Mendes                               │
-│ · Norte                                                                │
+│ · Norte · 12 cli · — · Atenção — · 2 membros                           │
 │     Bruno Alves · Carla Dias                                           │
 │                                                                        │
 │ (Por pessoa)                                                           │
-│ · Ana Silva                                                            │
+│ · Ana Silva · 20 cli · — · Atenção — · 2 carteiras                     │
 │     Sul · Especial                                                     │
-│ · Pedro Costa                                                          │
+│ · Pedro Costa · 18 cli · — · Atenção — · 1 carteira                    │
 │     Sul                                                                │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+**E6.2 — KPIs de carga:** snippet no nó (`cli · valor aberto · Atenção · membros|carteiras`).
+`customer_count` / `member_count` vêm de `GET /seller-portfolios/load-summary` (Postgres).
+`open_value` / `attention_count` ficam `null` (UI «—») até agregação TOTVS barata
+(`totvs_metrics.available=false`, reason `open_orders_aggregation_not_wired`).
 
 Clique no nome da carteira → WF-05R-D. Empty + CTA Nova carteira se filtro zerar a árvore.
 
@@ -554,7 +559,8 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 
 | Item | Nota |
 |------|------|
-| **E6** — features de mercado (após MVP multi-membro) | Planejado; fora do escopo E5.1 |
+| **E6.2** — KPIs de carga (clientes/membros; TOTVS stub) | Entregue — `load-summary` + lista/org |
+| **E6** restante — timeline, badge Conta, bulk | Planejado |
 | **E7** — mapa territorial, carve/IA de carteira, rotação, inbox compartilhado | Futuro; não wireframear como entregue |
 
 ---

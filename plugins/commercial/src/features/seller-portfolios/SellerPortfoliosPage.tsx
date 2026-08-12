@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createSellerPortfolio,
   getSellerPortfoliosCoverageAudit,
+  getSellerPortfoliosLoadSummary,
   listSellerPortfolios,
 } from "../../api/commercialPortfolioApi";
 import {
@@ -26,8 +27,13 @@ import {
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
-import type { SellerPortfolio, SellerPortfoliosCoverageAudit } from "../../types/portfolio";
+import type {
+  SellerPortfolio,
+  SellerPortfoliosCoverageAudit,
+  SellerPortfoliosLoadSummary,
+} from "../../types/portfolio";
 import { overlappingPortfolioIdSet } from "../../utils/portfolioCoverage";
+import { personLoadByUserId, portfolioLoadById } from "../../utils/portfolioLoad";
 import {
   buildSellerPortfolioDetailPath,
   migrateLegacySellerPortfolioIdParam,
@@ -104,6 +110,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [portfolios, setPortfolios] = useState<SellerPortfolio[]>([]);
   const [coverageAudit, setCoverageAudit] = useState<SellerPortfoliosCoverageAudit | null>(null);
+  const [loadSummary, setLoadSummary] = useState<SellerPortfoliosLoadSummary | null>(null);
   const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
   const [link, setLink] = useState<SellerPortfoliosDeepLink>(DEFAULT_LINK);
   const [createOpen, setCreateOpen] = useState(false);
@@ -171,10 +178,15 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       if (options?.silent) setRefreshing(true);
       else setLoading(true);
       setError(null);
-      Promise.all([listSellerPortfolios(), getSellerPortfoliosCoverageAudit()])
-        .then(([response, audit]) => {
+      Promise.all([
+        listSellerPortfolios(),
+        getSellerPortfoliosCoverageAudit(),
+        getSellerPortfoliosLoadSummary(),
+      ])
+        .then(([response, audit, load]) => {
           setPortfolios(response);
           setCoverageAudit(audit);
+          setLoadSummary(load);
           setLastSuccessAt(new Date());
         })
         .catch((err: unknown) => {
@@ -184,6 +196,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           if (!options?.silent) {
             setPortfolios([]);
             setCoverageAudit(null);
+            setLoadSummary(null);
           }
         })
         .finally(() => {
@@ -201,6 +214,16 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const overlapIds = useMemo(
     () => overlappingPortfolioIdSet(coverageAudit),
     [coverageAudit],
+  );
+
+  const loadByPortfolioId = useMemo(
+    () => portfolioLoadById(loadSummary),
+    [loadSummary],
+  );
+
+  const loadByPersonId = useMemo(
+    () => personLoadByUserId(loadSummary),
+    [loadSummary],
   );
 
   const stats = useMemo(() => {
@@ -426,6 +449,8 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           loading={loading && portfolios.length === 0}
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}
+          loadByPortfolioId={loadByPortfolioId}
+          loadByPersonId={loadByPersonId}
           onAxisChange={(axis: SellerPortfoliosAxis) => applyLink({ ...link, axis })}
           onOpenPortfolio={(portfolio) => openPortfolio(portfolio)}
           onCreate={() => setCreateOpen(true)}
@@ -435,6 +460,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
         <SellerPortfoliosList
           portfolios={filteredPortfolios}
           overlappingPortfolioIds={overlapIds}
+          loadByPortfolioId={loadByPortfolioId}
           loading={loading && portfolios.length === 0}
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}

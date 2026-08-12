@@ -25,6 +25,8 @@ export type SellerPortfolio = {
   display_name: string;
   active: boolean;
   customer_count: number;
+  /** Quantidade de membros (owner + members); fallback 1 se members vazio. */
+  member_count?: number;
   customers: SellerCustomer[];
   members?: SellerPortfolioMember[];
 };
@@ -109,6 +111,36 @@ export type SellerPortfoliosCoverageAudit = {
   overlapping: OverlappingCustomerCoverage[];
   portfolios_with_overlap: PortfolioOverlapSummary[];
   gap: PortfolioCoverageGapStatus;
+};
+
+export type TotvsLoadMetricsStatus = {
+  available: boolean;
+  reason: string | null;
+};
+
+export type PortfolioLoadItem = {
+  id: string;
+  display_name: string;
+  active: boolean;
+  customer_count: number;
+  member_count: number;
+  open_value: number | null;
+  attention_count: number | null;
+};
+
+export type PersonLoadItem = {
+  user_id: string;
+  portfolio_ids: string[];
+  portfolio_count: number;
+  customer_count: number;
+  open_value: number | null;
+  attention_count: number | null;
+};
+
+export type SellerPortfoliosLoadSummary = {
+  portfolios: PortfolioLoadItem[];
+  by_person: PersonLoadItem[];
+  totvs_metrics: TotvsLoadMetricsStatus;
 };
 
 export type CoverageLinkWarning = {

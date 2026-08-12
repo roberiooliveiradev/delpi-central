@@ -5,6 +5,7 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     ManageSellerPortfolioUseCase,
     add_customer_result_to_dict,
     coverage_audit_to_dict,
+    load_summary_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
 )
@@ -427,3 +428,42 @@ def test_audit_customer_coverage_uses_active_portfolios() -> None:
     assert payload["overlapping_count"] == 1
     assert payload["gap"]["available"] is False
     assert payload["portfolios_with_overlap"][0]["overlapping_customer_count"] == 1
+
+
+def test_summarize_portfolio_load_returns_stubbed_totvs_metrics() -> None:
+    repository = MagicMock()
+    repository.list_portfolios.return_value = [
+        _portfolio(
+            id="p1",
+            members=(
+                SellerPortfolioMember(user_id="u1", role="owner"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            ),
+        ),
+    ]
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    summary = use_case.summarize_portfolio_load(active_only=False)
+    payload = load_summary_to_dict(summary)
+
+    repository.list_portfolios.assert_called_once_with(active_only=False)
+    assert payload["portfolios"][0]["customer_count"] == 2
+    assert payload["portfolios"][0]["member_count"] == 2
+    assert payload["portfolios"][0]["open_value"] is None
+    assert payload["portfolios"][0]["attention_count"] is None
+    assert payload["by_person"][0]["user_id"] == "u1"
+    assert payload["totvs_metrics"]["available"] is False
+    assert payload["totvs_metrics"]["reason"] == "open_orders_aggregation_not_wired"
+
+
+def test_portfolio_to_dict_includes_member_count() -> None:
+    payload = portfolio_to_dict(
+        _portfolio(
+            members=(
+                SellerPortfolioMember(user_id="u1", role="owner"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            ),
+        )
+    )
+    assert payload["member_count"] == 2
+    assert len(payload["members"]) == 2

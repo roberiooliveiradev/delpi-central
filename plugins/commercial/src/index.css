@@ -328,6 +328,24 @@
   font-weight: 600;
 }
 
+.dashboard-commercial .cm-portfolios-org-tree__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__load {
+  color: var(--cm-text-muted);
+  font-size: 13px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__load--child {
+  margin-left: 8px;
+}
+
 .dashboard-commercial .cm-portfolios-org-tree__children {
   display: flex;
   flex-direction: column;

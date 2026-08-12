@@ -7,6 +7,7 @@ from commercial_app.domain.entities.portfolio_coverage import (
     CustomerOverlapWarning,
     PortfolioCoverageAudit,
 )
+from commercial_app.domain.entities.portfolio_load import PortfolioLoadSummary
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
@@ -19,6 +20,9 @@ from commercial_app.domain.ports.seller_portfolio_repository_port import (
 )
 from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
     SellerPortfolioCoverageAuditService,
+)
+from commercial_app.domain.services.seller_portfolio_load_summary_service import (
+    SellerPortfolioLoadSummaryService,
 )
 
 _PORTAL_ACCESS_DENIED = "Usuário sem acesso ao Portal Comercial."
@@ -33,6 +37,13 @@ def customer_key(code: str, store: str) -> tuple[str, str]:
 
 
 def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
+    members = [
+        {"user_id": member.user_id, "role": member.role}
+        for member in portfolio.members
+    ]
+    member_count = len(members)
+    if member_count == 0 and portfolio.user_id:
+        member_count = 1
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
@@ -40,6 +51,7 @@ def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
         "display_name": portfolio.display_name,
         "active": portfolio.active,
         "customer_count": len(portfolio.customers),
+        "member_count": member_count,
         "customers": [
             {
                 "customer_code": item.customer_code,
@@ -48,10 +60,39 @@ def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
             }
             for item in portfolio.customers
         ],
-        "members": [
-            {"user_id": member.user_id, "role": member.role}
-            for member in portfolio.members
+        "members": members,
+    }
+
+
+def load_summary_to_dict(summary: PortfolioLoadSummary) -> dict[str, Any]:
+    return {
+        "portfolios": [
+            {
+                "id": item.id,
+                "display_name": item.display_name,
+                "active": item.active,
+                "customer_count": item.customer_count,
+                "member_count": item.member_count,
+                "open_value": item.open_value,
+                "attention_count": item.attention_count,
+            }
+            for item in summary.portfolios
         ],
+        "by_person": [
+            {
+                "user_id": item.user_id,
+                "portfolio_ids": list(item.portfolio_ids),
+                "portfolio_count": item.portfolio_count,
+                "customer_count": item.customer_count,
+                "open_value": item.open_value,
+                "attention_count": item.attention_count,
+            }
+            for item in summary.by_person
+        ],
+        "totvs_metrics": {
+            "available": summary.totvs_metrics.available,
+            "reason": summary.totvs_metrics.reason,
+        },
     }
 
 
@@ -162,12 +203,14 @@ class ManageSellerPortfolioUseCase:
         audit_repository: AuditLogRepositoryPort | None = None,
         portal_access: PortalAccessPort | None = None,
         coverage_audit: SellerPortfolioCoverageAuditService | None = None,
+        load_summary: SellerPortfolioLoadSummaryService | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
         # None = permissivo (mesmo efeito de PermissivePortalAccessPort).
         self._portal_access = portal_access
         self._coverage_audit = coverage_audit or SellerPortfolioCoverageAuditService()
+        self._load_summary = load_summary or SellerPortfolioLoadSummaryService()
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
@@ -212,6 +255,11 @@ class ManageSellerPortfolioUseCase:
         """Relatório de overlapping entre carteiras ativas (gap só se houver universo)."""
         portfolios = self._repository.list_portfolios(active_only=True)
         return self._coverage_audit.audit_active_portfolios(portfolios)
+
+    def summarize_portfolio_load(self, *, active_only: bool = False) -> PortfolioLoadSummary:
+        """KPIs de carga (clientes/membros; TOTVS stub até wiring)."""
+        portfolios = self._repository.list_portfolios(active_only=active_only)
+        return self._load_summary.summarize(portfolios)
 
     def create_portfolio(self, request: CreatePortfolioRequest) -> SellerPortfolio:
         display_name = _normalize_code(request.display_name)
