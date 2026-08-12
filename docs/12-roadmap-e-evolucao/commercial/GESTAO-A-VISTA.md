@@ -51,7 +51,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | Página | Pergunta | Obrigatório | Não trazer |
 |--------|----------|-------------|------------|
 | Início | O que fazer agora / para onde ir? | Saudação; KPIs carteira; eventos; launcher | BI ROL/funil |
-| Visão geral | Como está o comercial no período? | Filtros (+**carteira**); KPIs; ROL; funil | Aprofundar; prévia OV |
+| Visão geral | Como está o comercial no período? | Filtros (+**carteira** + **Unidade** SC/ES); KPIs; ROL (Dia–Ano, séries SC/ES); funil trapézio (taxa/meta); **export** ROL/funil | Aprofundar; prévia OV; export OTD/Opp |
 | Minhas tarefas | Qual minha fila? | Buckets; CRUD tarefa | Pedidos / ROL |
 | Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; tabela | Série OTD histórica |
 | Minha Carteira | Quem são os clientes? | Lista; clique→Conta | BI período |
@@ -65,7 +65,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 
 | | Início `/` | Visão geral `/overview` |
 |--|------------|-------------------------|
-| Papel | Launcher (main) + eventos (side) | BI: filtros, KPIs, charts ROL/funil |
+| Papel | Launcher (main) + eventos (side) | BI: filtros Unidade SC/ES, KPIs, ROL Dia–Ano + export, funil trapézio + export |
 | Não fazer | Duplicar faixa BI completa | Faixa Aprofundar; hospedar CRUD carteiras |
 
 ## Duas “propostas”
@@ -84,7 +84,7 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 | id | Label |
 |----|-------|
 | `rol_head_office` | ROL vs meta |
-| `rol_branch` | ROL filial |
+| `rol_branch` | ROL Espírito Santo |
 | `closing_rate` | Conversão |
 | `otd` | OTD |
 | `new_business` | Novos negócios |
@@ -110,7 +110,7 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 
 | | |
 |--|--|
-| URL | `competence`, `start_date`, `end_date`, `branch`, `customer_segment`, **`seller_id`** (carteira) |
+| URL | `competence`, `start_date`, `end_date`, `branch` (Unidade SC/ES), `customer_segment`, **`seller_id`** (carteira) |
 | sessionStorage | `delpi.commercial.analytics.filters` |
 | Hook | `useAnalyticsFilters` + sync `PortfolioScopeContext.sellerIdFilter` |
 | Carteira → dados | commercial-api clientes → api-delpi `customer_codes` (TOTVS puro) |
@@ -123,9 +123,14 @@ Ver [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md): membership no Portal; api-delpi 
 `portfolio.changed` → sala WS **`team`** + `user:{member}`.  
 **Status:** entregue em `commercial_realtime_notify.notify_portfolio_changed`.
 
-## Backlog — export (não nesta wave)
+## Export (D13 + exceção Visão geral)
 
-Decisão D13: **não** implementar export OTD/Opp / Visão geral nesta wave.
+| Superfície | Export tabular CSV/Excel/PDF |
+|------------|------------------------------|
+| **Visão geral** — Evolução ROL + Funil | **Sim** (exceção D13 — paridade dashboard) |
+| OTD / Oportunidades | **Não** nesta wave (D13 permanece) |
+
+Rótulos de unidade: canônico `@delpi/plugin-ui` (`formatOperationalUnitCode` / SC = Santa Catarina, ES = Espírito Santo) — UI nunca mostra `"01"`/`"02"` como rótulo quando o código é conhecido. Campo de filtro analytics: **Unidade (indicadores)**.
 
 ## Backlog (outros)
 

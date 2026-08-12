@@ -139,11 +139,14 @@ Favoritos
 
 ```text
 ┌─ PageHero «Visão geral» ──────────────────────────────────── [Atualizar] ─┐
-┌─ Filtros: Data ini | Data fim | Competência | Filial | Segmento | Carteira† ┐
+┌─ Filtros: Data ini | Data fim | Competência | Unidade (SC/ES) | Segmento | Carteira† ┐
 ┌─ Indicadores (KPIs ≤8) ────────────────────────────────────────────────────┐
-┌─ Evolução ROL ──────────────────────────┬─ Funil de conversão ─────────────┐
+┌─ Evolução ROL [Dia–Ano][Export] ────────┬─ Funil trapézio [Export] ────────┐
+│ séries SC/ES · drill no ponto           │ taxa + meta · 3 etapas           │
 † SellerScopeFilter se canFilterPortfolios
 ```
+
+**Export:** só nesta tela (ROL + funil). OTD/Opp sem export (D13).
 
 ### WF-TASKS — Minhas tarefas `/my-tasks`
 
