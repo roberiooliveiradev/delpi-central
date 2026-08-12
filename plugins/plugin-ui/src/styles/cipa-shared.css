@@ -286,18 +286,30 @@
 
 .delpi-ui-signature-capture__preview-name {
   color: var(--delpi-ui-text, #111);
+  text-align: center;
+}
+
+.delpi-ui-signature-capture__paper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  padding: 12px;
 }
 
 .delpi-ui-signature-capture__preview-image {
   display: block;
   max-width: 100%;
   height: auto;
+  margin-inline: auto;
+  object-fit: contain;
   background: transparent;
 }
 
 .delpi-ui-signature-capture__preview-empty {
   font-size: 13px;
   color: var(--delpi-ui-muted, #64748b);
+  text-align: center;
 }
 
 .delpi-ui-signature-saved {
@@ -313,16 +325,22 @@
 }
 
 .delpi-ui-signature-saved__paper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 12px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   background: #fff;
   padding: 12px;
+  min-height: 120px;
 }
 
 .delpi-ui-signature-saved__image {
   display: block;
   max-width: 100%;
   height: auto;
+  margin-inline: auto;
+  object-fit: contain;
 }
 
 :root[data-theme="dark"] .delpi-ui-signature-pad__paper,

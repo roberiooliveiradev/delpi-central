@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SignaturePad } from "./SignaturePad";
@@ -71,7 +71,7 @@ describe("SignaturePad", () => {
     expect(screen.getByTestId("signature-pad-fullscreen")).toBeTruthy();
   });
 
-  it("desfaz e refaz traços e limpa com onChange(null)", () => {
+  it("desfaz e refaz traços e limpa com onChange(null)", async () => {
     mockCanvasContext();
     const onChange = vi.fn();
     const { container } = render(<SignaturePad onChange={onChange} />);
@@ -92,7 +92,9 @@ describe("SignaturePad", () => {
     fireEvent.pointerMove(canvas, { clientX: 40, clientY: 40, pointerId: 1 });
     fireEvent.pointerUp(canvas, { pointerId: 1 });
 
-    expect(onChange).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
     expect((screen.getByTestId("signature-pad-undo") as HTMLButtonElement).disabled).toBe(false);
 
     fireEvent.click(screen.getByTestId("signature-pad-undo"));

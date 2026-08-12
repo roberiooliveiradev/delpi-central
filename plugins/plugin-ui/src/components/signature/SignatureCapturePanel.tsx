@@ -2,6 +2,7 @@ import { Keyboard, PenLine, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
 import { SignaturePad, type SignaturePadProps } from "./SignaturePad";
 
 export type SignatureCaptureMode = "draw" | "type" | "upload";
@@ -107,7 +108,7 @@ export function SignatureCapturePanel({
     };
   }, [previewUrl]);
 
-  function publish(blob: Blob | null) {
+  async function publish(blob: Blob | null) {
     if (previewUrl) {
       try {
         URL.revokeObjectURL(previewUrl);
@@ -115,28 +116,32 @@ export function SignatureCapturePanel({
         /* jsdom */
       }
     }
+    if (!blob) {
+      setPreviewUrl(null);
+      onChange?.(null);
+      return;
+    }
+    const centered = await centerSignaturePngBlob(blob);
     let nextUrl: string | null = null;
-    if (blob) {
-      try {
-        nextUrl = URL.createObjectURL(blob);
-      } catch {
-        nextUrl = null;
-      }
+    try {
+      nextUrl = URL.createObjectURL(centered);
+    } catch {
+      nextUrl = null;
     }
     setPreviewUrl(nextUrl);
-    onChange?.(blob);
+    onChange?.(centered);
   }
 
   async function applyTyped() {
     if (disabled) return;
     const blob = await blobFromTypedName(typedName, width, height);
-    publish(blob);
+    await publish(blob);
   }
 
   async function handleUpload(file: File | null) {
     if (disabled || !file) return;
     const blob = await blobFromImageFile(file, width, height);
-    publish(blob);
+    await publish(blob);
   }
 
   return (
@@ -206,7 +211,7 @@ export function SignatureCapturePanel({
         <SignaturePad
           {...padProps}
           disabled={disabled}
-          onChange={publish}
+          onChange={(blob) => void publish(blob)}
           labels={labels?.pad}
         />
       ) : null}

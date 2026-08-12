@@ -8,3 +8,7 @@ export {
   type SignatureCaptureMode,
   type SignatureCapturePanelProps,
 } from "./SignatureCapturePanel";
+export {
+  centerSignaturePngBlob,
+  type CenterSignatureOptions,
+} from "./centerSignaturePngBlob";

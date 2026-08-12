@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
+import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
 
 export type SignatureStrokeWidth = "thin" | "medium" | "thick";
 
@@ -224,7 +225,13 @@ export function SignaturePad({
       onChange(null);
       return;
     }
-    canvas.toBlob((blob) => onChange(blob), "image/png");
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        onChange(null);
+        return;
+      }
+      void centerSignaturePngBlob(blob).then((centered) => onChange(centered));
+    }, "image/png");
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
