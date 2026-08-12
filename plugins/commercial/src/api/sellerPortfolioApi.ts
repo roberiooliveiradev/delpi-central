@@ -6,6 +6,7 @@ import type {
   SellerCustomerInput,
   SellerPortfolio,
   SellerPortfolioMeResponse,
+  SellerPortfolioMemberRole,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -42,7 +43,9 @@ export async function getSellerPortfolio(
 }
 
 export async function createSellerPortfolio(input: {
-  user_id: string;
+  user_id?: string;
+  user_ids?: string[];
+  owner_user_id?: string | null;
   display_name: string;
   customers?: SellerCustomerInput[];
 }): Promise<SellerPortfolio> {
@@ -62,6 +65,27 @@ export async function deactivateSellerPortfolio(sellerId: string): Promise<Selle
 
 export async function purgeSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {
   return commercial.purgeSellerPortfolio(sellerId);
+}
+
+export async function addSellerPortfolioMember(
+  portfolioId: string,
+  input: { user_id: string; role?: SellerPortfolioMemberRole },
+): Promise<SellerPortfolio> {
+  return commercial.addSellerPortfolioMember(portfolioId, input);
+}
+
+export async function removeSellerPortfolioMember(
+  portfolioId: string,
+  userId: string,
+): Promise<SellerPortfolio> {
+  return commercial.removeSellerPortfolioMember(portfolioId, userId);
+}
+
+export async function setSellerPortfolioOwner(
+  portfolioId: string,
+  userId: string,
+): Promise<SellerPortfolio> {
+  return commercial.setSellerPortfolioOwner(portfolioId, userId);
 }
 
 export async function replaceSellerCustomers(

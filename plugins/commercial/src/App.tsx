@@ -28,6 +28,7 @@ import { OpenOrderLineDetailPage } from "./features/open-orders/OpenOrderLineDet
 import { OpenOrderOpDetailPage } from "./features/open-orders/OpenOrderOpDetailPage";
 import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
 import { ProposalsPage } from "./features/proposals/ProposalsPage";
+import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
 export type AppProps = {
@@ -55,11 +56,14 @@ function AppRoutes({
     canViewAnalytics,
     canViewProposals,
     canUseTeamScope,
-    myPortfolio,
+    myPortfolios,
   } = usePortfolioScope();
-  const scopeLabel = myPortfolio?.display_name
-    ? `Carteira: ${myPortfolio.display_name}`
-    : undefined;
+  const scopeLabel =
+    myPortfolios.length > 1
+      ? `${myPortfolios.length} carteiras`
+      : myPortfolios.length === 1
+        ? `Carteira: ${myPortfolios[0]?.display_name ?? "—"}`
+        : undefined;
 
   return (
     <PluginShell
@@ -191,6 +195,17 @@ function AppRoutes({
       {view === "seller_portfolios" ? (
         isAdmin ? (
           <SellerPortfoliosPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "seller_portfolio_detail" && route.portfolioId ? (
+        isAdmin ? (
+          <SellerPortfolioDetailPage
+            basePath={basePath}
+            portfolioId={route.portfolioId}
+            search={search}
+          />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

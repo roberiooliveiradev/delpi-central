@@ -10,13 +10,23 @@ export type SellerCustomerInput = {
   customer_name?: string | null;
 };
 
+export type SellerPortfolioMemberRole = "owner" | "member";
+
+export type SellerPortfolioMember = {
+  user_id: string;
+  role: SellerPortfolioMemberRole;
+};
+
 export type SellerPortfolio = {
   id: string;
+  /** Dono legado (espelho do owner) — preferir `owner_user_id`/`members`. */
   user_id: string;
+  owner_user_id?: string | null;
   display_name: string;
   active: boolean;
   customer_count: number;
   customers: SellerCustomer[];
+  members?: SellerPortfolioMember[];
 };
 
 export type CommercialCapabilities = {
@@ -34,7 +44,10 @@ export type CommercialCapabilities = {
 export type SellerPortfolioMeResponse = {
   /** Sempre o usuário autenticado (mesmo sem carteira). */
   user_id?: string | null;
+  /** Primeira carteira — compat com consumidores single-portfolio. */
   portfolio: SellerPortfolio | null;
+  /** Todas as carteiras em que o usuário é owner ou member. */
+  portfolios?: SellerPortfolio[];
   is_admin: boolean;
   capabilities?: CommercialCapabilities;
 };

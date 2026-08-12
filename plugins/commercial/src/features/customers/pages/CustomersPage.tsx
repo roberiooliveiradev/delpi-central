@@ -3,6 +3,10 @@ import { useEffect, useMemo } from "react";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import {
+  portfolioSellerAccessKey,
+  usePortfolioSellerAccess,
+} from "../../../app/usePortfolioSellerAccess";
+import {
   CommercialActionButton,
   CommercialEmptyState,
   CommercialFilterBarShell,
@@ -30,7 +34,6 @@ import {
   matchesOperationalFocus,
 } from "../utils/customerFilters";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
-import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -51,19 +54,15 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   const {
     loading: scopeLoading,
     canUseTeamScope,
+    canFilterPortfolios,
+    filterablePortfolios,
     sellers,
     sellerIdFilter,
     setSellerIdFilter,
-    myPortfolio,
+    myPortfolios,
   } = usePortfolioScope();
-  const sellerAccess = useMemo<CustomersListSellerAccess>(
-    () => ({
-      allowSellerId: canUseTeamScope,
-      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
-    }),
-    [canUseTeamScope, sellers],
-  );
-  const sellerAccessKey = `${sellerAccess.allowSellerId ? "team" : "own"}:${sellerAccess.validSellerIds.join(",")}`;
+  const sellerAccess = usePortfolioSellerAccess();
+  const sellerAccessKey = portfolioSellerAccessKey(sellerAccess);
   const {
     state: listState,
     setSearch,
@@ -79,7 +78,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     scopeLoading,
     sellerAccess,
     sellerAccessKey,
-    sellerId: canUseTeamScope ? sellerIdFilter : null,
+    sellerId: canFilterPortfolios ? sellerIdFilter : null,
     setSellerId: setSellerIdFilter,
   });
 
@@ -87,11 +86,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     if (canUseTeamScope) {
       return buildSellerNameByCustomerKey(sellers);
     }
-    if (myPortfolio) {
-      return buildSellerNameByCustomerKey([myPortfolio]);
+    if (myPortfolios.length > 0) {
+      return buildSellerNameByCustomerKey(myPortfolios);
     }
     return new Map<string, string>();
-  }, [canUseTeamScope, sellers, myPortfolio]);
+  }, [canUseTeamScope, sellers, myPortfolios]);
 
   const {
     loading,
@@ -107,7 +106,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     portfolioMessage,
     portfolioEmpty,
     enrichment,
-  } = useCustomersData(canUseTeamScope ? sellerIdFilter : null, {
+  } = useCustomersData(canFilterPortfolios ? sellerIdFilter : null, {
     sellerNameByKey,
     listState,
   });
@@ -278,9 +277,9 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             onChange={setSearch}
             placeholder="Código, loja, nome ou pedido"
           />
-          {canUseTeamScope ? (
+          {canFilterPortfolios ? (
             <SellerScopeFilter
-              sellers={sellers}
+              sellers={filterablePortfolios}
               value={sellerIdFilter}
               onChange={setSellerId}
               hint={CM_HELP.customers.sellerScope}

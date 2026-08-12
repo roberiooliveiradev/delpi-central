@@ -24,8 +24,18 @@ type PortfolioScopeValue = {
   canViewWorklistTeam: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
   currentUserId: string | null;
+  /** Compat single-portfolio: primeira carteira de `myPortfolios`. */
   myPortfolio: SellerPortfolio | null;
+  /** Todas as carteiras em que o usuário é owner ou member. */
+  myPortfolios: SellerPortfolio[];
   sellers: SellerPortfolio[];
+  /**
+   * Fonte única do «pode escolher carteira»: equipe (team.view) ou
+   * usuário em mais de uma carteira própria.
+   */
+  canFilterPortfolios: boolean;
+  /** Universo do seletor de carteira: equipe → todas; senão → carteiras próprias. */
+  filterablePortfolios: SellerPortfolio[];
   sellerIdFilter: string | null;
   setSellerIdFilter: (sellerId: string | null) => void;
   reload: () => void;
@@ -73,7 +83,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [capabilities, setCapabilities] = useState<CommercialCapabilities>(EMPTY_CAPABILITIES);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [myPortfolio, setMyPortfolio] = useState<SellerPortfolio | null>(null);
+  const [myPortfolios, setMyPortfolios] = useState<SellerPortfolio[]>([]);
   const [sellers, setSellers] = useState<SellerPortfolio[]>([]);
   const [sellerIdFilter, setSellerIdFilterState] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -98,7 +108,14 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         const fromMe = (response.user_id || "").trim();
         const fromPortfolio = (response.portfolio?.user_id || "").trim();
         setCurrentUserId(fromMe || fromPortfolio || null);
-        setMyPortfolio(response.portfolio);
+        // `portfolios` é o contrato N:N; `portfolio` fica só como compat de API antiga.
+        setMyPortfolios(
+          response.portfolios?.length
+            ? response.portfolios
+            : response.portfolio
+              ? [response.portfolio]
+              : [],
+        );
         const nextCapabilities = resolveCapabilities(response.capabilities, admin);
         setCapabilities(nextCapabilities);
 
@@ -119,7 +136,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
         setCapabilities(EMPTY_CAPABILITIES);
         setCurrentUserId(null);
-        setMyPortfolio(null);
+        setMyPortfolios([]);
         setSellers([]);
       })
       .finally(() => {
@@ -129,8 +146,10 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [reloadToken]);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const canUseTeamScope = capabilities.team_scope;
+    const filterablePortfolios = canUseTeamScope ? sellers : myPortfolios;
+    return {
       loading,
       error,
       isAdmin,
@@ -139,29 +158,31 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       canViewAnalytics: capabilities.analytics_view,
       canViewProposals: capabilities.proposals_view,
       canExportProposals: capabilities.proposals_export,
-      canUseTeamScope: capabilities.team_scope,
+      canUseTeamScope,
       canViewWorklistTeam: capabilities.worklist_team_view,
       currentUserId,
-      myPortfolio,
+      myPortfolio: myPortfolios[0] ?? null,
+      myPortfolios,
       sellers,
+      canFilterPortfolios: canUseTeamScope || myPortfolios.length > 1,
+      filterablePortfolios,
       sellerIdFilter,
       setSellerIdFilter,
       reload,
       reloadScope: reload,
-    }),
-    [
-      loading,
-      error,
-      isAdmin,
-      capabilities,
-      currentUserId,
-      myPortfolio,
-      sellers,
-      sellerIdFilter,
-      setSellerIdFilter,
-      reload,
-    ],
-  );
+    };
+  }, [
+    loading,
+    error,
+    isAdmin,
+    capabilities,
+    currentUserId,
+    myPortfolios,
+    sellers,
+    sellerIdFilter,
+    setSellerIdFilter,
+    reload,
+  ]);
 
   return (
     <PortfolioScopeContext.Provider value={value}>{children}</PortfolioScopeContext.Provider>

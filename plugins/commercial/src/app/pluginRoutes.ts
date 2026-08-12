@@ -18,6 +18,7 @@ export type PluginView =
   | "analytics_opportunities"
   | "analytics_opportunity_detail"
   | "seller_portfolios"
+  | "seller_portfolio_detail"
   | "not_found";
 
 export type PluginNavId =
@@ -41,6 +42,7 @@ export type ResolvedPluginRoute = {
   orderNumber?: string;
   lineItem?: string;
   productionOrder?: string;
+  portfolioId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -140,6 +142,20 @@ export function resolvePluginRoute(
 
   if (relativePath === "seller-portfolios") {
     return { view: "seller_portfolios", pathname: path, relativePath };
+  }
+
+  const sellerPortfolioDetail = /^seller-portfolios\/([^/]+)$/.exec(relativePath);
+  if (sellerPortfolioDetail) {
+    const portfolioId = safeDecodeSegment(sellerPortfolioDetail[1] ?? "");
+    if (!portfolioId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "seller_portfolio_detail",
+      pathname: path,
+      relativePath,
+      portfolioId: portfolioId.trim(),
+    };
   }
 
   if (relativePath === "proposals") {
@@ -301,6 +317,7 @@ export type BuildablePluginView = Exclude<
   | "proposal_detail"
   | "analytics_otd_line"
   | "analytics_opportunity_detail"
+  | "seller_portfolio_detail"
   | "not_found"
 >;
 
@@ -334,6 +351,19 @@ export function buildPluginPath(
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   if (normalizedSearch === "?") return path;
   return `${path}${normalizedSearch}`;
+}
+
+export function buildSellerPortfolioDetailPath(
+  basePath: string | undefined,
+  portfolioId: string,
+  search?: string,
+): string | null {
+  const id = portfolioId.trim();
+  if (!id) return null;
+  const path = `${normalizeBasePath(basePath)}/seller-portfolios/${encodeURIComponent(id)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
 export function buildCustomerDetailPath(
@@ -439,6 +469,7 @@ export function isAnalyticsView(view: PluginView): boolean {
 export function resolveActiveNavId(view: PluginView): PluginNavId {
   if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
   if (view === "customer_detail") return "customers";
+  if (view === "seller_portfolio_detail") return "seller_portfolios";
   if (view === "proposal_detail") return "proposals";
   if (isAnalyticsView(view)) return "analytics";
   if (view === "not_found") return "home";

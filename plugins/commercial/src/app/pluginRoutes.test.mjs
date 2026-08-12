@@ -143,9 +143,9 @@ describe("estrutura dos detalhes de linha e OP", () => {
     ]);
     assert.match(linePage, /<OpenOrdersProductionDetailContent/);
     assert.match(opPage, /<OpenOrdersProductionDetailContent/);
-    assert.match(linePage, /canUseTeamScope/);
+    assert.match(linePage, /usePortfolioSellerAccess/);
     assert.match(linePage, /resolveOpenOrdersSellerId/);
-    assert.match(opPage, /canUseTeamScope/);
+    assert.match(opPage, /usePortfolioSellerAccess/);
     assert.match(opPage, /resolveOpenOrdersSellerId/);
     assert.match(opPage, /showOpenProductionOrderAction=\{false\}/);
     assert.match(opPage, /Produto \$\{item\.produto\.trim\(\)\}/);

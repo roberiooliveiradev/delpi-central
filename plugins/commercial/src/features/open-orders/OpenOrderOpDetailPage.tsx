@@ -16,6 +16,7 @@ import {
   buildPluginPath,
 } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { usePortfolioSellerAccess } from "../../app/usePortfolioSellerAccess";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
 import {
   buildOpenOrdersContextSearch,
@@ -51,18 +52,8 @@ export function OpenOrderOpDetailPage({
     INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
   );
   const [reloadKey, setReloadKey] = useState(0);
-  const {
-    loading: scopeLoading,
-    canUseTeamScope,
-    sellers,
-  } = usePortfolioScope();
-  const sellerAccess = useMemo(
-    () => ({
-      allowSellerId: canUseTeamScope,
-      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
-    }),
-    [canUseTeamScope, sellers],
-  );
+  const { loading: scopeLoading } = usePortfolioScope();
+  const sellerAccess = usePortfolioSellerAccess();
   const sourceSearch = search ?? (typeof window !== "undefined" ? window.location.search : "");
   const sellerId = useMemo(
     () => resolveOpenOrdersSellerId(new URLSearchParams(sourceSearch).get("seller_id"), sellerAccess),

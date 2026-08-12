@@ -13,6 +13,9 @@ export type PortfolioScopeContextValue = {
   canUseTeamScope?: boolean;
   canViewWorklistTeam?: boolean;
   myPortfolio: SellerPortfolio | null;
+  myPortfolios?: SellerPortfolio[];
+  canFilterPortfolios?: boolean;
+  filterablePortfolios?: SellerPortfolio[];
   sellers: SellerPortfolio[];
   sellerIdFilter: string | null;
   setSellerIdFilter: (sellerId: string | null) => void;

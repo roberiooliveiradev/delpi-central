@@ -5,6 +5,8 @@ import type {
   SellerCustomerInput,
   SellerPortfolio,
   SellerPortfolioMeResponse,
+  SellerPortfolioMember,
+  SellerPortfolioMemberRole,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -44,7 +46,10 @@ export async function listSellerPortfolios(
 }
 
 export async function createSellerPortfolio(input: {
-  user_id: string;
+  /** Compat: quando só há um usuário. Prefira `user_ids`. */
+  user_id?: string;
+  user_ids?: string[];
+  owner_user_id?: string | null;
   display_name: string;
   customers?: SellerCustomerInput[];
 }): Promise<SellerPortfolio> {
@@ -105,6 +110,51 @@ export async function replaceSellerCustomers(
   return unwrapEnvelope(response, "Erro ao atualizar clientes da carteira.");
 }
 
+export async function addSellerPortfolioMember(
+  portfolioId: string,
+  input: { user_id: string; role?: SellerPortfolioMemberRole },
+): Promise<SellerPortfolio> {
+  const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/members`),
+    { user_id: input.user_id, role: input.role ?? "member" },
+  );
+  return unwrapEnvelope(response, "Erro ao adicionar membro à carteira.");
+}
+
+export async function removeSellerPortfolioMember(
+  portfolioId: string,
+  userId: string,
+): Promise<SellerPortfolio> {
+  const response = await httpDelete<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(
+      `/seller-portfolios/${encodeURIComponent(portfolioId)}/members/${encodeURIComponent(userId)}`,
+    ),
+  );
+  return unwrapEnvelope(response, "Erro ao remover membro da carteira.");
+}
+
+export async function replaceSellerPortfolioMembers(
+  portfolioId: string,
+  members: SellerPortfolioMember[],
+): Promise<SellerPortfolio> {
+  const response = await httpPut<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/members`),
+    { members },
+  );
+  return unwrapEnvelope(response, "Erro ao atualizar membros da carteira.");
+}
+
+export async function setSellerPortfolioOwner(
+  portfolioId: string,
+  userId: string,
+): Promise<SellerPortfolio> {
+  const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/owner`),
+    { user_id: userId },
+  );
+  return unwrapEnvelope(response, "Erro ao definir responsável da carteira.");
+}
+
 export async function searchDirectoryUsers(
   query: string,
   limit = 10,
@@ -113,10 +163,12 @@ export async function searchDirectoryUsers(
   const normalized = query.trim();
   if (normalized.length < 2) return [];
 
+  // `app=commercial`: só usuários com acesso ao Portal Comercial entram na carteira.
   const params = new URLSearchParams({
     q: normalized,
     limit: String(limit),
     include_self: "true",
+    app: "commercial",
   });
 
   const payload = await httpGet<{ items?: DirectoryUser[] }>(

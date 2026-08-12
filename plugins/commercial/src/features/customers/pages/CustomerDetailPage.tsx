@@ -8,6 +8,7 @@ import {
   CommercialStateBanner,
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
+import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
@@ -33,7 +34,6 @@ import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
 import {
   buildCustomersListPath,
   parseCustomersListDeepLink,
-  type CustomersListSellerAccess,
 } from "../../../utils/customersListDeepLink";
 
 type CustomerDetailPageProps = {
@@ -55,20 +55,14 @@ export function CustomerDetailPage({
   const {
     canUseTeamScope,
     sellers,
-    myPortfolio,
+    myPortfolios,
     canViewWorklist,
     canManageFollowups,
     canViewAnalytics,
     canViewProposals,
   } = usePortfolioScope();
 
-  const sellerAccess = useMemo<CustomersListSellerAccess>(
-    () => ({
-      allowSellerId: canUseTeamScope,
-      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
-    }),
-    [canUseTeamScope, sellers],
-  );
+  const sellerAccess = usePortfolioSellerAccess();
   const listDeepLink = parseCustomersListDeepLink(
     search ?? (typeof window !== "undefined" ? window.location.search : ""),
     sellerAccess,
@@ -76,9 +70,9 @@ export function CustomerDetailPage({
 
   const sellerNameByKey = useMemo(() => {
     if (canUseTeamScope) return buildSellerNameByCustomerKey(sellers);
-    if (myPortfolio) return buildSellerNameByCustomerKey([myPortfolio]);
+    if (myPortfolios.length > 0) return buildSellerNameByCustomerKey(myPortfolios);
     return new Map<string, string>();
-  }, [canUseTeamScope, sellers, myPortfolio]);
+  }, [canUseTeamScope, sellers, myPortfolios]);
 
   const {
     loading,

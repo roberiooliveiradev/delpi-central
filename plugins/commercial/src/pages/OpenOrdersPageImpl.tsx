@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { ActionButton, EmptyState, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
@@ -12,6 +12,7 @@ import {
 } from "../app/commercialUi";
 import { navigatePluginView } from "../app/pluginNavigation";
 import { usePortfolioScope } from "../app/usePortfolioScope";
+import { usePortfolioSellerAccess } from "../app/usePortfolioSellerAccess";
 import { FilterBar } from "../components/FilterBar";
 import { OpenOrdersTable } from "../components/OpenOrdersTable";
 import { CM_HELP } from "../content/helpTooltips";
@@ -42,19 +43,13 @@ function formatUpdatedAt(value: Date): string {
 export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const {
     loading: sellerScopeLoading,
-    canUseTeamScope,
-    sellers,
+    canFilterPortfolios,
+    filterablePortfolios,
     sellerIdFilter,
     setSellerIdFilter,
   } = usePortfolioScope();
 
-  const sellerAccess = useMemo(
-    () => ({
-      allowSellerId: canUseTeamScope,
-      validSellerIds: canUseTeamScope ? sellers.map((seller) => seller.id) : [],
-    }),
-    [canUseTeamScope, sellers],
-  );
+  const sellerAccess = usePortfolioSellerAccess();
   const restoreSellerFromUrl = useCallback(
     (sellerId: string | null) => setSellerIdFilter(sellerId),
     [setSellerIdFilter],
@@ -86,7 +81,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     sortKey,
     sortDirection,
     toggleSort,
-  } = useOpenOrdersDashboard(canUseTeamScope ? sellerIdFilter : null, {
+  } = useOpenOrdersDashboard(canFilterPortfolios ? sellerIdFilter : null, {
     basePath,
     sellerAccess,
     sellerScopeLoading,
@@ -167,10 +162,10 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
         }
         highlights={highlights}
       >
-        {canUseTeamScope ? (
+        {canFilterPortfolios ? (
           <div className="cm-open-orders-page__scope">
             <SellerScopeFilter
-              sellers={sellers}
+              sellers={filterablePortfolios}
               value={sellerIdFilter}
               onChange={changeSeller}
               hint={CM_HELP.openOrders.sellerScope}

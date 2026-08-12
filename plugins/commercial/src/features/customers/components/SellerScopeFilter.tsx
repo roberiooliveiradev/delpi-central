@@ -22,7 +22,7 @@ export function SellerScopeFilter({ sellers, value, onChange, hint }: SellerScop
         value={value ?? ""}
         onChange={(next) => onChange(next || null)}
         allowEmpty
-        emptyLabel="Todos os vendedores"
+        emptyLabel="Todas as carteiras"
         searchable={options.length > 8}
       />
     </div>

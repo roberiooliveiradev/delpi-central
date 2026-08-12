@@ -7,7 +7,7 @@ export const CM_HELP = {
     portal:
       "Portal comercial: Início, Meu dia, pedidos, carteira, propostas, gestão e administração de vendedores — tudo no mesmo app.",
     scope:
-      "Escopo atual da sessão: sua carteira ou a carteira de outro vendedor que você pode consultar. Filtra pedidos, clientes e alertas.",
+      "Identidade da sessão: mostra as carteiras em que você participa. Não é filtro — nas listas de pedidos e clientes use o seletor de carteira quando houver mais de uma opção.",
     navHome: "Visão geral: alertas prioritários e atalhos para as áreas do portal.",
     navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
@@ -266,23 +266,31 @@ export const CM_HELP = {
     billingFilters: "Período e opções da consulta de faturamento deste cliente.",
   },
   sellerPortfolios: {
-    list: "Carteiras cadastradas (usuário Minha Delpi + nome de exibição).",
+    list: "Carteiras cadastradas (usuários com acesso ao Portal Comercial + nome de exibição).",
     filter: "Filtre a lista por status: todas, só ativas ou só inativas.",
-    create: "Cria carteira vinculada a um usuário do diretório. O nome aparece no seletor de escopo.",
+    create: "Cria carteira vinculada a um ou mais usuários do diretório. O nome aparece no seletor de escopo.",
     createDialog:
-      "Vincule um usuário do diretório e defina o nome no seletor de escopo.",
+      "Vincule usuários com acesso ao Portal Comercial e defina o nome no seletor de escopo.",
     displayName:
-      "Nome amigável no portal. Se vazio ao criar, usa o nome do usuário Minha Delpi.",
+      "Nome amigável no portal. Se vazio ao criar, usa o nome do primeiro usuário selecionado.",
     directoryUser:
-      "Usuário Minha Delpi que será o dono da carteira (busca por nome ou e-mail).",
+      "Usuário com acesso ao Portal Comercial (busca por nome ou e-mail). O primeiro vira responsável.",
+    members:
+      "Usuários com acesso a esta carteira no Portal Comercial. Defina um responsável e inclua membros.",
+    membersAdd:
+      "Busque e adicione usuários que já têm acesso ao Portal Comercial.",
+    setOwner: "Define este usuário como responsável da carteira.",
+    removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
     edit: "Altera o nome de exibição da carteira selecionada.",
     customers:
       "Clientes vinculados a esta carteira. Use a busca por código ou nome para incluir.",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
-    colUserId: "Nome e e-mail do usuário Minha Delpi dono da carteira.",
+    colUserId: "Responsável da carteira (usuário Minha Delpi).",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
     layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
+    shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra a árvore carteira ↔ pessoa.",
+    orgAxisToggle: "Agrupe a organização por carteira (membros abaixo) ou por pessoa (carteiras abaixo).",
     cardOpenHint: "Abrir carteira",
     searchCustomers:
       "Busca clientes ativos por código ou nome (mínimo de dois caracteres).",
