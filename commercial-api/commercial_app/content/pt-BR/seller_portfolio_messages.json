@@ -10,7 +10,12 @@
     "customerCodeStoreRequired": "Cada cliente precisa de customer_code e customer_store.",
     "customerNotInSource": "Cliente {code}/{store} não pertence à carteira de origem.",
     "portalAccessDenied": "Usuário sem acesso ao Portal Comercial.",
-    "customerOutsidePortfolio": "Cliente fora da sua carteira."
+    "customerOutsidePortfolio": "Cliente fora da sua carteira.",
+    "emptyPortfolioLink": "Nenhuma carteira de clientes cadastrada para o seu usuário. Peça ao gerente para vincular seus clientes na Configuração.",
+    "emptyPortfolioCustomers": "Sua carteira ainda não possui clientes vinculados.",
+    "portfolioFilterRequiresTeam": "Filtro por vendedor disponível apenas para equipe ou gerentes.",
+    "portfolioNotFound": "Vendedor não encontrado para filtro de carteira.",
+    "portfolioInactiveFilter": "Vendedor inativo não pode ser usado como filtro."
   },
   "bulk": {
     "itemOk": "ok",

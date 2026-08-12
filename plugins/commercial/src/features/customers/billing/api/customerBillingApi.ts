@@ -1,6 +1,5 @@
-import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../../../../types/api.ts";
-import { OPEN_ORDERS_TOTVS_API_BASE } from "../../../../api/openOrdersTotvsApi.ts";
-import { httpGet } from "../../../../api/httpClient.ts";
+import { unwrapEnvelope, type ApiSuccessResponse } from "../../../../types/api.ts";
+import { commercialApiUrl, httpGet } from "../../../../api/httpClient.ts";
 import type {
   CustomerBillingData,
   CustomerBillingSituationFilter,
@@ -32,9 +31,9 @@ export function buildCustomerBillingPath(query: CustomerBillingQuery): string {
     params.set("search", query.search.trim());
   }
   return (
-    `${OPEN_ORDERS_TOTVS_API_BASE}/clientes/` +
-    `${encodeSegment(query.codigo)}/${encodeSegment(query.loja)}/notas-fiscais?` +
-    params.toString()
+    `${commercialApiUrl(
+      `/customers/${encodeSegment(query.codigo)}/${encodeSegment(query.loja)}/outbound-invoices`,
+    )}?${params.toString()}`
   );
 }
 
@@ -46,7 +45,7 @@ export async function getCustomerOutboundInvoices(
     buildCustomerBillingPath(query),
     { signal },
   );
-  return unwrapApiDelpiEnvelope(
+  return unwrapEnvelope(
     response,
     "Erro ao carregar faturamento e notas fiscais do cliente.",
   );

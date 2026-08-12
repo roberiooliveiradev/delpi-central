@@ -11,7 +11,9 @@
    - Comunicar cutover aos usuários
 2. Remoção definitiva do código/manifest PVA = ADR posterior (depreciação ≠ delete).
 3. Estado Delpi (carteira/avatar) permanece em `commercial-api` com `COMMERCIAL_PORTFOLIO_SOURCE=commercial`.
-4. Reads TOTVS (`list_pedidos_venda_abertos`, ops, billing, NF) permanecem na **api-delpi**.
+4. Reads TOTVS (`list_pedidos_venda_abertos`, ops, billing, NF) permanecem na **api-delpi** como SQL/parametrização.
+5. **Escopo de carteira do Portal:** somente **commercial-api** (`ResolveCommercialCustomerScopeService`). O MFE Portal consome open-orders / billing-series / NF via BFF commercial (filtra ou `ensure_allows` antes do proxy). A api-delpi **não** é dona da regra «carteira do usuário» para o Portal — ver [SCOPE-OWNERSHIP.md](../SCOPE-OWNERSHIP.md).
+6. PVA legado pode continuar usando `ResolvePortfolioScope` na api-delpi até cutover F2c; não evoluir essa regra para o Portal.
 
 ## Consequências
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from commercial_app.domain.entities.seller_portfolio import SellerPortfolio
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
@@ -18,10 +19,13 @@ def _normalize_pair(code: str, store: str) -> tuple[str, str]:
 
 @dataclass(frozen=True, slots=True)
 class CommercialCustomerScope:
-    """None em allowed_customers = irrestrito (manage/team)."""
+    """None em allowed_customers = irrestrito (manage/team sem filtro)."""
 
     unrestricted: bool
     allowed_customers: frozenset[tuple[str, str]] | None
+    empty_portfolio: bool = False
+    message: str | None = None
+    portfolio_id: str | None = None
 
     def allows(self, customer_code: str, customer_store: str) -> bool:
         if self.unrestricted:
@@ -37,7 +41,8 @@ class CommercialCustomerScope:
 class ResolveCommercialCustomerScopeService:
     """
     Fonte de verdade do Portal Comercial: só clientes das carteiras do usuário,
-    salvo escopo manage/team (irrestrito).
+    salvo escopo manage/team (irrestrito). Filtro opcional por PK da carteira
+    (team/manage).
     """
 
     def __init__(self, repository: SellerPortfolioRepositoryPort) -> None:
@@ -48,18 +53,42 @@ class ResolveCommercialCustomerScopeService:
         *,
         user_id: str,
         unrestricted: bool,
+        portfolio_id: str | None = None,
     ) -> CommercialCustomerScope:
+        pid = (portfolio_id or "").strip() or None
+        if pid:
+            if not unrestricted:
+                raise PermissionError(
+                    SellerPortfolioMessagesContentService.error(
+                        "portfolioFilterRequiresTeam"
+                    )
+                )
+            return self._scope_from_portfolio_id(pid)
+
         if unrestricted:
-            return CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+            return CommercialCustomerScope(
+                unrestricted=True,
+                allowed_customers=None,
+            )
 
         uid = (user_id or "").strip()
         if not uid:
             return CommercialCustomerScope(
                 unrestricted=False,
                 allowed_customers=frozenset(),
+                empty_portfolio=True,
+                message=SellerPortfolioMessagesContentService.error("emptyPortfolioLink"),
             )
 
         portfolios = self._repository.list_by_user_id(uid, active_only=True)
+        if not portfolios:
+            return CommercialCustomerScope(
+                unrestricted=False,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                message=SellerPortfolioMessagesContentService.error("emptyPortfolioLink"),
+            )
+
         allowed = frozenset(
             _normalize_pair(item.customer_code, item.customer_store)
             for portfolio in portfolios
@@ -67,7 +96,56 @@ class ResolveCommercialCustomerScopeService:
             if _normalize_pair(item.customer_code, item.customer_store)[0]
             and _normalize_pair(item.customer_code, item.customer_store)[1]
         )
-        return CommercialCustomerScope(unrestricted=False, allowed_customers=allowed)
+        if not allowed:
+            return CommercialCustomerScope(
+                unrestricted=False,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                portfolio_id=portfolios[0].id,
+                message=SellerPortfolioMessagesContentService.error(
+                    "emptyPortfolioCustomers"
+                ),
+            )
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=allowed,
+            portfolio_id=portfolios[0].id,
+        )
+
+    def _scope_from_portfolio_id(self, portfolio_id: str) -> CommercialCustomerScope:
+        portfolio = self._repository.get_by_id(portfolio_id)
+        if portfolio is None:
+            raise LookupError(
+                SellerPortfolioMessagesContentService.error("portfolioNotFound")
+            )
+        if not portfolio.active:
+            raise ValueError(
+                SellerPortfolioMessagesContentService.error("portfolioInactiveFilter")
+            )
+        return self._scope_from_portfolio(portfolio)
+
+    def _scope_from_portfolio(self, portfolio: SellerPortfolio) -> CommercialCustomerScope:
+        allowed = frozenset(
+            _normalize_pair(item.customer_code, item.customer_store)
+            for item in portfolio.customers
+            if _normalize_pair(item.customer_code, item.customer_store)[0]
+            and _normalize_pair(item.customer_code, item.customer_store)[1]
+        )
+        if not allowed:
+            return CommercialCustomerScope(
+                unrestricted=False,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                portfolio_id=portfolio.id,
+                message=SellerPortfolioMessagesContentService.error(
+                    "emptyPortfolioCustomers"
+                ),
+            )
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=allowed,
+            portfolio_id=portfolio.id,
+        )
 
     def filter_pairs(
         self,

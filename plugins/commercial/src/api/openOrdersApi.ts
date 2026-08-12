@@ -1,8 +1,8 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import type { OpenOrdersData, OpsAbertasData } from "../types/openOrders";
-import { apiDelpiUrl, httpGet } from "./httpClient";
+import { commercialApiUrl, httpGet } from "./httpClient";
 
-const OPEN_ORDERS_PATH = "/pedidos-venda-abertos";
+const OPEN_ORDERS_PATH = "/open-orders";
 
 export async function getOpenOrders(
   signal?: AbortSignal,
@@ -16,7 +16,7 @@ export async function getOpenOrders(
   // Barra final obrigatória: sem ela o FastAPI redireciona e, atrás do
   // proxy HTTPS, o Location pode vir em http:// → Mixed Content no browser.
   const response = await httpGet<ApiSuccessResponse<OpenOrdersData>>(
-    `${apiDelpiUrl(`${OPEN_ORDERS_PATH}/`)}${qs ? `?${qs}` : ""}`,
+    `${commercialApiUrl(`${OPEN_ORDERS_PATH}/`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
 
@@ -25,7 +25,7 @@ export async function getOpenOrders(
 
 export async function getOpsAbertas(signal?: AbortSignal): Promise<OpsAbertasData> {
   const response = await httpGet<ApiSuccessResponse<OpsAbertasData>>(
-    apiDelpiUrl(`${OPEN_ORDERS_PATH}/ops-abertas`),
+    commercialApiUrl(`${OPEN_ORDERS_PATH}/ops-abertas`),
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar OPs abertas.");

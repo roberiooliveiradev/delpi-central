@@ -28,12 +28,14 @@
 
 ```text
 Portal Comercial (MFE)
-  ├─ commercial-api     → Postgres Delpi + agregações
-  └─ api-delpi          → TOTVS reads (open-orders, enrichment, KPIs, propostas)
+  ├─ commercial-api     → Postgres Delpi + escopo/membership + BFF TOTVS
+  └─ api-delpi          → KPIs /commercial/*, propostas (sem membership de carteira)
 
 commercial-api
-  └─ gateway HTTP       → api-delpi (quando compõe 360 / enrichment)
+  └─ gateway HTTP       → api-delpi (open-orders, enrichment, billing, NF, metrics)
 ```
+
+**Escopo de clientes:** ver [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) — `manage` \| `team.view` = irrestrito; demais = union das carteiras do membership.
 
 Dashboard Comercial e Propostas Comerciais continuam falando **direto** com api-delpi.
 
@@ -111,6 +113,17 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | DELETE | `/customers/{customer_code}/{store}/avatar` | `delete_customer_avatar` | F2 | manage | `customer_avatar` | `scalar` | WF-04 |
 
 `GET` pode retornar `FileResponse` (binário) ou URL assinada — documentar no OpenAPI.
+
+### 3.4b Open orders / billing / NF (BFF TOTVS + escopo commercial)
+
+| Method | Path | operationId | Fase | Permissão | entity | shape | Notas |
+|--------|------|-------------|------|-----------|--------|-------|-------|
+| GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; query `seller_id` = PK carteira (team/manage) |
+| GET | `/open-orders/ops-abertas` | `list_commercial_open_ops` | F2b | `commercial.accounts.view` | `open_ops` | `list` | Proxy TOTVS sem membership |
+| POST | `/customers/billing-series` | `list_commercial_customer_billing_series` | F2b | accounts.view | `billing_series` | `scalar` | `filter_pairs` antes do gateway |
+| GET | `/customers/{customer_code}/{store}/outbound-invoices` | `list_commercial_customer_outbound_invoices` | F2b | accounts.view | `outbound_invoice` | `paged_list` | `ensure_allows` → api-delpi NF |
+
+MFE Portal **não** chama `GET /pedidos-venda-abertos/` / billing-series / NF na api-delpi.
 
 ### 3.5 Accounts / Conta 360 (F5; leitura TOTVS via gateway)
 
@@ -315,15 +328,17 @@ Consumidas pelo Portal Comercial (F2b), dashboard e/ou gateway da commercial-api
 
 ### 4.1 Pedidos / carteira enrichment (`/pedidos-venda-abertos`)
 
-| operationId | Method + path | Uso Portal Comercial |
-|-------------|----------------|----------------------|
-| `list_pedidos_venda_abertos` | `GET /pedidos-venda-abertos/` | WF-02 open-orders |
-| `list_ops_abertas_pedidos_venda` | `GET /pedidos-venda-abertos/ops-abertas` | KPIs operacionais |
-| `search_active_customers_for_portfolio` | `GET .../customers/search` | WF-05 add customer |
-| `enrich_portfolio_customers` | `POST .../customers/enrichment` | WF-03/05 nomes/cidade |
-| `list_customer_open_order_metrics` | `POST .../customers/open-order-metrics` | E6 load-summary + gap uncovered |
-| `list_customer_billing_series` | `POST .../customers/billing-series` | WF-04 faturamento |
-| `list_cliente_notas_fiscais_saida` | `GET .../clientes/{codigo}/{loja}/notas-fiscais` | WF-04 NF |
+Leituras TOTVS **via gateway commercial-api** para o Portal (escopo na commercial). PVA legado pode chamar api-delpi direto até F2c.
+
+| operationId | Method + path | Uso |
+|-------------|----------------|------|
+| `list_pedidos_venda_abertos` | `GET /pedidos-venda-abertos/` | Gateway commercial BFF + PVA legado (scope JWT só no PVA) |
+| `list_ops_abertas_pedidos_venda` | `GET /pedidos-venda-abertos/ops-abertas` | Gateway commercial BFF |
+| `search_active_customers_for_portfolio` | `GET .../customers/search` | commercial-api proxy (sem membership) |
+| `enrich_portfolio_customers` | `POST .../customers/enrichment` | commercial-api (scope) → api-delpi |
+| `list_customer_open_order_metrics` | `POST .../customers/open-order-metrics` | E6 load-summary (service) |
+| `list_customer_billing_series` | `POST .../customers/billing-series` | commercial-api BFF (scope) |
+| `list_cliente_notas_fiscais_saida` | `GET .../clientes/{codigo}/{loja}/notas-fiscais` | commercial-api BFF (scope); PVA legado |
 
 ### 4.2 KPIs / OTD / propostas OV (`/commercial`)
 

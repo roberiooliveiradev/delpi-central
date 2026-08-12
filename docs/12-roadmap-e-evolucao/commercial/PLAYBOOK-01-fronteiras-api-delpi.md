@@ -15,7 +15,7 @@ O MFE legado `pedidos-venda-abertos` **coexiste** (decisão 5C); F2c só após o
 |--------|------------------|
 | **api-delpi** | Única implementação de SQL Protheus; KPIs e listagens TOTVS; contrato `{ success, message, data, meta }`; OpenAPI + `route_contract_registry` |
 | **commercial-api** | CRUD operacional Postgres; workflows CRM; orquestração; **gateways HTTP** para TOTVS via api-delpi |
-| **MFE Portal Comercial (`plugins/commercial`)** | **Única UX de produto** a consolidar: páginas **nativas**; estado Delpi via commercial-api; reads TOTVS via HTTP api-delpi (direto ou gateway) — **nunca SQL** |
+| **MFE Portal Comercial (`plugins/commercial`)** | **Única UX de produto** a consolidar: páginas **nativas**; estado Delpi + **escopo de carteira** via commercial-api; reads TOTVS de Conta/open-orders/billing/NF **só via BFF** commercial — **nunca SQL**; KPIs `/commercial/*` podem ir direto à api-delpi |
 | **MFEs irmãos** (`dashboard-commercial`, `propostas-comerciais`, PVA) | **Legado coexistente** — podem chamar api-delpi; **não** são hosteados nem deep-link como entrega do Portal Comercial |
 
 ```text

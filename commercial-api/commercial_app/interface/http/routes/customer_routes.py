@@ -24,7 +24,10 @@ from commercial_app.core.auth_actor import (
     current_user_from_request,
 )
 from commercial_app.core.responses import fail, ok
-from commercial_app.interface.http.schemas.portfolio_schemas import EnrichmentBody
+from commercial_app.interface.http.schemas.portfolio_schemas import (
+    BillingSeriesBody,
+    EnrichmentBody,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +120,134 @@ def enrich_portfolio_customers(request: Request, body: EnrichmentBody = Body(...
     except Exception:
         logger.exception("enrich_portfolio_customers_failed")
         return fail("Erro interno ao enriquecer clientes.", 500)
+
+
+@router.post("/billing-series", operation_id="list_commercial_customer_billing_series")
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_commercial_customer_billing_series(
+    request: Request,
+    body: BillingSeriesBody = Body(...),
+):
+    try:
+        customers = parse_customer_assignments(
+            [item.model_dump() for item in body.customers]
+        )
+        scope_service = build_resolve_commercial_customer_scope_service()
+        scope = _customer_scope_for_request(request)
+        allowed_pairs = scope_service.filter_pairs(
+            scope,
+            [(item.customer_code, item.customer_store) for item in customers],
+        )
+        if not allowed_pairs:
+            return ok(
+                {
+                    "months": body.months,
+                    "customer_count": 0,
+                    "points": [],
+                    **(
+                        {"start_date": body.start_date, "end_date": body.end_date}
+                        if body.start_date and body.end_date
+                        else {}
+                    ),
+                    **({"granularity": body.granularity} if body.granularity else {}),
+                },
+                message="Faturamento mensal carregado.",
+                operation_id="list_commercial_customer_billing_series",
+            )
+        payload: dict[str, Any] = {
+            "customers": [
+                {"customer_code": code, "customer_store": store}
+                for code, store in allowed_pairs
+            ],
+            "months": body.months,
+        }
+        if body.start_date and body.end_date:
+            payload["start_date"] = body.start_date
+            payload["end_date"] = body.end_date
+        if body.granularity:
+            payload["granularity"] = body.granularity
+        result = build_delpi_commercial_gateway().list_customer_billing_series(
+            payload=payload
+        )
+        data = result.get("data", result)
+        return ok(
+            data,
+            message="Faturamento mensal carregado.",
+            operation_id="list_commercial_customer_billing_series",
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="list_commercial_customer_billing_series")
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id="list_commercial_customer_billing_series")
+    except Exception:
+        logger.exception("list_commercial_customer_billing_series_failed")
+        return fail(
+            "Erro interno ao carregar faturamento mensal.",
+            500,
+            operation_id="list_commercial_customer_billing_series",
+        )
+
+
+@router.get(
+    "/{customer_code}/{customer_store}/outbound-invoices",
+    operation_id="list_commercial_customer_outbound_invoices",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_commercial_customer_outbound_invoices(
+    request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    situation: str | None = Query(default="all"),
+    search: str | None = Query(default=None),
+):
+    try:
+        scope = _customer_scope_for_request(request)
+        build_resolve_commercial_customer_scope_service().ensure_allows(
+            scope,
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
+        result = build_delpi_commercial_gateway().list_customer_outbound_invoices(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            params={
+                "start_date": start_date,
+                "end_date": end_date,
+                "page": page,
+                "page_size": page_size,
+                "situation": situation,
+                "search": search,
+            },
+        )
+        data = result.get("data", result)
+        return ok(
+            data,
+            message="Notas fiscais do cliente carregadas.",
+            operation_id="list_commercial_customer_outbound_invoices",
+        )
+    except LookupError as exc:
+        return fail(
+            str(exc),
+            404,
+            operation_id="list_commercial_customer_outbound_invoices",
+        )
+    except RuntimeError as exc:
+        return fail(
+            str(exc),
+            502,
+            operation_id="list_commercial_customer_outbound_invoices",
+        )
+    except Exception:
+        logger.exception("list_commercial_customer_outbound_invoices_failed")
+        return fail(
+            "Erro interno ao carregar notas fiscais do cliente.",
+            500,
+            operation_id="list_commercial_customer_outbound_invoices",
+        )
 
 
 @router.get(

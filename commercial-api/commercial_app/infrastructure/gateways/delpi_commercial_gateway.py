@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -55,6 +56,35 @@ class DelpiCommercialGateway:
             "POST",
             "/pedidos-venda-abertos/customers/open-order-metrics",
             json_body=payload or {},
+        )
+
+    def list_open_orders(self, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        # Barra final: FastAPI redirect; service-to-service evita Mixed Content no browser.
+        return self._request("GET", "/pedidos-venda-abertos/", params=params)
+
+    def list_ops_abertas(self) -> dict[str, Any]:
+        return self._request("GET", "/pedidos-venda-abertos/ops-abertas")
+
+    def list_customer_billing_series(self, *, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/pedidos-venda-abertos/customers/billing-series",
+            json_body=payload,
+        )
+
+    def list_customer_outbound_invoices(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        code = quote(str(customer_code or "").strip(), safe="")
+        store = quote(str(customer_store or "").strip(), safe="")
+        return self._request(
+            "GET",
+            f"/pedidos-venda-abertos/clientes/{code}/{store}/notas-fiscais",
+            params=params,
         )
 
     def _request(

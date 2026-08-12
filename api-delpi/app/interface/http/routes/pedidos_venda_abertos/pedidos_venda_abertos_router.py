@@ -64,7 +64,10 @@ router = APIRouter(
 # Rotas /sellers* e /customers/*/avatar (CRUD Delpi) estão **deprecated** para novos
 # consumidores — canônico: commercial-api (/apps/commercial-api/seller-portfolios*,
 # /customers/*/avatar). Mantidas read/write até cutover F2c (COMMERCIAL_PORTFOLIO_SOURCE).
-# Reads TOTVS (listagens, search, enrichment, billing) permanecem nesta api-delpi.
+# Reads TOTVS (listagens, search, enrichment, billing, NF) permanecem nesta api-delpi
+# como SQL parametrizado. Escopo de carteira do **Portal** = commercial-api BFF
+# (SCOPE-OWNERSHIP). `ResolvePortfolioScope` / `_resolve_scope` abaixo é **legado PVA**
+# até F2c — não evoluir para o Portal.
 
 
 class SellerCustomerBody(BaseModel):
@@ -129,6 +132,7 @@ class BillingSeriesBody(BaseModel):
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
+    """Legado PVA: membership JWT + dual-read commercial. Portal usa commercial-api BFF."""
     can_filter = can_filter_by_seller_id()
     seller_filter = (seller_id or "").strip() or None
     # team.view pode filtrar uma carteira; manage sem filtro vê consolidado.
@@ -796,17 +800,8 @@ def list_cliente_notas_fiscais_saida_route(
     ),
 ):
     try:
-        scope = _resolve_scope(None)
-        allowed = build_resolve_portfolio_scope_use_case().customer_allowed(
-            scope,
-            customer_code=codigo,
-            customer_store=loja,
-        )
-        if not allowed:
-            return error_response(
-                "Cliente fora da sua carteira.",
-                status_code=404,
-            )
+        # Sem membership commercial: escopo do Portal fica no BFF commercial-api.
+        # PVA legado ainda chama esta rota; gate de carteira Portal = outbound-invoices.
         use_case = build_list_customer_outbound_invoices_use_case()
         result = use_case.execute(
             ListCustomerOutboundInvoicesRequest(

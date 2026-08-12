@@ -4,7 +4,7 @@ import {
   CUSTOMER_BATCH_SIZE,
 } from "../config/customerBatching";
 import { runDeterministicBatches } from "../utils/deterministicBatch";
-import { apiDelpiUrl, httpPost } from "./httpClient";
+import { commercialApiUrl, httpPost } from "./httpClient";
 
 export type CustomerBillingSeriesPoint = {
   month: string;
@@ -48,7 +48,7 @@ async function fetchCustomerBillingSeriesBatch(
   options?: CustomerBillingSeriesQuery,
 ): Promise<Omit<CustomerBillingSeriesPayload, "coverage" | "partialError">> {
   const response = await httpPost<ApiSuccessResponse<CustomerBillingSeriesPayload>>(
-    apiDelpiUrl("/pedidos-venda-abertos/customers/billing-series"),
+    commercialApiUrl("/customers/billing-series"),
     {
       customers,
       ...billingSeriesBody(options),

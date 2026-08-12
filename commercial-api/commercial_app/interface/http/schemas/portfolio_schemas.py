@@ -82,6 +82,20 @@ class EnrichmentBody(BaseModel):
     )
 
 
+class BillingSeriesBody(BaseModel):
+    customers: list[CustomerAssignmentBody] = Field(
+        default_factory=list,
+        max_length=200,
+    )
+    months: int = Field(default=12, ge=1, le=24)
+    start_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    end_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    granularity: str | None = Field(
+        default=None,
+        pattern=r"^(day|week|month|year)$",
+    )
+
+
 class CustomerCoverageLookupBody(BaseModel):
     """Lookup batch de cobertura compartilhada (E6.4)."""
 

@@ -1,0 +1,183 @@
+"""Rotas BFF open-orders / billing / NF (escopo commercial + gateway mock)."""
+
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
+
+from starlette.requests import Request
+
+from commercial_app.application.services.resolve_commercial_customer_scope_service import (
+    CommercialCustomerScope,
+)
+from commercial_app.interface.http.routes import customer_routes, open_orders_routes
+from commercial_app.interface.http.schemas.portfolio_schemas import BillingSeriesBody
+
+
+class _User:
+    def __init__(self, permissions: list[str], sub: str = "u1"):
+        self.permissions = permissions
+        self.sub = sub
+        self.id = sub
+
+
+def _request(path: str = "/open-orders/", method: str = "GET") -> Request:
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": method,
+        "scheme": "http",
+        "path": path,
+        "raw_path": path.encode(),
+        "query_string": b"",
+        "headers": [],
+        "client": ("testclient", 50000),
+        "server": ("testserver", 80),
+    }
+    return Request(scope)
+
+
+def test_open_orders_bff_filters_via_scope() -> None:
+    gateway = MagicMock()
+    gateway.list_open_orders.return_value = {
+        "success": True,
+        "data": {
+            "items": [
+                {
+                    "codigo_cadastro": "100",
+                    "loja_cadastro": "01",
+                    "valor_aberto": 10,
+                    "saldo": 1,
+                    "no_estoque": 1,
+                },
+                {
+                    "codigo_cadastro": "999",
+                    "loja_cadastro": "01",
+                    "valor_aberto": 50,
+                    "saldo": 1,
+                    "no_estoque": 0,
+                },
+            ],
+            "summary": {"total_linhas": 2},
+        },
+    }
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01")}),
+    )
+    scope_svc = MagicMock()
+    scope_svc.execute.return_value = scope
+
+    request = _request("/open-orders/")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with (
+        patch.object(
+            open_orders_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            open_orders_routes,
+            "build_resolve_commercial_customer_scope_service",
+            return_value=scope_svc,
+        ),
+        patch.object(open_orders_routes, "actor_sub_from_request", return_value="u1"),
+    ):
+            response = open_orders_routes.list_commercial_open_orders(
+                request,
+                seller_id=None,
+                portfolio_id=None,
+            )
+
+    assert response.status_code == 200
+    import json
+
+    body = json.loads(response.body)
+    assert body["success"] is True
+    assert len(body["data"]["items"]) == 1
+    assert body["data"]["items"][0]["codigo_cadastro"] == "100"
+    gateway.list_open_orders.assert_called_once()
+
+
+def test_billing_series_bff_filters_pairs() -> None:
+    gateway = MagicMock()
+    gateway.list_customer_billing_series.return_value = {
+        "success": True,
+        "data": {"months": 12, "customer_count": 1, "points": []},
+    }
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01")}),
+    )
+    scope_svc = MagicMock()
+    scope_svc.execute.return_value = scope
+    scope_svc.filter_pairs.return_value = [("100", "01")]
+
+    request = _request("/customers/billing-series", method="POST")
+    request.state.user = _User(["commercial.accounts.view"])
+    body = BillingSeriesBody.model_validate(
+        {
+            "customers": [
+                {"customer_code": "100", "customer_store": "01"},
+                {"customer_code": "999", "customer_store": "01"},
+            ],
+            "months": 12,
+        }
+    )
+
+    with (
+        patch.object(
+            customer_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            customer_routes,
+            "build_resolve_commercial_customer_scope_service",
+            return_value=scope_svc,
+        ),
+        patch.object(customer_routes, "actor_sub_from_request", return_value="u1"),
+    ):
+        response = customer_routes.list_commercial_customer_billing_series(request, body)
+
+    assert response.status_code == 200
+    gateway.list_customer_billing_series.assert_called_once()
+    payload = gateway.list_customer_billing_series.call_args.kwargs["payload"]
+    assert payload["customers"] == [{"customer_code": "100", "customer_store": "01"}]
+
+
+def test_outbound_invoices_bff_ensure_allows() -> None:
+    gateway = MagicMock()
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01")}),
+    )
+    scope_svc = MagicMock()
+    scope_svc.execute.return_value = scope
+    scope_svc.ensure_allows.side_effect = LookupError("Cliente fora da sua carteira.")
+
+    request = _request("/customers/999/01/outbound-invoices")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with (
+        patch.object(
+            customer_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            customer_routes,
+            "build_resolve_commercial_customer_scope_service",
+            return_value=scope_svc,
+        ),
+        patch.object(customer_routes, "actor_sub_from_request", return_value="u1"),
+    ):
+        response = customer_routes.list_commercial_customer_outbound_invoices(
+            request,
+            customer_code="999",
+            customer_store="01",
+        )
+
+    assert response.status_code == 404
+    gateway.list_customer_outbound_invoices.assert_not_called()

@@ -30,9 +30,9 @@ function buildCustomerBillingPath(query) {
     params.set("search", query.search.trim());
   }
   return (
-    `/apps/api-delpi/pedidos-venda-abertos/clientes/` +
+    `/apps/commercial-api/customers/` +
     `${encodeURIComponent(query.codigo.trim())}/` +
-    `${encodeURIComponent(query.loja.trim())}/notas-fiscais?` +
+    `${encodeURIComponent(query.loja.trim())}/outbound-invoices?` +
     params.toString()
   );
 }
@@ -91,12 +91,12 @@ describe("customerBillingApi path", () => {
       situation: "all",
       search: "",
     });
-    assert.match(path, /\/clientes\/000123\/01\/notas-fiscais\?/);
+    assert.match(path, /\/customers\/000123\/01\/outbound-invoices\?/);
     assert.match(path, /start_date=2026-01-01/);
-    assert.doesNotMatch(path, /\/clientes\/123\//);
+    assert.doesNotMatch(path, /\/customers\/123\//);
   });
 
-  it("nao inventa endpoint fora de pedidos-venda-abertos", () => {
+  it("nao inventa endpoint fora de commercial-api", () => {
     const path = buildCustomerBillingPath({
       codigo: "1",
       loja: "01",
@@ -107,8 +107,8 @@ describe("customerBillingApi path", () => {
       situation: "emitted",
       search: "NF",
     });
-    assert.match(path, /\/apps\/api-delpi\/pedidos-venda-abertos\//);
-    assert.doesNotMatch(path, /products\/|rol\/by-customer|fornecedor|SC7/i);
+    assert.match(path, /\/apps\/commercial-api\/customers\//);
+    assert.doesNotMatch(path, /api-delpi|pedidos-venda-abertos|products\/|rol\/by-customer|fornecedor|SC7/i);
   });
 });
 

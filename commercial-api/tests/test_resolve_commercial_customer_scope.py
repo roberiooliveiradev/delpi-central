@@ -55,6 +55,49 @@ def test_unrestricted_scope_allows_any_customer() -> None:
     repo.list_by_user_id.assert_not_called()
 
 
+def test_manage_and_team_view_are_both_unrestricted() -> None:
+    """manage e team.view (unrestricted=True no caller) não leem membership."""
+    repo = MagicMock()
+    service = ResolveCommercialCustomerScopeService(repo)
+    for label in ("manage", "team.view"):
+        scope = service.execute(user_id=f"user-{label}", unrestricted=True)
+        assert scope.unrestricted, label
+        assert scope.allowed_customers is None, label
+    repo.list_by_user_id.assert_not_called()
+
+
+def test_member_without_portfolios_is_empty() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = []
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.execute(user_id="u1", unrestricted=False)
+    assert not scope.unrestricted
+    assert scope.allowed_customers == frozenset()
+    assert not scope.allows("100", "01")
+
+
+def test_portfolio_id_filter_requires_unrestricted() -> None:
+    repo = MagicMock()
+    service = ResolveCommercialCustomerScopeService(repo)
+    try:
+        service.execute(user_id="u1", unrestricted=False, portfolio_id="p1")
+        assert False, "expected PermissionError"
+    except PermissionError:
+        pass
+    repo.get_by_id.assert_not_called()
+
+
+def test_portfolio_id_filter_scopes_to_portfolio_customers() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = _portfolio(id="p-team")
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.execute(user_id="mgr", unrestricted=True, portfolio_id="p-team")
+    assert not scope.unrestricted
+    assert scope.allows("100", "01")
+    assert not scope.allows("999", "01")
+    repo.list_by_user_id.assert_not_called()
+
+
 def test_ensure_allows_raises_outside_portfolio() -> None:
     repo = MagicMock()
     repo.list_by_user_id.return_value = [_portfolio()]
