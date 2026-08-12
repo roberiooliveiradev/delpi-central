@@ -6,6 +6,7 @@ from typing import Any, Sequence
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
+    SellerPortfolioMember,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
@@ -25,6 +26,7 @@ def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
+        "owner_user_id": portfolio.owner_user_id,
         "display_name": portfolio.display_name,
         "active": portfolio.active,
         "customer_count": len(portfolio.customers),
@@ -35,6 +37,10 @@ def portfolio_to_dict(portfolio: SellerPortfolio) -> dict[str, Any]:
                 "customer_name": item.customer_name,
             }
             for item in portfolio.customers
+        ],
+        "members": [
+            {"user_id": member.user_id, "role": member.role}
+            for member in portfolio.members
         ],
     }
 
@@ -67,10 +73,12 @@ def parse_customer_assignments(raw: Sequence[dict[str, Any]] | None) -> list[Sel
 
 @dataclass(frozen=True, slots=True)
 class CreatePortfolioRequest:
-    user_id: str
-    display_name: str
+    user_id: str = ""
+    display_name: str = ""
     created_by_user_id: str | None = None
     customers: tuple[SellerCustomerAssignment, ...] = ()
+    user_ids: tuple[str, ...] = ()
+    owner_user_id: str | None = None
 
 
 class ManageSellerPortfolioUseCase:
@@ -82,8 +90,12 @@ class ManageSellerPortfolioUseCase:
         self._repository = repository
         self._audit = audit_repository
 
+    def get_me_portfolios(self, user_id: str) -> list[SellerPortfolio]:
+        return self._repository.list_by_user_id(user_id, active_only=True)
+
     def get_me(self, user_id: str) -> SellerPortfolio | None:
-        return self._repository.get_by_user_id(user_id)
+        portfolios = self.get_me_portfolios(user_id)
+        return portfolios[0] if portfolios else None
 
     def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         return self._repository.list_portfolios(active_only=active_only)
@@ -92,19 +104,31 @@ class ManageSellerPortfolioUseCase:
         return self._repository.get_by_id(portfolio_id)
 
     def create_portfolio(self, request: CreatePortfolioRequest) -> SellerPortfolio:
-        user_id = _normalize_code(request.user_id)
         display_name = _normalize_code(request.display_name)
-        if not user_id:
-            raise ValueError("user_id é obrigatório.")
         if not display_name:
             raise ValueError("display_name é obrigatório.")
-        existing = self._repository.get_by_user_id(user_id)
-        if existing is not None:
-            raise ValueError("Já existe vendedor cadastrado para este usuário.")
+
+        user_ids = [
+            uid
+            for uid in (_normalize_code(raw) for raw in request.user_ids)
+            if uid
+        ]
+        if not user_ids:
+            sole = _normalize_code(request.user_id)
+            if not sole:
+                raise ValueError("Informe ao menos um usuário (user_id ou user_ids).")
+            user_ids = [sole]
+
+        owner = _normalize_code(request.owner_user_id) if request.owner_user_id else user_ids[0]
+        if not owner:
+            raise ValueError("owner_user_id inválido.")
+
+        extras = [uid for uid in user_ids if uid != owner]
         portfolio = self._repository.create_portfolio(
-            user_id=user_id,
+            user_id=owner,
             display_name=display_name,
             created_by_user_id=request.created_by_user_id,
+            member_user_ids=extras,
         )
         if request.customers:
             updated = self._repository.replace_customers(
@@ -209,6 +233,102 @@ class ManageSellerPortfolioUseCase:
             portfolio_id=portfolio_id,
             customer_code=code,
             customer_store=store,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        return updated
+
+    def replace_members(
+        self,
+        *,
+        portfolio_id: str,
+        members: Sequence[SellerPortfolioMember],
+    ) -> SellerPortfolio:
+        normalized: list[SellerPortfolioMember] = []
+        seen: set[str] = set()
+        for member in members:
+            uid = _normalize_code(member.user_id)
+            if not uid or uid in seen:
+                continue
+            seen.add(uid)
+            role = "owner" if member.role == "owner" else "member"
+            normalized.append(SellerPortfolioMember(user_id=uid, role=role))
+        if not normalized:
+            raise ValueError("A carteira deve ter ao menos um membro.")
+        owners = [item for item in normalized if item.role == "owner"]
+        if len(owners) != 1:
+            raise ValueError("A carteira deve ter exatamente um owner.")
+        updated = self._repository.replace_members(
+            portfolio_id=portfolio_id,
+            members=normalized,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        return updated
+
+    def add_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+        role: str = "member",
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        next_role = "owner" if role == "owner" else "member"
+        updated = self._repository.add_member(
+            portfolio_id=portfolio_id,
+            user_id=uid,
+            role=next_role,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        return updated
+
+    def remove_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        members = list(current.members)
+        if not members and current.user_id:
+            members = [SellerPortfolioMember(user_id=current.user_id, role="owner")]
+        if len(members) <= 1:
+            raise ValueError("Não é possível remover o último membro da carteira.")
+        target = next((item for item in members if item.user_id == uid), None)
+        if target is None:
+            raise LookupError("Membro não encontrado na carteira.")
+        if target.role == "owner":
+            raise ValueError("Não é possível remover o único owner da carteira.")
+        updated = self._repository.remove_member(
+            portfolio_id=portfolio_id,
+            user_id=uid,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        return updated
+
+    def set_owner(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        # Se o usuário ainda não for membro, o repositório o inclui como owner.
+        updated = self._repository.set_owner(
+            portfolio_id=portfolio_id,
+            user_id=uid,
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")

@@ -19,3 +19,17 @@ def test_purge_seller_portfolio_operation_id_is_registered() -> None:
 def test_purge_route_is_permanent_suffix() -> None:
     assert '"/{portfolio_id}/permanent"' in ROUTES
     assert "def purge_seller_portfolio(" in ROUTES
+
+
+def test_member_management_operation_ids_are_registered() -> None:
+    assert 'operation_id="replace_seller_portfolio_members"' in ROUTES
+    assert 'operation_id="add_seller_portfolio_member"' in ROUTES
+    assert 'operation_id="remove_seller_portfolio_member"' in ROUTES
+    assert 'operation_id="set_seller_portfolio_owner"' in ROUTES
+
+
+def test_member_routes_paths_exist() -> None:
+    assert '"/{portfolio_id}/members"' in ROUTES
+    assert '"/{portfolio_id}/members/{user_id}"' in ROUTES
+    assert '"/{portfolio_id}/owner"' in ROUTES
+    assert '"portfolios"' in ROUTES or "'portfolios'" in ROUTES

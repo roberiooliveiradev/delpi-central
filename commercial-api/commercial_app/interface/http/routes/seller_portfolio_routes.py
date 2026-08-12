@@ -28,11 +28,18 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
 from commercial_app.composition.commercial_composer import build_manage_seller_portfolio_use_case
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
 from commercial_app.core.responses import fail, ok
-from commercial_app.domain.entities.seller_portfolio import SellerCustomerAssignment
+from commercial_app.domain.entities.seller_portfolio import (
+    SellerCustomerAssignment,
+    SellerPortfolio,
+    SellerPortfolioMember,
+)
 from commercial_app.interface.http.schemas.portfolio_schemas import (
     AddCustomerBody,
+    AddMemberBody,
     CreatePortfolioBody,
     ReplaceCustomersBody,
+    ReplaceMembersBody,
+    SetOwnerBody,
     TransferCustomersBody,
     UpdatePortfolioBody,
 )
@@ -50,12 +57,19 @@ def _current_user_id(request: Request) -> str | None:
     return actor_sub_from_request(request)
 
 
-def _can_access_portfolio(request: Request, portfolio_user_id: str) -> bool:
+def _can_access_portfolio(request: Request, portfolio: SellerPortfolio | str) -> bool:
     user = current_user_from_request(request)
     if can_manage_portfolios(user):
         return True
     current_id = _current_user_id(request)
-    return bool(current_id and current_id == portfolio_user_id)
+    if not current_id:
+        return False
+    if isinstance(portfolio, SellerPortfolio):
+        member_ids = {member.user_id for member in portfolio.members}
+        if current_id in member_ids:
+            return True
+        return current_id in {portfolio.owner_user_id, portfolio.user_id}
+    return current_id == portfolio
 
 
 @router.get("/me", operation_id="get_my_seller_portfolio")
@@ -65,12 +79,14 @@ def get_my_seller_portfolio(request: Request):
         user_id = _current_user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="get_my_seller_portfolio")
-        portfolio = _use_case().get_me(user_id)
+        portfolios = _use_case().get_me_portfolios(user_id)
+        first = portfolios[0] if portfolios else None
         user = current_user_from_request(request)
         return ok(
             {
                 "user_id": user_id,
-                "portfolio": portfolio_to_dict(portfolio) if portfolio else None,
+                "portfolio": portfolio_to_dict(first) if first else None,
+                "portfolios": [portfolio_to_dict(item) for item in portfolios],
                 # is_admin = somente manage (CRUD). Filtro equipe = team_scope no MFE.
                 "is_admin": can_manage_portfolios(user),
                 "capabilities": {
@@ -134,10 +150,12 @@ def create_seller_portfolio(request: Request, body: CreatePortfolioBody = Body(.
         )
         portfolio = _use_case().create_portfolio(
             CreatePortfolioRequest(
-                user_id=body.user_id,
+                user_id=body.user_id or "",
                 display_name=body.display_name,
                 created_by_user_id=_current_user_id(request),
                 customers=tuple(customers),
+                user_ids=tuple(body.user_ids or ()),
+                owner_user_id=body.owner_user_id,
             )
         )
         return ok(
@@ -167,7 +185,7 @@ def get_seller_portfolio(
         portfolio = _use_case().get_portfolio(portfolio_id)
         if portfolio is None:
             return fail("Carteira não encontrada.", 404, operation_id="get_seller_portfolio")
-        if not _can_access_portfolio(request, portfolio.user_id):
+        if not _can_access_portfolio(request, portfolio):
             return fail("Sem permissão para esta carteira.", 403, operation_id="get_seller_portfolio")
         return ok(
             portfolio_to_dict(portfolio),
@@ -366,6 +384,133 @@ def remove_seller_customer(
             "Erro interno ao remover cliente.",
             500,
             operation_id="remove_seller_customer",
+        )
+
+
+@router.put("/{portfolio_id}/members", operation_id="replace_seller_portfolio_members")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def replace_seller_portfolio_members(
+    _request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+    body: ReplaceMembersBody = Body(...),
+):
+    try:
+        portfolio = _use_case().replace_members(
+            portfolio_id=portfolio_id,
+            members=[
+                SellerPortfolioMember(user_id=item.user_id, role=item.role)
+                for item in body.members
+            ],
+        )
+        return ok(
+            portfolio_to_dict(portfolio),
+            message="Membros da carteira atualizados.",
+            operation_id="replace_seller_portfolio_members",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="replace_seller_portfolio_members")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="replace_seller_portfolio_members")
+    except Exception:
+        logger.exception("replace_seller_portfolio_members_failed")
+        return fail(
+            "Erro interno ao atualizar membros.",
+            500,
+            operation_id="replace_seller_portfolio_members",
+        )
+
+
+@router.post("/{portfolio_id}/members", operation_id="add_seller_portfolio_member")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def add_seller_portfolio_member(
+    _request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+    body: AddMemberBody = Body(...),
+):
+    try:
+        portfolio = _use_case().add_member(
+            portfolio_id=portfolio_id,
+            user_id=body.user_id,
+            role=body.role,
+        )
+        return ok(
+            portfolio_to_dict(portfolio),
+            message="Membro adicionado à carteira.",
+            operation_id="add_seller_portfolio_member",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="add_seller_portfolio_member")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="add_seller_portfolio_member")
+    except Exception:
+        logger.exception("add_seller_portfolio_member_failed")
+        return fail(
+            "Erro interno ao adicionar membro.",
+            500,
+            operation_id="add_seller_portfolio_member",
+        )
+
+
+@router.delete(
+    "/{portfolio_id}/members/{user_id}",
+    operation_id="remove_seller_portfolio_member",
+)
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def remove_seller_portfolio_member(
+    _request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+    user_id: str = Path(..., min_length=1),
+):
+    try:
+        portfolio = _use_case().remove_member(
+            portfolio_id=portfolio_id,
+            user_id=user_id,
+        )
+        return ok(
+            portfolio_to_dict(portfolio),
+            message="Membro removido da carteira.",
+            operation_id="remove_seller_portfolio_member",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="remove_seller_portfolio_member")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="remove_seller_portfolio_member")
+    except Exception:
+        logger.exception("remove_seller_portfolio_member_failed")
+        return fail(
+            "Erro interno ao remover membro.",
+            500,
+            operation_id="remove_seller_portfolio_member",
+        )
+
+
+@router.post("/{portfolio_id}/owner", operation_id="set_seller_portfolio_owner")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def set_seller_portfolio_owner(
+    _request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+    body: SetOwnerBody = Body(...),
+):
+    try:
+        portfolio = _use_case().set_owner(
+            portfolio_id=portfolio_id,
+            user_id=body.user_id,
+        )
+        return ok(
+            portfolio_to_dict(portfolio),
+            message="Owner da carteira atualizado.",
+            operation_id="set_seller_portfolio_owner",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="set_seller_portfolio_owner")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="set_seller_portfolio_owner")
+    except Exception:
+        logger.exception("set_seller_portfolio_owner_failed")
+        return fail(
+            "Erro interno ao definir owner.",
+            500,
+            operation_id="set_seller_portfolio_owner",
         )
 
 

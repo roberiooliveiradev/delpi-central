@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CustomerAssignmentBody(BaseModel):
@@ -10,9 +10,20 @@ class CustomerAssignmentBody(BaseModel):
 
 
 class CreatePortfolioBody(BaseModel):
-    user_id: str = Field(..., min_length=1)
+    user_id: str | None = Field(default=None, min_length=1)
     display_name: str = Field(..., min_length=1)
     customers: list[CustomerAssignmentBody] = Field(default_factory=list)
+    user_ids: list[str] = Field(default_factory=list)
+    owner_user_id: str | None = None
+
+    @model_validator(mode="after")
+    def require_user_id_or_user_ids(self) -> CreatePortfolioBody:
+        ids = [uid.strip() for uid in self.user_ids if uid and str(uid).strip()]
+        if ids:
+            return self
+        if not (self.user_id and self.user_id.strip()):
+            raise ValueError("Informe user_id ou user_ids.")
+        return self
 
 
 class UpdatePortfolioBody(BaseModel):
@@ -28,6 +39,24 @@ class AddCustomerBody(BaseModel):
     customer_code: str = Field(..., min_length=1)
     customer_store: str = Field(..., min_length=1)
     customer_name: str | None = None
+
+
+class MemberBody(BaseModel):
+    user_id: str = Field(..., min_length=1)
+    role: str = Field(default="member")
+
+
+class ReplaceMembersBody(BaseModel):
+    members: list[MemberBody] = Field(default_factory=list)
+
+
+class AddMemberBody(BaseModel):
+    user_id: str = Field(..., min_length=1)
+    role: str = Field(default="member")
+
+
+class SetOwnerBody(BaseModel):
+    user_id: str = Field(..., min_length=1)
 
 
 class TransferCustomersBody(BaseModel):

@@ -4,10 +4,12 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
     ManageSellerPortfolioUseCase,
     parse_customer_assignments,
+    portfolio_to_dict,
 )
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
+    SellerPortfolioMember,
 )
 
 
@@ -21,23 +23,158 @@ def _portfolio(**kwargs) -> SellerPortfolio:
             SellerCustomerAssignment("100", "01", "Cliente 100"),
             SellerCustomerAssignment("200", "01", "Cliente 200"),
         ),
+        members=(SellerPortfolioMember(user_id="u1", role="owner"),),
     )
     defaults.update(kwargs)
     return SellerPortfolio(**defaults)
 
 
-def test_create_portfolio_rejects_duplicate_user() -> None:
+def test_create_portfolio_allows_same_user_in_another_portfolio() -> None:
     repository = MagicMock()
-    repository.get_by_user_id.return_value = _portfolio()
+    created = _portfolio(id="p2", display_name="Novo")
+    repository.create_portfolio.return_value = created
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.create_portfolio(
+        CreatePortfolioRequest(user_id="u1", display_name="Novo")
+    )
+
+    assert result.id == "p2"
+    repository.get_by_user_id.assert_not_called()
+    repository.create_portfolio.assert_called_once_with(
+        user_id="u1",
+        display_name="Novo",
+        created_by_user_id=None,
+        member_user_ids=[],
+    )
+
+
+def test_create_portfolio_with_user_ids_and_owner() -> None:
+    repository = MagicMock()
+    created = _portfolio(id="p3", user_id="owner-1", display_name="Equipe")
+    repository.create_portfolio.return_value = created
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.create_portfolio(
+        CreatePortfolioRequest(
+            display_name="Equipe",
+            user_ids=("owner-1", "helper-1"),
+            owner_user_id="owner-1",
+        )
+    )
+
+    assert result.id == "p3"
+    repository.create_portfolio.assert_called_once_with(
+        user_id="owner-1",
+        display_name="Equipe",
+        created_by_user_id=None,
+        member_user_ids=["helper-1"],
+    )
+
+
+def test_replace_members_requires_exactly_one_owner() -> None:
+    repository = MagicMock()
     use_case = ManageSellerPortfolioUseCase(repository)
 
     try:
-        use_case.create_portfolio(
-            CreatePortfolioRequest(user_id="u1", display_name="Novo")
+        use_case.replace_members(
+            portfolio_id="p1",
+            members=[
+                SellerPortfolioMember(user_id="u1", role="member"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            ],
         )
         assert False, "expected ValueError"
     except ValueError as exc:
-        assert "Já existe vendedor" in str(exc)
+        assert "exatamente um owner" in str(exc)
+    repository.replace_members.assert_not_called()
+
+
+def test_replace_members_success() -> None:
+    repository = MagicMock()
+    updated = _portfolio(
+        members=(
+            SellerPortfolioMember(user_id="u1", role="owner"),
+            SellerPortfolioMember(user_id="u2", role="member"),
+        )
+    )
+    repository.replace_members.return_value = updated
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.replace_members(
+        portfolio_id="p1",
+        members=[
+            SellerPortfolioMember(user_id="u1", role="owner"),
+            SellerPortfolioMember(user_id="u2", role="member"),
+        ],
+    )
+
+    assert len(result.members) == 2
+    repository.replace_members.assert_called_once()
+
+
+def test_remove_member_rejects_last_owner() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio()
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    try:
+        use_case.remove_member(portfolio_id="p1", user_id="u1")
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "último membro" in str(exc) or "único owner" in str(exc)
+    repository.remove_member.assert_not_called()
+
+
+def test_remove_member_rejects_sole_owner_when_others_exist() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio(
+        members=(
+            SellerPortfolioMember(user_id="u1", role="owner"),
+            SellerPortfolioMember(user_id="u2", role="member"),
+        )
+    )
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    try:
+        use_case.remove_member(portfolio_id="p1", user_id="u1")
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "único owner" in str(exc)
+    repository.remove_member.assert_not_called()
+
+
+def test_get_me_portfolios_lists_active() -> None:
+    repository = MagicMock()
+    items = [
+        _portfolio(id="p1"),
+        _portfolio(id="p2", display_name="Outra"),
+    ]
+    repository.list_by_user_id.return_value = items
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    portfolios = use_case.get_me_portfolios("u1")
+    me = use_case.get_me("u1")
+
+    assert len(portfolios) == 2
+    assert me is not None and me.id == "p1"
+    repository.list_by_user_id.assert_called_with("u1", active_only=True)
+
+
+def test_portfolio_to_dict_includes_members_and_owner() -> None:
+    payload = portfolio_to_dict(
+        _portfolio(
+            members=(
+                SellerPortfolioMember(user_id="u1", role="owner"),
+                SellerPortfolioMember(user_id="u2", role="member"),
+            )
+        )
+    )
+    assert payload["owner_user_id"] == "u1"
+    assert payload["members"] == [
+        {"user_id": "u1", "role": "owner"},
+        {"user_id": "u2", "role": "member"},
+    ]
 
 
 def test_transfer_customers_requires_reason_note() -> None:
