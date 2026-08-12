@@ -1,107 +1,83 @@
-# Design / IA — Portal Comercial (Wave G / G+)
+# Design / IA — Portal Comercial
 
-> **Status:** Wave G+ concluído · **consolidação nativa** em curso — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
+> **Status:** IA hub 2026 — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
 > **Produto:** Portal Comercial · `id` `commercial` · `/apps/commercial`  
 > **UI kit:** `@delpi/plugin-ui` · prefixo MFE `cm-` · root `.dashboard-commercial`  
 > **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) · **Perfis:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
 
-O Portal Comercial é o hub operacional **e** de gestão à vista: Início, Meu dia, pedidos, Conta 360, **Propostas (ADY)**, **Gestão (BI/OTD/OV/Equipe)** e admin de carteiras — páginas **nativas** (sem deep link como produto).
+O Portal Comercial é o hub operacional e de diagnóstico: **Início** (launcher), **Visão geral** (BI), **Minhas tarefas**, pedidos, Conta 360, deep pages (Propostas ADY, OTD, OV, Equipe) e **Administração** — páginas **nativas**.
 
-## Princípios de informação (Overview → Focus → Detail → Action)
+## Princípios de informação
 
 | Camada | Superfície | Objetivo |
 |--------|------------|----------|
-| **Overview** | Início (`/`) | Hero, alertas, KPIs leves; teaser Gestão (sem deep link irmão) |
-| **Focus / Action** | Meu dia, Pedidos, Propostas ADY | Filas e documentos |
-| **Diagnosis** | Gestão (`/gestao/*`) | KPIs, séries, OTD, equipe, oportunidades OV |
-| **Detail** | Carteira, conta, detalhe OV/ADY/OTD | Investigation |
-| **Admin** | Carteiras (`/seller-portfolios`) | CRUD (`seller-portfolios.manage`) |
+| **Launcher** | Início (`/`) | Hero + eventos/interações + grid de funcionalidades (gated) |
+| **Diagnosis** | Visão geral (`/overview`) | KPIs, filtros, charts; drills OTD/Opp/Equipe |
+| **Focus / Action** | Minhas tarefas, Pedidos, Propostas ADY | Filas e documentos |
+| **Detail** | Minha Carteira, Conta, detalhe OV/ADY/OTD | Investigation |
+| **Admin** | Administração (`/administration/*`) | Painel · Carteiras · Membros (`seller-portfolios.manage`) |
 
-## Navegação (alvo consolidação)
+## Navegação (alvo)
 
 ```text
 Shell: TopBar flush + UnderlineNav
-Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†
+Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Administração†
 ```
 
-- **Início:** `PageHero` (saudação + highlights vivos) **acima** da TopBar.
-- **Meu dia:** `PageHero` próprio (contagens da fila) **dentro** da página (abaixo da TopBar).
-- Badge Meu dia na nav = `overdue + today` (padrão Pipedrive).
-- Escopo (carteira/vendedor) via `ScopeChipBar` no chrome da TopBar.
-- Pills/`ActionButton` só para **filtros e ações de página**.
+- **Início:** `PageHero` + card Eventos (worklist preview) + launcher — **sem** duplicar BI da Visão geral.
+- **Visão geral:** filtros analytics + KPIs ≤8 + charts; atalhos drill.
+- **Minhas tarefas:** antigo «Meu dia»; path `/my-tasks` (alias `/my-day`); badge = overdue+today.
+- Escopo via chip no chrome (identidade, não filtro de página).
+- Propostas / OTD / Opp / Equipe: **não** na top — só launcher ou drill.
 
-### Início (ordem e anti-redundância)
+### Administração
 
-Atenção → Seus números (KPIs clicáveis + Atualizar) → Gestão teaser (`analytics.view`) com CTA interno `/gestao`.  
-**Sem** bloco Analytics/Propostas via deep link para MFEs irmãos.
-
-### Meu dia (ordem)
-
-`PageHero` (atrasadas / hoje / depois) → Fila (`ScopeChipBar` + Atualizar) → Nova tarefa (form em grid).  
-Empty compacto com CTA para o form. Detalhe do MVP vs. backlog de CRM: **[UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md)**.
-
-### Carteiras admin (ordem)
-
-`PageHero` (totais vivos) → Lista (`ScopeChipBar` Todas/Ativas/Inativas + Atualizar) → Nova carteira → Gerenciar → Transferir.  
-Empty compacto com CTA para o form de criação.
+Subnav: **Painel · Carteiras · Membros**. Alias `/seller-portfolios` → aba Carteiras.
 
 ## Alinhamento mercado
 
 | Tema | Referência | Decisão Delpi |
 |------|------------|---------------|
-| Nav secundária 3–6 itens | Primer UnderlineNav, SAP | UnderlineNav no kit |
-| Sidebar no plugin | HubSpot 2024 | Não (host já tem) |
-| Worklist própria | HubSpot Tasks queue / Pipedrive Activities | Prazo default hoje EOD + prioridade + cliente; **assignee = self** no MVP |
-| Notes / assignee / anexos | HubSpot, Pipedrive, Salesforce | Modelo/API parcial; UI backlog P0–P2 — ver UX-E-TASKS-EVOLUTION |
+| Top nav curta + home launcher | Portal RH (IA) | Sim — visual Comercial (não clonar CSS RH) |
+| Eventos no home | Feed de interações | Worklist/tarefas — não aniversários RH |
+| BI em página própria | Manager dashboard | `/overview` |
+| Worklist | Pipedrive Activities | Label «Minhas tarefas» |
 
 ## Alinhamento `.cursor`
 
 | Regra | Aplicação |
 |-------|-----------|
-| `plugins-reusable-components` | `UnderlineNav` / `PageHero` / `TopBar` no kit; MFE só compõe; zero CSS de `.delpi-ui-*` no MFE |
-| `plugins-visual-design-system` | Tokens `--cm-*` → `--delpi-ui-*`; dark via `data-theme`; accent `#089bdb` |
-| `mfe-modal-host-contained` | Dialogs de tarefa/transferência contidos no host |
-| `persistent-upload-storage` | Anexos futuros: volume Compose obrigatório |
-| `infra-sequential-container-startup` | Rebuild: `plugin-ui` → `commercial` → `commercial-api` |
-| `test-and-commit` | Commit por etapa; testes API + build MFE |
+| `plugins-reusable-components` | Kit-first; zero CSS `.delpi-ui-*` no MFE |
+| `plugins-visual-design-system` | Tokens `--cm-*` → `--delpi-ui-*` |
+| `english-code-identifiers` | Paths EN; labels PT |
+| `application-bounded-context-decoupling` | Membership só commercial-api; ADY/OTD/OV sem membership |
+| `mfe-modal-host-contained` | Dialogs admin |
+| `infra-sequential-container-startup` | Rebuild remote → mfe |
+| `test-and-commit` | Cada subetapa: test → commit → push |
 
 ## Componentes kit
 
 | Componente | Uso |
 |------------|-----|
-| `PageHero` | Hero Início + Meu dia |
-| `TopBar` | Faixa sticky flush + UnderlineNav |
-| `ViewTransition` | Fade/slide na troca de telas / buckets |
-| `UnderlineNav` | Nav de áreas do plugin |
-| `AlertQueue` | Home “Precisa de atenção” |
-| `ScopeChipBar` | Escopo no chrome + filas do Meu dia |
-| `WorklistItem` | Linha do Meu dia |
-| `SimpleKpiCard` (clicável) | KPIs Home / Gestão |
-| `Timeline` | Activities na conta |
-| `EmptyState` + CTA | Empty compacto / onboarding |
-| `PageHeader` brand | Título do portal (outras páginas) |
+| `PageHero` | Início, Minhas tarefas, Visão geral, Admin |
+| `TopBar` + `UnderlineNav` | Shell |
+| `ViewTransition` | Troca de telas |
+| `SectionCard` / `SimpleKpiCard` | Launcher cards / KPIs |
+| `AlertQueue` / worklist items | Eventos Início + Minhas tarefas |
+| `EmptyState` + `ActionButton` | Empties manage-gated |
+| `OrgMembershipFlow` | Organização Carteiras |
 
 ## UX
 
 - Uma ação primária por seção; ≤ 2 cliques do Início até a ação.
-- Loading/erro por seção (`allSettled`); empty states com próximo passo.
-- Mobile ≤768: UnderlineNav com scroll; botões ≥44px (WF-12); grids KPI/form em 1 coluna.
-- Contraste AA em dark para ações secundárias (ex.: Concluir).
-- Semântica de status via `StatusBadge` / tones do kit — sem cores hardcoded.
+- Loading/erro por seção (`allSettled`); cards launcher omitidos sem capability.
+- Mobile ≤768: UnderlineNav com scroll; botões ≥44px.
+- CTA Administração só com `manage`.
 
-## Fases Wave G+
-
-| Fase | Entrega | Código |
-|------|---------|--------|
-| **P0** | Shell UnderlineNav, Meu dia form, Home hero operacional, forms críticos, 403 | Entregue |
-| **P1** | Follow-up Conta, Adiar/Abrir/tipo, KPIs gestão, forms restantes, ops/visual QA | Entregue |
-| **UX polish** | PageHero/TopBar/ViewTransition; Home + Meu dia + Carteiras | Entregue (ago/2026) — detalhe em UX-E-TASKS-EVOLUTION |
-
-## Fora desta wave / próximo
+## Fora / backlog
 
 | Item | Doc |
 |------|-----|
-| F2c (PVA), prospects/pipeline/forecast (Wave H) | IMPLEMENTATION-PLAN |
-| Observação, responsável, anexos, reminder… | [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3 |
-| Start tasks HubSpot, auto-tasks de pedidos | UX-E-TASKS-EVOLUTION P3 + HOMOLOGACAO gaps |
-| F3–F4 runtime module, rentabilidade | Playbook |
+| Export OTD/Opp; worklist summary leve | GESTAO-A-VISTA backlog |
+| Observação, anexos, reminder | UX-E-TASKS-EVOLUTION |
+| F2c PVA, Wave H | IMPLEMENTATION-PLAN |

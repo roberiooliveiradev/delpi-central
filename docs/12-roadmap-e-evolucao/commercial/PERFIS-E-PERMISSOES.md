@@ -22,15 +22,15 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | Código | Nome UI | Onde vale |
 |--------|---------|-----------|
 | `commercial.accounts.view` | Acessar Portal Comercial | Início, Meus pedidos, conta; Minha Carteira só com membership ou team/manage |
-| `commercial.worklist.view` | Ver Meu dia | `/my-day`, worklist |
+| `commercial.worklist.view` | Ver Minhas tarefas | `/my-tasks` (alias `/my-day`), worklist |
 | `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
-| `commercial.seller-portfolios.manage` | Administrar carteiras | CRUD `/seller-portfolios`; `is_admin`; escopo irrestrito (consolidado) |
+| `commercial.seller-portfolios.manage` | Administração | CRUD `/administration/*` (Painel · Carteiras · Membros); `is_admin`; escopo irrestrito |
 | `commercial.audit.view` | Ver auditoria | quando exposta |
-| `commercial.analytics.view` | Ver Gestão à vista | `/analytics`, OTD, oportunidades OV (**não** Equipe sozinha) |
-| `commercial.proposals.view` | Ver propostas documento | `/proposals` lista/detalhe ADY |
+| `commercial.analytics.view` | Ver Visão geral / OTD / OV | `/overview`, `/analytics/otd`, `/analytics/opportunities` (**não** Equipe sozinha) |
+| `commercial.proposals.view` | Ver propostas documento | `/proposals` via launcher (não top nav) |
 | `commercial.proposals.export` | Exportar PDF proposta | POST PDF com overrides |
-| `commercial.accounts.team.view` | Ver carteira da equipe | filtro equipe + **escopo consolidado** (sem membership); Gestão Equipe — **sem** CRUD |
-| `commercial.worklist.team.view` | Ver worklist da equipe | Meu dia `scope=team` |
+| `commercial.accounts.team.view` | Ver carteira da equipe | filtro equipe + **escopo consolidado**; Equipe analítica — **sem** CRUD |
+| `commercial.worklist.team.view` | Ver worklist da equipe | Minhas tarefas `scope=team` |
 
 **Home** usa `accounts.view`. **Não** existem `otd.view` / `opportunities.view` separados — cobertos por `analytics.view`.
 
@@ -52,8 +52,8 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 - Universo de filtro = carteiras **ativas** na commercial-api (membership via `seller_portfolio_members`).
 - Filtro MFE (Pedidos / Minha Carteira): `accounts.team.view || seller-portfolios.manage` (rótulo «Todas as carteiras»); multi-própria sem team → «Todas as minhas carteiras».
 - `is_admin` no `/seller-portfolios/me` = **apenas** `commercial.seller-portfolios.manage`.
-- **Admin (`seller-portfolios.manage`):** lista full-page, detalhe, org, membros, clientes, transferir, inativar/excluir.
-- **Gestor (`accounts.team.view` sem `manage`):** vê **todas** as carteiras ativas nos filtros das bancadas; **não** acessa `/seller-portfolios` (nav oculta / 404).
+- **Admin (`seller-portfolios.manage`):** Administração (Painel, lista, detalhe, org, membros, clientes, transferir).
+- **Gestor (`accounts.team.view` sem `manage`):** vê **todas** as carteiras ativas nos filtros das bancadas; **não** acessa Administração (nav oculta / 404).
 - **Operacional sem membership:** **Pedidos em aberto** vê consolidado (todos os clientes); **Minha Carteira** / Conta detalhe ainda exigem vínculo ou team/manage para gates de NF/avatar.
 - **Operacional com membership:** só a(s) sua(s) carteira(s); chip Escopo = identidade.
 - **Directory picker (criar carteira / adicionar membro):** só usuários com acesso ao portal (`app=commercial` no diretório).
@@ -80,13 +80,14 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 
 ## Checklist homologação RBAC
 
-- [ ] Sem `analytics.view` → nav Gestão oculta / 404
-- [ ] Sem `seller-portfolios.manage` (mesmo com `api-delpi.access`) → sem nav Carteiras / sem unrestricted
+- [ ] Sem `analytics.view` → nav Visão geral oculta / 404 em `/overview`
+- [ ] Sem `seller-portfolios.manage` → sem nav Administração / sem unrestricted
 - [ ] Sem membership e sem team/manage → sem Minha Carteira
 - [ ] Só `accounts.view` + membership → só a(s) carteira(s) próprias
-- [ ] `accounts.team.view` sem manage → filtro equipe; sem CRUD Carteiras
-- [ ] Sem `proposals.view` → nav Propostas oculta / 404
-- [ ] `manage` → Carteiras (lista + detalhe + org) + filtro equipe
+- [ ] `accounts.team.view` sem manage → filtro equipe; sem CRUD Administração
+- [ ] Sem `proposals.view` → card Propostas omitido no launcher / 404 em `/proposals`
+- [ ] Sem `worklist.view` → sem Minhas tarefas na top
+- [ ] `manage` → Administração (Painel + Carteiras + Membros) + filtro equipe
 - [ ] Usuário em 2+ carteiras → `/me` lista `portfolios[]`; chip Escopo «N carteiras»; filtro «Todas as minhas» união dedupe
 - [ ] Membro secundário (não owner) vê clientes da carteira compartilhada
 - [ ] Directory picker: usuário sem `app=commercial` não aparece; com acesso aparece

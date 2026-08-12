@@ -2,101 +2,181 @@
 
 > **Produto ao usuário:** Portal Comercial  
 > **Id técnico:** `commercial` · `basePath` `/apps/commercial`  
-> **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
-> **Paridade:** § 2.1.1 (Portal do Vendedor → Portal Comercial)  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
-> **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais · **E5.1** WF-05R lista/detalhe/org multi-membro  
-> **Wave G / G+:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md). UX polish + backlog de tarefas: [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md). IDs canônicos WF-01…10; **Wave G+** adiciona WF-00 (shell UnderlineNav), WF-01R (Home hero), WF-06R (Meu dia CRM). Rota `/my-day` implementada.
+> **Status:** IA hub 2026 — top nav Início · Visão geral · Minhas tarefas · Meus pedidos · Minha Carteira · Administração  
+> **Design:** [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)
 
 ## Convenções
 
 | Símbolo | Significado |
 |---------|-------------|
 | `[Botão]` | Ação primária/secundária |
-| `( )` / `(•)` | Radio |
-| `[x]` | Checkbox |
 | `·····` | Campo de busca / input |
 | `│ ░░░ │` | Skeleton / loading |
-| `⚠` | Estado de atenção (atraso, SLA) — no wireframe textual |
+| `⚠` | Estado de atenção |
+| `†` | Gate de permissão |
 
-**Layout portal:** sidebar do Minha DELPI à esquerda (fora do MFE). Conteúdo abaixo = área do plugin (`dashboard-commercial` pattern: `dashboard-commercial` → aqui `dashboard-commercial-portal` / root `.dashboard-commercial`).
+**Layout:** sidebar Minha DELPI à esquerda. Root MFE `.dashboard-commercial`.
 
-**Rotas propostas (EN paths, labels pt-BR):**
+**Rotas (EN paths, labels pt-BR):**
 
-| Rota | Label (menu) | Fase | Persona |
-|------|--------------|------|---------|
-| `/apps/commercial` | Início | F2b | Todos |
-| `/apps/commercial/open-orders` | Meus pedidos | F2b | Vendedor+ |
-| `/apps/commercial/customers` | Minha Carteira | F2b | Vendedor+ |
-| `/apps/commercial/customers/:code/:store` | Conta (detalhe) | F2b | Vendedor+ |
-| `/apps/commercial/seller-portfolios` | Carteiras (lista / org) | E5.1 | Admin |
-| `/apps/commercial/seller-portfolios/:id` | Carteira (detalhe) | E5.1 | Admin |
-| `/apps/commercial/my-day` | Meu dia | Wave G+ | worklist.view |
-| `/apps/commercial/proposals` | Propostas (ADY) | Consolidação | proposals.view |
-| `/apps/commercial/proposals/:id` | Detalhe + PDF | Consolidação | proposals.view |
-| `/apps/commercial/analytics` | Gestão visão geral | Consolidação | analytics.view |
-| `/apps/commercial/analytics/otd` | OTD | Consolidação | analytics.view |
-| `/apps/commercial/analytics/team` | Equipe | Consolidação | analytics + team |
-| `/apps/commercial/analytics/opportunities` | Oportunidades OV | Consolidação | analytics.view |
-| `/apps/commercial/prospects` | Prospects | pós-consolidação / P3 | — |
-| `/apps/commercial/forecast` | Forecast | pós-consolidação | — |
+| Rota | Label | Top? | Capacidade |
+|------|-------|------|------------|
+| `/apps/commercial` | Início | sim | accounts.view |
+| `/apps/commercial/overview` | Visão geral | sim | analytics.view |
+| `/apps/commercial/my-tasks` | Minhas tarefas | sim | worklist.view |
+| `/apps/commercial/my-day` | (alias → my-tasks) | — | worklist.view |
+| `/apps/commercial/open-orders` | Meus pedidos | sim | accounts.view |
+| `/apps/commercial/customers` | Minha Carteira | sim | membership/team/manage |
+| `/apps/commercial/customers/:code/:store` | Conta | — | idem |
+| `/apps/commercial/administration` | Administração · Painel | sim† | manage |
+| `/apps/commercial/administration/seller-portfolios` | Carteiras | Admin subnav | manage |
+| `/apps/commercial/administration/seller-portfolios/:id` | Carteira detalhe | — | manage |
+| `/apps/commercial/administration/team` | Membros | Admin subnav | manage |
+| `/apps/commercial/seller-portfolios` | (alias → administration/…) | — | manage |
+| `/apps/commercial/proposals` | Propostas ADY | launcher | proposals.view |
+| `/apps/commercial/analytics` | (redirect → /overview) | — | analytics.view |
+| `/apps/commercial/analytics/otd` | OTD | launcher/drill | analytics.view |
+| `/apps/commercial/analytics/team` | Equipe | launcher/drill | analytics + team |
+| `/apps/commercial/analytics/opportunities` | Oportunidades | launcher/drill | analytics.view |
 
-### WF-G — Gestão visão geral (`/gestao`) — ASCII
-
-```text
-[UnderlineNav] Início | Meu dia | Meus pedidos | Minha Carteira | Propostas | Gestão | Carteiras†
-[Subnav Gestão] Visão geral · OTD · Equipe · Oportunidades
-[FilterBar] Competence | Start DateField | End DateField | Branch | Segment | [Atualizar]
-[KPI row ×6] ROL | Meta | Conversão | OTD | Ticket | Funil
-[Série ROL]  chart
-[Funil OV]   stages
-[Tabela OV]  resumo período → drill /gestao/oportunidades/:n
-[Export]
-```
-
-Datas v1: **2× DateField** (sem DateRangeField). Filtros: URL + `sessionStorage` `delpi.commercial.gestao.filters`.
-
-Wireframes ASCII detalhados + matriz `@delpi/plugin-ui`: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
-
----
-
-## Mapa de navegação (F2b + E5.1)
+### Shell comum
 
 ```text
-Portal Comercial
-├── Início                         /apps/commercial
-├── Pedidos e entregas
-│   └── Meus pedidos               /apps/commercial/open-orders
-├── Contas
-│   ├── Minha Carteira             /apps/commercial/customers
-│   └── Conta (detalhe)            /apps/commercial/customers/:code/:store   ← fora do menu
-└── Administração
-    ├── Carteiras (lista / org)    /apps/commercial/seller-portfolios        ← admin
-    └── Carteira (detalhe)         /apps/commercial/seller-portfolios/:id    ← admin
+┌─ Host Minha Delpi (sidebar) ─┬─ Portal Comercial ────────────────────────────┐
+│                              │ Escopo: Carteira: {nome}            [?]       │
+│                              │ Início│Visão geral│Minhas tarefas│Meus pedidos│
+│                              │ Minha Carteira│Administração†                 │
+│                              │ ══════ (underline no ativo)                   │
+│                              │ … conteúdo da rota …                          │
+└──────────────────────────────┴───────────────────────────────────────────────┘
+† seller-portfolios.manage · Minhas tarefas oculto sem worklist.view
+  Visão geral oculto sem analytics.view · Minha Carteira sem canAccessMyPortfolio
 ```
 
 ---
 
-## Wave G+ — shell e Home (ago/2026)
+## IA hub 2026 — wireframes detalhados
 
-Nav secundária do plugin = **UnderlineNav** (padrão GitHub Primer / SAP), **não** pills de `ActionButton`. Host Minha DELPI já tem sidebar — sem sidebar interna no plugin. Meu dia alinhado a HubSpot/Pipedrive/Gong: prazo + prioridade + cliente.
+### WF-01R-L — Início `/`
 
-### WF-00 — Shell (UnderlineNav)
+**Objetivo:** launcher + eventos/interações. **Não** replica BI da Visão geral.
 
 ```text
-┌─ plugin ────────────────────────────────────────────────────────────────────┐
-│ [icon] Portal Comercial [?]          Escopo: Carteira: Sul  │ ou  «2 carteiras» │
-│ ─────────────────────────────────────────────────────────────────────────── │
-│ Início   Meu dia (3)   Meus pedidos   Minha Carteira   Carteiras†           │
-│ ═══════                                                                     │
-│   ↑ underline accent #089bdb; badge Meu dia = overdue+today                 │
-│ … página …                                                                  │
+┌─ PageHero ──────────────────────────────────────────────────────────────────┐
+│ PORTAL COMERCIAL                                                            │
+│ Bem-vindo, {nome} · Escopo: {carteira}                                      │
+│ “Selecione uma funcionalidade para começar.”                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Eventos e interações ───────────────────────────── [Abrir Minhas tarefas] ─┐
+│ Subtitle: Tarefas e alertas do seu dia                                      │
+│ ┌ Atrasadas N ┐ ┌ Hoje M ┐ ┌ Depois K ┐                                     │
+│ │ lista curta (máx 5): título · prazo · cliente · [Abrir]                   │
+│ empty: “Nenhuma interação pendente.” + CTA Minhas tarefas / Meus pedidos    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Funcionalidades ───────────────────────────────────────────────────────────┐
+│ Grid 2–3 colunas · card omitido se sem capability                           │
+│ Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira                │
+│ Propostas | OTD | Oportunidades | Equipe†team | Administração†manage        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Chip Escopo (identidade, não filtro):** 1 carteira → `Carteira: {nome}`; N>1 → `N carteiras`. Seleção operacional («Todas as carteiras» = união dedupe, ou carteira específica) fica no filtro da página (Pedidos / Minha Carteira), não no chip.
+### WF-OV — Visão geral `/overview`
 
-### WF-01R — Início (hero + permissões)
+```text
+┌─ Header ────────────────────────────────────────────────────── [Atualizar] ─┐
+│ Visão geral · Indicadores comerciais do período                             │
+│ Filtros: Data inicial | Data final | Competência | Filial | Segmento        │
+│ KPIs ≤8 (ROL vs meta · ROL filial · Conversão · OTD · Novos negócios · …)   │
+│ Charts: Evolução ROL | Funil conversão                                      │
+│ Drills: [OTD] [Oportunidades] [Equipe †team]                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### WF-TASKS — Minhas tarefas `/my-tasks`
+
+```text
+┌─ PageHero ─ highlights Atrasadas / Hoje / Depois ───────────── [Atualizar] ─┐
+│ MINHAS TAREFAS                                                              │
+│ [Atrasadas] [Hoje] [Depois]                                                 │
+│ Fila: título · prioridade · prazo · cliente · [Concluir][Adiar][Abrir conta]│
+│ Nova tarefa: Título* | Prazo* | Prioridade | Cliente | Tipo | [Criar]       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### WF-ADM — Administração
+
+```text
+[Subnav] Painel · Carteiras · Membros
+Painel: cards cobertura/ativas + [Nova carteira] [Transferência] [Carteiras] [Membros]
+Carteiras: lista/org (WF-05R) sob /administration/seller-portfolios
+Membros: roster pessoa × carteiras → detalhe
+```
+
+### Deep pages (launcher / drill)
+
+| WF | Path | Notas |
+|----|------|-------|
+| WF-02R | `/open-orders` | Empty carteira → Administração†manage |
+| WF-03R / WF-04 | `/customers` · Conta | Follow-up → Minhas tarefas |
+| WF-PROP | `/proposals` | Escopo chrome ≠ filtro ADY |
+| WF-OTD | `/analytics/otd` | Filtros analytics |
+| WF-OPP | `/analytics/opportunities` | OV AD1010 |
+| WF-EQ | `/analytics/team` | Empty + CTA Administração† |
+
+---
+
+## Mapa de navegação
+
+```text
+Portal Comercial
+├── Início                         /
+├── Visão geral                    /overview
+├── Minhas tarefas                 /my-tasks
+├── Meus pedidos                   /open-orders
+├── Minha Carteira                 /customers
+│   └── Conta                      /customers/:code/:store
+├── Administração†
+│   ├── Painel                     /administration
+│   ├── Carteiras                  /administration/seller-portfolios
+│   ├── Carteira detalhe           /administration/seller-portfolios/:id
+│   └── Membros                    /administration/team
+└── (launcher) Propostas, OTD, Oportunidades, Equipe
+```
+
+---
+
+## Wave G+ — shell (legado histórico)
+
+Nav secundária = **UnderlineNav**. Chip Escopo = identidade.
+
+### WF-00 — Shell (atualizado IA hub)
+
+```text
+┌─ plugin ────────────────────────────────────────────────────────────────────┐
+│ Portal Comercial [?]          Escopo: Carteira: Sul                         │
+│ Início  Visão geral  Minhas tarefas (3)  Meus pedidos  Minha Carteira  Adm† │
+│ ═══════                                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### WF-01R — Início (legado — substituído por WF-01R-L acima)
+
+O wireframe operacional antigo (Atenção → Seus números → Gestão teaser) foi **supersedido** por WF-01R-L (launcher + eventos).
+
+### WF-06R — Minhas tarefas (ex-Meu dia)
+
+Ver WF-TASKS. Labels «Minhas tarefas»; path `/my-tasks`.
+
+---
+
+## WF-G — Visão geral (histórico)
+
+Substituído por **WF-OV** (`/overview`). Não há mais item top «Gestão» nem subnav global Visão geral · OTD · …
+
+---
 
 ```text
 ┌─ HERO ──────────────────────────────────────────────────────────────────────┐
