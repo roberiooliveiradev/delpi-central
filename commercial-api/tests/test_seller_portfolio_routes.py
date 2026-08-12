@@ -63,3 +63,12 @@ def test_load_summary_route_is_registered_before_portfolio_id() -> None:
 def test_add_seller_customer_returns_soft_warning_payload() -> None:
     assert "add_customer_result_to_dict" in ROUTES
     assert "já estava em outra carteira ativa" in ROUTES
+
+
+def test_portfolio_audit_timeline_route_is_registered() -> None:
+    assert 'operation_id="list_seller_portfolio_audit"' in ROUTES
+    assert '"/{portfolio_id}/audit"' in ROUTES
+    assert "def list_seller_portfolio_audit(" in ROUTES
+    assert "list_portfolio_audit" in ROUTES
+    assert "COMMERCIAL_AUDIT_PERMISSIONS" in ROUTES
+    assert "page_size" in ROUTES

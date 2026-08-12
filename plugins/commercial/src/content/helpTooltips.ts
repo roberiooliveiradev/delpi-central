@@ -315,6 +315,8 @@ export const CM_HELP = {
     transferTarget: "Carteira que recebe os clientes.",
     transferCustomers: "Selecione um ou mais clientes da carteira de origem.",
     transferReason: "Motivo obrigatório da transferência (fica no histórico).",
+    auditTimeline:
+      "Registro de mudanças na carteira: membros, responsável, transferência de clientes e ativação.",
   },
   analytics: {
     ovStatus: "Etapa atual da oportunidade comercial.",

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Sequence
 
+from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
 from commercial_app.domain.entities.portfolio_coverage import (
     CustomerOverlapWarning,
     PortfolioCoverageAudit,
@@ -18,12 +20,18 @@ from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
+from commercial_app.domain.services.seller_portfolio_audit_formatter_service import (
+    SellerPortfolioAuditFormatterService,
+)
 from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
     SellerPortfolioCoverageAuditService,
 )
 from commercial_app.domain.services.seller_portfolio_load_summary_service import (
     SellerPortfolioLoadSummaryService,
 )
+
+_ENTITY_SELLER_PORTFOLIO = "seller_portfolio"
+_TRANSFER_TARGET_KEY = "target_portfolio_id"
 
 _PORTAL_ACCESS_DENIED = "Usuário sem acesso ao Portal Comercial."
 
@@ -196,6 +204,42 @@ def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
     return payload
 
 
+def _row_to_audit_entry(row: dict[str, Any]) -> AuditLogEntry:
+    payload = row.get("payload") or {}
+    if not isinstance(payload, dict):
+        payload = {}
+    created_at = row.get("created_at")
+    if isinstance(created_at, str):
+        try:
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except ValueError:
+            created_at = None
+    return AuditLogEntry(
+        id=str(row.get("id") or ""),
+        actor_user_id=str(row.get("actor_user_id") or ""),
+        action=str(row.get("action") or ""),
+        entity_type=str(row.get("entity_type") or ""),
+        entity_id=str(row.get("entity_id") or ""),
+        payload=payload,
+        created_at=created_at if isinstance(created_at, datetime) else None,
+    )
+
+
+def audit_page_to_dict(
+    *,
+    items: Sequence[dict[str, Any]],
+    total: int,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    return {
+        "items": list(items),
+        "total": int(total),
+        "page": int(page),
+        "page_size": int(page_size),
+    }
+
+
 class ManageSellerPortfolioUseCase:
     def __init__(
         self,
@@ -204,6 +248,7 @@ class ManageSellerPortfolioUseCase:
         portal_access: PortalAccessPort | None = None,
         coverage_audit: SellerPortfolioCoverageAuditService | None = None,
         load_summary: SellerPortfolioLoadSummaryService | None = None,
+        audit_formatter: SellerPortfolioAuditFormatterService | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
@@ -211,6 +256,7 @@ class ManageSellerPortfolioUseCase:
         self._portal_access = portal_access
         self._coverage_audit = coverage_audit or SellerPortfolioCoverageAuditService()
         self._load_summary = load_summary or SellerPortfolioLoadSummaryService()
+        self._audit_formatter = audit_formatter or SellerPortfolioAuditFormatterService()
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
@@ -232,9 +278,44 @@ class ManageSellerPortfolioUseCase:
         self._audit.append(
             actor_user_id=actor_user_id,
             action=action,
-            entity_type="seller_portfolio",
+            entity_type=_ENTITY_SELLER_PORTFOLIO,
             entity_id=entity_id,
             payload=payload or {},
+        )
+
+    def list_portfolio_audit(
+        self,
+        portfolio_id: str,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        """Lista eventos de audit_log da carteira (e transferências recebidas)."""
+        portfolio_id = _normalize_code(portfolio_id)
+        if not portfolio_id:
+            raise ValueError("portfolio_id é obrigatório.")
+        if self._repository.get_by_id(portfolio_id) is None:
+            raise LookupError("Vendedor não encontrado.")
+        if self._audit is None:
+            return audit_page_to_dict(items=[], total=0, page=page, page_size=page_size)
+
+        safe_page = max(1, int(page or 1))
+        safe_size = min(100, max(1, int(page_size or 20)))
+        rows, total = self._audit.list_for_entity(
+            entity_type=_ENTITY_SELLER_PORTFOLIO,
+            entity_id=portfolio_id,
+            page=safe_page,
+            page_size=safe_size,
+            related_target_key=_TRANSFER_TARGET_KEY,
+        )
+        items = [
+            self._audit_formatter.format_entry(_row_to_audit_entry(row)) for row in rows
+        ]
+        return audit_page_to_dict(
+            items=items,
+            total=total,
+            page=safe_page,
+            page_size=safe_size,
         )
 
     def get_me_portfolios(self, user_id: str) -> list[SellerPortfolio]:

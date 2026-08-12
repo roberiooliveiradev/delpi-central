@@ -154,6 +154,33 @@ export type AddSellerCustomerResult = SellerPortfolio & {
   coverage_warning?: CoverageLinkWarning | null;
 };
 
+export type SellerPortfolioAuditTone =
+  | "default"
+  | "danger"
+  | "warning"
+  | "success"
+  | "info";
+
+export type SellerPortfolioAuditEvent = {
+  id: string;
+  action: string;
+  actor_user_id: string;
+  entity_type: string;
+  entity_id: string;
+  payload: Record<string, unknown>;
+  created_at: string | null;
+  title: string;
+  message: string;
+  tone: SellerPortfolioAuditTone;
+};
+
+export type SellerPortfolioAuditPage = {
+  items: SellerPortfolioAuditEvent[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
 export type DirectoryUser = {
   id: string;
   name: string;

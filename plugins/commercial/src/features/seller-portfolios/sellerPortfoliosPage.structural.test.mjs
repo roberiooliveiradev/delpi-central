@@ -49,11 +49,25 @@ describe("seller-portfolios kit-first", () => {
     assert.match(pageSource, /getSellerPortfoliosLoadSummary/);
     assert.match(pageSource, /filter:\s*"overlapping"|overlapping/);
     assert.match(detailPageSource, /SellerPortfolioDetail/);
+    assert.match(detailPageSource, /SellerPortfolioAuditTimeline/);
+    assert.match(detailPageSource, /listSellerPortfolioAudit/);
     assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);
     assert.match(detailPageSource, /coverage_warning|readCoverageLinkWarning|notifyWarning/);
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /formatPortfolioLoadSnippet|cm-portfolios-org-tree__load/);
+  });
+
+  it("timeline de auditoria usa kit Timeline e estados vazios", () => {
+    const auditSource = readFileSync(
+      join(featureDirectory, "SellerPortfolioAuditTimeline.tsx"),
+      "utf8",
+    );
+    assert.match(auditSource, /CommercialActivityTimeline/);
+    assert.match(auditSource, /PORTFOLIO_AUDIT_CONTENT/);
+    assert.match(auditSource, /emptyMessage/);
+    assert.match(auditSource, /CommercialLoadingCard/);
+    assert.doesNotMatch(auditSource, /<button\b/);
   });
 
   it("não adiciona seletor do kit no CSS do MFE", () => {

@@ -1,0 +1,41 @@
+{
+  "titles": {
+    "seller_portfolio.add_member": "Membro adicionado",
+    "seller_portfolio.remove_member": "Membro removido",
+    "seller_portfolio.replace_members": "Membros atualizados",
+    "seller_portfolio.set_owner": "Responsável alterado",
+    "seller_portfolio.deactivate": "Carteira inativada",
+    "seller_portfolio.reactivate": "Carteira reativada",
+    "seller_portfolio.purge": "Carteira excluída",
+    "seller_portfolio.transfer_customers": "Clientes transferidos"
+  },
+  "messages": {
+    "seller_portfolio.add_member": "Usuário {user_id} adicionado como {role_label}.",
+    "seller_portfolio.remove_member": "Usuário {user_id} removido da carteira.",
+    "seller_portfolio.replace_members": "Composição de membros atualizada ({member_count} usuário(s)).",
+    "seller_portfolio.set_owner": "Responsável definido: {user_id}.",
+    "seller_portfolio.deactivate": "Carteira saiu do escopo operacional.",
+    "seller_portfolio.reactivate": "Carteira voltou ao escopo operacional.",
+    "seller_portfolio.purge": "Carteira «{display_name}» excluída em definitivo ({customer_count} cliente(s) desvinculados).",
+    "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos da origem {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}."
+  },
+  "roleLabels": {
+    "owner": "responsável",
+    "member": "membro"
+  },
+  "tones": {
+    "seller_portfolio.add_member": "success",
+    "seller_portfolio.remove_member": "warning",
+    "seller_portfolio.replace_members": "info",
+    "seller_portfolio.set_owner": "info",
+    "seller_portfolio.deactivate": "warning",
+    "seller_portfolio.reactivate": "success",
+    "seller_portfolio.purge": "danger",
+    "seller_portfolio.transfer_customers": "info"
+  },
+  "fallback": {
+    "title": "Evento de auditoria",
+    "message": "Ação «{action}» registrada.",
+    "tone": "default"
+  }
+}

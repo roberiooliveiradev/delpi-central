@@ -184,6 +184,8 @@ Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na 
 
 **E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) fica `available: false` até existir universo de clientes. Chip «Com overlapping» na lista; ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
 
+**E6.3 histórico:** `GET /seller-portfolios/{id}/audit` (manage ou `audit.view`) — timeline paginada do `audit_log` (membros, responsável, transferência, ativar/inativar) no detalhe da carteira.
+
 `DELETE /seller-portfolios/{id}` **inativa** (soft). Excluir de verdade é
 `DELETE /seller-portfolios/{id}/permanent` (`purge_seller_portfolio`): apaga a
 linha, desvincula clientes (`ON DELETE CASCADE`) e libera o `user_id`. Contrato

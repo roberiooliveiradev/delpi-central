@@ -6,6 +6,7 @@ from fastapi import APIRouter, Body, Path, Query, Request
 
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
+    COMMERCIAL_AUDIT_PERMISSIONS,
     COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS,
     COMMERCIAL_MANAGE_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
@@ -244,6 +245,52 @@ def get_seller_portfolio(
             "Erro interno ao carregar carteira.",
             500,
             operation_id="get_seller_portfolio",
+        )
+
+
+@router.get("/{portfolio_id}/audit", operation_id="list_seller_portfolio_audit")
+@require_any_permission(*COMMERCIAL_AUDIT_PERMISSIONS)
+def list_seller_portfolio_audit(
+    request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+    page: int = Query(1, ge=1, description="Página (1-based)."),
+    page_size: int = Query(20, ge=1, le=100, description="Itens por página."),
+):
+    """Timeline de audit_log da carteira (membros, owner, transfer, ativo)."""
+    try:
+        portfolio = _use_case().get_portfolio(portfolio_id)
+        if portfolio is None:
+            return fail(
+                "Carteira não encontrada.",
+                404,
+                operation_id="list_seller_portfolio_audit",
+            )
+        if not _can_access_portfolio(request, portfolio):
+            return fail(
+                "Sem permissão para esta carteira.",
+                403,
+                operation_id="list_seller_portfolio_audit",
+            )
+        payload = _use_case().list_portfolio_audit(
+            portfolio_id,
+            page=page,
+            page_size=page_size,
+        )
+        return ok(
+            payload,
+            message="Auditoria da carteira carregada.",
+            operation_id="list_seller_portfolio_audit",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="list_seller_portfolio_audit")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="list_seller_portfolio_audit")
+    except Exception:
+        logger.exception("list_seller_portfolio_audit_failed")
+        return fail(
+            "Erro interno ao listar auditoria da carteira.",
+            500,
+            operation_id="list_seller_portfolio_audit",
         )
 
 

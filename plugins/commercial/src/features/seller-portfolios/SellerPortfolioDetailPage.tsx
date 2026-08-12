@@ -6,6 +6,7 @@ import {
   deactivateSellerPortfolio,
   getSellerPortfolio,
   getSellerPortfoliosCoverageAudit,
+  listSellerPortfolioAudit,
   listSellerPortfolios,
   purgeSellerPortfolio,
   removeSellerCustomer,
@@ -31,6 +32,7 @@ import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageConte
 import { customerKey } from "../../shared/format";
 import type {
   SellerPortfolio,
+  SellerPortfolioAuditEvent,
   SellerPortfoliosCoverageAudit,
   TotvsCustomerHit,
 } from "../../types/portfolio";
@@ -44,6 +46,7 @@ import {
   parseSellerPortfoliosDeepLink,
   type SellerPortfoliosDeepLink,
 } from "../../utils/sellerPortfoliosDeepLink";
+import { SellerPortfolioAuditTimeline } from "./SellerPortfolioAuditTimeline";
 import { SellerPortfolioDetail } from "./SellerPortfolioDetail";
 import { SellerPortfolioTransferDialog } from "./SellerPortfolioTransferDialog";
 
@@ -80,6 +83,9 @@ export function SellerPortfolioDetailPage({
   const [portfolio, setPortfolio] = useState<SellerPortfolio | null>(null);
   const [allPortfolios, setAllPortfolios] = useState<SellerPortfolio[]>([]);
   const [coverageAudit, setCoverageAudit] = useState<SellerPortfoliosCoverageAudit | null>(null);
+  const [auditEvents, setAuditEvents] = useState<SellerPortfolioAuditEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
   const [busyMemberUserId, setBusyMemberUserId] = useState<string | null>(null);
@@ -95,8 +101,14 @@ export function SellerPortfolioDetailPage({
     for (const member of portfolio.members ?? []) {
       if (member.user_id.trim()) ids.add(member.user_id.trim());
     }
+    for (const event of auditEvents) {
+      const actor = event.actor_user_id?.trim();
+      if (actor) ids.add(actor);
+      const payloadUser = typeof event.payload?.user_id === "string" ? event.payload.user_id.trim() : "";
+      if (payloadUser) ids.add(payloadUser);
+    }
     return [...ids];
-  }, [portfolio]);
+  }, [auditEvents, portfolio]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
 
   const goToList = useCallback(
@@ -104,6 +116,26 @@ export function SellerPortfolioDetailPage({
       navigatePluginPath(buildSellerPortfoliosPath(basePath, nextList ?? listState));
     },
     [basePath, listState],
+  );
+
+  const reloadAudit = useCallback(
+    (options?: { signal?: AbortSignal }) => {
+      setAuditLoading(true);
+      setAuditError(null);
+      listSellerPortfolioAudit(portfolioId, { page: 1, pageSize: 50, signal: options?.signal })
+        .then((page) => {
+          if (options?.signal?.aborted) return;
+          setAuditEvents(page.items);
+        })
+        .catch((err: unknown) => {
+          if (options?.signal?.aborted) return;
+          setAuditError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
+        })
+        .finally(() => {
+          if (!options?.signal?.aborted) setAuditLoading(false);
+        });
+    },
+    [portfolioId],
   );
 
   const reload = useCallback(
@@ -144,8 +176,9 @@ export function SellerPortfolioDetailPage({
   useEffect(() => {
     const controller = new AbortController();
     reload({ signal: controller.signal });
+    reloadAudit({ signal: controller.signal });
     return () => controller.abort();
-  }, [reload]);
+  }, [reload, reloadAudit]);
 
   async function handleSaveName(displayName: string) {
     if (!portfolio) return;
@@ -175,6 +208,7 @@ export function SellerPortfolioDetailPage({
       const updated = await deactivateSellerPortfolio(portfolio.id);
       setPortfolio(updated);
       notifySuccess("Carteira desativada com sucesso.");
+      reloadAudit();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao desativar carteira.");
     }
@@ -186,6 +220,7 @@ export function SellerPortfolioDetailPage({
       const updated = await updateSellerPortfolio(portfolio.id, { active: true });
       setPortfolio(updated);
       notifySuccess("Carteira reativada com sucesso.");
+      reloadAudit();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao reativar carteira.");
     }
@@ -268,6 +303,7 @@ export function SellerPortfolioDetailPage({
       const updated = await addSellerPortfolioMember(portfolio.id, { user_id: userId });
       setPortfolio(updated);
       notifySuccess("Usuário adicionado à carteira.");
+      reloadAudit();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao adicionar usuário.");
     } finally {
@@ -282,6 +318,7 @@ export function SellerPortfolioDetailPage({
       const updated = await removeSellerPortfolioMember(portfolio.id, userId);
       setPortfolio(updated);
       notifySuccess("Usuário removido da carteira.");
+      reloadAudit();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao remover usuário.");
     } finally {
@@ -296,6 +333,7 @@ export function SellerPortfolioDetailPage({
       const updated = await setSellerPortfolioOwner(portfolio.id, userId);
       setPortfolio(updated);
       notifySuccess("Responsável atualizado.");
+      reloadAudit();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao definir responsável.");
     } finally {
@@ -345,6 +383,7 @@ export function SellerPortfolioDetailPage({
       );
       notifySuccess(`Transferência concluída: ${result.transferred_count} cliente(s) movido(s).`);
       setTransferOpen(false);
+      reloadAudit();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao transferir clientes.";
       setTransferError(message);
@@ -436,32 +475,41 @@ export function SellerPortfolioDetailPage({
       ) : null}
 
       {portfolio ? (
-        <SellerPortfolioDetail
-          portfolio={portfolio}
-          userLabel={directoryLabelFor(
-            portfolio.owner_user_id ?? portfolio.user_id,
-            portfolio.display_name,
-          )}
-          savingName={savingName}
-          busyCustomerKey={busyCustomerKey}
-          busyMemberUserId={busyMemberUserId}
-          overlappingCustomerKeys={overlappingCustomerKeys}
-          otherPortfolioLabelsFor={otherPortfolioLabelsFor}
-          directoryLabelFor={directoryLabelFor}
-          onSaveName={(name) => void handleSaveName(name)}
-          onAddCustomer={(hit) => void handleAddCustomer(hit)}
-          onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
-          onAddMember={(userId) => void handleAddMember(userId)}
-          onRemoveMember={(userId) => void handleRemoveMember(userId)}
-          onSetOwner={(userId) => void handleSetOwner(userId)}
-          onDeactivate={() => void handleDeactivate()}
-          onReactivate={() => void handleReactivate()}
-          onPurge={() => void handlePurge()}
-          onTransfer={() => {
-            setTransferError(null);
-            setTransferOpen(true);
-          }}
-        />
+        <>
+          <SellerPortfolioDetail
+            portfolio={portfolio}
+            userLabel={directoryLabelFor(
+              portfolio.owner_user_id ?? portfolio.user_id,
+              portfolio.display_name,
+            )}
+            savingName={savingName}
+            busyCustomerKey={busyCustomerKey}
+            busyMemberUserId={busyMemberUserId}
+            overlappingCustomerKeys={overlappingCustomerKeys}
+            otherPortfolioLabelsFor={otherPortfolioLabelsFor}
+            directoryLabelFor={directoryLabelFor}
+            onSaveName={(name) => void handleSaveName(name)}
+            onAddCustomer={(hit) => void handleAddCustomer(hit)}
+            onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
+            onAddMember={(userId) => void handleAddMember(userId)}
+            onRemoveMember={(userId) => void handleRemoveMember(userId)}
+            onSetOwner={(userId) => void handleSetOwner(userId)}
+            onDeactivate={() => void handleDeactivate()}
+            onReactivate={() => void handleReactivate()}
+            onPurge={() => void handlePurge()}
+            onTransfer={() => {
+              setTransferError(null);
+              setTransferOpen(true);
+            }}
+          />
+          <SellerPortfolioAuditTimeline
+            loading={auditLoading}
+            error={auditError}
+            events={auditEvents}
+            directoryLabelFor={directoryLabelFor}
+            onRetry={() => reloadAudit()}
+          />
+        </>
       ) : null}
 
       <SellerPortfolioTransferDialog

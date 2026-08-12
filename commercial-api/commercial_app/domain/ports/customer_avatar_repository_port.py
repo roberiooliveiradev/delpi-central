@@ -60,3 +60,20 @@ class AuditLogRepositoryPort(ABC):
         payload: dict[str, Any],
     ) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_for_entity(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        page: int = 1,
+        page_size: int = 20,
+        related_target_key: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Lista eventos por entidade (mais recentes primeiro) com total.
+
+        When ``related_target_key`` is set (ex.: ``target_portfolio_id``), also
+        includes rows whose JSON payload points this entity as transfer target.
+        """
+        raise NotImplementedError

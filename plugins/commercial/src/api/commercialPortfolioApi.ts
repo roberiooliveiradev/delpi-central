@@ -10,6 +10,7 @@ import type {
   SellerPortfolioMemberRole,
   SellerPortfoliosCoverageAudit,
   SellerPortfoliosLoadSummary,
+  SellerPortfolioAuditPage,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -109,6 +110,29 @@ export async function getSellerPortfoliosLoadSummary(options?: {
     { signal: options?.signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar resumo de carga das carteiras.");
+}
+
+export async function listSellerPortfolioAudit(
+  portfolioId: string,
+  options?: { page?: number; pageSize?: number; signal?: AbortSignal },
+): Promise<SellerPortfolioAuditPage> {
+  const params = new URLSearchParams({
+    page: String(options?.page ?? 1),
+    page_size: String(options?.pageSize ?? 20),
+  });
+  const response = await httpGet<ApiSuccessResponse<SellerPortfolioAuditPage>>(
+    `${commercialApiUrl(
+      `/seller-portfolios/${encodeURIComponent(portfolioId)}/audit`,
+    )}?${params.toString()}`,
+    { signal: options?.signal },
+  );
+  const data = unwrapEnvelope(response, "Erro ao carregar histórico da carteira.");
+  return {
+    items: data.items ?? [],
+    total: data.total ?? 0,
+    page: data.page ?? options?.page ?? 1,
+    page_size: data.page_size ?? options?.pageSize ?? 20,
+  };
 }
 
 export async function removeSellerCustomer(
