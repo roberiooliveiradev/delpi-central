@@ -32,6 +32,8 @@ describe("home hub stack", () => {
     assert.match(home, /cm-home-queue-ok/);
     assert.match(home, /queueOkTitle/);
     assert.match(home, /cm-home-sections-grid/);
+    assert.match(home, /getHomeFavorites|putHomeFavorites/);
+    assert.match(home, /onPinClick/);
     assert.doesNotMatch(home, /cm-home-columns/);
     assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);
     assert.doesNotMatch(home, /cm-home-grid--primary/);
