@@ -38,6 +38,14 @@ export const SHELL_NAV_CONTENT = {
   ariaLabel: "Áreas do Portal Comercial",
   scopeLabel: "Escopo",
   scopeHelpAriaLabel: "Ajuda: Escopo",
+  userMenu: {
+    nameFallback: "Usuário",
+    disabledAriaLabel: "Usuário sem carteira vinculada",
+    directAriaLabel: "Abrir Minha Carteira: {name}",
+    menuOpenAriaLabel: "Mais opções: escolher carteira",
+    menuCloseAriaLabel: "Fechar lista de carteiras",
+    menuAriaLabel: "Carteiras",
+  },
   homeHero: {
     eyebrow: "Portal Comercial",
     ariaLabel: "Saudação",

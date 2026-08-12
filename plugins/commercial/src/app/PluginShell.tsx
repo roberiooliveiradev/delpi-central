@@ -31,6 +31,7 @@ import {
   CommercialTopBar,
   CommercialViewTransition,
 } from "./commercialUi";
+import { ShellUserPortfolioMenu } from "./ShellUserPortfolioMenu";
 
 type PluginShellProps = {
   view: PluginView;
@@ -90,6 +91,7 @@ export function PluginShell({
 }: PluginShellProps) {
   const [myTasksBadge, setMyTasksBadge] = useState(0);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const homeMetrics = useHomeHeroMetricsOptional()?.metrics;
@@ -114,10 +116,15 @@ export function PluginShell({
     const controller = new AbortController();
     void fetchMeProfile(controller.signal)
       .then((profile) => {
-        setUserFirstName(firstNameFromDisplay(profile.name));
+        const name = (profile.name ?? "").trim();
+        setUserDisplayName(name || null);
+        setUserFirstName(firstNameFromDisplay(name));
       })
       .catch(() => {
-        if (!controller.signal.aborted) setUserFirstName(null);
+        if (!controller.signal.aborted) {
+          setUserDisplayName(null);
+          setUserFirstName(null);
+        }
       });
     return () => controller.abort();
   }, []);
@@ -237,6 +244,9 @@ export function PluginShell({
               : item.label,
             onSelect: () => navigatePluginView(item.id, { basePath }),
           }))}
+          actions={
+            <ShellUserPortfolioMenu basePath={basePath} displayName={userDisplayName} />
+          }
         />
 
         {showGreeting ? (

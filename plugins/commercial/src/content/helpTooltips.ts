@@ -342,7 +342,7 @@ export const CM_HELP = {
   },
   analytics: {
     portfolioFilter:
-      "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. Escopo no topo é identidade da sessão.",
+      "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. No topo, o menu do usuário abre Minha Carteira já filtrada.",
     filters:
       "Período, competência, filial, segmento e carteira aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
@@ -390,7 +390,7 @@ export const CM_HELP = {
     list: "Catálogo de propostas-documento. Clique na linha ou na proposta interna para abrir o detalhe.",
     search: "Busca por OV, proposta interna, oportunidade ou cliente.",
     scopeNote:
-      "O chip Escopo no topo identifica sua sessão de carteira; a lista de propostas documento não filtra por carteira — é o catálogo com permissão de propostas.",
+      "O menu do usuário no topo leva a Minha Carteira filtrada; a lista de propostas-documento não filtra por carteira — é o catálogo com permissão de propostas.",
     tableRowOpensDetail:
       "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.",
   },

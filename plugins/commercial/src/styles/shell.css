@@ -201,3 +201,68 @@
   max-width: 52rem;
   line-height: 1.45;
 }
+
+/* TopBar — usuário + atalho de carteira (slot ex-Escopo) */
+.cm-shell-user {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.cm-shell-user__trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(100%, 220px);
+  margin: 0;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cm-text, #111) 4%, transparent);
+  color: var(--cm-text, var(--text, #111));
+  font: inherit;
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  text-align: left;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+button.cm-shell-user__trigger:hover {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 28%, transparent);
+}
+
+button.cm-shell-user__trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.cm-shell-user--open .cm-shell-user__trigger {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 32%, transparent);
+}
+
+.cm-shell-user--disabled .cm-shell-user__trigger {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.cm-shell-user__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cm-shell-user__chevron {
+  flex: 0 0 auto;
+  opacity: 0.72;
+}
+
+.cm-shell-user--open .cm-shell-user__chevron {
+  transform: rotate(180deg);
+}
