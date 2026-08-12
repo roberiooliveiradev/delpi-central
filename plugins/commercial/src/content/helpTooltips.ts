@@ -207,7 +207,7 @@ export const CM_HELP = {
     },
     freshness: "Horário da última carga bem-sucedida desta página neste navegador.",
     portfolioEmpty:
-      "A carteira selecionada não tem clientes cadastrados. Quem gerencia carteiras pode incluir clientes em Gestão → Carteiras.",
+      "A carteira selecionada não tem clientes cadastrados. Quem gerencia carteiras pode incluir clientes em Administração.",
   },
   customers: {
     page:

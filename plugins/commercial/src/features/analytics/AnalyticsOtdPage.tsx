@@ -18,6 +18,7 @@ import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
+import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
 
@@ -112,6 +113,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
   return (
     <section className="cm-page-stack">
+      <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.otd.title} />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={ANALYTICS_CONTENT.otd.title}

@@ -18,6 +18,7 @@ import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProposal } from "../../types/analytics";
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
+import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import {
   buildAnalyticsOpportunityBackSearch,
@@ -118,6 +119,10 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
 
   return (
     <section className="cm-page-stack">
+      <AnalyticsDeepPagePath
+        basePath={basePath}
+        current={ANALYTICS_CONTENT.oportunidades.title}
+      />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={ANALYTICS_CONTENT.oportunidades.title}

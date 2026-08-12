@@ -17,6 +17,7 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SellerPortfolio } from "../../types/portfolio";
 import { formatCurrency } from "../../utils/format";
+import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 
 type TeamRow = {
   id: string;
@@ -141,6 +142,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
 
   return (
     <section className="cm-page-stack">
+      <AnalyticsDeepPagePath basePath={basePath} current={ANALYTICS_CONTENT.equipe.title} />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={ANALYTICS_CONTENT.equipe.title}

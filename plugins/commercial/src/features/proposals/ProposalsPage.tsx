@@ -18,6 +18,7 @@ import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type { ProposalDocumentListData, ProposalDocumentListItem } from "../../types/proposalsDocument";
+import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
 
 function filterProposalDocuments(
   items: ProposalDocumentListItem[],
@@ -97,6 +98,11 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
 
   return (
     <section className="cm-page-stack">
+      <AnalyticsDeepPagePath
+        basePath={basePath}
+        current={PROPOSALS_CONTENT.list.title}
+        backTo="home"
+      />
       <header className="cm-page-header-row">
         <CommercialTitleWithHelp
           title={PROPOSALS_CONTENT.list.title}
