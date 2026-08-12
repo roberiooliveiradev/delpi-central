@@ -12,29 +12,32 @@ import {
   CommercialLoadingCard,
   CommercialTitleWithHelp,
 } from "../../app/commercialUi";
-import { navigateAnalyticsOpportunityDetail } from "../../app/pluginNavigation";
+import { usePortfolioScope } from "../../app/PortfolioScopeContext";
+import { navigateAnalyticsOpportunityDetail, navigatePluginView } from "../../app/pluginNavigation";
+import type { PluginNavigationTarget } from "../../app/pluginRoutes";
 import { KpiCard } from "../../components/KpiCard";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { CommercialProposal } from "../../types/analytics";
 import { formatCurrency } from "../../utils/format";
 import { formatDisplayDate } from "../../utils/dates";
-import { AnalyticsFilters } from "./components/AnalyticsFilters";
-import { AnalyticsFunnelChart } from "./components/AnalyticsFunnelChart";
-import { AnalyticsRolSeriesChart } from "./components/AnalyticsRolSeriesChart";
-import { useAnalyticsDashboard } from "./hooks/useAnalyticsDashboard";
-import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
-import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
+import { AnalyticsFilters } from "../analytics/components/AnalyticsFilters";
+import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelChart";
+import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSeriesChart";
+import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
+import { useAnalyticsFilters } from "../analytics/hooks/useAnalyticsFilters";
+import { buildAnalyticsFilterSearchParams } from "../analytics/utils/analyticsFilterUrl";
 
 function formatPct(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 }
 
-type AnalyticsPageProps = {
+type OverviewPageProps = {
   basePath: string;
 };
 
-export function AnalyticsPage({ basePath }: AnalyticsPageProps) {
+export function OverviewPage({ basePath }: OverviewPageProps) {
+  const { canUseTeamScope } = usePortfolioScope();
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
   const [proposals, setProposals] = useState<CommercialProposal[]>([]);
@@ -68,6 +71,18 @@ export function AnalyticsPage({ basePath }: AnalyticsPageProps) {
     filters.apiParams.customer_segment,
   ]);
 
+  const filterSearch = buildAnalyticsFilterSearchParams(filters.filterState);
+  const openDrill = (view: PluginNavigationTarget) =>
+    navigatePluginView(view, { basePath, search: filterSearch });
+
+  const drills: Array<{ id: PluginNavigationTarget; label: string }> = [
+    { id: "analytics_otd", label: ANALYTICS_CONTENT.overview.drillOtd },
+    { id: "analytics_opportunities", label: ANALYTICS_CONTENT.overview.drillOpportunities },
+    ...(canUseTeamScope
+      ? [{ id: "analytics_team" as const, label: ANALYTICS_CONTENT.overview.drillTeam }]
+      : []),
+  ];
+
   const columns: DataTableColumn<CommercialProposal>[] = [
     {
       key: "proposal",
@@ -79,9 +94,7 @@ export function AnalyticsPage({ basePath }: AnalyticsPageProps) {
           onClick={() =>
             navigateAnalyticsOpportunityDetail(row.proposal_number, {
               basePath,
-              search: buildAnalyticsFilterSearchParams({
-                ...filters.filterState,
-              }),
+              search: filterSearch,
             })
           }
         >
@@ -131,6 +144,14 @@ export function AnalyticsPage({ basePath }: AnalyticsPageProps) {
         onCustomerSegment={filters.setCustomerSegment}
       />
 
+      <nav className="cm-overview-drills" aria-label={ANALYTICS_CONTENT.overview.drillsAriaLabel}>
+        {drills.map((drill) => (
+          <ActionButton key={drill.id} variant="ghost" onClick={() => openDrill(drill.id)}>
+            {drill.label}
+          </ActionButton>
+        ))}
+      </nav>
+
       <SectionCard
         title="Indicadores"
         hint={ANALYTICS_CONTENT.overview.filters}
@@ -144,7 +165,7 @@ export function AnalyticsPage({ basePath }: AnalyticsPageProps) {
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={dashboard.error} role="alert" />
         ) : null}
         {!dashboard.loading ? (
-          <div className="cm-home-kpi-grid" aria-label="KPIs de gestão">
+          <div className="cm-home-kpi-grid" aria-label="KPIs da visão geral">
             <KpiCard
               title="ROL vs meta"
               titleHint={ANALYTICS_CONTENT.overview.rolKpi}

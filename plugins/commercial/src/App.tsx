@@ -20,7 +20,7 @@ import { AnalyticsOpportunityDetailPage } from "./features/analytics/AnalyticsOp
 import { AnalyticsOpportunitiesPage } from "./features/analytics/AnalyticsOpportunitiesPage";
 import { AnalyticsOtdLineDetailPage } from "./features/analytics/AnalyticsOtdLineDetailPage";
 import { AnalyticsOtdPage } from "./features/analytics/AnalyticsOtdPage";
-import { AnalyticsPage } from "./features/analytics/AnalyticsPage";
+import { OverviewPage } from "./features/overview/OverviewPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
 import { OpenOrdersPage } from "./features/open-orders/OpenOrdersPage";
@@ -76,7 +76,6 @@ function AppRoutes({
       search={search}
       showAdmin={canManagePortfolios || isAdmin}
       showWorklist={canViewWorklist}
-      showProposals={canViewProposals}
       showAnalytics={canViewAnalytics}
       showCustomers={showCustomers}
       scopeLabel={scopeLabel}
@@ -92,7 +91,14 @@ function AppRoutes({
           canUseTeamScope={canUseTeamScope}
         />
       ) : null}
-      {view === "my_day" ? (
+      {view === "overview" ? (
+        canViewAnalytics ? (
+          <OverviewPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "my_tasks" ? (
         canViewWorklist ? <MyDayPage basePath={basePath} /> : <NotFoundPage basePath={basePath} />
       ) : null}
       {view === "open_orders" ? <OpenOrdersPage basePath={basePath} /> : null}
@@ -155,13 +161,6 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "analytics" ? (
-        canViewAnalytics ? (
-          <AnalyticsPage basePath={basePath} />
-        ) : (
-          <NotFoundPage basePath={basePath} />
-        )
-      ) : null}
       {view === "analytics_otd" ? (
         canViewAnalytics ? (
           <AnalyticsOtdPage basePath={basePath} />
@@ -209,7 +208,12 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "seller_portfolios" ? (
+      {/* Hub de Administração (Painel · Carteiras · Membros) entra em E2; até lá as três
+          rotas entregam a gestão de carteiras já existente. */}
+      {view === "administration" ||
+      view === "administration_portfolios" ||
+      view === "administration_members" ||
+      view === "seller_portfolios" ? (
         canManagePortfolios || isAdmin ? (
           <SellerPortfoliosPage basePath={basePath} />
         ) : (

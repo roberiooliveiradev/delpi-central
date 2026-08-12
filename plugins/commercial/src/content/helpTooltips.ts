@@ -5,16 +5,16 @@
 export const CM_HELP = {
   shell: {
     portal:
-      "Portal comercial: Início, Meu dia, pedidos, carteira, propostas, gestão e administração de vendedores — tudo no mesmo app.",
+      "Portal comercial: Início, Visão geral, Minhas tarefas, pedidos, carteira e administração de vendedores — tudo no mesmo app.",
     scope:
       "Identidade da sessão: mostra as carteiras em que você participa. Não é filtro — nas listas de pedidos e clientes use o seletor de carteira quando houver mais de uma opção.",
-    navHome: "Visão geral: alertas prioritários e atalhos para as áreas do portal.",
-    navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
+    navHome: "Alertas prioritários, eventos do dia e atalhos para as áreas do portal.",
+    navOverview:
+      "Indicadores comerciais do período: receita, conversão e pontualidade, com atalhos de aprofundamento.",
+    navMyTasks: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
     navCustomers:
       "Clientes das carteiras que você atende, com pedidos em aberto e indicadores comerciais.",
-    navProposals: "Propostas comerciais para consulta e emissão de PDF.",
-    navGestao: "KPIs, OTD, equipe e oportunidades comerciais no período filtrado.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },
   home: {

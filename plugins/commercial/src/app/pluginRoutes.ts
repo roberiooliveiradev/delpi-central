@@ -3,7 +3,8 @@ export const COMMERCIAL_BASE_PATH = "/apps/commercial";
 
 export type PluginView =
   | "home"
-  | "my_day"
+  | "overview"
+  | "my_tasks"
   | "open_orders"
   | "open_order_line_detail"
   | "open_order_op_detail"
@@ -11,24 +12,26 @@ export type PluginView =
   | "customer_detail"
   | "proposals"
   | "proposal_detail"
-  | "analytics"
   | "analytics_otd"
   | "analytics_otd_line"
   | "analytics_team"
   | "analytics_opportunities"
   | "analytics_opportunity_detail"
+  | "administration"
+  | "administration_portfolios"
+  | "administration_members"
   | "seller_portfolios"
   | "seller_portfolio_detail"
   | "not_found";
 
+/** Itens da navegação de topo (IA 2026 — seis áreas). */
 export type PluginNavId =
   | "home"
-  | "my_day"
+  | "overview"
+  | "my_tasks"
   | "open_orders"
   | "customers"
-  | "proposals"
-  | "analytics"
-  | "seller_portfolios";
+  | "administration";
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -83,8 +86,12 @@ export function resolvePluginRoute(
 
   const relativePath = path.slice(base.length + 1);
 
-  if (relativePath === "my-day") {
-    return { view: "my_day", pathname: path, relativePath };
+  if (relativePath === "my-tasks" || relativePath === "my-day") {
+    return { view: "my_tasks", pathname: path, relativePath };
+  }
+
+  if (relativePath === "overview") {
+    return { view: "overview", pathname: path, relativePath };
   }
 
   if (relativePath === "open-orders") {
@@ -140,6 +147,18 @@ export function resolvePluginRoute(
     return { view: "customers", pathname: path, relativePath };
   }
 
+  if (relativePath === "administration") {
+    return { view: "administration", pathname: path, relativePath };
+  }
+
+  if (relativePath === "administration/seller-portfolios") {
+    return { view: "administration_portfolios", pathname: path, relativePath };
+  }
+
+  if (relativePath === "administration/members") {
+    return { view: "administration_members", pathname: path, relativePath };
+  }
+
   if (relativePath === "seller-portfolios") {
     return { view: "seller_portfolios", pathname: path, relativePath };
   }
@@ -176,8 +195,9 @@ export function resolvePluginRoute(
     };
   }
 
+  // `/analytics` continua válido como caminho legado da Visão geral.
   if (relativePath === "analytics") {
-    return { view: "analytics", pathname: path, relativePath };
+    return { view: "overview", pathname: path, relativePath };
   }
 
   if (relativePath === "analytics/otd") {
@@ -225,17 +245,6 @@ export function resolvePluginRoute(
   }
 
 
-  // IA 2026 path aliases — páginas dedicadas ainda não existem; resolvem para as views atuais
-  if (relativePath === "overview") {
-    return { view: "analytics", pathname: path, relativePath };
-  }
-  if (relativePath === "my-tasks") {
-    return { view: "my_day", pathname: path, relativePath };
-  }
-  if (relativePath === "administration") {
-    return { view: "seller_portfolios", pathname: path, relativePath };
-  }
-
   // Legacy PT path aliases (pre-EN rename) — resolve to same views
   if (relativePath === "propostas") {
     return { view: "proposals", pathname: path, relativePath };
@@ -254,7 +263,7 @@ export function resolvePluginRoute(
     };
   }
   if (relativePath === "gestao") {
-    return { view: "analytics", pathname: path, relativePath };
+    return { view: "overview", pathname: path, relativePath };
   }
   if (relativePath === "gestao/otd") {
     return { view: "analytics_otd", pathname: path, relativePath };
@@ -334,14 +343,25 @@ export type BuildablePluginView = Exclude<
 
 /**
  * Vocabulário de navegação da arquitetura de informação 2026 (Início launcher,
- * Visão geral, Minhas tarefas, Administração). Enquanto as páginas dedicadas não
- * existem, os alvos novos apontam para as views atuais equivalentes.
+ * Visão geral, Minhas tarefas, Administração).
  */
-export type PluginNavigationTarget =
-  | BuildablePluginView
-  | "overview"
-  | "my_tasks"
-  | "administration";
+export type PluginNavigationTarget = BuildablePluginView;
+
+const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
+  home: "",
+  overview: "overview",
+  my_tasks: "my-tasks",
+  open_orders: "open-orders",
+  customers: "customers",
+  proposals: "proposals",
+  analytics_otd: "analytics/otd",
+  analytics_team: "analytics/team",
+  analytics_opportunities: "analytics/opportunities",
+  administration: "administration",
+  administration_portfolios: "administration/seller-portfolios",
+  administration_members: "administration/members",
+  seller_portfolios: "seller-portfolios",
+};
 
 export function buildPluginPath(
   view: PluginNavigationTarget,
@@ -349,26 +369,8 @@ export function buildPluginPath(
   search?: string,
 ): string {
   const base = normalizeBasePath(basePath);
-  const path =
-    view === "open_orders"
-      ? `${base}/open-orders`
-      : view === "customers"
-        ? `${base}/customers`
-        : view === "seller_portfolios" || view === "administration"
-          ? `${base}/seller-portfolios`
-          : view === "my_day" || view === "my_tasks"
-            ? `${base}/my-day`
-            : view === "proposals"
-              ? `${base}/proposals`
-              : view === "analytics" || view === "overview"
-                ? `${base}/analytics`
-                : view === "analytics_otd"
-                  ? `${base}/analytics/otd`
-                  : view === "analytics_team"
-                    ? `${base}/analytics/team`
-                    : view === "analytics_opportunities"
-                      ? `${base}/analytics/opportunities`
-                      : base;
+  const relative = PLUGIN_VIEW_RELATIVE_PATHS[view] ?? "";
+  const path = relative ? `${base}/${relative}` : base;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   if (normalizedSearch === "?") return path;
@@ -477,9 +479,9 @@ export function buildAnalyticsOtdLinePath(
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
-export function isAnalyticsView(view: PluginView): boolean {
+/** Páginas de diagnóstico profundo (drill da Visão geral), fora da navegação de topo. */
+export function isAnalyticsDeepView(view: PluginView): boolean {
   return (
-    view === "analytics" ||
     view === "analytics_otd" ||
     view === "analytics_otd_line" ||
     view === "analytics_team" ||
@@ -488,20 +490,31 @@ export function isAnalyticsView(view: PluginView): boolean {
   );
 }
 
-export function resolveActiveNavId(view: PluginView): PluginNavId {
+/**
+ * Item de topo destacado para a view atual. Páginas profundas (OTD, oportunidades,
+ * equipe, propostas) não pertencem à navegação de topo e ficam sem destaque.
+ */
+export function resolveActiveNavId(view: PluginView): PluginNavId | null {
   if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
   if (view === "customer_detail") return "customers";
-  if (view === "seller_portfolio_detail") return "seller_portfolios";
-  if (view === "proposal_detail") return "proposals";
-  if (isAnalyticsView(view)) return "analytics";
+  if (
+    view === "administration" ||
+    view === "administration_portfolios" ||
+    view === "administration_members" ||
+    view === "seller_portfolios" ||
+    view === "seller_portfolio_detail"
+  ) {
+    return "administration";
+  }
+  if (view === "proposals" || view === "proposal_detail") return null;
+  if (isAnalyticsDeepView(view)) return null;
   if (view === "not_found") return "home";
   if (
     view === "home" ||
-    view === "my_day" ||
+    view === "overview" ||
+    view === "my_tasks" ||
     view === "open_orders" ||
-    view === "customers" ||
-    view === "proposals" ||
-    view === "seller_portfolios"
+    view === "customers"
   ) {
     return view;
   }

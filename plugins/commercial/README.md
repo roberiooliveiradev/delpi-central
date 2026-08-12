@@ -19,8 +19,9 @@ Portal Minha DELPI
 
 | Rota | Descrição | Permissão |
 |------|-----------|-----------|
-| `/apps/commercial` | Início — hero + alertas + KPIs + teaser Gestão | `accounts.view` |
-| `/apps/commercial/my-day` | Meu dia — worklist | `worklist.view` |
+| `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `accounts.view` |
+| `/apps/commercial/overview` | Visão geral — KPIs, filtros, ROL, funil e drills | `analytics.view` |
+| `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `worklist.view` |
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
 | `/apps/commercial/open-orders/:filial/:pedido/:linha` | Ficha nativa da linha do pedido | `accounts.view` |
 | `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `accounts.view` |
@@ -28,14 +29,19 @@ Portal Minha DELPI
 | `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `accounts.view` |
 | `/apps/commercial/proposals` | Propostas documento (ADY) | `proposals.view` |
 | `/apps/commercial/proposals/:id` | Detalhe + PDF revisável | `proposals.view` |
-| `/apps/commercial/analytics` | Gestão — visão geral | `analytics.view` |
-| `/apps/commercial/analytics/otd` | Gestão — OTD | `analytics.view` |
-| `/apps/commercial/analytics/team` | Gestão — equipe | `analytics.view` (+ team) |
+| `/apps/commercial/analytics` (legado) | Redireciona para a Visão geral | `analytics.view` |
+| `/apps/commercial/analytics/otd` | Pontualidade (OTD) — drill da Visão geral | `analytics.view` |
+| `/apps/commercial/analytics/team` | Equipe — drill da Visão geral | `analytics.view` (+ team) |
 | `/apps/commercial/analytics/opportunities` | Oportunidades OV | `analytics.view` |
 | `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `analytics.view` |
+| `/apps/commercial/administration` | Administração — hub de carteiras | `seller-portfolios.manage` |
 | `/apps/commercial/seller-portfolios` | Carteiras (admin) | `seller-portfolios.manage` |
 
-Nav: `Início → Meu dia → Pedidos → Carteira → Propostas → Gestão → Carteiras†`
+Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
+(† `analytics.view` · ‡ `worklist.view` · ° `seller-portfolios.manage`). Propostas, OTD, Oportunidades
+e Equipe saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
+As rotas `/administration/seller-portfolios` e `/administration/members` já resolvem e, até o hub
+dedicado existir, entregam a gestão de carteiras atual.
 
 ## Pedidos em aberto
 
@@ -227,13 +233,13 @@ Somente codes canônicos `commercial.*` (aliases PVA / `api-delpi.access` / `com
 | Permissão | Escopo |
 |-----------|--------|
 | `commercial.accounts.view` | Portal / pedidos / conta |
-| `commercial.worklist.view` / `followups.manage` | Meu dia |
-| `commercial.seller-portfolios.manage` | CRUD Carteiras (`is_admin`) + escopo irrestrito |
+| `commercial.worklist.view` / `followups.manage` | Minhas tarefas |
+| `commercial.seller-portfolios.manage` | Administração / CRUD Carteiras (`is_admin`) + escopo irrestrito |
 | `commercial.audit.view` | Auditoria |
-| `commercial.analytics.view` | Gestão (visão geral, OTD, OV) |
+| `commercial.analytics.view` | Visão geral (KPIs, OTD, OV) |
 | `commercial.proposals.view` / `.export` | ADY + PDF (`/proposals/*`) |
-| `commercial.accounts.team.view` | Filtro multi-vendedor / Gestão Equipe |
-| `commercial.worklist.team.view` | Meu dia `scope=team` |
+| `commercial.accounts.team.view` | Filtro multi-vendedor / drill Equipe |
+| `commercial.worklist.team.view` | Minhas tarefas `scope=team` |
 
 Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Minha Carteira exige membership **ou** team/manage.
 
@@ -335,8 +341,8 @@ src/
   api/           — clients commercial-api / api-delpi
   app/           — rotas, shell, navegação, portfolio scope
   components/    — open-orders (tabela, conteúdo de detalhe, strips) e UI compartilhada
-  content/       — textos PT (help + analytics + proposals)
-  features/      — home, my-day, open-orders, customers, analytics, proposals, seller-portfolios
+  content/       — textos PT (help + nav de topo + launcher + analytics + proposals)
+  features/      — home, overview, my-day, open-orders, customers, analytics, proposals, seller-portfolios
   hooks/         — dashboard open-orders, extras do detalhe, layout
   pages/         — implementações de página (ex.: OpenOrdersPageImpl)
   utils/         — deep links, OV, timeline OP, formatação

@@ -121,6 +121,67 @@ describe("rotas nativas do pedido comercial", () => {
   });
 });
 
+describe("navegação da arquitetura de informação 2026", () => {
+  const base = "/apps/commercial";
+  const viewOf = (path) => resolvePluginRoute(`${base}${path}`, base).view;
+
+  it("Visão geral responde por /overview e pelos caminhos legados", () => {
+    assert.equal(viewOf("/overview"), "overview");
+    assert.equal(viewOf("/analytics"), "overview");
+    assert.equal(viewOf("/gestao"), "overview");
+    assert.equal(buildPluginPath("overview", base), `${base}/overview`);
+  });
+
+  it("Minhas tarefas responde por /my-tasks com alias /my-day", () => {
+    assert.equal(viewOf("/my-tasks"), "my_tasks");
+    assert.equal(viewOf("/my-day"), "my_tasks");
+    assert.equal(buildPluginPath("my_tasks", base), `${base}/my-tasks`);
+  });
+
+  it("Administração tem hub, carteiras e membros", () => {
+    assert.equal(viewOf("/administration"), "administration");
+    assert.equal(viewOf("/administration/seller-portfolios"), "administration_portfolios");
+    assert.equal(viewOf("/administration/members"), "administration_members");
+    assert.equal(viewOf("/seller-portfolios"), "seller_portfolios");
+    assert.equal(buildPluginPath("administration", base), `${base}/administration`);
+    assert.equal(
+      buildPluginPath("administration_portfolios", base),
+      `${base}/administration/seller-portfolios`,
+    );
+  });
+
+  it("destaca o item de topo certo e não destaca páginas profundas", () => {
+    assert.equal(resolveActiveNavId("overview"), "overview");
+    assert.equal(resolveActiveNavId("my_tasks"), "my_tasks");
+    assert.equal(resolveActiveNavId("seller_portfolios"), "administration");
+    assert.equal(resolveActiveNavId("seller_portfolio_detail"), "administration");
+    assert.equal(resolveActiveNavId("administration_members"), "administration");
+    for (const deepView of [
+      "analytics_otd",
+      "analytics_otd_line",
+      "analytics_team",
+      "analytics_opportunities",
+      "analytics_opportunity_detail",
+      "proposals",
+      "proposal_detail",
+    ]) {
+      assert.equal(resolveActiveNavId(deepView), null, deepView);
+    }
+  });
+
+  it("shell e App entregam as páginas novas", async () => {
+    const [shell, app] = await Promise.all([
+      readFile(new URL("./PluginShell.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../App.tsx", import.meta.url), "utf8"),
+    ]);
+    assert.match(app, /view === "overview"/);
+    assert.match(app, /<OverviewPage/);
+    assert.match(app, /view === "my_tasks"/);
+    assert.match(app, /view === "administration"/);
+    assert.doesNotMatch(shell, /AnalyticsSubNav/);
+  });
+});
+
 describe("estrutura dos detalhes de linha e OP", () => {
   it("as duas páginas compartilham o conteúdo operacional integral", async () => {
     const [linePage, opPage, content, app, table, otdPanel, otdUtils] = await Promise.all([
@@ -194,7 +255,7 @@ describe("estrutura dos detalhes de linha e OP", () => {
     const files = await Promise.all(
       [
         "../features/analytics/AnalyticsOpportunitiesPage.tsx",
-        "../features/analytics/AnalyticsPage.tsx",
+        "../features/overview/OverviewPage.tsx",
         "../components/OpenOrdersProductionDetailContent.tsx",
       ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
     );

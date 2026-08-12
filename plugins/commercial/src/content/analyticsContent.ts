@@ -6,8 +6,12 @@ export const ANALYTICS_CONTENT = {
     oportunidades: "Oportunidades",
   },
   overview: {
-    title: "Gestão comercial",
+    title: "Visão geral",
     subtitle: "KPIs, evolução de ROL, funil de conversão e resumo de OVs.",
+    drillsAriaLabel: "Aprofundar a análise",
+    drillOtd: "Pontualidade (OTD)",
+    drillOpportunities: "Oportunidades",
+    drillTeam: "Equipe",
     filters: "Período, filial e segmento aplicados a todos os painéis de gestão.",
     rolKpi: "ROL da matriz versus meta no período filtrado.",
     branchRolKpi: "ROL da filial selecionada versus meta.",

@@ -162,7 +162,7 @@ export function CustomerDetailPage({
           customer_code: codigo,
           customer_store: loja,
         });
-        navigatePluginView("my_day", {
+        navigatePluginView("my_tasks", {
           basePath,
           search: `?${params.toString()}`,
         });

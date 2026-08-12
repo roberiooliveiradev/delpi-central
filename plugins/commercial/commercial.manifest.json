@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "commercial",
   "name": "Portal Comercial",
-  "description": "Portal comercial nativo: carteira, pedidos, Meu dia, Gestão à vista e propostas documento.",
+  "description": "Portal comercial nativo: início, visão geral, minhas tarefas, pedidos, carteira e administração de carteiras.",
   "icon": "briefcase",
   "version": "0.3.1",
   "type": "microfrontend",
@@ -17,8 +17,8 @@
     },
     {
       "code": "commercial.worklist.view",
-      "name": "Ver Meu dia / worklist",
-      "description": "Acessar Meu dia, worklist e listagem de tarefas do vendedor.",
+      "name": "Ver Minhas tarefas / worklist",
+      "description": "Acessar Minhas tarefas, worklist e listagem de tarefas do vendedor.",
       "module": "commercial"
     },
     {
@@ -41,8 +41,8 @@
     },
     {
       "code": "commercial.analytics.view",
-      "name": "Ver Gestão à vista",
-      "description": "Acesso à área Gestão (visão geral, OTD, oportunidades OV).",
+      "name": "Ver Visão geral",
+      "description": "Acesso à Visão geral e às análises de OTD e oportunidades OV.",
       "module": "commercial"
     },
     {
@@ -66,7 +66,7 @@
     {
       "code": "commercial.worklist.team.view",
       "name": "Ver worklist da equipe",
-      "description": "Meu dia com escopo equipe (scope=team).",
+      "description": "Minhas tarefas com escopo equipe (scope=team).",
       "module": "commercial"
     }
   ],
@@ -80,11 +80,27 @@
       "showInMenu": true
     },
     {
-      "path": "/apps/commercial/my-day",
-      "label": "Meu dia",
+      "path": "/apps/commercial/overview",
+      "label": "Visão geral",
+      "permission": "commercial.analytics.view",
+      "icon": "bar-chart-2",
+      "order": 14,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/my-tasks",
+      "label": "Minhas tarefas",
       "permission": "commercial.worklist.view",
       "icon": "calendar-check",
-      "order": 14,
+      "order": 15,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/my-day",
+      "label": "Minhas tarefas",
+      "permission": "commercial.worklist.view",
+      "icon": "calendar-check",
+      "order": 16,
       "showInMenu": false
     },
     {
@@ -92,7 +108,7 @@
       "label": "Meus pedidos",
       "permission": "commercial.accounts.view",
       "icon": "clipboard-list",
-      "order": 15,
+      "order": 17,
       "showInMenu": false
     },
     {
@@ -100,7 +116,7 @@
       "label": "Minha Carteira",
       "permission": "commercial.accounts.view",
       "icon": "users",
-      "order": 16,
+      "order": 18,
       "showInMenu": false
     },
     {
@@ -108,31 +124,31 @@
       "label": "Propostas",
       "permission": "commercial.proposals.view",
       "icon": "file-text",
-      "order": 17,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/commercial/analytics",
-      "label": "Gestão",
-      "permission": "commercial.analytics.view",
-      "icon": "bar-chart-2",
-      "order": 18,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/commercial/analytics/otd",
-      "label": "Gestão OTD",
-      "permission": "commercial.analytics.view",
-      "icon": "clock",
       "order": 19,
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/analytics",
+      "label": "Visão geral",
+      "permission": "commercial.analytics.view",
+      "icon": "bar-chart-2",
+      "order": 20,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/analytics/otd",
+      "label": "Pontualidade (OTD)",
+      "permission": "commercial.analytics.view",
+      "icon": "clock",
+      "order": 21,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/analytics/team",
-      "label": "Gestão Equipe",
+      "label": "Equipe",
       "permission": "commercial.accounts.team.view",
       "icon": "users",
-      "order": 20,
+      "order": 22,
       "showInMenu": false
     },
     {
@@ -140,7 +156,15 @@
       "label": "Oportunidades",
       "permission": "commercial.analytics.view",
       "icon": "target",
-      "order": 21,
+      "order": 23,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration",
+      "label": "Administração",
+      "permission": "commercial.seller-portfolios.manage",
+      "icon": "settings",
+      "order": 24,
       "showInMenu": false
     },
     {
@@ -148,7 +172,7 @@
       "label": "Carteiras",
       "permission": "commercial.seller-portfolios.manage",
       "icon": "settings",
-      "order": 22,
+      "order": 25,
       "showInMenu": false
     }
   ],
