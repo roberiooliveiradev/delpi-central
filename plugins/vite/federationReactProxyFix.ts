@@ -31,19 +31,36 @@ type VitePlugin = {
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
 /**
- * React canônico para MF: basta expor `useRef`.
+ * React canônico para MF: exige hooks usados em runtime pelos chunks remotos.
  *
  * **Não** exigir `internals.H != null` — H (dispatcher) só é preenchido *durante*
  * o render. Chunks TipTap/recharts (ex.: `ContextMenuToolbarButton-*.js`) chamam o
  * bridge CJS no *init* do módulo; com o check de H o global era rejeitado e o
  * shim caía no React bundled → `Cannot access property "useRef", f.H is null`.
+ *
+ * Exigir `useMemo` + `useState` além de `useRef` — um global só com `useRef`
+ * (guard antigo) quebrava `const {useMemo:BA}=await O("react")` →
+ * `BA is not a function` na página pública de assinatura.
  */
-export function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
-  return typeof (mod as { useRef?: unknown })?.useRef === "function";
+export function isUsableReact(mod: unknown): mod is {
+  useRef: (...args: unknown[]) => unknown;
+  useMemo: (...args: unknown[]) => unknown;
+  useState: (...args: unknown[]) => unknown;
+} {
+  const m = mod as {
+    useRef?: unknown;
+    useMemo?: unknown;
+    useState?: unknown;
+  } | null;
+  return (
+    typeof m?.useRef === "function" &&
+    typeof m?.useMemo === "function" &&
+    typeof m?.useState === "function"
+  );
 }
 
 /** Guard runtime: preferir global semeado pelo portal/MFE (sem checar H). */
-const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function")`;
+const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function"&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useMemo=="function"&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useState=="function")`;
 
 /** Publica React canônico — não sobrescreve instância já semeada (primeiro vence). */
 export function publishDelpiMfReact(react: unknown): void {
@@ -263,7 +280,7 @@ export function patchBundledReactCjsBridge(code: string): string {
   }
   return code.replace(
     fnStart,
-    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function")return __g;return`,
+    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function"&&typeof __g.useMemo=="function"&&typeof __g.useState=="function")return __g;return`,
   );
 }
 

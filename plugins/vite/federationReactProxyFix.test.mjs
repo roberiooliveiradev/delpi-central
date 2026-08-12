@@ -26,6 +26,8 @@ const REACT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT
 function portalReact() {
   return {
     useRef: () => "portal",
+    useMemo: (fn) => fn(),
+    useState: (v) => [v, () => undefined],
     [REACT_INTERNALS]: { H: {} },
   };
 }
@@ -33,7 +35,15 @@ function portalReact() {
 function brokenFlattenReact() {
   return {
     useRef: () => "broken",
+    useMemo: (fn) => fn(),
+    useState: (v) => [v, () => undefined],
     [REACT_INTERNALS]: { H: null },
+  };
+}
+
+function incompleteReactOnlyUseRef() {
+  return {
+    useRef: () => "partial",
   };
 }
 
@@ -65,7 +75,7 @@ function testFlattenFromBrokenProxy() {
 function testFlattenRuntimeStrict() {
   const code = patchFederationImportPublishReact(patchFederationFlattenModule(UNPATCHED_H));
   const result = new Function(
-    `const w={}; const mock={useRef:()=>"ok",__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE:{H:{}}}; ${code}; return H({ default: mock }, "react");`,
+    `const w={}; const mock={useRef:()=>"ok",useMemo:(f)=>f(),useState:(v)=>[v,()=>{}],__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE:{H:{}}}; ${code}; return H({ default: mock }, "react");`,
   )();
   assert.equal(typeof result.useRef, "function");
   assert.ok(isUsableReact(globalThis[DELPI_MF_REACT_GLOBAL]));
@@ -76,6 +86,8 @@ function testReactShimUsesGlobal() {
   const out = patchBundledReactCjsBridge(REACT_SHIM);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "shim consulta global");
   assert.ok(out.includes('typeof __g.useRef=="function"'), "shim valida useRef");
+  assert.ok(out.includes('typeof __g.useMemo=="function"'), "shim valida useMemo");
+  assert.ok(out.includes('typeof __g.useState=="function"'), "shim valida useState");
   assert.ok(!out.includes(`${REACT_INTERNALS}?.H`), "shim não exige H (null fora do render)");
 }
 
@@ -90,6 +102,7 @@ function testUsableReactAcceptsModuleOutsideRender() {
   // H=null é o estado normal fora do render — ainda é React canônico.
   assert.ok(isUsableReact(brokenFlattenReact()));
   assert.ok(isUsableReact(portalReact()));
+  assert.ok(!isUsableReact(incompleteReactOnlyUseRef()), "só useRef não basta (BA/useMemo)");
   assert.ok(!isUsableReact(notReact()));
   assert.ok(!isUsableReact(null));
 }
@@ -111,6 +124,8 @@ function testAppChunkReactBridgeFallback() {
   const out = patchBundledReactConsumerChunk(raw);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "App shim consulta global");
   assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useRef=="function"'), "App shim valida useRef");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useMemo=="function"'), "App shim valida useMemo");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useState=="function"'), "App shim valida useState");
   assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
 }
 
@@ -119,6 +134,7 @@ function testRichTextChunkReactBridgeFallback() {
   const raw = String.raw`import{r as US}from"./index-B4SFKWmm.js";var Jm;function YR(){if(Jm)return Vc;Jm=1;var e=US();return e.useRef}`;
   const out = patchBundledReactConsumerChunk(raw);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "chunk rich-text consulta global");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useMemo=="function"'), "rich-text valida useMemo");
   assert.ok(!out.includes("var e=US()"), "não chama US() sem fallback");
 }
 
