@@ -19,7 +19,7 @@ export const CM_HELP = {
   },
   home: {
     overview:
-      "Saudação personalizada, seguida pelo escopo atual da carteira e pelos alertas prioritários.",
+      "Saudação personalizada, escopo da carteira e KPIs operacionais (follow-ups, valor aberto, atrasos) — sem BI do período.",
     alerts:
       "Eventos e interações do seu dia: alertas da carteira e as primeiras tarefas da fila — os atalhos levam direto a Pedidos ou Minhas tarefas.",
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",

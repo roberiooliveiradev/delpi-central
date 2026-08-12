@@ -119,11 +119,14 @@ export function PluginShell({
   const greeting = greetingForNow();
   const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
 
+  const heroCopy = SHELL_NAV_CONTENT.homeHero;
+  const lateCount =
+    homeMetrics?.ready && homeMetrics.atrasos != null ? homeMetrics.atrasos : null;
   const followUpsValue =
     homeMetrics?.ready && homeMetrics.followUps != null
       ? homeMetrics.followUps > 0
         ? `${homeMetrics.followUps.toLocaleString("pt-BR")} na fila`
-        : "Em dia"
+        : heroCopy.highlights.followUpsClear
       : myTasksBadge > 0
         ? `${myTasksBadge} na fila`
         : "—";
@@ -132,25 +135,24 @@ export function PluginShell({
       ? formatCurrency(homeMetrics.valorAberto)
       : "—";
   const atrasosValue =
-    homeMetrics?.ready && homeMetrics.atrasos != null
-      ? homeMetrics.atrasos.toLocaleString("pt-BR")
-      : "—";
+    lateCount != null ? lateCount.toLocaleString("pt-BR") : "—";
 
   const heroHighlights = [
     {
       id: "follow-ups",
-      label: "Follow-ups",
+      label: heroCopy.highlights.followUps,
       value: followUpsValue,
     },
     {
       id: "open-value",
-      label: "Valor em aberto",
+      label: heroCopy.highlights.openValue,
       value: valorValue,
     },
     {
       id: "late",
-      label: "Atrasos",
+      label: heroCopy.highlights.late,
       value: atrasosValue,
+      tone: lateCount != null && lateCount > 0 ? ("warning" as const) : ("neutral" as const),
     },
   ];
 
@@ -160,15 +162,15 @@ export function PluginShell({
         {showGreeting ? (
           <CommercialViewTransition transitionKey="home-hero" tone="page">
             <CommercialPageHero
-              aria-label="Saudação"
-              eyebrow="Portal Comercial"
+              aria-label={heroCopy.ariaLabel}
+              eyebrow={heroCopy.eyebrow}
               title={
                 <>
                   {heroTitle}
-                  <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
+                  <HelpTooltip content={CM_HELP.home.overview} ariaLabel={heroCopy.helpAriaLabel} />
                 </>
               }
-              description="Bem vindo ao Portal Comercial! Alertas e números da carteira abaixo — use a navegação para operar."
+              description={heroCopy.description}
               badge={
                 scopeLabel ? (
                   <StatusBadge
@@ -179,7 +181,7 @@ export function PluginShell({
                 ) : (
                   <StatusBadge
                     classNames={cmStatusBadgeClassNames}
-                    label="Carteira própria"
+                    label={heroCopy.scopeOwn}
                     variant="neutral"
                   />
                 )

@@ -38,4 +38,18 @@ export const SHELL_NAV_CONTENT = {
   ariaLabel: "Áreas do Portal Comercial",
   scopeLabel: "Escopo",
   scopeHelpAriaLabel: "Ajuda: Escopo",
+  homeHero: {
+    eyebrow: "Portal Comercial",
+    ariaLabel: "Saudação",
+    description:
+      "Acompanhe a fila do dia e abra as funcionalidades — indicadores do período ficam na Visão geral.",
+    scopeOwn: "Carteira própria",
+    helpAriaLabel: "Ajuda: Início",
+    highlights: {
+      followUps: "Follow-ups",
+      followUpsClear: "Em dia",
+      openValue: "Valor em aberto",
+      late: "Atrasos",
+    },
+  },
 } as const;

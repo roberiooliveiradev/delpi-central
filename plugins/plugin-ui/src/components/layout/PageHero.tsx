@@ -2,10 +2,14 @@ import type { ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
+export type PageHeroHighlightTone = "neutral" | "warning" | "danger";
+
 export type PageHeroHighlight = {
   id: string;
   label: ReactNode;
   value: ReactNode;
+  /** Tom visual do tile (ex.: atrasos > 0 → warning). */
+  tone?: PageHeroHighlightTone;
 };
 
 export type PageHeroClassNames = {
@@ -20,6 +24,7 @@ export type PageHeroClassNames = {
   actions: string;
   highlights: string;
   highlight: string;
+  highlightTone: (tone: Exclude<PageHeroHighlightTone, "neutral">) => string;
   highlightLabel: string;
   highlightValue: string;
   body: string;
@@ -41,36 +46,29 @@ export type PageHeroProps = {
 };
 
 export function pageHeroBemClasses(prefix: string): PageHeroClassNames {
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  const base = `${prefix}-page-hero`;
+  const ui = "delpi-ui-page-hero";
   return {
-    root: delpiUiClass(`${prefix}-page-hero`, "delpi-ui-page-hero"),
-    glow: delpiUiClass(`${prefix}-page-hero__glow`, "delpi-ui-page-hero__glow"),
-    content: delpiUiClass(`${prefix}-page-hero__content`, "delpi-ui-page-hero__content"),
-    eyebrow: delpiUiClass(`${prefix}-page-hero__eyebrow`, "delpi-ui-page-hero__eyebrow"),
-    headline: delpiUiClass(`${prefix}-page-hero__headline`, "delpi-ui-page-hero__headline"),
-    title: delpiUiClass(`${prefix}-page-hero__title`, "delpi-ui-page-hero__title"),
-    description: delpiUiClass(
-      `${prefix}-page-hero__description`,
-      "delpi-ui-page-hero__description",
-    ),
-    badge: delpiUiClass(`${prefix}-page-hero__badge`, "delpi-ui-page-hero__badge"),
-    actions: delpiUiClass(`${prefix}-page-hero__actions`, "delpi-ui-page-hero__actions"),
-    highlights: delpiUiClass(
-      `${prefix}-page-hero__highlights`,
-      "delpi-ui-page-hero__highlights",
-    ),
-    highlight: delpiUiClass(
-      `${prefix}-page-hero__highlight`,
-      "delpi-ui-page-hero__highlight",
-    ),
-    highlightLabel: delpiUiClass(
-      `${prefix}-page-hero__highlight-label`,
-      "delpi-ui-page-hero__highlight-label",
-    ),
-    highlightValue: delpiUiClass(
-      `${prefix}-page-hero__highlight-value`,
-      "delpi-ui-page-hero__highlight-value",
-    ),
-    body: delpiUiClass(`${prefix}-page-hero__body`, "delpi-ui-page-hero__body"),
+    root: pair(base, ui),
+    glow: pair(`${base}__glow`, `${ui}__glow`),
+    content: pair(`${base}__content`, `${ui}__content`),
+    eyebrow: pair(`${base}__eyebrow`, `${ui}__eyebrow`),
+    headline: pair(`${base}__headline`, `${ui}__headline`),
+    title: pair(`${base}__title`, `${ui}__title`),
+    description: pair(`${base}__description`, `${ui}__description`),
+    badge: pair(`${base}__badge`, `${ui}__badge`),
+    actions: pair(`${base}__actions`, `${ui}__actions`),
+    highlights: pair(`${base}__highlights`, `${ui}__highlights`),
+    highlight: pair(`${base}__highlight`, `${ui}__highlight`),
+    highlightTone: (tone) =>
+      pair(
+        `${base}__highlight ${base}__highlight--${tone}`,
+        `${ui}__highlight ${ui}__highlight--${tone}`,
+      ),
+    highlightLabel: pair(`${base}__highlight-label`, `${ui}__highlight-label`),
+    highlightValue: pair(`${base}__highlight-value`, `${ui}__highlight-value`),
+    body: pair(`${base}__body`, `${ui}__body`),
   };
 }
 
@@ -102,12 +100,16 @@ export function PageHero({
         {description ? <p className={classNames.description}>{description}</p> : null}
         {hasHighlights ? (
           <div className={classNames.highlights}>
-            {highlights!.map((item) => (
-              <div key={item.id} className={classNames.highlight}>
-                <span className={classNames.highlightLabel}>{item.label}</span>
-                <span className={classNames.highlightValue}>{item.value}</span>
-              </div>
-            ))}
+            {highlights!.map((item) => {
+              const tone = item.tone && item.tone !== "neutral" ? item.tone : null;
+              const tileClass = tone ? classNames.highlightTone(tone) : classNames.highlight;
+              return (
+                <div key={item.id} className={tileClass} data-tone={item.tone ?? "neutral"}>
+                  <span className={classNames.highlightLabel}>{item.label}</span>
+                  <span className={classNames.highlightValue}>{item.value}</span>
+                </div>
+              );
+            })}
           </div>
         ) : null}
         {children ? <div className={classNames.body}>{children}</div> : null}

@@ -308,6 +308,7 @@ export {
   type DashboardPageHeroProps,
   type PageHeroClassNames,
   type PageHeroHighlight,
+  type PageHeroHighlightTone,
   type PageHeroProps,
 } from "./PageHero";
 export {

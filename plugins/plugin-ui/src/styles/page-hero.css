@@ -122,6 +122,32 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+.delpi-ui-page-hero__highlight--warning {
+  border-color: color-mix(in srgb, var(--delpi-ui-warning, #d97706) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #d97706) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-page-hero__highlight--warning .delpi-ui-page-hero__highlight-value {
+  color: var(--delpi-ui-warning, #d97706);
+}
+
+.delpi-ui-page-hero__highlight--danger {
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #dc2626) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #dc2626) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-page-hero__highlight--danger .delpi-ui-page-hero__highlight-value {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
 .delpi-ui-page-hero__body {
   display: flex;
   flex-direction: column;

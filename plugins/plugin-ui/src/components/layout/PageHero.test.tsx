@@ -29,6 +29,20 @@ describe("PageHero", () => {
     expect(screen.getByText("10")).toBeTruthy();
   });
 
+  it("aplica tone warning no highlight", () => {
+    const cn = pageHeroBemClasses("cm");
+    const { container } = render(
+      <PageHero
+        classNames={cn}
+        title="Início"
+        highlights={[{ id: "late", label: "Atrasos", value: "3", tone: "warning" }]}
+      />,
+    );
+    const tile = container.querySelector("[data-tone='warning']");
+    expect(tile?.className).toContain("delpi-ui-page-hero__highlight--warning");
+    expect(tile?.className).toContain("cm-page-hero__highlight--warning");
+  });
+
   it("renderiza actions e children no body", () => {
     const cn = pageHeroBemClasses("cm");
     render(
