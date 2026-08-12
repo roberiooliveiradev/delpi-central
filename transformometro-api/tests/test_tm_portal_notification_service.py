@@ -43,7 +43,7 @@ def test_send_builds_core_contract_with_user_ids_and_portal_route():
     assert body["action"] == {
         "type": "portal_route",
         "label": "Assinar ata",
-        "target": "/apps/transformometro/atas/minute-1/sign",
+        "target": "/apps/transformometro/meeting-minutes/minute-1/sign",
     }
     assert body["metadata"]["event"] == EVENT_SIGN_PENDING
     assert body["metadata"]["dedupeKey"] == "tm:sign_pending:minute-1:user-1"
@@ -80,8 +80,8 @@ def test_signed_and_refused_deep_link_to_detail():
 
     targets = [call.kwargs["json"]["action"]["target"] for call in post.call_args_list]
     assert targets == [
-        "/apps/transformometro/atas/m1",
-        "/apps/transformometro/atas/m1",
+        "/apps/transformometro/meeting-minutes/m1",
+        "/apps/transformometro/meeting-minutes/m1",
     ]
     events = [call.kwargs["json"]["metadata"]["event"] for call in post.call_args_list]
     assert events == [EVENT_MINUTE_SIGNED, EVENT_MINUTE_REFUSED]

@@ -7,11 +7,12 @@ import httpx
 
 from tm_app.config import settings
 
-logger = logging.getLogger("transformometro.atas.notifications")
+logger = logging.getLogger("transformometro.meeting_minutes.notifications")
 
 _SOURCE_APP = "transformometro"
 _CATEGORY = "transformometro"
 _APP_BASE = "/apps/transformometro"
+
 
 EVENT_SIGN_PENDING = "tm_minute_sign_pending"
 EVENT_MINUTE_SIGNED = "tm_minute_signed"
@@ -37,10 +38,10 @@ class TmPortalNotificationService:
         )
 
     def minute_sign_route(self, minute_id: str) -> str:
-        return f"{_APP_BASE}/atas/{minute_id}/sign"
+        return f"{_APP_BASE}/meeting-minutes/{minute_id}/sign"
 
     def minute_detail_route(self, minute_id: str) -> str:
-        return f"{_APP_BASE}/atas/{minute_id}"
+        return f"{_APP_BASE}/meeting-minutes/{minute_id}"
 
     def send(
         self,
