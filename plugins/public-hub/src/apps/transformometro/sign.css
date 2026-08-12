@@ -122,30 +122,6 @@
   line-height: 1.45;
 }
 
-.tm-sign__pad {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.tm-sign__canvas {
-  width: 100%;
-  max-width: 40rem;
-  height: auto;
-  aspect-ratio: 640 / 220;
-  border: 1px dashed var(--pub-card-border);
-  border-radius: 0.65rem;
-  background: #fff;
-  touch-action: none;
-  cursor: crosshair;
-}
-
-.tm-sign__pad-hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--pub-text-muted);
-}
-
 .tm-sign__actions {
   display: flex;
   flex-wrap: wrap;
