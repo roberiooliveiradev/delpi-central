@@ -24,12 +24,12 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | `commercial.accounts.view` | Acessar Portal Comercial | Início, Meus pedidos, conta; Minha Carteira só com membership ou team/manage |
 | `commercial.worklist.view` | Ver Meu dia | `/my-day`, worklist |
 | `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
-| `commercial.seller-portfolios.manage` | Administrar carteiras | CRUD `/seller-portfolios`; `is_admin`; escopo irrestrito na api-delpi |
+| `commercial.seller-portfolios.manage` | Administrar carteiras | CRUD `/seller-portfolios`; `is_admin`; escopo irrestrito (consolidado) |
 | `commercial.audit.view` | Ver auditoria | quando exposta |
 | `commercial.analytics.view` | Ver Gestão à vista | `/analytics`, OTD, oportunidades OV (**não** Equipe sozinha) |
 | `commercial.proposals.view` | Ver propostas documento | `/proposals` lista/detalhe ADY |
 | `commercial.proposals.export` | Exportar PDF proposta | POST PDF com overrides |
-| `commercial.accounts.team.view` | Ver carteira da equipe | filtro equipe; Gestão Equipe — **sem** CRUD |
+| `commercial.accounts.team.view` | Ver carteira da equipe | filtro equipe + **escopo consolidado** (sem membership); Gestão Equipe — **sem** CRUD |
 | `commercial.worklist.team.view` | Ver worklist da equipe | Meu dia `scope=team` |
 
 **Home** usa `accounts.view`. **Não** existem `otd.view` / `opportunities.view` separados — cobertos por `analytics.view`.

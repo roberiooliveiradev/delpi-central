@@ -11,19 +11,26 @@ from app.application.security.api_delpi_permissions import (
 
 def current_user_id() -> str:
     user = get_current_user()
-    return str(getattr(user, "id", "") or "").strip()
+    if user is None:
+        return ""
+    for key in ("id", "sub", "user_id"):
+        value = getattr(user, key, None)
+        if value:
+            return str(value).strip()
+    return ""
 
 
 def is_portfolio_unrestricted() -> bool:
-    """Somente manage canônico — vê todas as carteiras sem filtro de membership."""
+    """manage ou team.view — consolidado sem membership (alinhado commercial-api)."""
     user = get_current_user()
-    return has_permission(user, COMMERCIAL_SELLER_PORTFOLIOS_MANAGE)
+    return has_permission(user, COMMERCIAL_SELLER_PORTFOLIOS_MANAGE) or has_permission(
+        user, COMMERCIAL_ACCOUNTS_TEAM_VIEW
+    )
 
 
 def can_filter_by_seller_id() -> bool:
     """team.view ou manage — permite query seller_id nos pedidos em aberto."""
-    user = get_current_user()
-    return is_portfolio_unrestricted() or has_permission(user, COMMERCIAL_ACCOUNTS_TEAM_VIEW)
+    return is_portfolio_unrestricted()
 
 
 def is_portfolio_admin() -> bool:

@@ -65,7 +65,28 @@ class PostgresCommercialSellerPortfolioRepository(
             """,
             (user_id,),
         )
-        return [portfolio for row in rows if (portfolio := self._hydrate(row)) is not None]
+        portfolios = [
+            portfolio for row in rows if (portfolio := self._hydrate(row)) is not None
+        ]
+        if portfolios:
+            return portfolios
+        # Fallback: coluna user_id (owner legado) quando membership ainda não backfillou.
+        where_owner_active = "AND active = TRUE" if active_only else ""
+        owner_rows = self.fetch_all(
+            f"""
+            SELECT {_PORTFOLIO_COLUMNS}
+              FROM commercial.seller_portfolios
+             WHERE user_id = %s
+               {where_owner_active}
+             ORDER BY active DESC, display_name ASC
+            """,
+            (user_id,),
+        )
+        return [
+            portfolio
+            for row in owner_rows
+            if (portfolio := self._hydrate(row)) is not None
+        ]
 
     def list_sellers(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         if active_only:
@@ -94,16 +115,35 @@ class PostgresCommercialSellerPortfolioRepository(
         display_name: str,
         created_by_user_id: str | None,
     ) -> SellerPortfolio:
-        row = self.execute_returning_one(
-            f"""
-            INSERT INTO commercial.seller_portfolios (
-                user_id, display_name, created_by_user_id
-            ) VALUES (%s, %s, %s)
-            RETURNING {_PORTFOLIO_COLUMNS}
-            """,
-            (user_id, display_name, created_by_user_id),
-        )
-        portfolio = self._hydrate(row)
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    INSERT INTO commercial.seller_portfolios (
+                        user_id, display_name, created_by_user_id
+                    ) VALUES (%s, %s, %s)
+                    RETURNING {_PORTFOLIO_COLUMNS}
+                    """,
+                    (user_id, display_name, created_by_user_id),
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise RuntimeError("Falha ao criar carteira de vendedor.")
+                portfolio_row = dict(row)
+                cursor.execute(
+                    """
+                    INSERT INTO commercial.seller_portfolio_members (
+                        seller_portfolio_id, user_id, role
+                    ) VALUES (%s, %s, 'owner')
+                    ON CONFLICT (seller_portfolio_id, user_id) DO NOTHING
+                    """,
+                    (str(portfolio_row["id"]), user_id),
+                )
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+        portfolio = self._hydrate(portfolio_row)
         if portfolio is None:
             raise RuntimeError("Falha ao criar carteira de vendedor.")
         return portfolio

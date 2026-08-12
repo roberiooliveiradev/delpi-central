@@ -133,14 +133,12 @@ class BillingSeriesBody(BaseModel):
 
 def _resolve_scope(seller_id: Optional[str] = None):
     """Legado PVA: membership JWT + dual-read commercial. Portal usa commercial-api BFF."""
-    can_filter = can_filter_by_seller_id()
     seller_filter = (seller_id or "").strip() or None
-    # team.view pode filtrar uma carteira; manage sem filtro vê consolidado.
-    unrestricted = is_portfolio_unrestricted() or (can_filter and bool(seller_filter))
+    # manage | team.view = consolidado; seller_id filtra uma carteira (team/manage).
     return build_resolve_portfolio_scope_use_case().execute(
         user_id=current_user_id(),
-        is_unrestricted=unrestricted,
-        seller_id_filter=seller_filter if can_filter else None,
+        is_unrestricted=is_portfolio_unrestricted(),
+        seller_id_filter=seller_filter if can_filter_by_seller_id() else None,
     )
 
 

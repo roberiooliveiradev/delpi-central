@@ -66,7 +66,27 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
             """,
             (user_id,),
         )
-        return [portfolio for row in rows if (portfolio := self._hydrate(row)) is not None]
+        portfolios = [
+            portfolio for row in rows if (portfolio := self._hydrate(row)) is not None
+        ]
+        if portfolios:
+            return portfolios
+        where_owner_active = "AND active = TRUE" if active_only else ""
+        owner_rows = self.fetch_all(
+            f"""
+            SELECT {_PORTFOLIO_COLUMNS}
+              FROM commercial.seller_portfolios
+             WHERE user_id = %s
+               {where_owner_active}
+             ORDER BY active DESC, display_name ASC
+            """,
+            (user_id,),
+        )
+        return [
+            portfolio
+            for row in owner_rows
+            if (portfolio := self._hydrate(row)) is not None
+        ]
 
     def list_member_user_ids(self, *, active_portfolios_only: bool = True) -> list[str]:
         where_active = "WHERE sp.active = TRUE" if active_portfolios_only else ""
