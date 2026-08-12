@@ -117,8 +117,8 @@ export function PluginShell({
     ...(showWorklist
       ? [{ id: "my_day" as const, label: "Meu dia", count: myDayBadge || undefined }]
       : []),
-    { id: "open_orders", label: "Pedidos" },
-    { id: "customers", label: "Carteira" },
+    { id: "open_orders", label: "Meus pedidos" },
+    { id: "customers", label: "Minha Carteira" },
     ...(showProposals ? [{ id: "proposals" as const, label: "Propostas" }] : []),
     ...(showAnalytics ? [{ id: "analytics" as const, label: "Gestão" }] : []),
     ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),

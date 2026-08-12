@@ -10,8 +10,9 @@ export const CM_HELP = {
       "Escopo atual da sessão: sua carteira ou a carteira de outro vendedor que você pode consultar. Filtra pedidos, clientes e alertas.",
     navHome: "Visão geral: alertas prioritários e atalhos para as áreas do portal.",
     navMyDay: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
-    navOrders: "Itens de pedidos de venda em aberto no escopo da carteira.",
-    navCustomers: "Clientes da carteira com pedidos em aberto e indicadores comerciais.",
+    navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
+    navCustomers:
+      "Clientes das carteiras que você atende, com pedidos em aberto e indicadores comerciais.",
     navProposals: "Propostas comerciais para consulta e emissão de PDF.",
     navGestao: "KPIs, OTD, equipe e oportunidades comerciais no período filtrado.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",

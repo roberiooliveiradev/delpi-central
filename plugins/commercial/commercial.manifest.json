@@ -89,7 +89,7 @@
     },
     {
       "path": "/apps/commercial/open-orders",
-      "label": "Pedidos",
+      "label": "Meus pedidos",
       "permission": "commercial.accounts.view",
       "icon": "clipboard-list",
       "order": 15,
@@ -97,7 +97,7 @@
     },
     {
       "path": "/apps/commercial/customers",
-      "label": "Carteira",
+      "label": "Minha Carteira",
       "permission": "commercial.accounts.view",
       "icon": "users",
       "order": 16,
