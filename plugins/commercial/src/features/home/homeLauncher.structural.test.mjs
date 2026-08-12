@@ -30,10 +30,18 @@ describe("home hub stack", () => {
     assert.match(home, /CommercialSectionRouteCard/);
     assert.match(home, /CommercialCatalogSearchBar/);
     assert.match(home, /cm-home-queue-ok/);
+    assert.match(home, /queueOkTitle/);
     assert.match(home, /cm-home-sections-grid/);
     assert.doesNotMatch(home, /cm-home-columns/);
     assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);
     assert.doesNotMatch(home, /cm-home-grid--primary/);
+  });
+
+  it("catálogo inclui atalho Nova tarefa create", () => {
+    const catalog = readSrc("content/pluginRouteCatalog.ts");
+    assert.match(catalog, /id: "create_task"/);
+    assert.match(catalog, /kind: "create"/);
+    assert.match(catalog, /\?createTask=1/);
   });
 
   it("CSS define stack e grid de seções", () => {
