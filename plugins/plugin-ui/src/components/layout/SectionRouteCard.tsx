@@ -101,7 +101,7 @@ export function SectionRouteCard({
       </div>
       <ul className={classNames.routes}>
         {routes.map((route) => {
-          const showPin = typeof route.onPinClick === "function" && route.kind !== "create";
+          const showPin = typeof route.onPinClick === "function";
           const routeAria =
             route.badge != null && route.badge !== "" && route.badge !== 0
               ? `${route.label}, ${route.badge}`

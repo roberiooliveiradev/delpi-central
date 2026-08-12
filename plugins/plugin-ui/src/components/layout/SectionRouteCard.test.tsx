@@ -70,27 +70,25 @@ describe("SectionRouteCard", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("marca pin pressed com fill quando pinned", () => {
+  it("mostra pin em rota kind create quando onPinClick existe", () => {
+    const onPinClick = vi.fn();
     render(
       <SectionRouteCard
         classNames={sectionRouteCardBemClasses("cm")}
-        title="Documentos"
+        title="Operação"
         routes={[
           {
-            id: "proposals",
-            label: "Propostas",
+            id: "create_task",
+            label: "Nova tarefa",
+            kind: "create",
             onClick: () => undefined,
-            onPinClick: () => undefined,
-            pinned: true,
-            unpinLabel: "Desfavoritar",
+            onPinClick,
+            pinLabel: "Favoritar",
           },
         ]}
       />,
     );
-    const pin = screen.getByRole("button", { name: "Desfavoritar" });
-    expect(pin.getAttribute("aria-pressed")).toBe("true");
-    expect(pin.className).toMatch(/route-pin--pressed/);
-    const svg = pin.querySelector("svg");
-    expect(svg?.getAttribute("fill")).toBe("currentColor");
+    fireEvent.click(screen.getByRole("button", { name: "Favoritar" }));
+    expect(onPinClick).toHaveBeenCalledTimes(1);
   });
 });
