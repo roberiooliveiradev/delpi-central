@@ -10,6 +10,7 @@ alwaysApply: true
 | Regra | Quando consultar |
 |-------|------------------|
 | `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
+| `application-bounded-context-decoupling.mdc` | **Sempre** — apps da Minha Delpi sem acoplamento de regra; cada bounded context é dono |
 | `plan-construction.mdc` | **CreatePlan / multi-etapa** — Cursor rules, inventário, mercado, fluxos/wireframes, impacto, E*.S*, test→commit |
 | `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
@@ -61,6 +62,7 @@ Doc: `infra/README-ambiente.md`.
 
 | Regra | Escopo |
 |-------|--------|
+| `application-bounded-context-decoupling.mdc` | Apps sem acoplamento · Portal = commercial-api · PVA congelado · TOTVS puro sem membership commercial |
 | `api-delpi-openapi-route-standards.mdc` | **Rotas futuras** — operationId, locale EN/pt-BR, enums+`pattern`, labels, sync TV, smoke de cobertura |
 | `api-delpi-response-contract.mdc` | Envelope, `meta`, `route_contract_registry`, RBAC |
 | `new-api-route-checklist.mdc` | HTTP + chat + apresentação + CI (três pacotes) |
@@ -103,6 +105,9 @@ Valoração R$ / B2_CM1 / armazém → totvs-warehouse-cost-standards → padroe
 Bug apresentação chat   → root-cause-generalized-fix → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
+Regra de negócio entre apps / ownership → application-bounded-context-decoupling (dono do contexto; HTTP só)
+Regra Portal Comercial / escopo carteira → commercial-api (nunca PVA) · SCOPE-OWNERSHIP
+TOTVS para o Portal sem membership PVA → path `totvs-*` na api-delpi + BFF commercial-api
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)

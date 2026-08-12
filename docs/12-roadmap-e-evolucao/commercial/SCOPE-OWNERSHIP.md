@@ -1,13 +1,15 @@
 # Portal Comercial — dono do escopo de clientes
 
-> **Status:** canônico (ago/2026) · ADRs [ADR-001](./adr/ADR-001-commercial-api-bounded-context.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)
+> **Status:** canônico (ago/2026) · ADRs [ADR-001](./adr/ADR-001-commercial-api.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)  
+> **Diretriz Cursor:** `.cursor/rules/application-bounded-context-decoupling.mdc` — **todas** as apps da Minha Delpi sem acoplamento; neste domínio: PVA congelado e regras novas só em `commercial-api`.
 
 ## Princípio
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **commercial-api** | Membership, escopo de clientes, CRUD carteira/avatar, BFF que aplica escopo **antes** do proxy TOTVS |
-| **api-delpi** | SQL/views TOTVS (pedidos, NF, billing, enrichment, KPIs) **sem** montar «carteira do usuário» a partir de JWT + membership commercial para o Portal |
+| **commercial-api** | Membership, escopo de clientes, CRUD carteira/avatar, BFF que aplica escopo **antes** do proxy TOTVS — **única** evolução de regra do Portal |
+| **api-delpi** | SQL/views TOTVS (paths `totvs-*` / enrichment / billing sem membership Portal) — **não** dono de carteira do Portal |
+| **PVA** (`/pedidos-venda-abertos/` + plugin) | Legado **congelado** para regra de negócio nova (só bug crítico / segurança até F2c) |
 
 **Uma fonte de escopo no Portal:** `ResolveCommercialCustomerScopeService`.
 
@@ -41,6 +43,8 @@
 - [ ] api-delpi **não** reintroduz `list_by_user_id` / dual-read commercial em enrichment, billing-series, avatar ou NF para o path do Portal.
 - [ ] Portal usa paths TOTVS puros (`totvs-open-orders`, `totvs-outbound-invoices`) — rotas PVA com membership ficam só para o plugin PVA.
 - [ ] Semântica `team.view` = irrestrito testada só na commercial-api.
+- [ ] **Nenhuma** regra de negócio nova no PVA / `ResolvePortfolioScope` / `portfolio_access` “para alinhar com o Portal”.
+- [ ] Sem import/shared module de regra entre `commercial-api` e `api-delpi`.
 
 ## Fora deste contrato
 
