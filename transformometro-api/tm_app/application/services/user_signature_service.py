@@ -7,13 +7,7 @@ from tm_app.application.security import transformometro_permissions as perms
 from tm_app.application.services.meeting_minutes_storage import TmAtaStorageError, UserSignatureStorageService
 from tm_app.infrastructure.persistence.repositories.user_signature_repository import UserSignatureRepository
 
-_PROFILE_PERMISSIONS: frozenset[str] = frozenset(
-    {
-        perms.TRANSFORMOMETRO_ATAS_VIEW,
-        perms.TRANSFORMOMETRO_ATAS_MANAGE,
-        perms.TRANSFORMOMETRO_ATAS_SIGN,
-    }
-)
+_PROFILE_PERMISSIONS: frozenset[str] = frozenset(perms.MEETING_MINUTES_PROFILE_PERMISSIONS)
 
 
 class UserSignatureService:

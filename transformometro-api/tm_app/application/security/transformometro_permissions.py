@@ -1,4 +1,7 @@
-"""Códigos RBAC do Transformômetro — escopo por filial (Playbook 18 S10)."""
+"""Códigos RBAC do Transformômetro — escopo por filial (Playbook 18 S10).
+
+Meeting minutes: canônico `meeting-minutes.*`; `atas.*` permanece como alias legado.
+"""
 
 from __future__ import annotations
 
@@ -14,9 +17,39 @@ TRANSFORMOMETRO_REVISIONS_MANAGE = "transformometro.revisions.manage"
 TRANSFORMOMETRO_MEASUREMENTS_MANAGE = "transformometro.measurements.manage"
 TRANSFORMOMETRO_INVESTMENTS_MANAGE = "transformometro.investments.manage"
 TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE = "transformometro.shared-resources.manage"
+
+# Canônico EN
+TRANSFORMOMETRO_MEETING_MINUTES_VIEW = "transformometro.meeting-minutes.view"
+TRANSFORMOMETRO_MEETING_MINUTES_MANAGE = "transformometro.meeting-minutes.manage"
+TRANSFORMOMETRO_MEETING_MINUTES_SIGN = "transformometro.meeting-minutes.sign"
+
+# Alias legado PT (dual até migração RBAC)
 TRANSFORMOMETRO_ATAS_VIEW = "transformometro.atas.view"
 TRANSFORMOMETRO_ATAS_MANAGE = "transformometro.atas.manage"
 TRANSFORMOMETRO_ATAS_SIGN = "transformometro.atas.sign"
+
+MEETING_MINUTES_VIEW_PERMISSIONS: tuple[str, ...] = (
+    TRANSFORMOMETRO_MEETING_MINUTES_VIEW,
+    TRANSFORMOMETRO_ATAS_VIEW,
+)
+MEETING_MINUTES_MANAGE_PERMISSIONS: tuple[str, ...] = (
+    TRANSFORMOMETRO_MEETING_MINUTES_MANAGE,
+    TRANSFORMOMETRO_ATAS_MANAGE,
+)
+MEETING_MINUTES_SIGN_PERMISSIONS: tuple[str, ...] = (
+    TRANSFORMOMETRO_MEETING_MINUTES_SIGN,
+    TRANSFORMOMETRO_ATAS_SIGN,
+)
+MEETING_MINUTES_READ_PERMISSIONS: tuple[str, ...] = (
+    *MEETING_MINUTES_VIEW_PERMISSIONS,
+    *MEETING_MINUTES_MANAGE_PERMISSIONS,
+    *MEETING_MINUTES_SIGN_PERMISSIONS,
+)
+MEETING_MINUTES_LIST_PERMISSIONS: tuple[str, ...] = (
+    *MEETING_MINUTES_VIEW_PERMISSIONS,
+    *MEETING_MINUTES_MANAGE_PERMISSIONS,
+)
+MEETING_MINUTES_PROFILE_PERMISSIONS: tuple[str, ...] = MEETING_MINUTES_READ_PERMISSIONS
 
 VIEW_FILIAL_PERMISSIONS: dict[str, str] = {
     "01": TRANSFORMOMETRO_VIEW_FILIAL_01,
@@ -34,6 +67,7 @@ GLOBAL_MANAGE_PERMISSIONS: tuple[str, ...] = (
     TRANSFORMOMETRO_MEASUREMENTS_MANAGE,
     TRANSFORMOMETRO_INVESTMENTS_MANAGE,
     TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE,
+    TRANSFORMOMETRO_MEETING_MINUTES_MANAGE,
     TRANSFORMOMETRO_ATAS_MANAGE,
 )
 

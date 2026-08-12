@@ -66,19 +66,14 @@ class MeetingMinutesService:
             return
         if action == "view":
             # Leitura: view, manage ou sign (sign-only precisa de detalhe/imagem no fluxo de assinar).
-            allowed_codes = (
-                perms.TRANSFORMOMETRO_ATAS_VIEW,
-                perms.TRANSFORMOMETRO_ATAS_MANAGE,
-                perms.TRANSFORMOMETRO_ATAS_SIGN,
-            )
-            if not any(code in permissions for code in allowed_codes):
+            if not any(code in permissions for code in perms.MEETING_MINUTES_READ_PERMISSIONS):
                 raise PermissionError("Sem permissão para esta operação de atas.")
         else:
             required = {
-                "manage": perms.TRANSFORMOMETRO_ATAS_MANAGE,
-                "sign": perms.TRANSFORMOMETRO_ATAS_SIGN,
+                "manage": perms.MEETING_MINUTES_MANAGE_PERMISSIONS,
+                "sign": perms.MEETING_MINUTES_SIGN_PERMISSIONS,
             }[action]
-            if required not in permissions:
+            if not any(code in permissions for code in required):
                 raise PermissionError("Sem permissão para esta operação de atas.")
         scope = self.scope_service.resolve(user)
         if action == "view":
@@ -103,18 +98,9 @@ class MeetingMinutesService:
     def list_minutes(self, user: Any, filters: dict[str, Any]) -> dict[str, Any]:
         pending_for_me = bool(filters.get("pending_for_me"))
         if pending_for_me:
-            if not self._has_any_permission(
-                user,
-                perms.TRANSFORMOMETRO_ATAS_VIEW,
-                perms.TRANSFORMOMETRO_ATAS_MANAGE,
-                perms.TRANSFORMOMETRO_ATAS_SIGN,
-            ):
+            if not self._has_any_permission(user, *perms.MEETING_MINUTES_READ_PERMISSIONS):
                 raise PermissionError("Sem permissão para consultar atas.")
-        elif not self._has_any_permission(
-            user,
-            perms.TRANSFORMOMETRO_ATAS_VIEW,
-            perms.TRANSFORMOMETRO_ATAS_MANAGE,
-        ):
+        elif not self._has_any_permission(user, *perms.MEETING_MINUTES_LIST_PERMISSIONS):
             raise PermissionError("Sem permissão para consultar atas.")
         scope = self.scope_service.resolve(user)
         units = ["01", "02"] if scope.is_unrestricted else sorted(scope.allowed_codigos)

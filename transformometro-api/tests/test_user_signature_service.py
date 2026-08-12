@@ -41,6 +41,9 @@ def _service() -> UserSignatureService:
         perms.TRANSFORMOMETRO_ATAS_VIEW,
         perms.TRANSFORMOMETRO_ATAS_MANAGE,
         perms.TRANSFORMOMETRO_ATAS_SIGN,
+        perms.TRANSFORMOMETRO_MEETING_MINUTES_VIEW,
+        perms.TRANSFORMOMETRO_MEETING_MINUTES_MANAGE,
+        perms.TRANSFORMOMETRO_MEETING_MINUTES_SIGN,
     ],
 )
 def test_profile_allows_any_atas_permission(permission: str) -> None:

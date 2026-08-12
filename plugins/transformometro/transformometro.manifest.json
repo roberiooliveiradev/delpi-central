@@ -4,7 +4,7 @@
   "name": "Transformômetro",
   "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
   "icon": "gauge",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -88,21 +88,39 @@
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.view",
+      "code": "transformometro.meeting-minutes.view",
       "name": "Consultar atas Transforma+",
       "description": "Permite listar e visualizar atas de reunião do Transforma+ e gerenciar a assinatura pessoal.",
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.manage",
+      "code": "transformometro.meeting-minutes.manage",
       "name": "Gerenciar atas Transforma+",
       "description": "Permite criar, editar, enviar e finalizar atas de reunião.",
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.sign",
+      "code": "transformometro.meeting-minutes.sign",
       "name": "Assinar atas Transforma+",
       "description": "Permite assinar ou recusar atas autenticadas.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.view",
+      "name": "Consultar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.view.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.manage",
+      "name": "Gerenciar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.manage.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.sign",
+      "name": "Assinar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.sign.",
       "module": "transformometro"
     }
   ],
@@ -137,7 +155,7 @@
     {
       "path": "/apps/transformometro/atas",
       "label": "Atas",
-      "permission": "transformometro.atas.view",
+      "permission": "transformometro.meeting-minutes.view",
       "icon": "file-text",
       "entry": null,
       "order": 24,
@@ -146,7 +164,7 @@
     {
       "path": "/apps/transformometro/minha-assinatura",
       "label": "Minha assinatura",
-      "permission": "transformometro.atas.view",
+      "permission": "transformometro.meeting-minutes.view",
       "icon": "pen-line",
       "entry": null,
       "order": 25,
