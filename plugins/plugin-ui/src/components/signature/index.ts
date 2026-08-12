@@ -1,1 +1,5 @@
-export { SignaturePad, type SignaturePadProps } from "./SignaturePad";
+export {
+  SignaturePad,
+  type SignaturePadProps,
+  type SignatureStrokeWidth,
+} from "./SignaturePad";
