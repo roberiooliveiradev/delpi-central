@@ -1,23 +1,15 @@
+import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
 import { Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  addSellerCustomer,
   createSellerPortfolio,
-  deactivateSellerPortfolio,
-  getSellerPortfolio,
   listSellerPortfolios,
-  purgeSellerPortfolio,
-  removeSellerCustomer,
-  transferSellerCustomers,
-  updateSellerPortfolio,
 } from "../../api/commercialPortfolioApi";
-import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import {
   useCommercialFloatingNotice,
-  FORM_VALIDATION_AUTO_DISMISS_MS,
 } from "../../app/CommercialFloatingNoticeProvider";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
   CommercialActionButton,
@@ -29,20 +21,23 @@ import {
   CommercialStateBanner,
   CommercialStatusBadge,
   CommercialTextField,
+  UI_PREFIX,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
-import { customerKey } from "../../shared/format";
-import type { SellerPortfolio, TotvsCustomerHit } from "../../types/portfolio";
+import type { SellerPortfolio } from "../../types/portfolio";
 import {
+  buildSellerPortfolioDetailPath,
+  migrateLegacySellerPortfolioIdParam,
   parseSellerPortfoliosRouteState,
   replaceSellerPortfoliosSearch,
+  type SellerPortfoliosAxis,
   type SellerPortfoliosDeepLink,
   type SellerPortfoliosFilter,
+  type SellerPortfoliosView,
 } from "../../utils/sellerPortfoliosDeepLink";
 import { SellerPortfolioCreateDialog } from "./SellerPortfolioCreateDialog";
-import { SellerPortfolioDetail } from "./SellerPortfolioDetail";
 import { SellerPortfoliosList } from "./SellerPortfoliosList";
-import { SellerPortfolioTransferDialog } from "./SellerPortfolioTransferDialog";
+import { SellerPortfoliosOrgView } from "./SellerPortfoliosOrgView";
 
 const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: string }> = {
   all: { label: "Todas", emptyHint: "Cadastre a primeira carteira." },
@@ -50,7 +45,12 @@ const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: st
   inactive: { label: "Inativas", emptyHint: "Nenhuma carteira inativa neste filtro." },
 };
 
-const DEFAULT_LINK: SellerPortfoliosDeepLink = { q: "", filter: "all", id: null };
+const DEFAULT_LINK: SellerPortfoliosDeepLink = {
+  q: "",
+  filter: "all",
+  view: "list",
+  axis: "portfolio",
+};
 
 type SellerPortfoliosPageProps = {
   basePath: string;
@@ -71,10 +71,13 @@ function portfolioMatchesQuery(
 ): boolean {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return true;
+  const memberIds = (portfolio.members ?? []).map((member) => member.user_id);
   const hay = [
     portfolio.display_name,
     portfolio.user_id,
-    labelFor(portfolio.user_id, portfolio.display_name),
+    portfolio.owner_user_id,
+    labelFor(portfolio.owner_user_id ?? portfolio.user_id, portfolio.display_name),
+    ...memberIds.map((userId) => labelFor(userId)),
   ]
     .join(" ")
     .toLowerCase();
@@ -82,8 +85,7 @@ function portfolioMatchesQuery(
 }
 
 export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
-  const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
-  const confirm = useCommercialConfirm();
+  const { notifyError, notifySuccess } = useCommercialFloatingNotice();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,16 +95,18 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [transferOpen, setTransferOpen] = useState(false);
-  const [transferring, setTransferring] = useState(false);
-  const [transferError, setTransferError] = useState<string | null>(null);
-  const [savingName, setSavingName] = useState(false);
-  const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
 
-  const directoryUserIds = useMemo(
-    () => portfolios.map((item) => item.user_id),
-    [portfolios],
-  );
+  const directoryUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const portfolio of portfolios) {
+      const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+      if (owner) ids.add(owner);
+      for (const member of portfolio.members ?? []) {
+        if (member.user_id.trim()) ids.add(member.user_id.trim());
+      }
+    }
+    return [...ids];
+  }, [portfolios]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
 
   const applyLink = useCallback(
@@ -113,9 +117,27 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     [basePath],
   );
 
+  const openPortfolio = useCallback(
+    (portfolio: SellerPortfolio, listState: SellerPortfoliosDeepLink = link) => {
+      const target = buildSellerPortfolioDetailPath(basePath, portfolio.id, listState);
+      if (!target) return;
+      navigatePluginPath(target);
+    },
+    [basePath, link],
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const syncFromLocation = () => {
+      const migrated = migrateLegacySellerPortfolioIdParam(
+        window.location.pathname,
+        window.location.search,
+        basePath,
+      );
+      if (migrated) {
+        navigatePluginPath(migrated, { replace: true });
+        return;
+      }
       const parsed = parseSellerPortfoliosRouteState(
         window.location.pathname,
         window.location.search,
@@ -158,25 +180,6 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     reload();
   }, [reload]);
 
-  useEffect(() => {
-    const selectedId = link.id;
-    if (!selectedId || loading) return;
-    if (portfolios.some((item) => item.id === selectedId)) return;
-    const controller = new AbortController();
-    getSellerPortfolio(selectedId, controller.signal)
-      .then((detail) => {
-        if (controller.signal.aborted) return;
-        setPortfolios((current) =>
-          current.some((item) => item.id === detail.id) ? current : [...current, detail],
-        );
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        applyLink({ ...link, id: null });
-      });
-    return () => controller.abort();
-  }, [applyLink, link, loading, portfolios]);
-
   const stats = useMemo(() => {
     const active = portfolios.filter((item) => item.active).length;
     const inactive = portfolios.length - active;
@@ -192,11 +195,6 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     });
   }, [directoryLabelFor, link.filter, link.q, portfolios]);
 
-  const selectedPortfolio =
-    portfolios.find((item) => item.id === link.id) ??
-    filteredPortfolios.find((item) => item.id === link.id) ??
-    null;
-
   const filterChips = (
     [
       ["all", stats.total] as const,
@@ -210,17 +208,20 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     onSelect: () => applyLink({ ...link, filter: id }),
   }));
 
-  async function handleCreate(input: { userId: string; displayName: string }) {
+  async function handleCreate(input: { userIds: string[]; displayName: string }) {
     setCreating(true);
     setCreateError(null);
     try {
       const created = await createSellerPortfolio({
-        user_id: input.userId,
+        user_ids: input.userIds,
+        user_id: input.userIds[0],
         display_name: input.displayName,
       });
       notifySuccess("Carteira criada com sucesso.");
       setCreateOpen(false);
-      applyLink({ q: "", filter: "all", id: created.id });
+      const nextList: SellerPortfoliosDeepLink = { q: "", filter: "all", view: "list", axis: "portfolio" };
+      applyLink(nextList);
+      openPortfolio(created, nextList);
       reload({ silent: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar carteira.";
@@ -231,160 +232,11 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     }
   }
 
-  async function handleSaveName(displayName: string) {
-    if (!selectedPortfolio) return;
-    if (!notifyMissingRequired(displayName ? [] : ["Nome de exibição"])) return;
-    setSavingName(true);
-    try {
-      await updateSellerPortfolio(selectedPortfolio.id, { display_name: displayName });
-      notifySuccess("Carteira atualizada com sucesso.");
-      reload({ silent: true });
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao atualizar carteira.");
-    } finally {
-      setSavingName(false);
-    }
-  }
-
-  async function handleDeactivate() {
-    if (!selectedPortfolio) return;
-    const accepted = await confirm({
-      title: "Inativar carteira",
-      message: `${selectedPortfolio.display_name} sai do escopo operacional. Os clientes continuam vinculados.`,
-      confirmLabel: "Inativar",
-      variant: "default",
-    });
-    if (!accepted) return;
-    try {
-      await deactivateSellerPortfolio(selectedPortfolio.id);
-      notifySuccess("Carteira desativada com sucesso.");
-      reload({ silent: true });
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao desativar carteira.");
-    }
-  }
-
-  async function handleReactivate() {
-    if (!selectedPortfolio) return;
-    try {
-      await updateSellerPortfolio(selectedPortfolio.id, { active: true });
-      notifySuccess("Carteira reativada com sucesso.");
-      reload({ silent: true });
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao reativar carteira.");
-    }
-  }
-
-  async function handlePurge() {
-    if (!selectedPortfolio) return;
-    const count = selectedPortfolio.customer_count;
-    const accepted = await confirm({
-      title: "Excluir carteira",
-      message: `Apaga ${selectedPortfolio.display_name} em definitivo. ${count.toLocaleString("pt-BR")} cliente(s) serão desvinculados. O usuário poderá receber uma carteira nova depois.`,
-      confirmLabel: "Excluir",
-      variant: "danger",
-    });
-    if (!accepted) return;
-    try {
-      await purgeSellerPortfolio(selectedPortfolio.id);
-      notifySuccess("Carteira excluída com sucesso.");
-      applyLink({ ...link, id: null });
-      reload({ silent: true });
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao excluir carteira.");
-    }
-  }
-
-  async function handleAddCustomer(hit: TotvsCustomerHit) {
-    if (!selectedPortfolio) return;
-    const key = customerKey(hit.code, hit.store);
-    setBusyCustomerKey(key);
-    try {
-      const updated = await addSellerCustomer(selectedPortfolio.id, {
-        customer_code: hit.code,
-        customer_store: hit.store,
-        customer_name: hit.name,
-      });
-      setPortfolios((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item)),
-      );
-      notifySuccess(`Cliente ${hit.name} adicionado à carteira.`);
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao adicionar cliente.");
-    } finally {
-      setBusyCustomerKey(null);
-    }
-  }
-
-  async function handleRemoveCustomer(code: string, store: string) {
-    if (!selectedPortfolio) return;
-    const key = customerKey(code, store);
-    setBusyCustomerKey(key);
-    try {
-      const updated = await removeSellerCustomer(selectedPortfolio.id, code, store);
-      setPortfolios((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item)),
-      );
-      notifySuccess("Cliente removido da carteira.");
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao remover cliente.");
-    } finally {
-      setBusyCustomerKey(null);
-    }
-  }
-
-  async function handleTransfer(input: {
-    targetId: string;
-    customerKeys: string[];
-    reason: string;
-  }) {
-    if (!selectedPortfolio) return;
-    if (selectedPortfolio.id === input.targetId) {
-      setTransferError("Origem e destino devem ser carteiras diferentes.");
-      notifyError("Origem e destino devem ser carteiras diferentes.", {
-        title: "Transferência inválida",
-        autoDismissMs: FORM_VALIDATION_AUTO_DISMISS_MS,
-      });
-      return;
-    }
-    const customers = selectedPortfolio.customers
-      .filter((customer) =>
-        input.customerKeys.includes(customerKey(customer.customer_code, customer.customer_store)),
-      )
-      .map((customer) => ({
-        customer_code: customer.customer_code,
-        customer_store: customer.customer_store,
-        customer_name: customer.customer_name,
-      }));
-    setTransferring(true);
-    setTransferError(null);
-    try {
-      const result = await transferSellerCustomers({
-        source_portfolio_id: selectedPortfolio.id,
-        target_portfolio_id: input.targetId,
-        customers,
-        reason_note: input.reason,
-      });
-      notifySuccess(`Transferência concluída: ${result.transferred_count} cliente(s) movido(s).`);
-      setTransferOpen(false);
-      reload({ silent: true });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao transferir clientes.";
-      setTransferError(message);
-      notifyError(message);
-    } finally {
-      setTransferring(false);
-    }
-  }
-
   const emptyTitle =
     stats.total === 0
       ? "Nenhuma carteira cadastrada"
       : `Nenhuma em ${FILTER_META[link.filter].label.toLowerCase()}`;
-  const emptyMessage =
-    stats.total === 0 || link.filter === "all"
-      ? FILTER_META[link.filter].emptyHint
-      : FILTER_META[link.filter].emptyHint;
+  const emptyMessage = FILTER_META[link.filter].emptyHint;
 
   return (
     <section className="cm-page-stack cm-portfolios-page">
@@ -471,6 +323,29 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           </div>
         }
       >
+        <div className="cm-portfolios-page__view-toggle">
+          <HelpTooltip
+            content={CM_HELP.sellerPortfolios.shellViewToggle}
+            ariaLabel="Ajuda: Lista ou Organização"
+            wrap
+            placement="bottom"
+          >
+            <SegmentToggle
+              prefix={UI_PREFIX}
+              size="sm"
+              ariaLabel="Modo Lista ou Organização"
+              idPrefix="seller-portfolios-shell-view"
+              value={link.view}
+              onChange={(next) =>
+                applyLink({ ...link, view: next as SellerPortfoliosView })
+              }
+              options={[
+                { value: "list", label: "Lista" },
+                { value: "org", label: "Organização" },
+              ]}
+            />
+          </HelpTooltip>
+        </div>
         <CommercialScopeChipBar
           label={
             <CommercialSectionHintLabel
@@ -502,38 +377,29 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
         </CommercialStateBanner>
       ) : null}
 
-      <div className="cm-portfolios-layout">
-        <SellerPortfoliosList
+      {link.view === "org" ? (
+        <SellerPortfoliosOrgView
           portfolios={filteredPortfolios}
-          selectedId={link.id}
+          axis={link.axis}
           loading={loading && portfolios.length === 0}
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}
-          onSelect={(portfolio) => applyLink({ ...link, id: portfolio.id })}
+          onAxisChange={(axis: SellerPortfoliosAxis) => applyLink({ ...link, axis })}
+          onOpenPortfolio={(portfolio) => openPortfolio(portfolio)}
           onCreate={() => setCreateOpen(true)}
           directoryLabelFor={directoryLabelFor}
         />
-        <SellerPortfolioDetail
-          portfolio={selectedPortfolio}
-          userLabel={
-            selectedPortfolio
-              ? directoryLabelFor(selectedPortfolio.user_id, selectedPortfolio.display_name)
-              : ""
-          }
-          savingName={savingName}
-          busyCustomerKey={busyCustomerKey}
-          onSaveName={handleSaveName}
-          onAddCustomer={handleAddCustomer}
-          onRemoveCustomer={handleRemoveCustomer}
-          onDeactivate={() => void handleDeactivate()}
-          onReactivate={() => void handleReactivate()}
-          onPurge={() => void handlePurge()}
-          onTransfer={() => {
-            setTransferError(null);
-            setTransferOpen(true);
-          }}
+      ) : (
+        <SellerPortfoliosList
+          portfolios={filteredPortfolios}
+          loading={loading && portfolios.length === 0}
+          emptyTitle={emptyTitle}
+          emptyMessage={emptyMessage}
+          onSelect={(portfolio) => openPortfolio(portfolio)}
+          onCreate={() => setCreateOpen(true)}
+          directoryLabelFor={directoryLabelFor}
         />
-      </div>
+      )}
 
       <SellerPortfolioCreateDialog
         open={createOpen}
@@ -545,19 +411,6 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           setCreateError(null);
         }}
         onCreate={(input) => void handleCreate(input)}
-      />
-      <SellerPortfolioTransferDialog
-        open={transferOpen}
-        busy={transferring}
-        error={transferError}
-        source={selectedPortfolio}
-        portfolios={portfolios}
-        onClose={() => {
-          if (transferring) return;
-          setTransferOpen(false);
-          setTransferError(null);
-        }}
-        onTransfer={(input) => void handleTransfer(input)}
       />
     </section>
   );

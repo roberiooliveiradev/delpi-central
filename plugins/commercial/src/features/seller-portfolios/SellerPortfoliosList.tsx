@@ -21,7 +21,6 @@ import { SellerPortfolioListCard } from "./SellerPortfolioListCard";
 
 type SellerPortfoliosListProps = {
   portfolios: SellerPortfolio[];
-  selectedId: string | null;
   loading: boolean;
   emptyTitle: string;
   emptyMessage: string;
@@ -32,7 +31,6 @@ type SellerPortfoliosListProps = {
 
 export function SellerPortfoliosList({
   portfolios,
-  selectedId,
   loading,
   emptyTitle,
   emptyMessage,
@@ -43,7 +41,6 @@ export function SellerPortfoliosList({
   const { layout, setLayout } = usePersistedViewLayout({
     storageKey: PORTFOLIOS_LAYOUT_STORAGE_KEY,
   });
-  const selectedIndex = portfolios.findIndex((item) => item.id === selectedId);
   const columns: DataTableColumn<SellerPortfolio>[] = [
     {
       key: "display_name",
@@ -53,9 +50,10 @@ export function SellerPortfoliosList({
     },
     {
       key: "user_id",
-      header: "Usuário",
+      header: "Responsável",
       headerHint: CM_HELP.sellerPortfolios.colUserId,
-      render: (row) => directoryLabelFor(row.user_id, row.display_name),
+      render: (row) =>
+        directoryLabelFor(row.owner_user_id ?? row.user_id, row.display_name),
     },
     {
       key: "customer_count",
@@ -80,7 +78,7 @@ export function SellerPortfoliosList({
   return (
     <CommercialSectionCard
       title={`Carteiras (${portfolios.length.toLocaleString("pt-BR")})`}
-      subtitle="Usuário Minha Delpi + nome de exibição no portal."
+      subtitle="Usuários com acesso ao Portal Comercial + nome de exibição."
       hint={CM_HELP.sellerPortfolios.list}
     >
       <CommercialDataListToolbar
@@ -123,7 +121,10 @@ export function SellerPortfoliosList({
                 <SellerPortfolioListCard
                   key={portfolio.id}
                   portfolio={portfolio}
-                  userLabel={directoryLabelFor(portfolio.user_id, portfolio.display_name)}
+                  userLabel={directoryLabelFor(
+                    portfolio.owner_user_id ?? portfolio.user_id,
+                    portfolio.display_name,
+                  )}
                   onSelect={onSelect}
                 />
               ))}
@@ -136,9 +137,6 @@ export function SellerPortfoliosList({
               layout="section"
               onRowClick={onSelect}
               rowClickRole="button"
-              selection={
-                selectedIndex >= 0 ? { kind: "row", indices: [selectedIndex] } : null
-              }
             />
           )}
         </CommercialViewTransition>

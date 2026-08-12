@@ -23,6 +23,12 @@ function filesUnder(directory, predicate = () => true) {
 
 describe("seller-portfolios kit-first", () => {
   const featureFiles = filesUnder(featureDirectory, (path) => /\.(?:ts|tsx)$/.test(path));
+  const pageSource = readFileSync(join(featureDirectory, "SellerPortfoliosPage.tsx"), "utf8");
+  const detailPageSource = readFileSync(
+    join(featureDirectory, "SellerPortfolioDetailPage.tsx"),
+    "utf8",
+  );
+  const orgSource = readFileSync(join(featureDirectory, "SellerPortfoliosOrgView.tsx"), "utf8");
 
   it("não usa button/input crus nem chrome cm-manage-panel", () => {
     for (const file of featureFiles) {
@@ -32,6 +38,19 @@ describe("seller-portfolios kit-first", () => {
       assert.doesNotMatch(source, /cm-manage-panel/, file);
       assert.doesNotMatch(source, /cm-customer-chip-list/, file);
     }
+  });
+
+  it("lista full-page sem split layout nem painel «Selecione»", () => {
+    assert.doesNotMatch(pageSource, /cm-portfolios-layout/);
+    assert.doesNotMatch(pageSource, /Selecione uma carteira/);
+    assert.doesNotMatch(pageSource, /selectedId/);
+    assert.match(pageSource, /buildSellerPortfolioDetailPath/);
+    assert.match(pageSource, /SellerPortfoliosOrgView/);
+    assert.match(pageSource, /view:\s*"list"/);
+    assert.match(detailPageSource, /SellerPortfolioDetail/);
+    assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);
+    assert.match(orgSource, /Por carteira/);
+    assert.match(orgSource, /Por pessoa/);
   });
 
   it("não adiciona seletor do kit no CSS do MFE", () => {

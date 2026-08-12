@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
 
-import { searchActiveCustomers } from "../../api/commercialPortfolioApi";
+import {
+  searchActiveCustomers,
+  searchDirectoryUsers,
+} from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
   CommercialDataTable,
@@ -16,47 +20,71 @@ import {
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { customerKey } from "../../shared/format";
-import type { SellerCustomer, SellerPortfolio, TotvsCustomerHit } from "../../types/portfolio";
+import type {
+  SellerCustomer,
+  SellerPortfolio,
+  SellerPortfolioMember,
+  TotvsCustomerHit,
+} from "../../types/portfolio";
 
 type SellerPortfolioDetailProps = {
-  portfolio: SellerPortfolio | null;
+  portfolio: SellerPortfolio;
   userLabel: string;
   savingName: boolean;
   busyCustomerKey: string | null;
+  busyMemberUserId: string | null;
+  directoryLabelFor: (userId: string, fallback?: string | null) => string;
   onSaveName: (displayName: string) => void;
   onAddCustomer: (hit: TotvsCustomerHit) => void;
   onRemoveCustomer: (code: string, store: string) => void;
+  onAddMember: (userId: string) => void;
+  onRemoveMember: (userId: string) => void;
+  onSetOwner: (userId: string) => void;
   onDeactivate: () => void;
   onReactivate: () => void;
   onPurge: () => void;
   onTransfer: () => void;
 };
 
+function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
+  const members = portfolio.members ?? [];
+  if (members.length > 0) return members;
+  const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+  return owner ? [{ user_id: owner, role: "owner" }] : [];
+}
+
 export function SellerPortfolioDetail({
   portfolio,
   userLabel,
   savingName,
   busyCustomerKey,
+  busyMemberUserId,
+  directoryLabelFor,
   onSaveName,
   onAddCustomer,
   onRemoveCustomer,
+  onAddMember,
+  onRemoveMember,
+  onSetOwner,
   onDeactivate,
   onReactivate,
   onPurge,
   onTransfer,
 }: SellerPortfolioDetailProps) {
-  const [editName, setEditName] = useState(portfolio?.display_name ?? "");
+  const [editName, setEditName] = useState(portfolio.display_name);
   const [customerQuery, setCustomerQuery] = useState("");
   const [customerHits, setCustomerHits] = useState<TotvsCustomerHit[]>([]);
   const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [customerSearchError, setCustomerSearchError] = useState<string | null>(null);
+  const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
 
   useEffect(() => {
-    setEditName(portfolio?.display_name ?? "");
+    setEditName(portfolio.display_name);
     setCustomerQuery("");
     setCustomerHits([]);
     setCustomerSearchError(null);
-  }, [portfolio?.id]);
+    setMemberPicker([]);
+  }, [portfolio.id, portfolio.display_name]);
 
   useEffect(() => {
     const normalized = customerQuery.trim();
@@ -96,7 +124,12 @@ export function SellerPortfolioDetail({
     };
   }, [customerQuery]);
 
-  const linked = portfolio?.customers ?? [];
+  const linked = portfolio.customers ?? [];
+  const members = resolveMembers(portfolio);
+  const memberIds = useMemo(
+    () => new Set(members.map((member) => member.user_id)),
+    [members],
+  );
   const queryReady = customerQuery.trim().length >= 2;
 
   const hitColumns = useMemo<DataTableColumn<TotvsCustomerHit>[]>(
@@ -120,9 +153,7 @@ export function SellerPortfolioDetail({
             (customer) => customerKey(customer.customer_code, customer.customer_store) === key,
           );
           if (alreadyLinked) {
-            return (
-              <CommercialStatusBadge label="Já vinculado" variant="success" />
-            );
+            return <CommercialStatusBadge label="Já vinculado" variant="success" />;
           }
           return (
             <CommercialActionButton
@@ -172,30 +203,71 @@ export function SellerPortfolioDetail({
     [busyCustomerKey, onRemoveCustomer],
   );
 
-  if (!portfolio) {
-    return (
-      <CommercialSectionCard title="Conta da carteira" hint={CM_HELP.sellerPortfolios.edit}>
-        <CommercialEmptyState
-          title="Selecione uma carteira"
-          message="Escolha uma carteira na lista para editar, vincular clientes ou transferir."
-        />
-      </CommercialSectionCard>
-    );
-  }
+  const memberColumns = useMemo<DataTableColumn<SellerPortfolioMember>[]>(
+    () => [
+      {
+        key: "user",
+        header: "Usuário",
+        render: (row) => directoryLabelFor(row.user_id),
+      },
+      {
+        key: "role",
+        header: "Papel",
+        render: (row) => (
+          <CommercialStatusBadge
+            label={row.role === "owner" ? "Responsável" : "Membro"}
+            variant={row.role === "owner" ? "info" : "neutral"}
+          />
+        ),
+      },
+      {
+        key: "action",
+        header: "Ação",
+        render: (row) => {
+          const busy = busyMemberUserId === row.user_id;
+          return (
+            <div className="cm-row-actions">
+              {row.role !== "owner" ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => onSetOwner(row.user_id)}
+                  aria-label={CM_HELP.sellerPortfolios.setOwner}
+                >
+                  {busy ? "Atualizando…" : "Tornar responsável"}
+                </CommercialActionButton>
+              ) : null}
+              {row.role !== "owner" || members.length > 1 ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={busy || (row.role === "owner" && members.length <= 1)}
+                  onClick={() => onRemoveMember(row.user_id)}
+                  aria-label={CM_HELP.sellerPortfolios.removeMember}
+                >
+                  {busy ? "Removendo…" : "Remover"}
+                </CommercialActionButton>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [busyMemberUserId, directoryLabelFor, members.length, onRemoveMember, onSetOwner],
+  );
 
   return (
-    <CommercialSectionCard
-      title={portfolio.display_name}
-      subtitle={`${userLabel} · ${portfolio.active ? "Ativa" : "Inativa"}`}
-      hint={CM_HELP.sellerPortfolios.edit}
-      actions={
-        <CommercialStatusBadge
-          label={portfolio.active ? "Ativa" : "Inativa"}
-          variant={portfolio.active ? "success" : "neutral"}
-        />
-      }
-    >
-      <div className="cm-portfolios-detail-stack">
+    <div className="cm-portfolios-detail-stack">
+      <CommercialSectionCard
+        title={portfolio.display_name}
+        subtitle={`${userLabel} · ${portfolio.active ? "Ativa" : "Inativa"}`}
+        hint={CM_HELP.sellerPortfolios.edit}
+        actions={
+          <CommercialStatusBadge
+            label={portfolio.active ? "Ativa" : "Inativa"}
+            variant={portfolio.active ? "success" : "neutral"}
+          />
+        }
+      >
         <div className="cm-portfolios-form">
           <div className="cm-portfolios-form__display-name">
             <CommercialTextField
@@ -216,86 +288,147 @@ export function SellerPortfolioDetail({
             </CommercialActionButton>
           </div>
         </div>
+      </CommercialSectionCard>
 
-        <section className="cm-portfolios-detail-block" aria-label="Buscar e vincular">
-          <h3 className="cm-section-subtitle">Buscar e vincular</h3>
-          <CommercialFilterBarShell embedded ariaLabel="Buscar no cadastro ativo">
-            <CommercialTextField
-              label="Buscar no cadastro"
-              hint={CM_HELP.sellerPortfolios.searchCustomers}
-              type="search"
-              value={customerQuery}
-              onChange={setCustomerQuery}
-              placeholder="Código ou nome do cliente"
-            />
-          </CommercialFilterBarShell>
-          <div aria-live="polite">
-            {!queryReady ? (
+      <CommercialSectionCard
+        title={`Usuários (${members.length.toLocaleString("pt-BR")})`}
+        subtitle="Usuário com acesso ao Portal Comercial"
+        hint={CM_HELP.sellerPortfolios.members}
+      >
+        <div className="cm-portfolios-detail-block">
+          <UserDirectoryPicker
+            value={memberPicker}
+            onChange={(users) => {
+              const next = users.filter((user) => !memberIds.has(user.id));
+              setMemberPicker(next);
+              const candidate = next[0];
+              if (candidate) {
+                onAddMember(candidate.id);
+                setMemberPicker([]);
+              }
+            }}
+            searchUsers={async (query, limit, signal) => {
+              const hits = await searchDirectoryUsers(query, limit, signal);
+              return hits.filter((hit) => !memberIds.has(hit.id));
+            }}
+            maxSelected={1}
+            labels={{
+              title: "Usuário com acesso ao Portal Comercial",
+              hint: CM_HELP.sellerPortfolios.membersAdd,
+              placeholder: "Buscar para adicionar…",
+            }}
+          />
+
+          <CommercialViewTransition
+            transitionKey={`members-${portfolio.id}-${members.length}`}
+            tone="panel"
+          >
+            {members.length === 0 ? (
               <CommercialEmptyState
-                title="Digite para buscar"
-                message="Informe código ou nome (ao menos 2 caracteres) para listar clientes ativos."
-              />
-            ) : searchingCustomers ? (
-              <CommercialLoadingCard title="Buscando no cadastro…" variant="panel" />
-            ) : customerSearchError ? (
-              <CommercialStateBanner variant="error">{customerSearchError}</CommercialStateBanner>
-            ) : customerHits.length === 0 ? (
-              <CommercialEmptyState
-                title="Nenhum cliente encontrado"
-                message={`Nada para “${customerQuery.trim()}”. Tente outro código ou nome.`}
+                title="Sem usuários"
+                message="Adicione ao menos um usuário com acesso ao Portal Comercial."
               />
             ) : (
               <CommercialDataTable
-                rows={customerHits}
-                columns={hitColumns}
-                rowKey={(row, index) => customerKey(row.code, row.store) || `hit-${index}`}
-                layout="embedded"
-              />
-            )}
-          </div>
-        </section>
-
-        <section className="cm-portfolios-detail-block" aria-label="Clientes vinculados">
-          <h3 className="cm-section-subtitle">
-            Na carteira ({linked.length.toLocaleString("pt-BR")})
-          </h3>
-          <CommercialViewTransition transitionKey={`linked-${portfolio.id}-${linked.length}`} tone="panel">
-            {linked.length === 0 ? (
-              <CommercialEmptyState
-                title="Carteira vazia"
-                message="Use a busca acima para vincular o primeiro cliente."
-              />
-            ) : (
-              <CommercialDataTable
-                rows={linked}
-                columns={linkedColumns}
-                rowKey={(row, index) =>
-                  customerKey(row.customer_code, row.customer_store) || `linked-${index}`
-                }
+                rows={members}
+                columns={memberColumns}
+                rowKey={(row) => row.user_id}
                 layout="embedded"
               />
             )}
           </CommercialViewTransition>
-        </section>
-
-        <div className="cm-row-actions">
-          {portfolio.active ? (
-            <CommercialActionButton variant="ghost" onClick={onDeactivate}>
-              Inativar
-            </CommercialActionButton>
-          ) : (
-            <CommercialActionButton variant="ghost" onClick={onReactivate}>
-              Reativar
-            </CommercialActionButton>
-          )}
-          <CommercialActionButton variant="ghost" onClick={onTransfer}>
-            Transferir clientes
-          </CommercialActionButton>
-          <CommercialActionButton variant="ghost" onClick={onPurge}>
-            Excluir
-          </CommercialActionButton>
         </div>
+      </CommercialSectionCard>
+
+      <CommercialSectionCard
+        title="Clientes"
+        subtitle="Vincule contas TOTVS a esta carteira"
+        hint={CM_HELP.sellerPortfolios.customers}
+      >
+        <div className="cm-portfolios-detail-stack">
+          <section className="cm-portfolios-detail-block" aria-label="Buscar e vincular">
+            <h3 className="cm-section-subtitle">Buscar e vincular</h3>
+            <CommercialFilterBarShell embedded ariaLabel="Buscar no cadastro ativo">
+              <CommercialTextField
+                label="Buscar no cadastro"
+                hint={CM_HELP.sellerPortfolios.searchCustomers}
+                type="search"
+                value={customerQuery}
+                onChange={setCustomerQuery}
+                placeholder="Código ou nome do cliente"
+              />
+            </CommercialFilterBarShell>
+            <div aria-live="polite">
+              {!queryReady ? (
+                <CommercialEmptyState
+                  title="Digite para buscar"
+                  message="Informe código ou nome (ao menos 2 caracteres) para listar clientes ativos."
+                />
+              ) : searchingCustomers ? (
+                <CommercialLoadingCard title="Buscando no cadastro…" variant="panel" />
+              ) : customerSearchError ? (
+                <CommercialStateBanner variant="error">{customerSearchError}</CommercialStateBanner>
+              ) : customerHits.length === 0 ? (
+                <CommercialEmptyState
+                  title="Nenhum cliente encontrado"
+                  message={`Nada para “${customerQuery.trim()}”. Tente outro código ou nome.`}
+                />
+              ) : (
+                <CommercialDataTable
+                  rows={customerHits}
+                  columns={hitColumns}
+                  rowKey={(row, index) => customerKey(row.code, row.store) || `hit-${index}`}
+                  layout="embedded"
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="cm-portfolios-detail-block" aria-label="Clientes vinculados">
+            <h3 className="cm-section-subtitle">
+              Na carteira ({linked.length.toLocaleString("pt-BR")})
+            </h3>
+            <CommercialViewTransition
+              transitionKey={`linked-${portfolio.id}-${linked.length}`}
+              tone="panel"
+            >
+              {linked.length === 0 ? (
+                <CommercialEmptyState
+                  title="Carteira vazia"
+                  message="Use a busca acima para vincular o primeiro cliente."
+                />
+              ) : (
+                <CommercialDataTable
+                  rows={linked}
+                  columns={linkedColumns}
+                  rowKey={(row, index) =>
+                    customerKey(row.customer_code, row.customer_store) || `linked-${index}`
+                  }
+                  layout="embedded"
+                />
+              )}
+            </CommercialViewTransition>
+          </section>
+        </div>
+      </CommercialSectionCard>
+
+      <div className="cm-row-actions">
+        {portfolio.active ? (
+          <CommercialActionButton variant="ghost" onClick={onDeactivate}>
+            Inativar
+          </CommercialActionButton>
+        ) : (
+          <CommercialActionButton variant="ghost" onClick={onReactivate}>
+            Reativar
+          </CommercialActionButton>
+        )}
+        <CommercialActionButton variant="ghost" onClick={onTransfer}>
+          Transferir clientes
+        </CommercialActionButton>
+        <CommercialActionButton variant="ghost" onClick={onPurge}>
+          Excluir
+        </CommercialActionButton>
       </div>
-    </CommercialSectionCard>
+    </div>
   );
 }

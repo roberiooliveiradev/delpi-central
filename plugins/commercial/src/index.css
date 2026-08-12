@@ -250,11 +250,11 @@
 }
 
 /* Carteiras (admin) — layout de página */
-.dashboard-commercial .cm-portfolios-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--cm-section-gap);
-  align-items: start;
+.dashboard-commercial .cm-portfolios-page__view-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .dashboard-commercial .cm-portfolios-page__actions {
@@ -308,6 +308,42 @@
   gap: 8px;
 }
 
+.dashboard-commercial .cm-portfolios-org-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__person {
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__children {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 16px;
+  list-style: disc;
+}
+
+.dashboard-commercial .cm-portfolios-org-tree__empty {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--cm-text-muted);
+  font-size: 13px;
+}
+
 @media (max-width: 768px) {
   .dashboard-commercial .cm-home-kpi-grid {
     grid-template-columns: 1fr;
@@ -327,10 +363,6 @@
 
   .dashboard-commercial .cm-my-day-form__title {
     grid-column: auto;
-  }
-
-  .dashboard-commercial .cm-portfolios-layout {
-    grid-template-columns: 1fr;
   }
 
   .dashboard-commercial .cm-portfolios-form {
