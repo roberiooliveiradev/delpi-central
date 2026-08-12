@@ -114,3 +114,78 @@ describe("DataTableSection columnPreferencesKey", () => {
     expect(screen.queryByRole("button", { name: "Colunas" })).toBeNull();
   });
 });
+
+describe("DataTableSection chrome nativo (fonte / cards / excel)", () => {
+  it("liga Fonte, Excel e Tabela/Cards quando as props opt-in estão definidas", async () => {
+    const onExport = vi.fn();
+    render(
+      <DataTableSection
+        title="Itens"
+        columnPreferencesKey="test:chrome:columns:v1"
+        fontSizePreferencesKey="test:chrome:font:v1"
+        viewLayoutPreferencesKey="test:chrome:layout:v1"
+        excelExport={{ onExport }}
+        uiPrefix="test"
+        renderCard={(row: { codigo: string }) => <div>Card {row.codigo}</div>}
+        columns={[
+          { key: "codigo", header: "Código", render: (row: { codigo: string }) => row.codigo },
+        ]}
+        rows={[{ codigo: "A1" }]}
+        rowKey={(row) => row.codigo}
+        hideSearch
+        hidePageSizeSelect
+        sectionClassNames={sectionCn}
+        tableClassNames={tableCn}
+        labels={LABELS}
+        tablePageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+        LoadingActivityCard={LoadingActivityCard}
+        Pagination={PaginationStub}
+        TablePageSizeSelect={TablePageSizeSelectStub}
+        useLoadingProgress={noopProgress}
+        useTrackedSingleFetchProgress={noopTracked}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Colunas" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Excel" })).toBeTruthy();
+    expect(screen.getByText("Fonte")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tabela" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Cards" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: /Código/i })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cards" }));
+    expect(screen.getByText("Card A1")).toBeTruthy();
+    expect(screen.queryByRole("columnheader", { name: /Código/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Excel" }));
+    expect(onExport).toHaveBeenCalledTimes(1);
+  });
+
+  it("sem props opt-in não mostra chrome operacional", () => {
+    render(
+      <DataTableSection
+        title="Itens"
+        columns={[
+          { key: "codigo", header: "Código", render: (row: { codigo: string }) => row.codigo },
+        ]}
+        rows={[{ codigo: "A1" }]}
+        rowKey={(row) => row.codigo}
+        hideSearch
+        hidePageSizeSelect
+        sectionClassNames={sectionCn}
+        tableClassNames={tableCn}
+        labels={LABELS}
+        tablePageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+        LoadingActivityCard={LoadingActivityCard}
+        Pagination={PaginationStub}
+        TablePageSizeSelect={TablePageSizeSelectStub}
+        useLoadingProgress={noopProgress}
+        useTrackedSingleFetchProgress={noopTracked}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Excel" })).toBeNull();
+    expect(screen.queryByText("Fonte")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cards" })).toBeNull();
+  });
+});

@@ -625,7 +625,12 @@ Props relevantes de `DataTableSection`:
 | Prop | Descrição |
 |------|-----------|
 | `columnPreferencesKey` | Chave `localStorage` — ativa menu “Colunas” e filtra a tabela |
+| `fontSizePreferencesKey` | Chave `localStorage` — ativa controles nativos de fonte |
+| `viewLayoutPreferencesKey` + `renderCard` | Toggle Tabela/Cards nativo (ambos necessários) |
+| `excelExport` | `{ onExport, disabled?, exporting? }` — botão Excel nativo |
 | `onVisibleColumnKeysChange` | Callback com as keys visíveis (ex.: export Excel) |
+
+Defaults: **off** (opt-in). Consumidores que usam só `DataTable` bare continuam sem chrome.
 
 Hook: `useTableColumnVisibility` (mesmo motor do menu; MFEs com tabela própria também podem usar).
 

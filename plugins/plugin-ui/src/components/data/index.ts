@@ -242,6 +242,7 @@ export {
   dataTableSectionBemClasses,
   type DashboardDataTableSectionProps,
   type DataTableSectionClassNames,
+  type DataTableSectionExcelExport,
   type DataTableSectionLabels,
   type DataTableSectionProps,
   type ServerPaginationConfig,

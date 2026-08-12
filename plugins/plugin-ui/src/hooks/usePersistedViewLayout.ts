@@ -7,6 +7,8 @@ export type UsePersistedViewLayoutOptions = {
   /** Default desktop. Mobile (≤768px) usa cards quando não há valor persistido. */
   defaultMode?: PersistedViewLayoutMode;
   mobileMaxWidthPx?: number;
+  /** Quando false, não lê/grava localStorage (default true). */
+  enabled?: boolean;
 };
 
 function readStored(storageKey: string): PersistedViewLayoutMode | null {
@@ -25,7 +27,9 @@ function resolveDefaultLayout(
   mobileMaxWidthPx: number,
 ): PersistedViewLayoutMode {
   if (typeof window === "undefined") return defaultMode;
-  if (window.matchMedia(`(max-width: ${mobileMaxWidthPx}px)`).matches) {
+  const matchMedia = window.matchMedia?.bind(window);
+  if (typeof matchMedia !== "function") return defaultMode;
+  if (matchMedia(`(max-width: ${mobileMaxWidthPx}px)`).matches) {
     return "cards";
   }
   return defaultMode;
@@ -36,19 +40,22 @@ export function usePersistedViewLayout(options: UsePersistedViewLayoutOptions) {
     storageKey,
     defaultMode = "table",
     mobileMaxWidthPx = 768,
+    enabled = true,
   } = options;
 
-  const [layout, setLayout] = useState<PersistedViewLayoutMode>(
-    () => readStored(storageKey) ?? resolveDefaultLayout(defaultMode, mobileMaxWidthPx),
-  );
+  const [layout, setLayout] = useState<PersistedViewLayoutMode>(() => {
+    if (!enabled) return defaultMode;
+    return readStored(storageKey) ?? resolveDefaultLayout(defaultMode, mobileMaxWidthPx);
+  });
 
   useEffect(() => {
+    if (!enabled) return;
     try {
       window.localStorage.setItem(storageKey, layout);
     } catch {
       /* ignore */
     }
-  }, [layout, storageKey]);
+  }, [enabled, layout, storageKey]);
 
   return {
     layout,

@@ -1,27 +1,15 @@
-import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
-
 import {
   CommercialActionButton,
-  CommercialDataCardsGrid,
-  CommercialDataListToolbar,
-  CommercialDataTable,
-  CommercialEmptyState,
-  CommercialLoadingCard,
-  CommercialSectionCard,
   CommercialStatusBadge,
-  CommercialViewTransition,
   PORTFOLIOS_LAYOUT_STORAGE_KEY,
-  UI_PREFIX,
-  usePersistedViewLayout,
   type DataTableColumn,
 } from "../../app/commercialUi";
+import { CommercialDataTableSection } from "../../app/dataTableUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
 import type { PortfolioLoadItem, SellerPortfolio } from "../../types/portfolio";
-import {
-  formatCompactOpenValue,
-} from "../../utils/portfolioLoad";
+import { formatCompactOpenValue } from "../../utils/portfolioLoad";
 import { SellerPortfolioListCard } from "./SellerPortfolioListCard";
 
 type SellerPortfoliosListProps = {
@@ -57,9 +45,6 @@ export function SellerPortfoliosList({
   onCreate,
   directoryLabelFor,
 }: SellerPortfoliosListProps) {
-  const { layout, setLayout } = usePersistedViewLayout({
-    storageKey: PORTFOLIOS_LAYOUT_STORAGE_KEY,
-  });
   const columns: DataTableColumn<SellerPortfolio>[] = [
     {
       key: "display_name",
@@ -136,75 +121,45 @@ export function SellerPortfoliosList({
   ];
 
   return (
-    <CommercialSectionCard
+    <CommercialDataTableSection
       title={`Carteiras (${portfolios.length.toLocaleString("pt-BR")})`}
-      subtitle="Usuários com acesso ao Portal Comercial + nome de exibição."
-      hint={CM_HELP.sellerPortfolios.list}
-    >
-      <CommercialDataListToolbar
-        leading={
-          <HelpTooltip
-            content={CM_HELP.sellerPortfolios.layoutToggle}
-            ariaLabel="Ajuda: modo Tabela ou Cards"
-            wrap
-            placement="bottom"
-          >
-            <SegmentToggle
-              prefix={UI_PREFIX}
-              size="sm"
-              ariaLabel="Modo de visualização"
-              idPrefix="seller-portfolios-layout"
-              value={layout}
-              onChange={setLayout}
-              options={[
-                { value: "table", label: "Tabela" },
-                { value: "cards", label: "Cards" },
-              ]}
-            />
-          </HelpTooltip>
-        }
-      />
-
-      {loading ? <CommercialLoadingCard title="Carregando carteiras" variant="panel" /> : null}
-
-      {!loading ? (
-        <CommercialViewTransition transitionKey={`layout-${layout}-${portfolios.length}`} tone="panel">
-          {portfolios.length === 0 ? (
-            <CommercialEmptyState title={emptyTitle} message={emptyMessage}>
-              <CommercialActionButton variant="primary" onClick={onCreate}>
-                Nova carteira
-              </CommercialActionButton>
-            </CommercialEmptyState>
-          ) : layout === "cards" ? (
-            <CommercialDataCardsGrid>
-              {portfolios.map((portfolio) => (
-                <SellerPortfolioListCard
-                  key={portfolio.id}
-                  portfolio={portfolio}
-                  load={loadByPortfolioId?.get(portfolio.id) ?? null}
-                  hasOverlappingCustomers={Boolean(
-                    portfolio.active && overlappingPortfolioIds?.has(portfolio.id),
-                  )}
-                  userLabel={directoryLabelFor(
-                    portfolio.owner_user_id ?? portfolio.user_id,
-                    portfolio.display_name,
-                  )}
-                  onSelect={onSelect}
-                />
-              ))}
-            </CommercialDataCardsGrid>
-          ) : (
-            <CommercialDataTable
-              rows={portfolios}
-              columns={columns}
-              rowKey={(row) => row.id}
-              layout="section"
-              onRowClick={onSelect}
-              rowClickRole="button"
-            />
+      titleHint={CM_HELP.sellerPortfolios.list}
+      hint="Usuários com acesso ao Portal Comercial + nome de exibição."
+      columns={columns}
+      rows={portfolios}
+      rowKey={(row) => row.id}
+      loading={loading}
+      emptyMessage={`${emptyTitle}. ${emptyMessage}`}
+      onRowClick={onSelect}
+      columnPreferencesKey="commercial:seller-portfolios:columns:v1"
+      fontSizePreferencesKey="commercial:seller-portfolios:table-font-size:v1"
+      viewLayoutPreferencesKey={PORTFOLIOS_LAYOUT_STORAGE_KEY}
+      renderCard={(portfolio) => (
+        <SellerPortfolioListCard
+          portfolio={portfolio}
+          load={loadByPortfolioId?.get(portfolio.id) ?? null}
+          hasOverlappingCustomers={Boolean(
+            portfolio.active && overlappingPortfolioIds?.has(portfolio.id),
           )}
-        </CommercialViewTransition>
-      ) : null}
-    </CommercialSectionCard>
+          userLabel={directoryLabelFor(
+            portfolio.owner_user_id ?? portfolio.user_id,
+            portfolio.display_name,
+          )}
+          onSelect={onSelect}
+        />
+      )}
+      headerActions={
+        <CommercialActionButton variant="primary" onClick={onCreate}>
+          Nova carteira
+        </CommercialActionButton>
+      }
+      getSearchText={(row) =>
+        [
+          row.display_name,
+          directoryLabelFor(row.owner_user_id ?? row.user_id, row.display_name),
+          row.active ? "ativa" : "inativa",
+        ].join(" ")
+      }
+    />
   );
 }
