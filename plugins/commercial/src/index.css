@@ -186,6 +186,12 @@
   margin-inline-end: 4px;
 }
 
+.dashboard-commercial .cm-home-queue-chip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .dashboard-commercial .cm-home-queue-ok {
   display: flex;
   flex-wrap: wrap;

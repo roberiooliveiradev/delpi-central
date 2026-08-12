@@ -13,10 +13,9 @@ export type SectionRouteItem = {
   onPinClick?: () => void;
   pinLabel?: string;
   unpinLabel?: string;
-  /** Create shortcut — no pin affordance when onPinClick omitted. */
+  /** Pin omitted only when onPinClick is undefined (not based on kind). */
   kind?: "navigate" | "create";
 };
-
 export type SectionRouteCardClassNames = {
   root: string;
   header: string;

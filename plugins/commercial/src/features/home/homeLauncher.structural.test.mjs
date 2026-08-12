@@ -29,11 +29,15 @@ describe("home hub stack", () => {
     assert.match(home, /cm-home-stack/);
     assert.match(home, /CommercialSectionRouteCard/);
     assert.match(home, /CommercialCatalogSearchBar/);
+    assert.match(home, /CommercialHubChipRow/);
+    assert.match(home, /CommercialRouteChip/);
+    assert.match(home, /leadingIcon/);
     assert.match(home, /cm-home-queue-ok/);
     assert.match(home, /queueOkTitle/);
     assert.match(home, /cm-home-sections-grid/);
     assert.match(home, /getHomeFavorites|putHomeFavorites/);
     assert.match(home, /onPinClick/);
+    assert.doesNotMatch(home, /kind === ["']create["']/);
     assert.doesNotMatch(home, /cm-home-columns/);
     assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);
     assert.doesNotMatch(home, /cm-home-grid--primary/);
@@ -58,6 +62,8 @@ describe("home hub stack", () => {
     const ui = readSrc("app/commercialUi.ts");
     assert.match(ui, /CommercialSectionRouteCard/);
     assert.match(ui, /CommercialCatalogSearchBar/);
+    assert.match(ui, /CommercialHubChipRow/);
+    assert.match(ui, /CommercialRouteChip/);
     assert.match(ui, /CommercialCommandPalette/);
   });
 

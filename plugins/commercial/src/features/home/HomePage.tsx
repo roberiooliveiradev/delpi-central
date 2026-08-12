@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  ArrowRight,
   BarChart3,
+  CircleAlert,
   ClipboardList,
+  Clock,
   FileText,
   Settings,
+  Sun,
+  TriangleAlert,
   Users,
 } from "lucide-react";
 import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
@@ -20,13 +25,16 @@ import {
   CommercialActionButton,
   CommercialAlertQueue,
   CommercialCatalogSearchBar,
+  CommercialHubChipRow,
   CommercialLoadingCard,
+  CommercialRouteChip,
   CommercialScopeChipBar,
   CommercialSectionRouteCard,
   CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { CM_HELP } from "../../content/helpTooltips";
+import { resolveHubRouteIcon } from "../../content/hubRouteIcons";
 import {
   collectSearchHits,
   filterRouteCatalog,
@@ -257,6 +265,7 @@ export function HomePage({
         title: `${summary.atrasos} linha(s) em atraso`,
         description: "Revise pedidos em aberto e priorize entregas vencidas.",
         tone: "warning" as const,
+        leadingIcon: <TriangleAlert size={18} strokeWidth={1.75} aria-hidden="true" />,
         actionLabel: "Ver atrasos",
         onAction: () => navigateRoute({
           viewId: "open_orders",
@@ -271,6 +280,7 @@ export function HomePage({
         title: `${worklist.counts.overdue} follow-up(s) atrasado(s)`,
         description: "Conclua ou reagende na fila de Minhas tarefas.",
         tone: "danger" as const,
+        leadingIcon: <CircleAlert size={18} strokeWidth={1.75} aria-hidden="true" />,
         actionLabel: EVENTS.openOverdue,
         onAction: () => openMyTasks("overdue"),
       });
@@ -281,6 +291,7 @@ export function HomePage({
         title: "Nenhum pedido em aberto na carteira",
         description: "Abra a carteira para acompanhar clientes.",
         tone: "neutral" as const,
+        leadingIcon: <Users size={18} strokeWidth={1.75} aria-hidden="true" />,
         actionLabel: "Ver carteira",
         onAction: () =>
           navigateRoute({
@@ -306,21 +317,38 @@ export function HomePage({
     const { overdue, today, later } = worklist.counts;
     const total = overdue + today + later;
     if (total === 0) return [];
+    const withIcon = (icon: ReactNode, text: string) => (
+      <span className="cm-home-queue-chip-label">
+        {icon}
+        {text}
+      </span>
+    );
     return [
       {
         id: "overdue",
-        label: `${EVENTS.buckets.overdue} ${overdue.toLocaleString("pt-BR")}`,
+        label: withIcon(
+          <Clock size={14} strokeWidth={1.75} aria-hidden="true" />,
+          `${EVENTS.buckets.overdue} ${overdue.toLocaleString("pt-BR")}`,
+        ),
         active: overdue > 0,
         onSelect: () => openMyTasks("overdue"),
       },
       {
         id: "today",
-        label: `${EVENTS.buckets.today} ${today.toLocaleString("pt-BR")}`,
+        label: withIcon(
+          <Sun size={14} strokeWidth={1.75} aria-hidden="true" />,
+          `${EVENTS.buckets.today} ${today.toLocaleString("pt-BR")}`,
+        ),
+        active: today > 0,
         onSelect: () => openMyTasks("today"),
       },
       {
         id: "later",
-        label: `${EVENTS.buckets.later} ${later.toLocaleString("pt-BR")}`,
+        label: withIcon(
+          <ArrowRight size={14} strokeWidth={1.75} aria-hidden="true" />,
+          `${EVENTS.buckets.later} ${later.toLocaleString("pt-BR")}`,
+        ),
+        active: later > 0,
         onSelect: () => openMyTasks(),
       },
     ];
@@ -377,8 +405,7 @@ export function HomePage({
   );
 
   const toggleFavorite = useCallback(
-    async (route: HubRouteDef) => {
-      if (route.kind === "create") return;
+    async (route: { viewId: PluginNavigationTarget; search?: string }) => {
       const item: HomeFavoriteItem = {
         viewId: route.viewId,
         search: route.search,
@@ -411,12 +438,9 @@ export function HomePage({
         pinned: favoriteKeys.has(favoriteKey(route)),
         pinLabel: FEATURES.pinLabel,
         unpinLabel: FEATURES.unpinLabel,
-        onPinClick:
-          route.kind === "create"
-            ? undefined
-            : () => {
-                void toggleFavorite(route);
-              },
+        onPinClick: () => {
+          void toggleFavorite(route);
+        },
         onClick: () => navigateRoute(route),
       })),
     [badgeFor, favoriteKeys, navigateRoute, toggleFavorite],
@@ -467,6 +491,9 @@ export function HomePage({
                       <CommercialWorklistItem
                         key={task.id}
                         title={task.title}
+                        leadingIcon={
+                          <ClipboardList size={18} strokeWidth={1.75} aria-hidden="true" />
+                        }
                         tone={
                           bucket === "overdue"
                             ? "danger"
@@ -547,49 +574,56 @@ export function HomePage({
             ) : null}
 
             {favorites.length > 0 ? (
-              <div className="cm-home-chip-row" aria-label={FEATURES.favoritesTitle}>
-                <span className="cm-home-chip-row__label">{FEATURES.favoritesTitle}</span>
+              <CommercialHubChipRow
+                label={FEATURES.favoritesTitle}
+                aria-label={FEATURES.favoritesTitle}
+              >
                 {favorites.map((item) => {
                   const label =
                     hubRouteLabelByView(item.viewId, item.search) ?? item.viewId;
                   return (
-                    <CommercialActionButton
+                    <CommercialRouteChip
                       key={favoriteKey(item)}
-                      variant="ghost"
-                      onClick={() =>
+                      tone="pinned"
+                      label={label}
+                      onNavigate={() =>
                         navigateRoute({
                           viewId: item.viewId,
                           search: item.search,
                           label,
                         })
                       }
-                    >
-                      {label}
-                    </CommercialActionButton>
+                      onRemove={() => {
+                        void toggleFavorite(item);
+                      }}
+                      removeLabel={FEATURES.unpinLabel}
+                    />
                   );
                 })}
-              </div>
+              </CommercialHubChipRow>
             ) : null}
 
             {visibleRecents.length > 0 ? (
-              <div className="cm-home-chip-row" aria-label={FEATURES.recentsTitle}>
-                <span className="cm-home-chip-row__label">{FEATURES.recentsTitle}</span>
+              <CommercialHubChipRow
+                label={FEATURES.recentsTitle}
+                aria-label={FEATURES.recentsTitle}
+              >
                 {visibleRecents.map((item) => (
-                  <CommercialActionButton
+                  <CommercialRouteChip
                     key={`${favoriteKey(item)}-${item.at}`}
-                    variant="ghost"
-                    onClick={() =>
+                    tone="recent"
+                    label={item.label}
+                    leadingIcon={resolveHubRouteIcon(item.viewId)}
+                    onNavigate={() =>
                       navigateRoute({
                         viewId: item.viewId,
                         search: item.search,
                         label: item.label,
                       })
                     }
-                  >
-                    {item.label}
-                  </CommercialActionButton>
+                  />
                 ))}
-              </div>
+              </CommercialHubChipRow>
             ) : null}
 
             {sections.length === 0 ? (
