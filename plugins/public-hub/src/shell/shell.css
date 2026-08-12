@@ -240,7 +240,8 @@ body {
   position: fixed;
   top: 16px;
   right: 16px;
-  z-index: 10;
+  /* Abaixo do overlay de assinatura em tela cheia (kit ~10400). */
+  z-index: 20;
   display: grid;
   place-items: center;
   width: 42px;
@@ -252,6 +253,12 @@ body {
   cursor: pointer;
   backdrop-filter: blur(6px);
   transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* SignaturePad em tela cheia marca o <html> — não competir no canto superior. */
+html[data-delpi-signature-fullscreen="1"] .pub-theme-toggle {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .pub-theme-toggle:hover {

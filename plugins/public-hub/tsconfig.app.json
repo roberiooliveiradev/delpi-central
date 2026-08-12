@@ -22,6 +22,8 @@
     "paths": {
       "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
       "@delpi/plugin-ui/index": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/signature": ["../plugin-ui/src/components/signature/index.ts"],
+      "@delpi/plugin-ui/screen-loading": ["../plugin-ui/src/exposes/screenLoading.ts"],
       "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"],
       "@delpi/tv-dashboard-presentation": ["../tv-dashboard-presentation/src/index.ts"]
     }

@@ -18,6 +18,10 @@ export default defineConfig({
       filename: "remoteEntry.js",
       exposes: {
         "./index": "./src/index.ts",
+        /** Assinatura pública / TM — sem TipTap/recharts do Index. */
+        "./signature": "./src/components/signature/index.ts",
+        /** Splash do public-hub — sem Index. */
+        "./screen-loading": "./src/exposes/screenLoading.ts",
         "./styles": "./src/styles-entry.ts",
         "./App": "./src/app/bootstrap.tsx",
       },

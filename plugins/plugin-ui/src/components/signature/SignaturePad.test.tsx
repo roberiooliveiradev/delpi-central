@@ -65,10 +65,14 @@ describe("SignaturePad", () => {
     expect(paper.className).toContain("delpi-ui-signature-pad__paper");
   });
 
-  it("expõe controle de tela cheia", () => {
+  it("marca html ao entrar em tela cheia para o host esconder o toggle de tema", () => {
     mockCanvasContext();
     render(<SignaturePad />);
-    expect(screen.getByTestId("signature-pad-fullscreen")).toBeTruthy();
+    expect(document.documentElement.dataset.delpiSignatureFullscreen).toBeUndefined();
+    fireEvent.click(screen.getByTestId("signature-pad-fullscreen"));
+    expect(document.documentElement.dataset.delpiSignatureFullscreen).toBe("1");
+    fireEvent.click(screen.getByTestId("signature-pad-fullscreen"));
+    expect(document.documentElement.dataset.delpiSignatureFullscreen).toBeUndefined();
   });
 
   it("desfaz e refaz traços e limpa com onChange(null)", async () => {

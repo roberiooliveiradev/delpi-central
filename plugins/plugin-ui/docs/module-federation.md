@@ -41,8 +41,12 @@ Gateway nginx
 | Expose | Arquivo | Import no consumidor |
 |--------|---------|----------------------|
 | `./index` | `src/index.ts` | `import { KpiCard } from "@delpi/plugin-ui/index"` |
+| `./signature` | `src/components/signature/index.ts` | `import { SignatureCapturePanel } from "@delpi/plugin-ui/signature"` — **public-hub `/sign`** (sem TipTap) |
+| `./screen-loading` | `src/exposes/screenLoading.ts` | `import { ScreenLoading } from "@delpi/plugin-ui/screen-loading"` — splash do hub |
 | `./styles` | `src/styles-entry.ts` | `await import("@delpi/plugin-ui/styles")` |
 | `./App` | `src/app/bootstrap.tsx` | Portal AppHost — catálogo visual (`plugin-ui.manifest.json`) |
+
+**Public-hub:** não importar `./index` nas rotas de assinatura/splash — o Index puxa TipTap/recharts (`ContextMenuToolbarButton-*.js`) e dispara `useMemo is not a function` se o share React estiver incompleto.
 
 **Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote consome React do MFE pai via `importShared` — o MFE **deve** chamar `preparePluginUiRemote()` antes de carregar chunks do remote.
 

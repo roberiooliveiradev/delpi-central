@@ -201,12 +201,15 @@ export function SignaturePad({
     if (!fullscreen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Esconde toggle de tema do host (ex.: public-hub) — mesmo canto do «Sair».
+    document.documentElement.dataset.delpiSignatureFullscreen = "1";
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setFullscreen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previous;
+      delete document.documentElement.dataset.delpiSignatureFullscreen;
       window.removeEventListener("keydown", onKey);
     };
   }, [fullscreen]);

@@ -1,4 +1,4 @@
-import { ScreenLoading } from "@delpi/plugin-ui/index";
+import { ScreenLoading } from "@delpi/plugin-ui/screen-loading";
 import { usePublicThemeMode } from "./ThemeToggle";
 
 type PublicLoadingSplashProps = {

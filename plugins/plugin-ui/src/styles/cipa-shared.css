@@ -356,13 +356,23 @@
 :root[data-theme="dark"] .delpi-ui-signature-pad__hint,
 :root[data-theme="dark"] .delpi-ui-signature-capture__upload-hint,
 :root[data-theme="dark"] .delpi-ui-signature-capture__preview-empty,
-:root[data-theme="dark"] .delpi-ui-signature-pad__stroke-label {
+:root[data-theme="dark"] .delpi-ui-signature-pad__stroke-label,
+:root[data-theme="dark"] .delpi-ui-signature-pad__chrome-title,
+:root[data-theme="dark"] .delpi-ui-signature-capture__preview-title,
+:root[data-theme="dark"] .delpi-ui-signature-capture__preview-name {
   color: var(--delpi-ui-muted, #94a3b8);
+}
+
+:root[data-theme="dark"] .delpi-ui-signature-pad__chrome-title,
+:root[data-theme="dark"] .delpi-ui-signature-capture__preview-title {
+  color: var(--delpi-ui-text, #e2e8f0);
 }
 
 :root[data-theme="dark"] .delpi-ui-signature-pad__stroke,
 :root[data-theme="dark"] .delpi-ui-signature-capture__mode,
 :root[data-theme="dark"] .delpi-ui-signature-pad__stroke-btn,
+:root[data-theme="dark"] .delpi-ui-signature-pad__icon-btn,
+:root[data-theme="dark"] .delpi-ui-signature-pad .delpi-ui-icon-btn,
 :root[data-theme="dark"] .delpi-ui-signature-capture__preview-card,
 :root[data-theme="dark"] .delpi-ui-signature-capture__type-input {
   background: var(--delpi-ui-surface, #0f172a);
@@ -382,6 +392,64 @@
 
 :root[data-theme="dark"] .delpi-ui-signature-pad__stroke-swatch {
   background: #e2e8f0;
+}
+
+:root[data-theme="dark"] .delpi-ui-signature-pad--fullscreen {
+  background: var(--delpi-ui-surface, #0b1220);
+  color: var(--delpi-ui-text, #e2e8f0);
+}
+
+/* Preferência do SO (sem data-theme=light) — espelha public-hub / portal. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__paper,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__paper,
+  :root:not([data-theme="light"]) .delpi-ui-signature-saved__paper {
+    border-color: color-mix(in srgb, #94a3b8 35%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 6%, transparent);
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__hint,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__upload-hint,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__preview-empty,
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__stroke-label {
+    color: var(--delpi-ui-muted, #94a3b8);
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__chrome-title,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__preview-title {
+    color: var(--delpi-ui-text, #e2e8f0);
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__stroke,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__mode,
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__stroke-btn,
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__icon-btn,
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad .delpi-ui-icon-btn,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__preview-card,
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__type-input {
+    background: var(--delpi-ui-surface, #0f172a);
+    border-color: var(--delpi-ui-border, #334155);
+    color: var(--delpi-ui-text, #e2e8f0);
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-capture__mode.is-active,
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__stroke-btn.is-active {
+    border-color: var(--delpi-ui-accent, var(--primary, #38bdf8));
+    background: color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #38bdf8)) 18%,
+      var(--delpi-ui-surface, #0f172a)
+    );
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad__stroke-swatch {
+    background: #e2e8f0;
+  }
+
+  :root:not([data-theme="light"]) .delpi-ui-signature-pad--fullscreen {
+    background: var(--delpi-ui-surface, #0b1220);
+    color: var(--delpi-ui-text, #e2e8f0);
+  }
 }
 
 .delpi-ui-user-directory-picker,

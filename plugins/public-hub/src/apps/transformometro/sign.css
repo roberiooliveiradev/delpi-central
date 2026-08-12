@@ -51,7 +51,7 @@
 .tm-sign--done h1 {
   margin: 0;
   font-size: 1.45rem;
-  color: var(--pub-text-title);
+  color: var(--pub-text);
 }
 
 .tm-sign__subtitle {
@@ -69,7 +69,7 @@
 .tm-sign__section h2 {
   margin: 0 0 0.65rem;
   font-size: 1rem;
-  color: var(--pub-text-title);
+  color: var(--pub-text);
 }
 
 .tm-sign__html {
@@ -98,16 +98,20 @@
   gap: 0.35rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--pub-text-title);
+  color: var(--pub-text);
 }
 
 .tm-sign__input {
-  border: 1px solid var(--pub-card-border);
+  border: 1px solid var(--pub-input-border, var(--pub-card-border));
   border-radius: 0.55rem;
   padding: 0.65rem 0.75rem;
   font: inherit;
-  color: var(--pub-text-body);
-  background: var(--pub-surface, #fff);
+  color: var(--pub-input-text, var(--pub-text-body));
+  background: var(--pub-input-bg, var(--pub-card-bg, #fff));
+}
+
+.tm-sign__input::placeholder {
+  color: var(--pub-placeholder, var(--pub-text-faint));
 }
 
 .tm-sign__textarea {
