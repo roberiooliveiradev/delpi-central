@@ -43,6 +43,7 @@ Módulo de atas oficiais (CRUD, assinatura eletrônica manuscrita, PDF, geraçã
 
 **API base:** `/apps/transformometro-api/transformometro/meeting-minutes` (JWT).  
 **Permissões:** `transformometro.meeting-minutes.view` / `.manage` / `.sign`.  
+**Escopo de filial (canônico):** `transformometro.branch.filial-01` / `filial-02` — combinar com capacidades. Legado: `view.filial-*` / `manage.filial-*`. Após mudar o manifesto: `register-manifest.sh` + re-grant nas roles.  
 **Rebuild MFE:** `./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro`
 
 ## Workspaces (jul/2026)
