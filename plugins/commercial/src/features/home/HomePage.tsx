@@ -1,48 +1,40 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  AlertTriangle,
+  BarChart3,
+  BriefcaseBusiness,
   CalendarCheck,
-  Package,
-  PackageCheck,
-  Wallet,
+  ClipboardList,
+  FileText,
+  Settings,
+  Target,
+  Timer,
+  Users,
 } from "lucide-react";
-import {
-  ActionButton,
-  DataTable,
-  EmptyState,
-  SectionCard,
-  type DataTableColumn,
-} from "@delpi/plugin-ui/index";
+import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../../content/helpTooltips";
-import { getOpenOrders } from "../../api/openOrdersApi";
-import { getMyWorklist } from "../../api/worklistApi";
 import {
-  formatPct,
-  getClosingRate,
-  getHeadOfficeRolTargetPct,
-  getSalesOrderOtd,
-  pickClosingPct,
-  pickOtdPct,
-  pickRolPct,
-} from "../../api/commercialKpisApi";
+  HOME_LAUNCHER_CONTENT,
+  resolveHomeLauncherCards,
+  type HomeLauncherCardId,
+} from "../../content/homeLauncher";
+import { getOpenOrders } from "../../api/openOrdersApi";
 import { useHomeHeroMetrics } from "../../app/HomeHeroMetricsContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import {
-  cmDataTableClassNames,
-  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialAlertQueue,
   CommercialLoadingCard,
+  CommercialNavigationCard,
+  CommercialScopeChipBar,
+  CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
-import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
-import { KpiCard } from "../../components/KpiCard";
-import { formatCurrency } from "../../utils/format";
+import { useWorklistPreview } from "../../hooks/useWorklistPreview";
+import { formatDisplayDate } from "../../utils/dates";
 import type { OpenOrdersData } from "../../types/openOrders";
-import type { SellerPortfolio } from "../../types/portfolio";
 
 type HomePageProps = {
   basePath: string;
@@ -50,22 +42,43 @@ type HomePageProps = {
   showWorklist: boolean;
   showProposals?: boolean;
   showAnalytics?: boolean;
+  showCustomers?: boolean;
+  canUseTeamScope?: boolean;
 };
 
-type HomeOrdersKpis = {
+type HomeOrdersSummary = {
   totalLinhas: number;
   valorAberto: number;
-  podeFaturar: number;
   atrasos: number;
 };
 
-function kpisFromOpenOrders(data: OpenOrdersData): HomeOrdersKpis {
+const emptySummary: HomeOrdersSummary = { totalLinhas: 0, valorAberto: 0, atrasos: 0 };
+
+const EVENTS = HOME_LAUNCHER_CONTENT.events;
+const FEATURES = HOME_LAUNCHER_CONTENT.features;
+
+const LAUNCHER_ICONS: Record<HomeLauncherCardId, ReactNode> = {
+  overview: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  my_tasks: <CalendarCheck size={22} strokeWidth={1.75} aria-hidden="true" />,
+  open_orders: <ClipboardList size={22} strokeWidth={1.75} aria-hidden="true" />,
+  customers: <Users size={22} strokeWidth={1.75} aria-hidden="true" />,
+  proposals: <FileText size={22} strokeWidth={1.75} aria-hidden="true" />,
+  analytics_otd: <Timer size={22} strokeWidth={1.75} aria-hidden="true" />,
+  analytics_opportunities: <Target size={22} strokeWidth={1.75} aria-hidden="true" />,
+  analytics_team: <BriefcaseBusiness size={22} strokeWidth={1.75} aria-hidden="true" />,
+  administration: <Settings size={22} strokeWidth={1.75} aria-hidden="true" />,
+};
+
+const cmEmptyCompactClassNames = {
+  ...cmEmptyStateClassNames,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+  withTitle: true,
+};
+
+function summaryFromOpenOrders(data: OpenOrdersData): HomeOrdersSummary {
   const items = data.items ?? [];
   const summary = data.summary as
-    | (OpenOrdersData["summary"] & {
-        itens_com_estoque?: number;
-        linhas_em_atraso?: number;
-      })
+    | (OpenOrdersData["summary"] & { linhas_em_atraso?: number })
     | undefined;
   const lateFromItems = items.filter((item) => {
     const status = `${item.status ?? ""} ${item.tipo_pedido ?? ""}`.toLowerCase();
@@ -74,41 +87,9 @@ function kpisFromOpenOrders(data: OpenOrdersData): HomeOrdersKpis {
   return {
     totalLinhas: summary?.total_linhas ?? items.length,
     valorAberto: summary?.valor_total_aberto ?? 0,
-    podeFaturar: summary?.itens_com_estoque ?? 0,
     atrasos: summary?.linhas_em_atraso ?? lateFromItems,
   };
 }
-
-const emptyKpis: HomeOrdersKpis = {
-  totalLinhas: 0,
-  valorAberto: 0,
-  podeFaturar: 0,
-  atrasos: 0,
-};
-
-type TeamRow = {
-  id: string;
-  name: string;
-  customers: number;
-  lines: number;
-  openValue: number;
-  error?: string | null;
-};
-
-type MgmtKpis = {
-  rolPct: number | null;
-  closingPct: number | null;
-  otdPct: number | null;
-};
-
-const emptyMgmt: MgmtKpis = { rolPct: null, closingPct: null, otdPct: null };
-const TEAM_FETCH_CAP = 12;
-
-const cmEmptyCompactClassNames = {
-  ...cmEmptyStateClassNames,
-  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
-  withTitle: true,
-};
 
 export function HomePage({
   basePath,
@@ -116,255 +97,75 @@ export function HomePage({
   showWorklist,
   showProposals = false,
   showAnalytics = false,
+  showCustomers = false,
+  canUseTeamScope = false,
 }: HomePageProps) {
-  const { sellerIdFilter, sellers } = usePortfolioScope();
+  const { sellerIdFilter } = usePortfolioScope();
   const { setMetrics, resetMetrics } = useHomeHeroMetrics();
   const [ordersLoading, setOrdersLoading] = useState(true);
-  const [worklistLoading, setWorklistLoading] = useState(showWorklist);
   const [ordersError, setOrdersError] = useState<string | null>(null);
-  const [worklistError, setWorklistError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<HomeOrdersKpis>(emptyKpis);
-  const [worklistOpen, setWorklistOpen] = useState(0);
-  const [worklistOverdue, setWorklistOverdue] = useState(0);
-  const [worklistToday, setWorklistToday] = useState(0);
-  const [mgmtLoading, setMgmtLoading] = useState(showAnalytics);
-  const [mgmtError, setMgmtError] = useState<string | null>(null);
-  const [mgmtKpis, setMgmtKpis] = useState<MgmtKpis>(emptyMgmt);
-  const [teamLoading, setTeamLoading] = useState(showAnalytics);
-  const [teamRows, setTeamRows] = useState<TeamRow[]>([]);
-  const [teamError, setTeamError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<HomeOrdersSummary>(emptySummary);
+  const worklist = useWorklistPreview({ enabled: showWorklist });
 
-  const reloadWorklist = useCallback(() => {
-    if (!showWorklist) return;
-    void getMyWorklist()
-      .then((wl) => {
-        setWorklistOpen(wl.counts?.open ?? 0);
-        setWorklistOverdue(wl.counts?.overdue ?? 0);
-        setWorklistToday(wl.counts?.today ?? 0);
-        setWorklistError(null);
-      })
-      .catch((err: unknown) => {
-        setWorklistError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
-        setWorklistOpen(0);
-        setWorklistOverdue(0);
-        setWorklistToday(0);
-      });
-  }, [showWorklist]);
-
-  useCommercialWorklistSync(reloadWorklist, showWorklist);
-
-  const reload = useCallback(() => {
+  const reloadOrders = useCallback(() => {
     const controller = new AbortController();
     setOrdersLoading(true);
     setOrdersError(null);
-    setWorklistLoading(showWorklist);
-    setWorklistError(null);
-    if (showAnalytics) {
-      setMgmtLoading(true);
-      setMgmtError(null);
-      setTeamLoading(true);
-      setTeamError(null);
-    }
-
-    const ordersPromise = getOpenOrders(controller.signal, {
-      sellerId: sellerIdFilter,
-    })
+    void getOpenOrders(controller.signal, { sellerId: sellerIdFilter })
       .then((data) => {
-        setSummary(kpisFromOpenOrders(data));
+        if (controller.signal.aborted) return;
+        setSummary(summaryFromOpenOrders(data));
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         setOrdersError(err instanceof Error ? err.message : "Erro ao carregar pedidos.");
-        setSummary(emptyKpis);
+        setSummary(emptySummary);
       })
       .finally(() => {
         if (!controller.signal.aborted) setOrdersLoading(false);
       });
-
-    const worklistPromise = showWorklist
-      ? getMyWorklist({ signal: controller.signal })
-          .then((wl) => {
-            setWorklistOpen(wl.counts?.open ?? 0);
-            setWorklistOverdue(wl.counts?.overdue ?? 0);
-            setWorklistToday(wl.counts?.today ?? 0);
-          })
-          .catch((err: unknown) => {
-            if (controller.signal.aborted) return;
-            setWorklistError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
-            setWorklistOpen(0);
-            setWorklistOverdue(0);
-            setWorklistToday(0);
-          })
-          .finally(() => {
-            if (!controller.signal.aborted) setWorklistLoading(false);
-          })
-      : Promise.resolve().then(() => {
-          setWorklistLoading(false);
-        });
-
-    const mgmtPromise = showAnalytics
-      ? Promise.allSettled([
-          getHeadOfficeRolTargetPct(controller.signal),
-          getClosingRate(controller.signal),
-          getSalesOrderOtd(controller.signal),
-        ])
-          .then((results) => {
-            if (controller.signal.aborted) return;
-            const [rolR, closingR, otdR] = results;
-            const next: MgmtKpis = { ...emptyMgmt };
-            let failed = 0;
-            if (rolR.status === "fulfilled") next.rolPct = pickRolPct(rolR.value);
-            else failed += 1;
-            if (closingR.status === "fulfilled") next.closingPct = pickClosingPct(closingR.value);
-            else failed += 1;
-            if (otdR.status === "fulfilled") next.otdPct = pickOtdPct(otdR.value);
-            else failed += 1;
-            setMgmtKpis(next);
-            if (failed === 3) {
-              setMgmtError("KPIs de gestão indisponíveis (permissão ou API).");
-            } else if (failed > 0) {
-              setMgmtError("Alguns KPIs de gestão falharam — os disponíveis seguem abaixo.");
-            } else {
-              setMgmtError(null);
-            }
-          })
-          .finally(() => {
-            if (!controller.signal.aborted) setMgmtLoading(false);
-          })
-      : Promise.resolve().then(() => {
-          setMgmtLoading(false);
-        });
-
-    const teamPromise = showAnalytics
-      ? (async () => {
-          const active = sellers.filter((s) => s.active).slice(0, TEAM_FETCH_CAP);
-          if (!active.length) {
-            setTeamRows([]);
-            setTeamError(null);
-            return;
-          }
-          const settled = await Promise.allSettled(
-            active.map(async (seller: SellerPortfolio) => {
-              const data = await getOpenOrders(controller.signal, {
-                // Filtro api-delpi é id da carteira (PK), não user_id do JWT.
-                sellerId: seller.id,
-              });
-              const kpis = kpisFromOpenOrders(data);
-              return {
-                id: seller.id,
-                name: seller.display_name.trim() || "Usuário",
-                customers: seller.customer_count ?? seller.customers?.length ?? 0,
-                lines: kpis.totalLinhas,
-                openValue: kpis.valorAberto,
-                error: null as string | null,
-              } satisfies TeamRow;
-            }),
-          );
-          if (controller.signal.aborted) return;
-          const rows: TeamRow[] = settled.map((result, index) => {
-            const seller = active[index];
-            if (result.status === "fulfilled") return result.value;
-            return {
-              id: seller.id,
-              name: seller.display_name.trim() || "Usuário",
-              customers: seller.customer_count ?? seller.customers?.length ?? 0,
-              lines: 0,
-              openValue: 0,
-              error: result.reason instanceof Error ? result.reason.message : "Falha",
-            };
-          });
-          setTeamRows(rows);
-          if (settled.every((r) => r.status === "rejected")) {
-            setTeamError("Não foi possível carregar a tabela da equipe.");
-          } else {
-            setTeamError(null);
-          }
-        })()
-          .catch((err: unknown) => {
-            if (controller.signal.aborted) return;
-            setTeamRows([]);
-            setTeamError(err instanceof Error ? err.message : "Erro na tabela da equipe.");
-          })
-          .finally(() => {
-            if (!controller.signal.aborted) setTeamLoading(false);
-          })
-      : Promise.resolve().then(() => {
-          setTeamLoading(false);
-        });
-
-    void Promise.allSettled([ordersPromise, worklistPromise, mgmtPromise, teamPromise]);
     return () => controller.abort();
-  }, [sellerIdFilter, sellers, showAnalytics, showWorklist]);
+  }, [sellerIdFilter]);
+
+  useEffect(() => reloadOrders(), [reloadOrders]);
+
+  const eventsReady = !ordersLoading && (!showWorklist || !worklist.loading);
 
   useEffect(() => {
-    const abort = reload();
-    return abort;
-  }, [reload]);
-
-  useEffect(() => {
-    const alertsReady = !ordersLoading && (!showWorklist || !worklistLoading);
-    if (!alertsReady) {
-      setMetrics({
-        valorAberto: null,
-        atrasos: null,
-        followUps: null,
-        ready: false,
-      });
+    if (!eventsReady) {
+      setMetrics({ valorAberto: null, atrasos: null, followUps: null, ready: false });
       return;
     }
     setMetrics({
       valorAberto: ordersError ? null : summary.valorAberto,
       atrasos: ordersError ? null : summary.atrasos,
-      followUps: showWorklist
-        ? worklistError
-          ? null
-          : worklistOpen
-        : null,
+      followUps: showWorklist ? (worklist.error ? null : worklist.counts.open) : null,
       ready: true,
     });
   }, [
+    eventsReady,
     ordersError,
-    ordersLoading,
     setMetrics,
     showWorklist,
     summary.atrasos,
     summary.valorAberto,
-    worklistError,
-    worklistLoading,
-    worklistOpen,
+    worklist.counts.open,
+    worklist.error,
   ]);
 
   useEffect(() => () => resetMetrics(), [resetMetrics]);
 
-  const teamColumns = useMemo<DataTableColumn<TeamRow>[]>(
-    () => [
-      { key: "name", header: "Vendedor", render: (row) => row.name },
-      {
-        key: "customers",
-        header: "Clientes",
-        align: "right",
-        render: (row) => row.customers.toLocaleString("pt-BR"),
-      },
-      {
-        key: "lines",
-        header: "Linhas abertas",
-        align: "right",
-        render: (row) => (row.error ? "—" : row.lines.toLocaleString("pt-BR")),
-      },
-      {
-        key: "openValue",
-        header: "Valor aberto",
-        align: "right",
-        render: (row) => (row.error ? row.error : formatCurrency(row.openValue)),
-      },
-    ],
-    [],
+  const openMyTasks = useCallback(
+    (bucket?: "overdue" | "today") =>
+      navigatePluginView("my_tasks", {
+        basePath,
+        search: bucket ? `?bucket=${bucket}` : undefined,
+      }),
+    [basePath],
   );
 
-  const alertsReady = !ordersLoading && (!showWorklist || !worklistLoading);
-
   const alerts = useMemo(() => {
-    if (!alertsReady) return [];
+    if (!eventsReady) return [];
     const items = [];
     if (summary.atrasos > 0) {
       items.push({
@@ -377,27 +178,17 @@ export function HomePage({
           navigatePluginView("open_orders", { basePath, search: "?focus=late" }),
       });
     }
-    if (showWorklist && worklistOverdue > 0) {
+    if (showWorklist && worklist.counts.overdue > 0) {
       items.push({
         id: "overdue-tasks",
-        title: `${worklistOverdue} follow-up(s) atrasado(s)`,
-        description: "Conclua ou reagende no Meu dia.",
+        title: `${worklist.counts.overdue} follow-up(s) atrasado(s)`,
+        description: "Conclua ou reagende na fila de Minhas tarefas.",
         tone: "danger" as const,
-        actionLabel: "Meu dia",
-        onAction: () =>
-          navigatePluginView("my_day", { basePath, search: "?bucket=overdue" }),
-      });
-    } else if (showWorklist && worklistOpen > 0) {
-      items.push({
-        id: "open-tasks",
-        title: `${worklistOpen} tarefa(s) em aberto`,
-        description: "Priorize a fila do Meu dia.",
-        tone: "info" as const,
-        actionLabel: "Meu dia",
-        onAction: () => navigatePluginView("my_day", { basePath }),
+        actionLabel: EVENTS.openOverdue,
+        onAction: () => openMyTasks("overdue"),
       });
     }
-    if (summary.totalLinhas === 0 && !ordersError) {
+    if (summary.totalLinhas === 0 && !ordersError && showCustomers) {
       items.push({
         id: "no-orders",
         title: "Nenhum pedido em aberto na carteira",
@@ -409,38 +200,83 @@ export function HomePage({
     }
     return items;
   }, [
-    alertsReady,
     basePath,
+    eventsReady,
+    openMyTasks,
     ordersError,
+    showCustomers,
     showWorklist,
     summary.atrasos,
     summary.totalLinhas,
-    worklistOpen,
-    worklistOverdue,
+    worklist.counts.overdue,
   ]);
 
-  const openOrders = () => navigatePluginView("open_orders", { basePath });
-  const openOrdersBillable = () =>
-    navigatePluginView("open_orders", { basePath, search: "?stock=com_estoque" });
-  const openOrdersLate = () =>
-    navigatePluginView("open_orders", { basePath, search: "?focus=late" });
-  const openMyDay = (bucket?: "overdue" | "today") =>
-    navigatePluginView("my_day", {
-      basePath,
-      search: bucket ? `?bucket=${bucket}` : undefined,
-    });
+  const queueChips = useMemo(
+    () => [
+      {
+        id: "overdue",
+        label: `${EVENTS.buckets.overdue} ${worklist.counts.overdue.toLocaleString("pt-BR")}`,
+        active: worklist.counts.overdue > 0,
+        onSelect: () => openMyTasks("overdue"),
+      },
+      {
+        id: "today",
+        label: `${EVENTS.buckets.today} ${worklist.counts.today.toLocaleString("pt-BR")}`,
+        onSelect: () => openMyTasks("today"),
+      },
+      {
+        id: "later",
+        label: `${EVENTS.buckets.later} ${worklist.counts.later.toLocaleString("pt-BR")}`,
+        onSelect: () => openMyTasks(),
+      },
+    ],
+    [openMyTasks, worklist.counts.later, worklist.counts.overdue, worklist.counts.today],
+  );
+
+  const launcherCards = useMemo(
+    () =>
+      resolveHomeLauncherCards({
+        analytics: showAnalytics,
+        worklist: showWorklist,
+        proposals: showProposals,
+        customers: showCustomers,
+        team: showAnalytics && canUseTeamScope,
+        admin: showAdmin,
+      }),
+    [canUseTeamScope, showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+  );
+
+  const hasEvents = alerts.length > 0 || worklist.items.length > 0;
 
   return (
     <section className="cm-page-stack">
       <SectionCard
-        title="Precisa de atenção"
-        subtitle="Alertas da carteira e do Meu dia."
+        title={EVENTS.title}
+        subtitle={EVENTS.subtitle}
         hint={CM_HELP.home.alerts}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
+        actions={
+          <>
+            <ActionButton
+              variant="ghost"
+              onClick={() => {
+                reloadOrders();
+                worklist.reload();
+              }}
+            >
+              {EVENTS.refresh}
+            </ActionButton>
+            {showWorklist ? (
+              <ActionButton variant="primary" onClick={() => openMyTasks()}>
+                {EVENTS.cta}
+              </ActionButton>
+            ) : null}
+          </>
+        }
       >
-        {!alertsReady ? (
-          <CommercialLoadingCard title="Carregando alertas…" variant="panel" />
+        {!eventsReady ? (
+          <CommercialLoadingCard title={EVENTS.loading} variant="panel" />
         ) : (
           <>
             {ordersError ? (
@@ -450,216 +286,112 @@ export function HomePage({
                 role="alert"
               />
             ) : null}
-            {worklistError ? (
+            {worklist.error ? (
               <EmptyState
                 classNames={cmEmptyStateClassNames}
-                defaultMessage={`Meu dia: ${worklistError}`}
+                defaultMessage={`Minhas tarefas: ${worklist.error}`}
                 role="alert"
               />
             ) : null}
-            <CommercialAlertQueue
-              className={alerts.length === 0 ? "delpi-ui-alert-queue--compact-empty" : undefined}
-              items={alerts}
-              emptyMessage="Nada precisa de atenção agora. Bom trabalho!"
-            />
+            {showWorklist && !worklist.error ? (
+              <CommercialScopeChipBar
+                label={EVENTS.queueLabel}
+                aria-label={EVENTS.queueLabel}
+                chips={queueChips}
+              />
+            ) : null}
+            {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
+            {worklist.items.length > 0 ? (
+              <div className="cm-home-events-list" aria-label={EVENTS.listAriaLabel}>
+                {worklist.items.map(({ task, bucket }) => (
+                  <CommercialWorklistItem
+                    key={task.id}
+                    title={task.title}
+                    tone={
+                      bucket === "overdue"
+                        ? "danger"
+                        : bucket === "today"
+                          ? "warning"
+                          : "neutral"
+                    }
+                    meta={[
+                      EVENTS.buckets[bucket],
+                      task.due_at ? formatDisplayDate(task.due_at) : EVENTS.noDueDate,
+                      task.customer_code ? `Cliente ${task.customer_code}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    detail={task.description ?? undefined}
+                    primaryActionLabel={EVENTS.openTask}
+                    onPrimaryAction={() =>
+                      openMyTasks(bucket === "later" ? undefined : bucket)
+                    }
+                  />
+                ))}
+              </div>
+            ) : null}
+            {!hasEvents ? (
+              <EmptyState
+                classNames={cmEmptyCompactClassNames}
+                defaultTitle={EVENTS.emptyTitle}
+                defaultMessage={EVENTS.emptyMessage}
+              >
+                {showWorklist ? (
+                  <ActionButton variant="ghost" onClick={() => openMyTasks()}>
+                    {EVENTS.cta}
+                  </ActionButton>
+                ) : null}
+              </EmptyState>
+            ) : null}
           </>
         )}
       </SectionCard>
 
       <SectionCard
-        title="Seus números"
-        subtitle="Resumo operacional da carteira no escopo atual."
-        hint={CM_HELP.home.kpis}
+        title={FEATURES.title}
+        subtitle={FEATURES.subtitle}
+        hint={CM_HELP.home.shortcuts}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
-        actions={
-          <ActionButton variant="ghost" onClick={() => reload()}>
-            Atualizar
-          </ActionButton>
-        }
       >
-        {ordersLoading ? (
-          <CommercialLoadingCard title="Carregando indicadores…" variant="panel" />
-        ) : ordersError ? (
+        {launcherCards.length === 0 ? (
           <EmptyState
             classNames={cmEmptyStateClassNames}
-            defaultMessage="Indicadores indisponíveis neste momento."
-            role="alert"
+            defaultMessage={FEATURES.empty}
           />
         ) : (
-          <div className="cm-home-kpi-grid" aria-label="Indicadores operacionais">
-            <KpiCard
-              title="Linhas em aberto"
-              titleHint={CM_HELP.openOrders.kpiLines}
-              value={summary.totalLinhas.toLocaleString("pt-BR")}
-              subtitle="No escopo atual"
-              icon={<Package size={22} />}
-              onClick={openOrders}
-            />
-            <KpiCard
-              title="Valor em aberto"
-              titleHint={CM_HELP.openOrders.kpiValue}
-              value={formatCurrency(summary.valorAberto)}
-              icon={<Wallet size={22} />}
-              wide
-              onClick={openOrders}
-            />
-            <KpiCard
-              title="Pode faturar"
-              titleHint={CM_HELP.openOrders.kpiCanInvoice}
-              value={summary.podeFaturar.toLocaleString("pt-BR")}
-              icon={<PackageCheck size={22} />}
-              onClick={openOrdersBillable}
-            />
-            <KpiCard
-              title="Pedidos em atraso"
-              titleHint={CM_HELP.openOrders.kpiLate}
-              value={summary.atrasos.toLocaleString("pt-BR")}
-              icon={<AlertTriangle size={22} />}
-              valueTone={summary.atrasos > 0 ? "danger" : "default"}
-              iconTone={summary.atrasos > 0 ? "warning" : undefined}
-              onClick={openOrdersLate}
-            />
-            {showWorklist ? (
-              <KpiCard
-                title="Tarefas hoje"
-                titleHint={CM_HELP.home.kpiTasks}
-                value={(worklistToday + worklistOverdue).toLocaleString("pt-BR")}
-                subtitle={`${worklistOverdue} atrasada(s)`}
-                icon={<CalendarCheck size={22} />}
-                valueTone={worklistOverdue > 0 ? "danger" : "default"}
-                onClick={() =>
-                  openMyDay(worklistOverdue > 0 ? "overdue" : "today")
-                }
-              />
-            ) : null}
+          <div className="cm-home-grid" aria-label={FEATURES.gridAriaLabel}>
+            {launcherCards.map((card) => (
+              <div key={card.id} className="cm-launcher-cell">
+                <CommercialNavigationCard
+                  title={card.title}
+                  description={card.description}
+                  icon={LAUNCHER_ICONS[card.id]}
+                  onClick={() => navigatePluginView(card.viewId, { basePath })}
+                />
+                {card.quickLinks?.length ? (
+                  <div className="cm-nav-row">
+                    {card.quickLinks.map((link) => (
+                      <ActionButton
+                        key={link.id}
+                        variant="ghost"
+                        onClick={() =>
+                          navigatePluginView(link.viewId, {
+                            basePath,
+                            search: link.search,
+                          })
+                        }
+                      >
+                        {link.label}
+                      </ActionButton>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
         )}
       </SectionCard>
-
-      {showAnalytics ? (
-        <SectionCard
-          title="Gestão"
-          subtitle="ROL, conversão e OTD do mês + carteiras da equipe."
-          hint={CM_HELP.home.management}
-          classNames={cmSectionCardClassNames}
-          labels={cmSectionLabels}
-          actions={
-            <ActionButton
-              variant="ghost"
-              onClick={() => navigatePluginView("analytics", { basePath })}
-            >
-              Abrir Gestão
-            </ActionButton>
-          }
-        >
-          {mgmtLoading ? (
-            <CommercialLoadingCard title="Carregando KPIs de gestão…" variant="panel" />
-          ) : null}
-          {mgmtError ? (
-            <EmptyState
-              classNames={cmEmptyStateClassNames}
-              defaultMessage={mgmtError}
-              role="alert"
-            />
-          ) : null}
-          {!mgmtLoading ? (
-            <div className="cm-home-kpi-grid" aria-label="Indicadores de gestão">
-              <KpiCard
-                title="ROL vs meta"
-                titleHint={CM_HELP.home.kpiRol}
-                value={formatPct(mgmtKpis.rolPct)}
-                subtitle="Matriz no mês"
-                icon={<Wallet size={22} />}
-                onClick={() => navigatePluginView("analytics", { basePath })}
-              />
-              <KpiCard
-                title="Conversão"
-                titleHint={CM_HELP.home.kpiClosing}
-                value={formatPct(mgmtKpis.closingPct)}
-                subtitle="Propostas → ganhas"
-                icon={<PackageCheck size={22} />}
-                onClick={() => navigatePluginView("analytics", { basePath })}
-              />
-              <KpiCard
-                title="OTD pedidos"
-                titleHint={CM_HELP.home.kpiOtd}
-                value={formatPct(mgmtKpis.otdPct)}
-                subtitle="Entrega no prazo"
-                icon={<Package size={22} />}
-                onClick={() => navigatePluginView("analytics_otd", { basePath })}
-              />
-            </div>
-          ) : null}
-
-          <h3 className="cm-section-subtitle">Equipe (carteiras)</h3>
-          {teamLoading ? (
-            <CommercialLoadingCard title="Carregando equipe…" variant="panel" />
-          ) : null}
-          {teamError ? (
-            <EmptyState
-              classNames={cmEmptyStateClassNames}
-              defaultMessage={teamError}
-              role="alert"
-            />
-          ) : null}
-          {!teamLoading && !teamError && teamRows.length === 0 ? (
-            <EmptyState
-              classNames={cmEmptyCompactClassNames}
-              defaultTitle="Nenhuma carteira ativa"
-              defaultMessage="Cadastre vendedores em Carteiras para ver a tabela da equipe."
-            >
-              {showAdmin ? (
-                <ActionButton
-                  variant="primary"
-                  onClick={() => navigatePluginView("seller_portfolios", { basePath })}
-                >
-                  Abrir Carteiras
-                </ActionButton>
-              ) : null}
-            </EmptyState>
-          ) : null}
-          {!teamLoading && teamRows.length > 0 ? (
-            <DataTable
-              rows={teamRows}
-              columns={teamColumns}
-              rowKey={(row) => row.id}
-              classNames={cmDataTableClassNames}
-              labels={cmDataTableLabels}
-              layout="section"
-            />
-          ) : null}
-        </SectionCard>
-      ) : null}
-
-      {showProposals || showAnalytics ? (
-        <SectionCard
-          title="Atalhos"
-          subtitle="Gestão e propostas comerciais no próprio portal."
-          hint={CM_HELP.home.analytics}
-          classNames={cmSectionCardClassNames}
-          labels={cmSectionLabels}
-        >
-          <div className="cm-nav-row">
-            {showAnalytics ? (
-              <ActionButton
-                variant="ghost"
-                onClick={() => navigatePluginView("analytics", { basePath })}
-              >
-                Gestão
-              </ActionButton>
-            ) : null}
-            {showProposals ? (
-              <ActionButton
-                variant="ghost"
-                onClick={() => navigatePluginView("proposals", { basePath })}
-              >
-                Propostas
-              </ActionButton>
-            ) : null}
-          </div>
-        </SectionCard>
-      ) : null}
     </section>
   );
 }

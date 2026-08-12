@@ -12,6 +12,7 @@ import {
   createDashboardFiltersKit,
   createDashboardLoadingActivityCard,
   createDashboardMultiSelectField,
+  createDashboardNavigationCard,
   createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
@@ -119,6 +120,9 @@ export const cmScopeChipBarClassNames = scopeChipBarBemClasses(UI_PREFIX);
 export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
 export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
+export const CommercialNavigationCard = createDashboardNavigationCard({
+  classNames: cmNavCardClassNames,
+});
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;
 export const CommercialExcelExportButton = ExcelExportButton;

@@ -88,6 +88,8 @@ function AppRoutes({
           showWorklist={canViewWorklist}
           showProposals={canViewProposals}
           showAnalytics={canViewAnalytics}
+          showCustomers={canAccessMyPortfolio}
+          canUseTeamScope={canUseTeamScope}
         />
       ) : null}
       {view === "my_day" ? (

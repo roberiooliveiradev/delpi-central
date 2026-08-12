@@ -7,7 +7,7 @@ import {
   buildPluginPath,
   buildProposalDetailPath,
   normalizePathname,
-  type BuildablePluginView,
+  type PluginNavigationTarget,
 } from "./pluginRoutes";
 import {
   sanitizeCustomersListSearch,
@@ -36,7 +36,7 @@ export function navigatePluginPath(
 }
 
 export function navigatePluginView(
-  view: BuildablePluginView,
+  view: PluginNavigationTarget,
   options?: { basePath?: string; search?: string },
 ): void {
   const target = buildPluginPath(view, options?.basePath, options?.search);

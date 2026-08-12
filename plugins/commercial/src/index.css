@@ -155,6 +155,20 @@
   gap: var(--cm-grid-gap);
 }
 
+.dashboard-commercial .cm-launcher-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-home-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
 /* Meu dia */
 .dashboard-commercial .cm-my-day-toolbar {
   display: flex;

@@ -20,7 +20,8 @@ export const CM_HELP = {
   home: {
     overview:
       "Saudação personalizada, seguida pelo escopo atual da carteira e pelos alertas prioritários.",
-    alerts: "Fila do que precisa de ação agora — CTAs levam direto a Pedidos ou Meu dia.",
+    alerts:
+      "Eventos e interações do seu dia: alertas da carteira e as primeiras tarefas da fila — os atalhos levam direto a Pedidos ou Minhas tarefas.",
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:

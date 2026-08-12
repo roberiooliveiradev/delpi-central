@@ -225,6 +225,17 @@ export function resolvePluginRoute(
   }
 
 
+  // IA 2026 path aliases — páginas dedicadas ainda não existem; resolvem para as views atuais
+  if (relativePath === "overview") {
+    return { view: "analytics", pathname: path, relativePath };
+  }
+  if (relativePath === "my-tasks") {
+    return { view: "my_day", pathname: path, relativePath };
+  }
+  if (relativePath === "administration") {
+    return { view: "seller_portfolios", pathname: path, relativePath };
+  }
+
   // Legacy PT path aliases (pre-EN rename) — resolve to same views
   if (relativePath === "propostas") {
     return { view: "proposals", pathname: path, relativePath };
@@ -321,8 +332,19 @@ export type BuildablePluginView = Exclude<
   | "not_found"
 >;
 
+/**
+ * Vocabulário de navegação da arquitetura de informação 2026 (Início launcher,
+ * Visão geral, Minhas tarefas, Administração). Enquanto as páginas dedicadas não
+ * existem, os alvos novos apontam para as views atuais equivalentes.
+ */
+export type PluginNavigationTarget =
+  | BuildablePluginView
+  | "overview"
+  | "my_tasks"
+  | "administration";
+
 export function buildPluginPath(
-  view: BuildablePluginView,
+  view: PluginNavigationTarget,
   basePath?: string,
   search?: string,
 ): string {
@@ -332,13 +354,13 @@ export function buildPluginPath(
       ? `${base}/open-orders`
       : view === "customers"
         ? `${base}/customers`
-        : view === "seller_portfolios"
+        : view === "seller_portfolios" || view === "administration"
           ? `${base}/seller-portfolios`
-          : view === "my_day"
+          : view === "my_day" || view === "my_tasks"
             ? `${base}/my-day`
             : view === "proposals"
               ? `${base}/proposals`
-              : view === "analytics"
+              : view === "analytics" || view === "overview"
                 ? `${base}/analytics`
                 : view === "analytics_otd"
                   ? `${base}/analytics/otd`
