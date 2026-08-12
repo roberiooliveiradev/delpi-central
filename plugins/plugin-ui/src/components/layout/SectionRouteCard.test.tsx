@@ -62,8 +62,35 @@ describe("SectionRouteCard", () => {
         ]}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Favoritar" }));
+    const pin = screen.getByRole("button", { name: "Favoritar" });
+    expect(pin.querySelector("svg")).toBeTruthy();
+    expect(pin.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(pin);
     expect(onPinClick).toHaveBeenCalledTimes(1);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("marca pin pressed com fill quando pinned", () => {
+    render(
+      <SectionRouteCard
+        classNames={sectionRouteCardBemClasses("cm")}
+        title="Documentos"
+        routes={[
+          {
+            id: "proposals",
+            label: "Propostas",
+            onClick: () => undefined,
+            onPinClick: () => undefined,
+            pinned: true,
+            unpinLabel: "Desfavoritar",
+          },
+        ]}
+      />,
+    );
+    const pin = screen.getByRole("button", { name: "Desfavoritar" });
+    expect(pin.getAttribute("aria-pressed")).toBe("true");
+    expect(pin.className).toMatch(/route-pin--pressed/);
+    const svg = pin.querySelector("svg");
+    expect(svg?.getAttribute("fill")).toBe("currentColor");
   });
 });

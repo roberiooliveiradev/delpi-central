@@ -53,4 +53,17 @@ describe("CatalogSearchBar", () => {
     fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
     expect(onChange).toHaveBeenCalledWith("");
   });
+
+  it("expõe field dual-class para foco no container", () => {
+    const { container } = render(
+      <CatalogSearchBar
+        classNames={catalogSearchBarBemClasses("cm")}
+        value=""
+        onChange={() => undefined}
+        aria-label="Buscar"
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-catalog-search-bar__field")).toBeTruthy();
+    expect(container.querySelector(".cm-catalog-search__field")).toBeTruthy();
+  });
 });
