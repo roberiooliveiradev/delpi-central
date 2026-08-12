@@ -5,6 +5,7 @@ from typing import Any, Sequence
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
+    SellerPortfolioMember,
 )
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -19,13 +20,16 @@ _LEGACY_PORTFOLIO_COLUMNS = (
 _LEGACY_CUSTOMER_COLUMNS = (
     "id, seller_id, customer_code, customer_store, customer_name, created_at"
 )
+_MEMBERSHIP_NN_REQUIRED = (
+    "Membership N:N exige COMMERCIAL_PORTFOLIO_SOURCE=commercial"
+)
 
 
 class LegacyPostgresSellerPortfolioRepository(
     PluginBaseRepository,
     SellerPortfolioRepositoryPort,
 ):
-    """Dual-read: schema legado pedidos_venda_abertos.sellers."""
+    """Dual-read: schema legado pedidos_venda_abertos.sellers (1:1)."""
 
     def get_by_id(self, portfolio_id: str) -> SellerPortfolio | None:
         row = self.fetch_one(
@@ -45,6 +49,38 @@ class LegacyPostgresSellerPortfolioRepository(
         )
         return self._hydrate(row)
 
+    def list_by_user_id(self, user_id: str, *, active_only: bool = True) -> list[SellerPortfolio]:
+        portfolio = self.get_by_user_id(user_id)
+        if portfolio is None:
+            return []
+        if active_only and not portfolio.active:
+            return []
+        return [portfolio]
+
+    def list_member_user_ids(self, *, active_portfolios_only: bool = True) -> list[str]:
+        if active_portfolios_only:
+            rows = self.fetch_all(
+                """
+                SELECT DISTINCT user_id
+                  FROM pedidos_venda_abertos.sellers
+                 WHERE active = TRUE
+                   AND user_id IS NOT NULL
+                   AND TRIM(user_id) <> ''
+                 ORDER BY user_id ASC
+                """
+            )
+        else:
+            rows = self.fetch_all(
+                """
+                SELECT DISTINCT user_id
+                  FROM pedidos_venda_abertos.sellers
+                 WHERE user_id IS NOT NULL
+                   AND TRIM(user_id) <> ''
+                 ORDER BY user_id ASC
+                """
+            )
+        return [str(row["user_id"]) for row in rows if row.get("user_id")]
+
     def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         query = f"""
             SELECT {_LEGACY_PORTFOLIO_COLUMNS}
@@ -63,7 +99,10 @@ class LegacyPostgresSellerPortfolioRepository(
         user_id: str,
         display_name: str,
         created_by_user_id: str | None,
+        member_user_ids: Sequence[str] | None = None,
     ) -> SellerPortfolio:
+        # Legado 1:1 — member_user_ids extras são ignorados; user_id é o owner.
+        _ = member_user_ids
         row = self.execute_returning_one(
             f"""
             INSERT INTO pedidos_venda_abertos.sellers (
@@ -336,6 +375,39 @@ class LegacyPostgresSellerPortfolioRepository(
             return None
         return source_portfolio, target_portfolio
 
+    def replace_members(
+        self,
+        *,
+        portfolio_id: str,
+        members: Sequence[SellerPortfolioMember],
+    ) -> SellerPortfolio | None:
+        raise NotImplementedError(_MEMBERSHIP_NN_REQUIRED)
+
+    def add_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+        role: str = "member",
+    ) -> SellerPortfolio | None:
+        raise NotImplementedError(_MEMBERSHIP_NN_REQUIRED)
+
+    def remove_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+    ) -> SellerPortfolio | None:
+        raise NotImplementedError(_MEMBERSHIP_NN_REQUIRED)
+
+    def set_owner(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+    ) -> SellerPortfolio | None:
+        raise NotImplementedError(_MEMBERSHIP_NN_REQUIRED)
+
     def _list_customers(self, portfolio_id: str) -> list[dict[str, Any]]:
         return self.fetch_all(
             f"""
@@ -351,6 +423,7 @@ class LegacyPostgresSellerPortfolioRepository(
         if not row:
             return None
         portfolio_id = str(row["id"])
+        user_id = str(row["user_id"])
         customers = tuple(
             SellerCustomerAssignment(
                 customer_code=str(item["customer_code"]),
@@ -363,10 +436,12 @@ class LegacyPostgresSellerPortfolioRepository(
             )
             for item in self._list_customers(portfolio_id)
         )
+        members = (SellerPortfolioMember(user_id=user_id, role="owner"),)
         return SellerPortfolio(
             id=portfolio_id,
-            user_id=str(row["user_id"]),
+            user_id=user_id,
             display_name=str(row["display_name"]),
             active=bool(row.get("active", True)),
             customers=customers,
+            members=members,
         )
