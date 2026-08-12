@@ -58,7 +58,7 @@ O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule
 
 **React incompleto no global (ago/2026 — public-hub `/sign`):** exigir só `useRef` aceitava um `__DELPI_MF_REACT__` parcial; o chunk rich-text faz `const {useMemo:BA}=await O("react")` → `BA is not a function`. Guard canônico: `typeof useRef` **e** `useMemo` **e** `useState` == `"function"`. Bump `DELPI_MF_PATCH_VERSION` quando o guard mudar.
 
-**Shared react-dom ≠ React (ago/2026 — HelpTooltip `/sign`):** o consumer patch redirecionava `__federation_shared_react-dom*` para `__DELPI_MF_REACT__` → `createPortal` sumia → `X is not a function`. Nunca patchar esse interop (`getDefaultExportFromCjs(bridge())`).
+**Shared react-dom ≠ React (ago/2026 — HelpTooltip `/sign`):** o consumer patch redirecionava `__federation_shared_react-dom*` para `__DELPI_MF_REACT__` → `createPortal` sumia → `X is not a function`. Nunca patchar esse interop (`getDefaultExportFromCjs(bridge())`). Detector de interop exige wrapper minúsculo (1 bridge, sem `importShared` / federation runtime) — App/expose também importam `_commonjsHelpers` + `export default` e **não** podem ser classificados como shared react-dom (senão o fallback some → `verify-federation-react-patch` FAIL).
 
 **React #527 (versões divergentes):** portal e MFEs devem usar a **mesma versão exata** de `react` e `react-dom` (`plugins/vite/reactPinnedVersion.ts` → `19.2.7`). Portal em 19.2.4 + MFE em 19.2.6 quebra o par react/react-dom no share scope. Sincronizar: `node plugins/vite/sync-react-pinned-version.mjs` + rebuild portal e MFEs.
 

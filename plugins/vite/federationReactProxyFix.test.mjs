@@ -185,6 +185,20 @@ function testSharedReactDomInteropNotRedirectedToReact() {
 }
 
 /**
+ * Regressão controle-retrabalhos (ago/2026): App-*.js importa _commonjsHelpers +
+ * export default (padrão do expose) — detector frouxo classificava como shared
+ * react-dom e pulava o fallback → verify-federation-react-patch FAIL.
+ */
+function testAppChunkWithCommonjsHelpersStillGetsReactFallback() {
+  const raw = String.raw`import{importShared as E}from"./__federation_fn_import-X.js";import{r as Nu}from"./index-B4SFKWmm.js";import{g as Yb}from"./_commonjsHelpers-CqkleIqs.js";function boot(){var e=Nu();return e.useRef}export{boot as default};`;
+  assert.equal(isFederationSharedReactDomInterop(raw), false, "App ≠ shared react-dom");
+  assert.equal(resolveBundledReactBridgeName(raw), "Nu", "escolhe bridge React");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "injeta fallback no App");
+  assert.ok(!out.includes("var e=Nu()"), "não chama Nu() sem fallback");
+}
+
+/**
  * Regressão ReDoS (?v=7): `(?:[^}"']*,)*r as` travava vite build do plugin-ui
  * (milhares de `import{a,b,…}`) em "rendering chunks…".
  */
@@ -252,9 +266,10 @@ testAppChunkPrefersDollarReactBridgeOverReactDom();
 testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
 testAppChunkSkipsLoneReactDomBridge();
 testSharedReactDomInteropNotRedirectedToReact();
+testAppChunkWithCommonjsHelpersStillGetsReactFallback();
 testBridgeImportScanIsLinearOnCommaHeavyImports();
 testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 18 testes passaram");
+console.log("OK: federationReactProxyFix — 19 testes passaram");

@@ -223,15 +223,30 @@ export function resolveBundledReactBridgeName(code: string): string | null {
 
 /**
  * Chunk Vite `__federation_shared_react-dom-*`: só faz
- * `getDefaultExportFromCjs(reactDomCjsBridge())` e exporta default.
+ * `getDefaultExportFromCjs(reactDomCjsBridge())` e exporta default (~136 bytes).
+ *
+ * **Não** usar só `_commonjsHelpers` + `export default` — App/expose (ex.:
+ * controle-retrabalhos) também importam o helper CJS e exportam default; o
+ * falso positivo bloqueava o fallback `__DELPI_MF_REACT__` no bridge React.
  */
 export function isFederationSharedReactDomInterop(code: string): boolean {
-  return (
-    code.includes("_commonjsHelpers") &&
-    /export\{\w+ as default\}/.test(code) &&
-    !code.includes(REACT_CLIENT_INTERNALS) &&
-    !code.includes("n.useRef=function")
-  );
+  if (!code.includes("_commonjsHelpers")) return false;
+  if (!/export\{\w+ as default\}/.test(code)) return false;
+  if (code.includes(REACT_CLIENT_INTERNALS)) return false;
+  if (code.includes("n.useRef=function")) return false;
+  // App/expose: federation runtime + importShared — nunca o wrapper shared.
+  if (
+    code.includes("importShared") ||
+    code.includes("__federation_fn_import") ||
+    code.includes("_virtual___federation__")
+  ) {
+    return false;
+  }
+  const bridges = listBundledReactBridgeImports(code);
+  if (bridges.length !== 1) return false;
+  // Wrapper real é minúsculo; App chunks são dezenas/centenas de KB.
+  if (code.length > 2000) return false;
+  return true;
 }
 
 export function isFederationSharedReactDomFileName(fileName: string): boolean {
