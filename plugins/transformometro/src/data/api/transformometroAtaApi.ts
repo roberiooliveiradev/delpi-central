@@ -59,15 +59,15 @@ export function listAtas(
   getAccessToken?: () => string | undefined,
   params: { unit_code?: string; status?: string } = {},
 ) {
-  return request<{ items: AtaListItem[]; total: number }>(`/atas${query(params)}`, getAccessToken);
+  return request<{ items: AtaListItem[]; total: number }>(`/meeting-minutes${query(params)}`, getAccessToken);
 }
 
 export function getAta(id: string, getAccessToken?: () => string | undefined) {
-  return request<AtaDetail>(`/atas/${id}`, getAccessToken);
+  return request<AtaDetail>(`/meeting-minutes/${id}`, getAccessToken);
 }
 
 export function createAta(payload: Record<string, unknown>, getAccessToken?: () => string | undefined) {
-  return request<AtaDetail>("/atas", getAccessToken, { method: "POST", body: JSON.stringify(payload) });
+  return request<AtaDetail>("/meeting-minutes", getAccessToken, { method: "POST", body: JSON.stringify(payload) });
 }
 
 type GenerateAtaApiData = {
@@ -86,7 +86,7 @@ export async function generateAtaFromTranscript(
   generationRequest: AtaGenerationRequest,
   getAccessToken?: () => string | undefined,
 ): Promise<AtaGenerationResult> {
-  const data = await request<GenerateAtaApiData>("/atas/generate-from-transcript", getAccessToken, {
+  const data = await request<GenerateAtaApiData>("/meeting-minutes/generate-from-transcript", getAccessToken, {
     method: "POST",
     body: JSON.stringify({
       unitCode: generationRequest.unitCode,
@@ -108,11 +108,11 @@ export async function generateAtaFromTranscript(
 }
 
 export function updateAta(id: string, payload: Record<string, unknown>, getAccessToken?: () => string | undefined) {
-  return request<AtaDetail>(`/atas/${id}`, getAccessToken, { method: "PATCH", body: JSON.stringify(payload) });
+  return request<AtaDetail>(`/meeting-minutes/${id}`, getAccessToken, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
 export function setAtaSigners(id: string, signers: Record<string, unknown>[], getAccessToken?: () => string | undefined) {
-  return request<{ signers: Record<string, unknown>[] }>(`/atas/${id}/signers`, getAccessToken, {
+  return request<{ signers: Record<string, unknown>[] }>(`/meeting-minutes/${id}/signers`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify({ signers }),
   });
@@ -146,19 +146,19 @@ export async function searchDirectoryUsers(
 }
 
 export function sendAta(id: string, getAccessToken?: () => string | undefined) {
-  return request<Record<string, unknown>>(`/atas/${id}/send-for-signature`, getAccessToken, { method: "POST" });
+  return request<Record<string, unknown>>(`/meeting-minutes/${id}/send-for-signature`, getAccessToken, { method: "POST" });
 }
 
 export function finalizeAta(id: string, getAccessToken?: () => string | undefined) {
-  return request<Record<string, unknown>>(`/atas/${id}/finalize`, getAccessToken, { method: "POST" });
+  return request<Record<string, unknown>>(`/meeting-minutes/${id}/finalize`, getAccessToken, { method: "POST" });
 }
 
 export function getAtaSignContext(id: string, getAccessToken?: () => string | undefined) {
-  return request<Record<string, unknown>>(`/atas/${id}/sign-context`, getAccessToken);
+  return request<Record<string, unknown>>(`/meeting-minutes/${id}/sign-context`, getAccessToken);
 }
 
 export function signAta(id: string, form: FormData, getAccessToken?: () => string | undefined) {
-  return request<Record<string, unknown>>(`/atas/${id}/signatures`, getAccessToken, {
+  return request<Record<string, unknown>>(`/meeting-minutes/${id}/signatures`, getAccessToken, {
     method: "POST",
     body: form,
     headers: { "Idempotency-Key": crypto.randomUUID() },
@@ -166,14 +166,14 @@ export function signAta(id: string, form: FormData, getAccessToken?: () => strin
 }
 
 export function refuseAta(id: string, reason: string, getAccessToken?: () => string | undefined) {
-  return request<Record<string, unknown>>(`/atas/${id}/signatures/refuse`, getAccessToken, {
+  return request<Record<string, unknown>>(`/meeting-minutes/${id}/signatures/refuse`, getAccessToken, {
     method: "POST",
     body: JSON.stringify({ reason }),
   });
 }
 
 export function pendingAtas(getAccessToken?: () => string | undefined) {
-  return request<{ items: AtaListItem[]; total: number }>("/atas/pending-signatures", getAccessToken);
+  return request<{ items: AtaListItem[]; total: number }>("/meeting-minutes/pending-signatures", getAccessToken);
 }
 
 export function getSignatureProfile(getAccessToken?: () => string | undefined) {
@@ -208,7 +208,7 @@ export async function fetchAtaSignatureImageBlob(
   getAccessToken?: () => string | undefined,
 ): Promise<Blob> {
   const response = await fetch(
-    `${TRANSFORMOMETRO_API_BASE}/atas/${encodeURIComponent(minuteId)}/signatures/${encodeURIComponent(signatureId)}/image`,
+    `${TRANSFORMOMETRO_API_BASE}/meeting-minutes/${encodeURIComponent(minuteId)}/signatures/${encodeURIComponent(signatureId)}/image`,
     { headers: buildAuthHeaders(getAccessToken) },
   );
   if (!response.ok) {
@@ -218,5 +218,5 @@ export async function fetchAtaSignatureImageBlob(
 }
 
 export function exportAtaPdfUrl(id: string): string {
-  return `${TRANSFORMOMETRO_API_BASE}/atas/${id}/export.pdf`;
+  return `${TRANSFORMOMETRO_API_BASE}/meeting-minutes/${id}/export.pdf`;
 }

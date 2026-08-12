@@ -12,7 +12,7 @@ export async function fetchProcessoArquivos(
   processoId: string,
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoArquivo[]> {
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/processos/${processoId}/arquivos`, {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/processes/${processoId}/files`, {
     headers: buildAuthHeaders(getAccessToken),
   });
   const data = await parseEnvelope<ProcessoArquivoList>(response);
@@ -35,7 +35,7 @@ export async function uploadProcessoArquivo(
   if (params.urlExterna) form.set("url_externa", params.urlExterna);
   if (params.file) form.append("file", params.file);
 
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/processos/${processoId}/arquivos`, {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/processes/${processoId}/files`, {
     method: "POST",
     headers: buildAuthHeaders(getAccessToken),
     body: form,
@@ -49,7 +49,7 @@ export async function deleteProcessoArquivo(
   getAccessToken?: () => string | undefined
 ): Promise<void> {
   const response = await fetch(
-    `${TRANSFORMOMETRO_API_BASE}/processos/${processoId}/arquivos/${arquivoId}`,
+    `${TRANSFORMOMETRO_API_BASE}/processes/${processoId}/files/${arquivoId}`,
     {
       method: "DELETE",
       headers: buildAuthHeaders(getAccessToken),
@@ -59,7 +59,7 @@ export async function deleteProcessoArquivo(
 }
 
 export function processoArquivoFileUrl(processoId: string, arquivoId: string): string {
-  return `${TRANSFORMOMETRO_API_BASE}/processos/${processoId}/arquivos/${arquivoId}/arquivo`;
+  return `${TRANSFORMOMETRO_API_BASE}/processes/${processoId}/files/${arquivoId}/file`;
 }
 
 export async function fetchProcessoArquivoObjectUrl(

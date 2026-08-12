@@ -53,7 +53,7 @@ export async function fetchCollaborationPresence(
   getAccessToken?: () => string | undefined
 ): Promise<CollaborationPresencePayload> {
   const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId });
-  return request(`/colaboracao/presenca?${query.toString()}`, getAccessToken);
+  return request(`/collaboration/presence?${query.toString()}`, getAccessToken);
 }
 
 export async function sendCollaborationHeartbeat(
@@ -65,7 +65,7 @@ export async function sendCollaborationHeartbeat(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request("/colaboracao/presenca", getAccessToken, {
+  return request("/collaboration/presence", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -80,7 +80,7 @@ export async function acquireCollaborationLock(
   getAccessToken?: () => string | undefined
 ): Promise<{ acquired?: boolean; presence?: CollaborationPresenceUser; holder?: CollaborationPresenceUser }> {
   try {
-    return await request("/colaboracao/travar", getAccessToken, {
+    return await request("/collaboration/lock", getAccessToken, {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -100,7 +100,7 @@ export async function releaseCollaborationLock(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request("/colaboracao/liberar", getAccessToken, {
+  return request("/collaboration/unlock", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -111,7 +111,7 @@ export function buildClearCollaborationPresenceUrl(
   entityId: string
 ): string {
   const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId });
-  return `${TRANSFORMOMETRO_API_BASE}/colaboracao/presenca?${query.toString()}`;
+  return `${TRANSFORMOMETRO_API_BASE}/collaboration/presence?${query.toString()}`;
 }
 
 export async function clearCollaborationPresence(
@@ -120,7 +120,7 @@ export async function clearCollaborationPresence(
   getAccessToken?: () => string | undefined
 ): Promise<{ cleared: boolean; still_connected?: boolean }> {
   const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId });
-  return request(`/colaboracao/presenca?${query.toString()}`, getAccessToken, {
+  return request(`/collaboration/presence?${query.toString()}`, getAccessToken, {
     method: "DELETE",
   });
 }

@@ -211,11 +211,11 @@ export function fetchFiliais(
   includeInactive = false
 ) {
   const qs = includeInactive ? "?include_inactive=true" : "";
-  return request<{ total: number; items: Filial[] }>(`/filiais${qs}`, getAccessToken);
+  return request<{ total: number; items: Filial[] }>(`/branches${qs}`, getAccessToken);
 }
 
 export function fetchFilial(filialId: string, getAccessToken?: () => string | undefined) {
-  return request<Filial>(`/filiais/${filialId}`, getAccessToken);
+  return request<Filial>(`/branches/${filialId}`, getAccessToken);
 }
 
 export function createFilial(
@@ -226,7 +226,7 @@ export function createFilial(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Filial>("/filiais", getAccessToken, {
+  return request<Filial>("/branches", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -240,14 +240,14 @@ export function updateFilial(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Filial>(`/filiais/${filialId}`, getAccessToken, {
+  return request<Filial>(`/branches/${filialId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteFilial(filialId: string, getAccessToken?: () => string | undefined) {
-  return request<null>(`/filiais/${filialId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/branches/${filialId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchSetores(
@@ -255,11 +255,11 @@ export function fetchSetores(
   filialId?: string
 ) {
   const qs = filialId ? `?${new URLSearchParams({ filial_id: filialId })}` : "";
-  return request<{ total: number; items: Setor[] }>(`/setores${qs}`, getAccessToken);
+  return request<{ total: number; items: Setor[] }>(`/departments${qs}`, getAccessToken);
 }
 
 export function fetchSetor(setorId: string, getAccessToken?: () => string | undefined) {
-  return request<Setor>(`/setores/${setorId}`, getAccessToken);
+  return request<Setor>(`/departments/${setorId}`, getAccessToken);
 }
 
 export function createSetor(
@@ -271,7 +271,7 @@ export function createSetor(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Setor>("/setores", getAccessToken, {
+  return request<Setor>("/departments", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -287,14 +287,14 @@ export function updateSetor(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Setor>(`/setores/${setorId}`, getAccessToken, {
+  return request<Setor>(`/departments/${setorId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteSetor(setorId: string, getAccessToken?: () => string | undefined) {
-  return request<null>(`/setores/${setorId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/departments/${setorId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchProcessos(
@@ -302,14 +302,14 @@ export function fetchProcessos(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<{ total: number; items: Processo[] }>(`/processos${qs}`, getAccessToken);
+  return request<{ total: number; items: Processo[] }>(`/processes${qs}`, getAccessToken);
 }
 
 export function fetchProcesso(
   processoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<Processo>(`/processos/${processoId}`, getAccessToken);
+  return request<Processo>(`/processes/${processoId}`, getAccessToken);
 }
 
 export type ProcessoTimelineResponse = {
@@ -338,14 +338,14 @@ export function fetchProcessoTimeline(
   if (params?.page) search.set("page", String(params.page));
   if (params?.page_size) search.set("page_size", String(params.page_size));
   const qs = search.toString() ? `?${search.toString()}` : "";
-  return request<ProcessoTimelineResponse>(`/processos/${processoId}/timeline${qs}`, getAccessToken);
+  return request<ProcessoTimelineResponse>(`/processes/${processoId}/timeline${qs}`, getAccessToken);
 }
 
 export function createProcesso(
   payload: Partial<Processo>,
   getAccessToken?: () => string | undefined
 ) {
-  return request<Processo>("/processos", getAccessToken, {
+  return request<Processo>("/processes", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -356,7 +356,7 @@ export function updateProcesso(
   payload: Partial<Processo>,
   getAccessToken?: () => string | undefined
 ) {
-  return request<Processo>(`/processos/${processoId}`, getAccessToken, {
+  return request<Processo>(`/processes/${processoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -366,7 +366,7 @@ export function deleteProcesso(
   processoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/processos/${processoId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/processes/${processoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchProcessoInstancias(
@@ -374,7 +374,7 @@ export function fetchProcessoInstancias(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ total: number; items: ProcessoInstancia[] }>(
-    `/processos/${processoId}/instancias`,
+    `/processes/${processoId}/instances`,
     getAccessToken
   );
 }
@@ -383,7 +383,7 @@ export function fetchInstancia(
   instanciaId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoInstancia>(`/instancias/${instanciaId}`, getAccessToken);
+  return request<ProcessoInstancia>(`/instances/${instanciaId}`, getAccessToken);
 }
 
 export function createProcessoInstancia(
@@ -402,7 +402,7 @@ export function createProcessoInstancia(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoInstancia>(`/processos/${processoId}/instancias`, getAccessToken, {
+  return request<ProcessoInstancia>(`/processes/${processoId}/instances`, getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -424,14 +424,14 @@ export function updateInstancia(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoInstancia>(`/instancias/${instanciaId}`, getAccessToken, {
+  return request<ProcessoInstancia>(`/instances/${instanciaId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteInstancia(instanciaId: string, getAccessToken?: () => string | undefined) {
-  return request<null>(`/instancias/${instanciaId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/instances/${instanciaId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type InstanciaDuplicateResult = {
@@ -451,7 +451,7 @@ export function duplicateInstancia(
   payload: { filial_id: string; setor_id: string; rotulo_instancia?: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<InstanciaDuplicateResult>(`/instancias/${instanciaId}/duplicar`, getAccessToken, {
+  return request<InstanciaDuplicateResult>(`/instances/${instanciaId}/duplicate`, getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -481,7 +481,7 @@ export function duplicateProcesso(
   payload?: { nome_processo?: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoDuplicateResult>(`/processos/${processoId}/duplicar`, getAccessToken, {
+  return request<ProcessoDuplicateResult>(`/processes/${processoId}/duplicate`, getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload ?? {}),
   });
@@ -492,7 +492,7 @@ export function fetchRevisoes(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ total: number; items: Revisao[] }>(
-    `/processos/${processoId}/revisoes`,
+    `/processes/${processoId}/revisoes`,
     getAccessToken
   );
 }
@@ -507,7 +507,7 @@ export function createRevisao(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Revisao>("/revisoes", getAccessToken, {
+  return request<Revisao>("/revisions", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -524,7 +524,7 @@ export function updateRevisao(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Revisao>(`/revisoes/${revisaoId}`, getAccessToken, {
+  return request<Revisao>(`/revisions/${revisaoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -534,7 +534,7 @@ export function deleteRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/revisoes/${revisaoId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/revisions/${revisaoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type RevisaoDuplicateResult = {
@@ -559,7 +559,7 @@ export function duplicateRevisao(
   payload?: { versao_revisao?: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<RevisaoDuplicateResult>(`/revisoes/${revisaoId}/duplicar`, getAccessToken, {
+  return request<RevisaoDuplicateResult>(`/revisions/${revisaoId}/duplicate`, getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload ?? {}),
   });
@@ -569,7 +569,7 @@ export function activateRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<Revisao>(`/revisoes/${revisaoId}/ativar`, getAccessToken, {
+  return request<Revisao>(`/revisions/${revisaoId}/activate`, getAccessToken, {
     method: "POST",
   });
 }
@@ -678,11 +678,11 @@ export type VinculoRecurso = {
 };
 
 export function fetchMedicao(revisaoId: string, getAccessToken?: () => string | undefined) {
-  return request<Medicao | null>(`/revisoes/${revisaoId}/medicoes`, getAccessToken);
+  return request<Medicao | null>(`/revisions/${revisaoId}/measurements`, getAccessToken);
 }
 
 export function upsertMedicao(payload: Medicao, getAccessToken?: () => string | undefined) {
-  return request<Medicao>("/medicoes", getAccessToken, {
+  return request<Medicao>("/measurements", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -693,7 +693,7 @@ export function fetchInvestimentos(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ total: number; items: Investimento[] }>(
-    `/revisoes/${revisaoId}/investimentos`,
+    `/revisions/${revisaoId}/investments`,
     getAccessToken
   );
 }
@@ -702,7 +702,7 @@ export function createInvestimento(
   payload: Partial<Investimento> & { revisao_id: string; descricao_item: string; tipo_investimento: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Investimento>("/investimentos", getAccessToken, {
+  return request<Investimento>("/investments", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -713,7 +713,7 @@ export function updateInvestimento(
   payload: Partial<Investimento> & { tipo_investimento: string; descricao_item: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<Investimento>(`/investimentos/${investimentoId}`, getAccessToken, {
+  return request<Investimento>(`/investments/${investimentoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -723,25 +723,25 @@ export function deleteInvestimento(
   investimentoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/investimentos/${investimentoId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/investments/${investimentoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchRecursos(getAccessToken?: () => string | undefined) {
   return request<{ total: number; items: RecursoCompartilhado[] }>(
-    "/recursos-compartilhados",
+    "/shared-resources",
     getAccessToken
   );
 }
 
 export function fetchRecurso(recursoId: string, getAccessToken?: () => string | undefined) {
-  return request<RecursoCompartilhado>(`/recursos-compartilhados/${recursoId}`, getAccessToken);
+  return request<RecursoCompartilhado>(`/shared-resources/${recursoId}`, getAccessToken);
 }
 
 export function createRecurso(
   payload: Partial<RecursoCompartilhado> & { nome_recurso: string; tipo_custo: string; recorrencia: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<RecursoCompartilhado>("/recursos-compartilhados", getAccessToken, {
+  return request<RecursoCompartilhado>("/shared-resources", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -752,14 +752,14 @@ export function updateRecurso(
   payload: Partial<RecursoCompartilhado> & { nome_recurso: string; tipo_custo: string; recorrencia: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<RecursoCompartilhado>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
+  return request<RecursoCompartilhado>(`/shared-resources/${recursoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteRecurso(recursoId: string, getAccessToken?: () => string | undefined) {
-  return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/shared-resources/${recursoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchRecursoCustos(
@@ -767,7 +767,7 @@ export function fetchRecursoCustos(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ total: number; items: RecursoCusto[] }>(
-    `/recursos-compartilhados/${recursoId}/custos`,
+    `/shared-resources/${recursoId}/custos`,
     getAccessToken
   );
 }
@@ -778,7 +778,7 @@ export function reajusteRecursoCusto(
   getAccessToken?: () => string | undefined
 ) {
   return request<RecursoCustoMutationResponse>(
-    `/recursos-compartilhados/${recursoId}/custos/reajuste`,
+    `/shared-resources/${recursoId}/custos/reajuste`,
     getAccessToken,
     { method: "POST", body: JSON.stringify(payload) }
   );
@@ -794,7 +794,7 @@ export function updateRecursoCusto(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
+  return request<RecursoCustoMutationResponse>(`/resource-costs/${recursoCustoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -804,14 +804,14 @@ export function deleteRecursoCusto(
   recursoCustoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
+  return request<RecursoCustoMutationResponse>(`/resource-costs/${recursoCustoId}`, getAccessToken, {
     method: "DELETE",
   });
 }
 
 export function fetchVinculos(revisaoId: string, getAccessToken?: () => string | undefined) {
   return request<{ total: number; items: VinculoRecurso[] }>(
-    `/revisoes/${revisaoId}/recursos-compartilhados`,
+    `/revisions/${revisaoId}/shared-resources`,
     getAccessToken
   );
 }
@@ -821,7 +821,7 @@ export function fetchRecursoVinculos(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ total: number; items: VinculoRecurso[] }>(
-    `/recursos-compartilhados/${recursoId}/vinculos`,
+    `/shared-resources/${recursoId}/vinculos`,
     getAccessToken
   );
 }
@@ -838,7 +838,7 @@ export function createVinculo(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<VinculoRecurso>("/revisao-recursos-compartilhados", getAccessToken, {
+  return request<VinculoRecurso>("/revision-shared-resources", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -855,14 +855,14 @@ export function updateVinculo(
   },
   getAccessToken?: () => string | undefined
 ) {
-  return request<VinculoRecurso>(`/revisao-recursos-compartilhados/${vinculoId}`, getAccessToken, {
+  return request<VinculoRecurso>(`/revision-shared-resources/${vinculoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteVinculo(vinculoId: string, getAccessToken?: () => string | undefined) {
-  return request<null>(`/revisao-recursos-compartilhados/${vinculoId}`, getAccessToken, { method: "DELETE" });
+  return request<null>(`/revision-shared-resources/${vinculoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type DashboardResumo = {
@@ -931,7 +931,7 @@ export function recalcularDashboard(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<DashboardRecalcResult>(`/dashboard/recalcular${qs}`, getAccessToken, { method: "POST" });
+  return request<DashboardRecalcResult>(`/dashboard/recalculate${qs}`, getAccessToken, { method: "POST" });
 }
 
 export function fetchDashboardResumo(
@@ -939,7 +939,7 @@ export function fetchDashboardResumo(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<DashboardResumo>(`/dashboard/resumo${qs}`, getAccessToken);
+  return request<DashboardResumo>(`/dashboard/summary${qs}`, getAccessToken);
 }
 
 export function fetchDashboardEvolucao(
@@ -948,7 +948,7 @@ export function fetchDashboardEvolucao(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<{ total: number; items: DashboardEvolucaoItem[] }>(
-    `/dashboard/evolucao${qs}`,
+    `/dashboard/evolution${qs}`,
     getAccessToken
   );
 }
@@ -959,7 +959,7 @@ export function fetchDashboardProcessos(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<{ total: number; items: DashboardProcessoItem[] }>(
-    `/dashboard/processos${qs}`,
+    `/dashboard/processes${qs}`,
     getAccessToken
   );
 }
@@ -986,7 +986,7 @@ export function fetchDashboardAlertas(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<{ total: number; items: DashboardAlertaItem[] }>(
-    `/dashboard/alertas${qs}`,
+    `/dashboard/alerts${qs}`,
     getAccessToken
   );
 }
@@ -1018,7 +1018,7 @@ export function fetchDashboardVencimentos(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<DashboardVencimentos>(
-    `/dashboard/vencimentos${qs}`,
+    `/dashboard/due-dates${qs}`,
     getAccessToken
   );
 }
@@ -1036,7 +1036,7 @@ export function fetchDashboardPorFamilia(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<{ total: number; items: DashboardFamiliaItem[] }>(
-    `/dashboard/por-familia${qs}`,
+    `/dashboard/by-family${qs}`,
     getAccessToken
   );
 }
@@ -1114,7 +1114,7 @@ export function fetchProcessoComparativo(
   processoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoComparativoResponse>(`/processos/${processoId}/comparativo`, getAccessToken);
+  return request<ProcessoComparativoResponse>(`/processes/${processoId}/comparison`, getAccessToken);
 }
 
 export type JsonBackupBundle = {
