@@ -1,5 +1,12 @@
 import { Eraser, Maximize2, Minimize2, Redo2, Undo2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
@@ -51,7 +58,8 @@ function velocityWidth(base: number, prev: Point | null, next: { x: number; y: n
   return base * factor;
 }
 
-function scaleStrokes(strokes: Stroke[], from: PadSize, to: PadSize): Stroke[] {
+/** Escala traços entre tamanhos lógicos do pad (exportado para testes). */
+export function scaleSignatureStrokes(strokes: Stroke[], from: PadSize, to: PadSize): Stroke[] {
   if (from.width <= 0 || from.height <= 0) return strokes;
   const sx = to.width / from.width;
   const sy = to.height / from.height;
@@ -83,7 +91,6 @@ export function SignaturePad({
   const strokesRef = useRef<Stroke[]>([]);
   const redoRef = useRef<Stroke[]>([]);
   const sizeRef = useRef<PadSize>({ width, height });
-  const [size, setSize] = useState<PadSize>({ width, height });
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [redoStack, setRedoStack] = useState<Stroke[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
@@ -97,6 +104,16 @@ export function SignaturePad({
     },
     [onStrokeWidthChange, strokeWidthProp],
   );
+
+  const commitStrokes = useCallback((next: Stroke[]) => {
+    strokesRef.current = next;
+    setStrokes(next);
+  }, []);
+
+  const commitRedo = useCallback((next: Stroke[]) => {
+    redoRef.current = next;
+    setRedoStack(next);
+  }, []);
 
   const redraw = useCallback((nextStrokes: Stroke[], padSize: PadSize) => {
     const canvas = canvasRef.current;
@@ -123,6 +140,8 @@ export function SignaturePad({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const dpr = Math.max(1, window.devicePixelRatio || 1);
+      // Bitmap só via JS — atributos React width/height no <canvas> apagam o buffer
+      // após setSize (tela cheia) sem redesenhar.
       canvas.width = Math.round(padSize.width * dpr);
       canvas.height = Math.round(padSize.height * dpr);
       canvas.style.width = "100%";
@@ -156,24 +175,20 @@ export function SignaturePad({
     const prev = sizeRef.current;
     let nextStrokes = strokesRef.current;
     if (prev.width !== nextSize.width || prev.height !== nextSize.height) {
-      nextStrokes = scaleStrokes(nextStrokes, prev, nextSize);
-      strokesRef.current = nextStrokes;
-      setStrokes(nextStrokes);
+      nextStrokes = scaleSignatureStrokes(nextStrokes, prev, nextSize);
+      commitStrokes(nextStrokes);
       if (redoRef.current.length) {
-        const nextRedo = scaleStrokes(redoRef.current, prev, nextSize);
-        redoRef.current = nextRedo;
-        setRedoStack(nextRedo);
+        commitRedo(scaleSignatureStrokes(redoRef.current, prev, nextSize));
       }
       sizeRef.current = nextSize;
-      setSize(nextSize);
     }
     if (paper) {
       paper.style.minHeight = `${nextSize.height}px`;
     }
     applyCanvasBitmap(nextSize, nextStrokes);
-  }, [applyCanvasBitmap, fullscreen, height, width]);
+  }, [applyCanvasBitmap, commitRedo, commitStrokes, fullscreen, height, width]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     measureAndSync();
     const paper = paperRef.current;
     if (!paper || typeof ResizeObserver === "undefined") return;
@@ -181,14 +196,6 @@ export function SignaturePad({
     observer.observe(paper);
     return () => observer.disconnect();
   }, [measureAndSync]);
-
-  useEffect(() => {
-    strokesRef.current = strokes;
-  }, [strokes]);
-
-  useEffect(() => {
-    redoRef.current = redoStack;
-  }, [redoStack]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -203,10 +210,6 @@ export function SignaturePad({
       window.removeEventListener("keydown", onKey);
     };
   }, [fullscreen]);
-
-  useEffect(() => {
-    measureAndSync();
-  }, [fullscreen, measureAndSync]);
 
   function pointFromEvent(event: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current!;
@@ -279,36 +282,38 @@ export function SignaturePad({
     currentStroke.current = [];
     if (finished.length < 2) return;
     const next = [...strokesRef.current, finished];
-    setStrokes(next);
-    setRedoStack([]);
+    commitStrokes(next);
+    commitRedo([]);
     emitPng(true);
   }
 
   function undo() {
-    if (disabled || strokes.length === 0) return;
-    const next = strokes.slice(0, -1);
-    const removed = strokes[strokes.length - 1];
-    setStrokes(next);
-    setRedoStack([...redoStack, removed]);
+    if (disabled || strokesRef.current.length === 0) return;
+    const current = strokesRef.current;
+    const next = current.slice(0, -1);
+    const removed = current[current.length - 1];
+    commitStrokes(next);
+    commitRedo([...redoRef.current, removed]);
     redraw(next, sizeRef.current);
     emitPng(next.length > 0);
   }
 
   function redo() {
-    if (disabled || redoStack.length === 0) return;
-    const restored = redoStack[redoStack.length - 1];
-    const nextRedo = redoStack.slice(0, -1);
-    const next = [...strokes, restored];
-    setStrokes(next);
-    setRedoStack(nextRedo);
+    if (disabled || redoRef.current.length === 0) return;
+    const stack = redoRef.current;
+    const restored = stack[stack.length - 1];
+    const nextRedo = stack.slice(0, -1);
+    const next = [...strokesRef.current, restored];
+    commitStrokes(next);
+    commitRedo(nextRedo);
     redraw(next, sizeRef.current);
     emitPng(true);
   }
 
   function clear() {
     if (disabled) return;
-    setStrokes([]);
-    setRedoStack([]);
+    commitStrokes([]);
+    commitRedo([]);
     redraw([], sizeRef.current);
     onChange?.(null);
   }
@@ -369,8 +374,6 @@ export function SignaturePad({
         <canvas
           ref={canvasRef}
           className="delpi-ui-signature-pad__canvas"
-          width={size.width}
-          height={size.height}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

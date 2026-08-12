@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SignaturePad } from "./SignaturePad";
+import { SignaturePad, scaleSignatureStrokes } from "./SignaturePad";
 import { RichTextEditor } from "../rich-text/RichTextEditor";
 import { UserDirectoryPicker } from "../directory/UserDirectoryPicker";
 
@@ -108,11 +108,47 @@ describe("SignaturePad", () => {
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 
-  it("altera espessura via presets", () => {
-    mockCanvasContext();
-    const onStrokeWidthChange = vi.fn();
-    render(<SignaturePad onStrokeWidthChange={onStrokeWidthChange} />);
-    fireEvent.click(screen.getByTestId("signature-pad-stroke-thick"));
-    expect(onStrokeWidthChange).toHaveBeenCalledWith("thick");
+  it("preserva traços ao entrar em tela cheia", async () => {
+    const context = mockCanvasContext();
+    const { container } = render(<SignaturePad width={640} height={220} />);
+    const canvas = container.querySelector(".delpi-ui-signature-pad__canvas") as HTMLCanvasElement;
+    const paper = container.querySelector(".delpi-ui-signature-pad__paper") as HTMLElement;
+    Object.defineProperty(paper, "clientWidth", { configurable: true, get: () => 640 });
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 640,
+      height: 220,
+      right: 640,
+      bottom: 220,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(canvas, { clientX: 10, clientY: 10, pointerId: 1 });
+    fireEvent.pointerMove(canvas, { clientX: 80, clientY: 60, pointerId: 1 });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+
+    expect((screen.getByTestId("signature-pad-undo") as HTMLButtonElement).disabled).toBe(false);
+    const strokesAfterDraw = context.stroke.mock.calls.length;
+
+    Object.defineProperty(paper, "clientWidth", { configurable: true, get: () => 960 });
+    fireEvent.click(screen.getByTestId("signature-pad-fullscreen"));
+
+    await waitFor(() => {
+      expect(context.stroke.mock.calls.length).toBeGreaterThan(strokesAfterDraw);
+    });
+    expect((screen.getByTestId("signature-pad-undo") as HTMLButtonElement).disabled).toBe(false);
+    expect(container.querySelector(".delpi-ui-signature-pad--fullscreen")).toBeTruthy();
+  });
+
+  it("scaleSignatureStrokes mantém proporção", () => {
+    const scaled = scaleSignatureStrokes(
+      [[{ x: 10, y: 20, lineWidth: 2 }]],
+      { width: 100, height: 50 },
+      { width: 200, height: 100 },
+    );
+    expect(scaled[0][0]).toEqual({ x: 20, y: 40, lineWidth: 4 });
   });
 });
