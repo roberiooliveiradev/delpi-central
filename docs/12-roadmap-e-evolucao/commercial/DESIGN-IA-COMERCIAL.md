@@ -115,8 +115,21 @@ Bindings via `plugins/commercial/src/app/commercialUi.ts` (`Commercial*` / `crea
 | Help | HelpTooltip + `CM_HELP` | — | Usar |
 | Charts | Recharts + EmptyState | SectionCard | MFE-only |
 | Layout Início stack | — | CSS `cm-home-stack` / `cm-home-sections-grid` | MFE-only |
+| Faixas Favoritos / Recentes | — | CSS `cm-home-chip-row*` (só spacing) | MFE-only |
 
 Catálogo de rotas: `plugins/commercial/src/content/pluginRouteCatalog.ts` (caps + keywords + kind create/navigate).
+
+### Backlog kit — hub Início (polish ago/2026)
+
+Entrega atual: pin Lucide centralizado, foco único no `CatalogSearchBar`, polish visual dos cards/busca, alinhamento das faixas no MFE. **Não** redesenhar a stack do HomePage.
+
+| Sugestão | Papel | Por quê |
+|----------|-------|---------|
+| `HubChipRow` (kit) | Favoritos / Recentes como primitivo | Hoje ActionButton ghost solto; chip com pin/remove e densidade |
+| `PinnedRouteChip` | Chip favorito com estrela + label | Substitui botão genérico na faixa |
+| Ícone Lucide por rota no `SectionRouteCard` (prop opcional) | Hierarquia visual 2º nível | Mercado (SAP Fiori / hub SaaS) |
+| Empty quiet da busca inline no field | Zero empty SectionCard | Já parcialmente; reforçar |
+| CommandPalette | Manter atalho; polish igual ao search | Paridade visual |
 
 ## UX
 

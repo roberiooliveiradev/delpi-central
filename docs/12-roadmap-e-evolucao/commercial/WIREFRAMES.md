@@ -90,6 +90,50 @@
 Seções canônicas: **Operação · Gestão à vista · Documentos · Administração**.  
 Catálogo: `pluginRouteCatalog.ts` (só `viewId` + `search`, sem URL absoluta).
 
+#### Polish kit (ago/2026) — WF-B / WF-D / WF-E
+
+Stack **inalterada**. Correções no `@delpi/plugin-ui` + leve CSS `cm-home-chip-row*`.
+
+**WF-B — linha de rota + pin (depois)**
+
+```text
+┌─ Operação ─────────────────────────────────────┐
+│ [tile] Operação                                │
+│        Fila do dia, pedidos e carteira.        │
+│ ┌──────────────────────────────────┬──────┐    │
+│ │ Minhas tarefas                   │ [★]  │ ← mesma baseline / centro
+│ ├──────────────────────────────────┼──────┤    │
+│ │ Atrasadas · badge 3              │ [☆]  │
+│ │ Hoje                             │ [☆]  │
+│ │ Nova tarefa (create, sem pin)    │      │
+│ └──────────────────────────────────┴──────┘    │
+│ hover: radius 10, fundo accent mix 10%         │
+└────────────────────────────────────────────────┘
+```
+
+**WF-D — busca com um anel de foco**
+
+```text
+┌─ Caminhos e funcionalidades ───────────────────┐
+│ [ CatalogSearchBar — campo único, foco limpo ] │
+│   └─ focus-within: UM box-shadow accent        │
+│      (border neutra; sem borda dupla)          │
+│ ┌ listbox hits ──────────────────────────────┐ │
+│ │ Operação · Minhas tarefas                  │ │
+│ └────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────┘
+```
+
+**WF-E — faixas Favoritos / Recentes**
+
+```text
+Favoritos        [★ Minhas tarefas] [★ Meus pedidos]
+Últimos acessos  [Nova tarefa] [Hoje] [Membros]
+                 ↑ label + chips no mesmo eixo (align-items: center)
+```
+
+**Backlog visual (não nesta entrega):** `HubChipRow` / `PinnedRouteChip` / ícone Lucide por rota — ver DESIGN-IA-COMERCIAL.
+
 ### WF-OV — Visão geral `/overview`
 
 **Objetivo:** dashboard BI (filtros + indicadores + ROL + funil). **Sem** Aprofundar / prévia OV.
