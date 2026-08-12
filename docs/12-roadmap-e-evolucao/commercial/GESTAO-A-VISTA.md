@@ -144,3 +144,24 @@ Textos de UI em `plugins/commercial/src/content/` (não hardcode em JSX).
 
 - [WIREFRAMES.md](./WIREFRAMES.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)
 - [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)
+
+## Homologação (wave top nav + hub — smoke)
+
+Checklist pós-deploy (papéis):
+
+| # | Papel / cap | Conferir |
+|---|-------------|----------|
+| 1 | Vendedor (`accounts` + `worklist`) | Top sem Administração; Início launcher + Eventos; Minhas tarefas |
+| 2 | Analytics (`analytics.view`) | Top Visão geral; drills OTD/Opp; breadcrumb volta à Visão geral |
+| 3 | Team (`accounts.team.view`) | Equipe + filtro carteira; empty sem manage sem CTA admin |
+| 4 | Manage (`seller-portfolios.manage`) | Administração Painel/Carteiras/Membros; empty pedidos → Abrir Administração |
+| 5 | Dois browsers (membro + gestor) | CRUD carteira → toast/refetch no membro; gestor em `team` recebe `portfolio.changed` |
+
+Rebuild MFE/kit (dev):
+
+```bash
+./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
+./infra/scripts/up-dev-sequential.sh --fase mfe --build commercial
+```
+
+API realtime (se alterou `commercial-api`): rebuild do serviço na fase `api` do script sequencial.
