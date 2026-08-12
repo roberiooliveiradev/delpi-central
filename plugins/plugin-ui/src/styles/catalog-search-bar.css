@@ -19,7 +19,8 @@
 }
 
 .delpi-ui-catalog-search-bar__field:focus-within {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  /* Um único anel — não alterar border-color (evita “duas linhas”). */
+  border-color: var(--delpi-ui-border, var(--border, #e6e6e6));
   box-shadow: var(
     --delpi-ui-focus-ring,
     0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
@@ -28,6 +29,8 @@
 
 .delpi-ui-catalog-search-bar__icon {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--delpi-ui-muted, var(--muted, #666666));
   flex-shrink: 0;
 }
@@ -35,12 +38,18 @@
 .delpi-ui-catalog-search-bar__input {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  min-height: 42px;
+  padding: 0;
+  margin: 0;
   border: none;
   background: transparent;
   color: var(--delpi-ui-text, var(--text, #111111));
   font: inherit;
   font-size: 0.95rem;
+  line-height: 1.35;
   outline: none;
+  box-shadow: none;
 }
 
 .delpi-ui-catalog-search-bar__input::placeholder {
