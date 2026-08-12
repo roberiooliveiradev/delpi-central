@@ -35,7 +35,7 @@ function publishTreeRefreshToOtherTabs() {
   }
 }
 
-/** Pede ao ProcessoWorkspacePage para recarregar processo/instâncias/revisões da sidebar. */
+/** Pede ao ProcessWorkspacePage para recarregar processo/instâncias/revisões da sidebar. */
 export function requestWorkspaceTreeRefresh() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT));

@@ -312,7 +312,7 @@ export function fetchProcesso(
   return request<Processo>(`/processes/${processoId}`, getAccessToken);
 }
 
-export type ProcessoTimelineResponse = {
+export type ProcessTimelineResponse = {
   total: number;
   page: number;
   page_size: number;
@@ -329,7 +329,7 @@ export type ProcessoTimelineResponse = {
   }>;
 };
 
-export function fetchProcessoTimeline(
+export function fetchProcessTimeline(
   processoId: string,
   getAccessToken?: () => string | undefined,
   params?: { page?: number; page_size?: number }
@@ -338,7 +338,7 @@ export function fetchProcessoTimeline(
   if (params?.page) search.set("page", String(params.page));
   if (params?.page_size) search.set("page_size", String(params.page_size));
   const qs = search.toString() ? `?${search.toString()}` : "";
-  return request<ProcessoTimelineResponse>(`/processes/${processoId}/timeline${qs}`, getAccessToken);
+  return request<ProcessTimelineResponse>(`/processes/${processoId}/timeline${qs}`, getAccessToken);
 }
 
 export function createProcesso(

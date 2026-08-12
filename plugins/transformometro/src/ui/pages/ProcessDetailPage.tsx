@@ -1,0 +1,754 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Copy, Trash2 } from "lucide-react";
+
+import type { AppProps } from "../../App";
+import { ProcessFormProgress } from "../../components/process/ProcessFormProgress";
+import { ProcessTimeline } from "../../components/process/ProcessTimeline";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { ProcessReadView } from "../../components/process/ProcessReadView";
+import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
+import { PageHeader } from "../../components/PageHeader";
+import { InlineErrorState } from "../../components/ErrorStateBox";
+import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
+import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { valuesEqual } from "@delpi/plugin-ui/index";
+import {
+  buildProcessoDiagramaEditPath,
+  buildInstanciaPath,
+  buildProcessoPath,
+} from "../../utils/routeParser";
+import {
+  createProcessoInstancia,
+  deleteInstancia,
+  deleteProcesso,
+  duplicateInstancia,
+  duplicateProcesso,
+  fetchOptions,
+  fetchProcesso,
+  fetchProcessoComparativo,
+  fetchProcessoInstancias,
+  fetchProcessTimeline,
+  fetchRevisoes,
+  updateProcesso,
+  updateInstancia,
+  type OptionsData,
+  type Processo,
+  type ProcessoComparativoItem,
+  type ProcessoInstancia,
+  type Revisao,
+} from "../../data/api/transformometroApi";
+import { fetchProcessoDiagrama } from "../../data/api/transformometroDiagramApi";
+import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompositionApi";
+import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
+import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
+import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
+import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
+import { ProcessFormFields } from "../processes/ProcessFormFields";
+import { ProcessScopeFields } from "../processes/ProcessScopeFields";
+import { ProcessInstancesPanel } from "../processes/ProcessInstancesPanel";
+import { ProcessImpactEffortMatrixSection } from "../processes/ProcessImpactEffortMatrixSection";
+import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
+import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
+import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
+import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
+import { ProcessoArquivosSection } from "../process/ProcessoArquivosSection";
+import {
+  masterPayloadFromProcessoForm,
+  processFormFromEntity,
+  type ProcessoFormState,
+} from "../processes/processForm";
+import { processScopeFromEntity } from "../processes/processScope";
+import {
+  ProcessWorkspaceShell,
+  useProcessoWorkspaceSection,
+} from "../processes/ProcessWorkspaceShell";
+import { resolveActiveWorkspaceNodeId } from "../processes/processWorkspaceNav";
+import type { ProcessoWorkspaceSectionId } from "../processes/processWorkspaceNav";
+import { ProcessWorkspaceSectionPanel } from "../processes/ProcessWorkspaceSectionPanel";
+import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+
+type Props = Pick<AppProps, "getAccessToken"> & {
+  processoId: string;
+  pathname?: string;
+  onNavigate: (path: string) => void;
+  onBack: () => void;
+  embedded?: boolean;
+  embeddedActive?: boolean;
+};
+
+export function ProcessDetailPage({
+  getAccessToken,
+  processoId,
+  pathname,
+  onNavigate,
+  onBack,
+  embedded = false,
+  embeddedActive = true,
+}: Props) {
+  const confirm = useConfirm();
+  const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
+  const [processo, setProcesso] = useState<Processo | null>(null);
+  const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
+  const [instanciasComRevisao, setInstanciasComRevisao] = useState<string[]>([]);
+  const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const [diagramNodeCount, setDiagramNodeCount] = useState(0);
+  const [decompositionNodeCount, setDecompositionNodeCount] = useState(0);
+  const [arquivosCount, setArquivosCount] = useState(0);
+  const [comparativoItems, setComparativoItems] = useState<ProcessoComparativoItem[]>([]);
+  const [options, setOptions] = useState<OptionsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  /** Incrementado a cada load — invalida matriz keep-alive do processo. */
+  const [dataEpoch, setDataEpoch] = useState(0);
+  const [processForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
+  const [processFormBaseline, setProcessoFormBaseline] = useState<ProcessoFormState | null>(
+    null
+  );
+  const [savingProcesso, setSavingProcesso] = useState(false);
+  const [timelineEntries, setTimelineEntries] = useState<ProcessoAuditLogEntry[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(true);
+
+  const loadTimeline = useCallback(async () => {
+    setTimelineLoading(true);
+    try {
+      const data = await fetchProcessTimeline(processoId, getAccessToken, { page_size: 500 });
+      setTimelineEntries(data.items);
+    } catch {
+      setTimelineEntries([]);
+    } finally {
+      setTimelineLoading(false);
+    }
+  }, [getAccessToken, processoId]);
+
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [proc, revs, opts, inst, diagram, comparativo, decomposicao, arquivos] = await Promise.all([
+        fetchProcesso(processoId, getAccessToken),
+        fetchRevisoes(processoId, getAccessToken),
+        fetchOptions(getAccessToken),
+        fetchProcessoInstancias(processoId, getAccessToken),
+        fetchProcessoDiagrama(processoId, getAccessToken).catch(() => null),
+        fetchProcessoComparativo(processoId, getAccessToken).catch(() => ({ items: [] })),
+        fetchProcessoDecomposicao(processoId, getAccessToken).catch(() => null),
+        fetchProcessoArquivos(processoId, getAccessToken).catch(() => []),
+      ]);
+      setProcesso(proc);
+      setOptions(opts);
+      setInstancias(inst.items);
+      setRevisoes(revs.items);
+      setDiagramNodeCount(diagram?.conteudo?.nodes?.length ?? 0);
+      setDecompositionNodeCount(decomposicao?.conteudo?.nodes?.length ?? 0);
+      setArquivosCount(arquivos.length);
+      setComparativoItems(comparativo.items ?? []);
+      setInstanciasComRevisao(
+        Array.from(
+          new Set(
+            revs.items.map((row) => row.instancia_id).filter((id): id is string => Boolean(id))
+          )
+        )
+      );
+      setDataEpoch((epoch) => epoch + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+    void loadTimeline();
+  }, [getAccessToken, processoId, loadTimeline]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "processo",
+    entityId: processoId,
+    getAccessToken,
+    enabled: !embedded || embeddedActive,
+    onResync: () => void load(),
+  });
+  /** WS remoto + load local (tree-refresh) — compostos/matriz não ficam stale. */
+  const panelResyncVersion = sectionEdit.resyncVersion + dataEpoch;
+
+  useEffect(() => {
+    if (!sectionEdit.resyncVersion) return;
+    void loadTimeline();
+  }, [sectionEdit.resyncVersion, loadTimeline]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useWorkspaceKeepAliveReload({
+    embedded,
+    embeddedActive,
+    reload: () => void load(),
+  });
+
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    enabled: !embedded || embeddedActive,
+    onUpdated: () => void load(),
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#nova-instancia") return;
+    setOpenInstanciaForm(true);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [processoId]);
+
+  async function handleStartEditProcesso() {
+    const acquired = await sectionEdit.startEdit("processo");
+    if (acquired !== false) {
+      const next = processFormFromEntity(processo!);
+      setProcessoForm(next);
+      setProcessoFormBaseline(next);
+    }
+  }
+
+  async function handleSaveProcesso() {
+    if (!processForm) return;
+    setSavingProcesso(true);
+    setError(null);
+    try {
+      const updated = await updateProcesso(
+        processoId,
+        masterPayloadFromProcessoForm(processForm),
+        getAccessToken
+      );
+      setProcesso(updated);
+      sectionEdit.stopEdit("processo");
+      setProcessoForm(null);
+      setProcessoFormBaseline(null);
+      await loadTimeline();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar processo");
+      throw err;
+    } finally {
+      setSavingProcesso(false);
+    }
+  }
+
+  const cancelProcessoEdit = useCallback(() => {
+    if (processFormBaseline) {
+      setProcessoForm(processFormBaseline);
+    }
+    sectionEdit.cancelEdit("processo");
+    setProcessoForm(null);
+    setProcessoFormBaseline(null);
+  }, [processFormBaseline, sectionEdit]);
+
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:dados`,
+    editing: sectionEdit.isEditing("processo"),
+    dirty: Boolean(
+      processForm &&
+        processFormBaseline &&
+        !valuesEqual(processForm, processFormBaseline),
+    ),
+    onSave: handleSaveProcesso,
+    onDiscard: cancelProcessoEdit,
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:decomposicao`,
+    editing: sectionEdit.isEditing("decomposicao"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("decomposicao"),
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:arquivos`,
+    editing: sectionEdit.isEditing("arquivos"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("arquivos"),
+    enabled: !embedded || embeddedActive,
+  });
+
+  async function handleDuplicateProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    const confirmed = await confirm({
+      title: "Duplicar processo",
+      message: `Duplicar ${label}? Serão copiados diagrama, mapeamento WBS, melhorias, revisões, medições, investimentos, vínculos e evidências.`,
+      confirmLabel: "Duplicar",
+    });
+    if (!confirmed) return;
+    setError(null);
+    try {
+      const result = await duplicateProcesso(processoId, undefined, getAccessToken);
+      onNavigate(buildProcessoPath(result.processo.processo_id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
+    }
+  }
+
+  async function handleDeleteProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    const confirmed = await confirm({
+      title: "Excluir processo",
+      message: `Excluir o processo-mestre ${label} e todo o cadastro associado (melhorias, revisões, medições)? Esta ação é uma exclusão lógica. Você será redirecionado à lista.`,
+      confirmLabel: "Excluir processo",
+      variant: "danger",
+    });
+    if (!confirmed) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteProcesso(processoId, getAccessToken);
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir processo");
+    }
+  }
+
+  const activeSection = useProcessoWorkspaceSection();
+  const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
+  const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
+    () => new Set([activeSection])
+  );
+
+  useEffect(() => {
+    setMountedSections((current) => {
+      if (current.has(activeSection)) return current;
+      const next = new Set(current);
+      next.add(activeSection);
+      return next;
+    });
+  }, [activeSection]);
+
+  const visibleSections = useMemo(() => {
+    const next = new Set(mountedSections);
+    next.add(activeSection);
+    return next;
+  }, [activeSection, mountedSections]);
+
+  const setupCompletion = useMemo(() => {
+    if (!processo) {
+      return { percent: 0, done: 0, total: 0, items: [] };
+    }
+    return computeProcessoSetupCompletion({
+      processo,
+      instanciaCount: instancias.length,
+      diagramNodeCount,
+      decompositionNodeCount,
+      revisoes,
+      comparativoItems,
+      hasMedicao: processo.setup_stats?.has_medicao,
+    });
+  }, [comparativoItems, decompositionNodeCount, diagramNodeCount, instancias.length, processo, revisoes]);
+
+  const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
+  const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
+
+  if (loading && !processo) {
+    const loader = (
+      <>
+        {!embedded ? (
+          <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        ) : null}
+        <LoadingActivityCard
+          title="Carregando processo"
+          description="Buscando dados mestre e instâncias operacionais."
+          progressPercent={processLoadingProgress}
+        />
+      </>
+    );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
+  }
+
+  if (!processo || !options) {
+    const errorView = (
+      <>
+        {!embedded ? (
+          <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        ) : null}
+        <InlineErrorState
+          title={error ? "Não foi possível carregar o processo" : "Processo não encontrado"}
+          message={
+            error ??
+            "Este processo pode ter sido excluído ou você não tem acesso."
+          }
+          onAction={() => void load()}
+        />
+      </>
+    );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
+  }
+
+  const sectionPanels = (
+    <>
+        {visibleSections.has("visao-geral") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "visao-geral"} sectionId="visao-geral">
+          <section className="ds-card tm-processo-workspace-panel">
+            <h2 className="ds-section-title">Visão geral</h2>
+            <p className="ds-hint">
+              Resumo do cadastro do processo-mestre. Use a árvore à esquerda para abrir cada tópico,
+              melhoria ou revisão.
+            </p>
+            <ProcessFormProgress completion={setupCompletion} title="Preenchimento do cadastro" />
+            <div className="tm-processo-workspace-overview">
+              <ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />
+              <dl className="ds-dl-grid tm-processo-workspace-overview__stats">
+                <div>
+                  <dt>Melhorias</dt>
+                  <dd>{instancias.length}</dd>
+                </div>
+                <div>
+                  <dt>Revisões</dt>
+                  <dd>{revisoes.length}</dd>
+                </div>
+                <div>
+                  <dt>Arquivos</dt>
+                  <dd>{arquivosCount}</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("dados") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
+          <EditableSectionCard
+            title="Dados do processo"
+            hint={TM_HELP_TOOLTIPS.processos.nome}
+            description="Informações mestre do processo. Melhorias e revisões ficam nos níveis abaixo."
+            isEditing={sectionEdit.isEditing("processo")}
+            onEdit={() => void handleStartEditProcesso()}
+            onCancel={cancelProcessoEdit}
+            onSave={() => void handleSaveProcesso()}
+            saving={savingProcesso}
+            dirty={
+              processForm != null &&
+              processFormBaseline != null &&
+              !valuesEqual(processForm, processFormBaseline)
+            }
+            readContent={<ProcessReadView processo={processo} activeFilialCount={options.filiais.length} />}
+            editContent={
+              processForm ? (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleSaveProcesso();
+                  }}
+                >
+                  <ProcessFormFields
+                    form={processForm}
+                    options={options}
+                    codigoProcesso={processo.codigo_processo}
+                    showInstanciaFields={false}
+                    onChange={setProcessoForm}
+                  />
+                  <div className="tm-inst-form tm-inst-form--spaced">
+                    <h3 className="ds-subsection-title">Unidades e departamentos do processo</h3>
+                    <p className="ds-hint">
+                      Escopo operacional do processo-mestre. Ao criar melhorias, você pode replicar esta
+                      amarração ou definir outra.
+                    </p>
+                    <ProcessScopeFields
+                      value={processForm.escopo}
+                      options={options}
+                      onChange={(escopo) => setProcessoForm({ ...processForm, escopo })}
+                      activeFilialCount={options.filiais.length}
+                    />
+                  </div>
+                </form>
+              ) : null
+            }
+          />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("mapeamento") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDecompositionComposedSection
+              embeddedInCard
+              processoId={processoId}
+              processoNome={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={panelResyncVersion}
+            />
+          </div>
+          <EditableSectionCard
+            title="Mapeamento base do processo"
+            description="Árvore WBS cadastrada (fonte estrutural). Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
+            hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
+            isEditing={sectionEdit.isEditing("decomposicao")}
+            onEdit={() => void sectionEdit.startEdit("decomposicao")}
+            onCancel={() => sectionEdit.cancelEdit("decomposicao")}
+            readContent={
+              <ProcessoDecompositionSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                processoNome={processo.nome_processo}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={panelResyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+            editContent={
+              <ProcessoDecompositionSection
+                embeddedInCard
+                processoId={processoId}
+                processoNome={processo.nome_processo}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={panelResyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+          />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("diagrama") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Macro do fluxo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDiagramComposedSection
+              embeddedInCard
+              processoId={processoId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={panelResyncVersion}
+            />
+          </div>
+          <EditableSectionCard
+            title="Diagrama macro base"
+            description="Mapa canônico cadastrado. Edite em página dedicada; as revisões vigentes aparecem acima na visão composta."
+            hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
+            isEditing={false}
+            editable={
+              !(
+                sectionEdit.presence?.editors.some(
+                  (item) => item.lock_active && item.section_key === "diagrama_macro",
+                ) ?? false
+              )
+            }
+            editLabel="Editar diagrama"
+            onEdit={() => onNavigate(buildProcessoDiagramaEditPath(processoId))}
+            onCancel={() => undefined}
+            readContent={
+              <ProcessoDiagramSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={panelResyncVersion}
+                onEntityChanged={() => void loadTimeline()}
+              />
+            }
+            editContent={null}
+          />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("arquivos") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "arquivos"} sectionId="arquivos">
+          <EditableSectionCard
+            title={`Arquivos do processo${arquivosCount ? ` (${arquivosCount})` : ""}`}
+            description="Documentos de referência do processo-mestre — POP, instruções, planilhas e links."
+            hint={TM_HELP_TOOLTIPS.processos.arquivos}
+            isEditing={sectionEdit.isEditing("arquivos")}
+            onEdit={() => void sectionEdit.startEdit("arquivos")}
+            onCancel={() => sectionEdit.cancelEdit("arquivos")}
+            readContent={
+              <ProcessoArquivosSection
+                embeddedInCard
+                readOnly
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={panelResyncVersion}
+              />
+            }
+            editContent={
+              <ProcessoArquivosSection
+                embeddedInCard
+                processoId={processoId}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                resyncVersion={panelResyncVersion}
+                onChanged={() => void load()}
+              />
+            }
+          />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("melhorias") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "melhorias"} sectionId="melhorias">
+          <ProcessInstancesPanel
+            instancias={instancias}
+            selectedInstanciaId={null}
+            options={options}
+            processScope={processScopeFromEntity(processo)}
+            busy={refreshing}
+            initialShowForm={openInstanciaForm}
+            instanciasComRevisao={instanciasComRevisao}
+            navigateOnSelect
+            onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
+            onCreate={async (payload) => {
+              await createProcessoInstancia(processoId, payload, getAccessToken);
+              setOpenInstanciaForm(false);
+              await load();
+              requestWorkspaceTreeRefresh();
+            }}
+            onUpdate={async (instanciaId, payload) => {
+              await updateInstancia(instanciaId, payload, getAccessToken);
+              await load();
+              requestWorkspaceTreeRefresh();
+            }}
+            onDelete={async (instanciaId) => {
+              await deleteInstancia(instanciaId, getAccessToken);
+              await load();
+              requestWorkspaceTreeRefresh();
+            }}
+            onDuplicate={async ({ origemInstanciaId, ...payload }) => {
+              await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
+              await load();
+              requestWorkspaceTreeRefresh();
+            }}
+          />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("priorizacao") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "priorizacao"} sectionId="priorizacao">
+            <ProcessImpactEffortMatrixSection
+              processoId={processoId}
+              processoLabel={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              onNavigate={onNavigate}
+              resyncVersion={panelResyncVersion}
+            />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("timeline") ? (
+          <ProcessWorkspaceSectionPanel active={activeSection === "timeline"} sectionId="timeline">
+          <ProcessTimeline entries={timelineEntries} loading={timelineLoading} />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+    </>
+  );
+
+  const pageBody = (
+    <>
+      {!embedded ? (
+        <PageHeader
+          title={`${processo.codigo_processo} — ${processo.nome_processo}`}
+          subtitle={[processo.status_processo, processo.familia_processo ? `família ${processo.familia_processo}` : null]
+            .filter(Boolean)
+            .join(" · ")}
+          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
+          onNavigate={onNavigate}
+          actions={
+            <>
+              <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+                <ArrowLeft size={16} />
+                Lista
+              </button>
+              <button
+                type="button"
+                className={DS_GHOST_BTN}
+                disabled={refreshing}
+                onClick={() => void handleDuplicateProcesso()}
+              >
+                <Copy size={16} />
+                Duplicar processo
+              </button>
+              <button
+                type="button"
+                className={dsGhostBtn('danger')}
+                disabled={refreshing}
+                onClick={() => void handleDeleteProcesso()}
+              >
+                <Trash2 size={16} />
+                Excluir processo
+              </button>
+            </>
+          }
+        />
+      ) : null}
+
+      <StatusAlerts
+        error={error}
+        loading={false}
+        hasData
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
+      />
+
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      {embedded ? (
+        sectionPanels
+      ) : (
+        <ProcessWorkspaceShell
+          processoId={processoId}
+          activeNodeId={activeNodeId}
+          getAccessToken={getAccessToken}
+          onNavigate={onNavigate}
+          processo={processo}
+          instancias={instancias}
+          revisoes={revisoes}
+        >
+          {sectionPanels}
+        </ProcessWorkspaceShell>
+      )}
+    </>
+  );
+
+  if (embedded) return pageBody;
+  return <TransformometroShell>{pageBody}</TransformometroShell>;
+}

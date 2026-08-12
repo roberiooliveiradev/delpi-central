@@ -44,8 +44,8 @@ import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
 import { RevisaoMatrizImpactoSection } from "../revisao/RevisaoMatrizImpactoSection";
-import { RevisaoWorkspaceSectionPanel } from "../processos/RevisaoWorkspaceSectionPanel";
-import type { RevisaoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
+import { RevisionWorkspaceSectionPanel } from "../processes/RevisionWorkspaceSectionPanel";
+import type { RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import {
   buildRevisaoVigenciaFromRevisao,
   RevisaoVigenciaSection,
@@ -471,7 +471,7 @@ export function RevisaoCadastroPanel({
 
       <div className="tm-processo-workspace__sections">
       {revisao.cenario_tipo !== "baseline" ? (
-        <RevisaoWorkspaceSectionPanel active={activeSection === "matriz"} sectionId="matriz">
+        <RevisionWorkspaceSectionPanel active={activeSection === "matriz"} sectionId="matriz">
           <RevisaoMatrizImpactoSection
             revisao={revisao}
             revisoesReferencia={revisoesReferencia}
@@ -482,10 +482,10 @@ export function RevisaoCadastroPanel({
             resyncVersion={sectionEdit.resyncVersion + cadastroEpoch}
             onSaved={onRevisaoUpdated}
           />
-        </RevisaoWorkspaceSectionPanel>
+        </RevisionWorkspaceSectionPanel>
       ) : null}
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "vigencia"} sectionId="vigencia">
+      <RevisionWorkspaceSectionPanel active={activeSection === "vigencia"} sectionId="vigencia">
       <EditableSectionCard
         title="Vigência e identificação"
         description="Versão, cenário, categoria de cálculo e período usados no dashboard."
@@ -523,9 +523,9 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
+      <RevisionWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
       <EditableSectionCard
         title="Mapeamento da revisão"
         description="Parte do mapeamento da revisão de referência; o delta desta revisão alimenta o macro composto pelas vigentes."
@@ -555,9 +555,9 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+      <RevisionWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
       <EditableSectionCard
         title="Diagrama da revisão"
         description="Parte do diagrama da revisão de referência; o delta alimenta o diagrama composto pelas vigentes. Edite em página dedicada."
@@ -599,9 +599,9 @@ export function RevisaoCadastroPanel({
         }
         editContent={null}
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "medicao"} sectionId="medicao">
+      <RevisionWorkspaceSectionPanel active={activeSection === "medicao"} sectionId="medicao">
       <EditableSectionCard
         title="Medição operacional"
         description="Volume, tempos e custos usados para calcular economia bruta."
@@ -640,9 +640,9 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "investimentos"} sectionId="investimentos">
+      <RevisionWorkspaceSectionPanel active={activeSection === "investimentos"} sectionId="investimentos">
       <EditableSectionCard
         title={`Investimentos (${investimentos.length})`}
         description="Custos únicos ou recorrentes ligados a esta revisão."
@@ -673,9 +673,9 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "recursos"} sectionId="recursos">
+      <RevisionWorkspaceSectionPanel active={activeSection === "recursos"} sectionId="recursos">
       <EditableSectionCard
         title={`Recursos compartilhados (${vinculos.length})`}
         description="Ferramentas do catálogo vinculadas ao rateio desta revisão."
@@ -708,9 +708,9 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
 
-      <RevisaoWorkspaceSectionPanel active={activeSection === "evidencias"} sectionId="evidencias">
+      <RevisionWorkspaceSectionPanel active={activeSection === "evidencias"} sectionId="evidencias">
       <EditableSectionCard
         title={`Evidências${evidenciasCount ? ` (${evidenciasCount})` : ""}`}
         description="Anexos, imagens e links que comprovam a melhoria."
@@ -739,7 +739,7 @@ export function RevisaoCadastroPanel({
           />
         }
       />
-      </RevisaoWorkspaceSectionPanel>
+      </RevisionWorkspaceSectionPanel>
       </div>
     </div>
   );

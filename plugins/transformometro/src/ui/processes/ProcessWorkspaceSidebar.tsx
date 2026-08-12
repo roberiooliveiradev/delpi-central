@@ -1,22 +1,25 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
-import { ProcessWorkspaceTreeIcon } from "../processes/ProcessWorkspaceTreeIcon";
 import {
-  collectConfiguracoesExpandedNodeIds,
-  filterConfiguracoesTree,
-  type ConfiguracoesNavNode,
-} from "./configuracoesWorkspaceNav";
+  collectExpandedNodeIds,
+  filterWorkspaceTree,
+  type ProcessoWorkspaceNavNode,
+} from "./processWorkspaceNav";
+import { ProcessWorkspaceSidebarActions } from "./ProcessWorkspaceSidebarActions";
+import { ProcessWorkspaceTreeIcon } from "./ProcessWorkspaceTreeIcon";
 import { handleSpaLinkClick } from "../../utils/spaLink";
 
 type Props = {
-  nodes: ConfiguracoesNavNode[];
+  processoLabel: string;
+  processoCode: string;
+  nodes: ProcessoWorkspaceNavNode[];
   activeNodeId: string;
   onNavigate: (href: string) => void;
   backActions?: ReactNode;
-  footerActions?: ReactNode;
+  processActions?: ReactNode;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
 };
@@ -28,7 +31,7 @@ function TreeNode({
   onToggle,
   onNavigate,
 }: {
-  node: ConfiguracoesNavNode;
+  node: ProcessoWorkspaceNavNode;
   activeNodeId: string;
   expandedIds: Set<string>;
   onToggle: (nodeId: string) => void;
@@ -38,10 +41,17 @@ function TreeNode({
   const isExpanded = expandedIds.has(node.id);
   const isActive = node.id === activeNodeId;
   const folderVariant = hasChildren ? "filled" : "empty";
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+    rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [isActive]);
 
   return (
     <li className="tm-processo-workspace-tree__item">
       <div
+        ref={rowRef}
         className={`tm-processo-workspace-tree__row${isActive ? " tm-processo-workspace-tree__row--active" : ""}`}
         style={{ paddingLeft: `${0.35 + node.depth * 0.65}rem` }}
       >
@@ -70,7 +80,17 @@ function TreeNode({
               {node.label}
             </span>
           </span>
-          {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
+          <span className="tm-processo-workspace-tree__badges">
+            {node.matrixBadge ? (
+              <span
+                className={`tm-matrix-badge tm-processo-workspace-tree__matrix-badge ${node.matrixBadge.className}`}
+                title={node.matrixBadge.title}
+              >
+                {node.matrixBadge.label}
+              </span>
+            ) : null}
+            {node.badge ? <span className="tm-processo-workspace-tree__badge">{node.badge}</span> : null}
+          </span>
         </a>
       </div>
       {hasChildren ? (
@@ -95,20 +115,22 @@ function TreeNode({
   );
 }
 
-export function ConfiguracoesWorkspaceSidebar({
+export function ProcessWorkspaceSidebar({
+  processoLabel,
+  processoCode,
   nodes,
   activeNodeId,
   onNavigate,
   backActions,
-  footerActions,
+  processActions,
   collapsed = false,
   onToggleCollapsed,
 }: Props) {
   const [query, setQuery] = useState("");
-  const filteredNodes = useMemo(() => filterConfiguracoesTree(nodes, query), [nodes, query]);
+  const filteredNodes = useMemo(() => filterWorkspaceTree(nodes, query), [nodes, query]);
 
   const autoExpanded = useMemo(
-    () => collectConfiguracoesExpandedNodeIds(nodes, activeNodeId),
+    () => collectExpandedNodeIds(nodes, activeNodeId),
     [activeNodeId, nodes]
   );
 
@@ -131,13 +153,16 @@ export function ConfiguracoesWorkspaceSidebar({
     });
   }, []);
 
-  const rootHasChildren = nodes.length > 0;
+  const rootHasChildren = useMemo(
+    () => nodes.some((node) => (node.children?.length ?? 0) > 0),
+    [nodes]
+  );
 
   if (collapsed) {
     return (
       <aside
         className="tm-processo-workspace-sidebar tm-processo-workspace-sidebar--collapsed"
-        aria-label="Navegação de configurações"
+        aria-label="Navegação do processo"
       >
         <button
           type="button"
@@ -148,11 +173,18 @@ export function ConfiguracoesWorkspaceSidebar({
         >
           <PanelLeftOpen size={18} aria-hidden="true" />
         </button>
+
+        {backActions ? (
+          <div className="tm-processo-workspace-sidebar__back tm-processo-workspace-sidebar__back--rail">
+            {backActions}
+          </div>
+        ) : null}
+
         <button
           type="button"
           className="tm-processo-workspace-sidebar__rail-btn"
           onClick={onToggleCollapsed}
-          aria-label="Pesquisar nas configurações"
+          aria-label="Pesquisar na árvore do processo"
           title="Pesquisar"
         >
           <Search size={18} aria-hidden="true" />
@@ -162,7 +194,7 @@ export function ConfiguracoesWorkspaceSidebar({
   }
 
   return (
-    <aside className="tm-processo-workspace-sidebar" aria-label="Navegação de configurações">
+    <aside className="tm-processo-workspace-sidebar" aria-label="Navegação do processo">
       <div className="tm-processo-workspace-sidebar__header">
         {backActions ? (
           <div className="tm-processo-workspace-sidebar__back">{backActions}</div>
@@ -184,20 +216,22 @@ export function ConfiguracoesWorkspaceSidebar({
           type="search"
           value={query}
           onChange={setQuery}
-          placeholder="Pesquisar unidades, deptos., recursos…"
-          aria-label="Pesquisar na árvore de configurações"
+          placeholder="Pesquisar tópicos, melhorias, revisões…"
+          aria-label="Pesquisar na árvore do processo"
         />
       </div>
 
       <div className="tm-processo-workspace-sidebar__root">
         <ProcessWorkspaceTreeIcon variant={rootHasChildren ? "filled" : "empty"} />
         <div className="tm-processo-workspace-sidebar__root-text">
-          <span className="tm-processo-workspace-sidebar__root-code">CFG</span>
-          <span className="tm-processo-workspace-sidebar__root-title">Configurações</span>
+          <span className="tm-processo-workspace-sidebar__root-code">{processoCode}</span>
+          <span className="tm-processo-workspace-sidebar__root-title" title={processoLabel}>
+            {processoLabel}
+          </span>
         </div>
       </div>
 
-      <nav className="tm-processo-workspace-tree" aria-label="Árvore de configurações">
+      <nav className="tm-processo-workspace-tree" aria-label="Árvore do processo">
         <ul className="tm-processo-workspace-tree__list" role="tree">
           {filteredNodes.map((node) => (
             <TreeNode
@@ -215,13 +249,7 @@ export function ConfiguracoesWorkspaceSidebar({
         ) : null}
       </nav>
 
-      {footerActions ? (
-        <div className="tm-processo-workspace-sidebar__footer">
-          <div className="tm-processo-workspace-sidebar__actions tm-processo-workspace-sidebar__actions--process">
-            {footerActions}
-          </div>
-        </div>
-      ) : null}
+      <ProcessWorkspaceSidebarActions processActions={processActions} />
     </aside>
   );
 }

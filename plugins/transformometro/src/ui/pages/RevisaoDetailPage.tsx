@@ -27,8 +27,8 @@ import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
-import { ProcessoWorkspaceShell, useRevisaoWorkspaceSection } from "../processos/ProcessoWorkspaceShell";
-import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
+import { ProcessWorkspaceShell, useRevisaoWorkspaceSection } from "../processes/ProcessWorkspaceShell";
+import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processes/processWorkspaceNav";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -231,7 +231,7 @@ export function RevisaoDetailPage({
       {embedded ? (
         revisaoMain
       ) : (
-        <ProcessoWorkspaceShell
+        <ProcessWorkspaceShell
           processoId={processoId}
           activeNodeId={resolveActiveWorkspaceNodeId({
             view: "revisao",
@@ -246,7 +246,7 @@ export function RevisaoDetailPage({
           revisoes={allRevisoes}
         >
           {revisaoMain}
-        </ProcessoWorkspaceShell>
+        </ProcessWorkspaceShell>
       )}
     </>
   );

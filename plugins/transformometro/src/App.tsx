@@ -12,8 +12,8 @@ import {
   ConfiguracoesWorkspacePage,
   isConfiguracoesWorkspaceRoute,
 } from "./ui/pages/ConfiguracoesWorkspacePage";
-import { ProcessoWorkspacePage, isProcessoWorkspaceRoute } from "./ui/pages/ProcessoWorkspacePage";
-import { ProcessosPage } from "./ui/pages/ProcessosPage";
+import { ProcessWorkspacePage, isProcessWorkspaceRoute } from "./ui/pages/ProcessWorkspacePage";
+import { ProcessesPage } from "./ui/pages/ProcessesPage";
 import { DataTransferPage } from "./ui/pages/DataTransferPage";
 import { MeetingMinutesPage } from "./ui/pages/MeetingMinutesPage";
 import { MeetingMinuteEditorPage } from "./ui/pages/MeetingMinuteEditorPage";
@@ -128,9 +128,9 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
         onNavigate={onNavigate}
       />
     );
-  } else if (isProcessoWorkspaceRoute(route)) {
+  } else if (isProcessWorkspaceRoute(route)) {
     page = (
-      <ProcessoWorkspacePage
+      <ProcessWorkspacePage
         getAccessToken={getAccessToken}
         route={route}
         pathname={pathname}
@@ -140,7 +140,7 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
     );
   } else if (route.view === "processos") {
     page = (
-      <ProcessosPage
+      <ProcessesPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
