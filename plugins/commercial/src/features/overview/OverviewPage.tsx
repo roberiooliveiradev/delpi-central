@@ -160,7 +160,10 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
-          <AnalyticsFunnelChart closingRate={dashboard.closingRate} />
+          <AnalyticsFunnelChart
+            closingRate={dashboard.closingRate}
+            loading={dashboard.loading}
+          />
         </SectionCard>
       </div>
     </section>

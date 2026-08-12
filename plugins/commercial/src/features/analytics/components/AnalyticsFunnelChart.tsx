@@ -1,8 +1,12 @@
 import { useMemo, type CSSProperties } from "react";
-import { EmptyState } from "@delpi/plugin-ui/index";
+import { EmptyState, runTabularExport } from "@delpi/plugin-ui/index";
 
-import { cmEmptyStateClassNames } from "../../../app/commercialUi";
+import {
+  cmEmptyStateClassNames,
+  CommercialTabularExportButtons,
+} from "../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
+import { buildOverviewFunnelPayload } from "../../overview/overviewExportBuilders";
 import type { ClosingRateData } from "../../../types/analytics";
 import { formatNumber } from "../../../utils/format";
 
@@ -104,6 +108,19 @@ export function AnalyticsFunnelChart({
   return (
     <div className="cm-funnel" role="img" aria-label="Funil de conversão comercial">
       <div className="cm-funnel__summary">
+        <div className="cm-funnel__export">
+          <CommercialTabularExportButtons
+            compact
+            disabled={loading}
+            onExport={(format) => {
+              runTabularExport({
+                kind: "table",
+                format,
+                payload: buildOverviewFunnelPayload(closingRate),
+              });
+            }}
+          />
+        </div>
         <div className="cm-funnel__rate">
           <span className="cm-funnel__rate-label">Taxa de conversão</span>
           <strong className="cm-funnel__rate-value">{formatPercent(conversionPct)}</strong>

@@ -28,6 +28,11 @@
   gap: 16px;
 }
 
+.dashboard-commercial .cm-funnel__export {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .dashboard-commercial .cm-funnel__rate,
 .dashboard-commercial .cm-funnel__goal {
   display: flex;

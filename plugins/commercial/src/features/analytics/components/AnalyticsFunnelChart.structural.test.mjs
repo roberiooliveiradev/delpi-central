@@ -18,6 +18,8 @@ describe("AnalyticsFunnelChart — trapézio", () => {
     assert.match(source, /Ganhas \(aceite no período\)/);
     assert.match(source, /Sem conversão/);
     assert.match(source, /clip-path|cm-funnel__stage-inner/);
+    assert.match(source, /CommercialTabularExportButtons/);
+    assert.match(source, /buildOverviewFunnelPayload/);
     assert.doesNotMatch(source, /BarChart|recharts/);
   });
 
