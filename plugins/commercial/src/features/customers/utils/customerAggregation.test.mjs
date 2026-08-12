@@ -476,8 +476,8 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /CustomerAvatar/);
     assert.match(table, /SegmentToggle/);
     assert.match(table, /onRowClick=\{openCustomer\}/);
+    assert.match(table, /cm-link-button/);
     assert.match(table, /<strong className="cm-open-orders-client__name">/);
-    assert.doesNotMatch(table, /<button/);
     assert.match(table, /useCustomerTablePreferences\(canUseTeamScope\)/);
     assert.match(table, /CommercialExcelExportButton/);
     assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns\)/);
