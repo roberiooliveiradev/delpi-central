@@ -145,7 +145,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         competence={filters.competence}
         branches={filters.branches}
         customerSegment={filters.customerSegment}
-        sellerId={filters.sellerId}
+        sellerIds={filters.sellerIds}
         canFilterPortfolios={filters.canFilterPortfolios}
         canUseTeamScope={filters.canUseTeamScope}
         filterablePortfolios={filters.filterablePortfolios}
@@ -154,7 +154,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         onCompetence={filters.setCompetence}
         onBranches={filters.setBranches}
         onCustomerSegment={filters.setCustomerSegment}
-        onSellerId={filters.setSellerId}
+        onSellerIds={filters.setSellerIds}
       />
       </CommercialPageHero>
 

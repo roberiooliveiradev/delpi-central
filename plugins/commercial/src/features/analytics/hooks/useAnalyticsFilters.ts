@@ -70,12 +70,26 @@ function useCompetenceLinkedDates(initial: LinkedDateFilters) {
   };
 }
 
-function sanitizeSellerId(
-  sellerId: string | null,
+function sanitizeSellerIds(
+  sellerIds: string[],
   access: { allowSellerId: boolean; validSellerIds: readonly string[] },
-): string | null {
-  if (!access.allowSellerId || !sellerId) return null;
-  return access.validSellerIds.includes(sellerId) ? sellerId : null;
+): string[] {
+  if (!access.allowSellerId || sellerIds.length === 0) return [];
+  const valid = new Set(access.validSellerIds);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of sellerIds) {
+    const trimmed = id.trim();
+    if (!trimmed || !valid.has(trimmed) || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    out.push(trimmed);
+  }
+  return out;
+}
+
+function serializeSellerIdsForApi(sellerIds: string[]): string | undefined {
+  if (sellerIds.length === 0) return undefined;
+  return sellerIds.join(",");
 }
 
 export function useAnalyticsFilters() {
@@ -91,7 +105,7 @@ export function useAnalyticsFilters() {
   } = useCompetenceLinkedDates(initial);
   const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
-  const [sellerId, setSellerIdState] = useState(initial.sellerId);
+  const [sellerIds, setSellerIdsState] = useState(initial.sellerIds);
 
   const sellerAccess = usePortfolioSellerAccess();
   const {
@@ -102,20 +116,26 @@ export function useAnalyticsFilters() {
     setSellerIdFilter,
   } = usePortfolioScope();
 
-  const effectiveSellerId = sanitizeSellerId(sellerId, sellerAccess);
+  const effectiveSellerIds = sanitizeSellerIds(sellerIds, sellerAccess);
 
   useEffect(() => {
-    const sanitized = sanitizeSellerId(sellerId, sellerAccess);
-    if (sanitized !== sellerId) setSellerIdState(sanitized);
-  }, [sellerAccess, sellerId]);
+    const sanitized = sanitizeSellerIds(sellerIds, sellerAccess);
+    if (
+      sanitized.length !== sellerIds.length ||
+      sanitized.some((id, index) => id !== sellerIds[index])
+    ) {
+      setSellerIdsState(sanitized);
+    }
+  }, [sellerAccess, sellerIds]);
 
-  // Sync analytics seller_id with portfolio scope identity when filtering.
+  // Sync single selection to portfolio scope; multi/vazio não força Minha Carteira.
   useEffect(() => {
     if (!canFilterPortfolios) return;
-    if (effectiveSellerId !== sellerIdFilter) {
-      setSellerIdFilter(effectiveSellerId);
+    const single = effectiveSellerIds.length === 1 ? effectiveSellerIds[0] : null;
+    if (single !== sellerIdFilter) {
+      setSellerIdFilter(single);
     }
-  }, [canFilterPortfolios, effectiveSellerId, sellerIdFilter, setSellerIdFilter]);
+  }, [canFilterPortfolios, effectiveSellerIds, sellerIdFilter, setSellerIdFilter]);
 
   useEffect(() => {
     writeAnalyticsFiltersToUrl({
@@ -124,9 +144,9 @@ export function useAnalyticsFilters() {
       competence,
       branches,
       customerSegment,
-      sellerId: effectiveSellerId,
+      sellerIds: effectiveSellerIds,
     });
-  }, [dateStart, dateEnd, competence, branches, customerSegment, effectiveSellerId]);
+  }, [dateStart, dateEnd, competence, branches, customerSegment, effectiveSellerIds]);
 
   useEffect(() => {
     return subscribeAnalyticsFilterRouteSync(() => {
@@ -134,7 +154,7 @@ export function useAnalyticsFilters() {
       replaceAll(next);
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
-      setSellerIdState(sanitizeSellerId(next.sellerId, sellerAccess));
+      setSellerIdsState(sanitizeSellerIds(next.sellerIds, sellerAccess));
     });
   }, [replaceAll, sellerAccess]);
 
@@ -143,7 +163,7 @@ export function useAnalyticsFilters() {
     end_date: dateEnd || undefined,
     branch: resolveAnalyticsApiBranch(branches),
     customer_segment: customerSegment || undefined,
-    seller_id: effectiveSellerId || undefined,
+    seller_id: serializeSellerIdsForApi(effectiveSellerIds),
   };
 
   const filterState: AnalyticsFilterUrlState = {
@@ -152,7 +172,7 @@ export function useAnalyticsFilters() {
     competence,
     branches,
     customerSegment,
-    sellerId: effectiveSellerId,
+    sellerIds: effectiveSellerIds,
   };
 
   return {
@@ -161,7 +181,7 @@ export function useAnalyticsFilters() {
     competence,
     branches,
     customerSegment,
-    sellerId: effectiveSellerId,
+    sellerIds: effectiveSellerIds,
     canFilterPortfolios,
     canUseTeamScope,
     filterablePortfolios,
@@ -174,7 +194,7 @@ export function useAnalyticsFilters() {
       (v: AnalyticsFilterUrlState["customerSegment"]) => setCustomerSegmentState(v),
       [],
     ),
-    setSellerId: useCallback((v: string | null) => setSellerIdState(v), []),
+    setSellerIds: useCallback((v: string[]) => setSellerIdsState(v), []),
     apiParams,
     filterState,
   };

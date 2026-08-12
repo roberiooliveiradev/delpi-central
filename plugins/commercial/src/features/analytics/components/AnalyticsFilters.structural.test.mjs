@@ -7,11 +7,13 @@ import { describe, it } from "node:test";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-describe("AnalyticsFilters — competência", () => {
-  it("usa DateField type=month (padrão dashboard), não select de meses", () => {
+describe("AnalyticsFilters — carteira multi e unidade", () => {
+  it("carteira multi-select com busca e unidade emptyLabel Todas", () => {
     const source = readFileSync(join(here, "AnalyticsFilters.tsx"), "utf8");
-    assert.match(source, /CommercialDateField/);
-    assert.match(source, /type="month"/);
-    assert.doesNotMatch(source, /buildCompetenceOptions|emptyLabel=\"Livre\"/);
+    assert.match(source, /multiple/);
+    assert.match(source, /SellerScopeFilter/);
+    assert.match(source, /emptyLabel=\"Todas\"/);
+    assert.match(source, /searchable/);
+    assert.doesNotMatch(source, /onSellerId\?/);
   });
 });

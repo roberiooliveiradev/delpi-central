@@ -17,7 +17,7 @@ type AnalyticsFiltersProps = {
   competence: string;
   branches: string[];
   customerSegment: AnalyticsFilterUrlState["customerSegment"];
-  sellerId?: string | null;
+  sellerIds?: string[];
   canFilterPortfolios?: boolean;
   canUseTeamScope?: boolean;
   filterablePortfolios?: SellerPortfolio[];
@@ -26,7 +26,7 @@ type AnalyticsFiltersProps = {
   onCompetence: (value: string) => void;
   onBranches: (value: string[]) => void;
   onCustomerSegment: (value: AnalyticsFilterUrlState["customerSegment"]) => void;
-  onSellerId?: (value: string | null) => void;
+  onSellerIds?: (value: string[]) => void;
 };
 
 export function AnalyticsFilters({
@@ -35,7 +35,7 @@ export function AnalyticsFilters({
   competence,
   branches,
   customerSegment,
-  sellerId = null,
+  sellerIds = [],
   canFilterPortfolios = false,
   canUseTeamScope = false,
   filterablePortfolios = [],
@@ -44,7 +44,7 @@ export function AnalyticsFilters({
   onCompetence,
   onBranches,
   onCustomerSegment,
-  onSellerId,
+  onSellerIds,
 }: AnalyticsFiltersProps) {
   const { FiltersRow } = cmFiltersKit;
 
@@ -74,6 +74,8 @@ export function AnalyticsFilters({
         selectedValues={branches}
         onChange={onBranches}
         options={ANALYTICS_BRANCH_OPTIONS}
+        emptyLabel="Todas"
+        searchable
         hint={CM_HELP.analytics.filterBranch}
       />
       <CommercialSelectField
@@ -90,11 +92,12 @@ export function AnalyticsFilters({
         emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
         hint={CM_HELP.analytics.filterSegment}
       />
-      {canFilterPortfolios && onSellerId ? (
+      {canFilterPortfolios && onSellerIds ? (
         <SellerScopeFilter
+          multiple
           sellers={filterablePortfolios}
-          value={sellerId}
-          onChange={onSellerId}
+          selectedValues={sellerIds}
+          onChange={onSellerIds}
           teamScope={canUseTeamScope}
           hint={CM_HELP.analytics.portfolioFilter}
         />

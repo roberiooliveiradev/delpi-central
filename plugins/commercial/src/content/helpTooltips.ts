@@ -343,9 +343,9 @@ export const CM_HELP = {
   },
   analytics: {
     portfolioFilter:
-      "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. No topo, o menu do usuário abre Minha Carteira já filtrada.",
+      "Filtra indicadores pelas carteiras selecionadas (multi + busca). Vazio = consolidado de todas as carteiras que você pode ver.",
     filters:
-      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira aplicados aos painéis e listas desta página.",
+      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira(s) aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterCompetence:

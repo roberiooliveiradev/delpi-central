@@ -56,7 +56,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           competence={filters.competence}
           branches={filters.branches}
           customerSegment={filters.customerSegment}
-          sellerId={filters.sellerId}
+          sellerIds={filters.sellerIds}
           canFilterPortfolios={filters.canFilterPortfolios}
           canUseTeamScope={filters.canUseTeamScope}
           filterablePortfolios={filters.filterablePortfolios}
@@ -65,7 +65,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           onCompetence={filters.setCompetence}
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
-          onSellerId={filters.setSellerId}
+          onSellerIds={filters.setSellerIds}
         />
       </CommercialPageHero>
 

@@ -12,8 +12,8 @@ import {
 export type AnalyticsFilterUrlState = LinkedDateFilters & {
   branches: string[];
   customerSegment: "" | "weg" | "new_business";
-  /** Carteira selecionada (id commercial-api); null = consolidado. */
-  sellerId: string | null;
+  /** Carteiras selecionadas (ids commercial-api); vazio = consolidado. */
+  sellerIds: string[];
 };
 
 const SESSION_STORAGE_KEY = "delpi.commercial.analytics.filters";
@@ -46,8 +46,38 @@ function defaultFilterState(): AnalyticsFilterUrlState {
     ...defaults,
     branches: [],
     customerSegment: "",
-    sellerId: null,
+    sellerIds: [],
   };
+}
+
+function parseSellerIdsCsv(raw: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(",")) {
+    const id = part.trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+function serializeSellerIdsCsv(ids: string[]): string {
+  return parseSellerIdsCsv(ids.join(",")).join(",");
+}
+
+function parseStoredSellerIds(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.sellerIds)) {
+    return parseSellerIdsCsv(
+      data.sellerIds
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(","),
+    );
+  }
+  if (typeof data.sellerId === "string" && data.sellerId.trim()) {
+    return parseSellerIdsCsv(data.sellerId);
+  }
+  return [];
 }
 
 function parseCustomerSegment(
@@ -101,7 +131,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
     ...dates,
     branches: parseAnalyticsBranchCsv(branchParam),
     customerSegment: parseCustomerSegment(customerSegmentParam),
-    sellerId: sellerIdParam || null,
+    sellerIds: parseSellerIdsCsv(sellerIdParam),
   };
 }
 
@@ -139,10 +169,7 @@ export function readAnalyticsFilters(
           customerSegment: parseCustomerSegment(
             typeof data.customerSegment === "string" ? data.customerSegment : null,
           ),
-          sellerId:
-            typeof data.sellerId === "string" && data.sellerId.trim()
-              ? data.sellerId.trim()
-              : null,
+          sellerIds: parseStoredSellerIds(data),
         };
       }
     } catch {
@@ -161,7 +188,8 @@ export function buildAnalyticsFilterSearchParams(state: AnalyticsFilterUrlState)
   const branch = serializeAnalyticsBranchCsv(state.branches);
   if (branch) params.set("branch", branch);
   if (state.customerSegment) params.set("customer_segment", state.customerSegment);
-  if (state.sellerId) params.set("seller_id", state.sellerId);
+  const sellerIds = serializeSellerIdsCsv(state.sellerIds);
+  if (sellerIds) params.set("seller_id", sellerIds);
   const query = params.toString();
   return query ? `?${query}` : "";
 }
