@@ -3,11 +3,12 @@
  * OverviewPage e docs consomem estas chaves; não espalhar textos de KPI no JSX.
  */
 export type OverviewMetricId =
-  | "rol_head_office"
-  | "rol_branch"
+  | "rol"
+  | "rol_weg"
+  | "rol_new_business"
   | "closing_rate"
   | "otd"
-  | "new_business"
+  | "new_business_pct"
   | "rol_series"
   | "funnel";
 
@@ -19,28 +20,33 @@ export type OverviewMetricDefinition = {
 
 export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
   {
-    id: "rol_head_office",
-    label: "ROL vs meta",
-    tooltip: "ROL consolidado versus meta no período filtrado.",
+    id: "rol",
+    label: "ROL",
+    tooltip: "Receita operacional líquida consolidada versus meta por unidade.",
   },
   {
-    id: "rol_branch",
-    label: "ROL por unidade",
-    tooltip: "ROL por unidade (Santa Catarina / Espírito Santo) versus meta.",
+    id: "rol_weg",
+    label: "ROL WEG",
+    tooltip: "ROL do segmento WEG versus meta por unidade.",
+  },
+  {
+    id: "rol_new_business",
+    label: "ROL Novos Negócios",
+    tooltip: "ROL de novos negócios versus meta por unidade.",
   },
   {
     id: "closing_rate",
-    label: "Conversão",
+    label: "Taxa de conversão",
     tooltip: "Taxa de conversão: propostas ganhas ÷ total de propostas.",
   },
   {
     id: "otd",
-    label: "OTD",
+    label: "OTD — pedidos de venda",
     tooltip: "On-time delivery de linhas de pedido de venda.",
   },
   {
-    id: "new_business",
-    label: "Novos negócios",
+    id: "new_business_pct",
+    label: "% ROL — novos negócios",
     tooltip: "Participação de novos negócios no ROL do período.",
   },
   {

@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "@delpi/plugin-ui/index";
+
 export type AnalyticsCustomerSegment = "weg" | "new_business";
 
 export type AnalyticsFilterParams = {
@@ -5,7 +7,7 @@ export type AnalyticsFilterParams = {
   end_date?: string;
   branch?: string;
   customer_segment?: AnalyticsCustomerSegment;
-  /** Filtro de carteira — commercial-api resolve customer_codes no servidor. */
+  /** Filtro de carteira — commercial-api resolve customer_codes no servidor. CSV multi. */
   seller_id?: string;
   status?: string;
   page?: number;
@@ -15,7 +17,7 @@ export type AnalyticsFilterParams = {
   search?: string;
 };
 
-export type RolTargetData = {
+export type RolTargetData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -24,7 +26,7 @@ export type RolTargetData = {
   rol_target_pct: number | null;
 };
 
-export type ClosingRateData = {
+export type ClosingRateData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -36,7 +38,7 @@ export type ClosingRateData = {
   comparable_goal?: number | null;
 };
 
-export type SalesOrderOtdData = {
+export type SalesOrderOtdData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -46,7 +48,7 @@ export type SalesOrderOtdData = {
   sales_order_otd_pct: number | null;
 };
 
-export type NewBusinessRolPctData = {
+export type NewBusinessRolPctData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;

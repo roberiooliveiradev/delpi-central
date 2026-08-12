@@ -13,7 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 describe("analytics unit labels (content + helper)", () => {
   it("content analytics/overview usam Unidade e estados", () => {
     assert.equal(ANALYTICS_CONTENT.filters.branch, "Unidade (indicadores)");
-    assert.equal(OVERVIEW_METRIC_BY_ID.rol_branch.label, "ROL por unidade");
+    assert.equal(OVERVIEW_METRIC_BY_ID.rol.label, "ROL");
     assert.match(OVERVIEW_METRIC_BY_ID.rol_series.tooltip, /Santa Catarina/);
     assert.match(OVERVIEW_METRIC_BY_ID.rol_series.tooltip, /Espírito Santo/);
     assert.doesNotMatch(ANALYTICS_CONTENT.filters.branch, /^Filial$/);

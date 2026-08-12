@@ -48,6 +48,7 @@ import {
   createDashboardWorklistItem,
   createMetricKpiCard,
   createSimpleKpiCard,
+  createDashboardKpiCard,
   DataCellValue,
   DataTable,
   createInitialsAvatar,
@@ -254,6 +255,16 @@ export const CommercialKpiCard = createSimpleKpiCard(UI_PREFIX, {
   withBody: true,
   withSubtitle: true,
   layout: "iconEnd",
+});
+
+/** KPI com Meta / Nota IDD / badges — paridade dashboard-commercial. */
+export const CommercialDashboardKpiCard = createDashboardKpiCard({
+  prefix: UI_PREFIX,
+  labels: {
+    goalPrefix: "Meta",
+    iddScorePrefix: "Nota IDD",
+    badgesStatus: "Escopo e desempenho em relação à meta",
+  },
 });
 
 export function CommercialDataTable<T>(props: DashboardDataTableProps<T>) {

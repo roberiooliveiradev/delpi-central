@@ -63,6 +63,36 @@ export function getBranchRolTarget(params: AnalyticsFilterParams, signal?: Abort
   return fetchAnalyticsData<RolTargetData>("/branch_rol_target_pct", params, signal);
 }
 
+export function getHeadOfficeWegRolTarget(params: AnalyticsFilterParams, signal?: AbortSignal) {
+  return fetchAnalyticsData<RolTargetData>("/head_office_weg_rol_target_pct", params, signal);
+}
+
+export function getBranchWegRolTarget(params: AnalyticsFilterParams, signal?: AbortSignal) {
+  return fetchAnalyticsData<RolTargetData>("/branch_weg_rol_target_pct", params, signal);
+}
+
+export function getHeadOfficeNewBusinessRolTarget(
+  params: AnalyticsFilterParams,
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<RolTargetData>(
+    "/head_office_new_business_rol_target_pct",
+    params,
+    signal,
+  );
+}
+
+export function getBranchNewBusinessRolTarget(
+  params: AnalyticsFilterParams,
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<RolTargetData>(
+    "/branch_new_business_rol_target_pct",
+    params,
+    signal,
+  );
+}
+
 export function getClosingRate(params: AnalyticsFilterParams, signal?: AbortSignal) {
   return fetchAnalyticsData<ClosingRateData>("/closing-rate", params, signal);
 }
@@ -168,4 +198,39 @@ export function getSalesOrderOtdLineDetail(
   ).then((response) =>
     unwrapEnvelope(response, "Erro ao carregar detalhe da linha de pedido"),
   );
+}
+
+export type DepartmentIddItem = {
+  department_id: string;
+  department_name?: string | null;
+  score?: number | null;
+  classification?: string | null;
+  contribution?: number | null;
+};
+
+type DepartmentIddResponse = {
+  item: DepartmentIddItem | null;
+};
+
+export async function fetchDepartmentIdd(params: {
+  departmentId?: string;
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+  branch?: string;
+  signal?: AbortSignal;
+}): Promise<DepartmentIddItem | null> {
+  const searchParams = new URLSearchParams();
+  searchParams.set("department_id", params.departmentId ?? "commercial");
+  if (params.competence) searchParams.set("competence", params.competence);
+  if (params.startDate) searchParams.set("start_date", params.startDate);
+  if (params.endDate) searchParams.set("end_date", params.endDate);
+  if (params.branch) searchParams.set("branch", params.branch);
+  const query = searchParams.toString();
+  const response = await httpGet<ApiSuccessResponse<DepartmentIddResponse>>(
+    `${commercialApiUrl(`${ANALYTICS_PATH}/department-idd`)}?${query}`,
+    { signal: params.signal },
+  );
+  const data = unwrapEnvelope(response, "Erro ao consultar IDD departamental");
+  return data.item ?? null;
 }

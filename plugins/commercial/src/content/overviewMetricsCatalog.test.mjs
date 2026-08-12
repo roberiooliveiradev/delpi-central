@@ -9,11 +9,12 @@ import {
 } from "./overviewMetricsCatalog.ts";
 
 const REQUIRED_IDS = [
-  "rol_head_office",
-  "rol_branch",
+  "rol",
+  "rol_weg",
+  "rol_new_business",
   "closing_rate",
   "otd",
-  "new_business",
+  "new_business_pct",
   "rol_series",
   "funnel",
 ];

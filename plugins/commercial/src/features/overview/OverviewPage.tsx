@@ -1,13 +1,21 @@
-import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
-import { Banknote, PackageCheck, Percent, RefreshCw, Sparkles } from "lucide-react";
+import { EmptyState, SectionCard, formatOperationalUnitCode } from "@delpi/plugin-ui/index";
+import {
+  Banknote,
+  Building2,
+  PackageCheck,
+  Percent,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
+import { useMemo } from "react";
 
 import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialActionButton,
+  CommercialDashboardKpiCard,
   CommercialLoadingCard,
-  CommercialMetricCard,
   CommercialPageHero,
   CommercialSectionHintLabel,
 } from "../../app/commercialUi";
@@ -20,10 +28,25 @@ import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelCha
 import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSeriesChart";
 import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
 import { useAnalyticsFilters } from "../analytics/hooks/useAnalyticsFilters";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
+import {
+  buildKpiGoalPresentationWithBranchIdd,
+  formatDashboardMetricValue,
+} from "./goalDisplay";
+import { buildRolPerUnitKpiView } from "./rolPerUnitPresentation";
 
-function formatPct(value: number | null | undefined): string {
+function formatInteger(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
-  return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+function formatPeriodLabel(dateStart: string, dateEnd: string): string {
+  const fmt = (iso: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "—";
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  };
+  return `${fmt(dateStart)} - ${fmt(dateEnd)}`;
 }
 
 type OverviewPageProps = {
@@ -34,6 +57,58 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
   const copy = ANALYTICS_CONTENT.overview;
+  const activeBranch = filters.apiParams.branch;
+  const periodLabel = formatPeriodLabel(filters.dateStart, filters.dateEnd);
+  const branchLabel = activeBranch
+    ? formatOperationalUnitCode(activeBranch, activeBranch)
+    : "Consolidado (todas as unidades)";
+  const contextBase = `${branchLabel} · ${periodLabel}`;
+
+  const rolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        dashboard.headOfficeRol,
+        dashboard.branchRol,
+        contextBase,
+        formatCurrency,
+        activeBranch,
+      ),
+    [activeBranch, contextBase, dashboard.branchRol, dashboard.headOfficeRol],
+  );
+
+  const wegRolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        dashboard.headOfficeWegRol,
+        dashboard.branchWegRol,
+        `${contextBase} · WEG`,
+        formatCurrency,
+        activeBranch,
+      ),
+    [
+      activeBranch,
+      contextBase,
+      dashboard.branchWegRol,
+      dashboard.headOfficeWegRol,
+    ],
+  );
+
+  const segmentNewBusinessRolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        dashboard.headOfficeNewBusinessRol,
+        dashboard.branchNewBusinessRol,
+        `${contextBase} · Novos negócios`,
+        formatCurrency,
+        activeBranch,
+      ),
+    [
+      activeBranch,
+      contextBase,
+      dashboard.branchNewBusinessRol,
+      dashboard.headOfficeNewBusinessRol,
+    ],
+  );
 
   return (
     <section className="cm-page-stack">
@@ -44,6 +119,16 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           <CommercialSectionHintLabel label={copy.title} hint={CM_HELP.overview.page} />
         }
         description={copy.subtitle}
+        badge={
+          <DepartmentIddBadge
+            filters={{
+              competence: filters.competence,
+              dateStart: filters.dateStart,
+              dateEnd: filters.dateEnd,
+              branches: filters.branches,
+            }}
+          />
+        }
         actions={
           <CommercialActionButton variant="ghost" onClick={dashboard.reload}>
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
@@ -83,49 +168,110 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
         ) : null}
         {!dashboard.loading ? (
           <div className="cm-home-kpi-grid cm-overview-kpi-grid" aria-label="KPIs da visão geral">
-            <CommercialMetricCard
-              hero
-              label={OVERVIEW_METRIC_BY_ID.rol_head_office.label}
-              titleHint={OVERVIEW_METRIC_BY_ID.rol_head_office.tooltip}
-              value={formatPct(dashboard.headOfficeRol?.rol_target_pct)}
-              hint={
-                dashboard.headOfficeRol
-                  ? `ROL ${formatCurrency(dashboard.headOfficeRol.rol)}`
-                  : undefined
-              }
-              icon={<Banknote size={18} aria-hidden="true" />}
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.rol.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.rol.tooltip}
+              value={rolKpi.value}
+              valueVariant={rolKpi.valueVariant}
+              goalVariant={rolKpi.valueVariant}
+              contextLabel={rolKpi.contextLabel}
+              goalLabel={rolKpi.goalLabel}
+              goalScopeBadge={rolKpi.goalScopeBadge}
+              goalScopeHint={rolKpi.goalScopeHint}
+              goalPerformanceBadge={rolKpi.goalPerformanceBadge}
+              goalPerformanceBadges={rolKpi.goalPerformanceBadges}
+              iddScoreLabel={rolKpi.iddScoreLabel}
+              icon={<Banknote size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
             />
-            <CommercialMetricCard
-              label={OVERVIEW_METRIC_BY_ID.rol_branch.label}
-              titleHint={OVERVIEW_METRIC_BY_ID.rol_branch.tooltip}
-              value={formatPct(dashboard.branchRol?.rol_target_pct)}
-              hint={
-                dashboard.branchRol ? `ROL ${formatCurrency(dashboard.branchRol.rol)}` : undefined
-              }
-              icon={<Banknote size={18} aria-hidden="true" />}
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.rol_weg.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.rol_weg.tooltip}
+              value={wegRolKpi.value}
+              valueVariant={wegRolKpi.valueVariant}
+              goalVariant={wegRolKpi.valueVariant}
+              contextLabel={wegRolKpi.contextLabel}
+              goalLabel={wegRolKpi.goalLabel}
+              goalScopeBadge={wegRolKpi.goalScopeBadge}
+              goalScopeHint={wegRolKpi.goalScopeHint}
+              goalPerformanceBadge={wegRolKpi.goalPerformanceBadge}
+              goalPerformanceBadges={wegRolKpi.goalPerformanceBadges}
+              iddScoreLabel={wegRolKpi.iddScoreLabel}
+              icon={<Building2 size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
             />
-            <CommercialMetricCard
-              label={OVERVIEW_METRIC_BY_ID.closing_rate.label}
-              titleHint={OVERVIEW_METRIC_BY_ID.closing_rate.tooltip}
-              value={formatPct(dashboard.closingRate?.sales_conversion_rate_pct)}
-              hint={
-                dashboard.closingRate
-                  ? `${dashboard.closingRate.qtd_won}/${dashboard.closingRate.qtd_proposals}`
-                  : undefined
-              }
-              icon={<Percent size={18} aria-hidden="true" />}
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.rol_new_business.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.rol_new_business.tooltip}
+              value={segmentNewBusinessRolKpi.value}
+              valueVariant={segmentNewBusinessRolKpi.valueVariant}
+              goalVariant={segmentNewBusinessRolKpi.valueVariant}
+              contextLabel={segmentNewBusinessRolKpi.contextLabel}
+              goalLabel={segmentNewBusinessRolKpi.goalLabel}
+              goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
+              goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
+              goalPerformanceBadge={segmentNewBusinessRolKpi.goalPerformanceBadge}
+              goalPerformanceBadges={segmentNewBusinessRolKpi.goalPerformanceBadges}
+              iddScoreLabel={segmentNewBusinessRolKpi.iddScoreLabel}
+              icon={<Sparkles size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
             />
-            <CommercialMetricCard
-              label={OVERVIEW_METRIC_BY_ID.otd.label}
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.otd.label}
               titleHint={OVERVIEW_METRIC_BY_ID.otd.tooltip}
-              value={formatPct(dashboard.salesOrderOtd?.sales_order_otd_pct)}
-              icon={<PackageCheck size={18} aria-hidden="true" />}
+              value={formatDashboardMetricValue(
+                dashboard.salesOrderOtd?.sales_order_otd_pct,
+                dashboard.salesOrderOtd,
+              )}
+              {...buildKpiGoalPresentationWithBranchIdd(
+                `${formatInteger(dashboard.salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(dashboard.salesOrderOtd?.total_lines)} linhas · ${contextBase}`,
+                dashboard.salesOrderOtd,
+                {
+                  realizedValue: dashboard.salesOrderOtd?.sales_order_otd_pct,
+                  activeBranch,
+                  branches: dashboard.salesOrderOtdBranches,
+                },
+              )}
+              icon={<PackageCheck size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
             />
-            <CommercialMetricCard
-              label={OVERVIEW_METRIC_BY_ID.new_business.label}
-              titleHint={OVERVIEW_METRIC_BY_ID.new_business.tooltip}
-              value={formatPct(dashboard.newBusinessRol?.new_business_rol_pct)}
-              icon={<Sparkles size={18} aria-hidden="true" />}
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.closing_rate.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.closing_rate.tooltip}
+              value={formatDashboardMetricValue(
+                dashboard.closingRate?.sales_conversion_rate_pct,
+                dashboard.closingRate,
+              )}
+              {...buildKpiGoalPresentationWithBranchIdd(
+                `${formatInteger(dashboard.closingRate?.qtd_won)} ganhas / ${formatInteger(dashboard.closingRate?.qtd_proposals)} propostas · ${contextBase}`,
+                dashboard.closingRate,
+                {
+                  realizedValue: dashboard.closingRate?.sales_conversion_rate_pct,
+                  activeBranch,
+                  branches: dashboard.closingRateBranches,
+                },
+              )}
+              icon={<Percent size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
+            />
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.new_business_pct.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.new_business_pct.tooltip}
+              value={formatDashboardMetricValue(
+                dashboard.newBusinessRol?.new_business_rol_pct,
+                dashboard.newBusinessRol,
+              )}
+              {...buildKpiGoalPresentationWithBranchIdd(
+                `${contextBase} · Novos negócios`,
+                dashboard.newBusinessRol,
+                {
+                  realizedValue: dashboard.newBusinessRol?.new_business_rol_pct,
+                  activeBranch,
+                  branches: dashboard.newBusinessRolBranches,
+                },
+              )}
+              icon={<Sparkles size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
             />
           </div>
         ) : null}
