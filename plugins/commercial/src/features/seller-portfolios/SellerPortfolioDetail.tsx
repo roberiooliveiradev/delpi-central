@@ -19,6 +19,7 @@ import {
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { customerKey } from "../../shared/format";
 import type {
   SellerCustomer,
@@ -33,6 +34,8 @@ type SellerPortfolioDetailProps = {
   savingName: boolean;
   busyCustomerKey: string | null;
   busyMemberUserId: string | null;
+  overlappingCustomerKeys?: ReadonlySet<string>;
+  otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
   directoryLabelFor: (userId: string, fallback?: string | null) => string;
   onSaveName: (displayName: string) => void;
   onAddCustomer: (hit: TotvsCustomerHit) => void;
@@ -59,6 +62,8 @@ export function SellerPortfolioDetail({
   savingName,
   busyCustomerKey,
   busyMemberUserId,
+  overlappingCustomerKeys,
+  otherPortfolioLabelsFor,
   directoryLabelFor,
   onSaveName,
   onAddCustomer,
@@ -145,6 +150,25 @@ export function SellerPortfolioDetail({
         render: (row) => row.name,
       },
       {
+        key: "coverage",
+        header: "Cobertura",
+        render: (row) => {
+          const key = customerKey(row.code, row.store);
+          const alreadyLinked = linked.some(
+            (customer) => customerKey(customer.customer_code, customer.customer_store) === key,
+          );
+          if (alreadyLinked) return "—";
+          const others = otherPortfolioLabelsFor?.(row.code, row.store) ?? [];
+          if (others.length === 0) return "—";
+          return (
+            <CommercialStatusBadge
+              label={`${PORTFOLIO_COVERAGE_CONTENT.overlappingAlsoIn}: ${others.join(", ")}`}
+              variant="warning"
+            />
+          );
+        },
+      },
+      {
         key: "action",
         header: "Ação",
         render: (row) => {
@@ -167,7 +191,7 @@ export function SellerPortfolioDetail({
         },
       },
     ],
-    [busyCustomerKey, linked, onAddCustomer],
+    [busyCustomerKey, linked, onAddCustomer, otherPortfolioLabelsFor],
   );
 
   const linkedColumns = useMemo<DataTableColumn<SellerCustomer>[]>(
@@ -181,6 +205,29 @@ export function SellerPortfolioDetail({
         key: "name",
         header: "Nome",
         render: (row) => row.customer_name?.trim() || "—",
+      },
+      {
+        key: "coverage",
+        header: "Cobertura",
+        headerHint: CM_HELP.sellerPortfolios.overlappingCustomer,
+        render: (row) => {
+          const key = customerKey(row.customer_code, row.customer_store);
+          if (!overlappingCustomerKeys?.has(key)) return "—";
+          const others = otherPortfolioLabelsFor?.(row.customer_code, row.customer_store) ?? [];
+          return (
+            <span className="cm-row-actions">
+              <CommercialStatusBadge
+                label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
+                variant="warning"
+              />
+              {others.length > 0 ? (
+                <span>
+                  {PORTFOLIO_COVERAGE_CONTENT.overlappingAlsoIn}: {others.join(", ")}
+                </span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         key: "action",
@@ -200,7 +247,7 @@ export function SellerPortfolioDetail({
         },
       },
     ],
-    [busyCustomerKey, onRemoveCustomer],
+    [busyCustomerKey, onRemoveCustomer, otherPortfolioLabelsFor, overlappingCustomerKeys],
   );
 
   const memberColumns = useMemo<DataTableColumn<SellerPortfolioMember>[]>(

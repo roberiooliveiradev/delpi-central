@@ -176,8 +176,13 @@ compartilhável usa `replaceState` só nesta rota:
 | Query | Efeito |
 |-------|--------|
 | `q` | Busca por nome, usuário ou e-mail |
-| `filter=active\|inactive` | Recorte de situação (`all` é omitido) |
-| `id` | UUID da carteira aberta no painel |
+| `filter=active\|inactive\|overlapping` | Recorte de situação ou carteiras com clientes em overlapping (`all` é omitido) |
+| `view=list\|org` | Lista ou organização |
+| `axis=portfolio\|person` | Eixo da visão organização |
+
+Detalhe: `/seller-portfolios/:id` (query da lista preservada). Legado `?id=` na lista migra para o path.
+
+**E6.1 cobertura:** `GET /seller-portfolios/coverage-audit` (manage) — overlapping entre carteiras ativas; gap (sem cobertura) fica `available: false` até existir universo de clientes. Chip «Com overlapping» na lista; ao vincular cliente já presente em outra carteira ativa, o `POST .../customers` mantém o vínculo e devolve `coverage_warning` (aviso soft).
 
 `DELETE /seller-portfolios/{id}` **inativa** (soft). Excluir de verdade é
 `DELETE /seller-portfolios/{id}/permanent` (`purge_seller_portfolio`): apaga a

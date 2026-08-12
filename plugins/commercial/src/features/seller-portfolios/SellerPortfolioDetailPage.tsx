@@ -5,6 +5,7 @@ import {
   addSellerPortfolioMember,
   deactivateSellerPortfolio,
   getSellerPortfolio,
+  getSellerPortfoliosCoverageAudit,
   listSellerPortfolios,
   purgeSellerPortfolio,
   removeSellerCustomer,
@@ -26,8 +27,18 @@ import {
   CommercialPagePath,
   CommercialStateBanner,
 } from "../../app/commercialUi";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { customerKey } from "../../shared/format";
-import type { SellerPortfolio, TotvsCustomerHit } from "../../types/portfolio";
+import type {
+  SellerPortfolio,
+  SellerPortfoliosCoverageAudit,
+  TotvsCustomerHit,
+} from "../../types/portfolio";
+import {
+  overlappingCustomerKeySetForPortfolio,
+  readCoverageLinkWarning,
+  stripPortfolioCoverageFields,
+} from "../../utils/portfolioCoverage";
 import {
   buildSellerPortfoliosPath,
   parseSellerPortfoliosDeepLink,
@@ -51,7 +62,8 @@ export function SellerPortfolioDetailPage({
   portfolioId,
   search,
 }: SellerPortfolioDetailPageProps) {
-  const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
+  const { notifyError, notifySuccess, notifyWarning, notifyMissingRequired } =
+    useCommercialFloatingNotice();
   const confirm = useCommercialConfirm();
   const listState = useMemo(
     () => parseSellerPortfoliosDeepLink(search ?? (typeof window !== "undefined" ? window.location.search : "")),
@@ -67,6 +79,7 @@ export function SellerPortfolioDetailPage({
   const [notFound, setNotFound] = useState(false);
   const [portfolio, setPortfolio] = useState<SellerPortfolio | null>(null);
   const [allPortfolios, setAllPortfolios] = useState<SellerPortfolio[]>([]);
+  const [coverageAudit, setCoverageAudit] = useState<SellerPortfoliosCoverageAudit | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
   const [busyMemberUserId, setBusyMemberUserId] = useState<string | null>(null);
@@ -101,11 +114,13 @@ export function SellerPortfolioDetailPage({
       Promise.all([
         getSellerPortfolio(portfolioId, options?.signal),
         listSellerPortfolios({ signal: options?.signal }),
+        getSellerPortfoliosCoverageAudit(options?.signal),
       ])
-        .then(([detail, items]) => {
+        .then(([detail, items, audit]) => {
           if (options?.signal?.aborted) return;
           setPortfolio(detail);
           setAllPortfolios(items);
+          setCoverageAudit(audit);
         })
         .catch((err: unknown) => {
           if (options?.signal?.aborted) return;
@@ -200,13 +215,30 @@ export function SellerPortfolioDetailPage({
     const key = customerKey(hit.code, hit.store);
     setBusyCustomerKey(key);
     try {
-      const updated = await addSellerCustomer(portfolio.id, {
+      const result = await addSellerCustomer(portfolio.id, {
         customer_code: hit.code,
         customer_store: hit.store,
         customer_name: hit.name,
       });
-      setPortfolio(updated);
-      notifySuccess(`Cliente ${hit.name} adicionado à carteira.`);
+      setPortfolio(stripPortfolioCoverageFields(result));
+      const warning = readCoverageLinkWarning(result);
+      if (warning) {
+        const others = warning.other_portfolios
+          .map((item) => item.display_name.trim() || item.id)
+          .filter(Boolean)
+          .join(", ");
+        notifyWarning(
+          others
+            ? `${warning.message} Também em: ${others}.`
+            : warning.message,
+          { title: PORTFOLIO_COVERAGE_CONTENT.linkWarningTitle },
+        );
+        void getSellerPortfoliosCoverageAudit()
+          .then((audit) => setCoverageAudit(audit))
+          .catch(() => undefined);
+      } else {
+        notifySuccess(`Cliente ${hit.name} adicionado à carteira.`);
+      }
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao adicionar cliente.");
     } finally {
@@ -322,6 +354,31 @@ export function SellerPortfolioDetailPage({
     }
   }
 
+  const overlappingCustomerKeys = useMemo(
+    () =>
+      portfolio
+        ? overlappingCustomerKeySetForPortfolio(coverageAudit, portfolio.id)
+        : new Set<string>(),
+    [coverageAudit, portfolio],
+  );
+
+  const otherPortfolioLabelsFor = useCallback(
+    (code: string, store: string) => {
+      if (!portfolio) return [];
+      const key = customerKey(code, store);
+      return allPortfolios
+        .filter((item) => item.active && item.id !== portfolio.id)
+        .filter((item) =>
+          (item.customers ?? []).some(
+            (customer) =>
+              customerKey(customer.customer_code, customer.customer_store) === key,
+          ),
+        )
+        .map((item) => item.display_name.trim() || item.id);
+    },
+    [allPortfolios, portfolio],
+  );
+
   return (
     <section className="cm-page-stack cm-portfolios-page">
       <CommercialPagePath
@@ -388,6 +445,8 @@ export function SellerPortfolioDetailPage({
           savingName={savingName}
           busyCustomerKey={busyCustomerKey}
           busyMemberUserId={busyMemberUserId}
+          overlappingCustomerKeys={overlappingCustomerKeys}
+          otherPortfolioLabelsFor={otherPortfolioLabelsFor}
           directoryLabelFor={directoryLabelFor}
           onSaveName={(name) => void handleSaveName(name)}
           onAddCustomer={(hit) => void handleAddCustomer(hit)}

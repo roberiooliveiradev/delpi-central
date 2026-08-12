@@ -3,6 +3,8 @@ from unittest.mock import MagicMock
 from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
     ManageSellerPortfolioUseCase,
+    add_customer_result_to_dict,
+    coverage_audit_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
 )
@@ -354,3 +356,74 @@ def test_parse_customer_assignments_deduplicates() -> None:
     )
     assert len(parsed) == 1
     assert parsed[0].customer_code == "100"
+
+
+def test_add_customer_returns_soft_overlap_warning() -> None:
+    repository = MagicMock()
+    other = _portfolio(
+        id="p2",
+        display_name="Outra",
+        customers=(SellerCustomerAssignment("100", "01", "Cliente 100"),),
+    )
+    updated = _portfolio(
+        customers=(
+            SellerCustomerAssignment("100", "01", "Cliente 100"),
+            SellerCustomerAssignment("200", "01", "Cliente 200"),
+        )
+    )
+    repository.list_portfolios.return_value = [other]
+    repository.add_customer.return_value = updated
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.add_customer(
+        portfolio_id="p1",
+        customer=SellerCustomerAssignment("100", "01", "Cliente 100"),
+    )
+
+    assert result.portfolio.id == "p1"
+    assert result.warning is not None
+    assert result.warning.code == "customer_in_other_portfolios"
+    assert result.warning.other_portfolios[0].id == "p2"
+    repository.add_customer.assert_called_once()
+    payload = add_customer_result_to_dict(result)
+    assert payload["coverage_warning"]["code"] == "customer_in_other_portfolios"
+    assert payload["warnings"][0]["other_portfolios"][0]["display_name"] == "Outra"
+
+
+def test_add_customer_without_overlap_has_no_warning() -> None:
+    repository = MagicMock()
+    repository.list_portfolios.return_value = [_portfolio(id="p2", display_name="Outra")]
+    repository.add_customer.return_value = _portfolio()
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.add_customer(
+        portfolio_id="p1",
+        customer=SellerCustomerAssignment("999", "01", "Novo"),
+    )
+
+    assert result.warning is None
+    assert add_customer_result_to_dict(result)["coverage_warning"] is None
+
+
+def test_audit_customer_coverage_uses_active_portfolios() -> None:
+    repository = MagicMock()
+    repository.list_portfolios.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+        _portfolio(
+            id="p2",
+            display_name="B",
+            customers=(SellerCustomerAssignment("100", "01", "Cliente"),),
+        ),
+    ]
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    audit = use_case.audit_customer_coverage()
+    payload = coverage_audit_to_dict(audit)
+
+    repository.list_portfolios.assert_called_once_with(active_only=True)
+    assert payload["overlapping_count"] == 1
+    assert payload["gap"]["available"] is False
+    assert payload["portfolios_with_overlap"][0]["overlapping_customer_count"] == 1

@@ -5,7 +5,13 @@ import {
 } from "../app/pluginRoutes";
 import { looksLikeUserId } from "../shared/directoryUserLabel";
 
-export const SELLER_PORTFOLIOS_FILTER_VALUES = ["all", "active", "inactive"] as const;
+export const SELLER_PORTFOLIOS_FILTER_VALUES = [
+  "all",
+  "active",
+  "inactive",
+  "overlapping",
+] as const;
+
 export const SELLER_PORTFOLIOS_VIEW_VALUES = ["list", "org"] as const;
 export const SELLER_PORTFOLIOS_AXIS_VALUES = ["portfolio", "person"] as const;
 

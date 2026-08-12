@@ -2,11 +2,13 @@ import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   CustomerEnrichmentItem,
   DirectoryUser,
+  AddSellerCustomerResult,
   SellerCustomerInput,
   SellerPortfolio,
   SellerPortfolioMeResponse,
   SellerPortfolioMember,
   SellerPortfolioMemberRole,
+  SellerPortfoliosCoverageAudit,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
@@ -76,12 +78,22 @@ export async function transferSellerCustomers(input: {
 export async function addSellerCustomer(
   portfolioId: string,
   customer: SellerCustomerInput,
-): Promise<SellerPortfolio> {
-  const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
+): Promise<AddSellerCustomerResult> {
+  const response = await httpPost<ApiSuccessResponse<AddSellerCustomerResult>>(
     commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/customers`),
     customer,
   );
   return unwrapEnvelope(response, "Erro ao adicionar cliente à carteira.");
+}
+
+export async function getSellerPortfoliosCoverageAudit(
+  signal?: AbortSignal,
+): Promise<SellerPortfoliosCoverageAudit> {
+  const response = await httpGet<ApiSuccessResponse<SellerPortfoliosCoverageAudit>>(
+    commercialApiUrl("/seller-portfolios/coverage-audit"),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar auditoria de cobertura.");
 }
 
 export async function removeSellerCustomer(

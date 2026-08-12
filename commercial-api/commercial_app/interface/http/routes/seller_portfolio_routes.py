@@ -22,6 +22,8 @@ from commercial_app.application.security.commercial_permissions import (
 from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
     ManageSellerPortfolioUseCase,
+    add_customer_result_to_dict,
+    coverage_audit_to_dict,
     parse_customer_assignments,
     portfolio_to_dict,
 )
@@ -110,6 +112,26 @@ def get_my_seller_portfolio(request: Request):
             "Erro interno ao carregar carteira.",
             500,
             operation_id="get_my_seller_portfolio",
+        )
+
+
+@router.get("/coverage-audit", operation_id="get_seller_portfolios_coverage_audit")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def get_seller_portfolios_coverage_audit(_request: Request):
+    """Auditoria de cobertura: clientes em 2+ carteiras ativas (overlapping)."""
+    try:
+        audit = _use_case().audit_customer_coverage()
+        return ok(
+            coverage_audit_to_dict(audit),
+            message="Auditoria de cobertura carregada.",
+            operation_id="get_seller_portfolios_coverage_audit",
+        )
+    except Exception:
+        logger.exception("get_seller_portfolios_coverage_audit_failed")
+        return fail(
+            "Erro interno ao auditar cobertura de carteiras.",
+            500,
+            operation_id="get_seller_portfolios_coverage_audit",
         )
 
 
@@ -330,7 +352,7 @@ def add_seller_customer(
     body: AddCustomerBody = Body(...),
 ):
     try:
-        portfolio = _use_case().add_customer(
+        result = _use_case().add_customer(
             portfolio_id=portfolio_id,
             customer=SellerCustomerAssignment(
                 customer_code=body.customer_code.strip(),
@@ -338,9 +360,14 @@ def add_seller_customer(
                 customer_name=(body.customer_name or "").strip() or None,
             ),
         )
+        message = (
+            "Cliente adicionado à carteira (já estava em outra carteira ativa)."
+            if result.warning is not None
+            else "Cliente adicionado à carteira."
+        )
         return ok(
-            portfolio_to_dict(portfolio),
-            message="Cliente adicionado à carteira.",
+            add_customer_result_to_dict(result),
+            message=message,
             operation_id="add_seller_customer",
         )
     except LookupError as exc:

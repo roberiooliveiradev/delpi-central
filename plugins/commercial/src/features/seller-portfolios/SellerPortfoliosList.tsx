@@ -16,11 +16,13 @@ import {
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import type { SellerPortfolio } from "../../types/portfolio";
 import { SellerPortfolioListCard } from "./SellerPortfolioListCard";
 
 type SellerPortfoliosListProps = {
   portfolios: SellerPortfolio[];
+  overlappingPortfolioIds?: ReadonlySet<string>;
   loading: boolean;
   emptyTitle: string;
   emptyMessage: string;
@@ -31,6 +33,7 @@ type SellerPortfoliosListProps = {
 
 export function SellerPortfoliosList({
   portfolios,
+  overlappingPortfolioIds,
   loading,
   emptyTitle,
   emptyMessage,
@@ -46,7 +49,17 @@ export function SellerPortfoliosList({
       key: "display_name",
       header: "Carteira",
       headerHint: CM_HELP.sellerPortfolios.colDisplayName,
-      render: (row) => row.display_name,
+      render: (row) => (
+        <span className="cm-row-actions">
+          <span>{row.display_name}</span>
+          {row.active && overlappingPortfolioIds?.has(row.id) ? (
+            <CommercialStatusBadge
+              label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
+              variant="warning"
+            />
+          ) : null}
+        </span>
+      ),
     },
     {
       key: "user_id",
@@ -121,6 +134,9 @@ export function SellerPortfoliosList({
                 <SellerPortfolioListCard
                   key={portfolio.id}
                   portfolio={portfolio}
+                  hasOverlappingCustomers={Boolean(
+                    portfolio.active && overlappingPortfolioIds?.has(portfolio.id),
+                  )}
                   userLabel={directoryLabelFor(
                     portfolio.owner_user_id ?? portfolio.user_id,
                     portfolio.display_name,

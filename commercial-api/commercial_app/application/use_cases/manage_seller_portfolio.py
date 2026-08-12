@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+from commercial_app.domain.entities.portfolio_coverage import (
+    CustomerOverlapWarning,
+    PortfolioCoverageAudit,
+)
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
     SellerPortfolio,
@@ -12,6 +16,9 @@ from commercial_app.domain.ports.customer_avatar_repository_port import AuditLog
 from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
+)
+from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
+    SellerPortfolioCoverageAuditService,
 )
 
 _PORTAL_ACCESS_DENIED = "Usuário sem acesso ao Portal Comercial."
@@ -84,17 +91,83 @@ class CreatePortfolioRequest:
     owner_user_id: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class AddCustomerResult:
+    portfolio: SellerPortfolio
+    warning: CustomerOverlapWarning | None = None
+
+
+def coverage_audit_to_dict(audit: PortfolioCoverageAudit) -> dict[str, Any]:
+    return {
+        "overlapping_count": audit.overlapping_count,
+        "overlapping": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "customer_name": item.customer_name,
+                "portfolio_ids": list(item.portfolio_ids),
+                "portfolios": [
+                    {"id": ref.id, "display_name": ref.display_name}
+                    for ref in item.portfolios
+                ],
+            }
+            for item in audit.overlapping
+        ],
+        "portfolios_with_overlap": [
+            {
+                "id": item.id,
+                "display_name": item.display_name,
+                "overlapping_customer_count": item.overlapping_customer_count,
+            }
+            for item in audit.portfolios_with_overlap
+        ],
+        "gap": {
+            "available": audit.gap.available,
+            "reason": audit.gap.reason,
+        },
+    }
+
+
+def customer_overlap_warning_to_dict(
+    warning: CustomerOverlapWarning | None,
+) -> dict[str, Any] | None:
+    if warning is None:
+        return None
+    return {
+        "code": warning.code,
+        "message": warning.message,
+        "other_portfolios": [
+            {"id": item.id, "display_name": item.display_name}
+            for item in warning.other_portfolios
+        ],
+    }
+
+
+def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
+    payload = portfolio_to_dict(result.portfolio)
+    warning = customer_overlap_warning_to_dict(result.warning)
+    if warning is not None:
+        payload["warnings"] = [warning]
+        payload["coverage_warning"] = warning
+    else:
+        payload["warnings"] = []
+        payload["coverage_warning"] = None
+    return payload
+
+
 class ManageSellerPortfolioUseCase:
     def __init__(
         self,
         repository: SellerPortfolioRepositoryPort,
         audit_repository: AuditLogRepositoryPort | None = None,
         portal_access: PortalAccessPort | None = None,
+        coverage_audit: SellerPortfolioCoverageAuditService | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
         # None = permissivo (mesmo efeito de PermissivePortalAccessPort).
         self._portal_access = portal_access
+        self._coverage_audit = coverage_audit or SellerPortfolioCoverageAuditService()
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
@@ -134,6 +207,11 @@ class ManageSellerPortfolioUseCase:
 
     def get_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
         return self._repository.get_by_id(portfolio_id)
+
+    def audit_customer_coverage(self) -> PortfolioCoverageAudit:
+        """Relatório de overlapping entre carteiras ativas (gap só se houver universo)."""
+        portfolios = self._repository.list_portfolios(active_only=True)
+        return self._coverage_audit.audit_active_portfolios(portfolios)
 
     def create_portfolio(self, request: CreatePortfolioRequest) -> SellerPortfolio:
         display_name = _normalize_code(request.display_name)
@@ -270,13 +348,22 @@ class ManageSellerPortfolioUseCase:
         *,
         portfolio_id: str,
         customer: SellerCustomerAssignment,
-    ) -> SellerPortfolio:
+    ) -> AddCustomerResult:
         if not customer.customer_code or not customer.customer_store:
             raise ValueError("customer_code e customer_store são obrigatórios.")
+        portfolio_id = _normalize_code(portfolio_id)
+        active_portfolios = self._repository.list_portfolios(active_only=True)
+        other = self._coverage_audit.find_other_active_portfolios_for_customer(
+            active_portfolios,
+            customer_code=customer.customer_code,
+            customer_store=customer.customer_store,
+            exclude_portfolio_id=portfolio_id,
+        )
+        warning = self._coverage_audit.build_link_overlap_warning(other)
         updated = self._repository.add_customer(portfolio_id=portfolio_id, customer=customer)
         if updated is None:
             raise LookupError("Vendedor não encontrado.")
-        return updated
+        return AddCustomerResult(portfolio=updated, warning=warning)
 
     def remove_customer(
         self,

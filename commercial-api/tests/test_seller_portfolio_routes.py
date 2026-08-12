@@ -43,3 +43,15 @@ def test_member_owner_deactivate_pass_actor_user_id() -> None:
     assert "def set_seller_portfolio_owner(" in ROUTES
     assert "def deactivate_seller_portfolio(" in ROUTES
     assert "def update_seller_portfolio(" in ROUTES
+
+
+def test_coverage_audit_route_is_registered_before_portfolio_id() -> None:
+    assert 'operation_id="get_seller_portfolios_coverage_audit"' in ROUTES
+    assert '"/coverage-audit"' in ROUTES
+    assert "def get_seller_portfolios_coverage_audit(" in ROUTES
+    assert ROUTES.index('"/coverage-audit"') < ROUTES.index('"/{portfolio_id}"')
+
+
+def test_add_seller_customer_returns_soft_warning_payload() -> None:
+    assert "add_customer_result_to_dict" in ROUTES
+    assert "já estava em outra carteira ativa" in ROUTES

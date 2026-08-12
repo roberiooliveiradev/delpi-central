@@ -45,10 +45,11 @@ describe("seller-portfolios kit-first", () => {
     assert.doesNotMatch(pageSource, /Selecione uma carteira/);
     assert.doesNotMatch(pageSource, /selectedId/);
     assert.match(pageSource, /buildSellerPortfolioDetailPath/);
-    assert.match(pageSource, /SellerPortfoliosOrgView/);
-    assert.match(pageSource, /view:\s*"list"/);
+    assert.match(pageSource, /getSellerPortfoliosCoverageAudit/);
+    assert.match(pageSource, /filter:\s*"overlapping"|overlapping/);
     assert.match(detailPageSource, /SellerPortfolioDetail/);
     assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);
+    assert.match(detailPageSource, /coverage_warning|readCoverageLinkWarning|notifyWarning/);
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
   });

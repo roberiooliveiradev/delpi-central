@@ -3,17 +3,20 @@ import {
   CommercialStatusBadge,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import type { SellerPortfolio } from "../../types/portfolio";
 
 type SellerPortfolioListCardProps = {
   portfolio: SellerPortfolio;
   userLabel: string;
+  hasOverlappingCustomers?: boolean;
   onSelect: (portfolio: SellerPortfolio) => void;
 };
 
 export function SellerPortfolioListCard({
   portfolio,
   userLabel,
+  hasOverlappingCustomers = false,
   onSelect,
 }: SellerPortfolioListCardProps) {
   const customerLabel =
@@ -31,7 +34,17 @@ export function SellerPortfolioListCard({
           id: "name",
           label: "Carteira",
           valueTone: "title",
-          value: portfolio.display_name,
+          value: (
+            <span className="cm-row-actions">
+              <span>{portfolio.display_name}</span>
+              {hasOverlappingCustomers ? (
+                <CommercialStatusBadge
+                  label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
+                  variant="warning"
+                />
+              ) : null}
+            </span>
+          ),
         },
         {
           id: "user",

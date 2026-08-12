@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createSellerPortfolio,
+  getSellerPortfoliosCoverageAudit,
   listSellerPortfolios,
 } from "../../api/commercialPortfolioApi";
 import {
@@ -24,7 +25,9 @@ import {
   UI_PREFIX,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
-import type { SellerPortfolio } from "../../types/portfolio";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
+import type { SellerPortfolio, SellerPortfoliosCoverageAudit } from "../../types/portfolio";
+import { overlappingPortfolioIdSet } from "../../utils/portfolioCoverage";
 import {
   buildSellerPortfolioDetailPath,
   migrateLegacySellerPortfolioIdParam,
@@ -40,9 +43,19 @@ import { SellerPortfoliosList } from "./SellerPortfoliosList";
 import { SellerPortfoliosOrgView } from "./SellerPortfoliosOrgView";
 
 const FILTER_META: Record<SellerPortfoliosFilter, { label: string; emptyHint: string }> = {
-  all: { label: "Todas", emptyHint: "Cadastre a primeira carteira." },
-  active: { label: "Ativas", emptyHint: "Nenhuma carteira ativa neste filtro." },
-  inactive: { label: "Inativas", emptyHint: "Nenhuma carteira inativa neste filtro." },
+  all: { label: PORTFOLIO_COVERAGE_CONTENT.filterAll, emptyHint: "Cadastre a primeira carteira." },
+  active: {
+    label: PORTFOLIO_COVERAGE_CONTENT.filterActive,
+    emptyHint: "Nenhuma carteira ativa neste filtro.",
+  },
+  inactive: {
+    label: PORTFOLIO_COVERAGE_CONTENT.filterInactive,
+    emptyHint: "Nenhuma carteira inativa neste filtro.",
+  },
+  overlapping: {
+    label: PORTFOLIO_COVERAGE_CONTENT.filterOverlapping,
+    emptyHint: PORTFOLIO_COVERAGE_CONTENT.filterOverlappingEmpty,
+  },
 };
 
 const DEFAULT_LINK: SellerPortfoliosDeepLink = {
@@ -90,6 +103,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [portfolios, setPortfolios] = useState<SellerPortfolio[]>([]);
+  const [coverageAudit, setCoverageAudit] = useState<SellerPortfoliosCoverageAudit | null>(null);
   const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
   const [link, setLink] = useState<SellerPortfoliosDeepLink>(DEFAULT_LINK);
   const [createOpen, setCreateOpen] = useState(false);
@@ -157,16 +171,20 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       if (options?.silent) setRefreshing(true);
       else setLoading(true);
       setError(null);
-      listSellerPortfolios()
-        .then((response) => {
+      Promise.all([listSellerPortfolios(), getSellerPortfoliosCoverageAudit()])
+        .then(([response, audit]) => {
           setPortfolios(response);
+          setCoverageAudit(audit);
           setLastSuccessAt(new Date());
         })
         .catch((err: unknown) => {
           const message = err instanceof Error ? err.message : "Erro ao listar carteiras.";
           setError(message);
           notifyError(message);
-          if (!options?.silent) setPortfolios([]);
+          if (!options?.silent) {
+            setPortfolios([]);
+            setCoverageAudit(null);
+          }
         })
         .finally(() => {
           setLoading(false);
@@ -180,26 +198,45 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     reload();
   }, [reload]);
 
+  const overlapIds = useMemo(
+    () => overlappingPortfolioIdSet(coverageAudit),
+    [coverageAudit],
+  );
+
   const stats = useMemo(() => {
     const active = portfolios.filter((item) => item.active).length;
     const inactive = portfolios.length - active;
     const customers = portfolios.reduce((sum, item) => sum + (item.customer_count ?? 0), 0);
-    return { total: portfolios.length, active, inactive, customers };
-  }, [portfolios]);
+    const overlapping = portfolios.filter(
+      (item) => item.active && overlapIds.has(item.id),
+    ).length;
+    return {
+      total: portfolios.length,
+      active,
+      inactive,
+      customers,
+      overlapping,
+      overlappingCustomers: coverageAudit?.overlapping_count ?? 0,
+    };
+  }, [coverageAudit?.overlapping_count, overlapIds, portfolios]);
 
   const filteredPortfolios = useMemo(() => {
     return portfolios.filter((item) => {
       if (link.filter === "active" && !item.active) return false;
       if (link.filter === "inactive" && item.active) return false;
+      if (link.filter === "overlapping") {
+        if (!item.active || !overlapIds.has(item.id)) return false;
+      }
       return portfolioMatchesQuery(item, link.q, directoryLabelFor);
     });
-  }, [directoryLabelFor, link.filter, link.q, portfolios]);
+  }, [directoryLabelFor, link.filter, link.q, overlapIds, portfolios]);
 
   const filterChips = (
     [
       ["all", stats.total] as const,
       ["active", stats.active] as const,
       ["inactive", stats.inactive] as const,
+      ["overlapping", stats.overlapping] as const,
     ] as const
   ).map(([id, count]) => ({
     id,
@@ -295,6 +332,11 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
             id: "customers",
             label: "Clientes",
             value: loading ? "—" : stats.customers.toLocaleString("pt-BR"),
+          },
+          {
+            id: "overlapping",
+            label: PORTFOLIO_COVERAGE_CONTENT.heroOverlapping,
+            value: loading ? "—" : stats.overlappingCustomers.toLocaleString("pt-BR"),
           },
         ]}
         actions={
@@ -392,6 +434,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       ) : (
         <SellerPortfoliosList
           portfolios={filteredPortfolios}
+          overlappingPortfolioIds={overlapIds}
           loading={loading && portfolios.length === 0}
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}

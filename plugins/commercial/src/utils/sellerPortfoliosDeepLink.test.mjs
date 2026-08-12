@@ -39,6 +39,12 @@ describe("sellerPortfoliosDeepLink", () => {
       view: "list",
       axis: "portfolio",
     });
+    assert.deepEqual(parseSellerPortfoliosDeepLink("?filter=overlapping"), {
+      q: "",
+      filter: "overlapping",
+      view: "list",
+      axis: "portfolio",
+    });
     assert.equal(
       sanitizeSellerPortfoliosSearch(`?filter=all&view=list&axis=portfolio&id=${PORTFOLIO_ID}&redirect=/apps/other`),
       "",
@@ -47,6 +53,10 @@ describe("sellerPortfoliosDeepLink", () => {
     assert.equal(
       buildSellerPortfoliosSearch({ q: "", filter: "active", view: "org", axis: "person" }),
       "?filter=active&view=org&axis=person",
+    );
+    assert.equal(
+      buildSellerPortfoliosSearch({ q: "", filter: "overlapping", view: "list", axis: "portfolio" }),
+      "?filter=overlapping",
     );
   });
 

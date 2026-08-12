@@ -267,7 +267,11 @@ export const CM_HELP = {
   },
   sellerPortfolios: {
     list: "Carteiras cadastradas (usuários com acesso ao Portal Comercial + nome de exibição).",
-    filter: "Filtre a lista por status: todas, só ativas ou só inativas.",
+    filter: "Filtre por situação (ativas/inativas) ou por carteiras com clientes em overlapping.",
+    filterOverlapping:
+      "Mostra só carteiras ativas que compartilham ao menos um cliente (código+loja) com outra carteira.",
+    overlappingCustomer:
+      "Este cliente também está em outra carteira ativa. Revise a cobertura se for necessário.",
     create: "Cria carteira vinculada a um ou mais usuários do diretório. O nome aparece no seletor de escopo.",
     createDialog:
       "Vincule usuários com acesso ao Portal Comercial e defina o nome no seletor de escopo.",

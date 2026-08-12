@@ -3,16 +3,25 @@
  */
 import type {
   DirectoryUser,
+  AddSellerCustomerResult,
   SellerCustomerInput,
   SellerPortfolio,
   SellerPortfolioMeResponse,
   SellerPortfolioMemberRole,
+  SellerPortfoliosCoverageAudit,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
 } from "../types/portfolio";
 import * as commercial from "./commercialPortfolioApi";
 
-export type { DirectoryUser, SellerCustomerInput, SellerPortfolio, SellerPortfolioMeResponse, TotvsCustomerHit };
+export type {
+  DirectoryUser,
+  SellerCustomerInput,
+  SellerPortfolio,
+  SellerPortfolioMeResponse,
+  SellerPortfoliosCoverageAudit,
+  TotvsCustomerHit,
+};
 
 export async function searchDirectoryUsers(
   query: string,
@@ -98,8 +107,14 @@ export async function replaceSellerCustomers(
 export async function addSellerCustomer(
   sellerId: string,
   customer: SellerCustomerInput,
-): Promise<SellerPortfolio> {
+): Promise<AddSellerCustomerResult> {
   return commercial.addSellerCustomer(sellerId, customer);
+}
+
+export async function getSellerPortfoliosCoverageAudit(
+  signal?: AbortSignal,
+): Promise<SellerPortfoliosCoverageAudit> {
+  return commercial.getSellerPortfoliosCoverageAudit(signal);
 }
 
 export async function removeSellerCustomer(

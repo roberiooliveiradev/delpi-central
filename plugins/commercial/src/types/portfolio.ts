@@ -80,6 +80,48 @@ export type TransferSellerCustomersResult = {
   transferred_count: number;
 };
 
+export type PortfolioCoverageRef = {
+  id: string;
+  display_name: string;
+};
+
+export type OverlappingCustomerCoverage = {
+  customer_code: string;
+  customer_store: string;
+  customer_name: string | null;
+  portfolio_ids: string[];
+  portfolios: PortfolioCoverageRef[];
+};
+
+export type PortfolioOverlapSummary = {
+  id: string;
+  display_name: string;
+  overlapping_customer_count: number;
+};
+
+export type PortfolioCoverageGapStatus = {
+  available: boolean;
+  reason: string | null;
+};
+
+export type SellerPortfoliosCoverageAudit = {
+  overlapping_count: number;
+  overlapping: OverlappingCustomerCoverage[];
+  portfolios_with_overlap: PortfolioOverlapSummary[];
+  gap: PortfolioCoverageGapStatus;
+};
+
+export type CoverageLinkWarning = {
+  code: string;
+  message: string;
+  other_portfolios: PortfolioCoverageRef[];
+};
+
+export type AddSellerCustomerResult = SellerPortfolio & {
+  warnings?: CoverageLinkWarning[];
+  coverage_warning?: CoverageLinkWarning | null;
+};
+
 export type DirectoryUser = {
   id: string;
   name: string;
