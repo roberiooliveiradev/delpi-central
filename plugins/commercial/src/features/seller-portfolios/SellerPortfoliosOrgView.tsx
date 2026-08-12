@@ -98,37 +98,34 @@ export function SellerPortfoliosOrgView({
       {loading ? <CommercialLoadingCard title="Carregando organização" variant="panel" /> : null}
 
       {!loading ? (
-        <CommercialViewTransition
-          transitionKey={`org-${axis}-${portfolios.length}`}
-          tone="panel"
-        >
-          {portfolios.length === 0 ? (
+        portfolios.length === 0 ? (
+          <CommercialViewTransition transitionKey={`org-empty-${portfolios.length}`} tone="panel">
             <CommercialEmptyState title={emptyTitle} message={emptyMessage}>
               <CommercialActionButton variant="primary" onClick={onCreate}>
                 Nova carteira
               </CommercialActionButton>
             </CommercialEmptyState>
-          ) : (
-            <CommercialOrgMembershipFlow
-              nodes={flowModel.nodes}
-              edges={flowModel.edges}
-              portalScopeClassName="dashboard-commercial"
-              fullscreenTitle="Organização"
-              fullscreenSubtitle="Relação entre carteiras e usuários com acesso ao Portal Comercial."
-              aria-label={
-                axis === "portfolio"
-                  ? "Organização por carteira"
-                  : "Organização por pessoa"
-              }
-              emptyMessage="Sem vínculos de carteira e usuários para exibir."
-              onNodeClick={(payload) => {
-                if (payload.kind !== "portfolio") return;
-                const portfolio = portfolioById.get(payload.entityId);
-                if (portfolio) onOpenPortfolio(portfolio);
-              }}
-            />
-          )}
-        </CommercialViewTransition>
+          </CommercialViewTransition>
+        ) : (
+          <CommercialOrgMembershipFlow
+            nodes={flowModel.nodes}
+            edges={flowModel.edges}
+            portalScopeClassName="dashboard-commercial"
+            fullscreenTitle="Organização"
+            fullscreenSubtitle="Relação entre carteiras e usuários com acesso ao Portal Comercial."
+            aria-label={
+              axis === "portfolio"
+                ? "Organização por carteira"
+                : "Organização por pessoa"
+            }
+            emptyMessage="Sem vínculos de carteira e usuários para exibir."
+            onNodeClick={(payload) => {
+              if (payload.kind !== "portfolio") return;
+              const portfolio = portfolioById.get(payload.entityId);
+              if (portfolio) onOpenPortfolio(portfolio);
+            }}
+          />
+        )
       ) : null}
     </CommercialSectionCard>
   );

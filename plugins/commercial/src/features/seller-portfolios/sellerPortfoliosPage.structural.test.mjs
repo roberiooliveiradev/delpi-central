@@ -70,6 +70,8 @@ describe("seller-portfolios kit-first", () => {
     assert.match(orgSource, /buildSellerPortfoliosOrgFlowModel/);
     assert.match(orgSource, /fullscreenTitle|portalScopeClassName/);
     assert.doesNotMatch(orgSource, /cm-portfolios-org-tree/);
+    // Troca Por carteira/Por pessoa atualiza nodes in-place — sem remount via ViewTransition+axis.
+    assert.doesNotMatch(orgSource, /transitionKey=\{`org-\$\{axis\}/);
   });
 
   it("wizard de transferência em massa tem etapas origem→clientes→destino→confirmar", () => {

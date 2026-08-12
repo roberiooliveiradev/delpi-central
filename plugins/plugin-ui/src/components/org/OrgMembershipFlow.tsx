@@ -16,6 +16,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  useNodesInitialized,
   useReactFlow,
   type Edge,
   type Node,
@@ -85,14 +86,17 @@ function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps)
   );
 }
 
+/** Enquadra o grafo após os nós medirem o layout — evita canvas vazio no remount/eixo. */
 function FitViewOnChange({ revision }: { revision: string }) {
   const { fitView } = useReactFlow();
+  const nodesInitialized = useNodesInitialized();
   useEffect(() => {
+    if (!nodesInitialized) return;
     const id = window.setTimeout(() => {
       void fitView({ padding: 0.2, duration: 220 });
-    }, 50);
+    }, 0);
     return () => window.clearTimeout(id);
-  }, [fitView, revision]);
+  }, [fitView, revision, nodesInitialized]);
   return null;
 }
 
