@@ -21,12 +21,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
   {
     id: "rol_head_office",
     label: "ROL vs meta",
-    tooltip: "ROL da matriz versus meta no período filtrado.",
+    tooltip: "ROL consolidado versus meta no período filtrado.",
   },
   {
     id: "rol_branch",
-    label: "ROL filial",
-    tooltip: "ROL da filial selecionada versus meta.",
+    label: "ROL por unidade",
+    tooltip: "ROL por unidade (Santa Catarina / Espírito Santo) versus meta.",
   },
   {
     id: "closing_rate",
@@ -45,12 +45,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
   },
   {
     id: "rol_series",
-    label: "Evolução de ROL",
-    tooltip: "Evolução do ROL matriz e filial no período.",
+    label: "Evolução do ROL (R$)",
+    tooltip: "Evolução do ROL por Santa Catarina e Espírito Santo no período.",
   },
   {
     id: "funnel",
-    label: "Funil",
+    label: "Funil de conversão",
     tooltip: "Funil de conversão (propostas → ganhas).",
   },
 ] as const;
