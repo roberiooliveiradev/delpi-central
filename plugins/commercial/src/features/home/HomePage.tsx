@@ -1,41 +1,54 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
-  CalendarCheck,
   ClipboardList,
   FileText,
   Settings,
-  Target,
-  Timer,
   Users,
 } from "lucide-react";
 import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
-import { CM_HELP } from "../../content/helpTooltips";
-import {
-  formatHomeLauncherMeta,
-  HOME_LAUNCHER_CONTENT,
-  resolveHomeLauncherCards,
-  type HomeLauncherCardId,
-} from "../../content/homeLauncher";
+import { getHomeFavorites, putHomeFavorites, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
 import { getOpenOrders } from "../../api/openOrdersApi";
 import { useHomeHeroMetrics } from "../../app/HomeHeroMetricsContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
+import type { PluginNavigationTarget } from "../../app/pluginRoutes";
 import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
   CommercialActionButton,
   CommercialAlertQueue,
+  CommercialCatalogSearchBar,
   CommercialLoadingCard,
-  CommercialNavigationCard,
   CommercialScopeChipBar,
+  CommercialSectionRouteCard,
   CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { CM_HELP } from "../../content/helpTooltips";
+import {
+  collectSearchHits,
+  filterRouteCatalog,
+  findHubRouteById,
+  hubRouteLabelByView,
+  HUB_CONTENT,
+  resolveHomeContextualCta,
+  resolveHubSections,
+  type HubRouteDef,
+  type HubSectionDef,
+  type HubSectionId,
+} from "../../content/pluginRouteCatalog";
 import { useWorklistPreview } from "../../hooks/useWorklistPreview";
 import { formatDisplayDate } from "../../utils/dates";
 import type { OpenOrdersData } from "../../types/openOrders";
+import {
+  filterRecentsByCaps,
+  pushRecentView,
+  readRecentViews,
+  type RecentHubView,
+} from "./homeRecentViews";
+import { readHomeSearchQuery, writeHomeSearchQuery } from "./homeSearchQuery";
 
 type HomePageProps = {
   basePath: string;
@@ -53,25 +66,14 @@ type HomeOrdersSummary = {
 };
 
 const emptySummary: HomeOrdersSummary = { totalLinhas: 0, valorAberto: 0, atrasos: 0 };
+const EVENTS = HUB_CONTENT.events;
+const FEATURES = HUB_CONTENT.features;
 
-const EVENTS = HOME_LAUNCHER_CONTENT.events;
-const FEATURES = HOME_LAUNCHER_CONTENT.features;
-
-const LAUNCHER_ICONS: Record<HomeLauncherCardId, ReactNode> = {
-  overview: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
-  my_tasks: <CalendarCheck size={22} strokeWidth={1.75} aria-hidden="true" />,
-  open_orders: <ClipboardList size={22} strokeWidth={1.75} aria-hidden="true" />,
-  customers: <Users size={22} strokeWidth={1.75} aria-hidden="true" />,
-  proposals: <FileText size={22} strokeWidth={1.75} aria-hidden="true" />,
-  analytics_otd: <Timer size={22} strokeWidth={1.75} aria-hidden="true" />,
-  analytics_opportunities: <Target size={22} strokeWidth={1.75} aria-hidden="true" />,
-  administration: <Settings size={22} strokeWidth={1.75} aria-hidden="true" />,
-};
-
-const cmEmptyQuietClassNames = {
-  ...cmEmptyStateClassNames,
-  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-quiet`,
-  withTitle: true,
+const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
+  operations: <ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />,
+  management: <BarChart3 size={20} strokeWidth={1.75} aria-hidden="true" />,
+  documents: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
+  administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 function summaryFromOpenOrders(data: OpenOrdersData): HomeOrdersSummary {
@@ -90,6 +92,10 @@ function summaryFromOpenOrders(data: OpenOrdersData): HomeOrdersSummary {
   };
 }
 
+function favoriteKey(item: { viewId: string; search?: string }): string {
+  return `${item.viewId}::${item.search ?? ""}`;
+}
+
 export function HomePage({
   basePath,
   showAdmin,
@@ -104,6 +110,27 @@ export function HomePage({
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [summary, setSummary] = useState<HomeOrdersSummary>(emptySummary);
   const worklist = useWorklistPreview({ enabled: showWorklist });
+  const [searchQuery, setSearchQuery] = useState(() =>
+    typeof window !== "undefined" ? readHomeSearchQuery() : "",
+  );
+  const [recents, setRecents] = useState<RecentHubView[]>(() =>
+    typeof window !== "undefined" ? readRecentViews() : [],
+  );
+  const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
+  const [favoritesError, setFavoritesError] = useState<string | null>(null);
+
+  const capabilities = useMemo(
+    () => ({
+      analytics: showAnalytics,
+      worklist: showWorklist,
+      proposals: showProposals,
+      customers: showCustomers,
+      admin: showAdmin,
+    }),
+    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
+  );
+
+  const sections = useMemo(() => resolveHubSections(capabilities), [capabilities]);
 
   const reloadOrders = useCallback(() => {
     const controller = new AbortController();
@@ -127,18 +154,54 @@ export function HomePage({
 
   useEffect(() => reloadOrders(), [reloadOrders]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void getHomeFavorites(controller.signal)
+      .then((items) => {
+        if (!controller.signal.aborted) {
+          setFavorites(items);
+          setFavoritesError(null);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setFavorites([]);
+          setFavoritesError(FEATURES.favoritesLoadError);
+        }
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => writeHomeSearchQuery(searchQuery), 200);
+    return () => window.clearTimeout(handle);
+  }, [searchQuery]);
+
   const eventsReady = !ordersLoading && (!showWorklist || !worklist.loading);
 
   useEffect(() => {
     if (!eventsReady) {
-      setMetrics({ valorAberto: null, atrasos: null, followUps: null, ready: false });
+      setMetrics({
+        valorAberto: null,
+        atrasos: null,
+        followUps: null,
+        ready: false,
+        contextualCta: null,
+      });
       return;
     }
+    const contextualCta = resolveHomeContextualCta({
+      ready: true,
+      ordersLate: ordersError ? null : summary.atrasos,
+      tasksOverdue: showWorklist && !worklist.error ? worklist.counts.overdue : null,
+      tasksToday: showWorklist && !worklist.error ? worklist.counts.today : null,
+    });
     setMetrics({
       valorAberto: ordersError ? null : summary.valorAberto,
       atrasos: ordersError ? null : summary.atrasos,
       followUps: showWorklist ? (worklist.error ? null : worklist.counts.open) : null,
       ready: true,
+      contextualCta,
     });
   }, [
     eventsReady,
@@ -148,6 +211,8 @@ export function HomePage({
     summary.atrasos,
     summary.valorAberto,
     worklist.counts.open,
+    worklist.counts.overdue,
+    worklist.counts.today,
     worklist.error,
   ]);
 
@@ -162,6 +227,27 @@ export function HomePage({
     [basePath],
   );
 
+  const recordVisit = useCallback(
+    (viewId: PluginNavigationTarget, search: string | undefined, label: string) => {
+      setRecents(
+        pushRecentView({
+          viewId,
+          search,
+          label,
+        }),
+      );
+    },
+    [],
+  );
+
+  const navigateRoute = useCallback(
+    (route: Pick<HubRouteDef, "viewId" | "search" | "label">) => {
+      recordVisit(route.viewId, route.search, route.label);
+      navigatePluginView(route.viewId, { basePath, search: route.search });
+    },
+    [basePath, recordVisit],
+  );
+
   const alerts = useMemo(() => {
     if (!eventsReady) return [];
     const items = [];
@@ -172,8 +258,11 @@ export function HomePage({
         description: "Revise pedidos em aberto e priorize entregas vencidas.",
         tone: "warning" as const,
         actionLabel: "Ver atrasos",
-        onAction: () =>
-          navigatePluginView("open_orders", { basePath, search: "?focus=late" }),
+        onAction: () => navigateRoute({
+          viewId: "open_orders",
+          search: "?focus=late",
+          label: hubRouteLabelByView("open_orders", "?focus=late") ?? "Em atraso",
+        }),
       });
     }
     if (showWorklist && worklist.counts.overdue > 0) {
@@ -193,13 +282,17 @@ export function HomePage({
         description: "Abra a carteira para acompanhar clientes.",
         tone: "neutral" as const,
         actionLabel: "Ver carteira",
-        onAction: () => navigatePluginView("customers", { basePath }),
+        onAction: () =>
+          navigateRoute({
+            viewId: "customers",
+            label: hubRouteLabelByView("customers") ?? "Minha Carteira",
+          }),
       });
     }
     return items;
   }, [
-    basePath,
     eventsReady,
+    navigateRoute,
     openMyTasks,
     ordersError,
     showCustomers,
@@ -233,126 +326,110 @@ export function HomePage({
     ];
   }, [openMyTasks, worklist.counts]);
 
-  const launcherCards = useMemo(
-    () =>
-      resolveHomeLauncherCards({
-        analytics: showAnalytics,
-        worklist: showWorklist,
-        proposals: showProposals,
-        customers: showCustomers,
-        admin: showAdmin,
-      }),
-    [showAdmin, showAnalytics, showCustomers, showProposals, showWorklist],
-  );
-
-  const launcherMetaCounts = useMemo(
-    () => ({
-      followUpsOpen: showWorklist && !worklist.error ? worklist.counts.open : null,
-      openOrderLines: ordersError ? null : summary.totalLinhas,
-      lateLines: ordersError ? null : summary.atrasos,
-    }),
+  const badgeFor = useCallback(
+    (route: HubRouteDef): number | undefined => {
+      if (!route.badgeKey || ordersLoading || (showWorklist && worklist.loading)) {
+        return undefined;
+      }
+      if (route.badgeKey === "orders_late") {
+        if (ordersError) return undefined;
+        return summary.atrasos > 0 ? summary.atrasos : undefined;
+      }
+      if (!showWorklist || worklist.error) return undefined;
+      if (route.badgeKey === "tasks_overdue") {
+        return worklist.counts.overdue > 0 ? worklist.counts.overdue : undefined;
+      }
+      if (route.badgeKey === "tasks_today") {
+        return worklist.counts.today > 0 ? worklist.counts.today : undefined;
+      }
+      return undefined;
+    },
     [
       ordersError,
+      ordersLoading,
       showWorklist,
       summary.atrasos,
-      summary.totalLinhas,
-      worklist.counts.open,
+      worklist.counts.overdue,
+      worklist.counts.today,
       worklist.error,
+      worklist.loading,
     ],
   );
 
-  const primaryCards = useMemo(
-    () => launcherCards.filter((card) => card.tier === "primary"),
-    [launcherCards],
+  const filteredSections = useMemo(
+    () => filterRouteCatalog(sections, searchQuery),
+    [searchQuery, sections],
   );
-  const secondaryCards = useMemo(
-    () => launcherCards.filter((card) => card.tier === "secondary"),
-    [launcherCards],
+
+  const searchHits = useMemo(
+    () => collectSearchHits(sections, searchQuery, 8),
+    [searchQuery, sections],
+  );
+
+  const visibleRecents = useMemo(
+    () => filterRecentsByCaps(recents, capabilities),
+    [capabilities, recents],
+  );
+
+  const favoriteKeys = useMemo(
+    () => new Set(favorites.map((item) => favoriteKey(item))),
+    [favorites],
+  );
+
+  const toggleFavorite = useCallback(
+    async (route: HubRouteDef) => {
+      if (route.kind === "create") return;
+      const item: HomeFavoriteItem = {
+        viewId: route.viewId,
+        search: route.search,
+      };
+      const key = favoriteKey(item);
+      const previous = favorites;
+      const next = favoriteKeys.has(key)
+        ? favorites.filter((entry) => favoriteKey(entry) !== key)
+        : [...favorites, item].slice(0, 20);
+      setFavorites(next);
+      try {
+        const saved = await putHomeFavorites(next);
+        setFavorites(saved);
+        setFavoritesError(null);
+      } catch {
+        setFavorites(previous);
+        setFavoritesError(FEATURES.favoritesSaveError);
+      }
+    },
+    [favoriteKeys, favorites],
+  );
+
+  const mapSectionRoutes = useCallback(
+    (section: HubSectionDef) =>
+      section.routes.map((route) => ({
+        id: route.id,
+        label: route.label,
+        kind: route.kind,
+        badge: badgeFor(route),
+        pinned: favoriteKeys.has(favoriteKey(route)),
+        pinLabel: FEATURES.pinLabel,
+        unpinLabel: FEATURES.unpinLabel,
+        onPinClick:
+          route.kind === "create"
+            ? undefined
+            : () => {
+                void toggleFavorite(route);
+              },
+        onClick: () => navigateRoute(route),
+      })),
+    [badgeFor, favoriteKeys, navigateRoute, toggleFavorite],
   );
 
   const hasEvents = alerts.length > 0 || worklist.items.length > 0;
-
-  const renderLauncherCard = (card: (typeof launcherCards)[number]) => {
-    const meta = formatHomeLauncherMeta(card.id, launcherMetaCounts);
-    return (
-      <div
-        key={card.id}
-        className={
-          card.tier === "primary"
-            ? "cm-launcher-cell cm-launcher-cell--featured"
-            : "cm-launcher-cell cm-launcher-cell--secondary"
-        }
-      >
-        <CommercialNavigationCard
-          title={card.title}
-          description={card.description}
-          meta={meta}
-          icon={LAUNCHER_ICONS[card.id]}
-          density={card.tier === "primary" ? "featured" : "default"}
-          onClick={() => navigatePluginView(card.viewId, { basePath })}
-        />
-        {card.quickLinks?.length ? (
-          <div className="cm-nav-row">
-            {card.quickLinks.map((link) => (
-              <CommercialActionButton
-                key={link.id}
-                variant="ghost"
-                onClick={() =>
-                  navigatePluginView(link.viewId, {
-                    basePath,
-                    search: link.search,
-                  })
-                }
-              >
-                {link.label}
-              </CommercialActionButton>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    );
-  };
+  const showEventsPanel = eventsReady && hasEvents;
+  const showQueueOk = eventsReady && !hasEvents;
 
   return (
     <section className="cm-page-stack cm-home-layout" aria-label="Início">
-      <div className="cm-home-columns">
-        <div className="cm-home-columns__main">
-          <SectionCard
-            title={FEATURES.title}
-            subtitle={FEATURES.subtitle}
-            hint={CM_HELP.home.shortcuts}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-          >
-            {launcherCards.length === 0 ? (
-              <EmptyState
-                classNames={cmEmptyStateClassNames}
-                defaultMessage={FEATURES.empty}
-              />
-            ) : (
-              <div className="cm-home-launcher" aria-label={FEATURES.gridAriaLabel}>
-                {primaryCards.length > 0 ? (
-                  <div
-                    className="cm-home-grid cm-home-grid--primary"
-                    aria-label={FEATURES.primaryAriaLabel}
-                  >
-                    {primaryCards.map(renderLauncherCard)}
-                  </div>
-                ) : null}
-                {secondaryCards.length > 0 ? (
-                  <div
-                    className="cm-home-grid cm-home-grid--secondary"
-                    aria-label={FEATURES.secondaryAriaLabel}
-                  >
-                    {secondaryCards.map(renderLauncherCard)}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </SectionCard>
-        </div>
-
-        <aside className="cm-home-columns__side">
+      <div className="cm-home-stack">
+        {showEventsPanel ? (
           <SectionCard
             title={EVENTS.title}
             subtitle={EVENTS.subtitle}
@@ -378,33 +455,13 @@ export function HomePage({
               </>
             }
           >
-            {!eventsReady ? (
-              <CommercialLoadingCard title={EVENTS.loading} variant="panel" />
-            ) : (
-              <div className="cm-home-events-panel">
-                {ordersError ? (
-                  <EmptyState
-                    classNames={cmEmptyStateClassNames}
-                    defaultMessage={`Pedidos: ${ordersError}`}
-                    role="alert"
-                  />
-                ) : null}
-                {worklist.error ? (
-                  <EmptyState
-                    classNames={cmEmptyStateClassNames}
-                    defaultMessage={`Minhas tarefas: ${worklist.error}`}
-                    role="alert"
-                  />
-                ) : null}
-                {showWorklist && !worklist.error && queueChips.length > 0 ? (
-                  <CommercialScopeChipBar
-                    label={EVENTS.queueLabel}
-                    aria-label={EVENTS.queueLabel}
-                    chips={queueChips}
-                  />
-                ) : null}
-                {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
-                {worklist.items.length > 0 ? (
+            <div className="cm-home-events-panel">
+              {alerts.length > 0 ? <CommercialAlertQueue items={alerts} /> : null}
+              {showWorklist && worklist.items.length > 0 ? (
+                <>
+                  {queueChips.length > 0 ? (
+                    <CommercialScopeChipBar label={EVENTS.queueLabel} chips={queueChips} />
+                  ) : null}
                   <div className="cm-home-events-list" aria-label={EVENTS.listAriaLabel}>
                     {worklist.items.map(({ task, bucket }) => (
                       <CommercialWorklistItem
@@ -418,13 +475,17 @@ export function HomePage({
                               : "neutral"
                         }
                         meta={[
-                          EVENTS.buckets[bucket],
-                          task.due_at ? formatDisplayDate(task.due_at) : EVENTS.noDueDate,
-                          task.customer_code ? `Cliente ${task.customer_code}` : null,
+                          bucket === "overdue"
+                            ? EVENTS.buckets.overdue
+                            : bucket === "today"
+                              ? EVENTS.buckets.today
+                              : EVENTS.buckets.later,
+                          task.due_at
+                            ? formatDisplayDate(task.due_at)
+                            : EVENTS.noDueDate,
                         ]
                           .filter(Boolean)
                           .join(" · ")}
-                        detail={task.description ?? undefined}
                         primaryActionLabel={EVENTS.openTask}
                         onPrimaryAction={() =>
                           openMyTasks(bucket === "later" ? undefined : bucket)
@@ -432,18 +493,127 @@ export function HomePage({
                       />
                     ))}
                   </div>
-                ) : null}
-                {!hasEvents ? (
-                  <EmptyState
-                    classNames={cmEmptyQuietClassNames}
-                    defaultTitle={EVENTS.emptyTitle}
-                    defaultMessage={EVENTS.emptyMessage}
+                </>
+              ) : null}
+            </div>
+          </SectionCard>
+        ) : null}
+
+        {showQueueOk ? (
+          <div className="cm-home-queue-ok" role="status">
+            <span>{EVENTS.queueOkTitle}</span>
+            {showWorklist ? (
+              <CommercialActionButton variant="ghost" onClick={() => openMyTasks()}>
+                {EVENTS.queueOkCta}
+              </CommercialActionButton>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!eventsReady ? (
+          <CommercialLoadingCard title={EVENTS.loading} variant="panel" />
+        ) : null}
+
+        <SectionCard
+          title={FEATURES.title}
+          subtitle={FEATURES.subtitle}
+          hint={CM_HELP.home.shortcuts}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
+          <div className="cm-home-paths">
+            <CommercialCatalogSearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              hits={searchHits.map((hit) => ({
+                id: hit.id,
+                label: hit.label,
+                groupLabel: hit.groupLabel,
+              }))}
+              onSelectHit={(id) => {
+                const route = findHubRouteById(sections, id);
+                if (route) navigateRoute(route);
+              }}
+              placeholder={FEATURES.searchPlaceholder}
+              clearLabel={FEATURES.clearSearch}
+              emptyHitsLabel={FEATURES.searchEmpty}
+              aria-label={FEATURES.searchAriaLabel}
+            />
+
+            {favoritesError ? (
+              <p className="cm-home-inline-error" role="status">
+                {favoritesError}
+              </p>
+            ) : null}
+
+            {favorites.length > 0 ? (
+              <div className="cm-home-chip-row" aria-label={FEATURES.favoritesTitle}>
+                <span className="cm-home-chip-row__label">{FEATURES.favoritesTitle}</span>
+                {favorites.map((item) => {
+                  const label =
+                    hubRouteLabelByView(item.viewId, item.search) ?? item.viewId;
+                  return (
+                    <CommercialActionButton
+                      key={favoriteKey(item)}
+                      variant="ghost"
+                      onClick={() =>
+                        navigateRoute({
+                          viewId: item.viewId,
+                          search: item.search,
+                          label,
+                        })
+                      }
+                    >
+                      {label}
+                    </CommercialActionButton>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {visibleRecents.length > 0 ? (
+              <div className="cm-home-chip-row" aria-label={FEATURES.recentsTitle}>
+                <span className="cm-home-chip-row__label">{FEATURES.recentsTitle}</span>
+                {visibleRecents.map((item) => (
+                  <CommercialActionButton
+                    key={`${favoriteKey(item)}-${item.at}`}
+                    variant="ghost"
+                    onClick={() =>
+                      navigateRoute({
+                        viewId: item.viewId,
+                        search: item.search,
+                        label: item.label,
+                      })
+                    }
+                  >
+                    {item.label}
+                  </CommercialActionButton>
+                ))}
+              </div>
+            ) : null}
+
+            {sections.length === 0 ? (
+              <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={FEATURES.empty} />
+            ) : filteredSections.length === 0 ? (
+              <EmptyState
+                classNames={cmEmptyStateClassNames}
+                defaultMessage={FEATURES.searchEmpty}
+              />
+            ) : (
+              <div className="cm-home-sections-grid" aria-label={FEATURES.gridAriaLabel}>
+                {filteredSections.map((section) => (
+                  <CommercialSectionRouteCard
+                    key={section.id}
+                    title={section.title}
+                    description={section.description}
+                    icon={SECTION_ICONS[section.id] ?? <Users size={20} aria-hidden="true" />}
+                    routes={mapSectionRoutes(section)}
                   />
-                ) : null}
+                ))}
               </div>
             )}
-          </SectionCard>
-        </aside>
+          </div>
+        </SectionCard>
       </div>
     </section>
   );

@@ -13,6 +13,9 @@ import {
   createDashboardLoadingActivityCard,
   createDashboardMultiSelectField,
   createDashboardNavigationCard,
+  createDashboardSectionRouteCard,
+  createDashboardCatalogSearchBar,
+  createDashboardCommandPalette,
   createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
@@ -52,6 +55,7 @@ import {
   useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
+  catalogSearchBarBemClasses,
   dataTableBemClasses,
   detailCardRichBemClasses,
   emptyStateCardBemClasses,
@@ -61,6 +65,7 @@ import {
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
+  sectionRouteCardBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
   statusBadgeBemClasses,
@@ -103,6 +108,8 @@ export const PORTFOLIOS_LAYOUT_STORAGE_KEY = "commercial:seller-portfolios:layou
 
 export const cmPageHeaderClassNames = pageHeaderBrandBemClasses(UI_PREFIX);
 export const cmNavCardClassNames = navigationCardBemClasses(UI_PREFIX);
+export const cmSectionRouteCardClassNames = sectionRouteCardBemClasses(UI_PREFIX);
+export const cmCatalogSearchClassNames = catalogSearchBarBemClasses(UI_PREFIX);
 export const cmSectionCardClassNames = sectionCardPacBemClasses(UI_PREFIX);
 export const cmDataTableClassNames = dataTableBemClasses(UI_PREFIX);
 export const cmEmptyStateClassNames = emptyStateCardBemClasses(UI_PREFIX);
@@ -123,6 +130,16 @@ export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const CommercialNavigationCard = createDashboardNavigationCard({
   classNames: cmNavCardClassNames,
+});
+export const CommercialSectionRouteCard = createDashboardSectionRouteCard({
+  classNames: cmSectionRouteCardClassNames,
+});
+export const CommercialCatalogSearchBar = createDashboardCatalogSearchBar({
+  classNames: cmCatalogSearchClassNames,
+});
+export const CommercialCommandPalette = createDashboardCommandPalette({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
 });
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;

@@ -19,9 +19,9 @@ export const CM_HELP = {
   },
   home: {
     overview:
-      "Saudação personalizada, escopo da carteira e KPIs operacionais (follow-ups, valor aberto, atrasos) — sem BI do período.",
+      "Saudação personalizada, escopo da carteira e KPIs operacionais (follow-ups, valor aberto, atrasos) — sem BI do período. CTA contextual quando há atrasos ou tarefas urgentes.",
     alerts:
-      "Eventos e interações do seu dia: alertas da carteira e as primeiras tarefas da fila — os atalhos levam direto a Pedidos ou Minhas tarefas.",
+      "Eventos e interações do seu dia: alertas da carteira e as primeiras tarefas da fila — os atalhos levam direto a Pedidos ou Minhas tarefas. Se a fila estiver vazia, aparece o chip «Fila em dia».",
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:
@@ -29,7 +29,12 @@ export const CM_HELP = {
     kpiRol: "ROL da matriz versus meta no mês corrente (Gestão do Portal Comercial).",
     kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
     kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
-    shortcuts: "Atalhos para as áreas principais — objetivo: chegar à ação em até dois cliques.",
+    shortcuts:
+      "Caminhos por seção (Operação, Gestão à vista, Documentos, Administração). Busque, fixe favoritos ou use Ctrl/Cmd+K. Objetivo: chegar à ação em até dois cliques.",
+    search:
+      "Filtra seções e rotas do catálogo (rótulo e palavras-chave). A URL guarda ?q= para compartilhar o filtro.",
+    favorites: "Atalhos fixados por você (persistidos na conta). Clique na estrela em uma rota para adicionar ou remover.",
+    palette: "Busca rápida do portal (Ctrl/Cmd+K). Mesmo catálogo do Início, em modal contido no app.",
     analytics:
       "Atalhos internos para Gestão e Propostas no Portal Comercial (sem deep link para MFEs irmãos).",
     scope:
