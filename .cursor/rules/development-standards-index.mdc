@@ -9,6 +9,7 @@ alwaysApply: true
 
 | Regra | Quando consultar |
 |-------|------------------|
+| `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
 | `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
