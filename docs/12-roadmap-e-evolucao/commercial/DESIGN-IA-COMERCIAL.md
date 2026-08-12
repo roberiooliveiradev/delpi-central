@@ -106,30 +106,29 @@ Bindings via `plugins/commercial/src/app/commercialUi.ts` (`Commercial*` / `crea
 | Launcher card (legado) | NavigationCard `density=featured` | CommercialNavigationCard | Só fora do Início |
 | Hub seção→rotas | SectionRouteCard | CommercialSectionRouteCard | Usar (Início) |
 | Busca catálogo | CatalogSearchBar | CommercialCatalogSearchBar | Usar (Início) |
+| Faixas Favoritos / Recentes | HubChipRow + RouteChip | CommercialHubChipRow / CommercialRouteChip | Usar (Início) |
 | Command palette | CommandPalette (host-contained) | CommercialCommandPalette | Usar (shell) |
 | Ações | ActionButton | CommercialActionButton | Usar |
 | KPI | MetricKpiCard | CommercialMetricCard (`onClick` opcional) | Usar |
 | Seção / Empty / Loading | SectionCard, EmptyState, LoadingActivityCard | Commercial* | Usar |
 | Tabela / Badge | DataTable (`onRowClick`, `rowClick` stop/propagate), StatusBadge | CommercialDataTable, CommercialStatusBadge | Usar |
-| Alertas / Worklist | AlertQueue, WorklistItem | Commercial* | Usar |
+| Alertas / Worklist | AlertQueue, WorklistItem (`leadingIcon`) | Commercial* | Usar |
 | Help | HelpTooltip + `CM_HELP` | — | Usar |
 | Charts | Recharts + EmptyState | SectionCard | MFE-only |
 | Layout Início stack | — | CSS `cm-home-stack` / `cm-home-sections-grid` | MFE-only |
-| Faixas Favoritos / Recentes | — | CSS `cm-home-chip-row*` (só spacing) | MFE-only |
 
-Catálogo de rotas: `plugins/commercial/src/content/pluginRouteCatalog.ts` (caps + keywords + kind create/navigate).
+Catálogo de rotas: `plugins/commercial/src/content/pluginRouteCatalog.ts` (caps + keywords + kind create/navigate). Ícones por `viewId`: `hubRouteIcons.tsx`.
 
-### Backlog kit — hub Início (polish ago/2026)
+### Backlog kit — hub Início
 
-Entrega atual: pin Lucide centralizado, foco único no `CatalogSearchBar`, polish visual dos cards/busca, alinhamento das faixas no MFE. **Não** redesenhar a stack do HomePage.
+Entrega atual (ago/2026): busca sem outline no input; `leadingIcon` em Eventos; `HubChipRow`/`RouteChip`; pin em rotas `create` (Nova tarefa).
 
-| Sugestão | Papel | Por quê |
-|----------|-------|---------|
-| `HubChipRow` (kit) | Favoritos / Recentes como primitivo | Hoje ActionButton ghost solto; chip com pin/remove e densidade |
-| `PinnedRouteChip` | Chip favorito com estrela + label | Substitui botão genérico na faixa |
-| Ícone Lucide por rota no `SectionRouteCard` (prop opcional) | Hierarquia visual 2º nível | Mercado (SAP Fiori / hub SaaS) |
-| Empty quiet da busca inline no field | Zero empty SectionCard | Já parcialmente; reforçar |
-| CommandPalette | Manter atalho; polish igual ao search | Paridade visual |
+| Sugestão | Papel | Estado |
+|----------|-------|--------|
+| Ícone Lucide por rota no `SectionRouteCard` (prop opcional) | Hierarquia visual 2º nível | Backlog |
+| Subtítulos «Alertas» vs «Tarefas» no painel Eventos | Separação semântica | Backlog |
+| CommandPalette polish = CatalogSearchBar | Paridade visual | Backlog |
+| Empty quiet da busca inline | Zero empty SectionCard | Parcial |
 
 ## UX
 

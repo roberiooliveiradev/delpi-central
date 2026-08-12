@@ -90,49 +90,48 @@
 Seções canônicas: **Operação · Gestão à vista · Documentos · Administração**.  
 Catálogo: `pluginRouteCatalog.ts` (só `viewId` + `search`, sem URL absoluta).
 
-#### Polish kit (ago/2026) — WF-B / WF-D / WF-E
+#### Polish kit (ago/2026) — busca, Eventos, RouteChip, pin create
 
-Stack **inalterada**. Correções no `@delpi/plugin-ui` + leve CSS `cm-home-chip-row*`.
+Stack **inalterada**.
+
+**WF-SEARCH — busca (borda só no field)**
+
+```text
+Idle / Focus: [🔍 Buscar…]  ← só borda do __field (accent no focus)
+              sem outline/ring no <input>
+```
+
+**WF-EVENTS — ícones**
+
+```text
+[TriangleAlert] linhas em atraso …     [Ver atrasos]
+[CircleAlert]   follow-ups atrasados … [Abrir…]
+Fila [Clock Atrasadas n] [Sun Hoje n] [Arrow Depois n]
+[ClipboardList] título tarefa …        [Abrir]
+```
 
 **WF-B — linha de rota + pin (depois)**
 
 ```text
 ┌─ Operação ─────────────────────────────────────┐
 │ [tile] Operação                                │
-│        Fila do dia, pedidos e carteira.        │
 │ ┌──────────────────────────────────┬──────┐    │
-│ │ Minhas tarefas                   │ [★]  │ ← mesma baseline / centro
-│ ├──────────────────────────────────┼──────┤    │
-│ │ Atrasadas · badge 3              │ [☆]  │
-│ │ Hoje                             │ [☆]  │
-│ │ Nova tarefa (create, sem pin)    │      │
+│ │ Minhas tarefas                   │ [★]  │
+│ │ Nova tarefa (create)             │ [☆]  │ ← pin liberado
 │ └──────────────────────────────────┴──────┘    │
-│ hover: radius 10, fundo accent mix 10%         │
 └────────────────────────────────────────────────┘
 ```
 
-**WF-D — busca com um anel de foco**
+**WF-CHIP-B — Favoritos / Recentes (RouteChip)**
 
 ```text
-┌─ Caminhos e funcionalidades ───────────────────┐
-│ [ CatalogSearchBar — campo único, foco limpo ] │
-│   └─ focus-within: UM box-shadow accent        │
-│      (border neutra; sem borda dupla)          │
-│ ┌ listbox hits ──────────────────────────────┐ │
-│ │ Operação · Minhas tarefas                  │ │
-│ └────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────┘
+Favoritos
+[★ Minhas tarefas ×]  [★ Nova tarefa ×]
+Últimos acessos
+[◇ Oportunidades]  [◇ Pontualidade (OTD)] …
 ```
 
-**WF-E — faixas Favoritos / Recentes**
-
-```text
-Favoritos        [★ Minhas tarefas] [★ Meus pedidos]
-Últimos acessos  [Nova tarefa] [Hoje] [Membros]
-                 ↑ label + chips no mesmo eixo (align-items: center)
-```
-
-**Backlog visual (não nesta entrega):** `HubChipRow` / `PinnedRouteChip` / ícone Lucide por rota — ver DESIGN-IA-COMERCIAL.
+**Backlog:** ícone por rota no SectionRouteCard; subtítulos Alertas/Tarefas; polish CommandPalette.
 
 ### WF-OV — Visão geral `/overview`
 
