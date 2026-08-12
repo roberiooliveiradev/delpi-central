@@ -1,6 +1,7 @@
 import { Keyboard, PenLine, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { blobFromSignatureImageFile } from "./blobFromSignatureImageFile";
 import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
 import { SignaturePad, type SignaturePadProps } from "./SignaturePad";
 
@@ -21,6 +22,8 @@ export type SignatureCapturePanelProps = {
     typePlaceholder?: string;
     typeApply?: string;
     uploadHint?: string;
+    uploadInvalidType?: string;
+    uploadFailed?: string;
     previewTitle?: string;
     modesHelp?: string;
     pad?: SignaturePadProps["labels"];
@@ -49,32 +52,6 @@ async function blobFromTypedName(text: string, width = 640, height = 220): Promi
   });
 }
 
-async function blobFromImageFile(file: File, width = 640, height = 220): Promise<Blob | null> {
-  if (!file.type.startsWith("image/")) return null;
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = Math.round(width * dpr);
-  canvas.height = Math.round(height * dpr);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    bitmap.close();
-    return null;
-  }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  const scale = Math.min(width / bitmap.width, height / bitmap.height);
-  const drawW = bitmap.width * scale;
-  const drawH = bitmap.height * scale;
-  const dx = (width - drawW) / 2;
-  const dy = (height - drawH) / 2;
-  ctx.drawImage(bitmap, dx, dy, drawW, drawH);
-  bitmap.close();
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/png");
-  });
-}
-
 export function SignatureCapturePanel({
   disabled = false,
   displayName,
@@ -88,6 +65,8 @@ export function SignatureCapturePanel({
   const [mode, setMode] = useState<SignatureCaptureMode>(modes[0] ?? "draw");
   const [typedName, setTypedName] = useState(displayName ?? "");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const width = padProps?.width ?? 640;
   const height = padProps?.height ?? 220;
@@ -131,16 +110,43 @@ export function SignatureCapturePanel({
     onChange?.(centered);
   }
 
+  function selectMode(next: SignatureCaptureMode) {
+    setMode(next);
+    setUploadError(null);
+  }
+
   async function applyTyped() {
     if (disabled) return;
+    setUploadError(null);
     const blob = await blobFromTypedName(typedName, width, height);
     await publish(blob);
   }
 
   async function handleUpload(file: File | null) {
     if (disabled || !file) return;
-    const blob = await blobFromImageFile(file, width, height);
-    await publish(blob);
+    setUploadBusy(true);
+    setUploadError(null);
+    try {
+      const blob = await blobFromSignatureImageFile(file, width, height);
+      if (!blob) {
+        setUploadError(
+          labels?.uploadInvalidType ||
+            "Arquivo inválido. Envie uma imagem PNG ou JPEG da assinatura.",
+        );
+        return;
+      }
+      await publish(blob);
+    } catch {
+      setUploadError(
+        labels?.uploadFailed ||
+          "Não foi possível ler a imagem. Tente outro PNG ou JPEG.",
+      );
+    } finally {
+      setUploadBusy(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   }
 
   return (
@@ -163,7 +169,7 @@ export function SignatureCapturePanel({
               className={["delpi-ui-signature-capture__mode", mode === "draw" ? "is-active" : ""]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setMode("draw")}
+              onClick={() => selectMode("draw")}
               disabled={disabled}
               data-testid="signature-capture-mode-draw"
             >
@@ -179,7 +185,7 @@ export function SignatureCapturePanel({
               className={["delpi-ui-signature-capture__mode", mode === "type" ? "is-active" : ""]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setMode("type")}
+              onClick={() => selectMode("type")}
               disabled={disabled}
               data-testid="signature-capture-mode-type"
             >
@@ -195,7 +201,7 @@ export function SignatureCapturePanel({
               className={["delpi-ui-signature-capture__mode", mode === "upload" ? "is-active" : ""]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setMode("upload")}
+              onClick={() => selectMode("upload")}
               disabled={disabled}
               data-testid="signature-capture-mode-upload"
             >
@@ -210,7 +216,10 @@ export function SignatureCapturePanel({
         <SignaturePad
           {...padProps}
           disabled={disabled}
-          onChange={(blob) => void publish(blob)}
+          onChange={(blob) => {
+            setUploadError(null);
+            void publish(blob);
+          }}
           labels={labels?.pad}
         />
       ) : null}
@@ -247,11 +256,25 @@ export function SignatureCapturePanel({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg"
-            disabled={disabled}
+            accept="image/png,image/jpeg,.png,.jpg,.jpeg"
+            disabled={disabled || uploadBusy}
             onChange={(event) => void handleUpload(event.target.files?.[0] ?? null)}
             data-testid="signature-capture-upload-input"
           />
+          {uploadBusy ? (
+            <p className="delpi-ui-signature-capture__upload-hint" data-testid="signature-capture-upload-busy">
+              Processando imagem…
+            </p>
+          ) : null}
+          {uploadError ? (
+            <p
+              className="delpi-ui-signature-capture__upload-error"
+              role="alert"
+              data-testid="signature-capture-upload-error"
+            >
+              {uploadError}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

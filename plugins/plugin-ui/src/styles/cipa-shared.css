@@ -267,6 +267,12 @@
   color: var(--delpi-ui-muted, #64748b);
 }
 
+.delpi-ui-signature-capture__upload-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-danger, #b42318);
+}
+
 .delpi-ui-signature-capture__preview-title-row {
   display: flex;
   align-items: center;

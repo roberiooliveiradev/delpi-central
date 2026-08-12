@@ -137,8 +137,10 @@
 .tm-sign__link-btn {
   font: inherit;
   border-radius: 0.55rem;
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1.35rem;
   cursor: pointer;
+  box-sizing: border-box;
+  min-height: 2.75rem;
 }
 
 .tm-sign__primary {
