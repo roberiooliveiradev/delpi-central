@@ -24,6 +24,7 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
     ManageSellerPortfolioUseCase,
     add_customer_result_to_dict,
+    bulk_transfer_result_to_dict,
     coverage_audit_to_dict,
     customer_shared_coverage_to_dict,
     load_summary_to_dict,
@@ -47,6 +48,7 @@ from commercial_app.interface.http.schemas.portfolio_schemas import (
     ReplaceMembersBody,
     SetOwnerBody,
     TransferCustomersBody,
+    TransferCustomersBulkBody,
     UpdatePortfolioBody,
 )
 
@@ -692,4 +694,48 @@ def transfer_seller_customers(request: Request, body: TransferCustomersBody = Bo
             "Erro interno ao transferir clientes.",
             500,
             operation_id="transfer_seller_customers",
+        )
+
+
+@router.post(
+    "/transfer-customers-bulk",
+    operation_id="transfer_seller_customers_bulk",
+)
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def transfer_seller_customers_bulk(
+    request: Request,
+    body: TransferCustomersBulkBody = Body(...),
+):
+    """Transferência em massa best-effort (E6.5) com resultado por cliente."""
+    try:
+        customers = parse_customer_assignments(
+            [item.model_dump() for item in body.customers]
+        )
+        result = _use_case().transfer_customers_bulk(
+            source_portfolio_id=body.source_portfolio_id,
+            target_portfolio_id=body.target_portfolio_id,
+            customers=customers,
+            actor_user_id=_current_user_id(request),
+            reason_note=body.reason_note,
+        )
+        message = (
+            "Transferência em massa concluída."
+            if result.failed_count == 0
+            else "Transferência em massa concluída com falhas parciais."
+        )
+        return ok(
+            bulk_transfer_result_to_dict(result),
+            message=message,
+            operation_id="transfer_seller_customers_bulk",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="transfer_seller_customers_bulk")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="transfer_seller_customers_bulk")
+    except Exception:
+        logger.exception("transfer_seller_customers_bulk_failed")
+        return fail(
+            "Erro interno na transferência em massa.",
+            500,
+            operation_id="transfer_seller_customers_bulk",
         )

@@ -81,3 +81,12 @@ def test_portfolio_audit_timeline_route_is_registered() -> None:
     assert "list_portfolio_audit" in ROUTES
     assert "COMMERCIAL_AUDIT_PERMISSIONS" in ROUTES
     assert "page_size" in ROUTES
+
+
+def test_transfer_customers_bulk_route_is_registered() -> None:
+    assert 'operation_id="transfer_seller_customers_bulk"' in ROUTES
+    assert '"/transfer-customers-bulk"' in ROUTES
+    assert "def transfer_seller_customers_bulk(" in ROUTES
+    assert "bulk_transfer_result_to_dict" in ROUTES
+    assert "TransferCustomersBulkBody" in ROUTES
+    assert "COMMERCIAL_MANAGE_PERMISSIONS" in ROUTES

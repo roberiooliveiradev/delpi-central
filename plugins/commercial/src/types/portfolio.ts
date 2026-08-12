@@ -82,6 +82,21 @@ export type TransferSellerCustomersResult = {
   transferred_count: number;
 };
 
+export type BulkTransferItemResult = {
+  customer_code: string;
+  customer_store: string;
+  ok: boolean;
+  error: string | null;
+};
+
+export type BulkTransferSellerCustomersResult = {
+  source: SellerPortfolio;
+  target: SellerPortfolio;
+  transferred_count: number;
+  failed_count: number;
+  results: BulkTransferItemResult[];
+};
+
 export type PortfolioCoverageRef = {
   id: string;
   display_name: string;

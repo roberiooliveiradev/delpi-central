@@ -1,0 +1,17 @@
+{
+  "errors": {
+    "sourceTargetRequired": "Origem e destino da transferência são obrigatórios.",
+    "sourceTargetMustDiffer": "Origem e destino devem ser vendedores diferentes.",
+    "customersRequired": "Selecione ao menos um cliente para transferir.",
+    "reasonRequired": "reason_note é obrigatório para transferência de clientes.",
+    "sourceNotFound": "Vendedor de origem não encontrado.",
+    "targetNotFound": "Vendedor de destino não encontrado.",
+    "targetInactive": "Não é possível transferir para um vendedor inativo.",
+    "customerCodeStoreRequired": "Cada cliente precisa de customer_code e customer_store.",
+    "customerNotInSource": "Cliente {code}/{store} não pertence à carteira de origem."
+  },
+  "bulk": {
+    "itemOk": "ok",
+    "itemFailed": "falha"
+  }
+}

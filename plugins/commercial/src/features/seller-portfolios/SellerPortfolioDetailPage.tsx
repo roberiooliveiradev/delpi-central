@@ -12,7 +12,7 @@ import {
   removeSellerCustomer,
   removeSellerPortfolioMember,
   setSellerPortfolioOwner,
-  transferSellerCustomers,
+  transferSellerCustomersBulk,
   updateSellerPortfolio,
 } from "../../api/commercialPortfolioApi";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
@@ -47,8 +47,9 @@ import {
   type SellerPortfoliosDeepLink,
 } from "../../utils/sellerPortfoliosDeepLink";
 import { SellerPortfolioAuditTimeline } from "./SellerPortfolioAuditTimeline";
+import { SellerPortfolioBulkTransferWizard } from "./SellerPortfolioBulkTransferWizard";
 import { SellerPortfolioDetail } from "./SellerPortfolioDetail";
-import { SellerPortfolioTransferDialog } from "./SellerPortfolioTransferDialog";
+import { PORTFOLIO_BULK_TRANSFER_CONTENT } from "../../content/portfolioBulkTransferContent";
 
 type SellerPortfolioDetailPageProps = {
   basePath: string;
@@ -342,11 +343,20 @@ export function SellerPortfolioDetailPage({
   }
 
   async function handleTransfer(input: {
+    sourceId: string;
     targetId: string;
     customerKeys: string[];
     reason: string;
   }) {
     if (!portfolio) return;
+    if (portfolio.id !== input.sourceId) {
+      setTransferError("Origem inválida para esta carteira.");
+      notifyError("Origem inválida para esta carteira.", {
+        title: "Transferência inválida",
+        autoDismissMs: FORM_VALIDATION_AUTO_DISMISS_MS,
+      });
+      return;
+    }
     if (portfolio.id === input.targetId) {
       setTransferError("Origem e destino devem ser carteiras diferentes.");
       notifyError("Origem e destino devem ser carteiras diferentes.", {
@@ -367,7 +377,7 @@ export function SellerPortfolioDetailPage({
     setTransferring(true);
     setTransferError(null);
     try {
-      const result = await transferSellerCustomers({
+      const result = await transferSellerCustomersBulk({
         source_portfolio_id: portfolio.id,
         target_portfolio_id: input.targetId,
         customers,
@@ -381,7 +391,20 @@ export function SellerPortfolioDetailPage({
           return item;
         }),
       );
-      notifySuccess(`Transferência concluída: ${result.transferred_count} cliente(s) movido(s).`);
+      if (result.failed_count > 0) {
+        notifySuccess(
+          PORTFOLIO_BULK_TRANSFER_CONTENT.successPartial
+            .replace("{ok}", String(result.transferred_count))
+            .replace("{failed}", String(result.failed_count)),
+        );
+      } else {
+        notifySuccess(
+          PORTFOLIO_BULK_TRANSFER_CONTENT.successAll.replace(
+            "{count}",
+            String(result.transferred_count),
+          ),
+        );
+      }
       setTransferOpen(false);
       reloadAudit();
     } catch (err: unknown) {
@@ -512,12 +535,12 @@ export function SellerPortfolioDetailPage({
         </>
       ) : null}
 
-      <SellerPortfolioTransferDialog
+      <SellerPortfolioBulkTransferWizard
         open={transferOpen}
         busy={transferring}
         error={transferError}
-        source={portfolio}
         portfolios={allPortfolios}
+        initialSourceId={portfolio?.id ?? null}
         onClose={() => {
           if (transferring) return;
           setTransferOpen(false);

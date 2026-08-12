@@ -30,6 +30,9 @@ from commercial_app.domain.services.seller_portfolio_coverage_audit_service impo
 from commercial_app.domain.services.seller_portfolio_load_summary_service import (
     SellerPortfolioLoadSummaryService,
 )
+from commercial_app.domain.services.seller_portfolio_messages_content_service import (
+    SellerPortfolioMessagesContentService,
+)
 
 _ENTITY_SELLER_PORTFOLIO = "seller_portfolio"
 _TRANSFER_TARGET_KEY = "target_portfolio_id"
@@ -147,6 +150,23 @@ class AddCustomerResult:
     warning: CustomerOverlapWarning | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class BulkTransferItemResult:
+    customer_code: str
+    customer_store: str
+    ok: bool
+    error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BulkTransferResult:
+    source: SellerPortfolio
+    target: SellerPortfolio
+    results: tuple[BulkTransferItemResult, ...]
+    transferred_count: int
+    failed_count: int
+
+
 def coverage_audit_to_dict(audit: PortfolioCoverageAudit) -> dict[str, Any]:
     return {
         "overlapping_count": audit.overlapping_count,
@@ -223,6 +243,24 @@ def add_customer_result_to_dict(result: AddCustomerResult) -> dict[str, Any]:
         payload["warnings"] = []
         payload["coverage_warning"] = None
     return payload
+
+
+def bulk_transfer_result_to_dict(result: BulkTransferResult) -> dict[str, Any]:
+    return {
+        "source": portfolio_to_dict(result.source),
+        "target": portfolio_to_dict(result.target),
+        "transferred_count": result.transferred_count,
+        "failed_count": result.failed_count,
+        "results": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "ok": item.ok,
+                "error": item.error,
+            }
+            for item in result.results
+        ],
+    }
 
 
 def _row_to_audit_entry(row: dict[str, Any]) -> AuditLogEntry:
@@ -731,25 +769,26 @@ class ManageSellerPortfolioUseCase:
         actor_user_id: str | None = None,
         reason_note: str | None = None,
     ) -> tuple[SellerPortfolio, SellerPortfolio]:
+        messages = SellerPortfolioMessagesContentService
         source_id = _normalize_code(source_portfolio_id)
         target_id = _normalize_code(target_portfolio_id)
         if not source_id or not target_id:
-            raise ValueError("Origem e destino da transferência são obrigatórios.")
+            raise ValueError(messages.error("sourceTargetRequired"))
         if source_id == target_id:
-            raise ValueError("Origem e destino devem ser vendedores diferentes.")
+            raise ValueError(messages.error("sourceTargetMustDiffer"))
         if not customers:
-            raise ValueError("Selecione ao menos um cliente para transferir.")
+            raise ValueError(messages.error("customersRequired"))
         if not (reason_note or "").strip():
-            raise ValueError("reason_note é obrigatório para transferência de clientes.")
+            raise ValueError(messages.error("reasonRequired"))
 
         source = self._repository.get_by_id(source_id)
         if source is None:
-            raise LookupError("Vendedor de origem não encontrado.")
+            raise LookupError(messages.error("sourceNotFound"))
         target = self._repository.get_by_id(target_id)
         if target is None:
-            raise LookupError("Vendedor de destino não encontrado.")
+            raise LookupError(messages.error("targetNotFound"))
         if not target.active:
-            raise ValueError("Não é possível transferir para um vendedor inativo.")
+            raise ValueError(messages.error("targetInactive"))
 
         owned = {
             (item.customer_code, item.customer_store): item for item in source.customers
@@ -759,14 +798,14 @@ class ManageSellerPortfolioUseCase:
         for item in customers:
             key = customer_key(item.customer_code, item.customer_store)
             if not key[0] or not key[1]:
-                raise ValueError("Cada cliente precisa de customer_code e customer_store.")
+                raise ValueError(messages.error("customerCodeStoreRequired"))
             if key in seen:
                 continue
             seen.add(key)
             owned_item = owned.get(key)
             if owned_item is None:
                 raise ValueError(
-                    f"Cliente {key[0]}/{key[1]} não pertence à carteira de origem."
+                    messages.error("customerNotInSource", code=key[0], store=key[1])
                 )
             to_move.append(
                 SellerCustomerAssignment(
@@ -782,7 +821,7 @@ class ManageSellerPortfolioUseCase:
             customers=to_move,
         )
         if result is None:
-            raise LookupError("Vendedor de origem ou destino não encontrado.")
+            raise LookupError(messages.error("sourceNotFound"))
 
         self._append_audit(
             actor_user_id=actor_user_id,
@@ -804,3 +843,145 @@ class ManageSellerPortfolioUseCase:
         )
 
         return result
+
+    def transfer_customers_bulk(
+        self,
+        *,
+        source_portfolio_id: str,
+        target_portfolio_id: str,
+        customers: Sequence[SellerCustomerAssignment],
+        actor_user_id: str | None = None,
+        reason_note: str | None = None,
+    ) -> BulkTransferResult:
+        """Best-effort: tenta cada cliente; retorna resultado por item + audit único."""
+        messages = SellerPortfolioMessagesContentService
+        source_id = _normalize_code(source_portfolio_id)
+        target_id = _normalize_code(target_portfolio_id)
+        if not source_id or not target_id:
+            raise ValueError(messages.error("sourceTargetRequired"))
+        if source_id == target_id:
+            raise ValueError(messages.error("sourceTargetMustDiffer"))
+        if not customers:
+            raise ValueError(messages.error("customersRequired"))
+        if not (reason_note or "").strip():
+            raise ValueError(messages.error("reasonRequired"))
+
+        source = self._repository.get_by_id(source_id)
+        if source is None:
+            raise LookupError(messages.error("sourceNotFound"))
+        target = self._repository.get_by_id(target_id)
+        if target is None:
+            raise LookupError(messages.error("targetNotFound"))
+        if not target.active:
+            raise ValueError(messages.error("targetInactive"))
+
+        owned = {
+            (item.customer_code, item.customer_store): item for item in source.customers
+        }
+        results: list[BulkTransferItemResult] = []
+        transferred: list[SellerCustomerAssignment] = []
+        seen: set[tuple[str, str]] = set()
+
+        for item in customers:
+            code, store = customer_key(item.customer_code, item.customer_store)
+            if not code or not store:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code or str(item.customer_code or "").strip(),
+                        customer_store=store or str(item.customer_store or "").strip(),
+                        ok=False,
+                        error=messages.error("customerCodeStoreRequired"),
+                    )
+                )
+                continue
+            if (code, store) in seen:
+                continue
+            seen.add((code, store))
+            owned_item = owned.get((code, store))
+            if owned_item is None:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=False,
+                        error=messages.error(
+                            "customerNotInSource", code=code, store=store
+                        ),
+                    )
+                )
+                continue
+
+            to_move = SellerCustomerAssignment(
+                customer_code=owned_item.customer_code,
+                customer_store=owned_item.customer_store,
+                customer_name=item.customer_name or owned_item.customer_name,
+            )
+            try:
+                moved = self._repository.transfer_customers(
+                    source_portfolio_id=source_id,
+                    target_portfolio_id=target_id,
+                    customers=[to_move],
+                )
+                if moved is None:
+                    raise LookupError(messages.error("sourceNotFound"))
+                del owned[(code, store)]
+                transferred.append(to_move)
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=True,
+                        error=None,
+                    )
+                )
+            except Exception as exc:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=False,
+                        error=str(exc) or messages.error("customerNotInSource", code=code, store=store),
+                    )
+                )
+
+        source_final = self._repository.get_by_id(source_id) or source
+        target_final = self._repository.get_by_id(target_id) or target
+        failed_count = sum(1 for item in results if not item.ok)
+        transferred_count = len(transferred)
+
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.transfer_customers_bulk",
+            entity_id=source_id,
+            payload={
+                "source_portfolio_id": source_id,
+                "target_portfolio_id": target_id,
+                "transferred_count": transferred_count,
+                "failed_count": failed_count,
+                "customers": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                    }
+                    for item in transferred
+                ],
+                "failures": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                        "error": item.error,
+                    }
+                    for item in results
+                    if not item.ok
+                ],
+                "reason_note": reason_note.strip(),
+            },
+        )
+
+        return BulkTransferResult(
+            source=source_final,
+            target=target_final,
+            results=tuple(results),
+            transferred_count=transferred_count,
+            failed_count=failed_count,
+        )

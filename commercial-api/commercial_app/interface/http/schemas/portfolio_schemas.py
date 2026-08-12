@@ -66,6 +66,15 @@ class TransferCustomersBody(BaseModel):
     reason_note: str = Field(..., min_length=1)
 
 
+class TransferCustomersBulkBody(BaseModel):
+    """Transferência em massa best-effort (E6.5) — resultado por cliente."""
+
+    source_portfolio_id: str = Field(..., min_length=1)
+    target_portfolio_id: str = Field(..., min_length=1)
+    customers: list[CustomerAssignmentBody] = Field(default_factory=list, max_length=500)
+    reason_note: str = Field(..., min_length=1)
+
+
 class EnrichmentBody(BaseModel):
     customers: list[CustomerAssignmentBody] = Field(
         default_factory=list,

@@ -316,6 +316,51 @@ def test_transfer_customers_writes_audit_when_configured() -> None:
     assert payload["transferred_count"] == 1
 
 
+def test_transfer_customers_bulk_best_effort_and_audit() -> None:
+    repository = MagicMock()
+    source = _portfolio(id="p1")
+    target = _portfolio(id="p2", user_id="u2", display_name="Destino")
+    # get: validate source/target, then reload after loop, (+ optional)
+    repository.get_by_id.side_effect = [
+        source,
+        target,
+        source,
+        target,
+    ]
+    repository.transfer_customers.side_effect = [
+        (source, target),
+        ValueError("falha simulada"),
+    ]
+    audit = MagicMock()
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    result = use_case.transfer_customers_bulk(
+        source_portfolio_id="p1",
+        target_portfolio_id="p2",
+        customers=[
+            SellerCustomerAssignment("100", "01"),
+            SellerCustomerAssignment("200", "01"),
+            SellerCustomerAssignment("999", "01"),
+        ],
+        actor_user_id="admin-1",
+        reason_note="Bulk reorg",
+    )
+
+    assert result.transferred_count == 1
+    assert result.failed_count == 2
+    assert len(result.results) == 3
+    assert result.results[0].ok is True
+    assert result.results[1].ok is False
+    assert result.results[2].ok is False
+    assert "999" in (result.results[2].error or "")
+    audit.append.assert_called_once()
+    kwargs = audit.append.call_args.kwargs
+    assert kwargs["action"] == "seller_portfolio.transfer_customers_bulk"
+    assert kwargs["payload"]["transferred_count"] == 1
+    assert kwargs["payload"]["failed_count"] == 2
+    assert kwargs["payload"]["reason_note"] == "Bulk reorg"
+
+
 def test_purge_portfolio_writes_audit_and_returns_snapshot() -> None:
     repository = MagicMock()
     current = _portfolio(id="p1")

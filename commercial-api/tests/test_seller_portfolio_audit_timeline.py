@@ -34,7 +34,32 @@ def test_audit_messages_content_has_portfolio_actions() -> None:
     bundle = AuditMessagesContentService.bundle()
     assert "seller_portfolio.add_member" in bundle["titles"]
     assert "seller_portfolio.transfer_customers" in bundle["messages"]
+    assert "seller_portfolio.transfer_customers_bulk" in bundle["titles"]
+    assert "seller_portfolio.transfer_customers_bulk" in bundle["messages"]
     assert AuditMessagesContentService.role_label("owner") == "responsável"
+
+
+def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    entry = AuditLogEntry(
+        id="a-bulk",
+        actor_user_id="admin",
+        action="seller_portfolio.transfer_customers_bulk",
+        entity_type="seller_portfolio",
+        entity_id="p1",
+        payload={
+            "source_portfolio_id": "p1",
+            "target_portfolio_id": "p2",
+            "transferred_count": 3,
+            "failed_count": 1,
+            "reason_note": "Reorg",
+        },
+    )
+    formatted = formatter.format_entry(entry)
+    assert formatted["title"] == "Transferência em massa"
+    assert "3 ok" in formatted["message"]
+    assert "1 falha" in formatted["message"]
+    assert formatted["tone"] == "info"
 
 
 def test_formatter_builds_pt_br_message_for_add_member() -> None:

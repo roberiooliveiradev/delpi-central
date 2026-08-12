@@ -315,6 +315,10 @@ export const CM_HELP = {
     transferTarget: "Carteira que recebe os clientes.",
     transferCustomers: "Selecione um ou mais clientes da carteira de origem.",
     transferReason: "Motivo obrigatório da transferência (fica no histórico).",
+    bulkTransferWizard:
+      "Wizard em etapas para transferir vários clientes entre carteiras, com motivo e auditoria.",
+    exportOrgMatrix:
+      "Gera planilha Excel da matriz de organização (carteira, membros, clientes e valor aberto).",
     auditTimeline:
       "Registro de mudanças na carteira: membros, responsável, transferência de clientes e ativação.",
   },

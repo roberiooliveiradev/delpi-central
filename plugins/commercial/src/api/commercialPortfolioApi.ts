@@ -14,6 +14,7 @@ import type {
   CustomerSharedCoverageLookup,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
+  BulkTransferSellerCustomersResult,
 } from "../types/portfolio";
 import {
   commercialApiUrl,
@@ -76,6 +77,26 @@ export async function transferSellerCustomers(input: {
     input,
   );
   return unwrapEnvelope(response, "Erro ao transferir clientes.");
+}
+
+export async function transferSellerCustomersBulk(input: {
+  source_portfolio_id: string;
+  target_portfolio_id: string;
+  customers: SellerCustomerInput[];
+  reason_note: string;
+}): Promise<BulkTransferSellerCustomersResult> {
+  const response = await httpPost<ApiSuccessResponse<BulkTransferSellerCustomersResult>>(
+    commercialApiUrl("/seller-portfolios/transfer-customers-bulk"),
+    input,
+  );
+  const data = unwrapEnvelope(response, "Erro na transferência em massa.");
+  return {
+    source: data.source,
+    target: data.target,
+    transferred_count: data.transferred_count ?? 0,
+    failed_count: data.failed_count ?? 0,
+    results: data.results ?? [],
+  };
 }
 
 export async function addSellerCustomer(

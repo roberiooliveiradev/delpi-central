@@ -1,5 +1,5 @@
 import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
-import { Plus, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, Download, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -7,6 +7,7 @@ import {
   getSellerPortfoliosCoverageAudit,
   getSellerPortfoliosLoadSummary,
   listSellerPortfolios,
+  transferSellerCustomersBulk,
 } from "../../api/commercialPortfolioApi";
 import {
   useCommercialFloatingNotice,
@@ -26,12 +27,16 @@ import {
   UI_PREFIX,
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
+import { PORTFOLIO_BULK_TRANSFER_CONTENT } from "../../content/portfolioBulkTransferContent";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
+import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
 import type {
   SellerPortfolio,
   SellerPortfoliosCoverageAudit,
   SellerPortfoliosLoadSummary,
 } from "../../types/portfolio";
+import { customerKey } from "../../shared/format";
+import { exportOrgMatrixExcel } from "../../utils/exportOrgMatrixExcel";
 import { overlappingPortfolioIdSet } from "../../utils/portfolioCoverage";
 import { personLoadByUserId, portfolioLoadById } from "../../utils/portfolioLoad";
 import {
@@ -44,6 +49,7 @@ import {
   type SellerPortfoliosFilter,
   type SellerPortfoliosView,
 } from "../../utils/sellerPortfoliosDeepLink";
+import { SellerPortfolioBulkTransferWizard } from "./SellerPortfolioBulkTransferWizard";
 import { SellerPortfolioCreateDialog } from "./SellerPortfolioCreateDialog";
 import { SellerPortfoliosList } from "./SellerPortfoliosList";
 import { SellerPortfoliosOrgView } from "./SellerPortfoliosOrgView";
@@ -116,6 +122,10 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const directoryUserIds = useMemo(() => {
     const ids = new Set<string>();
@@ -292,6 +302,83 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     }
   }
 
+  async function handleBulkTransfer(input: {
+    sourceId: string;
+    targetId: string;
+    customerKeys: string[];
+    reason: string;
+  }) {
+    const source = portfolios.find((item) => item.id === input.sourceId);
+    if (!source) {
+      setBulkError("Carteira de origem não encontrada.");
+      notifyError("Carteira de origem não encontrada.");
+      return;
+    }
+    const customers = source.customers
+      .filter((customer) =>
+        input.customerKeys.includes(customerKey(customer.customer_code, customer.customer_store)),
+      )
+      .map((customer) => ({
+        customer_code: customer.customer_code,
+        customer_store: customer.customer_store,
+        customer_name: customer.customer_name,
+      }));
+    setBulkBusy(true);
+    setBulkError(null);
+    try {
+      const result = await transferSellerCustomersBulk({
+        source_portfolio_id: input.sourceId,
+        target_portfolio_id: input.targetId,
+        customers,
+        reason_note: input.reason,
+      });
+      if (result.failed_count > 0) {
+        notifySuccess(
+          PORTFOLIO_BULK_TRANSFER_CONTENT.successPartial
+            .replace("{ok}", String(result.transferred_count))
+            .replace("{failed}", String(result.failed_count)),
+        );
+      } else {
+        notifySuccess(
+          PORTFOLIO_BULK_TRANSFER_CONTENT.successAll.replace(
+            "{count}",
+            String(result.transferred_count),
+          ),
+        );
+      }
+      setBulkOpen(false);
+      reload({ silent: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro na transferência em massa.";
+      setBulkError(message);
+      notifyError(message);
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleExportMatrix() {
+    if (filteredPortfolios.length === 0) {
+      notifyError(PORTFOLIO_LOAD_CONTENT.exportEmpty);
+      return;
+    }
+    setExporting(true);
+    try {
+      const ok = await exportOrgMatrixExcel(
+        filteredPortfolios,
+        loadByPortfolioId,
+        directoryLabelFor,
+      );
+      if (!ok) notifyError(PORTFOLIO_LOAD_CONTENT.exportEmpty);
+      else notifySuccess("Matriz exportada.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao exportar matriz.";
+      notifyError(message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const emptyTitle =
     stats.total === 0
       ? "Nenhuma carteira cadastrada"
@@ -372,6 +459,40 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
               <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
               Nova carteira
             </CommercialActionButton>
+            <HelpTooltip
+              content={CM_HELP.sellerPortfolios.bulkTransferWizard}
+              ariaLabel={PORTFOLIO_BULK_TRANSFER_CONTENT.openWizardHint}
+              wrap
+              placement="bottom"
+            >
+              <CommercialActionButton
+                variant="ghost"
+                onClick={() => {
+                  setBulkError(null);
+                  setBulkOpen(true);
+                }}
+                disabled={loading || portfolios.length === 0}
+              >
+                <ArrowLeftRight size={16} strokeWidth={1.75} aria-hidden="true" />
+                {PORTFOLIO_BULK_TRANSFER_CONTENT.openWizard}
+              </CommercialActionButton>
+            </HelpTooltip>
+            <HelpTooltip
+              content={CM_HELP.sellerPortfolios.exportOrgMatrix}
+              ariaLabel={PORTFOLIO_LOAD_CONTENT.exportMatrixHint}
+              wrap
+              placement="bottom"
+            >
+              <CommercialActionButton
+                variant="ghost"
+                onClick={() => void handleExportMatrix()}
+                disabled={loading || exporting || filteredPortfolios.length === 0}
+                aria-busy={exporting}
+              >
+                <Download size={16} strokeWidth={1.75} aria-hidden="true" />
+                {exporting ? "Exportando…" : PORTFOLIO_LOAD_CONTENT.exportMatrixButton}
+              </CommercialActionButton>
+            </HelpTooltip>
             <CommercialActionButton
               variant="ghost"
               onClick={() => reload({ silent: true })}
@@ -480,6 +601,19 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           setCreateError(null);
         }}
         onCreate={(input) => void handleCreate(input)}
+      />
+
+      <SellerPortfolioBulkTransferWizard
+        open={bulkOpen}
+        busy={bulkBusy}
+        error={bulkError}
+        portfolios={portfolios}
+        onClose={() => {
+          if (bulkBusy) return;
+          setBulkOpen(false);
+          setBulkError(null);
+        }}
+        onTransfer={(input) => void handleBulkTransfer(input)}
       />
     </section>
   );

@@ -12,6 +12,7 @@ import type {
   SellerPortfoliosLoadSummary,
   TotvsCustomerHit,
   TransferSellerCustomersResult,
+  BulkTransferSellerCustomersResult,
 } from "../types/portfolio";
 import * as commercial from "./commercialPortfolioApi";
 
@@ -23,6 +24,7 @@ export type {
   SellerPortfoliosCoverageAudit,
   SellerPortfoliosLoadSummary,
   TotvsCustomerHit,
+  BulkTransferSellerCustomersResult,
 };
 
 export async function searchDirectoryUsers(
@@ -151,6 +153,15 @@ export async function transferSellerCustomers(
     customers: input.customers,
     reason_note: input.reason_note?.trim() || "Transferência via Portal Comercial",
   });
+}
+
+export async function transferSellerCustomersBulk(input: {
+  source_portfolio_id: string;
+  target_portfolio_id: string;
+  customers: SellerCustomerInput[];
+  reason_note: string;
+}): Promise<BulkTransferSellerCustomersResult> {
+  return commercial.transferSellerCustomersBulk(input);
 }
 
 export async function searchActiveCustomers(

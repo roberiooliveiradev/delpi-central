@@ -561,7 +561,7 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 |------|------|
 | **E6.2** — KPIs de carga (clientes/membros; TOTVS stub) | Entregue — `load-summary` + lista/org |
 | **E6.4** — Badge «Compartilhado» + «Também em» na Conta / Minha Carteira | Entregue — `POST /customer-coverage` |
-| **E6** restante — bulk | Planejado |
+| **E6.5** — Transferência em massa + export matriz Excel | Entregue — wizard + `transfer-customers-bulk` + export client-side |
 | **E7** — mapa territorial, carve/IA de carteira, rotação, inbox compartilhado | Futuro; não wireframear como entregue |
 
 ---

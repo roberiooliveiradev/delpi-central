@@ -308,6 +308,42 @@
   gap: 8px;
 }
 
+.dashboard-commercial .cm-portfolios-wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  grid-column: 1 / -1;
+}
+
+.dashboard-commercial .cm-portfolios-wizard-steps__item {
+  border: 1px solid var(--cm-border, var(--border, #e5e7eb));
+  border-radius: 999px;
+  color: var(--cm-text-muted, var(--muted, #64748b));
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.dashboard-commercial .cm-portfolios-wizard-steps__item--current {
+  border-color: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 55%, transparent);
+  color: var(--cm-text, var(--text, #111));
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-portfolios-wizard-steps__item--done {
+  border-color: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 35%, transparent);
+  color: var(--cm-text, var(--text, #111));
+}
+
+.dashboard-commercial .cm-portfolios-wizard-summary {
+  margin: 0 0 12px;
+  line-height: 1.5;
+  color: var(--cm-text, var(--text, #111));
+  grid-column: 1 / -1;
+}
+
 .dashboard-commercial .cm-portfolios-org-tree {
   display: flex;
   flex-direction: column;

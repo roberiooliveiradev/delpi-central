@@ -7,7 +7,8 @@
     "seller_portfolio.deactivate": "Carteira inativada",
     "seller_portfolio.reactivate": "Carteira reativada",
     "seller_portfolio.purge": "Carteira excluída",
-    "seller_portfolio.transfer_customers": "Clientes transferidos"
+    "seller_portfolio.transfer_customers": "Clientes transferidos",
+    "seller_portfolio.transfer_customers_bulk": "Transferência em massa"
   },
   "messages": {
     "seller_portfolio.add_member": "Usuário {user_id} adicionado como {role_label}.",
@@ -17,7 +18,8 @@
     "seller_portfolio.deactivate": "Carteira saiu do escopo operacional.",
     "seller_portfolio.reactivate": "Carteira voltou ao escopo operacional.",
     "seller_portfolio.purge": "Carteira «{display_name}» excluída em definitivo ({customer_count} cliente(s) desvinculados).",
-    "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos da origem {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}."
+    "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos da origem {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}.",
+    "seller_portfolio.transfer_customers_bulk": "Transferência em massa: {transferred_count} ok, {failed_count} falha(s) de {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}."
   },
   "roleLabels": {
     "owner": "responsável",
@@ -31,7 +33,8 @@
     "seller_portfolio.deactivate": "warning",
     "seller_portfolio.reactivate": "success",
     "seller_portfolio.purge": "danger",
-    "seller_portfolio.transfer_customers": "info"
+    "seller_portfolio.transfer_customers": "info",
+    "seller_portfolio.transfer_customers_bulk": "info"
   },
   "fallback": {
     "title": "Evento de auditoria",

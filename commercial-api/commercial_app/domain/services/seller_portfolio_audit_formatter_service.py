@@ -46,6 +46,7 @@ class SellerPortfolioAuditFormatterService:
             "display_name": _as_str(payload.get("display_name"), "carteira"),
             "customer_count": _as_str(payload.get("customer_count"), "0"),
             "transferred_count": _as_str(payload.get("transferred_count"), "0"),
+            "failed_count": _as_str(payload.get("failed_count"), "0"),
             "source_portfolio_id": _as_str(payload.get("source_portfolio_id")),
             "target_portfolio_id": _as_str(payload.get("target_portfolio_id")),
             "reason_note": _as_str(payload.get("reason_note")),

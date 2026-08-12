@@ -47,15 +47,33 @@ describe("seller-portfolios kit-first", () => {
     assert.match(pageSource, /buildSellerPortfolioDetailPath/);
     assert.match(pageSource, /getSellerPortfoliosCoverageAudit/);
     assert.match(pageSource, /getSellerPortfoliosLoadSummary/);
+    assert.match(pageSource, /SellerPortfolioBulkTransferWizard/);
+    assert.match(pageSource, /exportOrgMatrixExcel|Exportar matriz/);
+    assert.match(pageSource, /transferSellerCustomersBulk/);
     assert.match(pageSource, /filter:\s*"overlapping"|overlapping/);
     assert.match(detailPageSource, /SellerPortfolioDetail/);
     assert.match(detailPageSource, /SellerPortfolioAuditTimeline/);
+    assert.match(detailPageSource, /SellerPortfolioBulkTransferWizard/);
     assert.match(detailPageSource, /listSellerPortfolioAudit/);
     assert.match(detailPageSource, /addSellerPortfolioMember|setSellerPortfolioOwner/);
     assert.match(detailPageSource, /coverage_warning|readCoverageLinkWarning|notifyWarning/);
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /formatPortfolioLoadSnippet|cm-portfolios-org-tree__load/);
+  });
+
+  it("wizard de transferência em massa tem etapas origem→clientes→destino→confirmar", () => {
+    const wizardSource = readFileSync(
+      join(featureDirectory, "SellerPortfolioBulkTransferWizard.tsx"),
+      "utf8",
+    );
+    assert.match(wizardSource, /PORTFOLIO_BULK_TRANSFER_CONTENT/);
+    assert.match(wizardSource, /"source"/);
+    assert.match(wizardSource, /"customers"/);
+    assert.match(wizardSource, /"target"/);
+    assert.match(wizardSource, /"confirm"/);
+    assert.match(wizardSource, /CommercialHostDialog/);
+    assert.doesNotMatch(wizardSource, /<button\b/);
   });
 
   it("timeline de auditoria usa kit Timeline e estados vazios", () => {
