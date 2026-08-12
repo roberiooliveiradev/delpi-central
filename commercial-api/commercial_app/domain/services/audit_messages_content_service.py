@@ -54,3 +54,11 @@ class AuditMessagesContentService:
         labels = cls.bundle().get("roleLabels") or {}
         normalized = (role or "").strip().lower()
         return str(labels.get(normalized) or role or "membro")
+
+    @classmethod
+    def anonymous_user_label(cls) -> str:
+        return str(cls.bundle().get("anonymousUserLabel") or "um usuário")
+
+    @classmethod
+    def anonymous_portfolio_label(cls) -> str:
+        return str(cls.bundle().get("anonymousPortfolioLabel") or "carteira")

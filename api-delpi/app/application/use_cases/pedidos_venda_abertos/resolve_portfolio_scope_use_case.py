@@ -13,7 +13,7 @@ class PortfolioScope:
     """Escopo de carteira aplicado às consultas operacionais."""
 
     unrestricted: bool
-    """True = admin/gerente sem filtro (ou api-delpi.access)."""
+    """True = manage canônico sem filtro de membership."""
 
     seller_id: str | None
     """Quando admin filtra um vendedor específico."""

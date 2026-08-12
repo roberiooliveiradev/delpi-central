@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Body, Path, Query, Request
+from fastapi import APIRouter, Body, Depends, Path, Query, Request
 
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
@@ -31,7 +31,11 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     parse_customer_assignments,
 )
 from commercial_app.composition.commercial_composer import build_manage_seller_portfolio_use_case
-from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
+from commercial_app.core.auth_actor import (
+    actor_sub_from_request,
+    bind_request_actor,
+    current_user_from_request,
+)
 from commercial_app.core.responses import fail, ok
 from commercial_app.domain.entities.seller_portfolio import (
     SellerCustomerAssignment,
@@ -53,7 +57,18 @@ from commercial_app.interface.http.schemas.portfolio_schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/seller-portfolios", tags=["Seller portfolios"])
+
+def _bind_actor_dependency(request: Request):
+    """Injeta ator do JWT no ContextVar para notify portfolio.changed."""
+    with bind_request_actor(request):
+        yield
+
+
+router = APIRouter(
+    prefix="/seller-portfolios",
+    tags=["Seller portfolios"],
+    dependencies=[Depends(_bind_actor_dependency)],
+)
 
 
 def _use_case() -> ManageSellerPortfolioUseCase:

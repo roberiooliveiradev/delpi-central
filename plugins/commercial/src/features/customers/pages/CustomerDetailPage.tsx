@@ -245,8 +245,8 @@ export function CustomerDetailPage({
 
       {notFound ? (
         <CommercialEmptyState
-          title="Cliente não encontrado"
-          message={`Não há pedidos de venda em aberto para o código / loja ${codeStore} no momento.`}
+          title="Cliente fora da carteira"
+          message={`O cliente ${codeStore} não está nas suas carteiras ou não há pedidos em aberto no escopo atual.`}
         >
             <CommercialActionButton variant="ghost" onClick={goBack}>
               Voltar para clientes

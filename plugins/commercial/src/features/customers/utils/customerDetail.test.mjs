@@ -398,7 +398,8 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     assert.match(page, /Carregando dados do cliente/);
     assert.match(page, /Tentar novamente/);
-    assert.match(page, /Cliente não encontrado/);
+    assert.match(page, /Cliente fora da carteira/);
+    assert.match(page, /não está nas suas carteiras/);
     assert.match(page, /buildCustomersListPath/);
     assert.match(page, /navigatePluginPath/);
     assert.match(page, /useCustomerDetailData/);

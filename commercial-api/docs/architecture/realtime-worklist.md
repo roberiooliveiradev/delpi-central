@@ -39,7 +39,7 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 
 Valores de `reason`: `task.created`, `task.updated`, `task.completed`, `task.deferred`, `task.reassigned`, `attachment.changed`.
 
-`actorDisplayName` vem do usuário autenticado (RBAC `name`) e, se faltar, da carteira (`display_name`); se ausente → «Alguém da equipe». `assigneeDisplayName` é o responsável atual.
+`actorDisplayName` vem do usuário autenticado (RBAC `name` / `preferred_username` / e-mail via `bind_request_actor`); se ausente → «Alguém da equipe» (o MFE tenta resolver pelo diretório com `actorUserId`). Não usar o `display_name` da carteira como nome da pessoa. `assigneeDisplayName` é o responsável atual.
 
 O payload `notification` no fio é genérico (audiência `team`). O MFE personaliza o toast com `assigneeUserIds` + usuário atual:
 

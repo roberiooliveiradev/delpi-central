@@ -18,18 +18,18 @@
   "messages": {
     "seller_portfolio.create": "Carteira «{display_name}» criada com {member_count} usuário(s).",
     "seller_portfolio.rename": "Nome alterado de «{previous_display_name}» para «{display_name}».",
-    "seller_portfolio.add_member": "Usuário {user_id} adicionado como {role_label}.",
-    "seller_portfolio.remove_member": "Usuário {user_id} removido da carteira.",
+    "seller_portfolio.add_member": "{user_label} adicionado como {role_label}.",
+    "seller_portfolio.remove_member": "{user_label} removido da carteira.",
     "seller_portfolio.replace_members": "Composição de membros atualizada ({member_count} usuário(s)).",
-    "seller_portfolio.set_owner": "Responsável definido: {user_id}.",
+    "seller_portfolio.set_owner": "Responsável definido: {user_label}.",
     "seller_portfolio.deactivate": "Carteira saiu do escopo operacional.",
     "seller_portfolio.reactivate": "Carteira voltou ao escopo operacional.",
     "seller_portfolio.purge": "Carteira «{display_name}» excluída em definitivo ({customer_count} cliente(s) desvinculados).",
-    "seller_portfolio.add_customer": "Cliente {customer_label} ({customer_code}/{customer_store}) vinculado à carteira.",
-    "seller_portfolio.remove_customer": "Cliente {customer_label} ({customer_code}/{customer_store}) desvinculado da carteira.",
+    "seller_portfolio.add_customer": "Cliente {customer_label} vinculado à carteira.",
+    "seller_portfolio.remove_customer": "Cliente {customer_label} desvinculado da carteira.",
     "seller_portfolio.replace_customers": "Lista de clientes substituída ({customer_count} vínculo(s)).",
-    "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos da origem {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}.",
-    "seller_portfolio.transfer_customers_bulk": "Transferência em massa: {transferred_count} ok, {failed_count} falha(s) de {source_portfolio_id} para {target_portfolio_id}. Motivo: {reason_note}."
+    "seller_portfolio.transfer_customers": "{transferred_count} cliente(s) transferidos de «{source_portfolio_label}» para «{target_portfolio_label}». Motivo: {reason_note}.",
+    "seller_portfolio.transfer_customers_bulk": "Transferência em massa: {transferred_count} ok, {failed_count} falha(s) de «{source_portfolio_label}» para «{target_portfolio_label}». Motivo: {reason_note}."
   },
   "roleLabels": {
     "owner": "responsável",
@@ -55,5 +55,7 @@
     "title": "Evento de auditoria",
     "message": "Ação «{action}» registrada.",
     "tone": "default"
-  }
+  },
+  "anonymousUserLabel": "um usuário",
+  "anonymousPortfolioLabel": "carteira"
 }

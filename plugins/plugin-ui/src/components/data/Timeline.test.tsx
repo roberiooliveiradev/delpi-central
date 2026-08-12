@@ -13,12 +13,31 @@ afterEach(() => {
 });
 
 describe("Timeline", () => {
-  it("timelineBemClasses emite dual-class incluindo tree", () => {
+  it("timelineBemClasses emite dual-class incluindo tree e toolbar", () => {
     const cn = timelineBemClasses("dm");
     expect(cn.track).toContain("dm-timeline__track");
     expect(cn.track).toContain("delpi-ui-timeline__track");
+    expect(cn.toolbar).toContain("delpi-ui-timeline__toolbar");
     expect(cn.rootTree).toContain("delpi-ui-timeline--tree");
     expect(cn.trackNested).toContain("delpi-ui-timeline__track--nested");
+  });
+
+  it("renderiza toolbar acima da trilha", () => {
+    const TimelineView = createTimeline({ prefix: "dm" });
+    render(
+      <TimelineView
+        toolbar={<button type="button">Só clientes</button>}
+        items={[
+          {
+            id: "1",
+            title: "Cliente vinculado",
+            detail: "BUHLER",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Só clientes" })).toBeTruthy();
+    expect(screen.getByText("Cliente vinculado")).toBeTruthy();
   });
 
   it("timelineMarkerToneClass omite default e dual-class nos tons", () => {

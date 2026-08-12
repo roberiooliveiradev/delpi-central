@@ -110,7 +110,7 @@ export function CustomerDetailHeader({
         eyebrow="Conta"
         title={
           <CommercialSectionHintLabel
-            label={customer?.nome || (notFound ? "Cliente não encontrado" : "Cliente")}
+            label={customer?.nome || (notFound ? "Cliente fora da carteira" : "Cliente")}
             hint={CM_HELP.customerDetail.header}
           />
         }

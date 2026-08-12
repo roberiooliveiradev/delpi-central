@@ -95,6 +95,22 @@ describe("resolvePortfolioNotification", () => {
     expect(note.message).toContain("Bruno");
     expect(note.message).toContain("Norte");
   });
+
+  it("substitui Alguém da equipe quando o ator é resolvido", () => {
+    const note = resolvePortfolioNotification({
+      type: "portfolio.changed",
+      reason: "seller_portfolio.add_customer",
+      portfolioId: "p1",
+      displayName: "Carteira Teste",
+      actorDisplayName: "João Silva",
+      notification: {
+        title: "Cliente vinculado",
+        message: "Alguém da equipe vinculou um cliente em «Carteira Teste».",
+        variant: "success",
+      },
+    });
+    expect(note.message).toBe("João Silva vinculou um cliente em «Carteira Teste».");
+  });
 });
 
 describe("portfolioEventTouchesId", () => {

@@ -82,23 +82,15 @@ def _safe_label(value: str | None) -> str | None:
 
 
 def resolve_user_display_name(user_id: str | None) -> str:
-    """Nome amigável via membership N:N; nunca devolve UUID."""
+    """
+    Fallback genérico quando o request não enviou display name.
+
+    Não usa `display_name` da carteira (é o nome da carteira, não da pessoa).
+    O nome real vem de `actor_display_name` (JWT) ou do lookup de diretório no MFE.
+    """
     cleaned = (user_id or "").strip()
     if not cleaned:
-        return "Alguém"
-    try:
-        from commercial_app.composition.commercial_composer import (
-            build_seller_portfolio_repository,
-        )
-
-        repo = build_seller_portfolio_repository()
-        portfolios = repo.list_by_user_id(cleaned, active_only=True)
-        portfolio = portfolios[0] if portfolios else repo.get_by_user_id(cleaned)
-        name = _safe_label(portfolio.display_name if portfolio else None)
-        if name:
-            return name
-    except Exception:  # noqa: BLE001 — notify não pode falhar a mutação
-        pass
+        return "Alguém da equipe"
     return "Alguém da equipe"
 
 
@@ -117,7 +109,7 @@ def build_worklist_notification(
 ) -> dict[str, str]:
     title, template, variant = _NOTIFICATION_BY_REASON[reason][audience]
     label = (task_title or "").strip() or "Tarefa sem título"
-    actor = _safe_label(actor_display_name) or "Alguém"
+    actor = _safe_label(actor_display_name) or "Alguém da equipe"
     assignee = _safe_label(assignee_display_name) or "alguém"
     return {
         "title": title,
@@ -133,7 +125,7 @@ def build_portfolio_notification(
     actor_display_name: str | None = None,
 ) -> dict[str, str]:
     content = SellerPortfolioMessagesContentService
-    actor = _safe_label(actor_display_name) or "Alguém"
+    actor = _safe_label(actor_display_name) or "Alguém da equipe"
     label = _safe_label(display_name) or "carteira"
     template = content.realtime_message_template(reason)
     try:

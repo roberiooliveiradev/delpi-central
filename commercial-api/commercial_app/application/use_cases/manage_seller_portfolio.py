@@ -433,10 +433,18 @@ class ManageSellerPortfolioUseCase:
         related_portfolio_ids: Sequence[str] | None = None,
         display_name: str | None = None,
         actor_client_id: str | None = None,
+        actor_display_name: str | None = None,
     ) -> None:
         if self._audit is None or not actor_user_id:
             return
+        from commercial_app.core.auth_actor import (
+            peek_actor_client_id,
+            peek_actor_display_name,
+        )
+
         safe_payload = payload or {}
+        resolved_display = (actor_display_name or "").strip() or peek_actor_display_name()
+        resolved_client = (actor_client_id or "").strip() or peek_actor_client_id()
         self._audit.append(
             actor_user_id=actor_user_id,
             action=action,
@@ -487,7 +495,8 @@ class ManageSellerPortfolioUseCase:
                 or str(safe_payload.get("display_name") or "")
                 or None,
                 actor_user_id=actor_user_id,
-                actor_client_id=actor_client_id,
+                actor_display_name=resolved_display,
+                actor_client_id=resolved_client,
             )
         except Exception:  # noqa: BLE001 — realtime não pode falhar a mutação
             pass
@@ -1059,6 +1068,8 @@ class ManageSellerPortfolioUseCase:
             payload={
                 "source_portfolio_id": source_id,
                 "target_portfolio_id": target_id,
+                "source_display_name": source.display_name,
+                "target_display_name": target.display_name,
                 "transferred_count": len(to_move),
                 "customers": [
                     {
@@ -1187,6 +1198,8 @@ class ManageSellerPortfolioUseCase:
             payload={
                 "source_portfolio_id": source_id,
                 "target_portfolio_id": target_id,
+                "source_display_name": source.display_name,
+                "target_display_name": target.display_name,
                 "transferred_count": transferred_count,
                 "failed_count": failed_count,
                 "customers": [

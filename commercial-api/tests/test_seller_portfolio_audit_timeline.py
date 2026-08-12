@@ -64,7 +64,7 @@ def test_formatter_add_customer_uses_customer_name() -> None:
     )
     assert formatted["title"] == "Cliente vinculado"
     assert "BUHLER DO BRASIL LTDA." in formatted["message"]
-    assert "000240/01" in formatted["message"]
+    assert "000240/01" not in formatted["message"]
 
 
 def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:
@@ -76,8 +76,10 @@ def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:
         entity_type="seller_portfolio",
         entity_id="p1",
         payload={
-            "source_portfolio_id": "p1",
-            "target_portfolio_id": "p2",
+            "source_portfolio_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+            "target_portfolio_id": "ffffffff-1111-4222-8333-444444444444",
+            "source_display_name": "Sul",
+            "target_display_name": "Norte",
             "transferred_count": 3,
             "failed_count": 1,
             "reason_note": "Reorg",
@@ -87,6 +89,9 @@ def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:
     assert formatted["title"] == "Transferência em massa"
     assert "3 ok" in formatted["message"]
     assert "1 falha" in formatted["message"]
+    assert "Sul" in formatted["message"]
+    assert "Norte" in formatted["message"]
+    assert "aaaaaaaa-bbbb" not in formatted["message"]
     assert formatted["tone"] == "info"
 
 
@@ -106,6 +111,36 @@ def test_formatter_builds_pt_br_message_for_add_member() -> None:
     assert "u2" in formatted["message"]
     assert "membro" in formatted["message"]
     assert formatted["tone"] == "success"
+
+
+def test_formatter_hides_uuid_user_id_in_member_messages() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    uid = "3bfdd634-a3a5-41af-b6b3-607025c2bdf5"
+    formatted = formatter.format_entry(
+        AuditLogEntry(
+            id="a-uuid",
+            actor_user_id="admin",
+            action="seller_portfolio.remove_member",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={"user_id": uid},
+        )
+    )
+    assert uid not in formatted["message"]
+    assert "um usuário" in formatted["message"]
+
+    named = formatter.format_entry(
+        AuditLogEntry(
+            id="a-named",
+            actor_user_id="admin",
+            action="seller_portfolio.set_owner",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={"user_id": uid, "user_display_name": "Ana Gestora"},
+        )
+    )
+    assert "Ana Gestora" in named["message"]
+    assert uid not in named["message"]
 
 
 def test_formatter_fallback_for_unknown_action() -> None:

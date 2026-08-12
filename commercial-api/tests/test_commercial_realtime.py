@@ -193,26 +193,9 @@ def test_build_portfolio_notification_uses_json():
     assert note["variant"] == "warning"
 
 
-def test_resolve_user_display_name_uses_first_portfolio_from_membership(monkeypatch):
-    import sys
-    import types
-
+def test_resolve_user_display_name_never_uses_portfolio_label():
     from commercial_app.application.services import commercial_realtime_notify as notify
 
-    class _Portfolio:
-        def __init__(self, display_name: str) -> None:
-            self.display_name = display_name
-
-    class _Repo:
-        def list_by_user_id(self, user_id: str, *, active_only: bool = True):
-            assert user_id == "helper-1"
-            assert active_only is True
-            return [_Portfolio("Carteira Equipe"), _Portfolio("Outra")]
-
-        def get_by_user_id(self, user_id: str):
-            raise AssertionError("list_by_user_id deve ser preferido")
-
-    fake_composer = types.ModuleType("commercial_app.composition.commercial_composer")
-    fake_composer.build_seller_portfolio_repository = lambda: _Repo()  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "commercial_app.composition.commercial_composer", fake_composer)
-    assert notify.resolve_user_display_name("helper-1") == "Carteira Equipe"
+    assert notify.resolve_user_display_name(None) == "Alguém da equipe"
+    assert notify.resolve_user_display_name("") == "Alguém da equipe"
+    assert notify.resolve_user_display_name("helper-1") == "Alguém da equipe"

@@ -342,3 +342,35 @@ def test_transfer_customers_rejects_same_seller() -> None:
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "diferentes" in str(exc)
+
+
+def test_customer_allowed_respects_membership_scope() -> None:
+    from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use_case import (
+        PortfolioScope,
+    )
+
+    usecase = ResolvePortfolioScopeUseCase(MagicMock())
+    scoped = PortfolioScope(
+        unrestricted=False,
+        seller_id="s1",
+        allowed_customers=frozenset({("100", "01")}),
+        empty_portfolio=False,
+        message=None,
+    )
+    assert usecase.customer_allowed(
+        scoped, customer_code="100", customer_store="01"
+    )
+    assert not usecase.customer_allowed(
+        scoped, customer_code="999", customer_store="01"
+    )
+
+    open_scope = PortfolioScope(
+        unrestricted=True,
+        seller_id=None,
+        allowed_customers=None,
+        empty_portfolio=False,
+        message=None,
+    )
+    assert usecase.customer_allowed(
+        open_scope, customer_code="999", customer_store="01"
+    )

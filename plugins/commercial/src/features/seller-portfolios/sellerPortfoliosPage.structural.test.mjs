@@ -83,12 +83,14 @@ describe("seller-portfolios kit-first", () => {
     assert.doesNotMatch(wizardSource, /<button\b/);
   });
 
-  it("timeline de auditoria usa kit Timeline e estados vazios", () => {
+  it("timeline de auditoria usa kit Timeline, filtros e estados vazios", () => {
     const auditSource = readFileSync(
       join(featureDirectory, "SellerPortfolioAuditTimeline.tsx"),
       "utf8",
     );
     assert.match(auditSource, /CommercialActivityTimeline/);
+    assert.match(auditSource, /SegmentToggle/);
+    assert.match(auditSource, /toolbar=\{filterToolbar\}/);
     assert.match(auditSource, /PORTFOLIO_AUDIT_CONTENT/);
     assert.match(auditSource, /emptyMessage/);
     assert.match(auditSource, /CommercialLoadingCard/);

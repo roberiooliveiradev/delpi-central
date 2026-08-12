@@ -49,8 +49,6 @@ export type CommercialRealtimeEvent =
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
 
-const GENERIC_ACTOR_LABELS = new Set(["alguém", "alguém da equipe"]);
-
 export function buildCommercialRealtimeWsUrl(options: {
   token: string;
   clientId: string;
@@ -78,6 +76,8 @@ export function parseCommercialRealtimeEvent(raw: string): CommercialRealtimeEve
   return null;
 }
 
+const GENERIC_ACTOR_LABELS = new Set(["alguém", "alguém da equipe"]);
+
 export function isGenericActorDisplayName(value: string | null | undefined): boolean {
   const name = (value || "").trim();
   if (!name) return true;
@@ -88,6 +88,49 @@ function actorLabel(event: { actorDisplayName?: string | null }): string {
   const name = (event.actorDisplayName || "").trim();
   if (name && !isGenericActorDisplayName(name)) return name;
   return "Alguém da equipe";
+}
+
+/** Substitui ator genérico no texto do servidor após lookup no diretório. */
+export function applyActorToPortfolioMessage(
+  message: string,
+  actorDisplayName: string | null | undefined,
+): string {
+  const actor = actorLabel({ actorDisplayName });
+  if (isGenericActorDisplayName(actor)) return message;
+  return message
+    .replace(/^Alguém da equipe\b/, actor)
+    .replace(/^Alguém\b/, actor);
+}
+
+export function resolvePortfolioNotification(
+  event: CommercialPortfolioChangedEvent,
+): CommercialRealtimeNotification {
+  const fromServer = event.notification;
+  const actor = actorLabel(event);
+  const name = (event.displayName || "").trim() || "carteira";
+  if (
+    fromServer &&
+    typeof fromServer.title === "string" &&
+    typeof fromServer.message === "string"
+  ) {
+    const variant =
+      fromServer.variant === "success" ||
+      fromServer.variant === "warning" ||
+      fromServer.variant === "error" ||
+      fromServer.variant === "info"
+        ? fromServer.variant
+        : "info";
+    return {
+      title: fromServer.title,
+      message: applyActorToPortfolioMessage(fromServer.message, actor),
+      variant,
+    };
+  }
+  return {
+    title: "Carteira atualizada",
+    message: `${actor} alterou a carteira «${name}».`,
+    variant: "info",
+  };
 }
 
 function assigneeLabel(event: CommercialWorklistChangedEvent): string {
@@ -207,37 +250,6 @@ export function fallbackWorklistNotification(
         variant: "info",
       };
   }
-}
-
-export function resolvePortfolioNotification(
-  event: CommercialPortfolioChangedEvent,
-): CommercialRealtimeNotification {
-  const fromServer = event.notification;
-  if (
-    fromServer &&
-    typeof fromServer.title === "string" &&
-    typeof fromServer.message === "string"
-  ) {
-    const variant =
-      fromServer.variant === "success" ||
-      fromServer.variant === "warning" ||
-      fromServer.variant === "error" ||
-      fromServer.variant === "info"
-        ? fromServer.variant
-        : "info";
-    return {
-      title: fromServer.title,
-      message: fromServer.message,
-      variant,
-    };
-  }
-  const actor = actorLabel(event);
-  const name = (event.displayName || "").trim() || "carteira";
-  return {
-    title: "Carteira atualizada",
-    message: `${actor} alterou a carteira «${name}».`,
-    variant: "info",
-  };
 }
 
 export function portfolioEventTouchesId(
