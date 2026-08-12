@@ -112,14 +112,16 @@
 .delpi-ui-signature-pad__icon-btn {
   min-width: auto;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 10px 16px;
   gap: 8px;
   border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .delpi-ui-signature-pad__btn-label {
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .delpi-ui-signature-pad__stroke {
@@ -127,7 +129,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 12px;
   background: var(--delpi-ui-surface, #fff);
@@ -144,8 +146,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 10px 16px;
+  box-sizing: border-box;
   border-radius: 10px;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   background: var(--delpi-ui-surface, #fff);
