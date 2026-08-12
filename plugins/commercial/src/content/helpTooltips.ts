@@ -26,7 +26,7 @@ export const CM_HELP = {
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:
       "Indicadores de gestão, conversão e pontualidade, além da visão da equipe por carteira.",
-    kpiRol: "ROL da matriz versus meta no mês corrente (Gestão do Portal Comercial).",
+    kpiRol: "ROL consolidado versus meta no mês corrente (Gestão do Portal Comercial).",
     kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
     kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
     shortcuts:
@@ -85,9 +85,10 @@ export const CM_HELP = {
     kpiCanInvoice: "Linhas com estoque suficiente para faturar integralmente.",
     kpiPartialStock: "Linhas com estoque parcial — atendem só parte da quantidade em aberto.",
     kpiLate: "Linhas com data de entrega prometida vencida e ainda em aberto.",
-    filters: "Refine a lista por busca, filial, cliente, status de estoque e janela de entrega.",
+    filters: "Refine a lista por busca, unidade, cliente, status de estoque e janela de entrega.",
     filterSearch: "Busca em cliente, pedido, produto e códigos da linha.",
-    filterBranch: "Filial responsável pelo pedido. Vazio = todas as filiais do escopo.",
+    filterBranch:
+      "Unidade responsável pelo pedido (Santa Catarina ou Espírito Santo). Vazio = todas as unidades do escopo.",
     filterClient: "Um ou mais clientes da carteira (código+loja).",
     filterStock:
       "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
@@ -110,7 +111,7 @@ export const CM_HELP = {
       nome_cliente:
         "Nome do cliente no pedido. Clique para abrir a Conta 360 (código + loja).",
       loja_cadastro: "Loja vinculada ao cadastro do cliente.",
-      filial: "Filial em que o pedido foi registrado.",
+      filial: "Unidade em que o pedido foi registrado (Santa Catarina ou Espírito Santo).",
       pedido: "Número do pedido de venda e identificação do item.",
       pedido_cliente: "Número de referência informado pelo cliente, quando disponível.",
       produto: "Código comercial do produto no item em aberto.",
@@ -119,7 +120,7 @@ export const CM_HELP = {
       entregue: "Quantidade já entregue / faturada desta linha.",
       saldo: "Quantidade ainda em aberto (pedida − entregue).",
       no_estoque:
-        "Estoque físico alocado a esta linha (FIFO por produto/filial no cliente — não é reserva formal).",
+        "Estoque físico alocado a esta linha (FIFO por produto/unidade no cliente — não é reserva formal).",
       cobertura:
         "Proporção estoque alocado ÷ saldo em aberto. Verde ≈ 100%; amarelo parcial; vermelho sem cobertura.",
       data_entrega: "Data de entrega prometida no pedido (compromisso comercial).",
@@ -141,7 +142,7 @@ export const CM_HELP = {
       guideCobertura: "Gráficos de cobertura estoque × demanda e prazo (entrega vs previsão OP).",
       guideProducao: "OPs alocadas, prazo OTD, timeline, apontamentos e tabela desta linha.",
       factoryStatus:
-        "Visão fabril consolidada do produto nesta filial: produção PA/PI, expedição e restrições de matéria-prima.",
+        "Visão fabril consolidada do produto nesta unidade: produção PA/PI, expedição e restrições de matéria-prima.",
       factoryPaStarted: "Indica se a produção do produto acabado (PA) deste código já foi iniciada.",
       factoryPiStarted:
         "Indica se a produção de produto intermediário (PI) vinculada a este código já foi iniciada.",
@@ -190,7 +191,7 @@ export const CM_HELP = {
       chartOps: "Por OP: quanto foi alocado a este pedido versus o saldo restante da OP.",
       chartOpsCaption: "Alocado no pedido vs saldo OP",
       opsNote:
-        "OPs são compartilhadas por produto/filial e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
+        "OPs são compartilhadas por produto/unidade e alocadas por ordem de entrega dos pedidos — indicação operacional, não reserva formal ao cliente.",
       opsTable:
         "Ordens de produção usadas na previsão desta linha (FIFO). Clique na linha para focar a timeline.",
       otdPrazo:
@@ -344,16 +345,18 @@ export const CM_HELP = {
     portfolioFilter:
       "Filtra indicadores e listas pela carteira selecionada. Vazio = consolidado das carteiras que você pode ver. No topo, o menu do usuário abre Minha Carteira já filtrada.",
     filters:
-      "Período, competência, filial, segmento e carteira aplicados aos painéis e listas desta página.",
+      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterCompetence: "Competência mensal (opcional). Livre = só as datas informadas.",
-    filterBranch: "Filiais incluídas no consolidado. Vazio = todas as filiais do escopo.",
+    filterBranch:
+      "Unidades incluídas no consolidado (Santa Catarina / Espírito Santo). Vazio = todas as unidades do escopo.",
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
     otdPage:
-      "Pontualidade de linhas de pedido no período: KPIs, série SC/ES e linhas com status/promessa.",
+      "Pontualidade de linhas de pedido no período: KPIs, série por unidade e linhas com status/promessa.",
     otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado.",
-    otdSeries: "Evolução do OTD por filial (SC e ES) no período.",
+    otdSeries:
+      "Evolução do OTD por Santa Catarina e Espírito Santo no período.",
     otdLines: "Linhas do período. Clique abre o detalhe de pontualidade da linha.",
     opportunitiesPage:
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
@@ -363,7 +366,8 @@ export const CM_HELP = {
     ovStatus: "Etapa atual da oportunidade comercial.",
     ovOpen: "Data de abertura da oportunidade.",
     ovClose: "Data de fechamento ou assinatura, quando houver.",
-    ovHeader: "Resumo da oportunidade: filial, revisão, processo, etapa e descrição.",
+    ovHeader:
+      "Resumo da oportunidade: unidade, revisão, processo, etapa e descrição.",
     ovCustomer: "Cliente e vendedor responsáveis pela oportunidade.",
     ovProducts: "Produtos da oportunidade: código, descrição, grupo, tipo e quantidade.",
     ovBom: "Estrutura de componentes de cada produto da oportunidade.",
@@ -374,9 +378,10 @@ export const CM_HELP = {
     page:
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
-      "Datas, competência, filial, segmento e carteira (quando permitido) aplicados a todos os painéis.",
+      "Datas, competência, unidade, segmento e carteira (quando permitido) aplicados a todos os painéis.",
     kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios.",
-    rolSeries: "Evolução do ROL no período selecionado.",
+    rolSeries:
+      "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",
     funnel: "Funil de conversão de propostas no período (propostas → ganhas).",
   },
   administration: {
