@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ActionButton, NativeTextControl, SignaturePad } from "@delpi/plugin-ui/index";
+import { ActionButton, NativeTextControl, SignatureCapturePanel } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
+  fetchSignatureImageBlob,
   getSignatureProfile,
   updateSignatureProfile,
   uploadSignature,
@@ -15,15 +16,36 @@ type Props = Pick<AppProps, "getAccessToken"> & { onNavigate?: (path: string) =>
 export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
   const [name, setName] = useState("");
   const [png, setPng] = useState<Blob | null>(null);
+  const [savedPreviewUrl, setSavedPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    void getSignatureProfile(getAccessToken)
-      .then((data) => setName(data.display_name))
-      .catch((value) =>
-        setError(value instanceof Error ? value.message : "Erro ao carregar assinatura."),
-      );
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    void (async () => {
+      try {
+        const data = await getSignatureProfile(getAccessToken);
+        if (cancelled) return;
+        setName(data.display_name);
+        if (data.has_signature) {
+          const blob = await fetchSignatureImageBlob(getAccessToken);
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(blob);
+          setSavedPreviewUrl(objectUrl);
+        } else {
+          setSavedPreviewUrl(null);
+        }
+      } catch (value) {
+        if (!cancelled) {
+          setError(value instanceof Error ? value.message : "Erro ao carregar assinatura.");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [getAccessToken]);
 
   async function saveName() {
@@ -39,11 +61,14 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
 
   async function saveSignature() {
     if (!png) {
-      setError("Desenhe a assinatura antes de salvar.");
+      setError("Capture a assinatura antes de salvar.");
       return;
     }
     try {
       await uploadSignature(png, getAccessToken);
+      if (savedPreviewUrl) URL.revokeObjectURL(savedPreviewUrl);
+      const nextUrl = URL.createObjectURL(png);
+      setSavedPreviewUrl(nextUrl);
       setSuccess("Assinatura pessoal salva.");
       setPng(null);
       setError(null);
@@ -66,8 +91,25 @@ export function MySignaturePage({ getAccessToken, onNavigate }: Props) {
         <ActionButton variant="primary" onClick={() => void saveName()}>
           Salvar nome
         </ActionButton>
-        <h2>Assinatura manuscrita</h2>
-        <SignaturePad className="delpi-ui-signature-pad--tall" onChange={setPng} />
+
+        {savedPreviewUrl ? (
+          <div className="ds-field">
+            <span>Assinatura salva</span>
+            <img
+              src={savedPreviewUrl}
+              alt="Assinatura pessoal salva"
+              style={{ maxWidth: "100%", height: "auto", display: "block" }}
+            />
+          </div>
+        ) : null}
+
+        <h2>Nova assinatura</h2>
+        <SignatureCapturePanel
+          displayName={name}
+          showPreview
+          padProps={{ className: "delpi-ui-signature-pad--tall" }}
+          onChange={setPng}
+        />
         <ActionButton variant="primary" disabled={!png} onClick={() => void saveSignature()}>
           Salvar assinatura
         </ActionButton>
