@@ -84,7 +84,7 @@
   min-width: 0;
 }
 
-/* Hero (PageHero kit) acima da TopBar — só Início */
+/* Hero (PageHero kit) abaixo da TopBar — alinhado às demais páginas */
 .dashboard-commercial .cm-page-hero .cm-page-hero__title {
   display: inline-flex;
   flex-wrap: wrap;

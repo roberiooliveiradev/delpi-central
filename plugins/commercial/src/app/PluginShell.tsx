@@ -27,7 +27,6 @@ import {
   CommercialActionButton,
   CommercialCommandPalette,
   CommercialPageHero,
-  CommercialScopeChipBar,
   CommercialStatusBadge,
   CommercialTopBar,
   CommercialViewTransition,
@@ -225,6 +224,21 @@ export function PluginShell({
   return (
     <div className="dashboard-commercial dashboard-page">
       <div className="cm-page-stack">
+        <CommercialTopBar
+          aria-label={SHELL_NAV_CONTENT.ariaLabel}
+          activeId={activeId ?? ""}
+          items={items.map((item) => ({
+            id: item.id,
+            label: item.label,
+            icon: NAV_ICONS[item.id],
+            count: item.count,
+            title: NAV_HELP[item.id]
+              ? `${item.label}. ${NAV_HELP[item.id]}`
+              : item.label,
+            onSelect: () => navigatePluginView(item.id, { basePath }),
+          }))}
+        />
+
         {showGreeting ? (
           <CommercialViewTransition transitionKey="home-hero" tone="page">
             <CommercialPageHero
@@ -263,35 +277,6 @@ export function PluginShell({
             />
           </CommercialViewTransition>
         ) : null}
-
-        <CommercialTopBar
-          aria-label={SHELL_NAV_CONTENT.ariaLabel}
-          activeId={activeId ?? ""}
-          items={items.map((item) => ({
-            id: item.id,
-            label: item.label,
-            icon: NAV_ICONS[item.id],
-            count: item.count,
-            title: NAV_HELP[item.id]
-              ? `${item.label}. ${NAV_HELP[item.id]}`
-              : item.label,
-            onSelect: () => navigatePluginView(item.id, { basePath }),
-          }))}
-          actions={
-            scopeLabel ? (
-              <>
-                <CommercialScopeChipBar
-                  label={SHELL_NAV_CONTENT.scopeLabel}
-                  chips={[{ id: "scope", label: scopeLabel, active: true }]}
-                />
-                <HelpTooltip
-                  content={CM_HELP.shell.scope}
-                  ariaLabel={SHELL_NAV_CONTENT.scopeHelpAriaLabel}
-                />
-              </>
-            ) : undefined
-          }
-        />
 
         <CommercialViewTransition transitionKey={view} tone="page">
           {children}
