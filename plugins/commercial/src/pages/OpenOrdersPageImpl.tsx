@@ -243,16 +243,16 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
           defaultMessage={
             portfolioMessage ||
             (canOpenSellerPortfolios
-              ? "Carteira sem clientes. Inclua clientes em Carteiras para ver pedidos em aberto."
+              ? "Carteira sem clientes. Inclua clientes em Administração para ver pedidos em aberto."
               : "Sua carteira ainda não possui clientes vinculados. Peça ao gerente para incluir clientes.")
           }
         >
           {canOpenSellerPortfolios ? (
             <ActionButton
               variant="primary"
-              onClick={() => navigatePluginView("seller_portfolios")}
+              onClick={() => navigatePluginView("administration")}
             >
-              Abrir carteiras
+              Abrir Administração
             </ActionButton>
           ) : null}
         </EmptyState>

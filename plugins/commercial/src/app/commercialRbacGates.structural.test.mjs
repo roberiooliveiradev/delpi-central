@@ -66,14 +66,16 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(source, /teamScope/);
   });
 
-  it("pedidos em aberto: CTA Abrir carteiras só com manage", () => {
+  it("pedidos em aberto: CTA Abrir Administração só com manage", () => {
     const source = readFileSync(join(src, "pages/OpenOrdersPageImpl.tsx"), "utf8");
     assert.match(source, /canOpenSellerPortfolios/);
     assert.match(source, /canManagePortfolios \|\| isAdmin/);
     assert.match(
       source,
-      /canOpenSellerPortfolios \? \(\s*<ActionButton[\s\S]*?Abrir carteiras/,
+      /canOpenSellerPortfolios \? \(\s*<ActionButton[\s\S]*?Abrir Administração/,
     );
+    assert.match(source, /navigatePluginView\("administration"\)/);
+    assert.doesNotMatch(source, /navigatePluginView\("seller_portfolios"\)/);
   });
 
   it("manifest sem texto de alias legado e team route canônica", () => {
@@ -87,5 +89,12 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(manifest, /"path": "\/apps\/commercial\/administration"/);
     assert.match(manifest, /"path": "\/apps\/commercial\/administration\/seller-portfolios"/);
     assert.match(manifest, /"path": "\/apps\/commercial\/administration\/team"/);
+  });
+
+  it("Equipe empty CTA Administração só com manage", () => {
+    const source = readFileSync(join(src, "features/analytics/AnalyticsTeamPage.tsx"), "utf8");
+    assert.match(source, /canOpenAdmin/);
+    assert.match(source, /Abrir Administração/);
+    assert.match(source, /navigatePluginView\("administration"/);
   });
 });

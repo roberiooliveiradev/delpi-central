@@ -34,7 +34,14 @@ type AnalyticsTeamPageProps = {
 };
 
 export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
-  const { sellers, loading: scopeLoading, reloadScope } = usePortfolioScope();
+  const {
+    sellers,
+    loading: scopeLoading,
+    reloadScope,
+    canManagePortfolios,
+    isAdmin,
+  } = usePortfolioScope();
+  const canOpenAdmin = canManagePortfolios || isAdmin;
   const [rows, setRows] = useState<TeamRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,8 +172,21 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
           <EmptyState
             classNames={cmEmptyStateClassNames}
             defaultTitle="Nenhuma carteira ativa"
-            defaultMessage="Cadastre vendedores em Carteiras para ver a equipe."
-          />
+            defaultMessage={
+              canOpenAdmin
+                ? "Cadastre vendedores em Administração para ver a equipe."
+                : "Nenhuma carteira ativa no momento. Peça ao gerente para cadastrar carteiras."
+            }
+          >
+            {canOpenAdmin ? (
+              <ActionButton
+                variant="primary"
+                onClick={() => navigatePluginView("administration", { basePath })}
+              >
+                Abrir Administração
+              </ActionButton>
+            ) : null}
+          </EmptyState>
         ) : null}
         {!loading && rows.length > 0 ? (
           <DataTable
