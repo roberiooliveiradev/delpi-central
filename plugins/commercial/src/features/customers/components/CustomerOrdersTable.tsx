@@ -1,4 +1,8 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
+import {
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "@delpi/plugin-ui/index";
 import { type ReactNode, useId, useState } from "react";
 
 import {
@@ -63,7 +67,11 @@ export function CustomerOrdersTable({
   };
 
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
-    { key: "branch", header: "Filial", render: (order) => order.filial || "—" },
+    {
+      key: "branch",
+      header: OPERATIONAL_UNIT_COLUMN_LABEL,
+      render: (order) => formatOperationalUnitCode(order.filial),
+    },
     { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
     {
       key: "customer-order",
@@ -157,7 +165,7 @@ export function CustomerOrdersTable({
             <div key={order.key} className="cm-customer-orders__mobile-item">
               <CommercialDataRecordCard
                 title={`Pedido ${order.pedido || "não informado"}`}
-                subtitle={`Filial ${order.filial || "não informada"}`}
+                subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
                 status={renderStatus(order)}
                 fields={[
                   {

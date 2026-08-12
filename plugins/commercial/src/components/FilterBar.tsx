@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Filter, RotateCcw } from "lucide-react";
-import { ActionButton, SectionHintLabel } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  OPERATIONAL_UNIT_FIELD_LABEL,
+  SectionHintLabel,
+  buildOperationalUnitOptions,
+} from "@delpi/plugin-ui/index";
 
 import {
   CommercialDateField,
@@ -37,7 +42,7 @@ export function FilterBar({
   onReset,
 }: FilterBarProps) {
   const [showMore, setShowMore] = useState(false);
-  const filialOptions = filiais.map((filial) => ({ value: filial, label: filial }));
+  const filialOptions = buildOperationalUnitOptions(filiais);
   const clientOptions = clients.map((client) => ({
     value: client.key,
     label: client.name,
@@ -75,7 +80,7 @@ export function FilterBar({
         onChange={(value) => onChange({ search: value })}
       />
       <CommercialSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         hint={CM_HELP.openOrders.filterBranch}
         value={filters.filial}
         onChange={(value) => onChange({ filial: value })}

@@ -1,3 +1,5 @@
+import { OPERATIONAL_UNIT_COLUMN_LABEL } from "@delpi/plugin-ui/index";
+
 import type { SortKey } from "./sortItems";
 
 export type TableColumnKey =
@@ -43,7 +45,7 @@ export const DEFAULT_VISIBLE_COLUMN_KEYS: readonly TableColumnKey[] = [
 export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "nome_cliente", label: "Cliente", sortable: true },
   { key: "loja_cadastro", label: "Loja", sortable: true },
-  { key: "filial", label: "Filial", sortable: true },
+  { key: "filial", label: OPERATIONAL_UNIT_COLUMN_LABEL, sortable: true },
   { key: "pedido", label: "Pedido", sortable: true },
   { key: "pedido_cliente", label: "Pedido cliente", sortable: true },
   { key: "produto", label: "Produto", sortable: true },

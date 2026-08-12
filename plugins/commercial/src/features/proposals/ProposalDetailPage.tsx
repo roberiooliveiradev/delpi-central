@@ -1,4 +1,8 @@
 import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
+import {
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "@delpi/plugin-ui/index";
 import { FileDown, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -185,7 +189,10 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 { label: "Data", value: displayValue(data.cabecalho.data) },
                 { label: "Versão", value: displayValue(data.cabecalho.versao) },
                 { label: "Status", value: displayValue(data.cabecalho.status) },
-                { label: "Filial", value: displayValue(data.cabecalho.filial) },
+                {
+                  label: OPERATIONAL_UNIT_COLUMN_LABEL,
+                  value: displayValue(formatOperationalUnitCode(data.cabecalho.filial, "")),
+                },
                 { label: "Soma R$/mil", value: displayValue(data.cabecalho.soma_valores_r_mil) },
                 { label: "Oportunidade", value: displayValue(data.cabecalho.oportunidade) },
                 {

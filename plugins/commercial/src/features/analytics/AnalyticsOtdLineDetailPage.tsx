@@ -1,4 +1,8 @@
 import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
+import {
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 
 import { getSalesOrderOtdLineDetail } from "../../api/analyticsApi";
@@ -96,7 +100,7 @@ export function AnalyticsOtdLineDetailPage({
       <CommercialPageHero
         aria-label={ANALYTICS_CONTENT.otd.lineDetail}
         title={ANALYTICS_CONTENT.otd.lineDetail}
-        description={`${branch} · ${orderNumber} · ${lineItem}`}
+        description={`${formatOperationalUnitCode(branch)} · ${orderNumber} · ${lineItem}`}
       />
 
       {loading ? <CommercialLoadingCard title="Carregando detalhe…" variant="panel" /> : null}
@@ -112,7 +116,10 @@ export function AnalyticsOtdLineDetailPage({
         >
           <CommercialDetailFieldGrid
             fields={[
-              { label: "Filial", value: line.branch },
+              {
+                label: OPERATIONAL_UNIT_COLUMN_LABEL,
+                value: formatOperationalUnitCode(line.branch),
+              },
               { label: "Pedido", value: line.order_number },
               { label: "Item", value: line.line_item },
               { label: "Cliente", value: line.customer_name || line.customer_code || "—" },

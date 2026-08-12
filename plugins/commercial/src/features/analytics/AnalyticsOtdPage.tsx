@@ -23,6 +23,7 @@ import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
+import { ANALYTICS_OTD_SERIES_LABELS } from "./utils/analyticsBranchFilters";
 
 function formatPct(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -200,12 +201,12 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
               { key: "periodo", header: "Período", render: (row) => row.periodo },
               {
                 key: "otd01",
-                header: "OTD SC",
+                header: ANALYTICS_OTD_SERIES_LABELS.unit01,
                 render: (row) => formatPct(row.otd_filial_01),
               },
               {
                 key: "otd02",
-                header: "OTD ES",
+                header: ANALYTICS_OTD_SERIES_LABELS.unit02,
                 render: (row) => formatPct(row.otd_filial_02),
               },
             ]}

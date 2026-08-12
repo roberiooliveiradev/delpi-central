@@ -1,4 +1,8 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
+import {
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "@delpi/plugin-ui/index";
 import { useId, useState } from "react";
 
 import {
@@ -44,7 +48,9 @@ export function CustomerInvoicesTable({
       header: "Nota / série",
       render: (invoice) =>
         `${invoice.invoice_number}${invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""}${
-          invoice.branch ? ` · Filial ${invoice.branch}` : ""
+          invoice.branch
+            ? ` · ${OPERATIONAL_UNIT_COLUMN_LABEL} ${formatOperationalUnitCode(invoice.branch)}`
+            : ""
         }`,
     },
     {

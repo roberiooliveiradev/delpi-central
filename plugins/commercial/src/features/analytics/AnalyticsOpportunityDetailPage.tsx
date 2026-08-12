@@ -1,7 +1,9 @@
 import {
   EmptyState,
+  OPERATIONAL_UNIT_COLUMN_LABEL,
   SectionCard,
   SegmentToggle,
+  formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 import { CalendarCheck, CalendarPlus, Flag, RefreshCw } from "lucide-react";
@@ -330,7 +332,10 @@ export function AnalyticsOpportunityDetailPage({
                 fields={[
                   { label: "OV", value: data.proposal_number },
                   { label: "Revisão", value: data.revision },
-                  { label: "Filial", value: data.branch },
+                  {
+                    label: OPERATIONAL_UNIT_COLUMN_LABEL,
+                    value: formatOperationalUnitCode(data.branch),
+                  },
                   {
                     label: "Status",
                     value: (

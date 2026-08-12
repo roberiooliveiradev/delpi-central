@@ -1,4 +1,4 @@
-import { ActionButton, EmptyState } from "@delpi/plugin-ui/index";
+import { ActionButton, EmptyState, formatOperationalUnitCode } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useReducer, useState, type MouseEvent } from "react";
 
@@ -122,8 +122,8 @@ export function OpenOrderLineDetailPage({
         title={`Pedido ${orderNumber} · linha ${lineItem}`}
         description={
           item
-            ? `${item.nome_cliente || "Cliente"} · Produto ${item.produto || "—"} · filial ${branch}`
-            : `Filial ${branch}`
+            ? `${item.nome_cliente || "Cliente"} · Produto ${item.produto || "—"} · ${formatOperationalUnitCode(branch)}`
+            : formatOperationalUnitCode(branch)
         }
         actions={
           <ActionButton

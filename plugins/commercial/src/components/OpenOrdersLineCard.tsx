@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
-import { StatusBadge } from "@delpi/plugin-ui/index";
+import { StatusBadge, formatOperationalUnitCode } from "@delpi/plugin-ui/index";
 
 import {
   CommercialInlineMeter,
@@ -95,7 +95,7 @@ function renderCardValue(
     case "loja_cadastro":
       return item.loja_cadastro || "—";
     case "filial":
-      return item.filial || "—";
+      return formatOperationalUnitCode(item.filial);
     case "pedido":
       return `${item.pedido || "—"} · Linha ${item.linha || "—"}`;
     case "pedido_cliente":

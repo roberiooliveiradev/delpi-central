@@ -1,4 +1,8 @@
 import {
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "@delpi/plugin-ui/index";
+import {
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
@@ -31,7 +35,9 @@ export function CustomerAttentionOrders({ orders }: CustomerAttentionOrdersProps
               <div className="cm-customer-attention-orders__main">
                 <span className="cm-customer-attention-orders__order">
                   Pedido {order.pedido}
-                  {order.filial ? ` · Filial ${order.filial}` : ""}
+                  {order.filial
+                    ? ` · ${OPERATIONAL_UNIT_COLUMN_LABEL} ${formatOperationalUnitCode(order.filial)}`
+                    : ""}
                 </span>
                 <CommercialStatusBadge
                   variant="neutral"

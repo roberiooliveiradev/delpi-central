@@ -6,6 +6,7 @@ import {
   SectionCard,
   SegmentToggle,
   StatusBadge,
+  formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 
@@ -224,7 +225,7 @@ export function OpenOrdersTable({
         );
       },
       loja_cadastro: (row) => row.loja_cadastro || "—",
-      filial: (row) => row.filial || "—",
+      filial: (row) => formatOperationalUnitCode(row.filial),
       pedido: (row) => (
         <div className="cm-cell-stack cm-cell-stack--tight">
           <span>{row.pedido || "—"}</span>

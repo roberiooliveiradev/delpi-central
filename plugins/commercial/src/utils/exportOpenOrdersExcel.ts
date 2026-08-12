@@ -1,5 +1,5 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
-import { exportTableFormat, type TableExportPayload } from "@delpi/plugin-ui/index";
+import { exportTableFormat, formatOperationalUnitCode, type TableExportPayload } from "@delpi/plugin-ui/index";
 import { formatDisplayDate, getDeliveryOverdueDays } from "./dates";
 import { getLineOpForecast } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
@@ -17,7 +17,7 @@ function itemExportValue(item: OpenOrdersTotvsItem, key: TableColumnKey): Export
     case "loja_cadastro":
       return item.loja_cadastro || "";
     case "filial":
-      return item.filial || "";
+      return formatOperationalUnitCode(item.filial, "");
     case "pedido":
       return item.linha ? `${item.pedido || ""} / Linha ${item.linha}` : item.pedido || "";
     case "pedido_cliente":
