@@ -2,7 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import { CommercialConfirmDialogProvider } from "./app/CommercialConfirmDialogProvider";
 import { CommercialFloatingNoticeProvider } from "./app/CommercialFloatingNoticeProvider";
-import { CommercialRealtimeProvider, useCommercialRealtimeNotices } from "./app/CommercialRealtimeProvider";
+import { CommercialRealtimeProvider, useCommercialPortfolioSync, useCommercialRealtimeNotices } from "./app/CommercialRealtimeProvider";
 import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
@@ -260,6 +260,7 @@ function RealtimeShell({
   return (
     <CommercialRealtimeProvider getAccessToken={getAccessToken} enabled={realtimeEnabled}>
       <CommercialRealtimeNoticesBridge enabled={realtimeEnabled} />
+      <PortfolioScopeRealtimeSyncBridge />
       {children}
     </CommercialRealtimeProvider>
   );
@@ -267,6 +268,15 @@ function RealtimeShell({
 
 function CommercialRealtimeNoticesBridge({ enabled }: { enabled: boolean }) {
   useCommercialRealtimeNotices(enabled);
+  return null;
+}
+
+/** Mantém `sellers` / membership frescos após CRUD de carteiras (WS + escopo). */
+function PortfolioScopeRealtimeSyncBridge() {
+  const { reloadScope } = usePortfolioScope();
+  useCommercialPortfolioSync(() => {
+    reloadScope();
+  });
   return null;
 }
 

@@ -15,6 +15,7 @@ import {
 import { useCommercialPortfolioSync } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CommercialActionButton,
   CommercialFilterBarShell,
@@ -118,6 +119,7 @@ function portfolioMatchesQuery(
 
 export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const { notifyError, notifySuccess } = useCommercialFloatingNotice();
+  const { reloadScope } = usePortfolioScope();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -318,6 +320,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       applyLink(nextList);
       openPortfolio(created, nextList);
       reload({ silent: true });
+      reloadScope();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar carteira.";
       setCreateError(message);
@@ -373,6 +376,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       }
       setBulkOpen(false);
       reload({ silent: true });
+      reloadScope();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro na transferência em massa.";
       setBulkError(message);

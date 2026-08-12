@@ -23,6 +23,7 @@ import {
 import { useCommercialPortfolioSync } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CommercialActionButton,
   CommercialLoadingCard,
@@ -69,6 +70,7 @@ export function SellerPortfolioDetailPage({
 }: SellerPortfolioDetailPageProps) {
   const { notifyError, notifySuccess, notifyWarning, notifyMissingRequired } =
     useCommercialFloatingNotice();
+  const { reloadScope } = usePortfolioScope();
   const confirm = useCommercialConfirm();
   const listState = useMemo(
     () => parseSellerPortfoliosDeepLink(search ?? (typeof window !== "undefined" ? window.location.search : "")),
@@ -186,6 +188,7 @@ export function SellerPortfolioDetailPage({
     () => {
       reload({ silent: true });
       reloadAudit();
+      reloadScope();
     },
     { portfolioId },
   );
@@ -219,6 +222,7 @@ export function SellerPortfolioDetailPage({
       setPortfolio(updated);
       notifySuccess("Carteira desativada com sucesso.");
       reloadAudit();
+      reloadScope();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao desativar carteira.");
     }
@@ -231,6 +235,7 @@ export function SellerPortfolioDetailPage({
       setPortfolio(updated);
       notifySuccess("Carteira reativada com sucesso.");
       reloadAudit();
+      reloadScope();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao reativar carteira.");
     }
@@ -249,6 +254,7 @@ export function SellerPortfolioDetailPage({
     try {
       await purgeSellerPortfolio(portfolio.id);
       notifySuccess("Carteira excluída com sucesso.");
+      reloadScope();
       goToList();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao excluir carteira.");
@@ -314,6 +320,7 @@ export function SellerPortfolioDetailPage({
       setPortfolio(updated);
       notifySuccess("Usuário adicionado à carteira.");
       reloadAudit();
+      reloadScope();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao adicionar usuário.");
     } finally {
@@ -329,6 +336,7 @@ export function SellerPortfolioDetailPage({
       setPortfolio(updated);
       notifySuccess("Usuário removido da carteira.");
       reloadAudit();
+      reloadScope();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao remover usuário.");
     } finally {
@@ -344,6 +352,7 @@ export function SellerPortfolioDetailPage({
       setPortfolio(updated);
       notifySuccess("Responsável atualizado.");
       reloadAudit();
+      reloadScope();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao definir responsável.");
     } finally {

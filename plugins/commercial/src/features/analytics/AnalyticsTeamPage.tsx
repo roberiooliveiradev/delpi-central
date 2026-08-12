@@ -34,7 +34,7 @@ type AnalyticsTeamPageProps = {
 };
 
 export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
-  const { sellers, loading: scopeLoading } = usePortfolioScope();
+  const { sellers, loading: scopeLoading, reloadScope } = usePortfolioScope();
   const [rows, setRows] = useState<TeamRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +139,13 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
           title={ANALYTICS_CONTENT.equipe.title}
           hint={ANALYTICS_CONTENT.equipe.subtitle}
         />
-        <ActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+        <ActionButton
+          variant="ghost"
+          onClick={() => {
+            reloadScope();
+            setReloadKey((v) => v + 1);
+          }}
+        >
           <RefreshCw size={16} aria-hidden="true" /> Atualizar
         </ActionButton>
       </header>
