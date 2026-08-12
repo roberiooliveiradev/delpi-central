@@ -4,7 +4,7 @@
   "name": "Transformômetro",
   "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
   "icon": "gauge",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -58,27 +58,39 @@
       "module": "transformometro"
     },
     {
+      "code": "transformometro.branch.filial-01",
+      "name": "Escopo Filial 01",
+      "description": "Segrega o acesso à filial 01. Combinar com capacidades (view/manage/sign/features).",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.branch.filial-02",
+      "name": "Escopo Filial 02",
+      "description": "Segrega o acesso à filial 02. Combinar com capacidades (view/manage/sign/features).",
+      "module": "transformometro"
+    },
+    {
       "code": "transformometro.view.filial-01",
-      "name": "Visualizar Transformômetro — Filial 01",
-      "description": "Acesso de leitura aos dados operacionais da filial 01.",
+      "name": "Visualizar Transformômetro — Filial 01 (legado)",
+      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-01 para leitura.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.view.filial-02",
-      "name": "Visualizar Transformômetro — Filial 02",
-      "description": "Acesso de leitura aos dados operacionais da filial 02.",
+      "name": "Visualizar Transformômetro — Filial 02 (legado)",
+      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-02 para leitura.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.manage.filial-01",
-      "name": "Gerenciar Transformômetro — Filial 01",
-      "description": "Criar e editar processos/instâncias/revisões da filial 01.",
+      "name": "Gerenciar Transformômetro — Filial 01 (legado)",
+      "description": "Alias legado: escopo filial 01 + manage naquela filial. Preferir branch.filial-01 + *.manage.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.manage.filial-02",
-      "name": "Gerenciar Transformômetro — Filial 02",
-      "description": "Criar e editar processos/instâncias/revisões da filial 02.",
+      "name": "Gerenciar Transformômetro — Filial 02 (legado)",
+      "description": "Alias legado: escopo filial 02 + manage naquela filial. Preferir branch.filial-02 + *.manage.",
       "module": "transformometro"
     },
     {
