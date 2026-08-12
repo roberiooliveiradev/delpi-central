@@ -375,6 +375,7 @@ globais são reportados separadamente pelo gate).
 | `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
 | `cipa` | 7.9 | ✅ | ✅ `PageHeader`, `SectionCard`, `ContentCard`, `DataTable`, estados, `NavigationCard`, `IconButton`, actions/forms | ✅ | CSS local reduzido a tokens, layout de página e domínio de ata/assinatura; zero seletor `.delpi-ui-*` |
 | `commercial` | 7.10 | ✅ | ✅ wrappers/factories `Commercial*`; helpers e shells mortos removidos | ✅ | prefixo `cm`; conteúdo de ajuda sem detalhes HTTP/Protheus; gates de source, test, lint e build |
+| `commercial` Hub Início | 7.10+ | ✅ | ✅ `SectionRouteCard`, `CatalogSearchBar`, `CommandPalette` (host-contained) | ✅ | catálogo `pluginRouteCatalog`; CSS só `cm-home-stack*`; favoritos via commercial-api |
 | `commercial` Pedidos+Carteira | 7.10+ | ✅ | ✅ chrome operacional → kit (`TableFontSizeControls`, `DataListToolbar`, `DataCardsGrid`, `InteractiveDataCard`, `usePersistedViewLayout`) | ✅ | storage keys `commercial:open-orders:*` / `commercial:customers:*`; CSS local de toolbar/cards removido |
 
 ### DoD de um plugin na Fase 7
