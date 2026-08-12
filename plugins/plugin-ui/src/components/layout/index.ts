@@ -358,6 +358,15 @@ export {
   type NavigationCardProps,
 } from "./NavigationCard";
 export {
+  SectionRouteCard,
+  createDashboardSectionRouteCard,
+  sectionRouteCardBemClasses,
+  type DashboardSectionRouteCardProps,
+  type SectionRouteCardClassNames,
+  type SectionRouteCardProps,
+  type SectionRouteItem,
+} from "./SectionRouteCard";
+export {
   PreviewDetailCard,
   createDashboardPreviewDetailCard,
   previewDetailCardBemClasses,

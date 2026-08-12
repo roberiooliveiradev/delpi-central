@@ -78,6 +78,42 @@ Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
 
 ---
 
+## `SectionRouteCard`
+
+Card de seção (1º nível) com lista de aplicações/sub-rotas (2º nível). Badges e pin
+de favorito são opcionais; atalhos `kind: "create"` não exibem pin.
+
+```tsx
+const CommercialSectionRouteCard = createDashboardSectionRouteCard({
+  classNames: sectionRouteCardBemClasses("cm"),
+});
+
+<CommercialSectionRouteCard
+  title="Operação"
+  description="Fila do dia, pedidos e carteira."
+  icon={<ClipboardList size={20} />}
+  routes={[
+    { id: "tasks", label: "Minhas tarefas", onClick: openTasks, badge: 3 },
+    {
+      id: "late",
+      label: "Em atraso",
+      onClick: openLate,
+      pinned: true,
+      onPinClick: togglePin,
+      pinLabel: "Adicionar aos favoritos",
+      unpinLabel: "Remover dos favoritos",
+    },
+  ]}
+/>
+```
+
+Props principais: `title`, `icon`, `badge`, `description`, `routes`, `classNames`.
+Em `routes[]`: `id`, `label`, `onClick`, `badge`, `pinned`, `onPinClick`, `kind`.
+
+CSS: `styles/section-route-card.css` (tokens `--delpi-ui-*` apenas).
+
+---
+
 ## `PagePath`
 
 Breadcrumb semântico (`nav` + `ol`) para páginas internas. `back` e `current` são
