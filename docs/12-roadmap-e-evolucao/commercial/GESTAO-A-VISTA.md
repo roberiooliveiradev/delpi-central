@@ -107,10 +107,23 @@ Universo = carteiras **ativas**. Filtro MFE: `accounts.team.view || manage`. CTA
 ## Backend P0 (realtime)
 
 `portfolio.changed` deve fan-out para sala WS **`team`** (gestores manage), além de `user:{member}`.
+**Status:** entregue em `commercial_realtime_notify.notify_portfolio_changed`.
 
-## Backlog (não nesta wave)
+## Backlog — export (não nesta wave)
 
-- Export CSV/Excel OTD/Opp / WEG novo
+Decisão D13: **não** implementar export OTD/Opp / Visão geral nesta wave.
+
+| Superfície | Formato desejado (futuro) | Notas |
+|------------|---------------------------|--------|
+| Visão geral (KPIs / série ROL) | CSV ou Excel | Respeitar filtros `useAnalyticsFilters` |
+| OTD (painel + linhas) | Excel | Incluir status/promessa; detalhe linha fora |
+| Oportunidades OV | Excel | Colunas da lista + filtros do período |
+| WEG / novos negócios | CSV | Só se houver pedido de produto |
+
+Já existe export na Administração: **Exportar matriz** (org / load-summary) — não confundir com este backlog.
+
+## Backlog (outros — não nesta wave)
+
 - `GET /me/worklist` preview leve; list portfolios sem `customers[]`
 - Membership em ADY/OTD/OV
 - P3 CRM; remoção de plugins irmãos
