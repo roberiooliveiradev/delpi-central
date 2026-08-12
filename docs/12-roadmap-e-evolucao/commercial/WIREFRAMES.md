@@ -60,23 +60,35 @@
 
 ### WF-01R-L — Início `/`
 
-**Objetivo:** launcher + eventos. **Não** replica BI. Layout: **Funcionalidades main** · **Eventos side** (IA RH).
+**Objetivo:** hub operacional (caminhos + eventos). **Não** replica BI.  
+**Stack (topo → base):** Eventos **ou** chip «Fila em dia» → Busca → Favoritos → Recentes → grid de seções.
 
 ```text
 ┌─ PageHero ──────────────────────────────────────────────────────────────────┐
 │ PORTAL COMERCIAL · Boa tarde, {nome} · Escopo badge                         │
 │ Highlights: Follow-ups | Valor em aberto | Atrasos                          │
-│ “Selecione uma funcionalidade para começar.”                                │
+│ [CTA contextual opcional — atrasos / tarefas]                               │
 └─────────────────────────────────────────────────────────────────────────────┘
 ┌─ Top nav 6 ──────────────────────────────────────────────── Escopo ─────────┐
+│ (Ctrl/Cmd+K → CommandPalette)                                               │
 
-┌─ Funcionalidades (main ~2/3) ──────────┬─ Eventos (side ~1/3) ─────────────┐
-│ Cards featured + secondary             │ [Atualizar] [Abrir Minhas tarefas]│
-│ Visão geral · Tarefas · Pedidos · …    │ Chips só se count>0               │
-│ Propostas · OTD · Opp · Admin†         │ Lista / quiet «Em dia»            │
-│ (sem Equipe)                           │ CTA só no header                  │
-└────────────────────────────────────────┴───────────────────────────────────┘
+┌─ Eventos (se houver) ───────────────────────────────────────────────────────┐
+│ Alertas + worklist preview · [Atualizar] [Abrir Minhas tarefas]             │
+└─────────────────────────────────────────────────────────────────────────────┘
+  — ou chip «Fila em dia» (nunca empty SectionCard grande) —
+
+┌─ Caminhos e funcionalidades ────────────────────────────────────────────────┐
+│ [CatalogSearchBar  ?q=  ]                                                   │
+│ Favoritos (pin) · Últimos acessos                                           │
+│ ┌ Operação ┐ ┌ Gestão à vista ┐ ┌ Documentos ┐ ┌ Administração ┐           │
+│ │ rotas…   │ │ Visão / OTD…   │ │ Propostas  │ │ Painel…       │           │
+│ └──────────┘ └────────────────┘ └────────────┘ └───────────────┘           │
+│ (SectionRouteCard kit · badges overdue/today/late · pin favorito)           │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+Seções canônicas: **Operação · Gestão à vista · Documentos · Administração**.  
+Catálogo: `pluginRouteCatalog.ts` (só `viewId` + `search`, sem URL absoluta).
 
 ### WF-OV — Visão geral `/overview`
 

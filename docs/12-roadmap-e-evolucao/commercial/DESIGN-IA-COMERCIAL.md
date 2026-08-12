@@ -11,9 +11,9 @@ O Portal Comercial é o hub operacional e de diagnóstico: **Início** (launcher
 
 | Camada | Superfície | Objetivo |
 |--------|------------|----------|
-| **Launcher** | Início (`/`) | Hero + **Funcionalidades (main)** + **Eventos (side)** |
+| **Hub Início** | Início (`/`) | Eventos **ou** chip «Fila em dia» → busca → favoritos → recentes → seções (`SectionRouteCard`) |
 | **Diagnosis** | Visão geral (`/overview`) | Filtros + KPIs ≤8 + evolução ROL + funil — **sem** faixa Aprofundar |
-| **Focus / Action** | Minhas tarefas, Meus pedidos, OTD, Oportunidades, Propostas ADY | Filas e listas (entrada: top ou Início) |
+| **Focus / Action** | Minhas tarefas, Meus pedidos, OTD, Oportunidades, Propostas ADY | Filas e listas (entrada: top, Início ou Ctrl+K) |
 | **Detail** | Conta, detalhe OV/ADY/linha/OP | Investigation |
 | **Admin** | Administração (`/administration/*`) | Painel · Carteiras · Membros (`seller-portfolios.manage`) |
 
@@ -21,7 +21,7 @@ O Portal Comercial é o hub operacional e de diagnóstico: **Início** (launcher
 
 | Página | Traz | Não traz |
 |--------|------|----------|
-| Início | Saudação, KPIs carteira, eventos, launcher | BI ROL/funil |
+| Início | Saudação, KPIs carteira, eventos/chip, busca, favoritos, recentes, seções | BI ROL/funil |
 | Visão geral | Filtros (+carteira), KPIs, ROL, funil | Drills Aprofundar, prévia OV, Equipe |
 | Minhas tarefas | Fila follow-ups | Pedidos / ROL |
 | Meus pedidos | Linhas abertas, chip Atraso | Série OTD histórica |
@@ -41,12 +41,13 @@ Shell: TopBar flush + UnderlineNav
 Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Administração†
 ```
 
-- **Início:** PageHero (shell) + Funcionalidades + Eventos — **sem** BI da Visão geral.
+- **Início:** PageHero (shell + CTA contextual) + stack Eventos/chip → busca → favoritos → recentes → grid de seções — **sem** BI da Visão geral.
 - **Visão geral:** PageHero + filtros (datas, competência, filial, segmento, **carteira**) + KPIs + charts; **sem** Aprofundar.
-- **Minhas tarefas:** `/my-tasks` (alias `/my-day`).
+- **Minhas tarefas:** `/my-tasks` (alias `/my-day`); atalho hub `?createTask=1`.
 - Escopo no chrome = **identidade**; filtro de carteira nas listas/analytics = `SellerScopeFilter`.
-- Propostas / OTD / Oportunidades: **não** na top — **launcher Início** (não drill Overview).
+- Propostas / OTD / Oportunidades: **não** na top — **catálogo Início** / CommandPalette (não drill Overview).
 - Equipe analítica: **depreciada** → Administração.
+- Atalho global: **Ctrl/Cmd+K** → `CommandPalette` host-contained.
 
 ### Administração
 
@@ -72,12 +73,10 @@ Fonte única: `plugins/commercial/src/content/helpTooltips.ts` (`CM_HELP`). Page
 | Tema | Referência | Decisão Delpi |
 |------|------------|---------------|
 | Top nav + home launcher | Portal RH (IA) | Sim — visual Comercial (**não** clonar CSS RH) |
-| Apps main + eventos side | Portal RH | Início 2 colunas |
-| Home = ação | HubSpot Sales Workspace | Eventos + atalhos; BI em `/overview` |
-| Filtros + KPIs + funil | dashboard-comercial (legado) | Visão geral nativa (**não** hostear) |
-| Tiles hierárquicos | Bento / Linear–Notion | NavigationCard `featured` |
-| Worklist | Pipedrive Activities | «Minhas tarefas» / Eventos Início |
-| Row → detalhe | Grids admin + link identidade | C17 DataTable |
+| Apps main + eventos side | Portal RH | **Supersedido** — stack vertical Eventos → busca → seções |
+| Home = ação | HubSpot / Linear | Eventos + catálogo + Ctrl+K; BI em `/overview` |
+| Tiles hierárquicos | SAP Fiori / hub SaaS | `SectionRouteCard` (seção → rotas) |
+| Busca de apps | Notion / Linear | `CatalogSearchBar` + `?q=` + CommandPalette |
 
 ## Alinhamento `.cursor`
 
@@ -101,7 +100,10 @@ Bindings via `plugins/commercial/src/app/commercialUi.ts` (`Commercial*` / `crea
 | Top / Escopo | TopBar, ScopeChipBar, StatusBadge | Commercial* | Usar |
 | Filtros | FiltersKit, Date/Select/MultiSelect | cmFiltersKit, Commercial*Field | Usar |
 | Carteira (filtro) | SelectField | SellerScopeFilter | Usar |
-| Launcher card | NavigationCard `density=featured` | CommercialNavigationCard | Usar |
+| Launcher card (legado) | NavigationCard `density=featured` | CommercialNavigationCard | Só fora do Início |
+| Hub seção→rotas | SectionRouteCard | CommercialSectionRouteCard | Usar (Início) |
+| Busca catálogo | CatalogSearchBar | CommercialCatalogSearchBar | Usar (Início) |
+| Command palette | CommandPalette (host-contained) | CommercialCommandPalette | Usar (shell) |
 | Ações | ActionButton | CommercialActionButton | Usar |
 | KPI | MetricKpiCard | CommercialMetricCard (`onClick` opcional) | Usar |
 | Seção / Empty / Loading | SectionCard, EmptyState, LoadingActivityCard | Commercial* | Usar |
@@ -109,9 +111,9 @@ Bindings via `plugins/commercial/src/app/commercialUi.ts` (`Commercial*` / `crea
 | Alertas / Worklist | AlertQueue, WorklistItem | Commercial* | Usar |
 | Help | HelpTooltip + `CM_HELP` | — | Usar |
 | Charts | Recharts + EmptyState | SectionCard | MFE-only |
-| Layout Início 2 colunas | — | CSS `cm-home-*` | MFE-only |
+| Layout Início stack | — | CSS `cm-home-stack` / `cm-home-sections-grid` | MFE-only |
 
-**Não criar** componentes novos no kit nesta wave. `components/KpiCard.tsx` reexporta `CommercialKpiCard` (deprecated).
+Catálogo de rotas: `plugins/commercial/src/content/pluginRouteCatalog.ts` (caps + keywords + kind create/navigate).
 
 ## UX
 
