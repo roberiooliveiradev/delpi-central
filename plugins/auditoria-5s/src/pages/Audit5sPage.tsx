@@ -13,7 +13,6 @@ import {
   fetchAreas,
   fetchAudit,
   fetchAudits,
-  joinAudit,
   reopenEvaluation,
   saveResponse,
   updateAudit,
@@ -146,7 +145,7 @@ export function Audit5sPage({ pathname, search }: Props) {
     setError(null);
     setSuccess(null);
     try {
-      const detail = await joinAudit(auditId);
+      const detail = await fetchAudit(auditId);
       setSelectedAudit(detail);
       setObservationDrafts({});
       setActiveSenso(1);
@@ -219,7 +218,7 @@ export function Audit5sPage({ pathname, search }: Props) {
     setError(null);
     setSuccess(null);
     try {
-      const detail = await joinAudit(auditId);
+      const detail = await fetchAudit(auditId);
       if (!canAccessNc(detail.status)) {
         setError("Conclua a avaliação dos critérios antes de tratar as não conformidades.");
         return;

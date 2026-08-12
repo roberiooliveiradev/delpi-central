@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import asyncio
 from collections import defaultdict
 from typing import Any
 
 from delpi_auth.jwt_validator import validate_token
 
-from app.composition.audit_5s_composer import build_audit_5s_repository
 from app.shared.utils.person_name import format_person_name
 from app.interface.socket.sio_server import sio
-from app.utils.logger import log_error
 
 _audit_presence: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
 _observation_typing: dict[str, dict[str, dict[str, dict[str, str]]]] = defaultdict(lambda: defaultdict(dict))
@@ -118,15 +115,6 @@ def _remove_sid_from_observation_typing(
     return affected
 
 
-def _register_auditor_sync(audit_id: str, user_id: str, display_name: str) -> None:
-    repo = build_audit_5s_repository()
-    repo.ensure_auditor(
-        audit_id=audit_id,
-        user_id=user_id,
-        display_name=display_name,
-    )
-
-
 async def _clear_observation_typing_for_sid(
     sid: str,
     audit_id: str | None = None,
@@ -197,20 +185,13 @@ def register_audit_5s_socket_handlers() -> None:
         if not user_id:
             return
 
+        # Presença em memória apenas — não grava em audit_5s_auditors.
+        # Auditores do cabeçalho só mudam via create/update HTTP.
         await sio.enter_room(sid, _room(audit_id))
         _audit_presence[audit_id][sid] = {
             "user_id": user_id,
             "display_name": display_name,
         }
-        try:
-            await asyncio.to_thread(
-                _register_auditor_sync,
-                audit_id,
-                user_id,
-                display_name,
-            )
-        except Exception as exc:
-            log_error(f"Erro ao registrar auditor 5S no join: {exc}")
         await _broadcast_presence(audit_id)
 
     @sio.on("audit5s.leave")
