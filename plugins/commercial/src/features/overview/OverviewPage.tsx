@@ -145,6 +145,13 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               customer_segment: filters.apiParams.customer_segment,
               seller_id: filters.apiParams.seller_id,
             }}
+            onDrillDown={(dateStart, dateEnd) => {
+              filters.replaceDateFilters({
+                dateStart,
+                dateEnd,
+                competence: "",
+              });
+            }}
           />
         </SectionCard>
         <SectionCard

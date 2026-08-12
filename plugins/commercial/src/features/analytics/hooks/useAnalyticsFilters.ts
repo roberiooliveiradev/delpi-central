@@ -168,6 +168,7 @@ export function useAnalyticsFilters() {
     setDateStart,
     setDateEnd,
     setCompetence,
+    replaceDateFilters: replaceAll,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setCustomerSegment: useCallback(
       (v: AnalyticsFilterUrlState["customerSegment"]) => setCustomerSegmentState(v),

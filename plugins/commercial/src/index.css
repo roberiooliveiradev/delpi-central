@@ -669,6 +669,20 @@
   min-height: 200px;
 }
 
+.dashboard-commercial .cm-rol-series {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-rol-series__hint {
+  margin: 0;
+  font-size: var(--cm-font-sm, 0.875rem);
+  color: var(--cm-muted, var(--muted, #64748b));
+  line-height: 1.4;
+}
+
 .dashboard-commercial .cm-open-orders-page__scope {
   display: flex;
   align-items: flex-end;

@@ -204,4 +204,4 @@ export type SalesOrderOtdLineDetailData = {
   line: SalesOrderOtdLineItem;
 };
 
-export type ChartGranularity = "day" | "week" | "month";
+export type ChartGranularity = "day" | "week" | "month" | "year";
