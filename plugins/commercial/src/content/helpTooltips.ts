@@ -302,8 +302,8 @@ export const CM_HELP = {
       "Clientes da carteira com pedido em atraso (entrega < hoje e saldo > 0). Exibe — se a agregação falhar.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
     layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
-    shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra a árvore carteira ↔ pessoa.",
-    orgAxisToggle: "Agrupe a organização por carteira (membros abaixo) ou por pessoa (carteiras abaixo).",
+    shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra o organograma interativo carteira ↔ pessoa (pan/zoom).",
+    orgAxisToggle: "Inverte a raiz do organograma: por carteira (membros abaixo) ou por pessoa (carteiras abaixo).",
     orgLoadSnippet:
       "Carga compacta: clientes, valor aberto, atenção e membros (ou carteiras no eixo pessoa).",
     cardOpenHint: "Abrir carteira",

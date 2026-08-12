@@ -66,7 +66,9 @@ describe("seller-portfolios kit-first", () => {
     );
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
-    assert.match(orgSource, /formatPortfolioLoadSnippet|cm-portfolios-org-tree__load/);
+    assert.match(orgSource, /CommercialOrgMembershipFlow/);
+    assert.match(orgSource, /buildSellerPortfoliosOrgFlowModel/);
+    assert.doesNotMatch(orgSource, /cm-portfolios-org-tree/);
   });
 
   it("wizard de transferência em massa tem etapas origem→clientes→destino→confirmar", () => {

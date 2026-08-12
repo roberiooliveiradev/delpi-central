@@ -22,6 +22,7 @@ import {
   createCompactPagination,
   createDashboardInlineMeter,
   createDashboardHorizontalTimeline,
+  createDashboardOrgMembershipFlow,
   createDashboardDataListToolbar,
   createDashboardDataCardsGrid,
   createDashboardDataCardsSortBar,
@@ -108,6 +109,9 @@ export const cmStatusBadgeClassNames = statusBadgeBemClasses(UI_PREFIX);
 export const cmInlineMeterClassNames = inlineMeterBemClasses(UI_PREFIX);
 export const CommercialInlineMeter = createDashboardInlineMeter({ prefix: UI_PREFIX });
 export const CommercialHorizontalTimeline = createDashboardHorizontalTimeline({
+  prefix: UI_PREFIX,
+});
+export const CommercialOrgMembershipFlow = createDashboardOrgMembershipFlow({
   prefix: UI_PREFIX,
 });
 export const cmAlertQueueClassNames = alertQueueBemClasses(UI_PREFIX);

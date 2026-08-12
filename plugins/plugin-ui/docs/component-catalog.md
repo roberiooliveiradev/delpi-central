@@ -18,7 +18,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
 | export | TabularExportButtons, DocumentExportActions… |
 | charts | ConfigurableSeriesChart, ImpactEffortMatrix, ChartTypeCatalogPanel… |
-| preview / bpmn / shape / menu | prévias + stubs onde falta fixture |
+| preview / bpmn / org / shape / menu | prévias + organograma membership + stubs onde falta fixture |
 
 Tabela estilo **dashboard LMPS**: use a entrada `DataTable` / `DataTableSection` (não a ConfigurablePresentationTable do TV/deck).
 
@@ -437,7 +437,34 @@ Ref: `FlowchartEditorHandle` (`fitView`, `exportPng`, etc.).
 
 Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` (`delpi-ui-bpmn-editor`). Escopo: `.delpi-ui-flowchart-shell` + `shellClassName` do host. Tokens: `--delpi-ui-bpmn-*` (aliases `--tm-diagram-*` temporários).
 
-### Padrão de integração no plugin
+---
+
+## Família `org` — organograma membership (carteira ↔ pessoa)
+
+Canvas **read-only** com `@xyflow/react` para relações bipartidas (não reutiliza o editor BPMN). Layout hierárquico local (`layoutOrgMembershipForest`).
+
+Código: `src/components/org/`. CSS: `styles/org-membership-flow.css` (classes `delpi-ui-org-flow*`).
+
+### `OrgMembershipFlow`
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `nodes` / `edges` | model | Nós `{ id, kind, entityId, title, subtitle?, tone? }` e arestas `{ id, source, target }` |
+| `classNames` | BEM dual-class | Via `orgMembershipFlowBemClasses(prefix)` ou factory |
+| `emptyMessage` | `string?` | Empty state no kit |
+| `onNodeClick` | `(payload) => void` | Clique tipado por `kind` + `entityId` |
+
+Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`.
+
+```tsx
+import { createDashboardOrgMembershipFlow } from "@delpi/plugin-ui/index";
+
+const OrgFlow = createDashboardOrgMembershipFlow({ prefix: "cm" });
+```
+
+---
+
+### Padrão de integração no plugin (BPMN)
 
 Wrapper fino injeta labels, confirm e tema:
 

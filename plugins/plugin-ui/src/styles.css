@@ -1,6 +1,7 @@
 /* @delpi/plugin-ui — importar uma vez no CSS do plugin MFE */
 @import "./file-preview.css";
 @import "./styles/bpmn/index.css";
+@import "./styles/org-membership-flow.css";
 @import "./styles/shape.css";
 @import "./styles/menu.css";
 @import "./styles/chart-catalog.css";

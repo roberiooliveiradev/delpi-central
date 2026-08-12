@@ -338,6 +338,12 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("bpmn", "DiagramMermaidPreview", { updatedAt: "2026-07-30" }),
   vc("bpmn", "DiagramFullscreenFrame", { updatedAt: "2026-07-30" }),
   vc("bpmn", "TabPanelTransition", { updatedAt: "2026-07-30" }),
+  // org — organograma membership (read-only React Flow)
+  vc("org", "OrgMembershipFlow", {
+    addedAt: "2026-08-12",
+    description:
+      "Canvas read-only carteira↔pessoa (@xyflow/react): pan/zoom, fit-view, clique tipado; factory createDashboardOrgMembershipFlow.",
+  }),
   // shape
   vc("shape", "ShapeFillMenu"),
   vc("shape", "ShapeOutlineMenu"),

@@ -13,7 +13,7 @@ export * from "./components/forms";
 export * from "./components/preview";
 export * from "./components/charts";
 export * from "./components/bpmn";
-
+export * from "./components/org";
 export * from "./components/shape";
 /** Export nomeado — evita tree-shake do remote MF omitir a constante usada por hosts. */
 export {

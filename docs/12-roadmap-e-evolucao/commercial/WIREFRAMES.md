@@ -524,33 +524,33 @@ Linha / card → `/seller-portfolios/:id` (preserva `q`/`filter`/`view`/`axis` n
 
 ### WF-05R-ORG — Visão Organização
 
-**Rota:** mesma lista com `?view=org&axis=portfolio|person`  
+**Rota:** mesma lista com `?view=org&axis=portfolio|person`
 **Toggle shell:** Lista | Organização. **Eixo:** Por carteira | Por pessoa.
 
 ```
 ┌─ Organização ──────────────────────────────────────────────────────────┐
 │ Eixo [Por carteira] [Por pessoa]                                       │
 │                                                                        │
-│ (Por carteira)                                                         │
-│ · Sul · 18 cli · — · Atenção — · 3 membros                             │
-│     Ana Silva · Pedro Costa · Lia Mendes                               │
-│ · Norte · 12 cli · — · Atenção — · 2 membros                           │
-│     Bruno Alves · Carla Dias                                           │
-│                                                                        │
-│ (Por pessoa)                                                           │
-│ · Ana Silva · 20 cli · — · Atenção — · 2 carteiras                     │
-│     Sul · Especial                                                     │
-│ · Pedro Costa · 18 cli · — · Atenção — · 1 carteira                    │
-│     Sul                                                                │
+│ ┌─ canvas (pan / zoom / fit) ────────────────────────────────────────┐ │
+│ │   [📁 Sul]                                                         │ │
+│ │      │                                                             │ │
+│ │      ├── [👤 Ana Silva]                                            │ │
+│ │      └── [👤 Pedro Costa]                                          │ │
+│ │   subtítulo KPI no nó: 18 cli · — · Atenção — · 3 membros          │ │
+│ │                                                                    │ │
+│ │ (Por pessoa inverte raiz↔filhos: pessoa no topo, carteiras abaixo) │ │
+│ └────────────────────────────────────────────────────────────────────┘ │
+│ Controles: zoom +/- · minimap · clique na carteira → detalhe           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-**E6.2 — KPIs de carga:** snippet no nó (`cli · valor aberto · Atenção · membros|carteiras`).
+**Canvas:** `OrgMembershipFlow` (`@delpi/plugin-ui`) + `@xyflow/react` — não é árvore HTML nem editor BPMN.
+**E6.2 — KPIs de carga:** snippet no subtítulo do nó (`cli · valor aberto · Atenção · membros|carteiras`).
 `customer_count` / `member_count` vêm de `GET /seller-portfolios/load-summary` (Postgres).
 `open_value` / `attention_count` ficam `null` (UI «—») até agregação TOTVS barata
 (`totvs_metrics.available=false`, reason `open_orders_aggregation_not_wired`).
 
-Clique no nome da carteira → WF-05R-D. Empty + CTA Nova carteira se filtro zerar a árvore.
+Clique no nó **carteira** → WF-05R-D. Empty + CTA Nova carteira se filtro zerar o dataset.
 
 ### Escopo operacional (bancadas)
 

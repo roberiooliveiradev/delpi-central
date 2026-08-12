@@ -344,59 +344,13 @@
   grid-column: 1 / -1;
 }
 
-.dashboard-commercial .cm-portfolios-org-tree {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__node {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__person {
-  font-weight: 600;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 12px;
-  min-width: 0;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__load {
-  color: var(--cm-text-muted);
-  font-size: 13px;
-  min-width: 0;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__load--child {
-  margin-left: 8px;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__children {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-  padding: 0 0 0 16px;
-  list-style: disc;
-}
 
-.dashboard-commercial .cm-portfolios-org-tree__empty {
-  margin: 0;
-  padding-left: 16px;
-  color: var(--cm-text-muted);
-  font-size: 13px;
-}
 
 @media (max-width: 768px) {
   .dashboard-commercial .cm-home-kpi-grid {
