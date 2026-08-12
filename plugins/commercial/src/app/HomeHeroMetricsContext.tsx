@@ -7,12 +7,22 @@ import {
   type ReactNode,
 } from "react";
 
+import type { PluginNavigationTarget } from "./pluginRoutes";
+
+export type HomeHeroContextualCta = {
+  id: "orders_late" | "tasks_overdue" | "tasks_today";
+  label: string;
+  viewId: PluginNavigationTarget;
+  search?: string;
+};
+
 export type HomeHeroMetrics = {
   /** null = ainda carregando / indisponível */
   valorAberto: number | null;
   atrasos: number | null;
   followUps: number | null;
   ready: boolean;
+  contextualCta: HomeHeroContextualCta | null;
 };
 
 const EMPTY_METRICS: HomeHeroMetrics = {
@@ -20,6 +30,7 @@ const EMPTY_METRICS: HomeHeroMetrics = {
   atrasos: null,
   followUps: null,
   ready: false,
+  contextualCta: null,
 };
 
 type HomeHeroMetricsContextValue = {

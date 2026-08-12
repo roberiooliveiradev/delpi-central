@@ -18,6 +18,7 @@ import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginR
 import { navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
+  CommercialActionButton,
   CommercialPageHero,
   CommercialScopeChipBar,
   CommercialStatusBadge,
@@ -156,6 +157,8 @@ export function PluginShell({
     },
   ];
 
+  const contextualCta = homeMetrics?.ready ? homeMetrics.contextualCta : null;
+
   return (
     <div className="dashboard-commercial dashboard-page">
       <div className="cm-page-stack">
@@ -179,6 +182,21 @@ export function PluginShell({
                 )
               }
               highlights={heroHighlights}
+              actions={
+                contextualCta ? (
+                  <CommercialActionButton
+                    variant="primary"
+                    onClick={() =>
+                      navigatePluginView(contextualCta.viewId, {
+                        basePath,
+                        search: contextualCta.search,
+                      })
+                    }
+                  >
+                    {contextualCta.label}
+                  </CommercialActionButton>
+                ) : undefined
+              }
             />
           </CommercialViewTransition>
         ) : null}
@@ -195,8 +213,6 @@ export function PluginShell({
               ? `${item.label}. ${NAV_HELP[item.id]}`
               : item.label,
             onSelect: () =>
-              // Nav de topo: path limpo. Não reaproveitar query da view atual
-              // (ex.: ?pedido=&linha= reabre detalhe; datas da Visão geral vazam em Pedidos).
               navigatePluginView(item.id, { basePath }),
           }))}
           actions={
