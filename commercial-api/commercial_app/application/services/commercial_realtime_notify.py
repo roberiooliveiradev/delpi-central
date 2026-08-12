@@ -78,7 +78,7 @@ def _safe_label(value: str | None) -> str | None:
 
 
 def resolve_user_display_name(user_id: str | None) -> str:
-    """Nome amigável via carteira; nunca devolve UUID."""
+    """Nome amigável via membership N:N; nunca devolve UUID."""
     cleaned = (user_id or "").strip()
     if not cleaned:
         return "Alguém"
@@ -87,7 +87,9 @@ def resolve_user_display_name(user_id: str | None) -> str:
             build_seller_portfolio_repository,
         )
 
-        portfolio = build_seller_portfolio_repository().get_by_user_id(cleaned)
+        repo = build_seller_portfolio_repository()
+        portfolios = repo.list_by_user_id(cleaned, active_only=True)
+        portfolio = portfolios[0] if portfolios else repo.get_by_user_id(cleaned)
         name = _safe_label(portfolio.display_name if portfolio else None)
         if name:
             return name

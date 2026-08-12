@@ -177,7 +177,10 @@ def test_reassign_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch
 
     fake_uc = MagicMock()
     fake_uc.reassign_task.return_value = _sample_task()
+    fake_tasks = MagicMock()
+    fake_tasks.get_by_id.return_value = _sample_task()
     monkeypatch.setattr(worklist_routes, "_use_case", lambda: fake_uc)
+    monkeypatch.setattr(worklist_routes, "build_task_repository", lambda: fake_tasks)
     monkeypatch.setattr(worklist_routes, "_user_id", lambda _req: "user-rbac-test")
     monkeypatch.setattr(worklist_routes, "_is_portfolio_manager", lambda _req: True)
 

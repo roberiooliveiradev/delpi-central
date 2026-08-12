@@ -290,8 +290,25 @@ class InMemoryPortfolioRepo:
     def __init__(self, user_ids: Sequence[str]) -> None:
         self._ids = list(user_ids)
 
+    def list_member_user_ids(self, *, active_portfolios_only: bool = True) -> list[str]:
+        return list(self._ids)
+
     def list_portfolios(self, *, active_only: bool = False) -> list[FakePortfolio]:
-        return [FakePortfolio(uid) for uid in self._ids]
+        # Só o owner espelhado em seller_portfolios.user_id — membros extras vêm de list_member_user_ids.
+        return [FakePortfolio(self._ids[0])] if self._ids else []
+
+
+def test_team_user_ids_includes_portfolio_members_not_only_owner():
+    """Membros N:N entram na equipe mesmo sem espelho em seller_portfolios.user_id."""
+    portfolios = InMemoryPortfolioRepo(["owner-1", "helper-1", "helper-2"])
+    uc = ManageWorklistUseCase(
+        task_repository=InMemoryTaskRepo(),
+        activity_repository=InMemoryActivityRepo(),
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+    assert uc.team_user_ids() == {"owner-1", "helper-1", "helper-2"}
+    # list_portfolios sozinho não bastaria (só owner).
+    assert {p.user_id for p in portfolios.list_portfolios(active_only=True)} == {"owner-1"}
 
 
 def test_worklist_buckets_and_complete():

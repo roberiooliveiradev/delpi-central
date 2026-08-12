@@ -133,3 +133,28 @@ def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):
 
 def test_user_room_key():
     assert user_room("seller-a") == "user:seller-a"
+
+
+def test_resolve_user_display_name_uses_first_portfolio_from_membership(monkeypatch):
+    import sys
+    import types
+
+    from commercial_app.application.services import commercial_realtime_notify as notify
+
+    class _Portfolio:
+        def __init__(self, display_name: str) -> None:
+            self.display_name = display_name
+
+    class _Repo:
+        def list_by_user_id(self, user_id: str, *, active_only: bool = True):
+            assert user_id == "helper-1"
+            assert active_only is True
+            return [_Portfolio("Carteira Equipe"), _Portfolio("Outra")]
+
+        def get_by_user_id(self, user_id: str):
+            raise AssertionError("list_by_user_id deve ser preferido")
+
+    fake_composer = types.ModuleType("commercial_app.composition.commercial_composer")
+    fake_composer.build_seller_portfolio_repository = lambda: _Repo()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "commercial_app.composition.commercial_composer", fake_composer)
+    assert notify.resolve_user_display_name("helper-1") == "Carteira Equipe"

@@ -43,6 +43,13 @@ class ManageAttachmentsUseCase:
     def team_user_ids(self) -> set[str]:
         if self._portfolios is None:
             return set()
+        list_members = getattr(self._portfolios, "list_member_user_ids", None)
+        if callable(list_members):
+            return {
+                str(uid).strip()
+                for uid in list_members(active_portfolios_only=True)
+                if str(uid or "").strip()
+            }
         return {
             str(item.user_id).strip()
             for item in self._portfolios.list_portfolios(active_only=True)
