@@ -322,7 +322,7 @@ export const CM_HELP = {
     exportOrgMatrix:
       "Gera planilha Excel da matriz de organização (carteira, membros, clientes e valor aberto).",
     auditTimeline:
-      "Registro de mudanças na carteira: membros, responsável, transferência de clientes e ativação.",
+      "Registro completo da carteira: vínculo/desvínculo de clientes, membros, responsável, transferência, nome e ativação.",
   },
   analytics: {
     ovStatus: "Etapa atual da oportunidade comercial.",
