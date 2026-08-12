@@ -155,18 +155,21 @@ Decisão D13: **não** implementar export OTD/Opp / Visão geral nesta wave.
 
 ## Homologação (refino visual)
 
-| # | Papel / cap | Conferir |
-|---|-------------|----------|
-| 1 | Vendedor | Início 2 colunas; sem Equipe no launcher; Minhas tarefas |
-| 2 | Analytics | Visão geral sem Aprofundar; filtro carteira†; OTD/Opp via Início |
-| 3 | Team | Filtro carteira; `/analytics/team` → Admin |
-| 4 | Manage | Administração; empty pedidos → Admin |
-| 5 | Carteira tabela | Clique linha **e** coluna Cliente → Conta |
-| 6 | Conta Opp | Lista OV real (não placeholder) |
+Rebuild sequencial (dev, ago/2026): `plugin-ui` → `commercial` → `api-delpi` (core) — imagens recriadas; sem regressão de build.
+
+| # | Papel / cap | Conferir | Status build |
+|---|-------------|----------|--------------|
+| 1 | Vendedor | Início 2 colunas; sem Equipe no launcher; Minhas tarefas | Pronto p/ smoke UI |
+| 2 | Analytics | Visão geral sem Aprofundar; filtro carteira†; OTD/Opp via Início | Pronto p/ smoke UI |
+| 3 | Team | Filtro carteira; `/analytics/team` → Admin | Redirect + testes |
+| 4 | Manage | Administração; empty pedidos → Admin | Pronto p/ smoke UI |
+| 5 | Carteira tabela | Clique linha **e** coluna Cliente → Conta (C17) | Testes estruturais |
+| 6 | Conta Opp | Lista OV real (não placeholder) | Entregue |
+| 7 | Helps | `CM_HELP` matriz + PageHero/filtros | Teste C16 |
 
 ```bash
 ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build commercial
-# se C8.7 api-delpi:
-./infra/scripts/up-dev-sequential.sh --fase api --build api-delpi
+# C8.7 customer_codes (api-delpi vive na fase core em dev):
+./infra/scripts/up-dev-sequential.sh --fase core --build api-delpi
 ```

@@ -93,3 +93,5 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 - [ ] Directory picker: usuário sem `app=commercial` não aparece; com acesso aparece
 - [ ] Re-grant pós-deploy concluído nos papéis afetados
 - [ ] Migration `V005` aplicada (`up` só — nunca `reset`) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
+- [ ] Refino visual: Início sem Equipe; Visão geral sem Aprofundar; `/analytics/team` → Admin
+- [ ] Clique Minha Carteira (linha + Cliente) abre Conta; Opp Conta lista real
