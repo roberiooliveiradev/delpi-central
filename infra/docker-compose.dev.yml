@@ -1872,6 +1872,7 @@ services:
 
     volumes:
       - ../gateway/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ../gateway/snippets:/etc/nginx/snippets:ro
 
     # Nginx resolve plugins sob demanda (delpi-{id}). Evita rebuild de todos os MFEs ao subir o gateway.
     depends_on:
