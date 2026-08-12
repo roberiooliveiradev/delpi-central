@@ -1,11 +1,12 @@
 import { useMemo, useState, type FormEvent } from "react";
 
+import { SignatureCapturePanel } from "@delpi/plugin-ui/index";
+
 import {
   submitPublicRefuse,
   submitPublicSign,
   type PublicSignContext,
 } from "./api";
-import { SimpleSignaturePad } from "./SimpleSignaturePad";
 import "./sign.css";
 
 type Phase = "form" | "submitting" | "done" | "refused";
@@ -47,7 +48,7 @@ export function SignPage({ context, token }: Props) {
       return;
     }
     if (!png) {
-      setError("Desenhe a assinatura antes de confirmar.");
+      setError("Capture a assinatura antes de confirmar.");
       return;
     }
     setPhase("submitting");
@@ -129,7 +130,13 @@ export function SignPage({ context, token }: Props) {
           <span>{context.terms}</span>
         </label>
 
-        <SimpleSignaturePad disabled={phase === "submitting"} onChange={setPng} />
+        <SignatureCapturePanel
+          disabled={phase === "submitting"}
+          displayName={name}
+          showPreview
+          padProps={{ className: "delpi-ui-signature-pad--tall" }}
+          onChange={setPng}
+        />
 
         {error ? <p className="tm-sign__error">{error}</p> : null}
 
