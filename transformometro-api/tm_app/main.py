@@ -32,6 +32,7 @@ from tm_app.application.services.transformometro_realtime_hub import (
 )
 from tm_app.interface.http.routes.realtime_routes import router as realtime_router
 from tm_app.middleware.auth_middleware import jwt_middleware
+from tm_app.middleware.path_alias_middleware import path_alias_middleware
 from tm_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
 logging.basicConfig(
@@ -102,6 +103,7 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
 
 
 app.middleware("http")(jwt_middleware)
+app.middleware("http")(path_alias_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
