@@ -7,7 +7,9 @@ from uuid import UUID
 from commercial_app.domain.entities.task import (
     CommercialActivity,
     CommercialTask,
+    TaskAssigneeGroupRef,
     TaskCustomerRef,
+    normalize_assignee_group_ids,
     normalize_assignee_user_ids,
     normalize_task_customers,
 )
@@ -21,13 +23,13 @@ from commercial_app.infrastructure.persistence.plugins.plugin_base_repository im
 
 _TASK_COLUMNS = """
     id, title, description, task_type, status, priority, due_at, completed_at,
-    assignee_user_id, created_by_user_id, customer_code, customer_store,
+    completed_by_user_id, assignee_user_id, created_by_user_id, customer_code, customer_store,
     created_at, updated_at
 """
 
 _TASK_COLUMNS_ALIASED = """
     t.id, t.title, t.description, t.task_type, t.status, t.priority, t.due_at, t.completed_at,
-    t.assignee_user_id, t.created_by_user_id, t.customer_code, t.customer_store,
+    t.completed_by_user_id, t.assignee_user_id, t.created_by_user_id, t.customer_code, t.customer_store,
     t.created_at, t.updated_at
 """
 
@@ -71,6 +73,11 @@ def _row_task_base(row: dict[str, Any] | None) -> CommercialTask | None:
         priority=row["priority"],
         due_at=row.get("due_at"),
         completed_at=row.get("completed_at"),
+        completed_by_user_id=(
+            str(row["completed_by_user_id"]).strip()
+            if row.get("completed_by_user_id")
+            else None
+        ),
         assignee_user_id=row["assignee_user_id"],
         created_by_user_id=row["created_by_user_id"],
         customer_code=row.get("customer_code"),
@@ -101,10 +108,14 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
     def _load_junctions(
         self,
         task_ids: Sequence[UUID | str],
-    ) -> tuple[dict[str, list[str]], dict[str, list[TaskCustomerRef]]]:
+    ) -> tuple[
+        dict[str, list[str]],
+        dict[str, list[TaskCustomerRef]],
+        dict[str, list[TaskAssigneeGroupRef]],
+    ]:
         ids = [str(item) for item in task_ids if item]
         if not ids:
-            return {}, {}
+            return {}, {}, {}
         assignee_rows = self.fetch_all(
             """
             SELECT task_id::text AS task_id, user_id, sort_order
@@ -121,6 +132,19 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
               FROM commercial.task_customers
              WHERE task_id = ANY(%s::uuid[])
              ORDER BY sort_order ASC, customer_code ASC, customer_store ASC
+            """,
+            (ids,),
+        )
+        group_rows = self.fetch_all(
+            """
+            SELECT tag.task_id::text AS task_id,
+                   g.id::text AS group_id,
+                   g.kind,
+                   g.name
+              FROM commercial.task_assignee_groups tag
+              JOIN commercial.commercial_groups g ON g.id = tag.group_id
+             WHERE tag.task_id = ANY(%s::uuid[])
+             ORDER BY g.sort_order ASC, g.name ASC
             """,
             (ids,),
         )
@@ -142,12 +166,24 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                     ),
                 )
             )
-        return assignees, customers
+        groups: dict[str, list[TaskAssigneeGroupRef]] = {}
+        for row in group_rows:
+            tid = str(row["task_id"])
+            groups.setdefault(tid, []).append(
+                TaskAssigneeGroupRef(
+                    id=str(row["group_id"]).strip(),
+                    kind=str(row.get("kind") or "").strip(),
+                    name=str(row.get("name") or "").strip(),
+                )
+            )
+        return assignees, customers, groups
 
     def _hydrate(self, tasks: Sequence[CommercialTask]) -> list[CommercialTask]:
         if not tasks:
             return []
-        assignees_by_id, customers_by_id = self._load_junctions([task.id for task in tasks])
+        assignees_by_id, customers_by_id, groups_by_id = self._load_junctions(
+            [task.id for task in tasks]
+        )
         hydrated: list[CommercialTask] = []
         for task in tasks:
             tid = str(task.id)
@@ -162,6 +198,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                         customer_store=task.customer_store,
                     ),
                 )
+            groups = tuple(groups_by_id.get(tid) or ())
+            group_ids = tuple(group.id for group in groups)
             hydrated.append(
                 CommercialTask(
                     id=task.id,
@@ -172,6 +210,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                     priority=task.priority,
                     due_at=task.due_at,
                     completed_at=task.completed_at,
+                    completed_by_user_id=task.completed_by_user_id,
                     assignee_user_id=assignee_ids[0] if assignee_ids else task.assignee_user_id,
                     created_by_user_id=task.created_by_user_id,
                     customer_code=custs[0].customer_code if custs else task.customer_code,
@@ -180,6 +219,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                     updated_at=task.updated_at,
                     assignee_user_ids=assignee_ids,
                     customers=custs,
+                    assignee_group_ids=group_ids,
+                    assignee_groups=groups,
                 )
             )
         return hydrated
@@ -256,6 +297,37 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         if auto_commit:
             self.commit()
 
+    def _replace_groups(
+        self,
+        *,
+        task_id: UUID | str,
+        assignee_group_ids: Sequence[str],
+        auto_commit: bool = False,
+    ) -> None:
+        tid = str(task_id)
+        self.execute(
+            "DELETE FROM commercial.task_assignee_groups WHERE task_id = %s",
+            (tid,),
+            auto_commit=False,
+        )
+        values = [
+            (tid, gid)
+            for gid in assignee_group_ids
+            if gid and str(gid).strip()
+        ]
+        if values:
+            self.execute_many(
+                """
+                INSERT INTO commercial.task_assignee_groups (task_id, group_id)
+                VALUES (%s, %s)
+                ON CONFLICT (task_id, group_id) DO NOTHING
+                """,
+                values,
+                auto_commit=False,
+            )
+        if auto_commit:
+            self.commit()
+
     def _resolve_assignees(
         self,
         *,
@@ -300,9 +372,17 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                      WHERE ta.task_id = t.id
                        AND ta.user_id = %s
                 )
+                OR EXISTS (
+                    SELECT 1
+                      FROM commercial.task_assignee_groups tag
+                      JOIN commercial.commercial_group_members cgm
+                        ON cgm.group_id = tag.group_id
+                     WHERE tag.task_id = t.id
+                       AND cgm.user_id = %s
+                )
             )""",
         ]
-        params: list[Any] = [assignee_user_id, assignee_user_id]
+        params: list[Any] = [assignee_user_id, assignee_user_id, assignee_user_id]
         if status:
             clauses.append("t.status = %s")
             params.append(status)
@@ -347,9 +427,17 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                      WHERE ta.task_id = t.id
                        AND ta.user_id = ANY(%s)
                 )
+                OR EXISTS (
+                    SELECT 1
+                      FROM commercial.task_assignee_groups tag
+                      JOIN commercial.commercial_group_members cgm
+                        ON cgm.group_id = tag.group_id
+                     WHERE tag.task_id = t.id
+                       AND cgm.user_id = ANY(%s)
+                )
             )""",
         ]
-        params: list[Any] = [ids, ids]
+        params: list[Any] = [ids, ids, ids]
         if status:
             clauses.append("t.status = %s")
             params.append(status)
@@ -423,6 +511,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         customer_store: str | None,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask:
         assignees = self._resolve_assignees(
             assignee_user_id=assignee_user_id,
@@ -433,6 +522,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             customer_store=customer_store,
             customers=customers,
         )
+        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
         primary_assignee = assignees[0] if assignees else assignee_user_id
         primary_customer = custs[0] if custs else None
         row = self.execute_returning_one(
@@ -463,6 +553,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         try:
             self._replace_assignees(task_id=task.id, assignee_user_ids=assignees)
             self._replace_customers(task_id=task.id, customers=custs)
+            self._replace_groups(task_id=task.id, assignee_group_ids=groups)
             self.commit()
         except Exception:
             self.rollback()
@@ -470,19 +561,26 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         hydrated = self._hydrate([task])
         return hydrated[0]
 
-    def complete(self, *, task_id: UUID) -> CommercialTask | None:
+    def complete(
+        self,
+        *,
+        task_id: UUID,
+        completed_by_user_id: str | None = None,
+    ) -> CommercialTask | None:
+        completed_by = (completed_by_user_id or "").strip() or None
         row = self.execute_returning_one(
             f"""
             UPDATE commercial.tasks
                SET status = 'done',
                    completed_at = NOW(),
+                   completed_by_user_id = %s,
                    updated_at = NOW()
              WHERE id = %s
                AND deleted_at IS NULL
                AND status = 'open'
          RETURNING {_TASK_COLUMNS}
             """,
-            (str(task_id),),
+            (completed_by, str(task_id)),
         )
         base = _row_task_base(row)
         return self._hydrate([base])[0] if base else None
@@ -514,6 +612,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         task_id: UUID,
         new_assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         assignees = self._resolve_assignees(
             assignee_user_id=new_assignee_user_id,
@@ -521,6 +620,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         if not assignees:
             return None
+        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
         primary = assignees[0]
         row = self.execute_returning_one(
             f"""
@@ -541,6 +641,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             return None
         try:
             self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
+            if assignee_group_ids is not None:
+                self._replace_groups(task_id=task_id, assignee_group_ids=groups)
             self.commit()
         except Exception:
             self.rollback()
@@ -561,6 +663,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         assignees = self._resolve_assignees(
             assignee_user_id=assignee_user_id,
@@ -571,6 +674,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             customer_store=customer_store,
             customers=customers,
         )
+        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
         primary_assignee = assignees[0] if assignees else assignee_user_id
         primary_customer = custs[0] if custs else None
         row = self.execute_returning_one(
@@ -610,6 +714,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         try:
             self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
             self._replace_customers(task_id=task_id, customers=custs)
+            if assignee_group_ids is not None:
+                self._replace_groups(task_id=task_id, assignee_group_ids=groups)
             self.commit()
         except Exception:
             self.rollback()

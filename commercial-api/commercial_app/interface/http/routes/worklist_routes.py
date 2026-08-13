@@ -233,6 +233,7 @@ def create_task(request: Request, body: CreateTaskBody):
                 customer_store=body.customer_store,
                 assignee_user_id=body.assignee_user_id,
                 assignee_user_ids=body.assignee_user_ids,
+                assignee_group_ids=body.assignee_group_ids,
                 customers=_customers_from_body(body.customers),
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
@@ -276,6 +277,7 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
                 customer_store=body.customer_store,
                 assignee_user_id=body.assignee_user_id,
                 assignee_user_ids=body.assignee_user_ids,
+                assignee_group_ids=body.assignee_group_ids,
                 customers=_customers_from_body(body.customers),
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
@@ -373,6 +375,7 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
             task_id=task_id,
             new_assignee_user_id=body.assignee_user_id,
             assignee_user_ids=body.assignee_user_ids,
+            assignee_group_ids=body.assignee_group_ids,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
         _notify_task_change(

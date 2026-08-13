@@ -64,11 +64,17 @@ class TaskRepositoryPort(ABC):
         customer_store: str | None,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask:
         raise NotImplementedError
 
     @abstractmethod
-    def complete(self, *, task_id: UUID) -> CommercialTask | None:
+    def complete(
+        self,
+        *,
+        task_id: UUID,
+        completed_by_user_id: str | None = None,
+    ) -> CommercialTask | None:
         """Marca tarefa aberta como concluída (autorização no use case)."""
         raise NotImplementedError
 
@@ -89,6 +95,7 @@ class TaskRepositoryPort(ABC):
         task_id: UUID,
         new_assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         """Reatribui tarefa aberta (autorização no use case)."""
         raise NotImplementedError
@@ -108,6 +115,7 @@ class TaskRepositoryPort(ABC):
         assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         """Atualiza campos de tarefa aberta (autorização no use case)."""
         raise NotImplementedError

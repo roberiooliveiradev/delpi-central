@@ -35,6 +35,11 @@ class CreateTaskBody(BaseModel):
         max_length=20,
         description="Responsáveis (sub Minha Delpi). Default = caller. Outro usuário exige manage.",
     )
+    assignee_group_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Grupos operacionais responsáveis (UUID). Exige manage; membership atual define visibilidade.",
+    )
 
     @model_validator(mode="after")
     def _require_customer_pair(self) -> CreateTaskBody:
@@ -68,6 +73,11 @@ class UpdateTaskBody(BaseModel):
         default=None,
         max_length=20,
         description="Conjunto de responsáveis (substitui). Troca exige manage de carteiras.",
+    )
+    assignee_group_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Grupos operacionais responsáveis (substitui). Exige manage.",
     )
 
     @model_validator(mode="after")
@@ -108,6 +118,11 @@ class ReassignTaskBody(BaseModel):
         default=None,
         max_length=20,
         description="Substitui o conjunto de responsáveis da tarefa.",
+    )
+    assignee_group_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Substitui os grupos responsáveis (opcional).",
     )
 
     @model_validator(mode="after")

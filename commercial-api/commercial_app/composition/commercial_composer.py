@@ -197,6 +197,7 @@ def build_manage_worklist_use_case() -> ManageWorklistUseCase:
             audit_repository=build_audit_log_repository(),
             portfolio_repository=build_seller_portfolio_repository(),
             attachment_repository=build_attachment_repository(),
+            group_repository=build_commercial_group_repository(),
         )
     return _worklist_use_case
 

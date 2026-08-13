@@ -9,10 +9,14 @@ from commercial_app.domain.entities.task import (
     CommercialActivity,
     CommercialTask,
     TaskCustomerRef,
+    normalize_assignee_group_ids,
     normalize_assignee_user_ids,
     normalize_task_customers,
 )
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
+from commercial_app.domain.ports.commercial_group_repository_port import (
+    CommercialGroupRepositoryPort,
+)
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
 from commercial_app.domain.ports.task_repository_port import (
@@ -34,6 +38,7 @@ class CreateTaskInput:
     customer_store: str | None = None
     assignee_user_id: str | None = None
     assignee_user_ids: Sequence[str] | None = None
+    assignee_group_ids: Sequence[str] | None = None
     customers: Sequence[TaskCustomerRef] | None = None
 
 
@@ -48,6 +53,7 @@ class UpdateTaskInput:
     customer_store: str | None = None
     assignee_user_id: str | None = None
     assignee_user_ids: Sequence[str] | None = None
+    assignee_group_ids: Sequence[str] | None = None
     customers: Sequence[TaskCustomerRef] | None = None
 
 
@@ -119,12 +125,14 @@ class ManageWorklistUseCase:
         audit_repository: AuditLogRepositoryPort | None = None,
         portfolio_repository: SellerPortfolioRepositoryPort | None = None,
         attachment_repository: AttachmentRepositoryPort | None = None,
+        group_repository: CommercialGroupRepositoryPort | None = None,
     ) -> None:
         self._tasks = task_repository
         self._activities = activity_repository
         self._audit = audit_repository
         self._portfolios = portfolio_repository
         self._attachments = attachment_repository
+        self._groups = group_repository
 
     def _attachment_counts(self, tasks: list[CommercialTask]) -> dict[str, int]:
         if self._attachments is None or not tasks:
@@ -149,6 +157,20 @@ class ManageWorklistUseCase:
             if str(item.user_id or "").strip()
         }
 
+    def _actor_in_assignee_groups(self, *, task: CommercialTask, actor_user_id: str) -> bool:
+        group_ids = task.resolved_assignee_group_ids()
+        if not group_ids or self._groups is None:
+            return False
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            return False
+        member_ids = {
+            str(group.id).strip()
+            for group in self._groups.list_groups_by_user_id(actor)
+            if str(group.id or "").strip()
+        }
+        return bool(member_ids.intersection(group_ids))
+
     def _can_act_on_task(
         self,
         *,
@@ -159,7 +181,32 @@ class ManageWorklistUseCase:
         actor = (actor_user_id or "").strip()
         if actor and actor in task.resolved_assignee_user_ids():
             return True
+        if self._actor_in_assignee_groups(task=task, actor_user_id=actor):
+            return True
         return bool(actor_is_portfolio_manager)
+
+    def _assert_can_assign_groups(
+        self,
+        *,
+        assignee_group_ids: Sequence[str],
+        actor_is_portfolio_manager: bool,
+    ) -> None:
+        if assignee_group_ids and not actor_is_portfolio_manager:
+            raise PermissionError("Sem permissão para atribuir tarefa a grupos.")
+
+    def _validate_group_ids(self, group_ids: Sequence[str]) -> list[str]:
+        normalized = normalize_assignee_group_ids(assignee_group_ids=group_ids)
+        if not normalized:
+            return []
+        if self._groups is None:
+            raise ValueError("Grupos operacionais indisponíveis.")
+        valid: list[str] = []
+        for gid in normalized:
+            group = self._groups.get_by_id(gid)
+            if group is None or not group.active:
+                raise ValueError(f"Grupo inválido ou inativo: {gid}")
+            valid.append(str(group.id))
+        return valid
 
     def _can_edit_task(self, *, task: CommercialTask, actor_user_id: str) -> bool:
         """Só o criador edita/exclui/adia; qualquer assignee conclui."""
@@ -319,6 +366,11 @@ class ManageWorklistUseCase:
             assignee_user_ids=assignees,
             actor_is_portfolio_manager=actor_is_portfolio_manager,
         )
+        group_ids = self._validate_group_ids(data.assignee_group_ids or ())
+        self._assert_can_assign_groups(
+            assignee_group_ids=group_ids,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        )
         customers = normalize_task_customers(
             customers=data.customers,
             customer_code=data.customer_code,
@@ -338,6 +390,7 @@ class ManageWorklistUseCase:
             customer_store=primary_customer.customer_store if primary_customer else None,
             assignee_user_ids=assignees,
             customers=customers,
+            assignee_group_ids=group_ids,
         )
         if self._audit:
             self._audit.append(
@@ -349,6 +402,7 @@ class ManageWorklistUseCase:
                     "title": task.title,
                     "assignee_user_id": task.assignee_user_id,
                     "assignee_user_ids": list(task.resolved_assignee_user_ids()),
+                    "assignee_group_ids": list(task.resolved_assignee_group_ids()),
                 },
             )
         self._activities.create(
@@ -405,6 +459,16 @@ class ManageWorklistUseCase:
                 actor_is_portfolio_manager=actor_is_portfolio_manager,
             )
 
+        if data.assignee_group_ids is not None:
+            group_ids = self._validate_group_ids(data.assignee_group_ids)
+            if set(group_ids) != set(existing.resolved_assignee_group_ids()):
+                self._assert_can_assign_groups(
+                    assignee_group_ids=group_ids,
+                    actor_is_portfolio_manager=actor_is_portfolio_manager,
+                )
+        else:
+            group_ids = list(existing.resolved_assignee_group_ids())
+
         if data.customers is not None:
             customers = normalize_task_customers(
                 customers=data.customers,
@@ -439,6 +503,7 @@ class ManageWorklistUseCase:
             assignee_user_id=assignees[0] if assignees else existing.assignee_user_id,
             assignee_user_ids=assignees,
             customers=customers,
+            assignee_group_ids=group_ids,
         )
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
@@ -485,7 +550,7 @@ class ManageWorklistUseCase:
             actor_is_portfolio_manager=actor_is_portfolio_manager,
         ):
             raise PermissionError("Sem permissão para concluir esta tarefa.")
-        task = self._tasks.complete(task_id=task_id)
+        task = self._tasks.complete(task_id=task_id, completed_by_user_id=user_id)
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if self._audit:
@@ -494,7 +559,7 @@ class ManageWorklistUseCase:
                 action="commercial.task.completed",
                 entity_type="task",
                 entity_id=str(task.id),
-                payload={},
+                payload={"completed_by_user_id": user_id},
             )
         self._activities.create(
             activity_type="system",
@@ -556,6 +621,7 @@ class ManageWorklistUseCase:
         task_id: UUID,
         new_assignee_user_id: str | None = None,
         assignee_user_ids: Sequence[str] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
         actor_is_portfolio_manager: bool = False,
     ) -> CommercialTask:
         assignees = normalize_assignee_user_ids(
@@ -570,7 +636,14 @@ class ManageWorklistUseCase:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if not actor_is_portfolio_manager:
             raise PermissionError("Sem permissão para reatribuir tarefas.")
-        if list(existing.resolved_assignee_user_ids()) == assignees:
+        if assignee_group_ids is not None:
+            group_ids = self._validate_group_ids(assignee_group_ids)
+        else:
+            group_ids = list(existing.resolved_assignee_group_ids())
+        if (
+            list(existing.resolved_assignee_user_ids()) == assignees
+            and list(existing.resolved_assignee_group_ids()) == group_ids
+        ):
             return existing
 
         previous = list(existing.resolved_assignee_user_ids())
@@ -578,6 +651,7 @@ class ManageWorklistUseCase:
             task_id=task_id,
             new_assignee_user_id=assignees[0],
             assignee_user_ids=assignees,
+            assignee_group_ids=group_ids,
         )
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")

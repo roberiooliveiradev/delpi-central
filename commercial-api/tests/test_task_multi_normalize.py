@@ -1,5 +1,6 @@
 from commercial_app.domain.entities.task import (
     TaskCustomerRef,
+    normalize_assignee_group_ids,
     normalize_assignee_user_ids,
     normalize_task_customers,
 )
@@ -52,3 +53,14 @@ def test_normalize_task_customers_from_body_dicts_and_singular():
         customer_name="Beta",
     )
     assert singular == [TaskCustomerRef("0009", "02", "Beta")]
+
+
+def test_normalize_assignee_group_ids_dedupes_and_caps():
+    ids = normalize_assignee_group_ids(
+        assignee_group_ids=["g1", "g1", "", "g2"] + [f"g{i}" for i in range(30)],
+        max_items=20,
+    )
+    assert ids[0] == "g1"
+    assert ids[1] == "g2"
+    assert len(ids) == 20
+    assert normalize_assignee_group_ids(assignee_group_ids=None) == []

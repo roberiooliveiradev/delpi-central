@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from typing import Any, Sequence
 from uuid import UUID, uuid4
@@ -15,6 +16,7 @@ from commercial_app.domain.entities.task import (
     CommercialActivity,
     CommercialTask,
     TaskCustomerRef,
+    normalize_assignee_group_ids,
     normalize_assignee_user_ids,
     normalize_task_customers,
 )
@@ -23,10 +25,14 @@ from commercial_app.domain.entities.task import (
 class InMemoryTaskRepo:
     def __init__(self) -> None:
         self.items: dict[UUID, CommercialTask] = {}
+        # user_id -> set(group_id) for membership-based visibility in tests
+        self.user_group_ids: dict[str, set[str]] = {}
 
-    @staticmethod
-    def _matches_assignee(task: CommercialTask, assignee_user_id: str) -> bool:
-        return assignee_user_id in task.resolved_assignee_user_ids()
+    def _matches_assignee(self, task: CommercialTask, assignee_user_id: str) -> bool:
+        if assignee_user_id in task.resolved_assignee_user_ids():
+            return True
+        member_groups = self.user_group_ids.get(assignee_user_id, set())
+        return bool(member_groups.intersection(task.resolved_assignee_group_ids()))
 
     def list_for_assignee(
         self,
@@ -111,6 +117,7 @@ class InMemoryTaskRepo:
         customer_store: str | None,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask:
         now = datetime.now(timezone.utc)
         assignees = tuple(
@@ -127,6 +134,7 @@ class InMemoryTaskRepo:
                 customer_store=customer_store,
             )
         )
+        groups = tuple(normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids))
         task = CommercialTask(
             id=uuid4(),
             title=title,
@@ -144,32 +152,27 @@ class InMemoryTaskRepo:
             updated_at=now,
             assignee_user_ids=assignees,
             customers=custs,
+            assignee_group_ids=groups,
         )
         self.items[task.id] = task
         return task
 
-    def complete(self, *, task_id: UUID) -> CommercialTask | None:
+    def complete(
+        self,
+        *,
+        task_id: UUID,
+        completed_by_user_id: str | None = None,
+    ) -> CommercialTask | None:
         task = self.items.get(task_id)
         if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
-        done = CommercialTask(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            task_type=task.task_type,
+        done = replace(
+            task,
             status="done",
-            priority=task.priority,
-            due_at=task.due_at,
             completed_at=now,
-            assignee_user_id=task.assignee_user_id,
-            created_by_user_id=task.created_by_user_id,
-            customer_code=task.customer_code,
-            customer_store=task.customer_store,
-            created_at=task.created_at,
+            completed_by_user_id=(completed_by_user_id or "").strip() or None,
             updated_at=now,
-            assignee_user_ids=task.assignee_user_ids,
-            customers=task.customers,
         )
         self.items[task.id] = done
         return done
@@ -179,24 +182,7 @@ class InMemoryTaskRepo:
         if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
-        updated = CommercialTask(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            task_type=task.task_type,
-            status=task.status,
-            priority=task.priority,
-            due_at=due_at,
-            completed_at=task.completed_at,
-            assignee_user_id=task.assignee_user_id,
-            created_by_user_id=task.created_by_user_id,
-            customer_code=task.customer_code,
-            customer_store=task.customer_store,
-            created_at=task.created_at,
-            updated_at=now,
-            assignee_user_ids=task.assignee_user_ids,
-            customers=task.customers,
-        )
+        updated = replace(task, due_at=due_at, updated_at=now)
         self.items[task.id] = updated
         return updated
 
@@ -206,6 +192,7 @@ class InMemoryTaskRepo:
         task_id: UUID,
         new_assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         task = self.items.get(task_id)
         if task is None or task.status != "open":
@@ -218,23 +205,17 @@ class InMemoryTaskRepo:
                 fallback_user_id=new_assignee_user_id,
             )
         )
-        updated = CommercialTask(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            task_type=task.task_type,
-            status=task.status,
-            priority=task.priority,
-            due_at=task.due_at,
-            completed_at=task.completed_at,
+        groups = (
+            tuple(normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids))
+            if assignee_group_ids is not None
+            else task.assignee_group_ids
+        )
+        updated = replace(
+            task,
             assignee_user_id=assignees[0] if assignees else new_assignee_user_id,
-            created_by_user_id=task.created_by_user_id,
-            customer_code=task.customer_code,
-            customer_store=task.customer_store,
-            created_at=task.created_at,
             updated_at=now,
             assignee_user_ids=assignees,
-            customers=task.customers,
+            assignee_group_ids=groups,
         )
         self.items[task.id] = updated
         return updated
@@ -253,6 +234,7 @@ class InMemoryTaskRepo:
         assignee_user_id: str,
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
+        assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         task = self.items.get(task_id)
         if task is None or task.status != "open":
@@ -272,23 +254,25 @@ class InMemoryTaskRepo:
                 customer_store=customer_store,
             )
         )
-        updated = CommercialTask(
-            id=task.id,
+        groups = (
+            tuple(normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids))
+            if assignee_group_ids is not None
+            else task.assignee_group_ids
+        )
+        updated = replace(
+            task,
             title=title,
             description=description,
             task_type=task_type,
-            status=task.status,
             priority=priority,
             due_at=due_at,
-            completed_at=task.completed_at,
             assignee_user_id=assignees[0] if assignees else assignee_user_id,
-            created_by_user_id=task.created_by_user_id,
             customer_code=custs[0].customer_code if custs else customer_code,
             customer_store=custs[0].customer_store if custs else customer_store,
-            created_at=task.created_at,
             updated_at=now,
             assignee_user_ids=assignees,
             customers=custs,
+            assignee_group_ids=groups,
         )
         self.items[task.id] = updated
         return updated
@@ -298,23 +282,10 @@ class InMemoryTaskRepo:
         if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
-        deleted = CommercialTask(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            task_type=task.task_type,
+        deleted = replace(
+            task,
             status="cancelled",
-            priority=task.priority,
-            due_at=task.due_at,
-            completed_at=task.completed_at,
-            assignee_user_id=task.assignee_user_id,
-            created_by_user_id=task.created_by_user_id,
-            customer_code=task.customer_code,
-            customer_store=task.customer_store,
-            created_at=task.created_at,
             updated_at=now,
-            assignee_user_ids=task.assignee_user_ids,
-            customers=task.customers,
         )
         del self.items[task.id]
         return deleted
@@ -860,6 +831,87 @@ def test_multi_assign_requires_manager():
             data=CreateTaskInput(
                 title="Hack",
                 assignee_user_ids=["seller-a", "seller-b"],
+            ),
+            actor_is_portfolio_manager=False,
+        )
+
+class FakeGroup:
+    def __init__(self, group_id: str, *, active: bool = True) -> None:
+        self.id = group_id
+        self.kind = "team"
+        self.name = f"Grupo {group_id}"
+        self.active = active
+        self.members = ()
+
+
+class FakeGroupsRepo:
+    def __init__(self, groups: dict[str, FakeGroup], memberships: dict[str, set[str]]) -> None:
+        self._groups = groups
+        self._memberships = memberships
+
+    def get_by_id(self, group_id: str) -> FakeGroup | None:
+        return self._groups.get(str(group_id))
+
+    def list_groups_by_user_id(self, user_id: str) -> list[FakeGroup]:
+        ids = self._memberships.get(user_id, set())
+        return [self._groups[gid] for gid in ids if gid in self._groups]
+
+
+def test_task_assignee_groups_visibility_and_completed_by():
+    group_id = str(uuid4())
+    tasks = InMemoryTaskRepo()
+    tasks.user_group_ids = {"member-a": {group_id}, "member-b": {group_id}}
+    activities = InMemoryActivityRepo()
+    groups = FakeGroupsRepo(
+        {group_id: FakeGroup(group_id)},
+        {"member-a": {group_id}, "member-b": {group_id}},
+    )
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        group_repository=groups,  # type: ignore[arg-type]
+    )
+
+    created = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(
+            title="Tarefa do grupo",
+            assignee_user_ids=["manager"],
+            assignee_group_ids=[group_id],
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    assert list(created.resolved_assignee_group_ids()) == [group_id]
+    assert created.to_dict()["assignee_group_ids"] == [group_id]
+
+    mine = uc.get_worklist(user_id="member-a")
+    assert any(
+        item["id"] == str(created.id)
+        for item in mine["today"] + mine["later"] + mine["overdue"]
+    )
+
+    completed = uc.complete_task(user_id="member-b", task_id=created.id)
+    assert completed.status == "done"
+    assert completed.completed_by_user_id == "member-b"
+    assert completed.to_dict()["completed_by_user_id"] == "member-b"
+
+
+def test_assign_group_requires_manager():
+    group_id = str(uuid4())
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    groups = FakeGroupsRepo({group_id: FakeGroup(group_id)}, {})
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        group_repository=groups,  # type: ignore[arg-type]
+    )
+    with pytest.raises(PermissionError):
+        uc.create_task(
+            user_id="seller-a",
+            data=CreateTaskInput(
+                title="Sem manage",
+                assignee_group_ids=[group_id],
             ),
             actor_is_portfolio_manager=False,
         )
