@@ -243,7 +243,7 @@ Trilha imutável (append-only).
 |--------|---------|--------|
 | `task_assignees` | `task_id`, `user_id`, `sort_order`, `created_at` | PK `(task_id, user_id)`; primeiro espelha `tasks.assignee_user_id` |
 | `task_customers` | `task_id`, `customer_code`, `customer_store`, `sort_order`, `created_at` | PK `(task_id, customer_code, customer_store)`; primeiro espelha colunas legado |
-| `task_assignee_groups` | `task_id`, `group_id` | **V012:** amarração a `commercial_groups` (sem expandir cópias em `task_assignees`); visibilidade por membership atual |
+| `task_assignee_groups` | `task_id`, `group_id` | **V012:** amarração a `commercial_groups` (sem expandir cópias em `task_assignees`); visibilidade por membership atual. **XOR com** `task_assignees` na API (não ambos no mesmo create/update). |
 
 ### 4.2 `task_dependencies`
 

@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const src = join(root, "src");
 
-describe("MyDay task groups (E6.S3)", () => {
+describe("MyDay task groups + XOR + anexos (E6.S3 / E10)", () => {
   it("form e card cobrem grupos e concluída por", () => {
     const page = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
     assert.match(page, /assignee_group_ids/);
@@ -27,5 +27,27 @@ describe("MyDay task groups (E6.S3)", () => {
     assert.match(card, /Concluída por/);
     assert.match(card, /completedByValue/);
     assert.match(card, /groupsValue/);
+  });
+
+  it("create/edit usam AttachmentPreviewStrip manage; preview só leitura", () => {
+    const page = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
+    assert.match(page, /CommercialAttachmentPreviewStrip/);
+    assert.match(page, /mode="manage"/);
+    assert.doesNotMatch(page, /CommercialAttachmentFileList/);
+
+    const block = readFileSync(
+      join(src, "features/my-day/TaskAttachmentsBlock.tsx"),
+      "utf8",
+    );
+    assert.match(block, /CommercialAttachmentPreviewStrip/);
+    assert.match(block, /mode="manage"/);
+    assert.match(block, /mode="preview"/);
+    assert.match(block, /onRemove/);
+    assert.doesNotMatch(block, /CommercialAttachmentFileList/);
+
+    const help = readFileSync(join(src, "content/helpTooltips.ts"), "utf8");
+    assert.match(help, /taskAssigneeXor/);
+    assert.match(help, /taskAttachment/);
+    assert.match(help, /Exclusivo com Grupos|não os dois/);
   });
 });

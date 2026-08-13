@@ -55,7 +55,7 @@
 | Grupos empty/create | WF-ADM: card formulário sob demanda | em entrega |
 | Equipe Lista\|Diagrama | WF-ADM: OrgMembershipFlow kind `group` | em entrega |
 | Presença Equipe | replay snapshot WS no subscribe | entregue |
-| Tarefa × grupo | WF-TASKS: `task_assignee_groups` + concluída por | em entrega (V012) |
+| Tarefa × grupo | WF-TASKS: `task_assignee_groups` + XOR Usuários\|Grupos + strip anexos | entregue (V012 + E10) |
 
 ### Shell comum
 
@@ -170,12 +170,19 @@ Favoritos
 ```text
 ┌─ PageHero ─ highlights Atrasadas / Hoje / Depois ───────────── [Atualizar] ─┐
 │ MINHAS TAREFAS                                                              │
-│ [Atrasadas] [Hoje] [Depois]                                                 │
+│ [Atrasadas] [Hoje] [Depois] [Concluídas]                                    │
 │ Fila: título · prioridade · prazo · cliente · [Concluir][Adiar][Abrir conta]│
-│ Nova tarefa: Título* | Prazo* | Prioridade | Cliente | Tipo | [Criar]       │
+│ Card: anexos em strip preview (só abrir)                                    │
+├─ Nova / Editar tarefa ──────────────────────────────────────────────────────┤
+│ Título* | Prazo* | Prioridade | Cliente | Tipo | Observação                 │
+│ Responsável: [ Usuários | Grupos ]  ← SegmentToggle XOR (limpa o outro)     │
+│   Usuários → UserDirectoryPicker · Grupos → MultiSelect grupos              │
+│ Anexos: dropzone + strip manage [thumb][x] … (kit AttachmentPreviewStrip)   │
+│                                                    [Criar / Salvar]         │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+API: create/update rejeita `assignee_user_ids` **e** `assignee_group_ids` juntos (422 / ValueError).
 ### WF-ADM — Administração
 
 ```text
@@ -786,7 +793,7 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 | Proposta detalhe | OK | Select contatos + `returnTo` |
 | Equipe lista/diagrama | OK | SegmentToggle + OrgMembershipFlow `group` |
 | Grupos / Perfil | OK | Empty+create card; AvatarStack; seção grupos |
-| Minhas tarefas | OK | Grupos + «Concluída por» (E6); wrappers `Commercial*` (E7.S2) |
+| Minhas tarefas | OK | XOR Usuários\|Grupos; anexos strip manage (create/edit) + preview no card |
 | Detalhe OV wrappers | OK | `CommercialSectionCard` / Empty / SegmentToggle (E7.S2) |
 | PagePath returnTo | OK | Helper canônico + detalhes do escopo (sweep E7.S3) |
 | Gaps kit | OK | AvatarStack + Org `group` + SegmentToggle factory |

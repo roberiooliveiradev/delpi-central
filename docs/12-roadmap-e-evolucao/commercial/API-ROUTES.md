@@ -155,7 +155,7 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 | POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | `seller-portfolios.manage` + carteira ativa destino | `task` | `scalar` | WF-06 · **P1 entregue** [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | POST | `/tasks/{id}/defer` | `defer_task` | F5 | manage | `task` | `scalar` | WF-06 |
 
-`create_task` aceita `description` (Observação) e `assignee_user_id` (P1 — gestão). Worklist: `scope=team` + `assignee_user_id` opcional + `attachment_count`. Anexos P2: § 3.18 (`/attachments`, volume `commercial-attachments`).
+`create_task` / `update_task` aceitam `description` (Observação), `assignee_user_ids` e/ou `assignee_group_ids`. **XOR:** enviar usuários **e** grupos no mesmo request → **422** (`ValueError`). Worklist: `scope=team` + `assignee_user_id` opcional + `attachment_count`. Anexos: § 3.18 (`/attachments`, volume `commercial-attachments`); UI create/edit = `AttachmentPreviewStrip` `mode=manage`.
 
 ### 3.7 Activities (F5)
 
