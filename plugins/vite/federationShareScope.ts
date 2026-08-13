@@ -125,6 +125,10 @@ async function sharedReactDomHasCreateRoot(): Promise<boolean> {
 /**
  * Registra React/lucide no share scope.
  * Usa par portal (react + react-dom) só se o host expõe createRoot — senão par MFE.
+ *
+ * Importante: nunca misturar React DEV do portal com react-dom PRODUCTION do MFE.
+ * Em DEV, `getOwner()` lê `SharedInternals.A.getOwner`; o DefaultAsyncDispatcher
+ * de produção não expõe `getOwner` → tela em branco (`dispatcher.getOwner is not a function`).
  */
 export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   const scope = getShareScope();
@@ -139,7 +143,6 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   publishDelpiMfReact(React);
 
   const reactDomShared = buildReactDomSharedExport();
-  publishDelpiMfReactDom(reactDomShared);
 
   let preservePortalPair =
     hasPortalHostEntry(scope, "react") && hasPortalHostEntry(scope, "react-dom");
@@ -148,10 +151,26 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
     preservePortalPair = false;
   }
 
-  // Sempre reassert react-dom do host com createPortal (remote não pode sobrescrever
-  // com shared quebrado sem portal).
+  if (preservePortalPair) {
+    try {
+      publishDelpiMfReactDom(await loadSharedModule("react-dom"));
+    } catch {
+      publishDelpiMfReactDom(reactDomShared);
+    }
+  } else {
+    // Sem portal: garantir createPortal no share (remote não pode deixar DOM incompleto).
+    publishDelpiMfReactDom(reactDomShared);
+  }
+
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
-  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
+  registerModule(
+    scope,
+    "react-dom",
+    reactDomShared,
+    ReactDOM.version,
+    "mfe-host",
+    preservePortalPair,
+  );
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
 }
 
@@ -159,9 +178,18 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
 export function ensureMfeFederationShareScope(): void {
   const scope = getShareScope();
   const reactDomShared = buildReactDomSharedExport();
+  const preservePortalPair =
+    hasPortalHostEntry(scope, "react") && hasPortalHostEntry(scope, "react-dom");
 
-  registerModule(scope, "react", React, React.version, "mfe-host", true);
-  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
+  registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
+  registerModule(
+    scope,
+    "react-dom",
+    reactDomShared,
+    ReactDOM.version,
+    "mfe-host",
+    preservePortalPair,
+  );
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
   publishDelpiMfReact(React);
   publishDelpiMfReactDom(reactDomShared);

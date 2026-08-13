@@ -60,5 +60,9 @@ export function ensurePortalFederationShareScope(): void {
   registerModule(scope, "react-dom", reactDomShared, ReactDOM.version);
   registerModule(scope, "lucide-react", LucideReact, "0.0.0");
 
-  (globalThis as Record<string, unknown>).__DELPI_MF_REACT__ = React;
+  const globals = globalThis as Record<string, unknown>;
+  // Par completo: React DEV + react-dom DEV. MFE não pode trocar só o DOM
+  // (produção sem getOwner em SharedInternals.A → tela em branco no AppHost).
+  globals.__DELPI_MF_REACT__ = React;
+  globals.__DELPI_MF_REACT_DOM__ = reactDomShared;
 }
