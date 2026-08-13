@@ -11,6 +11,7 @@ import {
   type AccountContactsBundle,
 } from "../../api/accountContactsApi";
 import { getProposalDocument, openProposalDocumentPdf } from "../../api/commercialProposalsApi";
+import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import {
   CommercialActionButton,
   CommercialDataTable,
@@ -165,17 +166,24 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
   }
 
   const cabecalho = data?.cabecalho;
-  const backHref = buildPluginPath("proposals", basePath);
+  const listHref = buildPluginPath("proposals", basePath);
+  const search =
+    typeof window !== "undefined" ? window.location.search : "";
+  const back = resolvePagePathBack(
+    search,
+    { href: listHref, label: "Propostas" },
+    basePath,
+  );
 
   return (
     <section className="cm-page-stack">
       <CommercialPagePath
         back={{
-          label: "Propostas",
-          href: backHref,
+          label: back.label,
+          href: back.href,
           onNavigate: (event) => {
             event.preventDefault();
-            navigatePluginPath(backHref);
+            navigatePluginPath(back.href);
           },
         }}
         current={cabecalho?.numero_ov || `Proposta ${propostaId}`}

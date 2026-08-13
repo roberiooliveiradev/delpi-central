@@ -11,8 +11,10 @@ import {
   usePersistedViewLayout,
   useTableFontSize,
 } from "../../app/commercialUi";
+import { currentLocationAsReturnTo } from "../../app/commercialNavigationReturn";
 import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { CM_HELP } from "../../content/helpTooltips";
+import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import type { ProposalDocumentListItem } from "../../types/proposalsDocument";
 import { formatDisplayDate } from "../../utils/dates";
 
@@ -26,7 +28,7 @@ type ProposalsDocumentsTableProps = {
 };
 
 function buildColumns(
-  basePath: string,
+  openDetail: (row: ProposalDocumentListItem) => void,
 ): DataTableColumn<ProposalDocumentListItem>[] {
   return [
     {
@@ -38,7 +40,7 @@ function buildColumns(
           className="cm-link-button"
           onClick={(event) => {
             event.stopPropagation();
-            navigateProposalDetail(row.proposta_interna, { basePath });
+            openDetail(row);
           }}
         >
           {row.numero_ov || row.proposta_interna}
@@ -91,9 +93,15 @@ export function ProposalsDocumentsTable({
     "--delpi-ui-table-font-size": `${fontSize}px`,
   } as CSSProperties;
 
-  const columns = buildColumns(basePath);
   const openDetail = (row: ProposalDocumentListItem) =>
-    navigateProposalDetail(row.proposta_interna, { basePath });
+    navigateProposalDetail(row.proposta_interna, {
+      basePath,
+      returnNav: {
+        returnTo: currentLocationAsReturnTo(),
+        returnLabel: PROPOSALS_CONTENT.list.title,
+      },
+    });
+  const columns = buildColumns(openDetail);
 
   return (
     <>
