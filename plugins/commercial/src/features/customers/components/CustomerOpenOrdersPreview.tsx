@@ -80,7 +80,7 @@ export function CustomerOpenOrdersPreview({
               )
             }
           >
-            Abrir linha
+            Abrir pedido
           </CommercialActionButton>
         ) : null}
         {proposalLine && proposalNumber ? (

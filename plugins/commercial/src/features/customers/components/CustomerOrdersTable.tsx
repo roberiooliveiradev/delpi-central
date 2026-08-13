@@ -3,12 +3,13 @@ import {
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
   CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialHostDialog,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
@@ -53,10 +54,9 @@ export function CustomerOrdersTable({
   basePath,
   canViewAnalytics,
 }: CustomerOrdersTableProps) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const baseId = useId();
-  const toggle = (key: string) =>
-    setExpandedKey((current) => (current === key ? null : key));
+  const [linesOrderKey, setLinesOrderKey] = useState<string | null>(null);
+  const linesOrder = orders.find((order) => order.key === linesOrderKey) ?? null;
+
   const openFirstLine = (order: CustomerOrderSummary) => {
     const line = findFirstNavigableOrderLine(order.lines);
     if (!line) return;
@@ -64,6 +64,22 @@ export function CustomerOrdersTable({
       basePath,
       search: buildOpenOrdersContextSearch(),
     });
+  };
+
+  const orderActions = (order: CustomerOrderSummary) => {
+    const canOpen = Boolean(findFirstNavigableOrderLine(order.lines));
+    return (
+      <div className="cm-customer-order-line-actions">
+        {canOpen ? (
+          <CommercialActionButton variant="ghost" onClick={() => openFirstLine(order)}>
+            Abrir pedido
+          </CommercialActionButton>
+        ) : null}
+        <CommercialActionButton variant="ghost" onClick={() => setLinesOrderKey(order.key)}>
+          Ver linhas
+        </CommercialActionButton>
+      </div>
+    );
   };
 
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
@@ -106,31 +122,9 @@ export function CustomerOrdersTable({
     {
       key: "details",
       header: "Ações",
-      render: (order) => {
-        const expanded = expandedKey === order.key;
-        const panelId = `${baseId}-desktop-lines-${order.key.replace(/\|/g, "-")}`;
-        const canOpen = Boolean(findFirstNavigableOrderLine(order.lines));
-        return (
-          <div className="cm-customer-order-line-actions">
-            {canOpen ? (
-              <CommercialActionButton variant="ghost" onClick={() => openFirstLine(order)}>
-                Abrir pedido
-              </CommercialActionButton>
-            ) : null}
-            <CommercialActionButton
-              variant="ghost"
-              aria-expanded={expanded}
-              aria-controls={panelId}
-              onClick={() => toggle(order.key)}
-            >
-              {expanded ? "Recolher linhas" : "Expandir linhas"}
-            </CommercialActionButton>
-          </div>
-        );
-      },
+      render: (order) => orderActions(order),
     },
   ];
-  const expandedOrder = orders.find((order) => order.key === expandedKey) ?? null;
 
   return (
     <CommercialSectionCard title="Todos os pedidos em aberto">
@@ -141,100 +135,78 @@ export function CustomerOrdersTable({
           rowKey={(order) => order.key}
           layout="section"
         />
-        {expandedOrder ? (
-          <div
-            id={`${baseId}-desktop-lines-${expandedOrder.key.replace(/\|/g, "-")}`}
-            role="region"
-            aria-label={`Linhas do pedido ${expandedOrder.pedido}`}
-          >
-            <CustomerOrderLines
-              lines={expandedOrder.lines}
-              orderKey={expandedOrder.key}
-              basePath={basePath}
-              canViewAnalytics={canViewAnalytics}
-            />
-          </div>
-        ) : null}
       </div>
 
       <div className="cm-customer-orders__mobile" aria-label="Pedidos em aberto">
-        {orders.map((order) => {
-          const expanded = expandedKey === order.key;
-          const panelId = `${baseId}-mobile-lines-${order.key.replace(/\|/g, "-")}`;
-          return (
-            <div key={order.key} className="cm-customer-orders__mobile-item">
-              <CommercialDataRecordCard
-                title={`Pedido ${order.pedido || "não informado"}`}
-                subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
-                status={renderStatus(order)}
-                fields={[
-                  {
-                    id: "customer-order",
-                    label: "Pedido do cliente",
-                    value: order.pedidoCliente || "—",
-                  },
-                  {
-                    id: "lines",
-                    label: "Linhas",
-                    value: order.quantidadeLinhas.toLocaleString("pt-BR"),
-                  },
-                  {
-                    id: "overdue",
-                    label: "Maior atraso",
-                    value: formatMaxOverdue(order.maiorAtrasoDias),
-                  },
-                  {
-                    id: "delivery",
-                    label: "Próxima entrega",
-                    value: order.proximaEntrega
-                      ? formatDisplayDate(order.proximaEntrega)
-                      : "—",
-                  },
-                  {
-                    id: "value",
-                    label: "Valor em aberto",
-                    value: formatCurrency(order.valorTotalAberto),
-                  },
-                ]}
-                context={
-                  <div className="cm-customer-order-line-actions">
-                    {findFirstNavigableOrderLine(order.lines) ? (
-                      <CommercialActionButton
-                        variant="ghost"
-                        onClick={() => openFirstLine(order)}
-                      >
-                        Abrir pedido
-                      </CommercialActionButton>
-                    ) : null}
-                    <CommercialActionButton
-                      variant="ghost"
-                      aria-expanded={expanded}
-                      aria-controls={panelId}
-                      onClick={() => toggle(order.key)}
-                    >
-                      {expanded ? "Recolher linhas" : "Expandir linhas"}
-                    </CommercialActionButton>
-                  </div>
-                }
-              />
-              {expanded ? (
-                <div
-                  id={panelId}
-                  role="region"
-                  aria-label={`Linhas do pedido ${order.pedido}`}
-                >
-                  <CustomerOrderLines
-                    lines={order.lines}
-                    orderKey={order.key}
-                    basePath={basePath}
-                    canViewAnalytics={canViewAnalytics}
-                  />
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
+        {orders.map((order) => (
+          <div key={order.key} className="cm-customer-orders__mobile-item">
+            <CommercialDataRecordCard
+              title={`Pedido ${order.pedido || "não informado"}`}
+              subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
+              status={renderStatus(order)}
+              fields={[
+                {
+                  id: "customer-order",
+                  label: "Pedido do cliente",
+                  value: order.pedidoCliente || "—",
+                },
+                {
+                  id: "lines",
+                  label: "Linhas",
+                  value: order.quantidadeLinhas.toLocaleString("pt-BR"),
+                },
+                {
+                  id: "overdue",
+                  label: "Maior atraso",
+                  value: formatMaxOverdue(order.maiorAtrasoDias),
+                },
+                {
+                  id: "delivery",
+                  label: "Próxima entrega",
+                  value: order.proximaEntrega
+                    ? formatDisplayDate(order.proximaEntrega)
+                    : "—",
+                },
+                {
+                  id: "value",
+                  label: "Valor em aberto",
+                  value: formatCurrency(order.valorTotalAberto),
+                },
+              ]}
+              context={orderActions(order)}
+            />
+          </div>
+        ))}
       </div>
+
+      <CommercialHostDialog
+        open={Boolean(linesOrder)}
+        title={
+          linesOrder
+            ? `Linhas do pedido ${linesOrder.pedido || "não informado"}`
+            : "Linhas do pedido"
+        }
+        description={
+          linesOrder
+            ? formatOperationalUnitCode(linesOrder.filial, "Unidade não informada")
+            : undefined
+        }
+        onClose={() => setLinesOrderKey(null)}
+        footer={
+          <CommercialActionButton variant="ghost" onClick={() => setLinesOrderKey(null)}>
+            Fechar
+          </CommercialActionButton>
+        }
+      >
+        {linesOrder ? (
+          <CustomerOrderLines
+            lines={linesOrder.lines}
+            orderKey={linesOrder.key}
+            basePath={basePath}
+            canViewAnalytics={canViewAnalytics}
+          />
+        ) : null}
+      </CommercialHostDialog>
     </CommercialSectionCard>
   );
 }
