@@ -11,3 +11,7 @@ export {
   type DocumentReaderProps,
   type DocumentSignatureBlockProps,
 } from "./DocumentReader";
+export {
+  DocumentReaderToolbar,
+  type DocumentReaderToolbarProps,
+} from "./DocumentReaderToolbar";

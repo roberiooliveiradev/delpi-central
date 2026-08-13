@@ -57,7 +57,7 @@ describe("DocumentReader", () => {
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(false);
   });
 
-  it("CSS de leitura mantém tabelas como grade (não colapsa em texto)", () => {
+  it("CSS de leitura mantém tabelas como grade e print multipágina sem clip", () => {
     const css = readFileSync(
       resolve(dirname(fileURLToPath(import.meta.url)), "../../styles/document-reader.css"),
       "utf8",
@@ -67,6 +67,13 @@ describe("DocumentReader", () => {
     );
     expect(css).toMatch(
       /\.delpi-ui-document-rich-content th,\s*\n\.delpi-ui-document-rich-content td \{[\s\S]*?display:\s*table-cell/,
+    );
+    expect(css).toMatch(/\.delpi-ui-document-page \{[\s\S]*?overflow:\s*visible/);
+    expect(css).toMatch(
+      /body\.delpi-ui-document-printing \.delpi-ui-document-reader \{[\s\S]*?height:\s*auto\s*!important/,
+    );
+    expect(css).not.toMatch(
+      /body\.delpi-ui-document-printing \.delpi-ui-document-reader \{[\s\S]*?\binset:\s*0\b/,
     );
   });
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionButton, StatusBadge } from "@delpi/plugin-ui/index";
+import { ActionButton, StatusBadge, triggerFileDownload } from "@delpi/plugin-ui/index";
 import {
   ArrowLeft,
   Building2,
@@ -18,7 +18,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { buildAtaEditPath, buildAtaSignPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  exportAtaPdfUrl,
+  fetchAtaPdfBlob,
   finalizeAta,
   getAta,
   sendAta,
@@ -167,15 +167,28 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
                 Assinar
               </ActionButton>
             ) : null}
-            <a
-              className="ds-primary-btn"
-              href={exportAtaPdfUrl(ataId)}
-              target="_blank"
-              rel="noreferrer"
+            <ActionButton
+              disabled={busy}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  setError(null);
+                  try {
+                    const { blob, filename } = await fetchAtaPdfBlob(ataId, getAccessToken);
+                    triggerFileDownload(blob, filename);
+                  } catch (err) {
+                    setError(
+                      err instanceof Error ? err.message : "Não foi possível baixar o PDF da ata.",
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
             >
               <Download size={16} aria-hidden />
               PDF
-            </a>
+            </ActionButton>
           </>
         }
       />
@@ -310,7 +323,7 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
             <MeetingMinuteDocumentView
               detail={detail}
               getAccessToken={getAccessToken}
-              pdfUrl={exportAtaPdfUrl(ataId)}
+              onError={setError}
             />
           </section>
         </div>

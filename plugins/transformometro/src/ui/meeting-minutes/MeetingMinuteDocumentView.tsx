@@ -3,12 +3,13 @@ import {
   DocumentFooter,
   DocumentPage,
   DocumentReader,
+  DocumentReaderToolbar,
   DocumentSignatureBlock,
-  printDocumentReader,
+  triggerFileDownload,
 } from "@delpi/plugin-ui/index";
-import { Download, Printer } from "lucide-react";
 
 import {
+  fetchAtaPdfBlob,
   fetchAtaSignatureImageBlob,
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
@@ -27,7 +28,7 @@ import {
 type Props = {
   detail: AtaDetail;
   getAccessToken?: () => string | undefined;
-  pdfUrl?: string;
+  onError?: (message: string | null) => void;
 };
 
 const MONTHS = [
@@ -59,7 +60,7 @@ function unitCity(unitCode: string): string {
   return unitCode || "—";
 }
 
-export function MeetingMinuteDocumentView({ detail, getAccessToken, pdfUrl }: Props) {
+export function MeetingMinuteDocumentView({ detail, getAccessToken, onError }: Props) {
   const minute = detail.minute;
   const version = detail.version ?? {};
   const minuteId = String(minute.id ?? "");
@@ -129,6 +130,17 @@ export function MeetingMinuteDocumentView({ detail, getAccessToken, pdfUrl }: Pr
     };
   }, [detail.signatures, getAccessToken, minuteId]);
 
+  async function downloadPdf() {
+    if (!minuteId) return;
+    onError?.(null);
+    try {
+      const { blob, filename } = await fetchAtaPdfBlob(minuteId, getAccessToken);
+      triggerFileDownload(blob, filename);
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : "Não foi possível baixar o PDF da ata.");
+    }
+  }
+
   const showDraftWatermark = status === "draft" || status === "in_review";
   const showCancelledWatermark = status === "cancelled";
 
@@ -136,32 +148,7 @@ export function MeetingMinuteDocumentView({ detail, getAccessToken, pdfUrl }: Pr
     <DocumentReader
       ariaLabel="Leitura da ata Transforma+"
       className="tm-ata-reader"
-      toolbar={
-        <div className="tm-ata-reader__toolbar">
-          <span className="tm-ata-reader__toolbar-label">Documento</span>
-          <div className="tm-ata-reader__toolbar-actions">
-            <button
-              type="button"
-              className="tm-ata-reader__tool-btn"
-              onClick={() => printDocumentReader()}
-            >
-              <Printer size={15} aria-hidden />
-              Imprimir
-            </button>
-            {pdfUrl ? (
-              <a
-                className="tm-ata-reader__tool-btn"
-                href={pdfUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Download size={15} aria-hidden />
-                Baixar PDF
-              </a>
-            ) : null}
-          </div>
-        </div>
-      }
+      toolbar={<DocumentReaderToolbar onDownloadPdf={() => downloadPdf()} />}
     >
       <DocumentPage
         className="tm-ata-paper"

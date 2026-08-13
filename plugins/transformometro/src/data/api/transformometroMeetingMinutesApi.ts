@@ -217,6 +217,28 @@ export async function fetchAtaSignatureImageBlob(
   return response.blob();
 }
 
+export async function fetchAtaPdfBlob(
+  id: string,
+  getAccessToken?: () => string | undefined,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await fetch(
+    `${TRANSFORMOMETRO_API_BASE}/meeting-minutes/${encodeURIComponent(id)}/export.pdf`,
+    { headers: buildAuthHeaders(getAccessToken) },
+  );
+  if (!response.ok) {
+    try {
+      await parseApiEnvelope(response);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Não foi possível baixar o PDF da ata.");
+    }
+  }
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  const filename = match?.[1] || `ata-transforma-mais-${id}.pdf`;
+  return { blob: await response.blob(), filename };
+}
+
+/** @deprecated Preferir fetchAtaPdfBlob (Authorization). URL crua gera 401 no browser. */
 export function exportAtaPdfUrl(id: string): string {
   return `${TRANSFORMOMETRO_API_BASE}/meeting-minutes/${id}/export.pdf`;
 }
