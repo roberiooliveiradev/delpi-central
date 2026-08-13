@@ -36,8 +36,6 @@ export function scoreProposalDocumentForOpportunity(
   if (opp === key) score += 80;
   else if (opp.includes(key) || key.includes(opp)) score += 30;
   if (score === 0) return 0;
-  score += Math.min(20, Math.floor(parseSortableDate(item.data) / 86_400_000) % 20);
-  score += Math.min(10, parseVersionScore(item.versao));
   return score;
 }
 
@@ -52,14 +50,23 @@ export function pickBestProposalDocumentForOpportunity(
   for (const item of items) {
     const score = scoreProposalDocumentForOpportunity(item, key);
     if (score <= 0) continue;
-    if (
-      !best ||
-      score > bestScore ||
-      (score === bestScore &&
-        parseSortableDate(item.data) > parseSortableDate(best.data))
-    ) {
+    if (!best || score > bestScore) {
       best = item;
       bestScore = score;
+      continue;
+    }
+    if (score < bestScore) continue;
+    const dateDelta =
+      parseSortableDate(item.data) - parseSortableDate(best.data);
+    if (dateDelta > 0) {
+      best = item;
+      continue;
+    }
+    if (
+      dateDelta === 0 &&
+      parseVersionScore(item.versao) > parseVersionScore(best.versao)
+    ) {
+      best = item;
     }
   }
   return best;
