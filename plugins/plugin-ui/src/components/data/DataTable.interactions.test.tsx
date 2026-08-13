@@ -221,4 +221,82 @@ describe("DataTable row click × interactive", () => {
     fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
     expect(onRowClick).toHaveBeenCalledTimes(1);
   });
+
+  it("renderiza linha de detalhe quando expandedRowKey bate com rowKey", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[
+          { id: "a", nome: "Acme" },
+          { id: "b", nome: "Beta" },
+        ]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        expandedRowKey="a"
+        renderExpandedRow={(row) => <div data-testid="detail">{`detalhe-${row.id}`}</div>}
+      />,
+    );
+
+    expect(screen.getByTestId("detail").textContent).toBe("detalhe-a");
+    expect(document.querySelector(".delpi-ui-table__row--expanded")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-table__detail-row")).toBeTruthy();
+    expect(screen.queryByText("detalhe-b")).toBeNull();
+  });
+
+  it("isRowExpandable=false omite detalhe mesmo com expandedRowKey", () => {
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ id: "a", nome: "Acme" }]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        expandedRowKey="a"
+        isRowExpandable={() => false}
+        renderExpandedRow={() => <div data-testid="detail">x</div>}
+      />,
+    );
+
+    expect(screen.queryByTestId("detail")).toBeNull();
+  });
+
+  it("clique no conteúdo expandido não dispara onRowClick", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ id: "a", nome: "Acme" }]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        expandedRowKey="a"
+        renderExpandedRow={() => <button type="button">Dentro</button>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Dentro" }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
 });

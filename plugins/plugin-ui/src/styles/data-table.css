@@ -550,6 +550,31 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
   );
 }
 
+/* Linha de detalhe expandida (renderExpandedRow) — não herda hover/click da row pai. */
+table.delpi-ui-table tbody tr.delpi-ui-table__row--expanded > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 6%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table tbody tr.delpi-ui-table__detail-row {
+  cursor: default;
+}
+
+table.delpi-ui-table tbody tr.delpi-ui-table__detail-row:hover > td,
+table.delpi-ui-table--clickable tbody tr.delpi-ui-table__detail-row:hover > td {
+  background: var(--delpi-ui-surface-muted, color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, #000));
+}
+
+table.delpi-ui-table td.delpi-ui-table__detail-cell {
+  padding: 0.75rem 1rem 1rem;
+  vertical-align: top;
+  white-space: normal;
+  border-top: none;
+}
+
 .delpi-ui-table-section.delpi-ui-card,
 .delpi-ui-table-section.card {
   min-width: 0;

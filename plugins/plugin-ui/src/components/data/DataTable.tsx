@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -112,6 +113,10 @@ export type DataTableClassNames = {
   sub?: string;
   /** Linha em modo edição inline. */
   rowEditing?: string;
+  /** Linha de detalhe expandida (`renderExpandedRow`). */
+  detailRow?: string;
+  /** Célula que envolve o conteúdo expandido. */
+  detailCell?: string;
 };
 
 export type DataTableLabels = {
@@ -170,6 +175,13 @@ export type DataTableProps<T> = {
   enableCopySelection?: boolean;
   /** Coluna visual de índice; não altera o shape das linhas. */
   indexColumn?: { header?: string; ariaLabel?: string; startAt?: number };
+  /** Chave da linha expandida (controlado; tipicamente uma por vez). */
+  expandedRowKey?: string | null;
+  onExpandedRowKeyChange?: (key: string | null) => void;
+  /** Conteúdo da linha de detalhe sob a row expandida. */
+  renderExpandedRow?: (row: T, index: number) => ReactNode;
+  /** Default: true quando `renderExpandedRow` existe. */
+  isRowExpandable?: (row: T) => boolean;
   classNames: DataTableClassNames;
   labels: DataTableLabels;
 };
@@ -199,6 +211,8 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
     actions: delpiUiClass(`${table}__actions`, `${ui}__actions`),
     sub: delpiUiClass(`${table}__sub`, `${ui}__sub`),
     rowEditing: delpiUiClass(`${table}__row--editing`, `${ui}__row--editing`),
+    detailRow: delpiUiClass(`${table}__detail-row`, `${ui}__detail-row`),
+    detailCell: delpiUiClass(`${table}__detail-cell`, `${ui}__detail-cell`),
     empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
     headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
     headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),
@@ -347,6 +361,10 @@ export function DataTable<T>({
   onColumnOrderChange,
   enableCopySelection = false,
   indexColumn,
+  expandedRowKey = null,
+  onExpandedRowKeyChange,
+  renderExpandedRow,
+  isRowExpandable,
   classNames,
   labels,
 }: DataTableProps<T>) {
@@ -715,127 +733,115 @@ export function DataTable<T>({
       </thead>
       <tbody>
         {rows.map((row, index) => {
+          const key = rowKey(row, index);
           const rowSelected = isRowSelected(resolvedSelection, index);
+          const expandable =
+            Boolean(renderExpandedRow) && (isRowExpandable ? isRowExpandable(row) : true);
+          const isExpanded = expandable && expandedRowKey != null && expandedRowKey === key;
+          const colSpan = columns.length + (indexColumn ? 1 : 0);
           const rowClass = [
             getRowClassName?.(row),
             onRowClick ? classNames.rowClickable : "",
             rowSelected ? "delpi-ui-table__row--selected" : "",
+            isExpanded ? "delpi-ui-table__row--expanded" : "",
           ]
             .filter(Boolean)
             .join(" ");
 
           return (
-            <tr
-              key={rowKey(row, index)}
-              className={rowClass || undefined}
-              aria-selected={rowSelected || undefined}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              tabIndex={onRowClick ? 0 : undefined}
-              role={onRowClick && rowClickRole === "button" ? "button" : undefined}
-              onKeyDown={
-                onRowClick
-                  ? (event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onRowClick(row);
+            <Fragment key={key}>
+              <tr
+                className={rowClass || undefined}
+                aria-selected={rowSelected || undefined}
+                aria-expanded={expandable ? isExpanded : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick && rowClickRole === "button" ? "button" : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
                       }
-                    }
-                  : undefined
-              }
-            >
-              {indexColumn ? (
-                <td
-                  className="delpi-ui-table__index-col"
-                  data-label={indexColumn.ariaLabel ?? "Índice"}
-                  tabIndex={onSelectionChange ? 0 : undefined}
-                  aria-selected={
-                    resolvedSelection?.kind === "row" &&
-                    resolvedSelection.indices.includes(index)
-                      ? true
-                      : undefined
-                  }
-                  onClick={
-                    onSelectionChange
-                      ? (event) => {
-                          event.stopPropagation();
-                          handleRowSelect(index, modifiersFromMouseEvent(event));
-                        }
-                      : undefined
-                  }
-                  onKeyDown={
-                    onSelectionChange
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            handleRowSelect(index, modifiersFromMouseEvent(event));
-                          }
-                        }
-                      : undefined
-                  }
-                >
-                  {(indexColumn.startAt ?? 1) + index}
-                </td>
-              ) : null}
-              {columns.map((column) => {
-                const cellSelected = isCellSelected(resolvedSelection, index, column.key);
-                const isActiveColumn = activeColumnKey === column.key;
-                const isDropTarget =
-                  dropTargetKey === column.key && dragColumnKey !== column.key;
-                return (
+                    : undefined
+                }
+              >
+                {indexColumn ? (
                   <td
-                    key={column.key}
-                    className={[
-                      resolveDataTableColumnClassName(column.className),
-                      getCellClassName?.(row, column, index),
-                      cellSelected ? "delpi-ui-table__cell--selected" : "",
-                      isColumnSelected(resolvedSelection, column.key)
-                        ? "delpi-ui-table__column--selected"
-                        : "",
-                      isActiveColumn ? "delpi-ui-table__column--dragging" : "",
-                      isDropTarget && dropEdge === "before"
-                        ? "delpi-ui-table__column--drop-before"
-                        : "",
-                      isDropTarget && dropEdge === "after"
-                        ? "delpi-ui-table__column--drop-after"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || undefined}
-                    data-label={column.mobileLabel ?? column.header}
-                    data-align={column.align}
-                    data-column-key={column.key}
-                    data-interactive={column.interactive ? "true" : undefined}
-                    aria-selected={cellSelected || undefined}
-                    tabIndex={onCellClick || onSelectionChange ? 0 : undefined}
-                    onClick={
-                      column.interactive ||
-                      column.rowClick === "stop" ||
-                      onCellClick ||
-                      onSelectionChange
-                        ? (event) => {
-                            const stopRowClick =
-                              column.rowClick === "stop" ||
-                              (Boolean(column.interactive) && column.rowClick !== "propagate");
-                            if (stopRowClick) event.stopPropagation();
-                            handleCellSelect(
-                              row,
-                              column,
-                              index,
-                              modifiersFromMouseEvent(event),
-                            );
-                          }
+                    className="delpi-ui-table__index-col"
+                    data-label={indexColumn.ariaLabel ?? "Índice"}
+                    tabIndex={onSelectionChange ? 0 : undefined}
+                    aria-selected={
+                      resolvedSelection?.kind === "row" &&
+                      resolvedSelection.indices.includes(index)
+                        ? true
                         : undefined
                     }
-                    onContextMenu={
-                      onCellContextMenu
-                        ? (event) => onCellContextMenu(event, row, column, index)
+                    onClick={
+                      onSelectionChange
+                        ? (event) => {
+                            event.stopPropagation();
+                            handleRowSelect(index, modifiersFromMouseEvent(event));
+                          }
                         : undefined
                     }
                     onKeyDown={
-                      onCellClick || onSelectionChange
+                      onSelectionChange
                         ? (event) => {
                             if (event.key === "Enter" || event.key === " ") {
                               event.preventDefault();
+                              handleRowSelect(index, modifiersFromMouseEvent(event));
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {(indexColumn.startAt ?? 1) + index}
+                  </td>
+                ) : null}
+                {columns.map((column) => {
+                  const cellSelected = isCellSelected(resolvedSelection, index, column.key);
+                  const isActiveColumn = activeColumnKey === column.key;
+                  const isDropTarget =
+                    dropTargetKey === column.key && dragColumnKey !== column.key;
+                  return (
+                    <td
+                      key={column.key}
+                      className={[
+                        resolveDataTableColumnClassName(column.className),
+                        getCellClassName?.(row, column, index),
+                        cellSelected ? "delpi-ui-table__cell--selected" : "",
+                        isColumnSelected(resolvedSelection, column.key)
+                          ? "delpi-ui-table__column--selected"
+                          : "",
+                        isActiveColumn ? "delpi-ui-table__column--dragging" : "",
+                        isDropTarget && dropEdge === "before"
+                          ? "delpi-ui-table__column--drop-before"
+                          : "",
+                        isDropTarget && dropEdge === "after"
+                          ? "delpi-ui-table__column--drop-after"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || undefined}
+                      data-label={column.mobileLabel ?? column.header}
+                      data-align={column.align}
+                      data-column-key={column.key}
+                      data-interactive={column.interactive ? "true" : undefined}
+                      aria-selected={cellSelected || undefined}
+                      tabIndex={onCellClick || onSelectionChange ? 0 : undefined}
+                      onClick={
+                        column.interactive ||
+                        column.rowClick === "stop" ||
+                        onCellClick ||
+                        onSelectionChange
+                          ? (event) => {
+                              const stopRowClick =
+                                column.rowClick === "stop" ||
+                                (Boolean(column.interactive) && column.rowClick !== "propagate");
+                              if (stopRowClick) event.stopPropagation();
                               handleCellSelect(
                                 row,
                                 column,
@@ -843,23 +849,54 @@ export function DataTable<T>({
                                 modifiersFromMouseEvent(event),
                               );
                             }
-                          }
-                        : undefined
-                    }
-                    style={
-                      columnWidths[column.key] != null
-                        ? {
-                            width: columnWidths[column.key],
-                            minWidth: columnWidths[column.key],
-                          }
-                        : undefined
-                    }
+                          : undefined
+                      }
+                      onContextMenu={
+                        onCellContextMenu
+                          ? (event) => onCellContextMenu(event, row, column, index)
+                          : undefined
+                      }
+                      onKeyDown={
+                        onCellClick || onSelectionChange
+                          ? (event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handleCellSelect(
+                                  row,
+                                  column,
+                                  index,
+                                  modifiersFromMouseEvent(event),
+                                );
+                              }
+                            }
+                          : undefined
+                      }
+                      style={
+                        columnWidths[column.key] != null
+                          ? {
+                              width: columnWidths[column.key],
+                              minWidth: columnWidths[column.key],
+                            }
+                          : undefined
+                      }
+                    >
+                      {column.render(row)}
+                    </td>
+                  );
+                })}
+              </tr>
+              {isExpanded && renderExpandedRow ? (
+                <tr className={classNames.detailRow ?? "delpi-ui-table__detail-row"}>
+                  <td
+                    className={classNames.detailCell ?? "delpi-ui-table__detail-cell"}
+                    colSpan={colSpan}
+                    onClick={(event) => event.stopPropagation()}
                   >
-                    {column.render(row)}
+                    {renderExpandedRow(row, index)}
                   </td>
-                );
-              })}
-            </tr>
+                </tr>
+              ) : null}
+            </Fragment>
           );
         })}
       </tbody>
