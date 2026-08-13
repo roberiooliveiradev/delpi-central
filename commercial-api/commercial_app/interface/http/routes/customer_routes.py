@@ -284,6 +284,73 @@ def list_commercial_customer_outbound_invoices(
 
 
 @router.get(
+    "/{customer_code}/{customer_store}/outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+    operation_id="get_commercial_customer_outbound_invoice",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def get_commercial_customer_outbound_invoice(
+    _request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+    branch: str = Path(..., min_length=1),
+    invoice_number: str = Path(..., min_length=1),
+    invoice_series: str = Path(..., min_length=1),
+):
+    """Detalhe de NF de saída (SF2/SD2) no contexto da Conta — proxy TOTVS via api-delpi."""
+    try:
+        result = build_delpi_commercial_gateway().get_outbound_invoice(
+            branch=branch,
+            invoice_number=invoice_number,
+            invoice_series=invoice_series,
+        )
+        data = result.get("data", result)
+        if not isinstance(data, dict):
+            return fail(
+                "Nota fiscal de saída não encontrada.",
+                404,
+                operation_id="get_commercial_customer_outbound_invoice",
+            )
+        invoice_customer = str(data.get("customer_code") or "").strip()
+        invoice_store = str(data.get("customer_store") or "").strip()
+        if invoice_customer and invoice_customer != str(customer_code).strip():
+            return fail(
+                "Nota fiscal de saída não encontrada para este cliente.",
+                404,
+                operation_id="get_commercial_customer_outbound_invoice",
+            )
+        if invoice_store and invoice_store != str(customer_store).strip():
+            return fail(
+                "Nota fiscal de saída não encontrada para este cliente.",
+                404,
+                operation_id="get_commercial_customer_outbound_invoice",
+            )
+        return ok(
+            data,
+            message="Nota fiscal do cliente carregada.",
+            operation_id="get_commercial_customer_outbound_invoice",
+        )
+    except LookupError as exc:
+        return fail(
+            str(exc),
+            404,
+            operation_id="get_commercial_customer_outbound_invoice",
+        )
+    except RuntimeError as exc:
+        return fail(
+            str(exc),
+            502,
+            operation_id="get_commercial_customer_outbound_invoice",
+        )
+    except Exception:
+        logger.exception("get_commercial_customer_outbound_invoice_failed")
+        return fail(
+            "Erro interno ao carregar a nota fiscal do cliente.",
+            500,
+            operation_id="get_commercial_customer_outbound_invoice",
+        )
+
+
+@router.get(
     "/{customer_code}/{customer_store}/open-orders",
     operation_id="list_commercial_customer_open_orders",
 )

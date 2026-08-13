@@ -145,6 +145,22 @@ class DelpiCommercialGateway:
             params=params,
         )
 
+    def get_outbound_invoice(
+        self,
+        *,
+        branch: str,
+        invoice_number: str,
+        invoice_series: str,
+    ) -> dict[str, Any]:
+        # TOTVS puro — detalhe NF por chave; escopo de conta no BFF.
+        unit = quote(str(branch or "").strip(), safe="")
+        number = quote(str(invoice_number or "").strip(), safe="")
+        series = quote(str(invoice_series or "").strip(), safe="")
+        return self._request(
+            "GET",
+            f"/pedidos-venda-abertos/totvs-outbound-invoices/{unit}/{number}/{series}",
+        )
+
     def get_commercial_analytics(
         self,
         path: str,

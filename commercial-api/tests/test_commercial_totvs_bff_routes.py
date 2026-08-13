@@ -216,6 +216,74 @@ def test_outbound_invoices_bff_allows_outside_portfolio() -> None:
     gateway.list_customer_outbound_invoices.assert_called_once()
 
 
+def test_get_outbound_invoice_bff_returns_invoice() -> None:
+    gateway = MagicMock()
+    gateway.get_outbound_invoice.return_value = {
+        "data": {
+            "key": "01|000123|1",
+            "branch": "01",
+            "invoice_number": "000123",
+            "invoice_series": "1",
+            "customer_code": "999",
+            "customer_store": "01",
+            "items": [],
+        }
+    }
+
+    request = _request("/customers/999/01/outbound-invoices/01/000123/1")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with patch.object(
+        customer_routes,
+        "build_delpi_commercial_gateway",
+        return_value=gateway,
+    ):
+        response = customer_routes.get_commercial_customer_outbound_invoice(
+            request,
+            customer_code="999",
+            customer_store="01",
+            branch="01",
+            invoice_number="000123",
+            invoice_series="1",
+        )
+
+    assert response.status_code == 200
+    gateway.get_outbound_invoice.assert_called_once_with(
+        branch="01",
+        invoice_number="000123",
+        invoice_series="1",
+    )
+
+
+def test_get_outbound_invoice_bff_rejects_customer_mismatch() -> None:
+    gateway = MagicMock()
+    gateway.get_outbound_invoice.return_value = {
+        "data": {
+            "customer_code": "OTHER",
+            "customer_store": "01",
+            "items": [],
+        }
+    }
+    request = _request("/customers/999/01/outbound-invoices/01/000123/1")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with patch.object(
+        customer_routes,
+        "build_delpi_commercial_gateway",
+        return_value=gateway,
+    ):
+        response = customer_routes.get_commercial_customer_outbound_invoice(
+            request,
+            customer_code="999",
+            customer_store="01",
+            branch="01",
+            invoice_number="000123",
+            invoice_series="1",
+        )
+
+    assert response.status_code == 404
+
+
 def test_customer_open_orders_bff_allows_outside_portfolio() -> None:
     """Conta detalhe: pedidos por cliente sem dump global nem membership."""
     gateway = MagicMock()
