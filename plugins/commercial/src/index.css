@@ -738,6 +738,28 @@
   width: 100%;
 }
 
+/* Cards de grupo: auto-fit + min maior — 1 card ocupa a linha; vários quebram confortáveis. */
+.dashboard-commercial .cm-administration-groups .cm-data-cards-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-commercial .cm-administration-groups .cm-data-cards-grid > .cm-section-card {
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-administration-groups .cm-user-profile__permission-list li.cm-row-actions {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.dashboard-commercial .cm-administration-groups .cm-user-profile__permission-list li.cm-row-actions strong {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-administration-groups__create-field {
   width: 100%;
 }

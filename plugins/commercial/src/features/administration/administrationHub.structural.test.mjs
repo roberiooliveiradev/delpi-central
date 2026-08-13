@@ -86,6 +86,11 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /parseCommercialTeamView/);
     assert.match(source, /CommercialOrgMembershipFlow/);
     assert.match(source, /buildCommercialGroupsOrgFlowModel/);
+    const css = readFileSync(join(root, "src/index.css"), "utf8");
+    assert.match(
+      css,
+      /\.cm-administration-groups \.cm-data-cards-grid[\s\S]*?auto-fit[\s\S]*?minmax\(min\(100%, 440px\), 1fr\)/,
+    );
   });
 
   it("App roteia Painel, Carteiras, Equipe e Grupos", () => {
