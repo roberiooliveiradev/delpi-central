@@ -147,6 +147,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         dateStart={filters.dateStart}
         dateEnd={filters.dateEnd}
         competence={filters.competence}
+        periodPreset={filters.periodPreset}
         branches={filters.branches}
         customerSegment={filters.customerSegment}
         sellerIds={filters.sellerIds}
@@ -156,6 +157,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         onDateStart={filters.setDateStart}
         onDateEnd={filters.setDateEnd}
         onCompetence={filters.setCompetence}
+        onPeriodPreset={filters.setPeriodPreset}
         onBranches={filters.setBranches}
         onCustomerSegment={filters.setCustomerSegment}
         onSellerIds={filters.setSellerIds}

@@ -4,7 +4,10 @@
 > **Produto:** Portal Comercial · `/apps/commercial` · `commercial-api`  
 > **Não substitui:** [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) · [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) · [KPI-FICHAS.md](./KPI-FICHAS.md)  
 > **Origem:** ata de reunião de desenvolvimento da área comercial (visão integrada na Minha DELPI)  
-> **Ecossistema:** §7 — MFEs/APIs irmãos (reuso Link / HTTP / Fora)
+> **Ecossistema:** §7 — MFEs/APIs irmãos (reuso Link / HTTP / Fora)  
+> **«Documento» / área na ata:** = aplicação **Portal Comercial** (`/apps/commercial`)  
+> **Onda A KPIs:** [KPI-FICHAS.md](./KPI-FICHAS.md) · [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)  
+> **Sequência GR:** Portal (cockpit) → rotas api-delpi se faltar → slide [tv-dashboard](../../../plugins/tv-dashboard/README.md)
 
 Este documento responde, para cada ponto da ata: **já temos?** · **onde acessar?** · **o que falta?** · **próximo passo**.
 
@@ -15,7 +18,7 @@ Este documento responde, para cada ponto da ata: **já temos?** · **onde acessa
 | Dimensão | Cobertura aproximada no Portal |
 |----------|--------------------------------|
 | Área comercial central + navegação | **Existe** |
-| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit nativo; sem ROL+carteira / MTD-YTD formais / projeção |
+| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit nativo; Onda A formaliza KPIs; MTD/YTD + card carteira lado a lado em implementação |
 | Visão do vendedor (Conta 360 pré-reunião) | **Parcial** — faturamento, pedidos, opp, contatos, tarefas; sem forecast/ofertas SLA |
 | Ofertas (produtividade, etapas, SLA) | **Parcial** — listagens OV/ADY + hit rate; sem tempo/etapa/área |
 | Clientes (ativo, recuperado, ticket, família, WEG) | **Parcial / bloqueado** — lista operacional; fichas KPI em rascunho |
@@ -273,7 +276,13 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 
 ## 4. Plano de implementação das lacunas
 
-Prioridade da ata: **visão gerencial primeiro**. Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código só após aprovação de ficha/política quando o item estiver **bloqueado**.
+Prioridade da ata: **visão gerencial primeiro**. **Documento / área comercial = Portal Comercial.**
+
+**Sequência GR / Manual do Líder N2:** (1) expor indicadores no Portal; (2) criar/completar rotas na api-delpi se faltar contrato; (3) automatizar slide no `tv-dashboard`. Não começar pelo TV.
+
+**Onda A (em curso):** fichas C1 + [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md). Engineering do Overview (presets, card carteira lado a lado) usa baseline de código enquanto fichas estão `em_validacao`.
+
+Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código de fórmula nova só após homologação quando a ficha estiver **bloqueada** para mudança.
 
 Legenda de dono: **CA** = `commercial-api` · **AD** = `api-delpi` · **MFE** = `plugins/commercial` · **NEG** = Comercial/negócio · **OUT** = outro domínio.
 
