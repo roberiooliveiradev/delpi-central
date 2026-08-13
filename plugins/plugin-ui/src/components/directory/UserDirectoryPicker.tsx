@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export type DirectoryUserOption = {
@@ -16,7 +17,7 @@ export type UserDirectoryPickerProps = {
   ) => Promise<DirectoryUserOption[]>;
   disabled?: boolean;
   /**
-   * Exibe a lista interna de selecionados com botão «Remover» (default true).
+   * Exibe chips dos selecionados com × (default true).
    * Passe false quando o consumidor já renderiza a própria lista (evita duplicação).
    */
   showSelectedList?: boolean;
@@ -143,21 +144,29 @@ export function UserDirectoryPicker({
           ))}
         </ul>
       ) : null}
-      {showSelectedList ? (
-        <ul className="delpi-ui-user-directory-picker__selected">
-          {value.map((user) => (
-            <li key={user.id}>
-              <span>{directoryUserLabel(user, showEmail)}</span>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange(value.filter((item) => item.id !== user.id))}
-              >
-                Remover
-              </button>
-            </li>
-          ))}
-        </ul>
+      {showSelectedList && value.length > 0 ? (
+        <div
+          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
+          aria-label="Usuários selecionados"
+        >
+          {value.map((user) => {
+            const label = directoryUserLabel(user, showEmail);
+            return (
+              <span key={user.id} className="delpi-ui-tag-chip">
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="delpi-ui-tag-chip__remove"
+                  disabled={disabled}
+                  aria-label={`Remover ${label}`}
+                  onClick={() => onChange(value.filter((item) => item.id !== user.id))}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

@@ -14,16 +14,19 @@ const searchUsers = vi.fn().mockResolvedValue([]);
 afterEach(cleanup);
 
 describe("UserDirectoryPicker", () => {
-  it("mostra a lista interna de selecionados por padrão", () => {
+  it("mostra chips dos selecionados com × por padrão", () => {
     render(
       <UserDirectoryPicker value={users} onChange={() => {}} searchUsers={searchUsers} />,
     );
 
     expect(screen.getByText("Ana Lima · ana@delpi.com.br")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Remover" })).toHaveLength(2);
+    expect(document.querySelectorAll(".delpi-ui-tag-chip")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Remover Ana Lima · ana@delpi.com.br" }),
+    ).toBeTruthy();
   });
 
-  it("oculta a lista interna com showSelectedList=false", () => {
+  it("oculta chips com showSelectedList=false", () => {
     render(
       <UserDirectoryPicker
         value={users}
@@ -34,7 +37,7 @@ describe("UserDirectoryPicker", () => {
     );
 
     expect(screen.queryByText("Ana Lima")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Remover" })).toBeNull();
+    expect(document.querySelector(".delpi-ui-tag-chip")).toBeNull();
   });
 
   it("com showEmail=false lista só o nome", () => {
