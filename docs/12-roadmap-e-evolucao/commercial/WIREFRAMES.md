@@ -49,7 +49,7 @@
 |------|------------------|----------------------|
 | `returnTo` / `returnLabel` | PagePath em detalhes (pedido Conta, OV, proposta, linha) | helper `commercialNavigationReturn` |
 | Conta pedidos | WF-04R: row click → detalhe; expand kit `renderExpandedRow` (linhas); sem modal | entregue |
-| Histórico NF | WF-04R: MetricCard + tabela + modal itens | entregue |
+| Histórico NF | WF-04R: MetricCard + tabela; row click → página detalhe NF (sem modal itens) | entregue |
 | OV → ADY | WF-OPP / WF-PROP: CTA Abrir proposta (atalho documento) | em entrega |
 | Proposta contato PDF | WF-PROP: select contatos salvos (sem inputs raw) | em entrega |
 | Grupos empty/create | WF-ADM: card formulário sob demanda | em entrega |
@@ -564,8 +564,8 @@ lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 **Abas:** Pedidos — clique na linha/item (atenção, preview Visão geral, tabela) abre
 detalhe (`…/orders/…`); na tabela, chevron expande `CustomerOrderLines` inline via
 `DataTable` `expandedRowKey`/`renderExpandedRow` (sem modal «Ver linhas» / «Abrir pedido»).
-Histórico carrega faturamento/NFs com MetricCard + tabela e **modal de itens** (sem expand);
-Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
+Histórico — clique na linha abre detalhe NF (`…/outbound-invoices/{branch}/{n}/{s}`);
+sem modal de itens. Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
 `interactive`; CTA ADY só com `analytics.view` / `proposals.view`. Atividades carrega
 timeline real e permite follow-up somente com `worklist.view + followups.manage`.
 Cada fonte mantém loading, erro, vazio, retry e atualização independentes.
@@ -758,7 +758,7 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 | Superfície | Status | Notas |
 |---|---|---|
 | Conta pedidos | OK | Row click → detalhe; expand kit inline; sem modal linhas |
-| Conta histórico NF | OK | MetricCards + tabela/modal itens |
+| Conta histórico NF | OK | MetricCards + row → página detalhe NF |
 | Oportunidades | OK | OV tipográfico + badge por status + Proposta interactive |
 | Detalhe OV | OK | CTA Abrir proposta + `resolvePagePathBack` |
 | Propostas lista | OK | Toolbar Tabela\|Cards + paginação |
@@ -938,6 +938,7 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Minha Carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
 | Detalhe pedido (Conta) | WF-04R + índice ago/2026 | `/customers/:code/:store/orders/:branch/:orderNumber` |
+| Detalhe NF (Conta) | WF-04R Histórico | `/customers/:code/:store/outbound-invoices/:branch/:invoiceNumber/:invoiceSeries` |
 | Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/administration/seller-portfolios` (+ alias legado) |
 | Avatar | WF-04R + WF-05 | commercial-api |
 | URL interna código+loja | WF-04R | idem |
