@@ -358,12 +358,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
         </CommercialStateBanner>
       ) : null}
 
-      {enrichment.lastSuccessAt ? (
-        <p className="cm-customers-page__freshness" aria-live="polite">
-          Enrichment atualizado em {formatUpdatedAt(enrichment.lastSuccessAt)}
-        </p>
-      ) : null}
-
       {aggregation && hasData && !showInitialLoading && !portfolioEmpty ? (
         <>
           {aggregation.incompleteLineCount > 0 ? (
