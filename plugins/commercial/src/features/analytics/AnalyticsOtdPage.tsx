@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getSalesOrderOtdPanel, getSalesOrderOtdSeries } from "../../api/analyticsApi";
+import { getSalesOrderOtdPanel, getSalesOrderOtdSeries, getSalesOrderOtd } from "../../api/analyticsApi";
 import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
@@ -34,6 +34,7 @@ import {
   useCustomerAvatarPresence,
 } from "../../hooks/useCustomerAvatarPresence";
 import type {
+  SalesOrderOtdData,
   SalesOrderOtdLineItem,
   SalesOrderOtdPanelData,
   SalesOrderOtdSeriesPoint,
@@ -49,7 +50,12 @@ import { AnalyticsOtdInsightBarChart } from "./components/AnalyticsOtdInsightBar
 import { OtdCustomerIdentityCell } from "./components/OtdCustomerIdentityCell";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
-import { ANALYTICS_OTD_SERIES_LABELS } from "./utils/analyticsBranchFilters";
+import {
+  ANALYTICS_OTD_SERIES_LABELS,
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+  formatOperationalUnitCode,
+} from "./utils/analyticsBranchFilters";
+import { fetchPerBranchMetricSlices } from "../overview/goalDisplay";
 import {
   defaultOtdListUrlState,
   parseOtdListUrlState,
@@ -86,6 +92,10 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
   const [listState, setListState] = useState<OtdListUrlState>(() => parseOtdListUrlState());
   const [panel, setPanel] = useState<SalesOrderOtdPanelData | null>(null);
   const [series, setSeries] = useState<SalesOrderOtdSeriesPoint[]>([]);
+  const [otdGoalByBranch, setOtdGoalByBranch] = useState<{
+    "01": number | null;
+    "02": number | null;
+  }>({ "01": null, "02": null });
   const [loadingPanel, setLoadingPanel] = useState(true);
   const [loadingSeries, setLoadingSeries] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +161,41 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.start_date,
     filters.apiParams.end_date,
     filters.apiParams.branch,
+    filters.apiParams.customer_segment,
+    filters.apiParams.seller_id,
+    reloadKey,
+  ]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchPerBranchMetricSlices(
+      (branch, signal) =>
+        getSalesOrderOtd({ ...filters.apiParams, branch }, signal ?? controller.signal),
+      (data: SalesOrderOtdData) => data.sales_order_otd_pct,
+      controller.signal,
+    )
+      .then((slices) => {
+        if (controller.signal.aborted) return;
+        const goalOf = (slice: { goal?: SalesOrderOtdData | null } | null) => {
+          const goal = slice?.goal;
+          if (!goal) return null;
+          const raw = goal.comparable_goal ?? goal.target;
+          return raw == null || Number.isNaN(Number(raw)) ? null : Number(raw);
+        };
+        setOtdGoalByBranch({
+          "01": goalOf(slices.filial01),
+          "02": goalOf(slices.filial02),
+        });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setOtdGoalByBranch({ "01": null, "02": null });
+        }
+      });
+    return () => controller.abort();
+  }, [
+    filters.apiParams.start_date,
+    filters.apiParams.end_date,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     reloadKey,
@@ -264,6 +309,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
   const handleSortChange = useCallback(
     (columnKey: string) => {
       const sortMap: Record<string, OtdListSortKey> = {
+        branch: "branch",
         order: "order_number",
         customer: "customer_name",
         product: "product_code",
@@ -291,6 +337,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
 
   const uiSortKey = useMemo(() => {
     const reverse: Record<string, string> = {
+      branch: "branch",
       order_number: "order",
       customer_name: "customer",
       product_code: "product",
@@ -304,6 +351,12 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
   }, [listState.sortBy]);
 
   const columns: DataTableColumn<SalesOrderOtdLineItem>[] = [
+    {
+      key: "branch",
+      header: OPERATIONAL_UNIT_COLUMN_LABEL,
+      sortable: true,
+      render: (row) => formatOperationalUnitCode(row.branch) || row.branch || "—",
+    },
     {
       key: "order",
       header: "Pedido",
@@ -616,6 +669,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             <CommercialSpeedometerGauge
               size={280}
               value={latestSeriesPoint.otd_filial_01}
+              goal={otdGoalByBranch["01"]}
               showZonesLegend
               tip={`${ANALYTICS_OTD_SERIES_LABELS.unit01} em ${latestSeriesPoint.periodo}`}
             />
@@ -632,6 +686,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             <CommercialSpeedometerGauge
               size={280}
               value={latestSeriesPoint.otd_filial_02}
+              goal={otdGoalByBranch["02"]}
               showZonesLegend
               tip={`${ANALYTICS_OTD_SERIES_LABELS.unit02} em ${latestSeriesPoint.periodo}`}
             />

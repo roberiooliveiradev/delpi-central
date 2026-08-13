@@ -6,6 +6,7 @@
 export type OtdListStatusFilter = "" | "on_time" | "late";
 
 export type OtdListSortKey =
+  | "branch"
   | "status"
   | "order_number"
   | "customer_name"
@@ -24,6 +25,7 @@ export type OtdListUrlState = {
 };
 
 const SORT_KEYS = new Set<string>([
+  "branch",
   "status",
   "order_number",
   "customer_name",

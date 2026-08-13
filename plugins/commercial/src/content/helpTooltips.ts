@@ -514,6 +514,7 @@ export const CM_HELP = {
       "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
     columns: {
       order: "Número do pedido e item da linha avaliada no OTD.",
+      branch: "Unidade operacional (Santa Catarina ou Espírito Santo) da linha.",
       customer: "Cliente da linha do pedido (nome ou código).",
       product: "Código do produto da linha no período OTD.",
       productDesc: "Descrição do produto (truncada na lista).",

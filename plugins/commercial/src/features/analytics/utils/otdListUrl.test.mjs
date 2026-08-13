@@ -48,6 +48,9 @@ describe("AnalyticsOtdPage estrutural", () => {
     assert.match(page, /AnalyticsOtdInsightBarChart/);
     assert.match(page, /OtdCustomerIdentityCell/);
     assert.match(page, /cm-otd-series-grid/);
+    assert.match(page, /otdGoalByBranch/);
+    assert.match(page, /goal=\{otdGoalByBranch/);
+    assert.match(page, /OPERATIONAL_UNIT_COLUMN_LABEL/);
     assert.match(page, /customer_store/);
     assert.match(page, /upcomingPromises/);
     assert.match(page, /latestSeriesPoint/);

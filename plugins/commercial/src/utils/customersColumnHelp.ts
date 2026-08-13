@@ -74,6 +74,7 @@ export const ADMIN_TEAM_COLUMN_HELP: Record<string, string> = {
 };
 
 export const ANALYTICS_OTD_COLUMN_HELP: Record<string, string> = {
+  branch: CM_HELP.analytics.columns.branch,
   order: CM_HELP.analytics.columns.order,
   customer: CM_HELP.analytics.columns.customer,
   product: CM_HELP.analytics.columns.product,

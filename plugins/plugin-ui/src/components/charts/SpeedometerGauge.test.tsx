@@ -34,6 +34,15 @@ describe("SpeedometerGauge", () => {
     expect(screen.getByRole("tooltip").textContent).toContain("OTD SC no período");
   });
 
+  it("mostra indicador e valor da meta", () => {
+    const { container } = render(
+      <SpeedometerGauge value={98.5} goal={95} label="OTD SC" />,
+    );
+    expect(screen.getByText(/Meta:\s*95/)).toBeTruthy();
+    expect(container.querySelector("[data-goal='95']")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker")).toBeTruthy();
+  });
+
   it("mostra traço quando valor é nulo", () => {
     render(<SpeedometerGauge value={null} label="Sem dados" unit="%" />);
     expect(screen.getByText("—")).toBeTruthy();

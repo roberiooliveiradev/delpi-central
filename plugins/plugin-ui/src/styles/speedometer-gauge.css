@@ -95,6 +95,24 @@
   line-height: 1.3;
 }
 
+.delpi-ui-speedometer-gauge__goal {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--delpi-ui-accent, #089bdb);
+  line-height: 1.25;
+}
+
+.delpi-ui-speedometer-gauge__goal-marker {
+  fill: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-speedometer-gauge__goal-tick {
+  stroke: var(--delpi-ui-accent, #089bdb);
+  fill: var(--delpi-ui-accent, #089bdb);
+}
+
 .delpi-ui-speedometer-gauge__legend {
   list-style: none;
   margin: 0;
