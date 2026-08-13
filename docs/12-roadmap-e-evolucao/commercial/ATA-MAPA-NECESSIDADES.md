@@ -3,7 +3,8 @@
 > **Status:** inventário ata-cêntrico (ago/2026) — leitura gerencial primeiro  
 > **Produto:** Portal Comercial · `/apps/commercial` · `commercial-api`  
 > **Não substitui:** [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) · [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) · [KPI-FICHAS.md](./KPI-FICHAS.md)  
-> **Origem:** ata de reunião de desenvolvimento da área comercial (visão integrada na Minha DELPI)
+> **Origem:** ata de reunião de desenvolvimento da área comercial (visão integrada na Minha DELPI)  
+> **Ecossistema:** §7 — MFEs/APIs irmãos (reuso Link / HTTP / Fora)
 
 Este documento responde, para cada ponto da ata: **já temos?** · **onde acessar?** · **o que falta?** · **próximo passo**.
 
@@ -337,8 +338,8 @@ Objetivo: fechar Manual do Líder N1/N2 no que for Comercial.
 | Variantes OTD (colocação; solicitado×confirmado×atendido; prometido×executado) | `KPI-OTD` ampliada | AD + CA + MFE | Dor #10 |
 | Taxonomia de causas de atraso | Negócio | CA + MFE | — |
 | Timeline progressiva embarque/trânsito/redespacho | Fontes disponíveis | AD + CA | Construir por marco |
-| Problemas de entrega (SC + Rio Bananal) + indicador GR | Modelo exceção | CA + TV se GAV | Dor #13 |
-| Pacote Manual do Líder N1 (o que faltar após B/C) | Itens acima | MFE (+ TV Dashboard se layout TV) | GAV-\* |
+| Problemas de entrega (SC + Rio Bananal) + indicador GR | Modelo exceção | CA + TV se GAV | Dor #13; plataforma [tv-dashboard](../../../plugins/tv-dashboard/README.md) (§7) |
+| Pacote Manual do Líder N1 (o que faltar após B/C) | Itens acima | MFE (+ slides em [tv-dashboard](../../../plugins/tv-dashboard/README.md)) | GAV-\*; não iframe do Portal |
 
 **Critério de saída D:** FNE e confirmação mensuráveis; OTD com causa mínima.
 
@@ -348,14 +349,14 @@ Objetivo: evoluções posteriores à centralização gerencial.
 
 | Item | Dependência | Dono | Notas |
 |------|-------------|------|-------|
-| Amostras (ciclo, atraso, 1ª peça) | Modelo M4 / fonte | CA + MFE | SMP-\* · F7 · dor #8 |
+| Amostras (ciclo, atraso, 1ª peça) | Modelo M4 / fonte | CA + MFE | SMP-\* · F7 · dor #8; LMP parcial = [dashboard-lmps](../../../plugins/dashboard-lmps/README.md) (§7) |
 | Ticket médio no cockpit | `KPI-TICKET` aprovada | AD + CA + MFE | — |
-| Rentabilidade (filtros cliente/família/período) | FIN-004 + RBAC + audit log | AD + CA + MFE | Dor #15 · P2 |
-| Boletos Vendas + alçadas | Contrato TOTVS + controles | AD + CA + MFE | FIN-007–008 · dor #16 |
+| Rentabilidade (filtros cliente/família/período) | FIN-004 + RBAC + audit log | AD + CA + MFE | Dor #15 · P2 · **sem app** hoje (§7.3) |
+| Boletos Vendas + alçadas | Contrato TOTVS + controles | AD + CA + MFE | FIN-007–008 · dor #16 · **sem app** (§7.3) |
 | Família produto / subgrupos WEG como filtro canônico | Cadastro Onda A | AD + CA + MFE | Dor #6 |
-| Read model ocupação/capacidade para Comercial | Contrato Produção/PCP | OUT → CA consume | Dor #14 · P2–P3 |
-| Rupturas estoque 30d (Jaraguá) no GR | Domínio Supplies/PCP | OUT · Comercial consome | Manual Líder N2 |
-| Acompanhar §18–§20 sem implementar no Portal | Chamados | OUT | § 5 deste doc |
+| Read model ocupação/capacidade para Comercial | Contrato Produção/PCP | OUT → CA consume | Dor #14; link parcial [dashboard-production](../../../plugins/dashboard-production/README.md) |
+| Rupturas estoque 30d (Jaraguá) no GR | Domínio Supplies | OUT · Comercial **Link** | [estoque-seguranca](../../../plugins/estoque-seguranca/README.md) / [dashboard-supplies](../../../plugins/dashboard-supplies/README.md) · §7.4 |
+| Acompanhar §18–§20 sem implementar no Portal | Chamados | OUT | §5 + §7.3 |
 
 **Critério de saída E:** itens sensíveis só após política; amostras e capacidade com dono claro.
 
@@ -375,13 +376,19 @@ A (fichas) → B (cockpit) → C (ofertas) → D (pedidos/entrega) → E (sensí
 
 ## 5. Itens fora do Portal (chamados / outros domínios)
 
-| Ata | Item | Ação |
-|-----|------|------|
-| §18 | Divergência expedição barcode/QR | Acompanhar ops (Junior, Vanusa, Fabiano); não implementar no `plugins/commercial` |
-| §19 | Inventário rotativo `#000697` | Consultar chamado e cronograma |
-| §20 | Devoluções `#000688` | Verificar status pós-27/jul; treinar após liberação |
-| §22 | Capacidade fábrica plena | Dono Produção/PCP; Portal só consome contrato futuro |
-| — | MFEs irmãos (`dashboard-commercial`, PVA, `propostas-comerciais`) | Coexistem; **não** são a UX canônica a evoluir |
+| Ata | Item | Situação no monorepo | Ação |
+|-----|------|----------------------|------|
+| §16 GAV TV | Exibição em TV / playlists | **App existe:** [tv-dashboard](../../../plugins/tv-dashboard/README.md) + [tv-dashboard-api](../../../tv-dashboard-api/README.md) | Aproveitar plataforma; criar **conteúdo** Comercial/GR (não rebuild) — ver §7.2 |
+| §16 GR rupturas | Estoque / safety stock | **App existe:** [estoque-seguranca](../../../plugins/estoque-seguranca/README.md), [dashboard-supplies](../../../plugins/dashboard-supplies/README.md) | **Link** / futuro HTTP; não reimplementar no Portal — §7.4 Onda E |
+| §22 | Capacidade / OEE produção | **App existe (parcial):** [dashboard-production](../../../plugins/dashboard-production/README.md), [eficiencia-fabril](../../../plugins/eficiencia-fabril/README.md) | Link; cockpit PCP pleno = **Fora** até contrato |
+| §18 | Divergência expedição barcode/QR | **Sem app** | Ops (Junior, Vanusa, Fabiano); não implementar em `plugins/commercial` |
+| §19 | Inventário rotativo `#000697` | **Sem app** | Consultar chamado e cronograma |
+| §20 | Devoluções `#000688` | **Sem app** | Verificar status; treinar após liberação (Laércio) |
+| §21 | Boletos Vendas | **Sem app** (≠ [financeiro-inadimplencia](../../../plugins/financeiro-inadimplencia/README.md)) | Spec FIN-007–008 |
+| — | MFEs irmãos comerciais | [dashboard-commercial](../../../plugins/dashboard-commercial/README.md), [pedidos-venda-abertos](../../../plugins/pedidos-venda-abertos/README.md), [propostas-comerciais](../../../plugins/propostas-comerciais/README.md) | Coexistem; UX canônica = Portal (§7.2) |
+| — | CIPA / PAC / Transformômetro | [cipa](../../../plugins/cipa/README.md), [quality-action-plans](../../../plugins/quality-action-plans/README.md), [transformometro](../../../plugins/transformometro/README.md) | **Fora** do escopo da ata comercial (não confundir nomes) |
+
+Detalhe de reuso: **§7**.
 
 ---
 
@@ -395,7 +402,11 @@ A (fichas) → B (cockpit) → C (ofertas) → D (pedidos/entrega) → E (sensí
 | [KPI-FICHAS.md](./KPI-FICHAS.md) | Fórmulas bloqueantes |
 | [API-ROUTES.md](./API-ROUTES.md) | Catálogo + gaps (FNE, boletos, rentabilidade) |
 | [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) | commercial-api × api-delpi |
+| [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) | IA / navegação Portal |
 | [plugins/commercial/README.md](../../../plugins/commercial/README.md) | README do MFE |
+| [docs/08-plugins/README.md](../../08-plugins/README.md) | Índice de plugins Minha DELPI |
+| [api-delpi/docs/api/06-modulos-departamentais.md](../../../api-delpi/docs/api/06-modulos-departamentais.md) | Módulos TOTVS (Produção, Financeiro, Suprimentos, Comercial) |
+| Ecossistema (§7) | READMEs citados na matriz 7.2 |
 
 ---
 
