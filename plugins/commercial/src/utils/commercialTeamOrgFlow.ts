@@ -26,6 +26,8 @@ export type CommercialGroupsOrgFlowModel = {
  */
 export function buildCommercialGroupsOrgFlowModel(input: {
   people: readonly CommercialTeamOrgPerson[];
+  /** Grupos sem membros ainda entram no diagrama (página Grupos). */
+  groups?: readonly CommercialTeamOrgGroupRef[];
 }): CommercialGroupsOrgFlowModel {
   const nodes: OrgMembershipFlowModelNode[] = [];
   const edges: OrgMembershipFlowModelEdge[] = [];
@@ -60,6 +62,12 @@ export function buildCommercialGroupsOrgFlowModel(input: {
     });
     return groupNodeId;
   };
+
+  for (const group of [...(input.groups ?? [])].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR"),
+  )) {
+    ensureGroup(group);
+  }
 
   for (const person of peopleSorted(input.people)) {
     const personNodeId = ensurePerson(person);

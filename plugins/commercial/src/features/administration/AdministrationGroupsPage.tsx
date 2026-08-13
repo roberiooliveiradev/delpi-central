@@ -18,18 +18,26 @@ import {
   CommercialDataCardsGrid,
   CommercialEmptyState,
   CommercialLoadingCard,
+  CommercialOrgMembershipFlow,
   CommercialPageHero,
   CommercialPagePath,
   CommercialSectionCard,
+  CommercialSegmentToggle,
   CommercialStateBanner,
   CommercialStatusBadge,
   CommercialTextField,
 } from "../../app/commercialUi";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
+import {
+  parseCommercialTeamView,
+  replaceCommercialTeamViewInUrl,
+  type CommercialTeamView,
+} from "../../utils/commercialTeamDeepLink";
+import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
 import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
@@ -52,6 +60,12 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [view, setView] = useState<CommercialTeamView>(() => parseCommercialTeamView());
+
+  const applyView = useCallback((next: CommercialTeamView) => {
+    setView(next);
+    replaceCommercialTeamViewInUrl(next);
+  }, []);
 
   const memberUserIds = useMemo(
     () =>
@@ -59,6 +73,46 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
     [groups],
   );
   const { byId, labelFor } = useDirectoryUserLabels(memberUserIds);
+
+  const orgFlowModel = useMemo(() => {
+    const peopleById = new Map<
+      string,
+      {
+        user_id: string;
+        name: string;
+        email: string | null;
+        groups: Array<{ id: string; name: string; active: boolean }>;
+      }
+    >();
+    for (const group of groups) {
+      for (const member of group.members) {
+        const existing = peopleById.get(member.user_id);
+        const directory = byId[member.user_id];
+        if (!existing) {
+          peopleById.set(member.user_id, {
+            user_id: member.user_id,
+            name: labelFor(member.user_id, directory?.name ?? null),
+            email: directory?.email ?? null,
+            groups: [{ id: group.id, name: group.name, active: group.active }],
+          });
+        } else {
+          existing.groups.push({
+            id: group.id,
+            name: group.name,
+            active: group.active,
+          });
+        }
+      }
+    }
+    return buildCommercialGroupsOrgFlowModel({
+      people: [...peopleById.values()],
+      groups: groups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        active: group.active,
+      })),
+    });
+  }, [byId, groups, labelFor]);
 
   const load = useCallback(
     async (mode: "initial" | "refresh" = "initial", signal?: AbortSignal) => {
@@ -296,7 +350,18 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         description={loading ? copy.loading : copy.description}
         actions={
           <>
-            {!loading && groups.length > 0 && !showCreateForm ? (
+            <CommercialSegmentToggle
+              size="sm"
+              ariaLabel={copy.viewToggleAria}
+              idPrefix="administration-groups-view"
+              value={view}
+              onChange={(next) => applyView(next as CommercialTeamView)}
+              options={[
+                { value: "list", label: copy.viewList },
+                { value: "org", label: copy.viewOrg },
+              ]}
+            />
+            {!loading && groups.length > 0 && !showCreateForm && view === "list" ? (
               <CommercialActionButton variant="primary" onClick={openCreateForm}>
                 <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
                 {copy.create}
@@ -320,9 +385,9 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
 
       {loading ? <CommercialLoadingCard title={copy.loading} /> : null}
 
-      {!loading ? createFormCard : null}
+      {!loading && view === "list" ? createFormCard : null}
 
-      {!loading && groups.length === 0 && !showCreateForm ? (
+      {!loading && view === "list" && groups.length === 0 && !showCreateForm ? (
         <CommercialEmptyState
           defaultTitle={copy.emptyTitle}
           defaultMessage={copy.emptyDescription}
@@ -334,7 +399,29 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         </CommercialEmptyState>
       ) : null}
 
-      {!loading && groups.length > 0 ? (
+      {!loading && view === "org" ? (
+        <CommercialSectionCard title={copy.orgTitle} subtitle={copy.orgSubtitle}>
+          {orgFlowModel.nodes.length === 0 ? (
+            <CommercialEmptyState defaultMessage={copy.orgEmpty} />
+          ) : (
+            <CommercialOrgMembershipFlow
+              nodes={orgFlowModel.nodes}
+              edges={orgFlowModel.edges}
+              portalScopeClassName="dashboard-commercial"
+              fullscreenTitle={copy.orgTitle}
+              fullscreenSubtitle={copy.orgSubtitle}
+              aria-label={copy.orgAriaLabel}
+              emptyMessage={copy.orgEmpty}
+              onNodeClick={(payload) => {
+                if (payload.kind !== "person") return;
+                navigateUserProfile(payload.entityId, { basePath });
+              }}
+            />
+          )}
+        </CommercialSectionCard>
+      ) : null}
+
+      {!loading && view === "list" && groups.length > 0 ? (
         <CommercialDataCardsGrid ariaLabel={copy.title}>
           {groups.map((group) => {
             const memberIds = new Set(group.members.map((member) => member.user_id));
