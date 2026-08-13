@@ -18,6 +18,7 @@ export const ANALYTICS_CONTENT = {
     newBusinessKpi: "Participação de novos negócios no ROL do período.",
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período.",
+    comparePriorYear: "Comparar ano anterior",
     funnel: "Funil de conversão (propostas → ganhas).",
     funnelFootnote:
       "Largura das etapas proporcional ao volume; números absolutos em cada faixa. Ganhas = propostas com status TOTVS 9 e aceite (AD1_DTASSI) no período filtrado.",

@@ -534,8 +534,16 @@ export const CM_HELP = {
     kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios. Carteira em aberto, quando exibida, é saldo atual — não soma com ROL.",
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",
+    rolSeriesYoy:
+      "Sobrepõe o mesmo intervalo deslocado −1 ano (linhas tracejadas). Alinhamento por bucket; drill só no período atual.",
+    rolSeriesYoyDisabledDay:
+      "Comparação com o ano anterior fica desligada na granularidade Dia (custo de consultas).",
     closingRateSeries:
       "Evolução da taxa de conversão (hit rate) por Santa Catarina e Espírito Santo. Cada ponto usa a mesma fórmula do KPI no intervalo do bucket.",
+    closingRateSeriesYoy:
+      "Sobrepõe hit rate do intervalo −1 ano (tracejado). Mesma regra de buckets; indisponível em Dia.",
+    closingRateSeriesYoyDisabledDay:
+      "Comparação com o ano anterior fica desligada na granularidade Dia (custo de consultas).",
     funnel:
       "Funil de conversão: propostas abertas no período (denominador) versus ganhas com status TOTVS 9 e data de aceite no período (numerador). Cohorts podem diferir — ver ficha KPI-HIT-RATE.",
     closingRate:

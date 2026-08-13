@@ -20,6 +20,26 @@ describe("overviewExportBuilders", () => {
     expect(payload.rows).toHaveLength(1);
   });
 
+  it("inclui colunas do ano anterior quando solicitado", () => {
+    const payload = buildOverviewRolSeriesPayload(
+      [
+        {
+          periodo: "01/08",
+          sort_key: "2026-08-01",
+          start_date: "2026-08-01",
+          end_date: "2026-08-01",
+          rol_matrix: 100,
+          rol_branch: 50,
+          rol_matrix_prior: 80,
+          rol_branch_prior: 40,
+        },
+      ],
+      { includePriorYear: true },
+    );
+    expect(payload.columns).toHaveLength(5);
+    expect(payload.rows[0]?.rolMatrixPrior).toBeTruthy();
+  });
+
   it("monta payload do funil", () => {
     const payload = buildOverviewFunnelPayload({
       qtd_proposals: 9,

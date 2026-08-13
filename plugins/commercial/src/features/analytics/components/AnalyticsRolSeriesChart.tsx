@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import {
   EmptyState,
+  NativeCheckboxControl,
   runTabularExport,
   type ChartGranularity,
 } from "@delpi/plugin-ui/index";
@@ -32,6 +33,11 @@ import type {
 } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 import { ANALYTICS_ROL_SERIES_LABELS } from "../utils/analyticsBranchFilters";
+import {
+  isPriorYearCompareAllowed,
+  mergeSeriesWithPriorYear,
+  shiftPeriodRangeByYears,
+} from "../utils/periodShift";
 
 const CHART_HEIGHT = 320;
 
@@ -41,6 +47,11 @@ const ROL_GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "month", label: "Mês" },
   { value: "year", label: "Ano" },
 ];
+
+type RolChartPoint = CommercialRolSeriesPoint & {
+  rol_matrix_prior?: number | null;
+  rol_branch_prior?: number | null;
+};
 
 type RolSeriesChartProps = {
   filters: Pick<
@@ -59,7 +70,8 @@ function formatChartCurrency(value: number): string {
 }
 
 /**
- * Evolução de ROL — séries Santa Catarina / Espírito Santo, toolbar Dia–Ano e drill.
+ * Evolução de ROL — séries Santa Catarina / Espírito Santo, toolbar Dia–Ano,
+ * overlay opcional ano anterior e drill no período atual.
  */
 export function AnalyticsRolSeriesChart({
   filters,
@@ -70,23 +82,66 @@ export function AnalyticsRolSeriesChart({
     filters.start_date,
     filters.end_date,
   );
-  const [points, setPoints] = useState<CommercialRolSeriesPoint[]>([]);
+  const [comparePriorYear, setComparePriorYear] = useState(false);
+  const [points, setPoints] = useState<RolChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
 
+  const yoyAllowed = isPriorYearCompareAllowed(granularity);
+  const yoyActive = comparePriorYear && yoyAllowed;
+
+  useEffect(() => {
+    if (!yoyAllowed && comparePriorYear) {
+      setComparePriorYear(false);
+    }
+  }, [comparePriorYear, yoyAllowed]);
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void getCommercialRolSeries({ ...filters, granularity }, controller.signal)
-      .then((data) => {
+
+    const currentPromise = getCommercialRolSeries(
+      { ...filters, granularity },
+      controller.signal,
+    );
+
+    const priorRange =
+      yoyActive && filters.start_date && filters.end_date
+        ? shiftPeriodRangeByYears(
+            { start_date: filters.start_date, end_date: filters.end_date },
+            -1,
+          )
+        : null;
+
+    const priorPromise = priorRange
+      ? getCommercialRolSeries(
+          {
+            ...filters,
+            start_date: priorRange.start_date,
+            end_date: priorRange.end_date,
+            granularity,
+          },
+          controller.signal,
+        )
+      : Promise.resolve(null);
+
+    void Promise.all([currentPromise, priorPromise])
+      .then(([currentData, priorData]) => {
         if (controller.signal.aborted) return;
-        const next = data.points ?? [];
+        const current = currentData.points ?? [];
+        const prior = priorData?.points ?? [];
+        const next: RolChartPoint[] = yoyActive
+          ? mergeSeriesWithPriorYear(current, prior, (p) => ({
+              rol_matrix_prior: p?.rol_matrix ?? null,
+              rol_branch_prior: p?.rol_branch ?? null,
+            }))
+          : current;
         setPoints(next);
-        onPointsChangeRef.current?.(next);
+        onPointsChangeRef.current?.(current);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -105,7 +160,18 @@ export function AnalyticsRolSeriesChart({
     filters.customer_segment,
     filters.seller_id,
     granularity,
+    yoyActive,
   ]);
+
+  const exportIncludePrior = yoyActive;
+
+  const priorLabels = useMemo(
+    () => ({
+      unit01: `${ANALYTICS_ROL_SERIES_LABELS.unit01} (ano ant.)`,
+      unit02: `${ANALYTICS_ROL_SERIES_LABELS.unit02} (ano ant.)`,
+    }),
+    [],
+  );
 
   const handleClick: ComponentProps<typeof LineChart>["onClick"] = (state) => {
     if (!onDrillDown || !state) return;
@@ -134,17 +200,33 @@ export function AnalyticsRolSeriesChart({
             runTabularExport({
               kind: "table",
               format,
-              payload: buildOverviewRolSeriesPayload(points),
+              payload: buildOverviewRolSeriesPayload(points, {
+                includePriorYear: exportIncludePrior,
+              }),
             });
           }}
         />
       </div>
-      <CommercialChartToolbar
-        granularity={granularity}
-        onGranularityChange={setGranularity}
-        options={ROL_GRANULARITY_OPTIONS}
-        modes={["day", "week", "month", "year"]}
-      />
+      <div className="cm-rol-series__toolbar">
+        <CommercialChartToolbar
+          granularity={granularity}
+          onGranularityChange={setGranularity}
+          options={ROL_GRANULARITY_OPTIONS}
+          modes={["day", "week", "month", "year"]}
+        />
+        <NativeCheckboxControl
+          id="overview-rol-yoy"
+          checked={yoyActive}
+          disabled={!yoyAllowed}
+          onChange={setComparePriorYear}
+          label={ANALYTICS_CONTENT.overview.comparePriorYear}
+          hint={
+            yoyAllowed
+              ? CM_HELP.overview.rolSeriesYoy
+              : CM_HELP.overview.rolSeriesYoyDisabledDay
+          }
+        />
+      </div>
       {loading ? (
         <CommercialLoadingCard title={emptyCopy.rolLoading} variant="panel" />
       ) : null}
@@ -169,9 +251,7 @@ export function AnalyticsRolSeriesChart({
                 tickFormatter={(value) => formatChartCurrency(Number(value))}
                 width={90}
               />
-              <Tooltip
-                formatter={(value) => formatChartCurrency(Number(value))}
-              />
+              <Tooltip formatter={(value) => formatChartCurrency(Number(value))} />
               <Legend />
               <Line
                 type="monotone"
@@ -191,6 +271,30 @@ export function AnalyticsRolSeriesChart({
                 dot={{ r: 4, cursor: onDrillDown ? "pointer" : "default" }}
                 activeDot={{ r: 6 }}
               />
+              {yoyActive ? (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="rol_matrix_prior"
+                    name={priorLabels.unit01}
+                    stroke="var(--chart-3, #94a3b8)"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    connectNulls
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="rol_branch_prior"
+                    name={priorLabels.unit02}
+                    stroke="var(--chart-4, #64748b)"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    connectNulls
+                    dot={false}
+                  />
+                </>
+              ) : null}
             </LineChart>
           </ResponsiveContainer>
         </div>

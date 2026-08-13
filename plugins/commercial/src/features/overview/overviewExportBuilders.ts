@@ -14,19 +14,45 @@ function formatPct(value: number | null | undefined): string {
 }
 
 export function buildOverviewRolSeriesPayload(
-  points: CommercialRolSeriesPoint[],
+  points: Array<
+    CommercialRolSeriesPoint & {
+      rol_matrix_prior?: number | null;
+      rol_branch_prior?: number | null;
+    }
+  >,
+  options: { includePriorYear?: boolean } = {},
 ): TableExportPayload {
+  const includePrior = Boolean(options.includePriorYear);
+  const columns = [
+    { key: "periodo", label: "Período" },
+    { key: "rolMatrix", label: ANALYTICS_ROL_SERIES_LABELS.unit01 },
+    { key: "rolBranch", label: ANALYTICS_ROL_SERIES_LABELS.unit02 },
+    ...(includePrior
+      ? [
+          { key: "rolMatrixPrior", label: `${ANALYTICS_ROL_SERIES_LABELS.unit01} (ano ant.)` },
+          { key: "rolBranchPrior", label: `${ANALYTICS_ROL_SERIES_LABELS.unit02} (ano ant.)` },
+        ]
+      : []),
+  ];
   return {
     title: "Evolução do ROL (R$)",
-    columns: [
-      { key: "periodo", label: "Período" },
-      { key: "rolMatrix", label: ANALYTICS_ROL_SERIES_LABELS.unit01 },
-      { key: "rolBranch", label: ANALYTICS_ROL_SERIES_LABELS.unit02 },
-    ],
+    columns,
     rows: points.map((point) => ({
       periodo: point.periodo,
       rolMatrix: formatCurrency(point.rol_matrix),
       rolBranch: formatCurrency(point.rol_branch),
+      ...(includePrior
+        ? {
+            rolMatrixPrior:
+              point.rol_matrix_prior == null
+                ? "—"
+                : formatCurrency(point.rol_matrix_prior),
+            rolBranchPrior:
+              point.rol_branch_prior == null
+                ? "—"
+                : formatCurrency(point.rol_branch_prior),
+          }
+        : {}),
     })),
   };
 }
