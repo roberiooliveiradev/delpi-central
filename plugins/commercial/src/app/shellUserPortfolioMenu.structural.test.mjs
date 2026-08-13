@@ -29,21 +29,22 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
     const nav = readFileSync(join(src, "content/shellNav.ts"), "utf8");
     assert.match(nav, /userMenu:/);
     assert.match(nav, /profileAriaLabel/);
-    assert.match(nav, /enlargePhotoAriaLabel/);
-    assert.match(nav, /openProfileFromPreview/);
     assert.match(nav, /menuOpenAriaLabel/);
+    assert.doesNotMatch(nav, /enlargePhotoAriaLabel/);
+    assert.doesNotMatch(nav, /openProfileFromPreview/);
   });
 
-  it("com foto amplia no lightbox; sem foto (ou ação no modal) abre perfil", () => {
+  it("avatar na TopBar sempre abre o perfil (zoom só na página de perfil)", () => {
     const menu = readFileSync(join(src, "app/ShellUserPortfolioMenu.tsx"), "utf8");
     assert.match(menu, /navigateUserProfile/);
     assert.match(menu, /cm-shell-user__profile/);
     assert.match(menu, /cm-shell-user__portfolio/);
     assert.match(menu, /goToProfile/);
     assert.match(menu, /userProfilePhotoAbsoluteUrl/);
-    assert.match(menu, /previewable=\{hasPhoto\}/);
-    assert.match(menu, /openProfileFromPreview/);
-    assert.match(menu, /enlargePhotoAriaLabel/);
+    assert.match(menu, /previewable=\{false\}/);
+    assert.match(menu, /onClick=\{goToProfile\}/);
+    assert.doesNotMatch(menu, /previewable=\{hasPhoto\}/);
+    assert.doesNotMatch(menu, /openProfileFromPreview/);
     assert.doesNotMatch(menu, /cm-shell-user__trigger/);
   });
 });

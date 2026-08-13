@@ -43,8 +43,6 @@ export const SHELL_NAV_CONTENT = {
   userMenu: {
     nameFallback: "Usuário",
     profileAriaLabel: "Abrir meu perfil",
-    enlargePhotoAriaLabel: "Ampliar minha foto",
-    openProfileFromPreview: "Abrir perfil",
     disabledAriaLabel: "Usuário sem carteira vinculada",
     directAriaLabel: "Abrir Minha Carteira: {name}",
     menuOpenAriaLabel: "Escolher carteira",
