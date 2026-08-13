@@ -72,6 +72,8 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /showCreateForm/);
     assert.match(source, /CommercialEmptyState/);
     assert.match(source, /closeCreateForm/);
+    assert.match(source, /CommercialAvatarStack/);
+    assert.match(source, /CommercialDataCardsGrid/);
   });
 
   it("App roteia Painel, Carteiras, Equipe e Grupos", () => {

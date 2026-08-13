@@ -93,6 +93,7 @@ export const ADMINISTRATION_CONTENT = {
     adding: "Adicionando…",
     noMembers: "Nenhum membro neste grupo.",
     memberCount: "{count} membro(s)",
+    membersFacepileAria: "Membros do grupo {name}",
   },
   metrics: {
     total: "Carteiras",

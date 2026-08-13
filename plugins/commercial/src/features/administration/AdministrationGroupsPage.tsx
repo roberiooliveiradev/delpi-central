@@ -13,6 +13,8 @@ import {
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
+  CommercialAvatarStack,
+  CommercialDataCardsGrid,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialPageHero,
@@ -291,19 +293,22 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         </CommercialEmptyState>
       ) : null}
 
-      {!loading
-        ? groups.map((group) => {
+      {!loading && groups.length > 0 ? (
+        <CommercialDataCardsGrid aria-label={copy.title}>
+          {groups.map((group) => {
             const memberIds = new Set(group.members.map((member) => member.user_id));
             const pickerValue = pickerByGroup[group.id] ?? [];
             const deleting = busyKey === `${group.id}:delete`;
+            const memberCount = group.member_count ?? group.members.length;
+            const facepileItems = group.members.map((member) => ({
+              id: member.user_id,
+              name: labelFor(member.user_id, byId[member.user_id]?.name ?? null),
+            }));
             return (
               <CommercialSectionCard
                 key={group.id}
                 title={group.name}
-                subtitle={copy.memberCount.replace(
-                  "{count}",
-                  String(group.member_count ?? group.members.length),
-                )}
+                subtitle={copy.memberCount.replace("{count}", String(memberCount))}
                 actions={
                   <>
                     <CommercialStatusBadge
@@ -322,6 +327,20 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                 }
               >
                 <div className="cm-portfolios-detail-block">
+                  {facepileItems.length > 0 ? (
+                    <CommercialAvatarStack
+                      items={facepileItems}
+                      max={6}
+                      size="sm"
+                      aria-label={copy.membersFacepileAria.replace(
+                        "{name}",
+                        group.name,
+                      )}
+                    />
+                  ) : null}
+
+                  <p className="cm-muted">{copy.membersTitle}</p>
+
                   <UserDirectoryPicker
                     value={pickerValue}
                     onChange={(users) => {
@@ -396,8 +415,9 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                 </div>
               </CommercialSectionCard>
             );
-          })
-        : null}
+          })}
+        </CommercialDataCardsGrid>
+      ) : null}
     </section>
   );
 }
