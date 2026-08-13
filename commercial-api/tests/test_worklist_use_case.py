@@ -9,13 +9,24 @@ import pytest
 from commercial_app.application.use_cases.manage_worklist import (
     CreateTaskInput,
     ManageWorklistUseCase,
+    UpdateTaskInput,
 )
-from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
+from commercial_app.domain.entities.task import (
+    CommercialActivity,
+    CommercialTask,
+    TaskCustomerRef,
+    normalize_assignee_user_ids,
+    normalize_task_customers,
+)
 
 
 class InMemoryTaskRepo:
     def __init__(self) -> None:
         self.items: dict[UUID, CommercialTask] = {}
+
+    @staticmethod
+    def _matches_assignee(task: CommercialTask, assignee_user_id: str) -> bool:
+        return assignee_user_id in task.resolved_assignee_user_ids()
 
     def list_for_assignee(
         self,
@@ -28,7 +39,7 @@ class InMemoryTaskRepo:
     ) -> Sequence[CommercialTask]:
         out: list[CommercialTask] = []
         for task in self.items.values():
-            if task.assignee_user_id != assignee_user_id:
+            if not self._matches_assignee(task, assignee_user_id):
                 continue
             if status and task.status != status:
                 continue
@@ -55,7 +66,8 @@ class InMemoryTaskRepo:
         out = [
             task
             for task in self.items.values()
-            if task.assignee_user_id in allowed and (not status or task.status == status)
+            if allowed.intersection(task.resolved_assignee_user_ids())
+            and (not status or task.status == status)
         ]
         if status == "done":
             out.sort(
@@ -97,8 +109,24 @@ class InMemoryTaskRepo:
         created_by_user_id: str,
         customer_code: str | None,
         customer_store: str | None,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask:
         now = datetime.now(timezone.utc)
+        assignees = tuple(
+            normalize_assignee_user_ids(
+                assignee_user_ids=assignee_user_ids,
+                assignee_user_id=assignee_user_id,
+                fallback_user_id=assignee_user_id,
+            )
+        )
+        custs = tuple(
+            normalize_task_customers(
+                customers=customers,
+                customer_code=customer_code,
+                customer_store=customer_store,
+            )
+        )
         task = CommercialTask(
             id=uuid4(),
             title=title,
@@ -108,12 +136,14 @@ class InMemoryTaskRepo:
             priority=priority,
             due_at=due_at,
             completed_at=None,
-            assignee_user_id=assignee_user_id,
+            assignee_user_id=assignees[0] if assignees else assignee_user_id,
             created_by_user_id=created_by_user_id,
-            customer_code=customer_code,
-            customer_store=customer_store,
+            customer_code=custs[0].customer_code if custs else customer_code,
+            customer_store=custs[0].customer_store if custs else customer_store,
             created_at=now,
             updated_at=now,
+            assignee_user_ids=assignees,
+            customers=custs,
         )
         self.items[task.id] = task
         return task
@@ -138,6 +168,8 @@ class InMemoryTaskRepo:
             customer_store=task.customer_store,
             created_at=task.created_at,
             updated_at=now,
+            assignee_user_ids=task.assignee_user_ids,
+            customers=task.customers,
         )
         self.items[task.id] = done
         return done
@@ -162,15 +194,30 @@ class InMemoryTaskRepo:
             customer_store=task.customer_store,
             created_at=task.created_at,
             updated_at=now,
+            assignee_user_ids=task.assignee_user_ids,
+            customers=task.customers,
         )
         self.items[task.id] = updated
         return updated
 
-    def reassign(self, *, task_id: UUID, new_assignee_user_id: str) -> CommercialTask | None:
+    def reassign(
+        self,
+        *,
+        task_id: UUID,
+        new_assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
+    ) -> CommercialTask | None:
         task = self.items.get(task_id)
         if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
+        assignees = tuple(
+            normalize_assignee_user_ids(
+                assignee_user_ids=assignee_user_ids,
+                assignee_user_id=new_assignee_user_id,
+                fallback_user_id=new_assignee_user_id,
+            )
+        )
         updated = CommercialTask(
             id=task.id,
             title=task.title,
@@ -180,12 +227,14 @@ class InMemoryTaskRepo:
             priority=task.priority,
             due_at=task.due_at,
             completed_at=task.completed_at,
-            assignee_user_id=new_assignee_user_id,
+            assignee_user_id=assignees[0] if assignees else new_assignee_user_id,
             created_by_user_id=task.created_by_user_id,
             customer_code=task.customer_code,
             customer_store=task.customer_store,
             created_at=task.created_at,
             updated_at=now,
+            assignee_user_ids=assignees,
+            customers=task.customers,
         )
         self.items[task.id] = updated
         return updated
@@ -202,11 +251,27 @@ class InMemoryTaskRepo:
         customer_code: str | None,
         customer_store: str | None,
         assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask | None:
         task = self.items.get(task_id)
         if task is None or task.status != "open":
             return None
         now = datetime.now(timezone.utc)
+        assignees = tuple(
+            normalize_assignee_user_ids(
+                assignee_user_ids=assignee_user_ids,
+                assignee_user_id=assignee_user_id,
+                fallback_user_id=assignee_user_id,
+            )
+        )
+        custs = tuple(
+            normalize_task_customers(
+                customers=customers,
+                customer_code=customer_code,
+                customer_store=customer_store,
+            )
+        )
         updated = CommercialTask(
             id=task.id,
             title=title,
@@ -216,12 +281,14 @@ class InMemoryTaskRepo:
             priority=priority,
             due_at=due_at,
             completed_at=task.completed_at,
-            assignee_user_id=assignee_user_id,
+            assignee_user_id=assignees[0] if assignees else assignee_user_id,
             created_by_user_id=task.created_by_user_id,
-            customer_code=customer_code,
-            customer_store=customer_store,
+            customer_code=custs[0].customer_code if custs else customer_code,
+            customer_store=custs[0].customer_store if custs else customer_store,
             created_at=task.created_at,
             updated_at=now,
+            assignee_user_ids=assignees,
+            customers=custs,
         )
         self.items[task.id] = updated
         return updated
@@ -246,6 +313,8 @@ class InMemoryTaskRepo:
             customer_store=task.customer_store,
             created_at=task.created_at,
             updated_at=now,
+            assignee_user_ids=task.assignee_user_ids,
+            customers=task.customers,
         )
         del self.items[task.id]
         return deleted
@@ -718,3 +787,79 @@ def test_permissions_helpers():
     assert can_view_worklist(User(["commercial.worklist.view"]))
     assert can_manage_followups(User(["commercial.followups.manage"]))
     assert not can_manage_followups(User(["commercial.accounts.view"]))
+
+
+def test_multi_assignees_and_customers_visible_and_any_completes():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    uc = ManageWorklistUseCase(task_repository=tasks, activity_repository=activities)
+
+    created = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(
+            title="Visita conjunta",
+            assignee_user_ids=["seller-a", "seller-b"],
+            customers=[
+                TaskCustomerRef("0001", "01", "ACME"),
+                TaskCustomerRef("0002", "01", "Beta"),
+            ],
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    assert created.assignee_user_id == "seller-a"
+    assert list(created.resolved_assignee_user_ids()) == ["seller-a", "seller-b"]
+    assert len(created.resolved_customers()) == 2
+    assert created.to_dict()["customers"][0]["customer_name"] == "ACME"
+
+    mine_a = uc.get_worklist(user_id="seller-a")
+    mine_b = uc.get_worklist(user_id="seller-b")
+    assert any(item["id"] == str(created.id) for item in mine_a["today"] + mine_a["later"] + mine_a["overdue"])
+    assert any(item["id"] == str(created.id) for item in mine_b["today"] + mine_b["later"] + mine_b["overdue"])
+
+    completed = uc.complete_task(user_id="seller-b", task_id=created.id)
+    assert completed.status == "done"
+
+    open_task = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(
+            title="Reassign multi",
+            assignee_user_ids=["seller-a"],
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    reassigned = uc.reassign_task(
+        user_id="manager",
+        task_id=open_task.id,
+        assignee_user_ids=["seller-c", "seller-a"],
+        actor_is_portfolio_manager=True,
+    )
+    assert list(reassigned.resolved_assignee_user_ids()) == ["seller-c", "seller-a"]
+
+    updated = uc.update_task(
+        user_id="manager",
+        task_id=open_task.id,
+        data=UpdateTaskInput(
+            title="Reassign multi",
+            assignee_user_ids=["seller-a", "seller-b"],
+            customers=[TaskCustomerRef("0099", "01", "Zeta")],
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    assert list(updated.resolved_assignee_user_ids()) == ["seller-a", "seller-b"]
+    assert updated.customer_code == "0099"
+    assert updated.customers[0].customer_name == "Zeta"
+
+
+def test_multi_assign_requires_manager():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    uc = ManageWorklistUseCase(task_repository=tasks, activity_repository=activities)
+    with pytest.raises(PermissionError):
+        uc.create_task(
+            user_id="seller-a",
+            data=CreateTaskInput(
+                title="Hack",
+                assignee_user_ids=["seller-a", "seller-b"],
+            ),
+            actor_is_portfolio_manager=False,
+        )

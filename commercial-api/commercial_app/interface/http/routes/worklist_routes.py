@@ -32,12 +32,14 @@ from commercial_app.application.services.commercial_realtime_notify import (
     WorklistChangeReason,
     notify_worklist_changed,
 )
+from commercial_app.domain.entities.task import TaskCustomerRef
 from commercial_app.interface.http.client_id import client_id_from_request
 from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateActivityBody,
     CreateTaskBody,
     DeferTaskBody,
     ReassignTaskBody,
+    TaskCustomerBody,
     UpdateTaskBody,
 )
 
@@ -46,6 +48,35 @@ logger = logging.getLogger(__name__)
 me_router = APIRouter(prefix="/me", tags=["Me / worklist"])
 tasks_router = APIRouter(prefix="/tasks", tags=["Tasks"])
 activities_router = APIRouter(prefix="/activities", tags=["Activities"])
+
+
+def _customers_from_body(
+    customers: list[TaskCustomerBody] | None,
+) -> list[TaskCustomerRef] | None:
+    if customers is None:
+        return None
+    return [
+        TaskCustomerRef(
+            customer_code=item.code.strip(),
+            customer_store=item.store.strip(),
+            customer_name=(item.name or "").strip() or None,
+        )
+        for item in customers
+        if item.code.strip() and item.store.strip()
+    ]
+
+
+def _notify_assignees(*tasks) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for task in tasks:
+        if task is None:
+            continue
+        for uid in task.resolved_assignee_user_ids():
+            if uid and uid not in seen:
+                seen.add(uid)
+                ordered.append(uid)
+    return ordered
 
 
 def _user_id(request: Request) -> str | None:
@@ -201,6 +232,8 @@ def create_task(request: Request, body: CreateTaskBody):
                 customer_code=body.customer_code,
                 customer_store=body.customer_store,
                 assignee_user_id=body.assignee_user_id,
+                assignee_user_ids=body.assignee_user_ids,
+                customers=_customers_from_body(body.customers),
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
@@ -208,7 +241,7 @@ def create_task(request: Request, body: CreateTaskBody):
             request,
             reason="task.created",
             task_id=str(task.id),
-            assignee_user_ids=[task.assignee_user_id],
+            assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
@@ -242,17 +275,16 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
                 customer_code=body.customer_code,
                 customer_store=body.customer_store,
                 assignee_user_id=body.assignee_user_id,
+                assignee_user_ids=body.assignee_user_ids,
+                customers=_customers_from_body(body.customers),
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
-        assignees = [task.assignee_user_id]
-        if existing and existing.assignee_user_id != task.assignee_user_id:
-            assignees.append(existing.assignee_user_id)
         _notify_task_change(
             request,
             reason="task.updated",
             task_id=str(task.id),
-            assignee_user_ids=assignees,
+            assignee_user_ids=_notify_assignees(existing, task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
@@ -283,7 +315,7 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
             request,
             reason="task.completed",
             task_id=str(task.id),
-            assignee_user_ids=[task.assignee_user_id],
+            assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
@@ -313,7 +345,7 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
             request,
             reason="task.deferred",
             task_id=str(task.id),
-            assignee_user_ids=[task.assignee_user_id],
+            assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
@@ -340,16 +372,14 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
             user_id=user_id,
             task_id=task_id,
             new_assignee_user_id=body.assignee_user_id,
+            assignee_user_ids=body.assignee_user_ids,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
-        assignees = [task.assignee_user_id]
-        if existing and existing.assignee_user_id != task.assignee_user_id:
-            assignees.append(existing.assignee_user_id)
         _notify_task_change(
             request,
             reason="task.reassigned",
             task_id=str(task.id),
-            assignee_user_ids=assignees,
+            assignee_user_ids=_notify_assignees(existing, task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")
@@ -380,7 +410,7 @@ def delete_task(request: Request, task_id: UUID = Path(...)):
             request,
             reason="task.deleted",
             task_id=str(task.id),
-            assignee_user_ids=[task.assignee_user_id],
+            assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
         )
         return ok(task.to_dict(), message="Tarefa excluída.", operation_id="delete_task")

@@ -5,7 +5,13 @@ from datetime import datetime, timezone
 from typing import Any, Literal, Sequence
 from uuid import UUID
 
-from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
+from commercial_app.domain.entities.task import (
+    CommercialActivity,
+    CommercialTask,
+    TaskCustomerRef,
+    normalize_assignee_user_ids,
+    normalize_task_customers,
+)
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
@@ -27,6 +33,8 @@ class CreateTaskInput:
     customer_code: str | None = None
     customer_store: str | None = None
     assignee_user_id: str | None = None
+    assignee_user_ids: Sequence[str] | None = None
+    customers: Sequence[TaskCustomerRef] | None = None
 
 
 @dataclass(frozen=True)
@@ -39,6 +47,8 @@ class UpdateTaskInput:
     customer_code: str | None = None
     customer_store: str | None = None
     assignee_user_id: str | None = None
+    assignee_user_ids: Sequence[str] | None = None
+    customers: Sequence[TaskCustomerRef] | None = None
 
 
 @dataclass(frozen=True)
@@ -146,12 +156,13 @@ class ManageWorklistUseCase:
         actor_user_id: str,
         actor_is_portfolio_manager: bool,
     ) -> bool:
-        if task.assignee_user_id == actor_user_id:
+        actor = (actor_user_id or "").strip()
+        if actor and actor in task.resolved_assignee_user_ids():
             return True
         return bool(actor_is_portfolio_manager)
 
     def _can_edit_task(self, *, task: CommercialTask, actor_user_id: str) -> bool:
-        """Só o criador edita/exclui/adia; o responsável apenas conclui."""
+        """Só o criador edita/exclui/adia; qualquer assignee conclui."""
         return (task.created_by_user_id or "").strip() == (actor_user_id or "").strip()
 
     @staticmethod
@@ -159,11 +170,23 @@ class ManageWorklistUseCase:
         seen: set[str] = set()
         ordered: list[str] = []
         for task in tasks:
-            uid = (task.assignee_user_id or "").strip()
-            if uid and uid not in seen:
-                seen.add(uid)
-                ordered.append(uid)
+            for uid in task.resolved_assignee_user_ids():
+                if uid and uid not in seen:
+                    seen.add(uid)
+                    ordered.append(uid)
         return ordered
+
+    @staticmethod
+    def _assert_can_assign_others(
+        *,
+        actor_user_id: str,
+        assignee_user_ids: Sequence[str],
+        actor_is_portfolio_manager: bool,
+    ) -> None:
+        actor = (actor_user_id or "").strip()
+        if any((uid or "").strip() != actor for uid in assignee_user_ids):
+            if not actor_is_portfolio_manager:
+                raise PermissionError("Sem permissão para atribuir tarefa a outro usuário.")
 
     def get_worklist(
         self,
@@ -286,10 +309,22 @@ class ManageWorklistUseCase:
         task_type = (data.task_type or "follow_up").strip() or "follow_up"
         priority = (data.priority or "normal").strip() or "normal"
         description = (data.description or "").strip() or None
-        assignee = (data.assignee_user_id or user_id).strip() or user_id
-        if assignee != user_id:
-            if not actor_is_portfolio_manager:
-                raise PermissionError("Sem permissão para atribuir tarefa a outro usuário.")
+        assignees = normalize_assignee_user_ids(
+            assignee_user_ids=data.assignee_user_ids,
+            assignee_user_id=data.assignee_user_id,
+            fallback_user_id=user_id,
+        )
+        self._assert_can_assign_others(
+            actor_user_id=user_id,
+            assignee_user_ids=assignees,
+            actor_is_portfolio_manager=actor_is_portfolio_manager,
+        )
+        customers = normalize_task_customers(
+            customers=data.customers,
+            customer_code=data.customer_code,
+            customer_store=data.customer_store,
+        )
+        primary_customer = customers[0] if customers else None
 
         task = self._tasks.create(
             title=title,
@@ -297,10 +332,12 @@ class ManageWorklistUseCase:
             task_type=task_type,
             priority=priority,
             due_at=data.due_at,
-            assignee_user_id=assignee,
+            assignee_user_id=assignees[0],
             created_by_user_id=user_id,
-            customer_code=(data.customer_code or None),
-            customer_store=(data.customer_store or None),
+            customer_code=primary_customer.customer_code if primary_customer else None,
+            customer_store=primary_customer.customer_store if primary_customer else None,
+            assignee_user_ids=assignees,
+            customers=customers,
         )
         if self._audit:
             self._audit.append(
@@ -308,7 +345,11 @@ class ManageWorklistUseCase:
                 action="commercial.task.created",
                 entity_type="task",
                 entity_id=str(task.id),
-                payload={"title": task.title, "assignee_user_id": task.assignee_user_id},
+                payload={
+                    "title": task.title,
+                    "assignee_user_id": task.assignee_user_id,
+                    "assignee_user_ids": list(task.resolved_assignee_user_ids()),
+                },
             )
         self._activities.create(
             activity_type="system",
@@ -349,17 +390,42 @@ class ManageWorklistUseCase:
         if due_at is not None and due_at.tzinfo is None:
             due_at = due_at.replace(tzinfo=timezone.utc)
 
-        assignee = (data.assignee_user_id or existing.assignee_user_id).strip() or existing.assignee_user_id
-        if assignee != existing.assignee_user_id:
-            if not actor_is_portfolio_manager:
-                raise PermissionError("Sem permissão para reatribuir ao editar.")
+        if data.assignee_user_ids is not None or data.assignee_user_id is not None:
+            assignees = normalize_assignee_user_ids(
+                assignee_user_ids=data.assignee_user_ids,
+                assignee_user_id=data.assignee_user_id,
+                fallback_user_id=existing.assignee_user_id,
+            )
+        else:
+            assignees = list(existing.resolved_assignee_user_ids())
+        if set(assignees) != set(existing.resolved_assignee_user_ids()):
+            self._assert_can_assign_others(
+                actor_user_id=user_id,
+                assignee_user_ids=assignees,
+                actor_is_portfolio_manager=actor_is_portfolio_manager,
+            )
 
-        customer_code = (data.customer_code or "").strip() or None
-        customer_store = (data.customer_store or "").strip() or None
-        if customer_code and not customer_store:
-            raise ValueError("Informe a loja do cliente junto com o código.")
-        if customer_store and not customer_code:
-            raise ValueError("Informe o código do cliente junto com a loja.")
+        if data.customers is not None:
+            customers = normalize_task_customers(
+                customers=data.customers,
+                customer_code=None,
+                customer_store=None,
+            )
+        elif data.customer_code is not None or data.customer_store is not None:
+            customer_code = (data.customer_code or "").strip() or None
+            customer_store = (data.customer_store or "").strip() or None
+            if customer_code and not customer_store:
+                raise ValueError("Informe a loja do cliente junto com o código.")
+            if customer_store and not customer_code:
+                raise ValueError("Informe o código do cliente junto com a loja.")
+            customers = normalize_task_customers(
+                customers=None,
+                customer_code=customer_code,
+                customer_store=customer_store,
+            )
+        else:
+            customers = list(existing.resolved_customers())
+        primary_customer = customers[0] if customers else None
 
         task = self._tasks.update(
             task_id=task_id,
@@ -368,9 +434,11 @@ class ManageWorklistUseCase:
             task_type=task_type,
             priority=priority,
             due_at=due_at,
-            customer_code=customer_code,
-            customer_store=customer_store,
-            assignee_user_id=assignee,
+            customer_code=primary_customer.customer_code if primary_customer else None,
+            customer_store=primary_customer.customer_store if primary_customer else None,
+            assignee_user_id=assignees[0] if assignees else existing.assignee_user_id,
+            assignee_user_ids=assignees,
+            customers=customers,
         )
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
@@ -384,6 +452,7 @@ class ManageWorklistUseCase:
                 payload={
                     "title": task.title,
                     "assignee_user_id": task.assignee_user_id,
+                    "assignee_user_ids": list(task.resolved_assignee_user_ids()),
                     "priority": task.priority,
                     "task_type": task.task_type,
                 },
@@ -485,21 +554,31 @@ class ManageWorklistUseCase:
         *,
         user_id: str,
         task_id: UUID,
-        new_assignee_user_id: str,
+        new_assignee_user_id: str | None = None,
+        assignee_user_ids: Sequence[str] | None = None,
         actor_is_portfolio_manager: bool = False,
     ) -> CommercialTask:
-        new_assignee = (new_assignee_user_id or "").strip()
-        if not new_assignee:
+        assignees = normalize_assignee_user_ids(
+            assignee_user_ids=assignee_user_ids,
+            assignee_user_id=new_assignee_user_id,
+            fallback_user_id="",
+        )
+        if not assignees:
             raise ValueError("Informe o novo responsável.")
         existing = self._tasks.get_by_id(task_id)
         if existing is None or existing.status != "open":
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if not actor_is_portfolio_manager:
             raise PermissionError("Sem permissão para reatribuir tarefas.")
-        if existing.assignee_user_id == new_assignee:
+        if list(existing.resolved_assignee_user_ids()) == assignees:
             return existing
 
-        task = self._tasks.reassign(task_id=task_id, new_assignee_user_id=new_assignee)
+        previous = list(existing.resolved_assignee_user_ids())
+        task = self._tasks.reassign(
+            task_id=task_id,
+            new_assignee_user_id=assignees[0],
+            assignee_user_ids=assignees,
+        )
         if task is None:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if self._audit:
@@ -509,14 +588,16 @@ class ManageWorklistUseCase:
                 entity_type="task",
                 entity_id=str(task.id),
                 payload={
-                    "from_assignee_user_id": existing.assignee_user_id,
-                    "to_assignee_user_id": new_assignee,
+                    "from_assignee_user_ids": previous,
+                    "to_assignee_user_ids": assignees,
+                    "from_assignee_user_id": previous[0] if previous else None,
+                    "to_assignee_user_id": assignees[0],
                 },
             )
         self._activities.create(
             activity_type="system",
             subject=f"Tarefa reatribuída: {task.title}",
-            body=f"De {existing.assignee_user_id} para {new_assignee}",
+            body=f"De {', '.join(previous)} para {', '.join(assignees)}",
             occurred_at=None,
             actor_user_id=user_id,
             customer_code=task.customer_code,
