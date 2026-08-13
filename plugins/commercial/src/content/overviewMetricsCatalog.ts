@@ -37,7 +37,8 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
   {
     id: "closing_rate",
     label: "Taxa de conversão",
-    tooltip: "Taxa de conversão: propostas ganhas ÷ total de propostas.",
+    tooltip:
+      "Hit rate: propostas ganhas (status TOTVS 9, aceite no período) ÷ revisões abertas no período. Cohorts de numerador e denominador podem diferir.",
   },
   {
     id: "otd",

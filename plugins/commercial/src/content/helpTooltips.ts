@@ -530,11 +530,16 @@ export const CM_HELP = {
     page:
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
-      "Datas, competência, unidade, segmento e carteira (quando permitido) aplicados a todos os painéis.",
-    kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios.",
+      "Datas, competência, atalho MTD/YTD, unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. A carteira em aberto (KPI) é snapshot e não usa o período.",
+    kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios. Carteira em aberto, quando exibida, é saldo atual — não soma com ROL.",
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",
-    funnel: "Funil de conversão de propostas no período (propostas → ganhas).",
+    funnel:
+      "Funil de conversão: propostas abertas no período (denominador) versus ganhas com status TOTVS 9 e data de aceite no período (numerador). Cohorts podem diferir — ver ficha KPI-HIT-RATE.",
+    closingRate:
+      "Taxa de conversão (hit rate): propostas ganhas (AD1_STATUS=9, aceite no período) ÷ revisões abertas no período. Metodologia atual do Portal — não alterar sem homologação.",
+    openPortfolio:
+      "Carteira comercial: valor e linhas em aberto agora (pedidos/compromissos). Não é a programação do PCP nem o ROL faturado do período.",
   },
   administration: {
     panel:
