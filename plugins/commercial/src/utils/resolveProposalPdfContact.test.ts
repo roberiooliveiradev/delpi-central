@@ -84,13 +84,49 @@ describe("resolveProposalPdfContact", () => {
     const options = buildProposalPdfContactOptions({
       proposalContact,
       totvsContact: null,
-      savedContacts: [saved({ id: "c1", full_name: "Beatriz", email: "bia@cliente.com" })],
+      savedContacts: [
+        saved({
+          id: "c1",
+          full_name: "Beatriz",
+          email: "bia@cliente.com",
+          role_title: "Compras",
+          phone_e164: "+5547999000000",
+        }),
+      ],
     });
     expect(resolveProposalPdfContactSelection(options, "c1")).toEqual({
       nome: "Beatriz",
       email: "bia@cliente.com",
+      departamento: "Compras",
+      telefone: "+5547999000000",
+    });
+  });
+
+  it("inclui telefone TOTVS e departamento da proposta nas opções", () => {
+    const options = buildProposalPdfContactOptions({
+      proposalContact: {
+        ...proposalContact,
+        departamento: "Engenharia",
+        telefone: "4733330000",
+      },
+      totvsContact: {
+        full_name: "Carlos Totvs",
+        phone: "+5547888000000",
+        email: "carlos@cliente.com",
+        source: "totvs",
+        read_only: true,
+      },
+      savedContacts: [],
+    });
+    expect(options[0]).toMatchObject({
+      value: PROPOSAL_PDF_CONTACT_PROPOSAL,
+      departamento: "Engenharia",
+      telefone: "4733330000",
+    });
+    expect(options[1]).toMatchObject({
+      value: PROPOSAL_PDF_CONTACT_TOTVS,
+      telefone: "+5547888000000",
       departamento: "",
-      telefone: "",
     });
   });
 });
