@@ -5,7 +5,11 @@ from datetime import datetime
 from typing import Sequence
 from uuid import UUID
 
-from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
+from commercial_app.domain.entities.task import (
+    CommercialActivity,
+    CommercialTask,
+    TaskCustomerRef,
+)
 
 
 class TaskRepositoryPort(ABC):
@@ -58,6 +62,8 @@ class TaskRepositoryPort(ABC):
         created_by_user_id: str,
         customer_code: str | None,
         customer_store: str | None,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask:
         raise NotImplementedError
 
@@ -82,6 +88,7 @@ class TaskRepositoryPort(ABC):
         *,
         task_id: UUID,
         new_assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
         """Reatribui tarefa aberta (autorização no use case)."""
         raise NotImplementedError
@@ -99,6 +106,8 @@ class TaskRepositoryPort(ABC):
         customer_code: str | None,
         customer_store: str | None,
         assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask | None:
         """Atualiza campos de tarefa aberta (autorização no use case)."""
         raise NotImplementedError

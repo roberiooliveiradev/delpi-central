@@ -4,7 +4,13 @@ from datetime import datetime
 from typing import Any, Sequence
 from uuid import UUID
 
-from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
+from commercial_app.domain.entities.task import (
+    CommercialActivity,
+    CommercialTask,
+    TaskCustomerRef,
+    normalize_assignee_user_ids,
+    normalize_task_customers,
+)
 from commercial_app.domain.ports.task_repository_port import (
     ActivityRepositoryPort,
     TaskRepositoryPort,
@@ -19,13 +25,41 @@ _TASK_COLUMNS = """
     created_at, updated_at
 """
 
+_TASK_COLUMNS_ALIASED = """
+    t.id, t.title, t.description, t.task_type, t.status, t.priority, t.due_at, t.completed_at,
+    t.assignee_user_id, t.created_by_user_id, t.customer_code, t.customer_store,
+    t.created_at, t.updated_at
+"""
+
 _ACTIVITY_COLUMNS = """
     id, activity_type, subject, body, occurred_at, actor_user_id,
     customer_code, customer_store, task_id, created_at
 """
 
+_OPEN_ORDER_SQL = """CASE priority
+                 WHEN 'critical' THEN 0
+                 WHEN 'high' THEN 1
+                 WHEN 'normal' THEN 2
+                 ELSE 3
+               END,
+               due_at ASC NULLS LAST,
+               created_at ASC"""
 
-def _row_task(row: dict[str, Any] | None) -> CommercialTask | None:
+_DONE_ORDER_SQL = "completed_at DESC NULLS LAST, updated_at DESC"
+
+_OPEN_ORDER_SQL_ALIASED = """CASE t.priority
+                 WHEN 'critical' THEN 0
+                 WHEN 'high' THEN 1
+                 WHEN 'normal' THEN 2
+                 ELSE 3
+               END,
+               t.due_at ASC NULLS LAST,
+               t.created_at ASC"""
+
+_DONE_ORDER_SQL_ALIASED = "t.completed_at DESC NULLS LAST, t.updated_at DESC"
+
+
+def _row_task_base(row: dict[str, Any] | None) -> CommercialTask | None:
     if not row:
         return None
     return CommercialTask(
@@ -64,6 +98,189 @@ def _row_activity(row: dict[str, Any] | None) -> CommercialActivity | None:
 
 
 class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
+    def _load_junctions(
+        self,
+        task_ids: Sequence[UUID | str],
+    ) -> tuple[dict[str, list[str]], dict[str, list[TaskCustomerRef]]]:
+        ids = [str(item) for item in task_ids if item]
+        if not ids:
+            return {}, {}
+        assignee_rows = self.fetch_all(
+            """
+            SELECT task_id::text AS task_id, user_id, sort_order
+              FROM commercial.task_assignees
+             WHERE task_id = ANY(%s::uuid[])
+             ORDER BY sort_order ASC, user_id ASC
+            """,
+            (ids,),
+        )
+        customer_rows = self.fetch_all(
+            """
+            SELECT task_id::text AS task_id, customer_code, customer_store,
+                   customer_name, sort_order
+              FROM commercial.task_customers
+             WHERE task_id = ANY(%s::uuid[])
+             ORDER BY sort_order ASC, customer_code ASC, customer_store ASC
+            """,
+            (ids,),
+        )
+        assignees: dict[str, list[str]] = {}
+        for row in assignee_rows:
+            tid = str(row["task_id"])
+            assignees.setdefault(tid, []).append(str(row["user_id"]).strip())
+        customers: dict[str, list[TaskCustomerRef]] = {}
+        for row in customer_rows:
+            tid = str(row["task_id"])
+            customers.setdefault(tid, []).append(
+                TaskCustomerRef(
+                    customer_code=str(row["customer_code"]).strip(),
+                    customer_store=str(row["customer_store"]).strip(),
+                    customer_name=(
+                        str(row["customer_name"]).strip()
+                        if row.get("customer_name")
+                        else None
+                    ),
+                )
+            )
+        return assignees, customers
+
+    def _hydrate(self, tasks: Sequence[CommercialTask]) -> list[CommercialTask]:
+        if not tasks:
+            return []
+        assignees_by_id, customers_by_id = self._load_junctions([task.id for task in tasks])
+        hydrated: list[CommercialTask] = []
+        for task in tasks:
+            tid = str(task.id)
+            assignee_ids = tuple(assignees_by_id.get(tid) or ())
+            if not assignee_ids and task.assignee_user_id:
+                assignee_ids = (task.assignee_user_id,)
+            custs = tuple(customers_by_id.get(tid) or ())
+            if not custs and task.customer_code and task.customer_store:
+                custs = (
+                    TaskCustomerRef(
+                        customer_code=task.customer_code,
+                        customer_store=task.customer_store,
+                    ),
+                )
+            hydrated.append(
+                CommercialTask(
+                    id=task.id,
+                    title=task.title,
+                    description=task.description,
+                    task_type=task.task_type,
+                    status=task.status,
+                    priority=task.priority,
+                    due_at=task.due_at,
+                    completed_at=task.completed_at,
+                    assignee_user_id=assignee_ids[0] if assignee_ids else task.assignee_user_id,
+                    created_by_user_id=task.created_by_user_id,
+                    customer_code=custs[0].customer_code if custs else task.customer_code,
+                    customer_store=custs[0].customer_store if custs else task.customer_store,
+                    created_at=task.created_at,
+                    updated_at=task.updated_at,
+                    assignee_user_ids=assignee_ids,
+                    customers=custs,
+                )
+            )
+        return hydrated
+
+    def _replace_assignees(
+        self,
+        *,
+        task_id: UUID | str,
+        assignee_user_ids: Sequence[str],
+        auto_commit: bool = False,
+    ) -> None:
+        tid = str(task_id)
+        self.execute(
+            "DELETE FROM commercial.task_assignees WHERE task_id = %s",
+            (tid,),
+            auto_commit=False,
+        )
+        values = [
+            (tid, uid, index)
+            for index, uid in enumerate(assignee_user_ids)
+            if uid and str(uid).strip()
+        ]
+        if values:
+            self.execute_many(
+                """
+                INSERT INTO commercial.task_assignees (task_id, user_id, sort_order)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (task_id, user_id) DO UPDATE
+                   SET sort_order = EXCLUDED.sort_order
+                """,
+                values,
+                auto_commit=False,
+            )
+        if auto_commit:
+            self.commit()
+
+    def _replace_customers(
+        self,
+        *,
+        task_id: UUID | str,
+        customers: Sequence[TaskCustomerRef],
+        auto_commit: bool = False,
+    ) -> None:
+        tid = str(task_id)
+        self.execute(
+            "DELETE FROM commercial.task_customers WHERE task_id = %s",
+            (tid,),
+            auto_commit=False,
+        )
+        values = [
+            (
+                tid,
+                item.customer_code,
+                item.customer_store,
+                item.customer_name,
+                index,
+            )
+            for index, item in enumerate(customers)
+            if item.customer_code and item.customer_store
+        ]
+        if values:
+            self.execute_many(
+                """
+                INSERT INTO commercial.task_customers (
+                    task_id, customer_code, customer_store, customer_name, sort_order
+                ) VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (task_id, customer_code, customer_store) DO UPDATE
+                   SET customer_name = EXCLUDED.customer_name,
+                       sort_order = EXCLUDED.sort_order
+                """,
+                values,
+                auto_commit=False,
+            )
+        if auto_commit:
+            self.commit()
+
+    def _resolve_assignees(
+        self,
+        *,
+        assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None,
+    ) -> list[str]:
+        return normalize_assignee_user_ids(
+            assignee_user_ids=assignee_user_ids,
+            assignee_user_id=assignee_user_id,
+            fallback_user_id=assignee_user_id,
+        )
+
+    def _resolve_customers(
+        self,
+        *,
+        customer_code: str | None,
+        customer_store: str | None,
+        customers: Sequence[TaskCustomerRef] | None,
+    ) -> list[TaskCustomerRef]:
+        return normalize_task_customers(
+            customers=customers,
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
+
     def list_for_assignee(
         self,
         *,
@@ -73,41 +290,42 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         due_after: datetime | None = None,
         limit: int = 100,
     ) -> Sequence[CommercialTask]:
-        clauses = ["deleted_at IS NULL", "assignee_user_id = %s"]
-        params: list[Any] = [assignee_user_id]
+        clauses = [
+            "t.deleted_at IS NULL",
+            """(
+                t.assignee_user_id = %s
+                OR EXISTS (
+                    SELECT 1
+                      FROM commercial.task_assignees ta
+                     WHERE ta.task_id = t.id
+                       AND ta.user_id = %s
+                )
+            )""",
+        ]
+        params: list[Any] = [assignee_user_id, assignee_user_id]
         if status:
-            clauses.append("status = %s")
+            clauses.append("t.status = %s")
             params.append(status)
         if due_before is not None:
-            clauses.append("due_at IS NOT NULL AND due_at < %s")
+            clauses.append("t.due_at IS NOT NULL AND t.due_at < %s")
             params.append(due_before)
         if due_after is not None:
-            clauses.append("due_at IS NOT NULL AND due_at >= %s")
+            clauses.append("t.due_at IS NOT NULL AND t.due_at >= %s")
             params.append(due_after)
         params.append(max(1, min(limit, 200)))
-        order_sql = (
-            "completed_at DESC NULLS LAST, updated_at DESC"
-            if status == "done"
-            else """CASE priority
-                 WHEN 'critical' THEN 0
-                 WHEN 'high' THEN 1
-                 WHEN 'normal' THEN 2
-                 ELSE 3
-               END,
-               due_at ASC NULLS LAST,
-               created_at ASC"""
-        )
+        order_sql = _DONE_ORDER_SQL_ALIASED if status == "done" else _OPEN_ORDER_SQL_ALIASED
         rows = self.fetch_all(
             f"""
-            SELECT {_TASK_COLUMNS}
-              FROM commercial.tasks
+            SELECT {_TASK_COLUMNS_ALIASED}
+              FROM commercial.tasks t
              WHERE {" AND ".join(clauses)}
              ORDER BY {order_sql}
              LIMIT %s
             """,
             tuple(params),
         )
-        return [task for row in rows if (task := _row_task(row)) is not None]
+        base = [task for row in rows if (task := _row_task_base(row)) is not None]
+        return self._hydrate(base)
 
     def list_for_assignees(
         self,
@@ -119,35 +337,36 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         ids = [str(item).strip() for item in assignee_user_ids if str(item).strip()]
         if not ids:
             return []
-        clauses = ["deleted_at IS NULL", "assignee_user_id = ANY(%s)"]
-        params: list[Any] = [ids]
+        clauses = [
+            "t.deleted_at IS NULL",
+            """(
+                t.assignee_user_id = ANY(%s)
+                OR EXISTS (
+                    SELECT 1
+                      FROM commercial.task_assignees ta
+                     WHERE ta.task_id = t.id
+                       AND ta.user_id = ANY(%s)
+                )
+            )""",
+        ]
+        params: list[Any] = [ids, ids]
         if status:
-            clauses.append("status = %s")
+            clauses.append("t.status = %s")
             params.append(status)
         params.append(max(1, min(limit, 500)))
-        order_sql = (
-            "completed_at DESC NULLS LAST, updated_at DESC"
-            if status == "done"
-            else """CASE priority
-                 WHEN 'critical' THEN 0
-                 WHEN 'high' THEN 1
-                 WHEN 'normal' THEN 2
-                 ELSE 3
-               END,
-               due_at ASC NULLS LAST,
-               created_at ASC"""
-        )
+        order_sql = _DONE_ORDER_SQL_ALIASED if status == "done" else _OPEN_ORDER_SQL_ALIASED
         rows = self.fetch_all(
             f"""
-            SELECT {_TASK_COLUMNS}
-              FROM commercial.tasks
+            SELECT {_TASK_COLUMNS_ALIASED}
+              FROM commercial.tasks t
              WHERE {" AND ".join(clauses)}
              ORDER BY {order_sql}
              LIMIT %s
             """,
             tuple(params),
         )
-        return [task for row in rows if (task := _row_task(row)) is not None]
+        base = [task for row in rows if (task := _row_task_base(row)) is not None]
+        return self._hydrate(base)
 
     def list_by_status(
         self,
@@ -161,18 +380,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             clauses.append("status = %s")
             params.append(status)
         params.append(max(1, min(limit, 500)))
-        order_sql = (
-            "completed_at DESC NULLS LAST, updated_at DESC"
-            if status == "done"
-            else """CASE priority
-                 WHEN 'critical' THEN 0
-                 WHEN 'high' THEN 1
-                 WHEN 'normal' THEN 2
-                 ELSE 3
-               END,
-               due_at ASC NULLS LAST,
-               created_at ASC"""
-        )
+        order_sql = _DONE_ORDER_SQL if status == "done" else _OPEN_ORDER_SQL
         rows = self.fetch_all(
             f"""
             SELECT {_TASK_COLUMNS}
@@ -183,7 +391,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             """,
             tuple(params),
         )
-        return [task for row in rows if (task := _row_task(row)) is not None]
+        base = [task for row in rows if (task := _row_task_base(row)) is not None]
+        return self._hydrate(base)
 
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         row = self.fetch_one(
@@ -194,7 +403,11 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             """,
             (str(task_id),),
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        if base is None:
+            return None
+        hydrated = self._hydrate([base])
+        return hydrated[0] if hydrated else None
 
     def create(
         self,
@@ -208,7 +421,20 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         created_by_user_id: str,
         customer_code: str | None,
         customer_store: str | None,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask:
+        assignees = self._resolve_assignees(
+            assignee_user_id=assignee_user_id,
+            assignee_user_ids=assignee_user_ids,
+        )
+        custs = self._resolve_customers(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            customers=customers,
+        )
+        primary_assignee = assignees[0] if assignees else assignee_user_id
+        primary_customer = custs[0] if custs else None
         row = self.execute_returning_one(
             f"""
             INSERT INTO commercial.tasks (
@@ -223,16 +449,26 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 task_type,
                 priority,
                 due_at,
-                assignee_user_id,
+                primary_assignee,
                 created_by_user_id,
-                customer_code,
-                customer_store,
+                primary_customer.customer_code if primary_customer else None,
+                primary_customer.customer_store if primary_customer else None,
             ),
+            auto_commit=False,
         )
-        task = _row_task(row)
+        task = _row_task_base(row)
         if task is None:
+            self.rollback()
             raise RuntimeError("Falha ao criar tarefa.")
-        return task
+        try:
+            self._replace_assignees(task_id=task.id, assignee_user_ids=assignees)
+            self._replace_customers(task_id=task.id, customers=custs)
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+        hydrated = self._hydrate([task])
+        return hydrated[0]
 
     def complete(self, *, task_id: UUID) -> CommercialTask | None:
         row = self.execute_returning_one(
@@ -248,7 +484,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             """,
             (str(task_id),),
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        return self._hydrate([base])[0] if base else None
 
     def update_due_at(
         self,
@@ -268,14 +505,23 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             """,
             (due_at, str(task_id)),
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        return self._hydrate([base])[0] if base else None
 
     def reassign(
         self,
         *,
         task_id: UUID,
         new_assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
+        assignees = self._resolve_assignees(
+            assignee_user_id=new_assignee_user_id,
+            assignee_user_ids=assignee_user_ids,
+        )
+        if not assignees:
+            return None
+        primary = assignees[0]
         row = self.execute_returning_one(
             f"""
             UPDATE commercial.tasks
@@ -286,9 +532,20 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                AND status = 'open'
          RETURNING {_TASK_COLUMNS}
             """,
-            (new_assignee_user_id, str(task_id)),
+            (primary, str(task_id)),
+            auto_commit=False,
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        if base is None:
+            self.rollback()
+            return None
+        try:
+            self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+        return self._hydrate([base])[0]
 
     def update(
         self,
@@ -302,7 +559,20 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         customer_code: str | None,
         customer_store: str | None,
         assignee_user_id: str,
+        assignee_user_ids: Sequence[str] | None = None,
+        customers: Sequence[TaskCustomerRef] | None = None,
     ) -> CommercialTask | None:
+        assignees = self._resolve_assignees(
+            assignee_user_id=assignee_user_id,
+            assignee_user_ids=assignee_user_ids,
+        )
+        custs = self._resolve_customers(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            customers=customers,
+        )
+        primary_assignee = assignees[0] if assignees else assignee_user_id
+        primary_customer = custs[0] if custs else None
         row = self.execute_returning_one(
             f"""
             UPDATE commercial.tasks
@@ -326,13 +596,25 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 task_type,
                 priority,
                 due_at,
-                customer_code,
-                customer_store,
-                assignee_user_id,
+                primary_customer.customer_code if primary_customer else None,
+                primary_customer.customer_store if primary_customer else None,
+                primary_assignee,
                 str(task_id),
             ),
+            auto_commit=False,
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        if base is None:
+            self.rollback()
+            return None
+        try:
+            self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
+            self._replace_customers(task_id=task_id, customers=custs)
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+        return self._hydrate([base])[0]
 
     def soft_delete(self, *, task_id: UUID) -> CommercialTask | None:
         row = self.execute_returning_one(
@@ -348,7 +630,8 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             """,
             (str(task_id),),
         )
-        return _row_task(row)
+        base = _row_task_base(row)
+        return self._hydrate([base])[0] if base else None
 
 
 class PostgresActivityRepository(PluginBaseRepository, ActivityRepositoryPort):
