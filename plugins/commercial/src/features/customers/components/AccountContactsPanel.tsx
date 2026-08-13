@@ -22,6 +22,7 @@ import {
   cmSectionCardClassNames,
   cmSectionLabels,
 } from "../../../app/commercialUi";
+import { CM_HELP } from "../../../content/helpTooltips";
 import {
   buildWhatsAppGreeting,
   buildWhatsAppUrl,
@@ -121,6 +122,7 @@ function ContactLinks({
           href={buildWhatsAppUrl(phone, buildWhatsAppGreeting(fullName))}
           target="_blank"
           rel="noreferrer"
+          title={CM_HELP.customerDetail.whatsapp}
         >
           Abrir WhatsApp
         </a>
@@ -251,6 +253,7 @@ export function AccountContactsPanel({
       <SectionCard
         title="Contato do cadastro TOTVS"
         subtitle="Dados oficiais da conta, disponíveis somente para consulta."
+        hint={CM_HELP.customerDetail.contactsTotvs}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -274,6 +277,7 @@ export function AccountContactsPanel({
       <SectionCard
         title="Contatos locais"
         subtitle="Contatos complementares mantidos pela equipe comercial."
+        hint={CM_HELP.customerDetail.contactsLocal}
         actions={
           <CommercialActionButton variant="primary" onClick={openCreate}>
             Adicionar contato

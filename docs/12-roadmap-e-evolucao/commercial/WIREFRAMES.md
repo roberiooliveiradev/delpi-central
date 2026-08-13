@@ -906,6 +906,37 @@ BFF: `GET/PATCH /users/{id}/profile` · `PUT/DELETE .../photo` · volume `commer
 
 ---
 
+## WF-ACCOUNT-CONTACTS — Aba Contatos da Conta 360
+
+```text
+┌─ UnderlineNav: … | Contatos | Atividades ───────────────────────────────────┐
+┌─ SectionCard: Contato do cadastro TOTVS (read-only) ────────────────────────┐
+│ Nome · tel: · mailto: · [Abrir WhatsApp] †                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard: Contatos locais [Adicionar contato] ──────────────────────────┐
+│ Lista · Principal · Editar / Remover · tel / mailto / WhatsApp              │
+│ Dialog host-contained: nome, cargo, canal, e-mail, phone E.164, flags       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+† WhatsApp só com celular BR + marcação WhatsApp; saudação via `whatsapp.json`.
+
+BFF: `GET .../contacts-bundle` · `POST/PATCH/DELETE .../contacts`.
+
+---
+
+## WF-TASK-LINKS — Links no card da tarefa (após perfil + Contatos)
+
+```text
+┌─ TaskDetailCard ────────────────────────────────────────────────────────────┐
+│ Responsável: [chip Ana → /users/:id] [chip João → /users/:id]               │
+│ Cliente:     [chip ACME · 000123/01 → Conta ?secao=contatos]                │
+│ Ações: … [Abrir conta] (primeiro cliente → Contatos)                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Próximos artefatos
 
 | Artefato | Quando |

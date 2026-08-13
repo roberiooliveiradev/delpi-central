@@ -203,9 +203,9 @@ Trilha imutável (append-only).
 | `priority` | TEXT NOT NULL | `low` \| `normal` \| `high` \| `critical` · default `normal` |
 | `due_at` | TIMESTAMPTZ | |
 | `completed_at` | TIMESTAMPTZ | |
-| `assignee_user_id` | TEXT NOT NULL | **Wave G+ MVP:** create sempre = caller; reassign / picker = backlog P1 |
+| `assignee_user_id` | TEXT NOT NULL | Espelho do **primeiro** responsável (`task_assignees`); legado + índice |
 | `created_by_user_id` | TEXT NOT NULL | |
-| `customer_code` / `customer_store` | TEXT | conta opcional |
+| `customer_code` / `customer_store` | TEXT | Espelho do **primeiro** cliente (`task_customers`); opcional |
 | `opportunity_id` | UUID NULL | FK → `opportunities` (nullable até M3; criar FK na M3) |
 | `prospect_id` | UUID NULL | FK → `prospects` (M2/M3) |
 | `related_entity_type` / `related_entity_id` | TEXT | polimórfico leve |
@@ -217,6 +217,15 @@ Trilha imutável (append-only).
 | `deleted_at` | TIMESTAMPTZ | |
 
 **Índices:** `(assignee_user_id, status, due_at)`; `(customer_code, customer_store)`; `(due_at) WHERE status = 'open'`.
+
+**Multi responsável / cliente (V007):** junções abaixo (máx. 20 cada na API). Qualquer assignee conclui; só o criador edita/exclui/adia.
+
+### 4.1b `task_assignees` / `task_customers`
+
+| Tabela | Colunas | Notas |
+|--------|---------|--------|
+| `task_assignees` | `task_id`, `user_id`, `sort_order`, `created_at` | PK `(task_id, user_id)`; primeiro espelha `tasks.assignee_user_id` |
+| `task_customers` | `task_id`, `customer_code`, `customer_store`, `sort_order`, `created_at` | PK `(task_id, customer_code, customer_store)`; primeiro espelha colunas legado |
 
 ### 4.2 `task_dependencies`
 
@@ -660,10 +669,9 @@ Extensão Commercial do usuário do diretório (foto + cargo). Migration `V008`.
 | `photo_storage_key` / `photo_file_name` / `photo_content_type` / `photo_byte_size` | | volume `COMMERCIAL_USER_AVATAR_UPLOAD_DIR` |
 | `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
 
-### 7.3 `account_contacts_extension`
+### 7.3 `account_contacts`
 
-
-Dados complementares **não** canônicos do contato TOTVS.
+Contatos locais da Conta (migration `V009`). O contato **TOTVS** (SA1: `A1_CONTATO` / `A1_TEL` / `A1_EMAIL`) é só leitura via BFF `GET .../contacts-bundle` — **não** grava nesta tabela.
 
 | Coluna | Tipo | Notas |
 |--------|------|--------|
@@ -671,9 +679,17 @@ Dados complementares **não** canônicos do contato TOTVS.
 | `customer_code` / `customer_store` | TEXT NOT NULL | |
 | `full_name` | TEXT NOT NULL | |
 | `role_title` | TEXT | |
-| `email` / `phone` | TEXT | |
-| `influence_notes` | TEXT | |
+| `channel` | TEXT NOT NULL | `phone` \| `mobile` \| `email` \| `whatsapp` \| `other` |
+| `email` | TEXT | |
+| `phone_e164` | TEXT | E.164 leve para `tel:` / `wa.me` |
+| `is_whatsapp` | BOOLEAN NOT NULL DEFAULT FALSE | |
+| `is_primary` | BOOLEAN NOT NULL DEFAULT FALSE | no máx. 1 por conta (índice único parcial) |
+| `source` | TEXT NOT NULL DEFAULT `manual` | |
+| `deleted_at` | TIMESTAMPTZ | soft delete |
 | `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
+| `created_by_user_id` | TEXT NOT NULL | |
+
+**RBAC:** mesmo escopo de leitura da Conta. WhatsApp: deep link `wa.me` no MFE (saudação `{full_name}` em `content/whatsapp.json`) — sem inbox.
 
 ### 7.4 `reference_reasons`
 

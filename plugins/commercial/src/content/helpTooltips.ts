@@ -68,11 +68,11 @@ export const CM_HELP = {
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligação, e-mail, visita ou outra ação comercial.",
     taskAssignee:
-      "Usuário do portal com acesso ao Comercial. Vazio = você. Só gestores atribuem a outro usuário.",
+      "Um ou mais usuários do portal com acesso ao Comercial (máx. 20). Vazio = você. Só gestores atribuem a outros. No card, o nome abre o perfil.",
     taskAssignedBy:
-      "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; o responsável apenas conclui.",
+      "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; qualquer responsável conclui.",
     taskCustomer:
-      "Qualquer cliente ativo no cadastro TOTVS (busca por código ou nome) — abre atalho Abrir conta na linha da tarefa.",
+      "Um ou mais clientes TOTVS (máx. 20). No card, o nome abre a Conta na aba Contatos; Abrir conta usa o primeiro cliente.",
     taskDescription:
       "Observação interna. Visível no card da tarefa e no histórico da conta — não é e-mail ao cliente.",
     taskAttachment:
@@ -261,10 +261,20 @@ export const CM_HELP = {
       "Escolha a ordem e as colunas exibidas. A preferência fica salva neste navegador.",
     trend:
       "Comparamos o faturamento dos últimos 6 meses com o dos 6 meses anteriores. Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; entre −5% e +5%, estável. Sem histórico suficiente, a tendência fica indefinida.",
+    contacts:
+      "Contatos da conta: cadastro TOTVS somente leitura e contatos locais da equipe comercial (CRUD + WhatsApp).",
   },
   customerDetail: {
     header:
       "Visão integrada da conta: indicadores, pedidos em aberto, faturamento, atividades e próximos passos.",
+    contacts:
+      "Aba Contatos: dados oficiais TOTVS (read-only) e lista de contatos mantidos localmente pela equipe.",
+    contactsTotvs:
+      "Nome, telefone e e-mail do cadastro SA1. Não dá para editar aqui — use o Protheus se precisar corrigir.",
+    contactsLocal:
+      "Contatos complementares desta conta. Quem vê a Conta pode criar, editar e remover. No máximo um contato principal.",
+    whatsapp:
+      "Abre o WhatsApp Web/app com saudação pronta (wa.me). Exige celular em formato brasileiro e canal WhatsApp marcado.",
     accountData:
       "Resumo cadastral e comercial da conta no recorte disponível, incluindo última venda, faturamento, situação e próxima ação.",
     billed12m: "Faturamento (NFs de saída) nos últimos 12 meses deste cliente.",
