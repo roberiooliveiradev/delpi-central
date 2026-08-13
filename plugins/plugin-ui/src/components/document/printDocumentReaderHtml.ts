@@ -121,3 +121,13 @@ export function printDocumentReaderInWindow(
     iframeTitle: options.iframeTitle || title,
   });
 }
+
+/**
+ * PDF com a formatação da prévia — mesmo HTML da impressão (Salvar como PDF no diálogo).
+ * Não usa renderer server-side paralelo (que diverge do DocumentReader).
+ */
+export function downloadDocumentReaderPdf(
+  options: PrintDocumentReaderOptions = {},
+): boolean {
+  return printDocumentReaderInWindow(options);
+}

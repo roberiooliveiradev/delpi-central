@@ -18,6 +18,7 @@ export {
 } from "./DocumentReaderToolbar";
 export {
   buildDocumentReaderPrintHtml,
+  downloadDocumentReaderPdf,
   findActiveDocumentPage,
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";

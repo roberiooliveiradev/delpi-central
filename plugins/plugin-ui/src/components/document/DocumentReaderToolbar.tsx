@@ -2,6 +2,7 @@ import { Download, Printer } from "lucide-react";
 import { useState } from "react";
 
 import { printDocumentReader } from "./DocumentReader";
+import { downloadDocumentReaderPdf } from "./printDocumentReaderHtml";
 
 export type DocumentReaderToolbarProps = {
   /** Rótulo à esquerda (ex.: "Documento"). */
@@ -9,17 +10,22 @@ export type DocumentReaderToolbarProps = {
   printLabel?: string;
   downloadPdfLabel?: string;
   downloadingLabel?: string;
-  /** Título da janela de impressão. */
+  /** Título da janela de impressão / PDF. */
   printTitle?: string;
-  /** Se omitido, o botão Baixar PDF não aparece. */
+  /**
+   * Override opcional (ex.: PDF arquivado no servidor).
+   * Sem override, Baixar PDF usa o HTML da prévia (mesmo fluxo da impressão).
+   */
   onDownloadPdf?: () => void | Promise<void>;
+  /** Quando false, esconde Baixar PDF. Default: true. */
+  showDownloadPdf?: boolean;
   disabled?: boolean;
   className?: string;
 };
 
 /**
- * Toolbar canônica do DocumentReader: Imprimir (janela dedicada) + Baixar PDF
- * (callback autenticado do consumidor — nunca `<a href>` sem Authorization).
+ * Toolbar canônica: Imprimir + Baixar PDF com a formatação do DocumentReader.
+ * PDF padrão = janela dedicada (Salvar como PDF) — paridade com a prévia.
  */
 export function DocumentReaderToolbar({
   label = "Documento",
@@ -28,19 +34,24 @@ export function DocumentReaderToolbar({
   downloadingLabel = "Gerando…",
   printTitle,
   onDownloadPdf,
+  showDownloadPdf = true,
   disabled = false,
   className,
 }: DocumentReaderToolbarProps) {
   const [downloading, setDownloading] = useState(false);
 
   async function handleDownload() {
-    if (!onDownloadPdf || disabled || downloading) return;
-    setDownloading(true);
-    try {
-      await onDownloadPdf();
-    } finally {
-      setDownloading(false);
+    if (disabled || downloading) return;
+    if (onDownloadPdf) {
+      setDownloading(true);
+      try {
+        await onDownloadPdf();
+      } finally {
+        setDownloading(false);
+      }
+      return;
     }
+    downloadDocumentReaderPdf({ title: printTitle });
   }
 
   return (
@@ -59,7 +70,7 @@ export function DocumentReaderToolbar({
           <Printer size={15} aria-hidden />
           {printLabel}
         </button>
-        {onDownloadPdf ? (
+        {showDownloadPdf ? (
           <button
             type="button"
             className="delpi-ui-document-reader-toolbar__btn"

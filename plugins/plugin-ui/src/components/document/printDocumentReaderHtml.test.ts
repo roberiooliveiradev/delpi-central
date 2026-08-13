@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildDocumentReaderPrintHtml,
+  downloadDocumentReaderPdf,
   findActiveDocumentPage,
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";
@@ -79,7 +80,29 @@ describe("printDocumentReaderHtml", () => {
     expect(print).toHaveBeenCalledTimes(1);
   });
 
-  it("retorna false sem DocumentPage ativo", () => {
-    expect(printDocumentReaderInWindow()).toBe(false);
+  it("downloadDocumentReaderPdf reutiliza o HTML da prévia", () => {
+    document.body.innerHTML = `
+      <section class="delpi-ui-document-reader">
+        <article class="delpi-ui-document-page"><p>Prévia</p></article>
+      </section>
+    `;
+    const fakeDoc = {
+      open: vi.fn(),
+      write: vi.fn(),
+      close: vi.fn(),
+      images: [] as unknown as HTMLCollectionOf<HTMLImageElement>,
+    };
+    const fakeWindow = {
+      closed: false,
+      focus: vi.fn(),
+      scrollTo: vi.fn(),
+      print: vi.fn(),
+      document: fakeDoc,
+      addEventListener: vi.fn(),
+    } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(fakeWindow);
+
+    expect(downloadDocumentReaderPdf({ title: "Ata" })).toBe(true);
+    expect(String(fakeDoc.write.mock.calls[0]?.[0] ?? "")).toContain("Prévia");
   });
 });

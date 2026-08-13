@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionButton, StatusBadge, triggerFileDownload } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  StatusBadge,
+  printDocumentReader,
+} from "@delpi/plugin-ui/index";
 import {
   ArrowLeft,
   Building2,
@@ -18,7 +22,6 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { buildAtaEditPath, buildAtaSignPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  fetchAtaPdfBlob,
   finalizeAta,
   getAta,
   sendAta,
@@ -170,20 +173,12 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
             <ActionButton
               disabled={busy}
               onClick={() => {
-                void (async () => {
-                  setBusy(true);
-                  setError(null);
-                  try {
-                    const { blob, filename } = await fetchAtaPdfBlob(ataId, getAccessToken);
-                    triggerFileDownload(blob, filename);
-                  } catch (err) {
-                    setError(
-                      err instanceof Error ? err.message : "Não foi possível baixar o PDF da ata.",
-                    );
-                  } finally {
-                    setBusy(false);
-                  }
-                })();
+                const title = String(
+                  detail?.minute?.title ?? detail?.minute?.minute_number ?? "Ata Transforma+",
+                );
+                if (!printDocumentReader({ title })) {
+                  setError("Documento ainda não carregado para gerar o PDF.");
+                }
               }}
             >
               <Download size={16} aria-hidden />

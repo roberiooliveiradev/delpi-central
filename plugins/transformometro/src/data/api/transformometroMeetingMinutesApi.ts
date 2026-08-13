@@ -217,6 +217,7 @@ export async function fetchAtaSignatureImageBlob(
   return response.blob();
 }
 
+/** PDF arquivado/server-side (ReportLab). UI da prévia usa downloadDocumentReaderPdf. */
 export async function fetchAtaPdfBlob(
   id: string,
   getAccessToken?: () => string | undefined,

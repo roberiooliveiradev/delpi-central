@@ -5,11 +5,9 @@ import {
   DocumentReader,
   DocumentReaderToolbar,
   DocumentSignatureBlock,
-  triggerFileDownload,
 } from "@delpi/plugin-ui/index";
 
 import {
-  fetchAtaPdfBlob,
   fetchAtaSignatureImageBlob,
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
@@ -130,17 +128,6 @@ export function MeetingMinuteDocumentView({ detail, getAccessToken, onError }: P
     };
   }, [detail.signatures, getAccessToken, minuteId]);
 
-  async function downloadPdf() {
-    if (!minuteId) return;
-    onError?.(null);
-    try {
-      const { blob, filename } = await fetchAtaPdfBlob(minuteId, getAccessToken);
-      triggerFileDownload(blob, filename);
-    } catch (err) {
-      onError?.(err instanceof Error ? err.message : "Não foi possível baixar o PDF da ata.");
-    }
-  }
-
   const showDraftWatermark = status === "draft" || status === "in_review";
   const showCancelledWatermark = status === "cancelled";
 
@@ -151,7 +138,6 @@ export function MeetingMinuteDocumentView({ detail, getAccessToken, onError }: P
       toolbar={
         <DocumentReaderToolbar
           printTitle={String(minute.title ?? minute.minute_number ?? "Ata Transforma+")}
-          onDownloadPdf={() => downloadPdf()}
         />
       }
     >
