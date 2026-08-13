@@ -1022,6 +1022,7 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Avatar | WF-04R + WF-05 | commercial-api |
 | URL interna código+loja | WF-04R | idem |
 | Home / Visão geral / Administração | WF-01R-L / WF-OV / WF-ADM-* | `/` · `/overview` · `/administration/*` |
+| Visão geral (cockpit C1 + YoY) | WF-OV | `/overview` — KPIs, carteira aberta, ROL+hit series, YoY, funil |
 | Minhas tarefas | WF-06R | `/my-tasks` (alias `/my-day`) |
 
 ---
