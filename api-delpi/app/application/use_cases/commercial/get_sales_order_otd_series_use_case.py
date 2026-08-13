@@ -102,6 +102,7 @@ class GetSalesOrderOtdSeriesUseCase:
         start_date: str,
         end_date: str,
         customer_segment: str | None,
+        customer_codes: list[str] | None,
         include: bool,
     ) -> float | None:
         if not include:
@@ -113,6 +114,7 @@ class GetSalesOrderOtdSeriesUseCase:
                 start_date=start_date,
                 end_date=end_date,
                 customer_segment=customer_segment,
+                customer_codes=customer_codes,
             )
         )
 
