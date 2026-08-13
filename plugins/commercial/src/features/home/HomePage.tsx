@@ -48,6 +48,7 @@ import {
   type HubSectionId,
 } from "../../content/pluginRouteCatalog";
 import { useWorklistPreview } from "../../hooks/useWorklistPreview";
+import { buildOpenOrdersHorizonListHref } from "../../utils/openOrdersDeepLink";
 import { formatDisplayDate } from "../../utils/dates";
 import type { OpenOrdersData } from "../../types/openOrders";
 import {
@@ -274,6 +275,42 @@ export function HomePage({
         }),
       });
     }
+    const monthHref = buildOpenOrdersHorizonListHref({
+      bucket: "current_month",
+      basePath,
+    });
+    const monthSearch = monthHref.includes("?") ? monthHref.slice(monthHref.indexOf("?")) : "";
+    if (summary.totalLinhas > 0) {
+      items.push({
+        id: "month-deliveries",
+        title: "Entregas deste mês",
+        description: "Concentre pedidos com data de entrega no mês corrente.",
+        tone: "neutral" as const,
+        leadingIcon: <ClipboardList size={18} strokeWidth={1.75} aria-hidden="true" />,
+        actionLabel: "Ver mês",
+        onAction: () =>
+          navigateRoute({
+            viewId: "open_orders",
+            search: monthSearch || undefined,
+            label: "Entregas deste mês",
+          }),
+      });
+    }
+    if (showAnalytics) {
+      items.push({
+        id: "gap-meta",
+        title: "Gap vs meta e carteira no tempo",
+        description: "Veja o buraco vs meta ROL e os buckets de entrega na Visão geral.",
+        tone: "neutral" as const,
+        leadingIcon: <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />,
+        actionLabel: "Abrir Overview",
+        onAction: () =>
+          navigateRoute({
+            viewId: "overview",
+            label: hubRouteLabelByView("overview") ?? "Visão geral",
+          }),
+      });
+    }
     if (showWorklist && worklist.counts.overdue > 0) {
       items.push({
         id: "overdue-tasks",
@@ -302,6 +339,7 @@ export function HomePage({
     }
     return items;
   }, [
+    basePath,
     eventsReady,
     navigateRoute,
     openMyTasks,
@@ -310,6 +348,7 @@ export function HomePage({
     showWorklist,
     summary.atrasos,
     summary.totalLinhas,
+    showAnalytics,
     worklist.counts.overdue,
   ]);
 
