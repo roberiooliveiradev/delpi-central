@@ -275,9 +275,9 @@ Composição canônica para leitura e impressão de documentos formais em papel 
 O kit controla papel A4 e margens ABNT (NBR 14724) numa única camada:
 `@page { margin: 0 }` + padding em `thead`/`tbody`/`tfoot` (3 cm / 2 cm /
 2 cm / 3 cm). Cabeçalho/rodapé repetem via `table-*-group`; numeração em
-`@page @top-right`. Marca d'água (`DocumentPage` `watermark`): tiles A4 na
-prévia + camada `position: fixed` no HTML de impressão (todas as páginas do
-PDF). Use `printDocumentReader()` / «Baixar PDF» (mesmo HTML).
+`@page @top-right`. Marca d'água (`DocumentPage` `watermark`): tiles A4 no
+fluxo do papel (prévia e PDF) — **não** `position:fixed` (Chromium só pinta
+na última página). Use `printDocumentReader()` / «Baixar PDF» (mesmo HTML).
 
 Impressão/PDF vai por `printDelpiDocumentHtml`: **iframe oculto** no host
 (`pointer-events: none`, sem `window.open` nem overlay fullscreen), com cleanup

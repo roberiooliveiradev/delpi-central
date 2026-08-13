@@ -11,8 +11,8 @@ export type DocumentPageWatermarkProps = {
 
 /**
  * Marca d'água do DocumentPage: um tile por faixa A4 (297 mm) ao longo do
- * papel contínuo na prévia. Na impressão, o HTML é extraído para a camada
- * fixa em `printDocumentReaderHtml` (todas as páginas do PDF).
+ * papel contínuo. A impressão/PDF reutiliza os mesmos tiles no fluxo do HTML
+ * (não usa position:fixed — no Chromium isso só aparece na última página).
  */
 export function DocumentPageWatermark({ children }: DocumentPageWatermarkProps) {
   const rootRef = useRef<HTMLDivElement>(null);

@@ -195,26 +195,30 @@ describe("printDocumentReaderHtml", () => {
     expect(chrome.pageHtml).toContain("Corpo da ata");
   });
 
-  it("extrai marca d'água uma vez (tile) e injeta camada fixa no HTML de impressão", () => {
+  it("mantém marca d'água em tiles no fluxo do papel (sem camada fixed)", () => {
     const page = mountAtaPaperWithChrome({ withWatermark: true });
+    Object.defineProperty(page, "offsetHeight", { configurable: true, value: 900 });
     const chrome = prepareDocumentPagePrintClone(page);
     expect(chrome.hasRunningWatermark).toBe(true);
-    expect(chrome.runningWatermarkHtml).toContain("watermark.svg");
-    expect(chrome.runningWatermarkHtml.match(/watermark\.svg/g)?.length).toBe(1);
-    expect(chrome.pageHtml).toContain("watermark--print-source");
+    expect(chrome.watermarkTileCount).toBeGreaterThanOrEqual(2);
+    expect(chrome.pageHtml).toContain("delpi-ui-document-page__watermark");
+    expect(chrome.pageHtml).not.toContain("watermark--print-source");
 
     const html = buildDocumentReaderPrintHtml(page, "Ata");
     const doc = parseDocumentPrintHtml(html);
-    const layer = doc.querySelector(".delpi-ui-document-print-running-watermark");
-    expect(layer).toBeTruthy();
-    expect(layer!.querySelector("img")?.getAttribute("src")).toMatch(/watermark\.svg/);
-    expect(html).toContain("has-print-running-watermark");
-    expect(html).toContain("position: fixed");
-    expect(html).toMatch(
-      /\.delpi-ui-document-print-running-watermark\s*\{[^}]*z-index:\s*-1/,
+    expect(doc.querySelector(".delpi-ui-document-print-running-watermark")).toBeNull();
+    expect(html).toContain("has-print-flow-watermark");
+    expect(html).not.toMatch(
+      /\.delpi-ui-document-print-running-watermark\s*\{[^}]*position:\s*fixed/,
     );
-    expect(html).toContain("mix-blend-mode: multiply");
-    expect(doc.querySelector(".delpi-ui-document-page__watermark--print-source")).toBeTruthy();
+    const tiles = doc.querySelectorAll(".delpi-ui-document-page__watermark-tile");
+    expect(tiles.length).toBeGreaterThanOrEqual(2);
+    expect(html).toMatch(
+      /\.delpi-ui-document-page__watermark\s*\{[^}]*z-index:\s*0/,
+    );
+    expect(html).toMatch(
+      /\.delpi-ui-document-page__body\s*\{[^}]*z-index:\s*1|\.delpi-ui-document-page__header,\s*\n\.delpi-ui-document-page__body/,
+    );
   });
 
   it("coloca cabeçalho no thead e rodapé no tfoot (DOM parseável)", () => {
