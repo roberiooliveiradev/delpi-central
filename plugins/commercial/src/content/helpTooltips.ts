@@ -244,11 +244,13 @@ export const CM_HELP = {
     kpiOpenOrders: "Quantidade de pedidos distintos em aberto na carteira filtrada.",
     kpiLateCustomers: "Clientes com ao menos uma linha de pedido vencida.",
     billingSeries:
-      "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a curva dele.",
+      "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a curva dele. Presets iguais à Visão geral; opcionalmente compare com o ano anterior.",
     billingSeriesPeriod:
-      "Recorte do gráfico: hoje, semana, mês, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
+      "Recorte do gráfico (paridade Visão geral): hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
     billingSeriesGrain:
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
+    billingSeriesYoy:
+      "Sobrepõe o mesmo período filtrado deslocado −1 ano (linha tracejada). Alinhamento por bucket em qualquer granularidade permitida.",
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterFocus:
       "Situação do pedido em aberto. Atenção = atraso ou atendimento parcial. Em dia = aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto.",

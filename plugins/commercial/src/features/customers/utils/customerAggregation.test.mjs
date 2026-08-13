@@ -516,10 +516,16 @@ describe("CustomersPage estrutural", () => {
     assert.match(chart, /CommercialChartToolbar/);
     assert.match(chart, /CommercialFilterBarShell/);
     assert.match(chart, /SegmentToggle/);
+    assert.match(chart, /NativeCheckboxControl/);
+    assert.match(chart, /comparePriorYear/);
+    assert.match(chart, /billingSeriesYoy/);
     assert.doesNotMatch(chart, /CommercialSelectField/);
     assert.doesNotMatch(chart, /cm-nav-row/);
     assert.match(chart, /startDate: range\.startDate/);
-    assert.match(seriesHook, /startDate, endDate, granularity/);
+    assert.match(seriesHook, /startDate,\s*\n?\s*endDate,\s*\n?\s*granularity|comparePriorYear/);
+    assert.match(seriesHook, /comparePriorYear/);
+    assert.match(seriesHook, /shiftPeriodRangeByYears/);
+    assert.match(seriesHook, /mergeSeriesWithPriorYear/);
     assert.match(seriesHook, /selectedKeys/);
     assert.match(seriesHook, /if \(!selectedKeys\.length\)/);
     assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);

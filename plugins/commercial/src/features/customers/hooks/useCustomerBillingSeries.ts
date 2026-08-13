@@ -4,6 +4,10 @@ import {
   fetchCustomerBillingSeries,
   type CustomerBillingSeriesPoint,
 } from "../../../api/customerBillingSeriesApi";
+import {
+  mergeSeriesWithPriorYear,
+  shiftPeriodRangeByYears,
+} from "../../analytics/utils/periodShift";
 import type { CustomerSummary } from "../types/customerSummary";
 
 export type BillingSeriesCustomerOption = {
@@ -13,12 +17,16 @@ export type BillingSeriesCustomerOption = {
   nome: string;
 };
 
+export type BillingSeriesChartPoint = CustomerBillingSeriesPoint & {
+  value_prior?: number | null;
+};
+
 export type UseCustomerBillingSeriesResult = {
   /** Chaves selecionadas; vazio = toda a carteira. */
   selectedKeys: string[];
   setSelectedKeys: (keys: string[]) => void;
   customerOptions: BillingSeriesCustomerOption[];
-  points: CustomerBillingSeriesPoint[];
+  points: BillingSeriesChartPoint[];
   loading: boolean;
   error: string | null;
   totalValue: number;
@@ -60,6 +68,8 @@ export type UseCustomerBillingSeriesOptions = {
   startDate?: string;
   endDate?: string;
   granularity?: "day" | "week" | "month" | "year";
+  /** Overlay YoY: 2ª chamada com o mesmo intervalo −1 ano. */
+  comparePriorYear?: boolean;
 };
 
 export function useCustomerBillingSeries(
@@ -70,8 +80,9 @@ export function useCustomerBillingSeries(
   const startDate = options?.startDate;
   const endDate = options?.endDate;
   const granularity = options?.granularity;
+  const comparePriorYear = Boolean(options?.comparePriorYear);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  const [points, setPoints] = useState<CustomerBillingSeriesPoint[]>([]);
+  const [points, setPoints] = useState<BillingSeriesChartPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coverage, setCoverage] = useState({ covered: 0, total: 0, failedBatches: 0 });
@@ -117,18 +128,45 @@ export function useCustomerBillingSeries(
     setLoading(true);
     setError(null);
 
-    void fetchCustomerBillingSeries(pairs, {
+    const currentQuery = {
       months: startDate && endDate ? undefined : 12,
       startDate,
       endDate,
       granularity,
       signal: controller.signal,
-    })
-      .then((payload) => {
+    } as const;
+
+    const priorRange =
+      comparePriorYear && startDate && endDate
+        ? shiftPeriodRangeByYears(
+            { start_date: startDate, end_date: endDate },
+            -1,
+          )
+        : null;
+
+    const currentPromise = fetchCustomerBillingSeries(pairs, currentQuery);
+    const priorPromise = priorRange
+      ? fetchCustomerBillingSeries(pairs, {
+          startDate: priorRange.start_date,
+          endDate: priorRange.end_date,
+          granularity,
+          signal: controller.signal,
+        })
+      : Promise.resolve(null);
+
+    void Promise.all([currentPromise, priorPromise])
+      .then(([currentPayload, priorPayload]) => {
         if (cancelled) return;
-        setPoints(payload.points ?? []);
-        setCoverage(payload.coverage);
-        setError(payload.partialError);
+        const current = currentPayload.points ?? [];
+        const prior = priorPayload?.points ?? [];
+        const next: BillingSeriesChartPoint[] = comparePriorYear
+          ? mergeSeriesWithPriorYear(current, prior, (p) => ({
+              value_prior: p?.value ?? null,
+            }))
+          : current;
+        setPoints(next);
+        setCoverage(currentPayload.coverage);
+        setError(currentPayload.partialError);
       })
       .catch((err: unknown) => {
         if (cancelled || controller.signal.aborted) return;
@@ -144,7 +182,15 @@ export function useCustomerBillingSeries(
       cancelled = true;
       controller.abort();
     };
-  }, [enabled, fingerprint, reloadKey, startDate, endDate, granularity]);
+  }, [
+    enabled,
+    fingerprint,
+    reloadKey,
+    startDate,
+    endDate,
+    granularity,
+    comparePriorYear,
+  ]);
 
   const displayedPoints = useMemo(
     () => (enabled && fingerprint ? points : []),

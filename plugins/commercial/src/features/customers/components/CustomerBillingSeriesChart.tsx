@@ -3,12 +3,14 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { EmptyState, SegmentToggle } from "@delpi/plugin-ui/index";
+import { EmptyState, NativeCheckboxControl, SegmentToggle } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
@@ -22,6 +24,7 @@ import {
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import { validateBillingPeriod } from "../billing/utils/billingPeriod";
@@ -43,6 +46,7 @@ const CHART_HEIGHT = 320;
 
 /** Accent do Portal — acompanha tema claro/escuro. */
 const SERIES_COLOR = "var(--cm-accent)";
+const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
@@ -76,7 +80,7 @@ function billingFilterLabel(
 }
 
 /**
- * Faturamento da carteira — período e granularidade reais via API existente.
+ * Faturamento da carteira — período (paridade Overview) + YoY opcional.
  */
 export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesChartProps) {
   const gradientId = useId().replace(/:/g, "");
@@ -87,6 +91,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   );
   const [customStart, setCustomStart] = useState(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
+  const [comparePriorYear, setComparePriorYear] = useState(false);
 
   const range =
     preset === "custom"
@@ -107,6 +112,8 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     ? granularity
     : (allowedGrains[0] ?? "month");
 
+  const yoyActive = comparePriorYear && Boolean(range.startDate && range.endDate);
+
   const {
     selectedKeys,
     setSelectedKeys,
@@ -122,6 +129,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     startDate: range.startDate,
     endDate: range.endDate,
     granularity: effectiveGrain,
+    comparePriorYear: yoyActive,
   });
 
   const chartData = useMemo(
@@ -129,11 +137,17 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
       points.map((point) => ({
         periodo: point.label,
         faturamento: Number(point.value) || 0,
+        faturamento_prior:
+          point.value_prior == null ? null : Number(point.value_prior) || 0,
       })),
     [points],
   );
 
-  const hasValues = chartData.some((point) => point.faturamento > 0);
+  const hasValues = chartData.some(
+    (point) =>
+      point.faturamento > 0 ||
+      (yoyActive && point.faturamento_prior != null && point.faturamento_prior > 0),
+  );
   const filterLabel = billingFilterLabel(selectedKeys, customerOptions);
   const periodLabel = billingSeriesPresetLabel(preset);
   const isAllCustomers = selectedKeys.length === 0;
@@ -212,13 +226,22 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
         ) : (
-          <CommercialChartToolbar
-            granularity={effectiveGrain}
-            onGranularityChange={setGranularity}
-            options={BILLING_SERIES_GRANULARITY_OPTIONS}
-            modes={allowedGrains}
-            granularityHelp={CM_HELP.customers.billingSeriesGrain}
-          />
+          <div className="cm-billing-series-chart__grain-row">
+            <CommercialChartToolbar
+              granularity={effectiveGrain}
+              onGranularityChange={setGranularity}
+              options={BILLING_SERIES_GRANULARITY_OPTIONS}
+              modes={allowedGrains}
+              granularityHelp={CM_HELP.customers.billingSeriesGrain}
+            />
+            <NativeCheckboxControl
+              id="customers-billing-yoy"
+              checked={yoyActive}
+              onChange={setComparePriorYear}
+              label={ANALYTICS_CONTENT.overview.comparePriorYear}
+              hint={CM_HELP.customers.billingSeriesYoy}
+            />
+          </div>
         )}
       </div>
       {error && !hasValues ? (
@@ -277,12 +300,15 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
               axisLine={false}
             />
             <Tooltip
-              formatter={(value) => [
-                formatCurrency(typeof value === "number" ? value : Number(value)),
-                "Faturamento",
+              formatter={(value, name) => [
+                value == null || Number.isNaN(Number(value))
+                  ? "—"
+                  : formatCurrency(Number(value)),
+                name,
               ]}
               labelFormatter={(label) => String(label)}
             />
+            {yoyActive ? <Legend /> : null}
             <Area
               type="monotone"
               dataKey="faturamento"
@@ -293,6 +319,18 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
               dot={{ r: 3, fill: SERIES_COLOR, strokeWidth: 0 }}
               activeDot={{ r: 5 }}
             />
+            {yoyActive ? (
+              <Line
+                type="monotone"
+                dataKey="faturamento_prior"
+                name="Ano ant."
+                stroke={PRIOR_SERIES_COLOR}
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                connectNulls
+                dot={false}
+              />
+            ) : null}
           </AreaChart>
           </ResponsiveContainer>
         </>
