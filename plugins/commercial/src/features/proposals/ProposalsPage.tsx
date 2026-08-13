@@ -1,25 +1,28 @@
-import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { listProposalsDocuments } from "../../api/commercialProposalsApi";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
+  CommercialActionButton,
+  CommercialEmptyState,
   CommercialLoadingCard,
+  CommercialPageHero,
+  CommercialPagination,
+  CommercialSectionCard,
+  CommercialSectionHintLabel,
   CommercialStateBanner,
   CommercialTextField,
-  CommercialPageHero,
-  CommercialActionButton,
-  CommercialDataTable,
-  CommercialSectionHintLabel,
 } from "../../app/commercialUi";
-import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
-import type { ProposalDocumentListData, ProposalDocumentListItem } from "../../types/proposalsDocument";
+import type {
+  ProposalDocumentListData,
+  ProposalDocumentListItem,
+} from "../../types/proposalsDocument";
 import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
+import { ProposalsDocumentsTable } from "./ProposalsDocumentsTable";
+
+const PAGE_SIZE = 20;
 
 function filterProposalDocuments(
   items: ProposalDocumentListItem[],
@@ -43,6 +46,7 @@ type ProposalsPageProps = {
 export function ProposalsPage({ basePath }: ProposalsPageProps) {
   const [data, setData] = useState<ProposalDocumentListData | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -71,34 +75,14 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
     [data?.items, search],
   );
 
-  const columns: DataTableColumn<ProposalDocumentListItem>[] = [
-    {
-      key: "ov",
-      header: "Nº OV",
-      render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            navigateProposalDetail(row.proposta_interna, { basePath });
-          }}
-        >
-          {row.numero_ov || row.proposta_interna}
-        </button>
-      ),
-    },
-    { key: "interna", header: "Proposta", render: (row) => row.proposta_interna },
-    { key: "cliente", header: "Cliente", render: (row) => row.cliente || "—" },
-    { key: "oportunidade", header: "Oportunidade", render: (row) => row.oportunidade || "—" },
-    { key: "versao", header: "Versão", render: (row) => row.versao || "—" },
-    { key: "data", header: "Data", render: (row) => row.data || "—" },
-    {
-      key: "itens",
-      header: "Itens",
-      render: (row) => row.quantidade_itens.toLocaleString("pt-BR"),
-    },
-  ];
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
 
   return (
     <section className="cm-page-stack">
@@ -134,38 +118,34 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         placeholder="OV, proposta, cliente…"
       />
 
-      <SectionCard
+      <CommercialSectionCard
         title={`Propostas (${filtered.length.toLocaleString("pt-BR")})`}
         hint={CM_HELP.proposals.list}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
       >
         {loading ? <CommercialLoadingCard title="Carregando propostas…" variant="panel" /> : null}
-        {error ? (
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
-        ) : null}
+        {error ? <CommercialEmptyState message={error} role="alert" /> : null}
         {!loading && !error && filtered.length === 0 ? (
-          <EmptyState
-            classNames={cmEmptyStateClassNames}
-            defaultTitle={PROPOSALS_CONTENT.list.empty}
-            defaultMessage={
+          <CommercialEmptyState
+            title={PROPOSALS_CONTENT.list.empty}
+            message={
               search ? PROPOSALS_CONTENT.list.emptySearch : PROPOSALS_CONTENT.list.empty
             }
           />
         ) : null}
         {!loading && !error && filtered.length > 0 ? (
-          <CommercialDataTable
-            rows={filtered}
-            columns={columns}
-            rowKey={(row) => row.proposta_interna}
-            layout="section"
-            onRowClick={(row) =>
-              navigateProposalDetail(row.proposta_interna, { basePath })
-            }
-            rowClickRole="button"
-          />
+          <>
+            <ProposalsDocumentsTable rows={paged} basePath={basePath} loading={loading} />
+            {filtered.length > PAGE_SIZE ? (
+              <CommercialPagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            ) : null}
+          </>
         ) : null}
-      </SectionCard>
+      </CommercialSectionCard>
     </section>
   );
 }

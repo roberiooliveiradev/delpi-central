@@ -426,6 +426,8 @@ export const CM_HELP = {
     page: "Propostas-documento: lista e emissão de PDF. Não confundir com OVs em Oportunidades.",
     list: "Catálogo de propostas-documento. Clique na linha ou na proposta interna para abrir o detalhe.",
     search: "Busca por OV, proposta interna, oportunidade ou cliente.",
+    layoutToggle:
+      "Alterna entre tabela densa e cards. A preferência fica salva neste navegador.",
     scopeNote:
       "O menu do usuário no topo leva a Minha Carteira filtrada; a lista de propostas-documento não filtra por carteira — é o catálogo com permissão de propostas.",
     tableRowOpensDetail:

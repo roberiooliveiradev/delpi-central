@@ -35,7 +35,7 @@ describe("C17 table row → detail", () => {
     for (const [file, needle] of [
       ["features/analytics/components/CommercialProposalsTable.tsx", /onRowClick=/],
       ["features/analytics/AnalyticsOtdPage.tsx", /onRowClick=\{/],
-      ["features/proposals/ProposalsPage.tsx", /onRowClick=\{/],
+      ["features/proposals/ProposalsDocumentsTable.tsx", /onRowClick=\{openDetail\}/],
     ]) {
       assert.match(readFileSync(join(src, file), "utf8"), needle, file);
     }
