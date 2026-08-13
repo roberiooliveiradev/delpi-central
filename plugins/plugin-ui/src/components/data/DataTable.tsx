@@ -24,6 +24,13 @@ import {
   type DataTableColumnWidths,
 } from "./dataTableColumnResize";
 import {
+  createColumnDragGhost,
+  disposeColumnDragGhost,
+  reorderColumnKeysWithEdge,
+  resolveColumnDropEdge,
+  type ColumnDropEdge,
+} from "./dataTableColumnReorder";
+import {
   isCellSelected,
   isColumnSelected,
   isRowSelected,
@@ -310,17 +317,6 @@ function modifiersFromMouseEvent(event: {
   };
 }
 
-function reorderColumnKeys(keys: string[], fromKey: string, toKey: string): string[] {
-  if (fromKey === toKey) return keys;
-  const from = keys.indexOf(fromKey);
-  const to = keys.indexOf(toKey);
-  if (from < 0 || to < 0) return keys;
-  const next = [...keys];
-  const [moved] = next.splice(from, 1);
-  next.splice(to, 0, moved!);
-  return next;
-}
-
 export function DataTable<T>({
   columns,
   rows,
@@ -356,7 +352,11 @@ export function DataTable<T>({
   labels,
 }: DataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
+  const dragGhostRef = useRef<HTMLElement | null>(null);
   const [dragColumnKey, setDragColumnKey] = useState<string | null>(null);
+  const [holdColumnKey, setHoldColumnKey] = useState<string | null>(null);
+  const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+  const [dropEdge, setDropEdge] = useState<ColumnDropEdge>("before");
   const [localWidths, setLocalWidths] = useState<DataTableColumnWidths>({});
   const wrapText = wrapTextProp ?? mode === "grid-preview";
   const columnWidths = columnWidthsProp ?? localWidths;
@@ -367,15 +367,21 @@ export function DataTable<T>({
 
   const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
   const resolvedEmptyMessage = emptyMessage ?? labels.emptyMessage;
-  const tableClassName = buildTableClassName(
-    classNames,
-    layout,
-    isSortable,
-    Boolean(onRowClick),
-    mode,
-    wrapText,
-    hasFixedWidths,
-  );
+  const tableClassName = [
+    buildTableClassName(
+      classNames,
+      layout,
+      isSortable,
+      Boolean(onRowClick),
+      mode,
+      wrapText,
+      hasFixedWidths,
+    ),
+    enableColumnReorder && onColumnOrderChange ? "delpi-ui-table--column-reorder" : "",
+    dragColumnKey ? "delpi-ui-table--column-reordering" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const columnKeys = useMemo(() => columns.map((column) => column.key), [columns]);
 
   const commitSelection = useCallback(
@@ -492,21 +498,69 @@ export function DataTable<T>({
     });
   };
 
+  const clearColumnDragState = useCallback(() => {
+    disposeColumnDragGhost(dragGhostRef.current);
+    dragGhostRef.current = null;
+    setDragColumnKey(null);
+    setHoldColumnKey(null);
+    setDropTargetKey(null);
+  }, []);
+
   const onHeaderDragStart = (event: DragEvent<HTMLElement>, columnKey: string) => {
     if (!enableColumnReorder || !onColumnOrderChange) return;
+    if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
+      event.preventDefault();
+      return;
+    }
+    setHoldColumnKey(null);
     setDragColumnKey(columnKey);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", columnKey);
+    const table = tableRef.current;
+    if (table) {
+      const ghost = createColumnDragGhost(table, columnKey);
+      dragGhostRef.current = ghost;
+      if (ghost) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.dataTransfer.setDragImage(
+          ghost,
+          Math.min(24, rect.width / 2),
+          Math.min(20, rect.height / 2),
+        );
+      }
+    }
+  };
+
+  const onHeaderDragOver = (event: DragEvent<HTMLElement>, targetKey: string) => {
+    if (!enableColumnReorder || !onColumnOrderChange || !dragColumnKey) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (targetKey === dragColumnKey) {
+      setDropTargetKey(null);
+      return;
+    }
+    const edge = resolveColumnDropEdge(
+      event.clientX,
+      event.currentTarget.getBoundingClientRect(),
+    );
+    setDropTargetKey(targetKey);
+    setDropEdge(edge);
   };
 
   const onHeaderDrop = (event: DragEvent<HTMLElement>, targetKey: string) => {
     if (!enableColumnReorder || !onColumnOrderChange) return;
     event.preventDefault();
     const fromKey = dragColumnKey || event.dataTransfer.getData("text/plain");
-    setDragColumnKey(null);
+    const edge = resolveColumnDropEdge(
+      event.clientX,
+      event.currentTarget.getBoundingClientRect(),
+    );
+    clearColumnDragState();
     if (!fromKey) return;
-    onColumnOrderChange(reorderColumnKeys(columnKeys, fromKey, targetKey));
+    onColumnOrderChange(reorderColumnKeysWithEdge(columnKeys, fromKey, targetKey, edge));
   };
+
+  const activeColumnKey = dragColumnKey ?? holdColumnKey;
 
   return wrapTableMarkup(
     classNames,
@@ -547,12 +601,20 @@ export function DataTable<T>({
             const isSorted = sortKey === column.key;
             const columnSelected = isColumnSelected(resolvedSelection, column.key);
             const columnClass = resolveDataTableColumnClassName(column.className);
+            const isActiveColumn = activeColumnKey === column.key;
+            const isDropTarget = dropTargetKey === column.key && dragColumnKey !== column.key;
             const headerClass = [
               columnClass,
               getHeaderClassName?.(column),
               column.sortable && classNames.sortableColumn ? classNames.sortableColumn : "",
               columnSelected ? "delpi-ui-table__column--selected" : "",
-              dragColumnKey === column.key ? "delpi-ui-table__column--dragging" : "",
+              isActiveColumn ? "delpi-ui-table__column--dragging" : "",
+              isDropTarget && dropEdge === "before"
+                ? "delpi-ui-table__column--drop-before"
+                : "",
+              isDropTarget && dropEdge === "after"
+                ? "delpi-ui-table__column--drop-after"
+                : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -565,14 +627,30 @@ export function DataTable<T>({
                 data-align={column.align}
                 data-column-key={column.key}
                 aria-selected={columnSelected || undefined}
+                aria-grabbed={dragColumnKey === column.key || undefined}
                 tabIndex={onHeaderClick || onSelectionChange ? 0 : undefined}
                 draggable={enableColumnReorder && Boolean(onColumnOrderChange)}
+                onPointerDown={(event) => {
+                  if (!enableColumnReorder || !onColumnOrderChange) return;
+                  if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
+                    return;
+                  }
+                  if (event.button !== 0) return;
+                  setHoldColumnKey(column.key);
+                }}
+                onPointerUp={() => {
+                  if (!dragColumnKey) setHoldColumnKey(null);
+                }}
+                onPointerCancel={() => {
+                  if (!dragColumnKey) setHoldColumnKey(null);
+                }}
                 onDragStart={(event) => onHeaderDragStart(event, column.key)}
-                onDragOver={(event) => {
-                  if (enableColumnReorder && onColumnOrderChange) event.preventDefault();
+                onDragOver={(event) => onHeaderDragOver(event, column.key)}
+                onDragLeave={() => {
+                  if (dropTargetKey === column.key) setDropTargetKey(null);
                 }}
                 onDrop={(event) => onHeaderDrop(event, column.key)}
-                onDragEnd={() => setDragColumnKey(null)}
+                onDragEnd={() => clearColumnDragState()}
                 onClick={(event) => {
                   if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
                     return;
@@ -716,6 +794,9 @@ export function DataTable<T>({
               ) : null}
               {columns.map((column) => {
                 const cellSelected = isCellSelected(resolvedSelection, index, column.key);
+                const isActiveColumn = activeColumnKey === column.key;
+                const isDropTarget =
+                  dropTargetKey === column.key && dragColumnKey !== column.key;
                 return (
                   <td
                     key={column.key}
@@ -725,6 +806,13 @@ export function DataTable<T>({
                       cellSelected ? "delpi-ui-table__cell--selected" : "",
                       isColumnSelected(resolvedSelection, column.key)
                         ? "delpi-ui-table__column--selected"
+                        : "",
+                      isActiveColumn ? "delpi-ui-table__column--dragging" : "",
+                      isDropTarget && dropEdge === "before"
+                        ? "delpi-ui-table__column--drop-before"
+                        : "",
+                      isDropTarget && dropEdge === "after"
+                        ? "delpi-ui-table__column--drop-after"
                         : "",
                     ]
                       .filter(Boolean)
