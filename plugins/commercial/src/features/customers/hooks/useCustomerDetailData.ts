@@ -88,7 +88,7 @@ export function useCustomerDetailData(
     void (async () => {
       try {
         const identityPromise = (async () => {
-          const [search, enrichItems] = await Promise.all([
+          const [searchResult, enrichResult] = await Promise.allSettled([
             searchActiveCustomers(code, {
               page: 1,
               pageSize: 20,
@@ -99,12 +99,48 @@ export function useCustomerDetailData(
               controller.signal,
             ),
           ]);
+          if (controller.signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+
+          const searchErrors: string[] = [];
+          const search =
+            searchResult.status === "fulfilled" ? searchResult.value : null;
+          if (searchResult.status === "rejected") {
+            searchErrors.push(
+              searchResult.reason instanceof Error
+                ? searchResult.reason.message
+                : "Falha ao buscar cadastro.",
+            );
+          }
+
+          const enrichItems =
+            enrichResult.status === "fulfilled" ? enrichResult.value : [];
+          if (enrichResult.status === "rejected") {
+            searchErrors.push(
+              enrichResult.reason instanceof Error
+                ? enrichResult.reason.message
+                : "Falha ao enriquecer cadastro.",
+            );
+          }
+
+          // Só bloqueia se search e enrichment falharem juntos.
+          if (!search && enrichResult.status === "rejected") {
+            throw new Error(searchErrors.join(" ") || "Erro ao carregar identidade.");
+          }
+          // Enrichment falhou → aviso (FAT 12m etc.); search sozinho não derruba a Conta.
+          setIdentityError(
+            enrichResult.status === "rejected"
+              ? searchErrors.join(" ") || "Não foi possível enriquecer o cadastro."
+              : null,
+          );
+
           const hit =
-            search.items.find(
+            search?.items.find(
               (item) =>
                 item.code.trim() === code && item.store.trim() === store,
             ) ??
-            search.items.find((item) => item.code.trim() === code) ??
+            search?.items.find((item) => item.code.trim() === code) ??
             null;
           const enrich =
             enrichItems.find(

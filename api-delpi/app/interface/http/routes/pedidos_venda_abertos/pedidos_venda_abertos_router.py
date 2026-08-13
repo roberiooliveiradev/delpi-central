@@ -291,7 +291,7 @@ def list_ops_abertas_route():
         path="/pedidos-venda-abertos/customers/search",
     ),
 )
-@require_any_permission(PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def search_active_customers_for_portfolio_route(
     q: Optional[str] = Query(
         None,
@@ -300,7 +300,12 @@ def search_active_customers_for_portfolio_route(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    """Clientes ativos no TOTVS (SA1) para amarração na carteira do vendedor."""
+    """
+    Clientes ativos no TOTVS (SA1).
+
+    Usado pelo BFF commercial-api para Conta 360 (accounts.view) e para
+    amarração de carteira (manage). Escopo/membership fica no commercial-api.
+    """
     try:
         result = build_search_active_customers_use_case().execute(
             SearchActiveCustomersRequest(query=q, page=page, page_size=page_size)

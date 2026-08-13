@@ -42,3 +42,19 @@ def test_search_active_customers_for_portfolio_operation_id_in_router() -> None:
     ).read()
     assert "search_active_customers_for_portfolio" in router
     assert "/customers/search" in router
+    # Conta 360 (accounts.view) + BFF commercial — não só manage.
+    assert "PEDIDOS_VENDA_ABERTOS_PERMISSIONS" in router
+    search_block = router.split('"/customers/search"', 1)[1].split(
+        '"/customers/enrichment"', 1
+    )[0]
+    assert "require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)" in search_block
+    assert "PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS" not in search_block
+
+
+def test_search_route_accepts_commercial_accounts_view_alias() -> None:
+    from app.application.security.api_delpi_permissions import (
+        COMMERCIAL_ACCOUNTS_VIEW,
+        PEDIDOS_VENDA_ABERTOS_PERMISSIONS,
+    )
+
+    assert COMMERCIAL_ACCOUNTS_VIEW in PEDIDOS_VENDA_ABERTOS_PERMISSIONS

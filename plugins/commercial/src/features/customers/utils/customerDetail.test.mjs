@@ -599,6 +599,7 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const hook = readSrc("features/customers/hooks/useCustomerDetailData.ts");
     assert.match(hook, /getCustomerOpenOrdersTotvs/);
+    assert.match(hook, /Promise\.allSettled/);
     assert.doesNotMatch(hook, /useCustomersData/);
     assert.match(page, /outsidePortfolioNotice|showPortfolioCoverage/);
     assert.match(
