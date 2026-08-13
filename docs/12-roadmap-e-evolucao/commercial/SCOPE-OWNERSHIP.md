@@ -50,6 +50,7 @@
 | `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
 | Contatos `…/contacts*` | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api |
 | KPIs `/analytics/*`, OV, OTD | commercial-api (`seller_id`/`membership` → `customer_codes`) | MFE → commercial-api → `GET …/commercial/*` |
+| `GET /analytics/open-portfolio-summary` | commercial-api filtra open-orders (summary só; sem `items`) | MFE → commercial-api → `GET …/totvs-open-orders` |
 | Propostas ADY `/proposal-documents*` | commercial-api (RBAC) | MFE → commercial-api → api-delpi `commercial-proposals` |
 | Production / products BFF | commercial-api (RBAC) | MFE → commercial-api → api-delpi production/products |
 | PVA `GET /pedidos-venda-abertos/` | Legado: membership + **`for_open_orders`** (sem vínculo → consolidado) | Só plugin PVA |
