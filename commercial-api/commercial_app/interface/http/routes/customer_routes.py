@@ -53,19 +53,37 @@ def _customer_scope_for_request(request: Request):
     )
 
 
-def _customer_scope_check_for_request(request: Request):
-    service = build_resolve_commercial_customer_scope_service()
-    scope = _customer_scope_for_request(request)
+def _account_detail_scope_check(_request: Request):
+    """
+    Conta (par único): `accounts.view` basta — sem membership.
+    Listas/KPIs continuam com filter_pairs no escopo de carteira.
+    """
 
-    def check(customer_code: str, customer_store: str) -> None:
-        service.ensure_allows(
-            scope,
-            customer_code=customer_code,
-            customer_store=customer_store,
-        )
+    def check(_customer_code: str, _customer_store: str) -> None:
+        return None
 
     return check
 
+
+def _pairs_for_account_or_portfolio_list(
+    scope,
+    pairs: list[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    """
+    Um par = detalhe Conta (sem filtro membership).
+    Vários pares = lista/KPI (KEEP filtro de carteira).
+    """
+    normalized = [
+        (str(code or "").strip(), str(store or "").strip())
+        for code, store in pairs
+        if str(code or "").strip() and str(store or "").strip()
+    ]
+    if len(normalized) <= 1:
+        return normalized
+    return build_resolve_commercial_customer_scope_service().filter_pairs(
+        scope,
+        normalized,
+    )
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
@@ -94,9 +112,8 @@ def enrich_portfolio_customers(request: Request, body: EnrichmentBody = Body(...
         customers = parse_customer_assignments(
             [item.model_dump() for item in body.customers]
         )
-        scope_service = build_resolve_commercial_customer_scope_service()
         scope = _customer_scope_for_request(request)
-        allowed_pairs = scope_service.filter_pairs(
+        allowed_pairs = _pairs_for_account_or_portfolio_list(
             scope,
             [(item.customer_code, item.customer_store) for item in customers],
         )
@@ -155,9 +172,8 @@ def list_commercial_customer_billing_series(
         customers = parse_customer_assignments(
             [item.model_dump() for item in body.customers]
         )
-        scope_service = build_resolve_commercial_customer_scope_service()
         scope = _customer_scope_for_request(request)
-        allowed_pairs = scope_service.filter_pairs(
+        allowed_pairs = _pairs_for_account_or_portfolio_list(
             scope,
             [(item.customer_code, item.customer_store) for item in customers],
         )
@@ -217,7 +233,7 @@ def list_commercial_customer_billing_series(
 )
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
 def list_commercial_customer_outbound_invoices(
-    request: Request,
+    _request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
     start_date: str | None = Query(default=None),
@@ -228,12 +244,6 @@ def list_commercial_customer_outbound_invoices(
     search: str | None = Query(default=None),
 ):
     try:
-        scope = _customer_scope_for_request(request)
-        build_resolve_commercial_customer_scope_service().ensure_allows(
-            scope,
-            customer_code=customer_code,
-            customer_store=customer_store,
-        )
         result = build_delpi_commercial_gateway().list_customer_outbound_invoices(
             customer_code=customer_code,
             customer_store=customer_store,
@@ -287,7 +297,7 @@ def get_customer_contacts_bundle(
         items = build_manage_account_contacts_use_case().list(
             customer_code=customer_code,
             customer_store=customer_store,
-            scope_check=_customer_scope_check_for_request(request),
+            scope_check=_account_detail_scope_check(request),
         )
         totvs_contact = None
         try:
@@ -342,7 +352,7 @@ def create_customer_contact(
                 is_primary=body.is_primary,
                 source=body.source,
             ),
-            scope_check=_customer_scope_check_for_request(request),
+            scope_check=_account_detail_scope_check(request),
         )
         return ok(
             contact.to_dict(),
@@ -380,7 +390,7 @@ def update_customer_contact(
             customer_store=customer_store,
             contact_id=contact_id,
             changes=body.model_dump(exclude_unset=True),
-            scope_check=_customer_scope_check_for_request(request),
+            scope_check=_account_detail_scope_check(request),
         )
         return ok(
             contact.to_dict(),
@@ -416,7 +426,7 @@ def delete_customer_contact(
             customer_code=customer_code,
             customer_store=customer_store,
             contact_id=contact_id,
-            scope_check=_customer_scope_check_for_request(request),
+            scope_check=_account_detail_scope_check(request),
         )
         return ok(
             {"deleted": True, "id": str(contact.id)},
@@ -440,17 +450,11 @@ def delete_customer_contact(
 )
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
 def get_customer_avatar(
-    request: Request,
+    _request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):
     try:
-        scope = _customer_scope_for_request(request)
-        build_resolve_commercial_customer_scope_service().ensure_allows(
-            scope,
-            customer_code=customer_code,
-            customer_store=customer_store,
-        )
         avatar_file = build_manage_customer_avatar_use_case().get_file(
             customer_code=customer_code,
             customer_store=customer_store,

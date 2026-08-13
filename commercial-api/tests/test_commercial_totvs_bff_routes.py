@@ -147,18 +147,28 @@ def test_billing_series_bff_filters_pairs() -> None:
     assert payload["customers"] == [{"customer_code": "100", "customer_store": "01"}]
 
 
-def test_outbound_invoices_bff_ensure_allows() -> None:
+def test_billing_series_single_pair_skips_membership_filter() -> None:
+    """Detalhe Conta (1 par): não aplica filter_pairs de carteira."""
     gateway = MagicMock()
+    gateway.list_customer_billing_series.return_value = {
+        "success": True,
+        "data": {"months": 12, "customer_count": 1, "points": []},
+    }
     scope = CommercialCustomerScope(
         unrestricted=False,
         allowed_customers=frozenset({("100", "01")}),
     )
     scope_svc = MagicMock()
     scope_svc.execute.return_value = scope
-    scope_svc.ensure_allows.side_effect = LookupError("Cliente fora da sua carteira.")
 
-    request = _request("/customers/999/01/outbound-invoices")
+    request = _request("/customers/billing-series", method="POST")
     request.state.user = _User(["commercial.accounts.view"])
+    body = BillingSeriesBody.model_validate(
+        {
+            "customers": [{"customer_code": "999", "customer_store": "01"}],
+            "months": 12,
+        }
+    )
 
     with (
         patch.object(
@@ -173,11 +183,34 @@ def test_outbound_invoices_bff_ensure_allows() -> None:
         ),
         patch.object(customer_routes, "actor_sub_from_request", return_value="u1"),
     ):
+        response = customer_routes.list_commercial_customer_billing_series(request, body)
+
+    assert response.status_code == 200
+    scope_svc.filter_pairs.assert_not_called()
+    payload = gateway.list_customer_billing_series.call_args.kwargs["payload"]
+    assert payload["customers"] == [{"customer_code": "999", "customer_store": "01"}]
+
+
+def test_outbound_invoices_bff_allows_outside_portfolio() -> None:
+    """Conta detalhe: accounts.view basta — sem ensure_allows de membership."""
+    gateway = MagicMock()
+    gateway.list_customer_outbound_invoices.return_value = {
+        "data": {"items": [], "pagination": {"page": 1, "page_size": 20, "total": 0}}
+    }
+
+    request = _request("/customers/999/01/outbound-invoices")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with patch.object(
+        customer_routes,
+        "build_delpi_commercial_gateway",
+        return_value=gateway,
+    ):
         response = customer_routes.list_commercial_customer_outbound_invoices(
             request,
             customer_code="999",
             customer_store="01",
         )
 
-    assert response.status_code == 404
-    gateway.list_customer_outbound_invoices.assert_not_called()
+    assert response.status_code == 200
+    gateway.list_customer_outbound_invoices.assert_called_once()
