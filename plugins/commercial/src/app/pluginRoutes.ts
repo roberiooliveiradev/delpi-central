@@ -25,13 +25,14 @@ export type PluginView =
   | "user_profile"
   | "not_found";
 
-/** Itens da navegação de topo (IA 2026 — seis áreas). */
+/** Itens da navegação de topo (IA 2026 — seis áreas + Cliente efêmero fora da carteira). */
 export type PluginNavId =
   | "home"
   | "overview"
   | "my_tasks"
   | "open_orders"
   | "customers"
+  | "client_context"
   | "administration";
 
 export type ResolvedPluginRoute = {
@@ -536,10 +537,16 @@ export function isAnalyticsDeepView(view: PluginView): boolean {
 /**
  * Item de topo destacado para a view atual. Páginas profundas (OTD, oportunidades,
  * equipe, propostas) não pertencem à navegação de topo e ficam sem destaque.
+ * Conta fora da carteira (sem team/manage) destaca o item efêmero «Cliente».
  */
-export function resolveActiveNavId(view: PluginView): PluginNavId | null {
+export function resolveActiveNavId(
+  view: PluginView,
+  options?: { customerDetailOutsidePortfolio?: boolean },
+): PluginNavId | null {
   if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
-  if (view === "customer_detail") return "customers";
+  if (view === "customer_detail") {
+    return options?.customerDetailOutsidePortfolio ? "client_context" : "customers";
+  }
   if (
     view === "administration" ||
     view === "administration_portfolios" ||
@@ -565,6 +572,10 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
   return "home";
 }
 
-export function isPluginNavActive(view: PluginView, target: PluginNavId): boolean {
-  return resolveActiveNavId(view) === target;
+export function isPluginNavActive(
+  view: PluginView,
+  target: PluginNavId,
+  options?: { customerDetailOutsidePortfolio?: boolean },
+): boolean {
+  return resolveActiveNavId(view, options) === target;
 }

@@ -21,7 +21,7 @@ import {
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
 import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
-import { navigatePluginView } from "./pluginNavigation";
+import { navigateCustomerDetail, navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
   CommercialActionButton,
@@ -43,6 +43,8 @@ type PluginShellProps = {
   showCustomers?: boolean;
   showProposals?: boolean;
   scopeLabel?: string;
+  /** Conta fora da carteira: item efêmero «Cliente» ativo. */
+  ephemeralClientNav?: { codigo: string; loja: string } | null;
   children: ReactNode;
 };
 
@@ -52,6 +54,7 @@ const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   my_tasks: CM_HELP.shell.navMyTasks,
   open_orders: CM_HELP.shell.navOrders,
   customers: CM_HELP.shell.navCustomers,
+  client_context: CM_HELP.shell.navCustomers,
   administration: CM_HELP.shell.navAdmin,
 };
 
@@ -61,6 +64,7 @@ const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   my_tasks: <CalendarCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
   open_orders: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
+  client_context: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
   administration: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
@@ -87,6 +91,7 @@ export function PluginShell({
   showCustomers = false,
   showProposals = false,
   scopeLabel,
+  ephemeralClientNav = null,
   children,
 }: PluginShellProps) {
   const [myTasksBadge, setMyTasksBadge] = useState(0);
@@ -152,7 +157,24 @@ export function PluginShell({
     count: item.id === "my_tasks" ? myTasksBadge || undefined : undefined,
   }));
 
-  const activeId = resolveActiveNavId(view);
+  if (ephemeralClientNav) {
+    const insertAt = items.findIndex((item) => item.id === "customers");
+    const clientItem = {
+      id: "client_context" as const,
+      label: SHELL_NAV_CONTENT.clientContextLabel,
+      requiredCap: "always" as const,
+      count: undefined as number | undefined,
+    };
+    if (insertAt >= 0) {
+      items.splice(insertAt + 1, 0, clientItem);
+    } else {
+      items.push(clientItem);
+    }
+  }
+
+  const activeId = resolveActiveNavId(view, {
+    customerDetailOutsidePortfolio: Boolean(ephemeralClientNav),
+  });
   const showGreeting = view === "home";
   const greeting = greetingForNow();
   const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
@@ -242,7 +264,18 @@ export function PluginShell({
             title: NAV_HELP[item.id]
               ? `${item.label}. ${NAV_HELP[item.id]}`
               : item.label,
-            onSelect: () => navigatePluginView(item.id, { basePath }),
+            onSelect: () => {
+              if (item.id === "client_context" && ephemeralClientNav) {
+                navigateCustomerDetail(
+                  ephemeralClientNav.codigo,
+                  ephemeralClientNav.loja,
+                  { basePath },
+                );
+                return;
+              }
+              if (item.id === "client_context") return;
+              navigatePluginView(item.id, { basePath });
+            },
           }))}
           actions={
             <ShellUserPortfolioMenu basePath={basePath} displayName={userDisplayName} />

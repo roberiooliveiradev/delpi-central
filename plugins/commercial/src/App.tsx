@@ -15,6 +15,10 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
+import {
+  isCustomerInViewerPortfolios,
+  shouldShowEphemeralClientNav,
+} from "./features/customers/utils/customerMembership";
 import { AnalyticsTeamRedirect } from "./features/analytics/AnalyticsTeamRedirect";
 import { AnalyticsOpportunityDetailPage } from "./features/analytics/AnalyticsOpportunityDetailPage";
 import { AnalyticsOpportunitiesPage } from "./features/analytics/AnalyticsOpportunitiesPage";
@@ -56,6 +60,7 @@ function AppRoutes({
   const {
     isAdmin,
     canManagePortfolios,
+    canUseTeamScope,
     canViewWorklist,
     canViewAnalytics,
     canViewProposals,
@@ -64,6 +69,23 @@ function AppRoutes({
     myPortfolios,
   } = usePortfolioScope();
   const showCustomers = scopeLoading || canAccessMyPortfolio;
+  const ephemeralClientNav =
+    view === "customer_detail" &&
+    route.codigo &&
+    route.loja &&
+    !scopeLoading &&
+    shouldShowEphemeralClientNav({
+      inMembership: isCustomerInViewerPortfolios(
+        route.codigo,
+        route.loja,
+        myPortfolios,
+      ),
+      canUseTeamScope,
+      canManagePortfolios,
+      isAdmin,
+    })
+      ? { codigo: route.codigo, loja: route.loja }
+      : null;
   const scopeLabel =
     myPortfolios.length > 1
       ? `${myPortfolios.length} carteiras`
@@ -82,6 +104,7 @@ function AppRoutes({
       showCustomers={showCustomers}
       showProposals={canViewProposals}
       scopeLabel={scopeLabel}
+      ephemeralClientNav={ephemeralClientNav}
     >
       {view === "home" ? (
         <HomePage
@@ -141,16 +164,12 @@ function AppRoutes({
         )
       ) : null}
       {view === "customer_detail" && route.codigo && route.loja ? (
-        scopeLoading || canAccessMyPortfolio ? (
-          <CustomerDetailPage
-            codigo={route.codigo}
-            loja={route.loja}
-            basePath={basePath}
-            search={search}
-          />
-        ) : (
-          <NotFoundPage basePath={basePath} />
-        )
+        <CustomerDetailPage
+          codigo={route.codigo}
+          loja={route.loja}
+          basePath={basePath}
+          search={search}
+        />
       ) : null}
       {view === "proposals" ? (
         canViewProposals ? (

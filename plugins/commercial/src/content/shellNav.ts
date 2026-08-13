@@ -38,6 +38,8 @@ export const SHELL_NAV_CONTENT = {
   ariaLabel: "Áreas do Portal Comercial",
   scopeLabel: "Escopo",
   scopeHelpAriaLabel: "Ajuda: Escopo",
+  /** Item efêmero na Conta fora da carteira (não entra em SHELL_NAV_ITEMS). */
+  clientContextLabel: "Cliente",
   userMenu: {
     nameFallback: "Usuário",
     profileAriaLabel: "Abrir meu perfil",
