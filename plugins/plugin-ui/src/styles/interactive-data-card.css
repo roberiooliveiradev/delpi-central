@@ -90,6 +90,10 @@
 
 .delpi-ui-interactive-data-card__open-hint {
   margin-right: auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 0.85em;
   font-weight: 600;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));

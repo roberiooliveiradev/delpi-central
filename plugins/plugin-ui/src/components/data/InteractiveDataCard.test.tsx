@@ -33,6 +33,24 @@ describe("InteractiveDataCard", () => {
     expect(container.querySelector(".delpi-ui-interactive-data-card--interactive")).toBeNull();
   });
 
+  it("mantém openHint longo no span com classe open-hint (clamp via CSS)", () => {
+    const longHint =
+      "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.";
+    const { container } = render(
+      <InteractiveDataCard
+        classNames={classNames}
+        ariaLabel="Proposta"
+        onActivate={() => undefined}
+        openHint={longHint}
+        fields={[{ id: "ov", label: "OV", value: "OV1" }]}
+      />,
+    );
+
+    const hint = container.querySelector(".cm-interactive-data-card__open-hint");
+    expect(hint?.textContent).toBe(longHint);
+    expect(hint?.classList.contains("delpi-ui-interactive-data-card__open-hint")).toBe(true);
+  });
+
   it("ativa com clique e teclado quando onActivate é informado", () => {
     const onActivate = vi.fn();
     render(
