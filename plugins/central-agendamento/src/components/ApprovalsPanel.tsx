@@ -112,6 +112,13 @@ export function ApprovalsPanel({
                       <div>
                         <span className="ca-approvals__fact-label">Quem solicitou</span>
                         <strong className="ca-approvals__fact-value">{booking.booked_by_name}</strong>
+                        {booking.requester_email || booking.requester_phone ? (
+                          <small className="ca-table__sub">
+                            {[booking.requester_email, booking.requester_phone]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </small>
+                        ) : null}
                       </div>
                     </div>
                     <div className="ca-approvals__fact ca-approvals__fact--time">

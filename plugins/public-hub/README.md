@@ -218,6 +218,16 @@ O relato continua anônimo. O link também aparece no MFE autenticado `canal-den
 
 Ver `src/apps/canal-denuncia/` · doc: [plugins/canal-denuncia/README.md](../canal-denuncia/README.md).
 
+### Central de Agendamento (`central-agendamento`)
+
+| Página | URL | API |
+|--------|-----|-----|
+| Solicitar reserva | `/p/central-agendamento/book/{token}` | `GET/POST /apps/api-delpi/public/scheduling/resources/{token}…` |
+
+Token opaco por recurso (`public_booking_enabled`). Sem login. O admin do MFE gera/copia o link.
+
+Ver `src/apps/central-agendamento/` · doc: [api-delpi/docs/api/central-agendamento.md](../../api-delpi/docs/api/central-agendamento.md).
+
 ### Mural de Acessos (`mural-acessos`)
 
 Menu estilo smartphone por mural (token na URL):
