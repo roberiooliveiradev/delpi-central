@@ -125,12 +125,12 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
     def create_portfolio(
         self,
         *,
-        user_id: str,
+        user_id: str | None,
         display_name: str,
         created_by_user_id: str | None,
         member_user_ids: Sequence[str] | None = None,
     ) -> SellerPortfolio:
-        owner_id = str(user_id).strip()
+        owner_id = str(user_id).strip() if user_id is not None else ""
         extra_members = [
             str(uid).strip()
             for uid in (member_user_ids or ())
@@ -152,31 +152,32 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                     ) VALUES (%s, %s, %s)
                     RETURNING {_PORTFOLIO_COLUMNS}
                     """,
-                    (owner_id, display_name, created_by_user_id),
+                    (owner_id or None, display_name, created_by_user_id),
                 )
                 row = cursor.fetchone()
                 if row is None:
                     raise RuntimeError("Falha ao criar carteira de vendedor.")
                 portfolio_row = dict(row)
                 portfolio_id = str(portfolio_row["id"])
-                cursor.execute(
-                    """
-                    INSERT INTO commercial.seller_portfolio_members (
-                        seller_portfolio_id, user_id, role
-                    ) VALUES (%s, %s, 'owner')
-                    """,
-                    (portfolio_id, owner_id),
-                )
-                for member_id in unique_extras:
+                if owner_id:
                     cursor.execute(
                         """
                         INSERT INTO commercial.seller_portfolio_members (
                             seller_portfolio_id, user_id, role
-                        ) VALUES (%s, %s, 'member')
-                        ON CONFLICT (seller_portfolio_id, user_id) DO NOTHING
+                        ) VALUES (%s, %s, 'owner')
                         """,
-                        (portfolio_id, member_id),
+                        (portfolio_id, owner_id),
                     )
+                    for member_id in unique_extras:
+                        cursor.execute(
+                            """
+                            INSERT INTO commercial.seller_portfolio_members (
+                                seller_portfolio_id, user_id, role
+                            ) VALUES (%s, %s, 'member')
+                            ON CONFLICT (seller_portfolio_id, user_id) DO NOTHING
+                            """,
+                            (portfolio_id, member_id),
+                        )
             self.commit()
         except Exception:
             self.rollback()
@@ -518,6 +519,10 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
             return self.get_by_id(portfolio_id)
         if next_role == "owner":
             return self.set_owner(portfolio_id=portfolio_id, user_id=uid)
+        current_members = self._list_members(portfolio_id)
+        if not current_members:
+            # Órfã (name-first): o 1º usuário vira owner e sincroniza user_id.
+            return self.set_owner(portfolio_id=portfolio_id, user_id=uid)
         self.execute(
             """
             INSERT INTO commercial.seller_portfolio_members (
@@ -667,7 +672,7 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         )
         return SellerPortfolio(
             id=portfolio_id,
-            user_id=str(row["user_id"]),
+            user_id=(str(row["user_id"]) if row.get("user_id") is not None else None),
             display_name=str(row["display_name"]),
             active=bool(row.get("active", True)),
             customers=customers,

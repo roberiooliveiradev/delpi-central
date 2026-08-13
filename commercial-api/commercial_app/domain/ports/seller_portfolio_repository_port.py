@@ -36,7 +36,7 @@ class SellerPortfolioRepositoryPort(ABC):
     def create_portfolio(
         self,
         *,
-        user_id: str,
+        user_id: str | None,
         display_name: str,
         created_by_user_id: str | None,
         member_user_ids: Sequence[str] | None = None,

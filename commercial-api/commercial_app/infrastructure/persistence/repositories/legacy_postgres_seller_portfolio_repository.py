@@ -96,13 +96,16 @@ class LegacyPostgresSellerPortfolioRepository(
     def create_portfolio(
         self,
         *,
-        user_id: str,
+        user_id: str | None,
         display_name: str,
         created_by_user_id: str | None,
         member_user_ids: Sequence[str] | None = None,
     ) -> SellerPortfolio:
         # Legado 1:1 — member_user_ids extras são ignorados; user_id é o owner.
         _ = member_user_ids
+        owner_id = str(user_id).strip() if user_id is not None else ""
+        if not owner_id:
+            raise ValueError("Legado exige user_id para criar carteira.")
         row = self.execute_returning_one(
             f"""
             INSERT INTO pedidos_venda_abertos.sellers (
@@ -110,7 +113,7 @@ class LegacyPostgresSellerPortfolioRepository(
             ) VALUES (%s, %s, %s)
             RETURNING {_LEGACY_PORTFOLIO_COLUMNS}
             """,
-            (user_id, display_name, created_by_user_id),
+            (owner_id, display_name, created_by_user_id),
         )
         portfolio = self._hydrate(row)
         if portfolio is None:
@@ -423,7 +426,8 @@ class LegacyPostgresSellerPortfolioRepository(
         if not row:
             return None
         portfolio_id = str(row["id"])
-        user_id = str(row["user_id"])
+        raw_user = row.get("user_id")
+        user_id = str(raw_user) if raw_user is not None else None
         customers = tuple(
             SellerCustomerAssignment(
                 customer_code=str(item["customer_code"]),
@@ -436,7 +440,11 @@ class LegacyPostgresSellerPortfolioRepository(
             )
             for item in self._list_customers(portfolio_id)
         )
-        members = (SellerPortfolioMember(user_id=user_id, role="owner"),)
+        members = (
+            (SellerPortfolioMember(user_id=user_id, role="owner"),)
+            if user_id
+            else ()
+        )
         return SellerPortfolio(
             id=portfolio_id,
             user_id=user_id,

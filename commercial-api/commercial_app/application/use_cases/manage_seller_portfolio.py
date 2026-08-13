@@ -624,9 +624,37 @@ class ManageSellerPortfolioUseCase:
         ]
         if not user_ids:
             sole = _normalize_code(request.user_id)
-            if not sole:
-                raise ValueError("Informe ao menos um usuário (user_id ou user_ids).")
-            user_ids = [sole]
+            if sole:
+                user_ids = [sole]
+
+        # Name-first: permite criar só com display_name (carteira órfã).
+        if not user_ids:
+            portfolio = self._repository.create_portfolio(
+                user_id=None,
+                display_name=display_name,
+                created_by_user_id=request.created_by_user_id,
+                member_user_ids=[],
+            )
+            if request.customers:
+                updated = self._repository.replace_customers(
+                    portfolio_id=portfolio.id,
+                    customers=request.customers,
+                )
+                if updated is not None:
+                    portfolio = updated
+            self._append_audit(
+                actor_user_id=request.created_by_user_id,
+                action="seller_portfolio.create",
+                entity_id=portfolio.id,
+                payload={
+                    "display_name": portfolio.display_name,
+                    "member_count": 0,
+                    "customer_count": len(portfolio.customers),
+                    "owner_user_id": None,
+                    "orphan": True,
+                },
+            )
+            return portfolio
 
         owner = _normalize_code(request.owner_user_id) if request.owner_user_id else user_ids[0]
         if not owner:

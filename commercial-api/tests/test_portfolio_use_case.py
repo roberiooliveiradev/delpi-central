@@ -33,6 +33,48 @@ def _portfolio(**kwargs) -> SellerPortfolio:
     return SellerPortfolio(**defaults)
 
 
+def test_create_portfolio_name_only_orphan() -> None:
+    repository = MagicMock()
+    created = _portfolio(id="p-orphan", user_id=None, display_name="Sul", members=())
+    repository.create_portfolio.return_value = created
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.create_portfolio(CreatePortfolioRequest(display_name="Sul"))
+
+    assert result.id == "p-orphan"
+    assert result.user_id is None
+    assert result.members == ()
+    repository.create_portfolio.assert_called_once_with(
+        user_id=None,
+        display_name="Sul",
+        created_by_user_id=None,
+        member_user_ids=[],
+    )
+
+
+def test_add_member_on_orphan_delegates_to_repository() -> None:
+    """Repo promove o 1º usuário a owner e sincroniza user_id (E9.S1)."""
+    repository = MagicMock()
+    updated = _portfolio(
+        id="p-orphan",
+        user_id="u-first",
+        display_name="Sul",
+        members=(SellerPortfolioMember(user_id="u-first", role="owner"),),
+        customers=(),
+    )
+    repository.add_member.return_value = updated
+    use_case = ManageSellerPortfolioUseCase(repository)
+
+    result = use_case.add_member(portfolio_id="p-orphan", user_id="u-first")
+
+    assert result.owner_user_id == "u-first"
+    repository.add_member.assert_called_once_with(
+        portfolio_id="p-orphan",
+        user_id="u-first",
+        role="member",
+    )
+
+
 def test_create_portfolio_allows_same_user_in_another_portfolio() -> None:
     repository = MagicMock()
     created = _portfolio(id="p2", display_name="Novo")

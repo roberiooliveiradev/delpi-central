@@ -19,14 +19,14 @@ class SellerPortfolioMember:
 @dataclass(frozen=True, slots=True)
 class SellerPortfolio:
     id: str
-    user_id: str
+    user_id: str | None
     display_name: str
     active: bool
     customers: tuple[SellerCustomerAssignment, ...]
     members: tuple[SellerPortfolioMember, ...] = ()
 
     @property
-    def owner_user_id(self) -> str:
+    def owner_user_id(self) -> str | None:
         for member in self.members:
             if member.role == "owner":
                 return member.user_id
