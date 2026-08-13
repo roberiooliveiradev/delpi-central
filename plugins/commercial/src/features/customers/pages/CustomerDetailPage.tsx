@@ -174,6 +174,11 @@ export function CustomerDetailPage({
     if (section === "contatos") setContactsRefreshKey((current) => current + 1);
   };
 
+  const onAvatarChanged = () => {
+    reload();
+    setContactsRefreshKey((current) => current + 1);
+  };
+
   return (
     <div className="cm-customer-detail-page">
       <CustomerDetailHeader
@@ -190,6 +195,8 @@ export function CustomerDetailPage({
         canViewProposals={canViewProposals}
         basePath={basePath}
         sharedCoverage={customerSharedCoverage}
+        avatarRefreshKey={contactsRefreshKey}
+        onAvatarChanged={onAvatarChanged}
       />
 
       {showInitialLoading ? (

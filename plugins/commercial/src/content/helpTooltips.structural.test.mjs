@@ -64,6 +64,8 @@ describe("CM_HELP matriz (C16)", () => {
       "customers.tableRowOpensDetail",
       "customerDetail.header",
       "customerDetail.contacts",
+      "customerDetail.avatarChange",
+      "customerDetail.avatarRemove",
       "customerDetail.opportunities",
       "customerDetail.tableRowOpensDetail",
       "customers.contacts",

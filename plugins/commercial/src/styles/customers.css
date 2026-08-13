@@ -112,6 +112,62 @@
   gap: 8px 16px;
 }
 
+.dashboard-commercial .cm-customer-detail-header__avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-customer-detail-header__avatar-button {
+  position: relative;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.dashboard-commercial .cm-customer-detail-header__avatar-button:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+.dashboard-commercial .cm-customer-detail-header__avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cm-text, #0b1220) 62%, transparent);
+  color: var(--cm-surface, #fff);
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.dashboard-commercial .cm-customer-detail-header__avatar-button:hover .cm-customer-detail-header__avatar-overlay,
+.dashboard-commercial .cm-customer-detail-header__avatar-button:focus-visible .cm-customer-detail-header__avatar-overlay {
+  opacity: 1;
+}
+
+.dashboard-commercial .cm-customer-detail-header__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 .dashboard-commercial .cm-customer-billing-panel__header {
   justify-content: space-between;
 }

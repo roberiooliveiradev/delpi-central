@@ -141,6 +141,7 @@ def build_manage_customer_avatar_use_case() -> ManageCustomerAvatarUseCase:
         _avatar_use_case = ManageCustomerAvatarUseCase(
             repository=build_customer_avatar_repository(),
             storage=build_avatar_storage(),
+            audit_repository=build_audit_log_repository(),
         )
     return _avatar_use_case
 

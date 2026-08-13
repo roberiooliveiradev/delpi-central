@@ -2,16 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Any
 
 from commercial_app.application.services.customer_avatar_storage import (
     CustomerAvatarStorage,
     CustomerAvatarStorageError,
 )
+from commercial_app.application.use_cases.manage_account_contacts import account_entity_id
 from commercial_app.domain.entities.customer_avatar import CustomerAvatarRecord
 from commercial_app.domain.ports.customer_avatar_repository_port import (
+    AuditLogRepositoryPort,
     CustomerAvatarRepositoryPort,
 )
+
+_ENTITY_ACCOUNT = "account"
+_ACTION_AVATAR_UPLOADED = "account.avatar.uploaded"
+_ACTION_AVATAR_DELETED = "account.avatar.deleted"
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,9 +32,11 @@ class ManageCustomerAvatarUseCase:
         self,
         repository: CustomerAvatarRepositoryPort,
         storage: CustomerAvatarStorage | None = None,
+        audit_repository: AuditLogRepositoryPort | None = None,
     ):
         self._repository = repository
         self._storage = storage or CustomerAvatarStorage()
+        self._audit = audit_repository
 
     def get_meta(
         self,
@@ -85,7 +93,7 @@ class ManageCustomerAvatarUseCase:
             )
         except CustomerAvatarStorageError as exc:
             raise ValueError(str(exc)) from exc
-        return self._repository.upsert(
+        record = self._repository.upsert(
             customer_code=code,
             customer_store=store,
             file_name=stored.file_name,
@@ -94,12 +102,25 @@ class ManageCustomerAvatarUseCase:
             byte_size=stored.byte_size,
             uploaded_by_user_id=uploaded_by_user_id,
         )
+        self._append_audit(
+            actor_user_id=uploaded_by_user_id,
+            action=_ACTION_AVATAR_UPLOADED,
+            customer_code=code,
+            customer_store=store,
+            payload={
+                "file_name": record.file_name,
+                "content_type": record.content_type,
+                "byte_size": record.byte_size,
+            },
+        )
+        return record
 
     def delete(
         self,
         *,
         customer_code: str,
         customer_store: str,
+        actor_user_id: str | None = None,
     ) -> None:
         code, store = self._normalize_identity(customer_code, customer_store)
         record = self._repository.get(customer_code=code, customer_store=store)
@@ -112,6 +133,16 @@ class ManageCustomerAvatarUseCase:
             storage_key=record.storage_key if record else None,
             file_name=record.file_name if record else None,
         )
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action=_ACTION_AVATAR_DELETED,
+            customer_code=code,
+            customer_store=store,
+            payload={
+                "file_name": record.file_name if record else None,
+                "content_type": record.content_type if record else None,
+            },
+        )
 
     def list_keys_with_avatar(
         self,
@@ -120,6 +151,28 @@ class ManageCustomerAvatarUseCase:
     ) -> set[tuple[str, str]]:
         records = self._repository.list_for_customers(customers=customers)
         return {(item.customer_code, item.customer_store) for item in records}
+
+    def _append_audit(
+        self,
+        *,
+        actor_user_id: str | None,
+        action: str,
+        customer_code: str,
+        customer_store: str,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        if self._audit is None:
+            return
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            return
+        self._audit.append(
+            actor_user_id=actor,
+            action=action,
+            entity_type=_ENTITY_ACCOUNT,
+            entity_id=account_entity_id(customer_code, customer_store),
+            payload=payload or {},
+        )
 
     @staticmethod
     def _normalize_identity(customer_code: str, customer_store: str) -> tuple[str, str]:

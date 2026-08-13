@@ -16,7 +16,9 @@
     "seller_portfolio.transfer_customers_bulk": "Transferência em massa",
     "account.contact.created": "Contato criado",
     "account.contact.updated": "Contato atualizado",
-    "account.contact.deleted": "Contato removido"
+    "account.contact.deleted": "Contato removido",
+    "account.avatar.uploaded": "Logo atualizado",
+    "account.avatar.deleted": "Logo removido"
   },
   "messages": {
     "seller_portfolio.create": "Carteira «{display_name}» criada com {member_count} usuário(s).",
@@ -35,7 +37,9 @@
     "seller_portfolio.transfer_customers_bulk": "Transferência em massa: {transferred_count} ok, {failed_count} falha(s) de «{source_portfolio_label}» para «{target_portfolio_label}». Motivo: {reason_note}.",
     "account.contact.created": "Contato «{full_name}» ({channel}) adicionado à conta.",
     "account.contact.updated": "Contato «{full_name}» atualizado ({fields_label}).",
-    "account.contact.deleted": "Contato «{full_name}» removido da conta."
+    "account.contact.deleted": "Contato «{full_name}» removido da conta.",
+    "account.avatar.uploaded": "Logo da conta atualizado ({file_name}).",
+    "account.avatar.deleted": "Logo da conta removido."
   },
   "roleLabels": {
     "owner": "responsável",
@@ -58,7 +62,9 @@
     "seller_portfolio.transfer_customers_bulk": "info",
     "account.contact.created": "success",
     "account.contact.updated": "info",
-    "account.contact.deleted": "warning"
+    "account.contact.deleted": "warning",
+    "account.avatar.uploaded": "success",
+    "account.avatar.deleted": "warning"
   },
   "fallback": {
     "title": "Evento de auditoria",

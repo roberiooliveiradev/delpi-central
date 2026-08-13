@@ -11,6 +11,9 @@ type CustomerAvatarProps = {
   name: string;
   hasAvatar?: boolean;
   size?: "sm" | "md" | "lg";
+  /** Bump after upload/replace to refetch the blob while hasAvatar stays true. */
+  refreshKey?: number;
+  previewable?: boolean;
 };
 
 /**
@@ -22,6 +25,8 @@ export function CustomerAvatar({
   name,
   hasAvatar = false,
   size = "md",
+  refreshKey = 0,
+  previewable = true,
 }: CustomerAvatarProps) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const key = `${code}|${store}`;
@@ -45,7 +50,7 @@ export function CustomerAvatar({
       controller.abort();
       if (created) URL.revokeObjectURL(created);
     };
-  }, [code, store, hasAvatar]);
+  }, [code, store, hasAvatar, refreshKey]);
 
   return (
     <Avatar
@@ -54,7 +59,8 @@ export function CustomerAvatar({
       src={objectUrl}
       size={size}
       portalScopeClassName="dashboard-commercial"
-      previewTitle={name || code}
+      previewTitle={previewable ? name || code : undefined}
+      previewable={previewable}
     />
   );
 }

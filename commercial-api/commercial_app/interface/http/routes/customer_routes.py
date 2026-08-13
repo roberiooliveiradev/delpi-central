@@ -338,7 +338,7 @@ def list_customer_account_audit(
     page: int = Query(1, ge=1, description="Página (1-based)."),
     page_size: int = Query(20, ge=1, le=100, description="Itens por página."),
 ):
-    """Timeline de audit_log da Conta (contatos; avatar em E3.S3)."""
+    """Timeline de audit_log da Conta (contatos e avatar)."""
     try:
         payload = build_manage_account_contacts_use_case().list_account_audit(
             customer_code=customer_code,
@@ -520,7 +520,7 @@ def get_customer_avatar(
     "/{customer_code}/{customer_store}/avatar",
     operation_id="upsert_customer_avatar",
 )
-@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
 async def upsert_customer_avatar(
     request: Request,
     customer_code: str = Path(..., min_length=1),
@@ -564,9 +564,9 @@ async def upsert_customer_avatar(
     "/{customer_code}/{customer_store}/avatar",
     operation_id="delete_customer_avatar",
 )
-@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
 def delete_customer_avatar(
-    _request: Request,
+    request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):
@@ -574,6 +574,7 @@ def delete_customer_avatar(
         build_manage_customer_avatar_use_case().delete(
             customer_code=customer_code,
             customer_store=customer_store,
+            actor_user_id=actor_sub_from_request(request),
         )
         return ok(
             {"deleted": True},

@@ -49,6 +49,7 @@ class AccountAuditFormatterService:
             "channel": channel,
             "fields_label": fields_label or "dados",
             "contact_id": _as_str(payload.get("contact_id")),
+            "file_name": _as_str(payload.get("file_name"), "logo"),
         }
 
     def format_entry(self, entry: AuditLogEntry) -> dict[str, Any]:

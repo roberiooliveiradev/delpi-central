@@ -297,6 +297,10 @@ export const CM_HELP = {
       "Atividades e follow-ups registrados para esta conta, em ordem cronológica.",
     scheduleFollowUp:
       "Abre o Meu dia com este cliente já selecionado para criar um follow-up com prazo.",
+    avatarChange:
+      "Envia ou troca o logo da conta (JPEG, PNG, WebP ou GIF, até 2 MB). Quem vê a Conta pode alterar.",
+    avatarRemove:
+      "Remove o logo da conta. A ação fica registrada na timeline de auditoria da aba Contatos.",
     billingValue: "Total faturado no período selecionado nos filtros de notas.",
     billingInvoiceCount: "Quantidade de notas fiscais de saída no período.",
     billingLastDate: "Data da nota mais recente no período filtrado.",
