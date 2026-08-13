@@ -211,6 +211,12 @@
 }
 
 .dashboard-commercial .cm-customer-attention-orders__item {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-commercial .cm-customer-attention-orders__hit {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -219,6 +225,18 @@
   border: 1px solid var(--cm-border);
   border-radius: 10px;
   background: var(--cm-surface-muted);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.dashboard-commercial .cm-customer-attention-orders__hit:hover {
+  background: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 8%, var(--cm-surface-muted));
+  border-color: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 35%, var(--cm-border));
+}
+
+.dashboard-commercial .cm-customer-attention-orders__hit:focus-visible {
+  outline: 2px solid var(--cm-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
 }
 
 .dashboard-commercial .cm-customer-attention-orders__order {
