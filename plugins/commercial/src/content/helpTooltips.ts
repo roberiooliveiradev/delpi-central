@@ -473,6 +473,36 @@ export const CM_HELP = {
     ovBom: "Estrutura de componentes de cada produto da oportunidade.",
     ovHistory:
       "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
+    searchOpportunities:
+      "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
+    columns: {
+      order: "Número do pedido e item da linha avaliada no OTD.",
+      customer: "Cliente da linha do pedido (nome ou código).",
+      product: "Código do produto da linha no período OTD.",
+      status: "Pontualidade da linha: no prazo ou atrasado no período.",
+      promised: "Data de entrega prometida usada no cálculo de OTD.",
+      periodo: "Competência ou bucket da série OTD (mês/período).",
+    },
+    oppDetailColumns: {
+      code: "Código comercial do produto na oportunidade.",
+      desc: "Descrição do produto cadastrada na OV.",
+      group: "Grupo de produto do item na oportunidade.",
+      type: "Tipo do produto (PA, PI ou outro) na OV.",
+      qty: "Quantidade de produto intermediário (PI) vinculada.",
+      rev: "Número da revisão do evento no histórico da OV.",
+      process: "Processo comercial associado ao evento do histórico.",
+      stage: "Etapa do processo no momento do evento.",
+      start: "Data de início registrada para o evento do histórico.",
+      end: "Data de fim registrada para o evento do histórico.",
+      dur: "Duração do evento (início até fim) no histórico.",
+      status: "Situação do evento no histórico da oportunidade.",
+    },
+    teamColumns: {
+      name: "Nome do vendedor ou carteira ativa na equipe.",
+      customers: "Quantidade de clientes vinculados à carteira.",
+      lines: "Linhas de pedido em aberto na carteira do vendedor.",
+      openValue: "Soma do valor em aberto dos pedidos da carteira.",
+    },
   },
   overview: {
     page:
@@ -510,6 +540,15 @@ export const CM_HELP = {
       "O menu do usuário no topo leva a Minha Carteira filtrada; a lista de propostas-documento não filtra por carteira — é o catálogo com permissão de propostas.",
     tableRowOpensDetail:
       "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.",
+    columns: {
+      ov: "Número da oportunidade de venda vinculada à proposta-documento.",
+      item: "Sequência do item na proposta-documento.",
+      produto: "Código do produto do item na proposta.",
+      desc: "Descrição comercial do item na proposta-documento.",
+      qty: "Quantidade pedida do item nesta proposta.",
+      total: "Valor total do item na proposta-documento.",
+      prazo: "Prazo de entrega do item em dias, quando informado.",
+    },
   },
 } as const;
 

@@ -73,6 +73,50 @@ export const ADMIN_TEAM_COLUMN_HELP: Record<string, string> = {
   portfolios: CM_HELP.administration.teamColPortfolios,
 };
 
+export const ANALYTICS_OTD_COLUMN_HELP: Record<string, string> = {
+  order: CM_HELP.analytics.columns.order,
+  customer: CM_HELP.analytics.columns.customer,
+  product: CM_HELP.analytics.columns.product,
+  status: CM_HELP.analytics.columns.status,
+  promised: CM_HELP.analytics.columns.promised,
+  periodo: CM_HELP.analytics.columns.periodo,
+};
+
+export const ANALYTICS_OPP_DETAIL_COLUMN_HELP: Record<string, string> = {
+  code: CM_HELP.analytics.oppDetailColumns.code,
+  desc: CM_HELP.analytics.oppDetailColumns.desc,
+  group: CM_HELP.analytics.oppDetailColumns.group,
+  type: CM_HELP.analytics.oppDetailColumns.type,
+  qty: CM_HELP.analytics.oppDetailColumns.qty,
+  rev: CM_HELP.analytics.oppDetailColumns.rev,
+  process: CM_HELP.analytics.oppDetailColumns.process,
+  stage: CM_HELP.analytics.oppDetailColumns.stage,
+  start: CM_HELP.analytics.oppDetailColumns.start,
+  end: CM_HELP.analytics.oppDetailColumns.end,
+  dur: CM_HELP.analytics.oppDetailColumns.dur,
+  status: CM_HELP.analytics.oppDetailColumns.status,
+};
+
+export const ANALYTICS_TEAM_COLUMN_HELP: Record<string, string> = {
+  name: CM_HELP.analytics.teamColumns.name,
+  customers: CM_HELP.analytics.teamColumns.customers,
+  lines: CM_HELP.analytics.teamColumns.lines,
+  openValue: CM_HELP.analytics.teamColumns.openValue,
+};
+
+export const PROPOSALS_DOCUMENTS_COLUMN_HELP: Record<string, string> = {
+  ov: CM_HELP.proposals.columns.ov,
+};
+
+export const PROPOSAL_DETAIL_ITEMS_COLUMN_HELP: Record<string, string> = {
+  item: CM_HELP.proposals.columns.item,
+  produto: CM_HELP.proposals.columns.produto,
+  desc: CM_HELP.proposals.columns.desc,
+  qty: CM_HELP.proposals.columns.qty,
+  total: CM_HELP.proposals.columns.total,
+  prazo: CM_HELP.proposals.columns.prazo,
+};
+
 export function withColumnHelp<T extends { key: string; headerHint?: string }>(
   columns: T[],
   helpByKey: Record<string, string>,

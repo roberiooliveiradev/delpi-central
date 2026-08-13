@@ -34,6 +34,10 @@ import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ProductStructureTree } from "../../components/ProductStructureTree";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
+import {
+  ANALYTICS_OPP_DETAIL_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
 import { OpenProposalFromOpportunityButton } from "./components/OpenProposalFromOpportunityButton";
 import type {
   CommercialProduct,
@@ -396,7 +400,7 @@ export function AnalyticsOpportunityDetailPage({
             <div className="cm-responsive-records__desktop">
               <CommercialDataTable
                 rows={data.list_products ?? []}
-                columns={productColumns}
+                columns={withColumnHelp(productColumns, ANALYTICS_OPP_DETAIL_COLUMN_HELP)}
                 rowKey={(row, index) => `${row.code}-${index}`}
                 layout="section"
               />
@@ -475,7 +479,7 @@ export function AnalyticsOpportunityDetailPage({
                 <div className="cm-responsive-records__desktop">
                   <CommercialDataTable
                     rows={history}
-                    columns={historyColumns}
+                    columns={withColumnHelp(historyColumns, ANALYTICS_OPP_DETAIL_COLUMN_HELP)}
                     rowKey={(row, index) => historyEventKey(row, index)}
                     layout="section"
                   />

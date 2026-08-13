@@ -36,6 +36,10 @@ import type {
   ProposalDocumentPdfExportOverrides,
 } from "../../types/proposalsDocument";
 import {
+  PROPOSAL_DETAIL_ITEMS_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
+import {
   buildProposalPdfContactOptions,
   defaultProposalPdfContactValue,
   type ProposalPdfContactOption,
@@ -350,7 +354,7 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
           <CommercialSectionCard title={PROPOSALS_CONTENT.detail.items}>
             <CommercialDataTable
               rows={data.itens}
-              columns={itemColumns}
+              columns={withColumnHelp(itemColumns, PROPOSAL_DETAIL_ITEMS_COLUMN_HELP)}
               rowKey={(row) => row.item}
               layout="section"
             />

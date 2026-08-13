@@ -18,6 +18,10 @@ import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/analytics";
+import {
+  ANALYTICS_OTD_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
@@ -197,19 +201,22 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         ) : (
           <CommercialDataTable
             rows={series}
-            columns={[
-              { key: "periodo", header: "Período", render: (row) => row.periodo },
-              {
-                key: "otd01",
-                header: ANALYTICS_OTD_SERIES_LABELS.unit01,
-                render: (row) => formatPct(row.otd_filial_01),
-              },
-              {
-                key: "otd02",
-                header: ANALYTICS_OTD_SERIES_LABELS.unit02,
-                render: (row) => formatPct(row.otd_filial_02),
-              },
-            ]}
+            columns={withColumnHelp(
+              [
+                { key: "periodo", header: "Período", render: (row) => row.periodo },
+                {
+                  key: "otd01",
+                  header: ANALYTICS_OTD_SERIES_LABELS.unit01,
+                  render: (row) => formatPct(row.otd_filial_01),
+                },
+                {
+                  key: "otd02",
+                  header: ANALYTICS_OTD_SERIES_LABELS.unit02,
+                  render: (row) => formatPct(row.otd_filial_02),
+                },
+              ],
+              ANALYTICS_OTD_COLUMN_HELP,
+            )}
             rowKey={(row) => row.sort_key}
             layout="section"
           />
@@ -224,7 +231,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       >
         <CommercialDataTable
           rows={panel?.lines.items ?? []}
-          columns={columns}
+          columns={withColumnHelp(columns, ANALYTICS_OTD_COLUMN_HELP)}
           rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}`}
           layout="section"
           onRowClick={(row) =>

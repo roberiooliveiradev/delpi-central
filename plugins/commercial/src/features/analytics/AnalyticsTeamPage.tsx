@@ -16,6 +16,10 @@ import { navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SellerPortfolio } from "../../types/portfolio";
+import {
+  ANALYTICS_TEAM_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
 import { formatCurrency } from "../../utils/format";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 
@@ -194,7 +198,7 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
         {!loading && rows.length > 0 ? (
           <CommercialDataTable
             rows={rows}
-            columns={columns}
+            columns={withColumnHelp(columns, ANALYTICS_TEAM_COLUMN_HELP)}
             rowKey={(row) => row.id}
             layout="section"
           />

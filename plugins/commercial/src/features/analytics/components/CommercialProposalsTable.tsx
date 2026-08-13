@@ -6,6 +6,10 @@ import type {
   CommercialProposal,
   CommercialProposalStatusCategory,
 } from "../../../types/analytics";
+import {
+  PROPOSALS_DOCUMENTS_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../../utils/dates";
 import { OpenProposalFromOpportunityButton } from "./OpenProposalFromOpportunityButton";
 
@@ -107,12 +111,13 @@ export function CommercialProposalsTable({
   showOpenProposal,
   onRowClick,
 }: CommercialProposalsTableProps) {
-  const columns = buildCommercialProposalColumns({
+  const baseColumns = buildCommercialProposalColumns({
     basePath,
     detailSearch,
     hideCustomerColumn,
     showOpenProposal,
   });
+  const columns = withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP);
 
   return (
     <CommercialDataTable

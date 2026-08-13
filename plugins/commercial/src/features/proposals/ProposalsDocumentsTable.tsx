@@ -16,6 +16,10 @@ import { navigateProposalDetail } from "../../app/pluginNavigation";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import type { ProposalDocumentListItem } from "../../types/proposalsDocument";
+import {
+  PROPOSALS_DOCUMENTS_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../utils/dates";
 
 const LAYOUT_STORAGE_KEY = "commercial.proposals.documents.layout";
@@ -101,7 +105,8 @@ export function ProposalsDocumentsTable({
         returnLabel: PROPOSALS_CONTENT.list.title,
       },
     });
-  const columns = buildColumns(openDetail);
+  const baseColumns = buildColumns(openDetail);
+  const columns = withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP);
 
   return (
     <>

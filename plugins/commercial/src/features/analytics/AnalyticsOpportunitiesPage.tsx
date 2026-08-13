@@ -136,6 +136,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
 
       <CommercialTextField
         label="Busca"
+        hint={CM_HELP.analytics.searchOpportunities}
         value={search}
         onChange={setSearch}
         placeholder="Número da OV, cliente…"
