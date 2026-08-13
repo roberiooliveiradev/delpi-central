@@ -400,25 +400,42 @@ table.delpi-ui-table--column-reordering td[data-column-key] {
     border-color 160ms ease;
 }
 
+/* Um retângulo contínuo na coluna (não borda por célula) */
 table.delpi-ui-table th.delpi-ui-table__column--dragging,
 table.delpi-ui-table td.delpi-ui-table__column--dragging {
   position: relative;
   z-index: 2;
-  opacity: 0.92;
+  opacity: 1;
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   box-shadow:
-    inset 0 0 0 2px
-      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 70%, white 30%),
-    0 8px 24px color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 22%, transparent);
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
 }
 
 table.delpi-ui-table th.delpi-ui-table__column--dragging {
-  opacity: 1;
-  transform: translateY(-1px);
+  box-shadow:
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset 0 2px 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
+}
+
+table.delpi-ui-table tbody tr:last-child td.delpi-ui-table__column--dragging {
+  box-shadow:
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset 0 -2px 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
 }
 
 table.delpi-ui-table th.delpi-ui-table__column--drop-before,
@@ -469,55 +486,6 @@ table.delpi-ui-table td.delpi-ui-table__column--drop-after::after {
     color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
   pointer-events: none;
   z-index: 3;
-}
-
-.delpi-ui-table__column-drag-ghost {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 10px;
-  border: 2px solid
-    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
-  );
-  color: var(--delpi-ui-text, var(--text, #111111));
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.22),
-    0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 25%, transparent);
-  font-size: 12px;
-  line-height: 1.3;
-  opacity: 0.96;
-  transform: rotate(1deg) scale(1.02);
-}
-
-.delpi-ui-table__column-drag-ghost__header,
-.delpi-ui-table__column-drag-ghost__cell,
-.delpi-ui-table__column-drag-ghost__more {
-  padding: 8px 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--delpi-ui-border, var(--border, #e6e6e6)) 80%, transparent);
-}
-
-.delpi-ui-table__column-drag-ghost__header {
-  font-weight: 700;
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
-    var(--delpi-ui-surface, var(--surface, #ffffff))
-  );
-}
-
-.delpi-ui-table__column-drag-ghost__more {
-  border-bottom: none;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
-  text-align: center;
-  font-weight: 600;
 }
 
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__sort-button,

@@ -24,8 +24,7 @@ import {
   type DataTableColumnWidths,
 } from "./dataTableColumnResize";
 import {
-  createColumnDragGhost,
-  disposeColumnDragGhost,
+  applyTransparentColumnDragImage,
   reorderColumnKeysWithEdge,
   resolveColumnDropEdge,
   type ColumnDropEdge,
@@ -352,7 +351,6 @@ export function DataTable<T>({
   labels,
 }: DataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
-  const dragGhostRef = useRef<HTMLElement | null>(null);
   const [dragColumnKey, setDragColumnKey] = useState<string | null>(null);
   const [holdColumnKey, setHoldColumnKey] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
@@ -499,8 +497,6 @@ export function DataTable<T>({
   };
 
   const clearColumnDragState = useCallback(() => {
-    disposeColumnDragGhost(dragGhostRef.current);
-    dragGhostRef.current = null;
     setDragColumnKey(null);
     setHoldColumnKey(null);
     setDropTargetKey(null);
@@ -516,19 +512,7 @@ export function DataTable<T>({
     setDragColumnKey(columnKey);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", columnKey);
-    const table = tableRef.current;
-    if (table) {
-      const ghost = createColumnDragGhost(table, columnKey);
-      dragGhostRef.current = ghost;
-      if (ghost) {
-        const rect = event.currentTarget.getBoundingClientRect();
-        event.dataTransfer.setDragImage(
-          ghost,
-          Math.min(24, rect.width / 2),
-          Math.min(20, rect.height / 2),
-        );
-      }
-    }
+    applyTransparentColumnDragImage(event.dataTransfer);
   };
 
   const onHeaderDragOver = (event: DragEvent<HTMLElement>, targetKey: string) => {

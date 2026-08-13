@@ -133,6 +133,7 @@ describe("DataTable grid-preview", () => {
         setDragImage: vi.fn(),
       },
     });
+    expect(document.querySelector(".delpi-ui-table__column-drag-ghost")).toBeNull();
     fireEvent.dragOver(headerA, {
       clientX: 20,
       dataTransfer: { dropEffect: "move" },

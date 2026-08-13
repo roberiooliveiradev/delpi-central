@@ -1,5 +1,6 @@
 /**
- * Reordenação visual de colunas do DataTable (HTML5 DnD + fantasma da coluna).
+ * Reordenação visual de colunas do DataTable (HTML5 DnD).
+ * Sem fantasma da coluna — só highlight in-place + indicador de soltura.
  */
 
 export type ColumnDropEdge = "before" | "after";
@@ -42,70 +43,18 @@ export function resolveColumnDropEdge(
   return clientX < mid ? "before" : "after";
 }
 
-const GHOST_MAX_BODY_ROWS = 8;
-
-function escapeColumnKeySelector(columnKey: string): string {
-  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
-    return CSS.escape(columnKey);
-  }
-  return columnKey.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
 /**
- * Monta um fantasma da coluna (header + células) para setDragImage.
- * Retorna o nó anexado ao body — remover no dragend.
+ * Substitui a miniatura nativa do browser por imagem transparente (1×1).
+ * Evita o fantasma da coluna flutuando sobre a tabela.
  */
-export function createColumnDragGhost(
-  table: HTMLTableElement,
-  columnKey: string,
-): HTMLElement | null {
-  const cells = Array.from(
-    table.querySelectorAll<HTMLElement>(
-      `[data-column-key="${escapeColumnKeySelector(columnKey)}"]`,
-    ),
-  );
-  if (cells.length === 0) return null;
-
-  const width = Math.max(
-    ...cells.slice(0, GHOST_MAX_BODY_ROWS + 1).map((cell) => cell.getBoundingClientRect().width),
-    120,
-  );
-
-  const ghost = document.createElement("div");
-  ghost.className = "delpi-ui-table__column-drag-ghost";
-  ghost.setAttribute("aria-hidden", "true");
-  ghost.style.width = `${Math.round(width)}px`;
-
-  const slice = cells.slice(0, GHOST_MAX_BODY_ROWS + 1);
-  for (const cell of slice) {
-    const row = document.createElement("div");
-    row.className =
-      cell.tagName === "TH"
-        ? "delpi-ui-table__column-drag-ghost__header"
-        : "delpi-ui-table__column-drag-ghost__cell";
-    row.textContent = (cell.innerText || cell.textContent || "").trim() || "—";
-    ghost.appendChild(row);
+export function applyTransparentColumnDragImage(dataTransfer: DataTransfer): void {
+  if (typeof document === "undefined") return;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  try {
+    dataTransfer.setDragImage(canvas, 0, 0);
+  } catch {
+    /* alguns ambientes de teste não implementam setDragImage */
   }
-
-  if (cells.length > slice.length) {
-    const more = document.createElement("div");
-    more.className = "delpi-ui-table__column-drag-ghost__more";
-    more.textContent = `+${cells.length - slice.length}`;
-    ghost.appendChild(more);
-  }
-
-  Object.assign(ghost.style, {
-    position: "fixed",
-    top: "-10000px",
-    left: "-10000px",
-    pointerEvents: "none",
-    zIndex: "9999",
-  } as CSSStyleDeclaration);
-
-  document.body.appendChild(ghost);
-  return ghost;
-}
-
-export function disposeColumnDragGhost(ghost: HTMLElement | null | undefined): void {
-  ghost?.remove();
 }

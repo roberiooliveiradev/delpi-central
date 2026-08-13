@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  applyTransparentColumnDragImage,
   reorderColumnKeys,
   reorderColumnKeysWithEdge,
   resolveColumnDropEdge,
@@ -41,5 +42,16 @@ describe("dataTableColumnReorder", () => {
     expect(resolveColumnDropEdge(160, rect)).toBe("after");
     expect(resolveColumnDropEdge(10, { left: 0, width: 0 } as DOMRect)).toBe("before");
     expect(resolveColumnDropEdge(Number.NaN, rect)).toBe("before");
+  });
+
+  it("applyTransparentColumnDragImage usa canvas 1×1 (sem fantasma no DOM)", () => {
+    const setDragImage = vi.fn();
+    applyTransparentColumnDragImage({ setDragImage } as unknown as DataTransfer);
+    expect(setDragImage).toHaveBeenCalledTimes(1);
+    const image = setDragImage.mock.calls[0]?.[0] as HTMLCanvasElement;
+    expect(image).toBeInstanceOf(HTMLCanvasElement);
+    expect(image.width).toBe(1);
+    expect(image.height).toBe(1);
+    expect(document.querySelector(".delpi-ui-table__column-drag-ghost")).toBeNull();
   });
 });
