@@ -83,7 +83,10 @@ def test_create_task_403_without_followups_manage():
         due_at=None,
         customer_code=None,
         customer_store=None,
+        customers=None,
         assignee_user_id=None,
+        assignee_user_ids=None,
+        assignee_group_ids=None,
     )
     response = worklist_routes.create_task(request, body)
     assert response.status_code == 403
@@ -150,7 +153,10 @@ def test_create_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
         due_at=None,
         customer_code=None,
         customer_store=None,
+        customers=None,
         assignee_user_id=None,
+        assignee_user_ids=None,
+        assignee_group_ids=None,
     )
     response = worklist_routes.create_task(request, body)
     assert response.status_code == 200
@@ -160,7 +166,11 @@ def test_create_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
 def test_reassign_task_403_without_followups_manage():
     request = _request("/tasks/x/reassign", method="POST")
     request.state.user = _User(["commercial.worklist.view"])
-    body = SimpleNamespace(assignee_user_id="other")
+    body = SimpleNamespace(
+        assignee_user_id="other",
+        assignee_user_ids=None,
+        assignee_group_ids=None,
+    )
     response = worklist_routes.reassign_task(
         request,
         task_id=UUID("00000000-0000-0000-0000-000000000001"),
@@ -184,7 +194,11 @@ def test_reassign_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(worklist_routes, "_user_id", lambda _req: "user-rbac-test")
     monkeypatch.setattr(worklist_routes, "_is_portfolio_manager", lambda _req: True)
 
-    body = SimpleNamespace(assignee_user_id="seller-b")
+    body = SimpleNamespace(
+        assignee_user_id="seller-b",
+        assignee_user_ids=None,
+        assignee_group_ids=None,
+    )
     response = worklist_routes.reassign_task(
         request,
         task_id=UUID("00000000-0000-0000-0000-000000000099"),
