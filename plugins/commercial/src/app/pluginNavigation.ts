@@ -1,6 +1,7 @@
 import {
   buildCustomerDetailPath,
   buildCustomerOrderDetailPath,
+  buildCustomerInvoiceDetailPath,
   buildAnalyticsOpportunityDetailPath,
   buildAnalyticsOtdLinePath,
   buildOpenOrderLineDetailPath,
@@ -92,6 +93,33 @@ export function navigateCustomerOrderDetail(
     loja,
     branch,
     orderNumber,
+  );
+  if (!path) return false;
+  const target = options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+  navigatePluginPath(target);
+  return true;
+}
+
+export function navigateCustomerInvoiceDetail(
+  codigo: string,
+  loja: string,
+  branch: string,
+  invoiceNumber: string,
+  invoiceSeries: string,
+  options?: {
+    basePath?: string;
+    returnNav?: ReturnNavOptions;
+  },
+): boolean {
+  const path = buildCustomerInvoiceDetailPath(
+    options?.basePath,
+    codigo,
+    loja,
+    branch,
+    invoiceNumber,
+    invoiceSeries,
   );
   if (!path) return false;
   const target = options?.returnNav
@@ -208,6 +236,7 @@ export function navigateOpenOrderLineDetail(
 export {
   buildCustomerDetailPath,
   buildCustomerOrderDetailPath,
+  buildCustomerInvoiceDetailPath,
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildProposalDetailPath,

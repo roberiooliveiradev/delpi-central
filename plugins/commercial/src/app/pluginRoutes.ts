@@ -11,6 +11,7 @@ export type PluginView =
   | "customers"
   | "customer_detail"
   | "customer_order_detail"
+  | "customer_invoice_detail"
   | "proposals"
   | "proposal_detail"
   | "analytics_otd"
@@ -47,6 +48,8 @@ export type ResolvedPluginRoute = {
   proposalNumber?: string;
   orderBranch?: string;
   orderNumber?: string;
+  invoiceNumber?: string;
+  invoiceSeries?: string;
   lineItem?: string;
   productionOrder?: string;
   portfolioId?: string;
@@ -196,6 +199,45 @@ export function resolvePluginRoute(
       loja,
       orderBranch: branch,
       orderNumber: order,
+    };
+  }
+
+  const customerInvoiceDetail =
+    /^customers\/([^/]+)\/([^/]+)\/outbound-invoices\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(
+      relativePath,
+    );
+  if (customerInvoiceDetail) {
+    const rawCodigo = safeDecodeSegment(customerInvoiceDetail[1] ?? "");
+    const rawLoja = safeDecodeSegment(customerInvoiceDetail[2] ?? "");
+    const rawBranch = safeDecodeSegment(customerInvoiceDetail[3] ?? "");
+    const rawNumber = safeDecodeSegment(customerInvoiceDetail[4] ?? "");
+    const rawSeries = safeDecodeSegment(customerInvoiceDetail[5] ?? "");
+    if (
+      rawCodigo === null ||
+      rawLoja === null ||
+      rawBranch === null ||
+      rawNumber === null ||
+      rawSeries === null
+    ) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    const codigo = rawCodigo.trim();
+    const loja = rawLoja.trim();
+    const branch = rawBranch.trim();
+    const invoiceNumber = rawNumber.trim();
+    const invoiceSeries = rawSeries.trim();
+    if (!codigo || !loja || !branch || !invoiceNumber || !invoiceSeries) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "customer_invoice_detail",
+      pathname: path,
+      relativePath,
+      codigo,
+      loja,
+      orderBranch: branch,
+      invoiceNumber,
+      invoiceSeries,
     };
   }
 
@@ -405,6 +447,7 @@ export type BuildablePluginView = Exclude<
   PluginView,
   | "customer_detail"
   | "customer_order_detail"
+  | "customer_invoice_detail"
   | "open_order_line_detail"
   | "open_order_op_detail"
   | "proposal_detail"
@@ -492,6 +535,27 @@ export function buildCustomerOrderDetailPath(
   const normalizedOrder = orderNumber.trim();
   if (!code || !store || !normalizedBranch || !normalizedOrder) return null;
   const path = `${normalizeBasePath(basePath)}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}/orders/${encodeURIComponent(normalizedBranch)}/${encodeURIComponent(normalizedOrder)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
+}
+
+export function buildCustomerInvoiceDetailPath(
+  basePath: string | undefined,
+  codigo: string,
+  loja: string,
+  branch: string,
+  invoiceNumber: string,
+  invoiceSeries: string,
+  search?: string,
+): string | null {
+  const code = codigo.trim();
+  const store = loja.trim();
+  const normalizedBranch = branch.trim();
+  const number = invoiceNumber.trim();
+  const series = invoiceSeries.trim();
+  if (!code || !store || !normalizedBranch || !number || !series) return null;
+  const path = `${normalizeBasePath(basePath)}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}/outbound-invoices/${encodeURIComponent(normalizedBranch)}/${encodeURIComponent(number)}/${encodeURIComponent(series)}`;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
@@ -604,7 +668,7 @@ export function resolveActiveNavId(
   options?: { customerDetailOutsidePortfolio?: boolean },
 ): PluginNavId | null {
   if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
-  if (view === "customer_detail" || view === "customer_order_detail") {
+  if (view === "customer_detail" || view === "customer_order_detail" || view === "customer_invoice_detail") {
     return options?.customerDetailOutsidePortfolio ? "client_context" : "customers";
   }
   if (

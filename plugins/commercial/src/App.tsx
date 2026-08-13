@@ -15,6 +15,7 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
 import { CustomerOrderDetailPage } from "./features/customers/pages/CustomerOrderDetailPage";
+import { CustomerInvoiceDetailPage } from "./features/customers/pages/CustomerInvoiceDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
 import {
   isCustomerInViewerPortfolios,
@@ -183,6 +184,22 @@ function AppRoutes({
           loja={route.loja}
           branch={route.orderBranch}
           orderNumber={route.orderNumber}
+          basePath={basePath}
+          search={search}
+        />
+      ) : null}
+      {view === "customer_invoice_detail" &&
+      route.codigo &&
+      route.loja &&
+      route.orderBranch &&
+      route.invoiceNumber &&
+      route.invoiceSeries ? (
+        <CustomerInvoiceDetailPage
+          codigo={route.codigo}
+          loja={route.loja}
+          branch={route.orderBranch}
+          invoiceNumber={route.invoiceNumber}
+          invoiceSeries={route.invoiceSeries}
           basePath={basePath}
           search={search}
         />

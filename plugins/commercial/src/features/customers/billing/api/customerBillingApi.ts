@@ -3,6 +3,7 @@ import { commercialApiUrl, httpGet } from "../../../../api/httpClient.ts";
 import type {
   CustomerBillingData,
   CustomerBillingSituationFilter,
+  CustomerInvoice,
 } from "../types/customerBilling";
 
 export type CustomerBillingQuery = {
@@ -49,4 +50,24 @@ export async function getCustomerOutboundInvoices(
     response,
     "Erro ao carregar faturamento e notas fiscais do cliente.",
   );
+}
+
+export async function getCustomerOutboundInvoice(
+  params: {
+    codigo: string;
+    loja: string;
+    branch: string;
+    invoiceNumber: string;
+    invoiceSeries: string;
+  },
+  signal?: AbortSignal,
+): Promise<CustomerInvoice> {
+  const path =
+    `${commercialApiUrl(
+      `/customers/${encodeSegment(params.codigo)}/${encodeSegment(params.loja)}/outbound-invoices/${encodeSegment(params.branch)}/${encodeSegment(params.invoiceNumber)}/${encodeSegment(params.invoiceSeries)}`,
+    )}`;
+  const response = await httpGet<ApiSuccessResponse<CustomerInvoice>>(path, {
+    signal,
+  });
+  return unwrapEnvelope(response, "Erro ao carregar a nota fiscal do cliente.");
 }
