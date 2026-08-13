@@ -43,6 +43,14 @@ export type ClosingRateData = DashboardGoalFields & {
   comparable_goal?: number | null;
 };
 
+/** Snapshot KPI-CARTEIRA — BFF open-portfolio-summary (sem items). */
+export type OpenPortfolioSummaryData = {
+  openValue: number;
+  openLineCount: number;
+  asOf: string;
+  nature: "open_order_value";
+};
+
 export type SalesOrderOtdData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;

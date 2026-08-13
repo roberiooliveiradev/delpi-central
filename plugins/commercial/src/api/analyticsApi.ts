@@ -8,6 +8,7 @@ import type {
   CommercialRolSeriesData,
   AnalyticsFilterParams,
   NewBusinessRolPctData,
+  OpenPortfolioSummaryData,
   RolTargetData,
   SalesOrderOtdData,
   SalesOrderOtdLineDetailData,
@@ -98,6 +99,18 @@ export function getBranchNewBusinessRolTarget(
 
 export function getClosingRate(params: AnalyticsFilterParams, signal?: AbortSignal) {
   return fetchAnalyticsData<ClosingRateData>("/closing-rate", params, signal);
+}
+
+/** Snapshot de carteira em aberto — ignora período; usa seller_id/escopo. */
+export function getOpenPortfolioSummary(
+  params: Pick<AnalyticsFilterParams, "seller_id"> = {},
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<OpenPortfolioSummaryData>(
+    "/open-portfolio-summary",
+    { seller_id: params.seller_id },
+    signal,
+  );
 }
 
 export function getSalesOrderOtd(params: AnalyticsFilterParams, signal?: AbortSignal) {

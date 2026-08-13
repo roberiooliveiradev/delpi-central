@@ -9,12 +9,14 @@ import {
   getHeadOfficeRolTarget,
   getHeadOfficeWegRolTarget,
   getNewBusinessRolPct,
+  getOpenPortfolioSummary,
   getSalesOrderOtd,
 } from "../../../api/analyticsApi";
 import type {
   AnalyticsFilterParams,
   ClosingRateData,
   NewBusinessRolPctData,
+  OpenPortfolioSummaryData,
   RolTargetData,
   SalesOrderOtdData,
 } from "../../../types/analytics";
@@ -33,6 +35,9 @@ type AnalyticsDashboardState = {
   closingRate: ClosingRateData | null;
   salesOrderOtd: SalesOrderOtdData | null;
   newBusinessRol: NewBusinessRolPctData | null;
+  openPortfolio: OpenPortfolioSummaryData | null;
+  openPortfolioLoading: boolean;
+  openPortfolioError: string | null;
   closingRateBranches: PerBranchMetricSlices<ClosingRateData> | null;
   salesOrderOtdBranches: PerBranchMetricSlices<SalesOrderOtdData> | null;
   newBusinessRolBranches: PerBranchMetricSlices<NewBusinessRolPctData> | null;
@@ -58,6 +63,9 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     useState<PerBranchMetricSlices<SalesOrderOtdData> | null>(null);
   const [newBusinessRolBranches, setNewBusinessRolBranches] =
     useState<PerBranchMetricSlices<NewBusinessRolPctData> | null>(null);
+  const [openPortfolio, setOpenPortfolio] = useState<OpenPortfolioSummaryData | null>(null);
+  const [openPortfolioLoading, setOpenPortfolioLoading] = useState(true);
+  const [openPortfolioError, setOpenPortfolioError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -173,6 +181,28 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     reloadKey,
   ]);
 
+  // Snapshot carteira — independente do período (só escopo seller_id).
+  useEffect(() => {
+    const controller = new AbortController();
+    setOpenPortfolioLoading(true);
+    setOpenPortfolioError(null);
+    void getOpenPortfolioSummary({ seller_id: filters.seller_id }, controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setOpenPortfolio(data);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setOpenPortfolio(null);
+        setOpenPortfolioError(
+          err instanceof Error ? err.message : "Erro ao carregar carteira em aberto.",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setOpenPortfolioLoading(false);
+      });
+    return () => controller.abort();
+  }, [filters.seller_id, reloadKey]);
+
   return {
     headOfficeRol,
     branchRol,
@@ -183,6 +213,9 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     closingRate,
     salesOrderOtd,
     newBusinessRol,
+    openPortfolio,
+    openPortfolioLoading,
+    openPortfolioError,
     closingRateBranches,
     salesOrderOtdBranches,
     newBusinessRolBranches,

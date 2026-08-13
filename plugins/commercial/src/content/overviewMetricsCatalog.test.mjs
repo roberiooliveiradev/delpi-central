@@ -13,6 +13,7 @@ const REQUIRED_IDS = [
   "rol_weg",
   "rol_new_business",
   "closing_rate",
+  "open_portfolio",
   "otd",
   "new_business_pct",
   "rol_series",

@@ -2,6 +2,7 @@ import { EmptyState, SectionCard, formatOperationalUnitCode } from "@delpi/plugi
 import {
   Banknote,
   Building2,
+  ClipboardList,
   PackageCheck,
   Percent,
   RefreshCw,
@@ -236,6 +237,24 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               )}
               icon={<PackageCheck size={22} aria-hidden="true" />}
               loading={dashboard.loading}
+            />
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.open_portfolio.label}
+              titleHint={CM_HELP.overview.openPortfolio}
+              value={
+                dashboard.openPortfolioError
+                  ? "—"
+                  : dashboard.openPortfolio
+                    ? formatCurrency(dashboard.openPortfolio.openValue)
+                    : "—"
+              }
+              contextLabel={
+                dashboard.openPortfolioError
+                  ? dashboard.openPortfolioError
+                  : `${formatInteger(dashboard.openPortfolio?.openLineCount)} linhas · Em aberto (agora)`
+              }
+              icon={<ClipboardList size={22} aria-hidden="true" />}
+              loading={dashboard.openPortfolioLoading}
             />
             <CommercialDashboardKpiCard
               title={OVERVIEW_METRIC_BY_ID.closing_rate.label}

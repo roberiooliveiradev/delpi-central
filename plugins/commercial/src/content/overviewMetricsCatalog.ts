@@ -9,6 +9,7 @@ export type OverviewMetricId =
   | "closing_rate"
   | "otd"
   | "new_business_pct"
+  | "open_portfolio"
   | "rol_series"
   | "funnel";
 
@@ -39,6 +40,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     label: "Taxa de conversão",
     tooltip:
       "Hit rate: propostas ganhas (status TOTVS 9, aceite no período) ÷ revisões abertas no período. Cohorts de numerador e denominador podem diferir.",
+  },
+  {
+    id: "open_portfolio",
+    label: "Carteira em aberto",
+    tooltip:
+      "Valor e linhas de pedidos em aberto agora (snapshot). Não é programação do PCP nem ROL do período.",
   },
   {
     id: "otd",
