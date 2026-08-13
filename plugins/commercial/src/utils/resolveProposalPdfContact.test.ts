@@ -89,6 +89,8 @@ describe("resolveProposalPdfContact", () => {
     expect(resolveProposalPdfContactSelection(options, "c1")).toEqual({
       nome: "Beatriz",
       email: "bia@cliente.com",
+      departamento: "",
+      telefone: "",
     });
   });
 });

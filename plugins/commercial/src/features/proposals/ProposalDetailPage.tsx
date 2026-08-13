@@ -38,7 +38,6 @@ import type {
 import {
   buildProposalPdfContactOptions,
   defaultProposalPdfContactValue,
-  resolveProposalPdfContactSelection,
   type ProposalPdfContactOption,
 } from "../../utils/resolveProposalPdfContact";
 
@@ -62,8 +61,8 @@ function applyPdfContactSelectionToFields(
   return {
     nome: option.nome,
     email: option.email,
-    departamento: option.departamento ?? (proposalContact?.departamento || "").trim(),
-    telefone: option.telefone ?? (proposalContact?.telefone || "").trim(),
+    departamento: option.departamento,
+    telefone: option.telefone,
   };
 }
 
@@ -190,17 +189,24 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
     if (obs && obs !== (data.observacoes || "").trim()) {
       overrides.observacoes = obs;
     }
-    const selected = resolveProposalPdfContactSelection(pdfContactOptions, pdfContactValue);
-    if (selected) {
-      const contato: NonNullable<ProposalDocumentPdfExportOverrides["contato"]> = {};
-      if (selected.nome && selected.nome !== (data.contato?.nome || "").trim()) {
-        contato.nome = selected.nome;
-      }
-      if (selected.email && selected.email !== (data.contato?.email || "").trim()) {
-        contato.email = selected.email;
-      }
-      if (Object.keys(contato).length) overrides.contato = contato;
+    const contato: NonNullable<ProposalDocumentPdfExportOverrides["contato"]> = {};
+    const nome = pdfContatoNome.trim();
+    const departamento = pdfContatoDepartamento.trim();
+    const email = pdfContatoEmail.trim();
+    const telefone = pdfContatoTelefone.trim();
+    if (nome !== (data.contato?.nome || "").trim()) {
+      contato.nome = nome;
     }
+    if (departamento !== (data.contato?.departamento || "").trim()) {
+      contato.departamento = departamento;
+    }
+    if (email !== (data.contato?.email || "").trim()) {
+      contato.email = email;
+    }
+    if (telefone !== (data.contato?.telefone || "").trim()) {
+      contato.telefone = telefone;
+    }
+    if (Object.keys(contato).length) overrides.contato = contato;
     return Object.keys(overrides).length ? overrides : undefined;
   }
 

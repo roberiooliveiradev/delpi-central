@@ -14,9 +14,8 @@ export type ProposalPdfContactOption = {
   label: string;
   nome: string;
   email: string;
-  /** Preenchido em E7.S2; UI pode cair no contato da proposta. */
-  departamento?: string;
-  telefone?: string;
+  departamento: string;
+  telefone: string;
 };
 
 function normalize(value: string | null | undefined): string {
@@ -36,6 +35,8 @@ export function buildProposalPdfContactOptions(input: {
   const options: ProposalPdfContactOption[] = [];
   const proposalNome = normalize(input.proposalContact?.nome);
   const proposalEmail = normalize(input.proposalContact?.email);
+  const proposalDepartamento = normalize(input.proposalContact?.departamento);
+  const proposalTelefone = normalize(input.proposalContact?.telefone);
   if (proposalNome || proposalEmail) {
     options.push({
       value: PROPOSAL_PDF_CONTACT_PROPOSAL,
@@ -46,11 +47,14 @@ export function buildProposalPdfContactOptions(input: {
       ),
       nome: proposalNome,
       email: proposalEmail,
+      departamento: proposalDepartamento,
+      telefone: proposalTelefone,
     });
   }
 
   const totvsNome = normalize(input.totvsContact?.full_name);
   const totvsEmail = normalize(input.totvsContact?.email);
+  const totvsTelefone = normalize(input.totvsContact?.phone);
   const totvsDistinct =
     (totvsNome || totvsEmail) &&
     (totvsNome !== proposalNome || totvsEmail !== proposalEmail);
@@ -60,6 +64,8 @@ export function buildProposalPdfContactOptions(input: {
       label: labelFor(totvsNome || "Contato TOTVS", totvsEmail, "TOTVS"),
       nome: totvsNome,
       email: totvsEmail,
+      departamento: "",
+      telefone: totvsTelefone,
     });
   }
 
@@ -73,6 +79,8 @@ export function buildProposalPdfContactOptions(input: {
       label: labelFor(nome || "Contato", email, primary),
       nome,
       email,
+      departamento: normalize(contact.role_title),
+      telefone: normalize(contact.phone_e164),
     });
   }
 
@@ -104,8 +112,18 @@ export function defaultProposalPdfContactValue(
 export function resolveProposalPdfContactSelection(
   options: readonly ProposalPdfContactOption[],
   selectedValue: string,
-): { nome: string; email: string } | null {
+): {
+  nome: string;
+  email: string;
+  departamento: string;
+  telefone: string;
+} | null {
   const selected = options.find((option) => option.value === selectedValue);
   if (!selected) return null;
-  return { nome: selected.nome, email: selected.email };
+  return {
+    nome: selected.nome,
+    email: selected.email,
+    departamento: selected.departamento,
+    telefone: selected.telefone,
+  };
 }
