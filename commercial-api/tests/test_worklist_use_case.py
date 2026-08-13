@@ -458,6 +458,55 @@ def test_create_and_reassign_team_task():
     assert filtered["counts"]["open"] == 1
 
 
+def test_manager_assigns_portal_user_without_portfolio_and_team_sees_all():
+    """Responsável = usuário do portal; fila equipe lista todas as tarefas."""
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    portfolios = InMemoryPortfolioRepo(["manager", "seller-a"])
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        portfolio_repository=portfolios,  # type: ignore[arg-type]
+    )
+
+    created = uc.create_task(
+        user_id="manager",
+        data=CreateTaskInput(
+            title="Para portal user",
+            assignee_user_id="portal-user-no-portfolio",
+            customer_code="C999",
+            customer_store="01",
+        ),
+        actor_is_portfolio_manager=True,
+    )
+    assert created.assignee_user_id == "portal-user-no-portfolio"
+    assert created.customer_code == "C999"
+
+    team_wl = uc.get_worklist(
+        user_id="manager",
+        scope="team",
+        actor_is_portfolio_manager=True,
+    )
+    assert team_wl["counts"]["open"] == 1
+    assert "portal-user-no-portfolio" in team_wl["team_user_ids"]
+
+    reassigned = uc.reassign_task(
+        user_id="manager",
+        task_id=created.id,
+        new_assignee_user_id="another-portal-user",
+        actor_is_portfolio_manager=True,
+    )
+    assert reassigned.assignee_user_id == "another-portal-user"
+
+    filtered = uc.get_worklist(
+        user_id="manager",
+        scope="team",
+        assignee_user_id="another-portal-user",
+        actor_is_portfolio_manager=True,
+    )
+    assert filtered["counts"]["open"] == 1
+
+
 def test_update_task_fields_and_permission():
     from commercial_app.application.use_cases.manage_worklist import UpdateTaskInput
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any, Literal, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
@@ -139,11 +139,6 @@ class ManageWorklistUseCase:
             if str(item.user_id or "").strip()
         }
 
-    def _assert_team_member(self, user_id: str) -> None:
-        team = self.team_user_ids()
-        if user_id not in team:
-            raise ValueError("Responsável deve ter carteira ativa no Comercial.")
-
     def _can_act_on_task(
         self,
         *,
@@ -153,13 +148,22 @@ class ManageWorklistUseCase:
     ) -> bool:
         if task.assignee_user_id == actor_user_id:
             return True
-        if not actor_is_portfolio_manager:
-            return False
-        return task.assignee_user_id in self.team_user_ids()
+        return bool(actor_is_portfolio_manager)
 
     def _can_edit_task(self, *, task: CommercialTask, actor_user_id: str) -> bool:
         """Só o criador edita/exclui/adia; o responsável apenas conclui."""
         return (task.created_by_user_id or "").strip() == (actor_user_id or "").strip()
+
+    @staticmethod
+    def _distinct_assignee_ids(tasks: Sequence[CommercialTask]) -> list[str]:
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for task in tasks:
+            uid = (task.assignee_user_id or "").strip()
+            if uid and uid not in seen:
+                seen.add(uid)
+                ordered.append(uid)
+        return ordered
 
     def get_worklist(
         self,
@@ -175,12 +179,7 @@ class ManageWorklistUseCase:
         if normalized_scope == "team":
             if not actor_is_portfolio_manager:
                 raise PermissionError("Sem permissão para ver a fila da equipe.")
-            team_ids = sorted(self.team_user_ids())
-            if not team_ids:
-                open_tasks: list[CommercialTask] = []
-            elif filter_assignee:
-                if filter_assignee not in team_ids:
-                    raise ValueError("Filtro de responsável fora da equipe.")
+            if filter_assignee:
                 open_tasks = list(
                     self._tasks.list_for_assignee(
                         assignee_user_id=filter_assignee,
@@ -189,19 +188,13 @@ class ManageWorklistUseCase:
                     )
                 )
             else:
-                open_tasks = list(
-                    self._tasks.list_for_assignees(
-                        assignee_user_ids=team_ids,
-                        status="open",
-                        limit=500,
-                    )
-                )
+                open_tasks = list(self._tasks.list_by_status(status="open", limit=500))
             payload = _bucket_tasks(
                 open_tasks,
                 attachment_counts=self._attachment_counts(open_tasks),
             )
             payload["scope"] = "team"
-            payload["team_user_ids"] = team_ids
+            payload["team_user_ids"] = self._distinct_assignee_ids(open_tasks)
             return payload
 
         open_tasks = list(
@@ -231,12 +224,7 @@ class ManageWorklistUseCase:
         if normalized_scope == "team":
             if not actor_is_portfolio_manager:
                 raise PermissionError("Sem permissão para ver a fila da equipe.")
-            team_ids = sorted(self.team_user_ids())
-            if not team_ids:
-                done_tasks: list[CommercialTask] = []
-            elif filter_assignee:
-                if filter_assignee not in team_ids:
-                    raise ValueError("Filtro de responsável fora da equipe.")
+            if filter_assignee:
                 done_tasks = list(
                     self._tasks.list_for_assignee(
                         assignee_user_id=filter_assignee,
@@ -245,13 +233,7 @@ class ManageWorklistUseCase:
                     )
                 )
             else:
-                done_tasks = list(
-                    self._tasks.list_for_assignees(
-                        assignee_user_ids=team_ids,
-                        status="done",
-                        limit=capped,
-                    )
-                )
+                done_tasks = list(self._tasks.list_by_status(status="done", limit=capped))
             counts = self._attachment_counts(done_tasks)
             items = []
             for task in done_tasks:
@@ -263,7 +245,7 @@ class ManageWorklistUseCase:
                 "items": items,
                 "count": len(items),
                 "scope": "team",
-                "team_user_ids": team_ids,
+                "team_user_ids": self._distinct_assignee_ids(done_tasks),
                 "limit": capped,
             }
 
@@ -308,7 +290,6 @@ class ManageWorklistUseCase:
         if assignee != user_id:
             if not actor_is_portfolio_manager:
                 raise PermissionError("Sem permissão para atribuir tarefa a outro usuário.")
-            self._assert_team_member(assignee)
 
         task = self._tasks.create(
             title=title,
@@ -372,7 +353,6 @@ class ManageWorklistUseCase:
         if assignee != existing.assignee_user_id:
             if not actor_is_portfolio_manager:
                 raise PermissionError("Sem permissão para reatribuir ao editar.")
-            self._assert_team_member(assignee)
 
         customer_code = (data.customer_code or "").strip() or None
         customer_store = (data.customer_store or "").strip() or None
@@ -516,13 +496,8 @@ class ManageWorklistUseCase:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if not actor_is_portfolio_manager:
             raise PermissionError("Sem permissão para reatribuir tarefas.")
-        self._assert_team_member(new_assignee)
         if existing.assignee_user_id == new_assignee:
             return existing
-
-        # Gestor só reatribui tarefas da equipe (inclui as próprias)
-        if existing.assignee_user_id not in self.team_user_ids():
-            raise PermissionError("Tarefa fora do escopo da equipe.")
 
         task = self._tasks.reassign(task_id=task_id, new_assignee_user_id=new_assignee)
         if task is None:
