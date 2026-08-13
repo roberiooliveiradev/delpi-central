@@ -554,6 +554,32 @@ table.delpi-ui-table--clickable tbody tr.is-clickable:hover td {
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
 }
 
+:root[data-theme="dark"] .delpi-ui-table__row--clickable:hover td,
+:root[data-theme="dark"] table.delpi-ui-table--clickable tbody tr:hover td,
+:root[data-theme="dark"] table.delpi-ui-table--clickable tbody tr.is-clickable:hover td,
+[data-theme="dark"] .delpi-ui-table__row--clickable:hover td,
+[data-theme="dark"] table.delpi-ui-table--clickable tbody tr:hover td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a))
+  );
+}
+
+:root[data-theme="dark"] table.delpi-ui-table th,
+[data-theme="dark"] table.delpi-ui-table th {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a)) 82%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%
+  );
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-text, #f5f5f5) 78%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 22%
+  );
+}
+
 table.delpi-ui-table--clickable tbody tr.is-selected {
   background: color-mix(
     in srgb,
