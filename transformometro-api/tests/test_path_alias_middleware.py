@@ -31,3 +31,21 @@ def test_rewrite_dashboard_verbs():
         rewrite_en_path_to_legacy_pt("/transformometro/dashboard/snapshot/summary")
         == "/transformometro/dashboard/snapshot/resumo"
     )
+
+
+def test_rewrite_scope_diagram_not_corrupted_by_diagram_alias():
+    """Regressão: replace ingênuo de /diagram virava /diagramaa-escopo (404)."""
+    assert (
+        rewrite_en_path_to_legacy_pt(
+            "/transformometro/instances/c84ed1c0-70c4-44c6-aff2-2313ef29c614/scope-diagram"
+        )
+        == "/transformometro/instancias/c84ed1c0-70c4-44c6-aff2-2313ef29c614/diagrama-escopo"
+    )
+    assert (
+        rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/diagram")
+        == "/transformometro/instancias/i1/diagrama"
+    )
+    assert (
+        rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/scope-decomposition")
+        == "/transformometro/instancias/i1/decomposicao-escopo"
+    )

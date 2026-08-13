@@ -59,6 +59,34 @@ _SKIP_PREFIXES: tuple[str, ...] = (
 )
 
 
+def _replace_path_token(path: str, en: str, pt: str) -> str:
+    """Replace ``en`` only as a full path token (bounded by ``/``, ``?`` or EOS).
+
+    Naive ``str.replace('/diagram', '/diagrama')`` corrupts ``/diagrama-escopo``
+    into ``/diagramaa-escopo`` because ``/diagrama`` starts with ``/diagram``.
+    """
+    if not en or en not in path:
+        return path
+    out: list[str] = []
+    i = 0
+    while i < len(path):
+        j = path.find(en, i)
+        if j < 0:
+            out.append(path[i:])
+            break
+        end = j + len(en)
+        after_ok = end >= len(path) or path[end] in "/?"
+        if after_ok:
+            out.append(path[i:j])
+            out.append(pt)
+            i = end
+        else:
+            # Prefix of a longer segment (e.g. /diagram inside /diagrama-escopo).
+            out.append(path[i : j + 1])
+            i = j + 1
+    return "".join(out)
+
+
 def rewrite_en_path_to_legacy_pt(path: str) -> str:
     """Map canonical EN path segments onto legacy PT route paths."""
     if not path or any(path == p or path.startswith(p + "/") or path.startswith(p + "?") for p in _SKIP_PREFIXES):
@@ -67,7 +95,7 @@ def rewrite_en_path_to_legacy_pt(path: str) -> str:
             return path
     rewritten = path
     for en, pt in _EN_TO_PT:
-        rewritten = rewritten.replace(en, pt)
+        rewritten = _replace_path_token(rewritten, en, pt)
     return rewritten
 
 
