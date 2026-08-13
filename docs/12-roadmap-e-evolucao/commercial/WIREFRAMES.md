@@ -757,9 +757,9 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 
 | Superfície | Status | Notas |
 |---|---|---|
-| Conta pedidos | OK | Modal linhas + página detalhe; sem expand inline |
+| Conta pedidos | OK | Row click → detalhe; expand kit inline; sem modal linhas |
 | Conta histórico NF | OK | MetricCards + tabela/modal itens |
-| Oportunidades | OK | DataTable + StatusBadge + CTA ADY |
+| Oportunidades | OK | OV tipográfico + badge por status + Proposta interactive |
 | Detalhe OV | OK | CTA Abrir proposta + `resolvePagePathBack` |
 | Propostas lista | OK | Toolbar Tabela\|Cards + paginação |
 | Proposta detalhe | OK | Select contatos + `returnTo` |
@@ -770,7 +770,7 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 | PagePath returnTo | OK | Helper canônico + detalhes do escopo (sweep E7.S3) |
 | Gaps kit | OK | AvatarStack + Org `group` + SegmentToggle factory |
 
-**Sweep E7.S3:** pedido Conta, linha/OP, OV, proposta → `resolvePagePathBack`; listas → `currentLocationAsReturnTo`; Conta pedidos sem expand inline. Teste: `returnToSweep.structural.test.mjs`.
+**Sweep E7.S3 / pedidos ago/2026:** pedido Conta, linha/OP, OV, proposta → `resolvePagePathBack`; listas → `currentLocationAsReturnTo`; Conta pedidos = expand canônico + row click. Testes: `returnToSweep.structural.test.mjs`, `tableAudit.structural.test.mjs`.
 
 ### Verify E8.S1 (ago/2026)
 
