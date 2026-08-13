@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
 
-import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
   CommercialHostDialog,
@@ -15,7 +13,7 @@ type SellerPortfolioCreateDialogProps = {
   busy: boolean;
   error: string | null;
   onClose: () => void;
-  onCreate: (input: { userIds: string[]; displayName: string }) => void;
+  onCreate: (input: { displayName: string }) => void;
 };
 
 export function SellerPortfolioCreateDialog({
@@ -25,38 +23,23 @@ export function SellerPortfolioCreateDialog({
   onClose,
   onCreate,
 }: SellerPortfolioCreateDialogProps) {
-  const [createUsers, setCreateUsers] = useState<DirectoryUserOption[]>([]);
-  const [createDisplayName, setCreateDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     if (open) return;
-    setCreateUsers([]);
-    setCreateDisplayName("");
+    setDisplayName("");
   }, [open]);
-
-  function reset() {
-    setCreateUsers([]);
-    setCreateDisplayName("");
-  }
 
   function handleClose() {
     if (busy) return;
-    reset();
+    setDisplayName("");
     onClose();
   }
 
   function handleCreate() {
-    if (createUsers.length === 0) return;
-    const primary = createUsers[0];
-    const displayName =
-      createDisplayName.trim() ||
-      primary?.name.trim() ||
-      primary?.email.trim() ||
-      "Usuário";
-    onCreate({
-      userIds: createUsers.map((user) => user.id),
-      displayName,
-    });
+    const name = displayName.trim();
+    if (!name) return;
+    onCreate({ displayName: name });
   }
 
   return (
@@ -73,7 +56,7 @@ export function SellerPortfolioCreateDialog({
           <CommercialActionButton
             variant="primary"
             onClick={handleCreate}
-            disabled={busy || createUsers.length === 0}
+            disabled={busy || !displayName.trim()}
           >
             {busy ? "Salvando…" : "Criar"}
           </CommercialActionButton>
@@ -82,33 +65,13 @@ export function SellerPortfolioCreateDialog({
     >
       <div className="cm-portfolios-form">
         {error ? <CommercialStateBanner variant="error">{error}</CommercialStateBanner> : null}
-        <div className="cm-portfolios-form__user">
-          <UserDirectoryPicker
-            value={createUsers}
-            onChange={(users) => {
-              setCreateUsers(users);
-              const next = users[0];
-              if (next && !createDisplayName.trim()) {
-                const fallback = next.name.trim() || next.email.trim();
-                if (fallback) setCreateDisplayName(fallback);
-              }
-              if (users.length === 0) setCreateDisplayName("");
-            }}
-            searchUsers={searchDirectoryUsers}
-            labels={{
-              title: "Usuário com acesso ao Portal Comercial",
-              hint: CM_HELP.sellerPortfolios.directoryUser,
-              placeholder: "Buscar usuário…",
-            }}
-          />
-        </div>
         <div className="cm-portfolios-form__display-name">
           <CommercialTextField
-            label="Nome de exibição"
+            label="Nome da carteira"
             hint={CM_HELP.sellerPortfolios.displayName}
-            value={createDisplayName}
-            onChange={setCreateDisplayName}
-            placeholder="Ex.: João Silva (padrão = nome do primeiro usuário)"
+            value={displayName}
+            onChange={setDisplayName}
+            placeholder="Ex.: Carteira Sul"
           />
         </div>
       </div>

@@ -326,17 +326,17 @@ export const CM_HELP = {
       "Lista clientes com pedido em aberto que não estão em nenhuma carteira ativa (gap global).",
     overlappingCustomer:
       "Este cliente também está em outra carteira ativa. Revise a cobertura se for necessário.",
-    create: "Cria carteira vinculada a um ou mais usuários do diretório. O nome aparece no seletor de escopo.",
+    create: "Cria uma carteira só com o nome. Responsáveis e membros entram depois no detalhe.",
     createDialog:
-      "Vincule usuários com acesso ao Portal Comercial e defina o nome no seletor de escopo.",
+      "Informe o nome da carteira. Usuários responsáveis e membros são adicionados na tela de detalhe.",
     displayName:
-      "Nome amigável no portal. Se vazio ao criar, usa o nome do primeiro usuário selecionado.",
+      "Nome amigável no portal (seletor de escopo, lista e detalhe).",
     directoryUser:
       "Usuário com acesso ao Portal Comercial (busca por nome ou e-mail). O primeiro vira responsável.",
     members:
       "Usuários com acesso a esta carteira no Portal Comercial. Defina um responsável e inclua membros.",
     membersAdd:
-      "Busque e adicione usuários que já têm acesso ao Portal Comercial.",
+      "Busque e adicione usuários que já têm acesso ao Portal Comercial. O primeiro usuário vira responsável se a carteira ainda não tiver.",
     setOwner: "Define este usuário como responsável da carteira.",
     removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
     edit: "Altera o nome de exibição da carteira selecionada.",

@@ -88,6 +88,20 @@ describe("seller-portfolios kit-first", () => {
     assert.doesNotMatch(wizardSource, /<button\b/);
   });
 
+  it("modal Nova carteira é name-first (só nome; sem picker de usuários)", () => {
+    const createSource = readFileSync(
+      join(featureDirectory, "SellerPortfolioCreateDialog.tsx"),
+      "utf8",
+    );
+    assert.match(createSource, /CommercialHostDialog/);
+    assert.match(createSource, /Nome da carteira/);
+    assert.match(createSource, /displayName/);
+    assert.doesNotMatch(createSource, /UserDirectoryPicker/);
+    assert.doesNotMatch(createSource, /userIds|user_ids/);
+    assert.match(pageSource, /createSellerPortfolio\(\{\s*display_name:/);
+    assert.match(pageSource, /onCreate=\{\(input\)\s*=>\s*void handleCreate\(input\)\}/);
+  });
+
   it("timeline de auditoria usa kit Timeline, filtros e estados vazios", () => {
     const auditSource = readFileSync(
       join(featureDirectory, "SellerPortfolioAuditTimeline.tsx"),

@@ -305,13 +305,11 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
       }),
   }));
 
-  async function handleCreate(input: { userIds: string[]; displayName: string }) {
+  async function handleCreate(input: { displayName: string }) {
     setCreating(true);
     setCreateError(null);
     try {
       const created = await createSellerPortfolio({
-        user_ids: input.userIds,
-        user_id: input.userIds[0],
         display_name: input.displayName,
       });
       notifySuccess("Carteira criada com sucesso.");
