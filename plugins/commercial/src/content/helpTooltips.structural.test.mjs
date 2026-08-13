@@ -70,6 +70,7 @@ describe("CM_HELP matriz (C16)", () => {
       "users.profile",
       "users.access",
       "users.shortcuts",
+      "users.editMode",
       "proposals.page",
       "proposals.list",
       "proposals.scopeNote",

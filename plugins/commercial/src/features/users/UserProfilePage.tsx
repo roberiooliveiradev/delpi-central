@@ -6,9 +6,11 @@ import {
   Home,
   LayoutDashboard,
   Mail,
+  Pencil,
   Shield,
   Trash2,
   UserRound,
+  Users,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -21,11 +23,13 @@ import {
   uploadUserProfilePhoto,
   userProfilePhotoAbsoluteUrl,
   type UserProfileDto,
+  type UserProfilePortfolioDto,
 } from "../../api/userProfileApi";
 import {
   cmEmptyStateClassNames,
   CommercialActionButton,
   CommercialAvatar,
+  CommercialDataRecordCard,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialPagePath,
@@ -37,6 +41,7 @@ import {
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
+import { buildShellPortfolioCustomersSearch } from "../../app/shellUserPortfolioNav";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
   formatPortfoliosCount,
@@ -58,6 +63,12 @@ type ShortcutItem = {
   onSelect: () => void;
 };
 
+function portfolioRoleLabel(role: string | undefined): string {
+  return role === "owner"
+    ? USER_ACCESS_COPY.portfolioRoleOwner
+    : USER_ACCESS_COPY.portfolioRoleMember;
+}
+
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const {
     currentUserId,
@@ -72,12 +83,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     canViewWorklistTeam,
     canAccessMyPortfolio,
     isAdmin,
+    setSellerIdFilter,
   } = usePortfolioScope();
   const { notifyError, notifySuccess } = useCommercialFloatingNotice();
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfileDto | null>(null);
   const [jobTitle, setJobTitle] = useState("");
@@ -120,6 +133,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     void reload(controller.signal);
     return () => controller.abort();
   }, [reload]);
+
+  useEffect(() => {
+    setEditing(false);
+  }, [userId]);
 
   useEffect(() => {
     if (!isSelf) {
@@ -199,6 +216,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     ],
   );
 
+  const portfolioIds = useMemo(
+    () => profile?.portfolios.map((item) => item.id).filter(Boolean) ?? [],
+    [profile?.portfolios],
+  );
+
   const shortcuts = useMemo(() => {
     const items: ShortcutItem[] = [
       {
@@ -250,23 +272,36 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     isAdmin,
   ]);
 
-  const onSaveJobTitle = async () => {
-    if (!canEdit) return;
+  const startEditing = () => {
+    if (!canEdit || !profile) return;
+    setJobTitle((profile.job_title || "").trim());
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    if (saving) return;
+    setJobTitle((profile?.job_title || "").trim());
+    setEditing(false);
+  };
+
+  const onSaveProfile = async () => {
+    if (!canEdit || !editing) return;
     setSaving(true);
     try {
       const data = await patchUserProfile(userId, { job_title: jobTitle.trim() || null });
       setProfile(data);
       setJobTitle((data.job_title || "").trim());
-      notifySuccess("Cargo atualizado.");
+      setEditing(false);
+      notifySuccess("Perfil atualizado.");
     } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao salvar cargo.");
+      notifyError(err instanceof Error ? err.message : "Falha ao salvar perfil.");
     } finally {
       setSaving(false);
     }
   };
 
   const onUploadPhoto = async (file: File | null | undefined) => {
-    if (!canEdit || !file) return;
+    if (!canEdit || !editing || !file) return;
     setSaving(true);
     try {
       const data = await uploadUserProfilePhoto(userId, file);
@@ -281,7 +316,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   };
 
   const onRemovePhoto = async () => {
-    if (!canEdit) return;
+    if (!canEdit || !editing) return;
     setSaving(true);
     try {
       const data = await deleteUserProfilePhoto(userId);
@@ -292,6 +327,20 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openPortfolio = (item: UserProfilePortfolioDto) => {
+    if (canManagePortfolios) {
+      const href = buildSellerPortfolioDetailPath(basePath, item.id);
+      if (href) navigatePluginPath(href);
+      return;
+    }
+    if (!canAccessMyPortfolio) return;
+    setSellerIdFilter(portfolioIds.length > 1 ? item.id : null);
+    navigatePluginView("customers", {
+      basePath,
+      search: buildShellPortfolioCustomersSearch(item.id, portfolioIds),
+    });
   };
 
   if (loading) {
@@ -337,7 +386,41 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               label={formatPortfoliosCount(profile.portfolios.length)}
               variant="info"
             />
+            {editing ? (
+              <CommercialStatusBadge label={USER_ACCESS_COPY.editingBadge} variant="warning" />
+            ) : null}
           </span>
+        }
+        actions={
+          canEdit ? (
+            editing ? (
+              <div className="cm-nav-row">
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={saving}
+                  onClick={cancelEditing}
+                >
+                  {USER_ACCESS_COPY.cancelEdit}
+                </CommercialActionButton>
+                <CommercialActionButton
+                  variant="primary"
+                  disabled={saving}
+                  onClick={() => void onSaveProfile()}
+                >
+                  {USER_ACCESS_COPY.saveProfile}
+                </CommercialActionButton>
+              </div>
+            ) : (
+              <CommercialActionButton
+                variant="primary"
+                onClick={startEditing}
+                aria-label={CM_HELP.users.editMode}
+              >
+                <Pencil size={16} aria-hidden />
+                {USER_ACCESS_COPY.editProfile}
+              </CommercialActionButton>
+            )
+          ) : undefined
         }
       />
 
@@ -345,7 +428,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         <CommercialSectionCard title={USER_ACCESS_COPY.identityTitle} hint={CM_HELP.users.profile}>
           <div className="cm-user-profile__identity">
             <div className="cm-user-profile__avatar-block">
-              {canEdit ? (
+              {editing && canEdit ? (
                 <>
                   <button
                     type="button"
@@ -409,7 +492,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                 </span>
               </div>
 
-              {canEdit ? (
+              {editing && canEdit ? (
                 <div className="cm-user-profile__job-form">
                   <CommercialTextField
                     label="Cargo"
@@ -418,16 +501,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     hint={CM_HELP.users.jobTitle}
                     fullWidth
                   />
-                  <CommercialActionButton
-                    variant="primary"
-                    disabled={saving}
-                    onClick={() => void onSaveJobTitle()}
-                  >
-                    Salvar cargo
-                  </CommercialActionButton>
                 </div>
               ) : (
                 <p className="cm-user-profile__job-readonly">
+                  <strong>Cargo:</strong>{" "}
                   {(profile.job_title || "").trim() || USER_ACCESS_COPY.jobTitleEmpty}
                 </p>
               )}
@@ -454,6 +531,69 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           </div>
         </CommercialSectionCard>
       </div>
+
+      <CommercialSectionCard
+        title={USER_ACCESS_COPY.portfoliosTitle}
+        subtitle={USER_ACCESS_COPY.portfoliosSubtitle}
+        hint={CM_HELP.users.portfolios}
+      >
+        {profile.portfolios.length === 0 ? (
+          <EmptyState
+            classNames={cmEmptyStateClassNames}
+            defaultTitle="Nenhuma carteira"
+            defaultMessage="Este usuário ainda não é membro de carteiras ativas."
+          />
+        ) : (
+          <div className="cm-user-profile__portfolio-grid">
+            {profile.portfolios.map((item) => {
+              const canOpen = canManagePortfolios || canAccessMyPortfolio;
+              return (
+                <CommercialDataRecordCard
+                  key={item.id}
+                  leading={<BriefcaseBusiness size={18} aria-hidden />}
+                  title={item.name}
+                  subtitle={portfolioRoleLabel(item.role)}
+                  status={
+                    <span className="cm-nav-row">
+                      <CommercialStatusBadge
+                        label={portfolioRoleLabel(item.role)}
+                        variant={item.role === "owner" ? "success" : "info"}
+                      />
+                      <CommercialStatusBadge
+                        label={item.active ? "Ativa" : "Inativa"}
+                        variant={item.active ? "success" : "neutral"}
+                      />
+                    </span>
+                  }
+                  fields={[
+                    {
+                      id: "customers",
+                      label: USER_ACCESS_COPY.portfolioCustomers,
+                      value: String(item.customer_count ?? 0),
+                    },
+                    {
+                      id: "members",
+                      label: USER_ACCESS_COPY.portfolioMembers,
+                      value: String(item.member_count ?? 0),
+                    },
+                  ]}
+                  context={
+                    canOpen ? (
+                      <CommercialActionButton
+                        variant="ghost"
+                        onClick={() => openPortfolio(item)}
+                      >
+                        <Users size={16} aria-hidden />
+                        {USER_ACCESS_COPY.portfolioOpen}
+                      </CommercialActionButton>
+                    ) : null
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
+      </CommercialSectionCard>
 
       <CommercialSectionCard
         title={USER_ACCESS_COPY.accessTitle}
@@ -494,43 +634,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           </div>
         ) : (
           <p className="cm-muted">{USER_ACCESS_COPY.accessSelfOnly}</p>
-        )}
-      </CommercialSectionCard>
-
-      <CommercialSectionCard title={USER_ACCESS_COPY.portfoliosTitle} hint={CM_HELP.users.portfolios}>
-        {profile.portfolios.length === 0 ? (
-          <EmptyState
-            classNames={cmEmptyStateClassNames}
-            defaultTitle="Nenhuma carteira"
-            defaultMessage="Este usuário ainda não é membro de carteiras ativas."
-          />
-        ) : (
-          <ul className="cm-user-profile__portfolio-list">
-            {profile.portfolios.map((item) => {
-              const href = canManagePortfolios
-                ? buildSellerPortfolioDetailPath(basePath, item.id)
-                : null;
-              return (
-                <li key={item.id} className="cm-user-profile__portfolio-item">
-                  {href ? (
-                    <button
-                      type="button"
-                      className="cm-user-profile__portfolio-link"
-                      onClick={() => navigatePluginPath(href)}
-                    >
-                      {item.name}
-                    </button>
-                  ) : (
-                    <span>{item.name}</span>
-                  )}
-                  <CommercialStatusBadge
-                    label={item.active ? "Ativa" : "Inativa"}
-                    variant={item.active ? "success" : "info"}
-                  />
-                </li>
-              );
-            })}
-          </ul>
         )}
       </CommercialSectionCard>
 

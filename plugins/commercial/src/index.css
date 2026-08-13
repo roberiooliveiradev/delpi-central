@@ -1737,6 +1737,12 @@
   opacity: 0.78;
 }
 
+.dashboard-commercial .cm-user-profile__portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
 .dashboard-commercial .cm-user-profile__portfolio-list {
   list-style: none;
   margin: 0;

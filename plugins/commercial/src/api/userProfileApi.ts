@@ -12,6 +12,10 @@ export type UserProfilePortfolioDto = {
   name: string;
   active: boolean;
   user_id: string;
+  owner_user_id?: string | null;
+  role?: "owner" | "member" | string;
+  customer_count?: number;
+  member_count?: number;
 };
 
 export type UserProfileDto = {

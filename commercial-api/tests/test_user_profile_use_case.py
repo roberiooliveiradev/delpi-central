@@ -79,13 +79,25 @@ class InMemoryUserProfileRepo:
 
 class FakePortfolioRepo:
     def list_by_user_id(self, user_id: str, *, active_only: bool = True) -> list[SellerPortfolio]:
+        from commercial_app.domain.entities.seller_portfolio import (
+            SellerCustomerAssignment,
+            SellerPortfolioMember,
+        )
+
         return [
             SellerPortfolio(
                 id="p1",
                 user_id=user_id,
                 display_name="Carteira Sul",
                 active=True,
-                customers=(),
+                customers=(
+                    SellerCustomerAssignment(
+                        customer_code="0001",
+                        customer_store="01",
+                        customer_name="Acme",
+                    ),
+                ),
+                members=(SellerPortfolioMember(user_id=user_id, role="owner"),),
             )
         ]
 
@@ -105,6 +117,9 @@ def test_user_profile_self_edit_and_photo(tmp_path: Path) -> None:
     )
     assert payload["job_title"] == "Consultor"
     assert payload["portfolios"][0]["name"] == "Carteira Sul"
+    assert payload["portfolios"][0]["role"] == "owner"
+    assert payload["portfolios"][0]["customer_count"] == 1
+    assert payload["portfolios"][0]["member_count"] == 1
 
     with pytest.raises(PermissionError):
         uc.update_job_title(

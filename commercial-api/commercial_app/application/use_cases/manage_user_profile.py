@@ -83,16 +83,35 @@ class ManageUserProfileUseCase:
     def _portfolio_summaries(self, user_id: str) -> list[dict[str, Any]]:
         if self._portfolios is None:
             return []
-        portfolios = self._portfolios.list_by_user_id(user_id, active_only=True)
-        return [
-            {
-                "id": str(item.id),
-                "name": item.display_name,
-                "active": bool(item.active),
-                "user_id": item.user_id,
-            }
-            for item in portfolios
-        ]
+        uid = (user_id or "").strip()
+        portfolios = self._portfolios.list_by_user_id(uid, active_only=True)
+        items: list[dict[str, Any]] = []
+        for item in portfolios:
+            members = tuple(item.members or ())
+            member_count = len(members)
+            if member_count == 0 and item.user_id:
+                member_count = 1
+            role = "member"
+            for member in members:
+                if str(member.user_id).strip() == uid:
+                    role = "owner" if member.role == "owner" else "member"
+                    break
+            else:
+                if str(item.user_id).strip() == uid or str(item.owner_user_id).strip() == uid:
+                    role = "owner"
+            items.append(
+                {
+                    "id": str(item.id),
+                    "name": item.display_name,
+                    "active": bool(item.active),
+                    "user_id": item.user_id,
+                    "owner_user_id": item.owner_user_id,
+                    "role": role,
+                    "customer_count": len(item.customers or ()),
+                    "member_count": member_count,
+                }
+            )
+        return items
 
     def get_profile(self, *, user_id: str) -> dict[str, Any]:
         target = (user_id or "").strip()
