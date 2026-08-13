@@ -33,11 +33,18 @@ describe("returnTo sweep (E7.S3)", () => {
 
   it("listas propagam returnTo canônico ao abrir detalhe", () => {
     assert.match(read("features/customers/components/CustomerOrdersTable.tsx"), /currentLocationAsReturnTo/);
+    assert.match(read("features/customers/billing/components/CustomerInvoicesTable.tsx"), /currentLocationAsReturnTo/);
     assert.match(read("features/proposals/ProposalsDocumentsTable.tsx"), /currentLocationAsReturnTo/);
     assert.match(
       read("features/analytics/components/OpenProposalFromOpportunityButton.tsx"),
       /currentLocationAsReturnTo/,
     );
+  });
+
+  it("detalhe NF usa resolvePagePathBack + CommercialPagePath", () => {
+    const page = read("features/customers/pages/CustomerInvoiceDetailPage.tsx");
+    assert.match(page, /resolvePagePathBack/);
+    assert.match(page, /CommercialPagePath/);
   });
 
   it("Conta pedidos usa expand canônico do kit + row click", () => {
