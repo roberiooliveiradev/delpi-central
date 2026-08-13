@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-08-13",
-  "note": "After E2.S2 Conta tables + withColumnHelp-aware auditor",
+  "note": "After E2.S3 Admin",
   "gaps": [
     {
       "file": "features/administration/AdministrationGroupsPage.tsx",
@@ -11,46 +11,6 @@
       "file": "features/administration/AdministrationGroupsPage.tsx",
       "kind": "field",
       "id": "renameDraft"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "field",
-      "id": "search"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "field",
-      "id": "groupId"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "field",
-      "id": "portfolioId"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "column",
-      "id": "person"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "column",
-      "id": "online"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "column",
-      "id": "email"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "column",
-      "id": "groups"
-    },
-    {
-      "file": "features/administration/AdministrationTeamPage.tsx",
-      "kind": "column",
-      "id": "portfolios"
     },
     {
       "file": "features/analytics/AnalyticsOpportunitiesPage.tsx",

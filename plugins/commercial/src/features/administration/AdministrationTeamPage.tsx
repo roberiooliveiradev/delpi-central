@@ -30,7 +30,12 @@ import { CommercialDataTableSection } from "../../app/dataTableUi";
 import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
 import type { CommercialPresenceUpdatedEvent } from "../../constants/realtime";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
+import { CM_HELP } from "../../content/helpTooltips";
 import type { SellerPortfolio } from "../../types/portfolio";
+import {
+  ADMIN_TEAM_COLUMN_HELP,
+  withColumnHelp,
+} from "../../utils/customersColumnHelp";
 import {
   parseCommercialTeamView,
   replaceCommercialTeamViewInUrl,
@@ -284,6 +289,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       <CommercialFilterBarShell embedded ariaLabel="Filtros da equipe">
         <CommercialTextField
           label={copy.filterSearch}
+          hint={CM_HELP.administration.teamSearch}
           type="search"
           value={search}
           onChange={setSearch}
@@ -291,6 +297,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
         />
         <CommercialSelectField
           label={copy.filterGroup}
+          hint={CM_HELP.administration.teamFilterGroup}
           value={groupId}
           onChange={setGroupId}
           options={groups.map((group) => ({ value: group.id, label: group.name }))}
@@ -299,6 +306,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
         />
         <CommercialSelectField
           label={copy.filterPortfolio}
+          hint={CM_HELP.administration.teamFilterPortfolio}
           value={portfolioId}
           onChange={setPortfolioId}
           options={portfolios.map((portfolio) => ({
@@ -355,7 +363,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
         <CommercialDataTableSection
           title={`${copy.title} (${rows.length.toLocaleString("pt-BR")})`}
           rows={rows}
-          columns={columns}
+          columns={withColumnHelp(columns, ADMIN_TEAM_COLUMN_HELP)}
           rowKey={(row) => row.user_id}
           loading={false}
           emptyMessage={copy.emptyDescription}

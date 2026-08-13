@@ -65,6 +65,14 @@ export const CUSTOMER_ORDERS_PREVIEW_COLUMN_HELP: Record<string, string> = {
   opportunity: CM_HELP.customerDetail.opportunities,
 };
 
+export const ADMIN_TEAM_COLUMN_HELP: Record<string, string> = {
+  person: CM_HELP.administration.teamColPerson,
+  online: CM_HELP.administration.teamColOnline,
+  email: CM_HELP.administration.teamColEmail,
+  groups: CM_HELP.administration.teamColGroups,
+  portfolios: CM_HELP.administration.teamColPortfolios,
+};
+
 export function withColumnHelp<T extends { key: string; headerHint?: string }>(
   columns: T[],
   helpByKey: Record<string, string>,

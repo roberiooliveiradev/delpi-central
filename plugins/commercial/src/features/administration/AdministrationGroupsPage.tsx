@@ -32,6 +32,7 @@ import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeP
 import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
+import { CM_HELP } from "../../content/helpTooltips";
 import {
   parseCommercialTeamView,
   replaceCommercialTeamViewInUrl,
