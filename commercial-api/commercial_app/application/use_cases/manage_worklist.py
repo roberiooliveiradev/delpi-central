@@ -194,6 +194,29 @@ class ManageWorklistUseCase:
         if assignee_group_ids and not actor_is_portfolio_manager:
             raise PermissionError("Sem permissão para atribuir tarefa a grupos.")
 
+    @staticmethod
+    def _assert_assignee_xor(
+        *,
+        assignee_user_ids: Sequence[str] | None,
+        assignee_user_id: str | None = None,
+        assignee_group_ids: Sequence[str] | None,
+    ) -> None:
+        """Usuários XOR grupos no request — não permitir os dois preenchidos."""
+        users: list[str] = []
+        if assignee_user_ids:
+            users.extend(str(item).strip() for item in assignee_user_ids if str(item).strip())
+        if assignee_user_id and str(assignee_user_id).strip():
+            users.append(str(assignee_user_id).strip())
+        groups = [
+            str(item).strip()
+            for item in (assignee_group_ids or [])
+            if str(item).strip()
+        ]
+        if users and groups:
+            raise ValueError(
+                "Atribua a tarefa a usuários ou a grupos — não aos dois ao mesmo tempo."
+            )
+
     def _validate_group_ids(self, group_ids: Sequence[str]) -> list[str]:
         normalized = normalize_assignee_group_ids(assignee_group_ids=group_ids)
         if not normalized:
@@ -356,6 +379,11 @@ class ManageWorklistUseCase:
         task_type = (data.task_type or "follow_up").strip() or "follow_up"
         priority = (data.priority or "normal").strip() or "normal"
         description = (data.description or "").strip() or None
+        self._assert_assignee_xor(
+            assignee_user_ids=data.assignee_user_ids,
+            assignee_user_id=data.assignee_user_id,
+            assignee_group_ids=data.assignee_group_ids,
+        )
         assignees = normalize_assignee_user_ids(
             assignee_user_ids=data.assignee_user_ids,
             assignee_user_id=data.assignee_user_id,
@@ -443,6 +471,12 @@ class ManageWorklistUseCase:
         due_at = data.due_at
         if due_at is not None and due_at.tzinfo is None:
             due_at = due_at.replace(tzinfo=timezone.utc)
+
+        self._assert_assignee_xor(
+            assignee_user_ids=data.assignee_user_ids,
+            assignee_user_id=data.assignee_user_id,
+            assignee_group_ids=data.assignee_group_ids,
+        )
 
         if data.assignee_user_ids is not None or data.assignee_user_id is not None:
             assignees = normalize_assignee_user_ids(
@@ -636,6 +670,11 @@ class ManageWorklistUseCase:
             raise LookupError("Tarefa não encontrada ou já concluída.")
         if not actor_is_portfolio_manager:
             raise PermissionError("Sem permissão para reatribuir tarefas.")
+        self._assert_assignee_xor(
+            assignee_user_ids=assignee_user_ids,
+            assignee_user_id=new_assignee_user_id,
+            assignee_group_ids=assignee_group_ids,
+        )
         if assignee_group_ids is not None:
             group_ids = self._validate_group_ids(assignee_group_ids)
         else:

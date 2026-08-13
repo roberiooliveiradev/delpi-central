@@ -426,6 +426,13 @@
   grid-column: 1 / -1;
 }
 
+.dashboard-commercial .cm-my-day-form__assignee-xor {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .dashboard-commercial .cm-my-day-form__actions {
   grid-column: 1 / -1;
   display: flex;

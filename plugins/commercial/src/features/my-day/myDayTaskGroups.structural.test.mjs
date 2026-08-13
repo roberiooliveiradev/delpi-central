@@ -17,6 +17,11 @@ describe("MyDay task groups (E6.S3)", () => {
     assert.match(page, /completedByValue/);
     assert.match(page, /groupsValue/);
     assert.match(page, /completed_by_user_id/);
+    assert.match(page, /CommercialSegmentToggle/);
+    assert.match(page, /assigneeMode/);
+    assert.match(page, /taskAssigneeXor/);
+    assert.match(page, /Usuários/);
+    assert.match(page, /Grupos/);
 
     const card = readFileSync(join(src, "features/my-day/TaskDetailCard.tsx"), "utf8");
     assert.match(card, /Concluída por/);

@@ -39,6 +39,7 @@ import {
   CommercialScopeChipBar,
   CommercialSectionCard,
   CommercialSelectField,
+  CommercialSegmentToggle,
   CommercialStatusBadge,
   CommercialTextAreaField,
   CommercialTextField,
@@ -258,6 +259,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   );
   const [assigneePicker, setAssigneePicker] = useState<DirectoryUserOption[]>([]);
   const [assigneeGroupIds, setAssigneeGroupIds] = useState<string[]>([]);
+  const [assigneeMode, setAssigneeMode] = useState<"users" | "groups">("users");
   const [groupOptions, setGroupOptions] = useState<CommercialGroupDto[]>([]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
@@ -349,6 +351,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     setCustomerSelection([]);
     setAssigneePicker([]);
     setAssigneeGroupIds([]);
+    setAssigneeMode("users");
     setEditingTaskId(null);
   }, []);
 
@@ -380,19 +383,23 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setDueDate(isoToLocalDateInput(task.due_at));
       setPriority(task.priority || "normal");
       setTaskType(task.task_type || "follow_up");
-      setAssigneePicker(
-        (task.assignee_user_ids?.length
+      const nextUserIds =
+        task.assignee_user_ids?.length
           ? task.assignee_user_ids
           : task.assignee_user_id
             ? [task.assignee_user_id]
-            : []
-        ).map((uid) => directoryOptionFromId(uid, directoryLabelFor)),
+            : [];
+      const nextGroupIds = task.assignee_group_ids?.length
+        ? [...task.assignee_group_ids]
+        : (task.assignee_groups ?? []).map((group) => group.id).filter(Boolean);
+      const preferGroups = canAssignGroups && nextGroupIds.length > 0;
+      setAssigneeMode(preferGroups ? "groups" : "users");
+      setAssigneePicker(
+        preferGroups
+          ? []
+          : nextUserIds.map((uid) => directoryOptionFromId(uid, directoryLabelFor)),
       );
-      setAssigneeGroupIds(
-        task.assignee_group_ids?.length
-          ? [...task.assignee_group_ids]
-          : (task.assignee_groups ?? []).map((group) => group.id).filter(Boolean),
-      );
+      setAssigneeGroupIds(preferGroups ? nextGroupIds : []);
       const customers =
         task.customers?.length
           ? task.customers.map((item) => ({
@@ -413,7 +420,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setFormMode("edit");
       scrollToTaskForm();
     },
-    [currentUserId, directoryLabelFor, myPortfolio?.user_id, notifyError, scrollToTaskForm],
+    [canAssignGroups, currentUserId, directoryLabelFor, myPortfolio?.user_id, notifyError, scrollToTaskForm],
   );
 
   const closeTaskForm = useCallback(() => {
@@ -657,8 +664,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         due_at: dueDateInputToIsoEod(dueDate),
         customers: customers.length > 0 ? customers : undefined,
         assignee_user_ids:
-          canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
-        assignee_group_ids: canAssignGroups ? assigneeGroupIds : undefined,
+          canTeamWorklist &&
+          assigneeMode === "users" &&
+          assigneeUserIds.length > 0
+            ? assigneeUserIds
+            : undefined,
+        assignee_group_ids:
+          canAssignGroups &&
+          assigneeMode === "groups" &&
+          assigneeGroupIds.length > 0
+            ? assigneeGroupIds
+            : undefined,
       });
       if (pendingAttachments.length > 0) {
         const failed: string[] = [];
@@ -711,9 +727,19 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         due_at: dueDateInputToIsoEod(dueDate),
         customers,
         assignee_user_ids:
-          canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
+          canTeamWorklist &&
+          assigneeMode === "users" &&
+          assigneeUserIds.length > 0
+            ? assigneeUserIds
+            : canTeamWorklist && assigneeMode === "users"
+              ? []
+              : undefined,
         assignee_group_ids:
-          canAssignGroups ? assigneeGroupIds : undefined,
+          canAssignGroups && assigneeMode === "groups"
+            ? assigneeGroupIds
+            : canAssignGroups && assigneeMode === "users"
+              ? []
+              : undefined,
       });
       closeTaskForm();
       notifySuccess("Tarefa atualizada.");
@@ -1201,60 +1227,82 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 onChange={setTaskType}
                 allowEmpty={false}
               />
-              {canTeamWorklist ? (
-                <UserDirectoryPicker
-                  value={assigneePicker}
-                  onChange={setAssigneePicker}
-                  searchUsers={searchDirectoryUsers}
-                  maxSelected={20}
-                  showEmail
-                  renderOptionLeading={(user) => (
-                    <TaskUserChipAvatar
-                      userId={user.id}
-                      name={(user.name || "").trim() || user.email}
+              {canTeamWorklist || canAssignGroups ? (
+                <div className="cm-my-day-form__assignee-xor">
+                  {canTeamWorklist && canAssignGroups ? (
+                    <CommercialSegmentToggle
+                      size="sm"
+                      ariaLabel={CM_HELP.myDay.taskAssigneeXor}
+                      idPrefix="my-day-assignee-mode"
+                      value={assigneeMode}
+                      onChange={(next) => {
+                        const mode = next === "groups" ? "groups" : "users";
+                        setAssigneeMode(mode);
+                        if (mode === "users") setAssigneeGroupIds([]);
+                        else setAssigneePicker([]);
+                      }}
+                      options={[
+                        { value: "users", label: "Usuários" },
+                        { value: "groups", label: "Grupos" },
+                      ]}
                     />
-                  )}
-                  renderSelectedChip={({ user, label, disabled, onRemove }) => (
-                    <span className="delpi-ui-tag-chip">
-                      <TaskUserChipAvatar
-                        userId={user.id}
-                        name={(user.name || "").trim() || user.email}
-                      />
-                      <span>{label}</span>
-                      <button
-                        type="button"
-                        className="delpi-ui-tag-chip__remove"
-                        disabled={disabled}
-                        aria-label={`Remover ${label}`}
-                        onClick={onRemove}
-                      >
-                        <X size={14} aria-hidden="true" />
-                      </button>
-                    </span>
-                  )}
-                  labels={{
-                    title: "Responsáveis",
-                    hint: CM_HELP.myDay.taskAssignee,
-                    placeholder:
-                      formMode === "edit"
-                        ? "Buscar usuários…"
-                        : "Buscar usuários… (vazio = eu)",
-                  }}
-                />
-              ) : null}
-              {canAssignGroups ? (
-                <CommercialMultiSelectField
-                  id="my-day-task-groups"
-                  label="Grupos"
-                  hint={CM_HELP.myDay.taskGroups}
-                  selectedValues={assigneeGroupIds}
-                  onChange={setAssigneeGroupIds}
-                  options={groupOptions.map((group) => ({
-                    value: group.id,
-                    label: group.name || group.kind || group.id,
-                  }))}
-                  searchable
-                />
+                  ) : null}
+                  {canTeamWorklist && assigneeMode === "users" ? (
+                    <UserDirectoryPicker
+                      value={assigneePicker}
+                      onChange={setAssigneePicker}
+                      searchUsers={searchDirectoryUsers}
+                      maxSelected={20}
+                      showEmail
+                      renderOptionLeading={(user) => (
+                        <TaskUserChipAvatar
+                          userId={user.id}
+                          name={(user.name || "").trim() || user.email}
+                        />
+                      )}
+                      renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                        <span className="delpi-ui-tag-chip">
+                          <TaskUserChipAvatar
+                            userId={user.id}
+                            name={(user.name || "").trim() || user.email}
+                          />
+                          <span>{label}</span>
+                          <button
+                            type="button"
+                            className="delpi-ui-tag-chip__remove"
+                            disabled={disabled}
+                            aria-label={`Remover ${label}`}
+                            onClick={onRemove}
+                          >
+                            <X size={14} aria-hidden="true" />
+                          </button>
+                        </span>
+                      )}
+                      labels={{
+                        title: "Responsáveis",
+                        hint: CM_HELP.myDay.taskAssignee,
+                        placeholder:
+                          formMode === "edit"
+                            ? "Buscar usuários…"
+                            : "Buscar usuários… (vazio = eu)",
+                      }}
+                    />
+                  ) : null}
+                  {canAssignGroups && assigneeMode === "groups" ? (
+                    <CommercialMultiSelectField
+                      id="my-day-task-groups"
+                      label="Grupos"
+                      hint={CM_HELP.myDay.taskGroups}
+                      selectedValues={assigneeGroupIds}
+                      onChange={setAssigneeGroupIds}
+                      options={groupOptions.map((group) => ({
+                        value: group.id,
+                        label: group.name || group.kind || group.id,
+                      }))}
+                      searchable
+                    />
+                  ) : null}
+                </div>
               ) : null}
               <CustomerSearchPicker
                 value={customerSelection}

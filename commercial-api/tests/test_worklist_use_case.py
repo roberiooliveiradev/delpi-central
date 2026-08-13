@@ -876,7 +876,6 @@ def test_task_assignee_groups_visibility_and_completed_by():
         user_id="manager",
         data=CreateTaskInput(
             title="Tarefa do grupo",
-            assignee_user_ids=["manager"],
             assignee_group_ids=[group_id],
         ),
         actor_is_portfolio_manager=True,
@@ -914,4 +913,27 @@ def test_assign_group_requires_manager():
                 assignee_group_ids=[group_id],
             ),
             actor_is_portfolio_manager=False,
+        )
+
+
+def test_create_task_rejects_users_and_groups_together():
+    """XOR: usuários e grupos no mesmo request → ValueError (HTTP 422)."""
+    group_id = str(uuid4())
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    groups = FakeGroupsRepo({group_id: FakeGroup(group_id)}, {})
+    uc = ManageWorklistUseCase(
+        task_repository=tasks,
+        activity_repository=activities,
+        group_repository=groups,  # type: ignore[arg-type]
+    )
+    with pytest.raises(ValueError, match="usuários ou a grupos"):
+        uc.create_task(
+            user_id="manager",
+            data=CreateTaskInput(
+                title="XOR",
+                assignee_user_ids=["manager"],
+                assignee_group_ids=[group_id],
+            ),
+            actor_is_portfolio_manager=True,
         )

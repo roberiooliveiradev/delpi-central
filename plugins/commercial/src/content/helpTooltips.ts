@@ -74,9 +74,11 @@ export const CM_HELP = {
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligação, e-mail, visita ou outra ação comercial.",
     taskAssignee:
-      "Um ou mais usuários do portal com acesso ao Comercial (máx. 20). Vazio = você. Só gestores atribuem a outros. No card, o nome abre o perfil.",
+      "Um ou mais usuários do portal com acesso ao Comercial (máx. 20). Vazio = você. Só gestores atribuem a outros. Exclusivo com Grupos.",
+    taskAssigneeXor:
+      "Escolha Usuários ou Grupos — não os dois. Trocar a opção limpa a seleção anterior.",
     taskGroups:
-      "Grupos operacionais responsáveis. Membros atuais do grupo veem a tarefa na fila Minhas; um membro conclui para todos.",
+      "Grupos operacionais responsáveis (exclusivo com Usuários). Membros atuais do grupo veem a tarefa na fila Minhas; um membro conclui para todos.",
     taskAssignedBy:
       "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; qualquer responsável (ou membro do grupo) conclui.",
     taskCustomer:
