@@ -22,7 +22,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     cpvRol:
       "Participação do CPV sobre o ROL no mesmo período. Quanto menor, melhor quando a meta é de redução.",
     otdPurchases:
-      "Percentual de linhas de pedido de compra recebidas no prazo prometido (data de recebimento ≤ data prometida).",
+      "Percentual de linhas recebidas no prazo (MP ou produtos com código iniciando em 3019; recebimento ≤ data prometida).",
     stockValue:
       "Valor total do estoque (SB9) no recorte de unidade e localização selecionados.",
     inventoryTurnoverMonths:
@@ -33,9 +33,9 @@ export const SUPPLIES_HELP_TOOLTIPS = {
       "Economia registrada em negociações de compras na planilha IDD Suprimentos (Google Sheets).",
     cpvMovements: "Quantidade de movimentos SD3 considerados no cálculo do CPV.",
     avgCostPerUnit: "Custo médio por unidade nos movimentos de CPV do período.",
-    otd: "Percentual de pontualidade (OTD) das linhas de compra recebidas no período.",
-    onTimeLines: "Linhas de compra recebidas dentro do prazo prometido.",
-    lateLines: "Linhas de compra recebidas após a data prometida.",
+    otd: "Percentual de pontualidade (OTD) das linhas elegíveis (tipo MP ou código 3019*) no período.",
+    onTimeLines: "Linhas elegíveis recebidas dentro do prazo prometido.",
+    lateLines: "Linhas elegíveis recebidas após a data prometida.",
     turnoverMonths: "Giro de estoque expresso em meses de cobertura (métrica auxiliar).",
     turnoverTimes:
       "Giro em vezes: CPV total dividido pelo valor de estoque. Indicador oficial do IDD e dos Indicadores Estratégicos.",
@@ -49,7 +49,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
   charts: {
     cpvByCfop: "Distribuição do CPV por código fiscal de operação (CFOP).",
     cpvByTm: "Distribuição do CPV por tipo de movimento (TES/TM) no SD3.",
-    otdEvolution: "Evolução mensal da pontualidade de compras (OTD).",
+    otdEvolution: "Evolução mensal da pontualidade de compras (OTD) no universo MP ou família 3019.",
     lateSuppliers: "Fornecedores com maior volume de linhas em atraso no período.",
     stockByLocation: "Valor de estoque agrupado por localização (armazém).",
     stockByBranch: "Valor de estoque consolidado por unidade TOTVS.",

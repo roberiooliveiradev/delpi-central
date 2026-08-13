@@ -7,7 +7,7 @@ Microfrontend com indicadores de suprimentos via **api-delpi** (`/supplies`).
 | Recurso | Endpoint | Descrição |
 |---------|----------|-----------|
 | CPV | `GET /supplies/cpv` | Custo de produto vendido e % sobre ROL |
-| OTD compras | `GET /supplies/otd` | Pontualidade de fornecedores |
+| OTD compras | `GET /supplies/otd` | Pontualidade (MP ou código `3019*`) |
 | Estoque | `GET /supplies/stock-value` | Valor total por localização |
 
 Plano de correção vs. Registro de Inventário TOTVS: `api-delpi/docs/api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md`.
