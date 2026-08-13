@@ -287,6 +287,7 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 |--------|------|-------------|-----------|-------|
 | GET | `/groups` | `list_commercial_groups` | manage | Grupos operacionais (sem seed) |
 | GET/POST | `/groups/{id}` / `` | get/create | manage | Create só com `name` (`kind` opcional) |
+| PATCH | `/groups/{id}` | `rename_commercial_group` | manage | Body `{ name }` — kind imutável |
 | DELETE | `/groups/{id}` | `delete_commercial_group` | manage | Exclui grupo + membros (CASCADE) |
 | POST/PUT/DELETE | `/groups/{id}/members…` | add/replace/remove | manage | |
 | GET | `/administration/team-roster` | `list_commercial_team_roster` | manage | Directory + grupos + carteiras; **sem** online (WS) |
