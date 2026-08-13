@@ -56,7 +56,8 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Entregue** — universo = clientes com pedido aberto; `filter=uncovered` + métricas no load-summary |
 | **Refino visual + IA** — Início apps\|eventos, Overview BI, filtro carteira, Equipe→Admin, Conta Opp, CM_HELP, C17 row→detalhe | **Entregue** — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) § Homologação |
 | **Onda A cockpit C1** — presets período, carteira aberta, série hit rate, fichas | **Entregue** (baseline) — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [KPI-FICHAS.md](./KPI-FICHAS.md) |
-| **Onda B YoY Overview** — overlay ano anterior em ROL + conversão | **Em curso** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 |
+| **Onda B YoY Overview** — overlay ano anterior em ROL + conversão | **Entregue** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [WIREFRAMES.md](./WIREFRAMES.md) WF-OV |
+| **B-fecho docs** — matriz rotas×WF + README/GESTAO/helps | **Em curso** — [WIREFRAMES.md](./WIREFRAMES.md) matriz |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 

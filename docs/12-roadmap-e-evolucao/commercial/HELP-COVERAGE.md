@@ -1,6 +1,6 @@
 # Cobertura de help — Portal Comercial
 
-> Atualizado em 2026-08-13 (E2.S5).  
+> Atualizado em 2026-08-13 (B-fecho Overview).  
 > Catálogo: `plugins/commercial/src/content/helpTooltips.ts` (`CM_HELP`).  
 > Allowlist: `plugins/commercial/src/content/help_coverage_allowlist.json`.
 
@@ -41,6 +41,7 @@ Gate: `src/content/helpCoverage.structural.test.mjs` — falha se surgir gap for
 - PDF proposta: `ProposalDetailPage` → `CM_HELP.proposals.pdfContact*`
 - Carteiras: detalhe / uncovered / bulk transfer → `CM_HELP.sellerPortfolios.col*` / `bulkTransferConfirmFrom`
 - Auditoria Minha Carteira: `MyPortfolioAuditSection` → `CM_HELP.customers.portfolioAudit`
+- **Visão geral (Overview):** `CM_HELP.overview.openPortfolio` (carteira ≠ PCP / ≠ ROL); `rolSeries` / `rolSeriesYoy`; `closingRateSeries` / `closingRateSeriesYoy`; `funnel` / `closingRate`; `filters` / `kpis` / `page`
 
 ## CLI
 

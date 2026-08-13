@@ -51,7 +51,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | Página | Pergunta | Obrigatório | Não trazer |
 |--------|----------|-------------|------------|
 | Início | O que fazer agora / para onde ir? | Saudação; KPIs carteira; eventos; launcher | BI ROL/funil |
-| Visão geral | Como está o comercial no período? | Filtros (+**carteira** + **Unidade** SC/ES); KPIs; ROL (Dia–Ano, séries SC/ES); funil trapézio (taxa/meta); **export** ROL/funil | Aprofundar; prévia OV; export OTD/Opp |
+| Visão geral | Como está o comercial no período? | Filtros (+**carteira** + **Unidade** SC/ES + atalhos período); KPIs (ROL, **carteira aberta agora**, hit rate, OTD…); ROL Dia–Ano + **YoY**; funil; série hit rate + **YoY**; **export** ROL/funil/série conversão | Aprofundar; prévia OV; export OTD/Opp; soma ROL+carteira |
 | Minhas tarefas | Qual minha fila? | Buckets; CRUD tarefa | Pedidos / ROL |
 | Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; tabela | Série OTD histórica |
 | Minha Carteira | Quem são os clientes? | Lista; clique→Conta | BI período |
@@ -65,7 +65,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 
 | | Início `/` | Visão geral `/overview` |
 |--|------------|-------------------------|
-| Papel | Launcher (main) + eventos (side) | BI: filtros Unidade SC/ES, KPIs, ROL Dia–Ano + export, funil trapézio + export |
+| Papel | Launcher (main) + eventos (side) | BI: filtros Unidade SC/ES, KPIs (incl. carteira aberta), ROL + YoY, funil, série hit rate + YoY, export |
 | Não fazer | Duplicar faixa BI completa | Faixa Aprofundar; hospedar CRUD carteiras |
 
 ## Duas “propostas”
@@ -83,12 +83,15 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 
 | id | Label |
 |----|-------|
-| `rol_head_office` | ROL vs meta |
-| `rol_branch` | ROL Espírito Santo |
+| `rol` | ROL vs meta |
+| `rol_weg` | ROL WEG |
+| `rol_new_business` | ROL novos negócios |
 | `closing_rate` | Conversão |
+| `open_portfolio` | Carteira aberta (agora) |
 | `otd` | OTD |
-| `new_business` | Novos negócios |
-| `rol_series` | Evolução de ROL |
+| `new_business_pct` | % novos negócios |
+| `rol_series` | Evolução de ROL (+ YoY opcional) |
+| `closing_rate_series` | Evolução hit rate (+ YoY opcional) |
 | `funnel` | Funil |
 
 (`ov_table` removido do hub — lista OV não na Overview.)
@@ -127,7 +130,7 @@ Ver [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md): membership no Portal; api-delpi 
 
 | Superfície | Export tabular CSV/Excel/PDF |
 |------------|------------------------------|
-| **Visão geral** — Evolução ROL + Funil | **Sim** (exceção D13 — paridade dashboard) |
+| **Visão geral** — Evolução ROL + Funil + série conversão (colunas prior se YoY) | **Sim** (exceção D13 — paridade dashboard) |
 | OTD / Oportunidades | **Não** nesta wave (D13 permanece) |
 
 Rótulos de unidade: canônico `@delpi/plugin-ui` (`formatOperationalUnitCode` / SC = Santa Catarina, ES = Espírito Santo) — UI nunca mostra `"01"`/`"02"` como rótulo quando o código é conhecido. Campo de filtro analytics: **Unidade (indicadores)**.

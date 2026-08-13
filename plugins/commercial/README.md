@@ -20,7 +20,7 @@ Portal Minha DELPI
 | Rota | Descrição | Permissão |
 |------|-----------|-----------|
 | `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `accounts.view` |
-| `/apps/commercial/overview` | Visão geral — KPIs, filtros, ROL, funil e drills | `analytics.view` |
+| `/apps/commercial/overview` | Visão geral — KPIs (incl. carteira aberta), filtros/período, ROL + YoY, funil, série hit rate + YoY | `analytics.view` |
 | `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `worklist.view` |
 | `/apps/commercial/users/:userId` | Perfil de usuário (foto, cargo, carteiras) | `accounts.view` |
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |

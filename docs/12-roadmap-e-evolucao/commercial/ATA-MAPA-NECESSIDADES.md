@@ -18,7 +18,7 @@ Este documento responde, para cada ponto da ata: **já temos?** · **onde acessa
 | Dimensão | Cobertura aproximada no Portal |
 |----------|--------------------------------|
 | Área comercial central + navegação | **Existe** |
-| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit nativo; Onda A (C1) entregue em baseline; YoY nos gráficos Overview **em curso** (Onda B); soma ROL+carteira / projeção fora |
+| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit C1 + YoY Overview **entregues**; soma ROL+carteira / projeção / gap meta ainda fora |
 | Visão do vendedor (Conta 360 pré-reunião) | **Parcial** — faturamento, pedidos, opp, contatos, tarefas; sem forecast/ofertas SLA |
 | Ofertas (produtividade, etapas, SLA) | **Parcial** — listagens OV/ADY + hit rate; sem tempo/etapa/área |
 | Clientes (ativo, recuperado, ticket, família, WEG) | **Parcial / bloqueado** — lista operacional; fichas KPI em rascunho |
@@ -82,7 +82,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Carteira + ROL | **Bloqueado** | — | — | `KPI-ROL-CARTEIRA` |
 | MTD / YTD | **Parcial** | Filtro de período no Overview | séries ROL | Presets MTD/YTD + labels |
 | Projeção de fechamento | **Falta** | — | — | Onda B / FCT-\* |
-| Comparação anos anteriores | **Parcial / em curso** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Mesmo período filtrado −1a; todas as granularidades |
+| Comparação anos anteriores | **Entregue** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Mesmo período filtrado −1a; todas as granularidades |
 | Produtividade comercial | **Parcial** | Opp/Proposals counts; Admin | — | Ofertas/colaborador (Onda C) |
 | Ofertas em aberto | **Existe** | `/analytics/opportunities` | proposals list | — |
 | Clientes ativos | **Parcial** | `/customers` (= com pedido aberto no escopo) | — | Formalizar `KPI-CLIENTE-ATIVO` |
@@ -282,7 +282,7 @@ Prioridade da ata: **visão gerencial primeiro**. **Documento / área comercial 
 
 **Onda A (entregue — baseline de código, ago/2026):** fichas C1 + workshop [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md); Overview com presets de período, card carteira lado a lado (sem soma) e série de hit rate. Assinatura formal das fichas **não** bloqueia a engenharia já no `main`.
 
-**Onda B — comparação 2 anos (em implementação):** overlay YoY nos gráficos de ROL e taxa de conversão do Overview (2ª chamada às séries existentes com datas −1 ano). **Fora desta fatia:** projeção/carteira futura, soma ROL+carteira, delta YoY nos KPI cards.
+**Onda B — comparação 2 anos (entregue — overlay YoY):** gráficos de ROL e taxa de conversão no Overview (2ª chamada às séries existentes com datas −1 ano; todas as granularidades). **B restante (fora do overlay):** projeção/carteira futura, soma ROL+carteira, delta YoY nos KPI cards, UX bruto vs líquido.
 
 Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código de fórmula nova só após homologação quando a ficha estiver **bloqueada** para mudança.
 
@@ -314,7 +314,7 @@ Objetivo: Visão geral como painel de decisão (carteira + ROL + tempo).
 | Item | Dependência | Dono | Notas |
 |------|-------------|------|-------|
 | Presets de período (hoje…últimos 12 meses / MTD–YTD) no Overview | Onda A | MFE | **Entregue** — botões de período; distinto do overlay YoY |
-| Comparação 2 anos (YoY) nos gráficos ROL e conversão | Séries existentes | MFE (2× BFF) | **Em curso** — mesmo período filtrado −1a; Dia/Semana/Mês/Ano |
+| Comparação 2 anos (YoY) nos gráficos ROL e conversão | Séries existentes | MFE (2× BFF) | **Entregue** — mesmo período filtrado −1a; Dia/Semana/Mês/Ano |
 | KPI consolidado carteira (valor + itens) no Overview | `KPI-CARTEIRA` | AD rota se faltar + CA BFF + MFE | Dor #4 |
 | Card ROL + carteira (bases alinhadas) | `KPI-ROL-CARTEIRA` | AD + CA + MFE | Bloqueado até A |
 | Carteira prevista mês / meses seguintes / gap vs meta | Fórmulas + fonte postergação | AD + CA + MFE | Projeção; FCT-\* |
