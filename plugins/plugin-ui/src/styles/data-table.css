@@ -42,11 +42,13 @@ table.delpi-ui-table {
   min-width: 100%;
   border-collapse: collapse;
   font-size: var(--delpi-ui-table-font-size, 13px);
+  line-height: var(--delpi-ui-table-line-height, 1.35);
   color: var(--delpi-ui-text, var(--text, #111111));
-  --delpi-ui-table-cell-pad-y: 10px;
-  --delpi-ui-table-cell-pad-x: 16px;
-  --delpi-ui-table-numeric-pad-x: 20px;
+  --delpi-ui-table-cell-pad-y: 9px;
+  --delpi-ui-table-cell-pad-x: 14px;
+  --delpi-ui-table-numeric-pad-x: 18px;
   --delpi-ui-table-numeric-min-width: 6.5rem;
+  --delpi-ui-table-header-pad-y: 10px;
 }
 
 table.delpi-ui-table--section {
@@ -63,15 +65,23 @@ table.delpi-ui-table td {
 }
 
 table.delpi-ui-table th {
-  font-weight: 700;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-weight: 650;
+  font-size: var(--delpi-ui-table-header-font-size, 0.92em);
+  letter-spacing: 0.01em;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
   background: color-mix(
     in srgb,
-    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 90%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%
+  );
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 30%
   );
   white-space: nowrap;
   vertical-align: middle;
+  padding-block: var(--delpi-ui-table-header-pad-y, 10px);
 }
 
 table.delpi-ui-table--sortable th {
@@ -79,9 +89,11 @@ table.delpi-ui-table--sortable th {
 }
 
 table.delpi-ui-table--compact {
-  --delpi-ui-table-cell-pad-y: 8px;
-  --delpi-ui-table-cell-pad-x: 14px;
-  --delpi-ui-table-numeric-pad-x: 18px;
+  --delpi-ui-table-cell-pad-y: 6px;
+  --delpi-ui-table-cell-pad-x: 12px;
+  --delpi-ui-table-numeric-pad-x: 16px;
+  --delpi-ui-table-header-pad-y: 8px;
+  --delpi-ui-table-font-size: 12.5px;
 }
 
 table.delpi-ui-table--compact th,
