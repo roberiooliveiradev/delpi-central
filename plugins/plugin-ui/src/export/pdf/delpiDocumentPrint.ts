@@ -35,8 +35,9 @@ function printViaHiddenIframe(
       "position:fixed",
       "left:0",
       "top:0",
-      "width:0",
-      "height:0",
+      /* Viewport A4: iframe 0×0 dispara @media (max-width:768px) e colapsa grids (assinaturas 1 col). */
+      "width:210mm",
+      "height:297mm",
       "border:0",
       "opacity:0",
       "pointer-events:none",

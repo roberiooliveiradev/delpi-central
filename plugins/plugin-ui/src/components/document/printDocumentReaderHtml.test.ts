@@ -221,6 +221,19 @@ describe("printDocumentReaderHtml", () => {
     );
   });
 
+  it("força grade de assinaturas em 2 colunas no CSS de impressão", () => {
+    const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
+    expect(html).toMatch(
+      /\.cipa-minute-document__signatures[\s\S]*?grid-template-columns:\s*repeat\(2/,
+    );
+    expect(html).toMatch(
+      /\.cec-minute-document__signatures[\s\S]*?grid-template-columns:\s*repeat\(2/,
+    );
+    expect(html).toMatch(
+      /\.tm-ata-document__signature-grid[\s\S]*?grid-template-columns:\s*repeat\(2/,
+    );
+  });
+
   it("coloca cabeçalho no thead e rodapé no tfoot (DOM parseável)", () => {
     const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
     const doc = parseDocumentPrintHtml(html);

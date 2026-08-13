@@ -73,7 +73,8 @@ describe("printDelpiDocumentHtml", () => {
     expect(iframe?.getAttribute("data-delpi-document-print-frame")).toBe("1");
     expect(iframe?.style.pointerEvents).toBe("none");
     expect(iframe?.style.zIndex).toBe("-1");
-    expect(iframe?.style.width).toBe("0px");
+    expect(iframe?.style.width).toBe("210mm");
+    expect(iframe?.style.height).toBe("297mm");
     expect(document.querySelectorAll("iframe[data-delpi-document-print-frame]").length).toBe(1);
   });
 

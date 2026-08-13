@@ -311,6 +311,22 @@ body.delpi-ui-document-print-window .ds-print-root {
   position: relative !important;
   z-index: 1 !important;
 }
+/*
+ * Assinaturas em 2 colunas (paridade com a prévia desktop).
+ * O iframe de impressão era 0×0 e ativava @media (max-width:768px) dos MFEs.
+ */
+.cipa-minute-document__signatures,
+.cec-minute-document__signatures,
+.tm-ata-document__signature-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5mm 8mm !important;
+}
+.delpi-ui-document-signature {
+  min-width: 0 !important;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 /* Tipografia ABNT */
 .delpi-ui-document-page p,
 .delpi-ui-document-rich-content p,
