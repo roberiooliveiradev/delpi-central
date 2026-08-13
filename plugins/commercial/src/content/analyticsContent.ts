@@ -84,9 +84,14 @@ export const PROPOSALS_CONTENT = {
     items: "Itens",
     pdfSection: "PDF revisável",
     pdfSectionHint:
-      "Escolha um contato salvo da conta (ou o contato da proposta/TOTVS) e ajuste observações antes de exportar.",
-    pdfContactLabel: "Contato no PDF",
+      "Escolha um contato e ajuste nome, departamento, e-mail e telefone só para este PDF. Alterações não gravam na Conta nem na proposta.",
+    pdfContactLabel: "Contato base",
     pdfContactEmpty: "Nenhum contato disponível para esta conta. Cadastre contatos na ficha do cliente.",
+    pdfContactFieldsHint: "Somente emissão do PDF — não altera o cadastro da Conta.",
+    pdfContactNomeLabel: "Nome no PDF",
+    pdfContactDepartamentoLabel: "Departamento no PDF",
+    pdfContactEmailLabel: "E-mail no PDF",
+    pdfContactTelefoneLabel: "Telefone no PDF",
     pdfObservacoesLabel: "Observações no PDF",
   },
 };

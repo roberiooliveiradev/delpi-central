@@ -1,8 +1,8 @@
 import type {
   AccountContact,
   TotvsAccountContact,
-} from "../../api/accountContactsApi";
-import type { ProposalDocumentContact } from "../../types/proposalsDocument";
+} from "../api/accountContactsApi";
+import type { ProposalDocumentContact } from "../types/proposalsDocument";
 
 /** Valor do select: contato já gravado no documento da proposta. */
 export const PROPOSAL_PDF_CONTACT_PROPOSAL = "__proposal__";
@@ -14,6 +14,9 @@ export type ProposalPdfContactOption = {
   label: string;
   nome: string;
   email: string;
+  /** Preenchido em E7.S2; UI pode cair no contato da proposta. */
+  departamento?: string;
+  telefone?: string;
 };
 
 function normalize(value: string | null | undefined): string {

@@ -24,6 +24,7 @@ import {
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTextAreaField,
+  CommercialTextField,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
@@ -38,7 +39,33 @@ import {
   buildProposalPdfContactOptions,
   defaultProposalPdfContactValue,
   resolveProposalPdfContactSelection,
+  type ProposalPdfContactOption,
 } from "../../utils/resolveProposalPdfContact";
+
+function applyPdfContactSelectionToFields(
+  option: ProposalPdfContactOption | null | undefined,
+  proposalContact: ProposalDocumentDetail["contato"] | null | undefined,
+): {
+  nome: string;
+  departamento: string;
+  email: string;
+  telefone: string;
+} {
+  if (!option) {
+    return {
+      nome: (proposalContact?.nome || "").trim(),
+      departamento: (proposalContact?.departamento || "").trim(),
+      email: (proposalContact?.email || "").trim(),
+      telefone: (proposalContact?.telefone || "").trim(),
+    };
+  }
+  return {
+    nome: option.nome,
+    email: option.email,
+    departamento: option.departamento ?? (proposalContact?.departamento || "").trim(),
+    telefone: option.telefone ?? (proposalContact?.telefone || "").trim(),
+  };
+}
 
 function displayValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "—";
@@ -63,6 +90,23 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
   const [reloadKey, setReloadKey] = useState(0);
   const [pdfObservacoes, setPdfObservacoes] = useState("");
   const [pdfContactValue, setPdfContactValue] = useState("");
+  const [pdfContatoNome, setPdfContatoNome] = useState("");
+  const [pdfContatoDepartamento, setPdfContatoDepartamento] = useState("");
+  const [pdfContatoEmail, setPdfContatoEmail] = useState("");
+  const [pdfContatoTelefone, setPdfContatoTelefone] = useState("");
+
+  function syncPdfContactFields(
+    options: readonly ProposalPdfContactOption[],
+    selectedValue: string,
+    proposalContact: ProposalDocumentDetail["contato"] | null | undefined,
+  ) {
+    const selected = options.find((option) => option.value === selectedValue);
+    const fields = applyPdfContactSelectionToFields(selected, proposalContact);
+    setPdfContatoNome(fields.nome);
+    setPdfContatoDepartamento(fields.departamento);
+    setPdfContatoEmail(fields.email);
+    setPdfContatoTelefone(fields.telefone);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,7 +136,9 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
           totvsContact: bundle?.totvs_contact,
           savedContacts: bundle?.items ?? [],
         });
-        setPdfContactValue(defaultProposalPdfContactValue(options, result.contato));
+        const defaultValue = defaultProposalPdfContactValue(options, result.contato);
+        setPdfContactValue(defaultValue);
+        syncPdfContactFields(options, defaultValue, result.contato);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -114,6 +160,11 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
       }),
     [data?.contato, contactsBundle],
   );
+
+  function handlePdfContactChange(value: string) {
+    setPdfContactValue(value);
+    syncPdfContactFields(pdfContactOptions, value, data?.contato);
+  }
 
   const itemColumns: DataTableColumn<ProposalDocumentItem>[] = [
     { key: "item", header: "Item", render: (row) => row.item },
@@ -309,7 +360,7 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                   id="proposal-pdf-contact"
                   label={PROPOSALS_CONTENT.detail.pdfContactLabel}
                   value={pdfContactValue}
-                  onChange={setPdfContactValue}
+                  onChange={handlePdfContactChange}
                   options={pdfContactOptions.map((option) => ({
                     value: option.value,
                     label: option.label,
@@ -318,6 +369,33 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
               ) : (
                 <CommercialEmptyState message={PROPOSALS_CONTENT.detail.pdfContactEmpty} />
               )}
+              <p className="cm-muted">{PROPOSALS_CONTENT.detail.pdfContactFieldsHint}</p>
+              <div className="cm-form-grid">
+                <CommercialTextField
+                  id="proposal-pdf-contact-nome"
+                  label={PROPOSALS_CONTENT.detail.pdfContactNomeLabel}
+                  value={pdfContatoNome}
+                  onChange={setPdfContatoNome}
+                />
+                <CommercialTextField
+                  id="proposal-pdf-contact-departamento"
+                  label={PROPOSALS_CONTENT.detail.pdfContactDepartamentoLabel}
+                  value={pdfContatoDepartamento}
+                  onChange={setPdfContatoDepartamento}
+                />
+                <CommercialTextField
+                  id="proposal-pdf-contact-email"
+                  label={PROPOSALS_CONTENT.detail.pdfContactEmailLabel}
+                  value={pdfContatoEmail}
+                  onChange={setPdfContatoEmail}
+                />
+                <CommercialTextField
+                  id="proposal-pdf-contact-telefone"
+                  label={PROPOSALS_CONTENT.detail.pdfContactTelefoneLabel}
+                  value={pdfContatoTelefone}
+                  onChange={setPdfContatoTelefone}
+                />
+              </div>
               <CommercialTextAreaField
                 label={PROPOSALS_CONTENT.detail.pdfObservacoesLabel}
                 value={pdfObservacoes}
