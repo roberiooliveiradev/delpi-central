@@ -25,6 +25,7 @@ import { CM_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
 import { formatCurrency } from "../../utils/format";
 import { AnalyticsFilters } from "../analytics/components/AnalyticsFilters";
+import { AnalyticsClosingRateSeriesChart } from "../analytics/components/AnalyticsClosingRateSeriesChart";
 import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelChart";
 import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSeriesChart";
 import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
@@ -330,6 +331,31 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
           <AnalyticsFunnelChart
             closingRate={dashboard.closingRate}
             loading={dashboard.loading}
+          />
+        </SectionCard>
+      </div>
+
+      <div className="cm-gestao-charts-grid cm-gestao-charts-grid--auto-span">
+        <SectionCard
+          title={OVERVIEW_METRIC_BY_ID.closing_rate_series.label}
+          hint={CM_HELP.overview.closingRateSeries}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
+          <AnalyticsClosingRateSeriesChart
+            filters={{
+              start_date: filters.apiParams.start_date,
+              end_date: filters.apiParams.end_date,
+              customer_segment: filters.apiParams.customer_segment,
+              seller_id: filters.apiParams.seller_id,
+            }}
+            onDrillDown={(dateStart, dateEnd) => {
+              filters.replaceDateFilters({
+                dateStart,
+                dateEnd,
+                competence: "",
+              });
+            }}
           />
         </SectionCard>
       </div>

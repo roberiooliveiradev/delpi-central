@@ -707,6 +707,10 @@
   gap: var(--cm-section-gap);
 }
 
+.dashboard-commercial .cm-gestao-charts-grid--auto-span > *:only-child {
+  grid-column: 1 / -1;
+}
+
 .dashboard-commercial .cm-gestao-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

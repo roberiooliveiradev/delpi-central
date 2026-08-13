@@ -109,5 +109,8 @@ describe("CM_HELP matriz (C16)", () => {
     assert.match(source, /CM_HELP\.overview\.closingRate/);
     assert.match(source, /CM_HELP\.overview\.funnel/);
     assert.match(source, /CM_HELP\.overview\.openPortfolio/);
+    assert.match(source, /CM_HELP\.overview\.closingRateSeries/);
+    assert.match(source, /cm-gestao-charts-grid--auto-span/);
+    assert.match(source, /AnalyticsClosingRateSeriesChart/);
   });
 });
