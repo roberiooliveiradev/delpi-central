@@ -273,11 +273,10 @@ Composição canônica para leitura e impressão de documentos formais em papel 
 `DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
 
 O kit controla papel A4, margens ABNT (NBR 14724) via `@page`, tipografia
-justificada, orphans/widows e quebras (`break-inside`/`break-after`) para
-impressão/PDF. Os slots `header`/`footer` do `DocumentPage` viram chrome
-fixo por página (`delpi-ui-document-print-running-*`). Textos e regras do
-documento continuam no plugin consumidor. Use `printDocumentReader()`
-(janela dedicada em `printDocumentReaderHtml`).
+justificada e quebras estáveis. Cabeçalho/rodapé do `DocumentPage` vão para
+`thead`/`tfoot` no layout ABNT: marca à esquerda + numeração (`counter(page)`)
+à direita; rodapé em três colunas (data | instituição | referência) com linha
+0,5 pt. Use `printDocumentReader()`.
 
 ---
 

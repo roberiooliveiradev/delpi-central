@@ -2,14 +2,12 @@ import { printDelpiDocumentHtml } from "../../export/pdf/delpiDocumentPrint";
 
 /**
  * CSS final da janela de impressão/PDF (vence stylesheets copiados do host).
- * Margens ABNT NBR 14724 via @page — não via padding da folha contínua.
- * Cabeçalho/rodapé do DocumentPage viram chrome fixo por página (padrão certificados).
+ *
+ * Cabeçalho/rodapé: tabela com thead/tfoot (display: table-*-group).
+ * Chrome NÃO repete position:fixed de forma confiável em documentos longos;
+ * thead/tfoot é o padrão estável (mesmo espírito dos certificados DELPI).
  */
 const PRINT_WINDOW_BASE_CSS = `
-:root {
-  --delpi-ui-doc-print-header-height: 22mm;
-  --delpi-ui-doc-print-footer-height: 18mm;
-}
 html, body {
   margin: 0;
   padding: 0;
@@ -23,6 +21,160 @@ html, body {
   font-family: Arial, Helvetica, sans-serif !important;
   font-size: 12pt !important;
   line-height: 1.5 !important;
+}
+.delpi-ui-document-print-layout {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
+}
+.delpi-ui-document-print-layout > thead,
+.delpi-ui-document-print-layout > tbody,
+.delpi-ui-document-print-layout > tfoot {
+  border: none !important;
+}
+.delpi-ui-document-print-layout > thead > tr > th,
+.delpi-ui-document-print-layout > tbody > tr > td,
+.delpi-ui-document-print-layout > tfoot > tr > td {
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  vertical-align: top !important;
+  background: transparent !important;
+}
+/*
+ * Chrome ABNT (NBR 14724):
+ * - cabeçalho: identificação à esquerda + numeração arábica à direita
+ * - rodapé: data | instituição | referência (10pt), linha 0,5 pt
+ */
+.delpi-ui-document-print-running-header,
+.delpi-ui-document-print-running-footer,
+.delpi-ui-document-print-abnt-header,
+.delpi-ui-document-print-abnt-footer {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff !important;
+  color: #000 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+.delpi-ui-document-print-abnt-header {
+  margin: 0 0 5mm;
+}
+.delpi-ui-document-print-abnt-header__row {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 8mm;
+  min-height: 11mm;
+  padding: 0 0 2.5mm;
+  border-bottom: 0.5pt solid #000;
+}
+.delpi-ui-document-print-abnt-header__brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.delpi-ui-document-print-abnt-header__brand .tm-ata-document-brand,
+.delpi-ui-document-print-abnt-header__brand .delpi-ui-document-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.delpi-ui-document-print-abnt-header__brand img,
+.delpi-ui-document-print-abnt-header__brand .tm-ata-document__logo,
+.delpi-ui-document-print-abnt-header__brand svg {
+  display: block;
+  max-height: 10mm !important;
+  max-width: 38mm !important;
+  width: auto !important;
+  height: auto !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.delpi-ui-document-print-abnt-header__page {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  min-width: 8mm;
+  font-size: 10pt !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  text-align: right !important;
+  color: #000 !important;
+}
+/* NBR 14724: numeração arábica no canto superior direito */
+.delpi-ui-document-print-abnt-header__page::after {
+  content: counter(page);
+}
+.delpi-ui-document-print-abnt-footer {
+  margin: 4mm 0 0;
+  padding: 0;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-document-footer {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+.delpi-ui-document-print-abnt-footer .delpi-ui-document-footer {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) !important;
+  align-items: end !important;
+  column-gap: 6mm !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 2.5mm 0 2mm !important;
+  border-top: 0.5pt solid #000 !important;
+  box-sizing: border-box !important;
+  font-size: 10pt !important;
+  line-height: 1.25 !important;
+  color: #000 !important;
+}
+.delpi-ui-document-print-abnt-footer .delpi-ui-document-footer > :nth-child(1) {
+  text-align: left !important;
+  justify-self: start;
+}
+.delpi-ui-document-print-abnt-footer .delpi-ui-document-footer > :nth-child(2) {
+  text-align: center !important;
+  justify-self: center;
+  font-weight: 700 !important;
+}
+.delpi-ui-document-print-abnt-footer .delpi-ui-document-footer > :nth-child(3) {
+  text-align: right !important;
+  justify-self: end;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar,
+.delpi-ui-document-print-abnt-footer [class*="brand-bar"] {
+  display: flex !important;
+  height: 3px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span,
+.delpi-ui-document-print-abnt-footer [class*="brand-bar"] span {
+  flex: 1 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span:nth-child(1) {
+  background: #013866 !important;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span:nth-child(2) {
+  background: #025a8f !important;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span:nth-child(3) {
+  background: #0477a8 !important;
+}
+.delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span:nth-child(4) {
+  background: #089bdb !important;
 }
 .delpi-ui-document-page {
   width: 100% !important;
@@ -76,6 +228,11 @@ body.delpi-ui-document-print-window .ds-print-root {
   color: #000 !important;
   box-shadow: none !important;
   animation: none !important;
+}
+/* Slots originais do papel: conteúdo já foi para thead/tfoot. */
+.delpi-ui-document-page__header--print-source,
+.delpi-ui-document-page__footer--print-source {
+  display: none !important;
 }
 /* Tipografia ABNT */
 .delpi-ui-document-page p,
@@ -134,21 +291,12 @@ h1, h2, h3, h4, h5, h6,
 .tm-ata-document__signature-grid,
 .delpi-ui-document-header,
 .tm-ata-document-brand,
-table,
+table:not(.delpi-ui-document-print-layout),
 tr,
 img,
 figure {
   break-inside: avoid;
   page-break-inside: avoid;
-}
-/* Chrome fixo: oculto na prévia da janela; ativo só no @media print. */
-.delpi-ui-document-print-running-header,
-.delpi-ui-document-print-running-footer {
-  display: none;
-}
-.delpi-ui-document-print-footer-spacer {
-  display: none;
-  height: 0;
 }
 @page {
   size: A4 portrait;
@@ -173,98 +321,18 @@ figure {
   body.delpi-ui-document-print-window .ds-print-root {
     position: static !important;
   }
-  body.has-print-running-header .delpi-ui-document-print-scope {
-    padding-top: var(--delpi-ui-doc-print-header-height) !important;
+  /*
+   * Repetição por página — obrigatório no motor de impressão do Chromium.
+   * Não usar position:fixed para este chrome (falha em atas longas).
+   */
+  .delpi-ui-document-print-layout > thead {
+    display: table-header-group !important;
   }
-  body.has-print-running-footer .delpi-ui-document-print-footer-spacer {
-    display: block !important;
-    height: var(--delpi-ui-doc-print-footer-height) !important;
+  .delpi-ui-document-print-layout > tfoot {
+    display: table-footer-group !important;
   }
-  /* Slots originais do papel: só na prévia; na impressão o chrome fixo assume. */
-  .delpi-ui-document-page__header--print-source,
-  .delpi-ui-document-page__footer--print-source {
-    display: none !important;
-  }
-  .delpi-ui-document-print-running-header {
-    display: block !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    box-sizing: border-box;
-    max-height: var(--delpi-ui-doc-print-header-height);
-    padding: 0 0 2mm;
-    background: #fff !important;
-    border-bottom: 1px solid #111;
-    overflow: hidden;
-  }
-  .delpi-ui-document-print-running-header .tm-ata-document-brand,
-  .delpi-ui-document-print-running-header .delpi-ui-document-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-  }
-  .delpi-ui-document-print-running-header img,
-  .delpi-ui-document-print-running-header .tm-ata-document__logo,
-  .delpi-ui-document-print-running-header svg {
-    display: block;
-    max-height: 14mm !important;
-    max-width: 42mm !important;
-    width: auto !important;
-    height: auto !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .delpi-ui-document-print-running-footer {
-    display: block !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    box-sizing: border-box;
-    max-height: var(--delpi-ui-doc-print-footer-height);
-    background: #fff !important;
-    overflow: hidden;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-document-footer,
-  .delpi-ui-document-print-running-footer .delpi-ui-document-footer {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 1.5mm 0 0 !important;
-    box-sizing: border-box;
-  }
-  .delpi-ui-document-print-running-footer .delpi-ui-document-footer {
-    border-top: 1px solid #111;
-    font-size: 9px !important;
-    line-height: 1.3 !important;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar,
-  .delpi-ui-document-print-running-footer [class*="brand-bar"] {
-    display: flex !important;
-    height: 4px !important;
-    width: 100% !important;
-    margin: 0 !important;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span,
-  .delpi-ui-document-print-running-footer [class*="brand-bar"] span {
-    flex: 1 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  /* Fallback de cores da faixa se tokens do MFE não resolverem no about:blank */
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(1) {
-    background: #013866 !important;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(2) {
-    background: #025a8f !important;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(3) {
-    background: #0477a8 !important;
-  }
-  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(4) {
-    background: #089bdb !important;
+  .delpi-ui-document-print-layout > tbody {
+    display: table-row-group !important;
   }
 }
 `;
@@ -362,8 +430,8 @@ export type DocumentPrintChrome = {
 };
 
 /**
- * Extrai cabeçalho/rodapé do papel para chrome fixo por página
- * e marca os slots originais para ocultar no @media print.
+ * Extrai cabeçalho/rodapé do papel para thead/tfoot da tabela de impressão
+ * e marca os slots originais para ocultar (evita duplicar no corpo).
  */
 export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintChrome {
   const clone = page.cloneNode(true) as HTMLElement;
@@ -380,10 +448,6 @@ export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintC
   }
   if (footerEl && runningFooterHtml) {
     footerEl.classList.add("delpi-ui-document-page__footer--print-source");
-    const spacer = clone.ownerDocument!.createElement("div");
-    spacer.className = "delpi-ui-document-print-footer-spacer";
-    spacer.setAttribute("aria-hidden", "true");
-    footerEl.insertAdjacentElement("afterend", spacer);
   }
 
   return {
@@ -395,9 +459,31 @@ export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintC
   };
 }
 
+/** Parseia o HTML de impressão para asserts estruturais nos testes. */
+export function parseDocumentPrintHtml(html: string): Document {
+  return new DOMParser().parseFromString(html, "text/html");
+}
+
+/** Cabeçalho ABNT: marca à esquerda + página (counter) à direita. */
+export function buildAbntPrintHeaderHtml(brandInnerHtml: string): string {
+  return `<div class="delpi-ui-document-print-running-header delpi-ui-document-print-abnt-header">
+  <div class="delpi-ui-document-print-abnt-header__row">
+    <div class="delpi-ui-document-print-abnt-header__brand">${brandInnerHtml}</div>
+    <div class="delpi-ui-document-print-abnt-header__page" aria-label="Número da página"></div>
+  </div>
+</div>`;
+}
+
+/** Rodapé ABNT: reaproveita meta (data | instituição | referência) + faixa. */
+export function buildAbntPrintFooterHtml(footerInnerHtml: string): string {
+  return `<div class="delpi-ui-document-print-running-footer delpi-ui-document-print-abnt-footer">
+  ${footerInnerHtml}
+</div>`;
+}
+
 /**
  * Serializa o papel ativo do DocumentReader em HTML standalone
- * com cabeçalho/rodapé repetidos em cada página impressa.
+ * com cabeçalho/rodapé ABNT em thead/tfoot (repetidos em cada página).
  */
 export function buildDocumentReaderPrintHtml(
   page: HTMLElement,
@@ -416,11 +502,24 @@ export function buildDocumentReaderPrintHtml(
     .filter(Boolean)
     .join(" ");
 
-  const runningHeaderBlock = chrome.hasRunningHeader
-    ? `<div class="delpi-ui-document-print-running-header" aria-hidden="true">${chrome.runningHeaderHtml}</div>`
+  const thead = chrome.hasRunningHeader
+    ? `<thead>
+  <tr>
+    <th scope="col">
+      ${buildAbntPrintHeaderHtml(chrome.runningHeaderHtml)}
+    </th>
+  </tr>
+</thead>`
     : "";
-  const runningFooterBlock = chrome.hasRunningFooter
-    ? `<div class="delpi-ui-document-print-running-footer" aria-hidden="true">${chrome.runningFooterHtml}</div>`
+
+  const tfoot = chrome.hasRunningFooter
+    ? `<tfoot>
+  <tr>
+    <td>
+      ${buildAbntPrintFooterHtml(chrome.runningFooterHtml)}
+    </td>
+  </tr>
+</tfoot>`
     : "";
 
   return `<!DOCTYPE html>
@@ -430,13 +529,21 @@ export function buildDocumentReaderPrintHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(title)}</title>
 ${collectStylesheetsHtml()}
-<style>${PRINT_WINDOW_BASE_CSS}</style>
+<style id="delpi-ui-document-print-base">${PRINT_WINDOW_BASE_CSS}</style>
 </head>
 <body class="${escapeHtml(bodyClasses)}" data-theme="light">
-${runningHeaderBlock}
-${runningFooterBlock}
 <div class="${escapeHtml(scopeClassAttr)}">
+<table class="delpi-ui-document-print-layout">
+${thead}
+<tbody>
+  <tr>
+    <td>
 ${chrome.pageHtml}
+    </td>
+  </tr>
+</tbody>
+${tfoot}
+</table>
 </div>
 </body>
 </html>`;

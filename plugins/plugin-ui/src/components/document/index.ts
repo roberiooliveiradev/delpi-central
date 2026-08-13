@@ -17,10 +17,13 @@ export {
   type DocumentReaderToolbarProps,
 } from "./DocumentReaderToolbar";
 export {
+  buildAbntPrintFooterHtml,
+  buildAbntPrintHeaderHtml,
   buildDocumentReaderPrintHtml,
   collectPrintScopeClasses,
   downloadDocumentReaderPdf,
   findActiveDocumentPage,
+  parseDocumentPrintHtml,
   prepareDocumentPagePrintClone,
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";

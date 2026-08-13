@@ -5,8 +5,44 @@ import {
   collectPrintScopeClasses,
   downloadDocumentReaderPdf,
   findActiveDocumentPage,
+  parseDocumentPrintHtml,
+  prepareDocumentPagePrintClone,
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";
+
+function mountAtaPaperWithChrome(): HTMLElement {
+  document.body.innerHTML = `
+    <div class="dashboard-transformometro">
+      <section class="delpi-ui-document-reader">
+        <article class="delpi-ui-document-page tm-ata-paper">
+          <div class="delpi-ui-document-page__header">
+            <div class="tm-ata-document-brand">
+              <img class="tm-ata-document__logo" src="/logo.svg" alt="Transforma+" />
+            </div>
+          </div>
+          <div class="delpi-ui-document-page__body">
+            <p>Corpo da ata</p>
+            <h2>2. Objetivo</h2>
+            <p>Texto longo que atravessa páginas.</p>
+          </div>
+          <div class="delpi-ui-document-page__footer">
+            <div class="tm-ata-document-footer">
+              <footer class="delpi-ui-document-footer">
+                <span>30/07/2026</span>
+                <span>DELPI<br>Jaraguá do Sul — SC</span>
+                <span>Ata 2026/003</span>
+              </footer>
+              <div class="tm-ata-brand-bar" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+  `;
+  return findActiveDocumentPage()!;
+}
 
 describe("printDocumentReaderHtml", () => {
   beforeEach(() => {
@@ -90,7 +126,6 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("tm-ata-paper");
     expect(html).toContain("tm-facts-style");
     expect(html).toContain('data-theme="light"');
-    // A4 + margens ABNT NBR 14724 (não padding da folha contínua)
     expect(html).toContain("size: A4 portrait");
     expect(html).toContain("margin: 30mm 20mm 20mm 30mm");
     expect(html).toContain("text-align: justify !important");
@@ -98,7 +133,6 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("orphans: 3");
     expect(html).toContain("break-after: avoid-page");
     expect(html).toContain("position: static !important");
-    // Neutraliza body * { visibility:hidden } dos MFEs no @media print
     expect(html).toContain(
       "body.delpi-ui-document-print-window * {\n    visibility: visible !important;",
     );
@@ -124,51 +158,117 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("page-break-inside: avoid");
   });
 
-  it("cria cabeçalho e rodapé fixos por página a partir dos slots do papel", () => {
+  it("prepareDocumentPagePrintClone extrai slots sem perder conteúdo", () => {
+    const page = mountAtaPaperWithChrome();
+    const chrome = prepareDocumentPagePrintClone(page);
+    expect(chrome.hasRunningHeader).toBe(true);
+    expect(chrome.hasRunningFooter).toBe(true);
+    expect(chrome.runningHeaderHtml).toContain("tm-ata-document__logo");
+    expect(chrome.runningFooterHtml).toContain("Ata 2026/003");
+    expect(chrome.runningFooterHtml).toContain("tm-ata-brand-bar");
+    expect(chrome.pageHtml).toContain("header--print-source");
+    expect(chrome.pageHtml).toContain("footer--print-source");
+    expect(chrome.pageHtml).toContain("Corpo da ata");
+  });
+
+  it("coloca cabeçalho no thead e rodapé no tfoot (DOM parseável)", () => {
+    const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
+    const doc = parseDocumentPrintHtml(html);
+
+    const layout = doc.querySelector("table.delpi-ui-document-print-layout");
+    expect(layout).toBeTruthy();
+
+    const header = layout!.querySelector(
+      "thead .delpi-ui-document-print-abnt-header",
+    );
+    const footer = layout!.querySelector(
+      "tfoot .delpi-ui-document-print-abnt-footer",
+    );
+    const body = layout!.querySelector("tbody .delpi-ui-document-page__body");
+
+    expect(header).toBeTruthy();
+    expect(footer).toBeTruthy();
+    expect(body).toBeTruthy();
+    expect(header!.querySelector(".delpi-ui-document-print-abnt-header__brand img")).toBeTruthy();
+    expect(header!.querySelector(".delpi-ui-document-print-abnt-header__page")).toBeTruthy();
+    expect(footer!.textContent).toContain("30/07/2026");
+    expect(footer!.textContent).toContain("DELPI");
+    expect(footer!.textContent).toContain("Ata 2026/003");
+    expect(footer!.querySelector(".tm-ata-brand-bar span")).toBeTruthy();
+    expect(body!.textContent).toContain("Corpo da ata");
+
+    expect(
+      layout!.querySelector(".delpi-ui-document-page__header--print-source"),
+    ).toBeTruthy();
+    expect(
+      layout!.querySelector(".delpi-ui-document-page__footer--print-source"),
+    ).toBeTruthy();
+
+    const scope = doc.querySelector(".delpi-ui-document-print-scope");
+    expect(scope?.contains(layout)).toBe(true);
+    expect(scope?.className).toContain("ds-print-root");
+  });
+
+  it("organiza cabeçalho/rodapé no padrão ABNT (página à direita, meta 10pt)", () => {
+    const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
+    const style = html.match(
+      /<style id="delpi-ui-document-print-base">([\s\S]*?)<\/style>/,
+    )?.[1];
+    expect(style).toBeTruthy();
+    expect(style!).toContain("content: counter(page)");
+    expect(style!).toMatch(
+      /\.delpi-ui-document-print-abnt-header__page\s*\{[^}]*text-align:\s*right/,
+    );
+    expect(style!).toMatch(
+      /\.delpi-ui-document-print-abnt-footer \.delpi-ui-document-footer\s*\{[^}]*font-size:\s*10pt/,
+    );
+    expect(style!).toMatch(
+      /\.delpi-ui-document-print-abnt-footer \.delpi-ui-document-footer\s*\{[^}]*grid-template-columns:/,
+    );
+    expect(style!).toContain("border-bottom: 0.5pt solid #000");
+    expect(style!).toContain("border-top: 0.5pt solid #000");
+
+    const doc = parseDocumentPrintHtml(html);
+    const row = doc.querySelector(".delpi-ui-document-print-abnt-header__row");
+    expect(row?.children).toHaveLength(2);
+    expect(row?.children[0]?.className).toContain("abnt-header__brand");
+    expect(row?.children[1]?.className).toContain("abnt-header__page");
+  });
+
+  it("CSS de impressão usa table-header-group/footer-group (não position:fixed)", () => {
+    const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
+    const style = html.match(
+      /<style id="delpi-ui-document-print-base">([\s\S]*?)<\/style>/,
+    )?.[1];
+    expect(style).toBeTruthy();
+    expect(style!).toMatch(
+      /\.delpi-ui-document-print-layout\s*>\s*thead\s*\{[^}]*display:\s*table-header-group\s*!important/,
+    );
+    expect(style!).toMatch(
+      /\.delpi-ui-document-print-layout\s*>\s*tfoot\s*\{[^}]*display:\s*table-footer-group\s*!important/,
+    );
+    // Regressão: fixed falhou em atas longas no Chromium
+    expect(style!).not.toMatch(
+      /\.delpi-ui-document-print-running-header\s*\{[^}]*position:\s*fixed/,
+    );
+    expect(style!).not.toMatch(
+      /\.delpi-ui-document-print-running-footer\s*\{[^}]*position:\s*fixed/,
+    );
+  });
+
+  it("omite thead/tfoot quando o papel não tem cabeçalho/rodapé", () => {
     document.body.innerHTML = `
-      <div class="dashboard-transformometro">
-        <section class="delpi-ui-document-reader">
-          <article class="delpi-ui-document-page tm-ata-paper">
-            <div class="delpi-ui-document-page__header">
-              <div class="tm-ata-document-brand">
-                <img class="tm-ata-document__logo" src="/logo.svg" alt="Transforma+" />
-              </div>
-            </div>
-            <div class="delpi-ui-document-page__body"><p>Corpo da ata</p></div>
-            <div class="delpi-ui-document-page__footer">
-              <div class="tm-ata-document-footer">
-                <footer class="delpi-ui-document-footer">
-                  <span>30/07/2026</span>
-                  <span>DELPI<br>Jaraguá do Sul — SC</span>
-                  <span>Ata 2026/003</span>
-                </footer>
-                <div class="tm-ata-brand-bar" aria-hidden="true">
-                  <span></span><span></span><span></span><span></span>
-                </div>
-              </div>
-            </div>
-          </article>
-        </section>
-      </div>
+      <section class="delpi-ui-document-reader">
+        <article class="delpi-ui-document-page">
+          <div class="delpi-ui-document-page__body"><p>Só corpo</p></div>
+        </article>
+      </section>
     `;
-    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
-    expect(html).toContain('class="delpi-ui-document-print-window has-print-running-header has-print-running-footer"');
-    expect(html).toContain('class="delpi-ui-document-print-running-header"');
-    expect(html).toContain('class="delpi-ui-document-print-running-footer"');
-    expect(html).toContain("tm-ata-document__logo");
-    expect(html).toContain("Ata 2026/003");
-    expect(html).toContain("tm-ata-brand-bar");
-    expect(html).toContain("delpi-ui-document-page__header--print-source");
-    expect(html).toContain("delpi-ui-document-page__footer--print-source");
-    expect(html).toContain("delpi-ui-document-print-footer-spacer");
-    expect(html).toContain("position: fixed");
-    // Chrome fixo aparece antes do corpo no HTML (padrão certificados)
-    const headerIdx = html.indexOf("delpi-ui-document-print-running-header");
-    const footerIdx = html.indexOf("delpi-ui-document-print-running-footer");
-    const bodyIdx = html.indexOf("Corpo da ata");
-    expect(headerIdx).toBeGreaterThan(-1);
-    expect(footerIdx).toBeGreaterThan(headerIdx);
-    expect(bodyIdx).toBeGreaterThan(footerIdx);
+    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Doc");
+    const doc = parseDocumentPrintHtml(html);
+    expect(doc.querySelector("thead")).toBeNull();
+    expect(doc.querySelector("tfoot")).toBeNull();
+    expect(doc.querySelector("tbody")?.textContent).toContain("Só corpo");
   });
 
   it("mantém conteúdo visível sob regra host body * { visibility:hidden }", () => {
@@ -182,18 +282,15 @@ describe("printDocumentReaderHtml", () => {
         }
       </style>`,
     );
-    document.body.innerHTML = `
-      <div class="dashboard-transformometro">
-        <section class="delpi-ui-document-reader">
-          <article class="delpi-ui-document-page"><p>Texto da ata</p></article>
-        </section>
-      </div>
-    `;
-    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
+    const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
     expect(html).toContain("visibility: visible !important");
     expect(html).toContain("ds-print-root");
-    expect(html).toContain("Texto da ata");
-    // Override vem DEPOIS do CSS host (última stylesheet vence na ausência de !important host)
+    expect(html).toContain("Corpo da ata");
+    const doc = parseDocumentPrintHtml(html);
+    // Header/footer precisam estar dentro do escopo visível do MFE
+    const scope = doc.querySelector(".delpi-ui-document-print-scope");
+    expect(scope?.querySelector("thead .delpi-ui-document-print-running-header")).toBeTruthy();
+    expect(scope?.querySelector("tfoot .delpi-ui-document-print-running-footer")).toBeTruthy();
     const hostileIdx = html.indexOf("hostile-print");
     const overrideIdx = html.indexOf("body.delpi-ui-document-print-window *");
     expect(hostileIdx).toBeGreaterThan(-1);
@@ -219,12 +316,8 @@ describe("printDocumentReaderHtml", () => {
     link.remove();
   });
 
-  it("abre janela via printDelpiDocumentHtml", () => {
-    document.body.innerHTML = `
-      <section class="delpi-ui-document-reader">
-        <article class="delpi-ui-document-page"><p>Ata</p></article>
-      </section>
-    `;
+  it("abre janela via printDelpiDocumentHtml com layout thead/tfoot", () => {
+    mountAtaPaperWithChrome();
     const print = vi.fn();
     const fakeDoc = {
       open: vi.fn(),
@@ -243,10 +336,13 @@ describe("printDocumentReaderHtml", () => {
     vi.spyOn(window, "open").mockReturnValue(fakeWindow);
 
     expect(printDocumentReaderInWindow({ title: "Ata" })).toBe(true);
-    expect(fakeDoc.write).toHaveBeenCalled();
     const written = String(fakeDoc.write.mock.calls[0]?.[0] ?? "");
-    expect(written).toContain("Ata");
-    expect(written).toContain("delpi-ui-document-page");
+    const doc = parseDocumentPrintHtml(written);
+    expect(doc.querySelector("thead .delpi-ui-document-print-running-header")).toBeTruthy();
+    expect(doc.querySelector("tfoot .delpi-ui-document-print-running-footer")).toBeTruthy();
+    expect(written).toContain("table-header-group");
+    expect(written).toContain("delpi-ui-document-print-abnt-header");
+    expect(written).toContain("counter(page)");
 
     vi.advanceTimersByTime(1_500);
     expect(print).toHaveBeenCalledTimes(1);
