@@ -298,6 +298,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         <div className="cm-administration-groups__create-field cm-form-grid__full">
           <CommercialTextField
             label={copy.createPlaceholder}
+            hint={CM_HELP.administration.groupCreateName}
             value={newGroupName}
             onChange={setNewGroupName}
             disabled={creating}
@@ -471,6 +472,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                   <div className="cm-administration-groups__rename">
                     <CommercialTextField
                       label={copy.createPlaceholder}
+                      hint={CM_HELP.administration.groupRename}
                       value={renameDraft}
                       onChange={setRenameDraft}
                       disabled={renaming}

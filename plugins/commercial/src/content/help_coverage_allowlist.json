@@ -1,17 +1,7 @@
 {
   "generatedAt": "2026-08-13",
-  "note": "After E2.S3 Admin",
+  "note": "After E2.S3 Admin complete",
   "gaps": [
-    {
-      "file": "features/administration/AdministrationGroupsPage.tsx",
-      "kind": "field",
-      "id": "newGroupName"
-    },
-    {
-      "file": "features/administration/AdministrationGroupsPage.tsx",
-      "kind": "field",
-      "id": "renameDraft"
-    },
     {
       "file": "features/analytics/AnalyticsOpportunitiesPage.tsx",
       "kind": "field",
