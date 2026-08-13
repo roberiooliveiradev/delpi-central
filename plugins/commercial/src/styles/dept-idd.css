@@ -61,8 +61,7 @@
 }
 
 /** Filtros da Visão geral — multi-selects mais compactos na grade. */
-.dashboard-commercial .cm-page-hero [class*="filters-row--extended"],
-.dashboard-commercial .cm-page-hero .delpi-ui-filters-row--extended {
+.dashboard-commercial .cm-page-hero [class*="filters-row--extended"] {
   --delpi-ui-filter-grid-min: 9.25rem;
 }
 
