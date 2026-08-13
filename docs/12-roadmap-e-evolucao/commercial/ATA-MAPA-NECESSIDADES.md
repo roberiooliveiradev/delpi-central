@@ -396,3 +396,67 @@ A (fichas) → B (cockpit) → C (ofertas) → D (pedidos/entrega) → E (sensí
 | [API-ROUTES.md](./API-ROUTES.md) | Catálogo + gaps (FNE, boletos, rentabilidade) |
 | [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) | commercial-api × api-delpi |
 | [plugins/commercial/README.md](../../../plugins/commercial/README.md) | README do MFE |
+
+---
+
+## 7. Ecossistema Minha DELPI — o que aproveitar
+
+Outros MFEs e `*-api` já cobrem partes da ata. O Portal Comercial **não** importa domain de outro app ([SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md)): só **link** (launcher/deep link), **HTTP via BFF** (`commercial-api` → api-delpi), **referência legado**, ou trata como **fora**.
+
+### 7.1 Legenda de reuso
+
+| Modo | Significado |
+|------|-------------|
+| **Link** | Usuário abre o app irmão; Portal pode apontar (sem iframe obrigatório / MF) |
+| **HTTP via BFF** | Dado TOTVS via `commercial-api` → api-delpi (mesmo contrato que o app irmão consome) |
+| **Referência legado** | Coexiste no menu; UX canônica permanece o Portal |
+| **Fora** | Outro bounded context ou sem app no monorepo; Comercial não implementa |
+
+### 7.2 Matriz App × necessidade da ata × reuso
+
+| Necessidade (ata) | App / API | basePath | Reuso | Doc |
+|-------------------|-----------|----------|-------|-----|
+| GAV TV / Manual do Líder N1 (exibição) | `tv-dashboard` + `tv-dashboard-api` | `/apps/tv-dashboard` | **Link** + slides live; gap = **conteúdo** Comercial/GR | [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md) · [tv-dashboard-api/README.md](../../../tv-dashboard-api/README.md) |
+| OEE / OTD **produção** / apontamentos | `dashboard-production`, `eficiencia-fabril`, `production-appointments` | `/apps/dashboard-production`, `/apps/eficiencia-fabril`, `/apps/production-appointments` | **Link**; dados `/production/*` (Portal já usa factory-status na ficha da linha via BFF) | [dashboard-production](../../../plugins/dashboard-production/README.md) · [eficiencia-fabril](../../../plugins/eficiencia-fabril/README.md) · [production-appointments](../../../plugins/production-appointments/README.md) |
+| Ocupação / capacidade PCP plena (§22) | — (PCP); parcial `factory-status` | — | **Fora** até contrato Produção; **não** usar Transformômetro | ver §7.3 |
+| ROL visão financeira | `dashboard-financial` | `/apps/dashboard-financial` | **Link** / referência; Portal = `/commercial/rol*` via BFF | [dashboard-financial](../../../plugins/dashboard-financial/README.md) |
+| Rupturas / estoque (GR N2) | `estoque-seguranca`, `dashboard-supplies` | `/apps/estoque-seguranca`, `/apps/dashboard-supplies` | **Link**; futuro HTTP `/supplies/*` no GR Comercial | [estoque-seguranca](../../../plugins/estoque-seguranca/README.md) · [dashboard-supplies](../../../plugins/dashboard-supplies/README.md) |
+| LMP / amostra engenharia (§12 parcial) | `dashboard-lmps` (`listing_type=Amostra`) | `/apps/dashboard-lmps` | **Link** parcial; **≠** ciclo amostra vendas (SMP-\*) | [dashboard-lmps](../../../plugins/dashboard-lmps/README.md) |
+| PAC Qualidade | `quality-action-plans` | `/apps/quality-action-plans` | **Fora** (não confundir com CIP/amostra comercial) | [quality-action-plans](../../../plugins/quality-action-plans/README.md) |
+| CIPA (segurança) | `cipa` + `cipa-api` | `/apps/cipa` | **Fora** — ≠ «CIP A» / amostra comercial | [cipa](../../../plugins/cipa/README.md) |
+| Metas / IDD | `strategic-indicators` + `strategic-indicators-api` | `/apps/strategic-indicators` | **Link** / HTTP SI (metas ≠ forecast Portal) | [strategic-indicators](../../../plugins/strategic-indicators/README.md) |
+| Consultas assistidas por IA (§4) | `minha-delpi-chat` + `minha-delpi-ai-api` | `/apps/minha-delpi-chat` | **Link**; membership/carteira só via commercial-api | [minha-delpi-chat](../../../plugins/minha-delpi-chat/README.md) · [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) |
+| ROL / OTD / OV legado | `dashboard-commercial` | `/apps/dashboard-commercial` | **Referência legado** | [dashboard-commercial](../../../plugins/dashboard-commercial/README.md) |
+| Propostas ADY legado | `propostas-comerciais` | `/apps/propostas-comerciais` | **Referência legado** (Portal `/proposals`) | [propostas-comerciais](../../../plugins/propostas-comerciais/README.md) |
+| Portal do Vendedor | `pedidos-venda-abertos` | `/apps/pedidos-venda-abertos` | **Referência legado** → deprecar pós F2c | [pedidos-venda-abertos](../../../plugins/pedidos-venda-abertos/README.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md) |
+| Melhoria de processo / ROI | `transformometro` + `transformometro-api` | `/apps/transformometro` | **Fora** — `ganho_capacidade` ≠ ocupação fábrica PCP | [transformometro](../../../plugins/transformometro/README.md) |
+| Inadimplência | `financeiro-inadimplencia` | `/apps/financeiro-inadimplencia` | **Fora** de boletos emitidos por Vendas (§21) | [financeiro-inadimplencia](../../../plugins/financeiro-inadimplencia/README.md) |
+
+```text
+Portal Comercial ──BFF──▶ commercial-api ──▶ api-delpi
+       │                      │
+       ├── Link ▶ tv-dashboard / dashboard-production / estoque-seguranca / chat
+       └── Referência ▶ dashboard-commercial / propostas-comerciais / PVA
+```
+
+### 7.3 Onde NÃO há app ainda (confirmado no monorepo)
+
+| Ata | Necessidade | Situação |
+|-----|-------------|----------|
+| §18 | Expedição barcode / QR / divergência | Sem MFE/`*-api`; ops + chamado |
+| §19 | Inventário rotativo Expedição `#000697` | Sem app; consultar chamado |
+| §20 | Formulário eletrônico de devoluções `#000688` | Sem app; só filtros/totais analíticos pontuais na api-delpi |
+| §21 | Boletos emitidos por Vendas + alçadas | Sem app; spec FIN-007–008 |
+| §11 | Rentabilidade / margem comercial | Sem app; **bloqueado** política FIN-004 |
+| §17 | Faturado e não embarcado (lista operacional) | Sem operationId dedicado |
+| §13 | Programa confirmação de pedidos | Sem app; workflow F7 |
+| §22 | Cockpit capacidade/ocupação PCP | Sem app Comercial; dashboards produção ≠ ATP |
+
+### 7.4 Impacto nas ondas D–E (sem mudar A→B)
+
+| Onda | Aproveitar do ecossistema | Continua a construir no Portal |
+|------|---------------------------|--------------------------------|
+| **D** | Plataforma [tv-dashboard](../../../plugins/tv-dashboard/README.md) para GAV TV; OTD produção em [dashboard-production](../../../plugins/dashboard-production/README.md) como **complemento** (≠ OTD comercial) | FNE, confirmação, causas OTD comercial, timeline embarque |
+| **E** | [estoque-seguranca](../../../plugins/estoque-seguranca/README.md) / [dashboard-supplies](../../../plugins/dashboard-supplies/README.md) para rupturas; [dashboard-lmps](../../../plugins/dashboard-lmps/README.md) só como parcial engenharia; [dashboard-production](../../../plugins/dashboard-production/README.md) como link de capacidade | Amostras vendas (SMP-\*), boletos, rentabilidade, read-model PCP se houver contrato |
+
+Prioridade da ata permanece: **A → B → C → D → E**. Ecossistema reduz retrabalho; não antecipa ondas bloqueadas por ficha/política.
