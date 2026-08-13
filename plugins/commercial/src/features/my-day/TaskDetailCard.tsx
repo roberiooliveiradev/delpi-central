@@ -19,6 +19,10 @@ type TaskDetailCardProps = {
   assigneeValue?: ReactNode;
   /** Quem criou/atribuiu — chips com avatar quando diferente do responsável. */
   assignedByValue?: ReactNode;
+  /** Quem concluiu — chip com avatar quando disponível. */
+  completedByValue?: ReactNode;
+  /** Grupos responsáveis (badges). */
+  groupsValue?: ReactNode;
   /** Texto legado ou chips com link (ReactNode). */
   customerValue?: ReactNode;
   canManage: boolean;
@@ -62,6 +66,8 @@ export function TaskDetailCard({
   priorityLabel,
   assigneeValue,
   assignedByValue,
+  completedByValue,
+  groupsValue,
   customerValue,
   canManage,
   canEdit,
@@ -94,6 +100,15 @@ export function TaskDetailCard({
             value: completedLabel,
             hint: CM_HELP.myDay.taskCompletedAt,
           },
+          ...(completedByValue
+            ? [
+                {
+                  label: "Concluída por",
+                  value: completedByValue,
+                  hint: CM_HELP.myDay.taskCompletedBy,
+                },
+              ]
+            : []),
         ]
       : []),
     { label: "Prazo", value: formatDue(task.due_at), hint: CM_HELP.myDay.taskDue },
@@ -101,6 +116,9 @@ export function TaskDetailCard({
     { label: "Tipo", value: typeLabel, hint: CM_HELP.myDay.taskType },
     ...(assigneeValue
       ? [{ label: "Responsável", value: assigneeValue, hint: CM_HELP.myDay.taskAssignee }]
+      : []),
+    ...(groupsValue
+      ? [{ label: "Grupos", value: groupsValue, hint: CM_HELP.myDay.taskGroups }]
       : []),
     ...(assignedByValue
       ? [

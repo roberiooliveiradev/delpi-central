@@ -69,12 +69,16 @@ export const CM_HELP = {
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskCompletedAt: "Quando a tarefa foi marcada como concluída.",
+    taskCompletedBy:
+      "Quem concluiu a tarefa (responsável individual ou membro do grupo atribuído).",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligação, e-mail, visita ou outra ação comercial.",
     taskAssignee:
       "Um ou mais usuários do portal com acesso ao Comercial (máx. 20). Vazio = você. Só gestores atribuem a outros. No card, o nome abre o perfil.",
+    taskGroups:
+      "Grupos operacionais responsáveis. Membros atuais do grupo veem a tarefa na fila Minhas; um membro conclui para todos.",
     taskAssignedBy:
-      "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; qualquer responsável conclui.",
+      "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; qualquer responsável (ou membro do grupo) conclui.",
     taskCustomer:
       "Um ou mais clientes TOTVS (máx. 20). No card, o nome abre a Conta na aba Contatos; Abrir conta usa o primeiro cliente.",
     taskDescription:

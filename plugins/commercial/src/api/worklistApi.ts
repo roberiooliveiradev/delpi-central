@@ -7,6 +7,12 @@ export type TaskCustomerDto = {
   customer_name?: string | null;
 };
 
+export type TaskAssigneeGroupDto = {
+  id: string;
+  kind?: string;
+  name?: string;
+};
+
 export type CommercialTaskDto = {
   id: string;
   title: string;
@@ -16,8 +22,11 @@ export type CommercialTaskDto = {
   priority: string;
   due_at?: string | null;
   completed_at?: string | null;
+  completed_by_user_id?: string | null;
   assignee_user_id: string;
   assignee_user_ids?: string[];
+  assignee_group_ids?: string[];
+  assignee_groups?: TaskAssigneeGroupDto[];
   created_by_user_id: string;
   customer_code?: string | null;
   customer_store?: string | null;
@@ -119,6 +128,7 @@ export async function createTask(
     customers?: TaskCustomerBody[] | null;
     assignee_user_id?: string | null;
     assignee_user_ids?: string[] | null;
+    assignee_group_ids?: string[] | null;
   },
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {
@@ -143,6 +153,7 @@ export async function updateTask(
     customers?: TaskCustomerBody[] | null;
     assignee_user_id?: string | null;
     assignee_user_ids?: string[] | null;
+    assignee_group_ids?: string[] | null;
   },
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {

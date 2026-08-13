@@ -22,6 +22,7 @@ import {
   type WorklistData,
   type WorklistScope,
 } from "../../api/worklistApi";
+import { listCommercialGroups, type CommercialGroupDto } from "../../api/commercialGroupsApi";
 import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -37,9 +38,11 @@ import {
   CommercialAttachmentFileList,
   CommercialFileDropzone,
   CommercialLoadingCard,
+  CommercialMultiSelectField,
   CommercialPageHero,
   CommercialScopeChipBar,
   CommercialSelectField,
+  CommercialStatusBadge,
   CommercialTextAreaField,
   CommercialTextField,
   CommercialTitleWithHelp,
@@ -236,11 +239,13 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     canManageFollowups,
     isAdmin,
     canViewWorklistTeam,
+    canManagePortfolios,
     myPortfolio,
     currentUserId,
     sellers,
   } = usePortfolioScope();
   const canTeamWorklist = canViewWorklistTeam || isAdmin;
+  const canAssignGroups = canManagePortfolios || isAdmin;
   const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
   const confirm = useCommercialConfirm();
   const [loading, setLoading] = useState(true);
@@ -261,6 +266,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     [],
   );
   const [assigneePicker, setAssigneePicker] = useState<DirectoryUserOption[]>([]);
+  const [assigneeGroupIds, setAssigneeGroupIds] = useState<string[]>([]);
+  const [groupOptions, setGroupOptions] = useState<CommercialGroupDto[]>([]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -304,6 +311,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           if (uid) ids.push(uid);
         }
         if (task.created_by_user_id) ids.push(task.created_by_user_id);
+        if (task.completed_by_user_id) ids.push(task.completed_by_user_id);
       }
     }
     for (const task of doneItems) {
@@ -315,6 +323,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         if (uid) ids.push(uid);
       }
       if (task.created_by_user_id) ids.push(task.created_by_user_id);
+      if (task.completed_by_user_id) ids.push(task.completed_by_user_id);
     }
     return ids;
   }, [
@@ -348,6 +357,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     setTaskType("follow_up");
     setCustomerSelection([]);
     setAssigneePicker([]);
+    setAssigneeGroupIds([]);
     setEditingTaskId(null);
   }, []);
 
@@ -386,6 +396,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             ? [task.assignee_user_id]
             : []
         ).map((uid) => directoryOptionFromId(uid, directoryLabelFor)),
+      );
+      setAssigneeGroupIds(
+        task.assignee_group_ids?.length
+          ? [...task.assignee_group_ids]
+          : (task.assignee_groups ?? []).map((group) => group.id).filter(Boolean),
       );
       const customers =
         task.customers?.length
@@ -502,6 +517,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setTeamAssigneeFilter("");
     }
   }, [canTeamWorklist, workScope]);
+
+  useEffect(() => {
+    if (!canAssignGroups) {
+      setGroupOptions([]);
+      return;
+    }
+    const controller = new AbortController();
+    void listCommercialGroups({ activeOnly: true, signal: controller.signal })
+      .then((items) => {
+        if (!controller.signal.aborted) {
+          setGroupOptions(items);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setGroupOptions([]);
+      });
+    return () => controller.abort();
+  }, [canAssignGroups]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -634,6 +667,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         customers: customers.length > 0 ? customers : undefined,
         assignee_user_ids:
           canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
+        assignee_group_ids: canAssignGroups ? assigneeGroupIds : undefined,
       });
       if (pendingAttachments.length > 0) {
         const failed: string[] = [];
@@ -687,6 +721,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         customers,
         assignee_user_ids:
           canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
+        assignee_group_ids:
+          canAssignGroups ? assigneeGroupIds : undefined,
       });
       closeTaskForm();
       notifySuccess("Tarefa atualizada.");
@@ -947,6 +983,50 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         })}
                       </div>
                     ) : null;
+                  const taskGroups =
+                    task.assignee_groups?.length
+                      ? task.assignee_groups
+                      : (task.assignee_group_ids ?? []).map((id) => ({
+                          id,
+                          kind: "",
+                          name: "",
+                        }));
+                  const groupsValue =
+                    taskGroups.length > 0 ? (
+                      <div
+                        className="cm-task-link-chips"
+                        role="group"
+                        aria-label="Grupos da tarefa"
+                      >
+                        {taskGroups.map((group) => (
+                          <CommercialStatusBadge
+                            key={group.id}
+                            label={group.name || group.kind || "Grupo"}
+                            variant="info"
+                          />
+                        ))}
+                      </div>
+                    ) : null;
+                  const completedBy = (task.completed_by_user_id || "").trim();
+                  const completedByValue =
+                    completedBy ? (
+                      <div
+                        className="cm-task-link-chips"
+                        role="group"
+                        aria-label="Concluída por"
+                      >
+                        <TaskUserLinkChip
+                          userId={completedBy}
+                          fallbackLabel={
+                            sellerNameByUserId.get(completedBy) ??
+                            directoryLabelFor(completedBy)
+                          }
+                          onOpen={() =>
+                            navigateUserProfile(completedBy, { basePath })
+                          }
+                        />
+                      </div>
+                    ) : null;
                   const createdBy = (task.created_by_user_id || "").trim();
                   const primaryAssignee = (assigneeIds[0] || "").trim();
                   const me = (currentUserId || myPortfolio?.user_id || "").trim();
@@ -1025,6 +1105,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       priorityLabel={priorityLabel}
                       assigneeValue={assigneeValue}
                       assignedByValue={assignedByValue}
+                      completedByValue={completedByValue}
+                      groupsValue={groupsValue}
                       customerValue={customerValue}
                       canManage={canManageFollowups}
                       canEdit={canEditTask}
@@ -1168,6 +1250,20 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         ? "Buscar usuários…"
                         : "Buscar usuários… (vazio = eu)",
                   }}
+                />
+              ) : null}
+              {canAssignGroups ? (
+                <CommercialMultiSelectField
+                  id="my-day-task-groups"
+                  label="Grupos"
+                  hint={CM_HELP.myDay.taskGroups}
+                  selectedValues={assigneeGroupIds}
+                  onChange={setAssigneeGroupIds}
+                  options={groupOptions.map((group) => ({
+                    value: group.id,
+                    label: group.name || group.kind || group.id,
+                  }))}
+                  searchable
                 />
               ) : null}
               <CustomerSearchPicker
