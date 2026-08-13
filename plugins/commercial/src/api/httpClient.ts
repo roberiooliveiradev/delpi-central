@@ -2,6 +2,7 @@ import {
   COMMERCIAL_CLIENT_ID_HEADER,
   getCommercialClientId,
 } from "../app/commercialClientId";
+import { formatApiErrorBody, resolveHttpErrorMessage } from "./httpErrorMessage";
 
 type RequestOptions = {
   signal?: AbortSignal;
@@ -17,28 +18,6 @@ let accessTokenGetter: (() => string | undefined) | null = null;
 
 export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
-}
-
-function formatErrorMessage(errorBody: unknown, fallback: string): string {
-  if (!errorBody || typeof errorBody !== "object") {
-    return fallback;
-  }
-
-  const record = errorBody as Record<string, unknown>;
-  const base =
-    (typeof record.message === "string" && record.message) ||
-    (typeof record.detail === "string" && record.detail) ||
-    fallback;
-  const error = record.error;
-
-  if (error && typeof error === "object") {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === "string" && code) {
-      return `[${code}] ${base}`;
-    }
-  }
-
-  return base;
 }
 
 function buildHeaders(withJsonBody: boolean, includeClientId = false): Record<string, string> {
@@ -60,14 +39,22 @@ function buildHeaders(withJsonBody: boolean, includeClientId = false): Record<st
 }
 
 async function parseError(response: Response): Promise<string> {
-  let message = `Erro HTTP ${response.status}`;
+  const status = response.status;
+  let rawFromBody: string | null = null;
   try {
-    const errorBody = await response.json();
-    message = formatErrorMessage(errorBody, message);
+    const text = await response.text();
+    if (text.trim()) {
+      try {
+        const errorBody: unknown = JSON.parse(text);
+        rawFromBody = formatApiErrorBody(errorBody, text);
+      } catch {
+        rawFromBody = text;
+      }
+    }
   } catch {
-    // mantém mensagem padrão
+    rawFromBody = null;
   }
-  return message;
+  return resolveHttpErrorMessage(status, rawFromBody);
 }
 
 export function commercialApiUrl(path: string): string {
