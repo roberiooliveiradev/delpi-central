@@ -740,6 +740,26 @@ Chip Escopo no shell = **só identidade** (ver WF-00).
 | **E6.4** — Badge Conta | «Compartilhado» + «Também em» (`POST /customer-coverage`) |
 | **E6.5** — Bulk + Excel | Wizard transfer + export matriz org |
 
+### Auditoria tabelas P0 — refino Conta/Propostas (ago/2026)
+
+Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/cards + `returnTo` nos detalhes).
+
+| Superfície | Status | Notas |
+|---|---|---|
+| Conta pedidos | OK | Modal linhas + página detalhe; sem expand inline |
+| Conta histórico NF | OK | MetricCards + tabela/modal itens |
+| Oportunidades | OK | DataTable + StatusBadge + CTA ADY |
+| Detalhe OV | OK | CTA Abrir proposta + `resolvePagePathBack` |
+| Propostas lista | OK | Toolbar Tabela\|Cards + paginação |
+| Proposta detalhe | OK | Select contatos + `returnTo` |
+| Equipe lista/diagrama | OK | SegmentToggle + OrgMembershipFlow `group` |
+| Grupos / Perfil | OK | Empty+create card; AvatarStack; seção grupos |
+| Minhas tarefas | OK | Grupos + «Concluída por» (E6) |
+| PagePath returnTo | OK | Helper canônico + detalhes do escopo |
+| Gaps kit | OK | AvatarStack + Org `group` + SegmentToggle factory |
+
+**P0 residual (higiene wrappers):** páginas fora do núcleo do refino ainda usam `SectionCard`/`EmptyState` diretos do kit (ex.: Analytics OTD/Team) — fora do escopo de gaps P0 desta auditoria; migrar em onda própria.
+
 ### E7 — backlog futuro (não implementar neste ciclo)
 
 Fora do MVP E1–E6. Detalhe em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6.
