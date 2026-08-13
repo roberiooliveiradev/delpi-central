@@ -122,6 +122,50 @@ def test_create_group_success_and_audit() -> None:
     assert audit.append.call_args.kwargs["action"] == "commercial_group.create"
 
 
+def test_rename_group_updates_name_keeps_kind_and_audits() -> None:
+    from commercial_app.application.use_cases.manage_commercial_groups import (
+        RenameCommercialGroupRequest,
+    )
+
+    repository = MagicMock()
+    repository.get_by_id.return_value = _group(name="Vendedores")
+    renamed = _group(name="Equipe Comercial")
+    repository.rename_group.return_value = renamed
+    audit = MagicMock()
+    use_case = ManageCommercialGroupsUseCase(repository, audit_repository=audit)
+
+    result = use_case.rename_group(
+        RenameCommercialGroupRequest(
+            group_id="g1",
+            name="Equipe Comercial",
+            actor_user_id="actor-1",
+        )
+    )
+
+    assert result.name == "Equipe Comercial"
+    assert result.kind == "sellers"
+    repository.rename_group.assert_called_once_with("g1", name="Equipe Comercial")
+    assert audit.append.call_args.kwargs["action"] == "commercial_group.rename"
+    assert audit.append.call_args.kwargs["payload"]["previous_name"] == "Vendedores"
+    assert audit.append.call_args.kwargs["payload"]["kind"] == "sellers"
+
+
+def test_rename_group_requires_name() -> None:
+    from commercial_app.application.use_cases.manage_commercial_groups import (
+        RenameCommercialGroupRequest,
+    )
+
+    repository = MagicMock()
+    repository.get_by_id.return_value = _group()
+    use_case = ManageCommercialGroupsUseCase(repository)
+
+    try:
+        use_case.rename_group(RenameCommercialGroupRequest(group_id="g1", name="  "))
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "nome" in str(exc).lower()
+
+
 def test_delete_group_audits_and_raises_when_missing() -> None:
     repository = MagicMock()
     repository.get_by_id.return_value = _group()

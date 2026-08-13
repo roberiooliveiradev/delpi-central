@@ -34,6 +34,11 @@ class CommercialGroupRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def rename_group(self, group_id: str, *, name: str) -> CommercialGroup | None:
+        """Update display name only; kind stays immutable. None if missing."""
+        raise NotImplementedError
+
+    @abstractmethod
     def delete_group(self, group_id: str) -> bool:
         """Hard-delete group (members cascade). False if missing."""
         raise NotImplementedError

@@ -11,6 +11,7 @@ from commercial_app.application.security.commercial_permissions import (
 from commercial_app.application.use_cases.manage_commercial_groups import (
     CreateCommercialGroupRequest,
     ManageCommercialGroupsUseCase,
+    RenameCommercialGroupRequest,
 )
 from commercial_app.composition.commercial_composer import (
     build_manage_commercial_groups_use_case,
@@ -23,6 +24,7 @@ from commercial_app.domain.services.commercial_groups_messages_content_service i
 from commercial_app.interface.http.schemas.group_schemas import (
     AddGroupMemberBody,
     CreateCommercialGroupBody,
+    RenameCommercialGroupBody,
     ReplaceGroupMembersBody,
 )
 
@@ -118,6 +120,40 @@ def create_commercial_group(
             "Erro interno ao criar grupo.",
             500,
             operation_id="create_commercial_group",
+        )
+
+
+@router.patch("/{group_id}", operation_id="rename_commercial_group")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def rename_commercial_group(
+    request: Request,
+    group_id: str = Path(..., min_length=1),
+    body: RenameCommercialGroupBody = Body(...),
+):
+    try:
+        use_case = _use_case()
+        group = use_case.rename_group(
+            RenameCommercialGroupRequest(
+                group_id=group_id,
+                name=body.name,
+                actor_user_id=_current_user_id(request),
+            )
+        )
+        return ok(
+            use_case.serialize_group(group),
+            message=CommercialGroupsMessagesContentService.message("renameOk"),
+            operation_id="rename_commercial_group",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="rename_commercial_group")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="rename_commercial_group")
+    except Exception:
+        logger.exception("rename_commercial_group_failed")
+        return fail(
+            "Erro interno ao renomear grupo.",
+            500,
+            operation_id="rename_commercial_group",
         )
 
 

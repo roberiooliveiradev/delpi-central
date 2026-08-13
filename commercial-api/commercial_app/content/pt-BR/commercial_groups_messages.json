@@ -11,6 +11,7 @@
     "listOk": "Grupos operacionais carregados.",
     "getOk": "Grupo operacional carregado.",
     "createOk": "Grupo operacional criado.",
+    "renameOk": "Grupo operacional renomeado.",
     "deleteOk": "Grupo operacional excluído.",
     "replaceMembersOk": "Membros do grupo atualizados.",
     "addMemberOk": "Membro adicionado ao grupo.",

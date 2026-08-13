@@ -1,5 +1,5 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
-import { commercialApiUrl, httpDelete, httpGet, httpPost, httpPut } from "./httpClient";
+import { commercialApiUrl, httpDelete, httpGet, httpPatch, httpPost, httpPut } from "./httpClient";
 
 export type CommercialGroupMemberDto = {
   user_id: string;
@@ -48,6 +48,17 @@ export async function createCommercialGroup(
     { name: name.trim() },
   );
   return unwrapEnvelope(response, "Erro ao criar grupo.");
+}
+
+export async function renameCommercialGroup(
+  groupId: string,
+  name: string,
+): Promise<CommercialGroupDto> {
+  const response = await httpPatch<ApiSuccessResponse<CommercialGroupDto>>(
+    commercialApiUrl(`/groups/${encodeURIComponent(groupId)}`),
+    { name: name.trim() },
+  );
+  return unwrapEnvelope(response, "Erro ao renomear grupo.");
 }
 
 export async function deleteCommercialGroup(groupId: string): Promise<void> {

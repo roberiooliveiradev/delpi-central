@@ -79,6 +79,23 @@ class PostgresCommercialGroupRepository(PluginBaseRepository, CommercialGroupRep
             raise RuntimeError("Falha ao criar grupo operacional.")
         return group
 
+    def rename_group(self, group_id: str, *, name: str) -> CommercialGroup | None:
+        gid = str(group_id).strip()
+        new_name = str(name).strip()
+        if not gid or not new_name:
+            return None
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.commercial_groups
+               SET name = %s,
+                   updated_at = NOW()
+             WHERE id = %s
+         RETURNING {_GROUP_COLUMNS}
+            """,
+            (new_name, gid),
+        )
+        return self._hydrate(row)
+
     def delete_group(self, group_id: str) -> bool:
         gid = str(group_id).strip()
         if not gid:

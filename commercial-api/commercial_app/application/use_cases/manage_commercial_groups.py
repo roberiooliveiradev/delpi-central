@@ -68,6 +68,13 @@ class CreateCommercialGroupRequest:
     created_by_user_id: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class RenameCommercialGroupRequest:
+    group_id: str
+    name: str
+    actor_user_id: str | None = None
+
+
 class ManageCommercialGroupsUseCase:
     def __init__(
         self,
@@ -124,6 +131,32 @@ class ManageCommercialGroupsUseCase:
             payload={"kind": group.kind, "name": group.name},
         )
         return group
+
+    def rename_group(self, request: RenameCommercialGroupRequest) -> CommercialGroup:
+        gid = _normalize(request.group_id)
+        name = _normalize(request.name)
+        if not gid:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        if not name:
+            raise ValueError(CommercialGroupsMessagesContentService.error("nameRequired"))
+        existing = self._repository.get_by_id(gid)
+        if existing is None:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        previous_name = existing.name
+        updated = self._repository.rename_group(gid, name=name)
+        if updated is None:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        self._append_audit(
+            actor_user_id=request.actor_user_id,
+            action="commercial_group.rename",
+            entity_id=gid,
+            payload={
+                "kind": updated.kind,
+                "previous_name": previous_name,
+                "name": updated.name,
+            },
+        )
+        return updated
 
     def delete_group(
         self,

@@ -13,6 +13,10 @@ class CreateCommercialGroupBody(BaseModel):
     active: bool = Field(default=True)
 
 
+class RenameCommercialGroupBody(BaseModel):
+    name: str = Field(..., min_length=1, description="Novo nome de exibição; kind permanece imutável.")
+
+
 class ReplaceGroupMembersBody(BaseModel):
     user_ids: list[str] = Field(default_factory=list)
 
