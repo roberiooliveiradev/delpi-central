@@ -282,11 +282,11 @@ export function AnalyticsOpportunityDetailPage({
     <section className="cm-page-stack">
       <CommercialPagePath
         back={{
-          label: "Oportunidades",
-          href: backHref,
+          label: back.label,
+          href: back.href,
           onNavigate: (event) => {
             event.preventDefault();
-            navigatePluginPath(backHref);
+            navigatePluginPath(back.href);
           },
         }}
         current={`OV ${proposalNumber}`}
@@ -296,9 +296,18 @@ export function AnalyticsOpportunityDetailPage({
         title={`OV ${proposalNumber}`}
         description={ANALYTICS_CONTENT.oportunidades.detail}
         actions={
-          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
-            <RefreshCw size={16} aria-hidden="true" /> Atualizar
-          </CommercialActionButton>
+          <>
+            {canViewProposals ? (
+              <OpenProposalFromOpportunityButton
+                basePath={basePath}
+                opportunityNumber={proposalNumber}
+                returnLabel={`OV ${proposalNumber}`}
+              />
+            ) : null}
+            <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+              <RefreshCw size={16} aria-hidden="true" /> Atualizar
+            </CommercialActionButton>
+          </>
         }
       />
 
