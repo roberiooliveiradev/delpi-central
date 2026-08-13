@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildDocumentReaderPrintHtml,
+  collectPrintScopeClasses,
   downloadDocumentReaderPdf,
   findActiveDocumentPage,
   printDocumentReaderInWindow,
@@ -45,6 +46,70 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toMatch(/https?:\/\/.+\/logo\.svg|file:\/\/.+\/logo\.svg|http:\/\/localhost.+\/logo\.svg/);
     expect(html).toContain("doc-test-style");
     document.getElementById("doc-test-style")?.remove();
+  });
+
+  it("preserva escopo dashboard-* da prévia (CSS do MFE)", () => {
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `<style id="tm-facts-style">
+        .dashboard-transformometro .tm-ata-document__facts {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+        }
+        .dashboard-transformometro .tm-ata-document-brand {
+          justify-content: flex-start;
+        }
+      </style>`,
+    );
+    document.body.innerHTML = `
+      <div class="dashboard-transformometro dashboard-page">
+        <div class="tm-atas-view__document">
+          <section class="delpi-ui-document-reader tm-ata-reader">
+            <article class="delpi-ui-document-page tm-ata-paper">
+              <div class="tm-ata-document-brand"><img src="/logo.png" alt="logo" /></div>
+              <dl class="tm-ata-document__facts">
+                <div><dt>Tipo</dt><dd>Reunião</dd></div>
+                <div><dt>Unidade</dt><dd>01</dd></div>
+              </dl>
+            </article>
+          </section>
+        </div>
+      </div>
+    `;
+    const page = findActiveDocumentPage()!;
+    const scope = collectPrintScopeClasses(page);
+    expect(scope).toContain("dashboard-transformometro");
+    expect(scope).toContain("delpi-ui-document-reader");
+
+    const html = buildDocumentReaderPrintHtml(page, "Ata Transforma+");
+    expect(html).toMatch(
+      /class="delpi-ui-document-print-scope[^"]*dashboard-transformometro[^"]*"/,
+    );
+    expect(html).toContain("tm-ata-document__facts");
+    expect(html).toContain("tm-ata-paper");
+    expect(html).toContain("tm-facts-style");
+    expect(html).toContain('data-theme="light"');
+    // Folha não pode herdar max-width mobile na janela estreita
+    expect(html).toContain("padding: 14mm 21mm 16mm !important");
+    document.getElementById("tm-facts-style")?.remove();
+  });
+
+  it("absolutiza href de stylesheets para about:blank", () => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/assets/plugin.css";
+    document.head.appendChild(link);
+    document.body.innerHTML = `
+      <div class="dashboard-cipa">
+        <section class="delpi-ui-document-reader">
+          <article class="delpi-ui-document-page"><p>CIPA</p></article>
+        </section>
+      </div>
+    `;
+    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "CIPA");
+    expect(html).toMatch(/href="https?:\/\/[^"]+\/assets\/plugin\.css"/);
+    expect(html).toContain("dashboard-cipa");
+    link.remove();
   });
 
   it("abre janela via printDelpiDocumentHtml", () => {
