@@ -351,9 +351,8 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
   const displayName = directoryUserLabelOrFallback({
     name: profile.name,
-    email: profile.email,
   });
-  const heroDescription = [profile.email, profile.job_title].filter(Boolean).join(" · ");
+  const heroDescription = (profile.job_title ?? "").trim() || undefined;
 
   return (
     <div className="cm-user-profile cm-page-stack">
@@ -372,10 +371,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
 
       <CommercialPageHero
         title={displayName}
-        description={heroDescription || undefined}
+        description={heroDescription}
         badge={
           <span className="cm-nav-row">
-            <CommercialStatusBadge label="Commercial" variant="success" />
+            <CommercialStatusBadge label={USER_ACCESS_COPY.appBadge} variant="success" />
             {meIsSuperadmin && isSelf ? (
               <CommercialStatusBadge label={USER_ACCESS_COPY.superadmin} variant="warning" />
             ) : null}
