@@ -23,6 +23,10 @@ import {
 } from "../../../app/commercialUi";
 import { navigateCustomerDetail } from "../../../app/pluginNavigation";
 import { CM_HELP } from "../../../content/helpTooltips";
+import {
+  CUSTOMERS_LIST_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 import { formatDisplayDate } from "../../../utils/dates";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
@@ -291,7 +295,8 @@ export function CustomersTable({
       render: (customer) => formatDisplayDate(customer.proximaEntrega),
     },
   ];
-  const visibleColumns = filterColumns(columns).filter(
+  const columnsWithHelp = withColumnHelp(columns, CUSTOMERS_LIST_COLUMN_HELP);
+  const visibleColumns = filterColumns(columnsWithHelp).filter(
     (column): column is DataTableColumn<CustomerSummary> => Boolean(column),
   );
   const visibleExportColumns = filterColumns(

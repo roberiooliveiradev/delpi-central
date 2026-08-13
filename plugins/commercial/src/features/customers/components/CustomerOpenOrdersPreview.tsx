@@ -12,6 +12,10 @@ import {
   navigateAnalyticsOpportunityDetail,
   navigateCustomerOrderDetail,
 } from "../../../app/pluginNavigation";
+import {
+  CUSTOMER_ORDERS_PREVIEW_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../utils/format";
 import { compareDeliveryDates, formatDisplayDate } from "../../../utils/dates";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
@@ -137,7 +141,7 @@ export function CustomerOpenOrdersPreview({
           <div className="cm-customer-orders-preview__desktop">
             <CommercialDataTable
               rows={rows}
-              columns={columns}
+              columns={withColumnHelp(columns, CUSTOMER_ORDERS_PREVIEW_COLUMN_HELP)}
               rowKey={(order) => order.key}
               layout="section"
               onRowClick={openOrderDetail}

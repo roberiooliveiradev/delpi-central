@@ -273,6 +273,17 @@ export const CM_HELP = {
       "Comparamos o faturamento dos últimos 6 meses com o dos 6 meses anteriores. Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; entre −5% e +5%, estável. Sem histórico suficiente, a tendência fica indefinida.",
     contacts:
       "Contatos da conta: cadastro TOTVS somente leitura e contatos locais da equipe comercial (CRUD + WhatsApp).",
+    columns: {
+      nome: "Nome fantasia/razão e código+loja da conta na carteira.",
+      sellerName: "Vendedor/carteira responsável pelo cliente no escopo atual.",
+      city: "Cidade e UF do cadastro TOTVS (quando o enriquecimento estiver disponível).",
+      lastPurchaseDate: "Data da última nota fiscal de saída conhecida para a conta.",
+      billed12m: "Soma do faturamento dos últimos 12 meses (quando coberto).",
+      status: "Situação operacional na carteira (ativo, sem venda recente, etc.).",
+      valorTotalAberto: "Soma do valor em aberto dos pedidos de venda desta conta.",
+      quantidadePedidosAtrasados: "Quantidade de pedidos com linha vencida e saldo em aberto.",
+      proximaEntrega: "Menor data de entrega prometida ainda em aberto nesta conta.",
+    },
   },
   customerDetail: {
     header:
@@ -331,6 +342,44 @@ export const CM_HELP = {
       "Oportunidades de venda (OV) só deste cliente. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:
       "Clique na linha ou na OV abre o detalhe da oportunidade. Controles internos com destino diferente não propagam o clique.",
+    ordersColumns: {
+      branch: "Unidade operacional (SC/ES) do pedido de venda.",
+      order: "Número do pedido de venda no Protheus.",
+      customerOrder: "Pedido de compra do cliente, quando informado.",
+      status: "Situação consolidada do pedido (em dia, atraso, parcial).",
+      lines: "Quantidade de linhas com saldo em aberto neste pedido.",
+      overdue: "Maior atraso em dias entre as linhas em aberto.",
+      delivery: "Próxima data de entrega prometida ainda em aberto.",
+      value: "Valor em aberto consolidado do pedido.",
+    },
+    orderLinesColumns: {
+      product: "Código do produto da linha do pedido.",
+      ordered: "Quantidade pedida na linha.",
+      delivered: "Quantidade já entregue/faturada.",
+      balance: "Saldo ainda em aberto na linha.",
+      delivery: "Data de entrega prometida da linha.",
+      openValue: "Valor em aberto da linha.",
+      delay: "Indicador de atraso da linha em relação à entrega prometida.",
+    },
+    invoiceColumns: {
+      issue: "Data de emissão da nota fiscal de saída.",
+      invoice: "Número e série da nota fiscal.",
+      salesOrder: "Pedido de venda vinculado à nota.",
+      customerOrder: "Pedido do cliente associado, quando houver.",
+      situation: "Situação fiscal da nota (emitida, devolução, etc.).",
+      items: "Quantidade de itens na nota.",
+      value: "Valor total da nota no período filtrado.",
+    },
+    invoiceItemColumns: {
+      item: "Sequência do item na nota.",
+      product: "Código do produto faturado.",
+      description: "Descrição do item na nota fiscal.",
+      quantity: "Quantidade faturada no item.",
+      unit: "Unidade de medida do item.",
+      unitPrice: "Preço unitário do item.",
+      total: "Valor total do item.",
+      order: "Pedido de venda de origem do item.",
+    },
   },
   sellerPortfolios: {
     list: "Carteiras cadastradas (usuários com acesso ao Portal Comercial + nome de exibição).",

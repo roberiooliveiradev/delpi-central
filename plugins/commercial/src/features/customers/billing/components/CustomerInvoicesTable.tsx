@@ -13,6 +13,10 @@ import {
 } from "../../../../app/commercialUi";
 import { currentLocationAsReturnTo } from "../../../../app/commercialNavigationReturn";
 import { navigateCustomerInvoiceDetail } from "../../../../app/pluginNavigation";
+import {
+  CUSTOMER_INVOICE_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../../utils/format";
 import { formatDisplayDate } from "../../../../utils/dates";
 import type { CustomerInvoice } from "../types/customerBilling";
@@ -118,7 +122,7 @@ export function CustomerInvoicesTable({
       <div className="cm-customer-invoices__desktop">
         <CommercialDataTable
           rows={invoices}
-          columns={columns}
+          columns={withColumnHelp(columns, CUSTOMER_INVOICE_COLUMN_HELP)}
           rowKey={(invoice) => invoice.key}
           layout="section"
           onRowClick={openInvoiceDetail}

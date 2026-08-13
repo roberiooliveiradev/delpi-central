@@ -4,6 +4,10 @@ import {
   CommercialDataRecordCard,
   CommercialDataTable,
 } from "../../../../app/commercialUi";
+import {
+  CUSTOMER_INVOICE_ITEM_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../../utils/format";
 
 type CustomerInvoiceItem = {
@@ -67,7 +71,7 @@ export function CustomerInvoiceItems({ items }: CustomerInvoiceItemsProps) {
       <div className="cm-customer-invoice-items__desktop">
         <CommercialDataTable
           rows={rows}
-          columns={columns}
+          columns={withColumnHelp(columns, CUSTOMER_INVOICE_ITEM_COLUMN_HELP)}
           rowKey={rowKey}
           layout="section"
         />

@@ -18,6 +18,10 @@ import {
 } from "../../../app/commercialNavigationReturn";
 import { navigateCustomerOrderDetail } from "../../../app/pluginNavigation";
 import { CUSTOMER_ORDERS_CONTENT } from "../../../content/customerOrdersContent";
+import {
+  CUSTOMER_ORDERS_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
@@ -148,7 +152,7 @@ export function CustomerOrdersTable({
       <div className="cm-customer-orders__desktop">
         <CommercialDataTable
           rows={orders}
-          columns={columns}
+          columns={withColumnHelp(columns, CUSTOMER_ORDERS_COLUMN_HELP)}
           rowKey={(order) => order.key}
           layout="section"
           onRowClick={openOrderDetail}

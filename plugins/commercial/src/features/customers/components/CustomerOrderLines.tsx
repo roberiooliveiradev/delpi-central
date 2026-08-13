@@ -5,6 +5,10 @@ import {
   CommercialDataRecordCard,
   CommercialDataTable,
 } from "../../../app/commercialUi";
+import {
+  CUSTOMER_ORDER_LINES_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
@@ -171,7 +175,7 @@ export function CustomerOrderLines({
       <div className="cm-customer-order-lines__desktop">
         <CommercialDataTable
           rows={rows}
-          columns={columns}
+          columns={withColumnHelp(columns, CUSTOMER_ORDER_LINES_COLUMN_HELP)}
           rowKey={rowKey}
           layout="section"
         />

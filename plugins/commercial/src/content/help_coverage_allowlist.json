@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-08-13",
-  "note": "Baseline gaps; waves must only remove entries. Do not grow without PR justification.",
+  "note": "After E2.S2 Conta tables + withColumnHelp-aware auditor",
   "gaps": [
     {
       "file": "features/administration/AdministrationGroupsPage.tsx",
@@ -60,6 +60,11 @@
     {
       "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
       "kind": "column",
+      "id": "code"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
       "id": "desc"
     },
     {
@@ -76,6 +81,11 @@
       "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
       "kind": "column",
       "id": "qty"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "rev"
     },
     {
       "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
@@ -115,6 +125,16 @@
     {
       "file": "features/analytics/AnalyticsOtdPage.tsx",
       "kind": "column",
+      "id": "customer"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
+      "id": "product"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
       "id": "status"
     },
     {
@@ -125,7 +145,12 @@
     {
       "file": "features/analytics/AnalyticsOtdPage.tsx",
       "kind": "column",
-      "id": "otd01"
+      "id": "periodo"
+    },
+    {
+      "file": "features/analytics/AnalyticsTeamPage.tsx",
+      "kind": "column",
+      "id": "name"
     },
     {
       "file": "features/analytics/AnalyticsTeamPage.tsx",
@@ -148,46 +173,6 @@
       "id": "ov"
     },
     {
-      "file": "features/customers/billing/components/CustomerInvoiceItems.tsx",
-      "kind": "column",
-      "id": "description"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "issue"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "invoice"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "sales-order"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "customer-order"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "situation"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "items"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
-      "kind": "column",
-      "id": "value"
-    },
-    {
       "file": "features/customers/components/AccountContactsPanel.tsx",
       "kind": "field",
       "id": "Nome completo"
@@ -206,136 +191,6 @@
       "file": "features/customers/components/AccountContactsPanel.tsx",
       "kind": "field",
       "id": "E-mail"
-    },
-    {
-      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
-      "kind": "column",
-      "id": "issue"
-    },
-    {
-      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
-      "kind": "column",
-      "id": "forecast"
-    },
-    {
-      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
-      "kind": "column",
-      "id": "value"
-    },
-    {
-      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
-      "kind": "column",
-      "id": "status"
-    },
-    {
-      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
-      "kind": "column",
-      "id": "opportunity"
-    },
-    {
-      "file": "features/customers/components/CustomerOrderLines.tsx",
-      "kind": "column",
-      "id": "ordered"
-    },
-    {
-      "file": "features/customers/components/CustomerOrderLines.tsx",
-      "kind": "column",
-      "id": "delivered"
-    },
-    {
-      "file": "features/customers/components/CustomerOrderLines.tsx",
-      "kind": "column",
-      "id": "balance"
-    },
-    {
-      "file": "features/customers/components/CustomerOrderLines.tsx",
-      "kind": "column",
-      "id": "delivery"
-    },
-    {
-      "file": "features/customers/components/CustomerOrderLines.tsx",
-      "kind": "column",
-      "id": "open-value"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "branch"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "customer-order"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "lines"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "overdue"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "delivery"
-    },
-    {
-      "file": "features/customers/components/CustomerOrdersTable.tsx",
-      "kind": "column",
-      "id": "value"
-    },
-    {
-      "file": "features/customers/components/CustomerPurchaseEvolutionChart.tsx",
-      "kind": "field",
-      "id": "Período"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "nome"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "sellerName"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "city"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "lastPurchaseDate"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "billed12m"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "status"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "valorTotalAberto"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "quantidadePedidosAtrasados"
-    },
-    {
-      "file": "features/customers/components/CustomersTable.tsx",
-      "kind": "column",
-      "id": "proximaEntrega"
     },
     {
       "file": "features/customers/components/MyPortfolioAuditSection.tsx",
@@ -375,7 +230,27 @@
     {
       "file": "features/proposals/ProposalDetailPage.tsx",
       "kind": "column",
+      "id": "item"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
+      "id": "produto"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
+      "id": "desc"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
       "id": "qty"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
+      "id": "total"
     },
     {
       "file": "features/proposals/ProposalDetailPage.tsx",

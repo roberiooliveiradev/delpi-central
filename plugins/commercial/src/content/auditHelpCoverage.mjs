@@ -188,8 +188,10 @@ export function findColumnGaps(relativeFile, source) {
     if (!block) continue;
     const body = block.text;
     // Must be a column-like object: has key + header as props, not nested-only
-    const keyMatch = body.match(/(?:^|,|\n)\s*key\s*:\s*(?:"([^"]+)"|'([^']+)'|`([^`]+)`)/);
-    const headerMatch = body.match(/(?:^|,|\n)\s*header\s*:/);
+    const keyMatch = body.match(
+      /(?:^|[,{])\s*key\s*:\s*(?:"([^"]+)"|'([^']+)'|`([^`]+)`)/,
+    );
+    const headerMatch = body.match(/(?:^|[,{]|\n)\s*header\s*:/);
     if (!keyMatch || !headerMatch) {
       i = block.end - 1;
       continue;
@@ -200,7 +202,7 @@ export function findColumnGaps(relativeFile, source) {
       continue;
     }
     // headerHint at top level of this object (not only nested)
-    if (/(?:^|,|\n)\s*headerHint\s*:/.test(body)) {
+    if (/(?:^|[,{]|\n)\s*headerHint\s*:/.test(body)) {
       i = block.end - 1;
       continue;
     }
@@ -261,13 +263,28 @@ export function extractObjectLiteral(source, start) {
 export function collectHelpCoverageGaps(srcRoot) {
   /** @type {HelpCoverageGap[]} */
   const gaps = [];
+  const columnHelpModule = join(srcRoot, "utils/customersColumnHelp.ts");
+  let columnHelpSource = "";
+  try {
+    columnHelpSource = readFileSync(columnHelpModule, "utf8");
+  } catch {
+    columnHelpSource = "";
+  }
+  const helpMaps = loadColumnHelpMaps(columnHelpSource);
+
   for (const abs of listSourceFiles(srcRoot)) {
     const rel = relative(srcRoot, abs).replace(/\\/g, "/");
     if (SKIP_FILES.has(rel)) continue;
     if (rel.endsWith("auditHelpCoverage.mjs")) continue;
+    if (rel.endsWith("customersColumnHelp.ts")) continue;
     const source = readFileSync(abs, "utf8");
     gaps.push(...findFieldGaps(rel, source));
-    gaps.push(...findColumnGaps(rel, source));
+    const columnGaps = findColumnGaps(rel, source);
+    const coveredKeys = resolveWithColumnHelpKeys(source, helpMaps);
+    for (const gap of columnGaps) {
+      if (coveredKeys.has(gap.id)) continue;
+      gaps.push(gap);
+    }
   }
   // de-dupe
   const seen = new Set();
@@ -277,6 +294,44 @@ export function collectHelpCoverageGaps(srcRoot) {
     seen.add(k);
     return true;
   });
+}
+
+/**
+ * @param {string} moduleSource
+ * @returns {Record<string, Set<string>>}
+ */
+export function loadColumnHelpMaps(moduleSource) {
+  /** @type {Record<string, Set<string>>} */
+  const maps = {};
+  const re = /export const (\w+)\s*[:=][^{]*\{([\s\S]*?)\n\};/g;
+  let match;
+  while ((match = re.exec(moduleSource)) !== null) {
+    const name = match[1];
+    if (!/HELP|COLUMN/i.test(name)) continue;
+    const body = match[2];
+    const keys = new Set();
+    for (const keyMatch of body.matchAll(/["']?([A-Za-z0-9_-]+)["']?\s*:/g)) {
+      keys.add(keyMatch[1]);
+    }
+    maps[name] = keys;
+  }
+  return maps;
+}
+
+/**
+ * @param {string} source
+ * @param {Record<string, Set<string>>} helpMaps
+ */
+export function resolveWithColumnHelpKeys(source, helpMaps) {
+  const covered = new Set();
+  const re = /withColumnHelp\s*\(\s*[\w.]+\s*,\s*(\w+)\s*\)/g;
+  let match;
+  while ((match = re.exec(source)) !== null) {
+    const keys = helpMaps[match[1]];
+    if (!keys) continue;
+    for (const key of keys) covered.add(key);
+  }
+  return covered;
 }
 
 /** @param {HelpCoverageGap} g */
