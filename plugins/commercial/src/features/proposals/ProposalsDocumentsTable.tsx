@@ -181,7 +181,7 @@ export function ProposalsDocumentsTable({
                 key={row.proposta_interna}
                 ariaLabel={`Abrir proposta ${label}`}
                 onActivate={() => openDetail(row)}
-                openHint={CM_HELP.proposals.tableRowOpensDetail}
+                openHint={CM_HELP.proposals.cardOpenHint}
                 fields={[
                   {
                     id: "ov",
