@@ -99,10 +99,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     return Boolean(me && me === userId.trim());
   }, [currentUserId, userId]);
 
-  const canEdit = useMemo(
-    () => Boolean(isSelf || canManagePortfolios),
-    [canManagePortfolios, isSelf],
-  );
+  const canEdit = isSelf;
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
