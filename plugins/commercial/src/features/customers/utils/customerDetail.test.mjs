@@ -573,6 +573,8 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const linePage = readSrc("features/open-orders/OpenOrderLineDetailPage.tsx");
     assert.match(linePage, /resolvePagePathBack/);
   });
+
+  it("pedidos usam DataTable, cards, modal e detalhe de pedido", () => {
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
     const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
     assert.match(table, /CommercialDataTable/);
