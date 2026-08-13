@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 
-type TaskEntityLinkChip = {
+export type TaskEntityLinkChip = {
   key: string;
   label: string;
+  /** Linha secundária (ex.: código/loja do cliente). */
+  subtitle?: string;
+  avatar?: ReactNode;
   onOpen: () => void;
 };
 
@@ -11,7 +14,10 @@ type TaskEntityLinkChipsProps = {
   ariaLabel: string;
 };
 
-/** Chips clicáveis (kit tag-chip) para responsáveis/clientes no card da tarefa. */
+/**
+ * Chips clicáveis com avatar opcional (kit tag-chip) para responsáveis/clientes no card.
+ * Nome/subtitle → `onOpen`; foto no avatar → lightbox do kit (stopPropagation).
+ */
 export function TaskEntityLinkChips({
   items,
   ariaLabel,
@@ -20,14 +26,21 @@ export function TaskEntityLinkChips({
   return (
     <div className="cm-task-link-chips" role="group" aria-label={ariaLabel}>
       {items.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          className="delpi-ui-tag-chip"
-          onClick={item.onOpen}
-        >
-          {item.label}
-        </button>
+        <div key={item.key} className="cm-task-link-chip">
+          {item.avatar ? (
+            <span className="cm-task-link-chip__avatar">{item.avatar}</span>
+          ) : null}
+          <button
+            type="button"
+            className="delpi-ui-tag-chip cm-task-link-chip__label"
+            onClick={item.onOpen}
+          >
+            <span className="cm-task-link-chip__name">{item.label}</span>
+            {item.subtitle ? (
+              <span className="cm-task-link-chip__subtitle">{item.subtitle}</span>
+            ) : null}
+          </button>
+        </div>
       ))}
     </div>
   );

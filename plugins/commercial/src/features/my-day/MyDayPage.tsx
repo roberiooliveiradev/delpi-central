@@ -45,9 +45,9 @@ import {
   CommercialViewTransition,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { CustomerAvatar } from "../customers/components/CustomerAvatar";
 import {
   CustomerSearchPicker,
-  customerSelectionLabel,
   type CustomerSearchSelection,
 } from "../customers/components/CustomerSearchPicker";
 import {
@@ -63,6 +63,7 @@ import {
 import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 import { TaskDetailCard } from "./TaskDetailCard";
 import { TaskEntityLinkChips } from "./TaskEntityLinkChips";
+import { TaskUserChipAvatar } from "./TaskUserChipAvatar";
 
 type MyDayPageProps = {
   basePath: string;
@@ -901,22 +902,48 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     assigneeIds.length > 0 ? (
                       <TaskEntityLinkChips
                         ariaLabel="Responsáveis da tarefa"
-                        items={assigneeIds.map((uid) => ({
-                          key: uid,
-                          label:
-                            sellerNameByUserId.get(uid) ?? directoryLabelFor(uid),
-                          onOpen: () =>
-                            navigateUserProfile(uid, { basePath }),
-                        }))}
+                        items={assigneeIds.map((uid) => {
+                          const label =
+                            sellerNameByUserId.get(uid) ?? directoryLabelFor(uid);
+                          return {
+                            key: uid,
+                            label,
+                            avatar: (
+                              <TaskUserChipAvatar userId={uid} name={label} />
+                            ),
+                            onOpen: () =>
+                              navigateUserProfile(uid, { basePath }),
+                          };
+                        })}
                       />
                     ) : null;
                   const createdBy = (task.created_by_user_id || "").trim();
                   const primaryAssignee = (assigneeIds[0] || "").trim();
                   const me = (currentUserId || myPortfolio?.user_id || "").trim();
-                  const assignedByLabel =
-                    createdBy && createdBy !== primaryAssignee
-                      ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
-                      : null;
+                  const assignedByName = createdBy
+                    ? sellerNameByUserId.get(createdBy) ??
+                      directoryLabelFor(createdBy)
+                    : "";
+                  const assignedByValue =
+                    createdBy && createdBy !== primaryAssignee ? (
+                      <TaskEntityLinkChips
+                        ariaLabel="Atribuído por"
+                        items={[
+                          {
+                            key: createdBy,
+                            label: assignedByName,
+                            avatar: (
+                              <TaskUserChipAvatar
+                                userId={createdBy}
+                                name={assignedByName}
+                              />
+                            ),
+                            onOpen: () =>
+                              navigateUserProfile(createdBy, { basePath }),
+                          },
+                        ]}
+                      />
+                    ) : null;
                   const taskCustomers =
                     task.customers?.length
                       ? task.customers
@@ -933,20 +960,29 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                     taskCustomers.length > 0 ? (
                       <TaskEntityLinkChips
                         ariaLabel="Clientes da tarefa"
-                        items={taskCustomers.map((item) => ({
-                          key: `${item.customer_code}:${item.customer_store}`,
-                          label: customerSelectionLabel({
-                            code: item.customer_code,
-                            store: item.customer_store,
-                            name: (item.customer_name || "").trim(),
-                          }),
-                          onOpen: () =>
-                            navigateCustomerDetail(
-                              item.customer_code,
-                              item.customer_store,
-                              { basePath, section: "contatos", search: "" },
+                        items={taskCustomers.map((item) => {
+                          const name = (item.customer_name || "").trim();
+                          const codeStore = `${item.customer_code}/${item.customer_store}`;
+                          return {
+                            key: `${item.customer_code}:${item.customer_store}`,
+                            label: name || codeStore,
+                            subtitle: name ? codeStore : undefined,
+                            avatar: (
+                              <CustomerAvatar
+                                code={item.customer_code}
+                                store={item.customer_store}
+                                name={name || codeStore}
+                                size="sm"
+                              />
                             ),
-                        }))}
+                            onOpen: () =>
+                              navigateCustomerDetail(
+                                item.customer_code,
+                                item.customer_store,
+                                { basePath, section: "contatos", search: "" },
+                              ),
+                          };
+                        })}
                       />
                     ) : null;
                   const readOnly = bucket === "done";
@@ -961,7 +997,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       typeLabel={typeLabel}
                       priorityLabel={priorityLabel}
                       assigneeValue={assigneeValue}
-                      assignedByLabel={assignedByLabel}
+                      assignedByValue={assignedByValue}
                       customerValue={customerValue}
                       canManage={canManageFollowups}
                       canEdit={canEditTask}

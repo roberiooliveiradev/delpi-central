@@ -17,8 +17,8 @@ type TaskDetailCardProps = {
   priorityLabel: string;
   /** Texto legado ou chips com link (ReactNode). */
   assigneeValue?: ReactNode;
-  /** Quem criou/atribuiu — exibido quando diferente do responsável. */
-  assignedByLabel?: string | null;
+  /** Quem criou/atribuiu — chips com avatar quando diferente do responsável. */
+  assignedByValue?: ReactNode;
   /** Texto legado ou chips com link (ReactNode). */
   customerValue?: ReactNode;
   canManage: boolean;
@@ -58,7 +58,7 @@ export function TaskDetailCard({
   typeLabel,
   priorityLabel,
   assigneeValue,
-  assignedByLabel,
+  assignedByValue,
   customerValue,
   canManage,
   canEdit,
@@ -99,11 +99,11 @@ export function TaskDetailCard({
     ...(assigneeValue
       ? [{ label: "Responsável", value: assigneeValue, hint: CM_HELP.myDay.taskAssignee }]
       : []),
-    ...(assignedByLabel
+    ...(assignedByValue
       ? [
           {
             label: "Atribuído por",
-            value: assignedByLabel,
+            value: assignedByValue,
             hint: CM_HELP.myDay.taskAssignedBy,
           },
         ]
