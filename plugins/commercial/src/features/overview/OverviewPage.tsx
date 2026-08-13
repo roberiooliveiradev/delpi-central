@@ -7,6 +7,7 @@ import {
   Percent,
   RefreshCw,
   Sparkles,
+  Target,
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -17,13 +18,19 @@ import {
   CommercialActionButton,
   CommercialDashboardKpiCard,
   CommercialLoadingCard,
+  CommercialMetricCard,
   CommercialPageHero,
   CommercialSectionHintLabel,
 } from "../../app/commercialUi";
+import { navigatePluginPath } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
 import { formatCurrency } from "../../utils/format";
+import {
+  buildOpenOrdersHorizonListHref,
+  type OpenOrdersHorizonBucketFocus,
+} from "../../utils/openOrdersDeepLink";
 import { AnalyticsFilters } from "../analytics/components/AnalyticsFilters";
 import { AnalyticsClosingRateSeriesChart } from "../analytics/components/AnalyticsClosingRateSeriesChart";
 import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelChart";
@@ -31,11 +38,20 @@ import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSer
 import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
 import { useAnalyticsFilters } from "../analytics/hooks/useAnalyticsFilters";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
+import { pickPrimaryRolTarget, resolveGapToTarget } from "./gapToTarget";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "./goalDisplay";
 import { buildRolPerUnitKpiView } from "./rolPerUnitPresentation";
+
+const HORIZON_BUCKET_LABELS: Record<string, string> = {
+  overdue: "Atrasado",
+  current_month: "Este mês",
+  next_1_3_months: "1–3 meses",
+  later: "Depois",
+  undated: "Sem data",
+};
 
 function formatInteger(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -55,7 +71,7 @@ type OverviewPageProps = {
   basePath: string;
 };
 
-export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
+export function OverviewPage({ basePath }: OverviewPageProps) {
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
   const copy = ANALYTICS_CONTENT.overview;
@@ -65,6 +81,32 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
     ? formatOperationalUnitCode(activeBranch, activeBranch)
     : "Consolidado (todas as unidades)";
   const contextBase = `${branchLabel} · ${periodLabel}`;
+
+  const primaryRol = useMemo(
+    () =>
+      pickPrimaryRolTarget(
+        dashboard.headOfficeRol,
+        dashboard.branchRol,
+        activeBranch,
+      ),
+    [activeBranch, dashboard.branchRol, dashboard.headOfficeRol],
+  );
+  const gapToTarget = useMemo(() => resolveGapToTarget(primaryRol), [primaryRol]);
+  const currentMonthOpen = useMemo(() => {
+    const buckets = dashboard.openPortfolioHorizon?.buckets ?? [];
+    return buckets.find((b) => b.id === "current_month")?.openValue ?? null;
+  }, [dashboard.openPortfolioHorizon]);
+
+  const openHorizonBucket = (bucket: OpenOrdersHorizonBucketFocus) => {
+    navigatePluginPath(
+      buildOpenOrdersHorizonListHref({
+        bucket,
+        asOfIso: dashboard.openPortfolioHorizon?.asOf,
+        sellerId: filters.apiParams.seller_id,
+        basePath,
+      }),
+    );
+  };
 
   const rolKpi = useMemo(
     () =>
@@ -258,6 +300,24 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               loading={dashboard.openPortfolioLoading}
             />
             <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.gap_to_target.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.gap_to_target.tooltip}
+              value={
+                gapToTarget == null
+                  ? "—"
+                  : formatCurrency(gapToTarget)
+              }
+              contextLabel={
+                gapToTarget == null
+                  ? "Sem meta SI no período"
+                  : currentMonthOpen != null
+                    ? `Este mês em aberto: ${formatCurrency(currentMonthOpen)} (contexto, sem soma)`
+                    : "Gap = max(meta − ROL, 0) · ≠ soma com carteira"
+              }
+              icon={<Target size={22} aria-hidden="true" />}
+              loading={dashboard.loading || dashboard.openPortfolioLoading}
+            />
+            <CommercialDashboardKpiCard
               title={OVERVIEW_METRIC_BY_ID.closing_rate.label}
               titleHint={CM_HELP.overview.closingRate}
               value={formatDashboardMetricValue(
@@ -295,6 +355,50 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               icon={<Sparkles size={22} aria-hidden="true" />}
               loading={dashboard.loading}
             />
+          </div>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard
+        title={OVERVIEW_METRIC_BY_ID.open_portfolio_horizon.label}
+        hint={CM_HELP.overview.openPortfolioHorizon}
+        classNames={cmSectionCardClassNames}
+        labels={cmSectionLabels}
+      >
+        {dashboard.openPortfolioLoading ? (
+          <CommercialLoadingCard title="Carregando carteira no tempo…" variant="panel" />
+        ) : null}
+        {dashboard.openPortfolioError ? (
+          <EmptyState
+            classNames={cmEmptyStateClassNames}
+            defaultMessage={dashboard.openPortfolioError}
+            role="alert"
+          />
+        ) : null}
+        {!dashboard.openPortfolioLoading && !dashboard.openPortfolioError ? (
+          <div className="cm-home-kpi-grid cm-overview-kpi-grid" aria-label="Carteira no tempo">
+            {(dashboard.openPortfolioHorizon?.buckets ?? []).map((bucket) => {
+              const clickable =
+                bucket.id === "overdue" ||
+                bucket.id === "current_month" ||
+                bucket.id === "next_1_3_months" ||
+                bucket.id === "later";
+              return (
+                <CommercialMetricCard
+                  key={bucket.id}
+                  label={HORIZON_BUCKET_LABELS[bucket.id] ?? bucket.id}
+                  titleHint={CM_HELP.overview.openPortfolioHorizon}
+                  value={formatCurrency(bucket.openValue)}
+                  hint={`${formatInteger(bucket.openLineCount)} linhas`}
+                  icon={<ClipboardList size={22} aria-hidden="true" />}
+                  onClick={
+                    clickable
+                      ? () => openHorizonBucket(bucket.id as OpenOrdersHorizonBucketFocus)
+                      : undefined
+                  }
+                />
+              );
+            })}
           </div>
         ) : null}
       </SectionCard>

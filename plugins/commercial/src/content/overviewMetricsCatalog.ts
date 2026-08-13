@@ -10,6 +10,8 @@ export type OverviewMetricId =
   | "otd"
   | "new_business_pct"
   | "open_portfolio"
+  | "gap_to_target"
+  | "open_portfolio_horizon"
   | "rol_series"
   | "closing_rate_series"
   | "funnel";
@@ -47,6 +49,18 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     label: "Carteira em aberto",
     tooltip:
       "Saldo comercial agora (valor e linhas de pedidos). Não é programação do PCP, não é forecast e não some com o ROL do período.",
+  },
+  {
+    id: "gap_to_target",
+    label: "Gap vs meta",
+    tooltip:
+      "Quanto falta para a meta ROL SI do período (max(meta − ROL, 0)). Carteira do mês é só contexto — não some com o gap.",
+  },
+  {
+    id: "open_portfolio_horizon",
+    label: "Carteira no tempo",
+    tooltip:
+      "Valor aberto por data de entrega (atrasado, este mês, 1–3 meses, depois, sem data). Clique abre Meus pedidos filtrados.",
   },
   {
     id: "otd",

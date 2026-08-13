@@ -158,6 +158,78 @@ export function buildCommercialOpenOrderPath(
   return query ? `${path}?${query}` : path;
 }
 
+export type OpenOrdersHorizonBucketFocus =
+  | "overdue"
+  | "current_month"
+  | "next_1_3_months"
+  | "later";
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function isoDate(y: number, m: number, d: number): string {
+  return `${y}-${pad2(m)}-${pad2(d)}`;
+}
+
+function addCalendarMonths(y: number, m: number, delta: number): { y: number; m: number } {
+  const idx = y * 12 + (m - 1) + delta;
+  return { y: Math.floor(idx / 12), m: (idx % 12) + 1 };
+}
+
+function lastDayOfMonth(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** Deep link lista open-orders a partir do bucket de horizonte (datas ISO). */
+export function buildOpenOrdersHorizonListHref(options: {
+  bucket: OpenOrdersHorizonBucketFocus;
+  asOfIso?: string | null;
+  sellerId?: string | null;
+  basePath?: string;
+}): string {
+  const base = (options.basePath || COMMERCIAL_BASE_PATH).replace(/\/$/, "");
+  const asOfDay = (options.asOfIso ?? "").slice(0, 10);
+  const today = isIsoDate(asOfDay) ? asOfDay : new Date().toISOString().slice(0, 10);
+  const [ys, ms] = today.split("-").map(Number);
+  const y = ys;
+  const m = ms;
+
+  const filters: OpenOrdersTotvsFilters = {
+    search: "",
+    filial: "",
+    clientCodes: [],
+    stockStatus: "",
+    dateStart: "",
+    dateEnd: "",
+    lateOnly: false,
+  };
+
+  if (options.bucket === "overdue") {
+    filters.lateOnly = true;
+  } else if (options.bucket === "current_month") {
+    filters.dateStart = isoDate(y, m, 1);
+    filters.dateEnd = isoDate(y, m, lastDayOfMonth(y, m));
+  } else if (options.bucket === "next_1_3_months") {
+    const n1 = addCalendarMonths(y, m, 1);
+    const n3 = addCalendarMonths(y, m, 3);
+    filters.dateStart = isoDate(n1.y, n1.m, 1);
+    filters.dateEnd = isoDate(n3.y, n3.m, lastDayOfMonth(n3.y, n3.m));
+  } else if (options.bucket === "later") {
+    const n4 = addCalendarMonths(y, m, 4);
+    filters.dateStart = isoDate(n4.y, n4.m, 1);
+  }
+
+  const search = buildOpenOrdersListSearch({
+    filters,
+    sellerId: options.sellerId?.trim() || null,
+    sortKey: DEFAULT_SORT.key,
+    sortDirection: DEFAULT_SORT.direction,
+    page: 1,
+  });
+  return `${base}/open-orders${search}`;
+}
+
 export function parseOpenOrdersAttentionDeepLink(
   search = typeof window !== "undefined" ? window.location.search : "",
 ): OpenOrdersAttentionDeepLink {

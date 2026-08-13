@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 
 import {
   buildCommercialOpenOrderPath,
+  buildOpenOrdersHorizonListHref,
   buildOpenOrdersListSearch,
   buildOpenOrdersContextSearch,
   findOpenOrderLine,
@@ -235,6 +236,23 @@ describe("openOrdersDeepLink", () => {
         validSellerIds: ["2869fcd2-a365-48bc-b311-714576720016"],
       }),
       null,
+    );
+  });
+
+  it("monta deep link de horizonte por bucket", () => {
+    assert.equal(
+      buildOpenOrdersHorizonListHref({
+        bucket: "overdue",
+        asOfIso: "2026-08-13T12:00:00-03:00",
+      }),
+      "/apps/commercial/open-orders?focus=late",
+    );
+    assert.equal(
+      buildOpenOrdersHorizonListHref({
+        bucket: "current_month",
+        asOfIso: "2026-08-13T12:00:00-03:00",
+      }),
+      "/apps/commercial/open-orders?date_start=2026-08-01&date_end=2026-08-31",
     );
   });
 });

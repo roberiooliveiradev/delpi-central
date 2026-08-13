@@ -8,6 +8,7 @@ import type {
   CommercialRolSeriesData,
   AnalyticsFilterParams,
   NewBusinessRolPctData,
+  OpenPortfolioHorizonData,
   OpenPortfolioSummaryData,
   RolTargetData,
   SalesConversionRateSeriesData,
@@ -109,6 +110,18 @@ export function getOpenPortfolioSummary(
 ) {
   return fetchAnalyticsData<OpenPortfolioSummaryData>(
     "/open-portfolio-summary",
+    { seller_id: params.seller_id },
+    signal,
+  );
+}
+
+/** Buckets por data_entrega — snapshot; seller_id/escopo. */
+export function getOpenPortfolioHorizon(
+  params: Pick<AnalyticsFilterParams, "seller_id"> = {},
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<OpenPortfolioHorizonData>(
+    "/open-portfolio-horizon",
     { seller_id: params.seller_id },
     signal,
   );

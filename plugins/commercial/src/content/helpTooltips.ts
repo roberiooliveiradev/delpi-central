@@ -548,6 +548,10 @@ export const CM_HELP = {
       "Taxa de conversão (hit rate): propostas ganhas (AD1_STATUS=9, aceite no período) ÷ revisões abertas no período. Metodologia atual do Portal — não alterar sem homologação.",
     openPortfolio:
       "Carteira comercial em aberto agora: valor e linhas de pedidos/compromissos. Não é programação do PCP, não é forecast e não deve ser somada ao ROL do período (bases diferentes).",
+    gapToTarget:
+      "Gap vs meta ROL SI do período filtrado. A carteira «este mês» aparece só como contexto — nunca some gap + carteira.",
+    openPortfolioHorizon:
+      "Buckets por data de entrega dos pedidos em aberto (snapshot). Clique concentra Meus pedidos; ≠ PCP e ≠ forecast F6.",
   },
   administration: {
     panel:

@@ -51,6 +51,29 @@ export type OpenPortfolioSummaryData = {
   nature: "open_order_value";
 };
 
+export type OpenPortfolioHorizonBucketId =
+  | "overdue"
+  | "current_month"
+  | "next_1_3_months"
+  | "later"
+  | "undated";
+
+export type OpenPortfolioHorizonBucket = {
+  id: OpenPortfolioHorizonBucketId;
+  openValue: number;
+  openLineCount: number;
+};
+
+/** KPI-CARTEIRA-HORIZON — BFF open-portfolio-horizon. */
+export type OpenPortfolioHorizonData = {
+  asOf: string;
+  timezone: string;
+  nature: "open_order_value_by_delivery";
+  buckets: OpenPortfolioHorizonBucket[];
+  totals: { openValue: number; openLineCount: number };
+  scope?: { seller_id: string | null; mode: string };
+};
+
 export type SalesOrderOtdData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
