@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../../export/pdf/delpiDocumentPrint", () => ({
+  printDelpiDocumentHtml: vi.fn(() => true),
+}));
+
+import { printDelpiDocumentHtml } from "../../export/pdf/delpiDocumentPrint";
 import {
   buildDocumentReaderPrintHtml,
   collectPrintScopeClasses,
@@ -329,27 +334,13 @@ describe("printDocumentReaderHtml", () => {
     link.remove();
   });
 
-  it("abre janela via printDelpiDocumentHtml com layout thead/tfoot", () => {
+  it("abre impressão via printDelpiDocumentHtml com layout thead/tfoot", () => {
     mountAtaPaperWithChrome();
-    const print = vi.fn();
-    const fakeDoc = {
-      open: vi.fn(),
-      write: vi.fn(),
-      close: vi.fn(),
-      images: [] as unknown as HTMLCollectionOf<HTMLImageElement>,
-    };
-    const fakeWindow = {
-      closed: false,
-      focus: vi.fn(),
-      scrollTo: vi.fn(),
-      print,
-      document: fakeDoc,
-      addEventListener: vi.fn(),
-    } as unknown as Window;
-    vi.spyOn(window, "open").mockReturnValue(fakeWindow);
+    vi.mocked(printDelpiDocumentHtml).mockClear().mockReturnValue(true);
 
     expect(printDocumentReaderInWindow({ title: "Ata" })).toBe(true);
-    const written = String(fakeDoc.write.mock.calls[0]?.[0] ?? "");
+    expect(printDelpiDocumentHtml).toHaveBeenCalled();
+    const written = String(vi.mocked(printDelpiDocumentHtml).mock.calls[0]?.[0] ?? "");
     const doc = parseDocumentPrintHtml(written);
     expect(doc.querySelector("thead .delpi-ui-document-print-running-header")).toBeTruthy();
     expect(doc.querySelector("tfoot .delpi-ui-document-print-running-footer")).toBeTruthy();
@@ -358,9 +349,6 @@ describe("printDocumentReaderHtml", () => {
     expect(written).toContain("@top-right");
     expect(written).toContain("counter(page)");
     expect(written).toMatch(/@page\s*\{[^}]*margin:\s*0/);
-
-    vi.advanceTimersByTime(1_500);
-    expect(print).toHaveBeenCalledTimes(1);
   });
 
   it("downloadDocumentReaderPdf reutiliza o HTML da prévia", () => {
@@ -369,23 +357,9 @@ describe("printDocumentReaderHtml", () => {
         <article class="delpi-ui-document-page"><p>Prévia</p></article>
       </section>
     `;
-    const fakeDoc = {
-      open: vi.fn(),
-      write: vi.fn(),
-      close: vi.fn(),
-      images: [] as unknown as HTMLCollectionOf<HTMLImageElement>,
-    };
-    const fakeWindow = {
-      closed: false,
-      focus: vi.fn(),
-      scrollTo: vi.fn(),
-      print: vi.fn(),
-      document: fakeDoc,
-      addEventListener: vi.fn(),
-    } as unknown as Window;
-    vi.spyOn(window, "open").mockReturnValue(fakeWindow);
+    vi.mocked(printDelpiDocumentHtml).mockClear().mockReturnValue(true);
 
     expect(downloadDocumentReaderPdf({ title: "Ata" })).toBe(true);
-    expect(String(fakeDoc.write.mock.calls[0]?.[0] ?? "")).toContain("Prévia");
+    expect(String(vi.mocked(printDelpiDocumentHtml).mock.calls[0]?.[0] ?? "")).toContain("Prévia");
   });
 });

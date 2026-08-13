@@ -10,7 +10,7 @@ export type DocumentReaderToolbarProps = {
   printLabel?: string;
   downloadPdfLabel?: string;
   downloadingLabel?: string;
-  /** Título da janela de impressão / PDF. */
+  /** Título do documento na impressão / PDF. */
   printTitle?: string;
   /**
    * Override opcional (ex.: PDF arquivado no servidor).
@@ -25,7 +25,7 @@ export type DocumentReaderToolbarProps = {
 
 /**
  * Toolbar canônica: Imprimir + Baixar PDF com a formatação do DocumentReader.
- * PDF padrão = janela dedicada (Salvar como PDF) — paridade com a prévia.
+ * PDF padrão = iframe oculto + diálogo do browser (Salvar como PDF) — paridade com a prévia.
  */
 export function DocumentReaderToolbar({
   label = "Documento",

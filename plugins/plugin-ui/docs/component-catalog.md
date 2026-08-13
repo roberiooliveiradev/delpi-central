@@ -275,7 +275,11 @@ Composição canônica para leitura e impressão de documentos formais em papel 
 O kit controla papel A4 e margens ABNT (NBR 14724) numa única camada:
 `@page { margin: 0 }` + padding em `thead`/`tbody`/`tfoot` (3 cm / 2 cm /
 2 cm / 3 cm). Cabeçalho/rodapé repetem via `table-*-group`; numeração em
-`@page @top-right`. Use `printDocumentReader()`.
+`@page @top-right`. Use `printDocumentReader()` / «Baixar PDF» (mesmo HTML).
+
+Impressão/PDF vai por `printDelpiDocumentHtml`: **iframe oculto** no host
+(`pointer-events: none`, sem `window.open` nem overlay fullscreen), com cleanup
+em `afterprint` — evita bloquear o hotspot da sidebar do portal após o diálogo.
 
 ---
 

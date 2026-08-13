@@ -54,6 +54,7 @@ describe("scheduleTargetWindowPrint", () => {
     const print = vi.fn();
     const img = document.createElement("img");
     Object.defineProperty(img, "complete", { value: true });
+    const listeners = new Map<string, Set<EventListener>>();
 
     const fakeWindow = {
       closed: false,
@@ -61,7 +62,14 @@ describe("scheduleTargetWindowPrint", () => {
       scrollTo: vi.fn(),
       print,
       document: { images: [img] },
-      addEventListener: vi.fn(),
+      addEventListener: vi.fn((type: string, listener: EventListener) => {
+        const set = listeners.get(type) ?? new Set();
+        set.add(listener);
+        listeners.set(type, set);
+      }),
+      removeEventListener: vi.fn((type: string, listener: EventListener) => {
+        listeners.get(type)?.delete(listener);
+      }),
     } as unknown as Window;
 
     scheduleTargetWindowPrint(fakeWindow);
@@ -70,5 +78,40 @@ describe("scheduleTargetWindowPrint", () => {
     expect(print).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(2_000);
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it("só chama onPrinted após afterprint (não logo após print)", () => {
+    const print = vi.fn();
+    const onPrinted = vi.fn();
+    const listeners = new Map<string, Set<EventListener>>();
+
+    const fakeWindow = {
+      closed: false,
+      focus: vi.fn(),
+      scrollTo: vi.fn(),
+      print,
+      document: { images: [] as HTMLImageElement[] },
+      addEventListener: vi.fn((type: string, listener: EventListener) => {
+        const set = listeners.get(type) ?? new Set();
+        set.add(listener);
+        listeners.set(type, set);
+      }),
+      removeEventListener: vi.fn((type: string, listener: EventListener) => {
+        listeners.get(type)?.delete(listener);
+      }),
+      dispatchEvent: (event: Event) => {
+        listeners.get(event.type)?.forEach((listener) => listener(event));
+        return true;
+      },
+    } as unknown as Window;
+
+    scheduleTargetWindowPrint(fakeWindow, { onPrinted });
+    vi.advanceTimersByTime(1_000);
+    vi.advanceTimersByTime(100);
+    expect(print).toHaveBeenCalledTimes(1);
+    expect(onPrinted).not.toHaveBeenCalled();
+
+    fakeWindow.dispatchEvent(new Event("afterprint"));
+    expect(onPrinted).toHaveBeenCalledTimes(1);
   });
 });

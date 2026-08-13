@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../../export/pdf/delpiDocumentPrint", () => ({
+  printDelpiDocumentHtml: vi.fn(() => true),
+}));
+
+import { printDelpiDocumentHtml } from "../../export/pdf/delpiDocumentPrint";
 import {
   DocumentFooter,
   DocumentHeader,
@@ -23,11 +28,7 @@ afterEach(() => {
 
 describe("DocumentReader", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
+    vi.mocked(printDelpiDocumentHtml).mockClear().mockReturnValue(true);
   });
 
   it("compõe papel A4 com slots institucionais e assinatura", () => {
@@ -50,7 +51,7 @@ describe("DocumentReader", () => {
     expect(screen.getByText("Baixar")).toBeTruthy();
   });
 
-  it("imprime via janela dedicada (printDelpiDocumentHtml)", () => {
+  it("imprime via printDelpiDocumentHtml (iframe oculto no host)", () => {
     render(
       <DocumentReader>
         <DocumentPage>
@@ -59,32 +60,12 @@ describe("DocumentReader", () => {
       </DocumentReader>,
     );
 
-    const print = vi.fn();
-    const fakeDoc = {
-      open: vi.fn(),
-      write: vi.fn(),
-      close: vi.fn(),
-      images: [] as unknown as HTMLCollectionOf<HTMLImageElement>,
-    };
-    const fakeWindow = {
-      closed: false,
-      focus: vi.fn(),
-      scrollTo: vi.fn(),
-      print,
-      document: fakeDoc,
-      addEventListener: vi.fn(),
-    } as unknown as Window;
-    vi.spyOn(window, "open").mockReturnValue(fakeWindow);
-
     expect(printDocumentReader({ title: "Ata formal" })).toBe(true);
-    expect(fakeDoc.write).toHaveBeenCalled();
-    const written = String(fakeDoc.write.mock.calls[0]?.[0] ?? "");
-    expect(written).toContain("Corpo da ata");
-    expect(written).toContain("delpi-ui-document-page");
+    expect(printDelpiDocumentHtml).toHaveBeenCalled();
+    const html = String(vi.mocked(printDelpiDocumentHtml).mock.calls[0]?.[0] ?? "");
+    expect(html).toContain("Corpo da ata");
+    expect(html).toContain("delpi-ui-document-page");
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(false);
-
-    vi.advanceTimersByTime(1_500);
-    expect(print).toHaveBeenCalledTimes(1);
   });
 
   it("CSS de leitura mantém tabelas como grade e print multipágina sem clip", () => {
