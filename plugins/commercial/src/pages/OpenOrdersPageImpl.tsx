@@ -23,6 +23,7 @@ import { formatCurrency } from "../utils/format";
 import type { StockFilter } from "../utils/statusBadges";
 
 type AttentionChipId = "all" | "can_invoice" | "partial" | "late";
+type ConcentrateChipId = "none" | "overdue" | "current_month" | "future";
 
 function resolveAttentionChip(filters: {
   stockStatus: StockFilter;
@@ -32,6 +33,52 @@ function resolveAttentionChip(filters: {
   if (filters.stockStatus === "com_estoque") return "can_invoice";
   if (filters.stockStatus === "parcial") return "partial";
   return "all";
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function monthBoundsFromAsOf(asOfIso: string | undefined): {
+  y: number;
+  m: number;
+  currentStart: string;
+  currentEnd: string;
+  futureStart: string;
+} {
+  const day = (asOfIso ?? "").slice(0, 10);
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(day)
+    ? day
+    : new Date().toISOString().slice(0, 10);
+  const [y, m] = today.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const nextIdx = y * 12 + m;
+  const fy = Math.floor(nextIdx / 12);
+  const fm = (nextIdx % 12) + 1;
+  return {
+    y,
+    m,
+    currentStart: `${y}-${pad2(m)}-01`,
+    currentEnd: `${y}-${pad2(m)}-${pad2(last)}`,
+    futureStart: `${fy}-${pad2(fm)}-01`,
+  };
+}
+
+function resolveConcentrateChip(filters: {
+  lateOnly: boolean;
+  dateStart: string;
+  dateEnd: string;
+  asOfIso?: string;
+}): ConcentrateChipId {
+  if (filters.lateOnly && !filters.dateStart && !filters.dateEnd) return "overdue";
+  const bounds = monthBoundsFromAsOf(filters.asOfIso);
+  if (filters.dateStart === bounds.currentStart && filters.dateEnd === bounds.currentEnd) {
+    return "current_month";
+  }
+  if (filters.dateStart === bounds.futureStart && !filters.dateEnd && !filters.lateOnly) {
+    return "future";
+  }
+  return "none";
 }
 
 function formatUpdatedAt(value: Date): string {
@@ -69,6 +116,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     lastUpdatedAt,
     portfolioEmpty,
     portfolioMessage,
+    deliveryHorizon,
     allItemsCount,
     paginatedItems,
     summary,
@@ -103,6 +151,12 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const showFilteredEmpty =
     !loading && !error && allItemsCount > 0 && totalFiltered === 0;
   const activeChip = resolveAttentionChip(filters);
+  const concentrateChip = resolveConcentrateChip({
+    lateOnly: filters.lateOnly,
+    dateStart: filters.dateStart,
+    dateEnd: filters.dateEnd,
+    asOfIso: deliveryHorizon?.asOf,
+  });
 
   const selectChip = (id: AttentionChipId) => {
     if (id === "all") {
@@ -117,8 +171,47 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
       updateFilters({ stockStatus: "parcial", lateOnly: false });
       return;
     }
-    updateFilters({ stockStatus: "", lateOnly: true });
+    updateFilters({ stockStatus: "", lateOnly: true, dateStart: "", dateEnd: "" });
   };
+
+  const selectConcentrate = (id: ConcentrateChipId) => {
+    const bounds = monthBoundsFromAsOf(deliveryHorizon?.asOf);
+    if (id === "none") {
+      updateFilters({ lateOnly: false, dateStart: "", dateEnd: "", stockStatus: "" as StockFilter });
+      return;
+    }
+    if (id === "overdue") {
+      updateFilters({
+        lateOnly: true,
+        dateStart: "",
+        dateEnd: "",
+        stockStatus: "" as StockFilter,
+      });
+      return;
+    }
+    if (id === "current_month") {
+      updateFilters({
+        lateOnly: false,
+        dateStart: bounds.currentStart,
+        dateEnd: bounds.currentEnd,
+        stockStatus: "" as StockFilter,
+      });
+      return;
+    }
+    updateFilters({
+      lateOnly: false,
+      dateStart: bounds.futureStart,
+      dateEnd: "",
+      stockStatus: "" as StockFilter,
+    });
+  };
+
+  const horizonCount = (id: string) => {
+    const bucket = deliveryHorizon?.buckets?.find((b) => b.id === id);
+    return bucket?.openLineCount ?? 0;
+  };
+  const futureCount =
+    horizonCount("next_1_3_months") + horizonCount("later");
 
   const highlights = [
     {
@@ -212,6 +305,39 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
                 },
               ]}
             />
+
+            {deliveryHorizon ? (
+              <CommercialScopeChipBar
+                aria-label="Concentrar forças por entrega"
+                label="Concentrar"
+                chips={[
+                  {
+                    id: "conc-none",
+                    label: "Todos",
+                    active: concentrateChip === "none",
+                    onSelect: () => selectConcentrate("none"),
+                  },
+                  {
+                    id: "conc-overdue",
+                    label: `Atrasado (${horizonCount("overdue").toLocaleString("pt-BR")})`,
+                    active: concentrateChip === "overdue",
+                    onSelect: () => selectConcentrate("overdue"),
+                  },
+                  {
+                    id: "conc-month",
+                    label: `Este mês (${horizonCount("current_month").toLocaleString("pt-BR")})`,
+                    active: concentrateChip === "current_month",
+                    onSelect: () => selectConcentrate("current_month"),
+                  },
+                  {
+                    id: "conc-future",
+                    label: `Futuro (${futureCount.toLocaleString("pt-BR")})`,
+                    active: concentrateChip === "future",
+                    onSelect: () => selectConcentrate("future"),
+                  },
+                ]}
+              />
+            ) : null}
 
             <FilterBar
               filters={filters}

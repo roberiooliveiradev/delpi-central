@@ -202,6 +202,7 @@ export function useOpenOrdersDashboard(
     lastUpdatedAt,
     portfolioEmpty: Boolean(data?.portfolio?.empty),
     portfolioMessage: data?.portfolio?.message ?? null,
+    deliveryHorizon: data?.deliveryHorizon ?? null,
     allItemsCount: allItems.length,
     filteredItems,
     paginatedItems,

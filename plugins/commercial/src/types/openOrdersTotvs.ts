@@ -48,4 +48,12 @@ export type OpenOrdersTotvsData = {
     message?: string | null;
     seller_id?: string | null;
   };
+  /** Buckets KPI-CARTEIRA-HORIZON (mesmo serviço do BFF analytics). */
+  deliveryHorizon?: {
+    asOf: string;
+    timezone: string;
+    nature: string;
+    buckets: Array<{ id: string; openValue: number; openLineCount: number }>;
+    totals: { openValue: number; openLineCount: number };
+  };
 };
