@@ -271,10 +271,10 @@
   }
 }
 
-/* Margens ABNT na janela dedicada vêm de printDocumentReaderHtml (@page). */
+/* Margens ABNT na janela dedicada: printDocumentReaderHtml (padding único; @page 0). */
 @page {
   size: A4 portrait;
-  margin: 30mm 20mm 20mm 30mm;
+  margin: 0;
 }
 
 @media print {

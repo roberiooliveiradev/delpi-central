@@ -100,7 +100,7 @@ describe("DocumentReader", () => {
     );
     expect(css).toMatch(/\.delpi-ui-document-page \{[\s\S]*?overflow:\s*visible/);
     expect(css).toMatch(/@page\s*\{[\s\S]*?size:\s*A4 portrait/);
-    expect(css).toMatch(/@page\s*\{[\s\S]*?margin:\s*30mm 20mm 20mm 30mm/);
+    expect(css).toMatch(/@page\s*\{[\s\S]*?margin:\s*0/);
     expect(css).toMatch(/text-align:\s*justify/);
     expect(css).toMatch(/break-after:\s*avoid-page/);
   });

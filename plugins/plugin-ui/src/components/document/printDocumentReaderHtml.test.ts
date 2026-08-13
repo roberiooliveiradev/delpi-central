@@ -127,7 +127,13 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("tm-facts-style");
     expect(html).toContain('data-theme="light"');
     expect(html).toContain("size: A4 portrait");
-    expect(html).toContain("margin: 30mm 20mm 20mm 30mm");
+    expect(html).toContain("--delpi-ui-abnt-top: 30mm");
+    expect(html).toContain("--delpi-ui-abnt-left: 30mm");
+    expect(html).toContain("--delpi-ui-abnt-right: 20mm");
+    expect(html).toContain("--delpi-ui-abnt-bottom: 20mm");
+    // Uma camada só: @page zerado (não somar com padding do chrome)
+    expect(html).toMatch(/@page\s*\{[^}]*margin:\s*0/);
+    expect(html).not.toMatch(/@page\s*\{[^}]*margin:\s*30mm 20mm 20mm 30mm/);
     expect(html).toContain("text-align: justify !important");
     expect(html).toContain("text-indent: 1.25cm");
     expect(html).toContain("orphans: 3");
@@ -152,7 +158,8 @@ describe("printDocumentReaderHtml", () => {
     `;
     const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
     expect(html).toMatch(/@page\s*\{[^}]*size:\s*A4 portrait/);
-    expect(html).toMatch(/@page\s*\{[^}]*margin:\s*30mm 20mm 20mm 30mm/);
+    expect(html).toMatch(/@page\s*\{[^}]*margin:\s*0/);
+    expect(html).toContain("--delpi-ui-abnt-top: 30mm");
     expect(html).toContain("padding: 0 !important");
     expect(html).toContain("widows: 3");
     expect(html).toContain("page-break-inside: avoid");
@@ -190,7 +197,7 @@ describe("printDocumentReaderHtml", () => {
     expect(footer).toBeTruthy();
     expect(body).toBeTruthy();
     expect(header!.querySelector(".delpi-ui-document-print-abnt-header__brand img")).toBeTruthy();
-    expect(header!.querySelector(".delpi-ui-document-print-abnt-header__page")).toBeTruthy();
+    expect(header!.querySelector(".delpi-ui-document-print-abnt-header__page")).toBeNull();
     expect(footer!.textContent).toContain("30/07/2026");
     expect(footer!.textContent).toContain("DELPI");
     expect(footer!.textContent).toContain("Ata 2026/003");
@@ -209,30 +216,36 @@ describe("printDocumentReaderHtml", () => {
     expect(scope?.className).toContain("ds-print-root");
   });
 
-  it("organiza cabeçalho/rodapé no padrão ABNT (página à direita, meta 10pt)", () => {
+  it("organiza cabeçalho/rodapé no padrão ABNT sem somar margens", () => {
     const html = buildDocumentReaderPrintHtml(mountAtaPaperWithChrome(), "Ata");
     const style = html.match(
       /<style id="delpi-ui-document-print-base">([\s\S]*?)<\/style>/,
     )?.[1];
     expect(style).toBeTruthy();
-    expect(style!).toContain("content: counter(page)");
-    expect(style!).toMatch(
-      /\.delpi-ui-document-print-abnt-header__page\s*\{[^}]*text-align:\s*right/,
+    expect(style!).toMatch(/@page\s*\{[\s\S]*?margin:\s*0/);
+    expect(style!).not.toMatch(/@page\s*\{[\s\S]*?margin:\s*30mm/);
+    expect(style!).toContain("--delpi-ui-abnt-top: 30mm");
+    expect(style!).toContain("--delpi-ui-abnt-left: 30mm");
+    expect(style!).toContain(
+      "calc(var(--delpi-ui-abnt-top) - var(--delpi-ui-abnt-header-band))",
+    );
+    expect(style!).toContain(
+      "calc(var(--delpi-ui-abnt-bottom) - var(--delpi-ui-abnt-footer-band))",
+    );
+    expect(style!).toMatch(/@top-right\s*\{[^}]*content:\s*counter\(page\)/);
+    expect(style!).not.toContain(
+      ".delpi-ui-document-print-abnt-header__page::after",
     );
     expect(style!).toMatch(
       /\.delpi-ui-document-print-abnt-footer \.delpi-ui-document-footer\s*\{[^}]*font-size:\s*10pt/,
-    );
-    expect(style!).toMatch(
-      /\.delpi-ui-document-print-abnt-footer \.delpi-ui-document-footer\s*\{[^}]*grid-template-columns:/,
     );
     expect(style!).toContain("border-bottom: 0.5pt solid #000");
     expect(style!).toContain("border-top: 0.5pt solid #000");
 
     const doc = parseDocumentPrintHtml(html);
     const row = doc.querySelector(".delpi-ui-document-print-abnt-header__row");
-    expect(row?.children).toHaveLength(2);
-    expect(row?.children[0]?.className).toContain("abnt-header__brand");
-    expect(row?.children[1]?.className).toContain("abnt-header__page");
+    expect(row?.querySelector(".delpi-ui-document-print-abnt-header__brand")).toBeTruthy();
+    expect(row?.querySelector(".delpi-ui-document-print-abnt-header__page")).toBeNull();
   });
 
   it("CSS de impressão usa table-header-group/footer-group (não position:fixed)", () => {
@@ -342,7 +355,9 @@ describe("printDocumentReaderHtml", () => {
     expect(doc.querySelector("tfoot .delpi-ui-document-print-running-footer")).toBeTruthy();
     expect(written).toContain("table-header-group");
     expect(written).toContain("delpi-ui-document-print-abnt-header");
+    expect(written).toContain("@top-right");
     expect(written).toContain("counter(page)");
+    expect(written).toMatch(/@page\s*\{[^}]*margin:\s*0/);
 
     vi.advanceTimersByTime(1_500);
     expect(print).toHaveBeenCalledTimes(1);

@@ -272,11 +272,10 @@ Composição canônica para leitura e impressão de documentos formais em papel 
 `DocumentReader` (viewport/toolbar), `DocumentPage` (header/watermark/footer),
 `DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
 
-O kit controla papel A4, margens ABNT (NBR 14724) via `@page`, tipografia
-justificada e quebras estáveis. Cabeçalho/rodapé do `DocumentPage` vão para
-`thead`/`tfoot` no layout ABNT: marca à esquerda + numeração (`counter(page)`)
-à direita; rodapé em três colunas (data | instituição | referência) com linha
-0,5 pt. Use `printDocumentReader()`.
+O kit controla papel A4 e margens ABNT (NBR 14724) numa única camada:
+`@page { margin: 0 }` + padding em `thead`/`tbody`/`tfoot` (3 cm / 2 cm /
+2 cm / 3 cm). Cabeçalho/rodapé repetem via `table-*-group`; numeração em
+`@page @top-right`. Use `printDocumentReader()`.
 
 ---
 

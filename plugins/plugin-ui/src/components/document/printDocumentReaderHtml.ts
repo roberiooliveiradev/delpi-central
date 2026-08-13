@@ -37,14 +37,53 @@ html, body {
 .delpi-ui-document-print-layout > tbody > tr > td,
 .delpi-ui-document-print-layout > tfoot > tr > td {
   border: none !important;
-  padding: 0 !important;
   margin: 0 !important;
   vertical-align: top !important;
   background: transparent !important;
 }
 /*
+ * Margens ABNT NBR 14724 numa ÚNICA camada (não somar com @page):
+ * superior 30mm · direita 20mm · inferior 20mm · esquerda 30mm.
+ * @page { margin: 0 } — o inset vai no padding de thead/tbody/tfoot.
+ * Cabeçalho ocupa a faixa superior; rodapé a inferior (texto do corpo
+ * começa/termina na borda interna ABNT).
+ */
+:root {
+  --delpi-ui-abnt-top: 30mm;
+  --delpi-ui-abnt-right: 20mm;
+  --delpi-ui-abnt-bottom: 20mm;
+  --delpi-ui-abnt-left: 30mm;
+  --delpi-ui-abnt-header-band: 12mm;
+  --delpi-ui-abnt-footer-band: 14mm;
+}
+.delpi-ui-document-print-layout > thead > tr > th {
+  /* topo até o logo + laterais; banda do chrome ≈ 12mm → corpo aos 30mm */
+  padding:
+    calc(var(--delpi-ui-abnt-top) - var(--delpi-ui-abnt-header-band))
+    var(--delpi-ui-abnt-right)
+    0
+    var(--delpi-ui-abnt-left) !important;
+}
+.delpi-ui-document-print-layout > tbody > tr > td {
+  padding: 0 var(--delpi-ui-abnt-right) 0 var(--delpi-ui-abnt-left) !important;
+}
+.delpi-ui-document-print-layout > tfoot > tr > td {
+  padding:
+    0
+    var(--delpi-ui-abnt-right)
+    calc(var(--delpi-ui-abnt-bottom) - var(--delpi-ui-abnt-footer-band))
+    var(--delpi-ui-abnt-left) !important;
+}
+body:not(.has-print-running-header) .delpi-ui-document-print-layout > tbody > tr > td {
+  padding-top: var(--delpi-ui-abnt-top) !important;
+}
+body:not(.has-print-running-footer) .delpi-ui-document-print-layout > tbody > tr > td {
+  padding-bottom: var(--delpi-ui-abnt-bottom) !important;
+}
+/*
  * Chrome ABNT (NBR 14724):
- * - cabeçalho: identificação à esquerda + numeração arábica à direita
+ * - cabeçalho: identificação à esquerda (numeração via @page @top-right —
+ *   counter(page) em elemento HTML no Chromium rende "0")
  * - rodapé: data | instituição | referência (10pt), linha 0,5 pt
  */
 .delpi-ui-document-print-running-header,
@@ -54,21 +93,27 @@ html, body {
   display: block;
   width: 100%;
   box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0 !important;
   background: #fff !important;
   color: #000 !important;
   font-family: Arial, Helvetica, sans-serif !important;
 }
 .delpi-ui-document-print-abnt-header {
-  margin: 0 0 5mm;
+  height: var(--delpi-ui-abnt-header-band);
+  max-height: var(--delpi-ui-abnt-header-band);
+  overflow: hidden;
 }
 .delpi-ui-document-print-abnt-header__row {
   display: flex !important;
   align-items: flex-end !important;
   justify-content: space-between !important;
   gap: 8mm;
-  min-height: 11mm;
-  padding: 0 0 2.5mm;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 0 2mm !important;
   border-bottom: 0.5pt solid #000;
+  margin: 0 !important;
 }
 .delpi-ui-document-print-abnt-header__brand {
   flex: 1 1 auto;
@@ -82,43 +127,33 @@ html, body {
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   border: none;
 }
 .delpi-ui-document-print-abnt-header__brand img,
 .delpi-ui-document-print-abnt-header__brand .tm-ata-document__logo,
 .delpi-ui-document-print-abnt-header__brand svg {
   display: block;
-  max-height: 10mm !important;
-  max-width: 38mm !important;
+  max-height: 9mm !important;
+  max-width: 36mm !important;
   width: auto !important;
   height: auto !important;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
 }
-.delpi-ui-document-print-abnt-header__page {
-  flex: 0 0 auto;
-  align-self: flex-end;
-  min-width: 8mm;
-  font-size: 10pt !important;
-  font-weight: 400 !important;
-  line-height: 1 !important;
-  text-align: right !important;
-  color: #000 !important;
-}
-/* NBR 14724: numeração arábica no canto superior direito */
-.delpi-ui-document-print-abnt-header__page::after {
-  content: counter(page);
-}
 .delpi-ui-document-print-abnt-footer {
-  margin: 4mm 0 0;
-  padding: 0;
+  height: var(--delpi-ui-abnt-footer-band);
+  max-height: var(--delpi-ui-abnt-footer-band);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .delpi-ui-document-print-abnt-footer .tm-ata-document-footer {
   display: flex !important;
   flex-direction: column !important;
+  justify-content: flex-end !important;
   width: 100% !important;
+  height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   gap: 0 !important;
@@ -130,11 +165,11 @@ html, body {
   column-gap: 6mm !important;
   width: 100% !important;
   margin: 0 !important;
-  padding: 2.5mm 0 2mm !important;
+  padding: 2mm 0 1.5mm !important;
   border-top: 0.5pt solid #000 !important;
   box-sizing: border-box !important;
   font-size: 10pt !important;
-  line-height: 1.25 !important;
+  line-height: 1.2 !important;
   color: #000 !important;
 }
 .delpi-ui-document-print-abnt-footer .delpi-ui-document-footer > :nth-child(1) {
@@ -157,6 +192,7 @@ html, body {
   width: 100% !important;
   margin: 0 !important;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .delpi-ui-document-print-abnt-footer .tm-ata-brand-bar span,
 .delpi-ui-document-print-abnt-footer [class*="brand-bar"] span {
@@ -300,13 +336,28 @@ figure {
 }
 @page {
   size: A4 portrait;
-  /* NBR 14724: superior 3cm · direita 2cm · inferior 2cm · esquerda 3cm */
-  margin: 30mm 20mm 20mm 30mm;
+  /*
+   * Margem zero no @page — ABNT aplicada só no padding thead/tbody/tfoot.
+   * Somar @page 30mm + padding do chrome dobrava o branco (e o diálogo
+   * "Margens: Padrão" ainda empilhava o default do browser).
+   */
+  margin: 0;
+  /* Numeração ABNT (canto superior direito). Preferível a counter() no HTML. */
+  @top-right {
+    content: counter(page);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    vertical-align: top;
+    padding-top: 18mm;
+    padding-right: 20mm;
+  }
 }
 @media print {
   html, body {
     height: auto !important;
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   body.delpi-ui-document-print-window,
   body.delpi-ui-document-print-window * {
@@ -464,12 +515,11 @@ export function parseDocumentPrintHtml(html: string): Document {
   return new DOMParser().parseFromString(html, "text/html");
 }
 
-/** Cabeçalho ABNT: marca à esquerda + página (counter) à direita. */
+/** Cabeçalho ABNT: marca à esquerda (numeração em @page @top-right). */
 export function buildAbntPrintHeaderHtml(brandInnerHtml: string): string {
   return `<div class="delpi-ui-document-print-running-header delpi-ui-document-print-abnt-header">
   <div class="delpi-ui-document-print-abnt-header__row">
     <div class="delpi-ui-document-print-abnt-header__brand">${brandInnerHtml}</div>
-    <div class="delpi-ui-document-print-abnt-header__page" aria-label="Número da página"></div>
   </div>
 </div>`;
 }
