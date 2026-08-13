@@ -16,8 +16,8 @@
   );
   --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   --delpi-ui-select-radius: 10px;
-  --delpi-ui-select-min-height: 36px;
-  --delpi-ui-select-font-size: 13px;
+  --delpi-ui-select-min-height: var(--delpi-ui-control-height, 42px);
+  --delpi-ui-select-font-size: var(--delpi-ui-control-font-size, 14px);
 
   position: relative;
   width: 100%;
@@ -98,7 +98,7 @@
   );
   --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   --delpi-ui-select-radius: var(--delpi-ui-popover-radius, 12px);
-  --delpi-ui-select-font-size: 13px;
+  --delpi-ui-select-font-size: var(--delpi-ui-control-font-size, 14px);
 
   position: absolute;
   z-index: 40;
@@ -126,7 +126,7 @@
 }
 
 .delpi-ui-select__search {
-  min-height: var(--delpi-ui-select-min-height, 36px);
+  min-height: var(--delpi-ui-select-min-height, var(--delpi-ui-control-height, 42px));
   box-sizing: border-box;
   padding: 8px 12px;
   border: 1px solid var(--delpi-ui-select-border);
