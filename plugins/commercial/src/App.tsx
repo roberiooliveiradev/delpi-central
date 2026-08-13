@@ -23,6 +23,7 @@ import { AnalyticsOtdPage } from "./features/analytics/AnalyticsOtdPage";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
+import { UserProfilePage } from "./features/users/UserProfilePage";
 import { OpenOrdersPage } from "./features/open-orders/OpenOrdersPage";
 import { OpenOrderLineDetailPage } from "./features/open-orders/OpenOrderLineDetailPage";
 import { OpenOrderOpDetailPage } from "./features/open-orders/OpenOrderOpDetailPage";
@@ -101,6 +102,9 @@ function AppRoutes({
       ) : null}
       {view === "my_tasks" ? (
         canViewWorklist ? <MyDayPage basePath={basePath} /> : <NotFoundPage basePath={basePath} />
+      ) : null}
+      {view === "user_profile" && route.userId ? (
+        <UserProfilePage basePath={basePath} userId={route.userId} />
       ) : null}
       {view === "open_orders" ? <OpenOrdersPage basePath={basePath} /> : null}
       {view === "open_order_line_detail" &&

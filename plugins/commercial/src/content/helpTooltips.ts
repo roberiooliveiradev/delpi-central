@@ -40,6 +40,12 @@ export const CM_HELP = {
     scope:
       "Escopo atual: sua carteira ou a de outro vendedor que você pode consultar.",
   },
+  users: {
+    profile:
+      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório, cargo e foto editáveis (você ou gestor de carteiras).",
+    jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
+    portfolios: "Carteiras em que o usuário é owner ou membro.",
+  },
   myDay: {
     worklist:
       "Fila operacional do dia: atrasadas → hoje → depois → concluídas. Filtre por tipo e consulte as observações em cada atividade.",

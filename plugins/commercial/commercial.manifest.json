@@ -96,6 +96,14 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/users/:userId",
+      "label": "Perfil de usuário",
+      "permission": "commercial.accounts.view",
+      "icon": "user",
+      "order": 17,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/my-day",
       "label": "Minhas tarefas",
       "permission": "commercial.worklist.view",

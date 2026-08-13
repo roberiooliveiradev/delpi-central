@@ -22,6 +22,7 @@ export type PluginView =
   | "administration_members"
   | "seller_portfolios"
   | "seller_portfolio_detail"
+  | "user_profile"
   | "not_found";
 
 /** Itens da navegação de topo (IA 2026 — seis áreas). */
@@ -46,6 +47,7 @@ export type ResolvedPluginRoute = {
   lineItem?: string;
   productionOrder?: string;
   portfolioId?: string;
+  userId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -88,6 +90,20 @@ export function resolvePluginRoute(
 
   if (relativePath === "my-tasks" || relativePath === "my-day") {
     return { view: "my_tasks", pathname: path, relativePath };
+  }
+
+  const userProfile = /^users\/([^/]+)$/.exec(relativePath);
+  if (userProfile) {
+    const userId = safeDecodeSegment(userProfile[1] ?? "");
+    if (!userId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "user_profile",
+      pathname: path,
+      relativePath,
+      userId: userId.trim(),
+    };
   }
 
   if (relativePath === "overview") {
@@ -354,6 +370,7 @@ export type BuildablePluginView = Exclude<
   | "analytics_otd_line"
   | "analytics_opportunity_detail"
   | "seller_portfolio_detail"
+  | "user_profile"
   | "not_found"
 >;
 
@@ -417,6 +434,15 @@ export function buildCustomerDetailPath(
   if (!code || !store) return null;
   const base = normalizeBasePath(basePath);
   return `${base}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}`;
+}
+
+export function buildUserProfilePath(
+  basePath: string | undefined,
+  userId: string,
+): string | null {
+  const id = userId.trim();
+  if (!id) return null;
+  return `${normalizeBasePath(basePath)}/users/${encodeURIComponent(id)}`;
 }
 
 export function buildOpenOrderOpDetailPath(
@@ -524,6 +550,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     return "administration";
   }
   if (view === "proposals" || view === "proposal_detail") return null;
+  if (view === "user_profile") return null;
   if (isAnalyticsDeepView(view)) return null;
   if (view === "not_found") return "home";
   if (
