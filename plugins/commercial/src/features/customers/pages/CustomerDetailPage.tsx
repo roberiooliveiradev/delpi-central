@@ -297,7 +297,12 @@ export function CustomerDetailPage({
 
               {section === "pedidos" ? (
                 <>
-                  <CustomerAttentionOrders orders={attentionOrders} />
+                  <CustomerAttentionOrders
+                    orders={attentionOrders}
+                    basePath={basePath}
+                    codigo={codigo}
+                    loja={loja}
+                  />
                   {orders.length === 0 ? (
                     <CommercialStateBanner>
                       {CM_HELP.customerDetail.ordersScopeEmpty}
