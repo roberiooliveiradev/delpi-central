@@ -6,7 +6,7 @@
 ## Pré-requisitos (gate ops)
 
 - [ ] Migration `V005__seller_portfolio_members` aplicada (`commercial.schema_migrations`)
-- [ ] `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (Compose / api-delpi)
+- [ ] `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (Compose / **commercial-api** apenas)
 - [ ] Rebuild sequencial: `plugin-ui` → `commercial` → `commercial-api` (ver `infra/scripts/up-*-sequential.sh`)
 - [ ] Papéis: Admin (`seller-portfolios.manage`) e Vendedor / Gestor (`team.view` sem `manage`)
 
@@ -21,9 +21,9 @@ Rodar a partir da raiz do monorepo:
   commercial-api/tests/test_worklist_*.py \
   commercial-api/tests/test_commercial_realtime*.py -q
 
-# api-delpi — união/dedupe + dual-read
+# api-delpi — escopo PVA isolado (schema pedidos_venda_abertos.*)
 ./api-delpi/.venv/bin/python -m pytest api-delpi/tests/test_seller_portfolio_use_cases.py \
-  api-delpi/tests/test_dual_read_seller_portfolio_repository.py -q
+  api-delpi/tests/test_pva_portfolio_isolation.py -q
 
 # MFE commercial — deep link, rotas, estrutural lista/org
 (cd plugins/commercial && npm test)
@@ -32,7 +32,7 @@ Rodar a partir da raiz do monorepo:
 | Pacote | Foco | Resultado E5.2 |
 |--------|------|----------------|
 | commercial-api | members, owner, `/me` portfolios, worklist, realtime | ☑ suites verdes |
-| api-delpi | `ResolvePortfolioScope` união+dedupe; dual-read `list_by_user_id` | ☑ suites verdes |
+| api-delpi | `ResolvePortfolioScope` PVA; **sem** dual-read commercial | ☑ suites verdes |
 | plugins/commercial | deep link `/:id`, org `view`/`axis`, escopo | ☑ 171 testes |
 
 ## Checklist funcional — P0

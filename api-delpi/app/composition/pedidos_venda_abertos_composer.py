@@ -28,15 +28,8 @@ from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use
 from app.application.use_cases.pedidos_venda_abertos.search_active_customers_use_case import (
     SearchActiveCustomersUseCase,
 )
-from app.config import settings
 from app.domain.ports.pedidos_venda_abertos.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
-)
-from app.infrastructure.persistence.plugins.repositories.pedidos_venda_abertos.dual_read_seller_portfolio_repository import (
-    DualReadSellerPortfolioRepository,
-)
-from app.infrastructure.persistence.plugins.repositories.pedidos_venda_abertos.postgres_commercial_seller_portfolio_repository import (
-    PostgresCommercialSellerPortfolioRepository,
 )
 from app.infrastructure.persistence.plugins.repositories.pedidos_venda_abertos.postgres_customer_avatar_repository import (
     PostgresCustomerAvatarRepository,
@@ -62,13 +55,8 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.pedidos_venda_ab
 
 
 def build_seller_portfolio_repository() -> SellerPortfolioRepositoryPort:
-    """Dual-read commercial + legado; writes seguem COMMERCIAL_PORTFOLIO_SOURCE."""
-    write_source = (settings.COMMERCIAL_PORTFOLIO_SOURCE or "commercial").strip().lower()
-    return DualReadSellerPortfolioRepository(
-        commercial=PostgresCommercialSellerPortfolioRepository(),
-        legacy=PostgresSellerPortfolioRepository(),
-        write_source=write_source,
-    )
+    """Somente schema PVA (`pedidos_venda_abertos.*`) — sem dual-read do Portal Comercial."""
+    return PostgresSellerPortfolioRepository()
 
 
 def build_manage_seller_portfolio_use_case() -> ManageSellerPortfolioUseCase:

@@ -61,13 +61,12 @@ router = APIRouter(
     tags=["Pedidos de Venda em Aberto"],
 )
 
-# Rotas /sellers* e /customers/*/avatar (CRUD Delpi) estão **deprecated** para novos
-# consumidores — canônico: commercial-api (/apps/commercial-api/seller-portfolios*,
-# /customers/*/avatar). Mantidas read/write até cutover F2c (COMMERCIAL_PORTFOLIO_SOURCE).
+# Rotas /sellers* e /customers/*/avatar (CRUD Delpi do PVA) usam somente o schema
+# `pedidos_venda_abertos.*` — **sem** dual-read / escrita no Portal Comercial.
+# Canônico do Portal: commercial-api (`/apps/commercial-api/seller-portfolios*`).
 # Reads TOTVS (listagens, search, enrichment, billing, NF) permanecem nesta api-delpi
 # como SQL parametrizado. Escopo de carteira do **Portal** = commercial-api BFF
-# (SCOPE-OWNERSHIP). `ResolvePortfolioScope` / `_resolve_scope` abaixo é **legado PVA**
-# até F2c — não evoluir para o Portal.
+# (SCOPE-OWNERSHIP). `ResolvePortfolioScope` / `_resolve_scope` abaixo é **só PVA**.
 
 
 class SellerCustomerBody(BaseModel):

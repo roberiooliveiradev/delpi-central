@@ -9,7 +9,7 @@
 |--------|------------------|
 | **commercial-api** | Membership, escopo de clientes, CRUD carteira/avatar, BFF que aplica escopo **antes** do proxy TOTVS — **única** evolução de regra do Portal |
 | **api-delpi** | SQL/views TOTVS (paths `totvs-*` / enrichment / billing sem membership Portal) — **não** dono de carteira do Portal |
-| **PVA** (`/pedidos-venda-abertos/` + plugin) | Legado **congelado** para regra de negócio nova (só bug crítico / segurança até F2c) |
+| **PVA** (`/pedidos-venda-abertos/` + plugin) | Legado **isolado** — schema `pedidos_venda_abertos.*` apenas; **não** lê/escreve `commercial.*`. Congelado para regra nova (bug crítico / segurança). Remoção futura do app. |
 
 **Uma fonte de escopo no Portal:** `ResolveCommercialCustomerScopeService`.
 
@@ -56,7 +56,7 @@
 
 - [ ] MFE `plugins/commercial` **nunca** chama `/apps/api-delpi` (grep zero: `apiDelpiUrl|API_DELPI_BASE|/apps/api-delpi` no `src/`).
 - [ ] Rotas BFF do Portal aplicam `ResolveCommercialCustomerScopeService` (ou helper `resolve_portfolio_scope`) antes do gateway quando há membership.
-- [ ] api-delpi **não** reintroduz `list_by_user_id` / dual-read commercial em enrichment, billing-series, avatar ou NF para o path do Portal.
+- [ ] api-delpi / PVA **não** lê schema `commercial.*` (sem dual-read de carteira). Portal não depende do PVA.
 - [ ] Portal usa paths TOTVS puros (`totvs-open-orders`, `totvs-outbound-invoices`) — rotas PVA com membership ficam só para o plugin PVA.
 - [ ] Semântica `team.view` = irrestrito testada só na commercial-api.
 - [ ] **Nenhuma** regra de negócio nova no PVA / `ResolvePortfolioScope` / `portfolio_access` “para alinhar com o Portal”.
@@ -64,5 +64,5 @@
 
 ## Fora deste contrato
 
-- Delete físico PVA / dual-read completo (F2c).
+- Delete físico do plugin PVA (app) quando produto decidir; carteiras já estão desacopladas.
 - Mover SQL Protheus para commercial-api.

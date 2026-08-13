@@ -160,9 +160,9 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 
 | Dado | Onde (atual) | Notas |
 |---|---|---|
-| Seller portfolio + customers | Schema Postgres `commercial` via **commercial-api** (default `COMMERCIAL_PORTFOLIO_SOURCE=commercial`) | Backfill a partir de `pedidos_venda_abertos.*`; dual-read `legacy` só transição |
+| Seller portfolio + customers | Schema Postgres `commercial` via **commercial-api** (default `COMMERCIAL_PORTFOLIO_SOURCE=commercial`) | Portal não compartilha runtime com PVA |
 | Customer avatars | Volume `commercial-avatars` + `commercial.customer_avatars` | `redirect_slashes=False` na API; ver Mixed Content HTTPS |
-| Schema legado `pedidos_venda_abertos` | Ainda no Postgres plugins | Fonte do backfill; CRUD canônico pós-cutover = commercial-api |
+| Schema legado `pedidos_venda_abertos` | Ainda no Postgres plugins — **só PVA** | Carteiras/avatars do plugin PVA; sem dual-read com `commercial.*` |
 | Pedido / proposta / cliente cadastro | TOTVS via api-delpi | Permanecem |
 | Oportunidade, tarefa, forecast, amostra | — | `commercial-api` (F5+) |
 
