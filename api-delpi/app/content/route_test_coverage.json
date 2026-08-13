@@ -2,8 +2,8 @@
   "version": 1,
   "generatedAt": "2026-08-13",
   "baselineOperationCount": 617,
-  "operationCount": 617,
-  "coveredCount": 545,
+  "operationCount": 618,
+  "coveredCount": 546,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 19,
-      "covered": 19,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     },
@@ -237,6 +237,15 @@
       "path": "/commercial/closing-rate",
       "module": "commercial",
       "entity": "sales_conversion_rate",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "method": "GET",
+      "path": "/commercial/closing-rate/series",
+      "module": "commercial",
+      "entity": "sales_conversion_rate_series",
       "shape": "scalar",
       "status": "covered"
     },
