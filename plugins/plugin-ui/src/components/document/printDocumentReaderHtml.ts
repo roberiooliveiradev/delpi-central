@@ -45,6 +45,20 @@ html, body {
     height: auto !important;
     overflow: visible !important;
   }
+  /*
+   * MFEs (ex.: transformometro) copiam regras de isolamento:
+   *   @media print { body * { visibility: hidden } }
+   *   .dashboard-*.ds-print-root * { visibility: visible }
+   * Sem override, a prévia na tela fica ok e o diálogo de impressão sai em branco.
+   */
+  body.delpi-ui-document-print-window,
+  body.delpi-ui-document-print-window * {
+    visibility: visible !important;
+  }
+  body.delpi-ui-document-print-window {
+    background: #fff !important;
+    color: #151515 !important;
+  }
 }
 `;
 
@@ -64,6 +78,7 @@ export function collectPrintScopeClasses(page: HTMLElement): string[] {
   const classes: string[] = [];
   const seen = new Set<string>();
   let el: HTMLElement | null = page.parentElement;
+  let hasDashboardScope = false;
   while (el && el !== document.documentElement) {
     for (const name of Array.from(el.classList)) {
       const keep =
@@ -72,7 +87,9 @@ export function collectPrintScopeClasses(page: HTMLElement): string[] {
         name.startsWith("tm-atas-") ||
         name.startsWith("cipa-") ||
         name.startsWith("cec-") ||
-        name === "dashboard-page";
+        name === "dashboard-page" ||
+        name === "ds-print-root";
+      if (name.startsWith("dashboard-")) hasDashboardScope = true;
       if (keep && !seen.has(name)) {
         seen.add(name);
         classes.push(name);
@@ -88,6 +105,10 @@ export function collectPrintScopeClasses(page: HTMLElement): string[] {
       }
     }
     el = el.parentElement;
+  }
+  // Compatível com isolamento print dos dashboards (visibility só com ds-print-root).
+  if (hasDashboardScope && !seen.has("ds-print-root")) {
+    classes.push("ds-print-root");
   }
   return classes;
 }

@@ -85,13 +85,48 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toMatch(
       /class="delpi-ui-document-print-scope[^"]*dashboard-transformometro[^"]*"/,
     );
+    expect(html).toContain("ds-print-root");
     expect(html).toContain("tm-ata-document__facts");
     expect(html).toContain("tm-ata-paper");
     expect(html).toContain("tm-facts-style");
     expect(html).toContain('data-theme="light"');
     // Folha não pode herdar max-width mobile na janela estreita
     expect(html).toContain("padding: 14mm 21mm 16mm !important");
+    // Neutraliza body * { visibility:hidden } dos MFEs no @media print
+    expect(html).toContain(
+      "body.delpi-ui-document-print-window * {\n    visibility: visible !important;",
+    );
     document.getElementById("tm-facts-style")?.remove();
+  });
+
+  it("mantém conteúdo visível sob regra host body * { visibility:hidden }", () => {
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `<style id="hostile-print">
+        @media print {
+          body * { visibility: hidden; }
+          .dashboard-transformometro.ds-print-root,
+          .dashboard-transformometro.ds-print-root * { visibility: visible; }
+        }
+      </style>`,
+    );
+    document.body.innerHTML = `
+      <div class="dashboard-transformometro">
+        <section class="delpi-ui-document-reader">
+          <article class="delpi-ui-document-page"><p>Texto da ata</p></article>
+        </section>
+      </div>
+    `;
+    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
+    expect(html).toContain("visibility: visible !important");
+    expect(html).toContain("ds-print-root");
+    expect(html).toContain("Texto da ata");
+    // Override vem DEPOIS do CSS host (última stylesheet vence na ausência de !important host)
+    const hostileIdx = html.indexOf("hostile-print");
+    const overrideIdx = html.indexOf("body.delpi-ui-document-print-window *");
+    expect(hostileIdx).toBeGreaterThan(-1);
+    expect(overrideIdx).toBeGreaterThan(hostileIdx);
+    document.getElementById("hostile-print")?.remove();
   });
 
   it("absolutiza href de stylesheets para about:blank", () => {
