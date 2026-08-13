@@ -18,20 +18,34 @@
 | `commercial.seller-portfolios.manage` | Irrestrito (consolidado) |
 | `commercial.accounts.team.view` | Irrestrito no Portal; pode filtrar por `portfolio_id` / `seller_id` (PK da carteira) |
 | Demais (`accounts.view` etc.) **com** membership | Union dos clientes das carteiras do JWT; com **2+ carteiras** pode filtrar por PK **própria** (`portfolio_id` / `seller_id`) |
-| Demais **sem** membership | Em **pedidos em aberto** → consolidado (todos os clientes); demais superfícies (NF/billing/avatar) seguem `ensure_allows` / filter_pairs |
+| Demais **sem** membership | Em **pedidos em aberto** / **listas MC / KPIs** → filtro ou consolidado conforme a superfície; **Conta detalhe** (par único: NF, avatar GET, contatos CUD, enrichment/billing com 1 par) → `accounts.view` **sem** `ensure_allows` |
+
+### Conta fora da carteira (deep-link)
+
+| Regra | Comportamento |
+|-------|----------------|
+| Gate MFE Conta | `accounts.view` (app); **não** exige `canAccessMyPortfolio` |
+| Lista Minha Carteira / topnav MC | KEEP membership / team / manage |
+| Topbar | Par ∉ carteiras do user e **sem** team/manage → item efêmero **Cliente** ativo; MC não ativa |
+| Team/manage | Conta tratada como «dentro» (sem item Cliente) |
+| API Conta (path `/{code}/{store}/*`) | Sem `ensure_allows`; contatos CUD liberados |
+| Enrichment / billing-series | **1 par** = Conta (sem filter); **N pares** = lista (KEEP `filter_pairs`) |
+| Pedidos / KPIs / lista MC | KEEP filtro membership |
 
 ## Matriz rota × dono da regra
 
 | Superfície | Dono do escopo | Quem chama o quê |
 |------------|----------------|------------------|
 | CRUD `/seller-portfolios*` | commercial-api | MFE → commercial-api |
-| `GET/PUT/DELETE …/avatar` | commercial-api (`ensure_allows`) | MFE → commercial-api |
-| `POST /customers/enrichment` | commercial-api (filter_pairs) → api-delpi TOTVS | MFE → commercial-api |
-| `GET /customers/search` | Sem membership (manage/add) | MFE → commercial-api → api-delpi |
+| `GET …/avatar` (Conta) | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api |
+| `PUT/DELETE …/avatar` | commercial-api (manage) | MFE → commercial-api |
+| `POST /customers/enrichment` | 1 par Conta sem filter; N pares `filter_pairs` → api-delpi | MFE → commercial-api |
+| `GET /customers/search` | Sem membership (manage/add / identidade Conta) | MFE → commercial-api → api-delpi |
 | `GET /open-orders/` | commercial-api filtra resposta TOTVS | MFE → commercial-api → `GET …/totvs-open-orders` |
 | `GET /open-orders/ops-abertas` | Proxy (sem membership) | MFE → commercial-api → api-delpi |
-| `POST /customers/billing-series` | commercial-api (filter_pairs) | MFE → commercial-api → api-delpi (path TOTVS sem gate PVA) |
-| `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`ensure_allows`) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
+| `POST /customers/billing-series` | 1 par Conta sem filter; N pares `filter_pairs` | MFE → commercial-api → api-delpi |
+| `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |
+| Contatos `…/contacts*` | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api |
 | KPIs `/analytics/*`, OV, OTD | commercial-api (`seller_id`/`membership` → `customer_codes`) | MFE → commercial-api → `GET …/commercial/*` |
 | Propostas ADY `/proposal-documents*` | commercial-api (RBAC) | MFE → commercial-api → api-delpi `commercial-proposals` |
 | Production / products BFF | commercial-api (RBAC) | MFE → commercial-api → api-delpi production/products |
