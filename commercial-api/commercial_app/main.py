@@ -42,6 +42,9 @@ from commercial_app.interface.http.routes.worklist_routes import (
 from commercial_app.interface.http.routes.user_profile_routes import (
     router as user_profile_router,
 )
+from commercial_app.interface.http.routes.group_routes import (
+    router as group_router,
+)
 from commercial_app.middleware.auth_middleware import jwt_middleware
 from commercial_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -174,4 +177,5 @@ app.include_router(tasks_router)
 app.include_router(activities_router)
 app.include_router(attachment_router)
 app.include_router(user_profile_router)
+app.include_router(group_router)
 app.include_router(realtime_router)

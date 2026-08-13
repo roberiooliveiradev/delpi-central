@@ -7,6 +7,9 @@ from commercial_app.application.use_cases.manage_account_contacts import (
     ManageAccountContactsUseCase,
 )
 from commercial_app.application.use_cases.manage_attachments import ManageAttachmentsUseCase
+from commercial_app.application.use_cases.manage_commercial_groups import (
+    ManageCommercialGroupsUseCase,
+)
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
 from commercial_app.application.use_cases.manage_user_profile import ManageUserProfileUseCase
@@ -15,6 +18,9 @@ from commercial_app.config import settings
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
 from commercial_app.domain.ports.account_contact_repository_port import (
     AccountContactRepositoryPort,
+)
+from commercial_app.domain.ports.commercial_group_repository_port import (
+    CommercialGroupRepositoryPort,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import CustomerAvatarRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
@@ -45,6 +51,9 @@ from commercial_app.infrastructure.persistence.repositories.postgres_account_con
 from commercial_app.infrastructure.persistence.repositories.postgres_audit_log_repository import (
     PostgresAuditLogRepository,
 )
+from commercial_app.infrastructure.persistence.repositories.postgres_commercial_group_repository import (
+    PostgresCommercialGroupRepository,
+)
 from commercial_app.infrastructure.security.permissive_portal_access import (
     PermissivePortalAccessPort,
 )
@@ -70,12 +79,14 @@ _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
 _user_profile_repository: UserProfileRepositoryPort | None = None
+_commercial_group_repository: CommercialGroupRepositoryPort | None = None
 _portfolio_use_case: ManageSellerPortfolioUseCase | None = None
 _avatar_use_case: ManageCustomerAvatarUseCase | None = None
 _attachment_use_case: ManageAttachmentsUseCase | None = None
 _worklist_use_case: ManageWorklistUseCase | None = None
 _account_contacts_use_case: ManageAccountContactsUseCase | None = None
 _user_profile_use_case: ManageUserProfileUseCase | None = None
+_commercial_groups_use_case: ManageCommercialGroupsUseCase | None = None
 _commercial_gateway: DelpiCommercialGateway | None = None
 
 
@@ -251,3 +262,21 @@ def build_manage_user_profile_use_case() -> ManageUserProfileUseCase:
             directory_gateway=directory,
         )
     return _user_profile_use_case
+
+
+def build_commercial_group_repository() -> CommercialGroupRepositoryPort:
+    global _commercial_group_repository
+    if _commercial_group_repository is None:
+        _commercial_group_repository = PostgresCommercialGroupRepository()
+    return _commercial_group_repository
+
+
+def build_manage_commercial_groups_use_case() -> ManageCommercialGroupsUseCase:
+    global _commercial_groups_use_case
+    if _commercial_groups_use_case is None:
+        _commercial_groups_use_case = ManageCommercialGroupsUseCase(
+            repository=build_commercial_group_repository(),
+            audit_repository=build_audit_log_repository(),
+            portal_access=build_portal_access_port(),
+        )
+    return _commercial_groups_use_case
