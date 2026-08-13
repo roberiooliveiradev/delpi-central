@@ -21,5 +21,6 @@ export {
   collectPrintScopeClasses,
   downloadDocumentReaderPdf,
   findActiveDocumentPage,
+  prepareDocumentPagePrintClone,
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";

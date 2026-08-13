@@ -12,6 +12,9 @@ from commercial_app.application.security.auth_dependencies import require_any_pe
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ANALYTICS_PERMISSIONS,
 )
+from commercial_app.application.use_cases.get_open_portfolio_summary import (
+    GetOpenPortfolioSummaryUseCase,
+)
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
 from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
@@ -89,6 +92,46 @@ def _common_filters(
         "sort_dir": sort_dir,
         "search": search,
     }
+
+
+@router.get(
+    "/open-portfolio-summary",
+    operation_id="bff_get_analytics_open_portfolio_summary",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_open_portfolio_summary(
+    request: Request,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    """KPI-CARTEIRA: saldo em aberto agora (sem items; ignora período MTD/YTD)."""
+    operation_id = "bff_get_analytics_open_portfolio_summary"
+    try:
+        scope = resolve_analytics_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
+        payload = build_delpi_commercial_gateway().list_open_orders()
+        raw = unwrap_gateway_data(payload)
+        data = GetOpenPortfolioSummaryUseCase().execute(
+            raw if isinstance(raw, dict) else {},
+            scope,
+        )
+        return ok(
+            data,
+            message="Resumo da carteira em aberto carregado.",
+            operation_id=operation_id,
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id=operation_id)
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
 
 
 @router.get(

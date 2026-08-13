@@ -122,6 +122,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 |--------|------|-------------|------|-----------|--------|-------|-------|
 | GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; proxy → `GET …/totvs-open-orders` |
 | GET | `/open-orders/ops-abertas` | `list_commercial_open_ops` | F2b | `commercial.accounts.view` | `open_ops` | `list` | Proxy TOTVS sem membership |
+| GET | `/analytics/open-portfolio-summary` | `bff_get_analytics_open_portfolio_summary` | Onda A | `commercial.analytics.view` | `open_portfolio_summary` | `scalar` | KPI-CARTEIRA; reusa `list_open_orders` + filtro de escopo; **sem** `items`; `{ openValue, openLineCount, asOf, nature }` |
 | POST | `/customers/billing-series` | `list_commercial_customer_billing_series` | F2b | accounts.view | `billing_series` | `scalar` | `filter_pairs` antes do gateway |
 | GET | `/customers/{customer_code}/{store}/outbound-invoices` | `list_commercial_customer_outbound_invoices` | F2b | accounts.view | `outbound_invoice` | `paged_list` | proxy → `GET …/totvs-outbound-invoices/{c}/{s}` |
 | GET | `/customers/{customer_code}/{store}/outbound-invoices/{branch}/{invoice_number}/{invoice_series}` | `get_commercial_customer_outbound_invoice` | F2b | accounts.view | `outbound_invoice` | `playbook_report` | proxy → `GET …/totvs-outbound-invoices/{branch}/{n}/{s}`; valida cliente da Conta |
