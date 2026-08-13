@@ -10,6 +10,7 @@ from commercial_app.application.use_cases.manage_attachments import ManageAttach
 from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
 )
+from commercial_app.application.use_cases.manage_team_roster import ManageTeamRosterUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
 from commercial_app.application.use_cases.manage_user_profile import ManageUserProfileUseCase
@@ -87,6 +88,7 @@ _worklist_use_case: ManageWorklistUseCase | None = None
 _account_contacts_use_case: ManageAccountContactsUseCase | None = None
 _user_profile_use_case: ManageUserProfileUseCase | None = None
 _commercial_groups_use_case: ManageCommercialGroupsUseCase | None = None
+_team_roster_use_case: ManageTeamRosterUseCase | None = None
 _commercial_gateway: DelpiCommercialGateway | None = None
 
 
@@ -280,3 +282,14 @@ def build_manage_commercial_groups_use_case() -> ManageCommercialGroupsUseCase:
             portal_access=build_portal_access_port(),
         )
     return _commercial_groups_use_case
+
+
+def build_manage_team_roster_use_case() -> ManageTeamRosterUseCase:
+    global _team_roster_use_case
+    if _team_roster_use_case is None:
+        _team_roster_use_case = ManageTeamRosterUseCase(
+            groups=build_manage_commercial_groups_use_case(),
+            portfolios=build_seller_portfolio_repository(),
+            directory=CoreApiPortalAccessPort(),
+        )
+    return _team_roster_use_case

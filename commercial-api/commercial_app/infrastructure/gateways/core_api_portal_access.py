@@ -179,3 +179,73 @@ class CoreApiPortalAccessPort(PortalAccessPort):
                     "email": email,
                 }
         return result
+
+    def search_directory_users(
+        self,
+        *,
+        query: str | None = None,
+        limit: int = 20,
+        browse: bool = False,
+    ) -> list[dict[str, str]]:
+        """Lista/busca usuários com acesso ao app commercial (S2S).
+
+        Core limita `limit` a 1–20; `browse=true` permite listar sem `q`.
+        """
+        if not self.configured():
+            return []
+        safe_limit = max(1, min(int(limit or 20), 20))
+        params: dict[str, str | int] = {
+            "limit": safe_limit,
+            "app": self._app_id,
+        }
+        normalized = (query or "").strip()
+        if normalized:
+            params["q"] = normalized
+        if browse or not normalized:
+            params["browse"] = "true"
+        headers = {
+            "Authorization": f"Bearer {self._service_token}",
+            "X-Delpi-Service-Token": self._service_token,
+            "Accept": "application/json",
+        }
+        try:
+            response = httpx.get(
+                f"{self._base_url}/integrations/directory/users",
+                headers=headers,
+                params=params,
+                timeout=self._timeout,
+            )
+        except Exception:
+            logger.exception("core_api_directory_search_failed")
+            return []
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_directory_search_rejected status=%s body=%s",
+                response.status_code,
+                response.text[:300],
+            )
+            return []
+        try:
+            payload: Any = response.json()
+        except ValueError:
+            return []
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items, list):
+            return []
+        result: list[dict[str, str]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            user_id = str(item.get("id") or "").strip()
+            if not user_id:
+                continue
+            name = str(item.get("name") or item.get("display_name") or "").strip()
+            email = str(item.get("email") or "").strip()
+            result.append(
+                {
+                    "id": user_id,
+                    "name": name or user_id,
+                    "email": email,
+                }
+            )
+        return result
