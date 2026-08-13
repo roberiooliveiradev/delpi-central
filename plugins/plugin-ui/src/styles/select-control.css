@@ -165,7 +165,7 @@
   background: transparent;
   color: var(--delpi-ui-select-text, var(--delpi-ui-text, var(--td-text, inherit)));
   font: inherit;
-  font-size: var(--delpi-ui-select-font-size, 13px);
+  font-size: var(--delpi-ui-select-font-size, 14px);
   text-align: left;
   padding: 7px 8px;
   cursor: pointer;
