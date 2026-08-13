@@ -272,7 +272,104 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 
 ## 4. Plano de implementação das lacunas
 
-> Preenchido em subetapa E1.S2 — ondas A–E.
+Prioridade da ata: **visão gerencial primeiro**. Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código só após aprovação de ficha/política quando o item estiver **bloqueado**.
+
+Legenda de dono: **CA** = `commercial-api` · **AD** = `api-delpi` · **MFE** = `plugins/commercial` · **NEG** = Comercial/negócio · **OUT** = outro domínio.
+
+### Onda A — Formalizar (sem UI nova)
+
+Objetivo: destravar P0 sem código de produto.
+
+| Item | Dependência | Dono | Ref. playbook / ficha |
+|------|-------------|------|------------------------|
+| Definir e publicar fórmula ROL (líquido, devoluções, competência) | Homologação Comercial | NEG + AD | `KPI-ROL` · dor #2 |
+| Definir carteira comercial (fonte SC5/SC6, bruto/líquido, exclusões) | Homologação | NEG + AD | `KPI-CARTEIRA` · dor #4 |
+| Regra de soma ROL + carteira (bases compatíveis) | KPI-ROL + KPI-CARTEIRA | NEG | `KPI-ROL-CARTEIRA` |
+| Documentar hit rate (num/den, abertas, canceladas, revisões, data conversão) **sem mudar regra** | Doc existente conversão | NEG + AD | `KPI-HIT-RATE` · dor #3 |
+| Critérios cliente ativo / inativo / novo / recuperado / evento de atividade | Homologação | NEG | `KPI-CLIENTE-*` · dor #7 |
+| Unidade do ticket médio (NF/pedido/cliente…) + bruto/líquido | Homologação | NEG | `KPI-TICKET` |
+| Confirmar se acompanha **valor** total ofertado além de quantidade | Ata §6.1 ambígua | NEG | OFF-\* |
+| Fonte de família de produto e subgrupos WEG (lista oficial) | Cadastro TOTVS/CRM/Delpi | NEG · dor #6 | ADM-\* / M5 |
+| Política de rentabilidade (quem vê, export, auditoria) | Diretoria | NEG · FIN-004 | dor #15 |
+| Esclarecer status confirmação de pedidos (levantamento vs não iniciado) | Junior Cesar Pedersetti | NEG | dor #9 |
+
+**Critério de saída A:** fichas críticas em `em_validacao` ou `aprovada` (ou bloqueio explícito documentado).
+
+### Onda B — Cockpit gerencial
+
+Objetivo: Visão geral como painel de decisão (carteira + ROL + tempo).
+
+| Item | Dependência | Dono | Notas |
+|------|-------------|------|-------|
+| Presets MTD / YTD + comparação 2 anos na UI Overview | Onda A (ROL) | MFE + CA BFF | Período já existe; labels/presets |
+| KPI consolidado carteira (valor + itens) no Overview | `KPI-CARTEIRA` | AD rota se faltar + CA BFF + MFE | Dor #4 |
+| Card ROL + carteira (bases alinhadas) | `KPI-ROL-CARTEIRA` | AD + CA + MFE | Bloqueado até A |
+| Carteira prevista mês / meses seguintes / gap vs meta | Fórmulas + fonte postergação | AD + CA + MFE | Projeção; FCT-\* |
+| UX bruto vs líquido por indicador | Política Onda A | MFE | Evitar misturar bases |
+| Expor `new-clients-*` / novos negócios no cockpit quando fichas ok | KPI-CLIENTE-\* | CA analytics BFF + MFE | Dor #7 |
+| Distinção visual carteira comercial ≠ PCP | Conteúdo CM_HELP + copy | MFE | Sem passar programação PCP como carteira |
+
+**Critério de saída B:** gerente responde «como está o mês/ano?» sem planilha auxiliar para ROL+carteira (quando fichas aprovadas).
+
+### Onda C — Ofertas: produtividade e SLA
+
+Objetivo: medir processo de ofertas além da listagem.
+
+| Item | Dependência | Dono | Notas |
+|------|-------------|------|-------|
+| Contagens por colaborador / emitidas / em aberto / idade | Dados OV/ADY | AD agregações + CA + MFE | OFF-001–003 |
+| Follow-up (com/sem, última data) | Modelo CRM ou evento | CA (+ AD se TOTVS) | Dor #3 |
+| Valor total ofertado (se confirmado em A) | Negócio | AD + MFE | — |
+| Filtros analista, situação, etapa, família, grupo | Cadastros Onda A | MFE + BFF | Estender AnalyticsFilters / Opp |
+| Stage history multiárea (entrada, permanência, área, prazo, gargalo) | SLAs acordados entre áreas | CA settings + AD eventos | OFF-004–009; SLAs ainda não firmados |
+| Preservar hit rate na UI (documentação visível) | Onda A doc | MFE Overview | Sem mudança de fórmula |
+
+**Critério de saída C:** liderança vê gargalo de oferta por etapa/área sem export manual.
+
+### Onda D — Pedidos, entrega e prazos
+
+Objetivo: fechar Manual do Líder N1/N2 no que for Comercial.
+
+| Item | Dependência | Dono | Notas |
+|------|-------------|------|-------|
+| Faturado e não embarcado (lista + tempos + justificativa persistente) | Contrato TOTVS + marcos expedição | AD nova rota + CA BFF + MFE | Dor #11; SLA 24h só após formalizar |
+| Programa confirmação de pedidos (prazo, área, atraso) | Esclarecimento §13 + adesão áreas | CA workflow + MFE | ORD-004–007 · F7 |
+| Variantes OTD (colocação; solicitado×confirmado×atendido; prometido×executado) | `KPI-OTD` ampliada | AD + CA + MFE | Dor #10 |
+| Taxonomia de causas de atraso | Negócio | CA + MFE | — |
+| Timeline progressiva embarque/trânsito/redespacho | Fontes disponíveis | AD + CA | Construir por marco |
+| Problemas de entrega (SC + Rio Bananal) + indicador GR | Modelo exceção | CA + TV se GAV | Dor #13 |
+| Pacote Manual do Líder N1 (o que faltar após B/C) | Itens acima | MFE (+ TV Dashboard se layout TV) | GAV-\* |
+
+**Critério de saída D:** FNE e confirmação mensuráveis; OTD com causa mínima.
+
+### Onda E — Sensíveis, amostras e externos
+
+Objetivo: evoluções posteriores à centralização gerencial.
+
+| Item | Dependência | Dono | Notas |
+|------|-------------|------|-------|
+| Amostras (ciclo, atraso, 1ª peça) | Modelo M4 / fonte | CA + MFE | SMP-\* · F7 · dor #8 |
+| Ticket médio no cockpit | `KPI-TICKET` aprovada | AD + CA + MFE | — |
+| Rentabilidade (filtros cliente/família/período) | FIN-004 + RBAC + audit log | AD + CA + MFE | Dor #15 · P2 |
+| Boletos Vendas + alçadas | Contrato TOTVS + controles | AD + CA + MFE | FIN-007–008 · dor #16 |
+| Família produto / subgrupos WEG como filtro canônico | Cadastro Onda A | AD + CA + MFE | Dor #6 |
+| Read model ocupação/capacidade para Comercial | Contrato Produção/PCP | OUT → CA consume | Dor #14 · P2–P3 |
+| Rupturas estoque 30d (Jaraguá) no GR | Domínio Supplies/PCP | OUT · Comercial consome | Manual Líder N2 |
+| Acompanhar §18–§20 sem implementar no Portal | Chamados | OUT | § 5 deste doc |
+
+**Critério de saída E:** itens sensíveis só após política; amostras e capacidade com dono claro.
+
+### Ordem recomendada e o que *não* fazer
+
+```text
+A (fichas) → B (cockpit) → C (ofertas) → D (pedidos/entrega) → E (sensíveis/externos)
+```
+
+- Não implementar rentabilidade ou boletos antes da política/alçada.  
+- Não classificar família/WEG automaticamente sem regra validada.  
+- Não tratar programação PCP como carteira comercial.  
+- Não hospedar MFEs irmãos como entrega da consolidação.  
+- Não expandir Expedição WMS dentro de `plugins/commercial`.
 
 ---
 
