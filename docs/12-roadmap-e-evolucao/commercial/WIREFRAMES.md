@@ -812,6 +812,19 @@ Smoke estrutural do refino (via `npx tsx --test`):
 
 Backend worklist (E6): `pytest tests/test_worklist_routes_rbac.py` + use case — ver E8.S2 se fixtures RBAC.
 
+### Verify E11.S1 (ago/2026)
+
+Smoke do escopo Conta/Admin/MyDay (via `npx tsx --test`):
+
+- `tableAudit` / `returnToSweep` / `customerDetail` / `tableRowNav` / `customerBilling`
+- `myDayTaskGroups` (XOR + strip manage)
+- `proposalPdfContacts` / `administrationHub` / `sellerPortfoliosPage`
+- `noDirectApiDelpi`
+- kit: `AttachmentPreviewStrip` + `DataTable.interactions`
+- `tsc --noEmit` commercial
+
+**P0 residual:** `tsc` do `plugin-ui` ainda tem erros pré-existentes em testes BPMN/charts (fora do escopo).
+
 **P0 residual (higiene wrappers):** páginas fora do núcleo do refino ainda usam `SectionCard`/`EmptyState` diretos do kit (ex.: Analytics OTD/Team) — fora do escopo de gaps P0 desta auditoria; migrar em onda própria.
 
 ### E7 — backlog futuro (não implementar neste ciclo)
