@@ -31,10 +31,10 @@ export function scoreProposalDocumentForOpportunity(
   const ov = normalizeOpportunityKey(item.numero_ov);
   const opp = normalizeOpportunityKey(item.oportunidade);
   let score = 0;
-  if (ov === key) score += 100;
-  else if (ov.includes(key) || key.includes(ov)) score += 40;
-  if (opp === key) score += 80;
-  else if (opp.includes(key) || key.includes(opp)) score += 30;
+  if (ov && ov === key) score += 100;
+  else if (ov && (ov.includes(key) || key.includes(ov))) score += 40;
+  if (opp && opp === key) score += 80;
+  else if (opp && (opp.includes(key) || key.includes(opp))) score += 30;
   if (score === 0) return 0;
   return score;
 }
