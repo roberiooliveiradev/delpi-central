@@ -32,6 +32,16 @@ class TaskRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_by_status(
+        self,
+        *,
+        status: str | None = "open",
+        limit: int = 500,
+    ) -> Sequence[CommercialTask]:
+        """Lista tarefas por status sem filtrar por assignee (fila equipe global)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         raise NotImplementedError
 

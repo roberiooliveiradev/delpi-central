@@ -149,6 +149,42 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return [task for row in rows if (task := _row_task(row)) is not None]
 
+    def list_by_status(
+        self,
+        *,
+        status: str | None = "open",
+        limit: int = 500,
+    ) -> Sequence[CommercialTask]:
+        clauses = ["deleted_at IS NULL"]
+        params: list[Any] = []
+        if status:
+            clauses.append("status = %s")
+            params.append(status)
+        params.append(max(1, min(limit, 500)))
+        order_sql = (
+            "completed_at DESC NULLS LAST, updated_at DESC"
+            if status == "done"
+            else """CASE priority
+                 WHEN 'critical' THEN 0
+                 WHEN 'high' THEN 1
+                 WHEN 'normal' THEN 2
+                 ELSE 3
+               END,
+               due_at ASC NULLS LAST,
+               created_at ASC"""
+        )
+        rows = self.fetch_all(
+            f"""
+            SELECT {_TASK_COLUMNS}
+              FROM commercial.tasks
+             WHERE {" AND ".join(clauses)}
+             ORDER BY {order_sql}
+             LIMIT %s
+            """,
+            tuple(params),
+        )
+        return [task for row in rows if (task := _row_task(row)) is not None]
+
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         row = self.fetch_one(
             f"""

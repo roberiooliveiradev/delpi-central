@@ -20,6 +20,9 @@ class _MemoryTasks:
     def list_for_assignees(self, **_kwargs):
         return [self.task]
 
+    def list_by_status(self, **_kwargs):
+        return [self.task]
+
     def get_by_id(self, task_id):
         return self.task if self.task.id == task_id else None
 

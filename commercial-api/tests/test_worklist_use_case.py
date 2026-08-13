@@ -64,6 +64,24 @@ class InMemoryTaskRepo:
             )
         return out[:limit]
 
+    def list_by_status(
+        self,
+        *,
+        status: str | None = "open",
+        limit: int = 500,
+    ) -> Sequence[CommercialTask]:
+        out = [
+            task
+            for task in self.items.values()
+            if not status or task.status == status
+        ]
+        if status == "done":
+            out.sort(
+                key=lambda t: t.completed_at or t.updated_at,
+                reverse=True,
+            )
+        return out[:limit]
+
     def get_by_id(self, task_id: UUID) -> CommercialTask | None:
         return self.items.get(task_id)
 
