@@ -1,0 +1,461 @@
+{
+  "generatedAt": "2026-08-13",
+  "note": "Baseline gaps; waves must only remove entries. Do not grow without PR justification.",
+  "gaps": [
+    {
+      "file": "features/administration/AdministrationGroupsPage.tsx",
+      "kind": "field",
+      "id": "newGroupName"
+    },
+    {
+      "file": "features/administration/AdministrationGroupsPage.tsx",
+      "kind": "field",
+      "id": "renameDraft"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "field",
+      "id": "search"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "field",
+      "id": "groupId"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "field",
+      "id": "portfolioId"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "column",
+      "id": "person"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "column",
+      "id": "online"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "column",
+      "id": "email"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "column",
+      "id": "groups"
+    },
+    {
+      "file": "features/administration/AdministrationTeamPage.tsx",
+      "kind": "column",
+      "id": "portfolios"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunitiesPage.tsx",
+      "kind": "field",
+      "id": "Busca"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "desc"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "group"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "type"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "qty"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "process"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "stage"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "start"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "end"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "dur"
+    },
+    {
+      "file": "features/analytics/AnalyticsOpportunityDetailPage.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
+      "id": "order"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
+      "id": "promised"
+    },
+    {
+      "file": "features/analytics/AnalyticsOtdPage.tsx",
+      "kind": "column",
+      "id": "otd01"
+    },
+    {
+      "file": "features/analytics/AnalyticsTeamPage.tsx",
+      "kind": "column",
+      "id": "customers"
+    },
+    {
+      "file": "features/analytics/AnalyticsTeamPage.tsx",
+      "kind": "column",
+      "id": "lines"
+    },
+    {
+      "file": "features/analytics/AnalyticsTeamPage.tsx",
+      "kind": "column",
+      "id": "openValue"
+    },
+    {
+      "file": "features/analytics/components/CommercialProposalsTable.tsx",
+      "kind": "column",
+      "id": "ov"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
+      "kind": "field",
+      "id": "Data inicial"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
+      "kind": "field",
+      "id": "Data final"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
+      "kind": "field",
+      "id": "Situação"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
+      "kind": "field",
+      "id": "Busca"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoiceItems.tsx",
+      "kind": "column",
+      "id": "description"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "issue"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "invoice"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "sales-order"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "customer-order"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "situation"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "items"
+    },
+    {
+      "file": "features/customers/billing/components/CustomerInvoicesTable.tsx",
+      "kind": "column",
+      "id": "value"
+    },
+    {
+      "file": "features/customers/components/AccountContactsPanel.tsx",
+      "kind": "field",
+      "id": "Nome completo"
+    },
+    {
+      "file": "features/customers/components/AccountContactsPanel.tsx",
+      "kind": "field",
+      "id": "Cargo ou função"
+    },
+    {
+      "file": "features/customers/components/AccountContactsPanel.tsx",
+      "kind": "field",
+      "id": "Canal preferencial"
+    },
+    {
+      "file": "features/customers/components/AccountContactsPanel.tsx",
+      "kind": "field",
+      "id": "E-mail"
+    },
+    {
+      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
+      "kind": "field",
+      "id": "Cliente"
+    },
+    {
+      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
+      "kind": "field",
+      "id": "Data inicial"
+    },
+    {
+      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
+      "kind": "field",
+      "id": "Data final"
+    },
+    {
+      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
+      "kind": "column",
+      "id": "issue"
+    },
+    {
+      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
+      "kind": "column",
+      "id": "forecast"
+    },
+    {
+      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
+      "kind": "column",
+      "id": "value"
+    },
+    {
+      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",
+      "kind": "column",
+      "id": "opportunity"
+    },
+    {
+      "file": "features/customers/components/CustomerOrderLines.tsx",
+      "kind": "column",
+      "id": "ordered"
+    },
+    {
+      "file": "features/customers/components/CustomerOrderLines.tsx",
+      "kind": "column",
+      "id": "delivered"
+    },
+    {
+      "file": "features/customers/components/CustomerOrderLines.tsx",
+      "kind": "column",
+      "id": "balance"
+    },
+    {
+      "file": "features/customers/components/CustomerOrderLines.tsx",
+      "kind": "column",
+      "id": "delivery"
+    },
+    {
+      "file": "features/customers/components/CustomerOrderLines.tsx",
+      "kind": "column",
+      "id": "open-value"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "branch"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "customer-order"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "lines"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "overdue"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "delivery"
+    },
+    {
+      "file": "features/customers/components/CustomerOrdersTable.tsx",
+      "kind": "column",
+      "id": "value"
+    },
+    {
+      "file": "features/customers/components/CustomerPurchaseEvolutionChart.tsx",
+      "kind": "field",
+      "id": "Período"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "nome"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "sellerName"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "city"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "lastPurchaseDate"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "billed12m"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "valorTotalAberto"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "quantidadePedidosAtrasados"
+    },
+    {
+      "file": "features/customers/components/CustomersTable.tsx",
+      "kind": "column",
+      "id": "proximaEntrega"
+    },
+    {
+      "file": "features/customers/components/MyPortfolioAuditSection.tsx",
+      "kind": "field",
+      "id": "anon:80:<CommercialSelectField label={PORTFOLIO_"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfContactValue"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfContatoNome"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfContatoDepartamento"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfContatoEmail"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfContatoTelefone"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "field",
+      "id": "pdfObservacoes"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
+      "id": "qty"
+    },
+    {
+      "file": "features/proposals/ProposalDetailPage.tsx",
+      "kind": "column",
+      "id": "prazo"
+    },
+    {
+      "file": "features/proposals/ProposalsDocumentsTable.tsx",
+      "kind": "column",
+      "id": "ov"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioBulkTransferWizard.tsx",
+      "kind": "field",
+      "id": "anon:80:<CommercialTextField label={C.confirmFro"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioDetail.tsx",
+      "kind": "column",
+      "id": "code"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioDetail.tsx",
+      "kind": "column",
+      "id": "name"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioDetail.tsx",
+      "kind": "column",
+      "id": "coverage"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioDetail.tsx",
+      "kind": "column",
+      "id": "user"
+    },
+    {
+      "file": "features/seller-portfolios/SellerPortfolioDetail.tsx",
+      "kind": "column",
+      "id": "role"
+    },
+    {
+      "file": "features/seller-portfolios/UncoveredCustomersPanel.tsx",
+      "kind": "column",
+      "id": "code"
+    }
+  ]
+}
