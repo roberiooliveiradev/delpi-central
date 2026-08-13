@@ -47,6 +47,45 @@ class DelpiCommercialGateway:
             json_body=payload,
         )
 
+    def fetch_totvs_customer_contact(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+    ) -> dict[str, Any] | None:
+        """Contato SA1 read-only via enrichment (um cliente)."""
+        code = (customer_code or "").strip()
+        store = (customer_store or "").strip()
+        if not code or not store:
+            return None
+        payload = self.enrich_portfolio_customers(
+            payload={"customers": [{"customer_code": code, "customer_store": store}]}
+        )
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items, list) or not items:
+            data = payload.get("data") if isinstance(payload, dict) else None
+            if isinstance(data, dict):
+                items = data.get("items")
+            elif isinstance(data, list):
+                items = data
+        if not isinstance(items, list) or not items:
+            return None
+        first = items[0]
+        if not isinstance(first, dict):
+            return None
+        name = str(first.get("contact_name") or "").strip() or None
+        phone = str(first.get("phone") or "").strip() or None
+        email = str(first.get("email") or "").strip() or None
+        if not name and not phone and not email:
+            return None
+        return {
+            "full_name": name,
+            "phone": phone,
+            "email": email,
+            "source": "totvs",
+            "read_only": True,
+        }
+
     def list_customer_open_order_metrics(
         self,
         *,

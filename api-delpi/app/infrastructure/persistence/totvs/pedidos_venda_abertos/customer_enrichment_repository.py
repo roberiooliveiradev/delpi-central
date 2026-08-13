@@ -62,7 +62,10 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
                 SA1.A1_COD AS customer_code,
                 SA1.A1_LOJA AS customer_store,
                 SA1.A1_MUN AS city,
-                SA1.A1_EST AS state
+                SA1.A1_EST AS state,
+                SA1.A1_CONTATO AS contact_name,
+                SA1.A1_TEL AS phone,
+                SA1.A1_EMAIL AS email
               FROM SA1010 SA1 WITH (NOLOCK)
              WHERE SA1.D_E_L_E_T_ = ''
                AND ({where_pairs})
@@ -75,6 +78,9 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
                 customer_store=_trim(row.get("customer_store")),
                 city=_trim(row.get("city")) or None,
                 state=_trim(row.get("state")) or None,
+                contact_name=_trim(row.get("contact_name")) or None,
+                phone=_trim(row.get("phone")) or None,
+                email=_trim(row.get("email")) or None,
             )
             for row in rows
         ]

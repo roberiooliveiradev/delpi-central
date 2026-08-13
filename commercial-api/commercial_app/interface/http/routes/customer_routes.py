@@ -289,9 +289,17 @@ def get_customer_contacts_bundle(
             customer_store=customer_store,
             scope_check=_customer_scope_check_for_request(request),
         )
+        totvs_contact = None
+        try:
+            totvs_contact = build_delpi_commercial_gateway().fetch_totvs_customer_contact(
+                customer_code=customer_code,
+                customer_store=customer_store,
+            )
+        except Exception:
+            logger.exception("fetch_totvs_customer_contact_failed")
         return ok(
             {
-                "totvs_contact": None,
+                "totvs_contact": totvs_contact,
                 "items": [item.to_dict() for item in items],
             },
             message="Contatos carregados.",

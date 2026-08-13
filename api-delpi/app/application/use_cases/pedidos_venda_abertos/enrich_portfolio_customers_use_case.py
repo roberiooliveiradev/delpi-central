@@ -30,6 +30,9 @@ class CustomerEnrichmentItem:
     billing_trend: BillingTrendDirection
     billing_trend_pct: float | None
     has_avatar: bool
+    contact_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -50,6 +53,9 @@ class CustomerEnrichmentItem:
                 if self.has_avatar
                 else None
             ),
+            "contact_name": self.contact_name,
+            "phone": self.phone,
+            "email": self.email,
         }
 
 
@@ -136,6 +142,9 @@ class EnrichPortfolioCustomersUseCase:
                     billing_trend=trend.direction,
                     billing_trend_pct=trend.change_pct,
                     has_avatar=(code, store) in avatars,
+                    contact_name=geo_item.contact_name if geo_item else None,
+                    phone=geo_item.phone if geo_item else None,
+                    email=geo_item.email if geo_item else None,
                 )
             )
         return result
