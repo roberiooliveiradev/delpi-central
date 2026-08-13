@@ -24,7 +24,7 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | `commercial.accounts.view` | Acessar Portal Comercial | Início, Meus pedidos, conta; Minha Carteira só com membership ou team/manage |
 | `commercial.worklist.view` | Ver Minhas tarefas | `/my-tasks` (alias `/my-day`), worklist |
 | `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
-| `commercial.seller-portfolios.manage` | Administração | CRUD `/administration/*` (Painel · Carteiras · Membros); `is_admin`; escopo irrestrito |
+| `commercial.seller-portfolios.manage` | Administração | CRUD `/administration/*` (Painel · Carteiras · Equipe · Grupos); `is_admin`; escopo irrestrito; presença online na Equipe |
 | `commercial.audit.view` | Ver auditoria | quando exposta |
 | `commercial.analytics.view` | Ver Visão geral / OTD / OV | `/overview`, `/analytics/otd`, `/analytics/opportunities` (**não** Equipe sozinha) |
 | `commercial.proposals.view` | Ver propostas documento | `/proposals` via launcher (não top nav) |
@@ -52,8 +52,9 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 - Universo de filtro = carteiras **ativas** na commercial-api (membership via `seller_portfolio_members`).
 - Filtro MFE (Pedidos / Minha Carteira): `accounts.team.view || seller-portfolios.manage` (rótulo «Todas as carteiras»); multi-própria sem team → «Todas as minhas carteiras».
 - `is_admin` no `/seller-portfolios/me` = **apenas** `commercial.seller-portfolios.manage`.
-- **Admin (`seller-portfolios.manage`):** Administração (Painel, lista, detalhe, org, membros, clientes, transferir).
+- **Admin (`seller-portfolios.manage`):** Administração (Painel, Carteiras, Equipe, Grupos, detalhe, org, clientes, transferir).
 - **Gestor (`accounts.team.view` sem `manage`):** vê **todas** as carteiras ativas nos filtros das bancadas; **não** acessa Administração (nav oculta / 404).
+- **Grupos operacionais** (`commercial_groups`): M:N usuário↔grupo; **≠** RBAC Keycloak e **≠** carteira. Gestão só com `manage`. Perfil expõe `groups[]` somente leitura.
 - **Operacional sem membership:** **Pedidos em aberto** vê consolidado (todos os clientes); **Minha Carteira** / Conta detalhe ainda exigem vínculo ou team/manage para gates de NF/avatar.
 - **Operacional com membership:** só a(s) sua(s) carteira(s); chip Escopo = identidade.
 - **Directory picker (criar carteira / adicionar membro):** só usuários com acesso ao portal (`app=commercial` no diretório).
@@ -87,7 +88,7 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 - [ ] `accounts.team.view` sem manage → filtro equipe; sem CRUD Administração
 - [ ] Sem `proposals.view` → card Propostas omitido no launcher / 404 em `/proposals`
 - [ ] Sem `worklist.view` → sem Minhas tarefas na top
-- [ ] `manage` → Administração (Painel + Carteiras + Membros) + filtro equipe
+- [ ] `manage` → Administração (Painel + Carteiras + Equipe + Grupos) + filtro equipe
 - [ ] Usuário em 2+ carteiras → `/me` lista `portfolios[]`; chip Escopo «N carteiras»; filtro «Todas as minhas» união dedupe
 - [ ] Membro secundário (não owner) vê clientes da carteira compartilhada
 - [ ] Directory picker: usuário sem `app=commercial` não aparece; com acesso aparece

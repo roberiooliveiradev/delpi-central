@@ -38,13 +38,14 @@ Portal Minha DELPI
 | `/apps/commercial/administration` | Administração — Painel | `seller-portfolios.manage` |
 | `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `seller-portfolios.manage` |
 | `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `seller-portfolios.manage` |
-| `/apps/commercial/administration/team` | Administração — Membros | `seller-portfolios.manage` |
+| `/apps/commercial/administration/team` | Administração — Equipe (presença online via WS) | `seller-portfolios.manage` |
+| `/apps/commercial/administration/groups` | Administração — Grupos operacionais | `seller-portfolios.manage` |
 | `/apps/commercial/seller-portfolios` (legado) | Alias → Carteiras do hub | `seller-portfolios.manage` |
 
 Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
 († `analytics.view` · ‡ `worklist.view` · ° `seller-portfolios.manage`). Propostas, OTD, Oportunidades
-e Equipe saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
-Alias `/administration/members` → Membros; detalhe legado `/seller-portfolios/:id` permanece válido.
+e Equipe analytics saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
+Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:id` permanece válido.
 
 ## Pedidos em aberto
 

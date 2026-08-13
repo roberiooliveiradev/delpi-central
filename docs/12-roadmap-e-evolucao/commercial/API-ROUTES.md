@@ -280,6 +280,18 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 | GET/POST/PATCH | `/settings/customer-groups` | `list_customer_groups` / … | M5 | settings.manage | `reference_customer_group` | … |
 | GET/POST/PATCH | `/settings/product-families` | `list_product_families` / … | M5 | settings.manage | `reference_product_family` | … |
 
+### 3.16b Groups / team roster / profile (E5–E8 — entregue)
+
+| Method | Path | operationId | Permissão | Notas |
+|--------|------|-------------|-----------|-------|
+| GET | `/groups` | `list_commercial_groups` | manage | Grupos operacionais |
+| GET/POST | `/groups/{id}` / `` | get/create | manage | |
+| POST/PUT/DELETE | `/groups/{id}/members…` | add/replace/remove | manage | |
+| GET | `/administration/team-roster` | `list_commercial_team_roster` | manage | Directory + grupos + carteiras; **sem** online (WS) |
+| GET | `/users/{id}/profile` | (profile) | accounts.view | Inclui `groups[]` (summary) + `portfolios[]` |
+
+Presença online: evento WS `presence.updated` na sala `team` (só manage).
+
 ### 3.17 Audit & data quality
 
 | Method | Path | operationId | Fase | Permissão | entity | shape |

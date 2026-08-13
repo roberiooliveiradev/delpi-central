@@ -33,7 +33,8 @@
 | `/apps/commercial/administration` | Administração · Painel | sim† | manage |
 | `/apps/commercial/administration/seller-portfolios` | Carteiras | Admin subnav | manage |
 | `/apps/commercial/administration/seller-portfolios/:id` | Carteira detalhe | — | manage |
-| `/apps/commercial/administration/team` | Membros | Admin subnav | manage |
+| `/apps/commercial/administration/team` | Equipe | Admin subnav | manage |
+| `/apps/commercial/administration/groups` | Grupos | Admin subnav | manage |
 | `/apps/commercial/seller-portfolios` | (alias → administration/…) | — | manage |
 | `/apps/commercial/proposals` | Propostas ADY | launcher | proposals.view |
 | `/apps/commercial/analytics` | (redirect → /overview) | — | analytics.view |
@@ -196,9 +197,10 @@ Portal Comercial
 │   ├── Painel                     /administration
 │   ├── Carteiras                  /administration/seller-portfolios
 │   ├── Carteira detalhe           /administration/seller-portfolios/:id
-│   └── Membros                    /administration/team
+│   ├── Equipe                     /administration/team  (alias /members)
+│   └── Grupos                     /administration/groups
 └── (launcher Início) Propostas, OTD, Oportunidades
-    (Equipe → redirect Admin)
+    (Equipe analytics → redirect Admin)
 ```
 
 ---
@@ -598,7 +600,7 @@ são projeções próprias consumidas por HTTP da `api-delpi`/`commercial-api`.
 **Dados:** commercial-api `seller-portfolios` (+ `members[]`)  
 **Permissão:** `commercial.seller-portfolios.manage` (CRUD). Gestor com só `accounts.team.view` **não** vê esta tela — só filtro de carteira nas bancadas.  
 **Modelo:** carteira compartilhada = 1 owner + N members; mesma lista de clientes. Usuário pode estar em N carteiras.  
-**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `SegmentToggle`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`, `UserDirectoryPicker`. Subnav Administração: Painel · Carteiras · Membros.
+**Kit:** `PagePath`, `PageHero`, `ScopeChipBar`, `FilterBarShell`, `SegmentToggle`, `DataTable`, `DataRecordCard` / `InteractiveDataCard`, `HostContainedDialog` / `CommercialConfirmModal`, `UserDirectoryPicker`. Subnav Administração: Painel · Carteiras · Equipe · Grupos.
 
 ```
 ← Portal Comercial / Administração / Carteiras
@@ -656,6 +658,19 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 ```
 
 **Regras:** mesma lista de clientes para todos os membros; trocar owner mantém membership N:N; remover membro não apaga clientes; picker de diretório filtra quem **não** tem app `commercial`.
+
+### WF-05R-TEAM — Equipe
+
+**Rota:** `/administration/team` (alias `/administration/members`)  
+**API:** `GET /administration/team-roster` + WS `presence.updated` (`onlineUserIds`)  
+**Colunas:** Pessoa · Status Online · E-mail · Grupos · Carteiras · Ver perfil  
+**Filtros:** busca, grupo, carteira, presença (Todos/Online/Offline).
+
+### WF-05R-GROUPS — Grupos
+
+**Rota:** `/administration/groups`  
+**API:** `GET /groups` + add/remove members  
+**UI:** card por grupo + `UserDirectoryPicker` (avatars) — grupos ≠ RBAC.
 
 ### WF-05R-ORG — Visão Organização
 

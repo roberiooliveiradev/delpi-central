@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`. Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql`. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
@@ -37,6 +37,7 @@
 |------|------|---------|
 | **M1** | F2 | Carteira + avatars (+ `audit_log` mínimo) |
 | **M1+** | E5.1 | `seller_portfolio_members` (N:N) — `V005` |
+| **M1++** | E5 groups | `commercial_groups` + `commercial_group_members` — `V010` (seed sellers/sales_assistants/billing/estimators) |
 | **M2** | F5 | Tasks, activities (+ Wave G `V003`); visits leves / outbox / task_deps = futuro |
 | **M3** | F6 | Opportunities, pipeline refs, forecast |
 | **M4** | F7 | Samples, order confirmations, delivery exceptions |
@@ -123,6 +124,18 @@ Membership N:N — usuários compartilham a **mesma** lista de clientes da carte
 
 **Backfill (`V005`):** cada `seller_portfolios.user_id` vira linha `role='owner'`.  
 **Produto:** usuário pode aparecer em N carteiras; filtro «Todas as carteiras» = união dedupe dos clientes; chip Escopo no shell = identidade (`N carteiras` se >1), não filtro.
+
+### 3.1c `commercial_groups` / `commercial_group_members` (V010)
+
+Grupos **operacionais** do Portal (Vendedores, Auxiliares, Faturamento, Orçamentistas). **Não** são papéis RBAC nem carteiras.
+
+| Tabela | Colunas-chave |
+|--------|----------------|
+| `commercial_groups` | `id`, `kind` (UNIQUE EN), `name` (PT UI), `active`, `sort_order` |
+| `commercial_group_members` | `group_id`, `user_id` — UNIQUE `(group_id, user_id)` |
+
+**API:** `GET/POST /groups`, membros add/remove/replace; roster `GET /administration/team-roster`; perfil `groups[]` (summary sem lista de membros).  
+**Permissão:** `commercial.seller-portfolios.manage`.
 
 ### 3.2 `seller_customers`
 
