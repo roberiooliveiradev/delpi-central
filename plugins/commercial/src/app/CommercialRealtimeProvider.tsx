@@ -199,8 +199,19 @@ export function CommercialRealtimeProvider({
     return () => {
       cancelled = true;
       clearTimers();
-      socketRef.current?.close();
+      const socket = socketRef.current;
       socketRef.current = null;
+      if (socket) {
+        socket.onclose = null;
+        socket.onerror = null;
+        socket.onmessage = null;
+        socket.onopen = null;
+        try {
+          socket.close(1000, "commercial-unmount");
+        } catch {
+          /* ignore */
+        }
+      }
       setConnected(false);
     };
   }, [enabled]);

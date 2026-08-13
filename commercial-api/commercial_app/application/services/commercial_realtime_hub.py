@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from typing import Any
 
@@ -11,6 +12,8 @@ from starlette.websockets import WebSocketDisconnect
 logger = logging.getLogger(__name__)
 
 TEAM_ROOM = "team"
+# Cliente envia ping a cada ~25s; sem tráfego além disso → socket zumbi (ex.: unmount falhou).
+PRESENCE_IDLE_SECONDS = 75.0
 
 
 def presence_updated_payload(online_user_ids: list[str]) -> dict[str, Any]:
@@ -27,13 +30,14 @@ class CommercialRealtimeHub:
     sala `team` recebem `presence.updated` + snapshot ao entrar.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, idle_seconds: float = PRESENCE_IDLE_SECONDS) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
         self._socket_meta: dict[WebSocket, tuple[tuple[str, ...], str | None]] = {}
         self._user_socket_counts: dict[str, int] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
+        self._idle_seconds = float(idle_seconds)
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
@@ -100,7 +104,19 @@ class CommercialRealtimeHub:
             if came_online:
                 await self.broadcast_now(TEAM_ROOM, self.presence_payload())
             while True:
-                message = await websocket.receive_text()
+                try:
+                    message = await asyncio.wait_for(
+                        websocket.receive_text(),
+                        timeout=self._idle_seconds,
+                    )
+                except asyncio.TimeoutError:
+                    logger.info(
+                        "commercial_realtime_idle_timeout user_id=%s",
+                        uid,
+                    )
+                    with contextlib.suppress(Exception):
+                        await websocket.close(code=1000)
+                    break
                 if message.strip().lower() == "ping":
                     await websocket.send_json({"type": "pong"})
         except WebSocketDisconnect:

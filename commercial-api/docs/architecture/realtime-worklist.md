@@ -31,6 +31,8 @@ conjunto de usuários online muda, e como **snapshot** ao entrar na sala `team`.
 - **Online** = usuário com ≥1 socket ativo no Portal Comercial (multi-aba conta
   como um único online).
 - Desconectar a última aba → remove o `user_id` da lista.
+- Idle: sem `ping` por ~75s o servidor fecha o socket (defesa contra unmount
+  incompleto do remote federado).
 - Quem vê: só clientes na sala `team` (Admin Equipe). Operacional (só `user:`)
   não recebe fan-out de presença.
 - O GET `/administration/team-roster` **não** inclui online — presença é só WS.

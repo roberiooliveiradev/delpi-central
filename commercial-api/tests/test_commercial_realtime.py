@@ -107,6 +107,37 @@ def test_hub_presence_multi_tab_counts_as_one_online():
     asyncio.run(run())
 
 
+def test_hub_presence_idle_timeout_marks_offline():
+    async def run() -> None:
+        hub = CommercialRealtimeHub(idle_seconds=0.05)
+
+        ws = AsyncMock()
+        ws.accept = AsyncMock()
+        ws.send_json = AsyncMock()
+        ws.close = AsyncMock()
+
+        async def hang_forever():
+            await asyncio.sleep(10)
+
+        ws.receive_text = hang_forever
+
+        task = asyncio.create_task(
+            hub.connect(
+                ws,
+                room_keys=["user:seller-a"],
+                user_id="seller-a",
+                client_id="c1",
+            )
+        )
+        await asyncio.sleep(0.01)
+        assert hub.online_user_ids() == ["seller-a"]
+        await asyncio.wait_for(task, timeout=1.0)
+        assert hub.online_user_ids() == []
+        ws.close.assert_awaited()
+
+    asyncio.run(run())
+
+
 def test_build_notification_mentions_who_assigned():
     note = build_worklist_notification(
         reason="task.reassigned",

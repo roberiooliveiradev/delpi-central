@@ -14,17 +14,20 @@ import type { Root } from "react-dom/client";
 const { default: App } = await import("./App");
 
 const roots = new WeakMap<HTMLElement, Root>();
+/** Fallback quando o host chama unmount sem o elemento (ref já nulo no cleanup). */
+let lastMountedEl: HTMLElement | null = null;
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {
-  const root =
-    roots.get(el) ??
-    (() => {
-      const created = ReactDOM.createRoot(el);
-      roots.set(el, created);
-      return created;
-    })();
+  lastMountedEl = el;
+  const existing = roots.get(el);
+  if (existing) {
+    existing.render(<App {...props} />);
+    return;
+  }
 
-  root.render(<App {...props} />);
+  const created = ReactDOM.createRoot(el);
+  roots.set(el, created);
+  created.render(<App {...props} />);
 }
 
 export function mount(el: HTMLElement, props: AppProps = {}) {
@@ -35,12 +38,22 @@ export function updateRoute(el: HTMLElement, props: AppProps = {}) {
   renderApp(el, props);
 }
 
-export function unmount(el?: HTMLElement) {
-  if (!el) return;
+/**
+ * Desmonta o remote. Sem `el`, usa o último host montado — necessário quando o
+ * AppHost limpa a ref antes do unmount e o WebSocket de presença ficaria vivo
+ * (mesmo padrão do tv-dashboard).
+ */
+export function unmount(el?: HTMLElement | null) {
+  const target = el ?? lastMountedEl;
+  if (!target) return;
 
-  const root = roots.get(el);
-  if (!root) return;
+  const root = roots.get(target);
+  if (!root) {
+    if (lastMountedEl === target) lastMountedEl = null;
+    return;
+  }
 
   root.unmount();
-  roots.delete(el);
+  roots.delete(target);
+  if (lastMountedEl === target) lastMountedEl = null;
 }
