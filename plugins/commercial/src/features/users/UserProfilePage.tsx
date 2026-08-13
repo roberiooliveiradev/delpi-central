@@ -44,6 +44,8 @@ import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { buildShellPortfolioCustomersSearch } from "../../app/shellUserPortfolioNav";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
+  formatPortfolioCountValue,
+  formatPortfolioRoleLabel,
   formatPortfoliosCount,
   listCommercialPermissions,
   listGrantedCapabilities,
@@ -62,12 +64,6 @@ type ShortcutItem = {
   icon: ReactNode;
   onSelect: () => void;
 };
-
-function portfolioRoleLabel(role: string | undefined): string {
-  return role === "owner"
-    ? USER_ACCESS_COPY.portfolioRoleOwner
-    : USER_ACCESS_COPY.portfolioRoleMember;
-}
 
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const {
@@ -555,11 +551,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                   key={item.id}
                   leading={<BriefcaseBusiness size={18} aria-hidden />}
                   title={item.name}
-                  subtitle={portfolioRoleLabel(item.role)}
+                  subtitle={formatPortfolioRoleLabel(item.role)}
                   status={
                     <span className="cm-nav-row">
                       <CommercialStatusBadge
-                        label={portfolioRoleLabel(item.role)}
+                        label={formatPortfolioRoleLabel(item.role)}
                         variant={item.role === "owner" ? "success" : "info"}
                       />
                       <CommercialStatusBadge
@@ -572,12 +568,12 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     {
                       id: "customers",
                       label: USER_ACCESS_COPY.portfolioCustomers,
-                      value: String(item.customer_count ?? 0),
+                      value: formatPortfolioCountValue(item.customer_count),
                     },
                     {
                       id: "members",
                       label: USER_ACCESS_COPY.portfolioMembers,
-                      value: String(item.member_count ?? 0),
+                      value: formatPortfolioCountValue(item.member_count),
                     },
                   ]}
                   context={

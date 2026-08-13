@@ -46,3 +46,18 @@ export function listGrantedCapabilities(
 export function formatPortfoliosCount(count: number): string {
   return USER_ACCESS_COPY.portfoliosCount.replace("{count}", String(count));
 }
+
+/** Role label for profile portfolio cards — missing role is not «Membro». */
+export function formatPortfolioRoleLabel(role: string | null | undefined): string {
+  if (role === "owner") return USER_ACCESS_COPY.portfolioRoleOwner;
+  if (role === "member") return USER_ACCESS_COPY.portfolioRoleMember;
+  return USER_ACCESS_COPY.portfolioRoleUnknown;
+}
+
+/** Count display — null/undefined shows em dash, not fake zero. */
+export function formatPortfolioCountValue(count: number | null | undefined): string {
+  if (count == null || Number.isNaN(Number(count))) {
+    return USER_ACCESS_COPY.portfolioCountUnknown;
+  }
+  return String(count);
+}

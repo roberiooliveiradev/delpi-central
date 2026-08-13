@@ -33,6 +33,8 @@
     "portfoliosSubtitle": "Participação nas carteiras comerciais (papel, clientes e membros).",
     "portfolioRoleOwner": "Responsável",
     "portfolioRoleMember": "Membro",
+    "portfolioRoleUnknown": "—",
+    "portfolioCountUnknown": "—",
     "portfolioCustomers": "Clientes",
     "portfolioMembers": "Membros",
     "portfolioOpen": "Abrir carteira",

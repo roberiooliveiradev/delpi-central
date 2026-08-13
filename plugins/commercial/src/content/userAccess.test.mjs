@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  formatPortfolioCountValue,
+  formatPortfolioRoleLabel,
   formatPortfoliosCount,
   listCommercialPermissions,
   listGrantedCapabilities,
@@ -33,5 +35,15 @@ describe("userAccess helpers", () => {
 
   it("formata contagem de carteiras", () => {
     assert.match(formatPortfoliosCount(3), /3/);
+  });
+
+  it("não inventa Membro nem zero quando o contrato omite campos", () => {
+    assert.equal(formatPortfolioRoleLabel(undefined), "—");
+    assert.equal(formatPortfolioRoleLabel("owner"), "Responsável");
+    assert.equal(formatPortfolioRoleLabel("member"), "Membro");
+    assert.equal(formatPortfolioCountValue(undefined), "—");
+    assert.equal(formatPortfolioCountValue(null), "—");
+    assert.equal(formatPortfolioCountValue(0), "0");
+    assert.equal(formatPortfolioCountValue(2), "2");
   });
 });
