@@ -8,6 +8,10 @@ from commercial_app.application.services.user_profile_storage import (
     UserProfileStorage,
     UserProfileStorageError,
 )
+from commercial_app.application.use_cases.manage_commercial_groups import (
+    ManageCommercialGroupsUseCase,
+    group_summary_to_dict,
+)
 from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -44,12 +48,14 @@ class ManageUserProfileUseCase:
         portfolio_repository: SellerPortfolioRepositoryPort | None = None,
         portal_access: PortalAccessPort | None = None,
         directory_gateway: CoreApiPortalAccessPort | None = None,
+        groups: ManageCommercialGroupsUseCase | None = None,
     ) -> None:
         self._repo = repository
         self._storage = storage
         self._portfolios = portfolio_repository
         self._portal_access = portal_access
         self._directory = directory_gateway
+        self._groups = groups
 
     def _assert_can_view(self, *, target_user_id: str) -> None:
         # Qualquer usuário autenticado com permissão commercial de leitura (rota).
@@ -90,6 +96,17 @@ class ManageUserProfileUseCase:
             for item in portfolios
         ]
 
+    def _group_summaries(self, user_id: str) -> list[dict[str, Any]]:
+        if self._groups is None:
+            return []
+        uid = (user_id or "").strip()
+        if not uid:
+            return []
+        return [
+            group_summary_to_dict(group)
+            for group in self._groups.list_groups_by_user_id(uid)
+        ]
+
     def get_profile(self, *, user_id: str) -> dict[str, Any]:
         target = (user_id or "").strip()
         if not target:
@@ -109,6 +126,7 @@ class ManageUserProfileUseCase:
                 else None
             ),
             "portfolios": self._portfolio_summaries(target),
+            "groups": self._group_summaries(target),
             "updated_at": (
                 profile.updated_at.isoformat() if profile and profile.updated_at else None
             ),

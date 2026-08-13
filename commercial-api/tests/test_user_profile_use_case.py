@@ -6,9 +6,105 @@ from pathlib import Path
 import pytest
 
 from commercial_app.application.services.user_profile_storage import UserProfileStorage
+from commercial_app.application.use_cases.manage_commercial_groups import (
+    ManageCommercialGroupsUseCase,
+)
 from commercial_app.application.use_cases.manage_user_profile import ManageUserProfileUseCase
+from commercial_app.domain.entities.commercial_group import (
+    CommercialGroup,
+    CommercialGroupMember,
+)
 from commercial_app.domain.entities.seller_portfolio import SellerPortfolio
 from commercial_app.domain.entities.user_profile import CommercialUserProfile
+
+
+class FakeGroupsRepo:
+    def __init__(self, groups: list[CommercialGroup]) -> None:
+        self._groups = groups
+
+    def list_groups_by_user_id(self, user_id: str) -> list[CommercialGroup]:
+        uid = user_id.strip()
+        return [
+            CommercialGroup(
+                id=group.id,
+                kind=group.kind,
+                name=group.name,
+                active=group.active,
+                sort_order=group.sort_order,
+                members=(),
+            )
+            for group in self._groups
+            if any(member.user_id == uid for member in group.members)
+        ]
+
+    def list_groups(self, *, active_only: bool = False) -> list[CommercialGroup]:
+        return list(self._groups)
+
+    def get_by_id(self, group_id: str) -> CommercialGroup | None:
+        return next((item for item in self._groups if item.id == group_id), None)
+
+    def get_by_kind(self, kind: str) -> CommercialGroup | None:
+        return next((item for item in self._groups if item.kind == kind), None)
+
+    def create_group(self, **kwargs):  # pragma: no cover
+        raise NotImplementedError
+
+    def replace_members(self, **kwargs):  # pragma: no cover
+        raise NotImplementedError
+
+    def add_member(self, **kwargs):  # pragma: no cover
+        raise NotImplementedError
+
+    def remove_member(self, **kwargs):  # pragma: no cover
+        raise NotImplementedError
+
+    def list_member_user_ids_by_group_id(self, group_id: str) -> list[str]:
+        group = self.get_by_id(group_id)
+        return [member.user_id for member in group.members] if group else []
+
+    def list_memberships_by_user_ids(self, user_ids):
+        return []
+
+
+def test_user_profile_includes_groups(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+    groups = ManageCommercialGroupsUseCase(
+        FakeGroupsRepo(  # type: ignore[arg-type]
+            [
+                CommercialGroup(
+                    id="g1",
+                    kind="sellers",
+                    name="Vendedores",
+                    active=True,
+                    sort_order=1,
+                    members=(CommercialGroupMember(user_id="u1"),),
+                ),
+                CommercialGroup(
+                    id="g2",
+                    kind="billing",
+                    name="Faturamento",
+                    active=True,
+                    sort_order=2,
+                    members=(CommercialGroupMember(user_id="u2"),),
+                ),
+            ]
+        )
+    )
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        portfolio_repository=FakePortfolioRepo(),  # type: ignore[arg-type]
+        groups=groups,
+    )
+    payload = uc.get_profile(user_id="u1")
+    assert [item["kind"] for item in payload["groups"]] == ["sellers"]
+    assert payload["groups"][0]["name"] == "Vendedores"
+    assert "members" not in payload["groups"][0]
+
+    empty = uc.get_profile(user_id="u3")
+    assert empty["groups"] == []
+
 
 
 class InMemoryUserProfileRepo:
