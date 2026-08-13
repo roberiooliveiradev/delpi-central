@@ -41,5 +41,8 @@ describe("AnalyticsOtdPage estrutural", () => {
     assert.match(page, /otdLinesSearch/);
     assert.match(page, /sort_by: listState\.sortBy/);
     assert.match(page, /daysDiff/);
+    assert.match(page, /insightsRecurrence/);
+    assert.match(page, /avg_late_days/);
+    assert.match(page, /worstDelays/);
   });
 });

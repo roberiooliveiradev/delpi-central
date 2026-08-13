@@ -1,5 +1,13 @@
 import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
-import { CircleGauge, PackageCheck, RefreshCw, Truck } from "lucide-react";
+import {
+  CircleGauge,
+  Clock3,
+  PackageCheck,
+  Percent,
+  RefreshCw,
+  Timer,
+  Truck,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getSalesOrderOtdPanel, getSalesOrderOtdSeries } from "../../api/analyticsApi";
@@ -398,6 +406,154 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             value={(summary.late_lines ?? 0).toLocaleString("pt-BR")}
             icon={<Truck size={22} />}
           />
+          <CommercialMetricCard
+            label="% atraso"
+            titleHint={CM_HELP.analytics.otdKpiLatePct}
+            value={formatPct(summary.late_percentage)}
+            icon={<Percent size={22} />}
+          />
+          <CommercialMetricCard
+            label="Média dias atraso"
+            titleHint={CM_HELP.analytics.otdKpiLateDays}
+            value={formatDays(summary.avg_late_days)}
+            icon={<Timer size={22} />}
+          />
+          <CommercialMetricCard
+            label="P50 / P90 dias"
+            titleHint={CM_HELP.analytics.otdKpiLateDays}
+            value={`${formatDays(summary.p50_late_days)} / ${formatDays(summary.p90_late_days)}`}
+            icon={<Clock3 size={22} />}
+          />
+        </div>
+      ) : null}
+
+      {!loadingPanel && panel?.insights ? (
+        <div className="cm-home-kpi-grid" aria-label="Insights OTD">
+          <SectionCard
+            title={ANALYTICS_CONTENT.otd.insightsRecurrence}
+            hint={CM_HELP.analytics.otdRecurrence}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            {(panel.insights.recurringCustomers?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem reincidência (≥2 atrasos) no período.</p>
+            ) : (
+              <CommercialDataTable
+                rows={panel.insights.recurringCustomers}
+                columns={[
+                  {
+                    key: "customer",
+                    header: "Cliente",
+                    render: (row) => row.customer_name || row.customer_code || "—",
+                  },
+                  {
+                    key: "late_count",
+                    header: "Atrasos",
+                    render: (row) => row.late_count.toLocaleString("pt-BR"),
+                  },
+                  {
+                    key: "total_late_days",
+                    header: "Dias ∑",
+                    render: (row) => formatDays(row.total_late_days),
+                  },
+                ]}
+                rowKey={(row) => row.customer_code}
+                layout="section"
+              />
+            )}
+          </SectionCard>
+          <SectionCard
+            title={ANALYTICS_CONTENT.otd.insightsWorst}
+            hint={CM_HELP.analytics.otdWorstDelays}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            {(panel.insights.worstDelays?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem linhas atrasadas.</p>
+            ) : (
+              <CommercialDataTable
+                rows={panel.insights.worstDelays}
+                columns={[
+                  {
+                    key: "order",
+                    header: "Pedido",
+                    render: (row) => (
+                      <button
+                        type="button"
+                        className="cm-link-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openLine(row);
+                        }}
+                      >
+                        {row.order_number}/{row.line_item}
+                      </button>
+                    ),
+                  },
+                  {
+                    key: "customer",
+                    header: "Cliente",
+                    render: (row) => row.customer_name || row.customer_code || "—",
+                  },
+                  {
+                    key: "days",
+                    header: "Dias",
+                    render: (row) => formatDays(row.days_diff),
+                  },
+                ]}
+                rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}-worst`}
+                layout="section"
+                onRowClick={openLine}
+                rowClickRole="button"
+              />
+            )}
+          </SectionCard>
+          <SectionCard
+            title={ANALYTICS_CONTENT.otd.insightsUpcoming}
+            hint={CM_HELP.analytics.otdUpcomingPromises}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            {(panel.insights.upcomingPromises?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem promessas abertas no recorte.</p>
+            ) : (
+              <CommercialDataTable
+                rows={panel.insights.upcomingPromises}
+                columns={[
+                  {
+                    key: "order",
+                    header: "Pedido",
+                    render: (row) => (
+                      <button
+                        type="button"
+                        className="cm-link-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openLine(row);
+                        }}
+                      >
+                        {row.order_number}/{row.line_item}
+                      </button>
+                    ),
+                  },
+                  {
+                    key: "customer",
+                    header: "Cliente",
+                    render: (row) => row.customer_name || row.customer_code || "—",
+                  },
+                  {
+                    key: "promised",
+                    header: "Promessa",
+                    render: (row) => formatDisplayDate(row.promised_date),
+                  },
+                ]}
+                rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}-up`}
+                layout="section"
+                onRowClick={openLine}
+                rowClickRole="button"
+              />
+            )}
+          </SectionCard>
         </div>
       ) : null}
 
