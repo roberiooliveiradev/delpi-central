@@ -30,11 +30,14 @@ import {
   CommercialStatusBadge,
   UI_PREFIX,
 } from "../../app/commercialUi";
+import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
+import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ProductStructureTree } from "../../components/ProductStructureTree";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
+import { OpenProposalFromOpportunityButton } from "./components/OpenProposalFromOpportunityButton";
 import type {
   CommercialProduct,
   CommercialProposalDetail,
@@ -78,6 +81,7 @@ export function AnalyticsOpportunityDetailPage({
   search,
 }: AnalyticsOpportunityDetailPageProps) {
   const filters = useAnalyticsFilters();
+  const { canViewProposals } = usePortfolioScope();
   const branchFromUrl = readQueryParam(search, "branch");
   const revisionFromUrl = readQueryParam(search, "revision");
   const branch =
@@ -95,10 +99,15 @@ export function AnalyticsOpportunityDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [historyView, setHistoryView] = useState<HistoryView>("timeline");
-  const backHref = buildPluginPath(
+  const listHref = buildPluginPath(
     "analytics_opportunities",
     basePath,
     buildAnalyticsOpportunityBackSearch(search),
+  );
+  const back = resolvePagePathBack(
+    search,
+    { href: listHref, label: "Oportunidades" },
+    basePath,
   );
 
   useEffect(() => {
