@@ -23,7 +23,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md)** | Smoke MVP multi-membro (E5.2) + comandos de regressão |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
 | **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Ocultar PVA + redirects + smoke multi-membro (`V005`) |
-| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — Onda A C1 em validação |
+| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — Onda A C1 (baseline código; assinatura formal opcional) |
 | **[KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)** | Workshop homologação ROL / carteira / hit rate |
 | **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo commercial-api + api-delpi |
 | **[DATA-MODEL.md](./DATA-MODEL.md)** | Tabelas Postgres schema `commercial` (`seller_portfolio_members`) |
@@ -55,6 +55,8 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 (sem implementação neste ciclo) |
 | Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Entregue** — universo = clientes com pedido aberto; `filter=uncovered` + métricas no load-summary |
 | **Refino visual + IA** — Início apps\|eventos, Overview BI, filtro carteira, Equipe→Admin, Conta Opp, CM_HELP, C17 row→detalhe | **Entregue** — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) § Homologação |
+| **Onda A cockpit C1** — presets período, carteira aberta, série hit rate, fichas | **Entregue** (baseline) — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [KPI-FICHAS.md](./KPI-FICHAS.md) |
+| **Onda B YoY Overview** — overlay ano anterior em ROL + conversão | **Em curso** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 
