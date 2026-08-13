@@ -22,6 +22,7 @@ Portal Minha DELPI
 | `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `accounts.view` |
 | `/apps/commercial/overview` | Visão geral — KPIs, filtros, ROL, funil e drills | `analytics.view` |
 | `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `worklist.view` |
+| `/apps/commercial/users/:userId` | Perfil de usuário (foto, cargo, carteiras) | `accounts.view` |
 | `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
 | `/apps/commercial/open-orders/:filial/:pedido/:linha` | Ficha nativa da linha do pedido | `accounts.view` |
 | `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `accounts.view` |

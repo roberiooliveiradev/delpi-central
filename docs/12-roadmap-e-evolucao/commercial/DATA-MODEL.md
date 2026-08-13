@@ -649,7 +649,19 @@ Aprovação genérica (desconto, margem, exceção).
 | `status` | TEXT NOT NULL | `open` \| `done` \| `cancelled` |
 | `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
 
+### 7.2b `commercial_user_profiles`
+
+Extensão Commercial do usuário do diretório (foto + cargo). Migration `V008`.
+
+| Coluna | Tipo | Notas |
+|--------|------|--------|
+| `user_id` | TEXT PK | sub Minha Delpi |
+| `job_title` | TEXT | editável self ou portfolio manager |
+| `photo_storage_key` / `photo_file_name` / `photo_content_type` / `photo_byte_size` | | volume `COMMERCIAL_USER_AVATAR_UPLOAD_DIR` |
+| `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
+
 ### 7.3 `account_contacts_extension`
+
 
 Dados complementares **não** canônicos do contato TOTVS.
 

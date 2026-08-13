@@ -26,6 +26,7 @@
 | `/apps/commercial/overview` | Visão geral | sim | analytics.view |
 | `/apps/commercial/my-tasks` | Minhas tarefas | sim | worklist.view |
 | `/apps/commercial/my-day` | (alias → my-tasks) | — | worklist.view |
+| `/apps/commercial/users/:userId` | Perfil de usuário | — | accounts.view |
 | `/apps/commercial/open-orders` | Meus pedidos | sim | accounts.view |
 | `/apps/commercial/customers` | Minha Carteira | sim | membership/team/manage |
 | `/apps/commercial/customers/:code/:store` | Conta | — | idem |
@@ -884,6 +885,24 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Modal transferir | shell host-contained (`HostContainedDialog`) |
 
 CSS de kit: **zero** no MFE — só tokens `--delpi-ui-*` + layout de página.
+
+---
+
+## WF-USER — Perfil usuário `/users/:userId`
+
+```text
+┌─ PagePath: Portal / Usuário / {nome} ───────────────────────────────────────┐
+┌─ PageHero: Nome · e-mail · cargo ───────────────────────────────────────────┐
+│ [Avatar]  Cargo [TextField] [Salvar] † · [Trocar foto] [Remover] †           │
+└─────────────────────────────────────────────────────────────────────────────┘
+† self ou portfolio manager
+
+┌─ SectionCard: Carteiras ────────────────────────────────────────────────────┐
+│ Lista de memberships (link detalhe só com seller-portfolios.manage)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+BFF: `GET/PATCH /users/{id}/profile` · `PUT/DELETE .../photo` · volume `commercial-user-avatars`.
 
 ---
 
