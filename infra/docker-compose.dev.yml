@@ -98,11 +98,13 @@ services:
       KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
 
       KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-}
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
       KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS}
 
-      KC_PROXY: ${KC_PROXY}
-      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS}
+      # Dev é HTTP em localhost. Não usar KC_PROXY=edge nem KC_PROXY_HEADERS:
+      # o Keycloak marca cookies Secure e o browser descarta → OAuth 400.
+      # Produção (nginx.conf + HTTPS) continua com proxy headers no compose de prod.
 
       TZ: ${TZ}
 
@@ -1869,7 +1871,8 @@ services:
     restart: unless-stopped
 
     ports:
-      - "80:80"
+      # Cursor no Windows costuma ocupar 80/8080 do localhost — use GATEWAY_HOST_PORT no .env
+      - "${GATEWAY_HOST_PORT:-80}:80"
 
     volumes:
       - ../gateway/nginx.dev.conf:/etc/nginx/nginx.conf

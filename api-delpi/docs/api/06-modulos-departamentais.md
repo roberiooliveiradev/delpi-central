@@ -191,7 +191,7 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
-| GET | `/supplies/otd` | On-Time Delivery compras (geral). |
+| GET | `/supplies/otd` | OTD compras — universo **MP ou** código com prefixo `3019`. Ver [padroes-totvs/cadastro-produto.md](./padroes-totvs/cadastro-produto.md). |
 | GET | `/supplies/purchase-order-otd` | OTD de pedidos de compra **só MP** (KPI). Ver [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md). |
 | GET | `/supplies/purchase-order-otd/series` | Série temporal OTD PC MP por filial. |
 | GET | `/supplies/purchase-order-otd/panel` | Painel OTD PC MP — resumo + linhas paginadas. |
@@ -211,7 +211,7 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 
 **Performance (`/supplies/otd`):**
 
-- Use case: summary derivado do `monthly_breakdown` (uma varredura em `VW_PONTUALIDADE_FORNECEDORES_MENSAL` em vez de duas).
+- Agregação a partir de `VW_PONTUALIDADE_FORNECEDORES` com filtro `TIPO_PRODUTO = MP` **ou** `PRODUTO` prefixo `3019` (a view mensal pré-agregada não permite esse recorte).
 - Views com `WITH (NOLOCK)` (leitura analítica).
 - Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).

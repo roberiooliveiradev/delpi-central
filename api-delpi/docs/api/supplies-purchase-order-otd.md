@@ -12,7 +12,7 @@ Percentual de linhas de **pedido de compra de matéria-prima (MP)** recebidas no
 Universo fixo: `TIPO_PRODUTO = MP` (`PRODUCT_TYPE_RAW_MATERIAL` em `app/domain/totvs/protheus_product_types.py`).  
 Não confundir com:
 
-- `GET /supplies/otd` — OTD de compras **geral** (todos os tipos)
+- `GET /supplies/otd` — OTD de compras do dashboard/SI: **MP ou** código com prefixo `3019` (não é “todos os tipos”)
 - `GET /commercial/sales-order-otd` — OTD de **pedidos de venda**
 - Estoque de segurança — lista PCs **abertos** (`C7_DATPRF`), sem taxa histórica
 

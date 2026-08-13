@@ -28,6 +28,23 @@ Doc da rota: [supplies-purchase-order-otd.md](../supplies-purchase-order-otd.md)
 
 ---
 
+## Universo OTD compras (`GET /supplies/otd`)
+
+KPI de pontualidade do dashboard de suprimentos / SI (`supplies_otd`). Fonte: `VW_PONTUALIDADE_FORNECEDORES`.
+
+Linha elegível se **qualquer** condição for verdadeira:
+
+| Regra | Campo | Valor |
+|-------|--------|--------|
+| Tipo MP | `TIPO_PRODUTO` | `MP` (`PRODUCT_TYPE_RAW_MATERIAL`) |
+| Família de código | `PRODUTO` | prefixo `3019` (`SUPPLIES_OTD_PRODUCT_CODE_PREFIX`) |
+
+Constantes em `app/domain/totvs/protheus_product_types.py`.
+
+Não confundir com `GET /supplies/purchase-order-otd` (somente `MP`, sem a família `3019`).
+
+---
+
 ## Produto de terceiro (`B1_TPMAT`)
 
 Painéis de **refugo em R$** e filtros associados **excluem** `B1_TPMAT = 2` (Sim).
