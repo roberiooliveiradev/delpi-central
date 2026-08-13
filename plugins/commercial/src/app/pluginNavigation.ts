@@ -6,6 +6,7 @@ import {
   buildOpenOrderOpDetailPath,
   buildPluginPath,
   buildProposalDetailPath,
+  buildUserProfilePath,
   normalizePathname,
   type PluginNavigationTarget,
 } from "./pluginRoutes";
@@ -13,6 +14,10 @@ import {
   sanitizeCustomersListSearch,
   type CustomersListSellerAccess,
 } from "../utils/customersListDeepLink";
+import {
+  buildCustomerDetailSearch,
+  type CustomerDetailSection,
+} from "../features/customers/utils/customerDetailSection";
 
 export function navigatePluginPath(
   target: string,
@@ -50,14 +55,29 @@ export function navigateCustomerDetail(
     basePath?: string;
     search?: string;
     sellerAccess?: CustomersListSellerAccess;
+    /** Abre a Conta já na seção (ex.: contatos). Preserva query allowlisted da lista. */
+    section?: CustomerDetailSection;
   },
 ): boolean {
   const path = buildCustomerDetailPath(options?.basePath, codigo, loja);
   if (!path) return false;
   const sourceSearch =
     options?.search ?? (typeof window !== "undefined" ? window.location.search : "");
-  const search = sanitizeCustomersListSearch(sourceSearch, options?.sellerAccess);
+  const listSearch = sanitizeCustomersListSearch(sourceSearch, options?.sellerAccess);
+  const search = options?.section
+    ? buildCustomerDetailSearch(options.section, listSearch)
+    : listSearch;
   navigatePluginPath(`${path}${search}`);
+  return true;
+}
+
+export function navigateUserProfile(
+  userId: string,
+  options?: { basePath?: string; replace?: boolean },
+): boolean {
+  const path = buildUserProfilePath(options?.basePath, userId);
+  if (!path) return false;
+  navigatePluginPath(path, { replace: options?.replace });
   return true;
 }
 
@@ -146,4 +166,5 @@ export {
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildProposalDetailPath,
+  buildUserProfilePath,
 };

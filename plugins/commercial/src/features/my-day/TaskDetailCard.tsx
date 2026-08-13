@@ -1,4 +1,5 @@
 import { ActionButton, StatusBadge } from "@delpi/plugin-ui/index";
+import type { ReactNode } from "react";
 
 import type { CommercialTaskDto } from "../../api/worklistApi";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -14,11 +15,12 @@ type TaskDetailCardProps = {
   tone: "danger" | "warning" | "neutral" | "success";
   typeLabel: string;
   priorityLabel: string;
-  assigneeLabel?: string | null;
+  /** Texto legado ou chips com link (ReactNode). */
+  assigneeValue?: ReactNode;
   /** Quem criou/atribuiu — exibido quando diferente do responsável. */
   assignedByLabel?: string | null;
-  /** Clientes da tarefa (já formatados). */
-  customerLabel?: string | null;
+  /** Texto legado ou chips com link (ReactNode). */
+  customerValue?: ReactNode;
   canManage: boolean;
   /** Só o criador edita conteúdo/anexos. */
   canEdit: boolean;
@@ -55,9 +57,9 @@ export function TaskDetailCard({
   tone,
   typeLabel,
   priorityLabel,
-  assigneeLabel,
+  assigneeValue,
   assignedByLabel,
-  customerLabel,
+  customerValue,
   canManage,
   canEdit,
   canDelete = false,
@@ -94,8 +96,8 @@ export function TaskDetailCard({
     { label: "Prazo", value: formatDue(task.due_at), hint: CM_HELP.myDay.taskDue },
     { label: "Prioridade", value: priorityLabel, hint: CM_HELP.myDay.taskPriority },
     { label: "Tipo", value: typeLabel, hint: CM_HELP.myDay.taskType },
-    ...(assigneeLabel
-      ? [{ label: "Responsável", value: assigneeLabel, hint: CM_HELP.myDay.taskAssignee }]
+    ...(assigneeValue
+      ? [{ label: "Responsável", value: assigneeValue, hint: CM_HELP.myDay.taskAssignee }]
       : []),
     ...(assignedByLabel
       ? [
@@ -106,11 +108,11 @@ export function TaskDetailCard({
           },
         ]
       : []),
-    ...(customerLabel
+    ...(customerValue
       ? [
           {
             label: "Cliente",
-            value: customerLabel,
+            value: customerValue,
             hint: CM_HELP.myDay.taskCustomer,
           },
         ]

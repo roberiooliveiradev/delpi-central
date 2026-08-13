@@ -24,7 +24,7 @@ import {
 import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import { CM_HELP } from "../../content/helpTooltips";
-import { navigateCustomerDetail } from "../../app/pluginNavigation";
+import { navigateCustomerDetail, navigateUserProfile } from "../../app/pluginNavigation";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
@@ -62,6 +62,7 @@ import {
 } from "./TaskAttachmentPreviewModal";
 import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 import { TaskDetailCard } from "./TaskDetailCard";
+import { TaskEntityLinkChips } from "./TaskEntityLinkChips";
 
 type MyDayPageProps = {
   basePath: string;
@@ -896,16 +897,19 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       : task.assignee_user_id
                         ? [task.assignee_user_id]
                         : [];
-                  const assigneeLabel =
-                    assigneeIds.length > 0 &&
-                    (workScope === "team" || assigneeIds.length > 1)
-                      ? assigneeIds
-                          .map(
-                            (uid) =>
-                              sellerNameByUserId.get(uid) ?? directoryLabelFor(uid),
-                          )
-                          .join(" · ")
-                      : null;
+                  const assigneeValue =
+                    assigneeIds.length > 0 ? (
+                      <TaskEntityLinkChips
+                        ariaLabel="Responsáveis da tarefa"
+                        items={assigneeIds.map((uid) => ({
+                          key: uid,
+                          label:
+                            sellerNameByUserId.get(uid) ?? directoryLabelFor(uid),
+                          onOpen: () =>
+                            navigateUserProfile(uid, { basePath }),
+                        }))}
+                      />
+                    ) : null;
                   const createdBy = (task.created_by_user_id || "").trim();
                   const primaryAssignee = (assigneeIds[0] || "").trim();
                   const me = (currentUserId || myPortfolio?.user_id || "").trim();
@@ -925,18 +929,26 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                             },
                           ]
                         : [];
-                  const customerLabel =
-                    taskCustomers.length > 0
-                      ? taskCustomers
-                          .map((item) =>
-                            customerSelectionLabel({
-                              code: item.customer_code,
-                              store: item.customer_store,
-                              name: (item.customer_name || "").trim(),
-                            }),
-                          )
-                          .join(" · ")
-                      : null;
+                  const customerValue =
+                    taskCustomers.length > 0 ? (
+                      <TaskEntityLinkChips
+                        ariaLabel="Clientes da tarefa"
+                        items={taskCustomers.map((item) => ({
+                          key: `${item.customer_code}:${item.customer_store}`,
+                          label: customerSelectionLabel({
+                            code: item.customer_code,
+                            store: item.customer_store,
+                            name: (item.customer_name || "").trim(),
+                          }),
+                          onOpen: () =>
+                            navigateCustomerDetail(
+                              item.customer_code,
+                              item.customer_store,
+                              { basePath, section: "contatos", search: "" },
+                            ),
+                        }))}
+                      />
+                    ) : null;
                   const readOnly = bucket === "done";
                   const isCreator = Boolean(me) && createdBy === me;
                   const canEditTask = !readOnly && canManageFollowups && isCreator;
@@ -948,9 +960,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       tone={toneForBucket(bucket)}
                       typeLabel={typeLabel}
                       priorityLabel={priorityLabel}
-                      assigneeLabel={assigneeLabel}
+                      assigneeValue={assigneeValue}
                       assignedByLabel={assignedByLabel}
-                      customerLabel={customerLabel}
+                      customerValue={customerValue}
                       canManage={canManageFollowups}
                       canEdit={canEditTask}
                       canDelete={canEditTask}
@@ -967,7 +979,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                               navigateCustomerDetail(
                                 primaryCustomer.customer_code,
                                 primaryCustomer.customer_store,
-                                { basePath },
+                                { basePath, section: "contatos", search: "" },
                               )
                           : undefined
                       }

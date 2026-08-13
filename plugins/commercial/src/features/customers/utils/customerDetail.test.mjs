@@ -668,6 +668,19 @@ describe("navigateCustomerDetail", () => {
     ]);
   });
 
+  it("abre seção contatos sem perder query allowlisted", () => {
+    assert.equal(
+      navigateCustomerDetail("000123", "01", {
+        search: "?focus=attention&evil=1",
+        section: "contatos",
+      }),
+      true,
+    );
+    assert.deepEqual(pushed, [
+      `${COMMERCIAL_BASE_PATH}/customers/000123/01?focus=attention&secao=contatos`,
+    ]);
+  });
+
   it("recusa identidade incompleta", () => {
     assert.equal(navigateCustomerDetail("", "01"), false);
     assert.deepEqual(pushed, []);
