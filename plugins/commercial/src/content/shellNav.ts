@@ -40,9 +40,10 @@ export const SHELL_NAV_CONTENT = {
   scopeHelpAriaLabel: "Ajuda: Escopo",
   userMenu: {
     nameFallback: "Usuário",
+    profileAriaLabel: "Abrir meu perfil",
     disabledAriaLabel: "Usuário sem carteira vinculada",
     directAriaLabel: "Abrir Minha Carteira: {name}",
-    menuOpenAriaLabel: "Mais opções: escolher carteira",
+    menuOpenAriaLabel: "Escolher carteira",
     menuCloseAriaLabel: "Fechar lista de carteiras",
     menuAriaLabel: "Carteiras",
   },

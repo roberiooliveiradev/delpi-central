@@ -6,7 +6,7 @@ import {
 import { BriefcaseBusiness, ChevronDown } from "lucide-react";
 
 import { CommercialAvatar } from "./commercialUi";
-import { navigatePluginView } from "./pluginNavigation";
+import { navigatePluginView, navigateUserProfile } from "./pluginNavigation";
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
   buildShellPortfolioCustomersSearch,
@@ -22,14 +22,13 @@ type ShellUserPortfolioMenuProps = {
 };
 
 /**
- * Slot da TopBar (ex-Escopo): avatar + nome + atalho para Minha Carteira filtrada.
- * 0 carteiras → estático; 1 → navega direto; N → menu de seleção.
+ * Slot da TopBar: avatar abre o perfil; nome/chevron abre Minha Carteira (1) ou menu (N).
  */
 export function ShellUserPortfolioMenu({
   basePath,
   displayName,
 }: ShellUserPortfolioMenuProps) {
-  const { myPortfolios, setSellerIdFilter } = usePortfolioScope();
+  const { myPortfolios, setSellerIdFilter, currentUserId } = usePortfolioScope();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -41,6 +40,7 @@ export function ShellUserPortfolioMenu({
   );
 
   const label = (displayName ?? "").trim() || copy.nameFallback;
+  const userId = (currentUserId || "").trim();
   const portfolioIds = useMemo(
     () =>
       mode.kind === "menu"
@@ -50,6 +50,12 @@ export function ShellUserPortfolioMenu({
           : [],
     [mode],
   );
+
+  const goToProfile = useCallback(() => {
+    if (!userId) return;
+    setOpen(false);
+    navigateUserProfile(userId, { basePath });
+  }, [basePath, userId]);
 
   const goToPortfolio = useCallback(
     (portfolio: ShellUserPortfolioOption) => {
@@ -63,7 +69,7 @@ export function ShellUserPortfolioMenu({
     [basePath, portfolioIds, setSellerIdFilter],
   );
 
-  const onTriggerClick = useCallback(() => {
+  const onPortfolioClick = useCallback(() => {
     if (mode.kind === "disabled") return;
     if (mode.kind === "direct") {
       goToPortfolio(mode.portfolio);
@@ -72,8 +78,8 @@ export function ShellUserPortfolioMenu({
     setOpen((current) => !current);
   }, [goToPortfolio, mode]);
 
-  const interactive = mode.kind !== "disabled";
-  const ariaLabel =
+  const portfolioInteractive = mode.kind !== "disabled";
+  const portfolioAriaLabel =
     mode.kind === "disabled"
       ? copy.disabledAriaLabel
       : mode.kind === "direct"
@@ -87,22 +93,36 @@ export function ShellUserPortfolioMenu({
       ref={rootRef}
       className={[
         "cm-shell-user",
-        interactive ? null : "cm-shell-user--disabled",
+        portfolioInteractive ? null : "cm-shell-user--disabled",
         open ? "cm-shell-user--open" : null,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {interactive ? (
+      {userId ? (
         <button
           type="button"
-          className="cm-shell-user__trigger"
-          aria-label={ariaLabel}
-          aria-haspopup={mode.kind === "menu" ? "menu" : undefined}
-          aria-expanded={mode.kind === "menu" ? open : undefined}
-          onClick={onTriggerClick}
+          className="cm-shell-user__profile"
+          aria-label={copy.profileAriaLabel}
+          onClick={goToProfile}
         >
           <CommercialAvatar name={label} size="sm" alt="" />
+        </button>
+      ) : (
+        <span className="cm-shell-user__profile cm-shell-user__profile--static">
+          <CommercialAvatar name={label} size="sm" alt="" />
+        </span>
+      )}
+
+      {portfolioInteractive ? (
+        <button
+          type="button"
+          className="cm-shell-user__portfolio"
+          aria-label={portfolioAriaLabel}
+          aria-haspopup={mode.kind === "menu" ? "menu" : undefined}
+          aria-expanded={mode.kind === "menu" ? open : undefined}
+          onClick={onPortfolioClick}
+        >
           <span className="cm-shell-user__name">{label}</span>
           {mode.kind === "menu" ? (
             <ChevronDown
@@ -111,11 +131,17 @@ export function ShellUserPortfolioMenu({
               strokeWidth={1.75}
               aria-hidden="true"
             />
-          ) : null}
+          ) : (
+            <BriefcaseBusiness
+              className="cm-shell-user__portfolio-icon"
+              size={16}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+          )}
         </button>
       ) : (
-        <div className="cm-shell-user__trigger" aria-label={ariaLabel}>
-          <CommercialAvatar name={label} size="sm" alt="" />
+        <div className="cm-shell-user__portfolio" aria-label={portfolioAriaLabel}>
           <span className="cm-shell-user__name">{label}</span>
         </div>
       )}

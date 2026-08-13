@@ -202,24 +202,22 @@
   line-height: 1.45;
 }
 
-/* TopBar — usuário + atalho de carteira (slot ex-Escopo) */
+/* TopBar — avatar (perfil) + nome (carteira) */
 .cm-shell-user {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
   min-width: 0;
+  max-width: min(100%, 260px);
 }
 
-.cm-shell-user__trigger {
+.cm-shell-user__profile,
+.cm-shell-user__portfolio {
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-  max-width: min(100%, 220px);
   margin: 0;
-  padding: 4px 8px 4px 4px;
   border: 1px solid transparent;
-  border-radius: 999px;
   background: color-mix(in srgb, var(--cm-text, #111) 4%, transparent);
   color: var(--cm-text, var(--text, #111));
   font: inherit;
@@ -227,26 +225,46 @@
   font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
-  text-align: left;
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-button.cm-shell-user__trigger:hover {
+.cm-shell-user__profile {
+  flex: 0 0 auto;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.cm-shell-user__profile--static {
+  cursor: default;
+}
+
+.cm-shell-user__portfolio {
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  text-align: left;
+}
+
+button.cm-shell-user__profile:hover,
+button.cm-shell-user__portfolio:hover {
   background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, transparent);
   border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 28%, transparent);
 }
 
-button.cm-shell-user__trigger:focus-visible {
+button.cm-shell-user__profile:focus-visible,
+button.cm-shell-user__portfolio:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 70%, transparent);
   outline-offset: 2px;
 }
 
-.cm-shell-user--open .cm-shell-user__trigger {
+.cm-shell-user--open .cm-shell-user__portfolio {
   background: color-mix(in srgb, var(--cm-accent, #089bdb) 14%, transparent);
   border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 32%, transparent);
 }
 
-.cm-shell-user--disabled .cm-shell-user__trigger {
+.cm-shell-user--disabled .cm-shell-user__portfolio {
   cursor: default;
   opacity: 0.78;
 }
@@ -258,7 +276,8 @@ button.cm-shell-user__trigger:focus-visible {
   white-space: nowrap;
 }
 
-.cm-shell-user__chevron {
+.cm-shell-user__chevron,
+.cm-shell-user__portfolio-icon {
   flex: 0 0 auto;
   opacity: 0.72;
 }

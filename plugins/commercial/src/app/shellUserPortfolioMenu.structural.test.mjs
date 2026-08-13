@@ -28,6 +28,16 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
   it("textos do menu vivem em shellNav", () => {
     const nav = readFileSync(join(src, "content/shellNav.ts"), "utf8");
     assert.match(nav, /userMenu:/);
+    assert.match(nav, /profileAriaLabel/);
     assert.match(nav, /menuOpenAriaLabel/);
+  });
+
+  it("separa clique do avatar (perfil) do atalho de carteira", () => {
+    const menu = readFileSync(join(src, "app/ShellUserPortfolioMenu.tsx"), "utf8");
+    assert.match(menu, /navigateUserProfile/);
+    assert.match(menu, /cm-shell-user__profile/);
+    assert.match(menu, /cm-shell-user__portfolio/);
+    assert.match(menu, /goToProfile/);
+    assert.doesNotMatch(menu, /cm-shell-user__trigger/);
   });
 });
