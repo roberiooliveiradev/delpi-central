@@ -16,6 +16,9 @@ from commercial_app.application.security.commercial_permissions import (
 from commercial_app.application.services.filter_open_orders_by_scope_service import (
     FilterOpenOrdersByScopeService,
 )
+from commercial_app.domain.services.open_orders_horizon_bucket_service import (
+    OpenOrdersHorizonBucketService,
+)
 from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
     build_resolve_commercial_customer_scope_service,
@@ -65,6 +68,17 @@ def list_commercial_open_orders(
             raw if isinstance(raw, dict) else {},
             scope,
         )
+        if isinstance(data, dict):
+            items_raw = data.get("items")
+            items = (
+                [item for item in items_raw if isinstance(item, dict)]
+                if isinstance(items_raw, list)
+                else []
+            )
+            data = {
+                **data,
+                "deliveryHorizon": OpenOrdersHorizonBucketService().bucketize(items),
+            }
         return ok(data, message="Pedidos de venda em aberto carregados.")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="list_commercial_open_orders")

@@ -97,6 +97,10 @@ def test_open_orders_bff_filters_via_scope() -> None:
     assert body["success"] is True
     assert len(body["data"]["items"]) == 1
     assert body["data"]["items"][0]["codigo_cadastro"] == "100"
+    horizon = body["data"]["deliveryHorizon"]
+    assert horizon["nature"] == "open_order_value_by_delivery"
+    assert horizon["totals"]["openLineCount"] == 1
+    assert horizon["totals"]["openValue"] == 10.0
     gateway.list_open_orders.assert_called_once()
 
 
