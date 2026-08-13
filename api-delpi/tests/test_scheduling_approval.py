@@ -54,7 +54,8 @@ def test_create_booking_requires_approval_sets_pending() -> None:
         "name": "Sala VIP",
         "resource_type": "meeting_room",
     }
-    start = datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc)
+    start = datetime.now(timezone.utc) + timedelta(days=2)
+    start = start.replace(minute=0, second=0, microsecond=0)
     end = start + timedelta(hours=1)
     repo.create_booking.return_value = {
         "id": "book-1",

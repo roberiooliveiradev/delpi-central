@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 from datetime import datetime
 from typing import Any, Literal
 
@@ -28,6 +29,8 @@ _RESOURCE_RETURNING = """
     metadata,
     active,
     requires_approval,
+    public_booking_enabled,
+    public_token,
     created_by_user_id,
     created_at,
     updated_at
@@ -50,6 +53,8 @@ _BOOKING_SELECT = """
            b.decided_at,
            b.decision_reason,
            b.expires_at,
+           b.requester_email,
+           b.requester_phone,
            b.created_at,
            b.updated_at,
            r.name AS resource_name,
@@ -75,9 +80,15 @@ _BOOKING_RETURNING = """
     decided_at,
     decision_reason,
     expires_at,
+    requester_email,
+    requester_phone,
     created_at,
     updated_at
 """
+
+
+def generate_scheduling_public_token() -> str:
+    return secrets.token_urlsafe(24)
 
 
 class BookingConflictError(PluginsRepositoryError):
@@ -112,6 +123,41 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             (resource_id,),
         )
 
+    def get_resource_by_public_token(self, public_token: str) -> dict[str, Any] | None:
+        token = (public_token or "").strip()
+        if not token:
+            return None
+        return self.fetch_one(
+            f"""
+            SELECT {_RESOURCE_RETURNING}
+              FROM scheduling.resources
+             WHERE public_token = %s
+               AND public_booking_enabled = TRUE
+               AND active = TRUE
+            """,
+            (token,),
+        )
+
+    def list_busy_slots(
+        self,
+        resource_id: str,
+        *,
+        from_at: datetime,
+        to_at: datetime,
+    ) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT start_at, end_at
+              FROM scheduling.bookings
+             WHERE resource_id = %s
+               AND status IN ('confirmed', 'pending')
+               AND start_at < %s
+               AND end_at > %s
+             ORDER BY start_at ASC
+            """,
+            (resource_id, to_at, from_at),
+        )
+
     def create_resource(
         self,
         *,
@@ -123,7 +169,11 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         metadata: dict[str, Any] | None,
         created_by_user_id: str | None,
         requires_approval: bool = False,
+        public_booking_enabled: bool = False,
     ) -> dict[str, Any]:
+        public_token = (
+            generate_scheduling_public_token() if public_booking_enabled else None
+        )
         row = self.execute_returning_one(
             f"""
             INSERT INTO scheduling.resources (
@@ -134,8 +184,10 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                 capacity,
                 metadata,
                 created_by_user_id,
-                requires_approval
-            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+                requires_approval,
+                public_booking_enabled,
+                public_token
+            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
             RETURNING {_RESOURCE_RETURNING}
             """,
             (
@@ -147,6 +199,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                 json.dumps(metadata or {}),
                 created_by_user_id,
                 requires_approval,
+                public_booking_enabled,
+                public_token,
             ),
         )
         if not row:
@@ -164,7 +218,13 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         metadata: dict[str, Any] | None = None,
         active: bool | None = None,
         requires_approval: bool | None = None,
+        public_booking_enabled: bool | None = None,
+        rotate_public_token: bool = False,
     ) -> dict[str, Any] | None:
+        existing = self.get_resource(resource_id)
+        if not existing:
+            return None
+
         fields: list[str] = []
         params: list[Any] = []
 
@@ -190,8 +250,28 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             fields.append("requires_approval = %s")
             params.append(requires_approval)
 
+        enabled = (
+            bool(public_booking_enabled)
+            if public_booking_enabled is not None
+            else bool(existing.get("public_booking_enabled"))
+        )
+        if public_booking_enabled is not None:
+            fields.append("public_booking_enabled = %s")
+            params.append(enabled)
+
+        current_token = existing.get("public_token")
+        need_new_token = rotate_public_token or (
+            enabled and not current_token
+        )
+        if need_new_token:
+            fields.append("public_token = %s")
+            params.append(generate_scheduling_public_token())
+        elif public_booking_enabled is False:
+            # Mantém o token para reativar o mesmo link; só desliga a flag.
+            pass
+
         if not fields:
-            return self.get_resource(resource_id)
+            return existing
 
         fields.append("updated_at = NOW()")
         params.append(resource_id)
@@ -389,6 +469,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         booked_by_name: str,
         status: str = "confirmed",
         expires_at: datetime | None = None,
+        requester_email: str | None = None,
+        requester_phone: str | None = None,
     ) -> dict[str, Any]:
         if self.has_booking_conflict(resource_id, start_at, end_at):
             raise BookingConflictError("Recurso já reservado neste horário.")
@@ -406,8 +488,10 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                     booked_by_user_id,
                     booked_by_name,
                     status,
-                    expires_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    expires_at,
+                    requester_email,
+                    requester_phone
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING {_BOOKING_RETURNING}
                 """,
                 (
@@ -421,6 +505,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                     booked_by_name,
                     status,
                     expires_at,
+                    requester_email,
+                    requester_phone,
                 ),
                 auto_commit=False,
             )

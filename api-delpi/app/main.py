@@ -49,6 +49,7 @@ from app.interface.http.routes.quality import quality_labels_public_router
 from app.interface.http.routes.quality import kaizen_public_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.dashboard import dashboard_router
+from app.interface.http.routes.scheduling import scheduling_public_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
 from app.interface.http.routes.canal_denuncia import canal_denuncia_public_router
@@ -252,6 +253,7 @@ app.include_router(quality_labels_public_router.router)
 app.include_router(kaizen_public_router.router)
 app.include_router(mural_acessos_public_router.router)
 app.include_router(canal_denuncia_public_router.router)
+app.include_router(scheduling_public_router.router)
 app.include_router(hr_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(scheduling_router.router, prefix="/scheduling", tags=["Agendamento"])

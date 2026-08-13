@@ -9,12 +9,29 @@ Plugin microfrontend para reserva de salas, salas de treinamento, veículos e ou
 - Deep link de aprovação: `...?tab=approvals&bookingId={uuid}`
 - Minhas reservas: `...?tab=mine&bookingId={uuid}`
 
+- `POST /resources` / `PATCH /resources/{id}` (gestores) — `requires_approval`, `public_booking_enabled`, `rotate_public_token`
+
+## Agendamento público (sem login)
+
+Link canônico (public-hub):
+
+```text
+/p/central-agendamento/book/{token}
+```
+
+1. Em **Gerenciar recursos**, edite o recurso (ex.: Choupana).
+2. Marque **Agendamento público** (força aprovação prévia).
+3. Salve e **Copiar link**.
+4. Colaboradores sem usuário abrem o link, escolhem horário e solicitam; a reserva fica `pending`.
+
+API pública: `/apps/api-delpi/public/scheduling/resources/{token}` (+ `/availability`, `POST .../bookings`).
+
 ## API
 
 Base: `/apps/api-delpi/scheduling`
 
 - `GET /resources?branch=ES|SC`
-- `POST /resources` / `PATCH /resources/{id}` (gestores) — inclui `requires_approval`
+- `POST /resources` / `PATCH /resources/{id}` (gestores)
 - `GET /bookings?branch=ES|SC&from=&to=`
 - `GET /bookings/pending?branch=&mine=`
 - `GET /bookings/mine?branch=` — solicitações do usuário e status

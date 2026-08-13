@@ -18,6 +18,8 @@ export type SchedulingResource = {
   metadata: Record<string, unknown>;
   active: boolean;
   requires_approval?: boolean;
+  public_booking_enabled?: boolean;
+  public_token?: string | null;
   created_by_user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -43,6 +45,8 @@ export type SchedulingBooking = {
   decided_at?: string | null;
   decision_reason?: string | null;
   expires_at?: string | null;
+  requester_email?: string | null;
+  requester_phone?: string | null;
   created_at: string;
   updated_at: string;
   resource_name?: string;
@@ -112,6 +116,7 @@ export async function createResource(payload: {
   capacity?: number;
   metadata?: Record<string, unknown>;
   requires_approval?: boolean;
+  public_booking_enabled?: boolean;
 }): Promise<SchedulingResource> {
   const envelope = await httpPost<ApiEnvelope<SchedulingResource>>(
     `${API_BASE}/resources`,
@@ -130,6 +135,8 @@ export async function updateResource(
     metadata: Record<string, unknown>;
     active: boolean;
     requires_approval: boolean;
+    public_booking_enabled: boolean;
+    rotate_public_token: boolean;
   }>,
 ): Promise<SchedulingResource> {
   const envelope = await httpPatch<ApiEnvelope<SchedulingResource>>(
@@ -137,6 +144,13 @@ export async function updateResource(
     payload,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
+}
+
+/** URL canônica do link público (public-hub). */
+export function resolvePublicBookingUrl(token: string): string {
+  const path = `/p/central-agendamento/book/${encodeURIComponent(token)}`;
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
 }
 
 export async function fetchBookings(

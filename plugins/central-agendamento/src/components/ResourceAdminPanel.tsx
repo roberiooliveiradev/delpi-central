@@ -47,6 +47,7 @@ export function ResourceAdminPanel({
                 <th>Tipo</th>
                 <th>Capacidade</th>
                 <th>Aprovação</th>
+                <th>Público</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -67,6 +68,13 @@ export function ResourceAdminPanel({
                       className={`ca-badge ${resource.requires_approval ? "ca-badge--warning" : "ca-badge--muted"}`}
                     >
                       {resource.requires_approval ? "Prévia" : "Imediata"}
+                    </span>
+                  </td>
+                  <td data-label="Público">
+                    <span
+                      className={`ca-badge ${resource.public_booking_enabled ? "ca-badge--success" : "ca-badge--muted"}`}
+                    >
+                      {resource.public_booking_enabled ? "Link" : "—"}
                     </span>
                   </td>
                   <td data-label="Status">

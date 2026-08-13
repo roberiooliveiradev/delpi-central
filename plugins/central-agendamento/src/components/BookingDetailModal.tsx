@@ -103,6 +103,11 @@ export function BookingDetailModal({
           <div className="ca-detail-highlight">
             <span className="ca-detail-highlight__label">Quem agendou</span>
             <strong className="ca-detail-highlight__value">{event.bookedByName}</strong>
+            {event.requesterEmail || event.requesterPhone ? (
+              <small className="ca-table__sub">
+                {[event.requesterEmail, event.requesterPhone].filter(Boolean).join(" · ")}
+              </small>
+            ) : null}
           </div>
           <div className="ca-detail-highlight">
             <span className="ca-detail-highlight__label">Horário</span>

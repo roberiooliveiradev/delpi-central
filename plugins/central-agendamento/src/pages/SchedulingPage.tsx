@@ -248,6 +248,8 @@ export function SchedulingPage({ pathname }: Props) {
     capacity?: number;
     metadata?: Record<string, unknown>;
     requires_approval?: boolean;
+    public_booking_enabled?: boolean;
+    rotate_public_token?: boolean;
   }) {
     if (!branch) return;
     setActionLoading(true);
