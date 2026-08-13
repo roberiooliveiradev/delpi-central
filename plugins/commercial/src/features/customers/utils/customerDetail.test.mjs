@@ -435,6 +435,14 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(sections, /mode="tabs"/);
     assert.match(sections, /customerDetailPanelId/);
     assert.match(sections, /openOrdersCount/);
+    const contactsPanel = readSrc(
+      "features/customers/components/AccountContactsPanel.tsx",
+    );
+    assert.match(contactsPanel, /CommercialDataRecordCard/);
+    assert.match(contactsPanel, /IconButton/);
+    assert.match(contactsPanel, /collapsible/);
+    assert.match(contactsPanel, /NativeCheckboxControl/);
+    assert.doesNotMatch(contactsPanel, /CommercialHostDialog|HostContainedDialog/);
   });
 
   it("condiciona fontes secundárias à aba e ao RBAC", async () => {

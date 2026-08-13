@@ -911,11 +911,12 @@ BFF: `GET/PATCH /users/{id}/profile` · `PUT/DELETE .../photo` · volume `commer
 ```text
 ┌─ UnderlineNav: … | Contatos | Atividades ───────────────────────────────────┐
 ┌─ SectionCard: Contato do cadastro TOTVS (read-only) ────────────────────────┐
-│ Nome · tel: · mailto: · [Abrir WhatsApp] †                                  │
+│ DataRecordCard · badge TOTVS · tel/e-mail + IconButton copiar               │
+│ ActionButton: Ligar · E-mail · WhatsApp †                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard: Contatos locais [Adicionar contato] ──────────────────────────┐
-│ Lista · Principal · Editar / Remover · tel / mailto / WhatsApp              │
-│ Dialog host-contained: nome, cargo, canal, e-mail, phone E.164, flags       │
+│ SectionCard colapsável: Novo/Editar (sem modal) · Salvar / Cancelar         │
+│ EmptyState ou DataRecordCard (Principal/WhatsApp) · Editar / Remover        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 

@@ -128,11 +128,30 @@
   align-items: start;
 }
 
+.dashboard-commercial .cm-form-grid__full {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-form-grid__actions {
   display: flex;
   align-items: flex-end;
   min-height: 44px;
   padding-top: 4px;
+}
+
+.dashboard-commercial .cm-contacts-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-contacts-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
 .dashboard-commercial .cm-link {

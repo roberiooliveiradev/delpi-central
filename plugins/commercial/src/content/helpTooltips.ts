@@ -272,9 +272,11 @@ export const CM_HELP = {
     contactsTotvs:
       "Nome, telefone e e-mail do cadastro SA1. Não dá para editar aqui — use o Protheus se precisar corrigir.",
     contactsLocal:
-      "Contatos complementares desta conta. Quem vê a Conta pode criar, editar e remover. No máximo um contato principal.",
+      "Contatos complementares desta conta. Quem vê a Conta pode criar, editar e remover. No máximo um contato principal. Use o card colapsável para incluir ou editar.",
     whatsapp:
       "Abre o WhatsApp Web/app com saudação pronta (wa.me). Exige celular em formato brasileiro e canal WhatsApp marcado.",
+    copyValue:
+      "Copia o telefone ou e-mail para a área de transferência.",
     accountData:
       "Resumo cadastral e comercial da conta no recorte disponível, incluindo última venda, faturamento, situação e próxima ação.",
     billed12m: "Faturamento (NFs de saída) nos últimos 12 meses deste cliente.",
