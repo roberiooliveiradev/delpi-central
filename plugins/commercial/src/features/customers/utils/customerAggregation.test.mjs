@@ -446,6 +446,10 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(page, /CustomerAttentionList/);
     assert.match(page, /CustomersTable/);
     assert.match(page, /MyPortfolioAuditSection/);
+    assert.match(page, /overdue-customers/);
+    assert.match(page, /navigatePluginView\("open_orders"/);
+    assert.match(page, /\?focus=late/);
+    assert.match(page, /lateOrdersShortcut/);
     assert.doesNotMatch(page, /clientes\/:|navigatePluginView\("customers"/);
   });
 

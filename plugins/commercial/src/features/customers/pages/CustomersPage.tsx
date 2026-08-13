@@ -1,6 +1,7 @@
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
+import { navigatePluginView } from "../../../app/pluginNavigation";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import {
   portfolioSellerAccessKey,
@@ -182,6 +183,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     { id: "down", label: "Queda" },
   ];
   const scopedCustomers = aggregation?.customers ?? [];
+  const overdueCustomerCount = useMemo(
+    () => scopedCustomers.filter((customer) => customer.quantidadePedidosAtrasados > 0).length,
+    [scopedCustomers],
+  );
   const focusChips = focusOptions.map((option) => {
     const count = scopedCustomers.filter(
       (customer) =>
@@ -227,6 +232,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
         : "—",
     },
     {
+      id: "overdue-customers",
+      label: "Com atraso",
+      value: overdueCustomerCount.toLocaleString("pt-BR"),
+    },
+    {
       id: "filtered",
       label: "Após filtros",
       value: filteredCustomers.length.toLocaleString("pt-BR"),
@@ -252,6 +262,21 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               Atualizado em {formatUpdatedAt(lastSuccessAt)}
               {refreshing ? " · Atualizando…" : ""}
             </span>
+            {overdueCustomerCount > 0 ? (
+              <CommercialActionButton
+                variant="default"
+                title={CM_HELP.customers.lateOrdersShortcut}
+                onClick={() =>
+                  navigatePluginView("open_orders", {
+                    basePath,
+                    search: "?focus=late",
+                  })
+                }
+              >
+                <TriangleAlert size={16} aria-hidden="true" />
+                Ver atrasos ({overdueCustomerCount.toLocaleString("pt-BR")})
+              </CommercialActionButton>
+            ) : null}
             <CommercialActionButton
               variant="ghost"
               onClick={reload}

@@ -254,6 +254,8 @@ export const CM_HELP = {
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterFocus:
       "Situação do pedido em aberto. Atenção = atraso ou atendimento parcial. Em dia = aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto.",
+    lateOrdersShortcut:
+      "Abre Meus pedidos já filtrado em linhas com entrega atrasada (focus=late), sem novo dump TOTVS nesta tela.",
     filterTrend:
       "Tendência de faturamento (últimos 6 meses vs. os 6 anteriores). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
     sellerScope:
