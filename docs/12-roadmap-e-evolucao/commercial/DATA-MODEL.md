@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`. Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã). Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
@@ -91,7 +91,7 @@ Carteira compartilhada (antes: `pedidos_venda_abertos.sellers`). Uma carteira = 
 | Coluna | Tipo | Constraints / notas |
 |--------|------|---------------------|
 | `id` | UUID | PK, default `gen_random_uuid()` |
-| `user_id` | TEXT | NOT NULL — **owner denormalizado** (espelho do membro `role=owner`). **Não** é UNIQUE global após `V005` (mesmo usuário pode ser owner/membro em várias carteiras; a unicidade de membership está em `seller_portfolio_members`) |
+| `user_id` | TEXT | NULL após **V013** — **owner denormalizado** (espelho do membro `role=owner`). NULL = carteira órfã (create só com `display_name`). **Não** é UNIQUE global após `V005` (mesmo usuário pode ser owner/membro em várias carteiras; a unicidade de membership está em `seller_portfolio_members`) |
 | `display_name` | TEXT | NOT NULL — nome exibido (seletor de escopo / filtros) |
 | `active` | BOOLEAN | NOT NULL, default `TRUE` |
 | `created_by_user_id` | TEXT | NULL |
@@ -102,7 +102,9 @@ Carteira compartilhada (antes: `pedidos_venda_abertos.sellers`). Uma carteira = 
 
 **Índices:** `(active)`; `(user_id)` — índice não único após `V005` (constraint `seller_portfolios_user_id_key` removida).
 
-**Fonte de verdade de membership:** tabela `seller_portfolio_members` (§ 3.1b). Manter `user_id` alinhado ao owner ao criar/trocar responsável.
+**Fonte de verdade de membership:** tabela `seller_portfolio_members` (§ 3.1b). Manter `user_id` alinhado ao owner ao criar/trocar responsável. **V013:** create name-first permite `user_id` NULL; o 1º `add_member` promove a `owner` e sincroniza `user_id`.
+
+**Migration V013:** `ALTER … user_id DROP NOT NULL` (+ índice/comentário). Sem backfill.
 
 **Migração:** `INSERT … SELECT` de `pedidos_venda_abertos.sellers` → mapear `id` preservado se possível (mesmo UUID). Multi-membro: `V005__seller_portfolio_members.sql`.
 

@@ -94,6 +94,8 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 
 | GET | `/seller-portfolios/{seller_id}` | `get_seller_portfolio` | F2 | manage ou own | `seller_portfolio` | `scalar` | WF-05 |
 | POST | `/seller-portfolios` | `create_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
+
+**Create name-first (E9):** body mínimo `{ "display_name": "…" }` — carteira órfã (`user_id` NULL). `user_ids` / `user_id` opcionais. O 1º `POST …/members` promove a owner e sincroniza `user_id` (V013).
 | PATCH | `/seller-portfolios/{seller_id}` | `update_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
 | DELETE | `/seller-portfolios/{seller_id}` | `deactivate_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
 | PUT | `/seller-portfolios/{seller_id}/customers` | `replace_seller_customers` | F2 | manage | `seller_customer` | `list` | WF-05 |

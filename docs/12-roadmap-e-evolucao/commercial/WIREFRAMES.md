@@ -649,7 +649,8 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 
 **Card da lista (mobile / modo Cards):** nome, owner, contagem de membros, clientes, `StatusBadge`. O card inteiro navega ao detalhe.
 
-**Dialog Nova carteira** — `UserDirectoryPicker` (só usuários com acesso ao portal, `app=commercial`) + nome + Cancelar / Criar. Owner inicial = usuário escolhido.  
+**Dialog Nova carteira** — só **nome** (`CommercialHostDialog` + TextField). Sem picker de usuários no create.  
+**Detalhe órfã** — banner + empty state «Sem responsável»; `UserDirectoryPicker` «Adicionar responsável»; o 1º usuário vira `owner` (API/repo).  
 **Dialog Transferir** — na página de detalhe (WF-05R-D).  
 **Inativar / Excluir** — no detalhe.
 
@@ -669,7 +670,10 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 └────────────────────────────────────────────────────────────────────────┘
 
 ┌─ Membros ──────────────────────────────────────────────────────────────┐
-│ UserDirectoryPicker (portal commercial) · [Adicionar]                  │
+│ (órfã) Banner: carteira sem responsável                                │
+│ UserDirectoryPicker · Adicionar responsável                            │
+│ Empty: Sem responsável — 1º usuário vira owner                         │
+│ ─ ou, com membros ─                                                    │
 │ Usuário          Papel     Ações                                       │
 │ Ana Silva        owner     [Definir owner] (já é)                      │
 │ Pedro Costa      member    [Tornar owner] [Remover]                    │
