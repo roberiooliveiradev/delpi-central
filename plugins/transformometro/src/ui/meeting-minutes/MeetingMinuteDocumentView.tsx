@@ -148,7 +148,12 @@ export function MeetingMinuteDocumentView({ detail, getAccessToken, onError }: P
     <DocumentReader
       ariaLabel="Leitura da ata Transforma+"
       className="tm-ata-reader"
-      toolbar={<DocumentReaderToolbar onDownloadPdf={() => downloadPdf()} />}
+      toolbar={
+        <DocumentReaderToolbar
+          printTitle={String(minute.title ?? minute.minute_number ?? "Ata Transforma+")}
+          onDownloadPdf={() => downloadPdf()}
+        />
+      }
     >
       <DocumentPage
         className="tm-ata-paper"

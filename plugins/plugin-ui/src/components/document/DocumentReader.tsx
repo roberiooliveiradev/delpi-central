@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-import { printScopedWindow } from "../../export/pdf/printOnce";
+import {
+  printDocumentReaderInWindow,
+  type PrintDocumentReaderOptions,
+} from "./printDocumentReaderHtml";
+
+export type { PrintDocumentReaderOptions };
 
 export type DocumentReaderProps = {
   children: ReactNode;
@@ -134,12 +139,9 @@ export function DocumentSignatureBlock({
 }
 
 /**
- * Imprime somente o DocumentReader ativo sem exigir CSS específico do MFE.
- * Usa o helper canônico (um `print()` por sessão — sem reabrir ao cancelar/duplo clique).
+ * Imprime o DocumentReader em janela/iframe (mesmo fluxo do chat / certificados).
+ * Não usa print in-place — evita corte em 1 página no Chrome.
  */
-export function printDocumentReader(): boolean {
-  return printScopedWindow({
-    bodyClassName: "delpi-ui-document-printing",
-    deferFrames: false,
-  });
+export function printDocumentReader(options?: PrintDocumentReaderOptions): boolean {
+  return printDocumentReaderInWindow(options);
 }

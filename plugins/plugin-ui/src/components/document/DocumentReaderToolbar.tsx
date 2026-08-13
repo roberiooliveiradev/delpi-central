@@ -9,6 +9,8 @@ export type DocumentReaderToolbarProps = {
   printLabel?: string;
   downloadPdfLabel?: string;
   downloadingLabel?: string;
+  /** Título da janela de impressão. */
+  printTitle?: string;
   /** Se omitido, o botão Baixar PDF não aparece. */
   onDownloadPdf?: () => void | Promise<void>;
   disabled?: boolean;
@@ -16,7 +18,7 @@ export type DocumentReaderToolbarProps = {
 };
 
 /**
- * Toolbar canônica do DocumentReader: Imprimir (print nativo) + Baixar PDF
+ * Toolbar canônica do DocumentReader: Imprimir (janela dedicada) + Baixar PDF
  * (callback autenticado do consumidor — nunca `<a href>` sem Authorization).
  */
 export function DocumentReaderToolbar({
@@ -24,6 +26,7 @@ export function DocumentReaderToolbar({
   printLabel = "Imprimir",
   downloadPdfLabel = "Baixar PDF",
   downloadingLabel = "Gerando…",
+  printTitle,
   onDownloadPdf,
   disabled = false,
   className,
@@ -50,7 +53,7 @@ export function DocumentReaderToolbar({
           type="button"
           className="delpi-ui-document-reader-toolbar__btn"
           disabled={disabled}
-          onClick={() => printDocumentReader()}
+          onClick={() => printDocumentReader({ title: printTitle })}
           data-testid="document-reader-print"
         >
           <Printer size={15} aria-hidden />
