@@ -162,6 +162,25 @@ export type CommercialRolSeriesData = {
   points: CommercialRolSeriesPoint[];
 };
 
+export type SalesConversionRateSeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  start_date: string;
+  end_date: string;
+  conversion_filial_01: number | null;
+  conversion_filial_02: number | null;
+  qtd_proposals_01: number;
+  qtd_proposals_02: number;
+  qtd_won_01: number;
+  qtd_won_02: number;
+};
+
+export type SalesConversionRateSeriesData = {
+  granularity: string;
+  truncated: boolean;
+  points: SalesConversionRateSeriesPoint[];
+};
+
 export type SalesOrderOtdLineStatus = "on_time" | "late";
 
 export type SalesOrderOtdLineItem = {

@@ -32,6 +32,11 @@ export const ANALYTICS_OTD_SERIES_LABELS = {
   unit02: `OTD ${formatOperationalUnitCode("02")}`,
 } as const;
 
+export const ANALYTICS_CONVERSION_SERIES_LABELS = {
+  unit01: `Conversão ${formatOperationalUnitCode("01")}`,
+  unit02: `Conversão ${formatOperationalUnitCode("02")}`,
+} as const;
+
 export function parseAnalyticsBranchCsv(value: string): string[] {
   const allowed = new Set(ANALYTICS_BRANCH_OPTIONS.map((option) => option.value));
   return value

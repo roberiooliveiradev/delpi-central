@@ -11,6 +11,7 @@ export type OverviewMetricId =
   | "new_business_pct"
   | "open_portfolio"
   | "rol_series"
+  | "closing_rate_series"
   | "funnel";
 
 export type OverviewMetricDefinition = {
@@ -61,6 +62,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     id: "rol_series",
     label: "Evolução do ROL (R$)",
     tooltip: "Evolução do ROL por Santa Catarina e Espírito Santo no período.",
+  },
+  {
+    id: "closing_rate_series",
+    label: "Evolução da taxa de conversão (%)",
+    tooltip:
+      "Hit rate ao longo do tempo por unidade (SC/ES). Mesma fórmula do KPI: ganhas com aceite no bucket ÷ revisões abertas no bucket.",
   },
   {
     id: "funnel",

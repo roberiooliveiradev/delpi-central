@@ -10,6 +10,7 @@ import type {
   NewBusinessRolPctData,
   OpenPortfolioSummaryData,
   RolTargetData,
+  SalesConversionRateSeriesData,
   SalesOrderOtdData,
   SalesOrderOtdLineDetailData,
   SalesOrderOtdPanelData,
@@ -128,6 +129,19 @@ export function getCommercialRolSeries(
   signal?: AbortSignal,
 ) {
   return fetchAnalyticsData<CommercialRolSeriesData>("/rol/series", params, signal);
+}
+
+export function getSalesConversionRateSeries(
+  params: Pick<AnalyticsFilterParams, "start_date" | "end_date" | "customer_segment" | "seller_id"> & {
+    granularity: ChartGranularity;
+  },
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<SalesConversionRateSeriesData>(
+    "/closing-rate/series",
+    params,
+    signal,
+  );
 }
 
 export function getCommercialProposals(params: AnalyticsFilterParams, signal?: AbortSignal) {

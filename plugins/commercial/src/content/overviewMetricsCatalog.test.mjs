@@ -17,6 +17,7 @@ const REQUIRED_IDS = [
   "otd",
   "new_business_pct",
   "rol_series",
+  "closing_rate_series",
   "funnel",
 ];
 

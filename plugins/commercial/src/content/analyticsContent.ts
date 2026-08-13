@@ -27,6 +27,11 @@ export const ANALYTICS_CONTENT = {
       rolTitle: "Sem evolução no período",
       rolMessage:
         "Não há pontos de ROL para os filtros atuais. Ajuste datas, unidade ou segmento.",
+      conversionLoading: "Carregando evolução da taxa de conversão…",
+      conversionError: "Erro ao carregar série da taxa de conversão.",
+      conversionTitle: "Sem série de conversão no período",
+      conversionMessage:
+        "Não há pontos de hit rate para os filtros atuais. Ajuste datas ou segmento.",
       funnelTitle: "Sem funil no período",
       funnelMessage: "Não há propostas no período filtrado para montar o funil de conversão.",
     },

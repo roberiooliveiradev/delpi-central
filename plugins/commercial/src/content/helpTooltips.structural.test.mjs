@@ -47,6 +47,7 @@ describe("CM_HELP matriz (C16)", () => {
       "overview.filters",
       "overview.kpis",
       "overview.rolSeries",
+      "overview.closingRateSeries",
       "overview.funnel",
       "overview.closingRate",
       "overview.openPortfolio",
