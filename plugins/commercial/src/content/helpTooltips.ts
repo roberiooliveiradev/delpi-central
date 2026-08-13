@@ -45,6 +45,9 @@ export const CM_HELP = {
       "Perfil do usuário no Portal Comercial: nome e e-mail do diretório, cargo e foto editáveis (você ou gestor de carteiras).",
     jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
     portfolios: "Carteiras em que o usuário é owner ou membro.",
+    access:
+      "Permissões commercial.* e capacidades efetivas desta sessão (somente no próprio perfil).",
+    shortcuts: "Atalhos para as áreas do Portal Comercial liberadas para você.",
   },
   myDay: {
     worklist:

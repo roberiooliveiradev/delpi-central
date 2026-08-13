@@ -68,6 +68,8 @@ describe("CM_HELP matriz (C16)", () => {
       "customerDetail.tableRowOpensDetail",
       "customers.contacts",
       "users.profile",
+      "users.access",
+      "users.shortcuts",
       "proposals.page",
       "proposals.list",
       "proposals.scopeNote",

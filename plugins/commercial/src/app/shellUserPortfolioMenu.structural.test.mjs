@@ -38,6 +38,7 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
     assert.match(menu, /cm-shell-user__profile/);
     assert.match(menu, /cm-shell-user__portfolio/);
     assert.match(menu, /goToProfile/);
+    assert.match(menu, /userProfilePhotoAbsoluteUrl/);
     assert.doesNotMatch(menu, /cm-shell-user__trigger/);
   });
 });

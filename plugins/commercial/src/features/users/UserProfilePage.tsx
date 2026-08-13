@@ -1,6 +1,19 @@
 import { EmptyState } from "@delpi/plugin-ui/index";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  BriefcaseBusiness,
+  CalendarCheck,
+  Camera,
+  Home,
+  LayoutDashboard,
+  Mail,
+  Shield,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { fetchMeProfile } from "../../api/meApi";
+import { httpGetBlob } from "../../api/httpClient";
 import {
   deleteUserProfilePhoto,
   getUserProfile,
@@ -9,12 +22,10 @@ import {
   userProfilePhotoAbsoluteUrl,
   type UserProfileDto,
 } from "../../api/userProfileApi";
-import { httpGetBlob } from "../../api/httpClient";
 import {
   cmEmptyStateClassNames,
   CommercialActionButton,
   CommercialAvatar,
-  CommercialFileDropzone,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialPagePath,
@@ -24,9 +35,15 @@ import {
   CommercialTextField,
 } from "../../app/commercialUi";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
-import { navigatePluginPath } from "../../app/pluginNavigation";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { CM_HELP } from "../../content/helpTooltips";
+import {
+  formatPortfoliosCount,
+  listCommercialPermissions,
+  listGrantedCapabilities,
+  USER_ACCESS_COPY,
+} from "../../content/userAccess";
 import { buildSellerPortfolioDetailPath } from "../../utils/sellerPortfoliosDeepLink";
 
 type UserProfilePageProps = {
@@ -34,21 +51,49 @@ type UserProfilePageProps = {
   userId: string;
 };
 
+type ShortcutItem = {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  onSelect: () => void;
+};
+
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
-  const { currentUserId, canManagePortfolios } = usePortfolioScope();
+  const {
+    currentUserId,
+    canManagePortfolios,
+    canViewWorklist,
+    canManageFollowups,
+    canViewAnalytics,
+    canViewProposals,
+    canExportProposals,
+    canUseTeamScope,
+    canViewAccountsTeam,
+    canViewWorklistTeam,
+    canAccessMyPortfolio,
+    isAdmin,
+  } = usePortfolioScope();
   const { notifyError, notifySuccess } = useCommercialFloatingNotice();
+  const fileInputId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfileDto | null>(null);
   const [jobTitle, setJobTitle] = useState("");
   const [photoObjectUrl, setPhotoObjectUrl] = useState<string | null>(null);
+  const [mePermissions, setMePermissions] = useState<string[]>([]);
+  const [meIsSuperadmin, setMeIsSuperadmin] = useState(false);
 
-  const canEdit = useMemo(() => {
+  const isSelf = useMemo(() => {
     const me = (currentUserId || "").trim();
-    const target = userId.trim();
-    return Boolean(me && (me === target || canManagePortfolios));
-  }, [canManagePortfolios, currentUserId, userId]);
+    return Boolean(me && me === userId.trim());
+  }, [currentUserId, userId]);
+
+  const canEdit = useMemo(
+    () => Boolean(isSelf || canManagePortfolios),
+    [canManagePortfolios, isSelf],
+  );
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -77,6 +122,28 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   }, [reload]);
 
   useEffect(() => {
+    if (!isSelf) {
+      setMePermissions([]);
+      setMeIsSuperadmin(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    void fetchMeProfile(controller.signal)
+      .then((me) => {
+        if (controller.signal.aborted) return;
+        setMePermissions(me.permissions || []);
+        setMeIsSuperadmin(Boolean(me.is_superadmin));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setMePermissions([]);
+          setMeIsSuperadmin(false);
+        }
+      });
+    return () => controller.abort();
+  }, [isSelf]);
+
+  useEffect(() => {
     let revoked: string | null = null;
     let cancelled = false;
     if (!profile?.has_photo) {
@@ -99,6 +166,90 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     };
   }, [profile?.has_photo, profile?.updated_at, userId]);
 
+  const permissionItems = useMemo(
+    () => listCommercialPermissions(mePermissions),
+    [mePermissions],
+  );
+  const capabilityItems = useMemo(
+    () =>
+      isSelf
+        ? listGrantedCapabilities({
+            worklist_view: canViewWorklist,
+            followups_manage: canManageFollowups,
+            seller_portfolios_manage: canManagePortfolios,
+            analytics_view: canViewAnalytics,
+            proposals_view: canViewProposals,
+            proposals_export: canExportProposals,
+            accounts_team_view: canViewAccountsTeam,
+            worklist_team_view: canViewWorklistTeam,
+            team_scope: canUseTeamScope,
+          })
+        : [],
+    [
+      canExportProposals,
+      canManageFollowups,
+      canManagePortfolios,
+      canUseTeamScope,
+      canViewAccountsTeam,
+      canViewAnalytics,
+      canViewProposals,
+      canViewWorklist,
+      canViewWorklistTeam,
+      isSelf,
+    ],
+  );
+
+  const shortcuts = useMemo(() => {
+    const items: ShortcutItem[] = [
+      {
+        id: "home",
+        label: USER_ACCESS_COPY.shortcutHome,
+        icon: <Home size={18} aria-hidden />,
+        onSelect: () => navigatePluginView("home", { basePath }),
+      },
+    ];
+    if (canViewWorklist) {
+      items.push({
+        id: "tasks",
+        label: USER_ACCESS_COPY.shortcutTasks,
+        icon: <CalendarCheck size={18} aria-hidden />,
+        onSelect: () => navigatePluginView("my_tasks", { basePath }),
+      });
+    }
+    if (canAccessMyPortfolio) {
+      items.push({
+        id: "customers",
+        label: USER_ACCESS_COPY.shortcutCustomers,
+        icon: <BriefcaseBusiness size={18} aria-hidden />,
+        onSelect: () => navigatePluginView("customers", { basePath }),
+      });
+    }
+    if (canViewAnalytics) {
+      items.push({
+        id: "overview",
+        label: USER_ACCESS_COPY.shortcutOverview,
+        icon: <LayoutDashboard size={18} aria-hidden />,
+        onSelect: () => navigatePluginView("overview", { basePath }),
+      });
+    }
+    if (canManagePortfolios || isAdmin) {
+      items.push({
+        id: "admin",
+        label: USER_ACCESS_COPY.shortcutAdmin,
+        icon: <Shield size={18} aria-hidden />,
+        onSelect: () => navigatePluginView("administration", { basePath }),
+      });
+    }
+    return items;
+  }, [
+    basePath,
+    canAccessMyPortfolio,
+    canManagePortfolios,
+    canViewAnalytics,
+    canViewWorklist,
+    isAdmin,
+  ]);
+
   const onSaveJobTitle = async () => {
     if (!canEdit) return;
     setSaving(true);
@@ -114,17 +265,18 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     }
   };
 
-  const onUploadPhoto = async (files: File[]) => {
-    if (!canEdit || files.length === 0) return;
+  const onUploadPhoto = async (file: File | null | undefined) => {
+    if (!canEdit || !file) return;
     setSaving(true);
     try {
-      const data = await uploadUserProfilePhoto(userId, files[0]!);
+      const data = await uploadUserProfilePhoto(userId, file);
       setProfile(data);
       notifySuccess("Foto atualizada.");
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao enviar foto.");
     } finally {
       setSaving(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -154,6 +306,9 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     );
   }
 
+  const displayName = profile.name || profile.user_id;
+  const heroDescription = [profile.email, profile.job_title].filter(Boolean).join(" · ");
+
   return (
     <div className="cm-user-profile cm-page-stack">
       <CommercialPagePath
@@ -166,76 +321,183 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           },
         }}
         items={[]}
-        current={profile.name || profile.user_id}
-      />
-      <CommercialPageHero
-        title={profile.name || profile.user_id}
-        description={[profile.email, profile.job_title].filter(Boolean).join(" · ") || undefined}
+        current={displayName}
       />
 
-      <CommercialSectionCard title="Identidade" hint={CM_HELP.users.profile}>
-        <div
-          style={{
-            display: "flex",
-            gap: 16,
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-          }}
-        >
-          <CommercialAvatar
-            name={profile.name || profile.user_id}
-            colorKey={profile.user_id}
-            src={photoObjectUrl}
-            size="lg"
-          />
-          <div style={{ display: "grid", gap: 12, minWidth: 240, flex: 1 }}>
-            <p style={{ margin: 0 }}>{profile.email || "Sem e-mail"}</p>
+      <CommercialPageHero
+        title={displayName}
+        description={heroDescription || undefined}
+        badge={
+          <span className="cm-nav-row">
             <CommercialStatusBadge label="Commercial" variant="success" />
-            {canEdit ? (
-              <>
-                <CommercialTextField
-                  label="Cargo"
-                  value={jobTitle}
-                  onChange={setJobTitle}
-                  hint={CM_HELP.users.jobTitle}
-                />
-                <CommercialActionButton
-                  variant="primary"
-                  disabled={saving}
-                  onClick={() => void onSaveJobTitle()}
-                >
-                  Salvar cargo
-                </CommercialActionButton>
-                <CommercialFileDropzone
-                  multiple={false}
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  fieldLabel="Foto"
-                  onFilesSelected={(files) => void onUploadPhoto(files)}
-                  labels={{
-                    title: "Trocar foto",
-                    hint: "JPEG, PNG, WebP ou GIF · máx. 2 MB",
-                  }}
-                />
-                {profile.has_photo ? (
-                  <CommercialActionButton
-                    variant="ghost"
+            {meIsSuperadmin && isSelf ? (
+              <CommercialStatusBadge label={USER_ACCESS_COPY.superadmin} variant="warning" />
+            ) : null}
+            <CommercialStatusBadge
+              label={formatPortfoliosCount(profile.portfolios.length)}
+              variant="info"
+            />
+          </span>
+        }
+      />
+
+      <div className="cm-user-profile__grid">
+        <CommercialSectionCard title={USER_ACCESS_COPY.identityTitle} hint={CM_HELP.users.profile}>
+          <div className="cm-user-profile__identity">
+            <div className="cm-user-profile__avatar-block">
+              {canEdit ? (
+                <>
+                  <button
+                    type="button"
+                    className="cm-user-profile__avatar-button"
+                    aria-label={USER_ACCESS_COPY.changePhoto}
                     disabled={saving}
-                    onClick={() => void onRemovePhoto()}
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    Remover foto
+                    <CommercialAvatar
+                      name={displayName}
+                      colorKey={profile.user_id}
+                      src={photoObjectUrl}
+                      size="lg"
+                    />
+                    <span className="cm-user-profile__avatar-overlay" aria-hidden>
+                      <Camera size={18} />
+                      <span>{USER_ACCESS_COPY.changePhoto}</span>
+                    </span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    id={fileInputId}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="cm-user-profile__file-input"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      void onUploadPhoto(file);
+                    }}
+                  />
+                  {profile.has_photo ? (
+                    <CommercialActionButton
+                      variant="ghost"
+                      disabled={saving}
+                      onClick={() => void onRemovePhoto()}
+                    >
+                      <Trash2 size={16} aria-hidden />
+                      {USER_ACCESS_COPY.removePhoto}
+                    </CommercialActionButton>
+                  ) : null}
+                </>
+              ) : (
+                <CommercialAvatar
+                  name={displayName}
+                  colorKey={profile.user_id}
+                  src={photoObjectUrl}
+                  size="lg"
+                />
+              )}
+            </div>
+
+            <div className="cm-user-profile__identity-fields">
+              <div className="cm-user-profile__meta-row">
+                <Mail size={16} aria-hidden />
+                <span>{profile.email || "Sem e-mail"}</span>
+              </div>
+              <div className="cm-user-profile__meta-row">
+                <UserRound size={16} aria-hidden />
+                <span>
+                  {USER_ACCESS_COPY.userIdLabel}: {profile.user_id}
+                </span>
+              </div>
+
+              {canEdit ? (
+                <div className="cm-user-profile__job-form">
+                  <CommercialTextField
+                    label="Cargo"
+                    value={jobTitle}
+                    onChange={setJobTitle}
+                    hint={CM_HELP.users.jobTitle}
+                    fullWidth
+                  />
+                  <CommercialActionButton
+                    variant="primary"
+                    disabled={saving}
+                    onClick={() => void onSaveJobTitle()}
+                  >
+                    Salvar cargo
                   </CommercialActionButton>
-                ) : null}
-              </>
-            ) : (
-              <p style={{ margin: 0 }}>
-                {(profile.job_title || "").trim() || "Cargo não informado"}
-              </p>
-            )}
+                </div>
+              ) : (
+                <p className="cm-user-profile__job-readonly">
+                  {(profile.job_title || "").trim() || USER_ACCESS_COPY.jobTitleEmpty}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </CommercialSectionCard>
+
+        <CommercialSectionCard
+          title={USER_ACCESS_COPY.shortcutsTitle}
+          subtitle={USER_ACCESS_COPY.shortcutsSubtitle}
+          hint={CM_HELP.users.shortcuts}
+        >
+          <div className="cm-user-profile__shortcuts">
+            {shortcuts.map((item) => (
+              <CommercialActionButton
+                key={item.id}
+                variant="default"
+                onClick={item.onSelect}
+              >
+                {item.icon}
+                {item.label}
+              </CommercialActionButton>
+            ))}
+          </div>
+        </CommercialSectionCard>
+      </div>
+
+      <CommercialSectionCard
+        title={USER_ACCESS_COPY.accessTitle}
+        subtitle={USER_ACCESS_COPY.accessSubtitle}
+        hint={CM_HELP.users.access}
+      >
+        {isSelf ? (
+          <div className="cm-user-profile__access">
+            {capabilityItems.length > 0 ? (
+              <div className="cm-user-profile__access-group">
+                <h3 className="cm-user-profile__access-heading">Capacidades da sessão</h3>
+                <div className="cm-nav-row">
+                  {capabilityItems.map((item) => (
+                    <CommercialStatusBadge
+                      key={item.key}
+                      label={item.label}
+                      variant="info"
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="cm-user-profile__access-group">
+              <h3 className="cm-user-profile__access-heading">Permissões RBAC</h3>
+              {permissionItems.length > 0 ? (
+                <ul className="cm-user-profile__permission-list">
+                  {permissionItems.map((item) => (
+                    <li key={item.code}>
+                      <strong>{item.label}</strong>
+                      <code>{item.code}</code>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="cm-muted">{USER_ACCESS_COPY.noPermissions}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="cm-muted">{USER_ACCESS_COPY.accessSelfOnly}</p>
+        )}
       </CommercialSectionCard>
 
-      <CommercialSectionCard title="Carteiras" hint={CM_HELP.users.portfolios}>
+      <CommercialSectionCard title={USER_ACCESS_COPY.portfoliosTitle} hint={CM_HELP.users.portfolios}>
         {profile.portfolios.length === 0 ? (
           <EmptyState
             classNames={cmEmptyStateClassNames}
@@ -243,33 +505,18 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
             defaultMessage="Este usuário ainda não é membro de carteiras ativas."
           />
         ) : (
-          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+          <ul className="cm-user-profile__portfolio-list">
             {profile.portfolios.map((item) => {
               const href = canManagePortfolios
                 ? buildSellerPortfolioDetailPath(basePath, item.id)
                 : null;
               return (
-                <li
-                  key={item.id}
-                  style={{
-                    display: "flex",
-                    gap: 12,
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
+                <li key={item.id} className="cm-user-profile__portfolio-item">
                   {href ? (
                     <button
                       type="button"
+                      className="cm-user-profile__portfolio-link"
                       onClick={() => navigatePluginPath(href)}
-                      style={{
-                        border: 0,
-                        background: "transparent",
-                        color: "inherit",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        padding: 0,
-                      }}
                     >
                       {item.name}
                     </button>
@@ -287,10 +534,8 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         )}
       </CommercialSectionCard>
 
-      <CommercialSectionCard title="Sobre">
-        <p style={{ margin: 0 }}>
-          Perfil do Portal Comercial. Dados de RH serão integrados em fase futura.
-        </p>
+      <CommercialSectionCard title={USER_ACCESS_COPY.aboutTitle}>
+        <p className="cm-muted">{USER_ACCESS_COPY.aboutBody}</p>
       </CommercialSectionCard>
     </div>
   );

@@ -892,17 +892,17 @@ CSS de kit: **zero** no MFE — só tokens `--delpi-ui-*` + layout de página.
 
 ```text
 ┌─ PagePath: Portal / Usuário / {nome} ───────────────────────────────────────┐
-┌─ PageHero: Nome · e-mail · cargo ───────────────────────────────────────────┐
-│ [Avatar]  Cargo [TextField] [Salvar] † · [Trocar foto] [Remover] †           │
+┌─ PageHero: Nome · e-mail · cargo · badges Commercial / carteiras ───────────┐
+┌─ Identidade | Atalhos ──────────────────────────────────────────────────────┐
+│ [Avatar + overlay Trocar foto]  Cargo · ID · e-mail                         │
+│ Atalhos: Início · Tarefas · Carteira · Visão geral · Admin                  │
 └─────────────────────────────────────────────────────────────────────────────┘
-† self ou portfolio manager
-
-┌─ SectionCard: Carteiras ────────────────────────────────────────────────────┐
-│ Lista de memberships (link detalhe só com seller-portfolios.manage)         │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Acesso: capacidades sessão + lista commercial.* (só self) ─────────────────┐
+┌─ Carteiras · Sobre ─────────────────────────────────────────────────────────┘
 ```
 
 BFF: `GET/PATCH /users/{id}/profile` · `PUT/DELETE .../photo` · volume `commercial-user-avatars`.
+Permissões RBAC via `/core-api/me` no próprio perfil.
 
 ---
 

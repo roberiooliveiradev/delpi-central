@@ -1592,6 +1592,191 @@
   }
 }
 
+/* Perfil de usuário */
+.dashboard-commercial .cm-user-profile__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-commercial .cm-user-profile__identity {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial .cm-user-profile__avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-commercial .cm-user-profile__avatar-button {
+  position: relative;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.dashboard-commercial .cm-user-profile__avatar-button:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+.dashboard-commercial .cm-user-profile__avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #0b1220 62%, transparent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.dashboard-commercial .cm-user-profile__avatar-button:hover .cm-user-profile__avatar-overlay,
+.dashboard-commercial .cm-user-profile__avatar-button:focus-visible .cm-user-profile__avatar-overlay {
+  opacity: 1;
+}
+
+.dashboard-commercial .cm-user-profile__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dashboard-commercial .cm-user-profile__identity-fields {
+  display: grid;
+  gap: 12px;
+  min-width: min(100%, 280px);
+  flex: 1;
+}
+
+.dashboard-commercial .cm-user-profile__meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--cm-muted, var(--muted, #64748b));
+  font-size: var(--cm-font-sm, 0.875rem);
+  word-break: break-word;
+}
+
+.dashboard-commercial .cm-user-profile__job-form {
+  display: grid;
+  gap: 12px;
+  max-width: 28rem;
+}
+
+.dashboard-commercial .cm-user-profile__job-readonly {
+  margin: 0;
+}
+
+.dashboard-commercial .cm-user-profile__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-commercial .cm-user-profile__access {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-commercial .cm-user-profile__access-group {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-commercial .cm-user-profile__access-heading {
+  margin: 0;
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 650;
+}
+
+.dashboard-commercial .cm-user-profile__permission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-user-profile__permission-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--cm-border, #e6e6e6) 80%, transparent);
+  background: color-mix(in srgb, var(--cm-text, #111) 3%, transparent);
+}
+
+.dashboard-commercial .cm-user-profile__permission-list code {
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.dashboard-commercial .cm-user-profile__portfolio-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-user-profile__portfolio-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--cm-border, #e6e6e6) 80%, transparent);
+}
+
+.dashboard-commercial .cm-user-profile__portfolio-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--cm-accent, #089bdb);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.dashboard-commercial .cm-user-profile__portfolio-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .dashboard-commercial .cm-user-profile__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-commercial.dashboard-page {
     padding: 16px;

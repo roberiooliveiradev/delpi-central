@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AnchoredPanelPortal,
   ContextMenuItem,
 } from "@delpi/plugin-ui/index";
 import { BriefcaseBusiness, ChevronDown } from "lucide-react";
 
+import { httpGetBlob } from "../api/httpClient";
+import {
+  getUserProfile,
+  userProfilePhotoAbsoluteUrl,
+} from "../api/userProfileApi";
 import { CommercialAvatar } from "./commercialUi";
 import { navigatePluginView, navigateUserProfile } from "./pluginNavigation";
 import { usePortfolioScope } from "./PortfolioScopeContext";
@@ -30,6 +35,7 @@ export function ShellUserPortfolioMenu({
 }: ShellUserPortfolioMenuProps) {
   const { myPortfolios, setSellerIdFilter, currentUserId } = usePortfolioScope();
   const [open, setOpen] = useState(false);
+  const [photoObjectUrl, setPhotoObjectUrl] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const copy = SHELL_NAV_CONTENT.userMenu;
@@ -50,6 +56,38 @@ export function ShellUserPortfolioMenu({
           : [],
     [mode],
   );
+
+  useEffect(() => {
+    let revoked: string | null = null;
+    let cancelled = false;
+    if (!userId) {
+      setPhotoObjectUrl(null);
+      return undefined;
+    }
+    const controller = new AbortController();
+    void getUserProfile(userId, controller.signal)
+      .then(async (profile) => {
+        if (cancelled || !profile.has_photo) {
+          if (!cancelled) setPhotoObjectUrl(null);
+          return;
+        }
+        const blob = await httpGetBlob(userProfilePhotoAbsoluteUrl(userId), {
+          signal: controller.signal,
+        });
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        revoked = url;
+        setPhotoObjectUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setPhotoObjectUrl(null);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
+  }, [userId]);
 
   const goToProfile = useCallback(() => {
     if (!userId) return;
@@ -88,6 +126,10 @@ export function ShellUserPortfolioMenu({
           ? copy.menuCloseAriaLabel
           : copy.menuOpenAriaLabel;
 
+  const avatar = (
+    <CommercialAvatar name={label} size="sm" alt="" src={photoObjectUrl} />
+  );
+
   return (
     <div
       ref={rootRef}
@@ -106,11 +148,11 @@ export function ShellUserPortfolioMenu({
           aria-label={copy.profileAriaLabel}
           onClick={goToProfile}
         >
-          <CommercialAvatar name={label} size="sm" alt="" />
+          {avatar}
         </button>
       ) : (
         <span className="cm-shell-user__profile cm-shell-user__profile--static">
-          <CommercialAvatar name={label} size="sm" alt="" />
+          {avatar}
         </span>
       )}
 
