@@ -210,6 +210,10 @@ describe("printDocumentReaderHtml", () => {
     expect(layer!.querySelector("img")?.getAttribute("src")).toMatch(/watermark\.svg/);
     expect(html).toContain("has-print-running-watermark");
     expect(html).toContain("position: fixed");
+    expect(html).toMatch(
+      /\.delpi-ui-document-print-running-watermark\s*\{[^}]*z-index:\s*-1/,
+    );
+    expect(html).toContain("mix-blend-mode: multiply");
     expect(doc.querySelector(".delpi-ui-document-page__watermark--print-source")).toBeTruthy();
   });
 

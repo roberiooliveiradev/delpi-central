@@ -271,19 +271,28 @@ body.delpi-ui-document-print-window .ds-print-root {
 .delpi-ui-document-page__watermark--print-source {
   display: none !important;
 }
-/* Marca d'água em todas as páginas (Chromium: position fixed no @media print). */
+/*
+ * Marca d'água atrás do texto em todas as páginas.
+ * Chromium costuma pintar position:fixed por cima do fluxo — z-index:-1 +
+ * fundo transparente no papel + mix-blend-mode mantêm o texto legível.
+ */
+body.has-print-running-watermark {
+  isolation: isolate;
+  background: #fff !important;
+}
 .delpi-ui-document-print-running-watermark {
   position: fixed;
-  left: 20%;
-  right: 20%;
-  top: 28%;
-  bottom: 28%;
-  z-index: 0;
+  left: 18%;
+  right: 18%;
+  top: calc(var(--delpi-ui-abnt-top) + var(--delpi-ui-abnt-header-band) + 8mm);
+  bottom: calc(var(--delpi-ui-abnt-bottom) + var(--delpi-ui-abnt-footer-band) + 4mm);
+  z-index: -1;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.09;
+  opacity: 0.1;
   pointer-events: none;
+  mix-blend-mode: multiply;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
 }
@@ -293,7 +302,25 @@ body.delpi-ui-document-print-window .ds-print-root {
   max-width: 100%;
   max-height: 100%;
 }
-.delpi-ui-document-print-layout {
+body.has-print-running-watermark .delpi-ui-document-print-layout {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+body.has-print-running-watermark .delpi-ui-document-print-layout > thead > tr > th,
+body.has-print-running-watermark .delpi-ui-document-print-layout > tfoot > tr > td {
+  position: relative;
+  z-index: 2;
+  background: #fff !important;
+}
+body.has-print-running-watermark .delpi-ui-document-print-layout > tbody > tr > td,
+body.has-print-running-watermark .delpi-ui-document-page,
+body.has-print-running-watermark .delpi-ui-document-page__body {
+  background: transparent !important;
+}
+body.has-print-running-watermark .delpi-ui-document-page__body,
+body.has-print-running-watermark .delpi-ui-document-rich-content,
+body.has-print-running-watermark .delpi-ui-document-rich-content * {
   position: relative;
   z-index: 1;
 }
@@ -414,14 +441,23 @@ figure {
   }
   .delpi-ui-document-print-running-watermark {
     position: fixed !important;
-    left: 20% !important;
-    right: 20% !important;
-    top: 28% !important;
-    bottom: 28% !important;
-    z-index: 0 !important;
-    opacity: 0.09 !important;
+    left: 18% !important;
+    right: 18% !important;
+    top: calc(var(--delpi-ui-abnt-top) + var(--delpi-ui-abnt-header-band) + 8mm) !important;
+    bottom: calc(var(--delpi-ui-abnt-bottom) + var(--delpi-ui-abnt-footer-band) + 4mm) !important;
+    z-index: -1 !important;
+    opacity: 0.1 !important;
+    mix-blend-mode: multiply !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+  body.has-print-running-watermark .delpi-ui-document-print-layout > thead > tr > th,
+  body.has-print-running-watermark .delpi-ui-document-print-layout > tfoot > tr > td {
+    background: #fff !important;
+  }
+  body.has-print-running-watermark .delpi-ui-document-page,
+  body.has-print-running-watermark .delpi-ui-document-print-layout > tbody > tr > td {
+    background: transparent !important;
   }
 }
 `;
