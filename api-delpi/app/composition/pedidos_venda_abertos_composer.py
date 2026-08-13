@@ -4,6 +4,9 @@ from app.application.use_cases.pedidos_venda_abertos.enrich_portfolio_customers_
 from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case import (
     ListCustomerBillingSeriesUseCase,
 )
+from app.application.use_cases.pedidos_venda_abertos.get_outbound_invoice_use_case import (
+    GetOutboundInvoiceUseCase,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesUseCase,
 )
@@ -108,5 +111,11 @@ def build_list_ops_abertas_use_case() -> ListOpsAbertasUseCase:
 
 def build_list_customer_outbound_invoices_use_case() -> ListCustomerOutboundInvoicesUseCase:
     return ListCustomerOutboundInvoicesUseCase(
+        repository=CustomerOutboundInvoicesRepository(),
+    )
+
+
+def build_get_outbound_invoice_use_case() -> GetOutboundInvoiceUseCase:
+    return GetOutboundInvoiceUseCase(
         repository=CustomerOutboundInvoicesRepository(),
     )

@@ -606,6 +606,38 @@ def test_totvs_outbound_invoices_returns_meta(mock_build) -> None:
 
 
 @patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_get_outbound_invoice_use_case"
+)
+def test_get_totvs_outbound_invoice_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        get_totvs_outbound_invoice_route,
+    )
+
+    mock_invoice = MagicMock()
+    mock_invoice.to_dict.return_value = {
+        "key": "01|000123|1",
+        "branch": "01",
+        "invoice_number": "000123",
+        "invoice_series": "1",
+        "items": [],
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_invoice
+    mock_build.return_value = mock_use_case
+
+    response = get_totvs_outbound_invoice_route(
+        branch="01",
+        invoice_number="000123",
+        invoice_series="1",
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="get_totvs_outbound_invoice",
+        shape="playbook_report",
+    )
+
+
+@patch(
     "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_ops_abertas_use_case"
 )
 def test_ops_abertas_pedidos_venda_returns_meta(mock_build) -> None:

@@ -4979,6 +4979,21 @@
       },
       "category": "commercial"
     },
+    "get_totvs_outbound_invoice": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS outbound invoice by key",
+          "description": "Pure TOTVS outbound invoice header and items (SF2/SD2) by branch, number and series.",
+          "label": "TOTVS outbound invoice"
+        },
+        "pt-BR": {
+          "label": "Nota fiscal TOTVS por chave",
+          "summary": "Nota fiscal de saída TOTVS por unidade, número e série",
+          "description": "Cabeçalho e itens SF2/SD2 para o BFF commercial-api, sem membership PVA."
+        }
+      },
+      "category": "commercial"
+    },
     "list_pedidos_venda_abertos": {
       "locale": {
         "en": {

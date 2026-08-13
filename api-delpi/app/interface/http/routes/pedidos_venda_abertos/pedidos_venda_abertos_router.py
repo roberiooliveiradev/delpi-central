@@ -19,6 +19,9 @@ from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_serie
 from app.application.use_cases.pedidos_venda_abertos.list_customer_open_order_metrics_use_case import (
     ListCustomerOpenOrderMetricsRequest,
 )
+from app.application.use_cases.pedidos_venda_abertos.get_outbound_invoice_use_case import (
+    GetOutboundInvoiceRequest,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesRequest,
 )
@@ -32,6 +35,7 @@ from app.application.use_cases.pedidos_venda_abertos.search_active_customers_use
 )
 from app.composition.pedidos_venda_abertos_composer import (
     build_enrich_portfolio_customers_use_case,
+    build_get_outbound_invoice_use_case,
     build_list_customer_billing_series_use_case,
     build_list_customer_open_order_metrics_use_case,
     build_list_customer_outbound_invoices_use_case,
@@ -932,6 +936,52 @@ def list_totvs_outbound_invoices_route(
         log_error(f"Erro ao listar NF TOTVS: {exc}")
         return error_response(
             "Erro interno ao carregar notas fiscais de saída do cliente (TOTVS).",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_totvs_outbound_invoice",
+        path="/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def get_totvs_outbound_invoice_route(
+    branch: str = Path(..., min_length=1, description="Branch / F2_FILIAL / D2_FILIAL"),
+    invoice_number: str = Path(..., min_length=1, description="Invoice number (F2_DOC / D2_DOC)"),
+    invoice_series: str = Path(..., min_length=1, description="Invoice series (F2_SERIE / D2_SERIE)"),
+):
+    """
+    Detalhe TOTVS puro de uma NF de saída (SF2/SD2) por unidade + número + série.
+    Consumo BFF commercial-api — sem membership PVA.
+    """
+    try:
+        invoice = build_get_outbound_invoice_use_case().execute(
+            GetOutboundInvoiceRequest(
+                branch=branch,
+                invoice_number=invoice_number,
+                invoice_series=invoice_series,
+            )
+        )
+        if invoice is None:
+            return error_response(
+                "Nota fiscal de saída não encontrada.",
+                status_code=404,
+            )
+        return api_delpi_success(
+            invoice.to_dict(),
+            operation_id="get_totvs_outbound_invoice",
+            message="Nota fiscal de saída carregada com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao obter NF TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao obter NF TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar a nota fiscal de saída (TOTVS).",
             status_code=500,
         )
 

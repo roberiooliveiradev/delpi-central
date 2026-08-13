@@ -557,6 +557,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_totvs_outbound_invoices": RouteContract(
         "customer_outbound_invoice", "playbook_report"
     ),
+    "get_totvs_outbound_invoice": RouteContract(
+        "customer_outbound_invoice", "playbook_report"
+    ),
     "get_my_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
     "list_seller_portfolios": RouteContract("seller_portfolio", "paged_list"),
     "create_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
