@@ -1,6 +1,5 @@
-import { EmptyState, SegmentToggle } from "@delpi/plugin-ui/index";
-import { RefreshCw, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw, UsersRound } from "lucide-react";
 
 import {
   listTeamRoster,
@@ -12,17 +11,19 @@ import {
   useCommercialPresenceSync,
 } from "../../app/CommercialRealtimeProvider";
 import {
-  cmEmptyStateClassNames,
   CommercialActionButton,
+  CommercialEmptyState,
   CommercialFilterBarShell,
   CommercialLoadingCard,
+  CommercialOrgMembershipFlow,
   CommercialPageHero,
   CommercialPagePath,
+  CommercialSectionCard,
+  CommercialSegmentToggle,
   CommercialSelectField,
   CommercialStateBanner,
   CommercialStatusBadge,
   CommercialTextField,
-  UI_PREFIX,
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CommercialDataTableSection } from "../../app/dataTableUi";
@@ -30,6 +31,12 @@ import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigat
 import type { CommercialPresenceUpdatedEvent } from "../../constants/realtime";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 import type { SellerPortfolio } from "../../types/portfolio";
+import {
+  parseCommercialTeamView,
+  replaceCommercialTeamViewInUrl,
+  type CommercialTeamView,
+} from "../../utils/commercialTeamDeepLink";
+import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
 type AdministrationTeamPageProps = {
@@ -54,6 +61,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
   const [portfolioId, setPortfolioId] = useState("");
   const [onlineFilter, setOnlineFilter] = useState<OnlineFilter>("all");
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(() => new Set());
+  const [view, setView] = useState<CommercialTeamView>(() => parseCommercialTeamView());
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 280);
@@ -65,6 +73,11 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       setOnlineUserIds(new Set(event.onlineUserIds.map((id) => id.trim()).filter(Boolean)));
     }, []),
   );
+
+  const applyView = useCallback((next: CommercialTeamView) => {
+    setView(next);
+    replaceCommercialTeamViewInUrl(next);
+  }, []);
 
   const loadFilters = useCallback(async (signal?: AbortSignal) => {
     const [groupItems, portfolioItems] = await Promise.all([
@@ -131,6 +144,11 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
     if (onlineFilter === "offline") return mapped.filter((row) => !row.online);
     return mapped;
   }, [onlineFilter, onlineUserIds, roster]);
+
+  const orgFlowModel = useMemo(
+    () => buildCommercialGroupsOrgFlowModel({ people: rows }),
+    [rows],
+  );
 
   const columns: DataTableColumn<TeamRow>[] = [
     {
@@ -237,14 +255,27 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
         title={copy.title}
         description={loading ? copy.loading : copy.description}
         actions={
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() => void loadRoster("refresh")}
-            disabled={loading || refreshing}
-          >
-            <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />
-            {copy.refresh}
-          </CommercialActionButton>
+          <>
+            <CommercialSegmentToggle
+              size="sm"
+              ariaLabel={copy.viewToggleAria}
+              idPrefix="administration-team-view"
+              value={view}
+              onChange={(next) => applyView(next as CommercialTeamView)}
+              options={[
+                { value: "list", label: copy.viewList },
+                { value: "org", label: copy.viewOrg },
+              ]}
+            />
+            <CommercialActionButton
+              variant="ghost"
+              onClick={() => void loadRoster("refresh")}
+              disabled={loading || refreshing}
+            >
+              <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />
+              {copy.refresh}
+            </CommercialActionButton>
+          </>
         }
       />
 
@@ -275,8 +306,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
           allowEmpty
           emptyLabel={copy.filterAllOption}
         />
-        <SegmentToggle
-          prefix={UI_PREFIX}
+        <CommercialSegmentToggle
           size="sm"
           ariaLabel={copy.filterOnline}
           idPrefix="administration-team-online"
@@ -297,8 +327,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       {loading ? <CommercialLoadingCard title={copy.loading} /> : null}
 
       {!loading && rows.length === 0 ? (
-        <EmptyState
-          classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+        <CommercialEmptyState
           defaultTitle={copy.emptyTitle}
           defaultMessage={copy.emptyDescription}
         >
@@ -317,10 +346,10 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
               {copy.openGroups}
             </CommercialActionButton>
           </div>
-        </EmptyState>
+        </CommercialEmptyState>
       ) : null}
 
-      {!loading && rows.length > 0 ? (
+      {!loading && rows.length > 0 && view === "list" ? (
         <CommercialDataTableSection
           title={`${copy.title} (${rows.length.toLocaleString("pt-BR")})`}
           rows={rows}
@@ -339,6 +368,29 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
             ].join(" ")
           }
         />
+      ) : null}
+
+      {!loading && rows.length > 0 && view === "org" ? (
+        <CommercialSectionCard title={copy.orgTitle} subtitle={copy.orgSubtitle}>
+          {orgFlowModel.edges.length === 0 &&
+          orgFlowModel.nodes.every((node) => node.kind === "person") ? (
+            <CommercialEmptyState defaultMessage={copy.orgEmpty} />
+          ) : (
+            <CommercialOrgMembershipFlow
+              nodes={orgFlowModel.nodes}
+              edges={orgFlowModel.edges}
+              portalScopeClassName="dashboard-commercial"
+              fullscreenTitle={copy.orgTitle}
+              fullscreenSubtitle={copy.orgSubtitle}
+              aria-label={copy.orgAriaLabel}
+              emptyMessage={copy.orgEmpty}
+              onNodeClick={(payload) => {
+                if (payload.kind !== "person") return;
+                navigateUserProfile(payload.entityId, { basePath });
+              }}
+            />
+          )}
+        </CommercialSectionCard>
       ) : null}
     </section>
   );

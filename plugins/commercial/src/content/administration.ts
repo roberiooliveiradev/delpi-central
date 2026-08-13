@@ -55,6 +55,13 @@ export const ADMINISTRATION_CONTENT = {
     filterOnlineOnly: "Online",
     filterOfflineOnly: "Offline",
     filterAllOption: "Todos",
+    viewList: "Lista",
+    viewOrg: "Diagrama",
+    viewToggleAria: "Modo Lista ou Diagrama",
+    orgTitle: "Diagrama de grupos",
+    orgSubtitle: "Relação entre grupos operacionais e pessoas da equipe.",
+    orgEmpty: "Sem vínculos de grupo para exibir com os filtros atuais.",
+    orgAriaLabel: "Organização da equipe por grupo",
   },
   /** Alias legado — preferir `team`. */
   members: {

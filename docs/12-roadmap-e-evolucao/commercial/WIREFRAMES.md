@@ -677,8 +677,8 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 ### WF-05R-TEAM — Equipe
 
 **Rota:** `/administration/team` (alias `/administration/members`)  
-**API:** `GET /administration/team-roster` + WS `presence.updated` (`onlineUserIds`)  
-**Colunas:** Pessoa · Status Online · E-mail · Grupos · Carteiras · Ver perfil  
+**UI:** `GET /administration/team-roster` + WS `presence.updated` (`onlineUserIds`); toggle **Lista | Diagrama** (`?view=org`); diagrama `OrgMembershipFlow` kind `group` → `person` via `buildCommercialGroupsOrgFlowModel`.  
+**Colunas (lista):** Pessoa · Status Online · E-mail · Grupos · Carteiras · Ver perfil  
 **Filtros:** busca, grupo, carteira, presença (Todos/Online/Offline).
 
 ### WF-05R-GROUPS — Grupos

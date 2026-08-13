@@ -39,7 +39,7 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /openGroups/);
   });
 
-  it("Equipe consome team-roster + presença WS", () => {
+  it("Equipe consome team-roster + presença WS + diagrama grupos", () => {
     const source = readFileSync(join(feature, "AdministrationTeamPage.tsx"), "utf8");
     assert.match(source, /listTeamRoster/);
     assert.match(source, /useCommercialPresenceSync/);
@@ -47,6 +47,10 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /navigateUserProfile/);
     assert.match(source, /active="team"/);
     assert.match(source, /CommercialDataTableSection/);
+    assert.match(source, /CommercialSegmentToggle/);
+    assert.match(source, /buildCommercialGroupsOrgFlowModel/);
+    assert.match(source, /CommercialOrgMembershipFlow/);
+    assert.match(source, /parseCommercialTeamView/);
   });
 
   it("CommercialRealtimeProvider faz replay de presença no subscribe tardio", () => {
