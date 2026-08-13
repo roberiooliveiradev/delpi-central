@@ -210,6 +210,10 @@ export function CustomerOrdersTable({
             orderKey={linesOrder.key}
             basePath={basePath}
             canViewAnalytics={canViewAnalytics}
+            returnNav={{
+              returnTo: currentLocationAsReturnTo(),
+              returnLabel: "Pedidos da conta",
+            }}
           />
         ) : null}
       </CommercialHostDialog>

@@ -565,7 +565,14 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
   });
 
-  it("pedidos usam DataTable, cards, modal e detalhe de pedido", () => {
+  it("linhas da Conta propagam returnNav para Meus pedidos", () => {
+    const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
+    assert.match(lines, /returnNav/);
+    assert.match(lines, /navigateOpenOrderLineDetail/);
+    assert.match(lines, /navigateOpenOrderOpDetail/);
+    const linePage = readSrc("features/open-orders/OpenOrderLineDetailPage.tsx");
+    assert.match(linePage, /resolvePagePathBack/);
+  });
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
     const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
     assert.match(table, /CommercialDataTable/);

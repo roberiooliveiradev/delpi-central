@@ -158,7 +158,7 @@ export function navigateOpenOrderOpDetail(
   orderNumber: string,
   lineItem: string,
   productionOrder: string,
-  options?: { basePath?: string; search?: string },
+  options?: { basePath?: string; search?: string; returnNav?: ReturnNavOptions },
 ): boolean {
   const path = buildOpenOrderOpDetailPath(
     options?.basePath,
@@ -169,7 +169,10 @@ export function navigateOpenOrderOpDetail(
     options?.search,
   );
   if (!path) return false;
-  navigatePluginPath(path);
+  const target = options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+  navigatePluginPath(target);
   return true;
 }
 
@@ -177,7 +180,12 @@ export function navigateOpenOrderLineDetail(
   branch: string,
   orderNumber: string,
   lineItem: string,
-  options?: { basePath?: string; search?: string; replace?: boolean },
+  options?: {
+    basePath?: string;
+    search?: string;
+    replace?: boolean;
+    returnNav?: ReturnNavOptions;
+  },
 ): boolean {
   const path = buildOpenOrderLineDetailPath(
     options?.basePath,
@@ -187,7 +195,10 @@ export function navigateOpenOrderLineDetail(
     options?.search,
   );
   if (!path) return false;
-  navigatePluginPath(path, { replace: options?.replace });
+  const target = options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+  navigatePluginPath(target, { replace: options?.replace });
   return true;
 }
 

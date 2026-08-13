@@ -23,6 +23,8 @@ type CustomerOrderLinesProps = {
   orderKey: string;
   basePath: string;
   canViewAnalytics: boolean;
+  /** Quando definido, deep links de linha/OP voltam para esta origem. */
+  returnNav?: { returnTo?: string | null; returnLabel?: string | null };
 };
 
 function lineOverdueLabel(item: OpenOrdersTotvsItem): string {
@@ -39,6 +41,7 @@ export function CustomerOrderLines({
   orderKey,
   basePath,
   canViewAnalytics,
+  returnNav,
 }: CustomerOrderLinesProps) {
   const regionId = `cm-order-lines-${orderKey.replace(/\|/g, "-")}`;
   const rows = Array.from(lines);
@@ -78,6 +81,7 @@ export function CustomerOrderLines({
                 {
                   basePath,
                   search: buildOpenOrdersContextSearch(),
+                  returnNav,
                 },
               )
             }
@@ -98,6 +102,7 @@ export function CustomerOrderLines({
                 {
                   basePath,
                   search: buildOpenOrdersContextSearch(),
+                  returnNav,
                 },
               )
             }

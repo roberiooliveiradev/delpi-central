@@ -16,6 +16,7 @@ import {
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
 import {
+  currentLocationAsReturnTo,
   resolvePagePathBack,
 } from "../../../app/commercialNavigationReturn";
 import { navigatePluginPath } from "../../../app/pluginNavigation";
@@ -204,6 +205,10 @@ export function CustomerOrderDetailPage({
               orderKey={order.key}
               basePath={basePath}
               canViewAnalytics={canViewAnalytics}
+              returnNav={{
+                returnTo: currentLocationAsReturnTo(),
+                returnLabel: `Pedido ${order.pedido}`,
+              }}
             />
           </CommercialSectionCard>
         </>

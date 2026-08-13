@@ -9,6 +9,7 @@ import {
   CommercialPageHero,
   CommercialPagePath,
 } from "../../app/commercialUi";
+import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
@@ -64,7 +65,12 @@ export function OpenOrderLineDetailPage({
     () => buildOpenOrdersContextSearch(sourceSearch, sellerAccess),
     [sellerAccess, sourceSearch],
   );
-  const backHref = buildPluginPath("open_orders", basePath, contextSearch);
+  const listHref = buildPluginPath("open_orders", basePath, contextSearch);
+  const back = resolvePagePathBack(
+    sourceSearch,
+    { href: listHref, label: "Pedidos em aberto" },
+    basePath,
+  );
 
   useEffect(() => {
     if (scopeLoading) return;
@@ -114,13 +120,13 @@ export function OpenOrderLineDetailPage({
 
   const navigateBack = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    navigatePluginPath(backHref);
+    navigatePluginPath(back.href);
   };
 
   return (
     <section className="cm-page-stack">
       <CommercialPagePath
-        back={{ label: "Pedidos em aberto", href: backHref, onNavigate: navigateBack }}
+        back={{ label: back.label, href: back.href, onNavigate: navigateBack }}
         current={`Pedido ${orderNumber} · linha ${lineItem}`}
       />
 

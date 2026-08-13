@@ -9,6 +9,7 @@ import {
   CommercialPageHero,
   CommercialPagePath,
 } from "../../app/commercialUi";
+import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildOpenOrderLineDetailPath,
@@ -82,6 +83,11 @@ export function OpenOrderOpDetailPage({
     lineItem,
     contextSearch,
   ) ?? ordersHref;
+  const back = resolvePagePathBack(
+    sourceSearch,
+    { href: lineHref, label: "Detalhe da linha" },
+    basePath,
+  );
 
   useEffect(() => {
     if (scopeLoading) return;
@@ -137,7 +143,7 @@ export function OpenOrderOpDetailPage({
 
   const navigateBack = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    navigatePluginPath(lineHref);
+    navigatePluginPath(back.href);
   };
 
   const selectProductionOrder = (nextProductionOrder: string) => {
@@ -155,7 +161,7 @@ export function OpenOrderOpDetailPage({
   return (
     <section className="cm-page-stack">
       <CommercialPagePath
-        back={{ label: "Detalhe da linha", href: lineHref, onNavigate: navigateBack }}
+        back={{ label: back.label, href: back.href, onNavigate: navigateBack }}
         items={[
           {
             id: "orders",
