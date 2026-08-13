@@ -39,4 +39,19 @@ describe("buildCommercialGroupsOrgFlowModel", () => {
       ]),
     );
   });
+
+  it("inclui grupos sem membros quando passados em groups[]", () => {
+    const model = buildCommercialGroupsOrgFlowModel({
+      people: [],
+      groups: [{ id: "g-empty", name: "Vazio", active: true }],
+    });
+    expect(model.nodes).toEqual([
+      expect.objectContaining({
+        id: "group:g-empty",
+        kind: "group",
+        title: "Vazio",
+      }),
+    ]);
+    expect(model.edges).toHaveLength(0);
+  });
 });

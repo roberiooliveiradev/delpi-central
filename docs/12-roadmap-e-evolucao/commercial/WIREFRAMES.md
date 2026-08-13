@@ -693,9 +693,26 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 
 ### WF-05R-GROUPS — Grupos
 
-**Rota:** `/administration/groups`  
-**API:** `GET/POST /groups`, `DELETE /groups/{id}`, add/remove members  
-**UI:** empty só com botão → card formulário sob demanda; grid de cards com `CommercialAvatarStack` (facepile), lista de membros, `UserDirectoryPicker` e **Excluir grupo**. Sem grupos padrão — o gestor cria. Grupos ≠ RBAC.
+**Rota:** `/administration/groups` (`?view=list|org`; default lista omite `view`)  
+**API:** `GET/POST /groups`, `PATCH /groups/{id}` `{ name }` (kind imutável), `DELETE /groups/{id}`, add/remove members  
+**UI:**
+- Empty só com botão → card **Novo grupo** sob demanda (input full-width; **Criar** inferior direito)
+- Toggle **Lista | Diagrama** (`CommercialSegmentToggle` + `?view=`)
+- **Lista:** grid de cards; **Renomear** inline; seção **Membros** `CommercialSectionCard` `collapsible` `defaultOpen={false}` com `CommercialAvatarStack` no header; `UserDirectoryPicker`; Excluir grupo
+- **Diagrama:** `CommercialOrgMembershipFlow` grupo → pessoa (`buildCommercialGroupsOrgFlowModel`)
+- Sem grupos padrão — o gestor cria. Grupos ≠ RBAC.
+
+```
+┌─ Grupos ────────────── [Lista|Diagrama] [Criar] [Atualizar] ─┐
+│ Lista:                                                       │
+│ ┌─ Equipe Sul ── [Ativo] [Renomear] [Excluir] ─────────────┐ │
+│ │ ┌─ Membros (3) ── [avatars] [v] ───────────────────────┐ │ │
+│ │ │ (colapsado por padrão)                               │ │ │
+│ │ └──────────────────────────────────────────────────────┘ │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ Diagrama (?view=org): canvas OrgMembershipFlow group→person  │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ### WF-05R-ORG — Visão Organização
 

@@ -63,10 +63,11 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(provider, /lastPresenceRef/);
   });
 
-  it("Grupos lista /groups, cria/exclui e gerencia membros com picker+avatar", () => {
+  it("Grupos lista /groups, cria/renomeia/exclui e gerencia membros com picker+avatar", () => {
     const source = readFileSync(join(feature, "AdministrationGroupsPage.tsx"), "utf8");
     assert.match(source, /listCommercialGroups/);
     assert.match(source, /createCommercialGroup/);
+    assert.match(source, /renameCommercialGroup/);
     assert.match(source, /deleteCommercialGroup/);
     assert.match(source, /addCommercialGroupMember/);
     assert.match(source, /removeCommercialGroupMember/);
@@ -74,10 +75,17 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /TaskUserChipAvatar/);
     assert.match(source, /active="groups"/);
     assert.match(source, /showCreateForm/);
+    assert.match(source, /cm-administration-groups__create/);
     assert.match(source, /CommercialEmptyState/);
     assert.match(source, /closeCreateForm/);
     assert.match(source, /CommercialAvatarStack/);
     assert.match(source, /CommercialDataCardsGrid/);
+    assert.match(source, /collapsible/);
+    assert.match(source, /defaultOpen=\{false\}/);
+    assert.match(source, /CommercialSegmentToggle/);
+    assert.match(source, /parseCommercialTeamView/);
+    assert.match(source, /CommercialOrgMembershipFlow/);
+    assert.match(source, /buildCommercialGroupsOrgFlowModel/);
   });
 
   it("App roteia Painel, Carteiras, Equipe e Grupos", () => {
