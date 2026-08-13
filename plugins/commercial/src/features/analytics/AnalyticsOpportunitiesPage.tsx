@@ -1,15 +1,13 @@
-import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getCommercialProposals } from "../../api/analyticsApi";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
   CommercialActionButton,
+  CommercialEmptyState,
   CommercialLoadingCard,
   CommercialPageHero,
+  CommercialSectionCard,
   CommercialSectionHintLabel,
   CommercialTextField,
 } from "../../app/commercialUi";
@@ -141,15 +139,13 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         placeholder="Número da OV, cliente…"
       />
 
-      <SectionCard
+      <CommercialSectionCard
         title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
         hint={CM_HELP.analytics.opportunitiesList}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
       >
         {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
         {error ? (
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
+          <CommercialEmptyState defaultMessage={error} />
         ) : null}
         {!loading && !error ? (
           <CommercialProposalsTable
@@ -158,7 +154,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
             detailSearch={buildAnalyticsOpportunityBackSearch()}
           />
         ) : null}
-      </SectionCard>
+      </CommercialSectionCard>
     </section>
   );
 }

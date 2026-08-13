@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
 import { getCommercialProposals } from "../../../api/analyticsApi";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
   CommercialActionButton,
   CommercialEmptyState,
   CommercialLoadingCard,
+  CommercialSectionCard,
 } from "../../../app/commercialUi";
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
@@ -99,11 +96,9 @@ export function CustomerOpportunitiesSection({
   }
 
   return (
-    <SectionCard
+    <CommercialSectionCard
       title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
       hint={CM_HELP.customerDetail.opportunities}
-      classNames={cmSectionCardClassNames}
-      labels={cmSectionLabels}
       actions={
         <CommercialActionButton
           variant="ghost"
@@ -120,11 +115,10 @@ export function CustomerOpportunitiesSection({
     >
       {loading ? <CommercialLoadingCard title="Carregando oportunidades…" variant="panel" /> : null}
       {error ? (
-        <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
+        <CommercialEmptyState defaultMessage={error} />
       ) : null}
       {!loading && !error && items.length === 0 ? (
-        <EmptyState
-          classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+        <CommercialEmptyState
           defaultTitle="Nenhuma OV deste cliente"
           defaultMessage="Não há oportunidades com este código de cliente no recorte atual."
         />
@@ -137,6 +131,6 @@ export function CustomerOpportunitiesSection({
           hideCustomerColumn
         />
       ) : null}
-    </SectionCard>
+    </CommercialSectionCard>
   );
 }

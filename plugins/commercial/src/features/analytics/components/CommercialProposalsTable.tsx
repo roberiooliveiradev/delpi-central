@@ -1,6 +1,6 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
 
-import { CommercialDataTable } from "../../../app/commercialUi";
+import { CommercialDataTable, CommercialStatusBadge } from "../../../app/commercialUi";
 import { navigateAnalyticsOpportunityDetail } from "../../../app/pluginNavigation";
 import type { CommercialProposal } from "../../../types/analytics";
 import { formatDisplayDate } from "../../../utils/dates";
@@ -55,7 +55,12 @@ export function buildCommercialProposalColumns(
     {
       key: "status",
       header: "Status",
-      render: (row) => row.status_label || row.status_code || "—",
+      render: (row) => (
+        <CommercialStatusBadge
+          label={row.status_label || row.status_code || "—"}
+          variant="info"
+        />
+      ),
     },
     { key: "stage", header: "Etapa", render: (row) => row.stage || "—" },
     {
