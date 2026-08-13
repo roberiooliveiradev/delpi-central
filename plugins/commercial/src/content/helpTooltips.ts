@@ -314,6 +314,19 @@ export const CM_HELP = {
     billingLastDate: "Data da nota mais recente no período filtrado.",
     billingLastValue: "Valor da nota mais recente no período filtrado.",
     billingFilters: "Período e opções da consulta de faturamento deste cliente.",
+    billingFilterDateStart:
+      "Início do período das notas fiscais de saída listadas nesta conta.",
+    billingFilterDateEnd: "Fim do período das notas fiscais de saída listadas nesta conta.",
+    billingFilterSituation:
+      "Restringe a lista a emitidas, devoluções ou todas as situações fiscais do período.",
+    billingFilterSearch:
+      "Busca por número da nota, série, pedido de venda ou código/descrição do produto.",
+    billingSeriesCustomer:
+      "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
+    billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
+    billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
+    purchaseEvolutionPeriod:
+      "Recorte do comparativo de compras (últimos 12 meses vs. período anterior).",
     opportunities:
       "Oportunidades de venda (OV) só deste cliente. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:

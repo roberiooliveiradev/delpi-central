@@ -76,6 +76,7 @@ export function CustomerPurchaseEvolutionChart({
       headerActions={
         <CommercialSelectField
           label="Período"
+          hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
           options={[{ value: "12", label: "Últimos 12 meses" }]}
           value="12"
           onChange={() => undefined}

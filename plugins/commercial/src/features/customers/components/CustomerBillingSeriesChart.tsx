@@ -158,6 +158,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
             <div className="cm-billing-series-chart__customer-filter">
               <CommercialMultiSelectField
                 label="Cliente"
+                hint={CM_HELP.customerDetail.billingSeriesCustomer}
                 options={customerOptions.map((customer) => ({
                   value: customer.key,
                   label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
@@ -195,11 +196,13 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
             <>
               <CommercialDateField
                 label="Data inicial"
+                hint={CM_HELP.customerDetail.billingSeriesDateStart}
                 value={customStart}
                 onChange={setCustomStart}
               />
               <CommercialDateField
                 label="Data final"
+                hint={CM_HELP.customerDetail.billingSeriesDateEnd}
                 value={customEnd}
                 onChange={setCustomEnd}
               />

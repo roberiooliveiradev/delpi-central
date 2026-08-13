@@ -148,26 +148,6 @@
       "id": "ov"
     },
     {
-      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
-      "kind": "field",
-      "id": "Data inicial"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
-      "kind": "field",
-      "id": "Data final"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
-      "kind": "field",
-      "id": "Situação"
-    },
-    {
-      "file": "features/customers/billing/components/CustomerBillingFilters.tsx",
-      "kind": "field",
-      "id": "Busca"
-    },
-    {
       "file": "features/customers/billing/components/CustomerInvoiceItems.tsx",
       "kind": "column",
       "id": "description"
@@ -226,21 +206,6 @@
       "file": "features/customers/components/AccountContactsPanel.tsx",
       "kind": "field",
       "id": "E-mail"
-    },
-    {
-      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
-      "kind": "field",
-      "id": "Cliente"
-    },
-    {
-      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
-      "kind": "field",
-      "id": "Data inicial"
-    },
-    {
-      "file": "features/customers/components/CustomerBillingSeriesChart.tsx",
-      "kind": "field",
-      "id": "Data final"
     },
     {
       "file": "features/customers/components/CustomerOpenOrdersPreview.tsx",

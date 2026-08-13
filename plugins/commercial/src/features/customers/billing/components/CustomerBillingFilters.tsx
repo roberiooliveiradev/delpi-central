@@ -90,18 +90,21 @@ export function CustomerBillingFilters({
       >
         <CommercialDateField
           label="Data inicial"
+          hint={CM_HELP.customerDetail.billingFilterDateStart}
           value={startDate}
           onChange={onStartDateChange}
           disabled={disabled}
         />
         <CommercialDateField
           label="Data final"
+          hint={CM_HELP.customerDetail.billingFilterDateEnd}
           value={endDate}
           onChange={onEndDateChange}
           disabled={disabled}
         />
         <CommercialSelectField
           label="Situação"
+          hint={CM_HELP.customerDetail.billingFilterSituation}
           options={[...SITUATION_OPTIONS]}
           value={situation}
           onChange={(value) => onSituationChange(value as CustomerBillingSituationFilter)}
@@ -110,6 +113,7 @@ export function CustomerBillingFilters({
         />
         <CommercialTextField
           label="Busca"
+          hint={CM_HELP.customerDetail.billingFilterSearch}
           type="search"
           value={search}
           onChange={onSearchChange}
