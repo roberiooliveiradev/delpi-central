@@ -408,7 +408,23 @@ describe("CipaAppShell compartilhado", () => {
     );
   });
 
-  it("renderiza modo de leitura e baixa o PDF oficial", async () => {
+  it("renderiza modo de leitura e PDF pela prévia (DocumentReader)", async () => {
+    const fakeDoc = {
+      open: vi.fn(),
+      write: vi.fn(),
+      close: vi.fn(),
+      images: [] as unknown as HTMLCollectionOf<HTMLImageElement>,
+    };
+    const fakeWindow = {
+      closed: false,
+      focus: vi.fn(),
+      scrollTo: vi.fn(),
+      print: vi.fn(),
+      document: fakeDoc,
+      addEventListener: vi.fn(),
+    } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(fakeWindow);
+
     render(
       <CipaAppShell
         route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
@@ -421,8 +437,10 @@ describe("CipaAppShell compartilhado", () => {
     await screen.findByLabelText("Modo de leitura da ata");
     expect(screen.getByText("Documento da ata.")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /Baixar PDF/ }));
-    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith("minute-1"));
+    fireEvent.click(screen.getByTestId("document-reader-download-pdf"));
+    expect(api.exportPdf).not.toHaveBeenCalled();
+    expect(fakeDoc.write).toHaveBeenCalled();
+    expect(String(fakeDoc.write.mock.calls[0]?.[0] ?? "")).toContain("delpi-ui-document-page");
   });
 
   it("mostra Assinar apenas quando o viewer ainda pode assinar", async () => {

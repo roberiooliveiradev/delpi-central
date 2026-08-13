@@ -3,7 +3,7 @@ import {
   ActionButton,
   BackLink,
   DataTable,
-  printDocumentReader,
+  DocumentReaderToolbar,
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
@@ -12,14 +12,12 @@ import {
   FilePlus2,
   PenLine,
   Pencil,
-  Printer,
   Trash2,
 } from "lucide-react";
 
 import {
   deleteMinute,
   exportFilteredPdfs,
-  exportPdf,
   finalizeMinute,
   getAudit,
   getMinute,
@@ -612,26 +610,6 @@ function MinuteDetailPage({
   const minute = detail?.minute;
   const status = String(minute?.status || "");
 
-  const downloadPdf = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const blob = await exportPdf(minuteId);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `ata-comite-etica-conduta-${String(minute?.minute_number || minuteId).replace("/", "-")}.pdf`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao baixar PDF");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const confirmDelete = async () => {
     setBusy(true);
     setError(null);
@@ -737,18 +715,9 @@ function MinuteDetailPage({
         <MinuteDocumentView
           detail={detail}
           toolbar={
-            <>
-              <ActionButton onClick={printDocumentReader}>
-                <Printer size={16} /> Imprimir
-              </ActionButton>
-              <ActionButton
-                variant="primary"
-                disabled={busy}
-                onClick={() => void downloadPdf()}
-              >
-                <Download size={16} /> {busy ? "Gerando…" : "Baixar PDF"}
-              </ActionButton>
-            </>
+            <DocumentReaderToolbar
+              printTitle={String(minute?.title || minute?.minute_number || "Ata Comitê")}
+            />
           }
         />
       ) : (
