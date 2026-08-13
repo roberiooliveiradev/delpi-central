@@ -130,12 +130,14 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(page, /fetchPolicy\.billing/);
   });
 
-  it("expansao acessivel na tabela de NF", () => {
+  it("itens da NF abrem em CommercialHostDialog", () => {
     const table = readSrc(
       "features/customers/billing/components/CustomerInvoicesTable.tsx",
     );
-    assert.match(table, /aria-expanded/);
-    assert.match(table, /Expandir itens/);
+    assert.match(table, /CommercialHostDialog/);
+    assert.match(table, /Ver itens/);
+    assert.doesNotMatch(table, /Expandir itens/);
+    assert.doesNotMatch(table, /aria-expanded/);
   });
 
   it("cards KPI do histórico usam CommercialMetricCard", () => {

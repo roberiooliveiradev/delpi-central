@@ -3,12 +3,13 @@ import {
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { useId, useState } from "react";
+import { useState } from "react";
 
 import {
   CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialHostDialog,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../../app/commercialUi";
@@ -33,10 +34,19 @@ export function CustomerInvoicesTable({
   total,
   onPageChange,
 }: CustomerInvoicesTableProps) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const baseId = useId();
-  const toggle = (key: string) =>
-    setExpandedKey((current) => (current === key ? null : key));
+  const [itemsInvoiceKey, setItemsInvoiceKey] = useState<string | null>(null);
+  const itemsInvoice =
+    invoices.find((invoice) => invoice.key === itemsInvoiceKey) ?? null;
+
+  const invoiceActions = (invoice: CustomerInvoice) => (
+    <CommercialActionButton
+      variant="ghost"
+      onClick={() => setItemsInvoiceKey(invoice.key)}
+    >
+      Ver itens
+    </CommercialActionButton>
+  );
+
   const columns: DataTableColumn<CustomerInvoice>[] = [
     {
       key: "issue",
@@ -88,24 +98,9 @@ export function CustomerInvoicesTable({
     {
       key: "details",
       header: "Detalhes",
-      render: (invoice) => {
-        const expanded = expandedKey === invoice.key;
-        const safe = invoice.key.replace(/\|/g, "-");
-        return (
-          <CommercialActionButton
-            variant="ghost"
-            aria-expanded={expanded}
-            aria-controls={`${baseId}-desktop-nf-${safe}`}
-            onClick={() => toggle(invoice.key)}
-          >
-            {expanded ? "Recolher itens" : "Expandir itens"}
-          </CommercialActionButton>
-        );
-      },
+      render: (invoice) => invoiceActions(invoice),
     },
   ];
-  const expandedInvoice =
-    invoices.find((invoice) => invoice.key === expandedKey) ?? null;
 
   return (
     <CommercialSectionCard title="Notas fiscais">
@@ -116,67 +111,62 @@ export function CustomerInvoicesTable({
           rowKey={(invoice) => invoice.key}
           layout="section"
         />
-        {expandedInvoice ? (
-          <div
-            id={`${baseId}-desktop-nf-${expandedInvoice.key.replace(/\|/g, "-")}`}
-            role="region"
-            aria-label={`Itens da nota ${expandedInvoice.invoice_number}`}
-          >
-            {expandedInvoice.items.length > 0 ? (
-              <CustomerInvoiceItems items={expandedInvoice.items} />
-            ) : (
-              <p className="cm-customer-invoices__empty">Sem itens nesta nota.</p>
-            )}
-          </div>
-        ) : null}
       </div>
       <div className="cm-customer-invoices__mobile">
-        {invoices.map((invoice) => {
-          const expanded = expandedKey === invoice.key;
-          const panelId = `${baseId}-mobile-nf-${invoice.key.replace(/\|/g, "-")}`;
-          return (
-            <div key={invoice.key} className="cm-customer-invoices__mobile-item">
-              <CommercialDataRecordCard
-                title={`Nota ${invoice.invoice_number}${
-                  invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
-                }`}
-                subtitle={`Emissão ${formatDisplayDate(invoice.issue_date)}`}
-                status={
-                  <CommercialStatusBadge
-                    variant={invoice.situation === "return" ? "info" : "success"}
-                    label={situationLabel(invoice.situation)}
-                  />
-                }
-                fields={[
-                  { id: "sales-order", label: "Pedido de venda", value: invoice.sales_order || "—" },
-                  { id: "customer-order", label: "Pedido do cliente", value: invoice.customer_order || "—" },
-                  { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
-                  { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
-                ]}
-                context={
-                  <CommercialActionButton
-                    variant="ghost"
-                    aria-expanded={expanded}
-                    aria-controls={panelId}
-                    onClick={() => toggle(invoice.key)}
-                  >
-                    {expanded ? "Recolher itens" : "Expandir itens"}
-                  </CommercialActionButton>
-                }
-              />
-              {expanded ? (
-                <div id={panelId} role="region" aria-label={`Itens da nota ${invoice.invoice_number}`}>
-                  {invoice.items.length > 0 ? (
-                    <CustomerInvoiceItems items={invoice.items} />
-                  ) : (
-                    <p className="cm-customer-invoices__empty">Sem itens nesta nota.</p>
-                  )}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
+        {invoices.map((invoice) => (
+          <div key={invoice.key} className="cm-customer-invoices__mobile-item">
+            <CommercialDataRecordCard
+              title={`Nota ${invoice.invoice_number}${
+                invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
+              }`}
+              subtitle={`Emissão ${formatDisplayDate(invoice.issue_date)}`}
+              status={
+                <CommercialStatusBadge
+                  variant={invoice.situation === "return" ? "info" : "success"}
+                  label={situationLabel(invoice.situation)}
+                />
+              }
+              fields={[
+                { id: "sales-order", label: "Pedido de venda", value: invoice.sales_order || "—" },
+                { id: "customer-order", label: "Pedido do cliente", value: invoice.customer_order || "—" },
+                { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
+                { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
+              ]}
+              context={invoiceActions(invoice)}
+            />
+          </div>
+        ))}
       </div>
+
+      <CommercialHostDialog
+        open={Boolean(itemsInvoice)}
+        title={
+          itemsInvoice
+            ? `Itens da nota ${itemsInvoice.invoice_number}${
+                itemsInvoice.invoice_series ? ` / ${itemsInvoice.invoice_series}` : ""
+              }`
+            : "Itens da nota"
+        }
+        description={
+          itemsInvoice
+            ? `Emissão ${formatDisplayDate(itemsInvoice.issue_date)}`
+            : undefined
+        }
+        onClose={() => setItemsInvoiceKey(null)}
+        footer={
+          <CommercialActionButton variant="ghost" onClick={() => setItemsInvoiceKey(null)}>
+            Fechar
+          </CommercialActionButton>
+        }
+      >
+        {itemsInvoice ? (
+          itemsInvoice.items.length > 0 ? (
+            <CustomerInvoiceItems items={itemsInvoice.items} />
+          ) : (
+            <p className="cm-customer-invoices__empty">Sem itens nesta nota.</p>
+          )
+        ) : null}
+      </CommercialHostDialog>
 
       {totalPages > 1 ? (
         <div className="cm-customer-billing-pagination" role="navigation" aria-label="Paginação de notas">
