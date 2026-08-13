@@ -1,4 +1,4 @@
-import { EmptyState, UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
+import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
 import { Plus, RefreshCw, Trash2, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -12,8 +12,8 @@ import {
 } from "../../api/commercialGroupsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import {
-  cmEmptyStateClassNames,
   CommercialActionButton,
+  CommercialEmptyState,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialPagePath,
@@ -46,6 +46,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
   const [pickerByGroup, setPickerByGroup] = useState<Record<string, DirectoryUserOption[]>>({});
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const memberUserIds = useMemo(
     () =>
@@ -101,6 +102,15 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
     });
   };
 
+  const openCreateForm = () => {
+    setShowCreateForm(true);
+  };
+
+  const closeCreateForm = () => {
+    setShowCreateForm(false);
+    setNewGroupName("");
+  };
+
   const onCreateGroup = async () => {
     const name = newGroupName.trim();
     if (!name) {
@@ -112,6 +122,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
       const created = await createCommercialGroup(name);
       upsertGroup(created);
       setNewGroupName("");
+      setShowCreateForm(false);
       notifySuccess(copy.createSuccess);
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao criar grupo.");
@@ -176,6 +187,38 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
     }
   };
 
+  const createFormCard = showCreateForm ? (
+    <CommercialSectionCard
+      title={copy.createFormTitle}
+      actions={
+        <CommercialActionButton
+          variant="ghost"
+          disabled={creating}
+          onClick={closeCreateForm}
+        >
+          {copy.closeCreate}
+        </CommercialActionButton>
+      }
+    >
+      <div className="cm-row-actions cm-administration-groups__create">
+        <CommercialTextField
+          label={copy.createPlaceholder}
+          value={newGroupName}
+          onChange={setNewGroupName}
+          disabled={creating}
+        />
+        <CommercialActionButton
+          variant="primary"
+          disabled={creating || !newGroupName.trim()}
+          onClick={() => void onCreateGroup()}
+        >
+          <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+          {creating ? copy.creating : copy.create}
+        </CommercialActionButton>
+      </div>
+    </CommercialSectionCard>
+  ) : null;
+
   return (
     <section className="cm-page-stack cm-administration-groups">
       <CommercialPagePath
@@ -209,14 +252,22 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         title={copy.title}
         description={loading ? copy.loading : copy.description}
         actions={
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() => void load("refresh")}
-            disabled={loading || refreshing}
-          >
-            <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />
-            {copy.refresh}
-          </CommercialActionButton>
+          <>
+            {!loading && groups.length > 0 && !showCreateForm ? (
+              <CommercialActionButton variant="primary" onClick={openCreateForm}>
+                <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+                {copy.create}
+              </CommercialActionButton>
+            ) : null}
+            <CommercialActionButton
+              variant="ghost"
+              onClick={() => void load("refresh")}
+              disabled={loading || refreshing}
+            >
+              <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />
+              {copy.refresh}
+            </CommercialActionButton>
+          </>
         }
       />
 
@@ -224,49 +275,20 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
       ) : null}
 
-      {!loading ? (
-        <CommercialSectionCard title={copy.create}>
-          <div className="cm-row-actions cm-administration-groups__create">
-            <CommercialTextField
-              label={copy.createPlaceholder}
-              value={newGroupName}
-              onChange={setNewGroupName}
-              disabled={creating}
-            />
-            <CommercialActionButton
-              variant="primary"
-              disabled={creating || !newGroupName.trim()}
-              onClick={() => void onCreateGroup()}
-            >
-              <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
-              {creating ? copy.creating : copy.create}
-            </CommercialActionButton>
-          </div>
-        </CommercialSectionCard>
-      ) : null}
-
       {loading ? <CommercialLoadingCard title={copy.loading} /> : null}
 
-      {!loading && groups.length === 0 ? (
-        <EmptyState
-          classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+      {!loading ? createFormCard : null}
+
+      {!loading && groups.length === 0 && !showCreateForm ? (
+        <CommercialEmptyState
           defaultTitle={copy.emptyTitle}
           defaultMessage={copy.emptyDescription}
         >
-          <CommercialActionButton
-            variant="primary"
-            disabled={creating}
-            onClick={() => {
-              const field = document.querySelector<HTMLInputElement>(
-                ".cm-administration-groups__create input",
-              );
-              field?.focus();
-            }}
-          >
+          <CommercialActionButton variant="primary" onClick={openCreateForm}>
             <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
             {copy.create}
           </CommercialActionButton>
-        </EmptyState>
+        </CommercialEmptyState>
       ) : null}
 
       {!loading

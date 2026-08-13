@@ -83,6 +83,8 @@ export const ADMINISTRATION_CONTENT = {
     emptyTitle: "Nenhum grupo cadastrado.",
     emptyDescription:
       "Crie o primeiro grupo operacional e adicione os membros da equipe.",
+    createFormTitle: "Novo grupo",
+    closeCreate: "Fechar",
     membersTitle: "Membros",
     addMember: "Adicionar membro",
     addMemberPlaceholder: "Buscar para adicionar…",
