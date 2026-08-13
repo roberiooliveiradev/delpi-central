@@ -269,6 +269,7 @@ export const CommercialDashboardKpiCard = createDashboardKpiCard({
   },
 });
 
+/** Thin wrapper do kit — herda `DashboardDataTableProps` (incl. expand `expandedRowKey` / `renderExpandedRow`). */
 export function CommercialDataTable<T>(props: DashboardDataTableProps<T>) {
   return createElement(DataTable<T>, {
     classNames: cmDataTableClassNames,
