@@ -14,6 +14,7 @@ import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
 import { CustomerDetailHeader } from "../components/CustomerDetailHeader";
+import { AccountContactsPanel } from "../components/AccountContactsPanel";
 import { CustomerActivityTimelinePanel } from "../components/CustomerActivityTimelinePanel";
 import { CustomerOpportunitiesSection } from "../components/CustomerOpportunitiesSection";
 import { CustomerOrdersTable } from "../components/CustomerOrdersTable";
@@ -111,6 +112,7 @@ export function CustomerDetailPage({
       search ?? (typeof window !== "undefined" ? window.location.search : ""),
     ),
   );
+  const [contactsRefreshKey, setContactsRefreshKey] = useState(0);
 
   useEffect(() => {
     const sync = () => {
@@ -172,6 +174,7 @@ export function CustomerDetailPage({
     reload();
     if (section === "historico") billing.reload();
     if (section === "atividades") activities.reload();
+    if (section === "contatos") setContactsRefreshKey((current) => current + 1);
   };
 
   return (
@@ -311,6 +314,14 @@ export function CustomerDetailPage({
                   basePath={basePath}
                   customerCode={codigo}
                   canViewAnalytics={canViewAnalytics}
+                />
+              ) : null}
+
+              {section === "contatos" ? (
+                <AccountContactsPanel
+                  customerCode={codigo}
+                  customerStore={loja}
+                  refreshKey={contactsRefreshKey}
                 />
               ) : null}
 

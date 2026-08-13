@@ -132,13 +132,18 @@ evolução com contrato de persistência e visibilidade próprio.
 | `pedidos` | Pedidos e linhas do cliente |
 | `historico` | Faturamento, filtros e notas fiscais |
 | `oportunidades` | Explicação e CTA interno permissionado |
+| `contatos` | Contato TOTVS somente leitura e contatos locais com CRUD |
 | `atividades` | Timeline real e follow-ups |
 
-Aliases legados (`faturamento`, `contatos`, `section`) são normalizados sem
+Aliases legados (`faturamento`, `section`) são normalizados sem
 apagar os demais parâmetros. Faturamento/notas e atividades usam **lazy loading
 de dados por aba**: só consultam a fonte quando a seção correspondente está
 ativa. Loading, erro, vazio, retry e atualização permanecem isolados por fonte.
 Os CTAs aparecem apenas quando o usuário possui a capacidade necessária.
+
+A seção Contatos consome exclusivamente a `commercial-api`: o bundle
+`GET /customers/{code}/{store}/contacts-bundle` combina o contato cadastral
+TOTVS com os contatos locais, mantidos por `POST/PATCH/DELETE .../contacts`.
 
 No resumo, `Pontos para conversa` apresenta badges derivados do snapshot real
 (atrasos, cobertura cadastral parcial e valor em aberto), com vazio explícito

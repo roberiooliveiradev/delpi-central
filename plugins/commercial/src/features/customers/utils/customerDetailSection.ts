@@ -3,6 +3,7 @@ export type CustomerDetailSection =
   | "pedidos"
   | "historico"
   | "oportunidades"
+  | "contatos"
   | "atividades";
 
 /** Valores canônicos + aliases legados (ex.: faturamento → historico). */
@@ -15,7 +16,7 @@ const SECTION_ALIASES: Record<string, CustomerDetailSection> = {
   historico: "historico",
   oportunidades: "oportunidades",
   atividades: "atividades",
-  contatos: "atividades",
+  contatos: "contatos",
   /** Alias legado — aba removida; cai na visão geral. */
   checkups: "resumo",
 };
@@ -25,6 +26,7 @@ export const CUSTOMER_DETAIL_SECTION_ORDER: readonly CustomerDetailSection[] = [
   "pedidos",
   "historico",
   "oportunidades",
+  "contatos",
   "atividades",
 ] as const;
 

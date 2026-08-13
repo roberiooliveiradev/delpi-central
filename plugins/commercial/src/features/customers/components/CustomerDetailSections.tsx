@@ -17,6 +17,7 @@ const LABELS: Record<CustomerDetailSection, string> = {
   pedidos: "Pedidos em aberto",
   historico: "Histórico de vendas",
   oportunidades: "Oportunidades",
+  contatos: "Contatos",
   atividades: "Atividades",
 };
 
