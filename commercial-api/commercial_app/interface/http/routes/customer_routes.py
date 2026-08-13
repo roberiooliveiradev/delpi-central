@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Body, File, Path, Query, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -13,9 +14,13 @@ from commercial_app.application.security.commercial_permissions import (
     can_manage_portfolios,
     can_use_team_scope,
 )
+from commercial_app.application.use_cases.manage_account_contacts import (
+    CreateAccountContactInput,
+)
 from commercial_app.application.use_cases.manage_seller_portfolio import parse_customer_assignments
 from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
+    build_manage_account_contacts_use_case,
     build_manage_customer_avatar_use_case,
     build_resolve_commercial_customer_scope_service,
 )
@@ -24,6 +29,10 @@ from commercial_app.core.auth_actor import (
     current_user_from_request,
 )
 from commercial_app.core.responses import fail, ok
+from commercial_app.interface.http.schemas.account_contact_schemas import (
+    CreateAccountContactBody,
+    UpdateAccountContactBody,
+)
 from commercial_app.interface.http.schemas.portfolio_schemas import (
     BillingSeriesBody,
     EnrichmentBody,
@@ -42,6 +51,20 @@ def _customer_scope_for_request(request: Request):
         user_id=user_id,
         unrestricted=unrestricted,
     )
+
+
+def _customer_scope_check_for_request(request: Request):
+    service = build_resolve_commercial_customer_scope_service()
+    scope = _customer_scope_for_request(request)
+
+    def check(customer_code: str, customer_store: str) -> None:
+        service.ensure_allows(
+            scope,
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
+
+    return check
 
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
@@ -247,6 +270,159 @@ def list_commercial_customer_outbound_invoices(
             "Erro interno ao carregar notas fiscais do cliente.",
             500,
             operation_id="list_commercial_customer_outbound_invoices",
+        )
+
+
+@router.get(
+    "/{customer_code}/{customer_store}/contacts-bundle",
+    operation_id="get_customer_contacts_bundle",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def get_customer_contacts_bundle(
+    request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+):
+    try:
+        items = build_manage_account_contacts_use_case().list(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            scope_check=_customer_scope_check_for_request(request),
+        )
+        return ok(
+            {
+                "totvs_contact": None,
+                "items": [item.to_dict() for item in items],
+            },
+            message="Contatos carregados.",
+            operation_id="get_customer_contacts_bundle",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="get_customer_contacts_bundle")
+    except Exception:
+        logger.exception("get_customer_contacts_bundle_failed")
+        return fail(
+            "Erro interno ao carregar contatos.",
+            500,
+            operation_id="get_customer_contacts_bundle",
+        )
+
+
+@router.post(
+    "/{customer_code}/{customer_store}/contacts",
+    operation_id="create_customer_contact",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def create_customer_contact(
+    request: Request,
+    body: CreateAccountContactBody,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+):
+    try:
+        contact = build_manage_account_contacts_use_case().create(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            actor_user_id=actor_sub_from_request(request) or "",
+            data=CreateAccountContactInput(
+                full_name=body.full_name,
+                role_title=body.role_title,
+                channel=body.channel,
+                email=body.email,
+                phone_e164=body.phone_e164,
+                is_whatsapp=body.is_whatsapp,
+                is_primary=body.is_primary,
+                source=body.source,
+            ),
+            scope_check=_customer_scope_check_for_request(request),
+        )
+        return ok(
+            contact.to_dict(),
+            message="Contato criado.",
+            operation_id="create_customer_contact",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="create_customer_contact")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="create_customer_contact")
+    except Exception:
+        logger.exception("create_customer_contact_failed")
+        return fail(
+            "Erro interno ao criar contato.",
+            500,
+            operation_id="create_customer_contact",
+        )
+
+
+@router.patch(
+    "/{customer_code}/{customer_store}/contacts/{contact_id}",
+    operation_id="update_customer_contact",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def update_customer_contact(
+    request: Request,
+    body: UpdateAccountContactBody,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+    contact_id: UUID = Path(...),
+):
+    try:
+        contact = build_manage_account_contacts_use_case().update(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            contact_id=contact_id,
+            changes=body.model_dump(exclude_unset=True),
+            scope_check=_customer_scope_check_for_request(request),
+        )
+        return ok(
+            contact.to_dict(),
+            message="Contato atualizado.",
+            operation_id="update_customer_contact",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="update_customer_contact")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="update_customer_contact")
+    except Exception:
+        logger.exception("update_customer_contact_failed")
+        return fail(
+            "Erro interno ao atualizar contato.",
+            500,
+            operation_id="update_customer_contact",
+        )
+
+
+@router.delete(
+    "/{customer_code}/{customer_store}/contacts/{contact_id}",
+    operation_id="delete_customer_contact",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def delete_customer_contact(
+    request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+    contact_id: UUID = Path(...),
+):
+    try:
+        contact = build_manage_account_contacts_use_case().soft_delete(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            contact_id=contact_id,
+            scope_check=_customer_scope_check_for_request(request),
+        )
+        return ok(
+            {"deleted": True, "id": str(contact.id)},
+            message="Contato removido.",
+            operation_id="delete_customer_contact",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="delete_customer_contact")
+    except Exception:
+        logger.exception("delete_customer_contact_failed")
+        return fail(
+            "Erro interno ao remover contato.",
+            500,
+            operation_id="delete_customer_contact",
         )
 
 

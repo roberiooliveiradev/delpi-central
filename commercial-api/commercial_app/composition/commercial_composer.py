@@ -3,6 +3,9 @@ from __future__ import annotations
 from commercial_app.application.services.attachment_storage import AttachmentStorage
 from commercial_app.application.services.customer_avatar_storage import CustomerAvatarStorage
 from commercial_app.application.services.user_profile_storage import UserProfileStorage
+from commercial_app.application.use_cases.manage_account_contacts import (
+    ManageAccountContactsUseCase,
+)
 from commercial_app.application.use_cases.manage_attachments import ManageAttachmentsUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
@@ -10,6 +13,9 @@ from commercial_app.application.use_cases.manage_user_profile import ManageUserP
 from commercial_app.application.use_cases.manage_worklist import ManageWorklistUseCase
 from commercial_app.config import settings
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
+from commercial_app.domain.ports.account_contact_repository_port import (
+    AccountContactRepositoryPort,
+)
 from commercial_app.domain.ports.customer_avatar_repository_port import CustomerAvatarRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
 from commercial_app.domain.ports.task_repository_port import (
@@ -32,6 +38,9 @@ from commercial_app.infrastructure.persistence.repositories.legacy_postgres_sell
 )
 from commercial_app.infrastructure.persistence.repositories.postgres_attachment_repository import (
     PostgresAttachmentRepository,
+)
+from commercial_app.infrastructure.persistence.repositories.postgres_account_contact_repository import (
+    PostgresAccountContactRepository,
 )
 from commercial_app.infrastructure.persistence.repositories.postgres_audit_log_repository import (
     PostgresAuditLogRepository,
@@ -59,11 +68,13 @@ _avatar_repository: CustomerAvatarRepositoryPort | None = None
 _attachment_repository: AttachmentRepositoryPort | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
+_account_contact_repository: AccountContactRepositoryPort | None = None
 _user_profile_repository: UserProfileRepositoryPort | None = None
 _portfolio_use_case: ManageSellerPortfolioUseCase | None = None
 _avatar_use_case: ManageCustomerAvatarUseCase | None = None
 _attachment_use_case: ManageAttachmentsUseCase | None = None
 _worklist_use_case: ManageWorklistUseCase | None = None
+_account_contacts_use_case: ManageAccountContactsUseCase | None = None
 _user_profile_use_case: ManageUserProfileUseCase | None = None
 _commercial_gateway: DelpiCommercialGateway | None = None
 
@@ -174,6 +185,22 @@ def build_manage_worklist_use_case() -> ManageWorklistUseCase:
             attachment_repository=build_attachment_repository(),
         )
     return _worklist_use_case
+
+
+def build_account_contact_repository() -> AccountContactRepositoryPort:
+    global _account_contact_repository
+    if _account_contact_repository is None:
+        _account_contact_repository = PostgresAccountContactRepository()
+    return _account_contact_repository
+
+
+def build_manage_account_contacts_use_case() -> ManageAccountContactsUseCase:
+    global _account_contacts_use_case
+    if _account_contacts_use_case is None:
+        _account_contacts_use_case = ManageAccountContactsUseCase(
+            repository=build_account_contact_repository(),
+        )
+    return _account_contacts_use_case
 
 
 def build_attachment_repository() -> AttachmentRepositoryPort:
