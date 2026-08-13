@@ -262,6 +262,7 @@ def build_manage_user_profile_use_case() -> ManageUserProfileUseCase:
             portfolio_repository=build_seller_portfolio_repository(),
             portal_access=directory,
             directory_gateway=directory,
+            groups=build_manage_commercial_groups_use_case(),
         )
     return _user_profile_use_case
 
