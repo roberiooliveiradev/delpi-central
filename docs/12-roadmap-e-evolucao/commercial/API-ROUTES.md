@@ -94,14 +94,14 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 
 | GET | `/seller-portfolios/{seller_id}` | `get_seller_portfolio` | F2 | manage ou own | `seller_portfolio` | `scalar` | WF-05 |
 | POST | `/seller-portfolios` | `create_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
-
-**Create name-first (E9):** body mínimo `{ "display_name": "…" }` — carteira órfã (`user_id` NULL). `user_ids` / `user_id` opcionais. O 1º `POST …/members` promove a owner e sincroniza `user_id` (V013).
 | PATCH | `/seller-portfolios/{seller_id}` | `update_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
 | DELETE | `/seller-portfolios/{seller_id}` | `deactivate_seller_portfolio` | F2 | manage | `seller_portfolio` | `scalar` | WF-05 |
 | PUT | `/seller-portfolios/{seller_id}/customers` | `replace_seller_customers` | F2 | manage | `seller_customer` | `list` | WF-05 |
 | POST | `/seller-portfolios/{seller_id}/customers` | `add_seller_customer` | F2 | manage | `seller_customer` | `scalar` | WF-05 |
 | DELETE | `/seller-portfolios/{seller_id}/customers` | `remove_seller_customer` | F2 | manage | `seller_customer` | `scalar` | WF-05 |
 | POST | `/seller-portfolios/{seller_id}/customers/transfer` | `transfer_seller_customers` | F2 | manage | `seller_customer` | `scalar` | WF-05 |
+
+**Create name-first (E9):** `POST /seller-portfolios` aceita body mínimo `{ "display_name": "…" }` — carteira órfã (`user_id` NULL). `user_ids` / `user_id` opcionais. O 1º `POST …/members` promove a owner e sincroniza `user_id` (V013).
 
 **Body delete/remove:** query ou body com `customer_code` + `customer_store`.  
 **Transfer:** `to_seller_id`, lista de clientes, `reason_note` obrigatório → grava `audit_log`.
