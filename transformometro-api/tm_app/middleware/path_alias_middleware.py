@@ -12,7 +12,10 @@ _EN_TO_PT: tuple[tuple[str, str], ...] = (
     ("/impact-effort-matrix", "/matriz-impacto-esforco"),
     ("/allocation-diagnosis", "/diagnostico-rateio"),
     ("/scope-decomposition", "/decomposicao-escopo"),
+    # Híbrido legado do MFE (EN stem + PT suffix) — bundles em cache até rebuild.
+    ("/decomposition-escopo", "/decomposicao-escopo"),
     ("/scope-diagram", "/diagrama-escopo"),
+    ("/diagram-escopo", "/diagrama-escopo"),
     ("/validate-flow-links", "/validar-vinculos-fluxo"),
     ("/suggest-draft", "/sugerir-rascunho"),
     ("/snapshot/summary", "/snapshot/resumo"),

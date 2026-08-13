@@ -104,7 +104,7 @@ export async function fetchInstanciaDecomposicaoEscopo(
   instanciaId: string,
   getAccessToken?: () => string | undefined
 ): Promise<DecompositionEscopo & { instancia_id: string; empty?: boolean }> {
-  return request(`/instances/${instanciaId}/decomposition-escopo`, getAccessToken);
+  return request(`/instances/${instanciaId}/scope-decomposition`, getAccessToken);
 }
 
 export async function saveInstanciaDecomposicaoEscopo(
@@ -112,7 +112,7 @@ export async function saveInstanciaDecomposicaoEscopo(
   escopo: DecompositionEscopo,
   getAccessToken?: () => string | undefined
 ) {
-  return request(`/instances/${instanciaId}/decomposition-escopo`, getAccessToken, {
+  return request(`/instances/${instanciaId}/scope-decomposition`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(escopo),
   });

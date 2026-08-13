@@ -49,3 +49,15 @@ def test_rewrite_scope_diagram_not_corrupted_by_diagram_alias():
         rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/scope-decomposition")
         == "/transformometro/instancias/i1/decomposicao-escopo"
     )
+
+
+def test_rewrite_hybrid_legacy_mfe_paths():
+    """MFE antigo chamava /decomposition-escopo (híbrido) — deve mapear ao legado PT."""
+    assert (
+        rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/decomposition-escopo")
+        == "/transformometro/instancias/i1/decomposicao-escopo"
+    )
+    assert (
+        rewrite_en_path_to_legacy_pt("/transformometro/instances/i1/diagram-escopo")
+        == "/transformometro/instancias/i1/diagrama-escopo"
+    )
