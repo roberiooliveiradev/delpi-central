@@ -30,6 +30,7 @@
 | `/apps/commercial/open-orders` | Meus pedidos | sim | accounts.view |
 | `/apps/commercial/customers` | Minha Carteira | sim | membership/team/manage |
 | `/apps/commercial/customers/:code/:store` | Conta | — | idem |
+| `/apps/commercial/customers/:code/:store/orders/:branch/:orderNumber` | Detalhe pedido (Conta) | — | idem |
 | `/apps/commercial/administration` | Administração · Painel | sim† | manage |
 | `/apps/commercial/administration/seller-portfolios` | Carteiras | Admin subnav | manage |
 | `/apps/commercial/administration/seller-portfolios/:id` | Carteira detalhe | — | manage |
@@ -41,6 +42,20 @@
 | `/apps/commercial/analytics/otd` | OTD | launcher Início | analytics.view |
 | `/apps/commercial/analytics/team` | (redirect → administration) | — | — |
 | `/apps/commercial/analytics/opportunities` | Oportunidades | launcher Início | analytics.view |
+
+### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
+
+| Tema | Wireframe / nota | Status implementação |
+|------|------------------|----------------------|
+| `returnTo` / `returnLabel` | PagePath em detalhes (pedido Conta, OV, proposta, linha) | helper `commercialNavigationReturn` |
+| Conta pedidos | WF-04R: modal linhas + página detalhe pedido (sem expand inline) | em entrega |
+| Histórico NF | WF-04R: MetricCard + tabela + modal itens | em entrega |
+| OV → ADY | WF-OPP / WF-PROP: CTA Abrir proposta (atalho documento) | em entrega |
+| Proposta contato PDF | WF-PROP: select contatos salvos (sem inputs raw) | em entrega |
+| Grupos empty/create | WF-ADM: card formulário sob demanda | em entrega |
+| Equipe Lista\|Diagrama | WF-ADM: OrgMembershipFlow kind `group` | em entrega |
+| Presença Equipe | replay snapshot WS no subscribe | entregue |
+| Tarefa × grupo | WF-TASKS: `task_assignee_groups` + concluída por | em entrega (V012) |
 
 ### Shell comum
 
