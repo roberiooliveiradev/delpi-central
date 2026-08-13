@@ -34,7 +34,6 @@ import type {
 import { formatCurrency } from "../../../utils/format";
 import { ANALYTICS_ROL_SERIES_LABELS } from "../utils/analyticsBranchFilters";
 import {
-  isPriorYearCompareAllowed,
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
 } from "../utils/periodShift";
@@ -90,14 +89,7 @@ export function AnalyticsRolSeriesChart({
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
 
-  const yoyAllowed = isPriorYearCompareAllowed(granularity);
-  const yoyActive = comparePriorYear && yoyAllowed;
-
-  useEffect(() => {
-    if (!yoyAllowed && comparePriorYear) {
-      setComparePriorYear(false);
-    }
-  }, [comparePriorYear, yoyAllowed]);
+  const yoyActive = comparePriorYear;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -217,14 +209,9 @@ export function AnalyticsRolSeriesChart({
         <NativeCheckboxControl
           id="overview-rol-yoy"
           checked={yoyActive}
-          disabled={!yoyAllowed}
           onChange={setComparePriorYear}
           label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={
-            yoyAllowed
-              ? CM_HELP.overview.rolSeriesYoy
-              : CM_HELP.overview.rolSeriesYoyDisabledDay
-          }
+          hint={CM_HELP.overview.rolSeriesYoy}
         />
       </div>
       {loading ? (

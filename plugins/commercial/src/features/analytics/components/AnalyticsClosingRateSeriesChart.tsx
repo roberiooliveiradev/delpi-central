@@ -33,7 +33,6 @@ import type {
 } from "../../../types/analytics";
 import { ANALYTICS_CONVERSION_SERIES_LABELS } from "../utils/analyticsBranchFilters";
 import {
-  isPriorYearCompareAllowed,
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
 } from "../utils/periodShift";
@@ -87,14 +86,7 @@ export function AnalyticsClosingRateSeriesChart({
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
 
-  const yoyAllowed = isPriorYearCompareAllowed(granularity);
-  const yoyActive = comparePriorYear && yoyAllowed;
-
-  useEffect(() => {
-    if (!yoyAllowed && comparePriorYear) {
-      setComparePriorYear(false);
-    }
-  }, [comparePriorYear, yoyAllowed]);
+  const yoyActive = comparePriorYear;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -214,14 +206,9 @@ export function AnalyticsClosingRateSeriesChart({
         <NativeCheckboxControl
           id="overview-closing-rate-yoy"
           checked={yoyActive}
-          disabled={!yoyAllowed}
           onChange={setComparePriorYear}
           label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={
-            yoyAllowed
-              ? CM_HELP.overview.closingRateSeriesYoy
-              : CM_HELP.overview.closingRateSeriesYoyDisabledDay
-          }
+          hint={CM_HELP.overview.closingRateSeriesYoy}
         />
       </div>
       {loading ? (

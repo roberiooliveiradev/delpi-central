@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  isPriorYearCompareAllowed,
   mergeSeriesWithPriorYear,
   shiftIsoDateByYears,
   shiftPeriodRangeByYears,
@@ -34,13 +33,6 @@ describe("periodShift", () => {
       ),
       { start_date: "2025-01-01", end_date: "2025-08-13" },
     );
-  });
-
-  it("isPriorYearCompareAllowed blocks day granularity", () => {
-    assert.equal(isPriorYearCompareAllowed("day"), false);
-    assert.equal(isPriorYearCompareAllowed("week"), true);
-    assert.equal(isPriorYearCompareAllowed("month"), true);
-    assert.equal(isPriorYearCompareAllowed("year"), true);
   });
 
   it("mergeSeriesWithPriorYear aligns by index", () => {

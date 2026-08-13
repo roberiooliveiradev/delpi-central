@@ -38,14 +38,11 @@ export function shiftPeriodRangeByYears(
   };
 }
 
-/** YoY overlay is disabled for day buckets (2× up to 366 KPI calls). */
-export function isPriorYearCompareAllowed(granularity: string): boolean {
-  return granularity !== "day";
-}
-
 /**
  * Align prior-year points onto the current axis by bucket index.
  * Extra prior points are ignored; missing prior slots stay undefined on prior keys.
+ * Caller must request prior series with the same filter range shifted −1 year and
+ * the same granularity (day/week/month/year).
  */
 export function mergeSeriesWithPriorYear<
   TCurrent extends Record<string, unknown>,

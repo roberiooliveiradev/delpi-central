@@ -82,7 +82,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Carteira + ROL | **Bloqueado** | — | — | `KPI-ROL-CARTEIRA` |
 | MTD / YTD | **Parcial** | Filtro de período no Overview | séries ROL | Presets MTD/YTD + labels |
 | Projeção de fechamento | **Falta** | — | — | Onda B / FCT-\* |
-| Comparação anos anteriores | **Parcial / em curso** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Sem rota nova; Dia desliga YoY |
+| Comparação anos anteriores | **Parcial / em curso** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Mesmo período filtrado −1a; todas as granularidades |
 | Produtividade comercial | **Parcial** | Opp/Proposals counts; Admin | — | Ofertas/colaborador (Onda C) |
 | Ofertas em aberto | **Existe** | `/analytics/opportunities` | proposals list | — |
 | Clientes ativos | **Parcial** | `/customers` (= com pedido aberto no escopo) | — | Formalizar `KPI-CLIENTE-ATIVO` |
@@ -314,7 +314,7 @@ Objetivo: Visão geral como painel de decisão (carteira + ROL + tempo).
 | Item | Dependência | Dono | Notas |
 |------|-------------|------|-------|
 | Presets de período (hoje…últimos 12 meses / MTD–YTD) no Overview | Onda A | MFE | **Entregue** — botões de período; distinto do overlay YoY |
-| Comparação 2 anos (YoY) nos gráficos ROL e conversão | Séries existentes | MFE (2× BFF) | **Em curso** — toggle; sem rota nova; Dia desliga |
+| Comparação 2 anos (YoY) nos gráficos ROL e conversão | Séries existentes | MFE (2× BFF) | **Em curso** — mesmo período filtrado −1a; Dia/Semana/Mês/Ano |
 | KPI consolidado carteira (valor + itens) no Overview | `KPI-CARTEIRA` | AD rota se faltar + CA BFF + MFE | Dor #4 |
 | Card ROL + carteira (bases alinhadas) | `KPI-ROL-CARTEIRA` | AD + CA + MFE | Bloqueado até A |
 | Carteira prevista mês / meses seguintes / gap vs meta | Fórmulas + fonte postergação | AD + CA + MFE | Projeção; FCT-\* |
