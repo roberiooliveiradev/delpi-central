@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql`. Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
@@ -38,7 +38,7 @@
 | **M1** | F2 | Carteira + avatars (+ `audit_log` mínimo) |
 | **M1+** | E5.1 | `seller_portfolio_members` (N:N) — `V005` |
 | **M1++** | E5 groups | `commercial_groups` + `commercial_group_members` — `V010` (tabelas) + `V011` (remove seeds; gestor cria) |
-| **M2** | F5 | Tasks, activities (+ Wave G `V003`); visits leves / outbox / task_deps = futuro |
+| **M2** | F5 | Tasks, activities (+ Wave G `V003`); `task_assignees`/`task_customers` (`V007`); `task_assignee_groups` + `completed_by_user_id` (`V012`); visits leves / outbox / task_deps = futuro |
 | **M3** | F6 | Opportunities, pipeline refs, forecast |
 | **M4** | F7 | Samples, order confirmations, delivery exceptions |
 | **M5** | Admin | `reference_*`, `sla_policies`, account plans, data quality |
