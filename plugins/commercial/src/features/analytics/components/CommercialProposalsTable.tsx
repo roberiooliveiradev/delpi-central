@@ -2,7 +2,10 @@ import type { DataTableColumn } from "@delpi/plugin-ui/index";
 
 import { CommercialDataTable, CommercialStatusBadge } from "../../../app/commercialUi";
 import { navigateAnalyticsOpportunityDetail } from "../../../app/pluginNavigation";
-import type { CommercialProposal } from "../../../types/analytics";
+import type {
+  CommercialProposal,
+  CommercialProposalStatusCategory,
+} from "../../../types/analytics";
 import { formatDisplayDate } from "../../../utils/dates";
 import { OpenProposalFromOpportunityButton } from "./OpenProposalFromOpportunityButton";
 
@@ -16,31 +19,31 @@ export type CommercialProposalsTableOptions = {
   showOpenProposal?: boolean;
 };
 
+function statusBadgeVariant(
+  category: CommercialProposalStatusCategory | null | undefined,
+): "success" | "danger" | "info" | "neutral" {
+  switch (category) {
+    case "won":
+      return "success";
+    case "lost":
+      return "danger";
+    case "open":
+      return "info";
+    default:
+      return "neutral";
+  }
+}
+
 /** Colunas canônicas da lista de OVs (página global e Conta). */
 export function buildCommercialProposalColumns(
   options: CommercialProposalsTableOptions,
 ): DataTableColumn<CommercialProposal>[] {
-  const openDetail = (row: CommercialProposal) =>
-    navigateAnalyticsOpportunityDetail(row.proposal_number, {
-      basePath: options.basePath,
-      search: options.detailSearch,
-    });
-
   const columns: DataTableColumn<CommercialProposal>[] = [
     {
       key: "ov",
       header: "OV",
       render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            openDetail(row);
-          }}
-        >
-          {row.proposal_number}
-        </button>
+        <span className="cm-proposals-table__ov">{row.proposal_number}</span>
       ),
     },
     { key: "rev", header: "Rev.", render: (row) => row.revision || "—" },
@@ -61,7 +64,7 @@ export function buildCommercialProposalColumns(
       render: (row) => (
         <CommercialStatusBadge
           label={row.status_label || row.status_code || "—"}
-          variant="info"
+          variant={statusBadgeVariant(row.status_category)}
         />
       ),
     },
@@ -77,6 +80,8 @@ export function buildCommercialProposalColumns(
     columns.push({
       key: "proposal-doc",
       header: "Proposta",
+      interactive: true,
+      rowClick: "stop",
       render: (row) => (
         <OpenProposalFromOpportunityButton
           basePath={options.basePath}
