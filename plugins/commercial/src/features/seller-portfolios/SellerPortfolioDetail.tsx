@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
 
-import {
-  searchActiveCustomers,
-  searchDirectoryUsers,
-} from "../../api/commercialPortfolioApi";
+import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
   CommercialDataTable,
@@ -21,6 +18,7 @@ import {
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { PORTFOLIO_MEMBERS_CONTENT } from "../../content/portfolioMembersContent";
+import { useActiveCustomerSearch } from "../customers/hooks/useActiveCustomerSearch";
 import { customerKey } from "../../shared/format";
 import type {
   SellerCustomer,
@@ -78,57 +76,22 @@ export function SellerPortfolioDetail({
   onTransfer,
 }: SellerPortfolioDetailProps) {
   const [editName, setEditName] = useState(portfolio.display_name);
-  const [customerQuery, setCustomerQuery] = useState("");
-  const [customerHits, setCustomerHits] = useState<TotvsCustomerHit[]>([]);
-  const [searchingCustomers, setSearchingCustomers] = useState(false);
-  const [customerSearchError, setCustomerSearchError] = useState<string | null>(null);
   const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
+  const {
+    query: customerQuery,
+    setQuery: setCustomerQuery,
+    hits: customerHits,
+    searching: searchingCustomers,
+    error: customerSearchError,
+    queryReady,
+    reset: resetCustomerSearch,
+  } = useActiveCustomerSearch();
 
   useEffect(() => {
     setEditName(portfolio.display_name);
-    setCustomerQuery("");
-    setCustomerHits([]);
-    setCustomerSearchError(null);
+    resetCustomerSearch();
     setMemberPicker([]);
-  }, [portfolio.id, portfolio.display_name]);
-
-  useEffect(() => {
-    const normalized = customerQuery.trim();
-    if (normalized.length < 2) {
-      setCustomerHits([]);
-      setCustomerSearchError(null);
-      setSearchingCustomers(false);
-      return;
-    }
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      setSearchingCustomers(true);
-      setCustomerSearchError(null);
-      searchActiveCustomers(normalized, { signal: controller.signal })
-        .then((result) => {
-          if (!controller.signal.aborted) {
-            setCustomerHits(result.items);
-            setCustomerSearchError(null);
-          }
-        })
-        .catch((err: unknown) => {
-          if (controller.signal.aborted) return;
-          setCustomerHits([]);
-          setCustomerSearchError(
-            err instanceof Error && err.message.trim()
-              ? err.message
-              : "Não foi possível buscar clientes no cadastro.",
-          );
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setSearchingCustomers(false);
-        });
-    }, 300);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [customerQuery]);
+  }, [portfolio.id, portfolio.display_name, resetCustomerSearch]);
 
   const linked = portfolio.customers ?? [];
   const members = resolveMembers(portfolio);
@@ -136,7 +99,6 @@ export function SellerPortfolioDetail({
     () => new Set(members.map((member) => member.user_id)),
     [members],
   );
-  const queryReady = customerQuery.trim().length >= 2;
 
   const hitColumns = useMemo<DataTableColumn<TotvsCustomerHit>[]>(
     () => [
