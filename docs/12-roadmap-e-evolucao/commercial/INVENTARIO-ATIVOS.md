@@ -3,7 +3,8 @@
 > **Status:** baseline factual + consolidação nativa em curso — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
 > **Produto ao usuário:** **Portal Comercial** (`id` técnico `commercial`)  
 > **Playbook mestre:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
-> **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)
+> **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
+> **Ata × Portal + ecossistema MFEs:** [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) (§7)
 
 Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação.
 
