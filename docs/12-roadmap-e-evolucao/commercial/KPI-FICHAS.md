@@ -121,7 +121,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | **Fórmula — comportamento atual (código)** | `sales_conversion_rate_pct = qtd_won / qtd_proposals × 100` (0 se denom=0). **Denominador:** COUNT de revisões em `AD1010` com `AD1_DATA` ∈ `[start,end]` (cada revisão conta). **Numerador:** OVs cuja **última** revisão tem `AD1_STATUS='9'` (Ganha) e data de aceite `COALESCE(AD1_DTASSI, AD1_DTFIM)` ∈ período — **cohort de aceite**, independente da data de abertura. |
 | Analogia de mercado | **Win rate** CRM; atenção: Delpi usa ganhas÷abertas no período (cohorts distintos), não necessariamente ganhas÷(ganhas+perdidas) do mesmo cohort |
 | Inclusões / exclusões | Ganha = só status `9` no cabeçalho AD1; **não** usa estágio `000013` nem `AIJ_STATUS`. Filtros: branch, segment, customer_codes |
-| Fonte | api-delpi `get_sales_conversion_rate` (`GET /commercial/closing-rate`); BFF `/analytics/closing-rate`; doc: [comercial-taxa-conversao-estagios.md](../../../api-delpi/docs/api/comercial-taxa-conversao-estagios.md); repo: `SalesConversionRateRepository` |
+| Fonte | api-delpi `get_sales_conversion_rate` (`GET /commercial/closing-rate`) + série `get_sales_conversion_rate_series` (`GET /commercial/closing-rate/series`); BFF `/analytics/closing-rate` e `/analytics/closing-rate/series`; doc: [comercial-taxa-conversao-estagios.md](../../../api-delpi/docs/api/comercial-taxa-conversao-estagios.md); repo: `SalesConversionRateRepository` |
 | Freshness | Query no período filtrado |
 | Filtros válidos | período, unidade, segmento, escopo clientes |
 | Escopo | branch / all (+ membership) |
