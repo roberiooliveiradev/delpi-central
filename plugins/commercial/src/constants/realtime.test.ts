@@ -5,6 +5,7 @@ import {
   resolveWorklistNotification,
   resolveWorklistNotificationAudience,
   portfolioEventTouchesId,
+  parseCommercialRealtimeEvent,
   type CommercialPortfolioChangedEvent,
   type CommercialWorklistChangedEvent,
 } from "./realtime";
@@ -124,5 +125,17 @@ describe("portfolioEventTouchesId", () => {
     expect(portfolioEventTouchesId(event, "a")).toBe(true);
     expect(portfolioEventTouchesId(event, "b")).toBe(true);
     expect(portfolioEventTouchesId(event, "c")).toBe(false);
+  });
+});
+
+describe("presence.updated", () => {
+  it("parseia onlineUserIds", () => {
+    const event = parseCommercialRealtimeEvent(
+      JSON.stringify({ type: "presence.updated", onlineUserIds: ["u1", "u2"] }),
+    );
+    expect(event).toEqual({
+      type: "presence.updated",
+      onlineUserIds: ["u1", "u2"],
+    });
   });
 });

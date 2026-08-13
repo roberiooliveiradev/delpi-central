@@ -20,6 +20,7 @@ import {
   resolvePortfolioNotification,
   resolveWorklistNotification,
   type CommercialPortfolioChangedEvent,
+  type CommercialPresenceUpdatedEvent,
   type CommercialWorklistChangedEvent,
 } from "../constants/realtime";
 import { formatDirectoryUserLabel } from "../shared/directoryUserLabel";
@@ -29,12 +30,14 @@ const RECONNECT_MS = 4_000;
 
 type WorklistChangedHandler = (event: CommercialWorklistChangedEvent) => void;
 type PortfolioChangedHandler = (event: CommercialPortfolioChangedEvent) => void;
+type PresenceUpdatedHandler = (event: CommercialPresenceUpdatedEvent) => void;
 
 type CommercialRealtimeContextValue = {
   connected: boolean;
   connectionError: string | null;
   subscribeWorklistChanged: (handler: WorklistChangedHandler) => () => void;
   subscribePortfolioChanged: (handler: PortfolioChangedHandler) => () => void;
+  subscribePresenceUpdated: (handler: PresenceUpdatedHandler) => () => void;
 };
 
 const CommercialRealtimeContext = createContext<CommercialRealtimeContextValue | null>(null);
@@ -56,6 +59,7 @@ export function CommercialRealtimeProvider({
   const clientIdRef = useRef(getCommercialClientId());
   const worklistHandlersRef = useRef(new Set<WorklistChangedHandler>());
   const portfolioHandlersRef = useRef(new Set<PortfolioChangedHandler>());
+  const presenceHandlersRef = useRef(new Set<PresenceUpdatedHandler>());
   const getAccessTokenRef = useRef(getAccessToken);
 
   const [connected, setConnected] = useState(false);
@@ -76,6 +80,13 @@ export function CommercialRealtimeProvider({
     portfolioHandlersRef.current.add(handler);
     return () => {
       portfolioHandlersRef.current.delete(handler);
+    };
+  }, []);
+
+  const subscribePresenceUpdated = useCallback((handler: PresenceUpdatedHandler) => {
+    presenceHandlersRef.current.add(handler);
+    return () => {
+      presenceHandlersRef.current.delete(handler);
     };
   }, []);
 
@@ -161,6 +172,12 @@ export function CommercialRealtimeProvider({
           for (const handler of portfolioHandlersRef.current) {
             handler(event);
           }
+          return;
+        }
+        if (event.type === "presence.updated") {
+          for (const handler of presenceHandlersRef.current) {
+            handler(event);
+          }
         }
       };
 
@@ -193,6 +210,7 @@ export function CommercialRealtimeProvider({
     connectionError,
     subscribeWorklistChanged,
     subscribePortfolioChanged,
+    subscribePresenceUpdated,
   };
 
   return (
@@ -270,6 +288,29 @@ export function useCommercialPortfolioSync(
       if (timer != null) window.clearTimeout(timer);
     };
   }, [enabled, portfolioId, subscribePortfolioChanged]);
+}
+
+/**
+ * Presença da Equipe (`presence.updated` — só gestores na sala `team`).
+ * UI completa (dot Online) fica em E7.S2.
+ */
+export function useCommercialPresenceSync(
+  onUpdated: (event: CommercialPresenceUpdatedEvent) => void,
+  enabled = true,
+) {
+  const { subscribePresenceUpdated } = useCommercialRealtime();
+  const onUpdatedRef = useRef(onUpdated);
+
+  useEffect(() => {
+    onUpdatedRef.current = onUpdated;
+  }, [onUpdated]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    return subscribePresenceUpdated((event) => {
+      onUpdatedRef.current(event);
+    });
+  }, [enabled, subscribePresenceUpdated]);
 }
 
 /**

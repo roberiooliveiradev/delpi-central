@@ -4,6 +4,8 @@ import asyncio
 import contextlib
 from unittest.mock import AsyncMock, MagicMock
 
+from starlette.websockets import WebSocketDisconnect
+
 from commercial_app.application.services.commercial_realtime_hub import CommercialRealtimeHub
 from commercial_app.application.services.commercial_realtime_notify import (
     TEAM_ROOM,
@@ -31,6 +33,76 @@ def test_hub_broadcasts_to_room():
         worker.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await worker
+
+    asyncio.run(run())
+
+
+def test_hub_presence_multi_tab_counts_as_one_online():
+    async def run() -> None:
+        hub = CommercialRealtimeHub()
+
+        async def connect_and_hold(
+            ws: AsyncMock, *, user_id: str, rooms: list[str]
+        ) -> tuple[asyncio.Event, asyncio.Task]:
+            released = asyncio.Event()
+
+            async def wait_release():
+                await released.wait()
+                raise WebSocketDisconnect()
+
+            ws.accept = AsyncMock()
+            ws.send_json = AsyncMock()
+            ws.receive_text = AsyncMock(side_effect=wait_release)
+            task = asyncio.create_task(
+                hub.connect(ws, room_keys=rooms, user_id=user_id, client_id=user_id)
+            )
+            await asyncio.sleep(0)
+            return released, task
+
+        manager = AsyncMock()
+        seller_a = AsyncMock()
+        seller_b = AsyncMock()
+
+        m_release, m_task = await connect_and_hold(
+            manager, user_id="manager-1", rooms=[TEAM_ROOM, "user:manager-1"]
+        )
+        assert hub.online_user_ids() == ["manager-1"]
+        snapshot = [
+            call.args[0]
+            for call in manager.send_json.await_args_list
+            if isinstance(call.args[0], dict) and call.args[0].get("type") == "presence.updated"
+        ]
+        assert snapshot and snapshot[0]["onlineUserIds"] == ["manager-1"]
+
+        a1_release, a1_task = await connect_and_hold(
+            seller_a, user_id="seller-a", rooms=["user:seller-a"]
+        )
+        a2_release, a2_task = await connect_and_hold(
+            seller_b, user_id="seller-a", rooms=["user:seller-a"]
+        )
+        assert hub.online_user_ids() == ["manager-1", "seller-a"]
+
+        presence_fanout = [
+            call.args[0]
+            for call in manager.send_json.await_args_list
+            if isinstance(call.args[0], dict)
+            and call.args[0].get("type") == "presence.updated"
+            and "seller-a" in (call.args[0].get("onlineUserIds") or [])
+        ]
+        assert presence_fanout
+
+        a1_release.set()
+        await a1_task
+        assert "seller-a" in hub.online_user_ids()
+
+        a2_release.set()
+        await a2_task
+        assert "seller-a" not in hub.online_user_ids()
+        assert hub.online_user_ids() == ["manager-1"]
+
+        m_release.set()
+        await m_task
+        assert hub.online_user_ids() == []
 
     asyncio.run(run())
 

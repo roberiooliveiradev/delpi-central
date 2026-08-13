@@ -43,9 +43,15 @@ export type CommercialPortfolioChangedEvent = {
   notification?: CommercialRealtimeNotification | null;
 };
 
+export type CommercialPresenceUpdatedEvent = {
+  type: "presence.updated";
+  onlineUserIds: string[];
+};
+
 export type CommercialRealtimeEvent =
   | CommercialWorklistChangedEvent
   | CommercialPortfolioChangedEvent
+  | CommercialPresenceUpdatedEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
 

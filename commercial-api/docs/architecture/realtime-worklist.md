@@ -16,6 +16,25 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 
 ## Eventos
 
+### `presence.updated`
+
+Emitido para a sala `team` (gestores com `seller-portfolios.manage`) quando o
+conjunto de usuários online muda, e como **snapshot** ao entrar na sala `team`.
+
+```json
+{
+  "type": "presence.updated",
+  "onlineUserIds": ["seller-a", "manager-1"]
+}
+```
+
+- **Online** = usuário com ≥1 socket ativo no Portal Comercial (multi-aba conta
+  como um único online).
+- Desconectar a última aba → remove o `user_id` da lista.
+- Quem vê: só clientes na sala `team` (Admin Equipe). Operacional (só `user:`)
+  não recebe fan-out de presença.
+- O GET `/administration/team-roster` **não** inclui online — presença é só WS.
+
 ### `worklist.changed`
 
 ```json
@@ -112,7 +131,8 @@ Mutações enviam header `X-Commercial-Client-Id`; evento inclui `actorClientId`
 
 ## Limitações
 
-- Hub **in-memory** (processo Uvicorn único). Multi-réplica → backlog Redis pub-sub.
+- Hub **in-memory** (processo Uvicorn único). Multi-réplica → backlog Redis pub-sub
+  (presença incluída — contagem por processo).
 - Não usa Socket.IO do Portal/`core-api` (notificações globais do host) — só toasts do plugin Comercial.
 - Rooms por `portfolio:{id}` (membership dinâmica no socket) ficam fora do v1 — publish resolve membros no momento do audit.
 
