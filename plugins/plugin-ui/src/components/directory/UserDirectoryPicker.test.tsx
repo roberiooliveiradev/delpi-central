@@ -83,4 +83,37 @@ describe("UserDirectoryPicker", () => {
       { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },
     ]);
   });
+
+  it("renderiza leading nas sugestões e chip customizado", async () => {
+    searchUsers.mockResolvedValueOnce([
+      { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },
+    ]);
+
+    render(
+      <UserDirectoryPicker
+        value={[users[0]]}
+        onChange={() => {}}
+        searchUsers={searchUsers}
+        showEmail={false}
+        renderOptionLeading={(user) => (
+          <span data-testid={`lead-${user.id}`}>A</span>
+        )}
+        renderSelectedChip={({ user, label, onRemove }) => (
+          <button type="button" data-testid={`chip-${user.id}`} onClick={onRemove}>
+            {label}
+          </button>
+        )}
+      />,
+    );
+
+    expect(screen.getByTestId("chip-u1")).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nome"), {
+      target: { value: "Carla" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("lead-u3")).toBeTruthy();
+    });
+  });
 });

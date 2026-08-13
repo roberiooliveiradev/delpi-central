@@ -511,6 +511,27 @@
   cursor: pointer;
 }
 
+.delpi-ui-user-directory-picker__option--with-leading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+}
+
+.delpi-ui-user-directory-picker__option-leading {
+  flex: 0 0 auto;
+  display: inline-flex;
+  line-height: 0;
+}
+
+.delpi-ui-user-directory-picker__option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .delpi-ui-user-directory-picker__selected {
   margin-bottom: 0;
 }

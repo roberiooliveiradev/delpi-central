@@ -7,6 +7,7 @@ import {
   UserDirectoryPicker,
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
+import { X } from "lucide-react";
 
 import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
 import {
@@ -829,6 +830,30 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 searchUsers={searchDirectoryUsers}
                 maxSelected={1}
                 showEmail
+                renderOptionLeading={(user) => (
+                  <TaskUserChipAvatar
+                    userId={user.id}
+                    name={(user.name || "").trim() || user.email}
+                  />
+                )}
+                renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <TaskUserChipAvatar
+                      userId={user.id}
+                      name={(user.name || "").trim() || user.email}
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
                 labels={{
                   title: "Responsável",
                   hint: CM_HELP.myDay.teamAssigneeFilter,
@@ -1109,6 +1134,30 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   searchUsers={searchDirectoryUsers}
                   maxSelected={20}
                   showEmail
+                  renderOptionLeading={(user) => (
+                    <TaskUserChipAvatar
+                      userId={user.id}
+                      name={(user.name || "").trim() || user.email}
+                    />
+                  )}
+                  renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                    <span className="delpi-ui-tag-chip">
+                      <TaskUserChipAvatar
+                        userId={user.id}
+                        name={(user.name || "").trim() || user.email}
+                      />
+                      <span>{label}</span>
+                      <button
+                        type="button"
+                        className="delpi-ui-tag-chip__remove"
+                        disabled={disabled}
+                        aria-label={`Remover ${label}`}
+                        onClick={onRemove}
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </button>
+                    </span>
+                  )}
                   labels={{
                     title: "Responsáveis",
                     hint: CM_HELP.myDay.taskAssignee,
@@ -1123,6 +1172,34 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 value={customerSelection}
                 onChange={setCustomerSelection}
                 maxSelected={20}
+                renderOptionLeading={(hit) => (
+                  <CustomerAvatar
+                    code={hit.code}
+                    store={hit.store}
+                    name={(hit.name || "").trim() || hit.code}
+                    size="sm"
+                  />
+                )}
+                renderSelectedChip={({ item, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <CustomerAvatar
+                      code={item.code}
+                      store={item.store}
+                      name={(item.name || "").trim() || item.code}
+                      size="sm"
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
                 labels={{
                   title: "Clientes",
                   hint: CM_HELP.myDay.taskCustomer,

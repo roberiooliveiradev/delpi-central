@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 export type DirectoryUserOption = {
@@ -30,6 +31,17 @@ export type UserDirectoryPickerProps = {
    * Limite de selecionados. Com `1`, a próxima escolha substitui a atual (single-select).
    */
   maxSelected?: number;
+  /** Conteúdo à esquerda de cada sugestão (ex.: avatar). */
+  renderOptionLeading?: (user: DirectoryUserOption) => ReactNode;
+  /**
+   * Chip selecionado customizado. Sem slot, usa tag-chip padrão com label + ×.
+   */
+  renderSelectedChip?: (args: {
+    user: DirectoryUserOption;
+    label: string;
+    disabled: boolean;
+    onRemove: () => void;
+  }) => ReactNode;
   labels?: {
     title?: string;
     hint?: string;
@@ -54,6 +66,8 @@ export function UserDirectoryPicker({
   showSelectedList = true,
   showEmail = true,
   maxSelected,
+  renderOptionLeading,
+  renderSelectedChip,
   labels,
   className,
 }: UserDirectoryPickerProps) {
@@ -120,6 +134,11 @@ export function UserDirectoryPicker({
             <li key={user.id}>
               <button
                 type="button"
+                className={
+                  renderOptionLeading
+                    ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
+                    : undefined
+                }
                 disabled={
                   disabled ||
                   selectedIds.has(user.id) ||
@@ -138,7 +157,14 @@ export function UserDirectoryPicker({
                   setResults([]);
                 }}
               >
-                {directoryUserLabel(user, showEmail)}
+                {renderOptionLeading ? (
+                  <span className="delpi-ui-user-directory-picker__option-leading">
+                    {renderOptionLeading(user)}
+                  </span>
+                ) : null}
+                <span className="delpi-ui-user-directory-picker__option-label">
+                  {directoryUserLabel(user, showEmail)}
+                </span>
               </button>
             </li>
           ))}
@@ -151,6 +177,15 @@ export function UserDirectoryPicker({
         >
           {value.map((user) => {
             const label = directoryUserLabel(user, showEmail);
+            const onRemove = () =>
+              onChange(value.filter((item) => item.id !== user.id));
+            if (renderSelectedChip) {
+              return (
+                <span key={user.id}>
+                  {renderSelectedChip({ user, label, disabled, onRemove })}
+                </span>
+              );
+            }
             return (
               <span key={user.id} className="delpi-ui-tag-chip">
                 <span>{label}</span>
@@ -159,7 +194,7 @@ export function UserDirectoryPicker({
                   className="delpi-ui-tag-chip__remove"
                   disabled={disabled}
                   aria-label={`Remover ${label}`}
-                  onClick={() => onChange(value.filter((item) => item.id !== user.id))}
+                  onClick={onRemove}
                 >
                   <X size={14} aria-hidden="true" />
                 </button>

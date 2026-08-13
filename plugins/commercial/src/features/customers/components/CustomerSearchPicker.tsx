@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { TotvsCustomerHit } from "../../../types/portfolio";
 import { customerKey } from "../../../shared/format";
@@ -16,6 +17,17 @@ export type CustomerSearchPickerProps = {
   disabled?: boolean;
   /** Limite de selecionados (default 20). Com `1`, a próxima escolha substitui. */
   maxSelected?: number;
+  /** Conteúdo à esquerda de cada sugestão (ex.: avatar). */
+  renderOptionLeading?: (hit: TotvsCustomerHit) => ReactNode;
+  /**
+   * Chip selecionado customizado. Sem slot, usa tag-chip padrão com label + ×.
+   */
+  renderSelectedChip?: (args: {
+    item: CustomerSearchSelection;
+    label: string;
+    disabled: boolean;
+    onRemove: () => void;
+  }) => ReactNode;
   labels?: {
     title?: string;
     hint?: string;
@@ -48,6 +60,8 @@ export function CustomerSearchPicker({
   onChange,
   disabled = false,
   maxSelected = 20,
+  renderOptionLeading,
+  renderSelectedChip,
   labels,
   className,
 }: CustomerSearchPickerProps) {
@@ -120,6 +134,11 @@ export function CustomerSearchPicker({
               <li key={key || `${hit.code}-${hit.store}`}>
                 <button
                   type="button"
+                  className={
+                    renderOptionLeading
+                      ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
+                      : undefined
+                  }
                   disabled={
                     disabled ||
                     selectedKeys.has(key) ||
@@ -127,7 +146,14 @@ export function CustomerSearchPicker({
                   }
                   onClick={() => selectHit(hit)}
                 >
-                  {hitLabel(hit)}
+                  {renderOptionLeading ? (
+                    <span className="delpi-ui-user-directory-picker__option-leading">
+                      {renderOptionLeading(hit)}
+                    </span>
+                  ) : null}
+                  <span className="delpi-ui-user-directory-picker__option-label">
+                    {hitLabel(hit)}
+                  </span>
                 </button>
               </li>
             );
@@ -142,6 +168,15 @@ export function CustomerSearchPicker({
           {value.map((item) => {
             const label = customerSelectionLabel(item);
             const key = customerKey(item.code, item.store);
+            const onRemove = () =>
+              onChange(value.filter((row) => customerKey(row.code, row.store) !== key));
+            if (renderSelectedChip) {
+              return (
+                <span key={key}>
+                  {renderSelectedChip({ item, label, disabled, onRemove })}
+                </span>
+              );
+            }
             return (
               <span key={key} className="delpi-ui-tag-chip">
                 <span>{label}</span>
@@ -150,9 +185,7 @@ export function CustomerSearchPicker({
                   className="delpi-ui-tag-chip__remove"
                   disabled={disabled}
                   aria-label={`Remover ${label}`}
-                  onClick={() =>
-                    onChange(value.filter((row) => customerKey(row.code, row.store) !== key))
-                  }
+                  onClick={onRemove}
                 >
                   <X size={14} aria-hidden="true" />
                 </button>
