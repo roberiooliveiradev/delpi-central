@@ -574,22 +574,24 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(linePage, /resolvePagePathBack/);
   });
 
-  it("pedidos usam DataTable, cards, modal e detalhe de pedido", () => {
+  it("pedidos usam DataTable, expand canônico e row click para detalhe", () => {
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
     const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
+    const attention = readSrc("features/customers/components/CustomerAttentionOrders.tsx");
     assert.match(table, /CommercialDataTable/);
     assert.match(table, /CommercialDataRecordCard/);
-    assert.match(table, /CommercialHostDialog/);
-    assert.match(table, /Ver linhas/);
-    assert.doesNotMatch(table, /Expandir linhas/);
-    assert.doesNotMatch(table, /aria-expanded/);
+    assert.match(table, /renderExpandedRow/);
+    assert.match(table, /CUSTOMER_ORDERS_CONTENT/);
+    assert.doesNotMatch(table, /CommercialHostDialog/);
+    assert.doesNotMatch(table, /Ver linhas|Abrir pedido/);
     assert.match(table, /navigateCustomerOrderDetail/);
-    assert.match(table, /Abrir pedido/);
+    assert.match(table, /onRowClick=\{openOrderDetail\}/);
     assert.match(preview, /navigateCustomerOrderDetail/);
-    assert.match(preview, /Abrir pedido/);
-    assert.match(preview, /canViewAnalytics \? findOrderProposalLine/);
+    assert.match(preview, /onRowClick=\{openOrderDetail\}/);
+    assert.doesNotMatch(preview, /Abrir pedido/);
     assert.match(preview, /navigateAnalyticsOpportunityDetail/);
     assert.match(preview, /Ver OV \{proposalNumber\}/);
+    assert.match(attention, /navigateCustomerOrderDetail/);
   });
 
   it("navegacao a partir da tabela de clientes", () => {

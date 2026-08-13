@@ -9,13 +9,18 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const src = join(root, "src");
 
 describe("Table audit P0 (E7.S1)", () => {
-  it("superfícies do refino usam padrão kit / sem expand pedidos", () => {
+  it("superfícies do refino usam padrão kit / expand canônico em pedidos", () => {
     const orders = readFileSync(
       join(src, "features/customers/components/CustomerOrdersTable.tsx"),
       "utf8",
     );
-    assert.match(orders, /CommercialHostDialog/);
-    assert.doesNotMatch(orders, /setExpanded|expandedOrder|expandInline/);
+    assert.match(orders, /renderExpandedRow/);
+    assert.match(orders, /expandedRowKey/);
+    assert.match(orders, /onRowClick/);
+    assert.match(orders, /CUSTOMER_ORDERS_CONTENT/);
+    assert.doesNotMatch(orders, /CommercialHostDialog/);
+    assert.doesNotMatch(orders, /Ver linhas|Abrir pedido/);
+    assert.doesNotMatch(orders, /expandedOrder|expandInline/);
 
     const invoices = readFileSync(
       join(src, "features/customers/billing/components/CustomerInvoicesTable.tsx"),
@@ -37,6 +42,8 @@ describe("Table audit P0 (E7.S1)", () => {
     );
     assert.match(opp, /CommercialStatusBadge/);
     assert.match(opp, /OpenProposalFromOpportunityButton/);
+    assert.match(opp, /statusBadgeVariant|status_category/);
+    assert.match(opp, /interactive:\s*true/);
 
     const myDay = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
     assert.match(myDay, /CommercialSectionCard/);

@@ -40,9 +40,12 @@ describe("returnTo sweep (E7.S3)", () => {
     );
   });
 
-  it("Conta pedidos não usa expand inline legado", () => {
+  it("Conta pedidos usa expand canônico do kit + row click", () => {
     const orders = read("features/customers/components/CustomerOrdersTable.tsx");
-    assert.doesNotMatch(orders, /setExpanded|expandedOrder|expandInline/);
-    assert.match(orders, /CommercialHostDialog/);
+    assert.match(orders, /renderExpandedRow/);
+    assert.match(orders, /expandedRowKey/);
+    assert.match(orders, /onRowClick=\{openOrderDetail\}/);
+    assert.doesNotMatch(orders, /CommercialHostDialog/);
+    assert.doesNotMatch(orders, /expandedOrder|expandInline/);
   });
 });
