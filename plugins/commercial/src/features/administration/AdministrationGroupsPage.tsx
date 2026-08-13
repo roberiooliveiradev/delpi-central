@@ -405,21 +405,26 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                     </div>
                   </div>
                 ) : null}
-                <div className="cm-portfolios-detail-block">
-                  {facepileItems.length > 0 ? (
-                    <CommercialAvatarStack
-                      items={facepileItems}
-                      max={6}
-                      size="sm"
-                      aria-label={copy.membersFacepileAria.replace(
-                        "{name}",
-                        group.name,
-                      )}
-                    />
-                  ) : null}
-
-                  <p className="cm-muted">{copy.membersTitle}</p>
-
+                <CommercialSectionCard
+                  title={copy.membersTitle}
+                  subtitle={copy.memberCount.replace("{count}", String(memberCount))}
+                  collapsible
+                  defaultOpen={false}
+                  actions={
+                    facepileItems.length > 0 ? (
+                      <CommercialAvatarStack
+                        items={facepileItems}
+                        max={6}
+                        size="sm"
+                        aria-label={copy.membersFacepileAria.replace(
+                          "{name}",
+                          group.name,
+                        )}
+                      />
+                    ) : null
+                  }
+                >
+                  <div className="cm-portfolios-detail-block">
                   <UserDirectoryPicker
                     value={pickerValue}
                     onChange={(users) => {
@@ -491,7 +496,8 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                       })}
                     </ul>
                   )}
-                </div>
+                  </div>
+                </CommercialSectionCard>
               </CommercialSectionCard>
             );
           })}
