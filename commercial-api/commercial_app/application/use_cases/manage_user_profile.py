@@ -13,6 +13,9 @@ from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
 from commercial_app.domain.ports.user_profile_repository_port import UserProfileRepositoryPort
+from commercial_app.domain.services.portfolio_membership_summary_service import (
+    portfolio_profile_summary_dict,
+)
 from commercial_app.infrastructure.gateways.core_api_portal_access import (
     CoreApiPortalAccessPort,
 )
@@ -85,33 +88,10 @@ class ManageUserProfileUseCase:
             return []
         uid = (user_id or "").strip()
         portfolios = self._portfolios.list_by_user_id(uid, active_only=True)
-        items: list[dict[str, Any]] = []
-        for item in portfolios:
-            members = tuple(item.members or ())
-            member_count = len(members)
-            if member_count == 0 and item.user_id:
-                member_count = 1
-            role = "member"
-            for member in members:
-                if str(member.user_id).strip() == uid:
-                    role = "owner" if member.role == "owner" else "member"
-                    break
-            else:
-                if str(item.user_id).strip() == uid or str(item.owner_user_id).strip() == uid:
-                    role = "owner"
-            items.append(
-                {
-                    "id": str(item.id),
-                    "name": item.display_name,
-                    "active": bool(item.active),
-                    "user_id": item.user_id,
-                    "owner_user_id": item.owner_user_id,
-                    "role": role,
-                    "customer_count": len(item.customers or ()),
-                    "member_count": member_count,
-                }
-            )
-        return items
+        return [
+            portfolio_profile_summary_dict(item, viewer_user_id=uid)
+            for item in portfolios
+        ]
 
     def get_profile(self, *, user_id: str) -> dict[str, Any]:
         target = (user_id or "").strip()

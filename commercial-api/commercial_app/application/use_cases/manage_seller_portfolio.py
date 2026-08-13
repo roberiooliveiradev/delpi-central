@@ -34,6 +34,9 @@ from commercial_app.domain.services.seller_portfolio_load_summary_service import
 from commercial_app.domain.services.seller_portfolio_messages_content_service import (
     SellerPortfolioMessagesContentService,
 )
+from commercial_app.domain.services.portfolio_membership_summary_service import (
+    portfolio_membership_summary,
+)
 
 _ENTITY_SELLER_PORTFOLIO = "seller_portfolio"
 _TRANSFER_TARGET_KEY = "target_portfolio_id"
@@ -81,17 +84,15 @@ def portfolio_to_dict(
         else:
             item["has_portal_access"] = True
         members.append(item)
-    member_count = len(members)
-    if member_count == 0 and portfolio.user_id:
-        member_count = 1
+    summary = portfolio_membership_summary(portfolio)
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
         "owner_user_id": portfolio.owner_user_id,
         "display_name": portfolio.display_name,
         "active": portfolio.active,
-        "customer_count": len(portfolio.customers),
-        "member_count": member_count,
+        "customer_count": summary["customer_count"],
+        "member_count": summary["member_count"],
         "customers": [
             {
                 "customer_code": item.customer_code,
