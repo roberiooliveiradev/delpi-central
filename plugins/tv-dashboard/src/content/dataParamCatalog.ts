@@ -261,7 +261,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "data_inicial": "Data inicial do período consultado (AAAA-MM-DD).",
   "data_inicio": "Início do período (AAAA-MM-DD).",
   "date": "Data de referência (AAAA-MM-DD).",
-  "dateRangePreset": "Atalho de período (hoje, dia anterior útil, este mês, últimos 30 dias etc.).",
+  "dateRangePreset": "Atalho de período (este mês, últimos 30 dias etc.).",
   "date_end": "Data final do período consultado (AAAA-MM-DD).",
   "date_from": "Data inicial do período consultado (AAAA-MM-DD).",
   "date_start": "Data inicial do período consultado (AAAA-MM-DD).",
