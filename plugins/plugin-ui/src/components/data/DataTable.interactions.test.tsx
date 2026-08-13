@@ -300,3 +300,42 @@ describe("DataTable row click × interactive", () => {
     expect(onRowClick).not.toHaveBeenCalled();
   });
 });
+
+describe("DataTable loading → dados (React #310)", () => {
+  it("não quebra ao sair de loading=true para linhas (hooks estáveis)", () => {
+    const columns = [
+      {
+        key: "nome",
+        header: "Nome",
+        render: (row: { nome: string }) => row.nome,
+      },
+    ];
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        loading
+      />,
+    );
+
+    expect(screen.getByText("Carregando")).toBeTruthy();
+
+    expect(() => {
+      rerender(
+        <DataTable
+          columns={columns}
+          rows={[{ nome: "Ata 1" }]}
+          rowKey={(_, index) => String(index)}
+          classNames={dataTableBemClasses("teste")}
+          labels={labels}
+          loading={false}
+        />,
+      );
+    }).not.toThrow();
+
+    expect(screen.getByText("Ata 1")).toBeTruthy();
+  });
+});

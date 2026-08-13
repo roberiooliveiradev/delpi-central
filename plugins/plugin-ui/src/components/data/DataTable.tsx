@@ -474,6 +474,13 @@ export function DataTable<T>({
     return () => document.removeEventListener("copy", onCopy);
   }, [columnKeys, enableCopySelection, resolvedSelection, rows]);
 
+  // Antes dos early returns — useCallback aqui gerava React #310 ao sair de loading/vazio.
+  const clearColumnDragState = useCallback(() => {
+    setDragColumnKey(null);
+    setHoldColumnKey(null);
+    setDropTargetKey(null);
+  }, []);
+
   if (loading) {
     return wrapTableMarkup(
       classNames,
@@ -513,12 +520,6 @@ export function DataTable<T>({
       onResize: commitWidth,
     });
   };
-
-  const clearColumnDragState = useCallback(() => {
-    setDragColumnKey(null);
-    setHoldColumnKey(null);
-    setDropTargetKey(null);
-  }, []);
 
   const onHeaderDragStart = (event: DragEvent<HTMLElement>, columnKey: string) => {
     if (!enableColumnReorder || !onColumnOrderChange) return;
