@@ -1,9 +1,16 @@
 import type { ChartGranularity } from "@delpi/plugin-ui/index";
 
+import {
+  PERIOD_PRESET_OPTIONS,
+  resolvePeriodPreset,
+  type PeriodPresetId,
+} from "../../analytics/utils/periodPreset";
+
 export const BILLING_SERIES_PRESETS = [
   "today",
   "this_week",
   "this_month",
+  "last_month",
   "this_quarter",
   "this_year",
   "last_12_months",
@@ -14,18 +21,14 @@ export type BillingSeriesPeriodPreset = (typeof BILLING_SERIES_PRESETS)[number];
 
 export const DEFAULT_BILLING_SERIES_PRESET = "last_12_months" as const;
 
+/** Labels/order aligned with Overview `PERIOD_PRESET_OPTIONS`. */
 export const BILLING_SERIES_PRESET_OPTIONS: {
   id: BillingSeriesPeriodPreset;
   label: string;
-}[] = [
-  { id: "today", label: "Hoje" },
-  { id: "this_week", label: "Esta semana" },
-  { id: "this_month", label: "Este mês" },
-  { id: "this_quarter", label: "Este trimestre" },
-  { id: "this_year", label: "Este ano" },
-  { id: "last_12_months", label: "Últimos 12 meses" },
-  { id: "custom", label: "Personalizado" },
-];
+}[] = PERIOD_PRESET_OPTIONS.map((option) => ({
+  id: option.value as BillingSeriesPeriodPreset,
+  label: option.label,
+}));
 
 export const BILLING_SERIES_GRANULARITY_OPTIONS: {
   value: ChartGranularity;
@@ -44,58 +47,19 @@ const MAX_SPAN_DAYS: Record<ChartGranularity, number> = {
   year: 3660,
 };
 
-export function toIsoDate(value: Date): string {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function startOfDay(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
-function startOfWeekMonday(value: Date): Date {
-  const start = startOfDay(value);
-  const weekday = start.getDay();
-  const diff = weekday === 0 ? -6 : 1 - weekday;
-  start.setDate(start.getDate() + diff);
-  return start;
-}
-
-function startOfQuarter(value: Date): Date {
-  const month = Math.floor(value.getMonth() / 3) * 3;
-  return new Date(value.getFullYear(), month, 1);
-}
-
+/**
+ * Resolve billing chart range from a shared analytics period preset.
+ * Maps `dateStart`/`dateEnd` (Overview) → `startDate`/`endDate` (billing API).
+ */
 export function periodRangeFromBillingPreset(
   preset: Exclude<BillingSeriesPeriodPreset, "custom">,
   today: Date = new Date(),
 ): { startDate: string; endDate: string } {
-  const end = startOfDay(today);
-  if (preset === "today") {
-    return { startDate: toIsoDate(end), endDate: toIsoDate(end) };
+  const range = resolvePeriodPreset(preset as PeriodPresetId, today);
+  if (!range) {
+    return { startDate: "", endDate: "" };
   }
-  if (preset === "this_week") {
-    return { startDate: toIsoDate(startOfWeekMonday(end)), endDate: toIsoDate(end) };
-  }
-  if (preset === "this_month") {
-    return {
-      startDate: toIsoDate(new Date(end.getFullYear(), end.getMonth(), 1)),
-      endDate: toIsoDate(end),
-    };
-  }
-  if (preset === "this_quarter") {
-    return { startDate: toIsoDate(startOfQuarter(end)), endDate: toIsoDate(end) };
-  }
-  if (preset === "this_year") {
-    return {
-      startDate: toIsoDate(new Date(end.getFullYear(), 0, 1)),
-      endDate: toIsoDate(end),
-    };
-  }
-  const start = new Date(end.getFullYear(), end.getMonth() - 11, 1);
-  return { startDate: toIsoDate(start), endDate: toIsoDate(end) };
+  return { startDate: range.dateStart, endDate: range.dateEnd };
 }
 
 export function inclusiveDayCount(startDate: string, endDate: string): number {

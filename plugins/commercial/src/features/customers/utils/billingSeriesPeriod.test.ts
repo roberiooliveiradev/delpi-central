@@ -9,7 +9,7 @@ import {
 const TODAY = new Date(2026, 7, 11);
 
 describe("billingSeriesPeriod", () => {
-  it("ancora presets no calendário local", () => {
+  it("ancora presets via resolvePeriodPreset (paridade Overview)", () => {
     expect(periodRangeFromBillingPreset("today", TODAY)).toEqual({
       startDate: "2026-08-11",
       endDate: "2026-08-11",
@@ -21,6 +21,10 @@ describe("billingSeriesPeriod", () => {
     expect(periodRangeFromBillingPreset("this_month", TODAY)).toEqual({
       startDate: "2026-08-01",
       endDate: "2026-08-11",
+    });
+    expect(periodRangeFromBillingPreset("last_month", TODAY)).toEqual({
+      startDate: "2026-07-01",
+      endDate: "2026-07-31",
     });
     expect(periodRangeFromBillingPreset("this_quarter", TODAY)).toEqual({
       startDate: "2026-07-01",
