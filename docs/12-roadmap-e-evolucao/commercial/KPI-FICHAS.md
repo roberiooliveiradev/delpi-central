@@ -68,11 +68,26 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 |-------|----------|
 | Código | `KPI-CARTEIRA` |
 | Nome | Carteira |
-| Objetivo | Saldo de pedidos assumidos pelo Comercial |
-| Fórmula | **A confirmar** — fonte SC5/SC6, cancelados, bloqueados, bruto/líquido |
-| Fonte | a criar / parcial via open-orders |
-| Owner | a confirmar |
-| Status | rascunho · **bloqueia** dor #4 consolidada |
+| Objetivo | Expor o saldo de pedidos/compromissos comerciais em aberto (backlog), distinto da programação do PCP |
+| **Fórmula — comportamento atual (código)** | `openValue = SUM(valor_aberto)` das linhas do escopo; também `openLineCount = COUNT(linhas)` via `FilterOpenOrdersByScopeService` → `summary.valor_total_aberto` / `total_linhas`. Fonte de linha: view/lista pedidos em aberto (SC5/SC6 / `VW_PEDIDOS_VENDA_ABERTOS_*`). |
+| Semântica temporal | **Snapshot** («em aberto agora») — **não** filtra por MTD/YTD do Overview |
+| Analogia de mercado | **Order backlog / order book** (comprometido, ainda não faturado como ROL) |
+| Natureza financeira | Tipicamente **valor aberto de pedido** (pode ser base bruta) — **não** misturar com ROL líquido sem homologação |
+| Inclusões / exclusões | Escopo membership / `seller_id` no BFF; linhas com saldo em aberto conforme view; cancelados/bloqueados conforme regra da view TOTVS (a confirmar na homologação) |
+| Fonte | commercial-api open-orders BFF (`list_commercial_open_orders`) + summary; cockpit: `GET /analytics/open-portfolio-summary` (E4); **não** é programação PCP |
+| Freshness | Cada consulta ao TOTVS/BFF |
+| Filtros válidos | Escopo carteira / vendedor; unidade se o upstream aplicar; **período de faturamento não se aplica** |
+| Escopo | own / team / membership |
+| Versão da regra | v0 — baseline open-orders |
+| Owner | Comercial — a confirmar (homologação) |
+| Status | **em_validacao** |
+
+### Checklist de homologação (KPI-CARTEIRA)
+
+- [ ] Confirmar se `valor_aberto` é bruto ou líquido  
+- [ ] Confirmar exclusão de bloqueados / cancelados / residuais  
+- [ ] Confirmar se conta linhas, pedidos ou itens  
+- [ ] Confirmar que **não** se apresenta programação PCP como carteira  
 
 ---
 
@@ -81,15 +96,21 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Campo | Conteúdo |
 |-------|----------|
 | Código | `KPI-ROL-CARTEIRA` |
-| Nome | ROL + carteira |
-| Objetivo | Visão combinada realizado + carteira |
-| Fórmula | Soma de bases **compatíveis** (mesma unidade/natureza) — a confirmar |
-| Fonte | depende KPI-ROL + KPI-CARTEIRA |
-| Owner | a confirmar |
-| Status | rascunho · **bloqueada** até ROL e Carteira |
+| Nome | ROL e carteira (visão combinada) |
+| Objetivo | Permitir leitura gerencial de **realizado (ROL)** e **backlog (carteira)** na mesma tela |
+| **Fórmula — decisão engineering (até homologação)** | Exibir **lado a lado**. **Proibido** somar `ROL + openValue` automaticamente (naturezas diferentes: faturado líquido × aberto de pedido). |
+| Analogia de mercado | Painel billings + backlog; **book-to-bill** é outro indicador (fora deste ciclo) |
+| Fonte | `KPI-ROL` + `KPI-CARTEIRA` no Overview |
+| Owner | Comercial — a confirmar (homologação) |
+| Status | **em_validacao** · soma oficial **bloqueada** |
+
+### Checklist de homologação (KPI-ROL-CARTEIRA)
+
+- [ ] Manter lado a lado como padrão?  
+- [ ] Se soma for desejada: definir base única (tudo líquido ou tudo bruto) e fórmula  
+- [ ] Definir se book-to-bill entra em ciclo futuro  
 
 ---
-
 ## KPI-HIT-RATE — Taxa de conversão / hit rate
 
 | Campo | Conteúdo |
@@ -165,7 +186,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Dor (§ 1.2) | Motivo |
 |-------------|--------|
 | #2 (ticket / amostras no cockpit) | KPI-TICKET e amostras sem ficha |
-| #4 (carteira consolidada × PCP) | KPI-CARTEIRA incompleta (E1.S2 preenche baseline) |
+| #4 (carteira consolidada × PCP) | Soma ROL+carteira e distinção PCP — baseline lado a lado em `em_validacao`; soma ainda bloqueada |
 | #7 (ativo/novo/recuperado) | Janelas não formalizadas |
 
 Engineering do cockpit Overview (MTD/YTD, card carteira **lado a lado**) usa o **baseline de código** acima enquanto as fichas permanecem `em_validacao`.
