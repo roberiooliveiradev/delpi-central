@@ -37,5 +37,18 @@ describe("Table audit P0 (E7.S1)", () => {
     );
     assert.match(opp, /CommercialStatusBadge/);
     assert.match(opp, /OpenProposalFromOpportunityButton/);
+
+    const myDay = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
+    assert.match(myDay, /CommercialSectionCard/);
+    assert.match(myDay, /CommercialEmptyState/);
+    assert.doesNotMatch(myDay, /\bSectionCard\b|\bEmptyState\b/);
+
+    const ovDetail = readFileSync(
+      join(src, "features/analytics/AnalyticsOpportunityDetailPage.tsx"),
+      "utf8",
+    );
+    assert.match(ovDetail, /CommercialSectionCard/);
+    assert.match(ovDetail, /CommercialEmptyState/);
+    assert.doesNotMatch(ovDetail, /\bSectionCard\b|\bEmptyState\b/);
   });
 });

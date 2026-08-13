@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActionButton,
-  EmptyState,
-  SectionCard,
   StatusBadge,
   UserDirectoryPicker,
   type DirectoryUserOption,
@@ -31,16 +28,16 @@ import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider"
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
   cmStatusBadgeClassNames,
+  CommercialActionButton,
   CommercialAttachmentFileList,
+  CommercialEmptyState,
   CommercialFileDropzone,
   CommercialLoadingCard,
   CommercialMultiSelectField,
   CommercialPageHero,
   CommercialScopeChipBar,
+  CommercialSectionCard,
   CommercialSelectField,
   CommercialStatusBadge,
   CommercialTextAreaField,
@@ -123,12 +120,6 @@ const BUCKET_META: Record<
     label: "Concluídas",
     emptyHint: "Nenhuma tarefa concluída neste escopo ainda.",
   },
-};
-
-const cmEmptyCompactClassNames = {
-  ...cmEmptyStateClassNames,
-  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
-  withTitle: true,
 };
 
 function readCreateTaskDeepLink(): {
@@ -822,22 +813,22 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         ]}
       />
 
-      <SectionCard
+      <CommercialSectionCard
         title="Fila"
         subtitle="Atrasadas → hoje → depois → concluídas."
         hint={CM_HELP.myDay.worklist}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
+        
+        
         actions={
           <div className="cm-my-day-queue-actions">
             {canManageFollowups ? (
-              <ActionButton variant="primary" onClick={openCreateForm}>
+              <CommercialActionButton variant="primary" onClick={openCreateForm}>
                 Nova tarefa
-              </ActionButton>
+              </CommercialActionButton>
             ) : null}
-            <ActionButton variant="ghost" onClick={() => void reload()}>
+            <CommercialActionButton variant="ghost" onClick={() => void reload()}>
               Atualizar
-            </ActionButton>
+            </CommercialActionButton>
           </div>
         }
       >
@@ -920,7 +911,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
+          <CommercialEmptyState message={error} role="alert" />
         ) : null}
 
         {!loading && !error ? (
@@ -929,25 +920,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             tone="panel"
           >
             {items.length === 0 ? (
-              <EmptyState
-                classNames={cmEmptyCompactClassNames}
-                defaultTitle={
+              <CommercialEmptyState
+                title={
                   typeFilter === "all"
                     ? `Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`
                     : `Nenhuma ${TYPE_LABELS[typeFilter] ?? typeFilter} em ${BUCKET_META[bucket].label.toLowerCase()}`
                 }
-                defaultMessage={
+                message={
                   typeFilter === "all"
                     ? BUCKET_META[bucket].emptyHint
                     : "Tente outro tipo ou crie uma tarefa com este tipo."
                 }
               >
                 {canManageFollowups && bucket !== "done" ? (
-                  <ActionButton variant="primary" onClick={openCreateForm}>
+                  <CommercialActionButton variant="primary" onClick={openCreateForm}>
                     Nova tarefa
-                  </ActionButton>
+                  </CommercialActionButton>
                 ) : null}
-              </EmptyState>
+              </CommercialEmptyState>
             ) : (
               <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
                 {items.map((task) => {
@@ -1138,11 +1128,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             )}
           </CommercialViewTransition>
         ) : null}
-      </SectionCard>
+      </CommercialSectionCard>
 
       {canManageFollowups && formMode !== "closed" ? (
         <div ref={taskFormRef} className="cm-my-day-create">
-          <SectionCard
+          <CommercialSectionCard
             title={formMode === "edit" ? "Editar tarefa" : "Nova tarefa"}
             subtitle={
               formMode === "edit"
@@ -1154,17 +1144,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   : "Título, prazo, tipo, cliente, observação e anexos — padrão HubSpot/Pipedrive."
             }
             hint={formMode === "edit" ? CM_HELP.myDay.editTask : CM_HELP.myDay.newTask}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
+            
+            
             collapsible
             open
             onOpenChange={(next) => {
               if (!next) closeTaskForm();
             }}
             actions={
-              <ActionButton variant="ghost" onClick={closeTaskForm}>
+              <CommercialActionButton variant="ghost" onClick={closeTaskForm}>
                 Fechar
-              </ActionButton>
+              </CommercialActionButton>
             }
           >
             <div className="cm-my-day-form">
@@ -1362,29 +1352,29 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 </div>
               ) : null}
               <div className="cm-my-day-form__actions">
-                <ActionButton variant="ghost" onClick={closeTaskForm}>
+                <CommercialActionButton variant="ghost" onClick={closeTaskForm}>
                   Cancelar
-                </ActionButton>
+                </CommercialActionButton>
                 {formMode === "edit" ? (
-                  <ActionButton
+                  <CommercialActionButton
                     variant="primary"
                     disabled={savingEdit}
                     onClick={() => void onSaveEdit()}
                   >
                     {savingEdit ? "Salvando…" : "Salvar alterações"}
-                  </ActionButton>
+                  </CommercialActionButton>
                 ) : (
-                  <ActionButton
+                  <CommercialActionButton
                     variant="primary"
                     disabled={creating}
                     onClick={() => void onCreate()}
                   >
                     {creating ? "Criando…" : "Criar tarefa"}
-                  </ActionButton>
+                  </CommercialActionButton>
                 )}
               </div>
             </div>
-          </SectionCard>
+          </CommercialSectionCard>
         </div>
       ) : null}
       <TaskAttachmentPreviewModal

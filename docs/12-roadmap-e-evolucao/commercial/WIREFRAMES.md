@@ -754,7 +754,8 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 | Proposta detalhe | OK | Select contatos + `returnTo` |
 | Equipe lista/diagrama | OK | SegmentToggle + OrgMembershipFlow `group` |
 | Grupos / Perfil | OK | Empty+create card; AvatarStack; seção grupos |
-| Minhas tarefas | OK | Grupos + «Concluída por» (E6) |
+| Minhas tarefas | OK | Grupos + «Concluída por» (E6); wrappers `Commercial*` (E7.S2) |
+| Detalhe OV wrappers | OK | `CommercialSectionCard` / Empty / SegmentToggle (E7.S2) |
 | PagePath returnTo | OK | Helper canônico + detalhes do escopo |
 | Gaps kit | OK | AvatarStack + Org `group` + SegmentToggle factory |
 

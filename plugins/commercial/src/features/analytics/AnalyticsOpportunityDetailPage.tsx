@@ -1,8 +1,5 @@
 import {
-  EmptyState,
   OPERATIONAL_UNIT_COLUMN_LABEL,
-  SectionCard,
-  SegmentToggle,
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
@@ -15,18 +12,18 @@ import {
 } from "../../api/analyticsApi";
 import { fetchOptional, fetchProductStructure } from "../../api/productionExtrasApi";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
   CommercialActivityTimeline,
   CommercialDataRecordCard,
   CommercialDataTable,
   CommercialDetailFieldGrid,
   CommercialActionButton,
+  CommercialEmptyState,
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
   CommercialPagePath,
+  CommercialSectionCard,
+  CommercialSegmentToggle,
   CommercialStatusBadge,
   UI_PREFIX,
 } from "../../app/commercialUi";
@@ -313,7 +310,7 @@ export function AnalyticsOpportunityDetailPage({
 
       {loading ? <CommercialLoadingCard title="Carregando OV…" variant="panel" /> : null}
       {error ? (
-        <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
+        <CommercialEmptyState message={error} role="alert" />
       ) : null}
 
       {!loading && data ? (
@@ -340,11 +337,9 @@ export function AnalyticsOpportunityDetailPage({
           </div>
 
           <div className="cm-ov-detail-grid">
-            <SectionCard
+            <CommercialSectionCard
               title="Proposta"
               hint={CM_HELP.analytics.ovHeader}
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
             >
               <CommercialDetailFieldGrid
                 fields={[
@@ -376,13 +371,11 @@ export function AnalyticsOpportunityDetailPage({
                   { label: "Descrição", value: data.description || "—" },
                 ]}
               />
-            </SectionCard>
+            </CommercialSectionCard>
 
-            <SectionCard
+            <CommercialSectionCard
               title="Cliente e vendedor"
               hint={CM_HELP.analytics.ovCustomer}
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
             >
               <CommercialDetailFieldGrid
                 fields={[
@@ -393,14 +386,12 @@ export function AnalyticsOpportunityDetailPage({
                   { label: "Cód. vendedor", value: data.seller_code || "—" },
                 ]}
               />
-            </SectionCard>
+            </CommercialSectionCard>
           </div>
 
-          <SectionCard
+          <CommercialSectionCard
             title="Produtos"
             hint={CM_HELP.analytics.ovProducts}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
           >
             <div className="cm-responsive-records__desktop">
               <CommercialDataTable
@@ -435,14 +426,12 @@ export function AnalyticsOpportunityDetailPage({
                 />
               ))}
             </div>
-          </SectionCard>
+          </CommercialSectionCard>
 
           {structures.length > 0 ? (
-            <SectionCard
+            <CommercialSectionCard
               title="Estrutura do produto"
               hint={CM_HELP.analytics.ovBom}
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
             >
               {structures.map((entry) => (
                 <div key={entry.code} className="cm-open-orders-detail__op-card">
@@ -453,18 +442,16 @@ export function AnalyticsOpportunityDetailPage({
                   />
                 </div>
               ))}
-            </SectionCard>
+            </CommercialSectionCard>
           ) : null}
 
-          <SectionCard
+          <CommercialSectionCard
             title="Histórico da OV"
             hint={CM_HELP.analytics.ovHistory}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
           >
             <div className="cm-ov-history-toggle">
-              <SegmentToggle
-                prefix={UI_PREFIX}
+              <CommercialSegmentToggle
+               
                 size="sm"
                 ariaLabel="Modo do histórico"
                 idPrefix="ov-history-view"
@@ -515,7 +502,7 @@ export function AnalyticsOpportunityDetailPage({
                 </div>
               </>
             )}
-          </SectionCard>
+          </CommercialSectionCard>
         </>
       ) : null}
     </section>
