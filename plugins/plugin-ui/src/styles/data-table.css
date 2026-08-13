@@ -535,30 +535,69 @@ table.delpi-ui-table td.delpi-ui-table__col--wrap {
   padding: 24px;
 }
 
+/* Hover/cursor só na <tr> de dados direta — nunca na detail-row nem em tabelas aninhadas
+   (seletores sem `>` pintavam o bloco expandido inteiro ao passar o mouse nas linhas filhas). */
 .delpi-ui-table__row--clickable,
-table.delpi-ui-table--clickable tbody tr,
-table.delpi-ui-table--clickable tbody tr.is-clickable {
+table.delpi-ui-table--clickable > tbody > tr:not(.delpi-ui-table__detail-row),
+table.delpi-ui-table--clickable > tbody > tr.is-clickable {
   cursor: pointer;
 }
 
 .delpi-ui-table__row--clickable:focus-visible,
-table.delpi-ui-table--clickable tbody tr.is-clickable:focus-visible {
+table.delpi-ui-table--clickable > tbody > tr.is-clickable:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: -2px;
 }
 
-.delpi-ui-table__row--clickable:hover td,
-table.delpi-ui-table--clickable tbody tr:hover td,
-table.delpi-ui-table--clickable tbody tr.is-clickable:hover,
-table.delpi-ui-table--clickable tbody tr.is-clickable:hover td {
+.delpi-ui-table__row--clickable:hover > td,
+table.delpi-ui-table--clickable > tbody > tr.is-clickable:hover > td,
+table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td {
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-table__row--clickable:hover td,
-:root[data-theme="dark"] table.delpi-ui-table--clickable tbody tr:hover td,
-:root[data-theme="dark"] table.delpi-ui-table--clickable tbody tr.is-clickable:hover td,
-[data-theme="dark"] .delpi-ui-table__row--clickable:hover td,
-[data-theme="dark"] table.delpi-ui-table--clickable tbody tr:hover td {
+/* Linhas de dados em tabela não-clickable (ex.: linhas do pedido aninhadas). */
+table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-table__row--clickable:hover > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.is-clickable:hover
+  > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td,
+[data-theme="dark"] .delpi-ui-table__row--clickable:hover > td,
+[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.is-clickable:hover
+  > td,
+[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td,
+[data-theme="dark"]
+  table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td {
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
@@ -588,8 +627,8 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
   );
 }
 
-/* Linha de detalhe expandida (renderExpandedRow) — não herda hover/click da row pai. */
-table.delpi-ui-table tbody tr.delpi-ui-table__row--expanded > td {
+/* Linha pai expandida — destaque estável; detalhe aninhado não recebe hover de bloco. */
+table.delpi-ui-table > tbody > tr.delpi-ui-table__row--expanded > td {
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 6%,
@@ -597,13 +636,12 @@ table.delpi-ui-table tbody tr.delpi-ui-table__row--expanded > td {
   );
 }
 
-table.delpi-ui-table tbody tr.delpi-ui-table__detail-row {
+table.delpi-ui-table > tbody > tr.delpi-ui-table__detail-row {
   cursor: default;
 }
 
-table.delpi-ui-table tbody tr.delpi-ui-table__detail-row:hover > td,
-table.delpi-ui-table--clickable tbody tr.delpi-ui-table__detail-row:hover > td {
-  background: var(--delpi-ui-surface-muted, color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, #000));
+table.delpi-ui-table > tbody > tr.delpi-ui-table__detail-row > td {
+  background: transparent;
 }
 
 table.delpi-ui-table td.delpi-ui-table__detail-cell {

@@ -786,7 +786,9 @@ e `aria-selected`.
 **Expand de detalhe (controlado):** uma linha expandida por vez via `expandedRowKey` +
 `onExpandedRowKeyChange` + `renderExpandedRow`. Opcional `isRowExpandable`. A row de
 detalhe (`delpi-ui-table__detail-row` / `__detail-cell`) não dispara `onRowClick`
-(stopPropagation no conteúdo). O toggle (ex.: chevron) fica no consumidor com
+(stopPropagation no conteúdo) e **não** recebe hover de bloco — o CSS usa
+`tbody > tr` / `> td` para destacar só a linha de dados sob o cursor (inclusive
+tabelas aninhadas). O toggle (ex.: chevron) fica no consumidor com
 `column.interactive` / `rowClick: "stop"`. Wrappers de dashboard (`DashboardDataTableProps`,
 `CommercialDataTable`) herdam as props sem redeclaração.
 
