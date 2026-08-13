@@ -90,13 +90,38 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("tm-ata-paper");
     expect(html).toContain("tm-facts-style");
     expect(html).toContain('data-theme="light"');
-    // Folha não pode herdar max-width mobile na janela estreita
-    expect(html).toContain("padding: 14mm 21mm 16mm !important");
+    // A4 + margens ABNT NBR 14724 (não padding da folha contínua)
+    expect(html).toContain("size: A4 portrait");
+    expect(html).toContain("margin: 30mm 20mm 20mm 30mm");
+    expect(html).toContain("text-align: justify !important");
+    expect(html).toContain("text-indent: 1.25cm");
+    expect(html).toContain("orphans: 3");
+    expect(html).toContain("break-after: avoid-page");
+    expect(html).toContain("position: static !important");
     // Neutraliza body * { visibility:hidden } dos MFEs no @media print
     expect(html).toContain(
       "body.delpi-ui-document-print-window * {\n    visibility: visible !important;",
     );
     document.getElementById("tm-facts-style")?.remove();
+  });
+
+  it("define página A4 ABNT e tipografia anti-corte no HTML de impressão", () => {
+    document.body.innerHTML = `
+      <section class="delpi-ui-document-reader">
+        <article class="delpi-ui-document-page">
+          <div class="delpi-ui-document-page__body delpi-ui-document-rich-content">
+            <h2>2. Objetivo</h2>
+            <p>Parágrafo longo da ata.</p>
+          </div>
+        </article>
+      </section>
+    `;
+    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
+    expect(html).toMatch(/@page\s*\{[^}]*size:\s*A4 portrait/);
+    expect(html).toMatch(/@page\s*\{[^}]*margin:\s*30mm 20mm 20mm 30mm/);
+    expect(html).toContain("padding: 0 !important");
+    expect(html).toContain("widows: 3");
+    expect(html).toContain("page-break-inside: avoid");
   });
 
   it("mantém conteúdo visível sob regra host body * { visibility:hidden }", () => {

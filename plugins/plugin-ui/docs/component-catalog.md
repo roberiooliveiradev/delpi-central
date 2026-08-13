@@ -272,9 +272,11 @@ Composição canônica para leitura e impressão de documentos formais em papel 
 `DocumentReader` (viewport/toolbar), `DocumentPage` (header/watermark/footer),
 `DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
 
-O kit controla papel, responsividade e `@media print`; cabeçalho institucional,
-textos e regras do documento continuam no plugin consumidor. Use
-`printDocumentReader()` para imprimir apenas a superfície documental.
+O kit controla papel A4, margens ABNT (NBR 14724) via `@page`, tipografia
+justificada, orphans/widows e quebras (`break-inside`/`break-after`) para
+impressão/PDF; cabeçalho institucional, textos e regras do documento continuam
+no plugin consumidor. Use `printDocumentReader()` para imprimir apenas a
+superfície documental (janela dedicada em `printDocumentReaderHtml`).
 
 ---
 

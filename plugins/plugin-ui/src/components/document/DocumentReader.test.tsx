@@ -99,5 +99,9 @@ describe("DocumentReader", () => {
       /\.delpi-ui-document-rich-content th,\s*\n\.delpi-ui-document-rich-content td \{[\s\S]*?display:\s*table-cell/,
     );
     expect(css).toMatch(/\.delpi-ui-document-page \{[\s\S]*?overflow:\s*visible/);
+    expect(css).toMatch(/@page\s*\{[\s\S]*?size:\s*A4 portrait/);
+    expect(css).toMatch(/@page\s*\{[\s\S]*?margin:\s*30mm 20mm 20mm 30mm/);
+    expect(css).toMatch(/text-align:\s*justify/);
+    expect(css).toMatch(/break-after:\s*avoid-page/);
   });
 });

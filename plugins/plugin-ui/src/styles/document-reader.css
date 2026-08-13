@@ -271,9 +271,10 @@
   }
 }
 
+/* Margens ABNT na janela dedicada vêm de printDocumentReaderHtml (@page). */
 @page {
-  size: A4;
-  margin: 0;
+  size: A4 portrait;
+  margin: 30mm 20mm 20mm 30mm;
 }
 
 @media print {
@@ -298,10 +299,10 @@
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-reader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: static;
+    top: auto;
+    left: auto;
+    right: auto;
     width: 100%;
     height: auto !important;
     min-height: 0;
@@ -323,17 +324,45 @@
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-page {
-    width: 210mm;
-    max-width: 100%;
+    width: 100%;
+    max-width: none;
     height: auto !important;
     min-height: 0;
-    margin: 0 auto;
+    margin: 0;
+    padding: 0;
     overflow: visible !important;
     box-shadow: none;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-page__body {
     overflow: visible !important;
+    padding: 0;
+  }
+
+  body.delpi-ui-document-printing .delpi-ui-document-rich-content p,
+  body.delpi-ui-document-printing .delpi-ui-document-page p {
+    text-align: justify;
+    orphans: 3;
+    widows: 3;
+  }
+
+  body.delpi-ui-document-printing h1,
+  body.delpi-ui-document-printing h2,
+  body.delpi-ui-document-printing h3,
+  body.delpi-ui-document-printing h4 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+    break-inside: avoid;
+  }
+
+  body.delpi-ui-document-printing .delpi-ui-document-signature,
+  body.delpi-ui-document-printing tr,
+  body.delpi-ui-document-printing img {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 
