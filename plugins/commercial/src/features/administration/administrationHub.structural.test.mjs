@@ -49,6 +49,16 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /CommercialDataTableSection/);
   });
 
+  it("CommercialRealtimeProvider faz replay de presença no subscribe tardio", () => {
+    const provider = readFileSync(
+      join(root, "src/app/CommercialRealtimeProvider.tsx"),
+      "utf8",
+    );
+    assert.match(provider, /subscribePresenceWithReplay/);
+    assert.match(provider, /fanPresenceUpdated/);
+    assert.match(provider, /lastPresenceRef/);
+  });
+
   it("Grupos lista /groups, cria/exclui e gerencia membros com picker+avatar", () => {
     const source = readFileSync(join(feature, "AdministrationGroupsPage.tsx"), "utf8");
     assert.match(source, /listCommercialGroups/);

@@ -8,6 +8,10 @@ import {
   type ReactNode,
 } from "react";
 
+import {
+  fanPresenceUpdated,
+  subscribePresenceWithReplay,
+} from "./commercialPresenceSubscribe";
 import { getCommercialClientId } from "./commercialClientId";
 import { useCommercialFloatingNotice } from "./CommercialFloatingNoticeProvider";
 import { usePortfolioScope } from "./PortfolioScopeContext";
@@ -60,6 +64,7 @@ export function CommercialRealtimeProvider({
   const worklistHandlersRef = useRef(new Set<WorklistChangedHandler>());
   const portfolioHandlersRef = useRef(new Set<PortfolioChangedHandler>());
   const presenceHandlersRef = useRef(new Set<PresenceUpdatedHandler>());
+  const lastPresenceRef = useRef<CommercialPresenceUpdatedEvent | null>(null);
   const getAccessTokenRef = useRef(getAccessToken);
 
   const [connected, setConnected] = useState(false);
@@ -84,10 +89,7 @@ export function CommercialRealtimeProvider({
   }, []);
 
   const subscribePresenceUpdated = useCallback((handler: PresenceUpdatedHandler) => {
-    presenceHandlersRef.current.add(handler);
-    return () => {
-      presenceHandlersRef.current.delete(handler);
-    };
+    return subscribePresenceWithReplay(lastPresenceRef, presenceHandlersRef.current, handler);
   }, []);
 
   useEffect(() => {
@@ -175,9 +177,7 @@ export function CommercialRealtimeProvider({
           return;
         }
         if (event.type === "presence.updated") {
-          for (const handler of presenceHandlersRef.current) {
-            handler(event);
-          }
+          fanPresenceUpdated(lastPresenceRef, presenceHandlersRef.current, event);
         }
       };
 
