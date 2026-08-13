@@ -45,8 +45,9 @@ export const CM_HELP = {
       "Fila operacional do dia: atrasadas → hoje → depois → concluídas. Filtre por tipo e consulte as observações em cada atividade.",
     scopeMine: "Só tarefas atribuídas a você.",
     scopeTeam:
-      "Fila de todos os vendedores com carteira ativa (gestão). Opcional: filtrar por responsável.",
-    teamAssigneeFilter: "Restringe a fila da equipe a um vendedor com carteira ativa.",
+      "Fila de todas as tarefas (gestão). Opcional: filtrar por responsável (usuário do portal).",
+    teamAssigneeFilter:
+      "Restringe a fila da equipe a um usuário do portal com acesso ao Comercial.",
     bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
     bucketLater: "Tarefas com prazo futuro.",
@@ -54,18 +55,18 @@ export const CM_HELP = {
       "Histórico das tarefas já concluídas (mais recentes primeiro). Somente leitura — sem editar, adiar ou concluir de novo.",
     typeFilter: "Filtra a fila pelo tipo de atividade comercial.",
     newTask:
-      "Cria follow-up com prazo (fim do dia). Gestores podem atribuir a outro vendedor da equipe.",
+      "Cria follow-up com prazo (fim do dia). Gestores podem atribuir a qualquer usuário do portal com acesso ao Comercial.",
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskCompletedAt: "Quando a tarefa foi marcada como concluída.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
     taskType: "Follow-up, ligação, e-mail, visita ou outra ação comercial.",
     taskAssignee:
-      "Responsável com carteira ativa. Vazio = você. Só gestores atribuem a outro vendedor.",
+      "Usuário do portal com acesso ao Comercial. Vazio = você. Só gestores atribuem a outro usuário.",
     taskAssignedBy:
       "Quem criou e atribuiu a tarefa. Só o criador edita, adia ou exclui; o responsável apenas conclui.",
     taskCustomer:
-      "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
+      "Qualquer cliente ativo no cadastro TOTVS (busca por código ou nome) — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
       "Observação interna. Visível no card da tarefa e no histórico da conta — não é e-mail ao cliente.",
     taskAttachment:
@@ -75,7 +76,7 @@ export const CM_HELP = {
     deleteTask: "Só o criador remove a tarefa aberta da fila. Confirme antes de excluir.",
     deferTask: "Só o criador empurra o prazo em +1 dia. O responsável apenas conclui.",
     reassignTask:
-      "Troca o responsável no formulário Editar (campo Responsável). Destino deve ter carteira ativa.",
+      "Troca o responsável no formulário Editar (campo Responsável). Destino = qualquer usuário do portal com acesso ao Comercial.",
   },
   openOrders: {
     page:

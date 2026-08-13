@@ -4,6 +4,8 @@ import {
   EmptyState,
   SectionCard,
   StatusBadge,
+  UserDirectoryPicker,
+  type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
 
 import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
@@ -20,6 +22,7 @@ import {
   type WorklistScope,
 } from "../../api/worklistApi";
 import { uploadTaskAttachment } from "../../api/attachmentsApi";
+import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
@@ -42,6 +45,10 @@ import {
   CommercialViewTransition,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import {
+  CustomerSearchPicker,
+  type CustomerSearchSelection,
+} from "../customers/components/CustomerSearchPicker";
 import {
   deferDueAtOneDay,
   dueDateInputToIsoEod,
@@ -177,13 +184,16 @@ function toneForBucket(bucket: BucketKey): "danger" | "warning" | "neutral" | "s
   return "neutral";
 }
 
-function parseCustomerKey(key: string): { code: string; store: string } | null {
-  const sep = key.indexOf("|");
-  if (sep <= 0) return null;
-  const code = key.slice(0, sep).trim();
-  const store = key.slice(sep + 1).trim();
-  if (!code || !store) return null;
-  return { code, store };
+function directoryOptionFromId(
+  userId: string,
+  labelFor: (id: string, fallback?: string | null) => string,
+): DirectoryUserOption {
+  const id = userId.trim();
+  return {
+    id,
+    name: labelFor(id, id),
+    email: "",
+  };
 }
 
 function heroCopy(counts: { overdue: number; today: number; later: number }): {
@@ -235,14 +245,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [doneCount, setDoneCount] = useState(0);
   const [workScope, setWorkScope] = useState<WorklistScope>("mine");
   const [teamAssigneeFilter, setTeamAssigneeFilter] = useState("");
+  const [teamAssigneePicker, setTeamAssigneePicker] = useState<DirectoryUserOption[]>([]);
   const [bucket, setBucket] = useState<BucketKey>("overdue");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState(localDateInputValue);
   const [priority, setPriority] = useState("normal");
   const [taskType, setTaskType] = useState("follow_up");
-  const [customerKey, setCustomerKey] = useState("");
-  const [assigneeUserId, setAssigneeUserId] = useState("");
+  const [customerSelection, setCustomerSelection] = useState<CustomerSearchSelection | null>(
+    null,
+  );
+  const [assigneePicker, setAssigneePicker] = useState<DirectoryUserOption[]>([]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -255,6 +268,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
+  const assigneeUserId = assigneePicker[0]?.id?.trim() ?? "";
+
   const activeSellers = useMemo(
     () => sellers.filter((seller) => seller.active && seller.user_id.trim()),
     [sellers],
@@ -263,7 +278,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const directoryUserIds = useMemo(() => {
     const ids = activeSellers.map((seller) => seller.user_id);
     if (myPortfolio?.user_id) ids.push(myPortfolio.user_id);
+    if (assigneeUserId) ids.push(assigneeUserId);
+    if (teamAssigneeFilter) ids.push(teamAssigneeFilter);
     if (data) {
+      for (const uid of data.team_user_ids ?? []) {
+        if (uid) ids.push(uid);
+      }
       for (const task of [...data.overdue, ...data.today, ...data.later]) {
         if (task.assignee_user_id) ids.push(task.assignee_user_id);
         if (task.created_by_user_id) ids.push(task.created_by_user_id);
@@ -274,7 +294,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       if (task.created_by_user_id) ids.push(task.created_by_user_id);
     }
     return ids;
-  }, [activeSellers, data, doneItems, myPortfolio?.user_id]);
+  }, [
+    activeSellers,
+    assigneeUserId,
+    data,
+    doneItems,
+    myPortfolio?.user_id,
+    teamAssigneeFilter,
+  ]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
 
   const sellerNameByUserId = useMemo(() => {
@@ -288,27 +315,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     return map;
   }, [activeSellers, directoryLabelFor]);
 
-  const sellerOptions = useMemo(
-    () =>
-      activeSellers.map((seller) => ({
-        value: seller.user_id,
-        label: directoryLabelFor(seller.user_id, seller.display_name),
-      })),
-    [activeSellers, directoryLabelFor],
-  );
-
-  const customerOptions = useMemo(() => {
-    const portfolio =
-      canTeamWorklist && assigneeUserId
-        ? activeSellers.find((seller) => seller.user_id === assigneeUserId) ?? myPortfolio
-        : myPortfolio;
-    const rows = portfolio?.customers ?? [];
-    return rows.map((c) => ({
-      value: `${c.customer_code}|${c.customer_store}`,
-      label: `${c.customer_name?.trim() || "Cliente"} (${c.customer_code}/${c.customer_store})`,
-    }));
-  }, [activeSellers, assigneeUserId, canTeamWorklist, myPortfolio]);
-
   const resetTaskFormFields = useCallback(() => {
     setTitle("");
     setDescription("");
@@ -317,8 +323,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     setDueDate(localDateInputValue());
     setPriority("normal");
     setTaskType("follow_up");
-    setCustomerKey("");
-    setAssigneeUserId("");
+    setCustomerSelection(null);
+    setAssigneePicker([]);
     setEditingTaskId(null);
   }, []);
 
@@ -350,16 +356,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setDueDate(isoToLocalDateInput(task.due_at));
       setPriority(task.priority || "normal");
       setTaskType(task.task_type || "follow_up");
-      setAssigneeUserId(task.assignee_user_id || "");
-      setCustomerKey(
+      setAssigneePicker(
+        task.assignee_user_id
+          ? [directoryOptionFromId(task.assignee_user_id, directoryLabelFor)]
+          : [],
+      );
+      setCustomerSelection(
         task.customer_code && task.customer_store
-          ? `${task.customer_code}|${task.customer_store}`
-          : "",
+          ? {
+              code: task.customer_code,
+              store: task.customer_store,
+              name: "",
+            }
+          : null,
       );
       setFormMode("edit");
       scrollToTaskForm();
     },
-    [currentUserId, myPortfolio?.user_id, notifyError, scrollToTaskForm],
+    [currentUserId, directoryLabelFor, myPortfolio?.user_id, notifyError, scrollToTaskForm],
   );
 
   const closeTaskForm = useCallback(() => {
@@ -376,12 +390,20 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setBucket(link.bucket);
     }
     if (link.customerCode && link.customerStore) {
-      setCustomerKey(`${link.customerCode}|${link.customerStore}`);
+      setCustomerSelection({
+        code: link.customerCode,
+        store: link.customerStore,
+        name: "",
+      });
     }
     if (link.createTask || link.customerCode) {
       resetTaskFormFields();
       if (link.customerCode && link.customerStore) {
-        setCustomerKey(`${link.customerCode}|${link.customerStore}`);
+        setCustomerSelection({
+          code: link.customerCode,
+          store: link.customerStore,
+          name: "",
+        });
       }
       setFormMode("create");
       scrollToTaskForm();
@@ -557,7 +579,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     if (!notifyMissingRequired(missing)) return;
     setCreating(true);
     try {
-      const customer = parseCustomerKey(customerKey);
+      const customer = customerSelection;
       const note = description.trim();
       const created = await createTask({
         title: title.trim(),
@@ -604,7 +626,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     if (!notifyMissingRequired(missing)) return;
     setSavingEdit(true);
     try {
-      const customer = parseCustomerKey(customerKey);
+      const customer = customerSelection;
       const note = description.trim();
       await updateTask(editingTaskId, {
         title: title.trim(),
@@ -634,6 +656,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       onSelect: () => {
         setWorkScope("mine");
         setTeamAssigneeFilter("");
+        setTeamAssigneePicker([]);
       },
     },
     {
@@ -747,17 +770,22 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               chips={scopeChips}
             />
           ) : null}
-          {canTeamWorklist && workScope === "team" && sellerOptions.length > 0 ? (
+          {canTeamWorklist && workScope === "team" ? (
             <div className="cm-my-day-toolbar__filter">
-              <CommercialSelectField
-                label="Responsável"
-                hint={CM_HELP.myDay.teamAssigneeFilter}
-                options={sellerOptions}
-                value={teamAssigneeFilter}
-                onChange={setTeamAssigneeFilter}
-                allowEmpty
-                emptyLabel="Toda a equipe"
-                searchable={sellerOptions.length > 8}
+              <UserDirectoryPicker
+                value={teamAssigneePicker}
+                onChange={(users) => {
+                  setTeamAssigneePicker(users);
+                  setTeamAssigneeFilter(users[0]?.id?.trim() ?? "");
+                }}
+                searchUsers={searchDirectoryUsers}
+                maxSelected={1}
+                showEmail
+                labels={{
+                  title: "Responsável",
+                  hint: CM_HELP.myDay.teamAssigneeFilter,
+                  placeholder: "Buscar usuário… (vazio = toda a equipe)",
+                }}
               />
             </div>
           ) : null}
@@ -943,30 +971,31 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 onChange={setTaskType}
                 allowEmpty={false}
               />
-              {canTeamWorklist && sellerOptions.length > 0 ? (
-                <CommercialSelectField
-                  label="Responsável"
-                  hint={CM_HELP.myDay.taskAssignee}
-                  options={sellerOptions}
-                  value={assigneeUserId}
-                  onChange={(value) => {
-                    setAssigneeUserId(value);
-                    setCustomerKey("");
+              {canTeamWorklist ? (
+                <UserDirectoryPicker
+                  value={assigneePicker}
+                  onChange={setAssigneePicker}
+                  searchUsers={searchDirectoryUsers}
+                  maxSelected={1}
+                  showEmail
+                  labels={{
+                    title: "Responsável",
+                    hint: CM_HELP.myDay.taskAssignee,
+                    placeholder:
+                      formMode === "edit"
+                        ? "Buscar usuário…"
+                        : "Buscar usuário… (vazio = eu)",
                   }}
-                  allowEmpty={formMode !== "edit"}
-                  emptyLabel="Eu (padrão)"
-                  searchable={sellerOptions.length > 8}
                 />
               ) : null}
-              <CommercialSelectField
-                label="Cliente"
-                hint={CM_HELP.myDay.taskCustomer}
-                options={customerOptions}
-                value={customerKey}
-                onChange={setCustomerKey}
-                allowEmpty
-                emptyLabel="Sem vínculo (opcional)"
-                searchable={customerOptions.length > 8}
+              <CustomerSearchPicker
+                value={customerSelection}
+                onChange={setCustomerSelection}
+                labels={{
+                  title: "Cliente",
+                  hint: CM_HELP.myDay.taskCustomer,
+                  placeholder: "Código ou nome (opcional)",
+                }}
               />
               {formMode === "create" ? (
                 <div className="cm-my-day-form__title cm-my-day-attachments">
