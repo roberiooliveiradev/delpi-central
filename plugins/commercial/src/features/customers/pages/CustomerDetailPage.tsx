@@ -14,6 +14,7 @@ import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
 import { CustomerDetailHeader } from "../components/CustomerDetailHeader";
 import { AccountContactsPanel } from "../components/AccountContactsPanel";
+import { AccountAuditSection } from "../components/AccountAuditSection";
 import { CustomerActivityTimelinePanel } from "../components/CustomerActivityTimelinePanel";
 import { CustomerOpportunitiesSection } from "../components/CustomerOpportunitiesSection";
 import { CustomerOrdersTable } from "../components/CustomerOrdersTable";
@@ -302,11 +303,18 @@ export function CustomerDetailPage({
               ) : null}
 
               {section === "contatos" ? (
-                <AccountContactsPanel
-                  customerCode={codigo}
-                  customerStore={loja}
-                  refreshKey={contactsRefreshKey}
-                />
+                <>
+                  <AccountContactsPanel
+                    customerCode={codigo}
+                    customerStore={loja}
+                    refreshKey={contactsRefreshKey}
+                  />
+                  <AccountAuditSection
+                    codigo={codigo}
+                    loja={loja}
+                    refreshKey={contactsRefreshKey}
+                  />
+                </>
               ) : null}
 
               {section === "atividades" ? (
