@@ -15,11 +15,22 @@ import {
   printDocumentReaderInWindow,
 } from "./printDocumentReaderHtml";
 
-function mountAtaPaperWithChrome(): HTMLElement {
+function mountAtaPaperWithChrome(options?: { withWatermark?: boolean }): HTMLElement {
+  const watermark = options?.withWatermark
+    ? `<div class="delpi-ui-document-page__watermark" data-delpi-document-watermark="">
+            <div class="delpi-ui-document-page__watermark-tile">
+              <img src="/watermark.svg" alt="" />
+            </div>
+            <div class="delpi-ui-document-page__watermark-tile">
+              <img src="/watermark.svg" alt="" />
+            </div>
+          </div>`
+    : "";
   document.body.innerHTML = `
     <div class="dashboard-transformometro">
       <section class="delpi-ui-document-reader">
         <article class="delpi-ui-document-page tm-ata-paper">
+          ${watermark}
           <div class="delpi-ui-document-page__header">
             <div class="tm-ata-document-brand">
               <img class="tm-ata-document__logo" src="/logo.svg" alt="Transforma+" />
@@ -175,12 +186,31 @@ describe("printDocumentReaderHtml", () => {
     const chrome = prepareDocumentPagePrintClone(page);
     expect(chrome.hasRunningHeader).toBe(true);
     expect(chrome.hasRunningFooter).toBe(true);
+    expect(chrome.hasRunningWatermark).toBe(false);
     expect(chrome.runningHeaderHtml).toContain("tm-ata-document__logo");
     expect(chrome.runningFooterHtml).toContain("Ata 2026/003");
     expect(chrome.runningFooterHtml).toContain("tm-ata-brand-bar");
     expect(chrome.pageHtml).toContain("header--print-source");
     expect(chrome.pageHtml).toContain("footer--print-source");
     expect(chrome.pageHtml).toContain("Corpo da ata");
+  });
+
+  it("extrai marca d'água uma vez (tile) e injeta camada fixa no HTML de impressão", () => {
+    const page = mountAtaPaperWithChrome({ withWatermark: true });
+    const chrome = prepareDocumentPagePrintClone(page);
+    expect(chrome.hasRunningWatermark).toBe(true);
+    expect(chrome.runningWatermarkHtml).toContain("watermark.svg");
+    expect(chrome.runningWatermarkHtml.match(/watermark\.svg/g)?.length).toBe(1);
+    expect(chrome.pageHtml).toContain("watermark--print-source");
+
+    const html = buildDocumentReaderPrintHtml(page, "Ata");
+    const doc = parseDocumentPrintHtml(html);
+    const layer = doc.querySelector(".delpi-ui-document-print-running-watermark");
+    expect(layer).toBeTruthy();
+    expect(layer!.querySelector("img")?.getAttribute("src")).toMatch(/watermark\.svg/);
+    expect(html).toContain("has-print-running-watermark");
+    expect(html).toContain("position: fixed");
+    expect(doc.querySelector(".delpi-ui-document-page__watermark--print-source")).toBeTruthy();
   });
 
   it("coloca cabeçalho no thead e rodapé no tfoot (DOM parseável)", () => {

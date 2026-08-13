@@ -13,6 +13,10 @@ export {
   type PrintDocumentReaderOptions,
 } from "./DocumentReader";
 export {
+  DocumentPageWatermark,
+  type DocumentPageWatermarkProps,
+} from "./DocumentPageWatermark";
+export {
   DocumentReaderToolbar,
   type DocumentReaderToolbarProps,
 } from "./DocumentReaderToolbar";
@@ -20,8 +24,10 @@ export {
   buildAbntPrintFooterHtml,
   buildAbntPrintHeaderHtml,
   buildDocumentReaderPrintHtml,
+  buildPrintWatermarkHtml,
   collectPrintScopeClasses,
   downloadDocumentReaderPdf,
+  extractWatermarkInnerHtml,
   findActiveDocumentPage,
   parseDocumentPrintHtml,
   prepareDocumentPagePrintClone,

@@ -265,10 +265,37 @@ body.delpi-ui-document-print-window .ds-print-root {
   box-shadow: none !important;
   animation: none !important;
 }
-/* Slots originais do papel: conteúdo já foi para thead/tfoot. */
+/* Slots originais do papel: conteúdo já foi para thead/tfoot/watermark fixa. */
 .delpi-ui-document-page__header--print-source,
-.delpi-ui-document-page__footer--print-source {
+.delpi-ui-document-page__footer--print-source,
+.delpi-ui-document-page__watermark--print-source {
   display: none !important;
+}
+/* Marca d'água em todas as páginas (Chromium: position fixed no @media print). */
+.delpi-ui-document-print-running-watermark {
+  position: fixed;
+  left: 20%;
+  right: 20%;
+  top: 28%;
+  bottom: 28%;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.09;
+  pointer-events: none;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.delpi-ui-document-print-running-watermark img,
+.delpi-ui-document-print-running-watermark svg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.delpi-ui-document-print-layout {
+  position: relative;
+  z-index: 1;
 }
 /* Tipografia ABNT */
 .delpi-ui-document-page p,
@@ -385,6 +412,17 @@ figure {
   .delpi-ui-document-print-layout > tbody {
     display: table-row-group !important;
   }
+  .delpi-ui-document-print-running-watermark {
+    position: fixed !important;
+    left: 20% !important;
+    right: 20% !important;
+    top: 28% !important;
+    bottom: 28% !important;
+    z-index: 0 !important;
+    opacity: 0.09 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 `;
 
@@ -475,13 +513,15 @@ function absolutizeResourceUrls(root: ParentNode): void {
 export type DocumentPrintChrome = {
   runningHeaderHtml: string;
   runningFooterHtml: string;
+  runningWatermarkHtml: string;
   pageHtml: string;
   hasRunningHeader: boolean;
   hasRunningFooter: boolean;
+  hasRunningWatermark: boolean;
 };
 
 /**
- * Extrai cabeçalho/rodapé do papel para thead/tfoot da tabela de impressão
+ * Extrai cabeçalho/rodapé/marca d'água do papel para chrome de impressão
  * e marca os slots originais para ocultar (evita duplicar no corpo).
  */
 export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintChrome {
@@ -490,9 +530,11 @@ export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintC
 
   const headerEl = clone.querySelector<HTMLElement>(".delpi-ui-document-page__header");
   const footerEl = clone.querySelector<HTMLElement>(".delpi-ui-document-page__footer");
+  const watermarkEl = clone.querySelector<HTMLElement>(".delpi-ui-document-page__watermark");
 
   const runningHeaderHtml = headerEl?.innerHTML.trim() || "";
   const runningFooterHtml = footerEl?.innerHTML.trim() || "";
+  const runningWatermarkHtml = extractWatermarkInnerHtml(watermarkEl);
 
   if (headerEl && runningHeaderHtml) {
     headerEl.classList.add("delpi-ui-document-page__header--print-source");
@@ -500,14 +542,34 @@ export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintC
   if (footerEl && runningFooterHtml) {
     footerEl.classList.add("delpi-ui-document-page__footer--print-source");
   }
+  if (watermarkEl && runningWatermarkHtml) {
+    watermarkEl.classList.add("delpi-ui-document-page__watermark--print-source");
+  }
 
   return {
     runningHeaderHtml,
     runningFooterHtml,
+    runningWatermarkHtml,
     pageHtml: clone.outerHTML,
     hasRunningHeader: Boolean(runningHeaderHtml),
     hasRunningFooter: Boolean(runningFooterHtml),
+    hasRunningWatermark: Boolean(runningWatermarkHtml),
   };
+}
+
+/**
+ * Conteúdo de um único tile (prévia pode repetir N tiles A4).
+ * Preferência: primeiro `.delpi-ui-document-page__watermark-tile`.
+ */
+export function extractWatermarkInnerHtml(
+  watermarkEl: HTMLElement | null | undefined,
+): string {
+  if (!watermarkEl) return "";
+  const tile = watermarkEl.querySelector<HTMLElement>(
+    ".delpi-ui-document-page__watermark-tile",
+  );
+  const source = tile ?? watermarkEl;
+  return source.innerHTML.trim();
 }
 
 /** Parseia o HTML de impressão para asserts estruturais nos testes. */
@@ -531,9 +593,16 @@ export function buildAbntPrintFooterHtml(footerInnerHtml: string): string {
 </div>`;
 }
 
+/** Marca d'água fixa — o motor de impressão repete em cada página A4. */
+export function buildPrintWatermarkHtml(watermarkInnerHtml: string): string {
+  return `<div class="delpi-ui-document-print-running-watermark" aria-hidden="true">
+  ${watermarkInnerHtml}
+</div>`;
+}
+
 /**
  * Serializa o papel ativo do DocumentReader em HTML standalone
- * com cabeçalho/rodapé ABNT em thead/tfoot (repetidos em cada página).
+ * com cabeçalho/rodapé ABNT em thead/tfoot e marca d'água em todas as páginas.
  */
 export function buildDocumentReaderPrintHtml(
   page: HTMLElement,
@@ -548,6 +617,7 @@ export function buildDocumentReaderPrintHtml(
     "delpi-ui-document-print-window",
     chrome.hasRunningHeader ? "has-print-running-header" : "",
     chrome.hasRunningFooter ? "has-print-running-footer" : "",
+    chrome.hasRunningWatermark ? "has-print-running-watermark" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -572,6 +642,10 @@ export function buildDocumentReaderPrintHtml(
 </tfoot>`
     : "";
 
+  const watermarkLayer = chrome.hasRunningWatermark
+    ? buildPrintWatermarkHtml(chrome.runningWatermarkHtml)
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -582,6 +656,7 @@ ${collectStylesheetsHtml()}
 <style id="delpi-ui-document-print-base">${PRINT_WINDOW_BASE_CSS}</style>
 </head>
 <body class="${escapeHtml(bodyClasses)}" data-theme="light">
+${watermarkLayer}
 <div class="${escapeHtml(scopeClassAttr)}">
 <table class="delpi-ui-document-print-layout">
 ${thead}

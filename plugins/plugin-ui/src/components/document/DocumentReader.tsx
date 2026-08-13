@@ -4,6 +4,7 @@ import {
   printDocumentReaderInWindow,
   type PrintDocumentReaderOptions,
 } from "./printDocumentReaderHtml";
+import { DocumentPageWatermark } from "./DocumentPageWatermark";
 
 export type { PrintDocumentReaderOptions };
 
@@ -72,11 +73,7 @@ export function DocumentPage({
 }: DocumentPageProps) {
   return (
     <article className={["delpi-ui-document-page", className].filter(Boolean).join(" ")}>
-      {watermark ? (
-        <div className="delpi-ui-document-page__watermark" aria-hidden="true">
-          {watermark}
-        </div>
-      ) : null}
+      {watermark ? <DocumentPageWatermark>{watermark}</DocumentPageWatermark> : null}
       {header ? <div className="delpi-ui-document-page__header">{header}</div> : null}
       <div className="delpi-ui-document-page__body">{children}</div>
       {footer ? <div className="delpi-ui-document-page__footer">{footer}</div> : null}
