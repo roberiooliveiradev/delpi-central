@@ -761,6 +761,18 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 
 **Sweep E7.S3:** pedido Conta, linha/OP, OV, proposta → `resolvePagePathBack`; listas → `currentLocationAsReturnTo`; Conta pedidos sem expand inline. Teste: `returnToSweep.structural.test.mjs`.
 
+### Verify E8.S1 (ago/2026)
+
+Smoke estrutural do refino (via `npx tsx --test`):
+
+- `commercialNavigationReturn.test.mjs`
+- `returnToSweep.structural.test.mjs`
+- `tableAudit.structural.test.mjs`
+- `proposalReturnNav.structural.test.mjs`
+- `opportunityAdyShortcut.structural.test.mjs` (inclui trava `../../../app/commercialUi`)
+
+Backend worklist (E6): `pytest tests/test_worklist_routes_rbac.py` + use case — ver E8.S2 se fixtures RBAC.
+
 **P0 residual (higiene wrappers):** páginas fora do núcleo do refino ainda usam `SectionCard`/`EmptyState` diretos do kit (ex.: Analytics OTD/Team) — fora do escopo de gaps P0 desta auditoria; migrar em onda própria.
 
 ### E7 — backlog futuro (não implementar neste ciclo)
