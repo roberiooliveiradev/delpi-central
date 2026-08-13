@@ -126,7 +126,13 @@ def test_user_profile_self_edit_and_photo(tmp_path: Path) -> None:
             actor_user_id="u2",
             user_id="u1",
             job_title="Hack",
-            actor_is_portfolio_manager=False,
+        )
+
+    with pytest.raises(PermissionError):
+        uc.update_job_title(
+            actor_user_id="manager",
+            user_id="u1",
+            job_title="Manager override",
         )
 
     photo = uc.upload_photo(
@@ -140,5 +146,8 @@ def test_user_profile_self_edit_and_photo(tmp_path: Path) -> None:
     file_info = uc.get_photo_file(user_id="u1")
     assert file_info.path.is_file()
 
-    cleared = uc.delete_photo(actor_user_id="manager", user_id="u1", actor_is_portfolio_manager=True)
+    with pytest.raises(PermissionError):
+        uc.delete_photo(actor_user_id="manager", user_id="u1")
+
+    cleared = uc.delete_photo(actor_user_id="u1", user_id="u1")
     assert cleared["has_photo"] is False

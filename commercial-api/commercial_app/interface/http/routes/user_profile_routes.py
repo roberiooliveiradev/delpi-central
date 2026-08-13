@@ -9,13 +9,9 @@ from pydantic import BaseModel, Field
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_READ_PERMISSIONS,
-    can_manage_portfolios,
 )
 from commercial_app.composition.commercial_composer import build_manage_user_profile_use_case
-from commercial_app.core.auth_actor import (
-    actor_sub_from_request,
-    current_user_from_request,
-)
+from commercial_app.core.auth_actor import actor_sub_from_request
 from commercial_app.core.responses import fail, ok
 
 logger = logging.getLogger(__name__)
@@ -29,10 +25,6 @@ class PatchUserProfileBody(BaseModel):
 
 def _user_id(request: Request) -> str | None:
     return actor_sub_from_request(request)
-
-
-def _is_portfolio_manager(request: Request) -> bool:
-    return can_manage_portfolios(current_user_from_request(request))
 
 
 @router.get("/{user_id}/profile", operation_id="get_user_profile")
@@ -63,7 +55,6 @@ def patch_user_profile(
             actor_user_id=actor,
             user_id=user_id,
             job_title=body.job_title,
-            actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
         return ok(data, message="Perfil atualizado.", operation_id="patch_user_profile")
     except PermissionError as exc:
@@ -114,7 +105,6 @@ async def put_user_profile_photo(
             original_name=file.filename or "photo.bin",
             content=content,
             mime_type=file.content_type,
-            actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
         return ok(data, message="Foto atualizada.", operation_id="put_user_profile_photo")
     except PermissionError as exc:
@@ -144,7 +134,6 @@ def delete_user_profile_photo(request: Request, user_id: str = Path(..., min_len
         data = build_manage_user_profile_use_case().delete_photo(
             actor_user_id=actor,
             user_id=user_id,
-            actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
         return ok(data, message="Foto removida.", operation_id="delete_user_profile_photo")
     except PermissionError as exc:

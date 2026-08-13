@@ -60,13 +60,10 @@ class ManageUserProfileUseCase:
         *,
         actor_user_id: str,
         target_user_id: str,
-        actor_is_portfolio_manager: bool,
     ) -> None:
         actor = (actor_user_id or "").strip()
         target = (target_user_id or "").strip()
         if actor and actor == target:
-            return
-        if actor_is_portfolio_manager:
             return
         raise PermissionError("Sem permissão para editar este perfil.")
 
@@ -124,13 +121,11 @@ class ManageUserProfileUseCase:
         actor_user_id: str,
         user_id: str,
         job_title: str | None,
-        actor_is_portfolio_manager: bool = False,
     ) -> dict[str, Any]:
         target = (user_id or "").strip()
         self._assert_can_edit(
             actor_user_id=actor_user_id,
             target_user_id=target,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
         )
         self._repo.upsert_job_title(user_id=target, job_title=job_title)
         return self.get_profile(user_id=target)
@@ -143,13 +138,11 @@ class ManageUserProfileUseCase:
         original_name: str,
         content: bytes,
         mime_type: str | None,
-        actor_is_portfolio_manager: bool = False,
     ) -> dict[str, Any]:
         target = (user_id or "").strip()
         self._assert_can_edit(
             actor_user_id=actor_user_id,
             target_user_id=target,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
         )
         existing = self._repo.get(target)
         try:
@@ -177,13 +170,11 @@ class ManageUserProfileUseCase:
         *,
         actor_user_id: str,
         user_id: str,
-        actor_is_portfolio_manager: bool = False,
     ) -> dict[str, Any]:
         target = (user_id or "").strip()
         self._assert_can_edit(
             actor_user_id=actor_user_id,
             target_user_id=target,
-            actor_is_portfolio_manager=actor_is_portfolio_manager,
         )
         existing = self._repo.get(target)
         if existing and existing.photo_storage_key:
