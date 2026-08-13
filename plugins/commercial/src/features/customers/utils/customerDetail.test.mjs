@@ -394,12 +394,13 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.doesNotMatch(app, /ops-abertas|faturamento|nota.?fiscal/i);
   });
 
-  it("pagina cobre loading, erro, nao encontrado e retorno", () => {
+  it("pagina cobre loading, erro e Conta sem empty bloqueante", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     assert.match(page, /Carregando dados do cliente/);
     assert.match(page, /Tentar novamente/);
-    assert.match(page, /Cliente fora da carteira/);
-    assert.match(page, /não está nas suas carteiras/);
+    assert.match(page, /ordersScopeEmpty/);
+    assert.doesNotMatch(page, /Cliente fora da carteira/);
+    assert.doesNotMatch(page, /CommercialEmptyState/);
     assert.match(page, /buildCustomersListPath/);
     assert.match(page, /navigatePluginPath/);
     assert.match(page, /useCustomerDetailData/);
@@ -558,7 +559,7 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     assert.match(header, /<CommercialPagePath/);
-    assert.match(page, /notFound=\{notFound\}/);
+    assert.doesNotMatch(page, /notFound=\{notFound\}/);
     assert.doesNotMatch(page, /detail-breadcrumb/);
     assert.match(page, /role="tabpanel"/);
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);

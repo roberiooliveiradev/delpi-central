@@ -3,13 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
 import {
   CommercialActionButton,
-  CommercialEmptyState,
   CommercialLoadingCard,
   CommercialStateBanner,
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
-import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
+import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerAttentionOrders } from "../components/CustomerAttentionOrders";
 import { CustomerBillingPanel } from "../billing/components/CustomerBillingPanel";
 import { CustomerDetailSections } from "../components/CustomerDetailSections";
@@ -93,7 +92,6 @@ export function CustomerDetailPage({
     loading,
     refreshing,
     error,
-    hasData,
     lastSuccessAt,
     reload,
     customer: rawCustomer,
@@ -153,9 +151,7 @@ export function CustomerDetailPage({
     const deepLink = parseCustomersListDeepLink(currentSearch, sellerAccess);
     navigatePluginPath(buildCustomersListPath(basePath, deepLink, sellerAccess));
   };
-  const codeStore = formatEntityCodeStore(codigo, loja) ?? `${codigo}-${loja}`;
-  const showInitialLoading = loading && !hasData;
-  const notFound = hasData && !loading && customer === null;
+  const showInitialLoading = loading && !customer;
   const canScheduleFollowUp = canViewWorklist && canManageFollowups;
   const scheduleFollowUp = canScheduleFollowUp
     ? () => {
@@ -186,7 +182,6 @@ export function CustomerDetailPage({
         lastSuccessAt={lastSuccessAt}
         refreshing={refreshing}
         loading={loading}
-        notFound={notFound}
         onBack={goBack}
         backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
         onReload={refreshActiveSection}
@@ -200,7 +195,7 @@ export function CustomerDetailPage({
         <CommercialLoadingCard title="Carregando dados do cliente…" variant="panel" />
       ) : null}
 
-      {error && !hasData ? (
+      {error && !customer ? (
         <CommercialStateBanner variant="error">
           <p>{error}</p>
           <div className="cm-customer-detail__actions">
@@ -214,7 +209,7 @@ export function CustomerDetailPage({
         </CommercialStateBanner>
       ) : null}
 
-      {error && hasData ? (
+      {error && customer ? (
         <CommercialStateBanner>
           <p>Não foi possível atualizar os pedidos em aberto: {error}</p>
           <CommercialActionButton
@@ -244,17 +239,6 @@ export function CustomerDetailPage({
             Tentar novamente
           </CommercialActionButton>
         </CommercialStateBanner>
-      ) : null}
-
-      {notFound ? (
-        <CommercialEmptyState
-          title="Cliente fora da carteira"
-          message={`O cliente ${codeStore} não está nas suas carteiras ou não há pedidos em aberto no escopo atual.`}
-        >
-            <CommercialActionButton variant="ghost" onClick={goBack}>
-              Voltar para clientes
-            </CommercialActionButton>
-        </CommercialEmptyState>
       ) : null}
 
       {customer ? (
@@ -295,7 +279,7 @@ export function CustomerDetailPage({
                   <CustomerAttentionOrders orders={attentionOrders} />
                   {orders.length === 0 ? (
                     <CommercialStateBanner>
-                      Cliente localizado, porém sem linhas utilizáveis neste recorte.
+                      {CM_HELP.customerDetail.ordersScopeEmpty}
                     </CommercialStateBanner>
                   ) : (
                     <CustomerOrdersTable

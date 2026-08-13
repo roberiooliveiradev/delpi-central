@@ -286,6 +286,8 @@ export const CM_HELP = {
     billed12m: "Faturamento (NFs de saída) nos últimos 12 meses deste cliente.",
     openValue: "Soma do saldo em aberto dos pedidos deste cliente.",
     openOrders: "Quantidade de pedidos distintos ainda em aberto.",
+    ordersScopeEmpty:
+      "Nenhum pedido em aberto neste escopo para a conta. Contatos, histórico e demais abas seguem disponíveis.",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
       "Comparativo mês a mês: últimos 12 meses versus os 12 meses imediatamente anteriores.",
