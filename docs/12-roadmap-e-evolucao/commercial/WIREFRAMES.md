@@ -756,8 +756,10 @@ Checklist pós E0–E6 (padrão: wrappers `Commercial*` + DataTable/toolbar/card
 | Grupos / Perfil | OK | Empty+create card; AvatarStack; seção grupos |
 | Minhas tarefas | OK | Grupos + «Concluída por» (E6); wrappers `Commercial*` (E7.S2) |
 | Detalhe OV wrappers | OK | `CommercialSectionCard` / Empty / SegmentToggle (E7.S2) |
-| PagePath returnTo | OK | Helper canônico + detalhes do escopo |
+| PagePath returnTo | OK | Helper canônico + detalhes do escopo (sweep E7.S3) |
 | Gaps kit | OK | AvatarStack + Org `group` + SegmentToggle factory |
+
+**Sweep E7.S3:** pedido Conta, linha/OP, OV, proposta → `resolvePagePathBack`; listas → `currentLocationAsReturnTo`; Conta pedidos sem expand inline. Teste: `returnToSweep.structural.test.mjs`.
 
 **P0 residual (higiene wrappers):** páginas fora do núcleo do refino ainda usam `SectionCard`/`EmptyState` diretos do kit (ex.: Analytics OTD/Team) — fora do escopo de gaps P0 desta auditoria; migrar em onda própria.
 
