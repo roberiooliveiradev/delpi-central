@@ -17,6 +17,8 @@ type TaskDetailCardProps = {
   assigneeLabel?: string | null;
   /** Quem criou/atribuiu — exibido quando diferente do responsável. */
   assignedByLabel?: string | null;
+  /** Clientes da tarefa (já formatados). */
+  customerLabel?: string | null;
   canManage: boolean;
   /** Só o criador edita conteúdo/anexos. */
   canEdit: boolean;
@@ -55,6 +57,7 @@ export function TaskDetailCard({
   priorityLabel,
   assigneeLabel,
   assignedByLabel,
+  customerLabel,
   canManage,
   canEdit,
   canDelete = false,
@@ -103,11 +106,11 @@ export function TaskDetailCard({
           },
         ]
       : []),
-    ...(task.customer_code
+    ...(customerLabel
       ? [
           {
             label: "Cliente",
-            value: `${task.customer_code}/${task.customer_store ?? ""}`,
+            value: customerLabel,
             hint: CM_HELP.myDay.taskCustomer,
           },
         ]

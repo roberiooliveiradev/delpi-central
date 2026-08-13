@@ -47,6 +47,7 @@ import {
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CustomerSearchPicker,
+  customerSelectionLabel,
   type CustomerSearchSelection,
 } from "../customers/components/CustomerSearchPicker";
 import {
@@ -252,8 +253,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [dueDate, setDueDate] = useState(localDateInputValue);
   const [priority, setPriority] = useState("normal");
   const [taskType, setTaskType] = useState("follow_up");
-  const [customerSelection, setCustomerSelection] = useState<CustomerSearchSelection | null>(
-    null,
+  const [customerSelection, setCustomerSelection] = useState<CustomerSearchSelection[]>(
+    [],
   );
   const [assigneePicker, setAssigneePicker] = useState<DirectoryUserOption[]>([]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -268,7 +269,13 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
-  const assigneeUserId = assigneePicker[0]?.id?.trim() ?? "";
+  const assigneeUserIds = useMemo(
+    () =>
+      assigneePicker
+        .map((item) => item.id.trim())
+        .filter(Boolean),
+    [assigneePicker],
+  );
 
   const activeSellers = useMemo(
     () => sellers.filter((seller) => seller.active && seller.user_id.trim()),
@@ -278,25 +285,37 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const directoryUserIds = useMemo(() => {
     const ids = activeSellers.map((seller) => seller.user_id);
     if (myPortfolio?.user_id) ids.push(myPortfolio.user_id);
-    if (assigneeUserId) ids.push(assigneeUserId);
+    ids.push(...assigneeUserIds);
     if (teamAssigneeFilter) ids.push(teamAssigneeFilter);
     if (data) {
       for (const uid of data.team_user_ids ?? []) {
         if (uid) ids.push(uid);
       }
       for (const task of [...data.overdue, ...data.today, ...data.later]) {
-        if (task.assignee_user_id) ids.push(task.assignee_user_id);
+        for (const uid of task.assignee_user_ids?.length
+          ? task.assignee_user_ids
+          : task.assignee_user_id
+            ? [task.assignee_user_id]
+            : []) {
+          if (uid) ids.push(uid);
+        }
         if (task.created_by_user_id) ids.push(task.created_by_user_id);
       }
     }
     for (const task of doneItems) {
-      if (task.assignee_user_id) ids.push(task.assignee_user_id);
+      for (const uid of task.assignee_user_ids?.length
+        ? task.assignee_user_ids
+        : task.assignee_user_id
+          ? [task.assignee_user_id]
+          : []) {
+        if (uid) ids.push(uid);
+      }
       if (task.created_by_user_id) ids.push(task.created_by_user_id);
     }
     return ids;
   }, [
     activeSellers,
-    assigneeUserId,
+    assigneeUserIds,
     data,
     doneItems,
     myPortfolio?.user_id,
@@ -323,7 +342,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     setDueDate(localDateInputValue());
     setPriority("normal");
     setTaskType("follow_up");
-    setCustomerSelection(null);
+    setCustomerSelection([]);
     setAssigneePicker([]);
     setEditingTaskId(null);
   }, []);
@@ -357,19 +376,30 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setPriority(task.priority || "normal");
       setTaskType(task.task_type || "follow_up");
       setAssigneePicker(
-        task.assignee_user_id
-          ? [directoryOptionFromId(task.assignee_user_id, directoryLabelFor)]
-          : [],
+        (task.assignee_user_ids?.length
+          ? task.assignee_user_ids
+          : task.assignee_user_id
+            ? [task.assignee_user_id]
+            : []
+        ).map((uid) => directoryOptionFromId(uid, directoryLabelFor)),
       );
-      setCustomerSelection(
-        task.customer_code && task.customer_store
-          ? {
-              code: task.customer_code,
-              store: task.customer_store,
-              name: "",
-            }
-          : null,
-      );
+      const customers =
+        task.customers?.length
+          ? task.customers.map((item) => ({
+              code: item.customer_code,
+              store: item.customer_store,
+              name: (item.customer_name || "").trim(),
+            }))
+          : task.customer_code && task.customer_store
+            ? [
+                {
+                  code: task.customer_code,
+                  store: task.customer_store,
+                  name: (task.customer_name || "").trim(),
+                },
+              ]
+            : [];
+      setCustomerSelection(customers);
       setFormMode("edit");
       scrollToTaskForm();
     },
@@ -390,20 +420,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setBucket(link.bucket);
     }
     if (link.customerCode && link.customerStore) {
-      setCustomerSelection({
-        code: link.customerCode,
-        store: link.customerStore,
-        name: "",
-      });
+      setCustomerSelection([
+        {
+          code: link.customerCode,
+          store: link.customerStore,
+          name: "",
+        },
+      ]);
     }
     if (link.createTask || link.customerCode) {
       resetTaskFormFields();
       if (link.customerCode && link.customerStore) {
-        setCustomerSelection({
-          code: link.customerCode,
-          store: link.customerStore,
-          name: "",
-        });
+        setCustomerSelection([
+          {
+            code: link.customerCode,
+            store: link.customerStore,
+            name: "",
+          },
+        ]);
       }
       setFormMode("create");
       scrollToTaskForm();
@@ -579,7 +613,13 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     if (!notifyMissingRequired(missing)) return;
     setCreating(true);
     try {
-      const customer = customerSelection;
+      const customers = customerSelection
+        .filter((item) => item.code.trim() && item.store.trim())
+        .map((item) => ({
+          code: item.code.trim(),
+          store: item.store.trim(),
+          name: item.name.trim() || null,
+        }));
       const note = description.trim();
       const created = await createTask({
         title: title.trim(),
@@ -587,9 +627,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         task_type: taskType || "follow_up",
         priority: priority || "normal",
         due_at: dueDateInputToIsoEod(dueDate),
-        customer_code: customer?.code ?? null,
-        customer_store: customer?.store ?? null,
-        assignee_user_id: canTeamWorklist && assigneeUserId ? assigneeUserId : undefined,
+        customers: customers.length > 0 ? customers : undefined,
+        assignee_user_ids:
+          canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
       });
       if (pendingAttachments.length > 0) {
         const failed: string[] = [];
@@ -626,7 +666,13 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     if (!notifyMissingRequired(missing)) return;
     setSavingEdit(true);
     try {
-      const customer = customerSelection;
+      const customers = customerSelection
+        .filter((item) => item.code.trim() && item.store.trim())
+        .map((item) => ({
+          code: item.code.trim(),
+          store: item.store.trim(),
+          name: item.name.trim() || null,
+        }));
       const note = description.trim();
       await updateTask(editingTaskId, {
         title: title.trim(),
@@ -634,9 +680,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         task_type: taskType || "follow_up",
         priority: priority || "normal",
         due_at: dueDateInputToIsoEod(dueDate),
-        customer_code: customer?.code ?? null,
-        customer_store: customer?.store ?? null,
-        assignee_user_id: canTeamWorklist && assigneeUserId ? assigneeUserId : undefined,
+        customers,
+        assignee_user_ids:
+          canTeamWorklist && assigneeUserIds.length > 0 ? assigneeUserIds : undefined,
       });
       closeTaskForm();
       notifySuccess("Tarefa atualizada.");
@@ -844,21 +890,57 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
                   const priorityLabel =
                     PRIORITY_LABELS[task.priority] ?? task.priority;
+                  const assigneeIds =
+                    task.assignee_user_ids?.length
+                      ? task.assignee_user_ids
+                      : task.assignee_user_id
+                        ? [task.assignee_user_id]
+                        : [];
                   const assigneeLabel =
-                    workScope === "team"
-                      ? sellerNameByUserId.get(task.assignee_user_id) ??
-                        directoryLabelFor(task.assignee_user_id)
+                    assigneeIds.length > 0 &&
+                    (workScope === "team" || assigneeIds.length > 1)
+                      ? assigneeIds
+                          .map(
+                            (uid) =>
+                              sellerNameByUserId.get(uid) ?? directoryLabelFor(uid),
+                          )
+                          .join(" · ")
                       : null;
                   const createdBy = (task.created_by_user_id || "").trim();
-                  const assignee = (task.assignee_user_id || "").trim();
+                  const primaryAssignee = (assigneeIds[0] || "").trim();
                   const me = (currentUserId || myPortfolio?.user_id || "").trim();
                   const assignedByLabel =
-                    createdBy && createdBy !== assignee
+                    createdBy && createdBy !== primaryAssignee
                       ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
+                      : null;
+                  const taskCustomers =
+                    task.customers?.length
+                      ? task.customers
+                      : task.customer_code && task.customer_store
+                        ? [
+                            {
+                              customer_code: task.customer_code,
+                              customer_store: task.customer_store,
+                              customer_name: task.customer_name,
+                            },
+                          ]
+                        : [];
+                  const customerLabel =
+                    taskCustomers.length > 0
+                      ? taskCustomers
+                          .map((item) =>
+                            customerSelectionLabel({
+                              code: item.customer_code,
+                              store: item.customer_store,
+                              name: (item.customer_name || "").trim(),
+                            }),
+                          )
+                          .join(" · ")
                       : null;
                   const readOnly = bucket === "done";
                   const isCreator = Boolean(me) && createdBy === me;
                   const canEditTask = !readOnly && canManageFollowups && isCreator;
+                  const primaryCustomer = taskCustomers[0];
                   return (
                     <TaskDetailCard
                       key={task.id}
@@ -868,6 +950,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       priorityLabel={priorityLabel}
                       assigneeLabel={assigneeLabel}
                       assignedByLabel={assignedByLabel}
+                      customerLabel={customerLabel}
                       canManage={canManageFollowups}
                       canEdit={canEditTask}
                       canDelete={canEditTask}
@@ -879,11 +962,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       onComplete={() => void onComplete(task.id)}
                       onDefer={() => void onDefer(task)}
                       onOpenAccount={
-                        task.customer_code && task.customer_store
+                        primaryCustomer
                           ? () =>
                               navigateCustomerDetail(
-                                task.customer_code!,
-                                task.customer_store!,
+                                primaryCustomer.customer_code,
+                                primaryCustomer.customer_store,
                                 { basePath },
                               )
                           : undefined
@@ -976,23 +1059,24 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   value={assigneePicker}
                   onChange={setAssigneePicker}
                   searchUsers={searchDirectoryUsers}
-                  maxSelected={1}
+                  maxSelected={20}
                   showEmail
                   labels={{
-                    title: "Responsável",
+                    title: "Responsáveis",
                     hint: CM_HELP.myDay.taskAssignee,
                     placeholder:
                       formMode === "edit"
-                        ? "Buscar usuário…"
-                        : "Buscar usuário… (vazio = eu)",
+                        ? "Buscar usuários…"
+                        : "Buscar usuários… (vazio = eu)",
                   }}
                 />
               ) : null}
               <CustomerSearchPicker
                 value={customerSelection}
                 onChange={setCustomerSelection}
+                maxSelected={20}
                 labels={{
-                  title: "Cliente",
+                  title: "Clientes",
                   hint: CM_HELP.myDay.taskCustomer,
                   placeholder: "Código ou nome (opcional)",
                 }}
