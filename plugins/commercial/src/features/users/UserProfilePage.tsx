@@ -529,6 +529,25 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       </div>
 
       <CommercialSectionCard
+        title={USER_ACCESS_COPY.groupsTitle}
+        subtitle={USER_ACCESS_COPY.groupsSubtitle}
+      >
+        {(profile.groups ?? []).length === 0 ? (
+          <p className="cm-muted">{USER_ACCESS_COPY.groupsEmpty}</p>
+        ) : (
+          <div className="cm-nav-row">
+            {(profile.groups ?? []).map((group) => (
+              <CommercialStatusBadge
+                key={group.id}
+                label={group.name}
+                variant={group.active ? "info" : "neutral"}
+              />
+            ))}
+          </div>
+        )}
+      </CommercialSectionCard>
+
+      <CommercialSectionCard
         title={USER_ACCESS_COPY.portfoliosTitle}
         subtitle={USER_ACCESS_COPY.portfoliosSubtitle}
         hint={CM_HELP.users.portfolios}

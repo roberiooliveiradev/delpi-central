@@ -18,6 +18,14 @@ export type UserProfilePortfolioDto = {
   member_count?: number;
 };
 
+export type UserProfileGroupDto = {
+  id: string;
+  kind: string;
+  name: string;
+  active: boolean;
+  sort_order?: number;
+};
+
 export type UserProfileDto = {
   user_id: string;
   name: string;
@@ -26,6 +34,7 @@ export type UserProfileDto = {
   has_photo?: boolean;
   photo_url?: string | null;
   portfolios: UserProfilePortfolioDto[];
+  groups?: UserProfileGroupDto[];
   updated_at?: string | null;
 };
 
