@@ -43,6 +43,39 @@
 | `/apps/commercial/analytics/team` | (redirect → administration) | — | — |
 | `/apps/commercial/analytics/opportunities` | Oportunidades | launcher Início | analytics.view |
 
+### Matriz rota × wireframe × status (ago/2026 — B-fecho)
+
+Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status = implementação no MFE vs ASCII do WF.
+
+| Rota (relativa a `/apps/commercial`) | Wireframe | Status | Notas |
+|--------------------------------------|-----------|--------|-------|
+| `/` | WF-01R-L | **entregue** | Hub launcher + eventos |
+| `/overview` | **WF-OV** | **entregue** | KPIs + carteira aberta + ROL (+YoY) + funil + série hit rate (+YoY) |
+| `/analytics` | — | **alias** | Redirect → `/overview` |
+| `/gestao` | — | **alias** | Redirect → `/overview` |
+| `/my-tasks` · `/my-day` | WF-TASKS / WF-06R | **entregue** | Alias my-day |
+| `/users/:userId` | WF-USER | **entregue** | Perfil |
+| `/open-orders` | WF-02R | **entregue** | Bancada |
+| `/open-orders/:filial/:pedido/:linha` | WF-02R-D | **entregue** | Linha |
+| `/open-orders/:filial/:pedido/:linha/op/:op` | WF-02R-D | **entregue** | OP |
+| `/customers` | WF-03R / WF-03R-M | **entregue** | Minha Carteira |
+| `/customers/:code/:store` | WF-04R / WF-04R-M | **entregue** | Conta 360 |
+| `/customers/:code/:store/orders/:branch/:orderNumber` | WF-04R | **entregue** | Detalhe pedido Conta |
+| `/customers/:code/:store/outbound-invoices/...` | WF-04R | **entregue** | Detalhe NF |
+| `/proposals` · `/proposals/:id` | WF-PROP | **entregue** | ADY documento |
+| `/analytics/otd` · `/analytics/otd/:b/:o/:l` | (OTD pages) | **entregue** | Via Início / drill |
+| `/analytics/opportunities` · `/:n` | WF-OPP / WF-OV-D | **entregue** | Lista + ficha OV |
+| `/analytics/team` | — | **alias** | Redirect → `/administration` |
+| `/administration` | WF-ADM | **entregue** | Painel |
+| `/administration/seller-portfolios` | WF-05R / ORG | **entregue** | Lista/org |
+| `/administration/seller-portfolios/:id` | WF-05R-D | **entregue** | Detalhe carteira |
+| `/administration/team` · `/members` | WF-05R-TEAM | **entregue** | Equipe |
+| `/administration/groups` | WF-05R-GROUPS | **entregue** | Grupos |
+| `/seller-portfolios` · `/:id` | WF-05R* | **alias** | → administration/… |
+| (pipeline kanban) | WF-08 | **backlog** | Não implementado — não inventar UI |
+| (forecast) | WF-09 | **backlog** | Não implementado — não inventar UI |
+| WF-G «Gestão» top nav | — | **supersedido** | Substituído por WF-OV + top «Visão geral» |
+
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
 
 | Tema | Wireframe / nota | Status implementação |
