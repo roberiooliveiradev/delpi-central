@@ -269,6 +269,16 @@
   display: none;
 }
 
+.dashboard-commercial .cm-customer-orders__mobile-item--clickable {
+  cursor: pointer;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+}
+
+.dashboard-commercial .cm-customer-orders__mobile-item--clickable:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 .dashboard-commercial .cm-spin {
   animation: cm-customer-spin 0.9s linear infinite;
 }

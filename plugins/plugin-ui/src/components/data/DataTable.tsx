@@ -362,7 +362,7 @@ export function DataTable<T>({
   enableCopySelection = false,
   indexColumn,
   expandedRowKey = null,
-  onExpandedRowKeyChange,
+  onExpandedRowKeyChange: _onExpandedRowKeyChange,
   renderExpandedRow,
   isRowExpandable,
   classNames,

@@ -1,15 +1,15 @@
 import {
   OPERATIONAL_UNIT_COLUMN_LABEL,
+  IconButton,
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import {
-  CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
-  CommercialHostDialog,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
@@ -59,10 +59,10 @@ export function CustomerOrdersTable({
   loja,
   canViewAnalytics,
 }: CustomerOrdersTableProps) {
-  const [linesOrderKey, setLinesOrderKey] = useState<string | null>(null);
-  const linesOrder = orders.find((order) => order.key === linesOrderKey) ?? null;
+  const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
 
   const openOrderDetail = (order: CustomerOrderSummary) => {
+    if (!order.filial?.trim() || !order.pedido?.trim()) return;
     navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
       basePath,
       returnNav: {
@@ -72,23 +72,34 @@ export function CustomerOrdersTable({
     });
   };
 
-  const orderActions = (order: CustomerOrderSummary) => {
-    const canOpen = Boolean(order.filial?.trim() && order.pedido?.trim());
-    return (
-      <div className="cm-customer-order-line-actions">
-        {canOpen ? (
-          <CommercialActionButton variant="ghost" onClick={() => openOrderDetail(order)}>
-            Abrir pedido
-          </CommercialActionButton>
-        ) : null}
-        <CommercialActionButton variant="ghost" onClick={() => setLinesOrderKey(order.key)}>
-          Ver linhas
-        </CommercialActionButton>
-      </div>
-    );
+  const toggleExpand = (orderKey: string) => {
+    setExpandedRowKey((current) => (current === orderKey ? null : orderKey));
   };
 
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
+    {
+      key: "expand",
+      header: "",
+      className: "delpi-ui-table__col--compact",
+      interactive: true,
+      rowClick: "stop",
+      render: (order) => {
+        const isExpanded = expandedRowKey === order.key;
+        return (
+          <IconButton
+            aria-label={isExpanded ? "Recolher linhas do pedido" : "Expandir linhas do pedido"}
+            aria-expanded={isExpanded}
+            onClick={() => toggleExpand(order.key)}
+          >
+            {isExpanded ? (
+              <ChevronDown size={16} aria-hidden />
+            ) : (
+              <ChevronRight size={16} aria-hidden />
+            )}
+          </IconButton>
+        );
+      },
+    },
     {
       key: "branch",
       header: OPERATIONAL_UNIT_COLUMN_LABEL,
@@ -125,11 +136,6 @@ export function CustomerOrdersTable({
       align: "right",
       render: (order) => formatCurrency(order.valorTotalAberto),
     },
-    {
-      key: "details",
-      header: "Ações",
-      render: (order) => orderActions(order),
-    },
   ];
 
   return (
@@ -140,12 +146,40 @@ export function CustomerOrdersTable({
           columns={columns}
           rowKey={(order) => order.key}
           layout="section"
+          onRowClick={openOrderDetail}
+          rowClickRole="button"
+          expandedRowKey={expandedRowKey}
+          onExpandedRowKeyChange={setExpandedRowKey}
+          renderExpandedRow={(order) => (
+            <CustomerOrderLines
+              lines={order.lines}
+              orderKey={order.key}
+              basePath={basePath}
+              canViewAnalytics={canViewAnalytics}
+              returnNav={{
+                returnTo: currentLocationAsReturnTo(),
+                returnLabel: "Pedidos da conta",
+              }}
+            />
+          )}
         />
       </div>
 
       <div className="cm-customer-orders__mobile" aria-label="Pedidos em aberto">
         {orders.map((order) => (
-          <div key={order.key} className="cm-customer-orders__mobile-item">
+          <div
+            key={order.key}
+            className="cm-customer-orders__mobile-item cm-customer-orders__mobile-item--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => openOrderDetail(order)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openOrderDetail(order);
+              }
+            }}
+          >
             <CommercialDataRecordCard
               title={`Pedido ${order.pedido || "não informado"}`}
               subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
@@ -179,44 +213,10 @@ export function CustomerOrdersTable({
                   value: formatCurrency(order.valorTotalAberto),
                 },
               ]}
-              context={orderActions(order)}
             />
           </div>
         ))}
       </div>
-
-      <CommercialHostDialog
-        open={Boolean(linesOrder)}
-        title={
-          linesOrder
-            ? `Linhas do pedido ${linesOrder.pedido || "não informado"}`
-            : "Linhas do pedido"
-        }
-        description={
-          linesOrder
-            ? formatOperationalUnitCode(linesOrder.filial, "Unidade não informada")
-            : undefined
-        }
-        onClose={() => setLinesOrderKey(null)}
-        footer={
-          <CommercialActionButton variant="ghost" onClick={() => setLinesOrderKey(null)}>
-            Fechar
-          </CommercialActionButton>
-        }
-      >
-        {linesOrder ? (
-          <CustomerOrderLines
-            lines={linesOrder.lines}
-            orderKey={linesOrder.key}
-            basePath={basePath}
-            canViewAnalytics={canViewAnalytics}
-            returnNav={{
-              returnTo: currentLocationAsReturnTo(),
-              returnLabel: "Pedidos da conta",
-            }}
-          />
-        ) : null}
-      </CommercialHostDialog>
     </CommercialSectionCard>
   );
 }
