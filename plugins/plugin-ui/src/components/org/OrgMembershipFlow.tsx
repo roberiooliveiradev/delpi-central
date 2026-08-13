@@ -1,4 +1,4 @@
-import { Briefcase, User } from "lucide-react";
+import { Briefcase, User, UsersRound } from "lucide-react";
 import {
   memo,
   useEffect,
@@ -57,7 +57,8 @@ type OrgMembershipNodeViewProps = NodeProps<FlowNode> & {
 };
 
 function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps) {
-  const Icon = data.kind === "portfolio" ? Briefcase : User;
+  const Icon =
+    data.kind === "portfolio" ? Briefcase : data.kind === "group" ? UsersRound : User;
   const toneClass =
     data.tone === "muted"
       ? classNames.nodeMuted
@@ -65,7 +66,11 @@ function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps)
         ? classNames.nodeWarning
         : "";
   const kindClass =
-    data.kind === "portfolio" ? classNames.nodePortfolio : classNames.nodePerson;
+    data.kind === "portfolio"
+      ? classNames.nodePortfolio
+      : data.kind === "group"
+        ? classNames.nodeGroup
+        : classNames.nodePerson;
   return (
     <div
       className={[classNames.node, kindClass, toneClass].filter(Boolean).join(" ")}

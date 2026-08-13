@@ -53,6 +53,7 @@ import {
   DataTable,
   createInitialsAvatar,
   createDashboardAvatarStack,
+  createDashboardSegmentToggle,
   createTimeline,
   createDashboardUnderlineNav,
   createDashboardChartToolbarKit,
@@ -429,6 +430,7 @@ export const CommercialDetailCard = createDashboardDetailCard({
 
 export const CommercialAvatar = createInitialsAvatar(UI_PREFIX);
 export const CommercialAvatarStack = createDashboardAvatarStack(UI_PREFIX);
+export const CommercialSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 
 export const cmFiltersKit = createDashboardFiltersKit({
   prefix: UI_PREFIX,

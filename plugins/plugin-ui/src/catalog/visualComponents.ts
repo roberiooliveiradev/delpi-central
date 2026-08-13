@@ -346,7 +346,9 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     updatedAt: "2026-08-12",
     changeNote: "Claro/escuro, tela cheia, controles pan/zoom/fit e nós temáticos",
     description:
-      "Canvas read-only carteira↔pessoa (@xyflow/react): pan/zoom, fit-view, fullscreen, tema Delpi; factory createDashboardOrgMembershipFlow.",
+      "Canvas read-only carteira/grupo↔pessoa (@xyflow/react): pan/zoom, fit-view, fullscreen, tema Delpi; kind portfolio|person|group; factory createDashboardOrgMembershipFlow.",
+    changeNote: "kind group + CSS nó; SegmentToggle factory cm",
+    updatedAt: "2026-08-13",
   }),
   // shape
   vc("shape", "ShapeFillMenu"),

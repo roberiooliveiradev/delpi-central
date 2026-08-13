@@ -116,6 +116,10 @@
   border-left: 3px solid var(--delpi-ui-success, #059669);
 }
 
+.delpi-ui-org-flow__node--group {
+  border-left: 3px solid var(--delpi-ui-info, #0284c7);
+}
+
 .delpi-ui-org-flow__node--muted {
   opacity: 0.72;
 }
@@ -139,6 +143,11 @@
 .delpi-ui-org-flow__node--person .delpi-ui-org-flow__node-icon {
   background: var(--org-flow-person-icon-bg);
   color: var(--delpi-ui-success, #059669);
+}
+
+.delpi-ui-org-flow__node--group .delpi-ui-org-flow__node-icon {
+  background: color-mix(in srgb, var(--delpi-ui-info, #0284c7) 14%, transparent);
+  color: var(--delpi-ui-info, #0284c7);
 }
 
 .delpi-ui-org-flow__node-body {

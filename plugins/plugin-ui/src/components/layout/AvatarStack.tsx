@@ -83,7 +83,7 @@ export function AvatarStack({
   );
 }
 
-export type DashboardAvatarStackProps = Omit<AvatarStackProps, "classNames">;
+export type DashboardAvatarStackProps = Omit<AvatarStackProps, "classNames" | "avatarClassNames">;
 
 export function createDashboardAvatarStack(prefix: string) {
   const classNames = avatarStackBemClasses(prefix);

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SegmentToggle, segmentToggleBemClasses } from "./SegmentToggle";
+import { SegmentToggle, createDashboardSegmentToggle, segmentToggleBemClasses } from "./SegmentToggle";
 
 afterEach(() => {
   cleanup();
@@ -73,5 +73,24 @@ describe("SegmentToggle", () => {
     );
     expect(screen.getAllByRole("button")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Departamento" })).toBeTruthy();
+  });
+});
+
+describe("createDashboardSegmentToggle", () => {
+  it("aplica prefixo do MFE no dual-class", () => {
+    const Toggle = createDashboardSegmentToggle("cm");
+    const { container } = render(
+      <Toggle
+        ariaLabel="Modo"
+        options={[
+          { value: "list", label: "Lista" },
+          { value: "org", label: "Diagrama" },
+        ]}
+        value="list"
+        onChange={() => undefined}
+      />,
+    );
+    const root = container.querySelector(".cm-segment-toggle");
+    expect(root?.className).toContain("delpi-ui-segment-toggle");
   });
 });

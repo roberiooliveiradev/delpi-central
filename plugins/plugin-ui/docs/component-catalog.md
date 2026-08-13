@@ -579,7 +579,7 @@ Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` 
 
 ---
 
-## Família `org` — organograma membership (carteira ↔ pessoa)
+## Família `org` — organograma membership (carteira/grupo ↔ pessoa)
 
 Canvas **read-only** com `@xyflow/react` para relações bipartidas (não reutiliza o editor BPMN). Layout hierárquico local (`layoutOrgMembershipForest`).
 
@@ -589,7 +589,7 @@ Código: `src/components/org/`. CSS: `styles/org-membership-flow.css` (classes `
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
-| `nodes` / `edges` | model | Nós `{ id, kind, entityId, title, subtitle?, tone? }` e arestas `{ id, source, target }` |
+| `nodes` / `edges` | model | Nós `{ id, kind: portfolio\|person\|group, entityId, title, subtitle?, tone? }` e arestas `{ id, source, target }` |
 | `classNames` | BEM dual-class | Via `orgMembershipFlowBemClasses(prefix)` ou factory |
 | `emptyMessage` | `string?` | Empty state no kit |
 | `onNodeClick` | `(payload) => void` | Clique tipado por `kind` + `entityId` |
@@ -598,7 +598,7 @@ Código: `src/components/org/`. CSS: `styles/org-membership-flow.css` (classes `
 | `fullscreenTitle` / `fullscreenSubtitle` | `string?` | Título do modal |
 | `portalScopeClassName` | `string?` | Escopo MFE (ex.: `dashboard-commercial`) |
 
-Interação: pan (arrastar), zoom (scroll/pinch/controles), fit-view, minimapa. Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`.
+Interação: pan (arrastar), zoom (scroll/pinch/controles), fit-view, minimapa. Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`. Nó `group` usa ícone de equipe e BEM `__node--group`.
 
 ```tsx
 import { createDashboardOrgMembershipFlow } from "@delpi/plugin-ui/index";

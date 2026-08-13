@@ -1,6 +1,6 @@
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
-export type OrgMembershipNodeKind = "portfolio" | "person";
+export type OrgMembershipNodeKind = "portfolio" | "person" | "group";
 
 export type OrgMembershipNodeTone = "neutral" | "muted" | "warning";
 
@@ -37,6 +37,7 @@ export type OrgMembershipFlowClassNames = {
   node: string;
   nodePortfolio: string;
   nodePerson: string;
+  nodeGroup: string;
   nodeMuted: string;
   nodeWarning: string;
   nodeIcon: string;
@@ -62,6 +63,7 @@ export function orgMembershipFlowBemClasses(prefix: string): OrgMembershipFlowCl
     node: bem("__node"),
     nodePortfolio: bem("__node--portfolio"),
     nodePerson: bem("__node--person"),
+    nodeGroup: bem("__node--group"),
     nodeMuted: bem("__node--muted"),
     nodeWarning: bem("__node--warning"),
     nodeIcon: bem("__node-icon"),

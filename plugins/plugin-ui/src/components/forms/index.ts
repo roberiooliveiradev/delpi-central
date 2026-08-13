@@ -1,6 +1,8 @@
 export {
   SegmentToggle,
+  createDashboardSegmentToggle,
   segmentToggleBemClasses,
+  type DashboardSegmentToggleProps,
   type SegmentToggleClassNames,
   type SegmentToggleOption,
   type SegmentToggleProps,
