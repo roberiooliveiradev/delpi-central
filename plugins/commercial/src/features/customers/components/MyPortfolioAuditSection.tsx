@@ -131,6 +131,7 @@ export function MyPortfolioAuditSection({
         >
           <CommercialSelectField
             label={PORTFOLIO_AUDIT_CONTENT.selectPortfolioLabel}
+            hint={CM_HELP.customers.portfolioAudit}
             options={candidatePortfolios.map((portfolio) => ({
               value: portfolio.id,
               label: portfolio.display_name,

@@ -256,6 +256,7 @@ export function SellerPortfolioBulkTransferWizard({
               {lockedSource || source ? (
                 <CommercialTextField
                   label={C.confirmFrom}
+                  hint={CM_HELP.sellerPortfolios.bulkTransferConfirmFrom}
                   value={source?.display_name ?? "—"}
                   onChange={() => undefined}
                   disabled

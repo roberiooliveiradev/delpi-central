@@ -38,7 +38,12 @@ describe("help coverage gate (E1.S3)", () => {
 
   it("allowlist só contém kind field|column e ids não vazios", () => {
     const allowlist = loadAllowlist(allowlistPath);
-    assert.ok(allowlist.length > 0, "allowlist vazia inesperada na baseline");
+    const gaps = collectHelpCoverageGaps(srcRoot);
+    if (gaps.length === 0) {
+      assert.equal(allowlist.length, 0, "com zero gaps a allowlist deve ficar vazia");
+      return;
+    }
+    assert.ok(allowlist.length > 0, "allowlist vazia com gaps restantes");
     for (const entry of allowlist) {
       assert.ok(entry.file, "file obrigatório");
       assert.ok(entry.kind === "field" || entry.kind === "column", entry.kind);

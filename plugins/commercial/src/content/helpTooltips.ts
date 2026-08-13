@@ -294,6 +294,16 @@ export const CM_HELP = {
       "Nome, telefone e e-mail do cadastro SA1. Não dá para editar aqui — use o Protheus se precisar corrigir.",
     contactsLocal:
       "Contatos complementares desta conta. Quem vê a Conta pode criar, editar e remover. No máximo um contato principal. Use o card colapsável para incluir ou editar.",
+    contactFullName:
+      "Nome completo do contato comercial local. Não altera o cadastro TOTVS da conta.",
+    contactRoleTitle:
+      "Cargo ou função do contato na conta, quando conhecido pela equipe.",
+    contactChannel:
+      "Canal preferencial de comunicação (telefone, e-mail, WhatsApp etc.).",
+    contactEmail:
+      "E-mail do contato local para comunicação comercial com a conta.",
+    contactPhoneE164:
+      "Use +, código do país, DDD e número. Ex.: +5547999999999.",
     whatsapp:
       "Abre o WhatsApp Web/app com saudação pronta (wa.me). Exige celular em formato brasileiro e canal WhatsApp marcado.",
     copyValue:
@@ -410,11 +420,21 @@ export const CM_HELP = {
     colUserId: "Responsável da carteira (usuário Minha Delpi).",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
     colMemberCount: "Quantidade de usuários com acesso a esta carteira (responsável + membros).",
+    colCustomerCode: "Código e loja do cliente (chave cadastral TOTVS).",
+    colCustomerName: "Nome fantasia ou razão social do cliente.",
+    colCoverageHit:
+      "Indica se o cliente da busca já está nesta carteira ou em outra carteira ativa.",
+    colMemberUser: "Usuário Minha Delpi com acesso a esta carteira.",
+    colMemberRole: "Papel na carteira: responsável ou membro.",
+    colUncoveredOpenValue:
+      "Soma do valor em aberto dos pedidos do cliente sem cobertura de carteira.",
     colOpenValue:
       "Soma do valor em aberto dos pedidos da carteira (TOTVS). Exibe — se a agregação falhar.",
     colAttentionCount:
       "Clientes da carteira com pedido em atraso (entrega < hoje e saldo > 0). Exibe — se a agregação falhar.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
+    bulkTransferConfirmFrom:
+      "Carteira de origem da transferência (somente leitura neste passo).",
     layoutToggle: "Alterna a lista entre tabela e cards, com o mesmo recorte.",
     shellViewToggle: "Lista mostra o cadastro em tabela/cards. Organização mostra o organograma interativo carteira ↔ pessoa (pan/zoom).",
     orgAxisToggle: "Inverte a raiz do organograma: por carteira (membros abaixo) ou por pessoa (carteiras abaixo).",
@@ -540,6 +560,18 @@ export const CM_HELP = {
       "O menu do usuário no topo leva a Minha Carteira filtrada; a lista de propostas-documento não filtra por carteira — é o catálogo com permissão de propostas.",
     tableRowOpensDetail:
       "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.",
+    pdfContact:
+      "Contato base da Conta usado para pré-preencher os campos do PDF. Vale só para esta emissão.",
+    pdfContactNome:
+      "Nome exibido no PDF. Não grava no cadastro da Conta nem na proposta.",
+    pdfContactDepartamento:
+      "Departamento exibido no PDF. Não grava no cadastro da Conta nem na proposta.",
+    pdfContactEmail:
+      "E-mail exibido no PDF. Não grava no cadastro da Conta nem na proposta.",
+    pdfContactTelefone:
+      "Telefone exibido no PDF. Não grava no cadastro da Conta nem na proposta.",
+    pdfObservacoes:
+      "Observações incluídas só neste PDF. Não alteram a proposta salva.",
     columns: {
       ov: "Número da oportunidade de venda vinculada à proposta-documento.",
       item: "Sequência do item na proposta-documento.",

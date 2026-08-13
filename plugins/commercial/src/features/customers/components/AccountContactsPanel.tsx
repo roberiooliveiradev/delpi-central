@@ -234,6 +234,7 @@ function ContactFormFields({
       ) : null}
       <CommercialTextField
         label="Nome completo"
+        hint={CM_HELP.customerDetail.contactFullName}
         value={form.fullName}
         onChange={(fullName) => setForm((current) => ({ ...current, fullName }))}
         required
@@ -241,12 +242,14 @@ function ContactFormFields({
       />
       <CommercialTextField
         label="Cargo ou função"
+        hint={CM_HELP.customerDetail.contactRoleTitle}
         value={form.roleTitle}
         onChange={(roleTitle) => setForm((current) => ({ ...current, roleTitle }))}
         fullWidth
       />
       <CommercialSelectField
         label="Canal preferencial"
+        hint={CM_HELP.customerDetail.contactChannel}
         value={form.channel}
         options={[...CHANNEL_OPTIONS]}
         onChange={(channel) =>
@@ -259,13 +262,14 @@ function ContactFormFields({
       />
       <CommercialTextField
         label="E-mail"
+        hint={CM_HELP.customerDetail.contactEmail}
         value={form.email}
         onChange={(email) => setForm((current) => ({ ...current, email }))}
         fullWidth
       />
       <CommercialTextField
         label="Telefone E.164"
-        hint="Use +, código do país, DDD e número. Ex.: +5547999999999."
+        hint={CM_HELP.customerDetail.contactPhoneE164}
         value={form.phoneE164}
         onChange={(phoneE164) => setForm((current) => ({ ...current, phoneE164 }))}
         placeholder="+5547999999999"

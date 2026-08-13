@@ -30,6 +30,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
+import { CM_HELP } from "../../content/helpTooltips";
 import type {
   ProposalDocumentDetail,
   ProposalDocumentItem,
@@ -369,6 +370,7 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 <CommercialSelectField
                   id="proposal-pdf-contact"
                   label={PROPOSALS_CONTENT.detail.pdfContactLabel}
+                  hint={CM_HELP.proposals.pdfContact}
                   value={pdfContactValue}
                   onChange={handlePdfContactChange}
                   options={pdfContactOptions.map((option) => ({
@@ -384,30 +386,35 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 <CommercialTextField
                   id="proposal-pdf-contact-nome"
                   label={PROPOSALS_CONTENT.detail.pdfContactNomeLabel}
+                  hint={CM_HELP.proposals.pdfContactNome}
                   value={pdfContatoNome}
                   onChange={setPdfContatoNome}
                 />
                 <CommercialTextField
                   id="proposal-pdf-contact-departamento"
                   label={PROPOSALS_CONTENT.detail.pdfContactDepartamentoLabel}
+                  hint={CM_HELP.proposals.pdfContactDepartamento}
                   value={pdfContatoDepartamento}
                   onChange={setPdfContatoDepartamento}
                 />
                 <CommercialTextField
                   id="proposal-pdf-contact-email"
                   label={PROPOSALS_CONTENT.detail.pdfContactEmailLabel}
+                  hint={CM_HELP.proposals.pdfContactEmail}
                   value={pdfContatoEmail}
                   onChange={setPdfContatoEmail}
                 />
                 <CommercialTextField
                   id="proposal-pdf-contact-telefone"
                   label={PROPOSALS_CONTENT.detail.pdfContactTelefoneLabel}
+                  hint={CM_HELP.proposals.pdfContactTelefone}
                   value={pdfContatoTelefone}
                   onChange={setPdfContatoTelefone}
                 />
               </div>
               <CommercialTextAreaField
                 label={PROPOSALS_CONTENT.detail.pdfObservacoesLabel}
+                hint={CM_HELP.proposals.pdfObservacoes}
                 value={pdfObservacoes}
                 onChange={setPdfObservacoes}
                 rows={4}

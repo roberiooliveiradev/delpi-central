@@ -106,16 +106,19 @@ export function SellerPortfolioDetail({
       {
         key: "code",
         header: "Código/loja",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerCode,
         render: (row) => `${row.code}/${row.store}`,
       },
       {
         key: "name",
         header: "Nome",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerName,
         render: (row) => row.name,
       },
       {
         key: "coverage",
         header: "Cobertura",
+        headerHint: CM_HELP.sellerPortfolios.colCoverageHit,
         render: (row) => {
           const key = customerKey(row.code, row.store);
           const alreadyLinked = linked.some(
@@ -163,11 +166,13 @@ export function SellerPortfolioDetail({
       {
         key: "code",
         header: "Código/loja",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerCode,
         render: (row) => `${row.customer_code}/${row.customer_store}`,
       },
       {
         key: "name",
         header: "Nome",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerName,
         render: (row) => row.customer_name?.trim() || "—",
       },
       {
@@ -219,6 +224,7 @@ export function SellerPortfolioDetail({
       {
         key: "user",
         header: "Usuário",
+        headerHint: CM_HELP.sellerPortfolios.colMemberUser,
         render: (row) => (
           <div className="cm-row-actions">
             <span>{directoryLabelFor(row.user_id)}</span>
@@ -236,6 +242,7 @@ export function SellerPortfolioDetail({
       {
         key: "role",
         header: "Papel",
+        headerHint: CM_HELP.sellerPortfolios.colMemberRole,
         render: (row) => (
           <CommercialStatusBadge
             label={
