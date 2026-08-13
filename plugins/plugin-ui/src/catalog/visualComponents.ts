@@ -326,6 +326,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("charts", "TableInsertCatalogPanel"),
   // preview
   vc("preview", "FilePreviewModal"),
+  vc("preview", "ImageLightboxModal"),
   vc("preview", "FilePreviewView"),
   vc("preview", "FilePreviewMetaFooter"),
   vc("preview", "CenteredScaledPreview"),

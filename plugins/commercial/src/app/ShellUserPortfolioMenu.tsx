@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActionButton,
   AnchoredPanelPortal,
   ContextMenuItem,
 } from "@delpi/plugin-ui/index";
@@ -27,7 +28,8 @@ type ShellUserPortfolioMenuProps = {
 };
 
 /**
- * Slot da TopBar: avatar abre o perfil; nome/chevron abre Minha Carteira (1) ou menu (N).
+ * Slot da TopBar: com foto, clique amplia; sem foto (ou ação no lightbox) abre perfil.
+ * Nome/chevron abre Minha Carteira (1) ou menu (N).
  */
 export function ShellUserPortfolioMenu({
   basePath,
@@ -126,8 +128,25 @@ export function ShellUserPortfolioMenu({
           ? copy.menuCloseAriaLabel
           : copy.menuOpenAriaLabel;
 
+  const hasPhoto = Boolean(photoObjectUrl);
   const avatar = (
-    <CommercialAvatar name={label} size="sm" alt="" src={photoObjectUrl} />
+    <CommercialAvatar
+      name={label}
+      size="sm"
+      alt=""
+      src={photoObjectUrl}
+      previewable={hasPhoto}
+      previewTitle={label}
+      previewAriaLabel={copy.enlargePhotoAriaLabel}
+      portalScopeClassName="dashboard-commercial"
+      previewHeaderActions={
+        userId ? (
+          <ActionButton variant="ghost" onClick={goToProfile}>
+            {copy.openProfileFromPreview}
+          </ActionButton>
+        ) : null
+      }
+    />
   );
 
   return (
@@ -141,7 +160,7 @@ export function ShellUserPortfolioMenu({
         .filter(Boolean)
         .join(" ")}
     >
-      {userId ? (
+      {userId && !hasPhoto ? (
         <button
           type="button"
           className="cm-shell-user__profile"

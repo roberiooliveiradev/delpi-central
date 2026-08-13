@@ -612,6 +612,14 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="sm" classNames={avatarCn} />
             <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="md" classNames={avatarCn} />
             <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="lg" classNames={avatarCn} />
+            <InitialsAvatar
+              name="Com foto"
+              src="https://picsum.photos/seed/delpi-avatar/128"
+              size="md"
+              classNames={avatarCn}
+              previewTitle="Com foto"
+              portalScopeClassName="dashboard-plugin-ui-catalog"
+            />
           </div>
         ),
       },

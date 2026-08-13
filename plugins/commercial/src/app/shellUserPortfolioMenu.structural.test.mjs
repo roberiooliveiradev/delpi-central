@@ -29,16 +29,21 @@ describe("ShellUserPortfolioMenu (TopBar)", () => {
     const nav = readFileSync(join(src, "content/shellNav.ts"), "utf8");
     assert.match(nav, /userMenu:/);
     assert.match(nav, /profileAriaLabel/);
+    assert.match(nav, /enlargePhotoAriaLabel/);
+    assert.match(nav, /openProfileFromPreview/);
     assert.match(nav, /menuOpenAriaLabel/);
   });
 
-  it("separa clique do avatar (perfil) do atalho de carteira", () => {
+  it("com foto amplia no lightbox; sem foto (ou ação no modal) abre perfil", () => {
     const menu = readFileSync(join(src, "app/ShellUserPortfolioMenu.tsx"), "utf8");
     assert.match(menu, /navigateUserProfile/);
     assert.match(menu, /cm-shell-user__profile/);
     assert.match(menu, /cm-shell-user__portfolio/);
     assert.match(menu, /goToProfile/);
     assert.match(menu, /userProfilePhotoAbsoluteUrl/);
+    assert.match(menu, /previewable=\{hasPhoto\}/);
+    assert.match(menu, /openProfileFromPreview/);
+    assert.match(menu, /enlargePhotoAriaLabel/);
     assert.doesNotMatch(menu, /cm-shell-user__trigger/);
   });
 });

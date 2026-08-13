@@ -1,6 +1,8 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useState } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import { ImageLightboxModal } from "../preview/ImageLightboxModal";
 
 export type InitialsAvatarSize = "sm" | "md" | "lg";
 
@@ -21,6 +23,19 @@ export type InitialsAvatarProps = {
   className?: string;
   /** Sobrescreve o estilo de fundo (só no modo iniciais). */
   style?: CSSProperties;
+  /**
+   * Com `src`, clique amplia a foto em modal host-contained.
+   * Default: `true` quando há `src`. Desligar em botões de upload/navegação.
+   */
+  previewable?: boolean;
+  /** Título do modal de ampliação. Default: `name`. */
+  previewTitle?: string;
+  /** `aria-label` do botão de ampliação. */
+  previewAriaLabel?: string;
+  portalScopeClassName?: string;
+  previewHeaderActions?: ReactNode;
+  previewFooter?: ReactNode;
+  onPreviewOpenChange?: (open: boolean) => void;
 };
 
 export function initialsFromName(name: string): string {
@@ -50,6 +65,7 @@ export function initialsAvatarBemClasses(prefix: string): InitialsAvatarClassNam
 /**
  * Avatar chrome: foto ou iniciais com cor determinística.
  * Sem HTTP — o consumidor resolve `src` (blob URL, CDN, etc.).
+ * Com foto, o clique abre lightbox transversal (`ImageLightboxModal`).
  */
 export function InitialsAvatar({
   name,
@@ -60,10 +76,57 @@ export function InitialsAvatar({
   classNames,
   className,
   style,
+  previewable,
+  previewTitle,
+  previewAriaLabel,
+  portalScopeClassName,
+  previewHeaderActions,
+  previewFooter,
+  onPreviewOpenChange,
 }: InitialsAvatarProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const rootClass = [withBemModifier(classNames.root, size), className].filter(Boolean).join(" ");
   const initials = initialsFromName(name);
   const hue = hueFromKey(colorKey ?? name);
+  const canPreview = Boolean(src) && previewable !== false;
+  const resolvedPreviewTitle = (previewTitle ?? name).trim() || "Foto";
+  const resolvedPreviewAria =
+    (previewAriaLabel ?? "").trim() || `Ampliar foto de ${name.trim() || "contato"}`;
+
+  const setOpen = (open: boolean) => {
+    setPreviewOpen(open);
+    onPreviewOpenChange?.(open);
+  };
+
+  if (src && canPreview) {
+    return (
+      <>
+        <button
+          type="button"
+          className={`${rootClass} delpi-ui-avatar--previewable`}
+          aria-label={resolvedPreviewAria}
+          aria-haspopup="dialog"
+          aria-expanded={previewOpen}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(true);
+          }}
+        >
+          <img className="delpi-ui-avatar__media" src={src} alt="" />
+        </button>
+        <ImageLightboxModal
+          open={previewOpen}
+          src={src}
+          title={resolvedPreviewTitle}
+          onClose={() => setOpen(false)}
+          portalScopeClassName={portalScopeClassName}
+          headerActions={previewHeaderActions}
+          footer={previewFooter}
+        />
+      </>
+    );
+  }
 
   if (src) {
     return <img className={rootClass} src={src} alt={alt} />;

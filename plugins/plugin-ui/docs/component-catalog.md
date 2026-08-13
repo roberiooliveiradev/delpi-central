@@ -513,7 +513,7 @@ Consumidores: `strategic-indicators`, `estoque-seguranca`, `pedidos-venda-aberto
 
 ### `InitialsAvatar`
 
-Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `colorKey` / `name`. Tamanhos: `sm` | `md` | `lg`.
+Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `colorKey` / `name`. Tamanhos: `sm` | `md` | `lg`. Com `src`, clique amplia a foto via `ImageLightboxModal` (host-contained) — desligar com `previewable={false}` (ex.: botão «trocar foto»).
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
@@ -521,11 +521,19 @@ Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `col
 | `colorKey` | `string?` | Chave estável para hue (ex.: `codigo\|loja`) |
 | `src` | `string \| null?` | URL da imagem; sem src → iniciais |
 | `size` | `"sm" \| "md" \| "lg"?` | Default `md` |
+| `previewable` | `boolean?` | Default `true` com `src`; `false` desliga lightbox |
+| `previewTitle` / `previewAriaLabel` | `string?` | Título / aria do modal |
+| `portalScopeClassName` | `string?` | Escopo MFE do portal (ex.: `dashboard-commercial`) |
+| `previewHeaderActions` / `previewFooter` | `ReactNode?` | Ações no modal |
 | `classNames` | `InitialsAvatarClassNames` | Dual-class BEM |
 
 Helpers: `initialsAvatarBemClasses(prefix)`, `createInitialsAvatar(prefix)`, `initialsFromName`, `hueFromKey`.
 
-CSS: `initials-avatar.css` — `.delpi-ui-avatar*`. Consumidor piloto: `pedidos-venda-abertos` (`CustomerAvatar` resolve blob e passa `src`).
+CSS: `initials-avatar.css` — `.delpi-ui-avatar*`, `.delpi-ui-avatar--previewable`. Consumidores: `CustomerAvatar` (commercial / PVA), perfil / TopBar commercial.
+
+### `ImageLightboxModal`
+
+Wrapper fino de `FilePreviewModal` para URL de imagem (avatar ampliado). Props: `open`, `src`, `title`, `onClose`, `portalScopeClassName`, `headerActions`, `footer`.
 
 ---
 

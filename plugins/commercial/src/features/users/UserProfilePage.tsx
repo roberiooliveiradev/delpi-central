@@ -442,6 +442,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       colorKey={profile.user_id}
                       src={photoObjectUrl}
                       size="lg"
+                      previewable={false}
                     />
                     <span className="cm-user-profile__avatar-overlay" aria-hidden>
                       <Camera size={18} />
@@ -476,6 +477,8 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                   colorKey={profile.user_id}
                   src={photoObjectUrl}
                   size="lg"
+                  previewTitle={displayName}
+                  portalScopeClassName="dashboard-commercial"
                 />
               )}
             </div>

@@ -53,6 +53,8 @@ export function CustomerAvatar({
       colorKey={key}
       src={objectUrl}
       size={size}
+      portalScopeClassName="dashboard-commercial"
+      previewTitle={name || code}
     />
   );
 }
