@@ -1,11 +1,11 @@
 import { useState, type MouseEvent } from "react";
 
-import { CommercialActionButton } from "../../app/commercialUi";
-import { currentLocationAsReturnTo } from "../../app/commercialNavigationReturn";
-import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
-import { navigateProposalDetail } from "../../app/pluginNavigation";
-import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
-import { resolveProposalDocumentForOpportunity } from "../../utils/resolveProposalDocumentForOpportunity";
+import { CommercialActionButton } from "../../../app/commercialUi";
+import { currentLocationAsReturnTo } from "../../../app/commercialNavigationReturn";
+import { useCommercialFloatingNotice } from "../../../app/CommercialFloatingNoticeProvider";
+import { navigateProposalDetail } from "../../../app/pluginNavigation";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
+import { resolveProposalDocumentForOpportunity } from "../../../utils/resolveProposalDocumentForOpportunity";
 
 type OpenProposalFromOpportunityButtonProps = {
   basePath: string;
