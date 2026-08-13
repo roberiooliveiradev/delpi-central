@@ -217,6 +217,7 @@ Trilha imutável (append-only).
 | `priority` | TEXT NOT NULL | `low` \| `normal` \| `high` \| `critical` · default `normal` |
 | `due_at` | TIMESTAMPTZ | |
 | `completed_at` | TIMESTAMPTZ | |
+| `completed_by_user_id` | TEXT NULL | **V012:** quem concluiu (tarefas de grupo / multi-assignee) |
 | `assignee_user_id` | TEXT NOT NULL | Espelho do **primeiro** responsável (`task_assignees`); legado + índice |
 | `created_by_user_id` | TEXT NOT NULL | |
 | `customer_code` / `customer_store` | TEXT | Espelho do **primeiro** cliente (`task_customers`); opcional |
@@ -240,6 +241,7 @@ Trilha imutável (append-only).
 |--------|---------|--------|
 | `task_assignees` | `task_id`, `user_id`, `sort_order`, `created_at` | PK `(task_id, user_id)`; primeiro espelha `tasks.assignee_user_id` |
 | `task_customers` | `task_id`, `customer_code`, `customer_store`, `sort_order`, `created_at` | PK `(task_id, customer_code, customer_store)`; primeiro espelha colunas legado |
+| `task_assignee_groups` | `task_id`, `group_id` | **V012:** amarração a `commercial_groups` (sem expandir cópias em `task_assignees`); visibilidade por membership atual |
 
 ### 4.2 `task_dependencies`
 

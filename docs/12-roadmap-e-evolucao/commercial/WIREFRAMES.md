@@ -892,6 +892,7 @@ Home e menu permanecem; card da capacidade indisponível mostra estado de erro i
 | Detalhe OV (paridade dashboard) | WF-OV-D | `/analytics/opportunities/:n` |
 | Minha Carteira | WF-03R / WF-03R-M | `/customers` |
 | Conta 360 | WF-04R / WF-04R-M | `/customers/:code/:store` |
+| Detalhe pedido (Conta) | WF-04R + índice ago/2026 | `/customers/:code/:store/orders/:branch/:orderNumber` |
 | Config vendedores / carteiras multi-membro | WF-05R / D / ORG | `/administration/seller-portfolios` (+ alias legado) |
 | Avatar | WF-04R + WF-05 | commercial-api |
 | URL interna código+loja | WF-04R | idem |
