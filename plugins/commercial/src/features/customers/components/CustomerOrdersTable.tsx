@@ -17,6 +17,7 @@ import {
   currentLocationAsReturnTo,
 } from "../../../app/commercialNavigationReturn";
 import { navigateCustomerOrderDetail } from "../../../app/pluginNavigation";
+import { CUSTOMER_ORDERS_CONTENT } from "../../../content/customerOrdersContent";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
@@ -87,7 +88,11 @@ export function CustomerOrdersTable({
         const isExpanded = expandedRowKey === order.key;
         return (
           <IconButton
-            aria-label={isExpanded ? "Recolher linhas do pedido" : "Expandir linhas do pedido"}
+            aria-label={
+              isExpanded
+                ? CUSTOMER_ORDERS_CONTENT.collapseLinesAriaLabel
+                : CUSTOMER_ORDERS_CONTENT.expandLinesAriaLabel
+            }
             aria-expanded={isExpanded}
             onClick={() => toggleExpand(order.key)}
           >
@@ -139,7 +144,7 @@ export function CustomerOrdersTable({
   ];
 
   return (
-    <CommercialSectionCard title="Todos os pedidos em aberto">
+    <CommercialSectionCard title={CUSTOMER_ORDERS_CONTENT.ordersSectionTitle}>
       <div className="cm-customer-orders__desktop">
         <CommercialDataTable
           rows={orders}
@@ -165,7 +170,10 @@ export function CustomerOrdersTable({
         />
       </div>
 
-      <div className="cm-customer-orders__mobile" aria-label="Pedidos em aberto">
+      <div
+        className="cm-customer-orders__mobile"
+        aria-label={CUSTOMER_ORDERS_CONTENT.mobileListAriaLabel}
+      >
         {orders.map((order) => (
           <div
             key={order.key}
