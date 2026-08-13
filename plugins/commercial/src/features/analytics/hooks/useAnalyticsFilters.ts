@@ -9,6 +9,11 @@ import {
   applyDateStartChange,
   type LinkedDateFilters,
 } from "../utils/competenceFilters";
+import {
+  detectPeriodPreset,
+  resolvePeriodPreset,
+  type PeriodPresetId,
+} from "../utils/periodPreset";
 import { resolveAnalyticsApiBranch } from "../utils/analyticsBranchFilters";
 import {
   readAnalyticsFilters,
@@ -175,6 +180,17 @@ export function useAnalyticsFilters() {
     sellerIds: effectiveSellerIds,
   };
 
+  const periodPreset = detectPeriodPreset(dateStart, dateEnd);
+
+  const setPeriodPreset = useCallback(
+    (preset: PeriodPresetId) => {
+      const range = resolvePeriodPreset(preset);
+      if (!range) return;
+      replaceAll(range);
+    },
+    [replaceAll],
+  );
+
   return {
     dateStart,
     dateEnd,
@@ -185,6 +201,8 @@ export function useAnalyticsFilters() {
     canFilterPortfolios,
     canUseTeamScope,
     filterablePortfolios,
+    periodPreset,
+    setPeriodPreset,
     setDateStart,
     setDateEnd,
     setCompetence,

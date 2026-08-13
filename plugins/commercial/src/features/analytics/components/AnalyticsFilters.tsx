@@ -8,6 +8,7 @@ import { CM_HELP } from "../../../content/helpTooltips";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
+import type { PeriodPresetId } from "../utils/periodPreset";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
 import type { SellerPortfolio } from "../../../types/portfolio";
 
@@ -15,6 +16,7 @@ type AnalyticsFiltersProps = {
   dateStart: string;
   dateEnd: string;
   competence: string;
+  periodPreset?: PeriodPresetId;
   branches: string[];
   customerSegment: AnalyticsFilterUrlState["customerSegment"];
   sellerIds?: string[];
@@ -24,6 +26,7 @@ type AnalyticsFiltersProps = {
   onDateStart: (value: string) => void;
   onDateEnd: (value: string) => void;
   onCompetence: (value: string) => void;
+  onPeriodPreset?: (value: PeriodPresetId) => void;
   onBranches: (value: string[]) => void;
   onCustomerSegment: (value: AnalyticsFilterUrlState["customerSegment"]) => void;
   onSellerIds?: (value: string[]) => void;
@@ -33,6 +36,7 @@ export function AnalyticsFilters({
   dateStart,
   dateEnd,
   competence,
+  periodPreset = "custom",
   branches,
   customerSegment,
   sellerIds = [],
@@ -42,6 +46,7 @@ export function AnalyticsFilters({
   onDateStart,
   onDateEnd,
   onCompetence,
+  onPeriodPreset,
   onBranches,
   onCustomerSegment,
   onSellerIds,
@@ -50,6 +55,26 @@ export function AnalyticsFilters({
 
   return (
     <FiltersRow variant="extended">
+      {onPeriodPreset ? (
+        <CommercialSelectField
+          label={ANALYTICS_CONTENT.filters.periodPreset}
+          value={periodPreset === "custom" ? "" : periodPreset}
+          onChange={(value) => {
+            if (value === "mtd" || value === "ytd") {
+              onPeriodPreset(value);
+              return;
+            }
+            onPeriodPreset("custom");
+          }}
+          options={[
+            { value: "mtd", label: ANALYTICS_CONTENT.filters.periodPresetMtd },
+            { value: "ytd", label: ANALYTICS_CONTENT.filters.periodPresetYtd },
+          ]}
+          allowEmpty
+          emptyLabel={ANALYTICS_CONTENT.filters.periodPresetCustom}
+          hint={CM_HELP.analytics.filterPeriodPreset}
+        />
+      ) : null}
       <CommercialDateField
         label={ANALYTICS_CONTENT.filters.start}
         value={dateStart}

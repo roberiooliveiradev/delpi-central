@@ -467,6 +467,8 @@ export const CM_HELP = {
       "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira(s) aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
+    filterPeriodPreset:
+      "Atalhos MTD (mês até hoje) e YTD (ano até hoje) no fuso America/Sao_Paulo. Personalizado mantém as datas que você informar.",
     filterCompetence:
       "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Vazio = só as datas informadas.",
     filterBranch:
