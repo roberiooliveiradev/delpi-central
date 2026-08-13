@@ -374,7 +374,7 @@ export const CM_HELP = {
   },
   analytics: {
     portfolioFilter:
-      "Filtra indicadores pelas carteiras selecionadas (multi + busca). Vazio = consolidado de todas as carteiras que você pode ver.",
+      "Não filtrar = indicadores no consolidado global (TOTVS). Selecione uma ou mais carteiras (ou «Selecionar visíveis») para restringir ao escopo dessas carteiras.",
     filters:
       "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira(s) aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",

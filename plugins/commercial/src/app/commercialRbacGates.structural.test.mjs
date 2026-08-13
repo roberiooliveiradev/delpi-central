@@ -57,13 +57,15 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.doesNotMatch(source, /getCommercialProposals|ov_table/);
   });
 
-  it("SellerScopeFilter diferencia emptyLabel team vs minhas", () => {
+  it("SellerScopeFilter diferencia emptyLabel team vs minhas e analytics", () => {
     const source = readFileSync(
       join(src, "features/customers/components/SellerScopeFilter.tsx"),
       "utf8",
     );
     assert.match(source, /Todas as minhas carteiras/);
     assert.match(source, /Todas as carteiras/);
+    assert.match(source, /ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL/);
+    assert.match(source, /Não filtrar/);
     assert.match(source, /teamScope/);
   });
 

@@ -12,7 +12,7 @@ import {
 export type AnalyticsFilterUrlState = LinkedDateFilters & {
   branches: string[];
   customerSegment: "" | "weg" | "new_business";
-  /** Carteiras selecionadas (ids commercial-api); vazio = consolidado. */
+  /** Carteiras selecionadas (ids commercial-api); vazio = «Não filtrar» (global TOTVS). */
   sellerIds: string[];
 };
 

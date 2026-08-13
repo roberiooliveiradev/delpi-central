@@ -10,6 +10,11 @@ type SellerScopeFilterBase = {
   hint?: string;
   /** team/manage → «Todas as carteiras»; multi-própria → «Todas as minhas carteiras». */
   teamScope?: boolean;
+  /**
+   * Sobrescreve o rótulo da seleção vazia (ex.: analytics «Não filtrar»).
+   * Sem valor, usa o padrão por teamScope.
+   */
+  emptyLabel?: string;
 };
 
 type SellerScopeFilterSingleProps = SellerScopeFilterBase & {
@@ -30,13 +35,16 @@ function emptyLabelForScope(teamScope: boolean): string {
   return teamScope ? "Todas as carteiras" : "Todas as minhas carteiras";
 }
 
+/** Rótulo da Visão geral / analytics: vazio = consolidado TOTVS sem membership. */
+export const ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL = "Não filtrar";
+
 export function SellerScopeFilter(props: SellerScopeFilterProps) {
-  const { sellers, hint, teamScope = false } = props;
+  const { sellers, hint, teamScope = false, emptyLabel: emptyLabelProp } = props;
   const options = sellers.map((seller) => ({
     value: seller.id,
     label: seller.display_name,
   }));
-  const emptyLabel = emptyLabelForScope(teamScope);
+  const emptyLabel = emptyLabelProp ?? emptyLabelForScope(teamScope);
 
   if (props.multiple) {
     return (

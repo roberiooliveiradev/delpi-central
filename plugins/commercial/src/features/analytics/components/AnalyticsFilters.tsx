@@ -6,7 +6,7 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
-import { SellerScopeFilter } from "../../customers/components/SellerScopeFilter";
+import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
 import type { SellerPortfolio } from "../../../types/portfolio";
@@ -100,6 +100,7 @@ export function AnalyticsFilters({
           selectedValues={sellerIds}
           onChange={onSellerIds}
           teamScope={canUseTeamScope}
+          emptyLabel={ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL}
           hint={CM_HELP.analytics.portfolioFilter}
         />
       ) : null}

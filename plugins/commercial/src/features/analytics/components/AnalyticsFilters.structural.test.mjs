@@ -12,6 +12,8 @@ describe("AnalyticsFilters — carteira multi e unidade", () => {
     const source = readFileSync(join(here, "AnalyticsFilters.tsx"), "utf8");
     assert.match(source, /multiple/);
     assert.match(source, /SellerScopeFilter/);
+    assert.match(source, /ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL/);
+    assert.match(source, /emptyLabel=\{ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL\}/);
     assert.match(source, /emptyLabel=\"Todas\"/);
     assert.match(source, /searchable/);
     assert.doesNotMatch(source, /onSellerId\?/);

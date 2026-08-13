@@ -58,6 +58,30 @@ def resolve_portfolio_scope(
     )
 
 
+def resolve_analytics_portfolio_scope(
+    request: Request,
+    *,
+    seller_id: str | None = None,
+    portfolio_id: str | None = None,
+) -> CommercialCustomerScope:
+    """
+    Analytics / Visão geral:
+    - sem seller_id/portfolio_id → «Não filtrar» (TOTVS global, sem membership);
+    - com ids → escopo das carteiras selecionadas (union / membership).
+    """
+    portfolio_ids = parse_portfolio_id_csv(portfolio_id, seller_id)
+    if not portfolio_ids:
+        return CommercialCustomerScope(
+            unrestricted=True,
+            allowed_customers=None,
+        )
+    return resolve_portfolio_scope(
+        request,
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+    )
+
+
 def merge_totvs_params(
     scope: CommercialCustomerScope,
     base: dict[str, object | None],

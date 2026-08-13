@@ -8,7 +8,27 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
     parse_portfolio_id_csv,
+    resolve_analytics_portfolio_scope,
 )
+
+
+def _dummy_request():
+    from starlette.requests import Request
+
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": "/",
+        "raw_path": b"/",
+        "query_string": b"",
+        "headers": [],
+        "client": ("testclient", 50000),
+        "server": ("testserver", 80),
+    }
+    return Request(scope)
 
 
 def test_merge_injects_codes_and_drops_empty():
@@ -52,6 +72,39 @@ def test_merge_account_customer_code_bypasses_portfolio_membership():
         "search": "000001",
         "customer_codes": "000001",
     }
+
+
+def test_resolve_analytics_portfolio_scope_empty_is_global():
+    scope = resolve_analytics_portfolio_scope(
+        _dummy_request(),
+        seller_id=None,
+        portfolio_id=None,
+    )
+    assert scope.unrestricted is True
+    assert scope.allowed_customers is None
+
+
+def test_resolve_analytics_portfolio_scope_with_ids_delegates(monkeypatch):
+    called: dict[str, object] = {}
+
+    def fake_resolve(request, *, seller_id=None, portfolio_id=None):
+        called["seller_id"] = seller_id
+        called["portfolio_id"] = portfolio_id
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=frozenset({("001", "01")}),
+        )
+
+    import commercial_app.interface.http.routes.totvs_bff_helpers as helpers
+
+    monkeypatch.setattr(helpers, "resolve_portfolio_scope", fake_resolve)
+    scope = helpers.resolve_analytics_portfolio_scope(
+        _dummy_request(),
+        seller_id="p1,p2",
+        portfolio_id=None,
+    )
+    assert called["seller_id"] == "p1,p2"
+    assert scope.allowed_customers == frozenset({("001", "01")})
 
 
 def test_parse_portfolio_id_csv_dedupes_and_splits():

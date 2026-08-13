@@ -16,7 +16,7 @@ from commercial_app.composition.commercial_composer import build_delpi_commercia
 from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
-    resolve_portfolio_scope,
+    resolve_analytics_portfolio_scope,
     unwrap_gateway_data,
 )
 
@@ -37,7 +37,7 @@ def _proxy(
     account_customer_code: str | None = None,
 ):
     try:
-        scope = resolve_portfolio_scope(
+        scope = resolve_analytics_portfolio_scope(
             request, seller_id=seller_id, portfolio_id=portfolio_id
         )
         totvs_params = merge_totvs_params(
