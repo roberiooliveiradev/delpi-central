@@ -3,6 +3,12 @@ from __future__ import annotations
 from app.application.dto.commercial.commercial_rol_series_request import (
     CommercialRolSeriesRequest,
 )
+from app.application.dto.commercial.sales_conversion_rate_series_request import (
+    SalesConversionRateSeriesRequest,
+)
+from app.application.dto.commercial.sales_conversion_rate_series_request import (
+    SalesConversionRateSeriesRequest,
+)
 from app.application.dto.commercial.sales_order_otd_series_request import (
     SalesOrderOtdSeriesRequest,
 )
@@ -38,6 +44,21 @@ def production_oee_series_cache_key(request: ProductionOeeSeriesRequest) -> str:
             request.date_start or "",
             request.date_end or "",
             request.branch or "",
+        ]
+    )
+
+
+def commercial_sales_conversion_rate_series_cache_key(
+    request: SalesConversionRateSeriesRequest,
+) -> str:
+    return "|".join(
+        [
+            "commercial-closing-rate-series",
+            request.granularity,
+            request.date_start or "",
+            request.date_end or "",
+            request.customer_segment or "",
+            ",".join(request.customer_codes or []),
         ]
     )
 

@@ -4,6 +4,12 @@ from app.application.use_cases.commercial.get_segment_rol_target_use_case import
 )
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import FinancialRepository
 from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
+from app.application.use_cases.commercial.get_sales_conversion_rate_series_use_case import (
+    GetSalesConversionRateSeriesUseCase,
+)
+from app.application.use_cases.commercial.get_sales_conversion_rate_series_use_case import (
+    GetSalesConversionRateSeriesUseCase,
+)
 from app.application.use_cases.commercial.get_commercial_proposal_use_case import (
     GetCommercialProposalUseCase,
 )
@@ -71,6 +77,12 @@ def build_get_branch_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
 
 def build_get_sales_conversion_rate_use_case() -> GetSalesConversionRateUseCase:
     return GetSalesConversionRateUseCase(
+        sales_conversion_rate_repository=SalesConversionRateRepository()
+    )
+
+
+def build_get_sales_conversion_rate_series_use_case() -> GetSalesConversionRateSeriesUseCase:
+    return GetSalesConversionRateSeriesUseCase(
         sales_conversion_rate_repository=SalesConversionRateRepository()
     )
 

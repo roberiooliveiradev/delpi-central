@@ -264,6 +264,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "commercial_proposal_history", "paged_list"
     ),
     "get_sales_conversion_rate": RouteContract("sales_conversion_rate", "scalar"),
+    "get_sales_conversion_rate_series": RouteContract(
+        "sales_conversion_rate_series", "scalar"
+    ),
+    "get_sales_conversion_rate_series": RouteContract(
+        "sales_conversion_rate_series", "scalar"
+    ),
     "get_new_clients_average": RouteContract("new_clients_average", "scalar"),
     "get_sales_order_otd": RouteContract("sales_order_otd", "scalar"),
     "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),

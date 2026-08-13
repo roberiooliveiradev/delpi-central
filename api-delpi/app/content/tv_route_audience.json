@@ -3956,6 +3956,47 @@
         }
       }
     },
+    "get_sales_conversion_rate_series": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "Sales conversion rate series",
+          "description": "Hit rate (conversion %) over time for Santa Catarina and Espírito Santo.",
+          "whenToUse": "Commercial chart: conversion rate by day/week/month/year. Same formula as closing-rate KPI per bucket."
+        },
+        "pt-BR": {
+          "summary": "Série da taxa de conversão",
+          "description": "Hit rate (taxa de conversão %) ao longo do tempo para Santa Catarina e Espírito Santo.",
+          "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket."
+        }
+      },
+      "params": {
+        "granularity": {
+          "locale": {
+            "en": {
+              "label": "Granularity",
+              "description": "Bucket size: day, week, month, or year."
+            },
+            "pt-BR": {
+              "label": "Granularidade",
+              "description": "Tamanho do bucket: day, week, month ou year."
+            }
+          }
+        },
+        "customer_segment": {
+          "locale": {
+            "en": {
+              "label": "Customer segment",
+              "description": "Optional commercial segment filter."
+            },
+            "pt-BR": {
+              "label": "Segmento",
+              "description": "Filtro opcional de segmento comercial."
+            }
+          }
+        }
+      }
+    },
     "get_sales_order_otd": {
       "locale": {
         "en": {

@@ -35,6 +35,8 @@ _ENTITY_LABELS: dict[str, str] = {
     "commercial_proposal_document": "proposta comercial interna (PDF/Totvs)",
     "commercial_proposal": "propostas comerciais",
     "sales_conversion_rate": "taxa de fechamento comercial",
+    "sales_conversion_rate_series": "série temporal da taxa de conversão de vendas",
+    "sales_conversion_rate_series": "série temporal da taxa de conversão de vendas",
     "new_clients_average": "média de novos clientes",
     "sales_order_otd": "OTD de pedidos de venda",
     "sales_order_otd_panel": "Painel OTD de pedidos de venda",

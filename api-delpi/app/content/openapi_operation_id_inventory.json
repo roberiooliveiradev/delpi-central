@@ -43,6 +43,13 @@
       "stable": true
     },
     {
+      "operationId": "get_sales_conversion_rate_series",
+      "method": "GET",
+      "path": "/commercial/closing-rate/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
       "operationId": "get_head_office_new_business_rol_target_pct",
       "method": "GET",
       "path": "/commercial/head_office_new_business_rol_target_pct",
