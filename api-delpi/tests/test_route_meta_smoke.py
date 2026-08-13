@@ -542,6 +542,35 @@ def test_totvs_open_orders_returns_meta(mock_build) -> None:
 
 
 @patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_pedidos_venda_abertos_use_case"
+)
+def test_totvs_open_orders_by_customer_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_totvs_open_orders_by_customer_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "summary": {"total_linhas": 0},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute_for_customer.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_totvs_open_orders_by_customer_route(
+        customer_code="000001",
+        customer_store="06",
+    )
+    mock_use_case.execute_for_customer.assert_called_once_with("000001", "06")
+    _assert_meta(
+        _body(response),
+        operation_id="list_totvs_open_orders_by_customer",
+        shape="composite_analysis",
+    )
+
+
+@patch(
     "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_customer_outbound_invoices_use_case"
 )
 def test_totvs_outbound_invoices_returns_meta(mock_build) -> None:

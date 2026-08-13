@@ -61,13 +61,25 @@ def resolve_portfolio_scope(
 def merge_totvs_params(
     scope: CommercialCustomerScope,
     base: dict[str, object | None],
+    *,
+    account_customer_code: str | None = None,
 ) -> dict[str, object]:
-    """Insere customer_codes a partir do escopo; remove seller_id/portfolio_id."""
+    """Insere customer_codes a partir do escopo; remove seller_id/portfolio_id.
+
+    Conta 360: com ``account_customer_code`` explícito, restringe só a esse código
+    (não à membership da carteira) — mesma semântica do enrichment 1 par.
+    """
     params: dict[str, object] = {
         key: value
         for key, value in base.items()
-        if value is not None and value != "" and key not in {"seller_id", "portfolio_id"}
+        if value is not None
+        and value != ""
+        and key not in {"seller_id", "portfolio_id", "account_customer_code"}
     }
+    account_code = (account_customer_code or "").strip()
+    if account_code:
+        params["customer_codes"] = account_code
+        return params
     codes = AnalyticsCustomerCodesService.codes_param(scope)
     if codes is not None:
         params["customer_codes"] = codes

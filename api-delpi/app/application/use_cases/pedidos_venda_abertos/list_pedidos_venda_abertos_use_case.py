@@ -143,3 +143,27 @@ class ListPedidosVendaAbertosUseCase:
             portfolio_empty=False,
             portfolio_seller_id=scope.seller_id,
         )
+
+    def execute_for_customer(
+        self,
+        customer_code: str,
+        customer_store: str,
+    ) -> ListPedidosVendaAbertosResponse:
+        """Conta 360: linhas do par código/loja sem membership/carteira."""
+        code = _as_str(customer_code)
+        store = _as_str(customer_store)
+        if not code or not store:
+            raise ValueError("customer_code e customer_store são obrigatórios.")
+
+        raw_items, raw_summary = self._repository.list_open_orders_for_customer(
+            code,
+            store,
+        )
+        items = [_normalize_item(row) for row in raw_items]
+        return ListPedidosVendaAbertosResponse(
+            items=items,
+            summary=_normalize_summary(raw_summary),
+            portfolio_message=None,
+            portfolio_empty=False,
+            portfolio_seller_id=None,
+        )

@@ -30,6 +30,8 @@
 | Team/manage | Conta tratada como «dentro» (sem item Cliente) |
 | API Conta (path `/{code}/{store}/*`) | Sem `ensure_allows`; contatos CUD liberados |
 | Enrichment / billing-series | **1 par** = Conta (sem filter); **N pares** = lista (KEEP `filter_pairs`) |
+| Pedidos na Conta | `GET /customers/{c}/{s}/open-orders` — TOTVS por par, **sem** membership |
+| Oportunidades na Conta | `account_customer_code` no BFF analytics — **sem** membership de carteira |
 | Pedidos / KPIs / lista MC | KEEP filtro membership |
 
 ## Matriz rota × dono da regra
@@ -42,6 +44,7 @@
 | `POST /customers/enrichment` | 1 par Conta sem filter; N pares `filter_pairs` → api-delpi | MFE → commercial-api |
 | `GET /customers/search` | Sem membership (manage/add / identidade Conta) | MFE → commercial-api → api-delpi |
 | `GET /open-orders/` | commercial-api filtra resposta TOTVS | MFE → commercial-api → `GET …/totvs-open-orders` |
+| `GET /customers/{c}/{s}/open-orders` | Conta 360 sem membership | MFE → commercial-api → `GET …/totvs-open-orders/{c}/{s}` |
 | `GET /open-orders/ops-abertas` | Proxy (sem membership) | MFE → commercial-api → api-delpi |
 | `POST /customers/billing-series` | 1 par Conta sem filter; N pares `filter_pairs` | MFE → commercial-api → api-delpi |
 | `GET /customers/{c}/{s}/outbound-invoices` | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api → `GET …/totvs-outbound-invoices/{c}/{s}` |

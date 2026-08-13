@@ -32,6 +32,9 @@ function buildQuery(
   if (params.seller_id?.trim()) {
     searchParams.set("seller_id", params.seller_id.trim());
   }
+  if (params.account_customer_code?.trim()) {
+    searchParams.set("account_customer_code", params.account_customer_code.trim());
+  }
   if (params.granularity) searchParams.set("granularity", params.granularity);
   if (params.status) searchParams.set("status", params.status);
   if (params.page != null) searchParams.set("page", String(params.page));

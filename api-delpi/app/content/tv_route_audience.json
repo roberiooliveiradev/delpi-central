@@ -5009,6 +5009,21 @@
       },
       "category": "commercial"
     },
+    "list_totvs_open_orders_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS open sales orders by customer",
+          "description": "Pure TOTVS open sales orders for one customer code/store. Used by commercial Account 360 BFF.",
+          "label": "TOTVS open sales orders by customer"
+        },
+        "pt-BR": {
+          "label": "Pedidos em aberto TOTVS por cliente",
+          "summary": "Pedidos em aberto TOTVS de um cliente (código/loja)",
+          "description": "Leitura TOTVS pura por par cliente; Conta 360 via commercial-api."
+        }
+      },
+      "category": "commercial"
+    },
     "list_pending_scheduling_bookings": {
       "category": "system",
       "locale": {

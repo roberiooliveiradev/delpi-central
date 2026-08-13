@@ -284,6 +284,49 @@ def list_commercial_customer_outbound_invoices(
 
 
 @router.get(
+    "/{customer_code}/{customer_store}/open-orders",
+    operation_id="list_commercial_customer_open_orders",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_commercial_customer_open_orders(
+    _request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+):
+    """Conta 360: pedidos do par código/loja sem filtro de membership."""
+    try:
+        result = build_delpi_commercial_gateway().list_open_orders_by_customer(
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
+        data = result.get("data", result)
+        return ok(
+            data,
+            message="Pedidos em aberto do cliente carregados.",
+            operation_id="list_commercial_customer_open_orders",
+        )
+    except LookupError as exc:
+        return fail(
+            str(exc),
+            404,
+            operation_id="list_commercial_customer_open_orders",
+        )
+    except RuntimeError as exc:
+        return fail(
+            str(exc),
+            502,
+            operation_id="list_commercial_customer_open_orders",
+        )
+    except Exception:
+        logger.exception("list_commercial_customer_open_orders_failed")
+        return fail(
+            "Erro interno ao carregar pedidos em aberto do cliente.",
+            500,
+            operation_id="list_commercial_customer_open_orders",
+        )
+
+
+@router.get(
     "/{customer_code}/{customer_store}/contacts-bundle",
     operation_id="get_customer_contacts_bundle",
 )

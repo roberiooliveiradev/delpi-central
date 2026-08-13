@@ -222,6 +222,38 @@ def list_totvs_open_orders_route():
 
 
 @router.get(
+    "/totvs-open-orders/{customer_code}/{customer_store}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_open_orders_by_customer",
+        path="/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_open_orders_by_customer_route(
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+):
+    """Pedidos em aberto de um cliente (TOTVS puro) — Conta 360 via BFF commercial-api."""
+    try:
+        use_case = build_list_pedidos_venda_abertos_use_case()
+        result = use_case.execute_for_customer(customer_code, customer_store)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_totvs_open_orders_by_customer",
+            message="Pedidos em aberto do cliente (TOTVS) carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar pedidos do cliente TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos do cliente TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos em aberto do cliente (TOTVS).",
+            status_code=500,
+        )
+
+
+@router.get(
     "/ops-abertas",
     **OpenApiAgentMetadataBuilder.from_contract(
         "list_ops_abertas_pedidos_venda",

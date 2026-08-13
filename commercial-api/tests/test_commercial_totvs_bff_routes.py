@@ -214,3 +214,31 @@ def test_outbound_invoices_bff_allows_outside_portfolio() -> None:
 
     assert response.status_code == 200
     gateway.list_customer_outbound_invoices.assert_called_once()
+
+
+def test_customer_open_orders_bff_allows_outside_portfolio() -> None:
+    """Conta detalhe: pedidos por cliente sem dump global nem membership."""
+    gateway = MagicMock()
+    gateway.list_open_orders_by_customer.return_value = {
+        "data": {"items": [{"pedido": "1"}], "summary": {"total_linhas": 1}}
+    }
+
+    request = _request("/customers/000001/06/open-orders")
+    request.state.user = _User(["commercial.accounts.view"])
+
+    with patch.object(
+        customer_routes,
+        "build_delpi_commercial_gateway",
+        return_value=gateway,
+    ):
+        response = customer_routes.list_commercial_customer_open_orders(
+            request,
+            customer_code="000001",
+            customer_store="06",
+        )
+
+    assert response.status_code == 200
+    gateway.list_open_orders_by_customer.assert_called_once_with(
+        customer_code="000001",
+        customer_store="06",
+    )

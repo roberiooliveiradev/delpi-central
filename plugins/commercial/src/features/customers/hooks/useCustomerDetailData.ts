@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   enrichPortfolioCustomers,
   searchActiveCustomers,
 } from "../../../api/commercialPortfolioApi";
+import { getCustomerOpenOrdersTotvs } from "../../../api/openOrdersTotvsApi";
+import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import type { CustomerSummary } from "../types/customerSummary";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
-import { useCustomersData, type UseCustomersDataResult } from "./useCustomersData";
 import {
   aggregateCustomerOrders,
   selectAttentionOrders,
 } from "../utils/customerOrderAggregation";
-import { findCustomerByIdentity } from "../utils/customerLookup";
+import { aggregateCustomers } from "../utils/customerAggregation";
 import {
   buildIdentityCustomerSummary,
   mergeCustomerIdentity,
@@ -21,6 +22,8 @@ export type UseCustomerDetailDataResult = {
   loading: boolean;
   refreshing: boolean;
   error: string | null;
+  ordersError: string | null;
+  identityError: string | null;
   hasData: boolean;
   lastSuccessAt: Date | null;
   reload: () => void;
@@ -28,79 +31,137 @@ export type UseCustomerDetailDataResult = {
   customer: CustomerSummary | null | undefined;
   orders: CustomerOrderSummary[];
   attentionOrders: CustomerOrderSummary[];
-  listData: UseCustomersDataResult;
+  enrichmentLoading: boolean;
 };
 
 /**
- * Detalhe Conta: identidade por par (search + enrichment) + pedidos via open-orders.
+ * Detalhe Conta: identidade (search + enrichment 1 par) + pedidos por cliente
+ * (sem dump global `/open-orders/`).
  */
 export function useCustomerDetailData(
   codigo: string,
   loja: string,
   options?: {
     sellerNameByKey?: ReadonlyMap<string, string>;
-    sellerId?: string | null;
   },
 ): UseCustomerDetailDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
-  const listData = useCustomersData(options?.sellerId ?? null, { sellerNameByKey });
   const [identity, setIdentity] = useState<CustomerSummary | null | undefined>(
     undefined,
   );
   const [identityError, setIdentityError] = useState<string | null>(null);
-  const [identityTick, setIdentityTick] = useState(0);
+  const [orderItems, setOrderItems] = useState<OpenOrdersTotvsItem[]>([]);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [ordersReady, setOrdersReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const hasDataRef = useRef(false);
+
+  const reload = useCallback(() => {
+    setReloadKey((value) => value + 1);
+  }, []);
 
   useEffect(() => {
     const code = codigo.trim();
     const store = loja.trim();
     if (!code || !store) {
       setIdentity(null);
+      setOrderItems([]);
+      setOrdersReady(true);
+      setLoading(false);
       return;
     }
+
     const controller = new AbortController();
-    setIdentity(undefined);
+    const isRefresh = hasDataRef.current;
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setIdentityError(null);
+    setOrdersError(null);
+    if (!isRefresh) {
+      setIdentity(undefined);
+      setOrdersReady(false);
+    }
+
     void (async () => {
       try {
-        const [search, enrichItems] = await Promise.all([
-          searchActiveCustomers(code, {
-            page: 1,
-            pageSize: 20,
-            signal: controller.signal,
+        const identityPromise = (async () => {
+          const [search, enrichItems] = await Promise.all([
+            searchActiveCustomers(code, {
+              page: 1,
+              pageSize: 20,
+              signal: controller.signal,
+            }),
+            enrichPortfolioCustomers(
+              [{ customer_code: code, customer_store: store }],
+              controller.signal,
+            ),
+          ]);
+          const hit =
+            search.items.find(
+              (item) =>
+                item.code.trim() === code && item.store.trim() === store,
+            ) ??
+            search.items.find((item) => item.code.trim() === code) ??
+            null;
+          const enrich =
+            enrichItems.find(
+              (item) =>
+                item.customer_code.trim() === code &&
+                item.customer_store.trim() === store,
+            ) ?? null;
+          const sellerName =
+            sellerNameByKey?.get(`${code}|${store}`) ?? null;
+          return buildIdentityCustomerSummary({
+            codigo: code,
+            loja: store,
+            nome: hit?.name ?? null,
+            enrichment: enrich,
+            sellerName,
+          });
+        })();
+
+        const ordersPromise = getCustomerOpenOrdersTotvs(code, store, controller.signal)
+          .then((data) => data.items ?? [])
+          .catch((err: unknown) => {
+            if (controller.signal.aborted) throw err;
+            const message =
+              err instanceof Error
+                ? err.message
+                : "Não foi possível carregar os pedidos em aberto.";
+            setOrdersError(message);
+            return [] as OpenOrdersTotvsItem[];
+          });
+
+        const [shell, items] = await Promise.all([
+          identityPromise.catch((err: unknown) => {
+            if (controller.signal.aborted) throw err;
+            setIdentityError(
+              err instanceof Error ? err.message : "Erro ao carregar identidade.",
+            );
+            return buildIdentityCustomerSummary({
+              codigo: code,
+              loja: store,
+              nome: null,
+              enrichment: null,
+              sellerName: sellerNameByKey?.get(`${code}|${store}`) ?? null,
+            });
           }),
-          enrichPortfolioCustomers(
-            [{ customer_code: code, customer_store: store }],
-            controller.signal,
-          ),
+          ordersPromise,
         ]);
+
         if (controller.signal.aborted) return;
-        const hit =
-          search.items.find(
-            (item) =>
-              item.code.trim() === code && item.store.trim() === store,
-          ) ??
-          search.items.find((item) => item.code.trim() === code) ??
-          null;
-        const enrich =
-          enrichItems.find(
-            (item) =>
-              item.customer_code.trim() === code &&
-              item.customer_store.trim() === store,
-          ) ?? null;
-        const sellerName =
-          sellerNameByKey?.get(`${code}|${store}`) ?? null;
-        const shell = buildIdentityCustomerSummary({
-          codigo: code,
-          loja: store,
-          nome: hit?.name ?? null,
-          enrichment: enrich,
-          sellerName,
-        });
         setIdentity(shell);
+        setOrderItems(items);
+        setOrdersReady(true);
+        hasDataRef.current = true;
+        setLastSuccessAt(new Date());
       } catch (err) {
         if (controller.signal.aborted) return;
         setIdentityError(
-          err instanceof Error ? err.message : "Erro ao carregar identidade.",
+          err instanceof Error ? err.message : "Erro ao carregar a conta.",
         );
         setIdentity(
           buildIdentityCustomerSummary({
@@ -111,15 +172,29 @@ export function useCustomerDetailData(
             sellerName: sellerNameByKey?.get(`${code}|${store}`) ?? null,
           }),
         );
+        setOrdersReady(true);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     })();
+
     return () => controller.abort();
-  }, [codigo, loja, sellerNameByKey, identityTick]);
+  }, [codigo, loja, sellerNameByKey, reloadKey]);
 
   const fromOrders = useMemo(() => {
-    if (!listData.aggregation) return undefined;
-    return findCustomerByIdentity(listData.aggregation.customers, codigo, loja);
-  }, [listData.aggregation, codigo, loja]);
+    if (!ordersReady) return undefined;
+    const aggregated = aggregateCustomers(orderItems);
+    return (
+      aggregated.customers.find(
+        (customer) =>
+          customer.codigo.trim() === codigo.trim() &&
+          customer.loja.trim() === loja.trim(),
+      ) ?? null
+    );
+  }, [orderItems, ordersReady, codigo, loja]);
 
   const customer = useMemo(() => {
     if (identity === undefined && fromOrders === undefined) return undefined;
@@ -136,26 +211,18 @@ export function useCustomerDetailData(
     return selectAttentionOrders(orders, customer.proximaEntrega);
   }, [customer, orders]);
 
-  const reload = () => {
-    listData.reload();
-    setIdentityTick((n) => n + 1);
-  };
-
-  const loading =
-    (identity === undefined && !identityError) ||
-    (listData.loading && customer === undefined);
-  const hasData = Boolean(customer) || listData.hasData;
-
   return {
     loading,
-    refreshing: listData.refreshing,
-    error: identityError || listData.error,
-    hasData,
-    lastSuccessAt: listData.lastSuccessAt,
+    refreshing,
+    error: identityError,
+    ordersError,
+    identityError,
+    hasData: Boolean(customer) || Boolean(lastSuccessAt),
+    lastSuccessAt,
     reload,
     customer,
     orders,
     attentionOrders,
-    listData,
+    enrichmentLoading: loading && identity === undefined,
   };
 }

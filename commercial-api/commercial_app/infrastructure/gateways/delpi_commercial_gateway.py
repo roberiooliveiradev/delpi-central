@@ -105,6 +105,20 @@ class DelpiCommercialGateway:
             params=params,
         )
 
+    def list_open_orders_by_customer(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+    ) -> dict[str, Any]:
+        """Pedidos em aberto de um par código/loja (Conta 360 — sem dump global)."""
+        code = quote(str(customer_code or "").strip(), safe="")
+        store = quote(str(customer_store or "").strip(), safe="")
+        return self._request(
+            "GET",
+            f"/pedidos-venda-abertos/totvs-open-orders/{code}/{store}",
+        )
+
     def list_ops_abertas(self) -> dict[str, Any]:
         return self._request("GET", "/pedidos-venda-abertos/ops-abertas")
 

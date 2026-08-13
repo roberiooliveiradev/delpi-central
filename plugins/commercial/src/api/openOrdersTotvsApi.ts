@@ -24,6 +24,21 @@ export async function getOpenOrdersTotvs(
   return unwrapEnvelope(response, "Erro ao carregar pedidos de venda em aberto.");
 }
 
+/** Conta 360: pedidos do par código/loja (sem dump global nem filtro de carteira). */
+export async function getCustomerOpenOrdersTotvs(
+  customerCode: string,
+  customerStore: string,
+  signal?: AbortSignal,
+): Promise<OpenOrdersTotvsData> {
+  const code = encodeURIComponent(customerCode.trim());
+  const store = encodeURIComponent(customerStore.trim());
+  const response = await httpGet<ApiSuccessResponse<OpenOrdersTotvsData>>(
+    commercialApiUrl(`/customers/${code}/${store}/open-orders`),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar pedidos em aberto do cliente.");
+}
+
 export async function getOpsAbertas(signal?: AbortSignal): Promise<OpsAbertasData> {
   const response = await httpGet<ApiSuccessResponse<OpsAbertasData>>(
     commercialApiUrl("/open-orders/ops-abertas"),

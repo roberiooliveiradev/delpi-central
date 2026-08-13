@@ -595,10 +595,16 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(card, /onActivate=\{openDetail\}/);
   });
 
-  it("nenhuma API nova no detalhe", () => {
+  it("detalhe Conta carrega pedidos por cliente (sem dump open-orders)", () => {
     const page = readSrc("features/customers/pages/CustomerDetailPage.tsx");
     const hook = readSrc("features/customers/hooks/useCustomerDetailData.ts");
-    assert.match(hook, /useCustomersData/);
+    assert.match(hook, /getCustomerOpenOrdersTotvs/);
+    assert.doesNotMatch(hook, /useCustomersData/);
+    assert.match(page, /outsidePortfolioNotice|showPortfolioCoverage/);
+    assert.match(
+      readSrc("features/customers/components/CustomerOpportunitiesSection.tsx"),
+      /account_customer_code/,
+    );
     assert.doesNotMatch(page, /getOpsAbertas|ops-abertas/);
     assert.doesNotMatch(hook, /getOpsAbertas|ops-abertas/);
   });

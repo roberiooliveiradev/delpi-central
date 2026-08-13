@@ -38,6 +38,22 @@ def test_merge_unrestricted_omits_codes():
     assert "customer_codes" not in params
 
 
+def test_merge_account_customer_code_bypasses_portfolio_membership():
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("OTHER", "01")}),
+    )
+    params = merge_totvs_params(
+        scope,
+        {"search": "000001", "account_customer_code": "should-drop-from-base"},
+        account_customer_code="000001",
+    )
+    assert params == {
+        "search": "000001",
+        "customer_codes": "000001",
+    }
+
+
 def test_parse_portfolio_id_csv_dedupes_and_splits():
     assert parse_portfolio_id_csv("a, b", "b,c", None, "") == ["a", "b", "c"]
     assert parse_portfolio_id_csv(None, None) == []

@@ -34,12 +34,17 @@ def _proxy(
     portfolio_id: str | None,
     params: dict[str, Any],
     message: str,
+    account_customer_code: str | None = None,
 ):
     try:
         scope = resolve_portfolio_scope(
             request, seller_id=seller_id, portfolio_id=portfolio_id
         )
-        totvs_params = merge_totvs_params(scope, params)
+        totvs_params = merge_totvs_params(
+            scope,
+            params,
+            account_customer_code=account_customer_code,
+        )
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
             path, params=totvs_params
         )
@@ -426,6 +431,10 @@ def bff_list_proposals(
     search: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    account_customer_code: str | None = Query(
+        default=None,
+        description="Conta 360: filtra OVs deste código sem membership de carteira.",
+    ),
 ):
     return _proxy(
         request,
@@ -433,6 +442,7 @@ def bff_list_proposals(
         path="/proposals",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
+        account_customer_code=account_customer_code,
         params=_common_filters(
             start_date=start_date,
             end_date=end_date,

@@ -56,6 +56,7 @@ export function CustomerOpportunitiesSection({
         search: code,
         sort_by: "proposal_date",
         sort_dir: "desc",
+        account_customer_code: code,
       },
       controller.signal,
     )

@@ -68,6 +68,59 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
 
         return items, summary_row or {}
 
+    def list_open_orders_for_customer(
+        self,
+        customer_code: str,
+        customer_store: str,
+    ) -> tuple[list[dict], dict]:
+        """Pedidos em aberto de um par código/loja (Conta 360 — sem dump global)."""
+        code = str(customer_code or "").strip()
+        store = str(customer_store or "").strip()
+        if not code or not store:
+            return [], {
+                "total_linhas": 0,
+                "valor_total_aberto": 0,
+                "saldo_total": 0,
+                "itens_com_estoque": 0,
+                "itens_estoque_parcial": 0,
+                "itens_sem_estoque": 0,
+            }
+
+        customer_where = """
+            WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ?
+              AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?
+        """
+        params = (code, store)
+
+        with self:
+            summary_row = self.execute_one(
+                f"""
+                SELECT
+                    COUNT(*) AS total_linhas,
+                    ISNULL(SUM(v.valor_aberto), 0) AS valor_total_aberto,
+                    ISNULL(SUM(v.saldo), 0) AS saldo_total,
+                    SUM(CASE WHEN v.no_estoque >= v.saldo THEN 1 ELSE 0 END) AS itens_com_estoque,
+                    SUM(
+                        CASE WHEN v.no_estoque > 0 AND v.no_estoque < v.saldo THEN 1 ELSE 0 END
+                    ) AS itens_estoque_parcial,
+                    SUM(CASE WHEN v.no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
+                {_ITEMS_FROM}
+                {customer_where}
+                """,
+                params,
+            )
+            items = self.execute_query(
+                f"""
+                SELECT {_ITEMS_SELECT}
+                {_ITEMS_FROM}
+                {customer_where}
+                ORDER BY v.data_entrega DESC
+                """,
+                params,
+            )
+
+        return items, summary_row or {}
+
     def aggregate_customer_open_order_metrics(
         self,
         customer_keys: Sequence[tuple[str, str]] | None = None,

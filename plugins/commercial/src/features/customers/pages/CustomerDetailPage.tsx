@@ -24,6 +24,7 @@ import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
 import { useCustomerActivities } from "../hooks/useCustomerActivities";
 import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
 import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
+import { isCustomerInViewerPortfolios } from "../utils/customerMembership";
 import {
   buildCustomerDetailSearch,
   customerDetailPanelId,
@@ -57,6 +58,7 @@ export function CustomerDetailPage({
 }: CustomerDetailPageProps) {
   const {
     canUseTeamScope,
+    canManagePortfolios,
     sellers,
     myPortfolios,
     filterablePortfolios,
@@ -78,30 +80,41 @@ export function CustomerDetailPage({
     return new Map<string, string>();
   }, [canUseTeamScope, sellers, myPortfolios]);
 
+  const inViewerPortfolio = useMemo(
+    () => isCustomerInViewerPortfolios(codigo, loja, myPortfolios),
+    [codigo, loja, myPortfolios],
+  );
+  const showPortfolioCoverage =
+    inViewerPortfolio || canUseTeamScope || canManagePortfolios;
+
   const scopePortfolioIds = useMemo(
-    () => filterablePortfolios.map((portfolio) => portfolio.id).filter(Boolean),
-    [filterablePortfolios],
+    () =>
+      showPortfolioCoverage
+        ? filterablePortfolios.map((portfolio) => portfolio.id).filter(Boolean)
+        : [],
+    [filterablePortfolios, showPortfolioCoverage],
   );
   const sharedCoverage = useCustomerSharedCoverage(
-    [{ codigo: codigo, loja: loja }],
+    showPortfolioCoverage ? [{ codigo: codigo, loja: loja }] : [],
     scopePortfolioIds,
   );
-  const customerSharedCoverage =
-    sharedCoverage.byKey.get(customerKey(codigo, loja)) ?? null;
+  const customerSharedCoverage = showPortfolioCoverage
+    ? sharedCoverage.byKey.get(customerKey(codigo, loja)) ?? null
+    : null;
 
   const {
     loading,
     refreshing,
     error,
+    ordersError,
     lastSuccessAt,
     reload,
     customer: rawCustomer,
     orders,
     attentionOrders,
-    listData,
+    enrichmentLoading,
   } = useCustomerDetailData(codigo, loja, {
     sellerNameByKey,
-    sellerId: listDeepLink.sellerId,
   });
 
   const customer = rawCustomer;
@@ -219,7 +232,7 @@ export function CustomerDetailPage({
 
       {error && customer ? (
         <CommercialStateBanner>
-          <p>Não foi possível atualizar os pedidos em aberto: {error}</p>
+          <p>Não foi possível atualizar o cadastro: {error}</p>
           <CommercialActionButton
             variant="ghost"
             onClick={reload}
@@ -230,22 +243,22 @@ export function CustomerDetailPage({
         </CommercialStateBanner>
       ) : null}
 
-      {customer && listData.enrichment.error ? (
+      {ordersError && customer ? (
         <CommercialStateBanner>
-          <p>
-            Cadastro e faturamento com cobertura parcial
-            {listData.enrichment.total > 0
-              ? ` (${listData.enrichment.covered}/${listData.enrichment.total})`
-              : ""}
-            : {listData.enrichment.error}
-          </p>
+          <p>Não foi possível atualizar os pedidos em aberto: {ordersError}</p>
           <CommercialActionButton
             variant="ghost"
             onClick={reload}
-            disabled={refreshing || listData.enrichment.loading}
+            disabled={refreshing}
           >
             Tentar novamente
           </CommercialActionButton>
+        </CommercialStateBanner>
+      ) : null}
+
+      {!showPortfolioCoverage && customer ? (
+        <CommercialStateBanner>
+          <p>{CM_HELP.customerDetail.outsidePortfolioNotice}</p>
         </CommercialStateBanner>
       ) : null}
 
@@ -273,7 +286,7 @@ export function CustomerDetailPage({
                   canViewActivities={canViewWorklist}
                   canViewAnalytics={canViewAnalytics}
                   coveragePartial={
-                    !listData.enrichment.loading &&
+                    !enrichmentLoading &&
                     !hasCustomerEnrichmentCoverage(customer)
                   }
                   basePath={basePath}
