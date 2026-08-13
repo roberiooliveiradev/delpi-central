@@ -282,7 +282,7 @@ Prioridade da ata: **visão gerencial primeiro**. **Documento / área comercial 
 
 **Onda A (entregue — baseline de código, ago/2026):** fichas C1 + workshop [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md); Overview com presets de período, card carteira lado a lado (sem soma) e série de hit rate. Assinatura formal das fichas **não** bloqueia a engenharia já no `main`.
 
-**Onda B — comparação 2 anos (entregue — overlay YoY):** gráficos de ROL e taxa de conversão no Overview (2ª chamada às séries existentes com datas −1 ano; todas as granularidades). **B restante (fora do overlay):** projeção/carteira futura, soma ROL+carteira, delta YoY nos KPI cards, UX bruto vs líquido.
+**Onda B — comparação 2 anos (entregue — overlay YoY):** gráficos de ROL e taxa de conversão no Overview (2ª chamada às séries existentes com datas −1 ano; todas as granularidades). **B restante:** MVP `KPI-CARTEIRA-HORIZON` (buckets + gap vs meta) **em curso**; soma ROL+carteira, delta YoY nos KPI cards, UX bruto vs líquido e FCT declarado permanecem backlog.
 
 Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código de fórmula nova só após homologação quando a ficha estiver **bloqueada** para mudança.
 
