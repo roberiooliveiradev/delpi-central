@@ -126,23 +126,37 @@ function resolveTone(
   autoTone: boolean,
   dangerBelow: number,
   warningBelow: number,
-  value: number | null,
-  goal: number | null,
 ): SpeedometerGaugeTone {
   if (tone) return tone;
   if (!autoTone) return "neutral";
-  if (value != null && goal != null && Number.isFinite(goal) && goal > 0) {
-    if (value >= goal) return "success";
-    if (value >= goal * 0.95) return "warning";
-    return "danger";
-  }
   if (ratio < dangerBelow) return "danger";
   if (ratio < warningBelow) return "warning";
   return "success";
 }
 
+/**
+ * Faixas do arco (0–1). Com meta, o verde começa na meta e o vermelho fica ~10% abaixo.
+ */
+export function resolveSpeedometerZoneThresholds(args: {
+  goalRatio: number | null;
+  dangerBelow: number;
+  warningBelow: number;
+}): { dangerBelow: number; warningBelow: number } {
+  const { goalRatio, dangerBelow, warningBelow } = args;
+  if (goalRatio == null || !Number.isFinite(goalRatio) || goalRatio <= 0) {
+    return { dangerBelow, warningBelow };
+  }
+  const warning = clamp(goalRatio, 0.05, 1);
+  const danger = clamp(Math.min(warning * 0.9, warning - 0.05), 0.02, Math.max(0.03, warning - 0.01));
+  return { dangerBelow: danger, warningBelow: warning };
+}
+
 function defaultFormat(value: number): string {
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
+function formatLegendPct(ratio: number): string {
+  return `${Math.round(ratio * 100)}`;
 }
 
 function toneLabel(tone: SpeedometerGaugeTone): string {
@@ -193,16 +207,19 @@ export function SpeedometerGauge({
   const ratio = numeric == null ? 0 : clamp((numeric - min) / span, 0, 1);
   const goalRatio =
     goalNumeric == null ? null : clamp((goalNumeric - min) / span, 0, 1);
+  const zonesResolved = resolveSpeedometerZoneThresholds({
+    goalRatio,
+    dangerBelow,
+    warningBelow,
+  });
   const needleAngle = START_ANGLE - ratio * SWEEP;
   const tipPoint = polar(CX, CY, R - 8, needleAngle);
   const resolvedTone = resolveTone(
     ratio,
     tone,
     autoTone,
-    dangerBelow,
-    warningBelow,
-    numeric,
-    goalNumeric,
+    zonesResolved.dangerBelow,
+    zonesResolved.warningBelow,
   );
   const toneColor = SPEEDOMETER_TONE_COLORS[resolvedTone];
   const fillPath =
@@ -210,7 +227,7 @@ export function SpeedometerGauge({
   const display = numeric == null ? "—" : formatValue(numeric);
   const goalDisplay = goalNumeric == null ? null : formatValue(goalNumeric);
   const goalCaption =
-    goalDisplay == null ? null : `${goalLabel}: ${goalDisplay}${unit}`;
+    goalDisplay == null ? null : `${goalLabel}: ${goalDisplay}${unit ? ` ${unit}` : ""}`;
   const accessible =
     ariaLabel ||
     [
@@ -233,8 +250,8 @@ export function SpeedometerGauge({
           .filter(Boolean)
           .join(" · "));
 
-  const dangerEnd = START_ANGLE - dangerBelow * SWEEP;
-  const warningEnd = START_ANGLE - warningBelow * SWEEP;
+  const dangerEnd = START_ANGLE - zonesResolved.dangerBelow * SWEEP;
+  const warningEnd = START_ANGLE - zonesResolved.warningBelow * SWEEP;
   const zones = [
     { tone: "danger" as const, from: START_ANGLE, to: dangerEnd },
     { tone: "warning" as const, from: dangerEnd, to: warningEnd },
@@ -242,9 +259,8 @@ export function SpeedometerGauge({
   ];
 
   const goalAngle = goalRatio == null ? null : START_ANGLE - goalRatio * SWEEP;
-  const goalOuter = goalAngle == null ? null : polar(CX, CY, R + 10, goalAngle);
-  const goalInner = goalAngle == null ? null : polar(CX, CY, R - 16, goalAngle);
-  const goalLabelPos = goalAngle == null ? null : polar(CX, CY, R + 18, goalAngle);
+  const goalOuter = goalAngle == null ? null : polar(CX, CY, R + 8, goalAngle);
+  const goalInner = goalAngle == null ? null : polar(CX, CY, R - 14, goalAngle);
 
   return (
     <div
@@ -255,6 +271,8 @@ export function SpeedometerGauge({
       aria-label={accessible || "Velocímetro"}
       data-tone={resolvedTone}
       data-goal={goalNumeric == null ? undefined : String(goalNumeric)}
+      data-zone-warning={String(zonesResolved.warningBelow)}
+      data-zone-danger={String(zonesResolved.dangerBelow)}
       tabIndex={0}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
@@ -270,8 +288,8 @@ export function SpeedometerGauge({
       >
         <defs>
           <linearGradient id={`${uid}-fill`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={toneColor} stopOpacity={0.55} />
-            <stop offset="100%" stopColor={toneColor} />
+            <stop offset="0%" stopColor={toneColor} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={toneColor} stopOpacity={0.75} />
           </linearGradient>
         </defs>
         {zones.map((zone) =>
@@ -284,7 +302,7 @@ export function SpeedometerGauge({
               stroke={SPEEDOMETER_TONE_COLORS[zone.tone]}
               strokeWidth={14}
               strokeLinecap="butt"
-              opacity={0.35}
+              opacity={0.88}
             />
           ) : null,
         )}
@@ -302,8 +320,9 @@ export function SpeedometerGauge({
             d={fillPath}
             fill="none"
             stroke={`url(#${uid}-fill)`}
-            strokeWidth={12}
+            strokeWidth={6}
             strokeLinecap="round"
+            opacity={0.9}
           />
         ) : null}
         {goalOuter && goalInner ? (
@@ -314,24 +333,10 @@ export function SpeedometerGauge({
               y1={goalInner.y}
               x2={goalOuter.x}
               y2={goalOuter.y}
-              strokeWidth={3}
+              strokeWidth={2.5}
               strokeLinecap="round"
             />
-            <circle cx={goalOuter.x} cy={goalOuter.y} r={3.5} />
-            {goalLabelPos && goalDisplay ? (
-              <text
-                x={goalLabelPos.x}
-                y={goalLabelPos.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className={classNames.goalTick}
-                fontSize={8}
-                fontWeight={700}
-              >
-                {goalDisplay}
-                {unit}
-              </text>
-            ) : null}
+            <circle className={classNames.goalTick} cx={goalOuter.x} cy={goalOuter.y} r={3} />
           </g>
         ) : null}
         {numeric != null ? (
@@ -363,13 +368,17 @@ export function SpeedometerGauge({
       {showZonesLegend ? (
         <ul className={classNames.legend} aria-hidden="true">
           <li className={classNames.legendItem} data-tone="danger">
-            &lt; {(dangerBelow * 100).toFixed(0)}%
+            &lt; {formatLegendPct(zonesResolved.dangerBelow)}
+            {unit}
           </li>
           <li className={classNames.legendItem} data-tone="warning">
-            {(dangerBelow * 100).toFixed(0)}–{(warningBelow * 100).toFixed(0)}%
+            {formatLegendPct(zonesResolved.dangerBelow)}
+            {unit}–{formatLegendPct(zonesResolved.warningBelow)}
+            {unit}
           </li>
           <li className={classNames.legendItem} data-tone="success">
-            ≥ {(warningBelow * 100).toFixed(0)}%
+            ≥ {formatLegendPct(zonesResolved.warningBelow)}
+            {unit}
           </li>
         </ul>
       ) : null}

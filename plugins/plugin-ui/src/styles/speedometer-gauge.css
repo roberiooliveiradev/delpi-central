@@ -102,10 +102,11 @@
   text-align: center;
   color: var(--delpi-ui-accent, #089bdb);
   line-height: 1.25;
+  letter-spacing: 0.01em;
 }
 
 .delpi-ui-speedometer-gauge__goal-marker {
-  fill: var(--delpi-ui-accent, #089bdb);
+  pointer-events: none;
 }
 
 .delpi-ui-speedometer-gauge__goal-tick {

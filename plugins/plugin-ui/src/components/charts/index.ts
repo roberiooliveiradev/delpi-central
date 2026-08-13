@@ -57,6 +57,7 @@ export {
 export {
   SpeedometerGauge,
   SPEEDOMETER_TONE_COLORS,
+  resolveSpeedometerZoneThresholds,
   speedometerGaugeBemClasses,
   type SpeedometerGaugeClassNames,
   type SpeedometerGaugeProps,

@@ -41,6 +41,17 @@ describe("SpeedometerGauge", () => {
     expect(screen.getByText(/Meta:\s*95/)).toBeTruthy();
     expect(container.querySelector("[data-goal='95']")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker")).toBeTruthy();
+    // texto da meta só no caption — não colado no arco
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker text")).toBeNull();
+  });
+
+  it("com meta, faixas usam a meta como limiar de sucesso", () => {
+    const { container } = render(<SpeedometerGauge value={96} goal={95} />);
+    expect(container.querySelector("[data-zone-warning='0.95']")).toBeTruthy();
+    const successLegend = container.querySelector(
+      ".delpi-ui-speedometer-gauge__legend-item[data-tone='success']",
+    );
+    expect(successLegend?.textContent?.replace(/\s+/g, " ")).toMatch(/≥\s*95%/);
   });
 
   it("mostra traço quando valor é nulo", () => {
