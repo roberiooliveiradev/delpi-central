@@ -18,7 +18,7 @@ Este documento responde, para cada ponto da ata: **já temos?** · **onde acessa
 | Dimensão | Cobertura aproximada no Portal |
 |----------|--------------------------------|
 | Área comercial central + navegação | **Existe** |
-| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit C1 + YoY Overview **entregues**; soma ROL+carteira / projeção / gap meta ainda fora |
+| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit C1 + YoY + **gap/meta MVP** entregues; soma ROL+carteira / FCT declarado ainda fora |
 | Visão do vendedor (Conta 360 pré-reunião) | **Parcial** — faturamento, pedidos, opp, contatos, tarefas; sem forecast/ofertas SLA |
 | Ofertas (produtividade, etapas, SLA) | **Parcial** — listagens OV/ADY + hit rate; sem tempo/etapa/área |
 | Clientes (ativo, recuperado, ticket, família, WEG) | **Parcial / bloqueado** — lista operacional; fichas KPI em rascunho |
@@ -128,7 +128,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 |-------------|--------|--------------|-------|---------------------|
 | ROL + série + metas % | **Existe** | `/overview` | rol targets + series | Ficha `KPI-ROL` |
 | Carteira + ROL / itens e valores / MTD YTD / 2 anos | **Parcial / bloqueado** | ROL sim; consolidado não | — | Onda A → B |
-| Visão temporal (realizado, carteira mês/futuro, gap meta, antecipação) | **Em curso (MVP temporal)** | Overview + Meus pedidos | `KPI-CARTEIRA-HORIZON` · BFF `open-portfolio-horizon` | FCT declarado (WF-09) permanece backlog |
+| Visão temporal (realizado, carteira mês/futuro, gap meta, antecipação) | **MVP entregue** | Overview + Meus pedidos + Home/Carteira atalhos | `KPI-CARTEIRA-HORIZON` · BFF `open-portfolio-horizon` · `deliveryHorizon` | FCT declarado (WF-09) permanece backlog |
 | Atualização automática da carteira (postergações) | **Parcial** | Pedidos refletem TOTVS | open-orders | UX «postergado vs disponível» |
 | Bruto vs líquido explícito | **Parcial** | ROL líquido; pedidos podem ser brutos | — | Política por indicador (Onda A) |
 | Distinguir carteira comercial × programação PCP | **Parcial** | Pedidos = comercial; factory-status ≠ PCP completo | — | Nunca rotular PCP como carteira (dor #4) |
@@ -282,7 +282,7 @@ Prioridade da ata: **visão gerencial primeiro**. **Documento / área comercial 
 
 **Onda A (entregue — baseline de código, ago/2026):** fichas C1 + workshop [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md); Overview com presets de período, card carteira lado a lado (sem soma) e série de hit rate. Assinatura formal das fichas **não** bloqueia a engenharia já no `main`.
 
-**Onda B — comparação 2 anos (entregue — overlay YoY):** gráficos de ROL e taxa de conversão no Overview (2ª chamada às séries existentes com datas −1 ano; todas as granularidades). **B restante:** MVP `KPI-CARTEIRA-HORIZON` (buckets + gap vs meta) **em curso**; soma ROL+carteira, delta YoY nos KPI cards, UX bruto vs líquido e FCT declarado permanecem backlog.
+**Onda B — comparação 2 anos (entregue — overlay YoY):** gráficos de ROL e taxa de conversão no Overview (2ª chamada às séries existentes com datas −1 ano; todas as granularidades). **MVP `KPI-CARTEIRA-HORIZON` entregue** (buckets + gap vs meta + chips/deep links); soma ROL+carteira, delta YoY nos KPI cards, UX bruto vs líquido e FCT declarado permanecem backlog.
 
 Ondas **não** reinventam fases do playbook — amarram lacunas da matriz a donos e dependências. Implementação de código de fórmula nova só após homologação quando a ficha estiver **bloqueada** para mudança.
 

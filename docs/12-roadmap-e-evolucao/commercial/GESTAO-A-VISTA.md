@@ -51,10 +51,10 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | Página | Pergunta | Obrigatório | Não trazer |
 |--------|----------|-------------|------------|
 | Início | O que fazer agora / para onde ir? | Saudação; KPIs carteira; eventos; launcher | BI ROL/funil |
-| Visão geral | Como está o comercial no período? | Filtros (+**carteira** + **Unidade** SC/ES + atalhos período); KPIs (ROL, **carteira aberta agora**, hit rate, OTD…); ROL Dia–Ano + **YoY**; funil; série hit rate + **YoY**; **export** ROL/funil/série conversão | Aprofundar; prévia OV; export OTD/Opp; soma ROL+carteira |
+| Visão geral | Como está o comercial no período? | Filtros (+**carteira** + **Unidade** SC/ES + atalhos período); KPIs (ROL, **carteira aberta agora**, **gap vs meta**, hit rate, OTD…); painel **carteira no tempo**; ROL Dia–Ano + **YoY**; funil; série hit rate + **YoY**; **export** ROL/funil/série conversão | Aprofundar; prévia OV; export OTD/Opp; soma ROL+carteira |
 | Minhas tarefas | Qual minha fila? | Buckets; CRUD tarefa | Pedidos / ROL |
-| Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; tabela | Série OTD histórica |
-| Minha Carteira | Quem são os clientes? | Lista; clique→Conta | BI período |
+| Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; **Concentrar** (horizonte); tabela | Série OTD histórica |
+| Minha Carteira | Quem são os clientes? | Lista; clique→Conta; atalho **Ver atrasos** → pedidos | BI período |
 | Conta · Opp | Quais OVs deste cliente? | Lista filtrada por código/loja | Placeholder CTA |
 | OTD | Pontualidade no período? | %; série SC/ES; linhas | Chip do dia (Pedidos) |
 | Oportunidades | Quais OVs no período (global)? | Lista + busca | ADY |
@@ -65,7 +65,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 
 | | Início `/` | Visão geral `/overview` |
 |--|------------|-------------------------|
-| Papel | Launcher (main) + eventos (side) | BI: filtros Unidade SC/ES, KPIs (incl. carteira aberta), ROL + YoY, funil, série hit rate + YoY, export |
+| Papel | Launcher (main) + eventos (side) | BI: filtros Unidade SC/ES, KPIs (carteira aberta, gap vs meta, horizonte), ROL + YoY, funil, série hit rate + YoY, export |
 | Não fazer | Duplicar faixa BI completa | Faixa Aprofundar; hospedar CRUD carteiras |
 
 ## Duas “propostas”
@@ -88,6 +88,8 @@ Fonte MFE: `plugins/commercial/src/content/overviewMetricsCatalog.ts`.
 | `rol_new_business` | ROL novos negócios |
 | `closing_rate` | Conversão |
 | `open_portfolio` | Carteira aberta (agora) |
+| `gap_to_target` | Gap vs meta ROL |
+| `open_portfolio_horizon` | Carteira no tempo (buckets) |
 | `otd` | OTD |
 | `new_business_pct` | % novos negócios |
 | `rol_series` | Evolução de ROL (+ YoY opcional) |

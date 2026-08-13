@@ -128,7 +128,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Módulo canônico | `OpenOrdersHorizonBucketService` (commercial-api); MFE **não** reimplementa regra de data |
 | Fonte | `GET /analytics/open-portfolio-horizon` (+ `deliveryHorizon` no envelope `GET /open-orders/`) |
 | Escopo | Mesmo membership / `seller_id` do open-portfolio-summary |
-| Status | **em_implementacao** |
+| Status | **implementado_mvp** (homologação de limites de bucket ainda aberta) |
 
 ### Checklist de homologação (KPI-CARTEIRA-HORIZON)
 

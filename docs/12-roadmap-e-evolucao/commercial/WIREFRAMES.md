@@ -50,7 +50,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | Rota (relativa a `/apps/commercial`) | Wireframe | Status | Notas |
 |--------------------------------------|-----------|--------|-------|
 | `/` | WF-01R-L | **entregue** | Hub launcher + eventos |
-| `/overview` | **WF-OV** | **entregue** | KPIs + carteira aberta + ROL (+YoY) + funil + série hit rate (+YoY) |
+| `/overview` | **WF-OV** | **entregue** | KPIs + carteira aberta + **gap vs meta** + **carteira no tempo** + ROL (+YoY) + funil + série hit rate (+YoY) |
 | `/analytics` | — | **alias** | Redirect → `/overview` |
 | `/gestao` | — | **alias** | Redirect → `/overview` |
 | `/my-tasks` · `/my-day` | WF-TASKS / WF-06R | **entregue** | Alias my-day |
@@ -155,6 +155,8 @@ Idle / Focus: [🔍 Buscar…]  ← só borda do __field (accent no focus)
 
 ```text
 [TriangleAlert] linhas em atraso …     [Ver atrasos]
+[ClipboardList] entregas deste mês …   [Ver mês]     ← deep link date_start/date_end
+[BarChart3]     gap vs meta / horizonte … [Abrir Overview]  ← só analytics.view
 [CircleAlert]   follow-ups atrasados … [Abrir…]
 Fila [Clock Atrasadas n] [Sun Hoje n] [Arrow Depois n]
 [ClipboardList] título tarefa …        [Abrir]
@@ -186,13 +188,15 @@ Favoritos
 ### WF-OV — Visão geral `/overview`
 
 **Objetivo:** dashboard BI do período (filtros + KPIs + séries + funil). **Sem** Aprofundar / prévia OV.  
-**Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades.
+**Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades.  
+**MVP temporal (KPI-CARTEIRA-HORIZON):** 1× `GET /analytics/open-portfolio-horizon`; card **Gap vs meta** (`max(meta_SI − ROL, 0)`); painel **Carteira no tempo** com chips → deep link Meus pedidos (`focus=late` / `date_start`–`date_end`). **Fora:** soma ROL+carteira; F6.
 
 ```text
 ┌─ PageHero «Visão geral» ────────────────────────────── [Atualizar] ─┐
 ┌─ Filtros + atalhos de período (hoje…12m) + Unidade + Segmento + Carteira† ┐
-┌─ KPIs (≤8): ROL · Carteira aberta (agora) · Hit rate · OTD · … ─────┐
-│  Carteira: valor + linhas · help ≠ PCP · ≠ soma com ROL              │
+┌─ KPIs (≤8): ROL · Carteira aberta (agora) · Gap vs meta · Hit rate · OTD · … ─┐
+│  Gap: buraco vs meta ROL · ao lado valor do mês corrente (contexto, sem soma) │
+┌─ Carteira no tempo (chips) → Meus pedidos (atraso / mês / 1–3m / depois) ──┐
 ┌─ Evolução ROL [Dia–Ano] [Comparar ano anterior] [Export] ─┬─ Funil ─┐
 │ séries SC/ES (+ prior tracejado se YoY) · drill só ano atual         │
 ┌─ Evolução hit rate [Dia–Ano] [Comparar ano anterior] [Export] ──────┐
@@ -404,7 +408,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 ```
 ┌─ PageHero (card único) ───────────────────────────────────────────────────┐
 │ PEDIDOS · highlights Linhas / Valor / Após filtros         [↻ Atualizar] │
-│ Carteira · Atenção chips · FilterBar (busca/filial/cliente/datas)         │
+│ Carteira · Atenção · **Concentrar** (Todos / Atrasado / Este mês / Futuro) │
+│ FilterBar (busca/filial/cliente/datas) · chips usam deliveryHorizon do BFF │
 └───────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard ─ [Tabela|Cards] ─ Excel · Fonte · Colunas ──────────────────┐
 │ Tabela: Cobertura (InlineMeter) · Prev. OP + badge · Status · Atraso badge│
@@ -425,6 +430,8 @@ sort resetam a página. `seller_id` só é aceito com `team_scope` e portfolio i
 válido. O `replaceState` roda apenas na rota exata `/open-orders`; linha e OP
 preservam o estado completo no retorno. O legado `?pedido=&linha=&filial=` é
 migrado após localizar a linha. Home pode emitir `?focus=late` / `?stock=…`.
+Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
+`buildOpenOrdersHorizonListHref` (`focus=late` ou `date_start`/`date_end`).
 
 **Mobile (≤768px):** default Cards na 1ª visita; hero e página de detalhe empilham.
 
@@ -507,9 +514,9 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 (ou gestão com team scope).
 
 ```text
-┌─ PageHero · Minha Carteira ─────────────────────────── [Atualizar] ──────┐
-│ Clientes no recorte 24 │ Valor aberto R$ 1,9 mi │ Após filtros 7        │
-│ Atualizado 09:04                                                       │
+┌─ PageHero · Minha Carteira ── [Ver atrasos (n)] [Atualizar] ──────────────┐
+│ Clientes · Valor aberto · Com atraso · Após filtros                     │
+│ Atualizado 09:04 · CTA atrasos → /open-orders?focus=late (sem dump extra) │
 │ Carteira [Todas as carteiras ▾]                                       │
 │ Foco [Todos] [Atenção] [Em dia] [Sem venda 60d]                       │
 │ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
