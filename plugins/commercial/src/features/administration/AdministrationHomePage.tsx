@@ -204,10 +204,17 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
             </CommercialActionButton>
             <CommercialActionButton
               variant="ghost"
-              onClick={() => navigatePluginView("administration_members", { basePath })}
+              onClick={() => navigatePluginView("administration_team", { basePath })}
             >
               <Users size={16} strokeWidth={1.75} aria-hidden="true" />
-              {copy.panel.openMembers}
+              {copy.panel.openTeam}
+            </CommercialActionButton>
+            <CommercialActionButton
+              variant="ghost"
+              onClick={() => navigatePluginView("administration_groups", { basePath })}
+            >
+              <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
+              {copy.panel.openGroups}
             </CommercialActionButton>
           </div>
         )}
