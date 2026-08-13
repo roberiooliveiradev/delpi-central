@@ -294,7 +294,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
       ) : null}
 
       {!loading && groups.length > 0 ? (
-        <CommercialDataCardsGrid aria-label={copy.title}>
+        <CommercialDataCardsGrid ariaLabel={copy.title}>
           {groups.map((group) => {
             const memberIds = new Set(group.members.map((member) => member.user_id));
             const pickerValue = pickerByGroup[group.id] ?? [];

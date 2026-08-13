@@ -10,6 +10,7 @@ import {
   Shield,
   Trash2,
   UserRound,
+  UsersRound,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
@@ -540,16 +541,43 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       <CommercialSectionCard
         title={USER_ACCESS_COPY.groupsTitle}
         subtitle={USER_ACCESS_COPY.groupsSubtitle}
+        actions={
+          canManagePortfolios || isAdmin ? (
+            <CommercialActionButton
+              variant="ghost"
+              title={USER_ACCESS_COPY.groupsManageHint}
+              onClick={() =>
+                navigatePluginView("administration_groups", { basePath })
+              }
+            >
+              <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
+              {USER_ACCESS_COPY.groupsManage}
+            </CommercialActionButton>
+          ) : null
+        }
       >
         {(profile.groups ?? []).length === 0 ? (
           <p className="cm-muted">{USER_ACCESS_COPY.groupsEmpty}</p>
         ) : (
-          <div className="cm-nav-row">
+          <div className="cm-user-profile__portfolio-grid">
             {(profile.groups ?? []).map((group) => (
-              <CommercialStatusBadge
+              <CommercialDataRecordCard
                 key={group.id}
-                label={group.name}
-                variant={group.active ? "info" : "neutral"}
+                leading={<UsersRound size={18} aria-hidden />}
+                title={group.name}
+                subtitle={
+                  group.active ? null : USER_ACCESS_COPY.groupInactive
+                }
+                status={
+                  <CommercialStatusBadge
+                    label={
+                      group.active
+                        ? USER_ACCESS_COPY.groupActive
+                        : USER_ACCESS_COPY.groupInactive
+                    }
+                    variant={group.active ? "info" : "neutral"}
+                  />
+                }
               />
             ))}
           </div>

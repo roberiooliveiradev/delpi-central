@@ -14,19 +14,23 @@ describe("user profile groups (E8)", () => {
     assert.match(source, /groups\?:/);
   });
 
-  it("página renderiza chips de Grupos somente leitura", () => {
+  it("página renderiza cards de Grupos somente leitura e deep link Admin", () => {
     const source = readFileSync(
       join(root, "src/features/users/UserProfilePage.tsx"),
       "utf8",
     );
     assert.match(source, /USER_ACCESS_COPY\.groupsTitle/);
     assert.match(source, /profile\.groups/);
+    assert.match(source, /CommercialDataRecordCard/);
     assert.match(source, /CommercialStatusBadge/);
+    assert.match(source, /administration_groups/);
+    assert.match(source, /groupsManage/);
   });
 
   it("copy de grupos está no content", () => {
     const source = readFileSync(join(root, "src/content/userAccess.json"), "utf8");
     assert.match(source, /"groupsTitle"/);
     assert.match(source, /"groupsEmpty"/);
+    assert.match(source, /"groupsManage"/);
   });
 });
