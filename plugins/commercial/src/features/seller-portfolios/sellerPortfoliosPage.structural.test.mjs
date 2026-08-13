@@ -64,6 +64,14 @@ describe("seller-portfolios kit-first", () => {
       readFileSync(join(featureDirectory, "SellerPortfolioDetail.tsx"), "utf8"),
       /PORTFOLIO_MEMBERS_CONTENT|has_portal_access/,
     );
+    assert.match(
+      readFileSync(join(featureDirectory, "SellerPortfolioDetail.tsx"), "utf8"),
+      /isOrphan|orphanBanner|emptyTitle/,
+    );
+    assert.match(
+      readFileSync(join(pluginRoot, "src/content/portfolioMembersContent.ts"), "utf8"),
+      /emptyTitle|orphanBanner|emptyCta/,
+    );
     assert.match(orgSource, /Por carteira/);
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /CommercialOrgMembershipFlow/);

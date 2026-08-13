@@ -51,7 +51,7 @@ type SellerPortfolioDetailProps = {
 function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
   const members = portfolio.members ?? [];
   if (members.length > 0) return members;
-  const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+  const owner = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
   return owner ? [{ user_id: owner, role: "owner" }] : [];
 }
 
@@ -95,6 +95,7 @@ export function SellerPortfolioDetail({
 
   const linked = portfolio.customers ?? [];
   const members = resolveMembers(portfolio);
+  const isOrphan = members.length === 0;
   const memberIds = useMemo(
     () => new Set(members.map((member) => member.user_id)),
     [members],
@@ -316,9 +317,17 @@ export function SellerPortfolioDetail({
         </div>
       </CommercialSectionCard>
 
+      {isOrphan ? (
+        <CommercialStateBanner>{PORTFOLIO_MEMBERS_CONTENT.orphanBanner}</CommercialStateBanner>
+      ) : null}
+
       <CommercialSectionCard
         title={`Usuários (${members.length.toLocaleString("pt-BR")})`}
-        subtitle="Usuário com acesso ao Portal Comercial"
+        subtitle={
+          isOrphan
+            ? PORTFOLIO_MEMBERS_CONTENT.sectionSubtitleOrphan
+            : PORTFOLIO_MEMBERS_CONTENT.sectionSubtitleWithOwner
+        }
         hint={CM_HELP.sellerPortfolios.members}
       >
         <div className="cm-portfolios-detail-block">
@@ -339,9 +348,13 @@ export function SellerPortfolioDetail({
             }}
             maxSelected={1}
             labels={{
-              title: "Usuário com acesso ao Portal Comercial",
+              title: isOrphan
+                ? "Adicionar responsável"
+                : "Usuário com acesso ao Portal Comercial",
               hint: CM_HELP.sellerPortfolios.membersAdd,
-              placeholder: "Buscar para adicionar…",
+              placeholder: isOrphan
+                ? "Buscar responsável…"
+                : "Buscar para adicionar…",
             }}
           />
 
@@ -349,11 +362,13 @@ export function SellerPortfolioDetail({
             transitionKey={`members-${portfolio.id}-${members.length}`}
             tone="panel"
           >
-            {members.length === 0 ? (
+            {isOrphan ? (
               <CommercialEmptyState
-                title="Sem usuários"
-                message="Adicione ao menos um usuário com acesso ao Portal Comercial."
-              />
+                title={PORTFOLIO_MEMBERS_CONTENT.emptyTitle}
+                message={PORTFOLIO_MEMBERS_CONTENT.emptyMessage}
+              >
+                <p className="cm-muted">{PORTFOLIO_MEMBERS_CONTENT.emptyCta}</p>
+              </CommercialEmptyState>
             ) : (
               <CommercialDataTable
                 rows={members}
