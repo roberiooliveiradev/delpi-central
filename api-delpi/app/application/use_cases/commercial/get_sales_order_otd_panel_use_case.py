@@ -23,6 +23,12 @@ class GetSalesOrderOtdPanelUseCase:
         )
         indicator = self._sales_order_otd_repository.get_sales_order_otd(summary_request)
         lines_page = self._sales_order_otd_repository.list_sales_order_otd_lines(request)
+        late_stats = self._sales_order_otd_repository.get_sales_order_otd_late_days_stats(
+            request
+        )
+        insights = self._sales_order_otd_repository.get_sales_order_otd_panel_insights(
+            request
+        )
 
         total_lines = int(indicator.total_lines or 0)
         on_time_lines = int(indicator.on_time_lines or 0)
@@ -42,6 +48,14 @@ class GetSalesOrderOtdPanelUseCase:
                 "late_lines": late_lines,
                 "sales_order_otd_pct": indicator.sales_order_otd_pct,
                 "late_percentage": late_percentage,
+                "avg_late_days": late_stats.get("avg_late_days"),
+                "p50_late_days": late_stats.get("p50_late_days"),
+                "p90_late_days": late_stats.get("p90_late_days"),
+            },
+            "insights": {
+                "recurringCustomers": insights.get("recurringCustomers") or [],
+                "worstDelays": insights.get("worstDelays") or [],
+                "upcomingPromises": insights.get("upcomingPromises") or [],
             },
             "lines": lines_page.to_dict(),
         }

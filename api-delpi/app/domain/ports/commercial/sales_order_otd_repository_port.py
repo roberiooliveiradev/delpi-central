@@ -25,6 +25,20 @@ class SalesOrderOtdRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_sales_order_otd_late_days_stats(
+        self,
+        request: GetSalesOrderOtdPanelRequest,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_sales_order_otd_panel_insights(
+        self,
+        request: GetSalesOrderOtdPanelRequest,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_sales_order_otd_line_detail(
         self,
         request: GetSalesOrderOtdLineDetailRequest,

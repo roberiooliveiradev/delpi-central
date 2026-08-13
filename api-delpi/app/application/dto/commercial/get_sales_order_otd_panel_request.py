@@ -14,3 +14,4 @@ class GetSalesOrderOtdPanelRequest:
     page_size: int = 20
     sort_by: Optional[str] = None
     sort_dir: str = "asc"
+    search: Optional[str] = None

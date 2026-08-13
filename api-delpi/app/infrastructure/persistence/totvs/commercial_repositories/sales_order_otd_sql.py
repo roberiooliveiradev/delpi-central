@@ -181,6 +181,44 @@ def _status_filter_clause(status: Optional[str]) -> str:
     return ""
 
 
+def _search_filter_clause(search: Optional[str]) -> Tuple[str, tuple]:
+    term = (search or "").strip()
+    if not term or len(term) > 80:
+        return "", ()
+    pattern = f"%{term}%"
+    clause = """
+      AND (
+        order_number LIKE ?
+        OR customer_code LIKE ?
+        OR ISNULL(customer_name, '') LIKE ?
+        OR ISNULL(customer_short_name, '') LIKE ?
+        OR product_code LIKE ?
+        OR ISNULL(product_description, '') LIKE ?
+      )
+    """
+    return clause, (pattern,) * 6
+
+
+def sales_order_otd_search_params(search: Optional[str]) -> tuple:
+    """Bind params for panel list/count search (empty when search is blank)."""
+    _, params = _search_filter_clause(search)
+    return params
+
+
+def _post_cte_where_clause(
+    *,
+    status: Optional[str],
+    search: Optional[str] = None,
+) -> Tuple[str, tuple]:
+    status_sql = _status_filter_clause(status)
+    search_sql, search_params = _search_filter_clause(search)
+    if not status_sql and not search_sql:
+        return "", ()
+    if status_sql:
+        return f"{status_sql}{search_sql}", search_params
+    return f"WHERE 1=1{search_sql}", search_params
+
+
 def _list_order_clause(request: GetSalesOrderOtdPanelRequest) -> str:
     sort_columns = {
         "status": "status",
@@ -227,19 +265,20 @@ def build_sales_order_otd_lines_count_sql(
     where_clause: str,
     status: Optional[str],
     reference_end_date: Optional[str],
+    search: Optional[str] = None,
 ) -> Tuple[str, tuple]:
     reference_date = _reference_date_param(reference_end_date)
-    status_clause = _status_filter_clause(status)
+    post_where, search_params = _post_cte_where_clause(status=status, search=search)
     list_cte = _list_cte_sql(where_clause=where_clause)
 
     sql = f"""
         WITH {list_cte}
         SELECT COUNT(*) AS total
         FROM LINHAS_ELEGIVEIS
-        {status_clause}
+        {post_where}
     """
 
-    return sql, (reference_date, reference_date, reference_date)
+    return sql, (reference_date, reference_date, reference_date) + search_params
 
 
 def build_sales_order_otd_lines_list_sql(
@@ -249,7 +288,10 @@ def build_sales_order_otd_lines_list_sql(
     reference_end_date: Optional[str],
 ) -> Tuple[str, tuple]:
     reference_date = _reference_date_param(reference_end_date)
-    status_clause = _status_filter_clause(request.status)
+    post_where, search_params = _post_cte_where_clause(
+        status=request.status,
+        search=request.search,
+    )
     order_clause = _list_order_clause(request)
     list_cte = _list_cte_sql(where_clause=where_clause)
 
@@ -257,11 +299,92 @@ def build_sales_order_otd_lines_list_sql(
         WITH {list_cte}
         SELECT *
         FROM LINHAS_ELEGIVEIS
-        {status_clause}
+        {post_where}
         {order_clause}
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
     """
 
+    return sql, (reference_date, reference_date, reference_date) + search_params
+
+
+def build_sales_order_otd_late_days_stats_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    reference_date = _reference_date_param(reference_end_date)
+    list_cte = _list_cte_sql(where_clause=where_clause)
+    sql = f"""
+        WITH {list_cte},
+        LATE_LINES AS (
+            SELECT days_diff
+            FROM LINHAS_ELEGIVEIS
+            WHERE status = 'late'
+              AND days_diff > 0
+        )
+        SELECT TOP 1
+            AVG(CAST(days_diff AS FLOAT)) OVER () AS avg_late_days,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_diff) OVER () AS p50_late_days,
+            PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY days_diff) OVER () AS p90_late_days
+        FROM LATE_LINES
+    """
+    return sql, (reference_date, reference_date, reference_date)
+
+
+def build_sales_order_otd_recurring_customers_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    reference_date = _reference_date_param(reference_end_date)
+    list_cte = _list_cte_sql(where_clause=where_clause)
+    sql = f"""
+        WITH {list_cte}
+        SELECT TOP 10
+            customer_code,
+            MAX(customer_name) AS customer_name,
+            COUNT(*) AS late_count,
+            SUM(days_diff) AS total_late_days
+        FROM LINHAS_ELEGIVEIS
+        WHERE status = 'late'
+        GROUP BY customer_code
+        HAVING COUNT(*) >= 2
+        ORDER BY late_count DESC, total_late_days DESC, customer_code ASC
+    """
+    return sql, (reference_date, reference_date, reference_date)
+
+
+def build_sales_order_otd_worst_delays_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    reference_date = _reference_date_param(reference_end_date)
+    list_cte = _list_cte_sql(where_clause=where_clause)
+    sql = f"""
+        WITH {list_cte}
+        SELECT TOP 10 *
+        FROM LINHAS_ELEGIVEIS
+        WHERE status = 'late'
+        ORDER BY days_diff DESC, promised_date ASC, branch ASC, order_number ASC, line_item ASC
+    """
+    return sql, (reference_date, reference_date, reference_date)
+
+
+def build_sales_order_otd_upcoming_promises_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    reference_date = _reference_date_param(reference_end_date)
+    list_cte = _list_cte_sql(where_clause=where_clause)
+    sql = f"""
+        WITH {list_cte}
+        SELECT TOP 10 *
+        FROM LINHAS_ELEGIVEIS
+        WHERE is_invoiced = 0
+        ORDER BY promised_date ASC, branch ASC, order_number ASC, line_item ASC
+    """
     return sql, (reference_date, reference_date, reference_date)
 
 
@@ -307,13 +430,14 @@ def compose_sales_order_otd_lines_params(
     *,
     where_params: tuple,
     reference_end_date: Optional[str],
+    search_params: tuple = (),
     offset: Optional[int] = None,
     page_size: Optional[int] = None,
 ) -> tuple:
     """Placeholders de referência aparecem no SELECT antes do WHERE na CTE."""
     reference_date = _reference_date_param(reference_end_date)
     reference_params = (reference_date, reference_date, reference_date)
-    params = reference_params + where_params
+    params = reference_params + where_params + tuple(search_params or ())
     if offset is not None and page_size is not None:
         return params + (offset, page_size)
     return params

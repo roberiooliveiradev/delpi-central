@@ -861,6 +861,11 @@ def get_sales_order_otd_panel(
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: Optional[str] = Query(default=None),
     sort_dir: str = SORT_DIR_QUERY(),
+    search: Optional[str] = Query(
+        default=None,
+        description="Busca em pedido, cliente ou produto (painel OTD).",
+        max_length=80,
+    ),
 ):
     try:
         use_case = build_get_sales_order_otd_panel_use_case()
@@ -876,6 +881,7 @@ def get_sales_order_otd_panel(
             page_size=page_size,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            search=search,
         )
 
         result = enrich_dashboard_metric(
