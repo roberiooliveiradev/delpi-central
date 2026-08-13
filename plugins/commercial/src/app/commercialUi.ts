@@ -317,6 +317,7 @@ export const CommercialAttachmentPreviewStrip = createDashboardAttachmentPreview
   labels: {
     empty: "Nenhum anexo nesta tarefa.",
     openAriaLabel: (fileName: string) => `Abrir prévia de ${fileName}`,
+    removeAriaLabel: (fileName: string) => `Remover ${fileName}`,
   },
 });
 

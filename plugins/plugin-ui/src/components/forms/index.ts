@@ -63,6 +63,7 @@ export {
   type AttachmentPreviewStripClassNames,
   type AttachmentPreviewStripItem,
   type AttachmentPreviewStripLabels,
+  type AttachmentPreviewStripMode,
   type AttachmentPreviewStripProps,
   type DashboardAttachmentPreviewStripProps,
 } from "./AttachmentPreviewStrip";

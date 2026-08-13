@@ -272,7 +272,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("forms", "AttachmentPreviewStrip", {
     addedAt: "2026-08-06",
-    description: "Prévia visual de anexos (thumbs / ícones) só leitura.",
+    updatedAt: "2026-08-13",
+    description:
+      "Prévia visual de anexos (thumbs / ícones); mode preview|manage com onRemove no manage.",
+    changeNote: "mode=manage + botão X de remover no thumb",
   }),
   vc("forms", "FilterCheckboxField"),
   vc("forms", "FormFieldShell"),
