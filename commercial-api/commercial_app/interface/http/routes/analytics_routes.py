@@ -375,6 +375,34 @@ def bff_closing_rate(
     )
 
 
+@router.get("/closing-rate/series", operation_id="bff_get_sales_conversion_rate_series")
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_closing_rate_series(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    customer_segment: str | None = None,
+    granularity: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_sales_conversion_rate_series",
+        path="/closing-rate/series",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=None,
+            customer_segment=customer_segment,
+            granularity=granularity,
+        ),
+        message="Série da taxa de conversão carregada.",
+    )
+
+
 @router.get("/sales-order-otd", operation_id="bff_get_sales_order_otd")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
 def bff_sales_order_otd(
