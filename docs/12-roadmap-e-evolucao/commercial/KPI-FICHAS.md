@@ -111,6 +111,32 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 - [ ] Definir se book-to-bill entra em ciclo futuro  
 
 ---
+
+## KPI-CARTEIRA-HORIZON — Carteira no tempo + gap vs meta
+
+| Campo | Conteúdo |
+|-------|----------|
+| Código | `KPI-CARTEIRA-HORIZON` |
+| Nome | Carteira no tempo (buckets por entrega) |
+| Objetivo | Concentrar esforço: ver **onde** está o valor aberto (atraso / mês / futuro) e o **buraco vs meta ROL**, sem misturar naturezas |
+| **Gap vs meta** | `gapValue = max(meta_SI − ROL_período, 0)` — mesma fonte do KPI ROL **principal** (matriz/filial). **Fora:** WEG e novos negócios neste card |
+| **Buckets** | Agrupar `valor_aberto` por `data_entrega` (TZ `America/Sao_Paulo`): `overdue`, `current_month`, `next_1_3_months`, `later`, `undated` |
+| Semântica temporal | Buckets = **snapshot** (como KPI-CARTEIRA); gap = **período** dos filtros Overview |
+| Analogia de mercado | Time-phased order backlog (ERP) + gap-to-quota (CRM); **não** pipeline × win rate |
+| **Proibido** | Somar `ROL + openValue`; win-rate em pedido aberto; rotular como PCP/OP; forecast F6 |
+| Contexto UI | Mostrar `current_month.openValue` **ao lado** do gap (contexto), sem soma automática |
+| Módulo canônico | `OpenOrdersHorizonBucketService` (commercial-api); MFE **não** reimplementa regra de data |
+| Fonte | `GET /analytics/open-portfolio-horizon` (+ `deliveryHorizon` no envelope `GET /open-orders/`) |
+| Escopo | Mesmo membership / `seller_id` do open-portfolio-summary |
+| Status | **em_implementacao** |
+
+### Checklist de homologação (KPI-CARTEIRA-HORIZON)
+
+- [ ] Confirmar limites dos buckets (mês+1…+3) com Comercial  
+- [ ] Confirmar tratamento de `data_entrega` vazia (`undated`)  
+- [ ] Confirmar disclaimer bruto/líquido alinhado a KPI-CARTEIRA  
+
+---
 ## KPI-HIT-RATE — Taxa de conversão / hit rate
 
 | Campo | Conteúdo |

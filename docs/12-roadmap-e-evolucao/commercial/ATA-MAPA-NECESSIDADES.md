@@ -128,7 +128,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 |-------------|--------|--------------|-------|---------------------|
 | ROL + série + metas % | **Existe** | `/overview` | rol targets + series | Ficha `KPI-ROL` |
 | Carteira + ROL / itens e valores / MTD YTD / 2 anos | **Parcial / bloqueado** | ROL sim; consolidado não | — | Onda A → B |
-| Visão temporal (realizado, carteira mês/futuro, gap meta, antecipação) | **Falta** | — | — | Onda B |
+| Visão temporal (realizado, carteira mês/futuro, gap meta, antecipação) | **Em curso (MVP temporal)** | Overview + Meus pedidos | `KPI-CARTEIRA-HORIZON` · BFF `open-portfolio-horizon` | FCT declarado (WF-09) permanece backlog |
 | Atualização automática da carteira (postergações) | **Parcial** | Pedidos refletem TOTVS | open-orders | UX «postergado vs disponível» |
 | Bruto vs líquido explícito | **Parcial** | ROL líquido; pedidos podem ser brutos | — | Política por indicador (Onda A) |
 | Distinguir carteira comercial × programação PCP | **Parcial** | Pedidos = comercial; factory-status ≠ PCP completo | — | Nunca rotular PCP como carteira (dor #4) |
