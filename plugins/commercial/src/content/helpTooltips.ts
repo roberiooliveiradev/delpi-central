@@ -575,6 +575,7 @@ export const CM_HELP = {
       "O menu do usuário no topo leva a Minha Carteira filtrada; a lista de propostas-documento não filtra por carteira — é o catálogo com permissão de propostas.",
     tableRowOpensDetail:
       "Clique na linha (ou na proposta) abre o detalhe do documento. Controles internos com destino diferente não propagam o clique.",
+    cardOpenHint: "Abrir proposta",
     pdfContact:
       "Contato base da Conta usado para pré-preencher os campos do PDF. Vale só para esta emissão.",
     pdfContactNome:
