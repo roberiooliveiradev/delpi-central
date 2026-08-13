@@ -62,6 +62,7 @@ export function CustomerOpenOrdersPreview({
 }: CustomerOpenOrdersPreviewProps) {
   const rows = orders.slice(0, PREVIEW_LIMIT);
   const openOrderDetail = (order: CustomerOrderSummary) => {
+    if (!order.filial?.trim() || !order.pedido?.trim()) return;
     navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
       basePath,
       returnNav: {
@@ -70,34 +71,27 @@ export function CustomerOpenOrdersPreview({
       },
     });
   };
-  const actions = (order: CustomerOrderSummary) => {
-    const canOpen = Boolean(order.filial?.trim() && order.pedido?.trim());
-    const proposalLine = canViewAnalytics ? findOrderProposalLine(order.lines) : null;
+
+  const opportunityAction = (order: CustomerOrderSummary) => {
+    if (!canViewAnalytics) return null;
+    const proposalLine = findOrderProposalLine(order.lines);
     const proposalNumber = proposalLine?.proposal_number?.trim() || null;
-    if (!canOpen && !proposalNumber) return null;
+    if (!proposalLine || !proposalNumber) return null;
     return (
-      <div className="cm-customer-order-line-actions">
-        {canOpen ? (
-          <CommercialActionButton variant="ghost" onClick={() => openOrderDetail(order)}>
-            Abrir pedido
-          </CommercialActionButton>
-        ) : null}
-        {proposalLine && proposalNumber ? (
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() =>
-              navigateAnalyticsOpportunityDetail(proposalNumber, {
-                basePath,
-                search: buildOrderOpportunityContextSearch(proposalLine),
-              })
-            }
-          >
-            Ver OV {proposalNumber}
-          </CommercialActionButton>
-        ) : null}
-      </div>
+      <CommercialActionButton
+        variant="link"
+        onClick={() =>
+          navigateAnalyticsOpportunityDetail(proposalNumber, {
+            basePath,
+            search: buildOrderOpportunityContextSearch(proposalLine),
+          })
+        }
+      >
+        Ver OV {proposalNumber}
+      </CommercialActionButton>
     );
   };
+
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
     { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
     {
@@ -126,9 +120,11 @@ export function CustomerOpenOrdersPreview({
       },
     },
     {
-      key: "actions",
-      header: "Ações",
-      render: (order) => actions(order) ?? "—",
+      key: "opportunity",
+      header: "Oportunidade",
+      interactive: true,
+      rowClick: "stop",
+      render: (order) => opportunityAction(order) ?? "—",
     },
   ];
 
@@ -144,38 +140,63 @@ export function CustomerOpenOrdersPreview({
               columns={columns}
               rowKey={(order) => order.key}
               layout="section"
+              onRowClick={openOrderDetail}
+              rowClickRole="button"
             />
           </div>
           <div className="cm-customer-orders-preview__mobile">
             {rows.map((order) => {
               const status = previewStatus(order);
               return (
-                <CommercialDataRecordCard
+                <div
                   key={order.key}
-                  title={`Pedido ${order.pedido || "não informado"}`}
-                  subtitle={`Emissão ${formatDisplayDate(pickEmission(order))}`}
-                  status={
-                    <CommercialStatusBadge
-                      variant={status.tone}
-                      label={status.label}
-                    />
-                  }
-                  fields={[
-                    {
-                      id: "forecast",
-                      label: "Previsão",
-                      value: order.proximaEntrega
-                        ? formatDisplayDate(order.proximaEntrega)
-                        : "—",
-                    },
-                    {
-                      id: "value",
-                      label: "Valor em aberto",
-                      value: formatCurrency(order.valorTotalAberto),
-                    },
-                  ]}
-                  context={actions(order)}
-                />
+                  className="cm-customer-orders-preview__mobile-item cm-customer-orders__mobile-item--clickable"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openOrderDetail(order)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openOrderDetail(order);
+                    }
+                  }}
+                >
+                  <CommercialDataRecordCard
+                    title={`Pedido ${order.pedido || "não informado"}`}
+                    subtitle={`Emissão ${formatDisplayDate(pickEmission(order))}`}
+                    status={
+                      <CommercialStatusBadge
+                        variant={status.tone}
+                        label={status.label}
+                      />
+                    }
+                    fields={[
+                      {
+                        id: "forecast",
+                        label: "Previsão",
+                        value: order.proximaEntrega
+                          ? formatDisplayDate(order.proximaEntrega)
+                          : "—",
+                      },
+                      {
+                        id: "value",
+                        label: "Valor em aberto",
+                        value: formatCurrency(order.valorTotalAberto),
+                      },
+                    ]}
+                    context={
+                      opportunityAction(order) ? (
+                        <div
+                          className="cm-customer-order-line-actions"
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
+                          {opportunityAction(order)}
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                </div>
               );
             })}
           </div>
