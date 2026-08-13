@@ -2,7 +2,7 @@ import { ActionButton, EmptyState } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useReducer, useState, type MouseEvent } from "react";
 
-import { getOpenOrdersTotvs } from "../../api/openOrdersTotvsApi";
+import { getOpsAbertas, getOpenOrdersTotvs } from "../../api/openOrdersTotvsApi";
 import {
   cmEmptyStateClassNames,
   CommercialLoadingCard,
@@ -18,11 +18,11 @@ import {
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { usePortfolioSellerAccess } from "../../app/usePortfolioSellerAccess";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
+import { resolveOpenOrderOpDetailItem } from "../../utils/enrichOpenOrdersForecast";
 import {
   buildOpenOrdersContextSearch,
   resolveOpenOrdersSellerId,
 } from "../../utils/openOrdersDeepLink";
-import { getLineOpForecast } from "../../utils/opAllocation";
 import {
   buildOpenOrderOpRouteIdentity,
   INITIAL_OPEN_ORDER_OP_DETAIL_STATE,
@@ -88,22 +88,19 @@ export function OpenOrderOpDetailPage({
     const controller = new AbortController();
     dispatchLoad({ type: "request_started", identity: routeIdentity });
 
-    void getOpenOrdersTotvs(controller.signal, { sellerId })
-      .then((data) => {
+    void (async () => {
+      try {
+        const pedidosPromise = getOpenOrdersTotvs(controller.signal, { sellerId });
+        const opsPromise = getOpsAbertas(controller.signal).catch(() => null);
+        const [data, opsData] = await Promise.all([pedidosPromise, opsPromise]);
         if (controller.signal.aborted) return;
-        const matched =
-          data.items.find(
-            (row) =>
-              row.filial.trim() === branch &&
-              row.pedido.trim() === orderNumber &&
-              row.linha.trim() === lineItem,
-          ) ?? null;
-        const opExists = matched
-          ? getLineOpForecast(matched).opsUtilizadas.some(
-              (op) => op.numero_op.trim() === productionOrder,
-            )
-          : false;
-        if (!matched || !opExists) {
+        const matched = resolveOpenOrderOpDetailItem(data.items, opsData, {
+          filial: branch,
+          pedido: orderNumber,
+          linha: lineItem,
+          productionOrder,
+        });
+        if (!matched) {
           dispatchLoad({
             type: "request_not_found",
             identity: routeIdentity,
@@ -114,8 +111,7 @@ export function OpenOrderOpDetailPage({
           return;
         }
         dispatchLoad({ type: "request_succeeded", identity: routeIdentity, item: matched });
-      })
-      .catch((reason: unknown) => {
+      } catch (reason: unknown) {
         if (controller.signal.aborted) return;
         dispatchLoad({
           type: "request_failed",
@@ -124,7 +120,8 @@ export function OpenOrderOpDetailPage({
             ? reason.message
             : "Não foi possível carregar o detalhe da OP.",
         });
-      });
+      }
+    })();
 
     return () => controller.abort();
   }, [

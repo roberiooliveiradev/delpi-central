@@ -178,6 +178,14 @@ describe("openOrdersDeepLink", () => {
     assert.equal(hit?.pedido, "B");
   });
 
+  it("encontra linha com padding numérico diferente (03 vs 3)", () => {
+    const hit = findOpenOrderLine(
+      [{ filial: "01", pedido: "102723", linha: "03" }],
+      { pedido: "102723", linha: "3", filial: "01" },
+    );
+    assert.equal(hit?.linha, "03");
+  });
+
   it("encontra primeira linha quando só pedido", () => {
     const hit = findOpenOrderLine(
       [

@@ -2,7 +2,7 @@ import { ActionButton, EmptyState, formatOperationalUnitCode } from "@delpi/plug
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useReducer, useState, type MouseEvent } from "react";
 
-import { getOpenOrdersTotvs } from "../../api/openOrdersTotvsApi";
+import { getOpsAbertas, getOpenOrdersTotvs } from "../../api/openOrdersTotvsApi";
 import {
   cmEmptyStateClassNames,
   CommercialLoadingCard,
@@ -14,6 +14,7 @@ import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { usePortfolioSellerAccess } from "../../app/usePortfolioSellerAccess";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
+import { enrichOpenOrdersWithOpForecast } from "../../utils/enrichOpenOrdersForecast";
 import {
   buildOpenOrdersContextSearch,
   findOpenOrderLine,
@@ -70,14 +71,20 @@ export function OpenOrderLineDetailPage({
     const controller = new AbortController();
     dispatchLoad({ type: "request_started", identity: routeIdentity });
 
-    void getOpenOrdersTotvs(controller.signal, { sellerId })
-      .then((data) => {
+    void (async () => {
+      try {
+        const pedidosPromise = getOpenOrdersTotvs(controller.signal, { sellerId });
+        const opsPromise = getOpsAbertas(controller.signal).catch(() => null);
+        const [data, opsData] = await Promise.all([pedidosPromise, opsPromise]);
         if (controller.signal.aborted) return;
-        const matched = findOpenOrderLine(data.items, {
-          filial: branch,
-          pedido: orderNumber,
-          linha: lineItem,
-        });
+        const matched = findOpenOrderLine(
+          enrichOpenOrdersWithOpForecast(data.items, opsData),
+          {
+            filial: branch,
+            pedido: orderNumber,
+            linha: lineItem,
+          },
+        );
         if (!matched) {
           dispatchLoad({
             type: "request_not_found",
@@ -89,8 +96,7 @@ export function OpenOrderLineDetailPage({
           return;
         }
         dispatchLoad({ type: "request_succeeded", identity: routeIdentity, item: matched });
-      })
-      .catch((reason: unknown) => {
+      } catch (reason: unknown) {
         if (controller.signal.aborted) return;
         dispatchLoad({
           type: "request_failed",
@@ -100,7 +106,8 @@ export function OpenOrderLineDetailPage({
               ? reason.message
               : "Não foi possível carregar o detalhe da linha.",
         });
-      });
+      }
+    })();
 
     return () => controller.abort();
   }, [branch, lineItem, orderNumber, reloadKey, routeIdentity, scopeLoading, sellerId]);

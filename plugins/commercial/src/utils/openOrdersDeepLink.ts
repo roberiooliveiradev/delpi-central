@@ -224,6 +224,17 @@ export function syncOpenOrdersListStateToUrl(
   if (target !== current) window.history.replaceState(window.history.state, "", target);
 }
 
+/** Compara linha TOTVS aceitando `03` e `3` como a mesma posição. */
+export function sameOpenOrderLineNumber(left: string, right: string): boolean {
+  const a = left.trim();
+  const b = right.trim();
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const nA = Number(a);
+  const nB = Number(b);
+  return Number.isFinite(nA) && Number.isFinite(nB) && nA === nB;
+}
+
 export function findOpenOrderLine<T extends { filial: string; pedido: string; linha: string }>(
   items: T[],
   link: OpenOrdersLineDeepLink,
@@ -234,7 +245,7 @@ export function findOpenOrderLine<T extends { filial: string; pedido: string; li
   return (
     items.find((row) => {
       if (row.pedido.trim() !== pedido) return false;
-      if (linha && row.linha.trim() !== linha) return false;
+      if (linha && !sameOpenOrderLineNumber(row.linha, linha)) return false;
       if (filial && row.filial.trim() !== filial) return false;
       return true;
     }) ?? null

@@ -15,8 +15,7 @@ import {
   syncOpenOrdersListStateToUrl,
   type OpenOrdersSellerAccess,
 } from "../utils/openOrdersDeepLink";
-import { allocateStockToOrders } from "../utils/stockAllocation";
-import { allocateOpsToOrders, buildOpsProductIndex } from "../utils/opAllocation";
+import { enrichOpenOrdersWithOpForecast } from "../utils/enrichOpenOrdersForecast";
 import { useOpenOrdersTotvs } from "./useOpenOrdersTotvs";
 import {
   sortPedidosItems,
@@ -96,16 +95,9 @@ export function useOpenOrdersDashboard(
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
-  const opsIndex = useMemo(() => buildOpsProductIndex(opsData), [opsData]);
-
-  const allocatedItems = useMemo(
-    () => allocateStockToOrders(allItems),
-    [allItems],
-  );
-
   const itemsWithOpForecast = useMemo(
-    () => allocateOpsToOrders(allocatedItems, opsIndex),
-    [allocatedItems, opsIndex],
+    () => enrichOpenOrdersWithOpForecast(allItems, opsData),
+    [allItems, opsData],
   );
 
   const filiais = useMemo(() => collectDistinctFiliais(itemsWithOpForecast), [itemsWithOpForecast]);
