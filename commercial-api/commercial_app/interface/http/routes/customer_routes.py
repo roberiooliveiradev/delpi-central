@@ -326,6 +326,45 @@ def get_customer_contacts_bundle(
         )
 
 
+@router.get(
+    "/{customer_code}/{customer_store}/audit",
+    operation_id="list_customer_account_audit",
+)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
+def list_customer_account_audit(
+    request: Request,
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+    page: int = Query(1, ge=1, description="Página (1-based)."),
+    page_size: int = Query(20, ge=1, le=100, description="Itens por página."),
+):
+    """Timeline de audit_log da Conta (contatos; avatar em E3.S3)."""
+    try:
+        payload = build_manage_account_contacts_use_case().list_account_audit(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            scope_check=_account_detail_scope_check(request),
+            page=page,
+            page_size=page_size,
+        )
+        return ok(
+            payload,
+            message="Auditoria da conta carregada.",
+            operation_id="list_customer_account_audit",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="list_customer_account_audit")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="list_customer_account_audit")
+    except Exception:
+        logger.exception("list_customer_account_audit_failed")
+        return fail(
+            "Erro interno ao listar auditoria da conta.",
+            500,
+            operation_id="list_customer_account_audit",
+        )
+
+
 @router.post(
     "/{customer_code}/{customer_store}/contacts",
     operation_id="create_customer_contact",
@@ -391,6 +430,7 @@ def update_customer_contact(
             contact_id=contact_id,
             changes=body.model_dump(exclude_unset=True),
             scope_check=_account_detail_scope_check(request),
+            actor_user_id=actor_sub_from_request(request) or "",
         )
         return ok(
             contact.to_dict(),
@@ -427,6 +467,7 @@ def delete_customer_contact(
             customer_store=customer_store,
             contact_id=contact_id,
             scope_check=_account_detail_scope_check(request),
+            actor_user_id=actor_sub_from_request(request) or "",
         )
         return ok(
             {"deleted": True, "id": str(contact.id)},

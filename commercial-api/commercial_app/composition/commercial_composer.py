@@ -199,6 +199,7 @@ def build_manage_account_contacts_use_case() -> ManageAccountContactsUseCase:
     if _account_contacts_use_case is None:
         _account_contacts_use_case = ManageAccountContactsUseCase(
             repository=build_account_contact_repository(),
+            audit_repository=build_audit_log_repository(),
         )
     return _account_contacts_use_case
 

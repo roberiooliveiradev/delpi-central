@@ -1,15 +1,29 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from datetime import datetime
+from typing import Any, Callable, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.account_contact import AccountContact
+from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
 from commercial_app.domain.ports.account_contact_repository_port import (
     AccountContactRepositoryPort,
 )
+from commercial_app.domain.ports.customer_avatar_repository_port import (
+    AuditLogRepositoryPort,
+)
+from commercial_app.domain.services.account_audit_formatter_service import (
+    AccountAuditFormatterService,
+)
 
 AccountScopeCheck = Callable[[str, str], None]
+
+_ENTITY_ACCOUNT = "account"
+_ACTION_CONTACT_CREATED = "account.contact.created"
+_ACTION_CONTACT_UPDATED = "account.contact.updated"
+_ACTION_CONTACT_DELETED = "account.contact.deleted"
+
 _CHANNELS = frozenset({"phone", "mobile", "email", "whatsapp", "other"})
 _UPDATABLE_FIELDS = frozenset(
     {
@@ -23,6 +37,16 @@ _UPDATABLE_FIELDS = frozenset(
         "source",
     }
 )
+_FIELD_LABELS_PT = {
+    "full_name": "nome",
+    "role_title": "cargo",
+    "channel": "canal",
+    "email": "e-mail",
+    "phone_e164": "telefone",
+    "is_whatsapp": "WhatsApp",
+    "is_primary": "principal",
+    "source": "origem",
+}
 
 
 @dataclass(frozen=True)
@@ -37,9 +61,57 @@ class CreateAccountContactInput:
     source: str = "manual"
 
 
+def account_entity_id(customer_code: str, customer_store: str) -> str:
+    return f"{customer_code}/{customer_store}"
+
+
+def _row_to_audit_entry(row: dict[str, Any]) -> AuditLogEntry:
+    payload = row.get("payload") or {}
+    if not isinstance(payload, dict):
+        payload = {}
+    created_at = row.get("created_at")
+    if isinstance(created_at, str):
+        try:
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except ValueError:
+            created_at = None
+    return AuditLogEntry(
+        id=str(row.get("id") or ""),
+        actor_user_id=str(row.get("actor_user_id") or ""),
+        action=str(row.get("action") or ""),
+        entity_type=str(row.get("entity_type") or ""),
+        entity_id=str(row.get("entity_id") or ""),
+        payload=payload,
+        created_at=created_at if isinstance(created_at, datetime) else None,
+    )
+
+
+def audit_page_to_dict(
+    *,
+    items: Sequence[dict[str, Any]],
+    total: int,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    return {
+        "items": list(items),
+        "total": int(total),
+        "page": int(page),
+        "page_size": int(page_size),
+    }
+
+
 class ManageAccountContactsUseCase:
-    def __init__(self, *, repository: AccountContactRepositoryPort) -> None:
+    def __init__(
+        self,
+        *,
+        repository: AccountContactRepositoryPort,
+        audit_repository: AuditLogRepositoryPort | None = None,
+        audit_formatter: AccountAuditFormatterService | None = None,
+    ) -> None:
         self._repository = repository
+        self._audit = audit_repository
+        self._audit_formatter = audit_formatter or AccountAuditFormatterService()
 
     @staticmethod
     def _account(customer_code: str, customer_store: str) -> tuple[str, str]:
@@ -93,6 +165,53 @@ class ManageAccountContactsUseCase:
     ) -> None:
         scope_check(customer_code, customer_store)
 
+    def _append_audit(
+        self,
+        *,
+        actor_user_id: str | None,
+        action: str,
+        customer_code: str,
+        customer_store: str,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        if self._audit is None:
+            return
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            return
+        self._audit.append(
+            actor_user_id=actor,
+            action=action,
+            entity_type=_ENTITY_ACCOUNT,
+            entity_id=account_entity_id(customer_code, customer_store),
+            payload=payload or {},
+        )
+
+    @staticmethod
+    def _contact_audit_payload(
+        contact: AccountContact,
+        *,
+        changed_fields: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "contact_id": str(contact.id),
+            "full_name": contact.full_name,
+            "channel": contact.channel,
+            "role_title": contact.role_title,
+            "email": contact.email,
+            "phone_e164": contact.phone_e164,
+            "is_whatsapp": contact.is_whatsapp,
+            "is_primary": contact.is_primary,
+            "source": contact.source,
+        }
+        if changed_fields:
+            fields = [str(field) for field in changed_fields if field]
+            payload["changed_fields"] = fields
+            payload["fields_label"] = ", ".join(
+                _FIELD_LABELS_PT.get(field, field) for field in fields
+            )
+        return payload
+
     def list(
         self,
         *,
@@ -138,7 +257,15 @@ class ManageAccountContactsUseCase:
                 "created_by_user_id": actor,
             }
         )
-        return self._repository.create(values=values)
+        contact = self._repository.create(values=values)
+        self._append_audit(
+            actor_user_id=actor,
+            action=_ACTION_CONTACT_CREATED,
+            customer_code=code,
+            customer_store=store,
+            payload=self._contact_audit_payload(contact),
+        )
+        return contact
 
     def update(
         self,
@@ -148,6 +275,7 @@ class ManageAccountContactsUseCase:
         contact_id: UUID,
         changes: dict[str, Any],
         scope_check: AccountScopeCheck,
+        actor_user_id: str | None = None,
     ) -> AccountContact:
         code, store = self._account(customer_code, customer_store)
         self._check_scope(scope_check, customer_code=code, customer_store=store)
@@ -166,6 +294,16 @@ class ManageAccountContactsUseCase:
         updated = self._repository.update(contact_id=contact_id, values=values)
         if updated is None:
             raise LookupError("Contato não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action=_ACTION_CONTACT_UPDATED,
+            customer_code=code,
+            customer_store=store,
+            payload=self._contact_audit_payload(
+                updated,
+                changed_fields=tuple(values.keys()),
+            ),
+        )
         return updated
 
     def soft_delete(
@@ -175,6 +313,7 @@ class ManageAccountContactsUseCase:
         customer_store: str,
         contact_id: UUID,
         scope_check: AccountScopeCheck,
+        actor_user_id: str | None = None,
     ) -> AccountContact:
         code, store = self._account(customer_code, customer_store)
         self._check_scope(scope_check, customer_code=code, customer_store=store)
@@ -188,4 +327,44 @@ class ManageAccountContactsUseCase:
         deleted = self._repository.soft_delete(contact_id=contact_id)
         if deleted is None:
             raise LookupError("Contato não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action=_ACTION_CONTACT_DELETED,
+            customer_code=code,
+            customer_store=store,
+            payload=self._contact_audit_payload(deleted),
+        )
         return deleted
+
+    def list_account_audit(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+        scope_check: AccountScopeCheck,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        """Lista eventos de audit_log da Conta (entity_type=account)."""
+        code, store = self._account(customer_code, customer_store)
+        self._check_scope(scope_check, customer_code=code, customer_store=store)
+        if self._audit is None:
+            return audit_page_to_dict(items=[], total=0, page=page, page_size=page_size)
+
+        safe_page = max(1, int(page or 1))
+        safe_size = min(100, max(1, int(page_size or 20)))
+        rows, total = self._audit.list_for_entity(
+            entity_type=_ENTITY_ACCOUNT,
+            entity_id=account_entity_id(code, store),
+            page=safe_page,
+            page_size=safe_size,
+        )
+        items = [
+            self._audit_formatter.format_entry(_row_to_audit_entry(row)) for row in rows
+        ]
+        return audit_page_to_dict(
+            items=items,
+            total=total,
+            page=safe_page,
+            page_size=safe_size,
+        )
