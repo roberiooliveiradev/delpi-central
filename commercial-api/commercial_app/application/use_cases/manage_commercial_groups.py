@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any, Sequence
+from uuid import uuid4
 
 from commercial_app.domain.entities.commercial_group import (
     CommercialGroup,
@@ -17,10 +20,20 @@ from commercial_app.domain.services.commercial_groups_messages_content_service i
 )
 
 _ENTITY_COMMERCIAL_GROUP = "commercial_group"
+_KIND_SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
 def _normalize(value: str | None) -> str:
     return str(value or "").strip()
+
+
+def _slug_kind_from_name(name: str) -> str:
+    normalized = unicodedata.normalize("NFKD", name)
+    ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = _KIND_SLUG_RE.sub("_", ascii_name.lower()).strip("_")
+    if not slug:
+        slug = "group"
+    return slug[:48]
 
 
 def group_to_dict(group: CommercialGroup) -> dict[str, Any]:
@@ -48,8 +61,8 @@ def group_summary_to_dict(group: CommercialGroup) -> dict[str, Any]:
 
 @dataclass(frozen=True, slots=True)
 class CreateCommercialGroupRequest:
-    kind: str
     name: str
+    kind: str | None = None
     sort_order: int = 0
     active: bool = True
     created_by_user_id: str | None = None
@@ -82,18 +95,22 @@ class ManageCommercialGroupsUseCase:
             raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
         return group
 
+    def _allocate_kind(self, *, name: str, requested_kind: str | None) -> str:
+        base = _normalize(requested_kind) or _slug_kind_from_name(name)
+        if not base:
+            base = "group"
+        candidate = base
+        if self._repository.get_by_kind(candidate) is None:
+            return candidate
+        suffix = uuid4().hex[:8]
+        clipped = base[:39].rstrip("_")
+        return f"{clipped}_{suffix}"
+
     def create_group(self, request: CreateCommercialGroupRequest) -> CommercialGroup:
-        kind = _normalize(request.kind)
         name = _normalize(request.name)
-        if not kind:
-            raise ValueError(CommercialGroupsMessagesContentService.error("kindRequired"))
         if not name:
             raise ValueError(CommercialGroupsMessagesContentService.error("nameRequired"))
-        existing = self._repository.get_by_kind(kind)
-        if existing is not None:
-            raise ValueError(
-                CommercialGroupsMessagesContentService.error("kindAlreadyExists", kind=kind)
-            )
+        kind = self._allocate_kind(name=name, requested_kind=request.kind)
         group = self._repository.create_group(
             kind=kind,
             name=name,
@@ -107,6 +124,28 @@ class ManageCommercialGroupsUseCase:
             payload={"kind": group.kind, "name": group.name},
         )
         return group
+
+    def delete_group(
+        self,
+        *,
+        group_id: str,
+        actor_user_id: str | None = None,
+    ) -> None:
+        gid = _normalize(group_id)
+        if not gid:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        existing = self._repository.get_by_id(gid)
+        if existing is None:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        deleted = self._repository.delete_group(gid)
+        if not deleted:
+            raise LookupError(CommercialGroupsMessagesContentService.error("groupNotFound"))
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="commercial_group.delete",
+            entity_id=gid,
+            payload={"kind": existing.kind, "name": existing.name},
+        )
 
     def replace_members(
         self,

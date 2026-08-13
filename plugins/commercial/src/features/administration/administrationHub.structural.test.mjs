@@ -49,9 +49,11 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /CommercialDataTableSection/);
   });
 
-  it("Grupos lista /groups e gerencia membros com picker+avatar", () => {
+  it("Grupos lista /groups, cria/exclui e gerencia membros com picker+avatar", () => {
     const source = readFileSync(join(feature, "AdministrationGroupsPage.tsx"), "utf8");
     assert.match(source, /listCommercialGroups/);
+    assert.match(source, /createCommercialGroup/);
+    assert.match(source, /deleteCommercialGroup/);
     assert.match(source, /addCommercialGroupMember/);
     assert.match(source, /removeCommercialGroupMember/);
     assert.match(source, /UserDirectoryPicker/);

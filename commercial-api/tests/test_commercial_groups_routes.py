@@ -25,6 +25,7 @@ def test_groups_operation_ids_registered() -> None:
     assert 'operation_id="list_commercial_groups"' in ROUTES
     assert 'operation_id="get_commercial_group"' in ROUTES
     assert 'operation_id="create_commercial_group"' in ROUTES
+    assert 'operation_id="delete_commercial_group"' in ROUTES
     assert 'operation_id="replace_commercial_group_members"' in ROUTES
     assert 'operation_id="add_commercial_group_member"' in ROUTES
     assert 'operation_id="remove_commercial_group_member"' in ROUTES
@@ -36,16 +37,18 @@ def test_groups_member_paths_exist() -> None:
     assert 'def list_commercial_groups(' in ROUTES
     assert 'def get_commercial_group(' in ROUTES
     assert 'def create_commercial_group(' in ROUTES
+    assert 'def delete_commercial_group(' in ROUTES
 
 
 def test_groups_require_manage_permission() -> None:
     assert "COMMERCIAL_MANAGE_PERMISSIONS" in ROUTES
-    assert ROUTES.count("@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)") == 6
+    assert ROUTES.count("@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)") == 7
 
 
 def test_groups_mutations_pass_actor_user_id() -> None:
     assert "actor_user_id=_current_user_id(request)" in ROUTES
     assert "created_by_user_id=_current_user_id(request)" in ROUTES
+    assert "delete_group(" in ROUTES
 
 
 def test_groups_router_mounted_in_main() -> None:

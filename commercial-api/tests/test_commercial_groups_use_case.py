@@ -63,19 +63,35 @@ def test_get_group_raises_when_missing() -> None:
         assert "não encontrado" in str(exc)
 
 
-def test_create_group_rejects_duplicate_kind() -> None:
+def test_create_group_allocates_kind_from_name() -> None:
     repository = MagicMock()
-    repository.get_by_kind.return_value = _group()
+    repository.get_by_kind.return_value = None
+    created = _group(id="g-new", kind="equipe_sul", name="Equipe Sul", members=())
+    repository.create_group.return_value = created
     use_case = ManageCommercialGroupsUseCase(repository)
 
-    try:
-        use_case.create_group(
-            CreateCommercialGroupRequest(kind="sellers", name="Outro")
-        )
-        assert False, "expected ValueError"
-    except ValueError as exc:
-        assert "sellers" in str(exc)
-    repository.create_group.assert_not_called()
+    result = use_case.create_group(CreateCommercialGroupRequest(name="Equipe Sul"))
+
+    assert result.kind == "equipe_sul"
+    repository.create_group.assert_called_once()
+    assert repository.create_group.call_args.kwargs["kind"] == "equipe_sul"
+    assert repository.create_group.call_args.kwargs["name"] == "Equipe Sul"
+
+
+def test_create_group_suffixes_kind_on_collision() -> None:
+    repository = MagicMock()
+    repository.get_by_kind.side_effect = lambda kind: (
+        _group(kind=kind) if kind == "equipe_sul" else None
+    )
+    created = _group(id="g-new", kind="equipe_sul_abc", name="Equipe Sul", members=())
+    repository.create_group.return_value = created
+    use_case = ManageCommercialGroupsUseCase(repository)
+
+    result = use_case.create_group(CreateCommercialGroupRequest(name="Equipe Sul"))
+
+    kind = repository.create_group.call_args.kwargs["kind"]
+    assert kind.startswith("equipe_sul_")
+    assert result.id == "g-new"
 
 
 def test_create_group_success_and_audit() -> None:
@@ -104,6 +120,26 @@ def test_create_group_success_and_audit() -> None:
     )
     audit.append.assert_called_once()
     assert audit.append.call_args.kwargs["action"] == "commercial_group.create"
+
+
+def test_delete_group_audits_and_raises_when_missing() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _group()
+    repository.delete_group.return_value = True
+    audit = MagicMock()
+    use_case = ManageCommercialGroupsUseCase(repository, audit_repository=audit)
+
+    use_case.delete_group(group_id="g1", actor_user_id="actor-1")
+
+    repository.delete_group.assert_called_once_with("g1")
+    assert audit.append.call_args.kwargs["action"] == "commercial_group.delete"
+
+    repository.get_by_id.return_value = None
+    try:
+        use_case.delete_group(group_id="missing")
+        assert False, "expected LookupError"
+    except LookupError:
+        pass
 
 
 def test_add_member_requires_portal_access() -> None:

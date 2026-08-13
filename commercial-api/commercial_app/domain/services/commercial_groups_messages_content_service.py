@@ -49,8 +49,3 @@ class CommercialGroupsMessagesContentService:
     def message(cls, key: str) -> str:
         messages = cls.bundle().get("messages") or {}
         return str(messages.get(key) or key)
-
-    @classmethod
-    def seed_kinds(cls) -> dict[str, str]:
-        seeds = cls.bundle().get("seedKinds") or {}
-        return {str(k): str(v) for k, v in seeds.items()} if isinstance(seeds, dict) else {}

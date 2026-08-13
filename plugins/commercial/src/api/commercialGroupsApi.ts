@@ -40,6 +40,22 @@ export async function getCommercialGroup(
   return unwrapEnvelope(response, "Erro ao carregar grupo.");
 }
 
+export async function createCommercialGroup(
+  name: string,
+): Promise<CommercialGroupDto> {
+  const response = await httpPost<ApiSuccessResponse<CommercialGroupDto>>(
+    commercialApiUrl("/groups"),
+    { name: name.trim() },
+  );
+  return unwrapEnvelope(response, "Erro ao criar grupo.");
+}
+
+export async function deleteCommercialGroup(groupId: string): Promise<void> {
+  await httpDelete<ApiSuccessResponse<{ deleted: boolean; id: string }>>(
+    commercialApiUrl(`/groups/${encodeURIComponent(groupId)}`),
+  );
+}
+
 export async function addCommercialGroupMember(
   groupId: string,
   userId: string,

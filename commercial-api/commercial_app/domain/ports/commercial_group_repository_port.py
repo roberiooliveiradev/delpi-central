@@ -34,6 +34,11 @@ class CommercialGroupRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_group(self, group_id: str) -> bool:
+        """Hard-delete group (members cascade). False if missing."""
+        raise NotImplementedError
+
+    @abstractmethod
     def replace_members(
         self,
         *,

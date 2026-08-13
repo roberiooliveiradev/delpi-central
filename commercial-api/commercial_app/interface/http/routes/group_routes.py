@@ -97,8 +97,8 @@ def create_commercial_group(
         use_case = _use_case()
         group = use_case.create_group(
             CreateCommercialGroupRequest(
-                kind=body.kind,
                 name=body.name,
+                kind=body.kind,
                 sort_order=body.sort_order,
                 active=body.active,
                 created_by_user_id=_current_user_id(request),
@@ -118,6 +118,34 @@ def create_commercial_group(
             "Erro interno ao criar grupo.",
             500,
             operation_id="create_commercial_group",
+        )
+
+
+@router.delete("/{group_id}", operation_id="delete_commercial_group")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def delete_commercial_group(
+    request: Request,
+    group_id: str = Path(..., min_length=1),
+):
+    try:
+        use_case = _use_case()
+        use_case.delete_group(
+            group_id=group_id,
+            actor_user_id=_current_user_id(request),
+        )
+        return ok(
+            {"deleted": True, "id": group_id},
+            message=CommercialGroupsMessagesContentService.message("deleteOk"),
+            operation_id="delete_commercial_group",
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="delete_commercial_group")
+    except Exception:
+        logger.exception("delete_commercial_group_failed")
+        return fail(
+            "Erro interno ao excluir grupo.",
+            500,
+            operation_id="delete_commercial_group",
         )
 
 

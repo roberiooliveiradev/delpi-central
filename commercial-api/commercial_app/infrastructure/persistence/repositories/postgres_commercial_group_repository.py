@@ -79,6 +79,21 @@ class PostgresCommercialGroupRepository(PluginBaseRepository, CommercialGroupRep
             raise RuntimeError("Falha ao criar grupo operacional.")
         return group
 
+    def delete_group(self, group_id: str) -> bool:
+        gid = str(group_id).strip()
+        if not gid:
+            return False
+        if self.fetch_one(
+            "SELECT id FROM commercial.commercial_groups WHERE id = %s",
+            (gid,),
+        ) is None:
+            return False
+        self.execute(
+            "DELETE FROM commercial.commercial_groups WHERE id = %s",
+            (gid,),
+        )
+        return True
+
     def replace_members(
         self,
         *,

@@ -669,8 +669,8 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 ### WF-05R-GROUPS — Grupos
 
 **Rota:** `/administration/groups`  
-**API:** `GET /groups` + add/remove members  
-**UI:** card por grupo + `UserDirectoryPicker` (avatars) — grupos ≠ RBAC.
+**API:** `GET/POST /groups`, `DELETE /groups/{id}`, add/remove members  
+**UI:** formulário **Criar grupo** + card por grupo com `UserDirectoryPicker` (avatars) e **Excluir grupo**. Sem grupos padrão — o gestor cria. Grupos ≠ RBAC.
 
 ### WF-05R-ORG — Visão Organização
 

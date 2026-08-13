@@ -37,7 +37,7 @@
 |------|------|---------|
 | **M1** | F2 | Carteira + avatars (+ `audit_log` mínimo) |
 | **M1+** | E5.1 | `seller_portfolio_members` (N:N) — `V005` |
-| **M1++** | E5 groups | `commercial_groups` + `commercial_group_members` — `V010` (seed sellers/sales_assistants/billing/estimators) |
+| **M1++** | E5 groups | `commercial_groups` + `commercial_group_members` — `V010` (tabelas) + `V011` (remove seeds; gestor cria) |
 | **M2** | F5 | Tasks, activities (+ Wave G `V003`); visits leves / outbox / task_deps = futuro |
 | **M3** | F6 | Opportunities, pipeline refs, forecast |
 | **M4** | F7 | Samples, order confirmations, delivery exceptions |
@@ -125,17 +125,18 @@ Membership N:N — usuários compartilham a **mesma** lista de clientes da carte
 **Backfill (`V005`):** cada `seller_portfolios.user_id` vira linha `role='owner'`.  
 **Produto:** usuário pode aparecer em N carteiras; filtro «Todas as carteiras» = união dedupe dos clientes; chip Escopo no shell = identidade (`N carteiras` se >1), não filtro.
 
-### 3.1c `commercial_groups` / `commercial_group_members` (V010)
+### 3.1c `commercial_groups` / `commercial_group_members` (V010 + V011)
 
-Grupos **operacionais** do Portal (Vendedores, Auxiliares, Faturamento, Orçamentistas). **Não** são papéis RBAC nem carteiras.
+Grupos **operacionais** do Portal — **sem seeds fixos**; o gestor cria, exclui e gerencia membros. **Não** são papéis RBAC nem carteiras.
 
 | Tabela | Colunas-chave |
 |--------|----------------|
-| `commercial_groups` | `id`, `kind` (UNIQUE EN), `name` (PT UI), `active`, `sort_order` |
+| `commercial_groups` | `id`, `kind` (UNIQUE EN, derivado do nome), `name` (PT UI), `active`, `sort_order` |
 | `commercial_group_members` | `group_id`, `user_id` — UNIQUE `(group_id, user_id)` |
 
-**API:** `GET/POST /groups`, membros add/remove/replace; roster `GET /administration/team-roster`; perfil `groups[]` (summary sem lista de membros).  
-**Permissão:** `commercial.seller-portfolios.manage`.
+**API:** `GET/POST /groups`, `DELETE /groups/{id}`, membros add/remove/replace; roster `GET /administration/team-roster`; perfil `groups[]` (summary sem lista de membros).  
+**Permissão:** `commercial.seller-portfolios.manage`.  
+**V011:** remove seeds legados (`sellers` / `sales_assistants` / `billing` / `estimators`).
 
 ### 3.2 `seller_customers`
 

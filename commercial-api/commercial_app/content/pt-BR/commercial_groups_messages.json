@@ -2,7 +2,7 @@
   "errors": {
     "groupNotFound": "Grupo operacional não encontrado.",
     "kindRequired": "kind é obrigatório.",
-    "nameRequired": "name é obrigatório.",
+    "nameRequired": "Informe o nome do grupo.",
     "userIdRequired": "user_id é obrigatório.",
     "kindAlreadyExists": "Já existe um grupo com o kind «{kind}».",
     "portalAccessDenied": "Usuário sem acesso ao Portal Comercial."
@@ -11,14 +11,9 @@
     "listOk": "Grupos operacionais carregados.",
     "getOk": "Grupo operacional carregado.",
     "createOk": "Grupo operacional criado.",
+    "deleteOk": "Grupo operacional excluído.",
     "replaceMembersOk": "Membros do grupo atualizados.",
     "addMemberOk": "Membro adicionado ao grupo.",
     "removeMemberOk": "Membro removido do grupo."
-  },
-  "seedKinds": {
-    "sellers": "Vendedores",
-    "sales_assistants": "Auxiliares de vendas",
-    "billing": "Faturamento",
-    "estimators": "Orçamentistas"
   }
 }

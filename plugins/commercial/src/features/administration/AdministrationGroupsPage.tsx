@@ -1,9 +1,11 @@
 import { EmptyState, UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
-import { RefreshCw, UsersRound, X } from "lucide-react";
+import { Plus, RefreshCw, Trash2, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   addCommercialGroupMember,
+  createCommercialGroup,
+  deleteCommercialGroup,
   listCommercialGroups,
   removeCommercialGroupMember,
   type CommercialGroupDto,
@@ -18,7 +20,9 @@ import {
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialStatusBadge,
+  CommercialTextField,
 } from "../../app/commercialUi";
+import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
@@ -32,6 +36,7 @@ type AdministrationGroupsPageProps = {
 
 export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageProps) {
   const copy = ADMINISTRATION_CONTENT.groups;
+  const confirm = useCommercialConfirm();
   const { notifyError, notifySuccess } = useCommercialFloatingNotice();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,6 +44,8 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
   const [groups, setGroups] = useState<CommercialGroupDto[]>([]);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [pickerByGroup, setPickerByGroup] = useState<Record<string, DirectoryUserOption[]>>({});
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const memberUserIds = useMemo(
     () =>
@@ -82,14 +89,62 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
   }, [load]);
 
   const upsertGroup = (next: CommercialGroupDto) => {
-    setGroups((prev) =>
-      prev
-        .map((item) => (item.id === next.id ? next : item))
-        .sort(
-          (a, b) =>
-            a.sort_order - b.sort_order || a.name.localeCompare(b.name, "pt-BR"),
-        ),
-    );
+    setGroups((prev) => {
+      const exists = prev.some((item) => item.id === next.id);
+      const list = exists
+        ? prev.map((item) => (item.id === next.id ? next : item))
+        : [...prev, next];
+      return list.sort(
+        (a, b) =>
+          a.sort_order - b.sort_order || a.name.localeCompare(b.name, "pt-BR"),
+      );
+    });
+  };
+
+  const onCreateGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name) {
+      notifyError(copy.createNameRequired);
+      return;
+    }
+    setCreating(true);
+    try {
+      const created = await createCommercialGroup(name);
+      upsertGroup(created);
+      setNewGroupName("");
+      notifySuccess(copy.createSuccess);
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : "Falha ao criar grupo.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const onDeleteGroup = async (group: CommercialGroupDto) => {
+    const ok = await confirm({
+      title: copy.deleteConfirmTitle,
+      message: copy.deleteConfirmMessage.replace("{name}", group.name),
+      confirmLabel: copy.deleteGroup,
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!ok) return;
+    const key = `${group.id}:delete`;
+    setBusyKey(key);
+    try {
+      await deleteCommercialGroup(group.id);
+      setGroups((prev) => prev.filter((item) => item.id !== group.id));
+      setPickerByGroup((prev) => {
+        const next = { ...prev };
+        delete next[group.id];
+        return next;
+      });
+      notifySuccess(copy.deleteSuccess);
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : "Falha ao excluir grupo.");
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const onAddMember = async (groupId: string, userId: string) => {
@@ -169,6 +224,27 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
       ) : null}
 
+      {!loading ? (
+        <CommercialSectionCard title={copy.create}>
+          <div className="cm-row-actions cm-administration-groups__create">
+            <CommercialTextField
+              label={copy.createPlaceholder}
+              value={newGroupName}
+              onChange={setNewGroupName}
+              disabled={creating}
+            />
+            <CommercialActionButton
+              variant="primary"
+              disabled={creating || !newGroupName.trim()}
+              onClick={() => void onCreateGroup()}
+            >
+              <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+              {creating ? copy.creating : copy.create}
+            </CommercialActionButton>
+          </div>
+        </CommercialSectionCard>
+      ) : null}
+
       {loading ? <CommercialLoadingCard title={copy.loading} /> : null}
 
       {!loading && groups.length === 0 ? (
@@ -179,10 +255,16 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         >
           <CommercialActionButton
             variant="primary"
-            onClick={() => navigatePluginView("administration_team", { basePath })}
+            disabled={creating}
+            onClick={() => {
+              const field = document.querySelector<HTMLInputElement>(
+                ".cm-administration-groups__create input",
+              );
+              field?.focus();
+            }}
           >
             <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
-            {ADMINISTRATION_CONTENT.team.navLabel}
+            {copy.create}
           </CommercialActionButton>
         </EmptyState>
       ) : null}
@@ -191,6 +273,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         ? groups.map((group) => {
             const memberIds = new Set(group.members.map((member) => member.user_id));
             const pickerValue = pickerByGroup[group.id] ?? [];
+            const deleting = busyKey === `${group.id}:delete`;
             return (
               <CommercialSectionCard
                 key={group.id}
@@ -200,10 +283,20 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                   String(group.member_count ?? group.members.length),
                 )}
                 actions={
-                  <CommercialStatusBadge
-                    label={group.active ? "Ativo" : "Inativo"}
-                    variant={group.active ? "success" : "neutral"}
-                  />
+                  <>
+                    <CommercialStatusBadge
+                      label={group.active ? "Ativo" : "Inativo"}
+                      variant={group.active ? "success" : "neutral"}
+                    />
+                    <CommercialActionButton
+                      variant="ghost"
+                      disabled={Boolean(busyKey)}
+                      onClick={() => void onDeleteGroup(group)}
+                    >
+                      <Trash2 size={16} strokeWidth={1.75} aria-hidden="true" />
+                      {deleting ? copy.deleting : copy.deleteGroup}
+                    </CommercialActionButton>
+                  </>
                 }
               >
                 <div className="cm-portfolios-detail-block">
