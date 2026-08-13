@@ -46,7 +46,7 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     id: "open_portfolio",
     label: "Carteira em aberto",
     tooltip:
-      "Valor e linhas de pedidos em aberto agora (snapshot). Não é programação do PCP nem ROL do período.",
+      "Saldo comercial agora (valor e linhas de pedidos). Não é programação do PCP, não é forecast e não some com o ROL do período.",
   },
   {
     id: "otd",

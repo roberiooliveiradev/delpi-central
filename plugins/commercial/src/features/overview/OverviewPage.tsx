@@ -252,7 +252,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
               contextLabel={
                 dashboard.openPortfolioError
                   ? dashboard.openPortfolioError
-                  : `${formatInteger(dashboard.openPortfolio?.openLineCount)} linhas · Em aberto (agora)`
+                  : `${formatInteger(dashboard.openPortfolio?.openLineCount)} linhas · Em aberto (agora) · ≠ PCP`
               }
               icon={<ClipboardList size={22} aria-hidden="true" />}
               loading={dashboard.openPortfolioLoading}

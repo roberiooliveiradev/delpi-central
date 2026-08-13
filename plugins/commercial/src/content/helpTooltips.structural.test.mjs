@@ -108,11 +108,15 @@ describe("CM_HELP matriz (C16)", () => {
 
   it("Overview expõe metodologia hit rate e carteira≠PCP", () => {
     const source = readFileSync(join(src, "features/overview/OverviewPage.tsx"), "utf8");
+    const helps = readFileSync(join(src, "content/helpTooltips.ts"), "utf8");
     assert.match(source, /CM_HELP\.overview\.closingRate/);
     assert.match(source, /CM_HELP\.overview\.funnel/);
     assert.match(source, /CM_HELP\.overview\.openPortfolio/);
     assert.match(source, /CM_HELP\.overview\.closingRateSeries/);
     assert.match(source, /cm-gestao-charts-grid--auto-span/);
     assert.match(source, /AnalyticsClosingRateSeriesChart/);
+    assert.match(source, /≠ PCP|Em aberto \(agora\)/);
+    assert.match(helps, /openPortfolio:[\s\S]*PCP/);
+    assert.match(helps, /openPortfolio:[\s\S]*não deve ser somada ao ROL|não some com ROL/i);
   });
 });

@@ -528,10 +528,10 @@ export const CM_HELP = {
   },
   overview: {
     page:
-      "Dashboard do período: filtros, indicadores (≤8), evolução ROL e funil. Sem lista de OVs nem faixa Aprofundar.",
+      "Dashboard do período: filtros, indicadores (≤8), evolução ROL (com YoY opcional), série de conversão e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
-      "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. A carteira em aberto (KPI) é snapshot e não usa o período.",
-    kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios. Carteira em aberto, quando exibida, é saldo atual — não soma com ROL.",
+      "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
+    kpis: "Indicadores do período: ROL vs meta, conversão, OTD% e novos negócios. «Carteira em aberto» é saldo comercial atual (pedidos) — não some com ROL e não é programação do PCP.",
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",
     rolSeriesYoy:
@@ -545,7 +545,7 @@ export const CM_HELP = {
     closingRate:
       "Taxa de conversão (hit rate): propostas ganhas (AD1_STATUS=9, aceite no período) ÷ revisões abertas no período. Metodologia atual do Portal — não alterar sem homologação.",
     openPortfolio:
-      "Carteira comercial: valor e linhas em aberto agora (pedidos/compromissos). Não é a programação do PCP nem o ROL faturado do período.",
+      "Carteira comercial em aberto agora: valor e linhas de pedidos/compromissos. Não é programação do PCP, não é forecast e não deve ser somada ao ROL do período (bases diferentes).",
   },
   administration: {
     panel:
