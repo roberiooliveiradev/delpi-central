@@ -1,6 +1,12 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import { commercialApiUrl, httpDelete, httpGet, httpPatch, httpPost } from "./httpClient";
 
+export type TaskCustomerDto = {
+  customer_code: string;
+  customer_store: string;
+  customer_name?: string | null;
+};
+
 export type CommercialTaskDto = {
   id: string;
   title: string;
@@ -11,9 +17,12 @@ export type CommercialTaskDto = {
   due_at?: string | null;
   completed_at?: string | null;
   assignee_user_id: string;
+  assignee_user_ids?: string[];
   created_by_user_id: string;
   customer_code?: string | null;
   customer_store?: string | null;
+  customer_name?: string | null;
+  customers?: TaskCustomerDto[];
   bucket?: "overdue" | "today" | "later" | string;
   attachment_count?: number;
 };
@@ -92,6 +101,12 @@ export async function getCompletedWorklist(
   return unwrapEnvelope(response, "Erro ao carregar tarefas concluídas.");
 }
 
+export type TaskCustomerBody = {
+  code: string;
+  store: string;
+  name?: string | null;
+};
+
 export async function createTask(
   body: {
     title: string;
@@ -101,7 +116,9 @@ export async function createTask(
     due_at?: string | null;
     customer_code?: string | null;
     customer_store?: string | null;
+    customers?: TaskCustomerBody[] | null;
     assignee_user_id?: string | null;
+    assignee_user_ids?: string[] | null;
   },
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {
@@ -123,7 +140,9 @@ export async function updateTask(
     due_at?: string | null;
     customer_code?: string | null;
     customer_store?: string | null;
+    customers?: TaskCustomerBody[] | null;
     assignee_user_id?: string | null;
+    assignee_user_ids?: string[] | null;
   },
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {
@@ -167,12 +186,16 @@ export async function deferTask(
 
 export async function reassignTask(
   taskId: string,
-  assigneeUserId: string,
+  assigneeUserId: string | string[],
   signal?: AbortSignal,
 ): Promise<CommercialTaskDto> {
+  const body =
+    Array.isArray(assigneeUserId)
+      ? { assignee_user_ids: assigneeUserId }
+      : { assignee_user_id: assigneeUserId };
   const response = await httpPost<ApiSuccessResponse<CommercialTaskDto>>(
     commercialApiUrl(`/tasks/${encodeURIComponent(taskId)}/reassign`),
-    { assignee_user_id: assigneeUserId },
+    body,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao reatribuir tarefa.");

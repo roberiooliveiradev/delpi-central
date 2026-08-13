@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+
 import type { TotvsCustomerHit } from "../../../types/portfolio";
 import { customerKey } from "../../../shared/format";
 import { useActiveCustomerSearch } from "../hooks/useActiveCustomerSearch";
@@ -9,9 +11,11 @@ export type CustomerSearchSelection = {
 };
 
 export type CustomerSearchPickerProps = {
-  value: CustomerSearchSelection | null;
-  onChange: (value: CustomerSearchSelection | null) => void;
+  value: CustomerSearchSelection[];
+  onChange: (value: CustomerSearchSelection[]) => void;
   disabled?: boolean;
+  /** Limite de selecionados (default 20). Com `1`, a próxima escolha substitui. */
+  maxSelected?: number;
   labels?: {
     title?: string;
     hint?: string;
@@ -20,39 +24,57 @@ export type CustomerSearchPickerProps = {
   className?: string;
 };
 
-function hitLabel(hit: TotvsCustomerHit): string {
-  const codeStore = `${hit.code}/${hit.store}`;
-  const name = (hit.name || "").trim();
-  return name ? `${codeStore} · ${name}` : codeStore;
-}
-
-function selectionLabel(value: CustomerSearchSelection): string {
+/** Label canônico: `{nome} · {código}/{loja}`. */
+export function customerSelectionLabel(value: CustomerSearchSelection): string {
   const codeStore = `${value.code}/${value.store}`;
   const name = (value.name || "").trim();
-  return name ? `${codeStore} · ${name}` : codeStore;
+  return name ? `${name} · ${codeStore}` : codeStore;
+}
+
+function hitLabel(hit: TotvsCustomerHit): string {
+  return customerSelectionLabel({
+    code: hit.code,
+    store: hit.store,
+    name: hit.name || "",
+  });
 }
 
 /**
- * Typeahead single-select de cliente TOTVS (busca global via commercial-api).
- * Visual alinhado ao UserDirectoryPicker do kit.
+ * Typeahead multi-select de cliente TOTVS (busca global via commercial-api).
+ * Chips alinhados ao UserDirectoryPicker / delpi-ui-tag-chip.
  */
 export function CustomerSearchPicker({
   value,
   onChange,
   disabled = false,
+  maxSelected = 20,
   labels,
   className,
 }: CustomerSearchPickerProps) {
   const { query, setQuery, hits, searching, error, queryReady, reset } =
     useActiveCustomerSearch({ pageSize: 12 });
 
+  const selectedKeys = new Set(value.map((item) => customerKey(item.code, item.store)));
+  const atLimit = maxSelected > 0 && value.length >= maxSelected;
+
   const selectHit = (hit: TotvsCustomerHit) => {
-    if (!hit.code.trim() || !hit.store.trim()) return;
-    onChange({
-      code: hit.code.trim(),
-      store: hit.store.trim(),
+    const code = hit.code.trim();
+    const store = hit.store.trim();
+    if (!code || !store) return;
+    const key = customerKey(code, store);
+    if (selectedKeys.has(key)) return;
+    const next: CustomerSearchSelection = {
+      code,
+      store,
       name: (hit.name || "").trim(),
-    });
+    };
+    if (maxSelected === 1) {
+      onChange([next]);
+    } else if (atLimit) {
+      return;
+    } else {
+      onChange([...value, next]);
+    }
     reset();
   };
 
@@ -98,7 +120,11 @@ export function CustomerSearchPicker({
               <li key={key || `${hit.code}-${hit.store}`}>
                 <button
                   type="button"
-                  disabled={disabled}
+                  disabled={
+                    disabled ||
+                    selectedKeys.has(key) ||
+                    (atLimit && maxSelected !== 1)
+                  }
                   onClick={() => selectHit(hit)}
                 >
                   {hitLabel(hit)}
@@ -108,19 +134,32 @@ export function CustomerSearchPicker({
           })}
         </ul>
       ) : null}
-      {value ? (
-        <ul className="delpi-ui-user-directory-picker__selected">
-          <li>
-            <span>{selectionLabel(value)}</span>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange(null)}
-            >
-              Remover
-            </button>
-          </li>
-        </ul>
+      {value.length > 0 ? (
+        <div
+          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
+          aria-label="Clientes selecionados"
+        >
+          {value.map((item) => {
+            const label = customerSelectionLabel(item);
+            const key = customerKey(item.code, item.store);
+            return (
+              <span key={key} className="delpi-ui-tag-chip">
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="delpi-ui-tag-chip__remove"
+                  disabled={disabled}
+                  aria-label={`Remover ${label}`}
+                  onClick={() =>
+                    onChange(value.filter((row) => customerKey(row.code, row.store) !== key))
+                  }
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );
