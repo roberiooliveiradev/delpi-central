@@ -8,7 +8,6 @@ import {
   type CommercialAttachmentDto,
 } from "../../api/attachmentsApi";
 import {
-  CommercialAttachmentFileList,
   CommercialAttachmentPreviewStrip,
   CommercialFileDropzone,
 } from "../../app/commercialUi";
@@ -98,7 +97,7 @@ export function TaskAttachmentsBlock({
       setThumbUrls({});
     };
 
-    if (mode !== "preview" || items.length === 0) {
+    if (items.length === 0) {
       clearThumbs();
       return () => {
         cancelled = true;
@@ -135,7 +134,7 @@ export function TaskAttachmentsBlock({
       }
       thumbUrlsRef.current = {};
     };
-  }, [items, mode]);
+  }, [items]);
 
   const onUpload = async (files: File[]) => {
     const file = files[0];
@@ -149,25 +148,6 @@ export function TaskAttachmentsBlock({
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao enviar anexo.", {
         title: "Não foi possível anexar",
-      });
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const onDownload = async (item: { id: string; fileName: string }) => {
-    setBusyId(item.id);
-    try {
-      const blob = await downloadAttachmentBlob(item.id);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = item.fileName;
-      anchor.click();
-      URL.revokeObjectURL(url);
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao baixar anexo.", {
-        title: "Não foi possível baixar o anexo",
       });
     } finally {
       setBusyId(null);
@@ -212,28 +192,19 @@ export function TaskAttachmentsBlock({
         ? `Arquivos anexados (${count})`
         : "Arquivos anexados";
 
+  const stripItems = items.map((item) => ({
+    id: item.id,
+    fileName: item.file_name,
+    contentType: item.content_type,
+    detail: formatBytes(item.byte_size),
+    previewUrl: thumbUrls[item.id] ?? null,
+    busy: busyId === item.id,
+  }));
+
   return (
     <>
       <div className={embedded ? "cm-my-day-attachments cm-my-day-attachments--embedded" : "cm-my-day-attachments"}>
-        {mode === "preview" ? (
-          <>
-            {loading && !loadedOnce ? <p className="cm-hint-text">Carregando anexos…</p> : null}
-            {loadedOnce || !loading ? (
-              <CommercialAttachmentPreviewStrip
-                heading={heading}
-                items={items.map((item) => ({
-                  id: item.id,
-                  fileName: item.file_name,
-                  contentType: item.content_type,
-                  detail: formatBytes(item.byte_size),
-                  previewUrl: thumbUrls[item.id] ?? null,
-                }))}
-                emptyMessage="Nenhum anexo nesta tarefa."
-                onOpen={(item) => onOpen({ id: item.id, fileName: item.fileName })}
-              />
-            ) : null}
-          </>
-        ) : (
+        {canManage ? (
           <>
             <h3 className="cm-my-day-attachments__title">{heading}</h3>
             <CommercialFileDropzone
@@ -249,18 +220,25 @@ export function TaskAttachmentsBlock({
             />
             {loading && !loadedOnce ? <p className="cm-hint-text">Carregando anexos…</p> : null}
             {loadedOnce || !loading ? (
-              <CommercialAttachmentFileList
-                items={items.map((item) => ({
-                  id: item.id,
-                  fileName: item.file_name,
-                  detail: formatBytes(item.byte_size),
-                  busy: busyId === item.id,
-                }))}
+              <CommercialAttachmentPreviewStrip
+                mode="manage"
+                items={stripItems}
                 emptyMessage="Nenhum arquivo anexado nesta tarefa."
-                onOpen={onOpen}
-                onDownload={(item) => void onDownload(item)}
-                onRemove={(item) => void onDelete(item)}
-                canRemove
+                onOpen={(item) => onOpen({ id: item.id, fileName: item.fileName })}
+                onRemove={(item) => void onDelete({ id: item.id })}
+              />
+            ) : null}
+          </>
+        ) : (
+          <>
+            {loading && !loadedOnce ? <p className="cm-hint-text">Carregando anexos…</p> : null}
+            {loadedOnce || !loading ? (
+              <CommercialAttachmentPreviewStrip
+                mode="preview"
+                heading={heading}
+                items={stripItems}
+                emptyMessage="Nenhum anexo nesta tarefa."
+                onOpen={(item) => onOpen({ id: item.id, fileName: item.fileName })}
               />
             ) : null}
           </>

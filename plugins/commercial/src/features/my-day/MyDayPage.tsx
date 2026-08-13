@@ -30,7 +30,7 @@ import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
   cmStatusBadgeClassNames,
   CommercialActionButton,
-  CommercialAttachmentFileList,
+  CommercialAttachmentPreviewStrip,
   CommercialEmptyState,
   CommercialFileDropzone,
   CommercialLoadingCard,
@@ -267,11 +267,27 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [pendingAttachments, setPendingAttachments] = useState<
     Array<{ id: string; file: File }>
   >([]);
+  const [pendingThumbUrls, setPendingThumbUrls] = useState<Record<string, string>>({});
   const [pendingPreview, setPendingPreview] = useState<TaskAttachmentPreviewTarget>(null);
   const [formMode, setFormMode] = useState<TaskFormMode>("closed");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const taskFormRef = useRef<HTMLDivElement | null>(null);
   const deepLinkBucketRef = useRef<BucketKey | null>(null);
+
+  useEffect(() => {
+    const next: Record<string, string> = {};
+    for (const item of pendingAttachments) {
+      const mime = (item.file.type || "").toLowerCase();
+      const isImage =
+        mime.startsWith("image/") ||
+        /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(item.file.name || "");
+      if (isImage) next[item.id] = URL.createObjectURL(item.file);
+    }
+    setPendingThumbUrls(next);
+    return () => {
+      for (const url of Object.values(next)) URL.revokeObjectURL(url);
+    };
+  }, [pendingAttachments]);
 
   const assigneeUserIds = useMemo(
     () =>
@@ -1362,16 +1378,19 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       hint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB por arquivo",
                     }}
                   />
-                  <CommercialAttachmentFileList
+                  <CommercialAttachmentPreviewStrip
+                    mode="manage"
                     items={pendingAttachments.map((item) => ({
                       id: item.id,
                       fileName: item.file.name,
+                      contentType: item.file.type,
                       detail:
                         item.file.size < 1024
                           ? `${item.file.size} B`
                           : item.file.size < 1024 * 1024
                             ? `${(item.file.size / 1024).toFixed(1)} KB`
                             : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`,
+                      previewUrl: pendingThumbUrls[item.id] ?? null,
                     }))}
                     emptyMessage="Nenhum arquivo na fila. Use a área acima para anexar."
                     labels={{ empty: "Nenhum arquivo na fila. Use a área acima para anexar." }}
@@ -1384,7 +1403,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         current.filter((row) => row.id !== item.id),
                       );
                     }}
-                    canRemove
                   />
                 </div>
               ) : null}
