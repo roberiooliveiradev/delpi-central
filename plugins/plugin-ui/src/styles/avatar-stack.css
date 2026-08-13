@@ -1,0 +1,65 @@
+/**
+ * AvatarStack — facepile .delpi-ui-avatar-stack*
+ */
+
+.delpi-ui-avatar-stack {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-avatar-stack__item,
+.delpi-ui-avatar-stack__more {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-avatar-stack__item {
+  position: relative;
+  margin-inline-start: -6px;
+}
+
+.delpi-ui-avatar-stack__item:first-child {
+  margin-inline-start: 0;
+}
+
+.delpi-ui-avatar-stack__item .delpi-ui-avatar {
+  box-shadow: 0 0 0 2px var(--delpi-ui-surface, var(--surface, #0f172a));
+}
+
+.delpi-ui-avatar-stack__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: -6px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--delpi-ui-surface, var(--surface, #0f172a));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
+    var(--delpi-ui-surface, var(--surface, #111827))
+  );
+  color: var(--delpi-ui-text, var(--text, #e5e7eb));
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.delpi-ui-avatar-stack--md .delpi-ui-avatar-stack__more {
+  min-width: 32px;
+  height: 32px;
+  font-size: 11px;
+}
+
+.delpi-ui-avatar-stack--lg .delpi-ui-avatar-stack__more {
+  min-width: 56px;
+  height: 56px;
+  font-size: 14px;
+}

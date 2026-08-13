@@ -259,6 +259,15 @@ export {
   type InitialsAvatarProps,
   type InitialsAvatarSize,
 } from "./InitialsAvatar";
+export {
+  AvatarStack,
+  avatarStackBemClasses,
+  createDashboardAvatarStack,
+  type AvatarStackClassNames,
+  type AvatarStackItem,
+  type AvatarStackProps,
+  type DashboardAvatarStackProps,
+} from "./AvatarStack";
 export { FitText } from "./FitText";
 export {
   PageHeader,
