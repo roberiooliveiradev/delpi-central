@@ -170,12 +170,16 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Campo | Conteúdo |
 |-------|----------|
 | Código | `KPI-OTD` |
-| Nome | OTD |
-| Objetivo | Entregas no prazo ÷ elegíveis |
-| Fórmula | Definir solicitado vs confirmado; parciais; tolerância |
-| Fonte | api-delpi `get_sales_order_otd`, panel, series |
-| Owner | a confirmar |
-| Status | rascunho |
+| Nome | Pontualidade (OTD) de pedido de venda |
+| Objetivo | % de linhas elegíveis no prazo (`C6_ENTREG`) + insights operacionais no painel |
+| Fórmula KPI | `sales_order_otd_pct = on_time_lines / total_lines × 100` — regras em `comercial-sales-order-otd.md` |
+| Stats painel | `late_percentage`; `avg_late_days` / `p50_late_days` / `p90_late_days` (só linhas `late`, `days_diff` > 0) |
+| Recorrência | Clientes com **≥2** linhas `late` no período — top 10 por `late_count` (desempate: soma `days_diff` DESC) |
+| Top 10 | (1) piores atrasos = linhas `late` por `days_diff` DESC; (2) próximas promessas = abertas (`not is_invoiced`) por `promised_date` ASC |
+| Tabela linhas | Server-side: `search`, `status`, `sort_by`/`sort_dir`, `page`/`page_size` via BFF commercial-api |
+| Fonte | api-delpi `get_sales_order_otd` / `…/panel` / `…/series`; BFF `/analytics/sales-order-otd*` |
+| Owner | Comercial + engenharia Portal |
+| Status | **implementado_mvp** (painel enriquecido) |
 
 ---
 

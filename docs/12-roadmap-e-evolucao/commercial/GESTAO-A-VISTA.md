@@ -56,7 +56,7 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | Meus pedidos | Quais linhas operar? | Escopo carteira; chip **Atraso**; **Concentrar** (horizonte); tabela | Série OTD histórica |
 | Minha Carteira | Quem são os clientes? | Lista; clique→Conta; atalho **Ver atrasos** → pedidos | BI período |
 | Conta · Opp | Quais OVs deste cliente? | Lista filtrada por código/loja | Placeholder CTA |
-| OTD | Pontualidade no período? | %; série SC/ES; linhas | Chip do dia (Pedidos) |
+| OTD | Pontualidade no período? | %; série SC/ES; stats atraso; reincidência; top 10 atrasos/promessas; linhas com busca/sort/filtro | Chip do dia (Pedidos); export |
 | Oportunidades | Quais OVs no período (global)? | Lista + busca | ADY |
 | Propostas | Documentos ADY / PDF? | Lista + detalhe | OV AD1010 |
 | Administração | Como gerir carteiras? | Painel / Carteiras / Membros | Ranking Equipe separado |

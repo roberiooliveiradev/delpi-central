@@ -241,7 +241,7 @@ Membros: roster pessoa × carteiras → detalhe
 | WF-02R | `/open-orders` | Chip Atraso = pontualidade operacional |
 | WF-03R / WF-04 | `/customers` · Conta | Aba Oportunidades = lista OV do cliente; clique linha→Conta |
 | WF-PROP | `/proposals` | Escopo chrome ≠ filtro ADY |
-| WF-OTD | `/analytics/otd` | % + série SC/ES; entrada Início |
+| WF-OTD | `/analytics/otd` | % + série SC/ES + insights (recorrência/top 10) + linhas server-side; entrada Início |
 | WF-OPP | `/analytics/opportunities` | OV global; entrada Início |
 | WF-EQ | `/analytics/team` | **Redirect → /administration** |
 

@@ -1,7 +1,7 @@
 # OTD de pedidos de venda — `/commercial/sales-order-otd`
 
-**Última atualização:** 2026-07-09  
-**Operação OpenAPI:** `get_sales_order_otd`  
+**Última atualização:** 2026-08-13  
+**Operação OpenAPI:** `get_sales_order_otd` (+ `…/panel`, `…/series`, `…/lines/{…}`)  
 **Repositório:** `app/infrastructure/persistence/totvs/commercial_repositories/sales_order_otd_repository.py`  
 **SQL:** `sales_order_otd_sql.py`
 
@@ -13,7 +13,7 @@ Calcular o percentual de linhas de pedido de venda (SC6) atendidas no prazo em r
 
 ```http
 GET /commercial/sales-order-otd?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&branch=02&customer_segment=weg
-GET /commercial/sales-order-otd/panel?...&status=late&page=1&page_size=20&sort_by=promised_date&sort_dir=desc
+GET /commercial/sales-order-otd/panel?...&status=late&page=1&page_size=20&sort_by=promised_date&sort_dir=desc&search=WEG
 GET /commercial/sales-order-otd/series?granularity=month&start_date=...&end_date=...
 GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 ```
@@ -23,6 +23,10 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `start_date` / `end_date` | Filtra linhas pela **data prometida** (`C6_ENTREG`). |
 | `branch` | Filial TOTVS (`01`, `02`, …). |
 | `customer_segment` | `weg` (cliente `000001`) ou `new_business` (demais clientes). |
+| `status` (panel) | `on_time` \| `late` (opcional). |
+| `search` (panel) | Busca em pedido, cliente (código/nome), produto (código/descrição). |
+| `page` / `page_size` | Paginação server-side (default page_size 20, máx. 1000). |
+| `sort_by` / `sort_dir` | Ordenação server-side (ver OpenAPI / DTO panel). |
 
 ## Fonte TOTVS
 
@@ -67,17 +71,29 @@ Entram linhas que atendem **todos** os critérios:
 | `late_lines` | Linhas atrasadas |
 | `sales_order_otd_pct` | `on_time_lines / total_lines × 100` (2 casas decimais) |
 
-Painel (`/panel`) — campos de linha relevantes:
+Painel (`/panel`) — `summary` + `insights` + `lines` paginado:
+
+| Bloco | Campos |
+|-------|--------|
+| `summary` | KPI (`total_lines`, `on_time_lines`, `late_lines`, `sales_order_otd_pct`, `late_percentage`) + `avg_late_days`, `p50_late_days`, `p90_late_days` (só late) |
+| `insights.recurringCustomers` | Top 10 clientes com ≥2 linhas late (`customer_code`, `customer_name`, `late_count`, `total_late_days`) |
+| `insights.worstDelays` | Top 10 linhas late por `days_diff` DESC |
+| `insights.upcomingPromises` | Top 10 linhas abertas por `promised_date` ASC |
+| `lines` | Página de itens (incl. `days_diff`, promessa, fatura, qtds) |
+
+Painel — campos de linha relevantes:
 
 | Campo | Fonte |
 |-------|--------|
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
+| `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |
 
 Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 ## Consumidores
 
+- Portal Comercial (`plugins/commercial` → commercial-api BFF `/analytics/sales-order-otd*`)
 - Dashboard Comercial (`plugins/dashboard-commercial`) — KPI na home + painel `/apps/dashboard-commercial/otd`
 - Strategic Indicators API (`commercial-sales-order-otd`)
 - Chat / agente (`get_sales_order_otd`)
@@ -86,5 +102,6 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 | Data | Alteração |
 |------|-----------|
+| 2026-08-13 | Panel: `search`, stats de atraso, insights (recorrência + top 10 atrasos/promessas); BFF commercial-api encaminha page/sort/status/search. |
 | 2026-07-09 | Passa a incluir linhas **não faturadas**; atraso de abertas medido por `end_date` vs. `C6_ENTREG`. |
 | Anterior | Considerava apenas linhas faturadas e totalmente entregues. |
