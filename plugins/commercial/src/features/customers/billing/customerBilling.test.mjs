@@ -138,6 +138,14 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(table, /Expandir itens/);
   });
 
+  it("cards KPI do histórico usam CommercialMetricCard", () => {
+    const cards = readSrc(
+      "features/customers/billing/components/CustomerBillingSummaryCards.tsx",
+    );
+    assert.match(cards, /CommercialMetricCard/);
+    assert.match(cards, /Valor faturado no período/);
+  });
+
   it("filtros de periodo e situacao", () => {
     const filters = readSrc(
       "features/customers/billing/components/CustomerBillingFilters.tsx",
@@ -145,7 +153,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /Últimos 90 dias/);
     assert.match(filters, /Devoluções/);
     assert.match(filters, /exclusão lógica/);
-    assert.match(filters, /SegmentToggle/);
+    assert.match(filters, /CommercialSegmentToggle/);
     assert.match(filters, /CommercialDateField/);
     assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
   });

@@ -1,12 +1,12 @@
-import { HelpTooltip, SegmentToggle } from "@delpi/plugin-ui/index";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import {
   CommercialDateField,
   CommercialFilterBarShell,
+  CommercialSegmentToggle,
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTextField,
-  UI_PREFIX,
 } from "../../../../app/commercialUi";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
@@ -75,8 +75,7 @@ export function CustomerBillingFilters({
         layout="grid"
         ariaLabel="Período"
         leading={
-          <SegmentToggle
-            prefix={UI_PREFIX}
+          <CommercialSegmentToggle
             ariaLabel="Período"
             idPrefix="customer-billing-period"
             value={preset}
