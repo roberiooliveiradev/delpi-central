@@ -1088,11 +1088,15 @@ Scatter SVG headless para priorização de revisões (Playbook 21 Transformômet
 
 ### `SpeedometerGauge`
 
-Velocímetro semicircular (SVG) para KPIs percentuais (ex.: OTD por unidade). Tom automático: &lt;90% danger · &lt;95% warning · demais success. CSS em `styles/speedometer-gauge.css`; dual-class `{prefix}-speedometer-gauge` + `delpi-ui-speedometer-gauge`. Layout de grupo: `delpi-ui-speedometer-gauge-row`.
+Velocímetro semicircular (SVG) para KPIs percentuais (ex.: OTD por unidade). Faixas de alerta no arco (&lt;90% danger · &lt;95% warning · demais success), tooltip no hover/foco, tamanho default 260. CSS em `styles/speedometer-gauge.css`.
 
 ### `HorizontalValueBars`
 
-Barras horizontais para rankings / top N (reincidência, piores atrasos). CSS em `styles/horizontal-value-bars.css`.
+Barras horizontais leves para rankings / top N. Preferir `ConfigurableSeriesChart` / `horizontal_bar` com `colorScale` quando o caso for dashboard.
+
+### `ConfigurableSeriesChart` (`horizontal_bar`)
+
+Barras interativas do pacote de séries; use `colorScale: { mode: "by_value", polarity: "high_is_bad" }` + `categoryColors` verde→âmbar→vermelho para alertas.
 
 ### `ImpactEffortMatrix`
 

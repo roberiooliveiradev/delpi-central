@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { SpeedometerGauge } from "./SpeedometerGauge";
@@ -14,6 +14,24 @@ describe("SpeedometerGauge", () => {
   it("aplica tom success para percentual alto", () => {
     const { container } = render(<SpeedometerGauge value={99.6} label="SC" />);
     expect(container.querySelector('[data-tone="success"]')).toBeTruthy();
+  });
+
+  it("aplica tom danger abaixo de 90%", () => {
+    const { container } = render(<SpeedometerGauge value={85} label="Baixo" />);
+    expect(container.querySelector('[data-tone="danger"]')).toBeTruthy();
+  });
+
+  it("mostra tooltip interativo no hover", () => {
+    render(
+      <SpeedometerGauge
+        value={98.5}
+        label="OTD Santa Catarina"
+        tip="OTD SC no período"
+      />,
+    );
+    const gauge = screen.getByRole("img", { name: /OTD Santa Catarina/i });
+    fireEvent.mouseEnter(gauge);
+    expect(screen.getByRole("tooltip").textContent).toContain("OTD SC no período");
   });
 
   it("mostra traço quando valor é nulo", () => {

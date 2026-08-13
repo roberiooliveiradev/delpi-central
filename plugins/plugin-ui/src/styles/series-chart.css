@@ -19,6 +19,19 @@
   overflow: visible;
 }
 
+/* Host de altura fixa para embutir o gráfico em cards (MFE seta --delpi-ui-series-chart-plot-height). */
+.delpi-ui-series-chart-plot {
+  width: 100%;
+  height: var(--delpi-ui-series-chart-plot-height, 260px);
+  min-height: 200px;
+}
+
+.delpi-ui-series-chart-plot .delpi-ui-series-chart-shell,
+.delpi-ui-series-chart-plot .delpi-ui-series-chart {
+  height: 100%;
+  max-height: 100%;
+}
+
 /* Bloco TV / presentation — garante fill + sombra do bloco quando o host seta --tdp-block-box-shadow. */
 .delpi-ui-series-chart-shell--fill {
   width: 100%;

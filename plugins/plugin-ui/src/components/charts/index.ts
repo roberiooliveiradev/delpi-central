@@ -56,6 +56,7 @@ export {
 } from "./ComparativeAreaChart";
 export {
   SpeedometerGauge,
+  SPEEDOMETER_TONE_COLORS,
   speedometerGaugeBemClasses,
   type SpeedometerGaugeClassNames,
   type SpeedometerGaugeProps,

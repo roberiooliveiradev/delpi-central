@@ -17,8 +17,8 @@ import {
   cmSectionLabels,
   cmSpeedometerGaugeRowClass,
   CommercialActionButton,
+  CommercialBarSeriesChart,
   CommercialDataTable,
-  CommercialHorizontalValueBars,
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
@@ -71,23 +71,6 @@ function truncate(text: string | null | undefined, max = 48): string {
   const value = (text ?? "").trim();
   if (!value) return "—";
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
-}
-
-/** Dias civis até a data ISO (YYYY-MM-DD); negativo se já passou. */
-function daysUntilIso(iso: string | null | undefined, today = new Date()): number | null {
-  if (!iso) return null;
-  const raw = iso.trim();
-  const d = new Date(raw.includes("T") ? raw : `${raw}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return null;
-  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const end = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  return Math.round((end - start) / 86_400_000);
-}
-
-/** Urgência para barra: quanto menor o prazo, maior a barra (janela ~60 dias). */
-function upcomingUrgency(daysUntil: number | null): number {
-  if (daysUntil == null) return 1;
-  return Math.max(1, 60 - Math.min(59, Math.max(-5, daysUntil)));
 }
 
 type AnalyticsOtdPageProps = {
@@ -461,17 +444,18 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <CommercialHorizontalValueBars
-              aria-label={ANALYTICS_CONTENT.otd.insightsRecurrence}
-              emptyMessage="Sem reincidência (≥2 atrasos) no período."
-              items={(panel.insights.recurringCustomers ?? []).map((row) => ({
-                id: row.customer_code,
-                label: row.customer_name || row.customer_code || "—",
-                value: row.late_count,
-                valueLabel: `${row.late_count.toLocaleString("pt-BR")} atrasos`,
-                meta: `∑ ${formatDays(row.total_late_days)} dias`,
-              }))}
-            />
+            {(panel.insights.recurringCustomers?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem reincidência (≥2 atrasos) no período.</p>
+            ) : (
+              <CommercialBarSeriesChart
+                seriesName="Atrasos"
+                emptyMessage="Sem reincidência (≥2 atrasos) no período."
+                points={(panel.insights.recurringCustomers ?? []).map((row) => ({
+                  label: row.customer_name || row.customer_code || "—",
+                  value: row.late_count,
+                }))}
+              />
+            )}
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsWorst}
@@ -479,24 +463,18 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <CommercialHorizontalValueBars
-              aria-label={ANALYTICS_CONTENT.otd.insightsWorst}
-              emptyMessage="Sem linhas atrasadas."
-              items={(panel.insights.worstDelays ?? []).map((row) => ({
-                id: `${row.branch}-${row.order_number}-${row.line_item}-worst`,
-                label: `${row.order_number}/${row.line_item}`,
-                value: Number(row.days_diff ?? 0),
-                valueLabel: `${formatDays(row.days_diff)} dias`,
-                meta: row.customer_name || row.customer_code || "—",
-              }))}
-              onItemClick={(item) => {
-                const row = panel.insights?.worstDelays?.find(
-                  (line) =>
-                    `${line.branch}-${line.order_number}-${line.line_item}-worst` === item.id,
-                );
-                if (row) openLine(row);
-              }}
-            />
+            {(panel.insights.worstDelays?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem linhas atrasadas.</p>
+            ) : (
+              <CommercialBarSeriesChart
+                seriesName="Dias de atraso"
+                emptyMessage="Sem linhas atrasadas."
+                points={(panel.insights.worstDelays ?? []).map((row) => ({
+                  label: `${row.order_number}/${row.line_item}`,
+                  value: Number(row.days_diff ?? 0),
+                }))}
+              />
+            )}
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsUpcoming}
@@ -504,27 +482,45 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            <CommercialHorizontalValueBars
-              aria-label={ANALYTICS_CONTENT.otd.insightsUpcoming}
-              emptyMessage="Sem promessas abertas no recorte."
-              items={(panel.insights.upcomingPromises ?? []).map((row) => {
-                const until = daysUntilIso(row.promised_date);
-                return {
-                  id: `${row.branch}-${row.order_number}-${row.line_item}-up`,
-                  label: `${row.order_number}/${row.line_item}`,
-                  value: upcomingUrgency(until),
-                  valueLabel: formatDisplayDate(row.promised_date),
-                  meta: row.customer_name || row.customer_code || "—",
-                };
-              })}
-              onItemClick={(item) => {
-                const row = panel.insights?.upcomingPromises?.find(
-                  (line) =>
-                    `${line.branch}-${line.order_number}-${line.line_item}-up` === item.id,
-                );
-                if (row) openLine(row);
-              }}
-            />
+            {(panel.insights.upcomingPromises?.length ?? 0) === 0 ? (
+              <p className="cm-muted">Sem promessas abertas no recorte.</p>
+            ) : (
+              <CommercialDataTable
+                rows={panel.insights.upcomingPromises}
+                columns={[
+                  {
+                    key: "order",
+                    header: "Pedido",
+                    render: (row) => (
+                      <button
+                        type="button"
+                        className="cm-link-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openLine(row);
+                        }}
+                      >
+                        {row.order_number}/{row.line_item}
+                      </button>
+                    ),
+                  },
+                  {
+                    key: "customer",
+                    header: "Cliente",
+                    render: (row) => row.customer_name || row.customer_code || "—",
+                  },
+                  {
+                    key: "promised",
+                    header: "Promessa",
+                    render: (row) => formatDisplayDate(row.promised_date),
+                  },
+                ]}
+                rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}-up`}
+                layout="section"
+                onRowClick={openLine}
+                rowClickRole="button"
+              />
+            )}
           </SectionCard>
         </div>
       ) : null}
@@ -546,12 +542,16 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             </p>
             <div className={cmSpeedometerGaugeRowClass} aria-label="Velocímetros OTD por unidade">
               <CommercialSpeedometerGauge
+                size={280}
                 value={latestSeriesPoint.otd_filial_01}
                 label={ANALYTICS_OTD_SERIES_LABELS.unit01}
+                tip={`${ANALYTICS_OTD_SERIES_LABELS.unit01} em ${latestSeriesPoint.periodo}`}
               />
               <CommercialSpeedometerGauge
+                size={280}
                 value={latestSeriesPoint.otd_filial_02}
                 label={ANALYTICS_OTD_SERIES_LABELS.unit02}
+                tip={`${ANALYTICS_OTD_SERIES_LABELS.unit02} em ${latestSeriesPoint.periodo}`}
               />
             </div>
           </div>

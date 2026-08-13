@@ -53,6 +53,7 @@ import {
   DataTable,
   SpeedometerGauge,
   HorizontalValueBars,
+  ConfigurableSeriesChart,
   createInitialsAvatar,
   createDashboardAvatarStack,
   createDashboardSegmentToggle,
@@ -93,6 +94,7 @@ import {
   type DashboardDataTableProps,
   type SpeedometerGaugeProps,
   type HorizontalValueBarsProps,
+  type SeriesChartPoint,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ReactNode } from "react";
 
@@ -474,6 +476,14 @@ export const cmSpeedometerGaugeRowClass = delpiUiClass(
   "delpi-ui-speedometer-gauge-row",
 );
 
+export const cmSeriesChartPlotClass = delpiUiClass(
+  `${UI_PREFIX}-series-chart-plot`,
+  "delpi-ui-series-chart-plot",
+);
+
+/** Rampa semântica high_is_bad (verde → âmbar → vermelho) para Barras OTD. */
+export const CM_OTD_ALERT_CATEGORY_COLORS = ["#16a34a", "#d97706", "#dc2626"] as const;
+
 export function CommercialSpeedometerGauge(props: Omit<SpeedometerGaugeProps, "prefix">) {
   return createElement(SpeedometerGauge, { ...props, prefix: UI_PREFIX });
 }
@@ -482,4 +492,43 @@ export function CommercialHorizontalValueBars(
   props: Omit<HorizontalValueBarsProps, "prefix">,
 ) {
   return createElement(HorizontalValueBars, { ...props, prefix: UI_PREFIX });
+}
+
+export function CommercialBarSeriesChart(props: {
+  points: SeriesChartPoint[];
+  emptyMessage?: string;
+  seriesName?: string;
+  valueFormat?: "number" | "percent" | "currency";
+  plotHeightPx?: number;
+}) {
+  const height = props.plotHeightPx ?? Math.max(220, props.points.length * 36 + 72);
+  return createElement(
+    "div",
+    {
+      className: cmSeriesChartPlotClass,
+      style: { ["--delpi-ui-series-chart-plot-height" as string]: `${height}px` },
+    },
+    createElement(ConfigurableSeriesChart, {
+      chartType: "horizontal_bar",
+      points: props.points,
+      emptyMessage: props.emptyMessage ?? "Sem dados.",
+      options: {
+        title: props.seriesName ?? "Valor",
+        showTitle: false,
+        showLegend: false,
+        showAxes: true,
+        showXAxisLabels: true,
+        showYAxisLabels: true,
+        showXAxisTitle: false,
+        showYAxisTitle: false,
+        showDataLabels: true,
+        showGrid: true,
+        seriesName: props.seriesName ?? "Valor",
+        valueFormat: props.valueFormat ?? "number",
+        seriesColor: CM_OTD_ALERT_CATEGORY_COLORS[2],
+        categoryColors: [...CM_OTD_ALERT_CATEGORY_COLORS],
+        colorScale: { mode: "by_value", polarity: "high_is_bad" },
+      },
+    }),
+  );
 }
