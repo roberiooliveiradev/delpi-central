@@ -103,14 +103,39 @@ export function useAnalyticsFilters() {
     dateStart,
     dateEnd,
     competence,
-    setDateStart,
-    setDateEnd,
-    setCompetence,
+    setDateStart: setDateStartLinked,
+    setDateEnd: setDateEndLinked,
+    setCompetence: setCompetenceLinked,
     replaceAll,
   } = useCompetenceLinkedDates(initial);
   const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
   const [sellerIds, setSellerIdsState] = useState(initial.sellerIds);
+  const [forceCustomPreset, setForceCustomPreset] = useState(false);
+
+  const setDateStart = useCallback(
+    (value: string) => {
+      setForceCustomPreset(false);
+      setDateStartLinked(value);
+    },
+    [setDateStartLinked],
+  );
+
+  const setDateEnd = useCallback(
+    (value: string) => {
+      setForceCustomPreset(false);
+      setDateEndLinked(value);
+    },
+    [setDateEndLinked],
+  );
+
+  const setCompetence = useCallback(
+    (value: string) => {
+      setForceCustomPreset(false);
+      setCompetenceLinked(value);
+    },
+    [setCompetenceLinked],
+  );
 
   const sellerAccess = usePortfolioSellerAccess();
   const {
@@ -180,12 +205,19 @@ export function useAnalyticsFilters() {
     sellerIds: effectiveSellerIds,
   };
 
-  const periodPreset = detectPeriodPreset(dateStart, dateEnd);
+  const detectedPreset = detectPeriodPreset(dateStart, dateEnd);
+  const periodPreset: PeriodPresetId =
+    forceCustomPreset || detectedPreset === "custom" ? "custom" : detectedPreset;
 
   const setPeriodPreset = useCallback(
     (preset: PeriodPresetId) => {
+      if (preset === "custom") {
+        setForceCustomPreset(true);
+        return;
+      }
       const range = resolvePeriodPreset(preset);
       if (!range) return;
+      setForceCustomPreset(false);
       replaceAll(range);
     },
     [replaceAll],

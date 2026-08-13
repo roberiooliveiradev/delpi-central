@@ -468,7 +468,7 @@ export const CM_HELP = {
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterPeriodPreset:
-      "Atalhos MTD (mês até hoje) e YTD (ano até hoje) no fuso America/Sao_Paulo. Personalizado mantém as datas que você informar.",
+      "Atalhos de período (hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses) no fuso America/Sao_Paulo. Personalizado mantém as datas que você informar.",
     filterCompetence:
       "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Vazio = só as datas informadas.",
     filterBranch:
@@ -530,7 +530,7 @@ export const CM_HELP = {
     page:
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
-      "Datas, competência, atalho MTD/YTD, unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. A carteira em aberto (KPI) é snapshot e não usa o período.",
+      "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. A carteira em aberto (KPI) é snapshot e não usa o período.",
     kpis: "Indicadores do período filtrado: ROL vs meta, conversão, OTD% e novos negócios. Carteira em aberto, quando exibida, é saldo atual — não soma com ROL.",
     rolSeries:
       "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",

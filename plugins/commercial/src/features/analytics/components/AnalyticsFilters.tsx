@@ -1,6 +1,9 @@
 import {
   CommercialDateField,
+  CommercialFilterBarShell,
   CommercialMultiSelectField,
+  CommercialSectionHintLabel,
+  CommercialSegmentToggle,
   CommercialSelectField,
   cmFiltersKit,
 } from "../../../app/commercialUi";
@@ -8,7 +11,10 @@ import { CM_HELP } from "../../../content/helpTooltips";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
-import type { PeriodPresetId } from "../utils/periodPreset";
+import {
+  PERIOD_PRESET_OPTIONS,
+  type PeriodPresetId,
+} from "../utils/periodPreset";
 import type { AnalyticsFilterUrlState } from "../utils/analyticsFilterUrl";
 import type { SellerPortfolio } from "../../../types/portfolio";
 
@@ -54,81 +60,88 @@ export function AnalyticsFilters({
   const { FiltersRow } = cmFiltersKit;
 
   return (
-    <FiltersRow variant="extended">
+    <>
       {onPeriodPreset ? (
+        <CommercialFilterBarShell
+          embedded
+          layout="inline"
+          ariaLabel={ANALYTICS_CONTENT.filters.periodPreset}
+          leading={
+            <div>
+              <CommercialSectionHintLabel
+                label={ANALYTICS_CONTENT.filters.periodPreset}
+                hint={CM_HELP.analytics.filterPeriodPreset}
+              />
+              <CommercialSegmentToggle
+                ariaLabel={ANALYTICS_CONTENT.filters.periodPreset}
+                idPrefix="analytics-period-preset"
+                size="sm"
+                value={periodPreset}
+                onChange={onPeriodPreset}
+                options={PERIOD_PRESET_OPTIONS}
+              />
+            </div>
+          }
+        >
+          {null}
+        </CommercialFilterBarShell>
+      ) : null}
+      <FiltersRow variant="extended">
+        <CommercialDateField
+          label={ANALYTICS_CONTENT.filters.start}
+          value={dateStart}
+          onChange={onDateStart}
+          hint={CM_HELP.analytics.filterDateStart}
+        />
+        <CommercialDateField
+          label={ANALYTICS_CONTENT.filters.end}
+          value={dateEnd}
+          onChange={onDateEnd}
+          hint={CM_HELP.analytics.filterDateEnd}
+        />
+        <CommercialDateField
+          type="month"
+          label={ANALYTICS_CONTENT.filters.competence}
+          value={competence}
+          onChange={onCompetence}
+          hint={CM_HELP.analytics.filterCompetence}
+        />
+        <CommercialMultiSelectField
+          className="cm-analytics-unit-filter"
+          label={ANALYTICS_CONTENT.filters.branch}
+          selectedValues={branches}
+          onChange={onBranches}
+          options={ANALYTICS_BRANCH_OPTIONS}
+          emptyLabel="Todas"
+          searchable
+          hint={CM_HELP.analytics.filterBranch}
+        />
         <CommercialSelectField
-          label={ANALYTICS_CONTENT.filters.periodPreset}
-          value={periodPreset === "custom" ? "" : periodPreset}
-          onChange={(value) => {
-            if (value === "mtd" || value === "ytd") {
-              onPeriodPreset(value);
-              return;
-            }
-            onPeriodPreset("custom");
-          }}
+          label={ANALYTICS_CONTENT.filters.segment}
+          value={customerSegment}
+          onChange={(value) =>
+            onCustomerSegment(value === "weg" || value === "new_business" ? value : "")
+          }
           options={[
-            { value: "mtd", label: ANALYTICS_CONTENT.filters.periodPresetMtd },
-            { value: "ytd", label: ANALYTICS_CONTENT.filters.periodPresetYtd },
+            { value: "weg", label: ANALYTICS_CONTENT.filters.segmentWeg },
+            { value: "new_business", label: ANALYTICS_CONTENT.filters.segmentNewBusiness },
           ]}
           allowEmpty
-          emptyLabel={ANALYTICS_CONTENT.filters.periodPresetCustom}
-          hint={CM_HELP.analytics.filterPeriodPreset}
+          emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
+          hint={CM_HELP.analytics.filterSegment}
         />
-      ) : null}
-      <CommercialDateField
-        label={ANALYTICS_CONTENT.filters.start}
-        value={dateStart}
-        onChange={onDateStart}
-        hint={CM_HELP.analytics.filterDateStart}
-      />
-      <CommercialDateField
-        label={ANALYTICS_CONTENT.filters.end}
-        value={dateEnd}
-        onChange={onDateEnd}
-        hint={CM_HELP.analytics.filterDateEnd}
-      />
-      <CommercialDateField
-        type="month"
-        label={ANALYTICS_CONTENT.filters.competence}
-        value={competence}
-        onChange={onCompetence}
-        hint={CM_HELP.analytics.filterCompetence}
-      />
-      <CommercialMultiSelectField
-        className="cm-analytics-unit-filter"
-        label={ANALYTICS_CONTENT.filters.branch}
-        selectedValues={branches}
-        onChange={onBranches}
-        options={ANALYTICS_BRANCH_OPTIONS}
-        emptyLabel="Todas"
-        searchable
-        hint={CM_HELP.analytics.filterBranch}
-      />
-      <CommercialSelectField
-        label={ANALYTICS_CONTENT.filters.segment}
-        value={customerSegment}
-        onChange={(value) =>
-          onCustomerSegment(value === "weg" || value === "new_business" ? value : "")
-        }
-        options={[
-          { value: "weg", label: ANALYTICS_CONTENT.filters.segmentWeg },
-          { value: "new_business", label: ANALYTICS_CONTENT.filters.segmentNewBusiness },
-        ]}
-        allowEmpty
-        emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
-        hint={CM_HELP.analytics.filterSegment}
-      />
-      {canFilterPortfolios && onSellerIds ? (
-        <SellerScopeFilter
-          multiple
-          sellers={filterablePortfolios}
-          selectedValues={sellerIds}
-          onChange={onSellerIds}
-          teamScope={canUseTeamScope}
-          emptyLabel={ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL}
-          hint={CM_HELP.analytics.portfolioFilter}
-        />
-      ) : null}
-    </FiltersRow>
+        {canFilterPortfolios && onSellerIds ? (
+          <SellerScopeFilter
+            multiple
+            sellers={filterablePortfolios}
+            selectedValues={sellerIds}
+            onChange={onSellerIds}
+            teamScope={canUseTeamScope}
+            emptyLabel={ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL}
+            hint={CM_HELP.analytics.portfolioFilter}
+          />
+        ) : null}
+      </FiltersRow>
+    </>
   );
 }
