@@ -185,18 +185,23 @@ Favoritos
 
 ### WF-OV — Visão geral `/overview`
 
-**Objetivo:** dashboard BI (filtros + indicadores + ROL + funil). **Sem** Aprofundar / prévia OV.
+**Objetivo:** dashboard BI do período (filtros + KPIs + séries + funil). **Sem** Aprofundar / prévia OV.  
+**Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades.
 
 ```text
-┌─ PageHero «Visão geral» ──────────────────────────────────── [Atualizar] ─┐
-┌─ Filtros: Data ini | Data fim | Competência | Unidade (SC/ES) | Segmento | Carteira† ┐
-┌─ Indicadores (KPIs ≤8) ────────────────────────────────────────────────────┐
-┌─ Evolução ROL [Dia–Ano][Export] ────────┬─ Funil trapézio [Export] ────────┐
-│ séries SC/ES · drill no ponto           │ taxa + meta · 3 etapas           │
+┌─ PageHero «Visão geral» ────────────────────────────── [Atualizar] ─┐
+┌─ Filtros + atalhos de período (hoje…12m) + Unidade + Segmento + Carteira† ┐
+┌─ KPIs (≤8): ROL · Carteira aberta (agora) · Hit rate · OTD · … ─────┐
+│  Carteira: valor + linhas · help ≠ PCP · ≠ soma com ROL              │
+┌─ Evolução ROL [Dia–Ano] [Comparar ano anterior] [Export] ─┬─ Funil ─┐
+│ séries SC/ES (+ prior tracejado se YoY) · drill só ano atual         │
+┌─ Evolução hit rate [Dia–Ano] [Comparar ano anterior] [Export] ──────┐
+│ séries SC/ES (+ prior) · mesma fórmula do KPI por bucket             │
 † SellerScopeFilter se canFilterPortfolios
 ```
 
-**Export:** só nesta tela (ROL + funil). OTD/Opp sem export (D13).
+**Export:** ROL, funil e série de conversão nesta tela. OTD/Opp sem export (D13).  
+**YoY:** 2ª chamada aos BFF `/analytics/rol/series` e `/analytics/closing-rate/series` com datas −1 ano — **sem** rota nova.
 
 ### WF-TASKS — Minhas tarefas `/my-tasks`
 
@@ -286,7 +291,7 @@ Ver WF-TASKS. Labels «Minhas tarefas»; path `/my-tasks`.
 
 ## WF-G — Visão geral (histórico)
 
-Substituído por **WF-OV** (`/overview`). Não há mais item top «Gestão» nem subnav global Visão geral · OTD · …
+**Supersedido** por **WF-OV** (`/overview`) — ver matriz rota × WF. Não há mais item top «Gestão» nem subnav global Visão geral · OTD · …. O ASCII abaixo é legado (pré–IA hub / pré–cockpit C1) e **não** descreve o produto atual.
 
 ---
 
