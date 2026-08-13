@@ -731,6 +731,28 @@
   margin: 0;
 }
 
+.dashboard-commercial .cm-administration-groups__create {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-administration-groups__create-field {
+  width: 100%;
+}
+
+.dashboard-commercial .cm-administration-groups__create-field .cm-text-field,
+.dashboard-commercial .cm-administration-groups__create-field .delpi-ui-text-field {
+  width: 100%;
+}
+
+.dashboard-commercial .cm-administration-groups__create-footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 .dashboard-commercial .cm-prose {
   margin: 0;
   white-space: pre-wrap;

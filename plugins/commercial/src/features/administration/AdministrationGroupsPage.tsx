@@ -202,21 +202,25 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         </CommercialActionButton>
       }
     >
-      <div className="cm-row-actions cm-administration-groups__create">
-        <CommercialTextField
-          label={copy.createPlaceholder}
-          value={newGroupName}
-          onChange={setNewGroupName}
-          disabled={creating}
-        />
-        <CommercialActionButton
-          variant="primary"
-          disabled={creating || !newGroupName.trim()}
-          onClick={() => void onCreateGroup()}
-        >
-          <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
-          {creating ? copy.creating : copy.create}
-        </CommercialActionButton>
+      <div className="cm-administration-groups__create">
+        <div className="cm-administration-groups__create-field cm-form-grid__full">
+          <CommercialTextField
+            label={copy.createPlaceholder}
+            value={newGroupName}
+            onChange={setNewGroupName}
+            disabled={creating}
+          />
+        </div>
+        <div className="cm-administration-groups__create-footer">
+          <CommercialActionButton
+            variant="primary"
+            disabled={creating || !newGroupName.trim()}
+            onClick={() => void onCreateGroup()}
+          >
+            <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+            {creating ? copy.creating : copy.create}
+          </CommercialActionButton>
+        </div>
       </div>
     </CommercialSectionCard>
   ) : null;
