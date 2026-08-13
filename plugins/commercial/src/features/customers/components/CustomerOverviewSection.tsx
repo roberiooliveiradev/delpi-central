@@ -50,6 +50,8 @@ export function CustomerOverviewSection({
       <CustomerOpenOrdersPreview
         orders={orders}
         basePath={basePath}
+        codigo={customer.codigo}
+        loja={customer.loja}
         canViewAnalytics={canViewAnalytics}
         onSeeAll={onGoToOrders}
       />

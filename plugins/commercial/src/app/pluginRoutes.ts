@@ -10,6 +10,7 @@ export type PluginView =
   | "open_order_op_detail"
   | "customers"
   | "customer_detail"
+  | "customer_order_detail"
   | "proposals"
   | "proposal_detail"
   | "analytics_otd"
@@ -163,6 +164,39 @@ export function resolvePluginRoute(
 
   if (relativePath === "customers") {
     return { view: "customers", pathname: path, relativePath };
+  }
+
+  const customerOrderDetail =
+    /^customers\/([^/]+)\/([^/]+)\/orders\/([^/]+)\/([^/]+)$/.exec(relativePath);
+  if (customerOrderDetail) {
+    const rawCodigo = safeDecodeSegment(customerOrderDetail[1] ?? "");
+    const rawLoja = safeDecodeSegment(customerOrderDetail[2] ?? "");
+    const orderBranch = safeDecodeSegment(customerOrderDetail[3] ?? "");
+    const orderNumber = safeDecodeSegment(customerOrderDetail[4] ?? "");
+    if (
+      rawCodigo === null ||
+      rawLoja === null ||
+      orderBranch === null ||
+      orderNumber === null
+    ) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    const codigo = rawCodigo.trim();
+    const loja = rawLoja.trim();
+    const branch = orderBranch.trim();
+    const order = orderNumber.trim();
+    if (!codigo || !loja || !branch || !order) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "customer_order_detail",
+      pathname: path,
+      relativePath,
+      codigo,
+      loja,
+      orderBranch: branch,
+      orderNumber: order,
+    };
   }
 
   if (relativePath === "administration") {
@@ -370,6 +404,7 @@ export function resolvePluginRoute(
 export type BuildablePluginView = Exclude<
   PluginView,
   | "customer_detail"
+  | "customer_order_detail"
   | "open_order_line_detail"
   | "open_order_op_detail"
   | "proposal_detail"
@@ -441,6 +476,25 @@ export function buildCustomerDetailPath(
   if (!code || !store) return null;
   const base = normalizeBasePath(basePath);
   return `${base}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}`;
+}
+
+export function buildCustomerOrderDetailPath(
+  basePath: string | undefined,
+  codigo: string,
+  loja: string,
+  branch: string,
+  orderNumber: string,
+  search?: string,
+): string | null {
+  const code = codigo.trim();
+  const store = loja.trim();
+  const normalizedBranch = branch.trim();
+  const normalizedOrder = orderNumber.trim();
+  if (!code || !store || !normalizedBranch || !normalizedOrder) return null;
+  const path = `${normalizeBasePath(basePath)}/customers/${encodeURIComponent(code)}/${encodeURIComponent(store)}/orders/${encodeURIComponent(normalizedBranch)}/${encodeURIComponent(normalizedOrder)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  return normalizedSearch === "?" ? path : `${path}${normalizedSearch}`;
 }
 
 export function buildUserProfilePath(
@@ -550,7 +604,7 @@ export function resolveActiveNavId(
   options?: { customerDetailOutsidePortfolio?: boolean },
 ): PluginNavId | null {
   if (view === "open_order_line_detail" || view === "open_order_op_detail") return "open_orders";
-  if (view === "customer_detail") {
+  if (view === "customer_detail" || view === "customer_order_detail") {
     return options?.customerDetailOutsidePortfolio ? "client_context" : "customers";
   }
   if (

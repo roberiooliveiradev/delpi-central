@@ -14,6 +14,7 @@ import {
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CustomerDetailPage } from "./features/customers/CustomerDetailPage";
+import { CustomerOrderDetailPage } from "./features/customers/pages/CustomerOrderDetailPage";
 import { CustomersPage } from "./features/customers/CustomersPage";
 import {
   isCustomerInViewerPortfolios,
@@ -71,7 +72,7 @@ function AppRoutes({
   } = usePortfolioScope();
   const showCustomers = scopeLoading || canAccessMyPortfolio;
   const ephemeralClientNav =
-    view === "customer_detail" &&
+    (view === "customer_detail" || view === "customer_order_detail") &&
     route.codigo &&
     route.loja &&
     !scopeLoading &&
@@ -168,6 +169,20 @@ function AppRoutes({
         <CustomerDetailPage
           codigo={route.codigo}
           loja={route.loja}
+          basePath={basePath}
+          search={search}
+        />
+      ) : null}
+      {view === "customer_order_detail" &&
+      route.codigo &&
+      route.loja &&
+      route.orderBranch &&
+      route.orderNumber ? (
+        <CustomerOrderDetailPage
+          codigo={route.codigo}
+          loja={route.loja}
+          branch={route.orderBranch}
+          orderNumber={route.orderNumber}
           basePath={basePath}
           search={search}
         />

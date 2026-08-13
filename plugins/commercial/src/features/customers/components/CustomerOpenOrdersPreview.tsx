@@ -7,23 +7,24 @@ import {
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
+import { currentLocationAsReturnTo } from "../../../app/commercialNavigationReturn";
 import {
   navigateAnalyticsOpportunityDetail,
-  navigateOpenOrderLineDetail,
+  navigateCustomerOrderDetail,
 } from "../../../app/pluginNavigation";
 import { formatCurrency } from "../../../utils/format";
 import { compareDeliveryDates, formatDisplayDate } from "../../../utils/dates";
-import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import {
   buildOrderOpportunityContextSearch,
-  findFirstNavigableOrderLine,
   findOrderProposalLine,
 } from "../utils/customerAccountActions";
 
 type CustomerOpenOrdersPreviewProps = {
   orders: CustomerOrderSummary[];
   basePath: string;
+  codigo: string;
+  loja: string;
   canViewAnalytics: boolean;
   onSeeAll: () => void;
 };
@@ -54,32 +55,30 @@ const PREVIEW_LIMIT = 5;
 export function CustomerOpenOrdersPreview({
   orders,
   basePath,
+  codigo,
+  loja,
   canViewAnalytics,
   onSeeAll,
 }: CustomerOpenOrdersPreviewProps) {
   const rows = orders.slice(0, PREVIEW_LIMIT);
+  const openOrderDetail = (order: CustomerOrderSummary) => {
+    navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
+      basePath,
+      returnNav: {
+        returnTo: currentLocationAsReturnTo(),
+        returnLabel: "Conta",
+      },
+    });
+  };
   const actions = (order: CustomerOrderSummary) => {
-    const firstLine = findFirstNavigableOrderLine(order.lines);
+    const canOpen = Boolean(order.filial?.trim() && order.pedido?.trim());
     const proposalLine = canViewAnalytics ? findOrderProposalLine(order.lines) : null;
     const proposalNumber = proposalLine?.proposal_number?.trim() || null;
-    if (!firstLine && !proposalNumber) return null;
+    if (!canOpen && !proposalNumber) return null;
     return (
       <div className="cm-customer-order-line-actions">
-        {firstLine ? (
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() =>
-              navigateOpenOrderLineDetail(
-                firstLine.filial,
-                firstLine.pedido,
-                firstLine.linha,
-                {
-                  basePath,
-                  search: buildOpenOrdersContextSearch(),
-                },
-              )
-            }
-          >
+        {canOpen ? (
+          <CommercialActionButton variant="ghost" onClick={() => openOrderDetail(order)}>
             Abrir pedido
           </CommercialActionButton>
         ) : null}

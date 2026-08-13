@@ -306,6 +306,8 @@ export function CustomerDetailPage({
                     <CustomerOrdersTable
                       orders={orders}
                       basePath={basePath}
+                      codigo={codigo}
+                      loja={loja}
                       canViewAnalytics={canViewAnalytics}
                     />
                   )}

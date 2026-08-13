@@ -1,5 +1,6 @@
 import {
   buildCustomerDetailPath,
+  buildCustomerOrderDetailPath,
   buildAnalyticsOpportunityDetailPath,
   buildAnalyticsOtdLinePath,
   buildOpenOrderLineDetailPath,
@@ -10,6 +11,10 @@ import {
   normalizePathname,
   type PluginNavigationTarget,
 } from "./pluginRoutes";
+import {
+  buildHrefWithReturn,
+  type ReturnNavOptions,
+} from "./commercialNavigationReturn";
 import {
   sanitizeCustomersListSearch,
   type CustomersListSellerAccess,
@@ -68,6 +73,31 @@ export function navigateCustomerDetail(
     ? buildCustomerDetailSearch(options.section, listSearch)
     : listSearch;
   navigatePluginPath(`${path}${search}`);
+  return true;
+}
+
+export function navigateCustomerOrderDetail(
+  codigo: string,
+  loja: string,
+  branch: string,
+  orderNumber: string,
+  options?: {
+    basePath?: string;
+    returnNav?: ReturnNavOptions;
+  },
+): boolean {
+  const path = buildCustomerOrderDetailPath(
+    options?.basePath,
+    codigo,
+    loja,
+    branch,
+    orderNumber,
+  );
+  if (!path) return false;
+  const target = options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+  navigatePluginPath(target);
   return true;
 }
 
@@ -163,6 +193,7 @@ export function navigateOpenOrderLineDetail(
 
 export {
   buildCustomerDetailPath,
+  buildCustomerOrderDetailPath,
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildProposalDetailPath,

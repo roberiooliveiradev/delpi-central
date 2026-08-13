@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 import {
+  buildCustomerOrderDetailPath,
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildPluginPath,
@@ -13,6 +14,30 @@ import {
 import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink.ts";
 
 describe("rotas nativas do pedido comercial", () => {
+  it("faz roundtrip do detalhe de pedido da conta", () => {
+    const path = buildCustomerOrderDetailPath(
+      "/apps/commercial",
+      "0001",
+      "01",
+      "01",
+      "101731",
+    );
+    assert.equal(
+      path,
+      "/apps/commercial/customers/0001/01/orders/01/101731",
+    );
+    assert.deepEqual(resolvePluginRoute(path, "/apps/commercial"), {
+      view: "customer_order_detail",
+      pathname: "/apps/commercial/customers/0001/01/orders/01/101731",
+      relativePath: "customers/0001/01/orders/01/101731",
+      codigo: "0001",
+      loja: "01",
+      orderBranch: "01",
+      orderNumber: "101731",
+    });
+    assert.equal(resolveActiveNavId("customer_order_detail"), "customers");
+  });
+
   it("faz roundtrip da linha com segmentos codificados", () => {
     const path = buildOpenOrderLineDetailPath(
       "/apps/commercial",

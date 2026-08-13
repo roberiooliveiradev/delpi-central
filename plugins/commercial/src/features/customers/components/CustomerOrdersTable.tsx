@@ -13,18 +13,21 @@ import {
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
-import { navigateOpenOrderLineDetail } from "../../../app/pluginNavigation";
+import {
+  currentLocationAsReturnTo,
+} from "../../../app/commercialNavigationReturn";
+import { navigateCustomerOrderDetail } from "../../../app/pluginNavigation";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
-import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
-import { findFirstNavigableOrderLine } from "../utils/customerAccountActions";
 import { CustomerOrderLines } from "./CustomerOrderLines";
 
 type CustomerOrdersTableProps = {
   orders: CustomerOrderSummary[];
   basePath: string;
+  codigo: string;
+  loja: string;
   canViewAnalytics: boolean;
 };
 
@@ -52,26 +55,29 @@ function renderStatus(order: CustomerOrderSummary): ReactNode {
 export function CustomerOrdersTable({
   orders,
   basePath,
+  codigo,
+  loja,
   canViewAnalytics,
 }: CustomerOrdersTableProps) {
   const [linesOrderKey, setLinesOrderKey] = useState<string | null>(null);
   const linesOrder = orders.find((order) => order.key === linesOrderKey) ?? null;
 
-  const openFirstLine = (order: CustomerOrderSummary) => {
-    const line = findFirstNavigableOrderLine(order.lines);
-    if (!line) return;
-    navigateOpenOrderLineDetail(line.filial, line.pedido, line.linha, {
+  const openOrderDetail = (order: CustomerOrderSummary) => {
+    navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
       basePath,
-      search: buildOpenOrdersContextSearch(),
+      returnNav: {
+        returnTo: currentLocationAsReturnTo(),
+        returnLabel: "Pedidos da conta",
+      },
     });
   };
 
   const orderActions = (order: CustomerOrderSummary) => {
-    const canOpen = Boolean(findFirstNavigableOrderLine(order.lines));
+    const canOpen = Boolean(order.filial?.trim() && order.pedido?.trim());
     return (
       <div className="cm-customer-order-line-actions">
         {canOpen ? (
-          <CommercialActionButton variant="ghost" onClick={() => openFirstLine(order)}>
+          <CommercialActionButton variant="ghost" onClick={() => openOrderDetail(order)}>
             Abrir pedido
           </CommercialActionButton>
         ) : null}

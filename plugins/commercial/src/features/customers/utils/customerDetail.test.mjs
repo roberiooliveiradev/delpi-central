@@ -565,7 +565,7 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /aria-labelledby=\{customerDetailTabId\(section\)\}/);
   });
 
-  it("pedidos usam DataTable, cards e modal de linhas", () => {
+  it("pedidos usam DataTable, cards, modal e detalhe de pedido", () => {
     const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
     const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
     assert.match(table, /CommercialDataTable/);
@@ -574,10 +574,9 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(table, /Ver linhas/);
     assert.doesNotMatch(table, /Expandir linhas/);
     assert.doesNotMatch(table, /aria-expanded/);
-    assert.match(table, /findFirstNavigableOrderLine/);
+    assert.match(table, /navigateCustomerOrderDetail/);
     assert.match(table, /Abrir pedido/);
-    assert.match(table, /navigateOpenOrderLineDetail/);
-    assert.match(preview, /navigateOpenOrderLineDetail/);
+    assert.match(preview, /navigateCustomerOrderDetail/);
     assert.match(preview, /Abrir pedido/);
     assert.match(preview, /canViewAnalytics \? findOrderProposalLine/);
     assert.match(preview, /navigateAnalyticsOpportunityDetail/);
