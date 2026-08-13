@@ -48,7 +48,7 @@
 | Tema | Wireframe / nota | Status implementação |
 |------|------------------|----------------------|
 | `returnTo` / `returnLabel` | PagePath em detalhes (pedido Conta, OV, proposta, linha) | helper `commercialNavigationReturn` |
-| Conta pedidos | WF-04R: modal linhas + página detalhe pedido (sem expand inline) | entregue |
+| Conta pedidos | WF-04R: row click → detalhe; expand kit `renderExpandedRow` (linhas); sem modal | entregue |
 | Histórico NF | WF-04R: MetricCard + tabela + modal itens | entregue |
 | OV → ADY | WF-OPP / WF-PROP: CTA Abrir proposta (atalho documento) | em entrega |
 | Proposta contato PDF | WF-PROP: select contatos salvos (sem inputs raw) | em entrega |
@@ -561,10 +561,21 @@ lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Abas:** Pedidos usa modal de linhas + página detalhe do pedido (`…/orders/…`); Histórico carrega faturamento/NFs com MetricCard + tabela e **modal de itens** (sem expand inline); Oportunidades oferece CTA interno apenas com
-`analytics.view`; Atividades carrega timeline real e permite follow-up somente
-com `worklist.view + followups.manage`. Cada fonte mantém loading, erro, vazio,
-retry e atualização independentes.
+**Abas:** Pedidos — clique na linha/item (atenção, preview Visão geral, tabela) abre
+detalhe (`…/orders/…`); na tabela, chevron expande `CustomerOrderLines` inline via
+`DataTable` `expandedRowKey`/`renderExpandedRow` (sem modal «Ver linhas» / «Abrir pedido»).
+Histórico carrega faturamento/NFs com MetricCard + tabela e **modal de itens** (sem expand);
+Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
+`interactive`; CTA ADY só com `analytics.view` / `proposals.view`. Atividades carrega
+timeline real e permite follow-up somente com `worklist.view + followups.manage`.
+Cada fonte mantém loading, erro, vazio, retry e atualização independentes.
+
+```text
+Pedidos — tabela
+[>] Unidade | Pedido | … | Valor
+    └─ (expandido) CustomerOrderLines …
+(clique na linha → detalhe pedido; chevron stopPropagation)
+```
 
 **Componentes importados de `@delpi/plugin-ui`:** `PagePath`, `PageHero`,
 `InitialsAvatar`, `StatusBadge`, `UnderlineNav` em modo tabs, `DetailCard`,
