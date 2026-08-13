@@ -1,6 +1,6 @@
 import { EmptyState, SectionCard, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { CircleGauge, PackageCheck, RefreshCw, Truck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getSalesOrderOtdPanel, getSalesOrderOtdSeries } from "../../api/analyticsApi";
 import {
@@ -12,12 +12,19 @@ import {
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
+  CommercialPagination,
+  CommercialScopeChipBar,
   CommercialSectionHintLabel,
+  CommercialTextField,
 } from "../../app/commercialUi";
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
-import type { SalesOrderOtdLineItem, SalesOrderOtdPanelData, SalesOrderOtdSeriesPoint } from "../../types/analytics";
+import type {
+  SalesOrderOtdLineItem,
+  SalesOrderOtdPanelData,
+  SalesOrderOtdSeriesPoint,
+} from "../../types/analytics";
 import {
   ANALYTICS_OTD_COLUMN_HELP,
   withColumnHelp,
@@ -28,10 +35,31 @@ import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
 import { ANALYTICS_OTD_SERIES_LABELS } from "./utils/analyticsBranchFilters";
+import {
+  defaultOtdListUrlState,
+  parseOtdListUrlState,
+  writeOtdListUrlState,
+  type OtdListSortKey,
+  type OtdListStatusFilter,
+  type OtdListUrlState,
+} from "./utils/otdListUrl";
+
+const PAGE_SIZE = 30;
 
 function formatPct(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+}
+
+function formatDays(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
+function truncate(text: string | null | undefined, max = 48): string {
+  const value = (text ?? "").trim();
+  if (!value) return "—";
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
 type AnalyticsOtdPageProps = {
@@ -40,39 +68,68 @@ type AnalyticsOtdPageProps = {
 
 export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
   const filters = useAnalyticsFilters();
+  const [listState, setListState] = useState<OtdListUrlState>(() => parseOtdListUrlState());
   const [panel, setPanel] = useState<SalesOrderOtdPanelData | null>(null);
   const [series, setSeries] = useState<SalesOrderOtdSeriesPoint[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPanel, setLoadingPanel] = useState(true);
+  const [loadingSeries, setLoadingSeries] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    writeOtdListUrlState(listState);
+  }, [listState]);
+
+  useEffect(() => {
+    const onPopState = () => setListState(parseOtdListUrlState());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const patchList = useCallback((patch: Partial<OtdListUrlState>) => {
+    setListState((prev) => {
+      const next = { ...prev, ...patch };
+      if (
+        patch.search !== undefined ||
+        patch.status !== undefined ||
+        patch.sortBy !== undefined ||
+        patch.sortDir !== undefined
+      ) {
+        next.page = patch.page ?? 1;
+      }
+      return next;
+    });
+  }, []);
+
+  const filterKey = [
+    filters.apiParams.start_date,
+    filters.apiParams.end_date,
+    filters.apiParams.branch,
+    filters.apiParams.customer_segment,
+    filters.apiParams.seller_id,
+  ].join("|");
+
+  useEffect(() => {
+    setListState((prev) => ({ ...prev, page: 1 }));
+  }, [filterKey]);
+
+  useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-    void Promise.all([
-      getSalesOrderOtdPanel(
-        { ...filters.apiParams, page: 1, page_size: 30 },
-        controller.signal,
-      ),
-      getSalesOrderOtdSeries(
-        { ...filters.apiParams, granularity: "month" },
-        controller.signal,
-      ),
-    ])
-      .then(([panelData, seriesData]) => {
+    setLoadingSeries(true);
+    void getSalesOrderOtdSeries(
+      { ...filters.apiParams, granularity: "month" },
+      controller.signal,
+    )
+      .then((seriesData) => {
         if (controller.signal.aborted) return;
-        setPanel(panelData);
         setSeries(seriesData.points ?? []);
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Erro ao carregar OTD.");
-        setPanel(null);
         setSeries([]);
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setLoadingSeries(false);
       });
     return () => controller.abort();
   }, [
@@ -84,41 +141,185 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     reloadKey,
   ]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadingPanel(true);
+    setError(null);
+    void getSalesOrderOtdPanel(
+      {
+        ...filters.apiParams,
+        page: listState.page,
+        page_size: PAGE_SIZE,
+        status: listState.status || undefined,
+        search: listState.search.trim() || undefined,
+        sort_by: listState.sortBy || undefined,
+        sort_dir: listState.sortBy ? listState.sortDir : undefined,
+      },
+      controller.signal,
+    )
+      .then((panelData) => {
+        if (controller.signal.aborted) return;
+        setPanel(panelData);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Erro ao carregar OTD.");
+        setPanel(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingPanel(false);
+      });
+    return () => controller.abort();
+  }, [
+    filters.apiParams.start_date,
+    filters.apiParams.end_date,
+    filters.apiParams.branch,
+    filters.apiParams.customer_segment,
+    filters.apiParams.seller_id,
+    listState.page,
+    listState.search,
+    listState.status,
+    listState.sortBy,
+    listState.sortDir,
+    reloadKey,
+  ]);
+
+  const openLine = useCallback(
+    (row: SalesOrderOtdLineItem) => {
+      navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
+        basePath,
+        search: buildAnalyticsFilterSearchParams(filters.filterState),
+      });
+    },
+    [basePath, filters.filterState],
+  );
+
+  const handleSortChange = useCallback(
+    (columnKey: string) => {
+      const sortMap: Record<string, OtdListSortKey> = {
+        order: "order_number",
+        customer: "customer_name",
+        product: "product_code",
+        status: "status",
+        promised: "promised_date",
+        invoice: "invoice_date",
+        daysDiff: "days_diff",
+        qty: "qty_sold",
+      };
+      const sortBy = sortMap[columnKey];
+      if (!sortBy) return;
+      setListState((prev) => {
+        if (prev.sortBy === sortBy) {
+          return {
+            ...prev,
+            sortDir: prev.sortDir === "asc" ? "desc" : "asc",
+            page: 1,
+          };
+        }
+        return { ...prev, sortBy, sortDir: "asc", page: 1 };
+      });
+    },
+    [],
+  );
+
+  const uiSortKey = useMemo(() => {
+    const reverse: Record<string, string> = {
+      order_number: "order",
+      customer_name: "customer",
+      product_code: "product",
+      status: "status",
+      promised_date: "promised",
+      invoice_date: "invoice",
+      days_diff: "daysDiff",
+      qty_sold: "qty",
+    };
+    return listState.sortBy ? reverse[listState.sortBy] ?? null : null;
+  }, [listState.sortBy]);
+
   const columns: DataTableColumn<SalesOrderOtdLineItem>[] = [
     {
       key: "order",
       header: "Pedido",
+      sortable: true,
       render: (row) => (
         <button
           type="button"
           className="cm-link-button"
           onClick={(event) => {
             event.stopPropagation();
-            navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
-              basePath,
-              search: buildAnalyticsFilterSearchParams(filters.filterState),
-            });
+            openLine(row);
           }}
         >
           {row.order_number}/{row.line_item}
         </button>
       ),
     },
-    { key: "customer", header: "Cliente", render: (row) => row.customer_name || row.customer_code || "—" },
-    { key: "product", header: "Produto", render: (row) => row.product_code || "—" },
+    {
+      key: "customer",
+      header: "Cliente",
+      sortable: true,
+      render: (row) => row.customer_name || row.customer_code || "—",
+    },
+    {
+      key: "product",
+      header: "Produto",
+      sortable: true,
+      render: (row) => row.product_code || "—",
+    },
+    {
+      key: "productDesc",
+      header: "Descrição",
+      render: (row) => truncate(row.product_description),
+    },
     {
       key: "status",
       header: "Status",
+      sortable: true,
       render: (row) => (row.status === "on_time" ? "No prazo" : "Atrasado"),
     },
     {
       key: "promised",
       header: "Promessa",
+      sortable: true,
       render: (row) => formatDisplayDate(row.promised_date),
+    },
+    {
+      key: "invoice",
+      header: "Fatura",
+      sortable: true,
+      render: (row) => formatDisplayDate(row.invoice_date),
+    },
+    {
+      key: "daysDiff",
+      header: "Dias",
+      sortable: true,
+      render: (row) => formatDays(row.days_diff),
+    },
+    {
+      key: "qty",
+      header: "Qtd",
+      sortable: true,
+      render: (row) =>
+        row.qty_sold == null ? "—" : row.qty_sold.toLocaleString("pt-BR"),
     },
   ];
 
+  const statusChips = (
+    [
+      { id: "" as OtdListStatusFilter, label: ANALYTICS_CONTENT.otd.statusAll },
+      { id: "on_time" as OtdListStatusFilter, label: ANALYTICS_CONTENT.otd.statusOnTime },
+      { id: "late" as OtdListStatusFilter, label: ANALYTICS_CONTENT.otd.statusLate },
+    ] as const
+  ).map((option) => ({
+    id: option.id || "all",
+    label: option.label,
+    active: listState.status === option.id,
+    onSelect: () => patchList({ status: option.id, page: 1 }),
+  }));
+
   const summary = panel?.summary;
+  const lines = panel?.lines;
+  const totalPages = Math.max(1, lines?.total_pages ?? 1);
 
   return (
     <section className="cm-page-stack">
@@ -138,38 +339,46 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         }
         description={ANALYTICS_CONTENT.otd.subtitle}
         actions={
-          <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
+          <CommercialActionButton
+            variant="ghost"
+            onClick={() => {
+              setListState(defaultOtdListUrlState());
+              setReloadKey((v) => v + 1);
+            }}
+          >
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </CommercialActionButton>
         }
       >
-      <AnalyticsFilters
-        dateStart={filters.dateStart}
-        dateEnd={filters.dateEnd}
-        competence={filters.competence}
-        periodPreset={filters.periodPreset}
-        branches={filters.branches}
-        customerSegment={filters.customerSegment}
-        sellerIds={filters.sellerIds}
-        canFilterPortfolios={filters.canFilterPortfolios}
-        canUseTeamScope={filters.canUseTeamScope}
-        filterablePortfolios={filters.filterablePortfolios}
-        onDateStart={filters.setDateStart}
-        onDateEnd={filters.setDateEnd}
-        onCompetence={filters.setCompetence}
-        onPeriodPreset={filters.setPeriodPreset}
-        onBranches={filters.setBranches}
-        onCustomerSegment={filters.setCustomerSegment}
-        onSellerIds={filters.setSellerIds}
-      />
+        <AnalyticsFilters
+          dateStart={filters.dateStart}
+          dateEnd={filters.dateEnd}
+          competence={filters.competence}
+          periodPreset={filters.periodPreset}
+          branches={filters.branches}
+          customerSegment={filters.customerSegment}
+          sellerIds={filters.sellerIds}
+          canFilterPortfolios={filters.canFilterPortfolios}
+          canUseTeamScope={filters.canUseTeamScope}
+          filterablePortfolios={filters.filterablePortfolios}
+          onDateStart={filters.setDateStart}
+          onDateEnd={filters.setDateEnd}
+          onCompetence={filters.setCompetence}
+          onPeriodPreset={filters.setPeriodPreset}
+          onBranches={filters.setBranches}
+          onCustomerSegment={filters.setCustomerSegment}
+          onSellerIds={filters.setSellerIds}
+        />
       </CommercialPageHero>
 
-      {loading ? <CommercialLoadingCard title="Carregando OTD…" variant="panel" /> : null}
+      {loadingPanel && !panel ? (
+        <CommercialLoadingCard title="Carregando OTD…" variant="panel" />
+      ) : null}
       {error ? (
         <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
       ) : null}
 
-      {!loading && summary ? (
+      {!loadingPanel && summary ? (
         <div className="cm-home-kpi-grid" aria-label="KPIs OTD">
           <CommercialMetricCard
             label="OTD %"
@@ -198,7 +407,9 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        {series.length === 0 ? (
+        {loadingSeries && series.length === 0 ? (
+          <p className="cm-muted">Carregando série…</p>
+        ) : series.length === 0 ? (
           <p className="cm-muted">Sem pontos na série.</p>
         ) : (
           <CommercialDataTable
@@ -231,19 +442,51 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        <CommercialDataTable
-          rows={panel?.lines.items ?? []}
-          columns={withColumnHelp(columns, ANALYTICS_OTD_COLUMN_HELP)}
-          rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}`}
-          layout="section"
-          onRowClick={(row) =>
-            navigateAnalyticsOtdLine(row.branch, row.order_number, row.line_item, {
-              basePath,
-              search: buildAnalyticsFilterSearchParams(filters.filterState),
-            })
-          }
-          rowClickRole="button"
-        />
+        <div className="cm-page-stack" style={{ gap: "0.75rem" }}>
+          <CommercialTextField
+            label="Buscar"
+            hint={CM_HELP.analytics.otdLinesSearch}
+            type="search"
+            value={listState.search}
+            onChange={(value) => patchList({ search: value, page: 1 })}
+            placeholder={ANALYTICS_CONTENT.otd.linesSearchPlaceholder}
+          />
+          <CommercialScopeChipBar
+            label={
+              <CommercialSectionHintLabel
+                label="Status"
+                hint={CM_HELP.analytics.otdLinesStatus}
+              />
+            }
+            aria-label="Filtro de status OTD"
+            chips={statusChips}
+          />
+          {(lines?.items.length ?? 0) === 0 && !loadingPanel ? (
+            <p className="cm-muted">{ANALYTICS_CONTENT.otd.emptyLines}</p>
+          ) : (
+            <CommercialDataTable
+              rows={lines?.items ?? []}
+              columns={withColumnHelp(columns, ANALYTICS_OTD_COLUMN_HELP)}
+              rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}`}
+              layout="section"
+              sortKey={uiSortKey}
+              sortDirection={listState.sortDir}
+              onSortChange={handleSortChange}
+              onRowClick={openLine}
+              rowClickRole="button"
+            />
+          )}
+          {(lines?.total ?? 0) > PAGE_SIZE ? (
+            <CommercialPagination
+              page={lines?.page ?? listState.page}
+              pageSize={PAGE_SIZE}
+              total={lines?.total ?? 0}
+              totalPages={totalPages}
+              onPageChange={(page) => patchList({ page })}
+              aria-label="Paginação das linhas OTD"
+            />
+          ) : null}
+        </div>
       </SectionCard>
     </section>
   );

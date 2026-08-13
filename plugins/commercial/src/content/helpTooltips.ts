@@ -479,11 +479,22 @@ export const CM_HELP = {
       "Unidades incluídas no consolidado (Santa Catarina / Espírito Santo). Vazio = todas as unidades do escopo.",
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
     otdPage:
-      "Pontualidade de linhas de pedido no período: KPIs, série por unidade e linhas com status/promessa.",
+      "Pontualidade de linhas de pedido no período: KPIs, série por unidade, insights e linhas com busca/filtro/ordenação.",
     otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado.",
+    otdKpiLatePct: "Percentual de linhas atrasadas sobre o total elegível no período.",
+    otdKpiLateDays:
+      "Distribuição dos dias de atraso (média, P50 e P90) apenas nas linhas classificadas como atrasadas.",
     otdSeries:
       "Evolução do OTD por Santa Catarina e Espírito Santo no período.",
-    otdLines: "Linhas do período. Clique abre o detalhe de pontualidade da linha.",
+    otdLines:
+      "Linhas do período com busca, status, ordenação e paginação no servidor. Clique abre o detalhe.",
+    otdLinesSearch: "Busca por pedido, cliente ou produto.",
+    otdLinesStatus: "Filtra linhas no prazo ou atrasadas (server-side).",
+    otdRecurrence:
+      "Clientes com duas ou mais linhas atrasadas no período (top 10 por quantidade).",
+    otdWorstDelays: "Top 10 linhas com maior atraso em dias no período.",
+    otdUpcomingPromises:
+      "Top 10 linhas ainda não faturadas com a promessa mais próxima.",
     opportunitiesPage:
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
     opportunitiesList: "OVs do período. Clique na linha ou no número da OV para abrir o detalhe.",
@@ -505,8 +516,12 @@ export const CM_HELP = {
       order: "Número do pedido e item da linha avaliada no OTD.",
       customer: "Cliente da linha do pedido (nome ou código).",
       product: "Código do produto da linha no período OTD.",
+      productDesc: "Descrição do produto (truncada na lista).",
       status: "Pontualidade da linha: no prazo ou atrasado no período.",
       promised: "Data de entrega prometida usada no cálculo de OTD.",
+      invoice: "Data de faturamento da linha, quando houver.",
+      daysDiff: "Diferença em dias entre a promessa e o faturamento (ou data de referência se aberta).",
+      qty: "Quantidade vendida da linha.",
       periodo: "Competência ou bucket da série OTD (mês/período).",
     },
     oppDetailColumns: {

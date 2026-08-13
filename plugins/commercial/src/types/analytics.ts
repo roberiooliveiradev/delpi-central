@@ -214,6 +214,7 @@ export type SalesOrderOtdLineItem = {
   product_description?: string | null;
   customer_code?: string | null;
   customer_name?: string | null;
+  customer_short_name?: string | null;
   qty_sold?: number | null;
   qty_delivered?: number | null;
   promised_date?: string | null;
@@ -221,6 +222,19 @@ export type SalesOrderOtdLineItem = {
   is_invoiced?: number | null;
   status: SalesOrderOtdLineStatus;
   days_diff?: number | null;
+};
+
+export type SalesOrderOtdRecurringCustomer = {
+  customer_code: string;
+  customer_name?: string | null;
+  late_count: number;
+  total_late_days?: number | null;
+};
+
+export type SalesOrderOtdPanelInsights = {
+  recurringCustomers: SalesOrderOtdRecurringCustomer[];
+  worstDelays: SalesOrderOtdLineItem[];
+  upcomingPromises: SalesOrderOtdLineItem[];
 };
 
 export type SalesOrderOtdPanelData = {
@@ -232,7 +246,12 @@ export type SalesOrderOtdPanelData = {
     on_time_lines: number;
     late_lines: number;
     sales_order_otd_pct: number | null;
+    late_percentage?: number | null;
+    avg_late_days?: number | null;
+    p50_late_days?: number | null;
+    p90_late_days?: number | null;
   };
+  insights?: SalesOrderOtdPanelInsights;
   lines: {
     items: SalesOrderOtdLineItem[];
     page: number;

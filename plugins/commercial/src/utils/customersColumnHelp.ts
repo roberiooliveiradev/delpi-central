@@ -77,8 +77,12 @@ export const ANALYTICS_OTD_COLUMN_HELP: Record<string, string> = {
   order: CM_HELP.analytics.columns.order,
   customer: CM_HELP.analytics.columns.customer,
   product: CM_HELP.analytics.columns.product,
+  productDesc: CM_HELP.analytics.columns.productDesc,
   status: CM_HELP.analytics.columns.status,
   promised: CM_HELP.analytics.columns.promised,
+  invoice: CM_HELP.analytics.columns.invoice,
+  daysDiff: CM_HELP.analytics.columns.daysDiff,
+  qty: CM_HELP.analytics.columns.qty,
   periodo: CM_HELP.analytics.columns.periodo,
 };
 
