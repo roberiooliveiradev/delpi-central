@@ -515,11 +515,12 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 │ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
 │ Buscar cliente, código, loja ou pedido [___________________________]    │
 └─────────────────────────────────────────────────────────────────────────┘
-┌─ Faturamento — últimos 12 meses ────────────────────────────────────────┐
-│ [Hoje][Semana][Mês][Trimestre][Ano][12 meses][Personalizado]           │
-│ ChartToolbar [Dia] [Semana] [Mês] [Ano] · cliente ▾                    │
-│ Área do faturamento (Recharts)                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─ Faturamento — {preset} ──────────────────────────────── Cliente [Todos ▾] ─┐
+│ [Hoje|Semana|Mês|Mês passado|Trimestre|Ano|12 meses|Personalizado]         │
+│ [datas se Personalizado]                                                   │
+│ ChartToolbar [Dia–Ano]  [ Comparar ano anterior ]                          │
+│ ──── atual ──── ─ ─ ─ ano ant. ─ ─ ─ (billing-series ×2, sem rota nova)    │
+└────────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard · Clientes (1–20 de 24) ─────────────── [Colunas] ────────┐
 │ Cliente       Vendedor  Última venda  Fat.12m  Em aberto  Atrasos      │
 │ ACME 01001/01 Ana       01/08/26      R$ 800k  R$ 90k     2            │

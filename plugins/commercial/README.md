@@ -84,8 +84,9 @@ eixos independentes: **Foco** operacional (`focus`) e **Tendência** de NF
 (`trend`). A lista usa `DataTable` no desktop e `DataRecordCard` no mobile, com
 a mesma paginação e ordenação em memória. Colunas, ordem e larguras são
 preferências locais versionadas; o gráfico de faturamento fica acima da lista,
-com presets de calendário e `ChartToolbar` (dia/semana/mês/ano) na rota
-existente `customers/billing-series`.
+com presets de calendário **paridade Visão geral** (incl. mês passado),
+`ChartToolbar` (dia/semana/mês/ano) e toggle **Comparar ano anterior** (2ª
+chamada a `customers/billing-series` com datas −1 ano — sem rota nova).
 
 O estado compartilhável é sincronizado na URL por `replaceState`, sem recarregar
 o MFE:
