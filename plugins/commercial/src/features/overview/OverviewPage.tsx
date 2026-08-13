@@ -258,7 +258,7 @@ export function OverviewPage({ basePath: _basePath }: OverviewPageProps) {
             />
             <CommercialDashboardKpiCard
               title={OVERVIEW_METRIC_BY_ID.closing_rate.label}
-              titleHint={OVERVIEW_METRIC_BY_ID.closing_rate.tooltip}
+              titleHint={CM_HELP.overview.closingRate}
               value={formatDashboardMetricValue(
                 dashboard.closingRate?.sales_conversion_rate_pct,
                 dashboard.closingRate,
