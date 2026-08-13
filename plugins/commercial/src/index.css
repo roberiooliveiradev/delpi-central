@@ -753,6 +753,21 @@
   width: 100%;
 }
 
+.dashboard-commercial .cm-administration-groups__rename {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-administration-groups__rename-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .dashboard-commercial .cm-prose {
   margin: 0;
   white-space: pre-wrap;

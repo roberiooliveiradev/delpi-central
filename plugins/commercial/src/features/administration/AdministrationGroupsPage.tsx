@@ -1,5 +1,5 @@
 import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
-import { Plus, RefreshCw, Trash2, UsersRound, X } from "lucide-react";
+import { Pencil, Plus, RefreshCw, Trash2, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -8,6 +8,7 @@ import {
   deleteCommercialGroup,
   listCommercialGroups,
   removeCommercialGroupMember,
+  renameCommercialGroup,
   type CommercialGroupDto,
 } from "../../api/commercialGroupsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
@@ -49,6 +50,8 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
 
   const memberUserIds = useMemo(
     () =>
@@ -130,6 +133,40 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
       notifyError(err instanceof Error ? err.message : "Falha ao criar grupo.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const startRename = (group: CommercialGroupDto) => {
+    setRenamingGroupId(group.id);
+    setRenameDraft(group.name);
+  };
+
+  const cancelRename = () => {
+    setRenamingGroupId(null);
+    setRenameDraft("");
+  };
+
+  const onRenameGroup = async (group: CommercialGroupDto) => {
+    const name = renameDraft.trim();
+    if (!name) {
+      notifyError(copy.renameNameRequired);
+      return;
+    }
+    if (name === group.name) {
+      cancelRename();
+      return;
+    }
+    const key = `${group.id}:rename`;
+    setBusyKey(key);
+    try {
+      const updated = await renameCommercialGroup(group.id, name);
+      upsertGroup(updated);
+      cancelRename();
+      notifySuccess(copy.renameSuccess);
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : "Falha ao renomear grupo.");
+    } finally {
+      setBusyKey(null);
     }
   };
 
@@ -303,6 +340,8 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
             const memberIds = new Set(group.members.map((member) => member.user_id));
             const pickerValue = pickerByGroup[group.id] ?? [];
             const deleting = busyKey === `${group.id}:delete`;
+            const renaming = busyKey === `${group.id}:rename`;
+            const isRenaming = renamingGroupId === group.id;
             const memberCount = group.member_count ?? group.members.length;
             const facepileItems = group.members.map((member) => ({
               id: member.user_id,
@@ -319,6 +358,16 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                       label={group.active ? "Ativo" : "Inativo"}
                       variant={group.active ? "success" : "neutral"}
                     />
+                    {!isRenaming ? (
+                      <CommercialActionButton
+                        variant="ghost"
+                        disabled={Boolean(busyKey)}
+                        onClick={() => startRename(group)}
+                      >
+                        <Pencil size={16} strokeWidth={1.75} aria-hidden="true" />
+                        {copy.rename}
+                      </CommercialActionButton>
+                    ) : null}
                     <CommercialActionButton
                       variant="ghost"
                       disabled={Boolean(busyKey)}
@@ -330,6 +379,32 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                   </>
                 }
               >
+                {isRenaming ? (
+                  <div className="cm-administration-groups__rename">
+                    <CommercialTextField
+                      label={copy.createPlaceholder}
+                      value={renameDraft}
+                      onChange={setRenameDraft}
+                      disabled={renaming}
+                    />
+                    <div className="cm-administration-groups__rename-actions">
+                      <CommercialActionButton
+                        variant="ghost"
+                        disabled={renaming}
+                        onClick={cancelRename}
+                      >
+                        {copy.renameCancel}
+                      </CommercialActionButton>
+                      <CommercialActionButton
+                        variant="primary"
+                        disabled={renaming || !renameDraft.trim()}
+                        onClick={() => void onRenameGroup(group)}
+                      >
+                        {renaming ? copy.renaming : copy.renameSave}
+                      </CommercialActionButton>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="cm-portfolios-detail-block">
                   {facepileItems.length > 0 ? (
                     <CommercialAvatarStack
