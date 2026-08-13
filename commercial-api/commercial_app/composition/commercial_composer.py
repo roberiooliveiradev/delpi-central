@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from commercial_app.application.services.attachment_storage import AttachmentStorage
 from commercial_app.application.services.customer_avatar_storage import CustomerAvatarStorage
+from commercial_app.application.services.user_profile_storage import UserProfileStorage
 from commercial_app.application.use_cases.manage_attachments import ManageAttachmentsUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
+from commercial_app.application.use_cases.manage_user_profile import ManageUserProfileUseCase
 from commercial_app.application.use_cases.manage_worklist import ManageWorklistUseCase
 from commercial_app.config import settings
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
@@ -14,6 +16,7 @@ from commercial_app.domain.ports.task_repository_port import (
     ActivityRepositoryPort,
     TaskRepositoryPort,
 )
+from commercial_app.domain.ports.user_profile_repository_port import UserProfileRepositoryPort
 from commercial_app.infrastructure.gateways.core_api_portal_access import (
     CoreApiPortalAccessPort,
 )
@@ -47,16 +50,21 @@ from commercial_app.infrastructure.persistence.repositories.postgres_task_reposi
     PostgresActivityRepository,
     PostgresTaskRepository,
 )
+from commercial_app.infrastructure.persistence.repositories.postgres_user_profile_repository import (
+    PostgresUserProfileRepository,
+)
 
 _portfolio_repository: SellerPortfolioRepositoryPort | None = None
 _avatar_repository: CustomerAvatarRepositoryPort | None = None
 _attachment_repository: AttachmentRepositoryPort | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
+_user_profile_repository: UserProfileRepositoryPort | None = None
 _portfolio_use_case: ManageSellerPortfolioUseCase | None = None
 _avatar_use_case: ManageCustomerAvatarUseCase | None = None
 _attachment_use_case: ManageAttachmentsUseCase | None = None
 _worklist_use_case: ManageWorklistUseCase | None = None
+_user_profile_use_case: ManageUserProfileUseCase | None = None
 _commercial_gateway: DelpiCommercialGateway | None = None
 
 
@@ -189,3 +197,28 @@ def build_manage_attachments_use_case() -> ManageAttachmentsUseCase:
             portfolio_repository=build_seller_portfolio_repository(),
         )
     return _attachment_use_case
+
+
+def build_user_profile_repository() -> UserProfileRepositoryPort:
+    global _user_profile_repository
+    if _user_profile_repository is None:
+        _user_profile_repository = PostgresUserProfileRepository()
+    return _user_profile_repository
+
+
+def build_user_profile_storage() -> UserProfileStorage:
+    return UserProfileStorage()
+
+
+def build_manage_user_profile_use_case() -> ManageUserProfileUseCase:
+    global _user_profile_use_case
+    if _user_profile_use_case is None:
+        directory = CoreApiPortalAccessPort()
+        _user_profile_use_case = ManageUserProfileUseCase(
+            repository=build_user_profile_repository(),
+            storage=build_user_profile_storage(),
+            portfolio_repository=build_seller_portfolio_repository(),
+            portal_access=directory,
+            directory_gateway=directory,
+        )
+    return _user_profile_use_case

@@ -113,3 +113,69 @@ class CoreApiPortalAccessPort(PortalAccessPort):
                     result[user_id] = True
 
         return result
+
+    def lookup_directory_users(
+        self,
+        user_ids: Sequence[str],
+    ) -> dict[str, dict[str, str]]:
+        """Resolve nome/e-mail via core-api directory lookup (S2S).
+
+        Retorna `{user_id: {"id", "name", "email"}}`.
+        """
+        ids = [
+            str(item or "").strip()
+            for item in user_ids
+            if str(item or "").strip()
+        ]
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for user_id in ids:
+            if user_id in seen:
+                continue
+            seen.add(user_id)
+            ordered.append(user_id)
+        result: dict[str, dict[str, str]] = {}
+        if not ordered or not self.configured():
+            return result
+
+        headers = {
+            "Authorization": f"Bearer {self._service_token}",
+            "X-Delpi-Service-Token": self._service_token,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        for offset in range(0, len(ordered), _LOOKUP_CHUNK_SIZE):
+            chunk = ordered[offset : offset + _LOOKUP_CHUNK_SIZE]
+            try:
+                response = httpx.post(
+                    f"{self._base_url}/integrations/directory/users/lookup",
+                    headers=headers,
+                    json={"ids": chunk, "app": self._app_id},
+                    timeout=self._timeout,
+                )
+            except Exception:
+                logger.exception("core_api_directory_lookup_failed")
+                continue
+            if response.status_code >= 400:
+                continue
+            try:
+                payload: Any = response.json()
+            except ValueError:
+                continue
+            items = payload.get("items") if isinstance(payload, dict) else None
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                user_id = str(item.get("id") or "").strip()
+                if not user_id:
+                    continue
+                name = str(item.get("name") or item.get("display_name") or "").strip()
+                email = str(item.get("email") or "").strip()
+                result[user_id] = {
+                    "id": user_id,
+                    "name": name or user_id,
+                    "email": email,
+                }
+        return result

@@ -69,6 +69,10 @@ class Settings:
         "COMMERCIAL_ATTACHMENT_UPLOAD_DIR",
         default="/app/data/commercial-attachments",
     )
+    COMMERCIAL_USER_AVATAR_UPLOAD_DIR: str = _get_env(
+        "COMMERCIAL_USER_AVATAR_UPLOAD_DIR",
+        default="/app/data/commercial-user-avatars",
+    )
     PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: str | None = _get_env(
         "PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR",
     )
