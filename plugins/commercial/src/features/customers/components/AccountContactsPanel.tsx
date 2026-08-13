@@ -412,6 +412,7 @@ export function AccountContactsPanel({
   const totvsPhoneE164 = toBrazilianE164(totvsContact?.phone ?? null);
   const totvsDisplayName = (totvsContact?.full_name || "").trim() || "Nome não informado";
   const formTitle = editing ? "Editar contato" : "Novo contato";
+  const hasLocalContacts = Boolean(bundle && bundle.items.length > 0);
 
   return (
     <div className="cm-contacts-stack">
@@ -489,33 +490,29 @@ export function AccountContactsPanel({
             <CommercialActionButton variant="ghost" onClick={closeForm} disabled={saving}>
               Fechar formulário
             </CommercialActionButton>
-          ) : (
+          ) : hasLocalContacts ? (
             <CommercialActionButton variant="primary" onClick={openCreate}>
               <Plus size={16} aria-hidden />
               Adicionar contato
             </CommercialActionButton>
-          )
+          ) : undefined
         }
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
         <div className="cm-contacts-stack">
-          <SectionCard
-            title={formTitle}
-            subtitle="Dados complementares da conta mantidos pela equipe comercial."
-            collapsible
-            open={formOpen}
-            onOpenChange={(open) => {
-              if (open) {
-                if (!formOpen) openCreate();
-                return;
-              }
-              closeForm();
-            }}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-            actions={
-              formOpen ? (
+          {formOpen ? (
+            <SectionCard
+              title={formTitle}
+              subtitle="Dados complementares da conta mantidos pela equipe comercial."
+              collapsible
+              open={formOpen}
+              onOpenChange={(open) => {
+                if (!open) closeForm();
+              }}
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+              actions={
                 <div className="cm-nav-row">
                   <CommercialActionButton
                     variant="ghost"
@@ -532,13 +529,13 @@ export function AccountContactsPanel({
                     {saving ? "Salvando…" : "Salvar contato"}
                   </CommercialActionButton>
                 </div>
-              ) : undefined
-            }
-          >
-            <ContactFormFields form={form} setForm={setForm} formError={formError} />
-          </SectionCard>
+              }
+            >
+              <ContactFormFields form={form} setForm={setForm} formError={formError} />
+            </SectionCard>
+          ) : null}
 
-          {bundle && bundle.items.length === 0 && !formOpen ? (
+          {!hasLocalContacts && !formOpen ? (
             <CommercialEmptyState
               title="Nenhum contato local"
               message="Adicione contatos complementares para ligar, enviar e-mail ou abrir o WhatsApp."

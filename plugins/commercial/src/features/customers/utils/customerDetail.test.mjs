@@ -442,6 +442,7 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(contactsPanel, /IconButton/);
     assert.match(contactsPanel, /collapsible/);
     assert.match(contactsPanel, /NativeCheckboxControl/);
+    assert.match(contactsPanel, /hasLocalContacts/);
     assert.doesNotMatch(contactsPanel, /CommercialHostDialog|HostContainedDialog/);
   });
 
