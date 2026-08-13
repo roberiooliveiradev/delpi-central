@@ -34,7 +34,8 @@ import { OpenOrderOpDetailPage } from "./features/open-orders/OpenOrderOpDetailP
 import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
 import { ProposalsPage } from "./features/proposals/ProposalsPage";
 import { AdministrationHomePage } from "./features/administration/AdministrationHomePage";
-import { AdministrationMembersPage } from "./features/administration/AdministrationMembersPage";
+import { AdministrationGroupsPage } from "./features/administration/AdministrationGroupsPage";
+import { AdministrationTeamPage } from "./features/administration/AdministrationTeamPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
@@ -240,9 +241,16 @@ function AppRoutes({
           <NotFoundPage basePath={basePath} />
         )
       ) : null}
-      {view === "administration_members" ? (
+      {view === "administration_team" ? (
         canManagePortfolios || isAdmin ? (
-          <AdministrationMembersPage basePath={basePath} />
+          <AdministrationTeamPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "administration_groups" ? (
+        canManagePortfolios || isAdmin ? (
+          <AdministrationGroupsPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

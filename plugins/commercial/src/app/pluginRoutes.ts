@@ -19,7 +19,8 @@ export type PluginView =
   | "analytics_opportunity_detail"
   | "administration"
   | "administration_portfolios"
-  | "administration_members"
+  | "administration_team"
+  | "administration_groups"
   | "seller_portfolios"
   | "seller_portfolio_detail"
   | "user_profile"
@@ -174,7 +175,11 @@ export function resolvePluginRoute(
 
   // Canônico `/administration/team`; alias `/administration/members`.
   if (relativePath === "administration/team" || relativePath === "administration/members") {
-    return { view: "administration_members", pathname: path, relativePath };
+    return { view: "administration_team", pathname: path, relativePath };
+  }
+
+  if (relativePath === "administration/groups") {
+    return { view: "administration_groups", pathname: path, relativePath };
   }
 
   const adminPortfolioDetail = /^administration\/seller-portfolios\/([^/]+)$/.exec(relativePath);
@@ -393,7 +398,8 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   analytics_opportunities: "analytics/opportunities",
   administration: "administration",
   administration_portfolios: "administration/seller-portfolios",
-  administration_members: "administration/team",
+  administration_team: "administration/team",
+  administration_groups: "administration/groups",
   /** Alias legado — resolve para a aba Carteiras do hub. */
   seller_portfolios: "administration/seller-portfolios",
 };
@@ -550,7 +556,8 @@ export function resolveActiveNavId(
   if (
     view === "administration" ||
     view === "administration_portfolios" ||
-    view === "administration_members" ||
+    view === "administration_team" ||
+    view === "administration_groups" ||
     view === "seller_portfolios" ||
     view === "seller_portfolio_detail"
   ) {

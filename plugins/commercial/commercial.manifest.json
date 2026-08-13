@@ -185,10 +185,18 @@
     },
     {
       "path": "/apps/commercial/administration/team",
-      "label": "Membros",
+      "label": "Equipe",
       "permission": "commercial.seller-portfolios.manage",
       "icon": "users",
       "order": 26,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration/groups",
+      "label": "Grupos",
+      "permission": "commercial.seller-portfolios.manage",
+      "icon": "users",
+      "order": 27,
       "showInMenu": false
     },
     {
@@ -196,7 +204,7 @@
       "label": "Carteiras",
       "permission": "commercial.seller-portfolios.manage",
       "icon": "settings",
-      "order": 27,
+      "order": 28,
       "showInMenu": false
     }
   ],

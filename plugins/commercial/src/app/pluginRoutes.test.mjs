@@ -138,18 +138,20 @@ describe("navegação da arquitetura de informação 2026", () => {
     assert.equal(buildPluginPath("my_tasks", base), `${base}/my-tasks`);
   });
 
-  it("Administração tem hub, carteiras e membros", () => {
+  it("Administração tem hub, carteiras, equipe e grupos", () => {
     assert.equal(viewOf("/administration"), "administration");
     assert.equal(viewOf("/administration/seller-portfolios"), "administration_portfolios");
-    assert.equal(viewOf("/administration/team"), "administration_members");
-    assert.equal(viewOf("/administration/members"), "administration_members");
+    assert.equal(viewOf("/administration/team"), "administration_team");
+    assert.equal(viewOf("/administration/members"), "administration_team");
+    assert.equal(viewOf("/administration/groups"), "administration_groups");
     assert.equal(viewOf("/seller-portfolios"), "administration_portfolios");
     assert.equal(buildPluginPath("administration", base), `${base}/administration`);
     assert.equal(
       buildPluginPath("administration_portfolios", base),
       `${base}/administration/seller-portfolios`,
     );
-    assert.equal(buildPluginPath("administration_members", base), `${base}/administration/team`);
+    assert.equal(buildPluginPath("administration_team", base), `${base}/administration/team`);
+    assert.equal(buildPluginPath("administration_groups", base), `${base}/administration/groups`);
     assert.equal(
       buildPluginPath("seller_portfolios", base),
       `${base}/administration/seller-portfolios`,
@@ -167,7 +169,8 @@ describe("navegação da arquitetura de informação 2026", () => {
     assert.equal(resolveActiveNavId("my_tasks"), "my_tasks");
     assert.equal(resolveActiveNavId("seller_portfolios"), "administration");
     assert.equal(resolveActiveNavId("seller_portfolio_detail"), "administration");
-    assert.equal(resolveActiveNavId("administration_members"), "administration");
+    assert.equal(resolveActiveNavId("administration_team"), "administration");
+    assert.equal(resolveActiveNavId("administration_groups"), "administration");
     for (const deepView of [
       "analytics_otd",
       "analytics_otd_line",

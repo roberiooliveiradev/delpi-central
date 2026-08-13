@@ -11,6 +11,7 @@ import {
   Target,
   Timer,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 import type { PluginNavigationTarget } from "../app/pluginRoutes";
@@ -27,7 +28,8 @@ const BY_VIEW: Partial<Record<PluginNavigationTarget, ReactNode>> = {
   proposals: <FileText {...ICON_PROPS} />,
   administration: <Shield {...ICON_PROPS} />,
   administration_portfolios: <FolderKanban {...ICON_PROPS} />,
-  administration_members: <Users {...ICON_PROPS} />,
+  administration_team: <Users {...ICON_PROPS} />,
+  administration_groups: <UsersRound {...ICON_PROPS} />,
 };
 
 /** Ícone Lucide por viewId do hub (chips recentes / catálogo). */
