@@ -3,6 +3,8 @@ import type {
   OrgMembershipFlowModelNode,
 } from "@delpi/plugin-ui/index";
 
+import { directoryUserLabelOrFallback } from "../shared/directoryUserLabel";
+
 export type CommercialTeamOrgGroupRef = {
   id: string;
   name: string;
@@ -37,14 +39,17 @@ export function buildCommercialGroupsOrgFlowModel(input: {
     const personNodeId = `person:${person.user_id}`;
     if (nodeIds.has(personNodeId)) return personNodeId;
     nodeIds.add(personNodeId);
-    const title = (person.name || "").trim() || person.user_id;
+    const title = directoryUserLabelOrFallback({
+      name: person.name,
+      email: person.email,
+    });
     const email = (person.email || "").trim();
     nodes.push({
       id: personNodeId,
       kind: "person",
       entityId: person.user_id,
       title,
-      subtitle: email || undefined,
+      subtitle: email && email !== title ? email : undefined,
     });
     return personNodeId;
   };

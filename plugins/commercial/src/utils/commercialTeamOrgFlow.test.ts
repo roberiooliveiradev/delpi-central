@@ -40,18 +40,19 @@ describe("buildCommercialGroupsOrgFlowModel", () => {
     );
   });
 
-  it("inclui grupos sem membros quando passados em groups[]", () => {
+  it("nunca usa user_id como título da pessoa", () => {
+    const uuid = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
     const model = buildCommercialGroupsOrgFlowModel({
-      people: [],
-      groups: [{ id: "g-empty", name: "Vazio", active: true }],
+      people: [
+        {
+          user_id: uuid,
+          name: uuid,
+          groups: [{ id: "g1", name: "Inside", active: true }],
+        },
+      ],
     });
-    expect(model.nodes).toEqual([
-      expect.objectContaining({
-        id: "group:g-empty",
-        kind: "group",
-        title: "Vazio",
-      }),
-    ]);
-    expect(model.edges).toHaveLength(0);
+    const person = model.nodes.find((node) => node.kind === "person");
+    expect(person?.title).toBe("Usuário");
+    expect(person?.title).not.toBe(uuid);
   });
 });

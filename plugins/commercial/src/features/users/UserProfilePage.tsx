@@ -9,7 +9,6 @@ import {
   Pencil,
   Shield,
   Trash2,
-  UserRound,
   UsersRound,
   Users,
 } from "lucide-react";
@@ -52,6 +51,7 @@ import {
   listGrantedCapabilities,
   USER_ACCESS_COPY,
 } from "../../content/userAccess";
+import { directoryUserLabelOrFallback } from "../../shared/directoryUserLabel";
 import { buildSellerPortfolioDetailPath } from "../../utils/sellerPortfoliosDeepLink";
 
 type UserProfilePageProps = {
@@ -349,7 +349,10 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     );
   }
 
-  const displayName = profile.name || profile.user_id;
+  const displayName = directoryUserLabelOrFallback({
+    name: profile.name,
+    email: profile.email,
+  });
   const heroDescription = [profile.email, profile.job_title].filter(Boolean).join(" · ");
 
   return (
@@ -490,12 +493,6 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               <div className="cm-user-profile__meta-row">
                 <Mail size={16} aria-hidden />
                 <span>{profile.email || "Sem e-mail"}</span>
-              </div>
-              <div className="cm-user-profile__meta-row">
-                <UserRound size={16} aria-hidden />
-                <span>
-                  {USER_ACCESS_COPY.userIdLabel}: {profile.user_id}
-                </span>
               </div>
 
               {editing && canEdit ? (

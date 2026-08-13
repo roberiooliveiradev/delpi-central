@@ -37,6 +37,7 @@ import {
   type CommercialTeamView,
 } from "../../utils/commercialTeamDeepLink";
 import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
+import { directoryUserLabelOrFallback } from "../../shared/directoryUserLabel";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
 type AdministrationTeamPageProps = {
@@ -154,7 +155,8 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
     {
       key: "person",
       header: copy.colPerson,
-      render: (row) => row.name || row.user_id,
+      render: (row) =>
+        directoryUserLabelOrFallback({ name: row.name, email: row.email }),
     },
     {
       key: "online",
