@@ -2,10 +2,14 @@ import { printDelpiDocumentHtml } from "../../export/pdf/delpiDocumentPrint";
 
 /**
  * CSS final da janela de impressão/PDF (vence stylesheets copiados do host).
- * Margens ABNT NBR 14724 via @page — não via padding da folha contínua
- * (padding só nas bordas do fluxo; páginas do meio cortam o texto).
+ * Margens ABNT NBR 14724 via @page — não via padding da folha contínua.
+ * Cabeçalho/rodapé do DocumentPage viram chrome fixo por página (padrão certificados).
  */
 const PRINT_WINDOW_BASE_CSS = `
+:root {
+  --delpi-ui-doc-print-header-height: 22mm;
+  --delpi-ui-doc-print-footer-height: 18mm;
+}
 html, body {
   margin: 0;
   padding: 0;
@@ -20,10 +24,6 @@ html, body {
   font-size: 12pt !important;
   line-height: 1.5 !important;
 }
-/*
- * Folha = fluxo contínuo; área útil por página vem de @page (ABNT).
- * Evita max-width mobile e min-height 297mm que empurram quebras ruins.
- */
 .delpi-ui-document-page {
   width: 100% !important;
   max-width: none !important;
@@ -48,7 +48,6 @@ html, body {
   padding: 0 !important;
   flex: none !important;
 }
-/* TM sangra o rodapé com margem negativa da prévia — no print corta a página. */
 .delpi-ui-document-page > .delpi-ui-document-page__footer,
 .tm-ata-paper > .delpi-ui-document-page__footer {
   margin-left: 0 !important;
@@ -78,7 +77,7 @@ body.delpi-ui-document-print-window .ds-print-root {
   box-shadow: none !important;
   animation: none !important;
 }
-/* Tipografia / alinhamento ABNT (corpo justificado; títulos sem indent). */
+/* Tipografia ABNT */
 .delpi-ui-document-page p,
 .delpi-ui-document-rich-content p,
 .tm-ata-document__body p,
@@ -136,15 +135,20 @@ h1, h2, h3, h4, h5, h6,
 .delpi-ui-document-header,
 .tm-ata-document-brand,
 table,
-thead,
-tbody,
-tfoot,
 tr,
 img,
-figure,
-.delpi-ui-document-rich-content li {
+figure {
   break-inside: avoid;
   page-break-inside: avoid;
+}
+/* Chrome fixo: oculto na prévia da janela; ativo só no @media print. */
+.delpi-ui-document-print-running-header,
+.delpi-ui-document-print-running-footer {
+  display: none;
+}
+.delpi-ui-document-print-footer-spacer {
+  display: none;
+  height: 0;
 }
 @page {
   size: A4 portrait;
@@ -156,12 +160,6 @@ figure,
     height: auto !important;
     overflow: visible !important;
   }
-  /*
-   * MFEs (ex.: transformometro) copiam regras de isolamento:
-   *   @media print { body * { visibility: hidden } }
-   *   .dashboard-*.ds-print-root * { visibility: visible }
-   * Sem override, a prévia na tela fica ok e o diálogo de impressão sai em branco.
-   */
   body.delpi-ui-document-print-window,
   body.delpi-ui-document-print-window * {
     visibility: visible !important;
@@ -170,11 +168,103 @@ figure,
     background: #fff !important;
     color: #000 !important;
   }
-  /* Absolute do ds-print-root dos dashboards corta multipágina no Chrome. */
   .delpi-ui-document-print-scope,
   .delpi-ui-document-print-scope.ds-print-root,
   body.delpi-ui-document-print-window .ds-print-root {
     position: static !important;
+  }
+  body.has-print-running-header .delpi-ui-document-print-scope {
+    padding-top: var(--delpi-ui-doc-print-header-height) !important;
+  }
+  body.has-print-running-footer .delpi-ui-document-print-footer-spacer {
+    display: block !important;
+    height: var(--delpi-ui-doc-print-footer-height) !important;
+  }
+  /* Slots originais do papel: só na prévia; na impressão o chrome fixo assume. */
+  .delpi-ui-document-page__header--print-source,
+  .delpi-ui-document-page__footer--print-source {
+    display: none !important;
+  }
+  .delpi-ui-document-print-running-header {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    box-sizing: border-box;
+    max-height: var(--delpi-ui-doc-print-header-height);
+    padding: 0 0 2mm;
+    background: #fff !important;
+    border-bottom: 1px solid #111;
+    overflow: hidden;
+  }
+  .delpi-ui-document-print-running-header .tm-ata-document-brand,
+  .delpi-ui-document-print-running-header .delpi-ui-document-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .delpi-ui-document-print-running-header img,
+  .delpi-ui-document-print-running-header .tm-ata-document__logo,
+  .delpi-ui-document-print-running-header svg {
+    display: block;
+    max-height: 14mm !important;
+    max-width: 42mm !important;
+    width: auto !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .delpi-ui-document-print-running-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    box-sizing: border-box;
+    max-height: var(--delpi-ui-doc-print-footer-height);
+    background: #fff !important;
+    overflow: hidden;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-document-footer,
+  .delpi-ui-document-print-running-footer .delpi-ui-document-footer {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 1.5mm 0 0 !important;
+    box-sizing: border-box;
+  }
+  .delpi-ui-document-print-running-footer .delpi-ui-document-footer {
+    border-top: 1px solid #111;
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar,
+  .delpi-ui-document-print-running-footer [class*="brand-bar"] {
+    display: flex !important;
+    height: 4px !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span,
+  .delpi-ui-document-print-running-footer [class*="brand-bar"] span {
+    flex: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Fallback de cores da faixa se tokens do MFE não resolverem no about:blank */
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(1) {
+    background: #013866 !important;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(2) {
+    background: #025a8f !important;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(3) {
+    background: #0477a8 !important;
+  }
+  .delpi-ui-document-print-running-footer .tm-ata-brand-bar span:nth-child(4) {
+    background: #089bdb !important;
   }
 }
 `;
@@ -223,7 +313,6 @@ export function collectPrintScopeClasses(page: HTMLElement): string[] {
     }
     el = el.parentElement;
   }
-  // Compatível com isolamento print dos dashboards (visibility só com ds-print-root).
   if (hasDashboardScope && !seen.has("ds-print-root")) {
     classes.push("ds-print-root");
   }
@@ -264,20 +353,76 @@ function absolutizeResourceUrls(root: ParentNode): void {
   });
 }
 
+export type DocumentPrintChrome = {
+  runningHeaderHtml: string;
+  runningFooterHtml: string;
+  pageHtml: string;
+  hasRunningHeader: boolean;
+  hasRunningFooter: boolean;
+};
+
+/**
+ * Extrai cabeçalho/rodapé do papel para chrome fixo por página
+ * e marca os slots originais para ocultar no @media print.
+ */
+export function prepareDocumentPagePrintClone(page: HTMLElement): DocumentPrintChrome {
+  const clone = page.cloneNode(true) as HTMLElement;
+  absolutizeResourceUrls(clone);
+
+  const headerEl = clone.querySelector<HTMLElement>(".delpi-ui-document-page__header");
+  const footerEl = clone.querySelector<HTMLElement>(".delpi-ui-document-page__footer");
+
+  const runningHeaderHtml = headerEl?.innerHTML.trim() || "";
+  const runningFooterHtml = footerEl?.innerHTML.trim() || "";
+
+  if (headerEl && runningHeaderHtml) {
+    headerEl.classList.add("delpi-ui-document-page__header--print-source");
+  }
+  if (footerEl && runningFooterHtml) {
+    footerEl.classList.add("delpi-ui-document-page__footer--print-source");
+    const spacer = clone.ownerDocument!.createElement("div");
+    spacer.className = "delpi-ui-document-print-footer-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    footerEl.insertAdjacentElement("afterend", spacer);
+  }
+
+  return {
+    runningHeaderHtml,
+    runningFooterHtml,
+    pageHtml: clone.outerHTML,
+    hasRunningHeader: Boolean(runningHeaderHtml),
+    hasRunningFooter: Boolean(runningFooterHtml),
+  };
+}
+
 /**
  * Serializa o papel ativo do DocumentReader em HTML standalone
- * com o mesmo escopo CSS da prévia (dashboard-* / data-delpi-print-scope).
+ * com cabeçalho/rodapé repetidos em cada página impressa.
  */
 export function buildDocumentReaderPrintHtml(
   page: HTMLElement,
   title = "Documento",
 ): string {
-  const clone = page.cloneNode(true) as HTMLElement;
-  absolutizeResourceUrls(clone);
+  const chrome = prepareDocumentPagePrintClone(page);
   const scopeClasses = collectPrintScopeClasses(page);
   const scopeClassAttr = ["delpi-ui-document-print-scope", ...scopeClasses]
     .filter(Boolean)
     .join(" ");
+  const bodyClasses = [
+    "delpi-ui-document-print-window",
+    chrome.hasRunningHeader ? "has-print-running-header" : "",
+    chrome.hasRunningFooter ? "has-print-running-footer" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const runningHeaderBlock = chrome.hasRunningHeader
+    ? `<div class="delpi-ui-document-print-running-header" aria-hidden="true">${chrome.runningHeaderHtml}</div>`
+    : "";
+  const runningFooterBlock = chrome.hasRunningFooter
+    ? `<div class="delpi-ui-document-print-running-footer" aria-hidden="true">${chrome.runningFooterHtml}</div>`
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -287,9 +432,11 @@ export function buildDocumentReaderPrintHtml(
 ${collectStylesheetsHtml()}
 <style>${PRINT_WINDOW_BASE_CSS}</style>
 </head>
-<body class="delpi-ui-document-print-window" data-theme="light">
+<body class="${escapeHtml(bodyClasses)}" data-theme="light">
+${runningHeaderBlock}
+${runningFooterBlock}
 <div class="${escapeHtml(scopeClassAttr)}">
-${clone.outerHTML}
+${chrome.pageHtml}
 </div>
 </body>
 </html>`;
@@ -312,7 +459,7 @@ export type PrintDocumentReaderOptions = {
 
 /**
  * Imprime o DocumentReader em janela/iframe dedicada (fluxo canônico DELPI).
- * Preserva classes de escopo do MFE para paridade visual com a prévia.
+ * Preserva classes de escopo do MFE e chrome de cabeçalho/rodapé por página.
  */
 export function printDocumentReaderInWindow(
   options: PrintDocumentReaderOptions = {},

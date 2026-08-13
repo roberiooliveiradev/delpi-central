@@ -124,6 +124,53 @@ describe("printDocumentReaderHtml", () => {
     expect(html).toContain("page-break-inside: avoid");
   });
 
+  it("cria cabeçalho e rodapé fixos por página a partir dos slots do papel", () => {
+    document.body.innerHTML = `
+      <div class="dashboard-transformometro">
+        <section class="delpi-ui-document-reader">
+          <article class="delpi-ui-document-page tm-ata-paper">
+            <div class="delpi-ui-document-page__header">
+              <div class="tm-ata-document-brand">
+                <img class="tm-ata-document__logo" src="/logo.svg" alt="Transforma+" />
+              </div>
+            </div>
+            <div class="delpi-ui-document-page__body"><p>Corpo da ata</p></div>
+            <div class="delpi-ui-document-page__footer">
+              <div class="tm-ata-document-footer">
+                <footer class="delpi-ui-document-footer">
+                  <span>30/07/2026</span>
+                  <span>DELPI<br>Jaraguá do Sul — SC</span>
+                  <span>Ata 2026/003</span>
+                </footer>
+                <div class="tm-ata-brand-bar" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+    `;
+    const html = buildDocumentReaderPrintHtml(findActiveDocumentPage()!, "Ata");
+    expect(html).toContain('class="delpi-ui-document-print-window has-print-running-header has-print-running-footer"');
+    expect(html).toContain('class="delpi-ui-document-print-running-header"');
+    expect(html).toContain('class="delpi-ui-document-print-running-footer"');
+    expect(html).toContain("tm-ata-document__logo");
+    expect(html).toContain("Ata 2026/003");
+    expect(html).toContain("tm-ata-brand-bar");
+    expect(html).toContain("delpi-ui-document-page__header--print-source");
+    expect(html).toContain("delpi-ui-document-page__footer--print-source");
+    expect(html).toContain("delpi-ui-document-print-footer-spacer");
+    expect(html).toContain("position: fixed");
+    // Chrome fixo aparece antes do corpo no HTML (padrão certificados)
+    const headerIdx = html.indexOf("delpi-ui-document-print-running-header");
+    const footerIdx = html.indexOf("delpi-ui-document-print-running-footer");
+    const bodyIdx = html.indexOf("Corpo da ata");
+    expect(headerIdx).toBeGreaterThan(-1);
+    expect(footerIdx).toBeGreaterThan(headerIdx);
+    expect(bodyIdx).toBeGreaterThan(footerIdx);
+  });
+
   it("mantém conteúdo visível sob regra host body * { visibility:hidden }", () => {
     document.head.insertAdjacentHTML(
       "beforeend",
