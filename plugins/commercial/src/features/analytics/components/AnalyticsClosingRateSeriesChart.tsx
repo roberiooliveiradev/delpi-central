@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import {
   EmptyState,
+  NativeCheckboxControl,
   runTabularExport,
   type ChartGranularity,
 } from "@delpi/plugin-ui/index";
@@ -31,6 +32,11 @@ import type {
   SalesConversionRateSeriesPoint,
 } from "../../../types/analytics";
 import { ANALYTICS_CONVERSION_SERIES_LABELS } from "../utils/analyticsBranchFilters";
+import {
+  isPriorYearCompareAllowed,
+  mergeSeriesWithPriorYear,
+  shiftPeriodRangeByYears,
+} from "../utils/periodShift";
 
 const CHART_HEIGHT = 320;
 
@@ -40,6 +46,11 @@ const CONVERSION_GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }
   { value: "month", label: "Mês" },
   { value: "year", label: "Ano" },
 ];
+
+type ClosingRateChartPoint = SalesConversionRateSeriesPoint & {
+  conversion_filial_01_prior?: number | null;
+  conversion_filial_02_prior?: number | null;
+};
 
 type ClosingRateSeriesChartProps = {
   filters: Pick<
@@ -56,7 +67,8 @@ function formatChartPct(value: number | null | undefined): string {
 }
 
 /**
- * Evolução da taxa de conversão (hit rate) — séries SC/ES, toolbar Dia–Ano e drill.
+ * Evolução da taxa de conversão (hit rate) — séries SC/ES, toolbar Dia–Ano,
+ * overlay opcional ano anterior e drill no período atual.
  */
 export function AnalyticsClosingRateSeriesChart({
   filters,
@@ -67,23 +79,66 @@ export function AnalyticsClosingRateSeriesChart({
     filters.start_date,
     filters.end_date,
   );
-  const [points, setPoints] = useState<SalesConversionRateSeriesPoint[]>([]);
+  const [comparePriorYear, setComparePriorYear] = useState(false);
+  const [points, setPoints] = useState<ClosingRateChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
 
+  const yoyAllowed = isPriorYearCompareAllowed(granularity);
+  const yoyActive = comparePriorYear && yoyAllowed;
+
+  useEffect(() => {
+    if (!yoyAllowed && comparePriorYear) {
+      setComparePriorYear(false);
+    }
+  }, [comparePriorYear, yoyAllowed]);
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void getSalesConversionRateSeries({ ...filters, granularity }, controller.signal)
-      .then((data) => {
+
+    const currentPromise = getSalesConversionRateSeries(
+      { ...filters, granularity },
+      controller.signal,
+    );
+
+    const priorRange =
+      yoyActive && filters.start_date && filters.end_date
+        ? shiftPeriodRangeByYears(
+            { start_date: filters.start_date, end_date: filters.end_date },
+            -1,
+          )
+        : null;
+
+    const priorPromise = priorRange
+      ? getSalesConversionRateSeries(
+          {
+            ...filters,
+            start_date: priorRange.start_date,
+            end_date: priorRange.end_date,
+            granularity,
+          },
+          controller.signal,
+        )
+      : Promise.resolve(null);
+
+    void Promise.all([currentPromise, priorPromise])
+      .then(([currentData, priorData]) => {
         if (controller.signal.aborted) return;
-        const next = data.points ?? [];
+        const current = currentData.points ?? [];
+        const prior = priorData?.points ?? [];
+        const next: ClosingRateChartPoint[] = yoyActive
+          ? mergeSeriesWithPriorYear(current, prior, (p) => ({
+              conversion_filial_01_prior: p?.conversion_filial_01 ?? null,
+              conversion_filial_02_prior: p?.conversion_filial_02 ?? null,
+            }))
+          : current;
         setPoints(next);
-        onPointsChangeRef.current?.(next);
+        onPointsChangeRef.current?.(current);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -102,7 +157,18 @@ export function AnalyticsClosingRateSeriesChart({
     filters.customer_segment,
     filters.seller_id,
     granularity,
+    yoyActive,
   ]);
+
+  const exportIncludePrior = yoyActive;
+
+  const priorLabels = useMemo(
+    () => ({
+      unit01: `${ANALYTICS_CONVERSION_SERIES_LABELS.unit01} (ano ant.)`,
+      unit02: `${ANALYTICS_CONVERSION_SERIES_LABELS.unit02} (ano ant.)`,
+    }),
+    [],
+  );
 
   const handleClick: ComponentProps<typeof LineChart>["onClick"] = (state) => {
     if (!onDrillDown || !state) return;
@@ -131,17 +197,33 @@ export function AnalyticsClosingRateSeriesChart({
             runTabularExport({
               kind: "table",
               format,
-              payload: buildOverviewClosingRateSeriesPayload(points),
+              payload: buildOverviewClosingRateSeriesPayload(points, {
+                includePriorYear: exportIncludePrior,
+              }),
             });
           }}
         />
       </div>
-      <CommercialChartToolbar
-        granularity={granularity}
-        onGranularityChange={setGranularity}
-        options={CONVERSION_GRANULARITY_OPTIONS}
-        modes={["day", "week", "month", "year"]}
-      />
+      <div className="cm-rol-series__toolbar">
+        <CommercialChartToolbar
+          granularity={granularity}
+          onGranularityChange={setGranularity}
+          options={CONVERSION_GRANULARITY_OPTIONS}
+          modes={["day", "week", "month", "year"]}
+        />
+        <NativeCheckboxControl
+          id="overview-closing-rate-yoy"
+          checked={yoyActive}
+          disabled={!yoyAllowed}
+          onChange={setComparePriorYear}
+          label={ANALYTICS_CONTENT.overview.comparePriorYear}
+          hint={
+            yoyAllowed
+              ? CM_HELP.overview.closingRateSeriesYoy
+              : CM_HELP.overview.closingRateSeriesYoyDisabledDay
+          }
+        />
+      </div>
       {loading ? (
         <CommercialLoadingCard title={emptyCopy.conversionLoading} variant="panel" />
       ) : null}
@@ -192,6 +274,30 @@ export function AnalyticsClosingRateSeriesChart({
                 dot={{ r: 4, cursor: onDrillDown ? "pointer" : "default" }}
                 activeDot={{ r: 6 }}
               />
+              {yoyActive ? (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="conversion_filial_01_prior"
+                    name={priorLabels.unit01}
+                    stroke="var(--chart-3, #94a3b8)"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    connectNulls
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="conversion_filial_02_prior"
+                    name={priorLabels.unit02}
+                    stroke="var(--chart-4, #64748b)"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    connectNulls
+                    dot={false}
+                  />
+                </>
+              ) : null}
             </LineChart>
           </ResponsiveContainer>
         </div>

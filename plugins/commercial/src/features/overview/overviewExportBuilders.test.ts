@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildOverviewFunnelPayload, buildOverviewRolSeriesPayload } from "./overviewExportBuilders";
+import {
+  buildOverviewClosingRateSeriesPayload,
+  buildOverviewFunnelPayload,
+  buildOverviewRolSeriesPayload,
+} from "./overviewExportBuilders";
 
 describe("overviewExportBuilders", () => {
   it("monta payload ROL com séries SC/ES", () => {
@@ -38,6 +42,30 @@ describe("overviewExportBuilders", () => {
     );
     expect(payload.columns).toHaveLength(5);
     expect(payload.rows[0]?.rolMatrixPrior).toBeTruthy();
+  });
+
+  it("inclui colunas prior no export da série de conversão", () => {
+    const payload = buildOverviewClosingRateSeriesPayload(
+      [
+        {
+          periodo: "01/08",
+          sort_key: "2026-08-01",
+          start_date: "2026-08-01",
+          end_date: "2026-08-01",
+          conversion_filial_01: 30,
+          conversion_filial_02: 20,
+          qtd_won_01: 3,
+          qtd_proposals_01: 10,
+          qtd_won_02: 2,
+          qtd_proposals_02: 10,
+          conversion_filial_01_prior: 25,
+          conversion_filial_02_prior: 15,
+        },
+      ],
+      { includePriorYear: true },
+    );
+    expect(payload.columns.some((c) => c.key === "conversion01Prior")).toBe(true);
+    expect(payload.rows[0]?.conversion01Prior).toContain("%");
   });
 
   it("monta payload do funil", () => {
