@@ -1,25 +1,28 @@
 import {
-  EmptyState,
   OPERATIONAL_UNIT_COLUMN_LABEL,
-  SectionCard,
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 import { FileDown, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import {
+  getAccountContactsBundle,
+  type AccountContactsBundle,
+} from "../../api/accountContactsApi";
 import { getProposalDocument, openProposalDocumentPdf } from "../../api/commercialProposalsApi";
 import {
-  cmEmptyStateClassNames,
-  cmSectionCardClassNames,
-  cmSectionLabels,
+  CommercialActionButton,
   CommercialDataTable,
   CommercialDetailFieldGrid,
+  CommercialEmptyState,
   CommercialLoadingCard,
-  CommercialPagePath,
-  CommercialTextAreaField,
   CommercialPageHero,
-  CommercialActionButton,
+  CommercialPagePath,
+  CommercialSectionCard,
+  CommercialSelectField,
+  CommercialStateBanner,
+  CommercialTextAreaField,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
@@ -30,6 +33,11 @@ import type {
   ProposalDocumentItem,
   ProposalDocumentPdfExportOverrides,
 } from "../../types/proposalsDocument";
+import {
+  buildProposalPdfContactOptions,
+  defaultProposalPdfContactValue,
+  resolveProposalPdfContactSelection,
+} from "../../utils/resolveProposalPdfContact";
 
 function displayValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "—";
@@ -46,26 +54,44 @@ type ProposalDetailPageProps = {
 export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageProps) {
   const { canExportProposals } = usePortfolioScope();
   const [data, setData] = useState<ProposalDocumentDetail | null>(null);
+  const [contactsBundle, setContactsBundle] = useState<AccountContactsBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pdfObservacoes, setPdfObservacoes] = useState("");
-  const [pdfContatoNome, setPdfContatoNome] = useState("");
-  const [pdfContatoEmail, setPdfContatoEmail] = useState("");
+  const [pdfContactValue, setPdfContactValue] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setContactsBundle(null);
     void getProposalDocument(propostaId, controller.signal)
-      .then((result) => {
+      .then(async (result) => {
         if (controller.signal.aborted) return;
         setData(result);
         setPdfObservacoes(result.observacoes || "");
-        setPdfContatoNome(result.contato?.nome || "");
-        setPdfContatoEmail(result.contato?.email || "");
+
+        const code = result.cliente.codigo?.trim();
+        const store = result.cliente.loja?.trim();
+        let bundle: AccountContactsBundle | null = null;
+        if (code && store) {
+          try {
+            bundle = await getAccountContactsBundle(code, store, controller.signal);
+          } catch {
+            bundle = { totvs_contact: null, items: [] };
+          }
+        }
+        if (controller.signal.aborted) return;
+        setContactsBundle(bundle);
+        const options = buildProposalPdfContactOptions({
+          proposalContact: result.contato,
+          totvsContact: bundle?.totvs_contact,
+          savedContacts: bundle?.items ?? [],
+        });
+        setPdfContactValue(defaultProposalPdfContactValue(options, result.contato));
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -77,6 +103,16 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
       });
     return () => controller.abort();
   }, [propostaId, reloadKey]);
+
+  const pdfContactOptions = useMemo(
+    () =>
+      buildProposalPdfContactOptions({
+        proposalContact: data?.contato,
+        totvsContact: contactsBundle?.totvs_contact,
+        savedContacts: contactsBundle?.items ?? [],
+      }),
+    [data?.contato, contactsBundle],
+  );
 
   const itemColumns: DataTableColumn<ProposalDocumentItem>[] = [
     { key: "item", header: "Item", render: (row) => row.item },
@@ -102,14 +138,17 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
     if (obs && obs !== (data.observacoes || "").trim()) {
       overrides.observacoes = obs;
     }
-    const contato: NonNullable<ProposalDocumentPdfExportOverrides["contato"]> = {};
-    if (pdfContatoNome.trim() && pdfContatoNome.trim() !== (data.contato?.nome || "").trim()) {
-      contato.nome = pdfContatoNome.trim();
+    const selected = resolveProposalPdfContactSelection(pdfContactOptions, pdfContactValue);
+    if (selected) {
+      const contato: NonNullable<ProposalDocumentPdfExportOverrides["contato"]> = {};
+      if (selected.nome && selected.nome !== (data.contato?.nome || "").trim()) {
+        contato.nome = selected.nome;
+      }
+      if (selected.email && selected.email !== (data.contato?.email || "").trim()) {
+        contato.email = selected.email;
+      }
+      if (Object.keys(contato).length) overrides.contato = contato;
     }
-    if (pdfContatoEmail.trim() && pdfContatoEmail.trim() !== (data.contato?.email || "").trim()) {
-      contato.email = pdfContatoEmail.trim();
-    }
-    if (Object.keys(contato).length) overrides.contato = contato;
     return Object.keys(overrides).length ? overrides : undefined;
   }
 
@@ -168,21 +207,13 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
         }
       />
 
-      {pdfError ? (
-        <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={pdfError} role="alert" />
-      ) : null}
+      {pdfError ? <CommercialStateBanner variant="error">{pdfError}</CommercialStateBanner> : null}
       {loading ? <CommercialLoadingCard title="Carregando proposta…" variant="panel" /> : null}
-      {error ? (
-        <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
-      ) : null}
+      {error ? <CommercialEmptyState message={error} role="alert" /> : null}
 
       {!loading && data ? (
         <>
-          <SectionCard
-            title="Cabeçalho"
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-          >
+          <CommercialSectionCard title="Cabeçalho">
             <CommercialDetailFieldGrid
               fields={[
                 { label: "Nº OV", value: displayValue(data.cabecalho.numero_ov) },
@@ -203,10 +234,10 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 },
               ]}
             />
-          </SectionCard>
+          </CommercialSectionCard>
 
           <div className="cm-gestao-detail-grid">
-            <SectionCard title="Empresa" classNames={cmSectionCardClassNames} labels={cmSectionLabels}>
+            <CommercialSectionCard title="Empresa">
               <CommercialDetailFieldGrid
                 fields={[
                   { label: "Razão social", value: displayValue(data.empresa.nome) },
@@ -218,8 +249,8 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                   { label: "Telefone", value: displayValue(data.empresa.telefone) },
                 ]}
               />
-            </SectionCard>
-            <SectionCard title="Cliente" classNames={cmSectionCardClassNames} labels={cmSectionLabels}>
+            </CommercialSectionCard>
+            <CommercialSectionCard title="Cliente">
               <CommercialDetailFieldGrid
                 fields={[
                   { label: "Nome", value: displayValue(data.cliente.nome) },
@@ -228,8 +259,8 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                   { label: "Telefone", value: displayValue(data.cliente.telefone) },
                 ]}
               />
-            </SectionCard>
-            <SectionCard title="Contato" classNames={cmSectionCardClassNames} labels={cmSectionLabels}>
+            </CommercialSectionCard>
+            <CommercialSectionCard title="Contato">
               <CommercialDetailFieldGrid
                 fields={[
                   { label: "Nome", value: displayValue(data.contato.nome) },
@@ -238,12 +269,8 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                   { label: "Telefone", value: displayValue(data.contato.telefone) },
                 ]}
               />
-            </SectionCard>
-            <SectionCard
-              title="Condições"
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
-            >
+            </CommercialSectionCard>
+            <CommercialSectionCard title="Condições">
               <CommercialDetailFieldGrid
                 fields={[
                   { label: "Descrição", value: displayValue(data.condicoes.descricao) },
@@ -252,62 +279,48 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                   { label: "Frete", value: displayValue(data.condicoes.frete) },
                 ]}
               />
-            </SectionCard>
+            </CommercialSectionCard>
           </div>
 
-          <SectionCard
-            title={PROPOSALS_CONTENT.detail.items}
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-          >
+          <CommercialSectionCard title={PROPOSALS_CONTENT.detail.items}>
             <CommercialDataTable
               rows={data.itens}
               columns={itemColumns}
               rowKey={(row) => row.item}
               layout="section"
             />
-          </SectionCard>
+          </CommercialSectionCard>
 
           {canExportProposals ? (
-            <SectionCard
-              title="PDF revisável"
-              subtitle="Ajuste observações/contato antes de exportar (POST com overrides)."
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
+            <CommercialSectionCard
+              title={PROPOSALS_CONTENT.detail.pdfSection}
+              hint={PROPOSALS_CONTENT.detail.pdfSectionHint}
             >
-              <div className="cm-form-grid">
-                <label className="cm-manage-search__field">
-                  Contato (nome)
-                  <input
-                    type="text"
-                    value={pdfContatoNome}
-                    onChange={(e) => setPdfContatoNome(e.target.value)}
-                  />
-                </label>
-                <label className="cm-manage-search__field">
-                  Contato (e-mail)
-                  <input
-                    type="email"
-                    value={pdfContatoEmail}
-                    onChange={(e) => setPdfContatoEmail(e.target.value)}
-                  />
-                </label>
-              </div>
+              {pdfContactOptions.length > 0 ? (
+                <CommercialSelectField
+                  id="proposal-pdf-contact"
+                  label={PROPOSALS_CONTENT.detail.pdfContactLabel}
+                  value={pdfContactValue}
+                  onChange={setPdfContactValue}
+                  options={pdfContactOptions.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                />
+              ) : (
+                <CommercialEmptyState message={PROPOSALS_CONTENT.detail.pdfContactEmpty} />
+              )}
               <CommercialTextAreaField
-                label="Observações no PDF"
+                label={PROPOSALS_CONTENT.detail.pdfObservacoesLabel}
                 value={pdfObservacoes}
                 onChange={setPdfObservacoes}
                 rows={4}
               />
-            </SectionCard>
+            </CommercialSectionCard>
           ) : data.observacoes ? (
-            <SectionCard
-              title="Observações"
-              classNames={cmSectionCardClassNames}
-              labels={cmSectionLabels}
-            >
+            <CommercialSectionCard title="Observações">
               <p className="cm-prose">{data.observacoes}</p>
-            </SectionCard>
+            </CommercialSectionCard>
           ) : null}
         </>
       ) : null}

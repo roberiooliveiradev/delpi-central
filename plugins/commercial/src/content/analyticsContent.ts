@@ -82,5 +82,11 @@ export const PROPOSALS_CONTENT = {
     exportPdf: "Emitir PDF",
     back: "Voltar",
     items: "Itens",
+    pdfSection: "PDF revisável",
+    pdfSectionHint:
+      "Escolha um contato salvo da conta (ou o contato da proposta/TOTVS) e ajuste observações antes de exportar.",
+    pdfContactLabel: "Contato no PDF",
+    pdfContactEmpty: "Nenhum contato disponível para esta conta. Cadastre contatos na ficha do cliente.",
+    pdfObservacoesLabel: "Observações no PDF",
   },
 };
