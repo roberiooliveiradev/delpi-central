@@ -47,6 +47,13 @@ export const ANALYTICS_CONTENT = {
       "Oportunidades (OV) deste cliente. Clique na linha ou no número para abrir o detalhe.",
     detail:
       "Detalhe da oportunidade: indicadores, dados comerciais, produtos, estrutura de componentes e histórico.",
+    openProposal: "Abrir proposta",
+    openProposalBusy: "Abrindo…",
+    openProposalEmpty:
+      "Não há documento ADY vinculado a esta OV. A proposta pode não ter sido gerada ainda.",
+    openProposalError: "Não foi possível localizar a proposta ADY desta OV.",
+    openProposalMultipleHint: "Há mais de um documento ADY; abrimos o mais recente.",
+    openProposalReturnLabel: "Oportunidade",
   },
   filters: {
     start: "Data inicial",

@@ -11,6 +11,7 @@ import {
   CommercialSectionHintLabel,
   CommercialTextField,
 } from "../../app/commercialUi";
+import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type { CommercialProposal } from "../../types/analytics";
@@ -30,6 +31,7 @@ type AnalyticsOpportunitiesPageProps = {
 };
 
 export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesPageProps) {
+  const { canViewProposals } = usePortfolioScope();
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [total, setTotal] = useState(0);
@@ -152,6 +154,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
             rows={items}
             basePath={basePath}
             detailSearch={buildAnalyticsOpportunityBackSearch()}
+            showOpenProposal={canViewProposals}
           />
         ) : null}
       </CommercialSectionCard>

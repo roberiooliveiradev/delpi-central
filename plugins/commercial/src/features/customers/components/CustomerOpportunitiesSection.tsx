@@ -17,6 +17,7 @@ type CustomerOpportunitiesSectionProps = {
   basePath: string;
   customerCode: string;
   canViewAnalytics: boolean;
+  canViewProposals?: boolean;
 };
 
 /**
@@ -26,6 +27,7 @@ export function CustomerOpportunitiesSection({
   basePath,
   customerCode,
   canViewAnalytics,
+  canViewProposals = false,
 }: CustomerOpportunitiesSectionProps) {
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [total, setTotal] = useState(0);
@@ -129,6 +131,7 @@ export function CustomerOpportunitiesSection({
           basePath={basePath}
           detailSearch={detailSearch}
           hideCustomerColumn
+          showOpenProposal={canViewProposals}
         />
       ) : null}
     </CommercialSectionCard>

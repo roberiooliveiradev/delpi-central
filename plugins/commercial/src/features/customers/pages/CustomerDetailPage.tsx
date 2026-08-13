@@ -321,6 +321,7 @@ export function CustomerDetailPage({
                   basePath={basePath}
                   customerCode={codigo}
                   canViewAnalytics={canViewAnalytics}
+                  canViewProposals={canViewProposals}
                 />
               ) : null}
 

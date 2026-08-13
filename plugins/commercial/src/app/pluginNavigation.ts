@@ -113,11 +113,14 @@ export function navigateUserProfile(
 
 export function navigateProposalDetail(
   propostaId: string,
-  options?: { basePath?: string },
+  options?: { basePath?: string; returnNav?: ReturnNavOptions },
 ): boolean {
   const path = buildProposalDetailPath(options?.basePath, propostaId);
   if (!path) return false;
-  navigatePluginPath(path);
+  const target = options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+  navigatePluginPath(target);
   return true;
 }
 

@@ -4,6 +4,7 @@ import { CommercialDataTable, CommercialStatusBadge } from "../../../app/commerc
 import { navigateAnalyticsOpportunityDetail } from "../../../app/pluginNavigation";
 import type { CommercialProposal } from "../../../types/analytics";
 import { formatDisplayDate } from "../../../utils/dates";
+import { OpenProposalFromOpportunityButton } from "./OpenProposalFromOpportunityButton";
 
 export type CommercialProposalsTableOptions = {
   basePath: string;
@@ -11,6 +12,8 @@ export type CommercialProposalsTableOptions = {
   detailSearch?: string;
   /** When true, omit Cliente column (account context). */
   hideCustomerColumn?: boolean;
+  /** CTA Abrir proposta (ADY) quando o usuário tem proposals.view. */
+  showOpenProposal?: boolean;
 };
 
 /** Colunas canônicas da lista de OVs (página global e Conta). */
@@ -70,6 +73,19 @@ export function buildCommercialProposalColumns(
     },
   );
 
+  if (options.showOpenProposal) {
+    columns.push({
+      key: "proposal-doc",
+      header: "Proposta",
+      render: (row) => (
+        <OpenProposalFromOpportunityButton
+          basePath={options.basePath}
+          opportunityNumber={row.proposal_number}
+        />
+      ),
+    });
+  }
+
   return columns;
 }
 
@@ -83,12 +99,14 @@ export function CommercialProposalsTable({
   basePath,
   detailSearch,
   hideCustomerColumn,
+  showOpenProposal,
   onRowClick,
 }: CommercialProposalsTableProps) {
   const columns = buildCommercialProposalColumns({
     basePath,
     detailSearch,
     hideCustomerColumn,
+    showOpenProposal,
   });
 
   return (
