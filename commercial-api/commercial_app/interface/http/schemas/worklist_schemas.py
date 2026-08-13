@@ -4,7 +4,13 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+class TaskCustomerBody(BaseModel):
+    code: str = Field(..., min_length=1, max_length=64)
+    store: str = Field(..., min_length=1, max_length=16)
+    name: str | None = Field(default=None, max_length=255)
 
 
 class CreateTaskBody(BaseModel):
@@ -15,10 +21,30 @@ class CreateTaskBody(BaseModel):
     due_at: datetime | None = None
     customer_code: str | None = None
     customer_store: str | None = None
+    customers: list[TaskCustomerBody] | None = Field(
+        default=None,
+        max_length=20,
+        description="Clientes da tarefa (até 20). Singular legado ainda aceito.",
+    )
     assignee_user_id: str | None = Field(
         default=None,
-        description="Responsável (sub Minha Delpi). Default = caller. Outro usuário exige manage de carteiras.",
+        description="Responsável singular (legado). Preferir assignee_user_ids.",
     )
+    assignee_user_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Responsáveis (sub Minha Delpi). Default = caller. Outro usuário exige manage.",
+    )
+
+    @model_validator(mode="after")
+    def _require_customer_pair(self) -> CreateTaskBody:
+        if self.customers:
+            return self
+        code = (self.customer_code or "").strip()
+        store = (self.customer_store or "").strip()
+        if (code and not store) or (store and not code):
+            raise ValueError("customer_code e customer_store devem ser enviados juntos")
+        return self
 
 
 class UpdateTaskBody(BaseModel):
@@ -29,10 +55,30 @@ class UpdateTaskBody(BaseModel):
     due_at: datetime | None = None
     customer_code: str | None = None
     customer_store: str | None = None
+    customers: list[TaskCustomerBody] | None = Field(
+        default=None,
+        max_length=20,
+        description="Clientes da tarefa (até 20). Singular legado ainda aceito.",
+    )
     assignee_user_id: str | None = Field(
         default=None,
-        description="Novo responsável (opcional). Troca exige manage de carteiras.",
+        description="Novo responsável singular (legado). Preferir assignee_user_ids.",
     )
+    assignee_user_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Conjunto de responsáveis (substitui). Troca exige manage de carteiras.",
+    )
+
+    @model_validator(mode="after")
+    def _require_customer_pair(self) -> UpdateTaskBody:
+        if self.customers:
+            return self
+        code = (self.customer_code or "").strip()
+        store = (self.customer_store or "").strip()
+        if (code and not store) or (store and not code):
+            raise ValueError("customer_code e customer_store devem ser enviados juntos")
+        return self
 
 
 class CreateActivityBody(BaseModel):
@@ -52,4 +98,22 @@ class DeferTaskBody(BaseModel):
 
 
 class ReassignTaskBody(BaseModel):
-    assignee_user_id: str = Field(..., min_length=1, max_length=200)
+    assignee_user_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="Responsável singular (legado). Preferir assignee_user_ids.",
+    )
+    assignee_user_ids: list[str] | None = Field(
+        default=None,
+        max_length=20,
+        description="Substitui o conjunto de responsáveis da tarefa.",
+    )
+
+    @model_validator(mode="after")
+    def _require_assignee(self) -> ReassignTaskBody:
+        ids = [item.strip() for item in (self.assignee_user_ids or []) if item and item.strip()]
+        singular = (self.assignee_user_id or "").strip()
+        if not ids and not singular:
+            raise ValueError("Informe assignee_user_ids ou assignee_user_id")
+        return self
