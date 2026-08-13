@@ -213,6 +213,7 @@ export type SalesOrderOtdLineItem = {
   product_code?: string | null;
   product_description?: string | null;
   customer_code?: string | null;
+  customer_store?: string | null;
   customer_name?: string | null;
   customer_short_name?: string | null;
   qty_sold?: number | null;
@@ -226,7 +227,9 @@ export type SalesOrderOtdLineItem = {
 
 export type SalesOrderOtdRecurringCustomer = {
   customer_code: string;
+  customer_store?: string | null;
   customer_name?: string | null;
+  customer_short_name?: string | null;
   late_count: number;
   total_late_days?: number | null;
 };

@@ -25,6 +25,7 @@ _LIST_LINES_CTE = """
             RTRIM(LTRIM(C6.C6_PRODUTO)) AS product_code,
             RTRIM(LTRIM(B1.B1_DESC)) AS product_description,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
+            RTRIM(LTRIM(C5.C5_LOJACLI)) AS customer_store,
             COALESCE(
                 NULLIF(RTRIM(LTRIM(SA1.A1_NREDUZ)), ''),
                 RTRIM(LTRIM(SA1.A1_NOME))
@@ -342,14 +343,16 @@ def build_sales_order_otd_recurring_customers_sql(
         WITH {list_cte}
         SELECT TOP 10
             customer_code,
+            customer_store,
             MAX(customer_name) AS customer_name,
+            MAX(customer_short_name) AS customer_short_name,
             COUNT(*) AS late_count,
             SUM(days_diff) AS total_late_days
         FROM LINHAS_ELEGIVEIS
         WHERE status = 'late'
-        GROUP BY customer_code
+        GROUP BY customer_code, customer_store
         HAVING COUNT(*) >= 2
-        ORDER BY late_count DESC, total_late_days DESC, customer_code ASC
+        ORDER BY late_count DESC, total_late_days DESC, customer_code ASC, customer_store ASC
     """
     return sql, (reference_date, reference_date, reference_date)
 

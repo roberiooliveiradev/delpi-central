@@ -47,6 +47,7 @@ class FakeSalesOrderOtdRepository:
             "recurringCustomers": [
                 {
                     "customer_code": "000100",
+                    "customer_store": "01",
                     "customer_name": "ACME",
                     "late_count": 2,
                     "total_late_days": 8,

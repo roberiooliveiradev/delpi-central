@@ -45,9 +45,11 @@ describe("AnalyticsOtdPage estrutural", () => {
     assert.match(page, /avg_late_days/);
     assert.match(page, /worstDelays/);
     assert.match(page, /CommercialSpeedometerGauge/);
-    assert.match(page, /CommercialBarSeriesChart/);
+    assert.match(page, /AnalyticsOtdInsightBarChart/);
+    assert.match(page, /OtdCustomerIdentityCell/);
+    assert.match(page, /cm-otd-series-grid/);
+    assert.match(page, /customer_store/);
     assert.match(page, /upcomingPromises/);
     assert.match(page, /latestSeriesPoint/);
-    assert.match(page, /chartType: "horizontal_bar"|CommercialBarSeriesChart/);
   });
 });

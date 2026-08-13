@@ -15,9 +15,7 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
-  cmSpeedometerGaugeRowClass,
   CommercialActionButton,
-  CommercialBarSeriesChart,
   CommercialDataTable,
   CommercialLoadingCard,
   CommercialMetricCard,
@@ -31,6 +29,10 @@ import {
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../hooks/useCustomerAvatarPresence";
 import type {
   SalesOrderOtdLineItem,
   SalesOrderOtdPanelData,
@@ -43,6 +45,8 @@ import {
 import { formatDisplayDate } from "../../utils/dates";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
+import { AnalyticsOtdInsightBarChart } from "./components/AnalyticsOtdInsightBarChart";
+import { OtdCustomerIdentityCell } from "./components/OtdCustomerIdentityCell";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import { buildAnalyticsFilterSearchParams } from "./utils/analyticsFilterUrl";
 import { ANALYTICS_OTD_SERIES_LABELS } from "./utils/analyticsBranchFilters";
@@ -211,6 +215,52 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     return [...series].sort((a, b) => a.sort_key.localeCompare(b.sort_key)).at(-1) ?? null;
   }, [series]);
 
+  const avatarPairs = useMemo(() => {
+    const insights = panel?.insights;
+    const pairs: Array<{ customer_code: string; customer_store: string }> = [];
+    const push = (code?: string | null, store?: string | null) => {
+      const c = (code ?? "").trim();
+      const s = (store ?? "").trim();
+      if (!c || !s) return;
+      pairs.push({ customer_code: c, customer_store: s });
+    };
+    for (const row of insights?.recurringCustomers ?? []) {
+      push(row.customer_code, row.customer_store);
+    }
+    for (const row of insights?.worstDelays ?? []) {
+      push(row.customer_code, row.customer_store);
+    }
+    for (const row of insights?.upcomingPromises ?? []) {
+      push(row.customer_code, row.customer_store);
+    }
+    for (const row of panel?.lines?.items ?? []) {
+      push(row.customer_code, row.customer_store);
+    }
+    return pairs;
+  }, [panel]);
+
+  const avatarByKey = useCustomerAvatarPresence(avatarPairs);
+
+  const customerIdentity = useCallback(
+    (row: {
+      customer_code?: string | null;
+      customer_store?: string | null;
+      customer_name?: string | null;
+      customer_short_name?: string | null;
+    }) => {
+      const code = (row.customer_code ?? "").trim();
+      const store = (row.customer_store ?? "").trim();
+      return {
+        code,
+        store,
+        name: row.customer_name,
+        shortName: row.customer_short_name,
+        hasAvatar: code && store ? Boolean(avatarByKey.get(customerAvatarKey(code, store))) : false,
+      };
+    },
+    [avatarByKey],
+  );
+
   const handleSortChange = useCallback(
     (columnKey: string) => {
       const sortMap: Record<string, OtdListSortKey> = {
@@ -275,7 +325,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       key: "customer",
       header: "Cliente",
       sortable: true,
-      render: (row) => row.customer_name || row.customer_code || "—",
+      render: (row) => <OtdCustomerIdentityCell customer={customerIdentity(row)} />,
     },
     {
       key: "product",
@@ -444,18 +494,18 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            {(panel.insights.recurringCustomers?.length ?? 0) === 0 ? (
-              <p className="cm-muted">Sem reincidência (≥2 atrasos) no período.</p>
-            ) : (
-              <CommercialBarSeriesChart
-                seriesName="Atrasos"
-                emptyMessage="Sem reincidência (≥2 atrasos) no período."
-                points={(panel.insights.recurringCustomers ?? []).map((row) => ({
-                  label: row.customer_name || row.customer_code || "—",
-                  value: row.late_count,
-                }))}
-              />
-            )}
+            <AnalyticsOtdInsightBarChart
+              valueLabel="Atrasos"
+              emptyMessage="Sem reincidência (≥2 atrasos) no período."
+              rows={(panel.insights.recurringCustomers ?? []).map((row) => ({
+                id: `${row.customer_code}|${row.customer_store ?? ""}`,
+                value: row.late_count,
+                customer: customerIdentity(row),
+              }))}
+              formatValue={(value) =>
+                `${value.toLocaleString("pt-BR")} atrasos`
+              }
+            />
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsWorst}
@@ -463,18 +513,25 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            {(panel.insights.worstDelays?.length ?? 0) === 0 ? (
-              <p className="cm-muted">Sem linhas atrasadas.</p>
-            ) : (
-              <CommercialBarSeriesChart
-                seriesName="Dias de atraso"
-                emptyMessage="Sem linhas atrasadas."
-                points={(panel.insights.worstDelays ?? []).map((row) => ({
-                  label: `${row.order_number}/${row.line_item}`,
-                  value: Number(row.days_diff ?? 0),
-                }))}
-              />
-            )}
+            <AnalyticsOtdInsightBarChart
+              valueLabel="Dias de atraso"
+              emptyMessage="Sem linhas atrasadas."
+              rows={(panel.insights.worstDelays ?? []).map((row) => ({
+                id: `${row.branch}-${row.order_number}-${row.line_item}-worst`,
+                value: Number(row.days_diff ?? 0),
+                axisLabel: `${row.order_number}/${row.line_item}`,
+                customer: customerIdentity(row),
+              }))}
+              formatValue={(value) => `${formatDays(value)} dias`}
+              onRowClick={(item) => {
+                const row = panel.insights?.worstDelays?.find(
+                  (line) =>
+                    `${line.branch}-${line.order_number}-${line.line_item}-worst` ===
+                    item.id,
+                );
+                if (row) openLine(row);
+              }}
+            />
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsUpcoming}
@@ -507,7 +564,9 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
                   {
                     key: "customer",
                     header: "Cliente",
-                    render: (row) => row.customer_name || row.customer_code || "—",
+                    render: (row) => (
+                      <OtdCustomerIdentityCell customer={customerIdentity(row)} />
+                    ),
                   },
                   {
                     key: "promised",
@@ -525,38 +584,60 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
         </div>
       ) : null}
 
-      <SectionCard
-        title={ANALYTICS_CONTENT.otd.seriesTitle}
-        hint={CM_HELP.analytics.otdSeries}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        {loadingSeries && series.length === 0 ? (
+      {loadingSeries && series.length === 0 ? (
+        <SectionCard
+          title={ANALYTICS_CONTENT.otd.seriesTitle}
+          hint={CM_HELP.analytics.otdSeries}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
           <p className="cm-muted">Carregando série…</p>
-        ) : !latestSeriesPoint ? (
+        </SectionCard>
+      ) : !latestSeriesPoint ? (
+        <SectionCard
+          title={ANALYTICS_CONTENT.otd.seriesTitle}
+          hint={CM_HELP.analytics.otdSeries}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
           <p className="cm-muted">Sem pontos na série.</p>
-        ) : (
-          <div className="cm-page-stack" style={{ gap: "0.5rem" }}>
-            <p className="cm-muted" style={{ margin: 0 }}>
+        </SectionCard>
+      ) : (
+        <div className="cm-otd-series-grid" aria-label="Série OTD por unidade">
+          <SectionCard
+            title={ANALYTICS_OTD_SERIES_LABELS.unit01}
+            hint={CM_HELP.analytics.otdSeries}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            <p className="cm-muted" style={{ margin: "0 0 0.35rem" }}>
               Período: {latestSeriesPoint.periodo}
             </p>
-            <div className={cmSpeedometerGaugeRowClass} aria-label="Velocímetros OTD por unidade">
-              <CommercialSpeedometerGauge
-                size={280}
-                value={latestSeriesPoint.otd_filial_01}
-                label={ANALYTICS_OTD_SERIES_LABELS.unit01}
-                tip={`${ANALYTICS_OTD_SERIES_LABELS.unit01} em ${latestSeriesPoint.periodo}`}
-              />
-              <CommercialSpeedometerGauge
-                size={280}
-                value={latestSeriesPoint.otd_filial_02}
-                label={ANALYTICS_OTD_SERIES_LABELS.unit02}
-                tip={`${ANALYTICS_OTD_SERIES_LABELS.unit02} em ${latestSeriesPoint.periodo}`}
-              />
-            </div>
-          </div>
-        )}
-      </SectionCard>
+            <CommercialSpeedometerGauge
+              size={280}
+              value={latestSeriesPoint.otd_filial_01}
+              showZonesLegend
+              tip={`${ANALYTICS_OTD_SERIES_LABELS.unit01} em ${latestSeriesPoint.periodo}`}
+            />
+          </SectionCard>
+          <SectionCard
+            title={ANALYTICS_OTD_SERIES_LABELS.unit02}
+            hint={CM_HELP.analytics.otdSeries}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            <p className="cm-muted" style={{ margin: "0 0 0.35rem" }}>
+              Período: {latestSeriesPoint.periodo}
+            </p>
+            <CommercialSpeedometerGauge
+              size={280}
+              value={latestSeriesPoint.otd_filial_02}
+              showZonesLegend
+              tip={`${ANALYTICS_OTD_SERIES_LABELS.unit02} em ${latestSeriesPoint.periodo}`}
+            />
+          </SectionCard>
+        </div>
+      )}
 
       <SectionCard
         title="Linhas"

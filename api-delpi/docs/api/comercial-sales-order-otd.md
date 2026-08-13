@@ -76,7 +76,7 @@ Painel (`/panel`) — `summary` + `insights` + `lines` paginado:
 | Bloco | Campos |
 |-------|--------|
 | `summary` | KPI (`total_lines`, `on_time_lines`, `late_lines`, `sales_order_otd_pct`, `late_percentage`) + `avg_late_days`, `p50_late_days`, `p90_late_days` (só late) |
-| `insights.recurringCustomers` | Top 10 clientes com ≥2 linhas late (`customer_code`, `customer_name`, `late_count`, `total_late_days`) |
+| `insights.recurringCustomers` | Top 10 clientes com ≥2 linhas late (`customer_code`, `customer_store`, `customer_name`, `customer_short_name`, `late_count`, `total_late_days`) |
 | `insights.worstDelays` | Top 10 linhas late por `days_diff` DESC |
 | `insights.upcomingPromises` | Top 10 linhas abertas por `promised_date` ASC |
 | `lines` | Página de itens (incl. `days_diff`, promessa, fatura, qtds) |
@@ -85,6 +85,8 @@ Painel — campos de linha relevantes:
 
 | Campo | Fonte |
 |-------|--------|
+| `customer_code` | `C5.C5_CLIENTE` |
+| `customer_store` | `C5.C5_LOJACLI` (loja do cliente) |
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 | `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |
@@ -102,6 +104,7 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 | Data | Alteração |
 |------|-----------|
+| 2026-08-13 | Panel: `customer_store` (loja) nas linhas e reincidência agrupada por código+loja. |
 | 2026-08-13 | Panel: `search`, stats de atraso, insights (recorrência + top 10 atrasos/promessas); BFF commercial-api encaminha page/sort/status/search. |
 | 2026-07-09 | Passa a incluir linhas **não faturadas**; atraso de abertas medido por `end_date` vs. `C6_ENTREG`. |
 | Anterior | Considerava apenas linhas faturadas e totalmente entregues. |

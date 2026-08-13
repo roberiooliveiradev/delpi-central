@@ -159,6 +159,9 @@ def test_build_sales_order_otd_insights_sql_shapes() -> None:
         reference_end_date="2026-07-08",
     )
     assert "PERCENTILE_CONT(0.5)" in stats_sql
+    assert "C5_LOJACLI" in recurring_sql
     assert "HAVING COUNT(*) >= 2" in recurring_sql
+    assert "customer_store" in recurring_sql
+    assert "GROUP BY customer_code, customer_store" in recurring_sql
     assert "WHERE status = 'late'" in worst_sql
     assert "is_invoiced = 0" in upcoming_sql
