@@ -44,6 +44,7 @@
     "aboutTitle": "Sobre",
     "aboutBody": "Perfil do Portal Comercial. Nome e e-mail vêm do diretório Minha Delpi; foto e cargo são da extensão Commercial. Dados de RH entram em fase futura.",
     "changePhoto": "Trocar foto",
+    "enlargePhoto": "Ampliar foto de {name}",
     "removePhoto": "Remover foto",
     "editProfile": "Editar perfil",
     "cancelEdit": "Cancelar",

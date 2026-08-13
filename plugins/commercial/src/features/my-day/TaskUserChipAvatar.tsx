@@ -6,7 +6,6 @@ import {
 } from "../../api/userProfileApi";
 import { httpGetBlob } from "../../api/httpClient";
 import { CommercialAvatar } from "../../app/commercialUi";
-import { SHELL_NAV_CONTENT } from "../../content/shellNav";
 
 type TaskUserChipAvatarProps = {
   userId: string;
@@ -14,7 +13,8 @@ type TaskUserChipAvatarProps = {
 };
 
 /**
- * Avatar de usuário em chip de tarefa — foto do perfil + lightbox; senão iniciais.
+ * Avatar no chip da tarefa — só visual (sem lightbox).
+ * Clique no badge pai abre o perfil; expandir foto fica na página do perfil.
  */
 export function TaskUserChipAvatar({ userId, name }: TaskUserChipAvatarProps) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -56,9 +56,7 @@ export function TaskUserChipAvatar({ userId, name }: TaskUserChipAvatarProps) {
       colorKey={userId}
       size="sm"
       src={photoUrl}
-      previewable={Boolean(photoUrl)}
-      previewTitle={name}
-      previewAriaLabel={SHELL_NAV_CONTENT.userMenu.enlargePhotoAriaLabel}
+      previewable={false}
       portalScopeClassName="dashboard-commercial"
     />
   );

@@ -364,24 +364,27 @@
 .dashboard-commercial .cm-task-link-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin: 0;
   min-width: 0;
   max-width: 100%;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+  padding-block: 4px;
+  padding-inline: 6px 10px;
 }
 
 .dashboard-commercial .cm-task-link-chip__avatar {
   flex: 0 0 auto;
   display: inline-flex;
   line-height: 0;
+  pointer-events: none;
 }
 
-.dashboard-commercial .cm-task-link-chip__label {
-  margin: 0;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  line-height: 1.25;
-  text-align: left;
+.dashboard-commercial .cm-task-link-chip__text {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -393,6 +396,8 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
 }
 
 .dashboard-commercial .cm-task-link-chip__subtitle {
@@ -401,6 +406,8 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
 }
 
 .dashboard-commercial .cm-my-day-attachments--embedded {

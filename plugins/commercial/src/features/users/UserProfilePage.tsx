@@ -470,7 +470,16 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                   colorKey={profile.user_id}
                   src={photoObjectUrl}
                   size="lg"
+                  previewable={Boolean(photoObjectUrl)}
                   previewTitle={displayName}
+                  previewAriaLabel={
+                    photoObjectUrl
+                      ? USER_ACCESS_COPY.enlargePhoto.replace(
+                          "{name}",
+                          displayName,
+                        )
+                      : undefined
+                  }
                   portalScopeClassName="dashboard-commercial"
                 />
               )}

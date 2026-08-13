@@ -7,19 +7,21 @@ import { fileURLToPath } from "node:url";
 const src = join(dirname(fileURLToPath(import.meta.url)));
 
 describe("task entity link chips avatars", () => {
-  it("chips aceitam avatar e subtitle; card usa assignedByValue", () => {
+  it("avatar fica dentro do badge; clique abre perfil/Conta", () => {
     const chips = readFileSync(join(src, "TaskEntityLinkChips.tsx"), "utf8");
-    assert.match(chips, /avatar\?:/);
-    assert.match(chips, /subtitle\?:/);
     assert.match(chips, /cm-task-link-chip__avatar/);
+    assert.match(chips, /delpi-ui-tag-chip cm-task-link-chip/);
+    assert.match(chips, /onClick=\{item\.onOpen\}/);
 
-    const card = readFileSync(join(src, "TaskDetailCard.tsx"), "utf8");
-    assert.match(card, /assignedByValue/);
-    assert.doesNotMatch(card, /assignedByLabel/);
+    const userChip = readFileSync(join(src, "TaskUserLinkChip.tsx"), "utf8");
+    assert.match(userChip, /previewable=\{false\}/);
+    assert.match(userChip, /profile\.email/);
+    assert.match(userChip, /navigateUserProfile|onOpen/);
 
     const page = readFileSync(join(src, "MyDayPage.tsx"), "utf8");
-    assert.match(page, /TaskUserChipAvatar/);
-    assert.match(page, /CustomerAvatar/);
-    assert.match(page, /assignedByValue=/);
+    assert.match(page, /TaskUserLinkChip/);
+    assert.match(page, /previewable=\{false\}/);
+    assert.match(page, /navigateUserProfile/);
+    assert.match(page, /navigateCustomerDetail/);
   });
 });

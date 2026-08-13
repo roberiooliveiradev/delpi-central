@@ -65,6 +65,7 @@ import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 import { TaskDetailCard } from "./TaskDetailCard";
 import { TaskEntityLinkChips } from "./TaskEntityLinkChips";
 import { TaskUserChipAvatar } from "./TaskUserChipAvatar";
+import { TaskUserLinkChip } from "./TaskUserLinkChip";
 
 type MyDayPageProps = {
   basePath: string;
@@ -925,49 +926,49 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         : [];
                   const assigneeValue =
                     assigneeIds.length > 0 ? (
-                      <TaskEntityLinkChips
-                        ariaLabel="Responsáveis da tarefa"
-                        items={assigneeIds.map((uid) => {
-                          const label =
+                      <div
+                        className="cm-task-link-chips"
+                        role="group"
+                        aria-label="Responsáveis da tarefa"
+                      >
+                        {assigneeIds.map((uid) => {
+                          const fallback =
                             sellerNameByUserId.get(uid) ?? directoryLabelFor(uid);
-                          return {
-                            key: uid,
-                            label,
-                            avatar: (
-                              <TaskUserChipAvatar userId={uid} name={label} />
-                            ),
-                            onOpen: () =>
-                              navigateUserProfile(uid, { basePath }),
-                          };
+                          return (
+                            <TaskUserLinkChip
+                              key={uid}
+                              userId={uid}
+                              fallbackLabel={fallback}
+                              onOpen={() =>
+                                navigateUserProfile(uid, { basePath })
+                              }
+                            />
+                          );
                         })}
-                      />
+                      </div>
                     ) : null;
                   const createdBy = (task.created_by_user_id || "").trim();
                   const primaryAssignee = (assigneeIds[0] || "").trim();
                   const me = (currentUserId || myPortfolio?.user_id || "").trim();
-                  const assignedByName = createdBy
+                  const assignedByFallback = createdBy
                     ? sellerNameByUserId.get(createdBy) ??
                       directoryLabelFor(createdBy)
                     : "";
                   const assignedByValue =
                     createdBy && createdBy !== primaryAssignee ? (
-                      <TaskEntityLinkChips
-                        ariaLabel="Atribuído por"
-                        items={[
-                          {
-                            key: createdBy,
-                            label: assignedByName,
-                            avatar: (
-                              <TaskUserChipAvatar
-                                userId={createdBy}
-                                name={assignedByName}
-                              />
-                            ),
-                            onOpen: () =>
-                              navigateUserProfile(createdBy, { basePath }),
-                          },
-                        ]}
-                      />
+                      <div
+                        className="cm-task-link-chips"
+                        role="group"
+                        aria-label="Atribuído por"
+                      >
+                        <TaskUserLinkChip
+                          userId={createdBy}
+                          fallbackLabel={assignedByFallback}
+                          onOpen={() =>
+                            navigateUserProfile(createdBy, { basePath })
+                          }
+                        />
+                      </div>
                     ) : null;
                   const taskCustomers =
                     task.customers?.length
@@ -998,6 +999,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                                 store={item.customer_store}
                                 name={name || codeStore}
                                 size="sm"
+                                previewable={false}
                               />
                             ),
                             onOpen: () =>
