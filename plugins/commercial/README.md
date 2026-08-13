@@ -285,6 +285,8 @@ TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-mani
 
 Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts`, `shellNav`, `homeLauncher`, `overviewMetricsCatalog`, `administration`). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
 
+Cobertura de `hint` / `headerHint` em campos e colunas: inventário e isenções em [`docs/12-roadmap-e-evolucao/commercial/HELP-COVERAGE.md`](../../docs/12-roadmap-e-evolucao/commercial/HELP-COVERAGE.md). Auditoria: `node scripts/audit_help_coverage.mjs` + gate `src/content/helpCoverage.structural.test.mjs` (C16 em `helpTooltips.structural.test.mjs`).
+
 ## Anexos de tarefa
 
 Upload multipart → volume `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
