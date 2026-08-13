@@ -48,8 +48,8 @@
 | Tema | Wireframe / nota | Status implementação |
 |------|------------------|----------------------|
 | `returnTo` / `returnLabel` | PagePath em detalhes (pedido Conta, OV, proposta, linha) | helper `commercialNavigationReturn` |
-| Conta pedidos | WF-04R: modal linhas + página detalhe pedido (sem expand inline) | em entrega |
-| Histórico NF | WF-04R: MetricCard + tabela + modal itens | em entrega |
+| Conta pedidos | WF-04R: modal linhas + página detalhe pedido (sem expand inline) | entregue |
+| Histórico NF | WF-04R: MetricCard + tabela + modal itens | entregue |
 | OV → ADY | WF-OPP / WF-PROP: CTA Abrir proposta (atalho documento) | em entrega |
 | Proposta contato PDF | WF-PROP: select contatos salvos (sem inputs raw) | em entrega |
 | Grupos empty/create | WF-ADM: card formulário sob demanda | em entrega |
@@ -561,8 +561,7 @@ lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Abas:** Pedidos mostra linhas do cliente; Histórico carrega faturamento e NFs
-somente quando ativo; Oportunidades oferece CTA interno apenas com
+**Abas:** Pedidos usa modal de linhas + página detalhe do pedido (`…/orders/…`); Histórico carrega faturamento/NFs com MetricCard + tabela e **modal de itens** (sem expand inline); Oportunidades oferece CTA interno apenas com
 `analytics.view`; Atividades carrega timeline real e permite follow-up somente
 com `worklist.view + followups.manage`. Cada fonte mantém loading, erro, vazio,
 retry e atualização independentes.
