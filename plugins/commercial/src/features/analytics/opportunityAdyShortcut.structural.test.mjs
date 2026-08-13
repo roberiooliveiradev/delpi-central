@@ -27,5 +27,7 @@ describe("OV → ADY shortcut", () => {
     assert.match(detail, /resolvePagePathBack/);
     assert.match(button, /resolveProposalDocumentForOpportunity/);
     assert.match(button, /navigateProposalDetail/);
+    assert.match(button, /from "\.\.\/\.\.\/\.\.\/app\/commercialUi"/);
+    assert.doesNotMatch(button, /from "\.\.\/\.\.\/app\//);
   });
 });
