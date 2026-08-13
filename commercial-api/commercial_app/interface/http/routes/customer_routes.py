@@ -71,7 +71,8 @@ def _pairs_for_account_or_portfolio_list(
 ) -> list[tuple[str, str]]:
     """
     Um par = detalhe Conta (sem filtro membership).
-    Vários pares = lista/KPI (KEEP filtro de carteira).
+    Vários pares = lista/KPI/multi-select (KEEP filtro de carteira).
+    Deduplica preservando ordem após normalização/filtro.
     """
     normalized = [
         (str(code or "").strip(), str(store or "").strip())
@@ -80,10 +81,19 @@ def _pairs_for_account_or_portfolio_list(
     ]
     if len(normalized) <= 1:
         return normalized
-    return build_resolve_commercial_customer_scope_service().filter_pairs(
+    filtered = build_resolve_commercial_customer_scope_service().filter_pairs(
         scope,
         normalized,
     )
+    seen: set[tuple[str, str]] = set()
+    unique: list[tuple[str, str]] = []
+    for pair in filtered:
+        if pair in seen:
+            continue
+        seen.add(pair)
+        unique.append(pair)
+    return unique
+
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)

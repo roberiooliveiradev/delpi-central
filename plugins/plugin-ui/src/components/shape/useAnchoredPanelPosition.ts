@@ -8,9 +8,15 @@ import {
 
 const PANEL_Z_INDEX = DELPI_UI_OVERLAY_Z_INDEX.anchoredPanel;
 
+/** Teto do painel quando cresce além do gatilho (nomes longos em multi-select). */
+const MATCH_ANCHOR_MAX_GROW_PX = 480;
+
 export type AnchoredPanelPositionOptions = {
   gap?: number;
-  /** Larga o painel no mínimo com a largura do gatilho (selects). */
+  /**
+   * Painel no mínimo tão largo quanto o gatilho; pode crescer com o conteúdo
+   * até o menor entre viewport e MATCH_ANCHOR_MAX_GROW_PX (não trava max=anchor).
+   */
   matchAnchorWidth?: boolean;
   /** Preferência de lado; se não couber, tenta alternativas. */
   preferredPlacement?: AnchoredPanelPlacement;
@@ -72,7 +78,12 @@ export function useAnchoredPanelPosition(
 
       const rect = anchor.getBoundingClientRect();
       const panel = panelRef.current;
-      const panelWidth = Math.max(panel?.offsetWidth ?? 0, matchAnchorWidth ? rect.width : 0);
+      const viewportMax = Math.max(12 * 16, window.innerWidth - 16);
+      const growCap = Math.min(viewportMax, MATCH_ANCHOR_MAX_GROW_PX);
+      const panelWidth = Math.max(
+        panel?.offsetWidth ?? 0,
+        matchAnchorWidth ? rect.width : 0,
+      );
       const panelHeight = panel?.offsetHeight ?? 0;
 
       const coords = resolveAnchoredPanelCoords({
@@ -84,7 +95,9 @@ export function useAnchoredPanelPosition(
           width: rect.width,
           height: rect.height,
         },
-        panelWidth,
+        panelWidth: matchAnchorWidth
+          ? Math.min(growCap, Math.max(panelWidth, rect.width))
+          : panelWidth,
         panelHeight,
         gap,
         viewportWidth: window.innerWidth,
@@ -101,7 +114,11 @@ export function useAnchoredPanelPosition(
         zIndex: PANEL_Z_INDEX,
         visibility: "visible",
         ...(matchAnchorWidth
-          ? { width: rect.width, minWidth: rect.width, maxWidth: rect.width }
+          ? {
+              minWidth: rect.width,
+              width: "max-content",
+              maxWidth: growCap,
+            }
           : null),
       });
     };

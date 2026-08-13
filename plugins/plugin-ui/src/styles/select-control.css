@@ -119,8 +119,8 @@
   left: auto;
   min-width: 12rem;
   width: max-content;
-  max-width: min(360px, calc(100vw - 16px));
-  /* Painel portaled: não cortar em 14rem legado do toolbar-select. */
+  max-width: min(480px, calc(100vw - 16px));
+  /* Painel portaled: cresce com o conteúdo até o teto (matchAnchorWidth no JS). */
   max-height: min(70vh, 480px);
   overflow: auto;
 }

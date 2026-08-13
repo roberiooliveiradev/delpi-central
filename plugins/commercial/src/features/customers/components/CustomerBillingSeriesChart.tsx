@@ -15,8 +15,8 @@ import {
   CommercialChartToolbar,
   CommercialDateField,
   CommercialFilterBarShell,
+  CommercialMultiSelectField,
   CommercialSectionCard,
-  CommercialSelectField,
   CommercialStateBanner,
   UI_PREFIX,
   cmEmptyStateClassNames,
@@ -25,10 +25,7 @@ import {
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import { validateBillingPeriod } from "../billing/utils/billingPeriod";
-import {
-  BILLING_SERIES_ALL_KEY,
-  useCustomerBillingSeries,
-} from "../hooks/useCustomerBillingSeries";
+import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
 import { useLazyBillingSeriesActivation } from "../hooks/useLazyBillingSeriesActivation";
 import type { CustomerSummary } from "../types/customerSummary";
 import {
@@ -67,6 +64,17 @@ function formatChartCurrency(value: number): string {
   return formatCurrency(value);
 }
 
+function billingFilterLabel(
+  selectedKeys: string[],
+  customerOptions: Array<{ key: string; nome: string }>,
+): string {
+  if (selectedKeys.length === 0) return "Toda a carteira";
+  if (selectedKeys.length === 1) {
+    return customerOptions.find((c) => c.key === selectedKeys[0])?.nome ?? "Cliente";
+  }
+  return `${selectedKeys.length} clientes`;
+}
+
 /**
  * Faturamento da carteira — período e granularidade reais via API existente.
  */
@@ -100,8 +108,8 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     : (allowedGrains[0] ?? "month");
 
   const {
-    selectedKey,
-    setSelectedKey,
+    selectedKeys,
+    setSelectedKeys,
     customerOptions,
     points,
     loading,
@@ -126,11 +134,9 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   );
 
   const hasValues = chartData.some((point) => point.faturamento > 0);
-  const filterLabel =
-    selectedKey === BILLING_SERIES_ALL_KEY
-      ? "Toda a carteira"
-      : customerOptions.find((c) => c.key === selectedKey)?.nome ?? "Cliente";
+  const filterLabel = billingFilterLabel(selectedKeys, customerOptions);
   const periodLabel = billingSeriesPresetLabel(preset);
+  const isAllCustomers = selectedKeys.length === 0;
 
   return (
     <div ref={anchorRef} className="cm-billing-series-chart">
@@ -149,21 +155,20 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         onOpenChange={setOpen}
         actions={
           open ? (
-            <CommercialSelectField
-              label="Cliente"
-              options={[
-                { value: BILLING_SERIES_ALL_KEY, label: "Todos os clientes" },
-                ...customerOptions.map((customer) => ({
+            <div className="cm-billing-series-chart__customer-filter">
+              <CommercialMultiSelectField
+                label="Cliente"
+                options={customerOptions.map((customer) => ({
                   value: customer.key,
                   label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
-                })),
-              ]}
-              value={selectedKey}
-              onChange={setSelectedKey}
-              allowEmpty={false}
-              searchable={customerOptions.length > 8}
-              disabled={loading && customerOptions.length === 0}
-            />
+                }))}
+                selectedValues={selectedKeys}
+                onChange={setSelectedKeys}
+                emptyLabel="Todos os clientes"
+                searchable
+                disabled={loading && customerOptions.length === 0}
+              />
+            </div>
           ) : undefined
         }
       >
@@ -228,9 +233,9 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         <EmptyState
           classNames={cmEmptyStateClassNames}
           defaultMessage={
-            selectedKey === BILLING_SERIES_ALL_KEY
+            isAllCustomers
               ? `Sem faturamento registrado em ${periodLabel.toLocaleLowerCase("pt-BR")} para a carteira.`
-              : `Sem faturamento registrado em ${periodLabel.toLocaleLowerCase("pt-BR")} para este cliente.`
+              : `Sem faturamento registrado em ${periodLabel.toLocaleLowerCase("pt-BR")} para o filtro de clientes.`
           }
         />
       ) : (

@@ -83,6 +83,8 @@ class EnrichmentBody(BaseModel):
 
 
 class BillingSeriesBody(BaseModel):
+    """Série de faturamento — aceita 1 cliente (Conta) ou subset multi-select da carteira."""
+
     customers: list[CustomerAssignmentBody] = Field(
         default_factory=list,
         max_length=200,

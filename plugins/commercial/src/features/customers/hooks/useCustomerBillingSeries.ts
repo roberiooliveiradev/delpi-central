@@ -13,11 +13,10 @@ export type BillingSeriesCustomerOption = {
   nome: string;
 };
 
-const ALL_KEY = "all";
-
 export type UseCustomerBillingSeriesResult = {
-  selectedKey: string;
-  setSelectedKey: (key: string) => void;
+  /** Chaves selecionadas; vazio = toda a carteira. */
+  selectedKeys: string[];
+  setSelectedKeys: (keys: string[]) => void;
   customerOptions: BillingSeriesCustomerOption[];
   points: CustomerBillingSeriesPoint[];
   loading: boolean;
@@ -29,18 +28,22 @@ export type UseCustomerBillingSeriesResult = {
 
 function buildRequestPairs(
   customers: CustomerSummary[] | undefined,
-  selectedKey: string,
+  selectedKeys: string[],
 ): Array<{ customer_code: string; customer_store: string }> {
   if (!customers?.length) return [];
-  if (selectedKey === ALL_KEY) {
+  if (!selectedKeys.length) {
     return customers.map((c) => ({
       customer_code: c.codigo,
       customer_store: c.loja,
     }));
   }
-  const match = customers.find((c) => c.key === selectedKey);
-  if (!match) return [];
-  return [{ customer_code: match.codigo, customer_store: match.loja }];
+  const selected = new Set(selectedKeys);
+  return customers
+    .filter((c) => selected.has(c.key))
+    .map((c) => ({
+      customer_code: c.codigo,
+      customer_store: c.loja,
+    }));
 }
 
 function requestFingerprint(
@@ -67,7 +70,7 @@ export function useCustomerBillingSeries(
   const startDate = options?.startDate;
   const endDate = options?.endDate;
   const granularity = options?.granularity;
-  const [selectedKey, setSelectedKey] = useState(ALL_KEY);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [points, setPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,14 +88,19 @@ export function useCustomerBillingSeries(
       }))
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [customers]);
-  const effectiveSelectedKey =
-    selectedKey === ALL_KEY || customerOptions.some((customer) => customer.key === selectedKey)
-      ? selectedKey
-      : ALL_KEY;
+
+  const optionKeySet = useMemo(
+    () => new Set(customerOptions.map((customer) => customer.key)),
+    [customerOptions],
+  );
+  const effectiveSelectedKeys = useMemo(
+    () => selectedKeys.filter((key) => optionKeySet.has(key)),
+    [optionKeySet, selectedKeys],
+  );
 
   const requestPairs = useMemo(
-    () => buildRequestPairs(customers, effectiveSelectedKey),
-    [customers, effectiveSelectedKey],
+    () => buildRequestPairs(customers, effectiveSelectedKeys),
+    [customers, effectiveSelectedKeys],
   );
   const fingerprint = useMemo(() => requestFingerprint(requestPairs), [requestPairs]);
 
@@ -148,8 +156,8 @@ export function useCustomerBillingSeries(
   );
 
   return {
-    selectedKey: effectiveSelectedKey,
-    setSelectedKey,
+    selectedKeys: effectiveSelectedKeys,
+    setSelectedKeys,
     customerOptions,
     points: displayedPoints,
     loading: enabled && fingerprint ? loading : false,
@@ -160,5 +168,3 @@ export function useCustomerBillingSeries(
     reload,
   };
 }
-
-export { ALL_KEY as BILLING_SERIES_ALL_KEY };

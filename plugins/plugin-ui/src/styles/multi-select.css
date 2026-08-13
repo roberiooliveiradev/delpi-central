@@ -90,7 +90,7 @@
   right: auto;
   top: auto;
   left: auto;
-  /* Largura canônica = gatilho (matchAnchorWidth no portal); evita painel “largo demais”. */
+  /* minWidth/maxWidth/width:max-content vêm do matchAnchorWidth (cresce com o conteúdo). */
   width: auto;
   min-width: 0;
   max-width: none; /* sobrescreve max(100%, 240px) do painel não-portal */
@@ -127,7 +127,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 168px;
+  /* Cresce com o viewport; scroll só quando a lista é longa de verdade. */
+  max-height: min(50vh, 320px);
   overflow: auto;
   display: grid;
   gap: 2px;
