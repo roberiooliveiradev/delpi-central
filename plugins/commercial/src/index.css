@@ -718,6 +718,13 @@
   text-underline-offset: 2px;
 }
 
+.dashboard-commercial .cm-proposals-table__ov {
+  color: var(--cm-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
 .dashboard-commercial .cm-muted {
   color: var(--cm-text-muted);
   font-size: 13px;
