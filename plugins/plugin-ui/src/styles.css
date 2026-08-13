@@ -7,6 +7,8 @@
 @import "./styles/chart-catalog.css";
 @import "./styles/series-chart.css";
 @import "./styles/comparative-area-chart.css";
+@import "./styles/speedometer-gauge.css";
+@import "./styles/horizontal-value-bars.css";
 @import "./styles/configurable-table.css";
 @import "./styles/centered-scaled-preview.css";
 @import "./styles/comunicado-stage.css";

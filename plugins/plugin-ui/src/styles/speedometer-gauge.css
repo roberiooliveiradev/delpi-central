@@ -1,0 +1,89 @@
+/**
+ * SpeedometerGauge — tokens `--delpi-ui-*`.
+ * Dual-class: `{prefix}-speedometer-gauge*` + `.delpi-ui-speedometer-gauge*`.
+ */
+
+.delpi-ui-speedometer-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-speedometer-gauge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.25rem 2rem;
+  width: 100%;
+  padding: 0.35rem 0 0.15rem;
+}
+
+.delpi-ui-speedometer-gauge__svg {
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+  height: auto;
+}
+
+.delpi-ui-speedometer-gauge__track {
+  stroke: var(--delpi-ui-border, var(--border, #334155));
+  opacity: 0.85;
+}
+
+.delpi-ui-speedometer-gauge__fill {
+  stroke: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-speedometer-gauge--neutral {
+  --delpi-ui-speedometer-start: var(--delpi-ui-accent, #089bdb);
+  --delpi-ui-speedometer-end: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-speedometer-gauge--success {
+  --delpi-ui-speedometer-start: color-mix(in srgb, var(--delpi-ui-success, #22c55e) 70%, #089bdb);
+  --delpi-ui-speedometer-end: var(--delpi-ui-success, #22c55e);
+}
+
+.delpi-ui-speedometer-gauge--warning {
+  --delpi-ui-speedometer-start: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 55%, #089bdb);
+  --delpi-ui-speedometer-end: var(--delpi-ui-warning, #f59e0b);
+}
+
+.delpi-ui-speedometer-gauge--danger {
+  --delpi-ui-speedometer-start: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 45%, #089bdb);
+  --delpi-ui-speedometer-end: var(--delpi-ui-danger, #ef4444);
+}
+
+.delpi-ui-speedometer-gauge__needle {
+  stroke: var(--delpi-ui-title, var(--delpi-ui-text, #e2e8f0));
+}
+
+.delpi-ui-speedometer-gauge__hub {
+  fill: var(--delpi-ui-title, var(--delpi-ui-text, #e2e8f0));
+}
+
+.delpi-ui-speedometer-gauge__value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  fill: var(--delpi-ui-title, var(--delpi-ui-text, #f8fafc));
+}
+
+.delpi-ui-speedometer-gauge__unit {
+  font-size: 0.72rem;
+  font-weight: 600;
+  fill: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+}
+
+.delpi-ui-speedometer-gauge__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+  max-width: 11rem;
+  line-height: 1.25;
+}

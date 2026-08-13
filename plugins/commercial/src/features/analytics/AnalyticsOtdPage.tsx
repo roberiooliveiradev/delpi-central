@@ -15,14 +15,17 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  cmSpeedometerGaugeRowClass,
   CommercialActionButton,
   CommercialDataTable,
+  CommercialHorizontalValueBars,
   CommercialLoadingCard,
   CommercialMetricCard,
   CommercialPageHero,
   CommercialPagination,
   CommercialScopeChipBar,
   CommercialSectionHintLabel,
+  CommercialSpeedometerGauge,
   CommercialTextField,
 } from "../../app/commercialUi";
 import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
@@ -68,6 +71,23 @@ function truncate(text: string | null | undefined, max = 48): string {
   const value = (text ?? "").trim();
   if (!value) return "—";
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+}
+
+/** Dias civis até a data ISO (YYYY-MM-DD); negativo se já passou. */
+function daysUntilIso(iso: string | null | undefined, today = new Date()): number | null {
+  if (!iso) return null;
+  const raw = iso.trim();
+  const d = new Date(raw.includes("T") ? raw : `${raw}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((end - start) / 86_400_000);
+}
+
+/** Urgência para barra: quanto menor o prazo, maior a barra (janela ~60 dias). */
+function upcomingUrgency(daysUntil: number | null): number {
+  if (daysUntil == null) return 1;
+  return Math.max(1, 60 - Math.min(59, Math.max(-5, daysUntil)));
 }
 
 type AnalyticsOtdPageProps = {
@@ -201,6 +221,12 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     },
     [basePath, filters.filterState],
   );
+
+  /** Último ponto da série (período mais recente) para os velocímetros. */
+  const latestSeriesPoint = useMemo(() => {
+    if (series.length === 0) return null;
+    return [...series].sort((a, b) => a.sort_key.localeCompare(b.sort_key)).at(-1) ?? null;
+  }, [series]);
 
   const handleSortChange = useCallback(
     (columnKey: string) => {
@@ -435,32 +461,17 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            {(panel.insights.recurringCustomers?.length ?? 0) === 0 ? (
-              <p className="cm-muted">Sem reincidência (≥2 atrasos) no período.</p>
-            ) : (
-              <CommercialDataTable
-                rows={panel.insights.recurringCustomers}
-                columns={[
-                  {
-                    key: "customer",
-                    header: "Cliente",
-                    render: (row) => row.customer_name || row.customer_code || "—",
-                  },
-                  {
-                    key: "late_count",
-                    header: "Atrasos",
-                    render: (row) => row.late_count.toLocaleString("pt-BR"),
-                  },
-                  {
-                    key: "total_late_days",
-                    header: "Dias ∑",
-                    render: (row) => formatDays(row.total_late_days),
-                  },
-                ]}
-                rowKey={(row) => row.customer_code}
-                layout="section"
-              />
-            )}
+            <CommercialHorizontalValueBars
+              aria-label={ANALYTICS_CONTENT.otd.insightsRecurrence}
+              emptyMessage="Sem reincidência (≥2 atrasos) no período."
+              items={(panel.insights.recurringCustomers ?? []).map((row) => ({
+                id: row.customer_code,
+                label: row.customer_name || row.customer_code || "—",
+                value: row.late_count,
+                valueLabel: `${row.late_count.toLocaleString("pt-BR")} atrasos`,
+                meta: `∑ ${formatDays(row.total_late_days)} dias`,
+              }))}
+            />
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsWorst}
@@ -468,45 +479,24 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            {(panel.insights.worstDelays?.length ?? 0) === 0 ? (
-              <p className="cm-muted">Sem linhas atrasadas.</p>
-            ) : (
-              <CommercialDataTable
-                rows={panel.insights.worstDelays}
-                columns={[
-                  {
-                    key: "order",
-                    header: "Pedido",
-                    render: (row) => (
-                      <button
-                        type="button"
-                        className="cm-link-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openLine(row);
-                        }}
-                      >
-                        {row.order_number}/{row.line_item}
-                      </button>
-                    ),
-                  },
-                  {
-                    key: "customer",
-                    header: "Cliente",
-                    render: (row) => row.customer_name || row.customer_code || "—",
-                  },
-                  {
-                    key: "days",
-                    header: "Dias",
-                    render: (row) => formatDays(row.days_diff),
-                  },
-                ]}
-                rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}-worst`}
-                layout="section"
-                onRowClick={openLine}
-                rowClickRole="button"
-              />
-            )}
+            <CommercialHorizontalValueBars
+              aria-label={ANALYTICS_CONTENT.otd.insightsWorst}
+              emptyMessage="Sem linhas atrasadas."
+              items={(panel.insights.worstDelays ?? []).map((row) => ({
+                id: `${row.branch}-${row.order_number}-${row.line_item}-worst`,
+                label: `${row.order_number}/${row.line_item}`,
+                value: Number(row.days_diff ?? 0),
+                valueLabel: `${formatDays(row.days_diff)} dias`,
+                meta: row.customer_name || row.customer_code || "—",
+              }))}
+              onItemClick={(item) => {
+                const row = panel.insights?.worstDelays?.find(
+                  (line) =>
+                    `${line.branch}-${line.order_number}-${line.line_item}-worst` === item.id,
+                );
+                if (row) openLine(row);
+              }}
+            />
           </SectionCard>
           <SectionCard
             title={ANALYTICS_CONTENT.otd.insightsUpcoming}
@@ -514,81 +504,57 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             classNames={cmSectionCardClassNames}
             labels={cmSectionLabels}
           >
-            {(panel.insights.upcomingPromises?.length ?? 0) === 0 ? (
-              <p className="cm-muted">Sem promessas abertas no recorte.</p>
-            ) : (
-              <CommercialDataTable
-                rows={panel.insights.upcomingPromises}
-                columns={[
-                  {
-                    key: "order",
-                    header: "Pedido",
-                    render: (row) => (
-                      <button
-                        type="button"
-                        className="cm-link-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openLine(row);
-                        }}
-                      >
-                        {row.order_number}/{row.line_item}
-                      </button>
-                    ),
-                  },
-                  {
-                    key: "customer",
-                    header: "Cliente",
-                    render: (row) => row.customer_name || row.customer_code || "—",
-                  },
-                  {
-                    key: "promised",
-                    header: "Promessa",
-                    render: (row) => formatDisplayDate(row.promised_date),
-                  },
-                ]}
-                rowKey={(row) => `${row.branch}-${row.order_number}-${row.line_item}-up`}
-                layout="section"
-                onRowClick={openLine}
-                rowClickRole="button"
-              />
-            )}
+            <CommercialHorizontalValueBars
+              aria-label={ANALYTICS_CONTENT.otd.insightsUpcoming}
+              emptyMessage="Sem promessas abertas no recorte."
+              items={(panel.insights.upcomingPromises ?? []).map((row) => {
+                const until = daysUntilIso(row.promised_date);
+                return {
+                  id: `${row.branch}-${row.order_number}-${row.line_item}-up`,
+                  label: `${row.order_number}/${row.line_item}`,
+                  value: upcomingUrgency(until),
+                  valueLabel: formatDisplayDate(row.promised_date),
+                  meta: row.customer_name || row.customer_code || "—",
+                };
+              })}
+              onItemClick={(item) => {
+                const row = panel.insights?.upcomingPromises?.find(
+                  (line) =>
+                    `${line.branch}-${line.order_number}-${line.line_item}-up` === item.id,
+                );
+                if (row) openLine(row);
+              }}
+            />
           </SectionCard>
         </div>
       ) : null}
 
       <SectionCard
-        title="Série OTD (tabela)"
+        title={ANALYTICS_CONTENT.otd.seriesTitle}
         hint={CM_HELP.analytics.otdSeries}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
         {loadingSeries && series.length === 0 ? (
           <p className="cm-muted">Carregando série…</p>
-        ) : series.length === 0 ? (
+        ) : !latestSeriesPoint ? (
           <p className="cm-muted">Sem pontos na série.</p>
         ) : (
-          <CommercialDataTable
-            rows={series}
-            columns={withColumnHelp(
-              [
-                { key: "periodo", header: "Período", render: (row) => row.periodo },
-                {
-                  key: "otd01",
-                  header: ANALYTICS_OTD_SERIES_LABELS.unit01,
-                  render: (row) => formatPct(row.otd_filial_01),
-                },
-                {
-                  key: "otd02",
-                  header: ANALYTICS_OTD_SERIES_LABELS.unit02,
-                  render: (row) => formatPct(row.otd_filial_02),
-                },
-              ],
-              ANALYTICS_OTD_COLUMN_HELP,
-            )}
-            rowKey={(row) => row.sort_key}
-            layout="section"
-          />
+          <div className="cm-page-stack" style={{ gap: "0.5rem" }}>
+            <p className="cm-muted" style={{ margin: 0 }}>
+              Período: {latestSeriesPoint.periodo}
+            </p>
+            <div className={cmSpeedometerGaugeRowClass} aria-label="Velocímetros OTD por unidade">
+              <CommercialSpeedometerGauge
+                value={latestSeriesPoint.otd_filial_01}
+                label={ANALYTICS_OTD_SERIES_LABELS.unit01}
+              />
+              <CommercialSpeedometerGauge
+                value={latestSeriesPoint.otd_filial_02}
+                label={ANALYTICS_OTD_SERIES_LABELS.unit02}
+              />
+            </div>
+          </div>
         )}
       </SectionCard>
 

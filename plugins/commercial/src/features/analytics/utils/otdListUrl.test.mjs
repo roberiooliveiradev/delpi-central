@@ -44,5 +44,8 @@ describe("AnalyticsOtdPage estrutural", () => {
     assert.match(page, /insightsRecurrence/);
     assert.match(page, /avg_late_days/);
     assert.match(page, /worstDelays/);
+    assert.match(page, /CommercialSpeedometerGauge/);
+    assert.match(page, /CommercialHorizontalValueBars/);
+    assert.match(page, /latestSeriesPoint/);
   });
 });

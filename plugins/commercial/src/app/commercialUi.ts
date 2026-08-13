@@ -51,6 +51,8 @@ import {
   createDashboardKpiCard,
   DataCellValue,
   DataTable,
+  SpeedometerGauge,
+  HorizontalValueBars,
   createInitialsAvatar,
   createDashboardAvatarStack,
   createDashboardSegmentToggle,
@@ -86,8 +88,11 @@ import {
   timelineBemClasses,
   underlineNavBemClasses,
   withBemModifier,
+  delpiUiClass,
   type DataCellValueProps,
   type DashboardDataTableProps,
+  type SpeedometerGaugeProps,
+  type HorizontalValueBarsProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ReactNode } from "react";
 
@@ -463,3 +468,18 @@ export const CommercialTabularExportButtons = createDashboardTabularExportButton
   prefix: UI_PREFIX,
   groupAriaLabel: "Exportar dados",
 });
+
+export const cmSpeedometerGaugeRowClass = delpiUiClass(
+  `${UI_PREFIX}-speedometer-gauge-row`,
+  "delpi-ui-speedometer-gauge-row",
+);
+
+export function CommercialSpeedometerGauge(props: Omit<SpeedometerGaugeProps, "prefix">) {
+  return createElement(SpeedometerGauge, { ...props, prefix: UI_PREFIX });
+}
+
+export function CommercialHorizontalValueBars(
+  props: Omit<HorizontalValueBarsProps, "prefix">,
+) {
+  return createElement(HorizontalValueBars, { ...props, prefix: UI_PREFIX });
+}

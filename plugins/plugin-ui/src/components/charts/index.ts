@@ -55,6 +55,20 @@ export {
   type ComparativeAreaChartSeries,
 } from "./ComparativeAreaChart";
 export {
+  SpeedometerGauge,
+  speedometerGaugeBemClasses,
+  type SpeedometerGaugeClassNames,
+  type SpeedometerGaugeProps,
+  type SpeedometerGaugeTone,
+} from "./SpeedometerGauge";
+export {
+  HorizontalValueBars,
+  horizontalValueBarsBemClasses,
+  type HorizontalValueBarItem,
+  type HorizontalValueBarsClassNames,
+  type HorizontalValueBarsProps,
+} from "./HorizontalValueBars";
+export {
   ChartSeriesViewport,
   chartSeriesViewportBemClasses,
   type ChartSeriesViewportClassNames,

@@ -1,0 +1,129 @@
+/**
+ * HorizontalValueBars — rankings / top N.
+ * Dual-class: `{prefix}-horizontal-value-bars*` + `.delpi-ui-horizontal-value-bars*`.
+ */
+
+.delpi-ui-horizontal-value-bars {
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-horizontal-value-bars__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+}
+
+.delpi-ui-horizontal-value-bars__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.delpi-ui-horizontal-value-bars__row,
+.delpi-ui-horizontal-value-bars__row-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) auto;
+  gap: 0.5rem 0.65rem;
+  align-items: center;
+  width: 100%;
+}
+
+.delpi-ui-horizontal-value-bars__row-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0.2rem 0.15rem;
+}
+
+.delpi-ui-horizontal-value-bars__row-button:hover .delpi-ui-horizontal-value-bars__fill,
+.delpi-ui-horizontal-value-bars__row-button:focus-visible .delpi-ui-horizontal-value-bars__fill {
+  filter: brightness(1.12);
+}
+
+.delpi-ui-horizontal-value-bars__row-button:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-ui-horizontal-value-bars__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, #f8fafc));
+}
+
+.delpi-ui-horizontal-value-bars__label > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-horizontal-value-bars__meta {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-horizontal-value-bars__track {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-ui-border, #334155) 80%, transparent);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.delpi-ui-horizontal-value-bars__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 65%, transparent),
+    var(--delpi-ui-accent, #089bdb)
+  );
+}
+
+.delpi-ui-horizontal-value-bars__value {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--delpi-ui-text, #e2e8f0);
+  white-space: nowrap;
+  justify-self: end;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-horizontal-value-bars__row,
+  .delpi-ui-horizontal-value-bars__row-button {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "label value"
+      "track track";
+  }
+
+  .delpi-ui-horizontal-value-bars__label {
+    grid-area: label;
+  }
+
+  .delpi-ui-horizontal-value-bars__track {
+    grid-area: track;
+  }
+
+  .delpi-ui-horizontal-value-bars__value {
+    grid-area: value;
+  }
+}

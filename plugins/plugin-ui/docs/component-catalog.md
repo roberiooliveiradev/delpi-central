@@ -1086,6 +1086,14 @@ import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 
 Scatter SVG headless para priorização de revisões (Playbook 21 Transformômetro). **Cálculo na API** — o MFE só passa pontos já normalizados.
 
+### `SpeedometerGauge`
+
+Velocímetro semicircular (SVG) para KPIs percentuais (ex.: OTD por unidade). Tom automático: &lt;90% danger · &lt;95% warning · demais success. CSS em `styles/speedometer-gauge.css`; dual-class `{prefix}-speedometer-gauge` + `delpi-ui-speedometer-gauge`. Layout de grupo: `delpi-ui-speedometer-gauge-row`.
+
+### `HorizontalValueBars`
+
+Barras horizontais para rankings / top N (reincidência, piores atrasos). CSS em `styles/horizontal-value-bars.css`.
+
 ### `ImpactEffortMatrix`
 
 | Prop | Tipo | Default | Descrição |

@@ -48,6 +48,7 @@ export const ANALYTICS_CONTENT = {
     insightsRecurrence: "Reincidência (clientes)",
     insightsWorst: "Piores atrasos",
     insightsUpcoming: "Próximas promessas",
+    seriesTitle: "Série OTD",
     emptyLines: "Nenhuma linha no recorte.",
   },
   equipe: {
