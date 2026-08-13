@@ -10,6 +10,7 @@ from commercial_app.application.services.attachment_storage import (
     AttachmentStorageError,
 )
 from commercial_app.domain.entities.attachment import CommercialAttachment
+from commercial_app.domain.entities.task import CommercialTask
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -59,22 +60,23 @@ class ManageAttachmentsUseCase:
     def _can_act_on_task(
         self,
         *,
-        task_assignee: str,
-        task_created_by: str,
+        task: CommercialTask,
         actor_user_id: str,
         actor_is_portfolio_manager: bool,
     ) -> bool:
+        """Criador, qualquer responsável (multi) ou gestor da equipe do assignee."""
         actor = (actor_user_id or "").strip()
         if not actor:
             return False
-        # Criador gerencia anexos; responsável/gestor também (evidência operacional).
-        if (task_created_by or "").strip() == actor:
+        if (task.created_by_user_id or "").strip() == actor:
             return True
-        if (task_assignee or "").strip() == actor:
+        assignees = task.resolved_assignee_user_ids()
+        if actor in assignees:
             return True
         if not actor_is_portfolio_manager:
             return False
-        return bool(task_assignee) and task_assignee in self.team_user_ids()
+        team = self.team_user_ids()
+        return any(uid in team for uid in assignees if uid)
 
     def _assert_owner_access(
         self,
@@ -99,8 +101,7 @@ class ManageAttachmentsUseCase:
             if task is None or task.status in {"cancelled"}:
                 raise LookupError("Tarefa não encontrada.")
             if not self._can_act_on_task(
-                task_assignee=task.assignee_user_id,
-                task_created_by=task.created_by_user_id,
+                task=task,
                 actor_user_id=actor_user_id,
                 actor_is_portfolio_manager=actor_is_portfolio_manager,
             ):

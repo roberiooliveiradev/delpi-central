@@ -27,7 +27,10 @@ type TaskAttachmentsBlockProps = {
   /** Sem SectionCard — corpo do DetailCard da tarefa. */
   embedded?: boolean;
   onChanged?: () => void;
-  notifyError: (message: string) => void;
+  notifyError: (
+    message: string,
+    options?: { title?: string; id?: string; autoDismissMs?: number | null },
+  ) => void;
   notifySuccess: (message: string) => void;
 };
 
@@ -71,7 +74,9 @@ export function TaskAttachmentsBlock({
       setItems(next);
       setLoadedOnce(true);
     } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao listar anexos.");
+      notifyError(err instanceof Error ? err.message : "Falha ao listar anexos.", {
+        title: "Não foi possível carregar anexos",
+      });
       setItems([]);
     } finally {
       setLoading(false);
@@ -142,7 +147,9 @@ export function TaskAttachmentsBlock({
       await reload();
       onChanged?.();
     } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao enviar anexo.");
+      notifyError(err instanceof Error ? err.message : "Falha ao enviar anexo.", {
+        title: "Não foi possível anexar",
+      });
     } finally {
       setBusyId(null);
     }
@@ -159,7 +166,9 @@ export function TaskAttachmentsBlock({
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao baixar anexo.");
+      notifyError(err instanceof Error ? err.message : "Falha ao baixar anexo.", {
+        title: "Não foi possível baixar o anexo",
+      });
     } finally {
       setBusyId(null);
     }
@@ -174,7 +183,9 @@ export function TaskAttachmentsBlock({
       await reload();
       onChanged?.();
     } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Falha ao remover anexo.");
+      notifyError(err instanceof Error ? err.message : "Falha ao remover anexo.", {
+        title: "Não foi possível remover o anexo",
+      });
     } finally {
       setBusyId(null);
     }

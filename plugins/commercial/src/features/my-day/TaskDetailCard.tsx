@@ -36,7 +36,10 @@ type TaskDetailCardProps = {
   onDefer: () => void;
   onOpenAccount?: () => void;
   onAttachmentsChanged: () => void;
-  notifyError: (message: string) => void;
+  notifyError: (
+    message: string,
+    options?: { title?: string; id?: string; autoDismissMs?: number | null },
+  ) => void;
   notifySuccess: (message: string) => void;
   formatDue: (dueAt?: string | null) => string;
   formatCompleted?: (completedAt?: string | null) => string;

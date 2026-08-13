@@ -86,8 +86,14 @@ class _MemoryAttachments:
         return None
 
 
-def _task(*, assignee: str = "u1") -> CommercialTask:
+def _task(
+    *,
+    assignee: str = "u1",
+    created_by: str | None = None,
+    assignee_user_ids: tuple[str, ...] = (),
+) -> CommercialTask:
     now = datetime.now(timezone.utc)
+    primary = assignee_user_ids[0] if assignee_user_ids else assignee
     return CommercialTask(
         id=uuid4(),
         title="Follow-up",
@@ -97,12 +103,13 @@ def _task(*, assignee: str = "u1") -> CommercialTask:
         priority="normal",
         due_at=now,
         completed_at=None,
-        assignee_user_id=assignee,
-        created_by_user_id=assignee,
+        assignee_user_id=primary,
+        created_by_user_id=created_by or primary,
         customer_code="0001",
         customer_store="01",
         created_at=now,
         updated_at=now,
+        assignee_user_ids=assignee_user_ids,
     )
 
 
@@ -162,6 +169,36 @@ def test_attachment_forbidden_for_other_user(tmp_path: Path) -> None:
         assert False, "expected PermissionError"
     except PermissionError:
         pass
+
+
+def test_secondary_assignee_can_list_attachments(tmp_path: Path) -> None:
+    """Regressão: multi-responsável — só o primary estava autorizado (403 na fila)."""
+    task = _task(
+        assignee="u-primary",
+        created_by="u-creator",
+        assignee_user_ids=("u-primary", "u-secondary"),
+    )
+    repo = _MemoryAttachments()
+    uc = ManageAttachmentsUseCase(
+        repository=repo,
+        storage=AttachmentStorage(base_dir=str(tmp_path)),
+        task_repository=_MemoryTasks(task),
+    )
+    uploaded = uc.upload(
+        owner_type="task",
+        owner_id=str(task.id),
+        original_name="nota.pdf",
+        content=b"%PDF-1.4 demo",
+        mime_type="application/pdf",
+        uploaded_by_user_id="u-creator",
+    )
+    listed = uc.list(
+        owner_type="task",
+        owner_id=str(task.id),
+        actor_user_id="u-secondary",
+    )
+    assert len(listed) == 1
+    assert listed[0].id == uploaded.id
 
 
 def test_rejects_unsupported_mime(tmp_path: Path) -> None:

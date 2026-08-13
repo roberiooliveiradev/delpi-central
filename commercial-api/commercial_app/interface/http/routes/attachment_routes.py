@@ -51,7 +51,7 @@ def _notify_task_attachment(task_id: str, request: Request) -> None:
     notify_worklist_changed(
         reason="attachment.changed",
         task_id=str(task.id),
-        assignee_user_ids=[task.assignee_user_id],
+        assignee_user_ids=list(task.resolved_assignee_user_ids()),
         actor_user_id=_user_id(request),
         actor_display_name=actor_display_name_from_request(request),
         task_title=task.title,
