@@ -13,9 +13,17 @@ import { CustomerInvoicesTable } from "./CustomerInvoicesTable";
 
 type CustomerBillingPanelProps = {
   billing: UseCustomerBillingResult;
+  basePath: string;
+  codigo: string;
+  loja: string;
 };
 
-export function CustomerBillingPanel({ billing }: CustomerBillingPanelProps) {
+export function CustomerBillingPanel({
+  billing,
+  basePath,
+  codigo,
+  loja,
+}: CustomerBillingPanelProps) {
   const {
     loading,
     refreshing,
@@ -115,6 +123,9 @@ export function CustomerBillingPanel({ billing }: CustomerBillingPanelProps) {
               totalPages={data.pagination.total_pages}
               total={data.pagination.total}
               onPageChange={setPage}
+              basePath={basePath}
+              codigo={codigo}
+              loja={loja}
             />
           )}
         </>

@@ -319,7 +319,14 @@ export function CustomerDetailPage({
                 </>
               ) : null}
 
-              {section === "historico" ? <CustomerBillingPanel billing={billing} /> : null}
+              {section === "historico" ? (
+                <CustomerBillingPanel
+                  billing={billing}
+                  basePath={basePath}
+                  codigo={codigo}
+                  loja={loja}
+                />
+              ) : null}
 
               {section === "oportunidades" ? (
                 <CustomerOpportunitiesSection

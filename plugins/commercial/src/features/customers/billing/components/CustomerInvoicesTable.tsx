@@ -3,21 +3,20 @@ import {
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { useState } from "react";
 
 import {
   CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
-  CommercialHostDialog,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../../app/commercialUi";
+import { currentLocationAsReturnTo } from "../../../../app/commercialNavigationReturn";
+import { navigateCustomerInvoiceDetail } from "../../../../app/pluginNavigation";
 import { formatCurrency } from "../../../../utils/format";
 import { formatDisplayDate } from "../../../../utils/dates";
 import type { CustomerInvoice } from "../types/customerBilling";
 import { situationLabel } from "../utils/billingPeriod";
-import { CustomerInvoiceItems } from "./CustomerInvoiceItems";
 
 type CustomerInvoicesTableProps = {
   invoices: CustomerInvoice[];
@@ -25,6 +24,9 @@ type CustomerInvoicesTableProps = {
   totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
+  basePath: string;
+  codigo: string;
+  loja: string;
 };
 
 export function CustomerInvoicesTable({
@@ -33,19 +35,33 @@ export function CustomerInvoicesTable({
   totalPages,
   total,
   onPageChange,
+  basePath,
+  codigo,
+  loja,
 }: CustomerInvoicesTableProps) {
-  const [itemsInvoiceKey, setItemsInvoiceKey] = useState<string | null>(null);
-  const itemsInvoice =
-    invoices.find((invoice) => invoice.key === itemsInvoiceKey) ?? null;
-
-  const invoiceActions = (invoice: CustomerInvoice) => (
-    <CommercialActionButton
-      variant="ghost"
-      onClick={() => setItemsInvoiceKey(invoice.key)}
-    >
-      Ver itens
-    </CommercialActionButton>
-  );
+  const openInvoiceDetail = (invoice: CustomerInvoice) => {
+    if (
+      !invoice.branch?.trim() ||
+      !invoice.invoice_number?.trim() ||
+      !invoice.invoice_series?.trim()
+    ) {
+      return;
+    }
+    navigateCustomerInvoiceDetail(
+      codigo,
+      loja,
+      invoice.branch,
+      invoice.invoice_number,
+      invoice.invoice_series,
+      {
+        basePath,
+        returnNav: {
+          returnTo: currentLocationAsReturnTo(),
+          returnLabel: "Histórico",
+        },
+      },
+    );
+  };
 
   const columns: DataTableColumn<CustomerInvoice>[] = [
     {
@@ -95,11 +111,6 @@ export function CustomerInvoicesTable({
       align: "right",
       render: (invoice) => formatCurrency(invoice.total_value),
     },
-    {
-      key: "details",
-      header: "Detalhes",
-      render: (invoice) => invoiceActions(invoice),
-    },
   ];
 
   return (
@@ -110,11 +121,25 @@ export function CustomerInvoicesTable({
           columns={columns}
           rowKey={(invoice) => invoice.key}
           layout="section"
+          onRowClick={openInvoiceDetail}
+          rowClickRole="button"
         />
       </div>
       <div className="cm-customer-invoices__mobile">
         {invoices.map((invoice) => (
-          <div key={invoice.key} className="cm-customer-invoices__mobile-item">
+          <div
+            key={invoice.key}
+            className="cm-customer-invoices__mobile-item cm-customer-orders__mobile-item--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => openInvoiceDetail(invoice)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openInvoiceDetail(invoice);
+              }
+            }}
+          >
             <CommercialDataRecordCard
               title={`Nota ${invoice.invoice_number}${
                 invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
@@ -132,41 +157,10 @@ export function CustomerInvoicesTable({
                 { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
                 { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
               ]}
-              context={invoiceActions(invoice)}
             />
           </div>
         ))}
       </div>
-
-      <CommercialHostDialog
-        open={Boolean(itemsInvoice)}
-        title={
-          itemsInvoice
-            ? `Itens da nota ${itemsInvoice.invoice_number}${
-                itemsInvoice.invoice_series ? ` / ${itemsInvoice.invoice_series}` : ""
-              }`
-            : "Itens da nota"
-        }
-        description={
-          itemsInvoice
-            ? `Emissão ${formatDisplayDate(itemsInvoice.issue_date)}`
-            : undefined
-        }
-        onClose={() => setItemsInvoiceKey(null)}
-        footer={
-          <CommercialActionButton variant="ghost" onClick={() => setItemsInvoiceKey(null)}>
-            Fechar
-          </CommercialActionButton>
-        }
-      >
-        {itemsInvoice ? (
-          itemsInvoice.items.length > 0 ? (
-            <CustomerInvoiceItems items={itemsInvoice.items} />
-          ) : (
-            <p className="cm-customer-invoices__empty">Sem itens nesta nota.</p>
-          )
-        ) : null}
-      </CommercialHostDialog>
 
       {totalPages > 1 ? (
         <div className="cm-customer-billing-pagination" role="navigation" aria-label="Paginação de notas">

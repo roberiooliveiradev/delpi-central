@@ -26,8 +26,11 @@ describe("Table audit P0 (E7.S1)", () => {
       join(src, "features/customers/billing/components/CustomerInvoicesTable.tsx"),
       "utf8",
     );
-    assert.match(invoices, /CommercialHostDialog/);
+    assert.match(invoices, /onRowClick/);
+    assert.match(invoices, /navigateCustomerInvoiceDetail/);
     assert.match(invoices, /CommercialDataTable/);
+    assert.doesNotMatch(invoices, /CommercialHostDialog/);
+    assert.doesNotMatch(invoices, /Ver itens/);
 
     const proposals = readFileSync(
       join(src, "features/proposals/ProposalsDocumentsTable.tsx"),
