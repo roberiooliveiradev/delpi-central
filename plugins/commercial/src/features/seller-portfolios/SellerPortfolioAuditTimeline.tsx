@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { SegmentToggle } from "@delpi/plugin-ui/index";
 
 import {
@@ -28,6 +28,10 @@ type SellerPortfolioAuditTimelineProps = {
   title?: string;
   subtitle?: string;
   hint?: string;
+  /** Conteúdo acima da timeline (ex.: seletor de carteira em Minha Carteira). */
+  leading?: ReactNode;
+  /** Quando false, só renderiza `leading` (aguardando escolha de carteira). */
+  showTimeline?: boolean;
   /** Minha Carteira: seção secundária, colapsável. */
   collapsible?: boolean;
   /** Estado inicial quando `collapsible` (default: aberto). */
@@ -49,6 +53,8 @@ export function SellerPortfolioAuditTimeline({
   title = PORTFOLIO_AUDIT_CONTENT.title,
   subtitle = PORTFOLIO_AUDIT_CONTENT.subtitle,
   hint = CM_HELP.sellerPortfolios.auditTimeline,
+  leading = null,
+  showTimeline = true,
   collapsible = false,
   defaultOpen = true,
 }: SellerPortfolioAuditTimelineProps) {
@@ -92,11 +98,13 @@ export function SellerPortfolioAuditTimeline({
       collapsible={collapsible}
       defaultOpen={defaultOpen}
     >
-      {loading && !hasSourceData ? (
+      {leading}
+
+      {showTimeline && loading && !hasSourceData ? (
         <CommercialLoadingCard title={PORTFOLIO_AUDIT_CONTENT.loading} variant="panel" />
       ) : null}
 
-      {error ? (
+      {showTimeline && error ? (
         <CommercialStateBanner variant="error">
           <p>{error}</p>
           <CommercialActionButton variant="ghost" onClick={onRetry} disabled={loading}>
@@ -105,7 +113,7 @@ export function SellerPortfolioAuditTimeline({
         </CommercialStateBanner>
       ) : null}
 
-      {!error && (hasSourceData || !loading) ? (
+      {showTimeline && !error && (hasSourceData || !loading) ? (
         <CommercialActivityTimeline
           toolbar={filterToolbar}
           items={items.map((item) => ({
@@ -122,6 +130,12 @@ export function SellerPortfolioAuditTimeline({
           emptyMessage={emptyMessage}
           aria-label={PORTFOLIO_AUDIT_CONTENT.ariaLabel}
         />
+      ) : null}
+
+      {!showTimeline && leading ? (
+        <p className="cm-cell-muted" role="status">
+          {PORTFOLIO_AUDIT_CONTENT.selectPortfolioEmpty}
+        </p>
       ) : null}
     </CommercialSectionCard>
   );

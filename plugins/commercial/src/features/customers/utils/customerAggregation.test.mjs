@@ -452,6 +452,12 @@ describe("CustomersPage estrutural", () => {
     );
     assert.match(auditSection, /collapsible/);
     assert.match(auditSection, /defaultOpen=\{false\}/);
+    assert.match(auditSection, /leading=\{portfolioSelect\}/);
+    assert.match(auditSection, /showTimeline=\{Boolean\(auditPortfolioId\)\}/);
+    assert.doesNotMatch(
+      auditSection,
+      /title=\{PORTFOLIO_AUDIT_CONTENT\.selectPortfolioLabel\}/,
+    );
     assert.match(page, /overdue-customers/);
     assert.match(page, /navigatePluginView\("open_orders"/);
     assert.match(page, /\?focus=late/);

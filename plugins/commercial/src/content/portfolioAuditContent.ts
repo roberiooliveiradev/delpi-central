@@ -19,6 +19,7 @@ export const PORTFOLIO_AUDIT_CONTENT = {
   selectPortfolioHint:
     "Com «Todas» no filtro da página, escolha qual carteira exibir no histórico.",
   selectPortfolioPlaceholder: "Selecione uma carteira",
+  selectPortfolioEmpty: "Selecione uma carteira para ver o histórico.",
   filters: {
     all: "Todos",
     customers: "Clientes",

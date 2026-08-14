@@ -642,8 +642,8 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 ┌─ Painel Clientes da carteira ─────────────────────── [Colunas] ────────┐
 │ Cliente · Vendedor · Última venda · Fat.12m · Tendência · …            │
 └─────────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard · Histórico da carteira ───────────────────────────────────┐
-│ Timeline GET /seller-portfolios/{id}/audit                             │
+┌─ SectionCard colapsável · Histórico da carteira (padrão fechado) ───────┐
+│ [Carteira do histórico ▾] (só com «Todas» + N carteiras) · timeline    │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
