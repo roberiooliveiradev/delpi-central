@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import {
@@ -12,6 +12,11 @@ export type AvatarStackItem = {
   id: string;
   name: string;
   src?: string | null;
+  /** Quando definido, a face vira `<a href>` (title obrigatório). */
+  href?: string;
+  /** Indicação do destino — obrigatório com `href`. */
+  title?: string;
+  onNavigate?: MouseEventHandler<HTMLAnchorElement>;
 };
 
 export type AvatarStackClassNames = {
@@ -43,7 +48,7 @@ export function avatarStackBemClasses(prefix: string): AvatarStackClassNames {
 
 /**
  * Facepile de avatares (iniciais/foto) com overflow +N.
- * Usa InitialsAvatar sem preview no clique (evita lightbox em stacks densos).
+ * Sem href: sem preview no clique. Com href/title: link por face.
  */
 export function AvatarStack({
   items,
@@ -62,18 +67,36 @@ export function AvatarStack({
 
   return (
     <ul className={rootClass} aria-label={ariaLabel || "Membros"}>
-      {visible.map((item) => (
-        <li key={item.id} className={classNames.item} title={item.name}>
-          <InitialsAvatar
-            name={item.name}
-            src={item.src}
-            size={size}
-            classNames={resolvedAvatarClasses}
-            previewable={false}
-            alt={item.name}
-          />
-        </li>
-      ))}
+      {visible.map((item) => {
+        const href = (item.href ?? "").trim();
+        const linkTitle = (item.title ?? "").trim();
+        const liTitle = href ? undefined : item.name;
+        return (
+          <li key={item.id} className={classNames.item} title={liTitle}>
+            {href && linkTitle ? (
+              <InitialsAvatar
+                name={item.name}
+                src={item.src}
+                size={size}
+                classNames={resolvedAvatarClasses}
+                href={href}
+                title={linkTitle}
+                onNavigate={item.onNavigate}
+                alt={item.name}
+              />
+            ) : (
+              <InitialsAvatar
+                name={item.name}
+                src={item.src}
+                size={size}
+                classNames={resolvedAvatarClasses}
+                previewable={false}
+                alt={item.name}
+              />
+            )}
+          </li>
+        );
+      })}
       {overflow > 0 ? (
         <li className={classNames.more} aria-label={`Mais ${overflow}`}>
           +{overflow}

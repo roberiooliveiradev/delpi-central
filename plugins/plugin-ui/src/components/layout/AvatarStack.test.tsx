@@ -37,4 +37,22 @@ describe("AvatarStack", () => {
     );
     expect(within(container).queryByLabelText(/Mais/)).toBeNull();
   });
+
+  it("com href+title cada face é link", () => {
+    render(
+      <AvatarStack
+        classNames={classNames}
+        items={[
+          {
+            id: "1",
+            name: "Ana",
+            href: "/apps/commercial/users/u1",
+            title: "Abrir perfil de Ana",
+          },
+        ]}
+      />,
+    );
+    const link = screen.getByRole("link", { name: "Abrir perfil de Ana" });
+    expect(link.getAttribute("href")).toBe("/apps/commercial/users/u1");
+  });
 });
