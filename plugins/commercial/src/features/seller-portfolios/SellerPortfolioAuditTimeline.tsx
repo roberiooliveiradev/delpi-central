@@ -28,6 +28,10 @@ type SellerPortfolioAuditTimelineProps = {
   title?: string;
   subtitle?: string;
   hint?: string;
+  /** Minha Carteira: seção secundária, colapsável. */
+  collapsible?: boolean;
+  /** Estado inicial quando `collapsible` (default: aberto). */
+  defaultOpen?: boolean;
 };
 
 const FILTER_OPTIONS = (
@@ -45,6 +49,8 @@ export function SellerPortfolioAuditTimeline({
   title = PORTFOLIO_AUDIT_CONTENT.title,
   subtitle = PORTFOLIO_AUDIT_CONTENT.subtitle,
   hint = CM_HELP.sellerPortfolios.auditTimeline,
+  collapsible = false,
+  defaultOpen = true,
 }: SellerPortfolioAuditTimelineProps) {
   const [eventFilter, setEventFilter] =
     useState<PortfolioAuditEventFilter>("all");
@@ -79,7 +85,13 @@ export function SellerPortfolioAuditTimeline({
   );
 
   return (
-    <CommercialSectionCard title={title} subtitle={subtitle} hint={hint}>
+    <CommercialSectionCard
+      title={title}
+      subtitle={subtitle}
+      hint={hint}
+      collapsible={collapsible}
+      defaultOpen={defaultOpen}
+    >
       {loading && !hasSourceData ? (
         <CommercialLoadingCard title={PORTFOLIO_AUDIT_CONTENT.loading} variant="panel" />
       ) : null}

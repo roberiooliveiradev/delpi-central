@@ -155,6 +155,8 @@ export function MyPortfolioAuditSection({
           title={PORTFOLIO_AUDIT_CONTENT.titleMember}
           subtitle={PORTFOLIO_AUDIT_CONTENT.subtitleMember}
           hint={CM_HELP.customers.portfolioAudit}
+          collapsible
+          defaultOpen={false}
         />
       ) : null}
     </div>

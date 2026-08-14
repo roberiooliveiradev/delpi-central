@@ -115,9 +115,10 @@ máximo 200 clientes. Falha parcial preserva a lista base e explicita cobertura;
 células sem cobertura mostram `Dado indisponível` e ficam vazias no Excel.
 
 **Histórico da carteira:** seção abaixo da lista (`MyPortfolioAuditSection`) com
-`GET /seller-portfolios/{id}/audit` (membro autorizado). Com filtro «Todas» e
-mais de uma carteira, é preciso escolher qual carteira acompanhar. Eventos
-WebSocket `portfolio.changed` disparam toast e refetch do histórico.
+`GET /seller-portfolios/{id}/audit` (membro autorizado). Colapsável, padrão
+fechado. Com filtro «Todas» e mais de uma carteira, é preciso escolher qual
+carteira acompanhar. Eventos WebSocket `portfolio.changed` disparam toast e
+refetch do histórico.
 
 Presets são fixos nesta etapa; saved views nomeadas/compartilhadas ficam para uma
 evolução com contrato de persistência e visibilidade próprio.
