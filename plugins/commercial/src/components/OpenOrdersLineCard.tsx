@@ -2,11 +2,24 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { StatusBadge, formatOperationalUnitCode } from "@delpi/plugin-ui/index";
 
 import {
+  CommercialEntityLink,
   CommercialInlineMeter,
   CommercialInteractiveDataCard,
   cmStatusBadgeClassNames,
 } from "../app/commercialUi";
-import { navigateCustomerDetail } from "../app/pluginNavigation";
+import { currentReturnNav } from "../app/commercialNavigationReturn";
+import {
+  buildCustomerDetailHref,
+  buildOpenOrderLineDetailPath,
+  buildOpenOrderOpDetailPath,
+  navigateCustomerDetail,
+  navigateOpenOrderOpDetail,
+} from "../app/pluginNavigation";
+import {
+  accountLinkTitle,
+  openOrderLineLinkTitle,
+  opPageLinkTitle,
+} from "../content/entityLinkHints";
 import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
@@ -22,6 +35,7 @@ import { canOpenOpForecastDetail, getLineOpForecast } from "../utils/opAllocatio
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus, getLineStatusCompactLabel } from "../utils/statusBadges";
 import type { TableColumnKey } from "../utils/tableColumns";
+import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink";
 
 type OpenOrdersLineCardProps = {
   item: OpenOrdersTotvsItem;
@@ -58,9 +72,37 @@ function renderCardValue(
       const code = item.codigo_cadastro?.trim() ?? "";
       const store = item.loja_cadastro?.trim() ?? "";
       const name = item.nome_cliente?.trim() || "—";
+      const returnNav = currentReturnNav("Meus pedidos");
+      const accountHref =
+        code && store
+          ? buildCustomerDetailHref(code, store, {
+              basePath: options.basePath,
+              search: "",
+              returnNav,
+            })
+          : null;
+      const accountTitle = accountLinkTitle(name);
+      const goAccount = () => {
+        if (!code || !store) return;
+        navigateCustomerDetail(code, store, {
+          basePath: options.basePath,
+          returnNav,
+        });
+      };
       return (
         <div className="cm-open-orders-client">
-          {code && store ? (
+          {code && store && accountHref ? (
+            <CustomerAvatar
+              code={code}
+              store={store}
+              name={name}
+              hasAvatar={hasAvatar}
+              size="sm"
+              href={accountHref}
+              title={accountTitle}
+              onNavigate={goAccount}
+            />
+          ) : code && store ? (
             <CustomerAvatar
               code={code}
               store={store}
@@ -70,18 +112,15 @@ function renderCardValue(
             />
           ) : null}
           <div className="cm-open-orders-client__text">
-            {code && store ? (
-              <button
-                type="button"
+            {accountHref ? (
+              <CommercialEntityLink
+                href={accountHref}
+                title={accountTitle}
                 className="cm-open-orders-client__name"
-                onClick={(event) => {
-                  stopCardBubble(event);
-                  navigateCustomerDetail(code, store, { basePath: options.basePath });
-                }}
-                onKeyDown={stopCardBubble}
+                onNavigate={goAccount}
               >
                 {name}
-              </button>
+              </CommercialEntityLink>
             ) : (
               <strong className="cm-open-orders-client__name">{name}</strong>
             )}
@@ -96,8 +135,31 @@ function renderCardValue(
       return item.loja_cadastro || "—";
     case "filial":
       return formatOperationalUnitCode(item.filial);
-    case "pedido":
-      return `${item.pedido || "—"} · Linha ${item.linha || "—"}`;
+    case "pedido": {
+      const contextSearch = buildOpenOrdersContextSearch();
+      const href =
+        buildOpenOrderLineDetailPath(
+          options.basePath,
+          item.filial,
+          item.pedido,
+          item.linha,
+          contextSearch,
+        ) ?? "#";
+      const title = openOrderLineLinkTitle(item.pedido, item.linha);
+      return (
+        <span onClick={stopCardBubble} onKeyDown={stopCardBubble}>
+          <CommercialEntityLink
+            href={href}
+            title={title}
+            className="cm-link-button"
+            onNavigate={() => options.onOpenDetail(item)}
+          >
+            {item.pedido || "—"}
+          </CommercialEntityLink>
+          <span className="cm-cell-muted"> · Linha {item.linha || "—"}</span>
+        </span>
+      );
+    }
     case "pedido_cliente":
       return item.pedido_cliente || "—";
     case "produto":
@@ -141,23 +203,40 @@ function renderCardValue(
     }
     case "previsao_entrega_op": {
       const previsao = getLineOpForecast(item);
+      const firstOp = previsao.opsUtilizadas[0]?.numero_op?.trim();
       const prazoBadge = resolvePrevisaoPrazoBadge(item);
       if (previsao.previsaoLabel === "—") return "—";
+      const contextSearch = buildOpenOrdersContextSearch();
+      const lineHref =
+        buildOpenOrderLineDetailPath(
+          options.basePath,
+          item.filial,
+          item.pedido,
+          item.linha,
+          contextSearch,
+        ) ?? "#";
+      const lineTitle = openOrderLineLinkTitle(item.pedido, item.linha);
+      const opHref = firstOp
+        ? buildOpenOrderOpDetailPath(
+            options.basePath,
+            item.filial,
+            item.pedido,
+            item.linha,
+            firstOp,
+            contextSearch,
+          )
+        : null;
       return (
-        <div className="cm-cell-inline">
+        <div className="cm-cell-inline" onClick={stopCardBubble} onKeyDown={stopCardBubble}>
           {canOpenOpForecastDetail(item) ? (
-            <button
-              type="button"
+            <CommercialEntityLink
+              href={lineHref}
+              title={lineTitle}
               className="cm-link-button cm-cell-inline__primary"
-              title="Ver detalhe da linha e OPs"
-              onClick={(event) => {
-                stopCardBubble(event);
-                options.onOpenDetail(item);
-              }}
-              onKeyDown={stopCardBubble}
+              onNavigate={() => options.onOpenDetail(item)}
             >
               {previsao.previsaoLabel}
-            </button>
+            </CommercialEntityLink>
           ) : (
             <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
           )}
@@ -168,6 +247,27 @@ function renderCardValue(
               label={prazoBadge.label}
               variant={prazoBadge.variant}
             />
+          ) : null}
+          {firstOp && opHref ? (
+            <CommercialEntityLink
+              href={opHref}
+              title={opPageLinkTitle(firstOp)}
+              className="cm-link-button"
+              onNavigate={() =>
+                navigateOpenOrderOpDetail(
+                  item.filial,
+                  item.pedido,
+                  item.linha,
+                  firstOp,
+                  {
+                    basePath: options.basePath,
+                    search: contextSearch,
+                  },
+                )
+              }
+            >
+              OP {firstOp}
+            </CommercialEntityLink>
           ) : null}
         </div>
       );

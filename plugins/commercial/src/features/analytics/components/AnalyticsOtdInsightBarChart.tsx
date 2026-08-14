@@ -54,6 +54,13 @@ function alertFill(value: number, max: number): string {
   return COLOR_SUCCESS;
 }
 
+function customerAccountHref(code: string, store: string): string | null {
+  return buildCustomerDetailHref(code, store, {
+    search: "",
+    returnNav: currentReturnNav("OTD"),
+  });
+}
+
 function InsightTooltip({
   active,
   payload,
@@ -67,13 +74,28 @@ function InsightTooltip({
 }) {
   if (!active || !payload?.[0]) return null;
   const row = payload[0].payload;
+  const code = (row.customer.code ?? "").trim();
+  const store = (row.customer.store ?? "").trim() || "01";
+  const href = code ? customerAccountHref(code, store) : null;
+  const title = accountLinkTitle(row.displayName);
   return (
     <div className="cm-otd-insight-tooltip">
       <div className="cm-open-orders-client">
-        {row.customer.code ? (
+        {code && href ? (
           <CustomerAvatar
-            code={row.customer.code}
-            store={(row.customer.store ?? "").trim() || "01"}
+            code={code}
+            store={store}
+            name={row.displayName}
+            hasAvatar={Boolean(row.customer.hasAvatar)}
+            size="sm"
+            href={href}
+            title={title}
+            onNavigate={() => navigatePluginPath(href)}
+          />
+        ) : code ? (
+          <CustomerAvatar
+            code={code}
+            store={store}
             name={row.displayName}
             hasAvatar={Boolean(row.customer.hasAvatar)}
             size="sm"
@@ -179,14 +201,31 @@ export function AnalyticsOtdInsightBarChart({
                   <foreignObject x={-164} y={-22} width={160} height={44}>
                     <div className="cm-otd-insight-chart__tick">
                       {code ? (
-                        <CustomerAvatar
-                          code={code}
-                          store={store}
-                          name={row.displayName}
-                          hasAvatar={Boolean(row.customer.hasAvatar)}
-                          size="sm"
-                          previewable={false}
-                        />
+                        (() => {
+                          const href = customerAccountHref(code, store);
+                          const title = accountLinkTitle(row.displayName);
+                          return href ? (
+                            <CustomerAvatar
+                              code={code}
+                              store={store}
+                              name={row.displayName}
+                              hasAvatar={Boolean(row.customer.hasAvatar)}
+                              size="sm"
+                              href={href}
+                              title={title}
+                              onNavigate={() => navigatePluginPath(href)}
+                            />
+                          ) : (
+                            <CustomerAvatar
+                              code={code}
+                              store={store}
+                              name={row.displayName}
+                              hasAvatar={Boolean(row.customer.hasAvatar)}
+                              size="sm"
+                              previewable={false}
+                            />
+                          );
+                        })()
                       ) : null}
                       <div className="cm-otd-insight-chart__tick-text">
                         {row.axisLabel ? (

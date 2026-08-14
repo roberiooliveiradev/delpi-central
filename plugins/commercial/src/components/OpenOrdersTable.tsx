@@ -14,6 +14,7 @@ import {
   CommercialDataCardsGrid,
   CommercialDataCardsSortBar,
   CommercialDataListToolbar,
+  CommercialEntityLink,
   CommercialExcelExportButton,
   CommercialInlineMeter,
   CommercialSelectField,
@@ -31,10 +32,19 @@ import {
   useTableFontSize,
 } from "../app/commercialUi";
 import {
+  buildCustomerDetailHref,
+  buildOpenOrderLineDetailPath,
+  buildOpenOrderOpDetailPath,
   navigateCustomerDetail,
   navigateOpenOrderLineDetail,
   navigateOpenOrderOpDetail,
 } from "../app/pluginNavigation";
+import { currentReturnNav } from "../app/commercialNavigationReturn";
+import {
+  accountLinkTitle,
+  openOrderLineLinkTitle,
+  opPageLinkTitle,
+} from "../content/entityLinkHints";
 import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import {
@@ -191,9 +201,34 @@ export function OpenOrdersTable({
           row.codigo_cadastro,
           null,
         );
+        const returnNav = currentReturnNav("Meus pedidos");
+        const accountHref =
+          code && store
+            ? buildCustomerDetailHref(code, store, {
+                basePath,
+                search: "",
+                returnNav,
+              })
+            : null;
+        const accountTitle = accountLinkTitle(name);
+        const goAccount = () => {
+          if (!code || !store) return;
+          navigateCustomerDetail(code, store, { basePath, returnNav });
+        };
         return (
           <div className="cm-open-orders-client">
-            {code && store ? (
+            {code && store && accountHref ? (
+              <CustomerAvatar
+                code={code}
+                store={store}
+                name={name}
+                hasAvatar={hasAvatar}
+                size="sm"
+                href={accountHref}
+                title={accountTitle}
+                onNavigate={goAccount}
+              />
+            ) : code && store ? (
               <CustomerAvatar
                 code={code}
                 store={store}
@@ -205,17 +240,15 @@ export function OpenOrdersTable({
               <span className="cm-open-orders-client__avatar-spacer" aria-hidden="true" />
             )}
             <div className="cm-open-orders-client__text">
-              {code && store ? (
-                <button
-                  type="button"
+              {accountHref ? (
+                <CommercialEntityLink
+                  href={accountHref}
+                  title={accountTitle}
                   className="cm-open-orders-client__name"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    navigateCustomerDetail(code, store, { basePath });
-                  }}
+                  onNavigate={goAccount}
                 >
                   {name}
-                </button>
+                </CommercialEntityLink>
               ) : (
                 <strong className="cm-open-orders-client__name">{name}</strong>
               )}
@@ -226,12 +259,31 @@ export function OpenOrdersTable({
       },
       loja_cadastro: (row) => row.loja_cadastro || "—",
       filial: (row) => formatOperationalUnitCode(row.filial),
-      pedido: (row) => (
-        <div className="cm-cell-stack cm-cell-stack--tight">
-          <span>{row.pedido || "—"}</span>
-          <span className="cm-cell-muted">Linha {row.linha || "—"}</span>
-        </div>
-      ),
+      pedido: (row) => {
+        const contextSearch = buildOpenOrdersContextSearch();
+        const href =
+          buildOpenOrderLineDetailPath(
+            basePath,
+            row.filial,
+            row.pedido,
+            row.linha,
+            contextSearch,
+          ) ?? "#";
+        const title = openOrderLineLinkTitle(row.pedido, row.linha);
+        return (
+          <div className="cm-cell-stack cm-cell-stack--tight">
+            <CommercialEntityLink
+              href={href}
+              title={title}
+              className="cm-link-button"
+              onNavigate={() => openDetail(row)}
+            >
+              {row.pedido || "—"}
+            </CommercialEntityLink>
+            <span className="cm-cell-muted">Linha {row.linha || "—"}</span>
+          </div>
+        );
+      },
       pedido_cliente: (row) => row.pedido_cliente || "—",
       produto: (row) => row.produto || "—",
       codigo_cliente: (row) => row.codigo_cliente || "—",
@@ -271,17 +323,37 @@ export function OpenOrdersTable({
         const firstOp = previsao.opsUtilizadas[0]?.numero_op?.trim();
         const prazoBadge = resolvePrevisaoPrazoBadge(row);
         if (previsao.previsaoLabel === "—") return "—";
+        const contextSearch = buildOpenOrdersContextSearch();
+        const lineHref =
+          buildOpenOrderLineDetailPath(
+            basePath,
+            row.filial,
+            row.pedido,
+            row.linha,
+            contextSearch,
+          ) ?? "#";
+        const lineTitle = openOrderLineLinkTitle(row.pedido, row.linha);
+        const opHref = firstOp
+          ? buildOpenOrderOpDetailPath(
+              basePath,
+              row.filial,
+              row.pedido,
+              row.linha,
+              firstOp,
+              contextSearch,
+            )
+          : null;
         return (
           <div className="cm-cell-inline">
             {canOpenOpForecastDetail(row) ? (
-              <button
-                type="button"
+              <CommercialEntityLink
+                href={lineHref}
+                title={lineTitle}
                 className="cm-link-button cm-cell-inline__primary"
-                onClick={() => openDetail(row)}
-                title="Ver detalhe da linha e OPs"
+                onNavigate={() => openDetail(row)}
               >
                 {previsao.previsaoLabel}
-              </button>
+              </CommercialEntityLink>
             ) : (
               <span className="cm-cell-inline__primary">{previsao.previsaoLabel}</span>
             )}
@@ -293,12 +365,12 @@ export function OpenOrdersTable({
                 variant={prazoBadge.variant}
               />
             ) : null}
-            {firstOp ? (
-              <button
-                type="button"
+            {firstOp && opHref ? (
+              <CommercialEntityLink
+                href={opHref}
+                title={opPageLinkTitle(firstOp)}
                 className="cm-link-button"
-                onClick={(event) => {
-                  event.stopPropagation();
+                onNavigate={() =>
                   navigateOpenOrderOpDetail(
                     row.filial,
                     row.pedido,
@@ -306,14 +378,13 @@ export function OpenOrdersTable({
                     firstOp,
                     {
                       basePath,
-                      search: buildOpenOrdersContextSearch(),
+                      search: contextSearch,
                     },
-                  );
-                }}
-                title={`Abrir página da OP ${firstOp}`}
+                  )
+                }
               >
                 OP {firstOp}
-              </button>
+              </CommercialEntityLink>
             ) : null}
           </div>
         );
