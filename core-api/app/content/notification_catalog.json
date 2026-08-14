@@ -114,6 +114,14 @@
       "kind": "app",
       "sourceApps": ["tv-dashboard"],
       "pluginId": "tv-dashboard"
+    },
+    "commercial": {
+      "label": "Portal Comercial",
+      "icon": "briefcase",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["commercial"],
+      "pluginId": "commercial"
     }
   },
   "legacyCategoryAliases": {

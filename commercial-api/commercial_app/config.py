@@ -52,6 +52,12 @@ class Settings:
         default="",
     )
     CORE_API_TIMEOUT: str = _get_env("CORE_API_TIMEOUT", default="10")
+    COMMERCIAL_PORTAL_NOTIFICATIONS_ENABLED: bool = (
+        str(
+            _get_env("COMMERCIAL_PORTAL_NOTIFICATIONS_ENABLED", default="true") or "true"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

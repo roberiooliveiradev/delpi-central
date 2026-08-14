@@ -1,6 +1,7 @@
 import {
   Activity,
   Bell,
+  Briefcase,
   Cake,
   Calendar,
   ClipboardCheck,
@@ -112,6 +113,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       sourceApps: ["tv-dashboard"],
       pluginId: "tv-dashboard",
     },
+    {
+      id: "commercial",
+      label: "Portal Comercial",
+      icon: "briefcase",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["commercial"],
+      pluginId: "commercial",
+    },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
@@ -131,6 +141,7 @@ const ICON_BY_NAME: Record<string, LucideIcon> = {
   "clipboard-list": ClipboardList,
   "clipboard-check": ClipboardCheck,
   "file-text": FileText,
+  briefcase: Briefcase,
 };
 
 export function resolveNotificationCategoryId(

@@ -323,3 +323,44 @@ def build_detect_ready_to_invoice_entries_use_case():
         portfolios=build_seller_portfolio_repository(),
         checkpoints=build_integration_checkpoint_repository(),
     )
+
+
+def build_commercial_portal_notification_service():
+    from commercial_app.application.services.commercial_portal_notification_service import (
+        CommercialPortalNotificationService,
+    )
+
+    return CommercialPortalNotificationService()
+
+
+def build_enqueue_ready_to_invoice_notifications_use_case():
+    from commercial_app.application.use_cases.enqueue_ready_to_invoice_notifications import (
+        EnqueueReadyToInvoiceNotificationsUseCase,
+    )
+
+    return EnqueueReadyToInvoiceNotificationsUseCase(
+        detect=build_detect_ready_to_invoice_entries_use_case(),
+        outbox=build_integration_outbox_repository(),
+    )
+
+
+def build_publish_integration_outbox_use_case():
+    from commercial_app.application.use_cases.enqueue_ready_to_invoice_notifications import (
+        PublishIntegrationOutboxUseCase,
+    )
+
+    return PublishIntegrationOutboxUseCase(
+        outbox=build_integration_outbox_repository(),
+        notifier=build_commercial_portal_notification_service(),
+    )
+
+
+def build_scan_ready_to_invoice_notifications_use_case():
+    from commercial_app.application.use_cases.enqueue_ready_to_invoice_notifications import (
+        ScanReadyToInvoiceNotificationsUseCase,
+    )
+
+    return ScanReadyToInvoiceNotificationsUseCase(
+        enqueue=build_enqueue_ready_to_invoice_notifications_use_case(),
+        publish=build_publish_integration_outbox_use_case(),
+    )
