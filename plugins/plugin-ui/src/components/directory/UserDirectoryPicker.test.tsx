@@ -116,4 +116,44 @@ describe("UserDirectoryPicker", () => {
       expect(screen.getByTestId("lead-u3")).toBeTruthy();
     });
   });
+
+  it("mantém resultados quando o pai recria searchUsers a cada render", async () => {
+    let resolveSearch!: (value: typeof users) => void;
+    const pending = new Promise<(typeof users)[number][]>((resolve) => {
+      resolveSearch = resolve;
+    });
+    const firstSearch = vi.fn(() => pending);
+
+    const { rerender } = render(
+      <UserDirectoryPicker
+        value={[]}
+        onChange={() => {}}
+        searchUsers={firstSearch}
+        showEmail={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nome"), {
+      target: { value: "Ana" },
+    });
+
+    await waitFor(() => {
+      expect(firstSearch).toHaveBeenCalled();
+    });
+
+    rerender(
+      <UserDirectoryPicker
+        value={[]}
+        onChange={() => {}}
+        searchUsers={vi.fn(() => pending)}
+        showEmail={false}
+      />,
+    );
+
+    resolveSearch([users[0]]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Ana Lima" })).toBeTruthy();
+    });
+  });
 });

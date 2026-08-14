@@ -43,6 +43,7 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(detail, /maxSelected=\{10\}/);
     assert.match(detail, /Adicionar selecionados/);
     assert.match(detail, /onAddMembers/);
+    assert.match(detail, /searchMemberCandidates/);
     assert.doesNotMatch(detail, /onAddMember\(/);
     assert.match(page, /handleAddMembers/);
     assert.match(page, /addingMembers/);

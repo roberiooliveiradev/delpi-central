@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type DirectoryUserOption = {
   id: string;
@@ -58,6 +58,12 @@ function directoryUserLabel(user: DirectoryUserOption, showEmail: boolean): stri
   return `${name} · ${user.email}`;
 }
 
+function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String((error as { name?: unknown }).name) : "";
+  return name === "AbortError";
+}
+
 export function UserDirectoryPicker({
   value,
   onChange,
@@ -74,22 +80,28 @@ export function UserDirectoryPicker({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryUserOption[]>([]);
   const [searching, setSearching] = useState(false);
+  /** Evita re-abortar a busca quando o pai passa `searchUsers` inline a cada render. */
+  const searchUsersRef = useRef(searchUsers);
+  searchUsersRef.current = searchUsers;
 
   useEffect(() => {
     const normalized = query.trim();
     if (normalized.length < 2) {
       setResults([]);
+      setSearching(false);
       return;
     }
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       setSearching(true);
-      void searchUsers(normalized, 10, controller.signal)
+      void searchUsersRef
+        .current(normalized, 10, controller.signal)
         .then((items) => {
           if (!controller.signal.aborted) setResults(items);
         })
-        .catch(() => {
-          if (!controller.signal.aborted) setResults([]);
+        .catch((error: unknown) => {
+          if (controller.signal.aborted || isAbortError(error)) return;
+          setResults([]);
         })
         .finally(() => {
           if (!controller.signal.aborted) setSearching(false);
@@ -99,7 +111,7 @@ export function UserDirectoryPicker({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [query, searchUsers]);
+  }, [query]);
 
   const selectedIds = new Set(value.map((item) => item.id));
   const atLimit =

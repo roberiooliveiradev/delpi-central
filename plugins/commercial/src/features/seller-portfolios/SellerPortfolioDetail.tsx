@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   NativeCheckboxControl,
   UserDirectoryPicker,
@@ -152,6 +152,14 @@ export function SellerPortfolioDetail({
   useEffect(() => {
     setMemberPicker((prev) => prev.filter((user) => !memberIds.has(user.id)));
   }, [memberIds]);
+
+  const searchMemberCandidates = useCallback(
+    async (query: string, limit?: number, signal?: AbortSignal) => {
+      const hits = await searchDirectoryUsers(query, limit, signal);
+      return hits.filter((hit) => !memberIds.has(hit.id));
+    },
+    [memberIds],
+  );
 
   const allLinkedSelected =
     linked.length > 0 &&
@@ -402,10 +410,7 @@ export function SellerPortfolioDetail({
             onChange={(users) => {
               setMemberPicker(users.filter((user) => !memberIds.has(user.id)));
             }}
-            searchUsers={async (query, limit, signal) => {
-              const hits = await searchDirectoryUsers(query, limit, signal);
-              return hits.filter((hit) => !memberIds.has(hit.id));
-            }}
+            searchUsers={searchMemberCandidates}
             maxSelected={10}
             disabled={addingMembers}
             labels={{
