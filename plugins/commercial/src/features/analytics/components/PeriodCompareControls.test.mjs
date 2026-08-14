@@ -35,8 +35,9 @@ describe("PeriodCompareControls helpers", () => {
     const source = readFileSync(join(here, "PeriodCompareControls.tsx"), "utf8");
     assert.match(source, /BILLING_SERIES_PRESET_OPTIONS/);
     assert.match(source, /MAX_COMPARE_YEARS/);
-    assert.match(source, /\+2 anos/);
-    assert.match(source, /\+3 anos/);
+    assert.match(source, /compareYearsPlus2|compareYearsPlus3|\+2 anos/);
+    assert.match(source, /AnchoredPanelPortal/);
+    assert.match(source, /compareYearsTrigger|compareYearsPanelTitle/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
   });

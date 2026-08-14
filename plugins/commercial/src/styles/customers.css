@@ -53,6 +53,123 @@
   margin-bottom: 8px;
 }
 
+.dashboard-commercial .cm-period-compare-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-period-compare-controls__compare-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-period-compare-controls__trailing {
+  display: inline-flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-period-compare-controls__trailing > * {
+  margin-bottom: 0;
+}
+
+.dashboard-commercial .cm-period-compare-controls__popover {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 6px 10px 6px 12px;
+  border: 1px solid var(--cm-border, var(--border, #e6e6e6));
+  border-radius: 10px;
+  background: var(--cm-surface, var(--surface, #fff));
+  color: var(--cm-text, var(--text, #111));
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 40%, transparent);
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 10%, var(--cm-surface, #fff));
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.dashboard-commercial .cm-period-compare-controls__popover--open .cm-period-compare-controls__trigger,
+.dashboard-commercial .cm-period-compare-controls__popover--active .cm-period-compare-controls__trigger {
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 55%, transparent);
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, var(--cm-surface, #fff));
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger-icon {
+  flex: 0 0 auto;
+  color: var(--cm-accent, #089bdb);
+}
+
+.dashboard-commercial .cm-period-compare-controls__trigger-chevron {
+  flex: 0 0 auto;
+  opacity: 0.65;
+  transition: transform 0.16s ease;
+}
+
+.dashboard-commercial .cm-period-compare-controls__popover--open .cm-period-compare-controls__trigger-chevron {
+  transform: rotate(180deg);
+}
+
+.dashboard-commercial .cm-period-compare-controls__portal {
+  z-index: 1200;
+}
+
+.dashboard-commercial .cm-period-compare-controls__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 12px;
+  border: 1px solid var(--cm-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--cm-surface, #fff);
+  color: var(--cm-text, #111);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+.dashboard-commercial .cm-period-compare-controls__panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-period-compare-controls__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-billing-series-chart__grain-row {
   display: flex;
   flex-wrap: wrap;
