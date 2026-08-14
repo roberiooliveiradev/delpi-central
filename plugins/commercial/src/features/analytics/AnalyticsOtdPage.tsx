@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getSalesOrderOtdPanel, getSalesOrderOtdSeries, getSalesOrderOtd } from "../../api/analyticsApi";
 import {
+  CommercialEntityLink,
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
@@ -26,7 +27,11 @@ import {
   CommercialSpeedometerGauge,
   CommercialTextField,
 } from "../../app/commercialUi";
-import { navigateAnalyticsOtdLine } from "../../app/pluginNavigation";
+import {
+  buildAnalyticsOtdLinePath,
+  navigateAnalyticsOtdLine,
+} from "../../app/pluginNavigation";
+import { otdLineLinkTitle } from "../../content/entityLinkHints";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
@@ -361,18 +366,27 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       key: "order",
       header: "Pedido",
       sortable: true,
-      render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            openLine(row);
-          }}
-        >
-          {row.order_number}/{row.line_item}
-        </button>
-      ),
+      render: (row) => {
+        const href =
+          buildAnalyticsOtdLinePath(
+            basePath,
+            row.branch,
+            row.order_number,
+            row.line_item,
+            buildAnalyticsFilterSearchParams(filters.filterState),
+          ) ?? "#";
+        const label = `${row.order_number}/${row.line_item}`;
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={otdLineLinkTitle(row.order_number, row.line_item)}
+            className="cm-link-button"
+            onNavigate={() => openLine(row)}
+          >
+            {label}
+          </CommercialEntityLink>
+        );
+      },
     },
     {
       key: "customer",
@@ -601,18 +615,27 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
                   {
                     key: "order",
                     header: "Pedido",
-                    render: (row) => (
-                      <button
-                        type="button"
-                        className="cm-link-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openLine(row);
-                        }}
-                      >
-                        {row.order_number}/{row.line_item}
-                      </button>
-                    ),
+                    render: (row) => {
+                      const href =
+                        buildAnalyticsOtdLinePath(
+                          basePath,
+                          row.branch,
+                          row.order_number,
+                          row.line_item,
+                          buildAnalyticsFilterSearchParams(filters.filterState),
+                        ) ?? "#";
+                      const label = `${row.order_number}/${row.line_item}`;
+                      return (
+                        <CommercialEntityLink
+                          href={href}
+                          title={otdLineLinkTitle(row.order_number, row.line_item)}
+                          className="cm-link-button"
+                          onNavigate={() => openLine(row)}
+                        >
+                          {label}
+                        </CommercialEntityLink>
+                      );
+                    },
                   },
                   {
                     key: "customer",

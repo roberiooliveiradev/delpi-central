@@ -276,4 +276,5 @@ export {
   buildOpenOrderOpDetailPath,
   buildProposalDetailPath,
   buildUserProfilePath,
+  buildAnalyticsOtdLinePath,
 };
