@@ -301,6 +301,12 @@ export {
 } from "./ChartTypeSegmentToggle";
 
 export {
+  delpiChartTypeToPersisted,
+  persistedChartTypeToDelpi,
+  persistedChartTypesToDelpi,
+} from "./chartTypeBridge";
+
+export {
   MultiTypeSeriesChart,
   type MultiTypeSeriesChartProps,
   type MultiTypeSeriesSpec,
