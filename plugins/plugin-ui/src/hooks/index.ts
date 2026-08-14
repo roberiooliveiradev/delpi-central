@@ -4,3 +4,4 @@ export * from "./useTableColumnVisibility";
 export * from "./useEditableDraft";
 export * from "./useTableFontSize";
 export * from "./usePersistedViewLayout";
+export * from "./usePersistedChartPreferences";
