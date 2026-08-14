@@ -9,6 +9,7 @@ import { getPortfolioBillingRanking } from "../../../api/analyticsApi";
 import {
   CommercialAvatar,
   CommercialCompareSparkline,
+  CommercialDataCellValue,
   CommercialDataTable,
   CommercialExcelExportButton,
   CommercialLoadingCard,
@@ -17,6 +18,7 @@ import {
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTrendDelta,
+  cmDataTableClassNames,
   type DataTableColumn,
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -165,18 +167,25 @@ export function PortfolioBillingRankingTable({
         key: "current",
         header: "ROL atual",
         align: "right",
-        render: (row) => formatCurrency(row.currentRol),
+        className: cmDataTableClassNames.colNumeric,
+        render: (row) => (
+          <CommercialDataCellValue value={formatCurrency(row.currentRol)} />
+        ),
       },
       {
         key: "prior",
         header: "ROL ano ant.",
         align: "right",
-        render: (row) => formatCurrency(row.priorRol),
+        className: cmDataTableClassNames.colNumeric,
+        render: (row) => (
+          <CommercialDataCellValue value={formatCurrency(row.priorRol)} />
+        ),
       },
       {
         key: "deltaPct",
         header: "Delta %",
         align: "right",
+        className: cmDataTableClassNames.colNumeric,
         render: (row) => <CommercialTrendDelta value={row.deltaPct} />,
       },
     );
