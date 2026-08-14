@@ -11,6 +11,7 @@ import {
   CommercialViewTransition,
   UI_PREFIX,
 } from "../../app/commercialUi";
+import type { DirectoryLabelFor } from "../../app/useDirectoryUserLabels";
 import { CM_HELP } from "../../content/helpTooltips";
 import type {
   PersonLoadItem,
@@ -31,7 +32,7 @@ type SellerPortfoliosOrgViewProps = {
   onAxisChange: (axis: SellerPortfoliosAxis) => void;
   onOpenPortfolio: (portfolio: SellerPortfolio) => void;
   onCreate: () => void;
-  directoryLabelFor: (userId: string, fallback?: string | null) => string;
+  directoryLabelFor: DirectoryLabelFor;
 };
 
 export function SellerPortfoliosOrgView({

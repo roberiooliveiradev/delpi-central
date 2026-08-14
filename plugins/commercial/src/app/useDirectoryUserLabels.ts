@@ -7,15 +7,25 @@ import {
   formatDirectoryUserLabel,
 } from "../shared/directoryUserLabel";
 
+export type DirectoryLabelFor = (
+  userId: string | null | undefined,
+  fallback?: string | null,
+) => string;
+
 /**
  * Resolve ids Minha Delpi → nome/e-mail via lookup do core-api.
  * Uso: nunca renderizar `user_id` cru na UI.
+ * Aceita userId null/undefined (carteira órfã name-first).
  */
-export function useDirectoryUserLabels(userIds: readonly string[]) {
+export function useDirectoryUserLabels(
+  userIds: readonly (string | null | undefined)[],
+) {
   const [byId, setById] = useState<Record<string, DirectoryUser>>({});
 
   const key = useMemo(() => {
-    const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+    const unique = [
+      ...new Set(userIds.map((id) => (id ?? "").trim()).filter(Boolean)),
+    ];
     unique.sort();
     return unique.join("|");
   }, [userIds]);
@@ -42,15 +52,15 @@ export function useDirectoryUserLabels(userIds: readonly string[]) {
     return () => controller.abort();
   }, [key]);
 
-  const labelFor = useMemo(
-    () => (userId: string, fallback?: string | null) => {
-      const id = userId.trim();
+  const labelFor = useMemo((): DirectoryLabelFor => {
+    return (userId, fallback) => {
+      const id = (userId ?? "").trim();
+      if (!id) return directoryUserLabelOrFallback({}, fallback);
       const hit = byId[id];
       if (hit) return formatDirectoryUserLabel(hit) || directoryUserLabelOrFallback({}, fallback);
       return directoryUserLabelOrFallback({}, fallback);
-    },
-    [byId],
-  );
+    };
+  }, [byId]);
 
   return { byId, labelFor };
 }

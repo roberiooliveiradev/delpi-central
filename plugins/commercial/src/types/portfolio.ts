@@ -21,13 +21,13 @@ export type SellerPortfolioMember = {
 
 export type SellerPortfolio = {
   id: string;
-  /** Dono legado (espelho do owner) — preferir `owner_user_id`/`members`. */
-  user_id: string;
+  /** Dono legado (espelho do owner) — null = carteira órfã (name-first). Preferir `owner_user_id`/`members`. */
+  user_id: string | null;
   owner_user_id?: string | null;
   display_name: string;
   active: boolean;
   customer_count: number;
-  /** Quantidade de membros (owner + members); fallback 1 se members vazio. */
+  /** Quantidade de membros (owner + members); 0 se órfã. */
   member_count?: number;
   customers: SellerCustomer[];
   members?: SellerPortfolioMember[];

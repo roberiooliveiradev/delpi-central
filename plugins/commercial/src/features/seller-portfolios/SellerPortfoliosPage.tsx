@@ -14,7 +14,7 @@ import {
 } from "../../app/CommercialFloatingNoticeProvider";
 import { useCommercialPortfolioSync } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
-import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { useDirectoryUserLabels, type DirectoryLabelFor } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CommercialActionButton,
@@ -100,7 +100,7 @@ function formatUpdatedAt(value: Date | null): string {
 function portfolioMatchesQuery(
   portfolio: SellerPortfolio,
   query: string,
-  labelFor: (userId: string, fallback?: string | null) => string,
+  labelFor: DirectoryLabelFor,
 ): boolean {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return true;

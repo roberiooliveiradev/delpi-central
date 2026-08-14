@@ -4,6 +4,7 @@
 import { PORTFOLIO_LOAD_CONTENT } from "../content/portfolioLoadContent";
 import type { PortfolioLoadItem, SellerPortfolio } from "../types/portfolio";
 import { resolvePortfolioLoad } from "./portfolioLoad";
+import { resolveSellerPortfolioMemberIds } from "./sellerPortfoliosOrgFlow";
 
 export type OrgMatrixExportPayload = {
   title: string;
@@ -11,20 +12,11 @@ export type OrgMatrixExportPayload = {
   rows: Array<Record<string, unknown>>;
 };
 
-function resolveMemberIds(portfolio: SellerPortfolio): string[] {
-  const fromMembers = (portfolio.members ?? [])
-    .map((member) => member.user_id.trim())
-    .filter(Boolean);
-  if (fromMembers.length > 0) return [...new Set(fromMembers)];
-  const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
-  return owner ? [owner] : [];
-}
-
 function memberLabels(
   portfolio: SellerPortfolio,
-  directoryLabelFor: (userId: string, fallback?: string | null) => string,
+  directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string,
 ): string {
-  const ids = resolveMemberIds(portfolio);
+  const ids = resolveSellerPortfolioMemberIds(portfolio);
   if (ids.length === 0) return "";
   return ids.map((userId) => directoryLabelFor(userId, portfolio.display_name)).join("; ");
 }
@@ -32,7 +24,7 @@ function memberLabels(
 export function buildOrgMatrixExportPayload(
   portfolios: readonly SellerPortfolio[],
   loadByPortfolioId: ReadonlyMap<string, PortfolioLoadItem> | undefined,
-  directoryLabelFor: (userId: string, fallback?: string | null) => string,
+  directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string,
 ): OrgMatrixExportPayload {
   const includeOpenValue = portfolios.some((portfolio) => {
     const load =

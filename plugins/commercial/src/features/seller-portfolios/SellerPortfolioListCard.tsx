@@ -30,6 +30,8 @@ function resolveMemberCount(
   if (portfolio.member_count != null) return portfolio.member_count;
   const fromMembers = portfolio.members?.length ?? 0;
   if (fromMembers > 0) return fromMembers;
+  // Órfã (sem members e sem owner): 0 responsáveis.
+  if (!portfolio.owner_user_id && !portfolio.user_id) return 0;
   return 1;
 }
 

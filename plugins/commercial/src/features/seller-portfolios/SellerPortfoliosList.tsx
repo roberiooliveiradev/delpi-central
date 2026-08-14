@@ -6,6 +6,7 @@ import {
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CommercialDataTableSection } from "../../app/dataTableUi";
+import type { DirectoryLabelFor } from "../../app/useDirectoryUserLabels";
 import { portfolioLinkTitle } from "../../content/entityLinkHints";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
@@ -24,7 +25,7 @@ type SellerPortfoliosListProps = {
   onSelect: (portfolio: SellerPortfolio) => void;
   hrefFor: (portfolio: SellerPortfolio) => string | null;
   onCreate: () => void;
-  directoryLabelFor: (userId: string, fallback?: string | null) => string;
+  directoryLabelFor: DirectoryLabelFor;
 };
 
 function memberCountFor(
@@ -34,7 +35,9 @@ function memberCountFor(
   if (load?.member_count != null) return load.member_count;
   if (portfolio.member_count != null) return portfolio.member_count;
   const fromMembers = portfolio.members?.length ?? 0;
-  return fromMembers > 0 ? fromMembers : 1;
+  if (fromMembers > 0) return fromMembers;
+  if (!portfolio.owner_user_id && !portfolio.user_id) return 0;
+  return 1;
 }
 
 export function SellerPortfoliosList({

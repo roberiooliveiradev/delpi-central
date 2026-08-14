@@ -121,6 +121,12 @@ describe("seller-portfolios kit-first", () => {
       detailPage,
       /\(portfolio\.owner_user_id \?\? portfolio\.user_id\)\.trim\(\)/,
     );
+    const labelsHook = readFileSync(
+      join(pluginRoot, "src/app/useDirectoryUserLabels.ts"),
+      "utf8",
+    );
+    assert.match(labelsHook, /\(userId \?\? ""\)\.trim\(\)/);
+    assert.match(labelsHook, /string \| null \| undefined/);
   });
 
   it("timeline de auditoria usa kit Timeline, filtros e estados vazios", () => {

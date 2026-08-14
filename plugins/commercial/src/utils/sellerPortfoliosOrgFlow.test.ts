@@ -59,4 +59,26 @@ describe("buildSellerPortfoliosOrgFlowModel", () => {
     expect(model.edges.every((e) => e.source.startsWith("person:"))).toBe(true);
     expect(model.nodes.find((n) => n.id === "person:u-ana")?.title).toBe("Label u-ana");
   });
+
+  it("carteira órfã não quebra membership nem gera nó de pessoa", () => {
+    const orphan = portfolio({
+      id: "p-orphan",
+      display_name: "Órfã",
+      user_id: null,
+      owner_user_id: null,
+      members: [],
+      member_count: 0,
+    });
+    const model = buildSellerPortfoliosOrgFlowModel({
+      portfolios: [orphan],
+      axis: "portfolio",
+      directoryLabelFor: (id) => {
+        if (id == null) throw new Error("labelFor recebeu null");
+        return String(id);
+      },
+    });
+    expect(model.nodes).toHaveLength(1);
+    expect(model.nodes[0]?.kind).toBe("portfolio");
+    expect(model.edges).toHaveLength(0);
+  });
 });

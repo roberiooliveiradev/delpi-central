@@ -18,7 +18,7 @@ export { buildOrgMatrixExportPayload } from "./orgMatrixExportPayload";
 export async function exportOrgMatrixExcel(
   portfolios: readonly SellerPortfolio[],
   loadByPortfolioId: ReadonlyMap<string, PortfolioLoadItem> | undefined,
-  directoryLabelFor: (userId: string, fallback?: string | null) => string,
+  directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string,
 ): Promise<boolean> {
   if (portfolios.length === 0) return false;
   const payload = buildOrgMatrixExportPayload(

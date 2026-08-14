@@ -300,7 +300,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   );
 
   const activeSellers = useMemo(
-    () => sellers.filter((seller) => seller.active && seller.user_id.trim()),
+    () =>
+      sellers.filter(
+        (seller) => seller.active && Boolean((seller.user_id ?? "").trim()),
+      ),
     [sellers],
   );
 
@@ -350,10 +353,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const sellerNameByUserId = useMemo(() => {
     const map = new Map<string, string>();
     for (const seller of activeSellers) {
-      map.set(
-        seller.user_id,
-        directoryLabelFor(seller.user_id, seller.display_name),
-      );
+      const uid = (seller.user_id ?? "").trim();
+      if (!uid) continue;
+      map.set(uid, directoryLabelFor(uid, seller.display_name));
     }
     return map;
   }, [activeSellers, directoryLabelFor]);

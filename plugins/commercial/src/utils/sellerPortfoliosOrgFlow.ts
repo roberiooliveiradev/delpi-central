@@ -3,6 +3,7 @@ import type {
   OrgMembershipFlowModelNode,
 } from "@delpi/plugin-ui/index";
 
+import type { DirectoryLabelFor } from "../app/useDirectoryUserLabels";
 import type {
   PersonLoadItem,
   PortfolioLoadItem,
@@ -17,10 +18,10 @@ import {
 
 export function resolveSellerPortfolioMemberIds(portfolio: SellerPortfolio): string[] {
   const fromMembers = (portfolio.members ?? [])
-    .map((member) => member.user_id.trim())
+    .map((member) => (member.user_id ?? "").trim())
     .filter(Boolean);
   if (fromMembers.length > 0) return [...new Set(fromMembers)];
-  const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+  const owner = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
   return owner ? [owner] : [];
 }
 
@@ -34,7 +35,11 @@ function portfolioLoadSnippet(
       customer_count: portfolio.customer_count,
       member_count:
         portfolio.member_count ??
-        (portfolio.members?.length ? portfolio.members.length : 1),
+        (portfolio.members?.length
+          ? portfolio.members.length
+          : portfolio.owner_user_id || portfolio.user_id
+            ? 1
+            : 0),
     });
   return formatPortfolioLoadSnippet(load);
 }
@@ -49,7 +54,7 @@ export function buildSellerPortfoliosOrgFlowModel(input: {
   axis: SellerPortfoliosAxis;
   loadByPortfolioId?: ReadonlyMap<string, PortfolioLoadItem>;
   loadByPersonId?: ReadonlyMap<string, PersonLoadItem>;
-  directoryLabelFor: (userId: string, fallback?: string | null) => string;
+  directoryLabelFor: DirectoryLabelFor;
 }): SellerPortfoliosOrgFlowModel {
   const {
     portfolios,
