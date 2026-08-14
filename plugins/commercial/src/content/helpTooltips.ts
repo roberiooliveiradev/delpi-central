@@ -119,7 +119,17 @@ export const CM_HELP = {
     tableRowOpensDetail:
       "Clique na linha (exceto ações/links com destino próprio, como Cliente→Conta) abre o detalhe do item.",
     layoutToggle:
-      "Alterna entre grade tabular (mais colunas) e cards (melhor em telas estreitas). A preferência fica salva neste navegador.",
+      "Alterna entre tabela, cards e board Kanban (colunas por etapa). A preferência fica salva neste navegador.",
+    kanbanBoard:
+      "Visão somente leitura: cada coluna é uma etapa operacional. Clique no card abre o detalhe da linha (mesmos filtros da lista).",
+    kanbanUpcoming:
+      "Próximos: linhas em aberto sem estoque suficiente e sem atraso (fila à frente).",
+    kanbanInProgress:
+      "Em andamento: entrega prometida vencida ou estoque parcial — ainda não dá para faturar o saldo inteiro.",
+    kanbanReadyToInvoice:
+      "Pronto para faturar: estoque alocado cobre o saldo em aberto (inclui atrasados com estoque completo).",
+    kanbanCompleted:
+      "Concluídos: linhas encerradas recentemente (fora da lista de abertos), no período configurado.",
     sortBy: "Campo usado para ordenar a lista (mesma ordenação da tabela e dos cards).",
     sortDirection: "Crescente ou decrescente no campo de ordenação selecionado.",
     cardOpenHint: "Abrir detalhes",
