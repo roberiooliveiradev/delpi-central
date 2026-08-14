@@ -6,6 +6,7 @@ import {
   chartCardBemClasses,
   HintAction,
   SectionHintLabel,
+  runTabularExport,
 } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -25,6 +26,7 @@ import {
   CommercialDetailFieldGrid,
   CommercialDataRecordCard,
   CommercialInlineMeter,
+  CommercialTabularExportButtons,
   cmDataTableClassNames,
   cmDataTableLabels,
   cmStatusBadgeClassNames,
@@ -425,6 +427,43 @@ export function OpenOrdersProductionDetailContent({
             title="Cobertura estoque × demanda"
             titleHint={DETAIL.chartCobertura}
             hint={`${coverage.percentLabel} · ${coverage.quantityLabel}`}
+            headerActions={
+              <CommercialTabularExportButtons
+                compact
+                disabled={
+                  !(
+                    coverageStacked[0]?.estoqueQty > 0 ||
+                    coverageStacked[0]?.produzirQty > 0
+                  )
+                }
+                onExport={(format) => {
+                  runTabularExport({
+                    kind: "table",
+                    format,
+                    payload: {
+                      title: "Cobertura estoque × demanda",
+                      columns: [
+                        { key: "serie", label: "Série" },
+                        { key: "qty", label: "Quantidade" },
+                        { key: "pct", label: "%" },
+                      ],
+                      rows: [
+                        {
+                          serie: "Estoque alocado",
+                          qty: coverageStacked[0]?.estoqueQty ?? 0,
+                          pct: coverageStacked[0]?.estoque ?? 0,
+                        },
+                        {
+                          serie: "A produzir",
+                          qty: coverageStacked[0]?.produzirQty ?? 0,
+                          pct: coverageStacked[0]?.produzir ?? 0,
+                        },
+                      ],
+                    },
+                  });
+                }}
+              />
+            }
           >
             <div className="cm-open-orders-detail__meter-block">
               <CommercialInlineMeter
@@ -503,6 +542,29 @@ export function OpenOrdersProductionDetailContent({
             title="Prazo vs hoje"
             titleHint={DETAIL.chartPrazo}
             hint="Negativo = já passou · positivo = dias restantes"
+            headerActions={
+              <CommercialTabularExportButtons
+                compact
+                disabled={prazoCompare.length === 0}
+                onExport={(format) => {
+                  runTabularExport({
+                    kind: "table",
+                    format,
+                    payload: {
+                      title: "Prazo vs hoje",
+                      columns: [
+                        { key: "label", label: "Referência" },
+                        { key: "days", label: "Dias vs hoje" },
+                      ],
+                      rows: prazoCompare.map((row) => ({
+                        label: row.label,
+                        days: row.days,
+                      })),
+                    },
+                  });
+                }}
+              />
+            }
           >
             <div className="cm-open-orders-detail__prazo-cards">
               <div className="cm-open-orders-detail__prazo-card">
