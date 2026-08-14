@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 
 class CustomerAssignmentBody(BaseModel):
@@ -10,20 +10,13 @@ class CustomerAssignmentBody(BaseModel):
 
 
 class CreatePortfolioBody(BaseModel):
+    """Name-first: `display_name` sozinho cria carteira órfã (V013 / ManageSellerPortfolio)."""
+
     user_id: str | None = Field(default=None, min_length=1)
     display_name: str = Field(..., min_length=1)
     customers: list[CustomerAssignmentBody] = Field(default_factory=list)
     user_ids: list[str] = Field(default_factory=list)
     owner_user_id: str | None = None
-
-    @model_validator(mode="after")
-    def require_user_id_or_user_ids(self) -> CreatePortfolioBody:
-        ids = [uid.strip() for uid in self.user_ids if uid and str(uid).strip()]
-        if ids:
-            return self
-        if not (self.user_id and self.user_id.strip()):
-            raise ValueError("Informe user_id ou user_ids.")
-        return self
 
 
 class UpdatePortfolioBody(BaseModel):
