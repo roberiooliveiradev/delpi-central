@@ -1,5 +1,13 @@
 import { useId, useMemo } from "react";
 import {
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  MultiTypeSeriesChart,
+  RANKING_TYPES,
+  runTabularExport,
+  usePersistedChartPreferences,
+} from "@delpi/plugin-ui/index";
+import {
   Bar,
   BarChart,
   CartesianGrid,
@@ -9,6 +17,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+import { CommercialTabularExportButtons } from "../../../app/commercialUi";
 
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { CustomerAvatar } from "../../customers/components/CustomerAvatar";
@@ -129,6 +139,12 @@ export function AnalyticsOtdInsightBarChart({
   onRowClick,
 }: AnalyticsOtdInsightBarChartProps) {
   const gid = useId().replace(/:/g, "");
+  const { preferences, setChartType } = usePersistedChartPreferences({
+    storageKey: `commercial:otd-insight:${valueLabel}`,
+    defaults: { chartType: "horizontal_bar" },
+    allowedChartTypes: RANKING_TYPES,
+  });
+  const chartType = preferences.chartType ?? "horizontal_bar";
   const max = useMemo(
     () => Math.max(0, ...rows.map((row) => Number(row.value) || 0)),
     [rows],
@@ -162,7 +178,55 @@ export function AnalyticsOtdInsightBarChart({
     return <p className="cm-muted">{emptyMessage}</p>;
   }
 
+  const exportPayload = {
+    title: valueLabel,
+    columns: [
+      { key: "cliente", label: "Cliente" },
+      { key: "codigo", label: "Código/loja" },
+      { key: "valor", label: valueLabel },
+    ],
+    rows: data.map((row) => ({
+      cliente: row.displayName,
+      codigo: row.codeStore,
+      valor: formatValue(row.value),
+    })),
+  };
+
+  const multiSeries = [
+    {
+      dataKey: "value",
+      name: valueLabel,
+      fill: "var(--cm-accent, #089bdb)",
+    },
+  ];
+  const multiData = data.map((row) => ({
+    label: row.displayName,
+    value: row.value,
+  }));
+
   return (
+    <ChartViewShell
+      prefix="cm"
+      typeToggle={
+        <ChartTypeSegmentToggle
+          family="ranking"
+          value={chartType}
+          onChange={setChartType}
+          categoryCount={data.length}
+          idPrefix={`otd-insight-${gid}`}
+          prefix="cm"
+        />
+      }
+      exportActions={
+        <CommercialTabularExportButtons
+          compact
+          onExport={(format) => {
+            runTabularExport({ kind: "table", format, payload: exportPayload });
+          }}
+        />
+      }
+    >
+    {chartType === "horizontal_bar" ? (
     <div className="cm-chart-wrap cm-otd-insight-chart" style={{ width: "100%", height }}>
       <ResponsiveContainer>
         <BarChart
@@ -264,5 +328,25 @@ export function AnalyticsOtdInsightBarChart({
         </BarChart>
       </ResponsiveContainer>
     </div>
+    ) : (
+      <MultiTypeSeriesChart
+        data={multiData}
+        categoryKey="label"
+        series={multiSeries}
+        chartType={chartType}
+        height={height}
+        formatY={formatValue}
+        formatTooltipValue={formatValue}
+        onCategoryClick={
+          onRowClick
+            ? (category) => {
+                const row = data.find((item) => item.displayName === category);
+                if (row) onRowClick(row);
+              }
+            : undefined
+        }
+      />
+    )}
+    </ChartViewShell>
   );
 }
