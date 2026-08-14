@@ -38,6 +38,8 @@ export type OpenOrdersTotvsItem = {
    * Sem o campo, o detalhe resolve via GET /commercial/proposals?search=pedido (não path /{pedido}).
    */
   proposal_number?: string | null;
+  /** BFF kanban stage (OpenOrderKanbanStageService). */
+  kanbanStage?: "upcoming" | "in_progress" | "ready_to_invoice";
 };
 
 export type OpenOrdersTotvsData = {
@@ -55,5 +57,8 @@ export type OpenOrdersTotvsData = {
     nature: string;
     buckets: Array<{ id: string; openValue: number; openLineCount: number }>;
     totals: { openValue: number; openLineCount: number };
+  };
+  kanbanStageCounts?: {
+    stages: Array<{ id: string; lineCount: number; openValue: number }>;
   };
 };

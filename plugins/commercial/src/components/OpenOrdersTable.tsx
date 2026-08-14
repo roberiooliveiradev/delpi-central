@@ -77,6 +77,7 @@ import {
   type TableColumnKey,
 } from "../utils/tableColumns";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
+import { OpenOrdersKanbanBoardView } from "./OpenOrdersKanbanBoard";
 import { TableColumnSettings } from "./TableColumnSettings";
 
 type OpenOrdersTableProps = {
@@ -451,7 +452,7 @@ export function OpenOrdersTable({
           leading={
             <HelpTooltip
               content={CM_HELP.openOrders.layoutToggle}
-              ariaLabel="Ajuda: modo Tabela ou Cards"
+              ariaLabel="Ajuda: modo Tabela, Cards ou Board"
               wrap
               placement="bottom"
             >
@@ -465,6 +466,7 @@ export function OpenOrdersTable({
                 options={[
                   { value: "table", label: "Tabela" },
                   { value: "cards", label: "Cards" },
+                  { value: "board", label: "Board" },
                 ]}
               />
             </HelpTooltip>
@@ -574,7 +576,9 @@ export function OpenOrdersTable({
               columns={columns}
             />
           </div>
-        ) : (
+        ) : null}
+
+        {layout === "cards" ? (
           <CommercialDataCardsGrid
             style={tableStyle}
             empty={rows.length === 0 ? emptyMessage : undefined}
@@ -596,7 +600,25 @@ export function OpenOrdersTable({
               />
             ))}
           </CommercialDataCardsGrid>
-        )}
+        ) : null}
+
+        {layout === "board" ? (
+          <div style={tableStyle}>
+            <OpenOrdersKanbanBoardView
+              rows={rows}
+              visibleColumns={visibleColumns}
+              basePath={basePath}
+              customerAvatarKeys={
+                new Set(
+                  [...customerAvatars.entries()]
+                    .filter(([, v]) => Boolean(v))
+                    .map(([k]) => k),
+                )
+              }
+              onOpenDetail={openDetail}
+            />
+          </div>
+        ) : null}
       </SectionCard>
 
     </>
