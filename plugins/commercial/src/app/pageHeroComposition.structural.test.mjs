@@ -23,17 +23,24 @@ describe("PageHero composition — density compact (conteúdo no hero)", () => {
     assert.match(ui, /CommercialPageHeroBase/);
   });
 
-  it("kit compact reduz padding/gap/highlights e densifica filtros no body", () => {
+  it("kit compact densifica padding/gap sem reduzir tipografia base", () => {
     const css = readFileSync(
       join(repoRoot, "plugin-ui/src/styles/page-hero.css"),
       "utf8",
     );
     assert.match(css, /\.delpi-ui-page-hero--compact\s*\{[^}]*padding:\s*12px/s);
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__content\s*\{[^}]*gap:\s*6px/s);
-    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight\s*\{[^}]*padding:\s*8px/s);
-    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight-value\s*\{[^}]*font-size:\s*15px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight\s*\{[^}]*padding:\s*10px/s);
+    assert.match(css, /\.delpi-ui-page-hero__title\s*\{[^}]*font-size:\s*clamp\(1\.75rem/s);
+    assert.doesNotMatch(
+      css,
+      /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__title\s*\{[^}]*font-size:/s,
+    );
+    assert.doesNotMatch(
+      css,
+      /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight-label\s*\{[^}]*font-size:/s,
+    );
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-filter-bar/);
-    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-scope-chip-bar__chip/);
   });
 
   it("P0 listas mantêm filtros/chips/highlights como children do hero", () => {
