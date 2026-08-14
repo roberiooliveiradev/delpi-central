@@ -844,6 +844,49 @@
   line-height: 1.2;
 }
 
+.dashboard-commercial .cm-otd-insight-chart__tick--compact {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 68px;
+  padding: 0 2px;
+  text-align: center;
+}
+
+.dashboard-commercial .cm-otd-insight-chart__tick--compact .cm-otd-insight-chart__tick-text {
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-otd-insight-chart__tick--compact .cm-otd-insight-chart__tick-text strong {
+  max-width: 100%;
+  font-size: 10px;
+}
+
+.dashboard-commercial .cm-otd-insight-chart__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 8px 8px;
+  list-style: none;
+}
+
+.dashboard-commercial .cm-otd-insight-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-otd-insight-chart__legend-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
 .dashboard-commercial .cm-otd-insight-chart__tick-text {
   display: flex;
   flex-direction: column;

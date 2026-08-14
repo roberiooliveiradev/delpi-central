@@ -20,4 +20,9 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /stroke=\{source\.fill\}/);
     assert.doesNotMatch(src, /delpi-ui-chart-trend-stroke/);
   });
+
+  it("aplica fill por categoria quando categoryFillKey está definido", () => {
+    assert.match(src, /categoryFillKey\?:/);
+    assert.match(src, /resolveCategoryFill/);
+  });
 });

@@ -41,6 +41,11 @@ export type MultiTypeSeriesChartProps = {
   showLegend?: boolean;
   onCategoryClick?: (category: string) => void;
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
+  /**
+   * When set (ranking charts), each category reads its fill from this data key
+   * instead of a single series color (pie / bar / horizontal_bar / column).
+   */
+  categoryFillKey?: string;
 };
 
 /** Traço/espessura diferenciam tendência da série; a cor herda de `series.fill`. */
@@ -50,6 +55,16 @@ const TREND_DASH = "8 5";
 function defaultFormatY(value: number): string {
   if (!Number.isFinite(value)) return "—";
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+function resolveCategoryFill(
+  row: Record<string, unknown>,
+  categoryFillKey: string | undefined,
+  fallback: string,
+): string {
+  if (!categoryFillKey) return fallback;
+  const raw = row[categoryFillKey];
+  return typeof raw === "string" && raw.trim() ? raw : fallback;
 }
 
 /**
@@ -68,6 +83,7 @@ export function MultiTypeSeriesChart({
   showLegend = true,
   onCategoryClick,
   margin = { top: 12, right: 16, left: 4, bottom: 4 },
+  categoryFillKey,
 }: MultiTypeSeriesChartProps) {
   const trendSources = useMemo(
     () => series.filter((entry) => entry.trendSource),
@@ -131,7 +147,7 @@ export function MultiTypeSeriesChart({
     const pieData = chartData.map((row) => ({
       name: String(row[categoryKey] ?? ""),
       value: Number(row[primary.dataKey]) || 0,
-      fill: primary.fill,
+      fill: resolveCategoryFill(row, categoryFillKey, primary.fill),
     }));
     return (
       <ResponsiveContainer width="100%" height={height}>
@@ -159,7 +175,11 @@ export function MultiTypeSeriesChart({
             {pieData.map((entry, index) => (
               <Cell
                 key={`${entry.name}-${index}`}
-                fill={series[index % series.length]?.fill ?? primary.fill}
+                fill={
+                  entry.fill ||
+                  series[index % series.length]?.fill ||
+                  primary.fill
+                }
               />
             ))}
           </Pie>
@@ -198,7 +218,16 @@ export function MultiTypeSeriesChart({
               radius={[0, 4, 4, 0]}
               cursor={onCategoryClick ? "pointer" : undefined}
               onClick={handleBarCategoryClick}
-            />
+            >
+              {categoryFillKey
+                ? chartData.map((row, index) => (
+                    <Cell
+                      key={`${entry.dataKey}-${index}`}
+                      fill={resolveCategoryFill(row, categoryFillKey, entry.fill)}
+                    />
+                  ))
+                : null}
+            </Bar>
           ))}
         </BarChart>
       </ResponsiveContainer>
@@ -319,7 +348,16 @@ export function MultiTypeSeriesChart({
             maxBarSize={48}
             cursor={onCategoryClick ? "pointer" : undefined}
             onClick={handleBarCategoryClick}
-          />
+          >
+            {categoryFillKey && !stackId
+              ? chartData.map((row, index) => (
+                  <Cell
+                    key={`${entry.dataKey}-${index}`}
+                    fill={resolveCategoryFill(row, categoryFillKey, entry.fill)}
+                  />
+                ))
+              : null}
+          </Bar>
         ))}
         {trendLines}
       </ComposedChart>

@@ -56,3 +56,21 @@ describe("AnalyticsOtdPage estrutural", () => {
     assert.match(page, /latestSeriesPoint/);
   });
 });
+
+describe("AnalyticsOtdInsightBarChart estrutural", () => {
+  it("mantém cores por severidade e avatares em Horiz. Barras e Pizza", () => {
+    const chart = readFileSync(
+      join(src, "features/analytics/components/AnalyticsOtdInsightBarChart.tsx"),
+      "utf8",
+    );
+    assert.match(chart, /chartType === "horizontal_bar"/);
+    assert.match(chart, /chartType === "bar"/);
+    assert.match(chart, /chartType === "pie"/);
+    assert.match(chart, /alertFill/);
+    assert.match(chart, /fill: alertFill/);
+    assert.match(chart, /InsightCustomerAvatar/);
+    assert.match(chart, /InsightPieLegend/);
+    assert.match(chart, /<Cell/);
+    assert.doesNotMatch(chart, /MultiTypeSeriesChart/);
+  });
+});

@@ -2,7 +2,6 @@ import { useId, useMemo } from "react";
 import {
   ChartTypeSegmentToggle,
   ChartViewShell,
-  MultiTypeSeriesChart,
   RANKING_TYPES,
   runTabularExport,
   usePersistedChartPreferences,
@@ -12,6 +11,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -50,6 +51,7 @@ type ChartDatum = OtdInsightBarRow & {
   label: string;
   codeStore: string;
   displayName: string;
+  fill: string;
 };
 
 const COLOR_DANGER = "var(--cm-danger, #dc2626)";
@@ -71,6 +73,65 @@ function customerAccountHref(code: string, store: string): string | null {
   });
 }
 
+function InsightCustomerAvatar({ row }: { row: ChartDatum }) {
+  const code = (row.customer.code ?? "").trim();
+  const store = (row.customer.store ?? "").trim() || "01";
+  if (!code) return null;
+  const href = customerAccountHref(code, store);
+  const title = accountLinkTitle(row.displayName);
+  if (href) {
+    return (
+      <CustomerAvatar
+        code={code}
+        store={store}
+        name={row.displayName}
+        hasAvatar={Boolean(row.customer.hasAvatar)}
+        size="sm"
+        href={href}
+        title={title}
+        onNavigate={() => navigatePluginPath(href)}
+      />
+    );
+  }
+  return (
+    <CustomerAvatar
+      code={code}
+      store={store}
+      name={row.displayName}
+      hasAvatar={Boolean(row.customer.hasAvatar)}
+      size="sm"
+      previewable={false}
+    />
+  );
+}
+
+function InsightTickContent({
+  row,
+  compact = false,
+}: {
+  row: ChartDatum;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={
+        compact
+          ? "cm-otd-insight-chart__tick cm-otd-insight-chart__tick--compact"
+          : "cm-otd-insight-chart__tick"
+      }
+    >
+      <InsightCustomerAvatar row={row} />
+      <div className="cm-otd-insight-chart__tick-text">
+        {row.axisLabel ? (
+          <span className="cm-otd-customer-eyebrow">{row.axisLabel}</span>
+        ) : null}
+        <strong>{row.displayName}</strong>
+        {compact ? null : <span>{row.codeStore}</span>}
+      </div>
+    </div>
+  );
+}
+
 function InsightTooltip({
   active,
   payload,
@@ -84,34 +145,10 @@ function InsightTooltip({
 }) {
   if (!active || !payload?.[0]) return null;
   const row = payload[0].payload;
-  const code = (row.customer.code ?? "").trim();
-  const store = (row.customer.store ?? "").trim() || "01";
-  const href = code ? customerAccountHref(code, store) : null;
-  const title = accountLinkTitle(row.displayName);
   return (
     <div className="cm-otd-insight-tooltip">
       <div className="cm-open-orders-client">
-        {code && href ? (
-          <CustomerAvatar
-            code={code}
-            store={store}
-            name={row.displayName}
-            hasAvatar={Boolean(row.customer.hasAvatar)}
-            size="sm"
-            href={href}
-            title={title}
-            onNavigate={() => navigatePluginPath(href)}
-          />
-        ) : code ? (
-          <CustomerAvatar
-            code={code}
-            store={store}
-            name={row.displayName}
-            hasAvatar={Boolean(row.customer.hasAvatar)}
-            size="sm"
-            previewable={false}
-          />
-        ) : null}
+        <InsightCustomerAvatar row={row} />
         <div className="cm-open-orders-client__text">
           {row.axisLabel ? (
             <span className="cm-otd-customer-eyebrow">{row.axisLabel}</span>
@@ -127,9 +164,41 @@ function InsightTooltip({
   );
 }
 
+function InsightPieLegend({
+  data,
+  formatValue,
+}: {
+  data: ChartDatum[];
+  formatValue: (value: number) => string;
+}) {
+  return (
+    <ul className="cm-otd-insight-chart__legend">
+      {data.map((row) => (
+        <li key={row.id} className="cm-otd-insight-chart__legend-item">
+          <span
+            className="cm-otd-insight-chart__legend-swatch"
+            style={{ background: row.fill }}
+            aria-hidden
+          />
+          <InsightCustomerAvatar row={row} />
+          <div className="cm-otd-insight-chart__tick-text">
+            {row.axisLabel ? (
+              <span className="cm-otd-customer-eyebrow">{row.axisLabel}</span>
+            ) : null}
+            <strong>{row.displayName}</strong>
+            <span>
+              {row.codeStore} · {formatValue(row.value)}
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
- * Barras horizontais recharts (mesmo pacote do ROL) + tokens `cm` (claro/escuro).
- * Eixo Y com avatar/nome/loja via foreignObject.
+ * Ranking OTD (reincidência / atrasos): Horiz. / Barras / Pizza com as mesmas
+ * cores por severidade e avatares de cliente em todos os modos.
  */
 export function AnalyticsOtdInsightBarChart({
   rows,
@@ -163,16 +232,20 @@ export function AnalyticsOtdInsightBarChart({
           code && store
             ? formatEntityCodeStore(code, store) ?? `${code} · Loja ${store}`
             : code || "—";
+        const value = Number(row.value) || 0;
         return {
           ...row,
           label: row.id,
           displayName,
           codeStore,
+          fill: alertFill(value, max),
         };
       }),
-    [rows],
+    [max, rows],
   );
-  const height = Math.max(220, data.length * 58 + 40);
+  const horizontalHeight = Math.max(220, data.length * 58 + 40);
+  const verticalHeight = Math.max(280, 220 + Math.min(data.length, 8) * 8);
+  const pieHeight = Math.max(300, 180 + data.length * 36);
 
   if (data.length === 0) {
     return <p className="cm-muted">{emptyMessage}</p>;
@@ -192,17 +265,14 @@ export function AnalyticsOtdInsightBarChart({
     })),
   };
 
-  const multiSeries = [
-    {
-      dataKey: "value",
-      name: valueLabel,
-      fill: "var(--cm-accent, #089bdb)",
-    },
-  ];
-  const multiData = data.map((row) => ({
-    label: row.displayName,
-    value: row.value,
-  }));
+  const handlePlotClick = (state: unknown) => {
+    const payload = (
+      state as { activePayload?: Array<{ payload?: ChartDatum }> } | null
+    )?.activePayload?.[0]?.payload;
+    if (!payload?.id || !onRowClick) return;
+    const row = rows.find((item) => item.id === payload.id);
+    if (row) onRowClick(row);
+  };
 
   return (
     <ChartViewShell
@@ -226,127 +296,184 @@ export function AnalyticsOtdInsightBarChart({
         />
       }
     >
-    {chartType === "horizontal_bar" ? (
-    <div className="cm-chart-wrap cm-otd-insight-chart" style={{ width: "100%", height }}>
-      <ResponsiveContainer>
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 8, right: 20, left: 4, bottom: 8 }}
-          barCategoryGap="22%"
-          onClick={(state) => {
-            const payload = (
-              state as { activePayload?: Array<{ payload?: ChartDatum }> } | null
-            )?.activePayload?.[0]?.payload;
-            if (!payload?.id || !onRowClick) return;
-            const row = rows.find((item) => item.id === payload.id);
-            if (row) onRowClick(row);
-          }}
+      {chartType === "horizontal_bar" ? (
+        <div
+          className="cm-chart-wrap cm-otd-insight-chart"
+          style={{ width: "100%", height: horizontalHeight }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--cm-border)" horizontal={false} />
-          <XAxis
-            type="number"
-            tick={{ fill: "var(--cm-muted)", fontSize: 11 }}
-            stroke="var(--cm-border)"
-          />
-          <YAxis
-            type="category"
-            dataKey="label"
-            width={168}
-            interval={0}
-            tick={(props) => {
-              const { x, y, payload } = props;
-              const row = data.find((item) => item.label === payload.value);
-              if (!row) return <g />;
-              const store = (row.customer.store ?? "").trim() || "01";
-              const code = (row.customer.code ?? "").trim();
-              return (
-                <g transform={`translate(${x},${y})`}>
-                  <foreignObject x={-164} y={-22} width={160} height={44}>
-                    <div className="cm-otd-insight-chart__tick">
-                      {code ? (
-                        (() => {
-                          const href = customerAccountHref(code, store);
-                          const title = accountLinkTitle(row.displayName);
-                          return href ? (
-                            <CustomerAvatar
-                              code={code}
-                              store={store}
-                              name={row.displayName}
-                              hasAvatar={Boolean(row.customer.hasAvatar)}
-                              size="sm"
-                              href={href}
-                              title={title}
-                              onNavigate={() => navigatePluginPath(href)}
-                            />
-                          ) : (
-                            <CustomerAvatar
-                              code={code}
-                              store={store}
-                              name={row.displayName}
-                              hasAvatar={Boolean(row.customer.hasAvatar)}
-                              size="sm"
-                              previewable={false}
-                            />
-                          );
-                        })()
-                      ) : null}
-                      <div className="cm-otd-insight-chart__tick-text">
-                        {row.axisLabel ? (
-                          <span className="cm-otd-customer-eyebrow">{row.axisLabel}</span>
-                        ) : null}
-                        <strong>{row.displayName}</strong>
-                        <span>{row.codeStore}</span>
-                      </div>
-                    </div>
-                  </foreignObject>
-                </g>
-              );
-            }}
-            stroke="var(--cm-border)"
-          />
-          <Tooltip
-            cursor={{ fill: "color-mix(in srgb, var(--cm-accent) 12%, transparent)" }}
-            content={
-              <InsightTooltip valueLabel={valueLabel} formatValue={formatValue} />
-            }
-          />
-          <Bar
-            dataKey="value"
-            name={valueLabel}
-            radius={[0, 6, 6, 0]}
-            maxBarSize={22}
-            cursor={onRowClick ? "pointer" : "default"}
-          >
-            {data.map((row) => (
-              <Cell
-                key={`${gid}-${row.id}`}
-                fill={alertFill(Number(row.value) || 0, max)}
+          <ResponsiveContainer>
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ top: 8, right: 20, left: 4, bottom: 8 }}
+              barCategoryGap="22%"
+              onClick={handlePlotClick}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--cm-border)"
+                horizontal={false}
               />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-    ) : (
-      <MultiTypeSeriesChart
-        data={multiData}
-        categoryKey="label"
-        series={multiSeries}
-        chartType={chartType}
-        height={height}
-        formatY={formatValue}
-        formatTooltipValue={formatValue}
-        onCategoryClick={
-          onRowClick
-            ? (category) => {
-                const row = data.find((item) => item.displayName === category);
-                if (row) onRowClick(row);
-              }
-            : undefined
-        }
-      />
-    )}
+              <XAxis
+                type="number"
+                tick={{ fill: "var(--cm-muted)", fontSize: 11 }}
+                stroke="var(--cm-border)"
+              />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={168}
+                interval={0}
+                tick={(props) => {
+                  const { x, y, payload } = props;
+                  const row = data.find((item) => item.label === payload.value);
+                  if (!row) return <g />;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <foreignObject x={-164} y={-22} width={160} height={44}>
+                        <InsightTickContent row={row} />
+                      </foreignObject>
+                    </g>
+                  );
+                }}
+                stroke="var(--cm-border)"
+              />
+              <Tooltip
+                cursor={{
+                  fill: "color-mix(in srgb, var(--cm-accent) 12%, transparent)",
+                }}
+                content={
+                  <InsightTooltip
+                    valueLabel={valueLabel}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Bar
+                dataKey="value"
+                name={valueLabel}
+                radius={[0, 6, 6, 0]}
+                maxBarSize={22}
+                cursor={onRowClick ? "pointer" : "default"}
+              >
+                {data.map((row) => (
+                  <Cell key={`${gid}-${row.id}`} fill={row.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : null}
+
+      {chartType === "bar" ? (
+        <div
+          className="cm-chart-wrap cm-otd-insight-chart cm-otd-insight-chart--vertical"
+          style={{ width: "100%", height: verticalHeight }}
+        >
+          <ResponsiveContainer>
+            <BarChart
+              data={data}
+              margin={{ top: 8, right: 12, left: 4, bottom: 8 }}
+              barCategoryGap="18%"
+              onClick={handlePlotClick}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--cm-border)"
+                vertical={false}
+              />
+              <XAxis
+                type="category"
+                dataKey="label"
+                interval={0}
+                height={72}
+                tick={(props) => {
+                  const { x, y, payload } = props;
+                  const row = data.find((item) => item.label === payload.value);
+                  if (!row) return <g />;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <foreignObject x={-36} y={0} width={72} height={68}>
+                        <InsightTickContent row={row} compact />
+                      </foreignObject>
+                    </g>
+                  );
+                }}
+                stroke="var(--cm-border)"
+              />
+              <YAxis
+                type="number"
+                tick={{ fill: "var(--cm-muted)", fontSize: 11 }}
+                stroke="var(--cm-border)"
+                tickFormatter={(value) => formatValue(Number(value))}
+              />
+              <Tooltip
+                cursor={{
+                  fill: "color-mix(in srgb, var(--cm-accent) 12%, transparent)",
+                }}
+                content={
+                  <InsightTooltip
+                    valueLabel={valueLabel}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Bar
+                dataKey="value"
+                name={valueLabel}
+                radius={[6, 6, 0, 0]}
+                maxBarSize={36}
+                cursor={onRowClick ? "pointer" : "default"}
+              >
+                {data.map((row) => (
+                  <Cell key={`${gid}-v-${row.id}`} fill={row.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : null}
+
+      {chartType === "pie" ? (
+        <div
+          className="cm-chart-wrap cm-otd-insight-chart cm-otd-insight-chart--pie"
+          style={{ width: "100%", minHeight: pieHeight }}
+        >
+          <ResponsiveContainer width="100%" height={Math.max(220, pieHeight * 0.55)}>
+            <PieChart>
+              <Tooltip
+                content={
+                  <InsightTooltip
+                    valueLabel={valueLabel}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="displayName"
+                cx="50%"
+                cy="50%"
+                outerRadius="72%"
+                cursor={onRowClick ? "pointer" : "default"}
+                onClick={(entry) => {
+                  const payload = (entry as { payload?: ChartDatum } | null)
+                    ?.payload;
+                  if (!payload?.id || !onRowClick) return;
+                  const row = rows.find((item) => item.id === payload.id);
+                  if (row) onRowClick(row);
+                }}
+              >
+                {data.map((row) => (
+                  <Cell key={`${gid}-p-${row.id}`} fill={row.fill} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <InsightPieLegend data={data} formatValue={formatValue} />
+        </div>
+      ) : null}
     </ChartViewShell>
   );
 }
