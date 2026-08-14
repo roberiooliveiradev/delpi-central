@@ -51,6 +51,17 @@ export type OpenPortfolioSummaryData = {
   nature: "open_order_value";
 };
 
+/** KPI-PORTFOLIO-SHARE — BFF portfolio-billing-share. */
+export type PortfolioBillingShareData = {
+  portfolioRol: number;
+  companyRol: number;
+  sharePct: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  branch?: string | null;
+  nature: "portfolio_billing_share";
+};
+
 export type OpenPortfolioHorizonBucketId =
   | "overdue"
   | "current_month"

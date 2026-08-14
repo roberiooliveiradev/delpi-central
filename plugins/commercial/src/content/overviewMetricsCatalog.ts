@@ -10,6 +10,7 @@ export type OverviewMetricId =
   | "otd"
   | "new_business_pct"
   | "open_portfolio"
+  | "portfolio_billing_share"
   | "gap_to_target"
   | "open_portfolio_horizon"
   | "rol_series"
@@ -49,6 +50,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     label: "Carteira em aberto",
     tooltip:
       "Saldo comercial agora (valor e linhas de pedidos). Não é programação do PCP, não é forecast e não some com o ROL do período.",
+  },
+  {
+    id: "portfolio_billing_share",
+    label: "Share empresa",
+    tooltip:
+      "Percentual do ROL do escopo atual sobre o ROL consolidado da empresa no mesmo período. Não mistura com carteira em aberto.",
   },
   {
     id: "gap_to_target",

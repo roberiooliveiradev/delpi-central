@@ -300,6 +300,25 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               loading={dashboard.openPortfolioLoading}
             />
             <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.portfolio_billing_share.label}
+              titleHint={CM_HELP.overview.portfolioBillingShare}
+              value={
+                dashboard.portfolioBillingShare?.sharePct == null
+                  ? "—"
+                  : `${dashboard.portfolioBillingShare.sharePct.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}%`
+              }
+              contextLabel={
+                dashboard.portfolioBillingShare
+                  ? `${formatCurrency(dashboard.portfolioBillingShare.portfolioRol)} / ${formatCurrency(dashboard.portfolioBillingShare.companyRol)} · ${contextBase}`
+                  : contextBase
+              }
+              icon={<Percent size={22} aria-hidden="true" />}
+              loading={dashboard.loading}
+            />
+            <CommercialDashboardKpiCard
               title={OVERVIEW_METRIC_BY_ID.gap_to_target.label}
               titleHint={OVERVIEW_METRIC_BY_ID.gap_to_target.tooltip}
               value={

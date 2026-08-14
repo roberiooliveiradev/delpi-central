@@ -10,6 +10,7 @@ import type {
   NewBusinessRolPctData,
   OpenPortfolioHorizonData,
   OpenPortfolioSummaryData,
+  PortfolioBillingShareData,
   RolTargetData,
   SalesConversionRateSeriesData,
   SalesOrderOtdData,
@@ -111,6 +112,18 @@ export function getOpenPortfolioSummary(
   return fetchAnalyticsData<OpenPortfolioSummaryData>(
     "/open-portfolio-summary",
     { seller_id: params.seller_id },
+    signal,
+  );
+}
+
+/** Share ROL carteira ÷ empresa no período (KPI-PORTFOLIO-SHARE). */
+export function getPortfolioBillingShare(
+  params: AnalyticsFilterParams,
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<PortfolioBillingShareData>(
+    "/portfolio-billing-share",
+    params,
     signal,
   );
 }

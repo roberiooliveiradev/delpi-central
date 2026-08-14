@@ -10,6 +10,7 @@ import {
   getHeadOfficeWegRolTarget,
   getNewBusinessRolPct,
   getOpenPortfolioHorizon,
+  getPortfolioBillingShare,
   getSalesOrderOtd,
 } from "../../../api/analyticsApi";
 import type {
@@ -18,6 +19,7 @@ import type {
   NewBusinessRolPctData,
   OpenPortfolioHorizonData,
   OpenPortfolioSummaryData,
+  PortfolioBillingShareData,
   RolTargetData,
   SalesOrderOtdData,
 } from "../../../types/analytics";
@@ -38,6 +40,7 @@ type AnalyticsDashboardState = {
   newBusinessRol: NewBusinessRolPctData | null;
   openPortfolio: OpenPortfolioSummaryData | null;
   openPortfolioHorizon: OpenPortfolioHorizonData | null;
+  portfolioBillingShare: PortfolioBillingShareData | null;
   openPortfolioLoading: boolean;
   openPortfolioError: string | null;
   closingRateBranches: PerBranchMetricSlices<ClosingRateData> | null;
@@ -68,6 +71,8 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
   const [openPortfolio, setOpenPortfolio] = useState<OpenPortfolioSummaryData | null>(null);
   const [openPortfolioHorizon, setOpenPortfolioHorizon] =
     useState<OpenPortfolioHorizonData | null>(null);
+  const [portfolioBillingShare, setPortfolioBillingShare] =
+    useState<PortfolioBillingShareData | null>(null);
   const [openPortfolioLoading, setOpenPortfolioLoading] = useState(true);
   const [openPortfolioError, setOpenPortfolioError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +104,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       getClosingRate(filters, controller.signal),
       getSalesOrderOtd(filters, controller.signal),
       getNewBusinessRolPct(filters, controller.signal),
+      getPortfolioBillingShare(filters, controller.signal),
       ...(needsBranchIdd
         ? [
             fetchPerBranchMetricSlices(
@@ -135,10 +141,15 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
         setClosingRate(results[6].status === "fulfilled" ? results[6].value : null);
         setSalesOrderOtd(results[7].status === "fulfilled" ? results[7].value : null);
         setNewBusinessRol(results[8].status === "fulfilled" ? results[8].value : null);
+        setPortfolioBillingShare(
+          results[9].status === "fulfilled"
+            ? (results[9].value as PortfolioBillingShareData)
+            : null,
+        );
         if (needsBranchIdd) {
-          const crBranches = results[9];
-          const otdBranches = results[10];
-          const nbBranches = results[11];
+          const crBranches = results[10];
+          const otdBranches = results[11];
+          const nbBranches = results[12];
           setClosingRateBranches(
             crBranches?.status === "fulfilled"
               ? (crBranches.value as PerBranchMetricSlices<ClosingRateData>)
@@ -159,7 +170,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
           setSalesOrderOtdBranches(null);
           setNewBusinessRolBranches(null);
         }
-        const core = results.slice(0, 9);
+        const core = results.slice(0, 10);
         const firstError = core.find((r) => r.status === "rejected") as
           | PromiseRejectedResult
           | undefined;
@@ -227,6 +238,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     newBusinessRol,
     openPortfolio,
     openPortfolioHorizon,
+    portfolioBillingShare,
     openPortfolioLoading,
     openPortfolioError,
     closingRateBranches,
