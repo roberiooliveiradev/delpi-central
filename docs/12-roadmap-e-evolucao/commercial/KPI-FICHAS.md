@@ -137,6 +137,38 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 - [ ] Confirmar disclaimer bruto/líquido alinhado a KPI-CARTEIRA  
 
 ---
+
+## KPI-PORTFOLIO-SHARE — Share faturamento carteira ÷ empresa
+
+| Campo | Conteúdo |
+|-------|----------|
+| Código | `KPI-PORTFOLIO-SHARE` |
+| Nome | Share da carteira no faturamento da empresa |
+| Objetivo | Mostrar quanto do ROL (faturado) do período a carteira/escopo atual representa vs. o consolidado da empresa |
+| **Fórmula** | `sharePct = (portfolioRol / companyRol) × 100` no **mesmo** `start_date`/`end_date` do filtro |
+| Numerador (`portfolioRol`) | ROL do escopo atual (membership / `seller_id`) — mesma regra `KPI-ROL` |
+| Denominador (`companyRol`) | ROL consolidado **sem** filtro de carteira (empresa / filiais do filtro de unidade, se houver) |
+| Analogia de mercado | Portfolio share of company billings (CRM/ERP cockpit) |
+| Inclusões / exclusões | Mesmas do `KPI-ROL`; **não** usar `openValue` (carteira aberta) no numerador nem no denominador |
+| **Proibido** | Misturar backlog (`KPI-CARTEIRA`) com share; somar ROL+carteira; expor denominador empresa a quem só tem `accounts.view` |
+| RBAC (UI) | Card só com `analytics.view` **ou** `accounts.team.view` **ou** `seller-portfolios.manage`; demais usuários veem só faturamento do escopo (sem %) |
+| Fonte | commercial-api `GET /analytics/portfolio-billing-share` → api-delpi ROL (série/agregado) |
+| Freshness | Conforme cache/query TOTVS do período |
+| Filtros válidos | `start_date`, `end_date`, `branch`/unidade, `seller_id`/carteira (só no numerador) |
+| Escopo | Numerador: own / team / membership; denominador: all (empresa) |
+| Versão da regra | v0 |
+| Owner | Comercial — a confirmar (homologação) |
+| Status | **rascunho** (implementação Portal — plano carteira comparativos) |
+
+### Checklist de homologação (KPI-PORTFOLIO-SHARE)
+
+- [ ] Confirmar que denominador = empresa toda (não «todas as carteiras ativas do Portal»)  
+- [ ] Confirmar política: vendedor operacional **não** vê % empresa  
+- [ ] Confirmar arredondamento (1 casa vs 0) e tratamento `companyRol = 0`  
+- [ ] Confirmar se segmento WEG/NB entra no share ou só no Overview separado  
+
+---
+
 ## KPI-HIT-RATE — Taxa de conversão / hit rate
 
 | Campo | Conteúdo |
