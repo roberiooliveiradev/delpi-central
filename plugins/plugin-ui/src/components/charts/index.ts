@@ -281,3 +281,21 @@ export {
   seriesChartPointsAttr,
   type SeriesChartCurvePoint,
 } from "./seriesChartCurve";
+
+export {
+  TIME_MULTI_SERIES_TYPES,
+  PERIOD_COMPARE_TYPES,
+  RANKING_TYPES,
+  COMPOSITION_TYPES,
+  CATEGORICAL_TYPES,
+  CHART_TYPE_LABELS_PT,
+  chartTypesForFamily,
+  defaultChartTypeForFamily,
+  familySupportsChartTypeSwitch,
+  type ChartDataFamily,
+} from "./chartDataFamilies";
+
+export {
+  ChartTypeSegmentToggle,
+  type ChartTypeSegmentToggleProps,
+} from "./ChartTypeSegmentToggle";
