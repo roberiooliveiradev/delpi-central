@@ -11,19 +11,24 @@ export type PurchaseEvolutionPoint = {
   anterior: number;
 };
 
+/** Janela do comparativo (atual vs. anterior imediato). */
+export type PurchaseEvolutionWindowMonths = 6 | 12;
+
 export type UseCustomerPurchaseEvolutionResult = {
   points: PurchaseEvolutionPoint[];
   loading: boolean;
   error: string | null;
+  windowMonths: PurchaseEvolutionWindowMonths;
 };
 
 /**
- * Série 24 meses → 12 atuais + 12 anteriores alinhados por índice (mockup evolução).
+ * Série 2× janela → pontos atuais + anteriores alinhados por índice.
  */
 export function useCustomerPurchaseEvolution(
   codigo: string | undefined,
   loja: string | undefined,
   enabled = true,
+  windowMonths: PurchaseEvolutionWindowMonths = 12,
 ): UseCustomerPurchaseEvolutionResult {
   const [rawPoints, setRawPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +40,8 @@ export function useCustomerPurchaseEvolution(
     if (!code || !store) return null;
     return { code, store };
   }, [codigo, loja]);
+
+  const fetchMonths = windowMonths * 2;
 
   useEffect(() => {
     if (!enabled || !identity) {
@@ -51,7 +58,7 @@ export function useCustomerPurchaseEvolution(
 
     void fetchCustomerBillingSeries(
       [{ customer_code: identity.code, customer_store: identity.store }],
-      { months: 24, signal: controller.signal },
+      { months: fetchMonths, signal: controller.signal },
     )
       .then((payload) => {
         if (cancelled) return;
@@ -72,7 +79,7 @@ export function useCustomerPurchaseEvolution(
       cancelled = true;
       controller.abort();
     };
-  }, [enabled, identity]);
+  }, [enabled, identity, fetchMonths]);
 
   const points = useMemo(() => {
     if (rawPoints.length < 2) {
@@ -82,15 +89,15 @@ export function useCustomerPurchaseEvolution(
         anterior: 0,
       }));
     }
-    const prior = rawPoints.slice(0, -12);
-    const current = rawPoints.slice(-12);
+    const prior = rawPoints.slice(0, -windowMonths);
+    const current = rawPoints.slice(-windowMonths);
     const priorOffset = Math.max(0, prior.length - current.length);
     return current.map((point, index) => ({
       periodo: point.label,
       atual: Number(point.value) || 0,
       anterior: Number(prior[priorOffset + index]?.value) || 0,
     }));
-  }, [rawPoints]);
+  }, [rawPoints, windowMonths]);
 
-  return { points, loading, error };
+  return { points, loading, error, windowMonths };
 }

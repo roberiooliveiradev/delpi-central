@@ -379,7 +379,15 @@ export const CM_HELP = {
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:
-      "Recorte do comparativo de compras (últimos 12 meses vs. período anterior).",
+      "Recorte do comparativo de compras (janela atual versus a janela imediatamente anterior).",
+    ordersSituationFilter:
+      "Restringe a lista de pedidos em aberto por situação consolidada (atraso, parcial ou em dia).",
+    ordersSearch:
+      "Busca por número do pedido, pedido do cliente ou unidade operacional.",
+    opportunitiesStatusFilter:
+      "Restringe as OVs deste cliente por categoria de status (abertas, ganhas, perdidas).",
+    opportunitiesSearch:
+      "Busca por número da OV, revisão, rótulo de status ou etapa.",
     opportunities:
       "Oportunidades de venda (OV) só deste cliente. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:

@@ -1,7 +1,12 @@
+import { useState } from "react";
+
 import type { CustomerSummary } from "../types/customerSummary";
 import type { CustomerOrderSummary } from "../types/customerOrderSummary";
 import type { UseCustomerActivitiesResult } from "../hooks/useCustomerActivities";
-import { useCustomerPurchaseEvolution } from "../hooks/useCustomerPurchaseEvolution";
+import {
+  useCustomerPurchaseEvolution,
+  type PurchaseEvolutionWindowMonths,
+} from "../hooks/useCustomerPurchaseEvolution";
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 import { CustomerConversationPoints } from "./CustomerConversationPoints";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
@@ -34,7 +39,14 @@ export function CustomerOverviewSection({
   onGoToOrders,
   onGoToActivities,
 }: CustomerOverviewSectionProps) {
-  const evolution = useCustomerPurchaseEvolution(customer.codigo, customer.loja, true);
+  const [windowMonths, setWindowMonths] =
+    useState<PurchaseEvolutionWindowMonths>(12);
+  const evolution = useCustomerPurchaseEvolution(
+    customer.codigo,
+    customer.loja,
+    true,
+    windowMonths,
+  );
 
   return (
     <div className="cm-customer-overview">
@@ -46,6 +58,8 @@ export function CustomerOverviewSection({
         points={evolution.points}
         loading={evolution.loading}
         error={evolution.error}
+        windowMonths={windowMonths}
+        onWindowMonthsChange={setWindowMonths}
       />
       <CustomerOpenOrdersPreview
         orders={orders}

@@ -1,4 +1,5 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
+import { useMemo, useState } from "react";
 
 import {
   CommercialDataTable,
@@ -19,6 +20,11 @@ import {
   withColumnHelp,
 } from "../../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../../utils/dates";
+import {
+  nextTableSortState,
+  sortTableRows,
+  type TableSortDirection,
+} from "../../../utils/sortTableRows";
 import { OpenProposalFromOpportunityButton } from "./OpenProposalFromOpportunityButton";
 
 export type CommercialProposalsTableOptions = {
@@ -54,6 +60,8 @@ export function buildCommercialProposalColumns(
     {
       key: "ov",
       header: "OV",
+      sortable: true,
+      sortValue: (row) => row.proposal_number,
       interactive: true,
       rowClick: "stop",
       render: (row) => {
@@ -81,13 +89,21 @@ export function buildCommercialProposalColumns(
         );
       },
     },
-    { key: "rev", header: "Rev.", render: (row) => row.revision || "—" },
+    {
+      key: "rev",
+      header: "Rev.",
+      sortable: true,
+      sortValue: (row) => row.revision,
+      render: (row) => row.revision || "—",
+    },
   ];
 
   if (!options.hideCustomerColumn) {
     columns.push({
       key: "customer",
       header: "Cliente",
+      sortable: true,
+      sortValue: (row) => row.customer_code,
       render: (row) => row.customer_code || "—",
     });
   }
@@ -96,6 +112,8 @@ export function buildCommercialProposalColumns(
     {
       key: "status",
       header: "Status",
+      sortable: true,
+      sortValue: (row) => row.status_label || row.status_code || "",
       render: (row) => (
         <CommercialStatusBadge
           label={row.status_label || row.status_code || "—"}
@@ -103,10 +121,18 @@ export function buildCommercialProposalColumns(
         />
       ),
     },
-    { key: "stage", header: "Etapa", render: (row) => row.stage || "—" },
+    {
+      key: "stage",
+      header: "Etapa",
+      sortable: true,
+      sortValue: (row) => row.stage,
+      render: (row) => row.stage || "—",
+    },
     {
       key: "date",
       header: "Data",
+      sortable: true,
+      sortValue: (row) => row.proposal_date,
       render: (row) => formatDisplayDate(row.proposal_date),
     },
   );
@@ -142,20 +168,38 @@ export function CommercialProposalsTable({
   showOpenProposal,
   onRowClick,
 }: CommercialProposalsTableProps) {
-  const baseColumns = buildCommercialProposalColumns({
-    basePath,
-    detailSearch,
-    hideCustomerColumn,
-    showOpenProposal,
-  });
+  const [sortKey, setSortKey] = useState<string>("date");
+  const [sortDirection, setSortDirection] = useState<TableSortDirection>("desc");
+
+  const baseColumns = useMemo(
+    () =>
+      buildCommercialProposalColumns({
+        basePath,
+        detailSearch,
+        hideCustomerColumn,
+        showOpenProposal,
+      }),
+    [basePath, detailSearch, hideCustomerColumn, showOpenProposal],
+  );
   const columns = withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP);
+  const sortedRows = useMemo(
+    () => sortTableRows(rows, columns, sortKey, sortDirection),
+    [columns, rows, sortDirection, sortKey],
+  );
 
   return (
     <CommercialDataTable
-      rows={rows}
+      rows={sortedRows}
       columns={columns}
       rowKey={(row) => `${row.branch}-${row.proposal_number}-${row.revision}`}
       layout="section"
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      onSortChange={(key) => {
+        const next = nextTableSortState(sortKey, sortDirection, key);
+        setSortKey(next.sortKey);
+        setSortDirection(next.sortDirection);
+      }}
       onRowClick={
         onRowClick ??
         ((row) =>

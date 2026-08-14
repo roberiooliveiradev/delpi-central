@@ -489,6 +489,7 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /fetchPolicy\.activities/);
     assert.match(overview, /useCustomerPurchaseEvolution/);
     assert.match(overview, /CustomerPurchaseEvolutionChart/);
+    assert.match(overview, /windowMonths/);
     assert.match(overview, /CustomerActivityTimelinePanel/);
     assert.match(overview, /preview/);
     assert.doesNotMatch(overview, /listCustomerActivities/);
@@ -523,12 +524,19 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     const opportunities = readSrc(
       "features/customers/components/CustomerOpportunitiesSection.tsx",
     );
+    const proposalsTable = readSrc(
+      "features/analytics/components/CommercialProposalsTable.tsx",
+    );
     const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
     assert.match(page, /canViewWorklist && canManageFollowups/);
     assert.doesNotMatch(header, /Registrar contato|onRegisterContact/);
     assert.match(page, /CustomerOpportunitiesSection/);
     assert.match(opportunities, /getCommercialProposals/);
     assert.match(opportunities, /CommercialProposalsTable/);
+    assert.match(opportunities, /CommercialScopeChipBar/);
+    assert.match(opportunities, /statusFilter/);
+    assert.match(proposalsTable, /onSortChange/);
+    assert.match(proposalsTable, /sortTableRows/);
     assert.match(opportunities, /canViewAnalytics/);
     assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
     assert.match(lines, /getLineOpForecast/);
@@ -582,6 +590,9 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(table, /CommercialDataRecordCard/);
     assert.match(table, /renderExpandedRow/);
     assert.match(table, /CUSTOMER_ORDERS_CONTENT/);
+    assert.match(table, /CommercialScopeChipBar/);
+    assert.match(table, /onSortChange/);
+    assert.match(table, /sortTableRows/);
     assert.doesNotMatch(table, /CommercialHostDialog/);
     assert.doesNotMatch(table, /Ver linhas|Abrir pedido/);
     assert.match(table, /navigateCustomerOrderDetail/);

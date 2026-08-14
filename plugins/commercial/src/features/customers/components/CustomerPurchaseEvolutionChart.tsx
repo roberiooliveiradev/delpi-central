@@ -15,7 +15,10 @@ import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/ind
 import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
-import type { PurchaseEvolutionPoint } from "../hooks/useCustomerPurchaseEvolution";
+import type {
+  PurchaseEvolutionPoint,
+  PurchaseEvolutionWindowMonths,
+} from "../hooks/useCustomerPurchaseEvolution";
 
 const CHART_CLASSES = chartCardBemClasses("cm", {
   headerLayout: "titleRow",
@@ -26,10 +29,17 @@ const CHART_HEIGHT = 320;
 const COLOR_CURRENT = "var(--cm-accent)";
 const COLOR_PRIOR = "color-mix(in srgb, var(--cm-accent) 56%, var(--cm-text-muted))";
 
+const PERIOD_OPTIONS: { value: string; label: string }[] = [
+  { value: "6", label: "Últimos 6 meses" },
+  { value: "12", label: "Últimos 12 meses" },
+];
+
 type CustomerPurchaseEvolutionChartProps = {
   points: PurchaseEvolutionPoint[];
   loading: boolean;
   error: string | null;
+  windowMonths: PurchaseEvolutionWindowMonths;
+  onWindowMonthsChange: (months: PurchaseEvolutionWindowMonths) => void;
 };
 
 function formatChartCurrency(value: number): string {
@@ -48,10 +58,16 @@ function formatChartCurrency(value: number): string {
   return formatCurrency(value);
 }
 
+function parseWindowMonths(value: string): PurchaseEvolutionWindowMonths {
+  return value === "6" ? 6 : 12;
+}
+
 export function CustomerPurchaseEvolutionChart({
   points,
   loading,
   error,
+  windowMonths,
+  onWindowMonthsChange,
 }: CustomerPurchaseEvolutionChartProps) {
   const gradientId = useId().replace(/:/g, "");
   const hasValues = useMemo(
@@ -66,6 +82,11 @@ export function CustomerPurchaseEvolutionChart({
     [points],
   );
 
+  const emptyMessage =
+    windowMonths === 6
+      ? "Sem faturamento registrado nos últimos 12 meses para este cliente."
+      : "Sem faturamento registrado nos últimos 24 meses para este cliente.";
+
   return (
     <ChartCard
       title="Evolução de compras"
@@ -77,11 +98,10 @@ export function CustomerPurchaseEvolutionChart({
         <CommercialSelectField
           label="Período"
           hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
-          options={[{ value: "12", label: "Últimos 12 meses" }]}
-          value="12"
-          onChange={() => undefined}
+          options={PERIOD_OPTIONS}
+          value={String(windowMonths)}
+          onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
           allowEmpty={false}
-          disabled
         />
       }
     >
@@ -99,7 +119,7 @@ export function CustomerPurchaseEvolutionChart({
       ) : !hasValues ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}
-          defaultMessage="Sem faturamento registrado nos últimos 24 meses para este cliente."
+          defaultMessage={emptyMessage}
         />
       ) : (
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>

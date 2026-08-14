@@ -3,6 +3,7 @@ import {
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
+import { useMemo, useState } from "react";
 
 import {
   CommercialActionButton,
@@ -24,6 +25,11 @@ import {
 } from "../../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../../utils/format";
 import { formatDisplayDate } from "../../../../utils/dates";
+import {
+  nextTableSortState,
+  sortTableRows,
+  type TableSortDirection,
+} from "../../../../utils/sortTableRows";
 import type { CustomerInvoice } from "../types/customerBilling";
 import { situationLabel } from "../utils/billingPeriod";
 
@@ -48,6 +54,9 @@ export function CustomerInvoicesTable({
   codigo,
   loja,
 }: CustomerInvoicesTableProps) {
+  const [sortKey, setSortKey] = useState<string>("issue");
+  const [sortDirection, setSortDirection] = useState<TableSortDirection>("desc");
+
   const invoiceReturnNav = {
     returnTo: currentLocationAsReturnTo(),
     returnLabel: "Histórico",
@@ -87,87 +96,119 @@ export function CustomerInvoicesTable({
       },
     );
 
-  const columns: DataTableColumn<CustomerInvoice>[] = [
-    {
-      key: "issue",
-      header: "Emissão",
-      render: (invoice) => formatDisplayDate(invoice.issue_date),
-    },
-    {
-      key: "invoice",
-      header: "Nota / série",
-      interactive: true,
-      rowClick: "stop",
-      render: (invoice) => {
-        const label = `${invoice.invoice_number}${
-          invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
-        }${
-          invoice.branch
-            ? ` · ${OPERATIONAL_UNIT_COLUMN_LABEL} ${formatOperationalUnitCode(invoice.branch)}`
-            : ""
-        }`;
-        const href = invoiceHref(invoice);
-        if (!href) return label;
-        return (
-          <CommercialEntityLink
-            href={href}
-            title={invoiceLinkTitle(invoice.invoice_number)}
-            className="cm-link-button"
-            onNavigate={() => openInvoiceDetail(invoice)}
-          >
-            {label}
-          </CommercialEntityLink>
-        );
+  const columns: DataTableColumn<CustomerInvoice>[] = useMemo(
+    () => [
+      {
+        key: "issue",
+        header: "Emissão",
+        sortable: true,
+        sortValue: (invoice) => invoice.issue_date,
+        render: (invoice) => formatDisplayDate(invoice.issue_date),
       },
-    },
-    {
-      key: "sales-order",
-      header: "Pedido de venda",
-      render: (invoice) => invoice.sales_order || "—",
-    },
-    {
-      key: "customer-order",
-      header: "Pedido do cliente",
-      render: (invoice) => invoice.customer_order || "—",
-    },
-    {
-      key: "situation",
-      header: "Situação",
-      render: (invoice) => (
-        <CommercialStatusBadge
-          variant={invoice.situation === "return" ? "info" : "success"}
-          label={situationLabel(invoice.situation)}
-        />
-      ),
-    },
-    {
-      key: "items",
-      header: "Itens",
-      align: "right",
-      render: (invoice) => invoice.item_count.toLocaleString("pt-BR"),
-    },
-    {
-      key: "value",
-      header: "Valor",
-      align: "right",
-      render: (invoice) => formatCurrency(invoice.total_value),
-    },
-  ];
+      {
+        key: "invoice",
+        header: "Nota / série",
+        sortable: true,
+        sortValue: (invoice) =>
+          `${invoice.invoice_number}/${invoice.invoice_series || ""}`,
+        interactive: true,
+        rowClick: "stop",
+        render: (invoice) => {
+          const label = `${invoice.invoice_number}${
+            invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
+          }${
+            invoice.branch
+              ? ` · ${OPERATIONAL_UNIT_COLUMN_LABEL} ${formatOperationalUnitCode(invoice.branch)}`
+              : ""
+          }`;
+          const href = invoiceHref(invoice);
+          if (!href) return label;
+          return (
+            <CommercialEntityLink
+              href={href}
+              title={invoiceLinkTitle(invoice.invoice_number)}
+              className="cm-link-button"
+              onNavigate={() => openInvoiceDetail(invoice)}
+            >
+              {label}
+            </CommercialEntityLink>
+          );
+        },
+      },
+      {
+        key: "sales-order",
+        header: "Pedido de venda",
+        sortable: true,
+        sortValue: (invoice) => invoice.sales_order,
+        render: (invoice) => invoice.sales_order || "—",
+      },
+      {
+        key: "customer-order",
+        header: "Pedido do cliente",
+        sortable: true,
+        sortValue: (invoice) => invoice.customer_order,
+        render: (invoice) => invoice.customer_order || "—",
+      },
+      {
+        key: "situation",
+        header: "Situação",
+        sortable: true,
+        sortValue: (invoice) => situationLabel(invoice.situation),
+        render: (invoice) => (
+          <CommercialStatusBadge
+            variant={invoice.situation === "return" ? "info" : "success"}
+            label={situationLabel(invoice.situation)}
+          />
+        ),
+      },
+      {
+        key: "items",
+        header: "Itens",
+        align: "right",
+        sortable: true,
+        sortValue: (invoice) => invoice.item_count,
+        render: (invoice) => invoice.item_count.toLocaleString("pt-BR"),
+      },
+      {
+        key: "value",
+        header: "Valor",
+        align: "right",
+        sortable: true,
+        sortValue: (invoice) => invoice.total_value,
+        render: (invoice) => formatCurrency(invoice.total_value),
+      },
+    ],
+    [basePath, codigo, loja],
+  );
+
+  const sortedInvoices = useMemo(
+    () => sortTableRows(invoices, columns, sortKey, sortDirection),
+    [columns, invoices, sortDirection, sortKey],
+  );
+
+  const handleSortChange = (columnKey: string) => {
+    const next = nextTableSortState(sortKey, sortDirection, columnKey);
+    setSortKey(next.sortKey);
+    setSortDirection(next.sortDirection);
+  };
 
   return (
     <CommercialSectionCard title="Notas fiscais">
       <div className="cm-customer-invoices__desktop">
         <CommercialDataTable
-          rows={invoices}
+          rows={sortedInvoices}
           columns={withColumnHelp(columns, CUSTOMER_INVOICE_COLUMN_HELP)}
           rowKey={(invoice) => invoice.key}
           layout="section"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
           onRowClick={openInvoiceDetail}
           rowClickRole="button"
         />
       </div>
       <div className="cm-customer-invoices__mobile">
-        {invoices.map((invoice) => {
+        {sortedInvoices.map((invoice) => {
           const href = invoiceHref(invoice);
           const titleLabel = `Nota ${invoice.invoice_number}${
             invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
@@ -209,10 +250,26 @@ export function CustomerInvoicesTable({
                   />
                 }
                 fields={[
-                  { id: "sales-order", label: "Pedido de venda", value: invoice.sales_order || "—" },
-                  { id: "customer-order", label: "Pedido do cliente", value: invoice.customer_order || "—" },
-                  { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
-                  { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
+                  {
+                    id: "sales-order",
+                    label: "Pedido de venda",
+                    value: invoice.sales_order || "—",
+                  },
+                  {
+                    id: "customer-order",
+                    label: "Pedido do cliente",
+                    value: invoice.customer_order || "—",
+                  },
+                  {
+                    id: "items",
+                    label: "Itens",
+                    value: invoice.item_count.toLocaleString("pt-BR"),
+                  },
+                  {
+                    id: "value",
+                    label: "Valor",
+                    value: formatCurrency(invoice.total_value),
+                  },
                 ]}
               />
             </div>
@@ -221,7 +278,11 @@ export function CustomerInvoicesTable({
       </div>
 
       {totalPages > 1 ? (
-        <div className="cm-customer-billing-pagination" role="navigation" aria-label="Paginação de notas">
+        <div
+          className="cm-customer-billing-pagination"
+          role="navigation"
+          aria-label="Paginação de notas"
+        >
           <CommercialActionButton
             variant="ghost"
             disabled={page <= 1}
