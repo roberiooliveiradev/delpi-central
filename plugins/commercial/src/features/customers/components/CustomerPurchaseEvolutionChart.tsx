@@ -1,18 +1,14 @@
-import { useId, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ChartCard, chartCardBemClasses, EmptyState } from "@delpi/plugin-ui/index";
+  ChartCard,
+  chartCardBemClasses,
+  EmptyState,
+  NativeCheckboxControl,
+} from "@delpi/plugin-ui/index";
 
 import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
+import { GroupedColumnSeriesChart } from "../../../components/GroupedColumnSeriesChart";
+import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import type {
@@ -69,7 +65,7 @@ export function CustomerPurchaseEvolutionChart({
   windowMonths,
   onWindowMonthsChange,
 }: CustomerPurchaseEvolutionChartProps) {
-  const gradientId = useId().replace(/:/g, "");
+  const [showTrend, setShowTrend] = useState(false);
   const hasValues = useMemo(
     () => points.some((p) => p.atual > 0 || p.anterior > 0),
     [points],
@@ -80,6 +76,33 @@ export function CustomerPurchaseEvolutionChart({
       anterior: points.reduce((sum, point) => sum + (Number(point.anterior) || 0), 0),
     }),
     [points],
+  );
+
+  const chartData = useMemo(
+    () =>
+      points.map((point) => ({
+        periodo: point.periodo,
+        atual: Number(point.atual) || 0,
+        anterior: Number(point.anterior) || 0,
+      })),
+    [points],
+  );
+
+  const bars = useMemo(
+    () => [
+      {
+        dataKey: "atual",
+        name: `Período atual · ${formatCurrency(totals.atual)}`,
+        fill: COLOR_CURRENT,
+        trendSource: true,
+      },
+      {
+        dataKey: "anterior",
+        name: `Período anterior · ${formatCurrency(totals.anterior)}`,
+        fill: COLOR_PRIOR,
+      },
+    ],
+    [totals.atual, totals.anterior],
   );
 
   const emptyMessage =
@@ -95,14 +118,25 @@ export function CustomerPurchaseEvolutionChart({
       classNames={CHART_CLASSES}
       className="cm-purchase-evolution"
       headerActions={
-        <CommercialSelectField
-          label="Período"
-          hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
-          options={PERIOD_OPTIONS}
-          value={String(windowMonths)}
-          onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
-          allowEmpty={false}
-        />
+        <div className="cm-purchase-evolution__header-actions">
+          <CommercialSelectField
+            label="Período"
+            hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
+            options={PERIOD_OPTIONS}
+            value={String(windowMonths)}
+            onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
+            allowEmpty={false}
+          />
+          <div className="cm-field">
+            <NativeCheckboxControl
+              id="customer-purchase-evolution-trend"
+              checked={showTrend}
+              onChange={setShowTrend}
+              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+              hint={CM_HELP.customerDetail.billingSeriesTrend}
+            />
+          </div>
+        </div>
       }
     >
       {error ? (
@@ -122,70 +156,15 @@ export function CustomerPurchaseEvolutionChart({
           defaultMessage={emptyMessage}
         />
       ) : (
-        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-          <ComposedChart
-            data={points}
-            margin={{ top: 8, right: 16, left: 4, bottom: 4 }}
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={COLOR_CURRENT} stopOpacity={0.22} />
-                <stop offset="100%" stopColor={COLOR_CURRENT} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="periodo"
-              tick={{ fontSize: 11 }}
-              interval="preserveStartEnd"
-              tickLine={false}
-            />
-            <YAxis
-              width={88}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => formatChartCurrency(Number(value))}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              formatter={(value, name) => [
-                formatCurrency(typeof value === "number" ? value : Number(value)),
-                name === "atual" ? "Período atual" : "Período anterior",
-              ]}
-            />
-            <Legend
-              verticalAlign="top"
-              align="left"
-              wrapperStyle={{ paddingBottom: 8, fontSize: 13 }}
-              formatter={(value) => {
-                if (value === "atual") {
-                  return `Período atual · ${formatCurrency(totals.atual)}`;
-                }
-                return `Período anterior · ${formatCurrency(totals.anterior)}`;
-              }}
-            />
-            <Area
-              type="monotone"
-              dataKey="atual"
-              name="atual"
-              stroke={COLOR_CURRENT}
-              strokeWidth={2.25}
-              fill={`url(#${gradientId})`}
-              dot={{ r: 3.5, fill: COLOR_CURRENT, strokeWidth: 0 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="anterior"
-              name="anterior"
-              stroke={COLOR_PRIOR}
-              strokeWidth={2}
-              strokeOpacity={0.9}
-              dot={{ r: 3.5, fill: COLOR_PRIOR, strokeWidth: 0 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <GroupedColumnSeriesChart
+          data={chartData}
+          categoryKey="periodo"
+          bars={bars}
+          height={CHART_HEIGHT}
+          showTrend={showTrend}
+          formatY={formatChartCurrency}
+          formatTooltipValue={formatCurrency}
+        />
       )}
     </ChartCard>
   );

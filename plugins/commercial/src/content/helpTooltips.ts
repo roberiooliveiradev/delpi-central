@@ -351,9 +351,9 @@ export const CM_HELP = {
       "Cliente fora da sua carteira — dados da conta (histórico, oportunidades, contatos e pedidos deste cliente) permanecem disponíveis. Indicadores de cobertura de carteira ficam ocultos.",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
-      "Comparativo mês a mês: últimos 12 meses versus os 12 meses imediatamente anteriores.",
+      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior.",
     purchaseEvolutionComparison:
-      "Compara os últimos 12 meses com os 12 meses anteriores para evidenciar mudança de ritmo nas compras.",
+      "Compara a janela atual com a anterior para evidenciar mudança de ritmo nas compras.",
     timeline:
       "Atividades e follow-ups registrados para esta conta, em ordem cronológica.",
     scheduleFollowUp:
