@@ -1,0 +1,237 @@
+# Ata → novas implementações (ago/2026)
+
+> **Origem:** ata de follow-up comercial (pedidos, carteira, Meu Dia, perfis/notificações, colaboração)  
+> **Produto:** Portal Comercial · `/apps/commercial` · `commercial-api` · TOTVS via `api-delpi`  
+> **Como ler:** cada bloco = **já temos** · **implementar** · **investigar / decisão** · **fora / irmão**  
+> **Não substitui:** [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) · [WIREFRAMES.md](./WIREFRAMES.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
+
+---
+
+## 0. Resumo executivo
+
+| Tema da ata | Situação no Portal | Próximo passo sugerido |
+|-------------|--------------------|------------------------|
+| Pedidos em aberto (filtros, KPI, tabela/cards, colunas) | **Existe** | Homologar UX; não reinventar |
+| Kanban de pedidos por etapa (próximos → faturar → concluídos) | **Falta** | Desenhar etapas + fonte TOTVS; WF novo |
+| Responsável pela criação do pedido (Protheus) | **Indisponível** (doc padroes-totvs) | Sem UI de criador neste ciclo |
+| Comparativos de faturamento na carteira (empresa, YoY, períodos, tendência) | **Parcial** | Estender Overview/Conta; faltam % empresa e seletor livre |
+| Meu Dia (tarefas, cliente, anexos, responsável, realtime, gestor) | **Existe** (MVP forte) | P3 CRM (lembrete/notif push); visita→frota |
+| Integração visita × Central de Agendamento (veículos) | **Falta** (app irmão existe) | BFF + deep-link / reserva no fluxo Visita |
+| Home por perfil (vendedor × gestor × orçamentista × faturamento) | **Parcial** | Personas via papéis Minha Delpi + layouts Home |
+| Notificar «pronto para faturar» (faturamento + vendedores) | **Falta** | Definir gatilho TOTVS + outbox/notif |
+| Config sensível só admin da aplicação | **Parcial** | Manter manage interno; não expandir toggles ao gestor |
+| Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Falta** | Epico novo; reusar integração Outlook Minha Delpi |
+
+Legenda: **Existe** · **Parcial** · **Falta** · **Investigar** · **Fora** (outro bounded context).
+
+---
+
+## 1. Pedidos em aberto (`/open-orders`)
+
+### 1.1 Já temos
+
+| Capacidade | Onde | Notas |
+|------------|------|-------|
+| Filtros (estoque, atraso, escopo carteira/vendedor, datas…) | `OpenOrdersPage` + deep links | Ver helps `CM_HELP.openOrders` |
+| Indicadores resumidos / strip de status | Página + factory strip | Cobertura, atrasos, etc. |
+| Visualização **tabela** ou **cards** | Preferência persistida | Layout toggle |
+| Escolher e ordenar colunas | Preferências de coluna | Table settings |
+| Detalhe de linha / OP, links reais Conta/Pedido/OP | Detalhe produção + `CommercialEntityLink` | WF pedidos / links ago/2026 |
+| Export Excel | Toolbar | |
+
+Rota: `/apps/commercial/open-orders` · permissão típica: `commercial.accounts.view`.
+
+### 1.2 Implementar
+
+| Item da ata | Ferramenta / entrega | Dependências |
+|-------------|----------------------|--------------|
+| **Kanban** por etapas (próximos · em andamento · prontos para faturar · concluídos) | Nova visão na página (ou subrota), board com colunas = etapas | (1) Glossário de etapas acordado com Comercial/PCP/Faturamento; (2) campos TOTVS que mapeiam cada coluna; (3) regra de «pronto para faturar»; (4) UX: drag opcional vs. só leitura por status |
+| Coluna / filtro por **criador do pedido** (se o campo existir) | Coluna + filtro na lista + eventual chip | Discovery § 1.3 |
+
+**Não fazer:** reimplementar filtros/KPI/tabela/cards já estáveis.
+
+### 1.3 Investigar (Protheus)
+
+| Pergunta | Resultado (ago/2026) |
+|----------|----------------------|
+| Existe campo do **usuário que criou** o pedido de venda? | **Não** — ver [pedido-venda-criador.md](../../../api-delpi/docs/api/padroes-totvs/pedido-venda-criador.md) |
+| `C5_MSUIDT` | UUID técnico (SX3 «Campo UUID»); não usar como criador |
+| Filtro carteira por criador | **Não prometido** na UI até haver fonte nova |
+
+Probe: `api-delpi/scripts/sql/sc5_order_creator_probe.py`.  
+**UI criador (coluna/filtro):** cancelada neste ciclo.
+
+---
+
+## 2. Carteira — comparações de faturamento
+
+### 2.1 Já temos
+
+| Capacidade | Onde | Notas |
+|------------|------|-------|
+| Faturamento / ROL no período | Visão geral `/overview`, Conta `?secao=historico` | Séries BFF analytics / billing |
+| **YoY** (mesmo período −1 ano) em ROL e conversão | Overview (Onda B) | Overlay sem rota nova |
+| Carteira aberta + **gap vs meta** + buckets no tempo | Overview (`open-portfolio-horizon`) | Chips → deep link Meus pedidos |
+| Análise por **cliente** | Conta 360 + Minha Carteira | Pedidos, histórico, opp |
+| Escopo por **vendedor / carteira** | Filtro de escopo shell + Admin | Membership N:N |
+| Evolução / série por período (presets) | Overview + Conta | Presets MTD/YTD etc. |
+
+Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § Onda A/B · [WIREFRAMES.md](./WIREFRAMES.md) WF-OV.
+
+### 2.2 Implementar
+
+| Item da ata | Status vs atual | Ferramenta / entrega |
+|-------------|-----------------|----------------------|
+| Faturamento da **carteira ÷ faturamento total da empresa** | **Falta** | KPI/card % share; precisa ROL consolidado empresa (todas filiais/carteiras) × escopo da carteira; ficha fórmula + BFF |
+| Período atual × **mesmo período ano anterior** | **Parcial** (Overview YoY) | Espelhar na **Minha Carteira / Conta** se a ata exige lá; manter mesma fórmula |
+| Comparação com **períodos e anos escolhidos pelo usuário** | **Parcial** (presets) | Date range livre + N anos de comparação (UI + cache); não só −1a fixo |
+| Evolução da carteira no tempo | **Parcial** (horizon + séries) | Clarificar: valor **aberto** vs **faturado**; series dedicada se faltar |
+| Tendência de faturamento com **período configurável** | **Parcial** | Controles de janela (7/30/90/custom) + sparkline/tendência na carteira |
+| Cortes cliente × vendedor × período (crescimento/queda) | **Parcial** | Ranking delta % por cliente/vendedor no escopo; tabela + export |
+
+### 2.3 Fora / cuidado
+
+- Não misturar **carteira aberta (backlog)** com **ROL faturado** no mesmo card sem rótulo (já documentado em KPI-FICHAS).
+- Totais «empresa» = escopo RBAC (gestor com `analytics` / team); vendedor só vê o próprio share se política permitir.
+
+---
+
+## 3. Follow-up e organização de atividades (Meu Dia)
+
+### 3.1 Já temos
+
+| Capacidade da ata | Estado | Onde |
+|-------------------|--------|------|
+| Cadastro e acompanhamento de tarefas / atividades | **Existe** | `/my-tasks` (alias `/my-day`) |
+| Vínculo a **cliente** | **Existe** | Form + Conta «Agendar follow-up» |
+| **Anexos** | **Existe** (P2) | Volume `commercial-attachments` |
+| **Responsáveis** + reatribuir | **Existe** (P1) | Gestão: chips Minhas / Equipe |
+| Gestor atribui a vendedores da carteira | **Existe** | Escopo team + picker |
+| Realtime (conclusão visível aos envolvidos) | **Existe** | WebSocket worklist + toast |
+| Tipos (Follow-up, Ligar, E-mail, Visita, To-do) | **Existe** | |
+| Observação / histórico na conta | **Existe** (P0) | |
+
+Refs: [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md).
+
+### 3.2 Implementar
+
+| Item da ata | Status | Ferramenta / entrega |
+|-------------|--------|----------------------|
+| **Notificações no Minha Delpi** (além do toast in-app) | **Parcial / Falta** | Canal plataforma (bell/push/e-mail) via outbox; P3 «Reminder» em UX-E-TASKS |
+| Integração **visita → Central de Agendamento (veículos)** | **Falta** | Ao tipo **Visita**: consultar disponibilidade, data/hora, reservar recurso; UI no Portal + gateway HTTP para api-delpi `/scheduling…` (dono: Central de Agendamento) |
+
+App irmão já existe: [`plugins/central-agendamento`](../../../plugins/central-agendamento/README.md) · rotas ES/SC · doc [central-agendamento.md](../../../api-delpi/docs/api/central-agendamento.md).
+
+**Princípio de fronteira:** Comercial **não** reimplementa frota; orquestra reserva via API do agendamento (ou deep-link autenticado com retorno ao Meu Dia).
+
+### 3.3 Backlog CRM já listado (P3)
+
+Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-TASKS § 3 P3. Não misturar com o épico de colaboração (§ 5).
+
+---
+
+## 4. Perfis de acesso e notificações
+
+### 4.1 Já temos
+
+| Capacidade | Estado | Notas |
+|------------|--------|-------|
+| Informações conforme **capacidade** (não cargo hardcoded) | **Existe** | [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) — papéis Minha Delpi agrupam codes |
+| Vendedor: pedidos, carteira (membership), Meu Dia, Conta | **Existe** | Home prioriza atenção / números do escopo |
+| Gestor: Visão geral, escopo equipe, Admin carteiras/equipe | **Existe** | `analytics.view`, `accounts.team.view`, `seller-portfolios.manage` |
+| Config sensível em Admin (não no dia a dia do gestor de campo) | **Parcial** | CRUD carteiras/grupos só `manage`; evitar proliferar toggles |
+
+### 4.2 Implementar
+
+| Item da ata | Ferramenta / entrega |
+|-------------|----------------------|
+| Home **vendedor** = meus clientes / pedidos / carteira / atividades | Layout/prioridade do Início por conjunto de permissões (já parcialmente); validar copy e ordem com Comercial |
+| Home **gestor** = equipe + carteiras + pedidos + indicadores | Reforçar bloco Gestão/Equipe + deep links Overview; ranking produtividade se faltar |
+| Perfis **orçamentista** e **faturamento** | Novos **papéis** Minha Delpi (agrupando codes existentes + futuros `*.view` se necessário); telas/atalhos: OV/propostas vs. «pronto a faturar» |
+| Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | (1) Definir gatilho TOTVS/regra; (2) job/outbox; (3) destinatários (papel + membership do pedido); (4) canal Minha Delpi |
+| Permissões sensíveis só equipe da aplicação | Política ops: grants de `manage` / auditoria só internos; documentar no PERFIS |
+
+**Não fazer:** permission codes nomeados `commercial.vendedor` / `commercial.gestor` — manter modelo por capacidade.
+
+---
+
+## 5. Área de colaboração comercial
+
+### 5.1 Já temos (adjacente, não substitui)
+
+| Peça | Onde | Limite |
+|------|------|--------|
+| Atividades / follow-ups por cliente | Meu Dia + Conta | Não é feed de equipe |
+| Realtime worklist / portfolio | commercial-api WS | Eventos de domínio, não chat |
+| Conta Outlook Minha Delpi (integração existente) | Plataforma | Ampliar escopo calendário/eventos conforme ata |
+
+### 5.2 Implementar (épico)
+
+| Capacidade da ata | Ferramenta / entrega | Notas |
+|-------------------|----------------------|-------|
+| Publicar mensagens e orientações | Feed / mural Comercial (Postgres `commercial` + API) | Bounded context Comercial |
+| Menções a colaboradores | `@user` + notificação | Diretório já usado em Admin |
+| Vincular cliente, pedido, proposta, etc. | Mentions tipados → deep link Portal | Reusar builders de path/href |
+| Preview resumido do item mencionado | Cards/snippet (nome, status, valor) | BFF por tipo de entidade |
+| Histórico formal | Persistência + busca + auditoria | Soft delete / retenção |
+| Criar reuniões/compromissos a partir da mensagem | Action «Agendar» | |
+| Integração **Outlook** e **Teams** | Graph / conectores Minha Delpi | Conta já existe; ampliar scopes |
+| Consultar disponibilidade dos participantes | Free/busy Graph | |
+| Convites + eventos nas agendas | Create event + attendees | |
+
+**Fora do escopo imediato do MFE Comercial sozinho:** política de tenant Graph, consentimento admin, rate limits — coordenar com plataforma/auth.
+
+**Substituição parcial do Teams:** posicionar como **histórico operacional vinculado a registros**; não como chat genérico 1:1.
+
+---
+
+## 6. Mapa de ferramentas (o que construir)
+
+| # | Ferramenta | Pacote dono | Prioridade sugerida | Depende de |
+|---|------------|-------------|---------------------|------------|
+| T1 | Discovery «criador do pedido» Protheus | api-delpi (+ doc padroes-totvs) | P0 discovery | Acesso TOTVS / DBA |
+| T2 | Kanban Meus pedidos (etapas) | commercial MFE + api-delpi campos | P1 | Glossário etapas + T1 se coluna criador |
+| T3 | Share faturamento carteira ÷ empresa | commercial-api BFF + Overview/Carteira | P1 | Fórmula KPI + RBAC |
+| T4 | Comparadores de período livres + tendência na Carteira/Conta | MFE + séries existentes | P1 | UX presets vs custom |
+| T5 | Ranking crescimento/queda (cliente/vendedor) | BFF analytics | P2 | T3/T4 |
+| T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | P1 | Gatilho TOTVS + persona faturamento |
+| T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
+| T8 | Visita Meu Dia → reserva veículo | commercial + Central de Agendamento | P1 | Contrato HTTP scheduling |
+| T9 | Lembretes tarefa (e-mail/push) | commercial-api outbox + plataforma | P2 | Canal notificação global |
+| T10 | Área de colaboração (feed + menções + vínculos) | commercial-api + MFE | P2 épico | Design + Graph |
+| T11 | Colaboração → Outlook/Teams (busy + invite) | plataforma / Graph | P2–P3 | T10 + scopes |
+
+---
+
+## 7. Alinhamento com backlog já documentado
+
+| Ata (este doc) | Documento existente |
+|----------------|---------------------|
+| Kanban pedidos | WIREFRAMES: WF-08 pipeline era backlog de **oportunidades**; **Kanban de pedidos** = demanda **nova** (não misturar com OV) |
+| YoY / horizon | ATA-MAPA + KPI-FICHAS (entregue Overview) — estender à Carteira |
+| Meu Dia anexos/responsável | UX-E-TASKS (entregue); P3 reminder |
+| Mapa / inbox e-mail / rotate leads | WIREFRAMES E7 futuro — **diferente** da colaboração feed |
+| Perfis | PERFIS-E-PERMISSOES — evoluir papéis, não codes de cargo |
+| Agendamento veículos | Plugin `central-agendamento` — integração, não clone |
+
+---
+
+## 8. Próximos passos recomendados (ordem)
+
+1. **Workshop curto** — fechar glossário das colunas do Kanban e regra «pronto para faturar».  
+2. **T1 discovery** — campo criador do pedido no Protheus (sim/não + qualidade do dado).  
+3. **T6 + persona faturamento** — maior ganho operacional citado na ata.  
+4. **T3/T4** — comparativos de faturamento na superfície Carteira/Conta.  
+5. **T8** — visita ↔ veículos (reuso Central de Agendamento).  
+6. **T10/T11** — épico colaboração (ADR + spike Graph).
+
+---
+
+## Referências
+
+- [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)  
+- [WIREFRAMES.md](./WIREFRAMES.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
+- [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)  
+- [KPI-FICHAS.md](./KPI-FICHAS.md) · [API-ROUTES.md](./API-ROUTES.md)  
+- [plugins/central-agendamento/README.md](../../../plugins/central-agendamento/README.md)  
+- [api-delpi/docs/api/central-agendamento.md](../../../api-delpi/docs/api/central-agendamento.md)  
