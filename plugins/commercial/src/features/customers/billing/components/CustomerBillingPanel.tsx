@@ -7,6 +7,7 @@ import {
   CommercialStateBanner,
 } from "../../../../app/commercialUi";
 import type { UseCustomerBillingResult } from "../hooks/useCustomerBilling";
+import { CustomerAccountBillingChart } from "./CustomerAccountBillingChart";
 import { CustomerBillingFilters } from "./CustomerBillingFilters";
 import { CustomerBillingSummaryCards } from "./CustomerBillingSummaryCards";
 import { CustomerInvoicesTable } from "./CustomerInvoicesTable";
@@ -52,6 +53,7 @@ export function CustomerBillingPanel({
   const showInitialLoading = loading && !hasData;
   const empty =
     !loading && !error && !validationError && data && data.invoices.length === 0;
+  const chartEnabled = !validationError && Boolean(startDate && endDate);
 
   return (
     <div className="cm-customer-billing-panel">
@@ -85,6 +87,15 @@ export function CustomerBillingPanel({
         onEndDateChange={setEndDate}
         onSituationChange={setSituation}
         onSearchChange={setSearch}
+      />
+
+      <CustomerAccountBillingChart
+        codigo={codigo}
+        loja={loja}
+        startDate={startDate}
+        endDate={endDate}
+        comparePriorYear={comparePriorYear}
+        enabled={chartEnabled}
       />
 
       {showInitialLoading ? (

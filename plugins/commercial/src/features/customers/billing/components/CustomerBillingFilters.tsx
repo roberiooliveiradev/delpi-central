@@ -125,18 +125,17 @@ export function CustomerBillingFilters({
           placeholder="Nota, série, pedido ou produto"
           disabled={disabled}
         />
+        <div className="cm-customer-billing-filters__yoy cm-field">
+          <NativeCheckboxControl
+            id="customer-billing-yoy"
+            checked={comparePriorYear}
+            onChange={onComparePriorYearChange}
+            label={ANALYTICS_CONTENT.overview.comparePriorYear}
+            hint={CM_HELP.customerDetail.billingSeriesAccount}
+            disabled={disabled}
+          />
+        </div>
       </CommercialFilterBarShell>
-
-      <div className="cm-customer-billing-filters__yoy">
-        <NativeCheckboxControl
-          id="customer-billing-yoy"
-          checked={comparePriorYear}
-          onChange={onComparePriorYearChange}
-          label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={CM_HELP.customers.billingSeriesYoy}
-          disabled={disabled}
-        />
-      </div>
 
       {validationError ? (
         <CommercialStateBanner>

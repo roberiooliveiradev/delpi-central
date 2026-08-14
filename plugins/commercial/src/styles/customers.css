@@ -342,6 +342,17 @@
   gap: 12px;
 }
 
+.dashboard-commercial .cm-customer-billing-filters__yoy {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  padding-bottom: 4px;
+}
+
+.dashboard-commercial .cm-account-billing-chart {
+  margin-top: 4px;
+}
+
 .dashboard-commercial .cm-customer-orders__mobile,
 .dashboard-commercial .cm-customer-orders-preview__mobile,
 .dashboard-commercial .cm-customer-order-lines__mobile,

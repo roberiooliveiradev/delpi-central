@@ -726,8 +726,9 @@ lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 **Abas:** Pedidos — clique na linha/item (atenção, preview Visão geral, tabela) abre
 detalhe (`…/orders/…`); na tabela, chevron expande `CustomerOrderLines` inline via
 `DataTable` `expandedRowKey`/`renderExpandedRow` (sem modal «Ver linhas» / «Abrir pedido»).
-Histórico — clique na linha abre detalhe NF (`…/outbound-invoices/{branch}/{n}/{s}`);
-sem modal de itens. Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
+Histórico — gráfico de faturamento (série) + KPIs + tabela; clique na linha abre
+detalhe NF (`…/outbound-invoices/{branch}/{n}/{s}`); sem modal de itens. YoY no
+filtro sobrepõe linha tracejada e delta nos cards. Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
 `interactive`; CTA ADY só com `analytics.view` / `proposals.view`. Atividades carrega
 timeline real e permite follow-up somente com `worklist.view + followups.manage`.
 Cada fonte mantém loading, erro, vazio, retry e atualização independentes.

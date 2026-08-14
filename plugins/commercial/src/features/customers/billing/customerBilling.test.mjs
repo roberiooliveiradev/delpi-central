@@ -160,6 +160,8 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /CommercialDateField/);
     assert.match(filters, /comparePriorYear/);
     assert.match(filters, /NativeCheckboxControl/);
+    assert.match(filters, /cm-customer-billing-filters__yoy/);
+    assert.match(filters, /CommercialFilterBarShell/);
     assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
   });
 
@@ -168,9 +170,16 @@ describe("CustomerDetailPage billing (fonte)", () => {
       "features/customers/billing/components/CustomerBillingPanel.tsx",
     );
     const hook = readSrc("features/customers/billing/hooks/useCustomerBilling.ts");
+    const chart = readSrc(
+      "features/customers/billing/components/CustomerAccountBillingChart.tsx",
+    );
     assert.match(panel, /comparePriorYear/);
     assert.match(panel, /priorSummary/);
+    assert.match(panel, /CustomerAccountBillingChart/);
     assert.match(hook, /shiftPeriodRangeByYears/);
     assert.match(hook, /comparePriorYear/);
+    assert.match(chart, /useCustomerBillingSeries/);
+    assert.match(chart, /comparePriorYear/);
+    assert.match(chart, /AreaChart/);
   });
 });

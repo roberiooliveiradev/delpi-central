@@ -72,6 +72,7 @@ describe("CM_HELP matriz (C16)", () => {
       "customerDetail.avatarChange",
       "customerDetail.avatarRemove",
       "customerDetail.opportunities",
+      "customerDetail.billingSeriesAccount",
       "customerDetail.ordersSituationFilter",
       "customerDetail.ordersSearch",
       "customerDetail.opportunitiesStatusFilter",

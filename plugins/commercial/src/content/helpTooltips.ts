@@ -376,6 +376,8 @@ export const CM_HELP = {
       "Busca por número da nota, série, pedido de venda ou código/descrição do produto.",
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
+    billingSeriesAccount:
+      "Evolução do faturamento deste cliente no período dos filtros. Com «Comparar ano anterior», a linha tracejada sobrepõe o mesmo intervalo −1 ano.",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:
