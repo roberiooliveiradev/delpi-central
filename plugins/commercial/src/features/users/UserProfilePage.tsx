@@ -40,6 +40,7 @@ import {
 } from "../../app/commercialUi";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
+import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { buildShellPortfolioCustomersSearch } from "../../app/shellUserPortfolioNav";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -353,16 +354,23 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     name: profile.name,
   });
   const heroDescription = (profile.job_title ?? "").trim() || undefined;
+  const pathSearch =
+    typeof window !== "undefined" ? window.location.search : "";
+  const back = resolvePagePathBack(
+    pathSearch,
+    { href: basePath, label: "Portal Comercial" },
+    basePath,
+  );
 
   return (
     <div className="cm-user-profile cm-page-stack">
       <CommercialPagePath
         back={{
-          label: "Portal Comercial",
-          href: basePath,
+          label: back.label,
+          href: back.href,
           onNavigate: (event) => {
             event.preventDefault();
-            navigatePluginPath(basePath);
+            navigatePluginPath(back.href);
           },
         }}
         items={[]}

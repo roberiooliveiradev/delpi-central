@@ -12,6 +12,7 @@ import {
 } from "../api/userProfileApi";
 import { CommercialAvatar } from "./commercialUi";
 import { navigatePluginView, navigateUserProfile } from "./pluginNavigation";
+import { currentReturnNav } from "./commercialNavigationReturn";
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
   buildShellPortfolioCustomersSearch,
@@ -93,7 +94,10 @@ export function ShellUserPortfolioMenu({
   const goToProfile = useCallback(() => {
     if (!userId) return;
     setOpen(false);
-    navigateUserProfile(userId, { basePath });
+    navigateUserProfile(userId, {
+      basePath,
+      returnNav: currentReturnNav("Portal Comercial"),
+    });
   }, [basePath, userId]);
 
   const goToPortfolio = useCallback(

@@ -24,6 +24,7 @@ import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail, navigateUserProfile } from "../../app/pluginNavigation";
+import { currentReturnNav } from "../../app/commercialNavigationReturn";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
@@ -1008,7 +1009,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                               userId={uid}
                               fallbackLabel={fallback}
                               onOpen={() =>
-                                navigateUserProfile(uid, { basePath })
+                                navigateUserProfile(uid, {
+                                  basePath,
+                                  returnNav: currentReturnNav("Minhas tarefas"),
+                                })
                               }
                             />
                           );
@@ -1054,7 +1058,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                             directoryLabelFor(completedBy)
                           }
                           onOpen={() =>
-                            navigateUserProfile(completedBy, { basePath })
+                            navigateUserProfile(completedBy, {
+                              basePath,
+                              returnNav: currentReturnNav("Minhas tarefas"),
+                            })
                           }
                         />
                       </div>
@@ -1077,7 +1084,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                           userId={createdBy}
                           fallbackLabel={assignedByFallback}
                           onOpen={() =>
-                            navigateUserProfile(createdBy, { basePath })
+                            navigateUserProfile(createdBy, {
+                              basePath,
+                              returnNav: currentReturnNav("Minhas tarefas"),
+                            })
                           }
                         />
                       </div>

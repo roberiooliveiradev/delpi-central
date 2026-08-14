@@ -28,6 +28,7 @@ import {
 } from "../../app/commercialUi";
 import { CommercialDataTableSection } from "../../app/dataTableUi";
 import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
+import { currentReturnNav } from "../../app/commercialNavigationReturn";
 import type { CommercialPresenceUpdatedEvent } from "../../constants/realtime";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -221,7 +222,12 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       render: (row) => (
         <CommercialActionButton
           variant="ghost"
-          onClick={() => navigateUserProfile(row.user_id, { basePath })}
+          onClick={() =>
+            navigateUserProfile(row.user_id, {
+              basePath,
+              returnNav: currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot),
+            })
+          }
         >
           {copy.viewProfile}
         </CommercialActionButton>
@@ -396,7 +402,10 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
               emptyMessage={copy.orgEmpty}
               onNodeClick={(payload) => {
                 if (payload.kind !== "person") return;
-                navigateUserProfile(payload.entityId, { basePath });
+                navigateUserProfile(payload.entityId, {
+                  basePath,
+                  returnNav: currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot),
+                });
               }}
             />
           )}

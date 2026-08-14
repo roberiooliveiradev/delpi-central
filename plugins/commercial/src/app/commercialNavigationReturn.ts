@@ -125,3 +125,11 @@ export function currentLocationAsReturnTo(): string {
   if (typeof window === "undefined") return "";
   return `${normalizePathname(window.location.pathname)}${window.location.search || ""}`;
 }
+
+/** Pacote returnNav a partir da URL atual + rótulo do Path. */
+export function currentReturnNav(returnLabel: string): ReturnNavOptions {
+  return {
+    returnTo: currentLocationAsReturnTo(),
+    returnLabel: sanitizeReturnLabel(returnLabel),
+  };
+}

@@ -30,6 +30,7 @@ import {
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
+import { currentReturnNav } from "../../app/commercialNavigationReturn";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -416,7 +417,10 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
               emptyMessage={copy.orgEmpty}
               onNodeClick={(payload) => {
                 if (payload.kind !== "person") return;
-                navigateUserProfile(payload.entityId, { basePath });
+                navigateUserProfile(payload.entityId, {
+                  basePath,
+                  returnNav: currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot),
+                });
               }}
             />
           )}
