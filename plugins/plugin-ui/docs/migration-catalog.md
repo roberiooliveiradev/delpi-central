@@ -386,6 +386,7 @@ obrigatório com `href`; CSS `a.delpi-ui-action-btn` + `:visited` em
 | `commercial` | 7.10 | ✅ | ✅ wrappers/factories `Commercial*`; helpers e shells mortos removidos | ✅ | prefixo `cm`; conteúdo de ajuda sem detalhes HTTP/Protheus; gates de source, test, lint e build |
 | `commercial` Hub Início | 7.10+ | ✅ | ✅ `SectionRouteCard`, `CatalogSearchBar`, `HubChipRow`, `RouteChip`, `CommandPalette`, `leadingIcon` em AlertQueue/WorklistItem | ✅ | catálogo `pluginRouteCatalog` + `hubRouteIcons`; CSS `cm-home-stack*`; favoritos via commercial-api; pin em `create` |
 | `commercial` Pedidos+Carteira | 7.10+ | ✅ | ✅ chrome operacional → kit (`TableFontSizeControls`, `DataListToolbar`, `DataCardsGrid`, `InteractiveDataCard`, `usePersistedViewLayout`) | ✅ | storage keys `commercial:open-orders:*` / `commercial:customers:*`; CSS local de toolbar/cards removido |
+| `commercial` Pedidos Kanban | 7.10+ | ✅ | ✅ `KanbanBoard` + `createDashboardKanbanBoard` (board read-only) | ✅ | layout `board` em `commercial:open-orders:layout`; zero CSS board no MFE |
 
 ### DoD de um plugin na Fase 7
 
