@@ -260,7 +260,9 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
           </div>
         }
         highlights={highlights}
-      >
+      />
+
+      <div className="cm-page-filters" aria-label="Filtros de pedidos em aberto">
         {canFilterPortfolios ? (
           <div className="cm-open-orders-page__scope">
             <SellerScopeFilter
@@ -349,7 +351,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
             />
           </>
         ) : null}
-      </CommercialPageHero>
+      </div>
 
       {loading && !allItemsCount && !portfolioEmpty ? (
         <CommercialLoadingCard title="Carregando pedidos em aberto…" variant="panel" />
