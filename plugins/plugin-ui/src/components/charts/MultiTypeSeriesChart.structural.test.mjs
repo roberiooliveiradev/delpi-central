@@ -17,6 +17,7 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /withLinearTrendField/);
     assert.match(src, /ComposedChart/);
     assert.match(src, /TREND_STROKE_WIDTH/);
-    assert.match(src, /delpi-ui-chart-trend-stroke|delpi-ui-warning/);
+    assert.match(src, /stroke=\{source\.fill\}/);
+    assert.doesNotMatch(src, /delpi-ui-chart-trend-stroke/);
   });
 });
