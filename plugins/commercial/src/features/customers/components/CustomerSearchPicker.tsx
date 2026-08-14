@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import type { TotvsCustomerHit } from "../../../types/portfolio";
 import { customerKey } from "../../../shared/format";
@@ -17,6 +17,10 @@ export type CustomerSearchPickerProps = {
   disabled?: boolean;
   /** Limite de selecionados (default 20). Com `1`, a próxima escolha substitui. */
   maxSelected?: number;
+  /**
+   * Chaves `code/store` já vinculadas (ou bloqueadas) — não entram na lista de resultados.
+   */
+  excludeKeys?: ReadonlySet<string>;
   /** Conteúdo à esquerda de cada sugestão (ex.: avatar). */
   renderOptionLeading?: (hit: TotvsCustomerHit) => ReactNode;
   /**
@@ -60,6 +64,7 @@ export function CustomerSearchPicker({
   onChange,
   disabled = false,
   maxSelected = 20,
+  excludeKeys,
   renderOptionLeading,
   renderSelectedChip,
   labels,
@@ -68,7 +73,30 @@ export function CustomerSearchPicker({
   const { query, setQuery, hits, searching, error, queryReady, reset } =
     useActiveCustomerSearch({ pageSize: 12 });
 
-  const selectedKeys = new Set(value.map((item) => customerKey(item.code, item.store)));
+  const blockedKeys = useMemo(() => {
+    const next = new Set<string>();
+    if (excludeKeys) {
+      for (const key of excludeKeys) {
+        const normalized = key.trim();
+        if (normalized) next.add(normalized);
+      }
+    }
+    for (const item of value) {
+      const key = customerKey(item.code, item.store);
+      if (key) next.add(key);
+    }
+    return next;
+  }, [excludeKeys, value]);
+
+  const visibleHits = useMemo(
+    () =>
+      hits.filter((hit) => {
+        const key = customerKey(hit.code, hit.store);
+        return Boolean(key) && !blockedKeys.has(key);
+      }),
+    [blockedKeys, hits],
+  );
+
   const atLimit = maxSelected > 0 && value.length >= maxSelected;
 
   const selectHit = (hit: TotvsCustomerHit) => {
@@ -76,7 +104,7 @@ export function CustomerSearchPicker({
     const store = hit.store.trim();
     if (!code || !store) return;
     const key = customerKey(code, store);
-    if (selectedKeys.has(key)) return;
+    if (!key || blockedKeys.has(key)) return;
     const next: CustomerSearchSelection = {
       code,
       store,
@@ -93,20 +121,20 @@ export function CustomerSearchPicker({
   };
 
   const selectAllHits = () => {
-    if (disabled || maxSelected === 1 || hits.length === 0) return;
+    if (disabled || maxSelected === 1 || visibleHits.length === 0) return;
     const remaining =
       typeof maxSelected === "number" && maxSelected > 0
         ? Math.max(0, maxSelected - value.length)
-        : hits.length;
+        : visibleHits.length;
     if (remaining === 0) return;
     const additions: CustomerSearchSelection[] = [];
-    for (const hit of hits) {
+    for (const hit of visibleHits) {
       if (additions.length >= remaining) break;
       const code = hit.code.trim();
       const store = hit.store.trim();
       if (!code || !store) continue;
       const key = customerKey(code, store);
-      if (selectedKeys.has(key)) continue;
+      if (!key || blockedKeys.has(key)) continue;
       if (additions.some((item) => customerKey(item.code, item.store) === key)) {
         continue;
       }
@@ -120,11 +148,6 @@ export function CustomerSearchPicker({
     onChange([...value, ...additions]);
     reset();
   };
-
-  const selectableHitCount = hits.filter((hit) => {
-    const key = customerKey(hit.code, hit.store);
-    return key && !selectedKeys.has(key);
-  }).length;
 
   return (
     <div
@@ -157,12 +180,16 @@ export function CustomerSearchPicker({
           {error}
         </p>
       ) : null}
-      {!searching && queryReady && !error && hits.length === 0 ? (
-        <p className="delpi-ui-user-directory-picker__status">Nenhum cliente encontrado.</p>
+      {!searching && queryReady && !error && visibleHits.length === 0 ? (
+        <p className="delpi-ui-user-directory-picker__status">
+          {hits.length > 0
+            ? "Nenhum resultado disponível — já selecionados ou vinculados."
+            : "Nenhum cliente encontrado."}
+        </p>
       ) : null}
-      {hits.length > 0 ? (
+      {visibleHits.length > 0 ? (
         <>
-          {maxSelected !== 1 && selectableHitCount > 0 ? (
+          {maxSelected !== 1 ? (
             <div className="delpi-ui-user-directory-picker__status">
               <button
                 type="button"
@@ -173,16 +200,16 @@ export function CustomerSearchPicker({
                 {atLimit
                   ? "Limite de seleção atingido"
                   : `Selecionar todos filtrados (${Math.min(
-                      selectableHitCount,
+                      visibleHits.length,
                       typeof maxSelected === "number" && maxSelected > 0
                         ? Math.max(0, maxSelected - value.length)
-                        : selectableHitCount,
+                        : visibleHits.length,
                     )})`}
               </button>
             </div>
           ) : null}
           <ul className="delpi-ui-user-directory-picker__results">
-            {hits.map((hit) => {
+            {visibleHits.map((hit) => {
               const key = customerKey(hit.code, hit.store);
               return (
                 <li key={key || `${hit.code}-${hit.store}`}>
@@ -193,11 +220,7 @@ export function CustomerSearchPicker({
                         ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
                         : undefined
                     }
-                    disabled={
-                      disabled ||
-                      selectedKeys.has(key) ||
-                      (atLimit && maxSelected !== 1)
-                    }
+                    disabled={disabled || (atLimit && maxSelected !== 1)}
                     onClick={() => selectHit(hit)}
                   >
                     {renderOptionLeading ? (

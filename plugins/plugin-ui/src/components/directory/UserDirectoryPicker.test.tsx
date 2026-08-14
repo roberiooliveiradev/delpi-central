@@ -84,6 +84,31 @@ describe("UserDirectoryPicker", () => {
     ]);
   });
 
+  it("omite da lista quem já está selecionado", async () => {
+    searchUsers.mockResolvedValueOnce([
+      users[0],
+      { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },
+    ]);
+
+    render(
+      <UserDirectoryPicker
+        value={[users[0]]}
+        onChange={() => {}}
+        searchUsers={searchUsers}
+        showEmail={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nome"), {
+      target: { value: "Ana" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Carla Dias" })).toBeTruthy();
+    });
+    expect(screen.queryByRole("button", { name: "Ana Lima" })).toBeNull();
+  });
+
   it("renderiza leading nas sugestões e chip customizado", async () => {
     searchUsers.mockResolvedValueOnce([
       { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },

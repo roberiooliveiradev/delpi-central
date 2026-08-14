@@ -64,5 +64,6 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(detail, /filteredLinked/);
     assert.match(detail, /Selecionar todos filtrados/);
     assert.match(detail, /Limpar seleção/);
+    assert.match(detail, /excludeKeys=\{linkedKeys\}/);
   });
 });

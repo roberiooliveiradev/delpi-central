@@ -116,6 +116,7 @@ export function UserDirectoryPicker({
   const selectedIds = new Set(value.map((item) => item.id));
   const atLimit =
     typeof maxSelected === "number" && maxSelected > 0 && value.length >= maxSelected;
+  const visibleResults = results.filter((user) => !selectedIds.has(user.id));
 
   return (
     <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
@@ -140,9 +141,16 @@ export function UserDirectoryPicker({
       {searching ? (
         <p className="delpi-ui-user-directory-picker__status">Buscando…</p>
       ) : null}
-      {results.length > 0 ? (
+      {!searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
+        <p className="delpi-ui-user-directory-picker__status">
+          {results.length > 0
+            ? "Nenhum resultado disponível — já selecionados ou membros."
+            : "Nenhum usuário encontrado."}
+        </p>
+      ) : null}
+      {visibleResults.length > 0 ? (
         <ul className="delpi-ui-user-directory-picker__results">
-          {results.map((user) => (
+          {visibleResults.map((user) => (
             <li key={user.id}>
               <button
                 type="button"
@@ -151,11 +159,7 @@ export function UserDirectoryPicker({
                     ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
                     : undefined
                 }
-                disabled={
-                  disabled ||
-                  selectedIds.has(user.id) ||
-                  (atLimit && maxSelected !== 1)
-                }
+                disabled={disabled || (atLimit && maxSelected !== 1)}
                 onClick={() => {
                   if (selectedIds.has(user.id)) return;
                   if (maxSelected === 1) {

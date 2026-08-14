@@ -480,6 +480,7 @@ export function SellerPortfolioDetail({
                   ),
                 );
               }}
+              excludeKeys={linkedKeys}
               maxSelected={20}
               disabled={linkingCustomers}
               labels={{

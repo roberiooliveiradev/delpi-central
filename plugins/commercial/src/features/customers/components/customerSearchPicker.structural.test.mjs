@@ -13,5 +13,8 @@ describe("CustomerSearchPicker", () => {
     assert.match(source, /selectAllHits/);
     assert.match(source, /Selecionar todos filtrados/);
     assert.match(source, /maxSelected/);
+    assert.match(source, /excludeKeys/);
+    assert.match(source, /visibleHits/);
+    assert.match(source, /já selecionados ou vinculados/);
   });
 });

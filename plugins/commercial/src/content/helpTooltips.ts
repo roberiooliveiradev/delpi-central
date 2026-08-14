@@ -433,7 +433,7 @@ export const CM_HELP = {
     members:
       "Usuários com acesso a esta carteira no Portal Comercial. Defina um responsável e inclua membros.",
     membersAdd:
-      "Busque até 10 usuários com acesso ao Portal Comercial. Já membros não entram na seleção; o primeiro usuário de uma carteira órfã vira responsável.",
+      "Busque até 10 usuários com acesso ao Portal Comercial. Já selecionados ou membros não aparecem na busca; o primeiro usuário de uma carteira órfã vira responsável.",
     addSelectedMembers:
       "Inclui na carteira todos os usuários selecionados nos chips (até 10 por vez).",
     setOwner: "Define este usuário como responsável da carteira.",
@@ -442,7 +442,7 @@ export const CM_HELP = {
     customers:
       "Clientes vinculados a esta carteira. Busque e selecione vários para vincular de uma vez.",
     searchCustomers:
-      "Busca no cadastro ativo TOTVS (código ou nome). Já vinculados não entram na seleção.",
+      "Busca no cadastro ativo TOTVS (código ou nome). Já selecionados ou vinculados não aparecem nos resultados.",
     linkSelectedCustomers:
       "Inclui na carteira todos os clientes selecionados nos chips (até 20 por vez).",
     unlinkSelectedCustomers:
