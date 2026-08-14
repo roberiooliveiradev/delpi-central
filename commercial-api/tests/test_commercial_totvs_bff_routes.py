@@ -101,6 +101,9 @@ def test_open_orders_bff_filters_via_scope() -> None:
     assert horizon["nature"] == "open_order_value_by_delivery"
     assert horizon["totals"]["openLineCount"] == 1
     assert horizon["totals"]["openValue"] == 10.0
+    assert "kanbanStage" in body["data"]["items"][0]
+    assert "kanbanStageCounts" in body["data"]
+    assert body["data"]["kanbanStageCounts"]["stages"]
     gateway.list_open_orders.assert_called_once()
 
 
