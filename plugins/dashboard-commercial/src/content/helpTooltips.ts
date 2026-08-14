@@ -77,7 +77,9 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   charts: {
     rolEvolution:
-      "Evolução do ROL por Santa Catarina e Espírito Santo. Clique em um ponto para ajustar o período ao intervalo selecionado.",
+      "Evolução do ROL por Santa Catarina e Espírito Santo em colunas agrupadas. Clique em uma coluna para ajustar o período ao intervalo selecionado.",
+    rolTrend:
+      "Sobreposição da regressão linear sobre a série atual de cada unidade (não altera o valor dos buckets).",
     rolGranularity:
       "Agrupa os pontos do gráfico por dia, semana ou mês conforme o intervalo filtrado.",
     rolExport:

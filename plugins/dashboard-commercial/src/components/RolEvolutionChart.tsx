@@ -1,17 +1,14 @@
-import type { ComponentProps } from "react";
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useMemo, useState } from "react";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
+import {
+  GroupedColumnSeriesChart,
+  type GroupedColumnBarSpec,
+} from "./GroupedColumnSeriesChart";
 import { CHART_COLORS } from "../constants/chartColors";
 import { COMMERCIAL_ROL_SERIES_LABELS } from "../constants/commercialIndicators";
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { ROL_CHART_CONTENT } from "../content/rolChartContent";
 import type { RolSeriesPoint } from "../hooks/useCommercialRolSeries";
 import { formatChartCurrency } from "../utils/format";
 import { STATE_BOX_EMPTY } from "../ui/stateChrome";
@@ -29,82 +26,77 @@ export function RolEvolutionChart({
   loading = false,
   onDrillDown,
 }: RolEvolutionChartProps) {
-  const handleClick: ComponentProps<typeof LineChart>["onClick"] = (state) => {
-    if (!state) return;
-    const rawIndex = state.activeTooltipIndex;
-    const index =
-      typeof rawIndex === "number"
-        ? rawIndex
-        : typeof rawIndex === "string"
-          ? Number(rawIndex)
-          : -1;
-    if (!Number.isFinite(index) || index < 0) return;
+  const [showTrend, setShowTrend] = useState(false);
 
-    const point = data[index];
-    if (point?.dateStart && point?.dateEnd) {
-      onDrillDown(point.dateStart, point.dateEnd);
-    }
-  };
+  const chartData = useMemo(
+    () =>
+      data.map((point) => ({
+        periodo: point.periodo,
+        rolMatrix: Number(point.rolMatrix) || 0,
+        rolBranch: Number(point.rolBranch) || 0,
+      })),
+    [data],
+  );
+
+  const bars = useMemo(
+    (): GroupedColumnBarSpec[] => [
+      {
+        dataKey: "rolMatrix",
+        name: COMMERCIAL_ROL_SERIES_LABELS.filial01,
+        fill: CHART_COLORS[0],
+        trendSource: true,
+      },
+      {
+        dataKey: "rolBranch",
+        name: COMMERCIAL_ROL_SERIES_LABELS.filial02,
+        fill: CHART_COLORS[1],
+        trendSource: true,
+      },
+    ],
+    [],
+  );
 
   if (loading && data.length === 0) {
     return (
       <div className={STATE_BOX_EMPTY} aria-busy="true">
-        Carregando gráfico…
+        {ROL_CHART_CONTENT.loading}
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
+      <div className={STATE_BOX_EMPTY}>{ROL_CHART_CONTENT.empty}</div>
     );
   }
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-      <LineChart
-        data={data as Record<string, string | number>[]}
-        onClick={handleClick}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          dataKey="periodo"
-          tick={{ fontSize: 11 }}
-          interval="preserveStartEnd"
+    <div className="dc-rol-evolution-chart">
+      <div className="dc-field dc-rol-evolution-chart__trend">
+        <NativeCheckboxControl
+          id="dashboard-rol-trend"
+          checked={showTrend}
+          onChange={setShowTrend}
+          label={ROL_CHART_CONTENT.showTrendLine}
+          hint={COMMERCIAL_HELP_TOOLTIPS.charts.rolTrend}
         />
-        <YAxis
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value) => formatChartCurrency(value)}
-          width={88}
-        />
-        <Tooltip
-          formatter={(value, name) => [
-            formatChartCurrency(
-              typeof value === "number" ? value : Number(value),
-            ),
-            String(name),
-          ]}
-        />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="rolMatrix"
-          name={COMMERCIAL_ROL_SERIES_LABELS.filial01}
-          stroke={CHART_COLORS[0]}
-          strokeWidth={2}
-          dot={{ r: 4, cursor: "pointer" }}
-          activeDot={{ r: 6, cursor: "pointer" }}
-        />
-        <Line
-          type="monotone"
-          dataKey="rolBranch"
-          name={COMMERCIAL_ROL_SERIES_LABELS.filial02}
-          stroke={CHART_COLORS[1]}
-          strokeWidth={2}
-          dot={{ r: 4, cursor: "pointer" }}
-          activeDot={{ r: 6, cursor: "pointer" }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+      </div>
+      <GroupedColumnSeriesChart
+        data={chartData}
+        categoryKey="periodo"
+        bars={bars}
+        height={CHART_HEIGHT}
+        showTrend={showTrend}
+        formatY={formatChartCurrency}
+        formatTooltipValue={formatChartCurrency}
+        trendSeriesName={ROL_CHART_CONTENT.trendLineSeriesName}
+        onCategoryClick={(category) => {
+          const point = data.find((entry) => entry.periodo === category);
+          if (point?.dateStart && point?.dateEnd) {
+            onDrillDown(point.dateStart, point.dateEnd);
+          }
+        }}
+      />
+    </div>
   );
 }
