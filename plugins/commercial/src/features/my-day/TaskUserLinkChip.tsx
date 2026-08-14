@@ -5,13 +5,15 @@ import {
   userProfilePhotoAbsoluteUrl,
 } from "../../api/userProfileApi";
 import { httpGetBlob } from "../../api/httpClient";
-import { CommercialAvatar } from "../../app/commercialUi";
+import { CommercialAvatar, CommercialEntityLink } from "../../app/commercialUi";
 
 type TaskUserLinkChipProps = {
   userId: string;
   /** Nome/fallback enquanto o perfil carrega (pode vir "Nome · e-mail mascarado"). */
   fallbackLabel: string;
-  onOpen: () => void;
+  href: string;
+  title: string;
+  onNavigate?: () => void;
 };
 
 /** Extrai só o nome do rótulo do diretório (ignora e-mail mascarado). */
@@ -26,12 +28,14 @@ function displayNameFromFallback(label: string): string {
 }
 
 /**
- * Badge de usuário na tarefa: avatar + nome + e-mail; clique abre o perfil.
+ * Badge de usuário na tarefa: avatar + nome + e-mail; link real abre o perfil.
  */
 export function TaskUserLinkChip({
   userId,
   fallbackLabel,
-  onOpen,
+  href,
+  title,
+  onNavigate,
 }: TaskUserLinkChipProps): ReactNode {
   const [name, setName] = useState(() => displayNameFromFallback(fallbackLabel));
   const [email, setEmail] = useState<string | null>(null);
@@ -81,10 +85,11 @@ export function TaskUserLinkChip({
   }, [userId]);
 
   return (
-    <button
-      type="button"
+    <CommercialEntityLink
+      href={href}
+      title={title}
       className="delpi-ui-tag-chip cm-task-link-chip"
-      onClick={onOpen}
+      onNavigate={onNavigate}
     >
       <span className="cm-task-link-chip__avatar" aria-hidden>
         <CommercialAvatar
@@ -102,6 +107,6 @@ export function TaskUserLinkChip({
           <span className="cm-task-link-chip__subtitle">{email}</span>
         ) : null}
       </span>
-    </button>
+    </CommercialEntityLink>
   );
 }

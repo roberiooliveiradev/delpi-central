@@ -11,8 +11,9 @@ import {
   userProfilePhotoAbsoluteUrl,
 } from "../api/userProfileApi";
 import { CommercialAvatar } from "./commercialUi";
-import { navigatePluginView, navigateUserProfile } from "./pluginNavigation";
+import { navigatePluginView, navigateUserProfile, buildUserProfileHref } from "./pluginNavigation";
 import { currentReturnNav } from "./commercialNavigationReturn";
+import { profileLinkTitle } from "../content/entityLinkHints";
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
   buildShellPortfolioCustomersSearch,
@@ -131,7 +132,26 @@ export function ShellUserPortfolioMenu({
           ? copy.menuCloseAriaLabel
           : copy.menuOpenAriaLabel;
 
-  const avatar = (
+  const profileHref = userId
+    ? buildUserProfileHref(userId, {
+        basePath,
+        returnNav: currentReturnNav("Portal Comercial"),
+      })
+    : null;
+  const profileTitle = profileLinkTitle(label);
+
+  const avatar = profileHref ? (
+    <CommercialAvatar
+      name={label}
+      size="sm"
+      alt=""
+      src={photoObjectUrl}
+      href={profileHref}
+      title={profileTitle}
+      onNavigate={goToProfile}
+      portalScopeClassName="dashboard-commercial"
+    />
+  ) : (
     <CommercialAvatar
       name={label}
       size="sm"
@@ -153,15 +173,8 @@ export function ShellUserPortfolioMenu({
         .filter(Boolean)
         .join(" ")}
     >
-      {userId ? (
-        <button
-          type="button"
-          className="cm-shell-user__profile"
-          aria-label={copy.profileAriaLabel}
-          onClick={goToProfile}
-        >
-          {avatar}
-        </button>
+      {userId && profileHref ? (
+        <span className="cm-shell-user__profile">{avatar}</span>
       ) : (
         <span className="cm-shell-user__profile cm-shell-user__profile--static">
           {avatar}

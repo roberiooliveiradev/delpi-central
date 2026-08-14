@@ -29,8 +29,9 @@ import {
 } from "../../app/commercialUi";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
-import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
+import { navigatePluginView, navigateUserProfile, buildUserProfileHref } from "../../app/pluginNavigation";
 import { currentReturnNav } from "../../app/commercialNavigationReturn";
+import { profileLinkTitle } from "../../content/entityLinkHints";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -436,10 +437,24 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
             const renaming = busyKey === `${group.id}:rename`;
             const isRenaming = renamingGroupId === group.id;
             const memberCount = group.member_count ?? group.members.length;
-            const facepileItems = group.members.map((member) => ({
-              id: member.user_id,
-              name: labelFor(member.user_id, byId[member.user_id]?.name ?? null),
-            }));
+            const facepileItems = group.members.map((member) => {
+              const name = labelFor(
+                member.user_id,
+                byId[member.user_id]?.name ?? null,
+              );
+              const returnNav = currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot);
+              const href =
+                buildUserProfileHref(member.user_id, { basePath, returnNav }) ??
+                `${basePath}/users/${encodeURIComponent(member.user_id)}`;
+              return {
+                id: member.user_id,
+                name,
+                href,
+                title: profileLinkTitle(name),
+                onNavigate: () =>
+                  navigateUserProfile(member.user_id, { basePath, returnNav }),
+              };
+            });
             return (
               <CommercialSectionCard
                 key={group.id}
@@ -574,9 +589,29 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                           byId[member.user_id]?.name ?? null,
                         );
                         const busy = busyKey === `${group.id}:remove:${member.user_id}`;
+                        const returnNav = currentReturnNav(
+                          ADMINISTRATION_CONTENT.breadcrumbRoot,
+                        );
+                        const profileHref =
+                          buildUserProfileHref(member.user_id, {
+                            basePath,
+                            returnNav,
+                          }) ??
+                          `${basePath}/users/${encodeURIComponent(member.user_id)}`;
                         return (
                           <li key={member.user_id} className="cm-row-actions">
-                            <TaskUserChipAvatar userId={member.user_id} name={name} />
+                            <TaskUserChipAvatar
+                              userId={member.user_id}
+                              name={name}
+                              href={profileHref}
+                              title={profileLinkTitle(name)}
+                              onNavigate={() =>
+                                navigateUserProfile(member.user_id, {
+                                  basePath,
+                                  returnNav,
+                                })
+                              }
+                            />
                             <strong>{name}</strong>
                             <CommercialActionButton
                               variant="ghost"

@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
 
+import { CommercialEntityLink } from "../../app/commercialUi";
+
 export type TaskEntityLinkChip = {
   key: string;
   label: string;
   /** Linha secundária (e-mail do usuário ou código/loja do cliente). */
   subtitle?: string;
   avatar?: ReactNode;
-  /** Abre perfil do usuário ou Conta do cliente. */
-  onOpen: () => void;
+  href: string;
+  title: string;
+  onNavigate?: () => void;
 };
 
 type TaskEntityLinkChipsProps = {
@@ -16,8 +19,7 @@ type TaskEntityLinkChipsProps = {
 };
 
 /**
- * Badge único (avatar + texto): clique abre perfil/Conta.
- * Avatar fica dentro do chip; sem lightbox no card (expandir fica na página do perfil).
+ * Badge único (avatar + texto): link real abre perfil/Conta.
  */
 export function TaskEntityLinkChips({
   items,
@@ -27,11 +29,12 @@ export function TaskEntityLinkChips({
   return (
     <div className="cm-task-link-chips" role="group" aria-label={ariaLabel}>
       {items.map((item) => (
-        <button
+        <CommercialEntityLink
           key={item.key}
-          type="button"
+          href={item.href}
+          title={item.title}
           className="delpi-ui-tag-chip cm-task-link-chip"
-          onClick={item.onOpen}
+          onNavigate={item.onNavigate}
         >
           {item.avatar ? (
             <span className="cm-task-link-chip__avatar" aria-hidden>
@@ -44,7 +47,7 @@ export function TaskEntityLinkChips({
               <span className="cm-task-link-chip__subtitle">{item.subtitle}</span>
             ) : null}
           </span>
-        </button>
+        </CommercialEntityLink>
       ))}
     </div>
   );

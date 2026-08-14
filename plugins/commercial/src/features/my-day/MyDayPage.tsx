@@ -23,8 +23,9 @@ import { listCommercialGroups, type CommercialGroupDto } from "../../api/commerc
 import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import { CM_HELP } from "../../content/helpTooltips";
-import { navigateCustomerDetail, navigateUserProfile } from "../../app/pluginNavigation";
+import { navigateCustomerDetail, navigateUserProfile, buildUserProfileHref, buildCustomerDetailHref } from "../../app/pluginNavigation";
 import { currentReturnNav } from "../../app/commercialNavigationReturn";
+import { accountLinkTitle, profileLinkTitle } from "../../content/entityLinkHints";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
@@ -1008,7 +1009,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                               key={uid}
                               userId={uid}
                               fallbackLabel={fallback}
-                              onOpen={() =>
+                              href={
+                                buildUserProfileHref(uid, {
+                                  basePath,
+                                  returnNav: currentReturnNav("Minhas tarefas"),
+                                }) ?? `${basePath}/users/${encodeURIComponent(uid)}`
+                              }
+                              title={profileLinkTitle(fallback)}
+                              onNavigate={() =>
                                 navigateUserProfile(uid, {
                                   basePath,
                                   returnNav: currentReturnNav("Minhas tarefas"),
@@ -1057,7 +1065,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                             sellerNameByUserId.get(completedBy) ??
                             directoryLabelFor(completedBy)
                           }
-                          onOpen={() =>
+                          href={
+                            buildUserProfileHref(completedBy, {
+                              basePath,
+                              returnNav: currentReturnNav("Minhas tarefas"),
+                            }) ?? `${basePath}/users/${encodeURIComponent(completedBy)}`
+                          }
+                          title={profileLinkTitle(
+                            sellerNameByUserId.get(completedBy) ??
+                              directoryLabelFor(completedBy),
+                          )}
+                          onNavigate={() =>
                             navigateUserProfile(completedBy, {
                               basePath,
                               returnNav: currentReturnNav("Minhas tarefas"),
@@ -1083,7 +1101,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         <TaskUserLinkChip
                           userId={createdBy}
                           fallbackLabel={assignedByFallback}
-                          onOpen={() =>
+                          href={
+                            buildUserProfileHref(createdBy, {
+                              basePath,
+                              returnNav: currentReturnNav("Minhas tarefas"),
+                            }) ?? `${basePath}/users/${encodeURIComponent(createdBy)}`
+                          }
+                          title={profileLinkTitle(assignedByFallback)}
+                          onNavigate={() =>
                             navigateUserProfile(createdBy, {
                               basePath,
                               returnNav: currentReturnNav("Minhas tarefas"),
@@ -1111,6 +1136,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         items={taskCustomers.map((item) => {
                           const name = (item.customer_name || "").trim();
                           const codeStore = `${item.customer_code}/${item.customer_store}`;
+                          const accountHref =
+                            buildCustomerDetailHref(
+                              item.customer_code,
+                              item.customer_store,
+                              {
+                                basePath,
+                                section: "contatos",
+                                search: "",
+                                returnNav: currentReturnNav("Minhas tarefas"),
+                              },
+                            ) ?? "";
                           return {
                             key: `${item.customer_code}:${item.customer_store}`,
                             label: name || codeStore,
@@ -1124,11 +1160,18 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                                 previewable={false}
                               />
                             ),
-                            onOpen: () =>
+                            href: accountHref,
+                            title: accountLinkTitle(name || codeStore),
+                            onNavigate: () =>
                               navigateCustomerDetail(
                                 item.customer_code,
                                 item.customer_store,
-                                { basePath, section: "contatos", search: "" },
+                                {
+                                  basePath,
+                                  section: "contatos",
+                                  search: "",
+                                  returnNav: currentReturnNav("Minhas tarefas"),
+                                },
                               ),
                           };
                         })}

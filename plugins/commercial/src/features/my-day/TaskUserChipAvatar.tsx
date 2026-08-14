@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEventHandler } from "react";
 
 import {
   getUserProfile,
@@ -7,16 +7,30 @@ import {
 import { httpGetBlob } from "../../api/httpClient";
 import { CommercialAvatar } from "../../app/commercialUi";
 
-type TaskUserChipAvatarProps = {
+type TaskUserChipAvatarBase = {
   userId: string;
   name: string;
 };
 
+export type TaskUserChipAvatarProps = TaskUserChipAvatarBase &
+  (
+    | {
+        href: string;
+        title: string;
+        onNavigate?: MouseEventHandler<HTMLAnchorElement>;
+      }
+    | {
+        href?: undefined;
+        title?: undefined;
+        onNavigate?: undefined;
+      }
+  );
+
 /**
- * Avatar no chip da tarefa — só visual (sem lightbox).
- * Clique no badge pai abre o perfil; expandir foto fica na página do perfil.
+ * Avatar no chip — com href vira link para o perfil; senão só visual.
  */
-export function TaskUserChipAvatar({ userId, name }: TaskUserChipAvatarProps) {
+export function TaskUserChipAvatar(props: TaskUserChipAvatarProps) {
+  const { userId, name } = props;
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,6 +63,21 @@ export function TaskUserChipAvatar({ userId, name }: TaskUserChipAvatarProps) {
       if (created) URL.revokeObjectURL(created);
     };
   }, [userId]);
+
+  if (props.href) {
+    return (
+      <CommercialAvatar
+        name={name}
+        colorKey={userId}
+        size="sm"
+        src={photoUrl}
+        href={props.href}
+        title={props.title}
+        onNavigate={props.onNavigate}
+        portalScopeClassName="dashboard-commercial"
+      />
+    );
+  }
 
   return (
     <CommercialAvatar

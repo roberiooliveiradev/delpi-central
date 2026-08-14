@@ -361,7 +361,8 @@
   min-width: 0;
 }
 
-.dashboard-commercial .cm-task-link-chip {
+.dashboard-commercial .cm-task-link-chip,
+.dashboard-commercial a.cm-task-link-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -375,6 +376,12 @@
   text-align: left;
   padding-block: 4px;
   padding-inline: 6px 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-commercial a.cm-task-link-chip:visited {
+  color: inherit;
 }
 
 .dashboard-commercial .cm-task-link-chip__avatar {
