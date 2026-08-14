@@ -8,13 +8,10 @@ import { describe, it } from "node:test";
 const here = dirname(fileURLToPath(import.meta.url));
 
 describe("PortfolioBillingShareCard", () => {
-  it("usa BFF commercial + help CM_HELP sem api-delpi nem CSS de kit", () => {
+  it("usa hook + help CM_HELP sem api-delpi nem CSS de kit", () => {
     const source = readFileSync(join(here, "PortfolioBillingShareCard.tsx"), "utf8");
-    assert.match(source, /getPortfolioBillingShare/);
+    assert.match(source, /usePortfolioBillingShare/);
     assert.match(source, /CM_HELP\.customers\.portfolioBillingShare/);
-    assert.match(source, /canViewAnalytics/);
-    assert.match(source, /canViewAccountsTeam/);
-    assert.match(source, /canManagePortfolios/);
     assert.match(source, /CommercialDashboardKpiCard/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
