@@ -66,4 +66,19 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(detail, /Limpar seleção/);
     assert.match(detail, /excludeKeys=\{linkedKeys\}/);
   });
+
+  it("colapsa busca de clientes e usuários quando já há vinculados", () => {
+    assert.match(detail, /memberSearchOpen|setMemberSearchOpen/);
+    assert.match(detail, /customerSearchOpen|setCustomerSearchOpen/);
+    assert.match(detail, /PORTFOLIO_MEMBERS_CONTENT\.addMoreMembers/);
+    assert.match(detail, /PORTFOLIO_CUSTOMERS_CONTENT\.addMoreCustomers/);
+    assert.match(detail, /showMemberSearch/);
+    assert.match(detail, /showCustomerSearch/);
+    const content = readFileSync(
+      join(here, "../../content/portfolioMembersContent.ts"),
+      "utf8",
+    );
+    assert.match(content, /addMoreMembers/);
+    assert.match(content, /addMoreCustomers/);
+  });
 });

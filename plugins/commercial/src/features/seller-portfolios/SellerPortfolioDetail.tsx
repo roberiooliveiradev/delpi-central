@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   NativeCheckboxControl,
@@ -21,7 +21,10 @@ import {
 } from "../../app/commercialUi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
-import { PORTFOLIO_MEMBERS_CONTENT } from "../../content/portfolioMembersContent";
+import {
+  PORTFOLIO_CUSTOMERS_CONTENT,
+  PORTFOLIO_MEMBERS_CONTENT,
+} from "../../content/portfolioMembersContent";
 import { customerKey } from "../../shared/format";
 import type {
   SellerCustomer,
@@ -101,12 +104,20 @@ export function SellerPortfolioDetail({
     () => new Set(),
   );
   const [linkedFilter, setLinkedFilter] = useState("");
+  const [memberSearchOpen, setMemberSearchOpen] = useState(
+    () => resolveMembers(portfolio).length === 0,
+  );
+  const [customerSearchOpen, setCustomerSearchOpen] = useState(
+    () => (portfolio.customers ?? []).length === 0,
+  );
 
   useEffect(() => {
     setMemberPicker([]);
     setCustomerPicker([]);
     setSelectedLinkedKeys(new Set());
     setLinkedFilter("");
+    setMemberSearchOpen(resolveMembers(portfolio).length === 0);
+    setCustomerSearchOpen((portfolio.customers ?? []).length === 0);
   }, [portfolio.id]);
 
   const linked = portfolio.customers ?? [];
@@ -144,6 +155,8 @@ export function SellerPortfolioDetail({
 
   const members = resolveMembers(portfolio);
   const isOrphan = members.length === 0;
+  const showMemberSearch = memberSearchOpen || isOrphan;
+  const showCustomerSearch = customerSearchOpen || linked.length === 0;
   const memberIds = useMemo(
     () => new Set(members.map((member) => member.user_id)),
     [members],
@@ -381,64 +394,92 @@ export function SellerPortfolioDetail({
             : PORTFOLIO_MEMBERS_CONTENT.sectionSubtitleWithOwner
         }
         hint={CM_HELP.sellerPortfolios.members}
-      >
-        <div className="cm-portfolios-detail-block">
-          <UserDirectoryPicker
-            value={memberPicker}
-            onChange={(users) => {
-              setMemberPicker(users.filter((user) => !memberIds.has(user.id)));
-            }}
-            searchUsers={searchMemberCandidates}
-            maxSelected={10}
-            disabled={addingMembers}
-            labels={{
-              title: isOrphan
-                ? "Adicionar responsável"
-                : "Usuário com acesso ao Portal Comercial",
-              hint: CM_HELP.sellerPortfolios.membersAdd,
-              placeholder: isOrphan
-                ? "Buscar responsável…"
-                : "Buscar para adicionar…",
-            }}
-            renderOptionLeading={(user) => (
-              <TaskUserChipAvatar
-                userId={user.id}
-                name={(user.name || "").trim() || user.email}
-              />
-            )}
-            renderSelectedChip={({ user, label, disabled, onRemove }) => (
-              <span className="delpi-ui-tag-chip">
-                <TaskUserChipAvatar
-                  userId={user.id}
-                  name={(user.name || "").trim() || user.email}
-                />
-                <span>{label}</span>
-                <button
-                  type="button"
-                  className="delpi-ui-tag-chip__remove"
-                  disabled={disabled || addingMembers}
-                  aria-label={`Remover ${label}`}
-                  onClick={onRemove}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </span>
-            )}
-          />
-          <div className="cm-portfolios-form__actions">
+        actions={
+          isOrphan ? undefined : showMemberSearch ? (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={addingMembers}
+              onClick={() => {
+                setMemberPicker([]);
+                setMemberSearchOpen(false);
+              }}
+            >
+              {PORTFOLIO_MEMBERS_CONTENT.closeMemberSearch}
+            </CommercialActionButton>
+          ) : (
             <CommercialActionButton
               variant="primary"
-              disabled={addingMembers || memberPicker.length === 0}
-              onClick={() => onAddMembers(memberPicker.map((user) => user.id))}
-              title={CM_HELP.sellerPortfolios.addSelectedMembers}
+              disabled={addingMembers}
+              onClick={() => setMemberSearchOpen(true)}
+              aria-label={CM_HELP.sellerPortfolios.membersAdd}
             >
-              {addingMembers
-                ? "Adicionando…"
-                : memberPicker.length <= 1
-                  ? "Adicionar selecionado"
-                  : `Adicionar selecionados (${memberPicker.length})`}
+              <Plus size={16} aria-hidden />
+              {PORTFOLIO_MEMBERS_CONTENT.addMoreMembers}
             </CommercialActionButton>
-          </div>
+          )
+        }
+      >
+        <div className="cm-portfolios-detail-block">
+          {showMemberSearch ? (
+            <>
+              <UserDirectoryPicker
+                value={memberPicker}
+                onChange={(users) => {
+                  setMemberPicker(users.filter((user) => !memberIds.has(user.id)));
+                }}
+                searchUsers={searchMemberCandidates}
+                maxSelected={10}
+                disabled={addingMembers}
+                labels={{
+                  title: isOrphan
+                    ? "Adicionar responsável"
+                    : "Usuário com acesso ao Portal Comercial",
+                  hint: CM_HELP.sellerPortfolios.membersAdd,
+                  placeholder: isOrphan
+                    ? "Buscar responsável…"
+                    : "Buscar para adicionar…",
+                }}
+                renderOptionLeading={(user) => (
+                  <TaskUserChipAvatar
+                    userId={user.id}
+                    name={(user.name || "").trim() || user.email}
+                  />
+                )}
+                renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <TaskUserChipAvatar
+                      userId={user.id}
+                      name={(user.name || "").trim() || user.email}
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled || addingMembers}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
+              />
+              <div className="cm-portfolios-form__actions">
+                <CommercialActionButton
+                  variant="primary"
+                  disabled={addingMembers || memberPicker.length === 0}
+                  onClick={() => onAddMembers(memberPicker.map((user) => user.id))}
+                  title={CM_HELP.sellerPortfolios.addSelectedMembers}
+                >
+                  {addingMembers
+                    ? "Adicionando…"
+                    : memberPicker.length <= 1
+                      ? "Adicionar selecionado"
+                      : `Adicionar selecionados (${memberPicker.length})`}
+                </CommercialActionButton>
+              </div>
+            </>
+          ) : null}
 
           <CommercialViewTransition
             transitionKey={`members-${portfolio.id}-${members.length}`}
@@ -467,70 +508,102 @@ export function SellerPortfolioDetail({
         title="Clientes"
         subtitle="Vincule contas TOTVS a esta carteira"
         hint={CM_HELP.sellerPortfolios.customers}
+        actions={
+          linked.length === 0 ? undefined : showCustomerSearch ? (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={linkingCustomers}
+              onClick={() => {
+                setCustomerPicker([]);
+                setCustomerSearchOpen(false);
+              }}
+            >
+              {PORTFOLIO_CUSTOMERS_CONTENT.closeCustomerSearch}
+            </CommercialActionButton>
+          ) : (
+            <CommercialActionButton
+              variant="primary"
+              disabled={linkingCustomers}
+              onClick={() => setCustomerSearchOpen(true)}
+              aria-label={CM_HELP.sellerPortfolios.searchCustomers}
+            >
+              <Plus size={16} aria-hidden />
+              {PORTFOLIO_CUSTOMERS_CONTENT.addMoreCustomers}
+            </CommercialActionButton>
+          )
+        }
       >
         <div className="cm-portfolios-detail-stack">
-          <section className="cm-portfolios-detail-block" aria-label="Buscar e vincular">
-            <h3 className="cm-section-subtitle">Buscar e vincular</h3>
-            <CustomerSearchPicker
-              value={customerPicker}
-              onChange={(next) => {
-                setCustomerPicker(
-                  next.filter(
-                    (item) => !linkedKeys.has(customerKey(item.code, item.store)),
-                  ),
-                );
-              }}
-              excludeKeys={linkedKeys}
-              maxSelected={20}
-              disabled={linkingCustomers}
-              labels={{
-                title: "Buscar no cadastro",
-                hint: CM_HELP.sellerPortfolios.searchCustomers,
-                placeholder: "Código ou nome do cliente",
-              }}
-              renderOptionLeading={(hit) => (
-                <CustomerAvatar
-                  code={hit.code}
-                  store={hit.store}
-                  name={(hit.name || "").trim() || hit.code}
-                  size="sm"
-                />
-              )}
-              renderSelectedChip={({ item, label, disabled, onRemove }) => (
-                <span className="delpi-ui-tag-chip">
+          {showCustomerSearch ? (
+            <section
+              className="cm-portfolios-detail-block"
+              aria-label={PORTFOLIO_CUSTOMERS_CONTENT.searchSectionLabel}
+            >
+              <h3 className="cm-section-subtitle">
+                {PORTFOLIO_CUSTOMERS_CONTENT.searchSectionLabel}
+              </h3>
+              <CustomerSearchPicker
+                value={customerPicker}
+                onChange={(next) => {
+                  setCustomerPicker(
+                    next.filter(
+                      (item) => !linkedKeys.has(customerKey(item.code, item.store)),
+                    ),
+                  );
+                }}
+                excludeKeys={linkedKeys}
+                maxSelected={20}
+                disabled={linkingCustomers}
+                labels={{
+                  title: "Buscar no cadastro",
+                  hint: CM_HELP.sellerPortfolios.searchCustomers,
+                  placeholder: "Código ou nome do cliente",
+                }}
+                renderOptionLeading={(hit) => (
                   <CustomerAvatar
-                    code={item.code}
-                    store={item.store}
-                    name={(item.name || "").trim() || item.code}
+                    code={hit.code}
+                    store={hit.store}
+                    name={(hit.name || "").trim() || hit.code}
                     size="sm"
                   />
-                  <span>{label}</span>
-                  <button
-                    type="button"
-                    className="delpi-ui-tag-chip__remove"
-                    disabled={disabled || linkingCustomers}
-                    aria-label={`Remover ${label}`}
-                    onClick={onRemove}
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </span>
-              )}
-            />
-            <div className="cm-portfolios-form__actions">
-              <CommercialActionButton
-                variant="primary"
-                disabled={linkingCustomers || customerPicker.length === 0}
-                onClick={() => onAddCustomers(customerPicker)}
-              >
-                {linkingCustomers
-                  ? "Vinculando…"
-                  : customerPicker.length <= 1
-                    ? "Vincular selecionado"
-                    : `Vincular selecionados (${customerPicker.length})`}
-              </CommercialActionButton>
-            </div>
-          </section>
+                )}
+                renderSelectedChip={({ item, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <CustomerAvatar
+                      code={item.code}
+                      store={item.store}
+                      name={(item.name || "").trim() || item.code}
+                      size="sm"
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled || linkingCustomers}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
+              />
+              <div className="cm-portfolios-form__actions">
+                <CommercialActionButton
+                  variant="primary"
+                  disabled={linkingCustomers || customerPicker.length === 0}
+                  onClick={() => onAddCustomers(customerPicker)}
+                  title={CM_HELP.sellerPortfolios.linkSelectedCustomers}
+                >
+                  {linkingCustomers
+                    ? "Vinculando…"
+                    : customerPicker.length <= 1
+                      ? "Vincular selecionado"
+                      : `Vincular selecionados (${customerPicker.length})`}
+                </CommercialActionButton>
+              </div>
+            </section>
+          ) : null}
 
           <section className="cm-portfolios-detail-block" aria-label="Clientes vinculados">
             <h3 className="cm-section-subtitle">

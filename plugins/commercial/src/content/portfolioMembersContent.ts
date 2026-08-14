@@ -15,4 +15,13 @@ export const PORTFOLIO_MEMBERS_CONTENT = {
     "Carteira sem responsável. Adicione o primeiro usuário na seção Usuários para liberar o escopo operacional.",
   sectionSubtitleWithOwner: "Usuários com acesso ao Portal Comercial",
   sectionSubtitleOrphan: "Adicione o responsável para ativar a carteira no escopo",
+  addMoreMembers: "Adicionar usuários",
+  closeMemberSearch: "Fechar busca",
+} as const;
+
+/** Textos do bloco de clientes no detalhe da carteira. */
+export const PORTFOLIO_CUSTOMERS_CONTENT = {
+  addMoreCustomers: "Vincular mais clientes",
+  closeCustomerSearch: "Fechar busca",
+  searchSectionLabel: "Buscar e vincular",
 } as const;
