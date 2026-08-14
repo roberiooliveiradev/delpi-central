@@ -601,9 +601,9 @@ export const CM_HELP = {
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
     kpis: "Indicadores do período: ROL vs meta, conversão, OTD% e novos negócios. «Carteira em aberto» é saldo comercial atual (pedidos) — não some com ROL e não é programação do PCP.",
     rolSeries:
-      "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado.",
+      "Evolução do ROL por Santa Catarina e Espírito Santo no período selecionado (colunas agrupadas).",
     rolSeriesYoy:
-      "Sobrepõe o mesmo período filtrado deslocado −1 ano (linhas tracejadas), em Dia/Semana/Mês/Ano. Alinhamento por bucket; drill só no período atual.",
+      "Compara o mesmo período filtrado deslocado −1 ano em colunas agrupadas, em Dia/Semana/Mês/Ano. Alinhamento por bucket; drill só no período atual.",
     closingRateSeries:
       "Evolução da taxa de conversão (hit rate) por Santa Catarina e Espírito Santo. Cada ponto usa a mesma fórmula do KPI no intervalo do bucket.",
     closingRateSeriesYoy:
