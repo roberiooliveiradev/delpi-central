@@ -12,7 +12,10 @@ describe("AnalyticsRolSeriesChart — paridade dashboard", () => {
     const chart = readFileSync(join(here, "AnalyticsRolSeriesChart.tsx"), "utf8");
     assert.match(chart, /CommercialTabularExportButtons/);
     assert.match(chart, /buildOverviewRolSeriesPayload/);
-    assert.match(chart, /CommercialChartToolbar/);
+    assert.match(chart, /CommercialChartGranularityToggle/);
+    assert.match(chart, /granularityLabel|chartGranularityLabel/);
+    assert.match(chart, /typeToggleLabel|chartTypeLabel/);
+    assert.doesNotMatch(chart, /CommercialChartToolbar/);
     assert.match(chart, /"year"/);
     assert.match(chart, /onDrillDown/);
     assert.match(chart, /comparePriorYear|NativeCheckboxControl/);

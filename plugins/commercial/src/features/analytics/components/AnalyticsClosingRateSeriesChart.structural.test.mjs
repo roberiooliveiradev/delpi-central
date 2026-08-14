@@ -13,7 +13,10 @@ describe("AnalyticsClosingRateSeriesChart", () => {
     assert.match(chart, /buildOverviewClosingRateSeriesPayload/);
     assert.match(chart, /ANALYTICS_CONVERSION_SERIES_LABELS/);
     assert.match(chart, /CM_HELP\.overview\.closingRateSeries/);
-    assert.match(chart, /CommercialChartToolbar/);
+    assert.match(chart, /CommercialChartGranularityToggle/);
+    assert.match(chart, /granularityLabel|chartGranularityLabel/);
+    assert.match(chart, /ChartViewShell/);
+    assert.doesNotMatch(chart, /CommercialChartToolbar/);
     assert.match(chart, /comparePriorYear|NativeCheckboxControl/);
     assert.match(chart, /shiftPeriodRangeByYears|mergeSeriesWithPriorYear/);
     assert.match(chart, /closingRateSeriesYoy/);

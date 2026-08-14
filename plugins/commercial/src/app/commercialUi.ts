@@ -487,6 +487,8 @@ const commercialChartToolbarKit = createDashboardChartToolbarKit({
 });
 
 export const CommercialChartToolbar = commercialChartToolbarKit.ChartToolbar;
+export const CommercialChartGranularityToggle =
+  commercialChartToolbarKit.ChartGranularityToggle;
 
 export const CommercialTabularExportButtons = createDashboardTabularExportButtons({
   prefix: UI_PREFIX,

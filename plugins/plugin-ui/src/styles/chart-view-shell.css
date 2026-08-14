@@ -16,9 +16,25 @@
 .delpi-ui-chart-view-shell__toolbar-primary {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px 12px;
   min-width: 0;
+}
+
+.delpi-ui-chart-view-shell__control {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+
+.delpi-ui-chart-view-shell__control-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
 }
 
 .delpi-ui-chart-view-shell__toolbar-overlays {
@@ -39,6 +55,7 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  align-self: flex-end;
 }
 
 .delpi-ui-chart-view-shell__plot {

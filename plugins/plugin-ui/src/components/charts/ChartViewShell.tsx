@@ -7,14 +7,20 @@ export type ChartViewShellClassNames = {
   toolbar: string;
   toolbarPrimary: string;
   toolbarOverlays: string;
+  control: string;
+  controlLabel: string;
   plot: string;
 };
 
 export type ChartViewShellProps = {
   /** Granularity / period controls. */
   granularity?: ReactNode;
+  /** Label above granularity (empty string hides). */
+  granularityLabel?: string;
   /** Chart type segment toggle. */
   typeToggle?: ReactNode;
+  /** Label above type toggle (empty string hides). */
+  typeToggleLabel?: string;
   /** Compact overlay checkboxes (YoY, trend). */
   overlays?: ReactNode;
   /** Export buttons (Excel / CSV / PDF). */
@@ -36,8 +42,28 @@ export function chartViewShellBemClasses(prefix: string): ChartViewShellClassNam
     toolbar: pair(`${local}__toolbar`, `${ui}__toolbar`),
     toolbarPrimary: pair(`${local}__toolbar-primary`, `${ui}__toolbar-primary`),
     toolbarOverlays: pair(`${local}__toolbar-overlays`, `${ui}__toolbar-overlays`),
+    control: pair(`${local}__control`, `${ui}__control`),
+    controlLabel: pair(`${local}__control-label`, `${ui}__control-label`),
     plot: pair(`${local}__plot`, `${ui}__plot`),
   };
+}
+
+function ChartViewShellControl({
+  label,
+  classNames,
+  children,
+}: {
+  label: string;
+  classNames: Pick<ChartViewShellClassNames, "control" | "controlLabel">;
+  children: ReactNode;
+}) {
+  const showLabel = label.trim().length > 0;
+  return (
+    <div className={classNames.control}>
+      {showLabel ? <span className={classNames.controlLabel}>{label}</span> : null}
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -45,7 +71,9 @@ export function chartViewShellBemClasses(prefix: string): ChartViewShellClassNam
  */
 export function ChartViewShell({
   granularity,
+  granularityLabel = "Agrupamento",
   typeToggle,
+  typeToggleLabel = "Tipo",
   overlays,
   exportActions,
   extra,
@@ -60,6 +88,8 @@ export function ChartViewShell({
     toolbar: classNamesOverride?.toolbar ?? base.toolbar,
     toolbarPrimary: classNamesOverride?.toolbarPrimary ?? base.toolbarPrimary,
     toolbarOverlays: classNamesOverride?.toolbarOverlays ?? base.toolbarOverlays,
+    control: classNamesOverride?.control ?? base.control,
+    controlLabel: classNamesOverride?.controlLabel ?? base.controlLabel,
     plot: classNamesOverride?.plot ?? base.plot,
   };
 
@@ -71,8 +101,19 @@ export function ChartViewShell({
       {hasToolbar ? (
         <div className={classNames.toolbar}>
           <div className={classNames.toolbarPrimary}>
-            {granularity}
-            {typeToggle}
+            {granularity ? (
+              <ChartViewShellControl
+                label={granularityLabel}
+                classNames={classNames}
+              >
+                {granularity}
+              </ChartViewShellControl>
+            ) : null}
+            {typeToggle ? (
+              <ChartViewShellControl label={typeToggleLabel} classNames={classNames}>
+                {typeToggle}
+              </ChartViewShellControl>
+            ) : null}
             {extra}
             {exportActions ? (
               <div className="delpi-ui-chart-view-shell__export">{exportActions}</div>

@@ -15,7 +15,7 @@ import {
 import { getCommercialRolSeries } from "../../../api/analyticsApi";
 import {
   cmEmptyStateClassNames,
-  CommercialChartToolbar,
+  CommercialChartGranularityToggle,
   CommercialLoadingCard,
   CommercialTabularExportButtons,
   useChartGranularitySelection,
@@ -229,12 +229,15 @@ export function AnalyticsRolSeriesChart({
       {!loading && !error && points.length > 0 ? (
         <ChartViewShell
           prefix="cm"
+          granularityLabel={ANALYTICS_CONTENT.overview.chartGranularityLabel}
+          typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
           granularity={
-            <CommercialChartToolbar
-              granularity={granularity}
-              onGranularityChange={setGranularity}
+            <CommercialChartGranularityToggle
+              value={granularity}
+              onChange={setGranularity}
               options={ROL_GRANULARITY_OPTIONS}
               modes={["day", "week", "month", "year"]}
+              idPrefix="overview-rol"
             />
           }
           typeToggle={
