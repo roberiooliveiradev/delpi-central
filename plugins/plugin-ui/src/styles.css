@@ -33,6 +33,7 @@
 @import "./styles/attachment-preview-strip.css";
 @import "./styles/departmental-kpi.css";@import "./styles/analytics-kpi.css";
 @import "./styles/chart-card.css";
+@import "./styles/chart-view-shell.css";
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";
 @import "./styles/inline-loading-progress.css";

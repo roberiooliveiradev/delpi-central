@@ -305,3 +305,10 @@ export {
   type MultiTypeSeriesChartProps,
   type MultiTypeSeriesSpec,
 } from "./MultiTypeSeriesChart";
+
+export {
+  ChartViewShell,
+  chartViewShellBemClasses,
+  type ChartViewShellClassNames,
+  type ChartViewShellProps,
+} from "./ChartViewShell";
