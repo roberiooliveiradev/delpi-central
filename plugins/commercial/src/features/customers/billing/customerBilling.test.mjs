@@ -194,6 +194,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(hook, /comparePriorYear/);
     assert.match(chart, /useCustomerBillingSeries/);
     assert.match(chart, /comparePriorYear/);
-    assert.match(chart, /AreaChart/);
+    assert.match(chart, /GroupedColumnSeriesChart/);
+    assert.doesNotMatch(chart, /AreaChart/);
   });
 });

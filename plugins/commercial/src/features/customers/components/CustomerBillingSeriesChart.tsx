@@ -1,16 +1,5 @@
-import { useId, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { EmptyState } from "@delpi/plugin-ui/index";
+import { useMemo, useState } from "react";
+import { EmptyState, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
@@ -21,6 +10,9 @@ import {
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
+import { GroupedColumnSeriesChart } from "../../../components/GroupedColumnSeriesChart";
+import type { GroupedColumnBarSpec } from "../../../components/GroupedColumnSeriesChart";
+import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
   PeriodCompareControls,
@@ -45,6 +37,8 @@ const CHART_HEIGHT = 320;
 /** Accent do Portal — acompanha tema claro/escuro. */
 const SERIES_COLOR = "var(--cm-accent)";
 const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
+const PRIOR_2_COLOR = "var(--chart-4, #64748b)";
+const PRIOR_3_COLOR = "var(--chart-5, #475569)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
@@ -86,7 +80,6 @@ export function CustomerBillingSeriesChart({
   customers,
   active = true,
 }: CustomerBillingSeriesChartProps) {
-  const gradientId = useId().replace(/:/g, "");
   const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
   const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
     DEFAULT_BILLING_SERIES_PRESET,
@@ -94,6 +87,7 @@ export function CustomerBillingSeriesChart({
   const [customStart, setCustomStart] = useState(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
   const [compareYears, setCompareYears] = useState<CompareYearsCount>(0);
+  const [showTrend, setShowTrend] = useState(false);
 
   const range =
     preset === "custom"
@@ -148,6 +142,39 @@ export function CustomerBillingSeriesChart({
       })),
     [points],
   );
+
+  const bars = useMemo((): GroupedColumnBarSpec[] => {
+    const list: GroupedColumnBarSpec[] = [
+      {
+        dataKey: "faturamento",
+        name: "Faturamento",
+        fill: SERIES_COLOR,
+        trendSource: true,
+      },
+    ];
+    if (compareYears >= 1) {
+      list.push({
+        dataKey: "faturamento_prior",
+        name: "Ano ant.",
+        fill: PRIOR_SERIES_COLOR,
+      });
+    }
+    if (compareYears >= 2) {
+      list.push({
+        dataKey: "faturamento_prior_2",
+        name: "−2 anos",
+        fill: PRIOR_2_COLOR,
+      });
+    }
+    if (compareYears >= 3) {
+      list.push({
+        dataKey: "faturamento_prior_3",
+        name: "−3 anos",
+        fill: PRIOR_3_COLOR,
+      });
+    }
+    return list;
+  }, [compareYears]);
 
   const hasValues = chartData.some(
     (point) =>
@@ -214,6 +241,17 @@ export function CustomerBillingSeriesChart({
             )
           }
         />
+        {!periodError ? (
+          <div className="cm-field cm-billing-series-chart__trend">
+            <NativeCheckboxControl
+              id="customers-billing-trend"
+              checked={showTrend}
+              onChange={setShowTrend}
+              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+              hint={CM_HELP.customerDetail.billingSeriesTrend}
+            />
+          </div>
+        ) : null}
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
         ) : null}
@@ -248,89 +286,16 @@ export function CustomerBillingSeriesChart({
               </CommercialActionButton>
             </CommercialStateBanner>
           ) : null}
-          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-          <AreaChart
+          <GroupedColumnSeriesChart
             data={chartData}
-            margin={{ top: 12, right: 16, left: 4, bottom: 4 }}
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={SERIES_COLOR} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={SERIES_COLOR} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="periodo"
-              tick={{ fontSize: 11 }}
-              interval="preserveStartEnd"
-              tickLine={false}
-            />
-            <YAxis
-              width={88}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => formatChartCurrency(Number(value))}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              formatter={(value, name) => [
-                value == null || Number.isNaN(Number(value))
-                  ? "—"
-                  : formatCurrency(Number(value)),
-                name,
-              ]}
-              labelFormatter={(label) => String(label)}
-            />
-            {yoyActive ? <Legend /> : null}
-            <Area
-              type="monotone"
-              dataKey="faturamento"
-              name="Faturamento"
-              stroke={SERIES_COLOR}
-              strokeWidth={2}
-              fill={`url(#${gradientId})`}
-              dot={{ r: 3, fill: SERIES_COLOR, strokeWidth: 0 }}
-              activeDot={{ r: 5 }}
-            />
-            {compareYears >= 1 ? (
-              <Line
-                type="monotone"
-                dataKey="faturamento_prior"
-                name="Ano ant."
-                stroke={PRIOR_SERIES_COLOR}
-                strokeWidth={2}
-                strokeDasharray="6 4"
-                connectNulls
-                dot={false}
-              />
-            ) : null}
-            {compareYears >= 2 ? (
-              <Line
-                type="monotone"
-                dataKey="faturamento_prior_2"
-                name="−2 anos"
-                stroke="var(--chart-4, #64748b)"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                connectNulls
-                dot={false}
-              />
-            ) : null}
-            {compareYears >= 3 ? (
-              <Line
-                type="monotone"
-                dataKey="faturamento_prior_3"
-                name="−3 anos"
-                stroke="var(--chart-5, #475569)"
-                strokeWidth={1.5}
-                strokeDasharray="2 4"
-                connectNulls
-                dot={false}
-              />
-            ) : null}
-          </AreaChart>
-          </ResponsiveContainer>
+            categoryKey="periodo"
+            bars={bars}
+            height={CHART_HEIGHT}
+            showTrend={showTrend}
+            showLegend={yoyActive || showTrend}
+            formatY={formatChartCurrency}
+            formatTooltipValue={formatCurrency}
+          />
         </>
       )}
       </CommercialSectionCard>

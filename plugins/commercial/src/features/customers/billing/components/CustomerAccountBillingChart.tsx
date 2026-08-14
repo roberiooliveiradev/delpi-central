@@ -1,16 +1,5 @@
-import { useId, useMemo } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { EmptyState } from "@delpi/plugin-ui/index";
+import { useMemo, useState } from "react";
+import { EmptyState, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
@@ -20,6 +9,10 @@ import {
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../../app/commercialUi";
+import {
+  GroupedColumnSeriesChart,
+  type GroupedColumnBarSpec,
+} from "../../../../components/GroupedColumnSeriesChart";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import { formatCurrency } from "../../../../utils/format";
@@ -93,7 +86,7 @@ export function CustomerAccountBillingChart({
   comparePriorYear,
   enabled = true,
 }: CustomerAccountBillingChartProps) {
-  const gradientId = useId().replace(/:/g, "");
+  const [showTrend, setShowTrend] = useState(false);
   const customers = useMemo(
     () => [accountAsSeriesCustomer(codigo, loja)],
     [codigo, loja],
@@ -129,6 +122,25 @@ export function CustomerAccountBillingChart({
     [points],
   );
 
+  const bars = useMemo((): GroupedColumnBarSpec[] => {
+    const list: GroupedColumnBarSpec[] = [
+      {
+        dataKey: "faturamento",
+        name: "Faturamento",
+        fill: SERIES_COLOR,
+        trendSource: true,
+      },
+    ];
+    if (comparePriorYear) {
+      list.push({
+        dataKey: "faturamento_prior",
+        name: "Ano ant.",
+        fill: PRIOR_SERIES_COLOR,
+      });
+    }
+    return list;
+  }, [comparePriorYear]);
+
   const hasValues = chartData.some(
     (point) =>
       point.faturamento > 0 ||
@@ -161,6 +173,17 @@ export function CustomerAccountBillingChart({
           ) : null
         }
       >
+        {queryEnabled ? (
+          <div className="cm-field cm-account-billing-chart__trend">
+            <NativeCheckboxControl
+              id="customer-account-billing-trend"
+              checked={showTrend}
+              onChange={setShowTrend}
+              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+              hint={CM_HELP.customerDetail.billingSeriesTrend}
+            />
+          </div>
+        ) : null}
         {error && !hasValues ? (
           <EmptyState
             classNames={cmEmptyStateClassNames}
@@ -193,65 +216,16 @@ export function CustomerAccountBillingChart({
                 </CommercialActionButton>
               </CommercialStateBanner>
             ) : null}
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <AreaChart
-                data={chartData}
-                margin={{ top: 12, right: 16, left: 4, bottom: 4 }}
-              >
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={SERIES_COLOR} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={SERIES_COLOR} stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="periodo"
-                  tick={{ fontSize: 11 }}
-                  interval="preserveStartEnd"
-                  tickLine={false}
-                />
-                <YAxis
-                  width={88}
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => formatChartCurrency(Number(value))}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  formatter={(value, name) => [
-                    value == null || Number.isNaN(Number(value))
-                      ? "—"
-                      : formatCurrency(Number(value)),
-                    name,
-                  ]}
-                  labelFormatter={(label) => String(label)}
-                />
-                {comparePriorYear ? <Legend /> : null}
-                <Area
-                  type="monotone"
-                  dataKey="faturamento"
-                  name="Faturamento"
-                  stroke={SERIES_COLOR}
-                  strokeWidth={2}
-                  fill={`url(#${gradientId})`}
-                  dot={{ r: 3, fill: SERIES_COLOR, strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
-                />
-                {comparePriorYear ? (
-                  <Line
-                    type="monotone"
-                    dataKey="faturamento_prior"
-                    name="Ano ant."
-                    stroke={PRIOR_SERIES_COLOR}
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                    connectNulls
-                    dot={false}
-                  />
-                ) : null}
-              </AreaChart>
-            </ResponsiveContainer>
+            <GroupedColumnSeriesChart
+              data={chartData}
+              categoryKey="periodo"
+              bars={bars}
+              height={CHART_HEIGHT}
+              showTrend={showTrend}
+              showLegend={comparePriorYear || showTrend}
+              formatY={formatChartCurrency}
+              formatTooltipValue={formatCurrency}
+            />
           </>
         )}
         <p className="cm-customer-billing-filters__hint cm-cell-muted">
