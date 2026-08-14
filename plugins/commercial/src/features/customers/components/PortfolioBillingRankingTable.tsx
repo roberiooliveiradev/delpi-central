@@ -19,6 +19,7 @@ import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { CM_HELP } from "../../../content/helpTooltips";
 import type { PortfolioBillingRankingItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
+import { OtdCustomerIdentityCell } from "../../analytics/components/OtdCustomerIdentityCell";
 import {
   DEFAULT_BILLING_SERIES_PRESET,
   periodRangeFromBillingPreset,
@@ -99,10 +100,19 @@ export function PortfolioBillingRankingTable({
       base.push({
         key: "customer",
         header: "Cliente",
-        render: (row) =>
-          row.customerName
-            ? `${row.customerName} (${row.customerCode}/${row.customerStore})`
-            : `${row.customerCode ?? "—"}/${row.customerStore ?? "—"}`,
+        interactive: true,
+        rowClick: "stop",
+        render: (row) => (
+          <OtdCustomerIdentityCell
+            customer={{
+              code: row.customerCode,
+              store: row.customerStore,
+              name: row.customerName,
+            }}
+            size="sm"
+            returnLabel="Minha Carteira"
+          />
+        ),
       });
     }
     base.push(
