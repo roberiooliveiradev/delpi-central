@@ -26,4 +26,15 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(page, /linkingCustomers/);
     assert.match(page, /Vínculo parcial|vinculado\(s\)/);
   });
+
+  it("permite desvincular clientes em lote com checkbox e toolbar", () => {
+    assert.match(detail, /NativeCheckboxControl/);
+    assert.match(detail, /selectedLinkedKeys/);
+    assert.match(detail, /Desvincular selecionados/);
+    assert.match(detail, /onRemoveCustomers/);
+    assert.match(detail, /CommercialDataListToolbar/);
+    assert.match(page, /handleRemoveCustomers/);
+    assert.match(page, /unlinkingCustomers/);
+    assert.match(page, /Desvínculo parcial|removido\(s\)/);
+  });
 });
