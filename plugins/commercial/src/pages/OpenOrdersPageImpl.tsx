@@ -261,92 +261,97 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
         }
         highlights={highlights}
       >
-        {canFilterPortfolios ? (
-          <div className="cm-open-orders-page__scope">
-            <SellerScopeFilter
-              sellers={filterablePortfolios}
-              value={sellerIdFilter}
-              onChange={changeSeller}
-              hint={CM_HELP.openOrders.sellerScope}
-              teamScope={canUseTeamScope}
-            />
-          </div>
-        ) : null}
-
-        {!error && allItemsCount > 0 ? (
+        {canFilterPortfolios || (!error && allItemsCount > 0) ? (
           <>
-            <CommercialScopeChipBar
-              aria-label="Atenção operacional"
-              label="Atenção"
-              chips={[
-                {
-                  id: "all",
-                  label: `Todos (${attentionSummary.total_linhas.toLocaleString("pt-BR")})`,
-                  active: activeChip === "all",
-                  onSelect: () => selectChip("all"),
-                },
-                {
-                  id: "can_invoice",
-                  label: `Pode faturar (${attentionSummary.itens_com_estoque.toLocaleString("pt-BR")})`,
-                  active: activeChip === "can_invoice",
-                  onSelect: () => selectChip("can_invoice"),
-                },
-                {
-                  id: "partial",
-                  label: `Parcial (${attentionSummary.itens_estoque_parcial.toLocaleString("pt-BR")})`,
-                  active: activeChip === "partial",
-                  onSelect: () => selectChip("partial"),
-                },
-                {
-                  id: "late",
-                  label: `Atraso (${attentionSummary.linhas_em_atraso.toLocaleString("pt-BR")})`,
-                  active: activeChip === "late",
-                  onSelect: () => selectChip("late"),
-                },
-              ]}
-            />
+            {!error && allItemsCount > 0 ? (
+              <div className="cm-open-orders-page__chip-row">
+                <CommercialScopeChipBar
+                  aria-label="Atenção operacional"
+                  label="Atenção"
+                  chips={[
+                    {
+                      id: "all",
+                      label: `Todos (${attentionSummary.total_linhas.toLocaleString("pt-BR")})`,
+                      active: activeChip === "all",
+                      onSelect: () => selectChip("all"),
+                    },
+                    {
+                      id: "can_invoice",
+                      label: `Pode faturar (${attentionSummary.itens_com_estoque.toLocaleString("pt-BR")})`,
+                      active: activeChip === "can_invoice",
+                      onSelect: () => selectChip("can_invoice"),
+                    },
+                    {
+                      id: "partial",
+                      label: `Parcial (${attentionSummary.itens_estoque_parcial.toLocaleString("pt-BR")})`,
+                      active: activeChip === "partial",
+                      onSelect: () => selectChip("partial"),
+                    },
+                    {
+                      id: "late",
+                      label: `Atraso (${attentionSummary.linhas_em_atraso.toLocaleString("pt-BR")})`,
+                      active: activeChip === "late",
+                      onSelect: () => selectChip("late"),
+                    },
+                  ]}
+                />
 
-            {deliveryHorizon ? (
-              <CommercialScopeChipBar
-                aria-label="Concentrar forças por entrega"
-                label="Concentrar"
-                chips={[
-                  {
-                    id: "conc-none",
-                    label: "Todos",
-                    active: concentrateChip === "none",
-                    onSelect: () => selectConcentrate("none"),
-                  },
-                  {
-                    id: "conc-overdue",
-                    label: `Atrasado (${horizonCount("overdue").toLocaleString("pt-BR")})`,
-                    active: concentrateChip === "overdue",
-                    onSelect: () => selectConcentrate("overdue"),
-                  },
-                  {
-                    id: "conc-month",
-                    label: `Este mês (${horizonCount("current_month").toLocaleString("pt-BR")})`,
-                    active: concentrateChip === "current_month",
-                    onSelect: () => selectConcentrate("current_month"),
-                  },
-                  {
-                    id: "conc-future",
-                    label: `Futuro (${futureCount.toLocaleString("pt-BR")})`,
-                    active: concentrateChip === "future",
-                    onSelect: () => selectConcentrate("future"),
-                  },
-                ]}
-              />
+                {deliveryHorizon ? (
+                  <CommercialScopeChipBar
+                    aria-label="Concentrar forças por entrega"
+                    label="Concentrar"
+                    chips={[
+                      {
+                        id: "conc-none",
+                        label: "Todos",
+                        active: concentrateChip === "none",
+                        onSelect: () => selectConcentrate("none"),
+                      },
+                      {
+                        id: "conc-overdue",
+                        label: `Atrasado (${horizonCount("overdue").toLocaleString("pt-BR")})`,
+                        active: concentrateChip === "overdue",
+                        onSelect: () => selectConcentrate("overdue"),
+                      },
+                      {
+                        id: "conc-month",
+                        label: `Este mês (${horizonCount("current_month").toLocaleString("pt-BR")})`,
+                        active: concentrateChip === "current_month",
+                        onSelect: () => selectConcentrate("current_month"),
+                      },
+                      {
+                        id: "conc-future",
+                        label: `Futuro (${futureCount.toLocaleString("pt-BR")})`,
+                        active: concentrateChip === "future",
+                        onSelect: () => selectConcentrate("future"),
+                      },
+                    ]}
+                  />
+                ) : null}
+              </div>
             ) : null}
 
-            <FilterBar
-              filters={filters}
-              filiais={filiais}
-              clients={clients}
-              hasActiveFilters={hasActiveFilters}
-              onChange={updateFilters}
-              onReset={resetFilters}
-            />
+            {!error && (allItemsCount > 0 || canFilterPortfolios) ? (
+              <FilterBar
+                filters={filters}
+                filiais={filiais}
+                clients={clients}
+                hasActiveFilters={hasActiveFilters}
+                onChange={updateFilters}
+                onReset={resetFilters}
+                scopeFilter={
+                  canFilterPortfolios ? (
+                    <SellerScopeFilter
+                      sellers={filterablePortfolios}
+                      value={sellerIdFilter}
+                      onChange={changeSeller}
+                      hint={CM_HELP.openOrders.sellerScope}
+                      teamScope={canUseTeamScope}
+                    />
+                  ) : null
+                }
+              />
+            ) : null}
           </>
         ) : null}
       </CommercialPageHero>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Filter, RotateCcw } from "lucide-react";
 import {
   ActionButton,
@@ -25,6 +25,8 @@ type FilterBarProps = {
   hasActiveFilters: boolean;
   onChange: (patch: Partial<OpenOrdersTotvsFilters>) => void;
   onReset: () => void;
+  /** Escopo de carteira (SellerScopeFilter) na mesma barra de filtros. */
+  scopeFilter?: ReactNode;
 };
 
 const STOCK_OPTIONS: Array<{ value: StockFilter; label: string }> = [
@@ -40,6 +42,7 @@ export function FilterBar({
   hasActiveFilters,
   onChange,
   onReset,
+  scopeFilter = null,
 }: FilterBarProps) {
   const [showMore, setShowMore] = useState(false);
   const filialOptions = buildOperationalUnitOptions(filiais);
@@ -72,6 +75,7 @@ export function FilterBar({
         </div>
       }
     >
+      {scopeFilter}
       <CommercialTextField
         label="Busca livre"
         hint={CM_HELP.openOrders.filterSearch}

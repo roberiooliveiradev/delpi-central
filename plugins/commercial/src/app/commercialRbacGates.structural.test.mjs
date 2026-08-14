@@ -79,6 +79,9 @@ describe("commercial RBAC gates (sem aliases)", () => {
     );
     assert.match(source, /navigatePluginView\("administration"\)/);
     assert.doesNotMatch(source, /navigatePluginView\("seller_portfolios"\)/);
+    assert.match(source, /cm-open-orders-page__chip-row/);
+    assert.match(source, /scopeFilter=/);
+    assert.doesNotMatch(source, /cm-open-orders-page__scope/);
   });
 
   it("manifest sem texto de alias legado e team route canônica", () => {

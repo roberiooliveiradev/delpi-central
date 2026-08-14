@@ -501,8 +501,8 @@ Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pr�
 ```
 ┌─ PageHero (card único) ───────────────────────────────────────────────────┐
 │ PEDIDOS · highlights Linhas / Valor / Após filtros         [↻ Atualizar] │
-│ Carteira · Atenção · **Concentrar** (Todos / Atrasado / Este mês / Futuro) │
-│ FilterBar (busca/filial/cliente/datas) · chips usam deliveryHorizon do BFF │
+│ Atenção + Concentrar (mesma linha) · FilterBar (Carteira | busca/…)    │
+│ chips usam deliveryHorizon do BFF                                       │
 └───────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard ─ [Tabela|Cards] ─ Excel · Fonte · Colunas ──────────────────┐
 │ Tabela: Cobertura (InlineMeter) · Prev. OP + badge · Status · Atraso badge│

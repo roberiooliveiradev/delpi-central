@@ -934,11 +934,12 @@
   gap: 8px 12px;
 }
 
-.dashboard-commercial .cm-open-orders-page__scope {
+.dashboard-commercial .cm-open-orders-page__chip-row {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
   flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 28px;
+  min-width: 0;
 }
 
 .dashboard-commercial .cm-filter-bar__header {
