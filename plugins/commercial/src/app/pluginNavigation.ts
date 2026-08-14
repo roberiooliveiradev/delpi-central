@@ -97,6 +97,30 @@ export function buildCustomerDetailHref(
   return buildHrefWithReturn(withSearch, options.returnNav, options?.basePath);
 }
 
+/** Href do detalhe do pedido na Conta (+ returnTo opcional). */
+export function buildCustomerOrderDetailHref(
+  codigo: string,
+  loja: string,
+  branch: string,
+  orderNumber: string,
+  options?: {
+    basePath?: string;
+    returnNav?: ReturnNavOptions;
+  },
+): string | null {
+  const path = buildCustomerOrderDetailPath(
+    options?.basePath,
+    codigo,
+    loja,
+    branch,
+    orderNumber,
+  );
+  if (!path) return null;
+  return options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+}
+
 export function navigateCustomerOrderDetail(
   codigo: string,
   loja: string,
@@ -107,19 +131,42 @@ export function navigateCustomerOrderDetail(
     returnNav?: ReturnNavOptions;
   },
 ): boolean {
-  const path = buildCustomerOrderDetailPath(
-    options?.basePath,
+  const target = buildCustomerOrderDetailHref(
     codigo,
     loja,
     branch,
     orderNumber,
+    options,
   );
-  if (!path) return false;
-  const target = options?.returnNav
-    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
-    : path;
+  if (!target) return false;
   navigatePluginPath(target);
   return true;
+}
+
+/** Href do detalhe da NF na Conta (+ returnTo opcional). */
+export function buildCustomerInvoiceDetailHref(
+  codigo: string,
+  loja: string,
+  branch: string,
+  invoiceNumber: string,
+  invoiceSeries: string,
+  options?: {
+    basePath?: string;
+    returnNav?: ReturnNavOptions;
+  },
+): string | null {
+  const path = buildCustomerInvoiceDetailPath(
+    options?.basePath,
+    codigo,
+    loja,
+    branch,
+    invoiceNumber,
+    invoiceSeries,
+  );
+  if (!path) return null;
+  return options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
 }
 
 export function navigateCustomerInvoiceDetail(
@@ -133,18 +180,15 @@ export function navigateCustomerInvoiceDetail(
     returnNav?: ReturnNavOptions;
   },
 ): boolean {
-  const path = buildCustomerInvoiceDetailPath(
-    options?.basePath,
+  const target = buildCustomerInvoiceDetailHref(
     codigo,
     loja,
     branch,
     invoiceNumber,
     invoiceSeries,
+    options,
   );
-  if (!path) return false;
-  const target = options?.returnNav
-    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
-    : path;
+  if (!target) return false;
   navigatePluginPath(target);
   return true;
 }
@@ -187,15 +231,22 @@ export function navigateProposalDetail(
   return true;
 }
 
-export function navigateAnalyticsOpportunityDetail(
+export function buildAnalyticsOpportunityDetailHref(
   proposalNumber: string,
   options?: { basePath?: string; search?: string },
-): boolean {
-  const path = buildAnalyticsOpportunityDetailPath(
+): string | null {
+  return buildAnalyticsOpportunityDetailPath(
     options?.basePath,
     proposalNumber,
     options?.search,
   );
+}
+
+export function navigateAnalyticsOpportunityDetail(
+  proposalNumber: string,
+  options?: { basePath?: string; search?: string },
+): boolean {
+  const path = buildAnalyticsOpportunityDetailHref(proposalNumber, options);
   if (!path) return false;
   navigatePluginPath(path);
   return true;
@@ -272,6 +323,7 @@ export {
   buildCustomerDetailPath,
   buildCustomerOrderDetailPath,
   buildCustomerInvoiceDetailPath,
+  buildAnalyticsOpportunityDetailPath,
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildProposalDetailPath,

@@ -8,11 +8,16 @@ import {
   CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../../app/commercialUi";
 import { currentLocationAsReturnTo } from "../../../../app/commercialNavigationReturn";
-import { navigateCustomerInvoiceDetail } from "../../../../app/pluginNavigation";
+import {
+  buildCustomerInvoiceDetailHref,
+  navigateCustomerInvoiceDetail,
+} from "../../../../app/pluginNavigation";
+import { invoiceLinkTitle } from "../../../../content/entityLinkHints";
 import {
   CUSTOMER_INVOICE_COLUMN_HELP,
   withColumnHelp,
@@ -43,6 +48,11 @@ export function CustomerInvoicesTable({
   codigo,
   loja,
 }: CustomerInvoicesTableProps) {
+  const invoiceReturnNav = {
+    returnTo: currentLocationAsReturnTo(),
+    returnLabel: "Histórico",
+  };
+
   const openInvoiceDetail = (invoice: CustomerInvoice) => {
     if (
       !invoice.branch?.trim() ||
@@ -59,13 +69,23 @@ export function CustomerInvoicesTable({
       invoice.invoice_series,
       {
         basePath,
-        returnNav: {
-          returnTo: currentLocationAsReturnTo(),
-          returnLabel: "Histórico",
-        },
+        returnNav: invoiceReturnNav,
       },
     );
   };
+
+  const invoiceHref = (invoice: CustomerInvoice) =>
+    buildCustomerInvoiceDetailHref(
+      codigo,
+      loja,
+      invoice.branch,
+      invoice.invoice_number,
+      invoice.invoice_series,
+      {
+        basePath,
+        returnNav: invoiceReturnNav,
+      },
+    );
 
   const columns: DataTableColumn<CustomerInvoice>[] = [
     {
@@ -76,12 +96,29 @@ export function CustomerInvoicesTable({
     {
       key: "invoice",
       header: "Nota / série",
-      render: (invoice) =>
-        `${invoice.invoice_number}${invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""}${
+      interactive: true,
+      rowClick: "stop",
+      render: (invoice) => {
+        const label = `${invoice.invoice_number}${
+          invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
+        }${
           invoice.branch
             ? ` · ${OPERATIONAL_UNIT_COLUMN_LABEL} ${formatOperationalUnitCode(invoice.branch)}`
             : ""
-        }`,
+        }`;
+        const href = invoiceHref(invoice);
+        if (!href) return label;
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={invoiceLinkTitle(invoice.invoice_number)}
+            className="cm-link-button"
+            onNavigate={() => openInvoiceDetail(invoice)}
+          >
+            {label}
+          </CommercialEntityLink>
+        );
+      },
     },
     {
       key: "sales-order",
@@ -130,40 +167,57 @@ export function CustomerInvoicesTable({
         />
       </div>
       <div className="cm-customer-invoices__mobile">
-        {invoices.map((invoice) => (
-          <div
-            key={invoice.key}
-            className="cm-customer-invoices__mobile-item cm-customer-orders__mobile-item--clickable"
-            role="button"
-            tabIndex={0}
-            onClick={() => openInvoiceDetail(invoice)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openInvoiceDetail(invoice);
-              }
-            }}
-          >
-            <CommercialDataRecordCard
-              title={`Nota ${invoice.invoice_number}${
-                invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
-              }`}
-              subtitle={`Emissão ${formatDisplayDate(invoice.issue_date)}`}
-              status={
-                <CommercialStatusBadge
-                  variant={invoice.situation === "return" ? "info" : "success"}
-                  label={situationLabel(invoice.situation)}
-                />
-              }
-              fields={[
-                { id: "sales-order", label: "Pedido de venda", value: invoice.sales_order || "—" },
-                { id: "customer-order", label: "Pedido do cliente", value: invoice.customer_order || "—" },
-                { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
-                { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
-              ]}
-            />
-          </div>
-        ))}
+        {invoices.map((invoice) => {
+          const href = invoiceHref(invoice);
+          const titleLabel = `Nota ${invoice.invoice_number}${
+            invoice.invoice_series ? ` / ${invoice.invoice_series}` : ""
+          }`;
+          return (
+            <div
+              key={invoice.key}
+              className="cm-customer-invoices__mobile-item cm-customer-orders__mobile-item--clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => openInvoiceDetail(invoice)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openInvoiceDetail(invoice);
+                }
+              }}
+            >
+              <CommercialDataRecordCard
+                title={
+                  href ? (
+                    <CommercialEntityLink
+                      href={href}
+                      title={invoiceLinkTitle(invoice.invoice_number)}
+                      className="cm-link-button"
+                      onNavigate={() => openInvoiceDetail(invoice)}
+                    >
+                      {titleLabel}
+                    </CommercialEntityLink>
+                  ) : (
+                    titleLabel
+                  )
+                }
+                subtitle={`Emissão ${formatDisplayDate(invoice.issue_date)}`}
+                status={
+                  <CommercialStatusBadge
+                    variant={invoice.situation === "return" ? "info" : "success"}
+                    label={situationLabel(invoice.situation)}
+                  />
+                }
+                fields={[
+                  { id: "sales-order", label: "Pedido de venda", value: invoice.sales_order || "—" },
+                  { id: "customer-order", label: "Pedido do cliente", value: invoice.customer_order || "—" },
+                  { id: "items", label: "Itens", value: invoice.item_count.toLocaleString("pt-BR") },
+                  { id: "value", label: "Valor", value: formatCurrency(invoice.total_value) },
+                ]}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {totalPages > 1 ? (

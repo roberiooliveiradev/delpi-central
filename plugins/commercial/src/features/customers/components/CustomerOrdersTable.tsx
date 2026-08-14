@@ -10,13 +10,18 @@ import { type ReactNode, useState } from "react";
 import {
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
 import {
   currentLocationAsReturnTo,
 } from "../../../app/commercialNavigationReturn";
-import { navigateCustomerOrderDetail } from "../../../app/pluginNavigation";
+import {
+  buildCustomerOrderDetailHref,
+  navigateCustomerOrderDetail,
+} from "../../../app/pluginNavigation";
+import { orderLinkTitle } from "../../../content/entityLinkHints";
 import { CUSTOMER_ORDERS_CONTENT } from "../../../content/customerOrdersContent";
 import {
   CUSTOMER_ORDERS_COLUMN_HELP,
@@ -66,16 +71,24 @@ export function CustomerOrdersTable({
 }: CustomerOrdersTableProps) {
   const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
 
+  const orderReturnNav = {
+    returnTo: currentLocationAsReturnTo(),
+    returnLabel: "Pedidos da conta",
+  };
+
   const openOrderDetail = (order: CustomerOrderSummary) => {
     if (!order.filial?.trim() || !order.pedido?.trim()) return;
     navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
       basePath,
-      returnNav: {
-        returnTo: currentLocationAsReturnTo(),
-        returnLabel: "Pedidos da conta",
-      },
+      returnNav: orderReturnNav,
     });
   };
+
+  const orderHref = (order: CustomerOrderSummary) =>
+    buildCustomerOrderDetailHref(codigo, loja, order.filial, order.pedido, {
+      basePath,
+      returnNav: orderReturnNav,
+    });
 
   const toggleExpand = (orderKey: string) => {
     setExpandedRowKey((current) => (current === orderKey ? null : orderKey));
@@ -114,7 +127,26 @@ export function CustomerOrdersTable({
       header: OPERATIONAL_UNIT_COLUMN_LABEL,
       render: (order) => formatOperationalUnitCode(order.filial),
     },
-    { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
+    {
+      key: "order",
+      header: "Pedido",
+      interactive: true,
+      rowClick: "stop",
+      render: (order) => {
+        const href = orderHref(order);
+        if (!href) return order.pedido || "—";
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={orderLinkTitle(order.pedido)}
+            className="cm-link-button"
+            onNavigate={() => openOrderDetail(order)}
+          >
+            {order.pedido || "—"}
+          </CommercialEntityLink>
+        );
+      },
+    },
     {
       key: "customer-order",
       header: "Pedido do cliente",
@@ -165,10 +197,7 @@ export function CustomerOrdersTable({
               orderKey={order.key}
               basePath={basePath}
               canViewAnalytics={canViewAnalytics}
-              returnNav={{
-                returnTo: currentLocationAsReturnTo(),
-                returnLabel: "Pedidos da conta",
-              }}
+              returnNav={orderReturnNav}
             />
           )}
         />
@@ -178,56 +207,72 @@ export function CustomerOrdersTable({
         className="cm-customer-orders__mobile"
         aria-label={CUSTOMER_ORDERS_CONTENT.mobileListAriaLabel}
       >
-        {orders.map((order) => (
-          <div
-            key={order.key}
-            className="cm-customer-orders__mobile-item cm-customer-orders__mobile-item--clickable"
-            role="button"
-            tabIndex={0}
-            onClick={() => openOrderDetail(order)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openOrderDetail(order);
-              }
-            }}
-          >
-            <CommercialDataRecordCard
-              title={`Pedido ${order.pedido || "não informado"}`}
-              subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
-              status={renderStatus(order)}
-              fields={[
-                {
-                  id: "customer-order",
-                  label: "Pedido do cliente",
-                  value: order.pedidoCliente || "—",
-                },
-                {
-                  id: "lines",
-                  label: "Linhas",
-                  value: order.quantidadeLinhas.toLocaleString("pt-BR"),
-                },
-                {
-                  id: "overdue",
-                  label: "Maior atraso",
-                  value: formatMaxOverdue(order.maiorAtrasoDias),
-                },
-                {
-                  id: "delivery",
-                  label: "Próxima entrega",
-                  value: order.proximaEntrega
-                    ? formatDisplayDate(order.proximaEntrega)
-                    : "—",
-                },
-                {
-                  id: "value",
-                  label: "Valor em aberto",
-                  value: formatCurrency(order.valorTotalAberto),
-                },
-              ]}
-            />
-          </div>
-        ))}
+        {orders.map((order) => {
+          const href = orderHref(order);
+          return (
+            <div
+              key={order.key}
+              className="cm-customer-orders__mobile-item cm-customer-orders__mobile-item--clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => openOrderDetail(order)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openOrderDetail(order);
+                }
+              }}
+            >
+              <CommercialDataRecordCard
+                title={
+                  href ? (
+                    <CommercialEntityLink
+                      href={href}
+                      title={orderLinkTitle(order.pedido)}
+                      className="cm-link-button"
+                      onNavigate={() => openOrderDetail(order)}
+                    >
+                      {`Pedido ${order.pedido || "não informado"}`}
+                    </CommercialEntityLink>
+                  ) : (
+                    `Pedido ${order.pedido || "não informado"}`
+                  )
+                }
+                subtitle={formatOperationalUnitCode(order.filial, "Unidade não informada")}
+                status={renderStatus(order)}
+                fields={[
+                  {
+                    id: "customer-order",
+                    label: "Pedido do cliente",
+                    value: order.pedidoCliente || "—",
+                  },
+                  {
+                    id: "lines",
+                    label: "Linhas",
+                    value: order.quantidadeLinhas.toLocaleString("pt-BR"),
+                  },
+                  {
+                    id: "overdue",
+                    label: "Maior atraso",
+                    value: formatMaxOverdue(order.maiorAtrasoDias),
+                  },
+                  {
+                    id: "delivery",
+                    label: "Próxima entrega",
+                    value: order.proximaEntrega
+                      ? formatDisplayDate(order.proximaEntrega)
+                      : "—",
+                  },
+                  {
+                    id: "value",
+                    label: "Valor em aberto",
+                    value: formatCurrency(order.valorTotalAberto),
+                  },
+                ]}
+              />
+            </div>
+          );
+        })}
       </div>
     </CommercialSectionCard>
   );

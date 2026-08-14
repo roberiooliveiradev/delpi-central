@@ -1,9 +1,9 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
 
 import {
-  CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialEntityLink,
 } from "../../../app/commercialUi";
 import {
   CUSTOMER_ORDER_LINES_COLUMN_HELP,
@@ -14,10 +14,19 @@ import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "..
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
 import {
+  buildAnalyticsOpportunityDetailHref,
+  buildOpenOrderLineDetailPath,
+  buildOpenOrderOpDetailPath,
   navigateAnalyticsOpportunityDetail,
   navigateOpenOrderLineDetail,
   navigateOpenOrderOpDetail,
 } from "../../../app/pluginNavigation";
+import { buildHrefWithReturn } from "../../../app/commercialNavigationReturn";
+import {
+  openOrderLineLinkTitle,
+  opPageLinkTitle,
+  opportunityLinkTitle,
+} from "../../../content/entityLinkHints";
 import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink";
 import { getLineOpForecast } from "../../../utils/opAllocation";
 import { buildOrderOpportunityContextSearch } from "../utils/customerAccountActions";
@@ -51,10 +60,16 @@ export function CustomerOrderLines({
   const rows = Array.from(lines);
   const rowKey = (line: OpenOrdersTotvsItem, index: number) =>
     `${orderKey}-${line.linha ?? index}-${line.produto ?? ""}`;
+  const withReturn = (path: string | null) => {
+    if (!path) return null;
+    if (!returnNav) return path;
+    return buildHrefWithReturn(path, returnNav, basePath);
+  };
   const actions = (line: OpenOrdersTotvsItem) => {
     const canOpenOrder = Boolean(
       line.filial?.trim() && line.pedido?.trim() && line.linha?.trim(),
     );
+    const contextSearch = buildOpenOrdersContextSearch();
     const productionOrders = canOpenOrder
       ? Array.from(
           new Map(
@@ -65,8 +80,19 @@ export function CustomerOrderLines({
         )
       : [];
     const proposalNumber = line.proposal_number?.trim() || null;
+    const lineHref = canOpenOrder
+      ? withReturn(
+          buildOpenOrderLineDetailPath(
+            basePath,
+            line.filial,
+            line.pedido,
+            line.linha,
+            contextSearch,
+          ),
+        )
+      : null;
     if (
-      !canOpenOrder &&
+      !lineHref &&
       productionOrders.length === 0 &&
       !(canViewAnalytics && proposalNumber)
     ) {
@@ -74,59 +100,82 @@ export function CustomerOrderLines({
     }
     return (
       <div className="cm-customer-order-line-actions">
-        {canOpenOrder ? (
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() =>
-              navigateOpenOrderLineDetail(
-                line.filial,
-                line.pedido,
-                line.linha,
-                {
-                  basePath,
-                  search: buildOpenOrdersContextSearch(),
-                  returnNav,
-                },
-              )
-            }
-          >
-            Ver em Pedidos
-          </CommercialActionButton>
-        ) : null}
-        {productionOrders.map((op) => (
-          <CommercialActionButton
-            key={op.numero_op}
-            variant="ghost"
-            onClick={() =>
-              navigateOpenOrderOpDetail(
-                line.filial,
-                line.pedido,
-                line.linha,
-                op.numero_op,
-                {
-                  basePath,
-                  search: buildOpenOrdersContextSearch(),
-                  returnNav,
-                },
-              )
-            }
-          >
-            Ver OP {op.numero_op}
-          </CommercialActionButton>
-        ))}
-        {canViewAnalytics && proposalNumber ? (
-          <CommercialActionButton
-            variant="ghost"
-            onClick={() =>
-              navigateAnalyticsOpportunityDetail(proposalNumber, {
+        {lineHref ? (
+          <CommercialEntityLink
+            href={lineHref}
+            title={openOrderLineLinkTitle(line.pedido, line.linha)}
+            className="cm-link-button"
+            onNavigate={() =>
+              navigateOpenOrderLineDetail(line.filial, line.pedido, line.linha, {
                 basePath,
-                search: buildOrderOpportunityContextSearch(line),
+                search: contextSearch,
+                returnNav,
               })
             }
           >
-            Ver OV {proposalNumber}
-          </CommercialActionButton>
+            Ver em Pedidos
+          </CommercialEntityLink>
         ) : null}
+        {productionOrders.map((op) => {
+          const opHref = withReturn(
+            buildOpenOrderOpDetailPath(
+              basePath,
+              line.filial,
+              line.pedido,
+              line.linha,
+              op.numero_op,
+              contextSearch,
+            ),
+          );
+          if (!opHref) return null;
+          return (
+            <CommercialEntityLink
+              key={op.numero_op}
+              href={opHref}
+              title={opPageLinkTitle(op.numero_op)}
+              className="cm-link-button"
+              onNavigate={() =>
+                navigateOpenOrderOpDetail(
+                  line.filial,
+                  line.pedido,
+                  line.linha,
+                  op.numero_op,
+                  {
+                    basePath,
+                    search: contextSearch,
+                    returnNav,
+                  },
+                )
+              }
+            >
+              Ver OP {op.numero_op}
+            </CommercialEntityLink>
+          );
+        })}
+        {canViewAnalytics && proposalNumber
+          ? (() => {
+              const ovHref = buildAnalyticsOpportunityDetailHref(proposalNumber, {
+                basePath,
+                search: buildOrderOpportunityContextSearch(line),
+              });
+              if (!ovHref) return null;
+              return (
+                <CommercialEntityLink
+                  href={ovHref}
+                  title={opportunityLinkTitle(proposalNumber)}
+                  className="cm-link-button"
+                  onNavigate={() =>
+                    navigateAnalyticsOpportunityDetail(proposalNumber, {
+                      basePath,
+                      search: buildOrderOpportunityContextSearch(line),
+                    })
+                  }
+                >
+                  Ver OV {proposalNumber}
+                </CommercialEntityLink>
+              );
+            })()
+          : null}
       </div>
     );
   };

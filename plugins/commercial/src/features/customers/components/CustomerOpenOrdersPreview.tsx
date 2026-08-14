@@ -4,14 +4,21 @@ import {
   CommercialActionButton,
   CommercialDataRecordCard,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialSectionCard,
   CommercialStatusBadge,
 } from "../../../app/commercialUi";
 import { currentLocationAsReturnTo } from "../../../app/commercialNavigationReturn";
 import {
+  buildAnalyticsOpportunityDetailHref,
+  buildCustomerOrderDetailHref,
   navigateAnalyticsOpportunityDetail,
   navigateCustomerOrderDetail,
 } from "../../../app/pluginNavigation";
+import {
+  opportunityLinkTitle,
+  orderLinkTitle,
+} from "../../../content/entityLinkHints";
 import {
   CUSTOMER_ORDERS_PREVIEW_COLUMN_HELP,
   withColumnHelp,
@@ -65,26 +72,41 @@ export function CustomerOpenOrdersPreview({
   onSeeAll,
 }: CustomerOpenOrdersPreviewProps) {
   const rows = orders.slice(0, PREVIEW_LIMIT);
+  const orderReturnNav = {
+    returnTo: currentLocationAsReturnTo(),
+    returnLabel: "Conta",
+  };
+
   const openOrderDetail = (order: CustomerOrderSummary) => {
     if (!order.filial?.trim() || !order.pedido?.trim()) return;
     navigateCustomerOrderDetail(codigo, loja, order.filial, order.pedido, {
       basePath,
-      returnNav: {
-        returnTo: currentLocationAsReturnTo(),
-        returnLabel: "Conta",
-      },
+      returnNav: orderReturnNav,
     });
   };
+
+  const orderHref = (order: CustomerOrderSummary) =>
+    buildCustomerOrderDetailHref(codigo, loja, order.filial, order.pedido, {
+      basePath,
+      returnNav: orderReturnNav,
+    });
 
   const opportunityAction = (order: CustomerOrderSummary) => {
     if (!canViewAnalytics) return null;
     const proposalLine = findOrderProposalLine(order.lines);
     const proposalNumber = proposalLine?.proposal_number?.trim() || null;
     if (!proposalLine || !proposalNumber) return null;
+    const href = buildAnalyticsOpportunityDetailHref(proposalNumber, {
+      basePath,
+      search: buildOrderOpportunityContextSearch(proposalLine),
+    });
+    if (!href) return null;
     return (
-      <CommercialActionButton
-        variant="link"
-        onClick={() =>
+      <CommercialEntityLink
+        href={href}
+        title={opportunityLinkTitle(proposalNumber)}
+        className="cm-link-button"
+        onNavigate={() =>
           navigateAnalyticsOpportunityDetail(proposalNumber, {
             basePath,
             search: buildOrderOpportunityContextSearch(proposalLine),
@@ -92,12 +114,31 @@ export function CustomerOpenOrdersPreview({
         }
       >
         Ver OV {proposalNumber}
-      </CommercialActionButton>
+      </CommercialEntityLink>
     );
   };
 
   const columns: DataTableColumn<CustomerOrderSummary>[] = [
-    { key: "order", header: "Pedido", render: (order) => order.pedido || "—" },
+    {
+      key: "order",
+      header: "Pedido",
+      interactive: true,
+      rowClick: "stop",
+      render: (order) => {
+        const href = orderHref(order);
+        if (!href) return order.pedido || "—";
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={orderLinkTitle(order.pedido)}
+            className="cm-link-button"
+            onNavigate={() => openOrderDetail(order)}
+          >
+            {order.pedido || "—"}
+          </CommercialEntityLink>
+        );
+      },
+    },
     {
       key: "issue",
       header: "Emissão",
@@ -151,6 +192,7 @@ export function CustomerOpenOrdersPreview({
           <div className="cm-customer-orders-preview__mobile">
             {rows.map((order) => {
               const status = previewStatus(order);
+              const href = orderHref(order);
               return (
                 <div
                   key={order.key}
@@ -166,7 +208,20 @@ export function CustomerOpenOrdersPreview({
                   }}
                 >
                   <CommercialDataRecordCard
-                    title={`Pedido ${order.pedido || "não informado"}`}
+                    title={
+                      href ? (
+                        <CommercialEntityLink
+                          href={href}
+                          title={orderLinkTitle(order.pedido)}
+                          className="cm-link-button"
+                          onNavigate={() => openOrderDetail(order)}
+                        >
+                          {`Pedido ${order.pedido || "não informado"}`}
+                        </CommercialEntityLink>
+                      ) : (
+                        `Pedido ${order.pedido || "não informado"}`
+                      )
+                    }
                     subtitle={`Emissão ${formatDisplayDate(pickEmission(order))}`}
                     status={
                       <CommercialStatusBadge
