@@ -354,6 +354,10 @@ left-click limpo) em `components/navigation/InlineNavLink.tsx` — sem skin visu
 própria; `title` obrigatório; factory `createDashboardInlineNavLink`. Consumo
 inicial: Portal Comercial (`CommercialEntityLink`).
 
+**ActionButton + href (ago/2026):** mesmo contrato de clique SPA; `title`
+obrigatório com `href`; CSS `a.delpi-ui-action-btn` + `:visited` em
+`action-controls.css`. CTAs de página (ex.: detalhe OP no Commercial).
+
 ### Checklist por plugin (preencher ao fechar onda)
 
 | Plugin | Onda | CSS kit zerado | TSX cópia/inline resolvido | Dual-class ok | Notas |

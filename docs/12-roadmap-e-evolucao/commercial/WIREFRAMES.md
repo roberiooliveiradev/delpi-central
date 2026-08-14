@@ -1103,6 +1103,24 @@ BFF: `GET .../contacts-bundle` · `POST/PATCH/DELETE .../contacts`.
 
 ---
 
+## WF-ENTITY-LINKS — Identificadores com href real (ago/2026)
+
+Avatares, nomes, Pedido, OP, OV, NF, perfil e carteira usam `<a href>` via
+`CommercialEntityLink` / `InitialsAvatar.href` / `ActionButton.href` (kit
+`InlineNavLink`). Hover nativo com `title` do catálogo `entityLinkHints`
+(padrão «Abrir…»). Clique esquerdo same-tab (SPA); Ctrl/middle-click e copiar
+URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
+
+```text
+┌─ célula ────────────────────────────────────────┐
+│ [Avatar a]  Nome a   ← title «Abrir conta de …» │
+│ Pedido 102942/01     ← title «Abrir pedido …»   │
+│ OP 00118901001       ← title «Abrir página da OP»│
+└─────────────────────────────────────────────────┘
+```
+
+---
+
 ## Próximos artefatos
 
 | Artefato | Quando |
