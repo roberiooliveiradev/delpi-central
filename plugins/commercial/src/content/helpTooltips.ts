@@ -284,8 +284,8 @@ export const CM_HELP = {
     filterTrend:
       "Tendência de faturamento (janela recente vs. a anterior de mesma duração). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
     trendWindow:
-      "Janela da tendência: 7, 30 ou 90 dias (default 30), ou custom (1–365). Compara o período recente com o imediatamente anterior.",
-    trendWindowCustom: "Quantidade de dias da janela recente (1–365). A janela anterior tem a mesma duração.",
+      "Janela da tendência: 7, 30 ou 90 dias (default 30), ou personalizado (1–365). Compara o período recente com o imediatamente anterior.",
+    trendWindowCustom: "Dias da janela recente (1–365). A janela anterior tem a mesma duração.",
     sellerScope:
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     portfolioAudit:

@@ -114,8 +114,23 @@
   justify-content: flex-end;
 }
 
+.dashboard-commercial .cm-customers-page__trend-window-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-customers-page__trend-window-days {
+  flex: 0 0 auto;
+  width: 5.5rem;
+  max-width: 5.5rem;
+}
+
 .dashboard-commercial .cm-customers-page__search-field {
-  min-width: min(100%, 16rem);
+  min-width: min(100%, 14rem);
+  flex: 1 1 14rem;
 }
 
 .dashboard-commercial .cm-customers-page__panels {
@@ -139,6 +154,7 @@
 .dashboard-commercial .cm-customers-page__filter-actions {
   display: flex;
   align-items: end;
+  margin-inline-start: auto;
 }
 
 .dashboard-commercial .cm-customers-list__toolbar {
