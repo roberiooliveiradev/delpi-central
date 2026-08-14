@@ -12,6 +12,7 @@ from commercial_app.application.security.auth_dependencies import require_any_pe
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ANALYTICS_PERMISSIONS,
     COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS,
+    can_use_team_scope,
 )
 from commercial_app.application.use_cases.get_open_portfolio_summary import (
     GetOpenPortfolioSummaryUseCase,
@@ -22,6 +23,10 @@ from commercial_app.application.use_cases.get_open_portfolio_horizon import (
 from commercial_app.application.use_cases.get_portfolio_billing_share import (
     GetPortfolioBillingShareUseCase,
 )
+from commercial_app.application.use_cases.get_portfolio_billing_ranking import (
+    GetPortfolioBillingRankingUseCase,
+)
+from commercial_app.core.auth_actor import current_user_from_request
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
 from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
@@ -133,6 +138,72 @@ def bff_portfolio_billing_share(
         return ok(
             data,
             message="Share de faturamento da carteira carregado.",
+            operation_id=operation_id,
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id=operation_id)
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
+
+
+@router.get(
+    "/portfolio-billing-ranking",
+    operation_id="bff_get_analytics_portfolio_billing_ranking",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS, *COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS)
+def bff_portfolio_billing_ranking(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+    group_by: str = Query(default="customer", pattern="^(customer|seller)$"),
+    limit: int = Query(default=50, ge=1, le=500),
+):
+    """Ranking delta % faturamento vs período −1 ano (cliente; vendedor se team/manage)."""
+    operation_id = "bff_get_analytics_portfolio_billing_ranking"
+    try:
+        resolved_group = "seller" if group_by == "seller" else "customer"
+        if resolved_group == "seller" and not can_use_team_scope(
+            current_user_from_request(request)
+        ):
+            return fail(
+                "Ranking por vendedor exige visão de equipe ou gestão de carteiras.",
+                403,
+                operation_id=operation_id,
+            )
+        if not start_date or not end_date:
+            return fail(
+                "start_date e end_date são obrigatórios.",
+                400,
+                operation_id=operation_id,
+            )
+        scope = resolve_analytics_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
+        gateway = build_delpi_commercial_gateway()
+        data = GetPortfolioBillingRankingUseCase().execute(
+            gateway,
+            scope,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+            limit=limit,
+            group_by=resolved_group,  # type: ignore[arg-type]
+        )
+        return ok(
+            data,
+            message="Ranking de faturamento carregado.",
             operation_id=operation_id,
         )
     except PermissionError as exc:
