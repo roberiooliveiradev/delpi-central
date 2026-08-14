@@ -123,9 +123,11 @@ Impressão: `printDocumentReader()`; PDF oficial continua no endpoint `export.pd
 
 | Modo | Comportamento |
 |------|----------------|
-| Preencher | Cabeçalho + rich text das seções |
+| Preencher | Cabeçalho + `RichTextEditor` (Visual / HTML / Markdown); persistência sempre HTML (`body_html`) |
 | Importar | DOCX → HTML; opcional IA; rich text |
 | Signatários | `UserDirectoryPicker` + flag «Assina»; externo só nome |
+
+Markdown: colar GFM ou modo fonte Markdown no kit `@delpi/plugin-ui` (conversão → HTML sanitizado). Sem campos `*_md` na API.
 
 Após salvar: atalhos para enviar / ver ata / continuar editando.
 

@@ -38,10 +38,14 @@ export const RICH_TEXT_LABELS = {
   linkEditAction: "Editar link",
   linkRemove: "Remover link",
   sourceHtml: "Editar HTML",
+  sourceMarkdown: "Editar Markdown",
   sourceVisual: "Voltar ao visual",
   sourceEditor: "Fonte HTML do texto",
+  sourceMarkdownEditor: "Fonte Markdown do texto",
   sourceHint:
     "Digite < para tags e edite style=\"…\" para CSS. Só o allowlist é preservado ao salvar (sem script/CSS global).",
+  sourceMarkdownHint:
+    "Edite em Markdown (GFM). Ao voltar ao visual, o conteúdo vira HTML sanitizado. Tabelas/estilos ricos podem simplificar.",
   sourceSuggestList: "Sugestões de HTML e CSS",
   sourceSuggestTag: "tag HTML",
   sourceSuggestCss: "propriedade CSS",

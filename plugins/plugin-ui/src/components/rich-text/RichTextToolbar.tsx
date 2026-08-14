@@ -5,6 +5,7 @@ import {
   AlignRight,
   Bold,
   CodeXml,
+  FileText,
   Heading2,
   Indent,
   Italic,
@@ -16,6 +17,7 @@ import {
   RemoveFormatting,
   Strikethrough,
   Table2,
+  Type,
   Underline,
   Undo2,
 } from "lucide-react";
@@ -58,12 +60,14 @@ import {
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import { insertRichTextTable } from "./richTextTable";
 
+export type RichTextSourceKind = "visual" | "html" | "markdown";
+
 type Props = {
   editorRef: RefObject<HTMLDivElement | null>;
   disabled?: boolean;
-  /** Modo fonte HTML — desabilita formatação WYSIWYG. */
-  sourceMode?: boolean;
-  onToggleSource?: () => void;
+  /** Modo fonte (HTML/Markdown) — desabilita formatação WYSIWYG. */
+  sourceKind?: RichTextSourceKind;
+  onSourceKindChange?: (kind: RichTextSourceKind) => void;
   onFormatted: () => void;
   /** Abre o diálogo de link do editor (ModalShell) — sem prompt do navegador. */
   onRequestLink: () => void;
@@ -114,8 +118,8 @@ function RibbonSep() {
 export function RichTextToolbar({
   editorRef,
   disabled = false,
-  sourceMode = false,
-  onToggleSource,
+  sourceKind = "visual",
+  onSourceKindChange,
   onFormatted,
   onRequestLink,
   portalScopeClassName,
@@ -129,6 +133,7 @@ export function RichTextToolbar({
   const savedRangeRef = useRef<Range | null>(null);
   const tableAnchorRef = useRef<HTMLDivElement>(null);
   const tablePanelRef = useRef<HTMLDivElement>(null);
+  const sourceMode = sourceKind !== "visual";
   const formatDisabled = disabled || sourceMode;
 
   const refreshFormatState = useCallback(() => {
@@ -451,13 +456,31 @@ export function RichTextToolbar({
         </div>
         <RibbonSep />
         <RichTextIconButton
-          hint={sourceMode ? RICH_TEXT_LABELS.sourceVisual : RICH_TEXT_LABELS.sourceHtml}
-          ariaLabel={sourceMode ? RICH_TEXT_LABELS.sourceVisual : RICH_TEXT_LABELS.sourceHtml}
-          active={sourceMode}
-          disabled={disabled || !onToggleSource}
-          onClick={() => onToggleSource?.()}
+          hint={RICH_TEXT_LABELS.sourceVisual}
+          ariaLabel={RICH_TEXT_LABELS.sourceVisual}
+          active={sourceKind === "visual"}
+          disabled={disabled || !onSourceKindChange}
+          onClick={() => onSourceKindChange?.("visual")}
+        >
+          <Type size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.sourceHtml}
+          ariaLabel={RICH_TEXT_LABELS.sourceHtml}
+          active={sourceKind === "html"}
+          disabled={disabled || !onSourceKindChange}
+          onClick={() => onSourceKindChange?.("html")}
         >
           <CodeXml size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.sourceMarkdown}
+          ariaLabel={RICH_TEXT_LABELS.sourceMarkdown}
+          active={sourceKind === "markdown"}
+          disabled={disabled || !onSourceKindChange}
+          onClick={() => onSourceKindChange?.("markdown")}
+        >
+          <FileText size={15} aria-hidden="true" />
         </RichTextIconButton>
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.undo}

@@ -21,6 +21,8 @@ describe("RichTextEditor", () => {
     expect(toolbarButton(RICH_TEXT_LABELS.table)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.bold)).toBeTruthy();
     expect(toolbarButton(RICH_TEXT_LABELS.sourceHtml)).toBeTruthy();
+    expect(toolbarButton(RICH_TEXT_LABELS.sourceMarkdown)).toBeTruthy();
+    expect(toolbarButton(RICH_TEXT_LABELS.sourceVisual)).toBeTruthy();
     expect(screen.getByRole("textbox", { name: "Editor de texto" })).toBeTruthy();
   });
 
@@ -37,19 +39,22 @@ describe("RichTextEditor", () => {
   });
 
   it("alterna para fonte HTML e desabilita formatação", () => {
-    render(<RichTextEditor value="<p>Olá</p>" onChange={() => undefined} />);
+    const { container } = render(
+      <RichTextEditor value="<p>Olá</p>" onChange={() => undefined} />,
+    );
 
     fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceHtml));
 
     expect(screen.getByRole("textbox", { name: RICH_TEXT_LABELS.sourceEditor })).toBeTruthy();
-    expect(toolbarButton(RICH_TEXT_LABELS.sourceVisual)).toBeTruthy();
     expect((toolbarButton(RICH_TEXT_LABELS.bold) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByRole("textbox", { name: "Editor de texto" })).toBeNull();
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    expect(editor.getAttribute("contenteditable")).toBe("false");
+    expect(editor.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("volta ao visual a partir da fonte HTML", () => {
     const onChange = vi.fn();
-    render(<RichTextEditor value="<p>Olá</p>" onChange={onChange} />);
+    const { container } = render(<RichTextEditor value="<p>Olá</p>" onChange={onChange} />);
 
     fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceHtml));
     const source = screen.getByRole("textbox", { name: RICH_TEXT_LABELS.sourceEditor });
@@ -58,10 +63,54 @@ describe("RichTextEditor", () => {
     });
     fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceVisual));
 
-    expect(screen.getByRole("textbox", { name: "Editor de texto" })).toBeTruthy();
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    expect(editor.getAttribute("contenteditable")).toBe("true");
     expect(onChange).toHaveBeenCalled();
     const last = onChange.mock.calls.at(-1)?.[0] as string;
     expect(last).toContain("Editado");
+    expect(last.toLowerCase()).not.toContain("<script");
+  });
+
+  it("alterna Visual ↔ Markdown e sincroniza HTML", () => {
+    const onChange = vi.fn();
+    render(<RichTextEditor value="<p><strong>Olá</strong></p>" onChange={onChange} />);
+
+    fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceMarkdown));
+    const source = screen.getByRole("textbox", {
+      name: RICH_TEXT_LABELS.sourceMarkdownEditor,
+    });
+    expect((source as HTMLTextAreaElement).value).toMatch(/\*\*Olá\*\*/);
+
+    fireEvent.change(source, { target: { value: "## Título\n\n- item" } });
+    fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceVisual));
+
+    expect(onChange).toHaveBeenCalled();
+    const last = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(last).toContain("<h2>");
+    expect(last).toContain("<ul>");
+    expect(last.toLowerCase()).not.toContain("<script");
+  });
+
+  it("cola Markdown plain como HTML sanitizado", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor value="<p></p>" onChange={onChange} />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    expect(editor).toBeTruthy();
+
+    const clipboardData = {
+      getData: (type: string) => {
+        if (type === "text/html") return "";
+        if (type === "text/plain") return "# Título\n\n**negrito**\n\n- um";
+        return "";
+      },
+    };
+
+    fireEvent.paste(editor, { clipboardData });
+    expect(onChange).toHaveBeenCalled();
+    const last = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(last).toMatch(/<h1>|<h2>/);
     expect(last.toLowerCase()).not.toContain("<script");
   });
 

@@ -1,7 +1,7 @@
 export { RichTextEditor, type RichTextEditorMode, type RichTextEditorProps } from "./RichTextEditor";
 export { RichTextLinkDialog, type RichTextLinkDialogProps } from "./RichTextLinkDialog";
 export { RichTextSourceEditor, type RichTextSourceEditorProps } from "./RichTextSourceEditor";
-export { RichTextToolbar } from "./RichTextToolbar";
+export { RichTextToolbar, type RichTextSourceKind } from "./RichTextToolbar";
 export {
   RICH_TEXT_FONT_FAMILIES,
   RICH_TEXT_FONT_SIZE_DEFAULT,
@@ -21,6 +21,12 @@ export {
   RICH_TEXT_CSS_SUGGEST_PROPERTIES,
   RICH_TEXT_HTML_SUGGEST_TAGS,
 } from "./richTextHtmlAssist";
+export {
+  clipboardHasUsefulHtml,
+  clipboardLooksLikeMarkdown,
+  markdownToRichTextHtml,
+  richTextHtmlToMarkdown,
+} from "./richTextMarkdown";
 export {
   buildRichTextTableHtml,
   insertRichTextTable,

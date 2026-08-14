@@ -23,6 +23,10 @@ export type RichTextSourceEditorProps = {
   onChange: (next: string) => void;
   minHeight?: number;
   disabled?: boolean;
+  /** HTML assist (tags/CSS). Desligado no modo Markdown. */
+  assistMode?: "html" | "plain";
+  ariaLabel?: string;
+  hint?: string;
 };
 
 type SuggestionState = RichTextSourceSuggestionSession & {
@@ -41,26 +45,37 @@ function suggestionLabel(kind: RichTextSourceSuggestionSession["kind"], item: st
   return item;
 }
 
-/** Textarea monoespaçado com sugestão HTML/CSS e auto-fechamento de tags. */
+/** Textarea monoespaçado; assist HTML/CSS opcional (modo fonte HTML). */
 export function RichTextSourceEditor({
   value,
   onChange,
   minHeight = 200,
   disabled = false,
+  assistMode = "html",
+  ariaLabel = RICH_TEXT_LABELS.sourceEditor,
+  hint = RICH_TEXT_LABELS.sourceHint,
 }: RichTextSourceEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const listId = useId();
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestionState | null>(null);
+  const htmlAssist = assistMode === "html";
 
-  const syncSuggestions = useCallback((nextValue: string, cursor: number) => {
-    const session = resolveRichTextSourceSuggestions(nextValue, cursor);
-    if (!session || session.items.length === 0) {
-      setSuggestions(null);
-      return;
-    }
-    setSuggestions({ ...session, activeIndex: 0 });
-  }, []);
+  const syncSuggestions = useCallback(
+    (nextValue: string, cursor: number) => {
+      if (!htmlAssist) {
+        setSuggestions(null);
+        return;
+      }
+      const session = resolveRichTextSourceSuggestions(nextValue, cursor);
+      if (!session || session.items.length === 0) {
+        setSuggestions(null);
+        return;
+      }
+      setSuggestions({ ...session, activeIndex: 0 });
+    },
+    [htmlAssist],
+  );
 
   useLayoutEffect(() => {
     const sel = pendingSelectionRef.current;
@@ -97,6 +112,11 @@ export function RichTextSourceEditor({
     const cursor = el.selectionStart;
     onChange(next);
 
+    if (!htmlAssist) {
+      setSuggestions(null);
+      return;
+    }
+
     if (
       cursor > 0 &&
       next[cursor - 1] === ">" &&
@@ -113,13 +133,14 @@ export function RichTextSourceEditor({
   }
 
   function handleSelect() {
+    if (!htmlAssist) return;
     const el = textareaRef.current;
     if (!el) return;
     syncSuggestions(el.value, el.selectionStart);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (!suggestions || suggestions.items.length === 0) return;
+    if (!htmlAssist || !suggestions || suggestions.items.length === 0) return;
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -159,7 +180,7 @@ export function RichTextSourceEditor({
   return (
     <div className="delpi-ui-rich-text__source-wrap">
       <p className="delpi-ui-rich-text__source-hint" role="note">
-        {RICH_TEXT_LABELS.sourceHint}
+        {hint}
       </p>
       <div className="delpi-ui-rich-text__source-shell">
         <textarea
@@ -169,12 +190,12 @@ export function RichTextSourceEditor({
           value={value}
           disabled={disabled}
           spellCheck={false}
-          aria-label={RICH_TEXT_LABELS.sourceEditor}
-          aria-autocomplete="list"
-          aria-controls={suggestions ? listId : undefined}
-          aria-expanded={Boolean(suggestions)}
+          aria-label={ariaLabel}
+          aria-autocomplete={htmlAssist ? "list" : undefined}
+          aria-controls={htmlAssist && suggestions ? listId : undefined}
+          aria-expanded={htmlAssist ? Boolean(suggestions) : undefined}
           aria-activedescendant={
-            suggestions && activeItem
+            htmlAssist && suggestions && activeItem
               ? `${listId}-${suggestions.kind}-${activeItem}`
               : undefined
           }
@@ -183,7 +204,7 @@ export function RichTextSourceEditor({
           onClick={handleSelect}
           onKeyUp={handleSelect}
         />
-        {suggestions ? (
+        {htmlAssist && suggestions ? (
           <ul
             id={listId}
             className="delpi-ui-rich-text__source-suggest"

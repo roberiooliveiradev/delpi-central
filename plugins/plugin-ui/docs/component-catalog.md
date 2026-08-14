@@ -1333,10 +1333,10 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 |--------|-----|
 | `SignaturePad` | Canvas de assinatura manuscrita (PNG) com undo/redo, espessura e DPI |
 | `SignatureCapturePanel` | Painel Desenhar / Digitar / Upload + prévia nome+traço |
-| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; toggle **HTML/Visual** (fonte monoespaçada); sugestão de tags/`style` CSS + auto-fechamento de tags; paste de tabelas normalizado; link via `RichTextLinkDialog` |
+| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; modos **Visual / HTML / Markdown** (fonte monoespaçada); paste Markdown→HTML (GFM); sugestão de tags/`style` CSS no modo HTML; paste de tabelas normalizado; link via `RichTextLinkDialog`. Storage do consumidor continua HTML. Round-trip MD cobre GFM básico (títulos, listas, ênfase, links, tabelas simples) — HTML com estilos/tabelas ricas pode simplificar no modo Markdown. |
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
-| `RichTextSourceEditor` | Textarea da fonte HTML com autocomplete de tags e propriedades CSS allowlisted |
-| `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`, botão HTML/Visual) |
+| `RichTextSourceEditor` | Textarea da fonte (`assistMode: html \| plain`); autocomplete de tags/CSS só no modo HTML |
+| `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`, botões Visual/HTML/Markdown) |
 | `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

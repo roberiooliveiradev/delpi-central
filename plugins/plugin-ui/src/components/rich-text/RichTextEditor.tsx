@@ -1,22 +1,36 @@
 import { ExternalLink, Pencil, Unlink } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+} from "react";
 
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
 import { RichTextSourceEditor } from "./RichTextSourceEditor";
-import { RichTextToolbar } from "./RichTextToolbar";
+import { RichTextToolbar, type RichTextSourceKind } from "./RichTextToolbar";
 import {
   applyRichTextLinkAtRange,
-  execRichTextCommand,
   findRichTextLinkAtSelection,
+  insertRichTextHtmlFragment,
   normalizeRichTextLinkUrl,
   unwrapRichTextLink,
 } from "./richTextCommands";
 import { tryDeleteRichTextAtEmphasisBoundary } from "./richTextDeleteBoundary";
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
+import {
+  clipboardHasUsefulHtml,
+  clipboardLooksLikeMarkdown,
+  markdownToRichTextHtml,
+  richTextHtmlToMarkdown,
+} from "./richTextMarkdown";
 import { normalizeRichTextPastedHtml } from "./richTextTable";
 
 export type RichTextEditorMode = "edit" | "preview";
+export type { RichTextSourceKind };
 
 export type RichTextEditorProps = {
   value: string;
@@ -43,6 +57,14 @@ type ActiveLinkState = {
 
 const SOURCE_CHANGE_DEBOUNCE_MS = 150;
 
+function sanitizeEditorHtml(html: string): string {
+  let cleaned = stripDangerousRichTextTags(html);
+  if (/<table[\s>]/i.test(cleaned)) {
+    cleaned = normalizeRichTextPastedHtml(cleaned) || cleaned;
+  }
+  return cleaned || "<p></p>";
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -57,10 +79,11 @@ export function RichTextEditor({
   const ref = useRef<HTMLDivElement>(null);
   const focusedRef = useRef(false);
   const sourceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [sourceMode, setSourceMode] = useState(false);
+  const [sourceKind, setSourceKind] = useState<RichTextSourceKind>("visual");
   const [sourceDraft, setSourceDraft] = useState("");
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const [activeLink, setActiveLink] = useState<ActiveLinkState | null>(null);
+  const sourceMode = sourceKind !== "visual";
   const rootClass = useMemo(
     () => ["delpi-ui-rich-text", className].filter(Boolean).join(" "),
     [className],
@@ -114,9 +137,18 @@ export function RichTextEditor({
     onChange(ref.current?.innerHTML || "");
   }, [onChange]);
 
-  const flushSourceDraft = useCallback(
+  const flushHtmlSourceDraft = useCallback(
     (draft: string) => {
-      const cleaned = stripDangerousRichTextTags(draft);
+      const cleaned = sanitizeEditorHtml(draft);
+      onChange(cleaned);
+      return cleaned;
+    },
+    [onChange],
+  );
+
+  const flushMarkdownSourceDraft = useCallback(
+    (draft: string) => {
+      const cleaned = sanitizeEditorHtml(markdownToRichTextHtml(draft));
       onChange(cleaned);
       return cleaned;
     },
@@ -127,34 +159,67 @@ export function RichTextEditor({
     setSourceDraft(next);
     if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
     sourceDebounceRef.current = setTimeout(() => {
-      flushSourceDraft(next);
+      if (sourceKind === "markdown") flushMarkdownSourceDraft(next);
+      else flushHtmlSourceDraft(next);
     }, SOURCE_CHANGE_DEBOUNCE_MS);
   }
 
-  function handleToggleSource() {
-    if (disabled) return;
-    if (sourceDebounceRef.current) {
-      clearTimeout(sourceDebounceRef.current);
-      sourceDebounceRef.current = null;
-    }
+  function currentEditorHtml(): string {
+    return ref.current?.innerHTML || value || "<p></p>";
+  }
 
-    if (!sourceMode) {
-      const current = ref.current?.innerHTML || value || "<p></p>";
-      focusedRef.current = false;
-      setActiveLink(null);
-      setLinkDialog(null);
-      setSourceDraft(prettyPrintRichTextHtml(current));
-      setSourceMode(true);
-      return;
-    }
-
-    const cleaned = flushSourceDraft(sourceDraft);
-    setSourceMode(false);
+  function applyHtmlToVisual(cleaned: string) {
     requestAnimationFrame(() => {
       if (ref.current) {
         ref.current.innerHTML = cleaned;
       }
     });
+  }
+
+  function handleSourceKindChange(next: RichTextSourceKind) {
+    if (disabled || next === sourceKind) return;
+    if (sourceDebounceRef.current) {
+      clearTimeout(sourceDebounceRef.current);
+      sourceDebounceRef.current = null;
+    }
+
+    focusedRef.current = false;
+    setActiveLink(null);
+    setLinkDialog(null);
+
+    if (sourceKind === "html") {
+      const cleaned = flushHtmlSourceDraft(sourceDraft);
+      if (next === "visual") {
+        setSourceKind("visual");
+        applyHtmlToVisual(cleaned);
+        return;
+      }
+      setSourceDraft(richTextHtmlToMarkdown(cleaned));
+      setSourceKind("markdown");
+      return;
+    }
+
+    if (sourceKind === "markdown") {
+      const cleaned = flushMarkdownSourceDraft(sourceDraft);
+      if (next === "visual") {
+        setSourceKind("visual");
+        applyHtmlToVisual(cleaned);
+        return;
+      }
+      setSourceDraft(prettyPrintRichTextHtml(cleaned));
+      setSourceKind("html");
+      return;
+    }
+
+    // visual → html | markdown
+    const current = currentEditorHtml();
+    if (next === "html") {
+      setSourceDraft(prettyPrintRichTextHtml(current));
+      setSourceKind("html");
+      return;
+    }
+    setSourceDraft(richTextHtmlToMarkdown(current));
+    setSourceKind("markdown");
   }
 
   function handleRequestLink() {
@@ -198,6 +263,28 @@ export function RichTextEditor({
     emitChange();
   }
 
+  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+    if (sourceMode) return;
+    const html = event.clipboardData?.getData("text/html");
+    const plain = event.clipboardData?.getData("text/plain") ?? "";
+
+    if (html && /<table[\s>]/i.test(html)) {
+      const normalized = normalizeRichTextPastedHtml(html);
+      if (!normalized) return;
+      event.preventDefault();
+      insertRichTextHtmlFragment(ref.current, normalized);
+      emitChange();
+      return;
+    }
+
+    if (!clipboardHasUsefulHtml(html) && clipboardLooksLikeMarkdown(plain)) {
+      event.preventDefault();
+      const converted = sanitizeEditorHtml(markdownToRichTextHtml(plain));
+      insertRichTextHtmlFragment(ref.current, converted);
+      emitChange();
+    }
+  }
+
   if (mode === "preview" || disabled) {
     return (
       <div
@@ -213,18 +300,32 @@ export function RichTextEditor({
       <RichTextToolbar
         editorRef={ref}
         disabled={disabled}
-        sourceMode={sourceMode}
-        onToggleSource={handleToggleSource}
+        sourceKind={sourceKind}
+        onSourceKindChange={handleSourceKindChange}
         portalScopeClassName={portalScopeClassName}
         onFormatted={emitChange}
         onRequestLink={handleRequestLink}
       />
-      {sourceMode ? (
+      {sourceKind === "html" ? (
         <RichTextSourceEditor
           value={sourceDraft}
           onChange={handleSourceDraftChange}
           minHeight={minHeight}
           disabled={disabled}
+          assistMode="html"
+          ariaLabel={RICH_TEXT_LABELS.sourceEditor}
+          hint={RICH_TEXT_LABELS.sourceHint}
+        />
+      ) : null}
+      {sourceKind === "markdown" ? (
+        <RichTextSourceEditor
+          value={sourceDraft}
+          onChange={handleSourceDraftChange}
+          minHeight={minHeight}
+          disabled={disabled}
+          assistMode="plain"
+          ariaLabel={RICH_TEXT_LABELS.sourceMarkdownEditor}
+          hint={RICH_TEXT_LABELS.sourceMarkdownHint}
         />
       ) : null}
       {/*
@@ -271,16 +372,7 @@ export function RichTextEditor({
             syncActiveLink();
           }
         }}
-        onPaste={(event) => {
-          if (sourceMode) return;
-          const html = event.clipboardData?.getData("text/html");
-          if (!html || !/<table[\s>]/i.test(html)) return;
-          const normalized = normalizeRichTextPastedHtml(html);
-          if (!normalized) return;
-          event.preventDefault();
-          execRichTextCommand("insertHTML", normalized);
-          emitChange();
-        }}
+        onPaste={handlePaste}
       />
 
       {!sourceMode && activeLink ? (

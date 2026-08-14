@@ -76,6 +76,49 @@ export function execRichTextCommand(command: string, value?: string) {
   }
 }
 
+/** Insere HTML na seleção (fallback quando execCommand insertHTML é no-op, ex. jsdom). */
+export function insertRichTextHtmlFragment(editor: HTMLElement | null, html: string): void {
+  if (!editor || !html) return;
+  focusEditor(editor);
+  const before = editor.innerHTML;
+  try {
+    document.execCommand("insertHTML", false, html);
+  } catch {
+    /* ignore */
+  }
+  if (editor.innerHTML !== before) return;
+
+  const selection = window.getSelection();
+  const range =
+    selection &&
+    selection.rangeCount > 0 &&
+    editor.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0)
+      : null;
+
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const frag = template.content;
+
+  if (range) {
+    range.deleteContents();
+    range.insertNode(frag);
+    selection?.collapseToEnd();
+    return;
+  }
+
+  const empty =
+    !editor.innerHTML.trim() ||
+    editor.innerHTML === "<p></p>" ||
+    editor.innerHTML === "<br>" ||
+    editor.innerHTML === "<p><br></p>";
+  if (empty) {
+    editor.innerHTML = html;
+    return;
+  }
+  editor.appendChild(frag);
+}
+
 export function runRichTextCommand(
   editor: HTMLElement | null,
   command: string,

@@ -21,9 +21,12 @@
     "@originjs/vite-plugin-federation": "^1.4.1",
     "@xyflow/react": "^12.11.2",
     "lucide-react": "^0.576.0",
+    "marked": "^18.0.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "recharts": "^3.10.1"
+    "recharts": "^3.10.1",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "peerDependencies": {
     "@xyflow/react": "^12.11.2",
@@ -68,6 +71,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/turndown": "^5.0.6",
     "@vitejs/plugin-react": "^5.2.0",
     "exceljs": "^4.4.0",
     "html-to-image": "^1.11.13",
