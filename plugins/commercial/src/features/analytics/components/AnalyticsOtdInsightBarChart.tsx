@@ -12,6 +12,12 @@ import {
 
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import { CustomerAvatar } from "../../customers/components/CustomerAvatar";
+import {
+  buildCustomerDetailHref,
+  navigatePluginPath,
+} from "../../../app/pluginNavigation";
+import { currentReturnNav } from "../../../app/commercialNavigationReturn";
+import { accountLinkTitle } from "../../../content/entityLinkHints";
 import type { OtdCustomerIdentity } from "./OtdCustomerIdentityCell";
 
 export type OtdInsightBarRow = {
