@@ -15,7 +15,6 @@ import {
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialStatusBadge,
-  CommercialTextField,
   CommercialViewTransition,
   type DataTableColumn,
 } from "../../app/commercialUi";
@@ -41,8 +40,6 @@ import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 
 type SellerPortfolioDetailProps = {
   portfolio: SellerPortfolio;
-  userLabel: string;
-  savingName: boolean;
   busyCustomerKey: string | null;
   linkingCustomers?: boolean;
   busyMemberUserId: string | null;
@@ -50,7 +47,6 @@ type SellerPortfolioDetailProps = {
   overlappingCustomerKeys?: ReadonlySet<string>;
   otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
   directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string;
-  onSaveName: (displayName: string) => void;
   onAddCustomers: (items: CustomerSearchSelection[]) => void;
   onRemoveCustomer: (code: string, store: string) => void;
   onRemoveCustomers: (items: Array<{ code: string; store: string }>) => void;
@@ -58,10 +54,6 @@ type SellerPortfolioDetailProps = {
   onAddMembers: (userIds: string[]) => void;
   onRemoveMember: (userId: string) => void;
   onSetOwner: (userId: string) => void;
-  onDeactivate: () => void;
-  onReactivate: () => void;
-  onPurge: () => void;
-  onTransfer: () => void;
 };
 
 function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
@@ -73,8 +65,6 @@ function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
 
 export function SellerPortfolioDetail({
   portfolio,
-  userLabel,
-  savingName,
   busyCustomerKey,
   linkingCustomers = false,
   unlinkingCustomers = false,
@@ -83,19 +73,13 @@ export function SellerPortfolioDetail({
   overlappingCustomerKeys,
   otherPortfolioLabelsFor,
   directoryLabelFor,
-  onSaveName,
   onAddCustomers,
   onRemoveCustomer,
   onRemoveCustomers,
   onAddMembers,
   onRemoveMember,
   onSetOwner,
-  onDeactivate,
-  onReactivate,
-  onPurge,
-  onTransfer,
 }: SellerPortfolioDetailProps) {
-  const [editName, setEditName] = useState(portfolio.display_name);
   const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
   const [customerPicker, setCustomerPicker] = useState<CustomerSearchSelection[]>([]);
   const [selectedLinkedKeys, setSelectedLinkedKeys] = useState<Set<string>>(
@@ -103,11 +87,10 @@ export function SellerPortfolioDetail({
   );
 
   useEffect(() => {
-    setEditName(portfolio.display_name);
     setMemberPicker([]);
     setCustomerPicker([]);
     setSelectedLinkedKeys(new Set());
-  }, [portfolio.id, portfolio.display_name]);
+  }, [portfolio.id]);
 
   const linked = portfolio.customers ?? [];
   const linkedKeys = useMemo(
@@ -358,39 +341,6 @@ export function SellerPortfolioDetail({
 
   return (
     <div className="cm-portfolios-detail-stack">
-      <CommercialSectionCard
-        title={portfolio.display_name}
-        subtitle={`${userLabel} · ${portfolio.active ? "Ativa" : "Inativa"}`}
-        hint={CM_HELP.sellerPortfolios.edit}
-        actions={
-          <CommercialStatusBadge
-            label={portfolio.active ? "Ativa" : "Inativa"}
-            variant={portfolio.active ? "success" : "neutral"}
-          />
-        }
-      >
-        <div className="cm-portfolios-form">
-          <div className="cm-portfolios-form__display-name">
-            <CommercialTextField
-              label="Nome de exibição"
-              hint={CM_HELP.sellerPortfolios.displayName}
-              value={editName}
-              onChange={setEditName}
-              required
-            />
-          </div>
-          <div className="cm-portfolios-form__actions">
-            <CommercialActionButton
-              variant="primary"
-              onClick={() => onSaveName(editName.trim())}
-              disabled={savingName || !editName.trim() || editName.trim() === portfolio.display_name}
-            >
-              {savingName ? "Salvando…" : "Salvar"}
-            </CommercialActionButton>
-          </div>
-        </div>
-      </CommercialSectionCard>
-
       {isOrphan ? (
         <CommercialStateBanner>{PORTFOLIO_MEMBERS_CONTENT.orphanBanner}</CommercialStateBanner>
       ) : null}
@@ -635,24 +585,6 @@ export function SellerPortfolioDetail({
           </section>
         </div>
       </CommercialSectionCard>
-
-      <div className="cm-row-actions">
-        {portfolio.active ? (
-          <CommercialActionButton variant="ghost" onClick={onDeactivate}>
-            Inativar
-          </CommercialActionButton>
-        ) : (
-          <CommercialActionButton variant="ghost" onClick={onReactivate}>
-            Reativar
-          </CommercialActionButton>
-        )}
-        <CommercialActionButton variant="ghost" onClick={onTransfer}>
-          Transferir clientes
-        </CommercialActionButton>
-        <CommercialActionButton variant="ghost" onClick={onPurge}>
-          Excluir
-        </CommercialActionButton>
-      </div>
     </div>
   );
 }

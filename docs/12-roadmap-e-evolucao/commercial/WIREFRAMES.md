@@ -751,10 +751,10 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 ```
 ← Carteiras   /   Sul
 
-┌─ PageHero · Sul ───────────────────────── [Ativa] [Atualizar] ────────┐
-│ Owner: Ana Silva · 3 membros · 18 clientes                             │
-│ Nome [Sul____________________] [Salvar]                                │
-│ [Reativar|Inativar] [Transferir clientes] [Excluir permanente]         │
+┌─ PageHero · Sul ─────────── [Ativa] [Editar nome] [Atualizar] … ──────┐
+│ Responsável · N usuários · N clientes (highlights)                     │
+│ (só ao editar) Nome [Sul____] [Cancelar] [Salvar]                      │
+│ Ações: [Inativar|Reativar] [Transferir clientes] [Excluir]             │
 └────────────────────────────────────────────────────────────────────────┘
 
 ┌─ Usuários (N) ─────────────────────────────────────────────────────────┐

@@ -49,4 +49,13 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(page, /addingMembers/);
     assert.match(page, /Inclusão parcial|adicionado\(s\)/);
   });
+
+  it("concentra infos e edição de nome no PageHero", () => {
+    assert.match(page, /CommercialPageHero/);
+    assert.match(page, /Editar nome/);
+    assert.match(page, /editingName/);
+    assert.match(page, /highlights/);
+    assert.doesNotMatch(detail, /Nome de exibição/);
+    assert.doesNotMatch(detail, /onSaveName|onDeactivate|onTransfer/);
+  });
 });

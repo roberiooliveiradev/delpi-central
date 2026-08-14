@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pencil, RefreshCw } from "lucide-react";
 
 import {
   addSellerCustomer,
@@ -30,7 +31,10 @@ import {
   CommercialPageHero,
   CommercialPagePath,
   CommercialStateBanner,
+  CommercialStatusBadge,
+  CommercialTextField,
 } from "../../app/commercialUi";
+import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { customerKey } from "../../shared/format";
 import type {
@@ -92,6 +96,8 @@ export function SellerPortfolioDetailPage({
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
   const [linkingCustomers, setLinkingCustomers] = useState(false);
   const [unlinkingCustomers, setUnlinkingCustomers] = useState(false);
@@ -119,6 +125,12 @@ export function SellerPortfolioDetailPage({
     return [...ids];
   }, [auditEvents, portfolio]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
+
+  useEffect(() => {
+    if (!portfolio) return;
+    setEditName(portfolio.display_name);
+    setEditingName(false);
+  }, [portfolio?.id, portfolio?.display_name]);
 
   const goToList = useCallback(
     (nextList?: SellerPortfoliosDeepLink) => {
@@ -205,6 +217,7 @@ export function SellerPortfolioDetailPage({
     try {
       const updated = await updateSellerPortfolio(portfolio.id, { display_name: displayName });
       setPortfolio(updated);
+      setEditingName(false);
       notifySuccess("Carteira atualizada com sucesso.");
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Erro ao atualizar carteira.");
@@ -548,6 +561,23 @@ export function SellerPortfolioDetailPage({
     [allPortfolios, portfolio],
   );
 
+  const heroMeta = useMemo(() => {
+    if (!portfolio) return null;
+    const ownerId = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
+    const memberCount =
+      portfolio.member_count ??
+      portfolio.members?.length ??
+      (ownerId ? 1 : 0);
+    return {
+      ownerId,
+      ownerLabel: ownerId ? directoryLabelFor(ownerId) : "Sem responsável",
+      memberCount,
+      customerCount: portfolio.customer_count,
+      active: portfolio.active,
+      displayName: portfolio.display_name,
+    };
+  }, [directoryLabelFor, portfolio]);
+
   return (
     <section className="cm-page-stack cm-portfolios-page">
       <CommercialPagePath
@@ -592,16 +622,139 @@ export function SellerPortfolioDetailPage({
       />
 
       <CommercialPageHero
-        aria-label={portfolio?.display_name ?? "Detalhe da carteira"}
-        title={portfolio?.display_name ?? "Detalhe da carteira"}
+        aria-label={heroMeta?.displayName ?? "Detalhe da carteira"}
+        eyebrow="Carteira"
+        title={heroMeta?.displayName ?? "Detalhe da carteira"}
+        badge={
+          heroMeta ? (
+            <CommercialStatusBadge
+              label={heroMeta.active ? "Ativa" : "Inativa"}
+              variant={heroMeta.active ? "success" : "neutral"}
+            />
+          ) : undefined
+        }
         description={
-          portfolio
-            ? `${portfolio.customer_count.toLocaleString("pt-BR")} cliente(s) · ${
-                portfolio.active ? "Ativa" : "Inativa"
-              }`
+          heroMeta
+            ? `${heroMeta.ownerLabel} · ${heroMeta.memberCount.toLocaleString("pt-BR")} usuário(s) · ${heroMeta.customerCount.toLocaleString("pt-BR")} cliente(s)`
             : "Clientes, membros e ações da carteira."
         }
-      />
+        highlights={
+          heroMeta
+            ? [
+                {
+                  id: "owner",
+                  label: "Responsável",
+                  value: heroMeta.ownerId ? heroMeta.ownerLabel : "—",
+                  tone: heroMeta.ownerId ? "neutral" : "warning",
+                },
+                {
+                  id: "members",
+                  label: "Usuários",
+                  value: heroMeta.memberCount.toLocaleString("pt-BR"),
+                },
+                {
+                  id: "customers",
+                  label: "Clientes",
+                  value: heroMeta.customerCount.toLocaleString("pt-BR"),
+                },
+              ]
+            : undefined
+        }
+        actions={
+          portfolio ? (
+            <div className="cm-row-actions">
+              {!editingName ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  onClick={() => {
+                    setEditName(portfolio.display_name);
+                    setEditingName(true);
+                  }}
+                  aria-label={CM_HELP.sellerPortfolios.edit}
+                >
+                  <Pencil size={16} aria-hidden="true" />
+                  Editar nome
+                </CommercialActionButton>
+              ) : null}
+              <CommercialActionButton
+                variant="ghost"
+                disabled={loading}
+                onClick={() => reload()}
+              >
+                <RefreshCw size={16} aria-hidden="true" />
+                Atualizar
+              </CommercialActionButton>
+              {portfolio.active ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  onClick={() => void handleDeactivate()}
+                >
+                  Inativar
+                </CommercialActionButton>
+              ) : (
+                <CommercialActionButton
+                  variant="ghost"
+                  onClick={() => void handleReactivate()}
+                >
+                  Reativar
+                </CommercialActionButton>
+              )}
+              <CommercialActionButton
+                variant="ghost"
+                onClick={() => {
+                  setTransferError(null);
+                  setTransferOpen(true);
+                }}
+              >
+                Transferir clientes
+              </CommercialActionButton>
+              <CommercialActionButton
+                variant="ghost"
+                onClick={() => void handlePurge()}
+              >
+                Excluir
+              </CommercialActionButton>
+            </div>
+          ) : undefined
+        }
+      >
+        {portfolio && editingName ? (
+          <div className="cm-portfolios-form">
+            <div className="cm-portfolios-form__display-name">
+              <CommercialTextField
+                label="Nome de exibição"
+                hint={CM_HELP.sellerPortfolios.displayName}
+                value={editName}
+                onChange={setEditName}
+                required
+              />
+            </div>
+            <div className="cm-portfolios-form__actions">
+              <CommercialActionButton
+                variant="ghost"
+                disabled={savingName}
+                onClick={() => {
+                  setEditName(portfolio.display_name);
+                  setEditingName(false);
+                }}
+              >
+                Cancelar
+              </CommercialActionButton>
+              <CommercialActionButton
+                variant="primary"
+                onClick={() => void handleSaveName(editName.trim())}
+                disabled={
+                  savingName ||
+                  !editName.trim() ||
+                  editName.trim() === portfolio.display_name
+                }
+              >
+                {savingName ? "Salvando…" : "Salvar"}
+              </CommercialActionButton>
+            </div>
+          </div>
+        ) : null}
+      </CommercialPageHero>
 
       {loading && !portfolio ? (
         <CommercialLoadingCard title="Carregando carteira…" variant="panel" />
@@ -629,11 +782,6 @@ export function SellerPortfolioDetailPage({
         <>
           <SellerPortfolioDetail
             portfolio={portfolio}
-            userLabel={directoryLabelFor(
-              portfolio.owner_user_id ?? portfolio.user_id,
-              portfolio.display_name,
-            )}
-            savingName={savingName}
             busyCustomerKey={busyCustomerKey}
             linkingCustomers={linkingCustomers}
             unlinkingCustomers={unlinkingCustomers}
@@ -642,20 +790,12 @@ export function SellerPortfolioDetailPage({
             overlappingCustomerKeys={overlappingCustomerKeys}
             otherPortfolioLabelsFor={otherPortfolioLabelsFor}
             directoryLabelFor={directoryLabelFor}
-            onSaveName={(name) => void handleSaveName(name)}
             onAddCustomers={(items) => void handleAddCustomers(items)}
             onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
             onRemoveCustomers={(items) => void handleRemoveCustomers(items)}
             onAddMembers={(userIds) => void handleAddMembers(userIds)}
             onRemoveMember={(userId) => void handleRemoveMember(userId)}
             onSetOwner={(userId) => void handleSetOwner(userId)}
-            onDeactivate={() => void handleDeactivate()}
-            onReactivate={() => void handleReactivate()}
-            onPurge={() => void handlePurge()}
-            onTransfer={() => {
-              setTransferError(null);
-              setTransferOpen(true);
-            }}
           />
           <SellerPortfolioAuditTimeline
             loading={auditLoading}

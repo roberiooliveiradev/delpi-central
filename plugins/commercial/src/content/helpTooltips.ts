@@ -438,7 +438,7 @@ export const CM_HELP = {
       "Inclui na carteira todos os usuários selecionados nos chips (até 10 por vez).",
     setOwner: "Define este usuário como responsável da carteira.",
     removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
-    edit: "Altera o nome de exibição da carteira selecionada.",
+    edit: "Abre o formulário para alterar o nome de exibição da carteira no hero.",
     customers:
       "Clientes vinculados a esta carteira. Busque e selecione vários para vincular de uma vez.",
     searchCustomers:
