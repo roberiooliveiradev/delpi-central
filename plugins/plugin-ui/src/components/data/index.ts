@@ -197,6 +197,16 @@ export {
 } from "./DataCardsGrid";
 
 export {
+  KanbanBoard,
+  createDashboardKanbanBoard,
+  kanbanBoardBemClasses,
+  type DashboardKanbanBoardProps,
+  type KanbanBoardClassNames,
+  type KanbanBoardColumn,
+  type KanbanBoardProps,
+} from "./KanbanBoard";
+
+export {
   InteractiveDataCard,
   createDashboardInteractiveDataCard,
   interactiveDataCardBemClasses,

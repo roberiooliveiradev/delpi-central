@@ -266,6 +266,29 @@ omite o campo.
 
 ---
 
+## `KanbanBoard`
+
+Board Kanban **somente leitura** (colunas + slots de card). Sem drag-and-drop e
+sem strings de domínio — o consumidor informa `title` / `empty` / children.
+
+```tsx
+const CommercialKanbanBoard = createDashboardKanbanBoard({ prefix: "cm" });
+
+<CommercialKanbanBoard
+  ariaLabel="Pedidos por etapa"
+  columns={[
+    { id: "upcoming", title: "Próximos", count: 3, empty: "Nenhum" },
+    { id: "ready_to_invoice", title: "Pronto", count: 1, children: <Card /> },
+  ]}
+/>
+```
+
+Props: `columns[]` (`id`, `title`, `count?`, `summary?`, `children?`, `empty?`),
+`ariaLabel`, `className`. Factory: `createDashboardKanbanBoard` /
+`kanbanBoardBemClasses`.
+
+---
+
 ## `DocumentReader`
 
 Composição canônica para leitura e impressão de documentos formais em papel A4:

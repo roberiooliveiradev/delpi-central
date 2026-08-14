@@ -201,6 +201,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-10",
     description: "Grid auto-fill de cards operacionais.",
   }),
+  vc("data", "KanbanBoard", {
+    addedAt: "2026-08-14",
+    description: "Board Kanban somente leitura (colunas + slots de card, sem DnD).",
+  }),
   vc("data", "DataCardsSortBar", {
     addedAt: "2026-08-10",
     description: "Barra de ordenação do modo cards.",

@@ -13,6 +13,8 @@ import {
   dataRecordCardBemClasses,
   InteractiveDataCard,
   interactiveDataCardBemClasses,
+  KanbanBoard,
+  kanbanBoardBemClasses,
   DataTable,
   dataTableBemClasses,
   DataTableSection,
@@ -50,6 +52,7 @@ const MOCK_ROWS: DemoRow[] = [
 const tableCn = dataTableBemClasses(PUC_PREFIX);
 const recordCardCn = dataRecordCardBemClasses(PUC_PREFIX);
 const interactiveCardCn = interactiveDataCardBemClasses(PUC_PREFIX);
+const kanbanCn = kanbanBoardBemClasses(PUC_PREFIX);
 const sectionCn = dataTableSectionBemClasses(PUC_PREFIX);
 const paginationKit = paginationBemClasses(PUC_PREFIX);
 const compactCn = compactPaginationBemClasses(PUC_PREFIX, { ghostBtn: "puc-ghost-btn" });
