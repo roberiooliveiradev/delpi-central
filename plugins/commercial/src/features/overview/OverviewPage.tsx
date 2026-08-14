@@ -178,7 +178,9 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </CommercialActionButton>
         }
-      >
+      />
+
+      <div className="cm-page-filters" aria-label="Filtros da visão geral">
         <AnalyticsFilters
           dateStart={filters.dateStart}
           dateEnd={filters.dateEnd}
@@ -198,7 +200,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           onCustomerSegment={filters.setCustomerSegment}
           onSellerIds={filters.setSellerIds}
         />
-      </CommercialPageHero>
+      </div>
 
       <SectionCard
         title="Indicadores"
