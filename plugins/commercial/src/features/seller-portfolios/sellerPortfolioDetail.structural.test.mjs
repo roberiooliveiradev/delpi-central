@@ -13,6 +13,7 @@ describe("SellerPortfolioDetail UX", () => {
   it("usa CustomerSearchPicker com avatares e vincular selecionados", () => {
     assert.match(detail, /CustomerSearchPicker/);
     assert.match(detail, /CustomerAvatar/);
+    assert.match(detail, /useCustomerAvatarPresence/);
     assert.match(detail, /onAddCustomers/);
     assert.match(detail, /Vincular selecionados/);
     assert.match(detail, /maxSelected=\{20\}/);

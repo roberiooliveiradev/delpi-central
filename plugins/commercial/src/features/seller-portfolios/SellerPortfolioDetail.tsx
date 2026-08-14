@@ -23,6 +23,10 @@ import type {
   SellerPortfolio,
   SellerPortfolioMember,
 } from "../../types/portfolio";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../hooks/useCustomerAvatarPresence";
 import { CustomerAvatar } from "../customers/components/CustomerAvatar";
 import {
   CustomerSearchPicker,
@@ -99,6 +103,15 @@ export function SellerPortfolioDetail({
       ),
     [linked],
   );
+  const avatarPairs = useMemo(
+    () =>
+      linked.map((customer) => ({
+        customer_code: customer.customer_code,
+        customer_store: customer.customer_store,
+      })),
+    [linked],
+  );
+  const avatarByKey = useCustomerAvatarPresence(avatarPairs);
 
   useEffect(() => {
     setCustomerPicker((prev) =>
@@ -124,7 +137,25 @@ export function SellerPortfolioDetail({
         key: "name",
         header: "Nome",
         headerHint: CM_HELP.sellerPortfolios.colCustomerName,
-        render: (row) => row.customer_name?.trim() || "—",
+        render: (row) => {
+          const name = row.customer_name?.trim() || row.customer_code;
+          const hasAvatar =
+            avatarByKey.get(
+              customerAvatarKey(row.customer_code, row.customer_store),
+            ) === true;
+          return (
+            <div className="cm-row-actions">
+              <CustomerAvatar
+                code={row.customer_code}
+                store={row.customer_store}
+                name={name}
+                hasAvatar={hasAvatar}
+                size="sm"
+              />
+              <span>{row.customer_name?.trim() || "—"}</span>
+            </div>
+          );
+        },
       },
       {
         key: "coverage",
@@ -168,6 +199,7 @@ export function SellerPortfolioDetail({
       },
     ],
     [
+      avatarByKey,
       busyCustomerKey,
       linkingCustomers,
       onRemoveCustomer,
