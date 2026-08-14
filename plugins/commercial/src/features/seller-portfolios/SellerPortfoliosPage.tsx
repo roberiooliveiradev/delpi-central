@@ -19,7 +19,6 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import {
   CommercialActionButton,
   CommercialFilterBarShell,
-  CommercialMetricStrip,
   CommercialPageHero,
   CommercialPagePath,
   CommercialScopeChipBar,
@@ -457,6 +456,41 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
             variant={stats.total === 0 ? "neutral" : stats.active === 0 ? "warning" : "info"}
           />
         }
+        highlights={[
+          {
+            id: "total",
+            label: "Carteiras",
+            value: loading ? "—" : stats.total.toLocaleString("pt-BR"),
+          },
+          {
+            id: "active",
+            label: "Ativas",
+            value: loading ? "—" : stats.active.toLocaleString("pt-BR"),
+          },
+          {
+            id: "inactive",
+            label: "Inativas",
+            value: loading ? "—" : stats.inactive.toLocaleString("pt-BR"),
+          },
+          {
+            id: "customers",
+            label: "Clientes",
+            value: loading ? "—" : stats.customers.toLocaleString("pt-BR"),
+          },
+          {
+            id: "overlapping",
+            label: PORTFOLIO_COVERAGE_CONTENT.heroOverlapping,
+            value: loading ? "—" : stats.overlappingCustomers.toLocaleString("pt-BR"),
+          },
+          {
+            id: "uncovered",
+            label: PORTFOLIO_COVERAGE_CONTENT.heroUncovered,
+            value:
+              loading || stats.uncoveredCount === null
+                ? "—"
+                : stats.uncoveredCount.toLocaleString("pt-BR"),
+          },
+        ]}
         actions={
           <div className="cm-portfolios-page__actions">
             <span className="cm-portfolios-page__freshness" aria-live="polite">
@@ -516,48 +550,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
             </CommercialActionButton>
           </div>
         }
-      />
-
-      <CommercialMetricStrip
-        aria-label="Indicadores das carteiras"
-        items={[
-          {
-            id: "total",
-            label: "Carteiras",
-            value: loading ? "—" : stats.total.toLocaleString("pt-BR"),
-          },
-          {
-            id: "active",
-            label: "Ativas",
-            value: loading ? "—" : stats.active.toLocaleString("pt-BR"),
-          },
-          {
-            id: "inactive",
-            label: "Inativas",
-            value: loading ? "—" : stats.inactive.toLocaleString("pt-BR"),
-          },
-          {
-            id: "customers",
-            label: "Clientes",
-            value: loading ? "—" : stats.customers.toLocaleString("pt-BR"),
-          },
-          {
-            id: "overlapping",
-            label: PORTFOLIO_COVERAGE_CONTENT.heroOverlapping,
-            value: loading ? "—" : stats.overlappingCustomers.toLocaleString("pt-BR"),
-          },
-          {
-            id: "uncovered",
-            label: PORTFOLIO_COVERAGE_CONTENT.heroUncovered,
-            value:
-              loading || stats.uncoveredCount === null
-                ? "—"
-                : stats.uncoveredCount.toLocaleString("pt-BR"),
-          },
-        ]}
-      />
-
-      <div className="cm-page-filters" aria-label="Filtros de carteiras">
+      >
         <div className="cm-portfolios-page__view-toggle">
           <HelpTooltip
             content={CM_HELP.sellerPortfolios.shellViewToggle}
@@ -601,7 +594,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
             placeholder="Nome, usuário ou e-mail"
           />
         </CommercialFilterBarShell>
-      </div>
+      </CommercialPageHero>
 
       {error ? (
         <CommercialStateBanner variant="error">
@@ -645,6 +638,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           hrefFor={(portfolio) =>
             buildSellerPortfolioDetailPath(basePath, portfolio.id, link)
           }
+          onCreate={() => setCreateOpen(true)}
           directoryLabelFor={directoryLabelFor}
         />
       )}

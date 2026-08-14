@@ -114,29 +114,27 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </CommercialActionButton>
         }
+      >
+      <AnalyticsFilters
+        dateStart={filters.dateStart}
+        dateEnd={filters.dateEnd}
+        competence={filters.competence}
+        periodPreset={filters.periodPreset}
+        branches={filters.branches}
+        customerSegment={filters.customerSegment}
+        sellerIds={filters.sellerIds}
+        canFilterPortfolios={filters.canFilterPortfolios}
+        canUseTeamScope={filters.canUseTeamScope}
+        filterablePortfolios={filters.filterablePortfolios}
+        onDateStart={filters.setDateStart}
+        onDateEnd={filters.setDateEnd}
+        onCompetence={filters.setCompetence}
+        onPeriodPreset={filters.setPeriodPreset}
+        onBranches={filters.setBranches}
+        onCustomerSegment={filters.setCustomerSegment}
+        onSellerIds={filters.setSellerIds}
       />
-
-      <div className="cm-page-filters" aria-label="Filtros de oportunidades">
-        <AnalyticsFilters
-          dateStart={filters.dateStart}
-          dateEnd={filters.dateEnd}
-          competence={filters.competence}
-          periodPreset={filters.periodPreset}
-          branches={filters.branches}
-          customerSegment={filters.customerSegment}
-          sellerIds={filters.sellerIds}
-          canFilterPortfolios={filters.canFilterPortfolios}
-          canUseTeamScope={filters.canUseTeamScope}
-          filterablePortfolios={filters.filterablePortfolios}
-          onDateStart={filters.setDateStart}
-          onDateEnd={filters.setDateEnd}
-          onCompetence={filters.setCompetence}
-          onPeriodPreset={filters.setPeriodPreset}
-          onBranches={filters.setBranches}
-          onCustomerSegment={filters.setCustomerSegment}
-          onSellerIds={filters.setSellerIds}
-        />
-      </div>
+      </CommercialPageHero>
 
       <CommercialTextField
         label="Busca"

@@ -1,4 +1,5 @@
 import {
+  CommercialActionButton,
   CommercialEntityLink,
   CommercialStatusBadge,
   PORTFOLIOS_LAYOUT_STORAGE_KEY,
@@ -23,6 +24,7 @@ type SellerPortfoliosListProps = {
   emptyMessage: string;
   onSelect: (portfolio: SellerPortfolio) => void;
   hrefFor: (portfolio: SellerPortfolio) => string | null;
+  onCreate: () => void;
   directoryLabelFor: DirectoryLabelFor;
 };
 
@@ -47,6 +49,7 @@ export function SellerPortfoliosList({
   emptyMessage,
   onSelect,
   hrefFor,
+  onCreate,
   directoryLabelFor,
 }: SellerPortfoliosListProps) {
   const columns: DataTableColumn<SellerPortfolio>[] = [
@@ -169,6 +172,11 @@ export function SellerPortfoliosList({
           onSelect={onSelect}
         />
       )}
+      headerActions={
+        <CommercialActionButton variant="primary" onClick={onCreate}>
+          Nova carteira
+        </CommercialActionButton>
+      }
       getSearchText={(row) =>
         [
           row.display_name,

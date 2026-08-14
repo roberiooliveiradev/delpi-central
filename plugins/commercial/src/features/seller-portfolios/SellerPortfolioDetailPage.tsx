@@ -717,44 +717,44 @@ export function SellerPortfolioDetailPage({
             </div>
           ) : undefined
         }
-      />
-
-      {portfolio && editingName ? (
-        <div className="cm-page-filters cm-portfolios-form" aria-label="Editar nome da carteira">
-          <div className="cm-portfolios-form__display-name">
-            <CommercialTextField
-              label="Nome de exibição"
-              hint={CM_HELP.sellerPortfolios.displayName}
-              value={editName}
-              onChange={setEditName}
-              required
-            />
+      >
+        {portfolio && editingName ? (
+          <div className="cm-portfolios-form">
+            <div className="cm-portfolios-form__display-name">
+              <CommercialTextField
+                label="Nome de exibição"
+                hint={CM_HELP.sellerPortfolios.displayName}
+                value={editName}
+                onChange={setEditName}
+                required
+              />
+            </div>
+            <div className="cm-portfolios-form__actions">
+              <CommercialActionButton
+                variant="ghost"
+                disabled={savingName}
+                onClick={() => {
+                  setEditName(portfolio.display_name);
+                  setEditingName(false);
+                }}
+              >
+                Cancelar
+              </CommercialActionButton>
+              <CommercialActionButton
+                variant="primary"
+                onClick={() => void handleSaveName(editName.trim())}
+                disabled={
+                  savingName ||
+                  !editName.trim() ||
+                  editName.trim() === portfolio.display_name
+                }
+              >
+                {savingName ? "Salvando…" : "Salvar"}
+              </CommercialActionButton>
+            </div>
           </div>
-          <div className="cm-portfolios-form__actions">
-            <CommercialActionButton
-              variant="ghost"
-              disabled={savingName}
-              onClick={() => {
-                setEditName(portfolio.display_name);
-                setEditingName(false);
-              }}
-            >
-              Cancelar
-            </CommercialActionButton>
-            <CommercialActionButton
-              variant="primary"
-              onClick={() => void handleSaveName(editName.trim())}
-              disabled={
-                savingName ||
-                !editName.trim() ||
-                editName.trim() === portfolio.display_name
-              }
-            >
-              {savingName ? "Salvando…" : "Salvar"}
-            </CommercialActionButton>
-          </div>
-        </div>
-      ) : null}
+        ) : null}
+      </CommercialPageHero>
 
       {loading && !portfolio ? (
         <CommercialLoadingCard title="Carregando carteira…" variant="panel" />

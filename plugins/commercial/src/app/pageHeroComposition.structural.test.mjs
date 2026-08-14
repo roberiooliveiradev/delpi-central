@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * E3.S7 — PageHero compact: faixa de título sem filtros/children nos P0.
+ * PageHero compact — densidade no kit + children legítimos no hero.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -10,61 +10,44 @@ import { describe, it } from "node:test";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const srcRoot = join(here, "..");
+const repoRoot = join(here, "../../..");
 
 function readSrc(...parts) {
   return readFileSync(join(srcRoot, ...parts), "utf8");
 }
 
-/** Hero sem children JSX (self-closing ou sem tag de fechamento). */
-function assertHeroTitleStripOnly(source, label) {
-  assert.doesNotMatch(
-    source,
-    /<\/CommercialPageHero>/,
-    `${label}: filtros/children não devem ficar dentro do PageHero`,
-  );
-  assert.match(source, /<CommercialPageHero\b/, `${label}: usa CommercialPageHero`);
-}
-
-describe("PageHero composition — density compact + filtros fora", () => {
+describe("PageHero composition — density compact (conteúdo no hero)", () => {
   it("CommercialPageHero defaulta density=compact", () => {
     const ui = readSrc("app/commercialUi.ts");
     assert.match(ui, /density:\s*"compact"/);
     assert.match(ui, /CommercialPageHeroBase/);
-    assert.match(ui, /createDashboardMetricStrip/);
   });
 
-  it("P0 listas: hero só faixa de título + cm-page-filters", () => {
-    const pages = [
-      ["features/overview/OverviewPage.tsx", "Overview"],
-      ["pages/OpenOrdersPageImpl.tsx", "Open Orders"],
-      ["features/customers/pages/CustomersPage.tsx", "Customers"],
-      ["features/seller-portfolios/SellerPortfoliosPage.tsx", "Seller Portfolios"],
-      ["features/analytics/AnalyticsOtdPage.tsx", "Analytics OTD"],
-      ["features/analytics/AnalyticsOpportunitiesPage.tsx", "Analytics Opportunities"],
+  it("kit compact reduz padding/gap/highlights e densifica filtros no body", () => {
+    const css = readFileSync(
+      join(repoRoot, "plugin-ui/src/styles/page-hero.css"),
+      "utf8",
+    );
+    assert.match(css, /\.delpi-ui-page-hero--compact\s*\{[^}]*padding:\s*12px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__content\s*\{[^}]*gap:\s*6px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight\s*\{[^}]*padding:\s*6px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-filter-bar/);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-scope-chip-bar__chip/);
+  });
+
+  it("P0 listas mantêm filtros/chips/highlights como children do hero", () => {
+    const cases = [
+      ["features/overview/OverviewPage.tsx", /AnalyticsFilters/, "Overview"],
+      ["pages/OpenOrdersPageImpl.tsx", /FilterBar/, "Open Orders"],
+      ["features/customers/pages/CustomersPage.tsx", /CommercialScopeChipBar/, "Customers"],
+      ["features/seller-portfolios/SellerPortfoliosPage.tsx", /highlights=\{/, "Seller Portfolios"],
+      ["features/analytics/AnalyticsOtdPage.tsx", /AnalyticsFilters/, "Analytics OTD"],
     ];
-    for (const [rel, label] of pages) {
+    for (const [rel, childPattern, label] of cases) {
       const source = readSrc(rel);
-      assertHeroTitleStripOnly(source, label);
-      assert.match(source, /cm-page-filters/, `${label}: filtros em cm-page-filters`);
-    }
-  });
-
-  it("Seller Portfolios: MetricStrip fora do hero e sem CTA duplicada na lista", () => {
-    const page = readSrc("features/seller-portfolios/SellerPortfoliosPage.tsx");
-    const list = readSrc("features/seller-portfolios/SellerPortfoliosList.tsx");
-    assert.match(page, /CommercialMetricStrip/);
-    assert.doesNotMatch(page, /highlights=\{/);
-    assert.doesNotMatch(list, /Nova carteira/);
-    assert.doesNotMatch(list, /headerActions/);
-  });
-
-  it("Admin hub: hero self-closing (filtros já fora)", () => {
-    for (const rel of [
-      "features/administration/AdministrationHomePage.tsx",
-      "features/administration/AdministrationTeamPage.tsx",
-      "features/administration/AdministrationGroupsPage.tsx",
-    ]) {
-      assertHeroTitleStripOnly(readSrc(rel), rel);
+      assert.match(source, /<CommercialPageHero\b/, `${label}: PageHero`);
+      assert.match(source, /<\/CommercialPageHero>/, `${label}: children no hero`);
+      assert.match(source, childPattern, `${label}: conteúdo restaurado`);
     }
   });
 

@@ -206,84 +206,149 @@
 
 /* Densidade compact — listas / admin (Portal Comercial e consumidores). */
 .delpi-ui-page-hero--compact {
-  padding: 16px 18px;
-  border-radius: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
   box-shadow: var(--delpi-ui-shadow-sm, 0 4px 14px rgba(0, 0, 0, 0.1));
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__content {
-  gap: 8px;
+  gap: 6px;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__eyebrow {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.06em;
+  line-height: 1.2;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__headline {
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__title {
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
   line-height: 1.15;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__description {
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12.5px;
+  line-height: 1.35;
   max-width: 52rem;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 6px;
   margin-top: 0;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight {
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: 8px;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight-label {
-  font-size: 10px;
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight-value {
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__body {
-  gap: 8px;
+  gap: 6px;
   margin-top: 0;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-page-hero__glow {
-  width: 160px;
-  height: 160px;
-  opacity: 0.4;
+  width: 140px;
+  height: 140px;
+  opacity: 0.35;
+}
+
+/* Controles densos dentro do body do hero compact (filtros / chips). */
+.delpi-ui-page-hero--compact .delpi-ui-scope-chip-bar {
+  gap: 4px 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-scope-chip-bar__chips {
+  gap: 6px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-scope-chip-bar__chip {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar:not(.delpi-ui-card) {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar.delpi-ui-card,
+.delpi-ui-page-hero--compact .delpi-ui-card.delpi-ui-filter-bar {
+  padding: 10px 12px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__header"],
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filters__header"] {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__title"] h2,
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filters__title"] h2 {
+  font-size: 14px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar__grid,
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__grid"],
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filters__grid"] {
+  gap: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class$="-field"] {
+  gap: 4px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filters-row {
+  margin-bottom: 0;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-box {
+  gap: 4px;
 }
 
 @media (max-width: 900px) {
   .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .delpi-ui-page-hero--compact {
-    padding: 14px 16px;
+    padding: 10px 12px;
   }
 
   .delpi-ui-page-hero--compact .delpi-ui-page-hero__title {
-    font-size: clamp(1.25rem, 5vw, 1.5rem);
+    font-size: clamp(1.15rem, 5vw, 1.4rem);
   }
 
   .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

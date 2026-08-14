@@ -313,9 +313,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             </CommercialActionButton>
           </div>
         }
-      />
-
-      <div className="cm-page-filters" aria-label="Filtros da carteira">
+      >
         <CommercialScopeChipBar
           label={
             <CommercialSectionHintLabel
@@ -396,7 +394,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             </div>
           ) : null}
         </CommercialFilterBarShell>
-      </div>
+      </CommercialPageHero>
 
       {portfolioEmpty && portfolioMessage ? (
         <CommercialEmptyState title="Carteira vazia" message={portfolioMessage} />
