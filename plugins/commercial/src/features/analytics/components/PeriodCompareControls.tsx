@@ -111,7 +111,7 @@ export function PeriodCompareControls({
           id={`${idPrefix}-yoy`}
           checked={yoyActive}
           onChange={(checked) =>
-            onCompareYearsChange(checked ? Math.max(compareYears, 1) as CompareYearsCount : 0)
+            onCompareYearsChange(checked ? clampCompareYears(Math.max(compareYears, 1)) : 0)
           }
           label={ANALYTICS_CONTENT.overview.comparePriorYear}
           hint={yoyHint}
@@ -122,7 +122,11 @@ export function PeriodCompareControls({
           checked={compare2}
           onChange={(checked) =>
             onCompareYearsChange(
-              checked ? (Math.max(compareYears, 2) as CompareYearsCount) : (yoyActive ? 1 : 0),
+              checked
+                ? clampCompareYears(Math.max(compareYears, 2))
+                : yoyActive
+                  ? 1
+                  : 0,
             )
           }
           label="+2 anos"
@@ -134,7 +138,7 @@ export function PeriodCompareControls({
           checked={compare3}
           onChange={(checked) =>
             onCompareYearsChange(
-              checked ? 3 : (compare2 ? 2 : yoyActive ? 1 : 0),
+              checked ? 3 : compare2 ? 2 : yoyActive ? 1 : 0,
             )
           }
           label="+3 anos"

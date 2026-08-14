@@ -10,22 +10,22 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { EmptyState, NativeCheckboxControl, SegmentToggle } from "@delpi/plugin-ui/index";
+import { EmptyState } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
   CommercialChartToolbar,
-  CommercialDateField,
-  CommercialFilterBarShell,
   CommercialMultiSelectField,
   CommercialSectionCard,
   CommercialStateBanner,
-  UI_PREFIX,
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
-import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CM_HELP } from "../../../content/helpTooltips";
+import {
+  PeriodCompareControls,
+  type CompareYearsCount,
+} from "../../analytics/components/PeriodCompareControls";
 import { formatCurrency } from "../../../utils/format";
 import { validateBillingPeriod } from "../billing/utils/billingPeriod";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
@@ -33,7 +33,6 @@ import { useLazyBillingSeriesActivation } from "../hooks/useLazyBillingSeriesAct
 import type { CustomerSummary } from "../types/customerSummary";
 import {
   BILLING_SERIES_GRANULARITY_OPTIONS,
-  BILLING_SERIES_PRESET_OPTIONS,
   DEFAULT_BILLING_SERIES_PRESET,
   allowedBillingSeriesGranularities,
   billingSeriesPresetLabel,
@@ -91,7 +90,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   );
   const [customStart, setCustomStart] = useState(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
-  const [comparePriorYear, setComparePriorYear] = useState(false);
+  const [compareYears, setCompareYears] = useState<CompareYearsCount>(0);
 
   const range =
     preset === "custom"
@@ -112,7 +111,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     ? granularity
     : (allowedGrains[0] ?? "month");
 
-  const yoyActive = comparePriorYear && Boolean(range.startDate && range.endDate);
+  const yoyActive = compareYears >= 1 && Boolean(range.startDate && range.endDate);
 
   const {
     selectedKeys,
@@ -129,7 +128,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
     startDate: range.startDate,
     endDate: range.endDate,
     granularity: effectiveGrain,
-    comparePriorYear: yoyActive,
+    compareYears: yoyActive ? compareYears : 0,
   });
 
   const chartData = useMemo(
@@ -139,6 +138,10 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         faturamento: Number(point.value) || 0,
         faturamento_prior:
           point.value_prior == null ? null : Number(point.value_prior) || 0,
+        faturamento_prior_2:
+          point.value_prior_2 == null ? null : Number(point.value_prior_2) || 0,
+        faturamento_prior_3:
+          point.value_prior_3 == null ? null : Number(point.value_prior_3) || 0,
       })),
     [points],
   );
@@ -146,7 +149,10 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   const hasValues = chartData.some(
     (point) =>
       point.faturamento > 0 ||
-      (yoyActive && point.faturamento_prior != null && point.faturamento_prior > 0),
+      (yoyActive &&
+        ((point.faturamento_prior != null && point.faturamento_prior > 0) ||
+          (point.faturamento_prior_2 != null && point.faturamento_prior_2 > 0) ||
+          (point.faturamento_prior_3 != null && point.faturamento_prior_3 > 0))),
   );
   const filterLabel = billingFilterLabel(selectedKeys, customerOptions);
   const periodLabel = billingSeriesPresetLabel(preset);
@@ -188,61 +194,31 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
         }
       >
       <div className="cm-billing-series-chart__controls">
-        <CommercialFilterBarShell
-          embedded
-          layout={preset === "custom" ? "grid" : "inline"}
-          ariaLabel={CM_HELP.customers.billingSeriesPeriod}
-          leading={
-            <SegmentToggle
-              prefix={UI_PREFIX}
-              ariaLabel={CM_HELP.customers.billingSeriesPeriod}
-              idPrefix="customers-billing-period"
-              value={preset}
-              onChange={setPreset}
-              options={BILLING_SERIES_PRESET_OPTIONS.map((item) => ({
-                value: item.id,
-                label: item.label,
-              }))}
-            />
+        <PeriodCompareControls
+          idPrefix="customers-billing"
+          preset={preset}
+          onPresetChange={setPreset}
+          customStart={customStart}
+          customEnd={customEnd}
+          onCustomStartChange={setCustomStart}
+          onCustomEndChange={setCustomEnd}
+          compareYears={compareYears}
+          onCompareYearsChange={setCompareYears}
+          trailing={
+            periodError ? undefined : (
+              <CommercialChartToolbar
+                granularity={effectiveGrain}
+                onGranularityChange={setGranularity}
+                options={BILLING_SERIES_GRANULARITY_OPTIONS}
+                modes={allowedGrains}
+                granularityHelp={CM_HELP.customers.billingSeriesGrain}
+              />
+            )
           }
-        >
-          {preset === "custom" ? (
-            <>
-              <CommercialDateField
-                label="Data inicial"
-                hint={CM_HELP.customerDetail.billingSeriesDateStart}
-                value={customStart}
-                onChange={setCustomStart}
-              />
-              <CommercialDateField
-                label="Data final"
-                hint={CM_HELP.customerDetail.billingSeriesDateEnd}
-                value={customEnd}
-                onChange={setCustomEnd}
-              />
-            </>
-          ) : null}
-        </CommercialFilterBarShell>
+        />
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
-        ) : (
-          <div className="cm-billing-series-chart__grain-row">
-            <CommercialChartToolbar
-              granularity={effectiveGrain}
-              onGranularityChange={setGranularity}
-              options={BILLING_SERIES_GRANULARITY_OPTIONS}
-              modes={allowedGrains}
-              granularityHelp={CM_HELP.customers.billingSeriesGrain}
-            />
-            <NativeCheckboxControl
-              id="customers-billing-yoy"
-              checked={yoyActive}
-              onChange={setComparePriorYear}
-              label={ANALYTICS_CONTENT.overview.comparePriorYear}
-              hint={CM_HELP.customers.billingSeriesYoy}
-            />
-          </div>
-        )}
+        ) : null}
       </div>
       {error && !hasValues ? (
         <EmptyState
@@ -319,7 +295,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
               dot={{ r: 3, fill: SERIES_COLOR, strokeWidth: 0 }}
               activeDot={{ r: 5 }}
             />
-            {yoyActive ? (
+            {compareYears >= 1 ? (
               <Line
                 type="monotone"
                 dataKey="faturamento_prior"
@@ -327,6 +303,30 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
                 stroke={PRIOR_SERIES_COLOR}
                 strokeWidth={2}
                 strokeDasharray="6 4"
+                connectNulls
+                dot={false}
+              />
+            ) : null}
+            {compareYears >= 2 ? (
+              <Line
+                type="monotone"
+                dataKey="faturamento_prior_2"
+                name="−2 anos"
+                stroke="var(--chart-4, #64748b)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                connectNulls
+                dot={false}
+              />
+            ) : null}
+            {compareYears >= 3 ? (
+              <Line
+                type="monotone"
+                dataKey="faturamento_prior_3"
+                name="−3 anos"
+                stroke="var(--chart-5, #475569)"
+                strokeWidth={1.5}
+                strokeDasharray="2 4"
                 connectNulls
                 dot={false}
               />

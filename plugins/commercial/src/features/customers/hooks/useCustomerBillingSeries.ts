@@ -5,6 +5,11 @@ import {
   type CustomerBillingSeriesPoint,
 } from "../../../api/customerBillingSeriesApi";
 import {
+  compareYearOffsets,
+  type CompareYearsCount,
+  clampCompareYears,
+} from "../../analytics/utils/compareYears";
+import {
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
 } from "../../analytics/utils/periodShift";
@@ -19,6 +24,8 @@ export type BillingSeriesCustomerOption = {
 
 export type BillingSeriesChartPoint = CustomerBillingSeriesPoint & {
   value_prior?: number | null;
+  value_prior_2?: number | null;
+  value_prior_3?: number | null;
 };
 
 export type UseCustomerBillingSeriesResult = {
@@ -68,9 +75,13 @@ export type UseCustomerBillingSeriesOptions = {
   startDate?: string;
   endDate?: string;
   granularity?: "day" | "week" | "month" | "year";
-  /** Overlay YoY: 2ª chamada com o mesmo intervalo −1 ano. */
+  /** Overlay YoY legado (equivale a compareYears=1). */
   comparePriorYear?: boolean;
+  /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
+  compareYears?: CompareYearsCount;
 };
+
+const PRIOR_VALUE_KEYS = ["value_prior", "value_prior_2", "value_prior_3"] as const;
 
 export function useCustomerBillingSeries(
   customers: CustomerSummary[] | undefined,
@@ -80,7 +91,9 @@ export function useCustomerBillingSeries(
   const startDate = options?.startDate;
   const endDate = options?.endDate;
   const granularity = options?.granularity;
-  const comparePriorYear = Boolean(options?.comparePriorYear);
+  const compareYears = clampCompareYears(
+    options?.compareYears ?? (options?.comparePriorYear ? 1 : 0),
+  );
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [points, setPoints] = useState<BillingSeriesChartPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -136,34 +149,34 @@ export function useCustomerBillingSeries(
       signal: controller.signal,
     } as const;
 
-    const priorRange =
-      comparePriorYear && startDate && endDate
-        ? shiftPeriodRangeByYears(
-            { start_date: startDate, end_date: endDate },
-            -1,
-          )
-        : null;
-
+    const offsets = compareYearOffsets(compareYears);
     const currentPromise = fetchCustomerBillingSeries(pairs, currentQuery);
-    const priorPromise = priorRange
-      ? fetchCustomerBillingSeries(pairs, {
-          startDate: priorRange.start_date,
-          endDate: priorRange.end_date,
-          granularity,
-          signal: controller.signal,
-        })
-      : Promise.resolve(null);
+    const priorPromises = offsets.map((years) => {
+      if (!startDate || !endDate) return Promise.resolve(null);
+      const range = shiftPeriodRangeByYears(
+        { start_date: startDate, end_date: endDate },
+        years,
+      );
+      return fetchCustomerBillingSeries(pairs, {
+        startDate: range.start_date,
+        endDate: range.end_date,
+        granularity,
+        signal: controller.signal,
+      });
+    });
 
-    void Promise.all([currentPromise, priorPromise])
-      .then(([currentPayload, priorPayload]) => {
+    void Promise.all([currentPromise, ...priorPromises])
+      .then(([currentPayload, ...priorPayloads]) => {
         if (cancelled) return;
-        const current = currentPayload.points ?? [];
-        const prior = priorPayload?.points ?? [];
-        const next: BillingSeriesChartPoint[] = comparePriorYear
-          ? mergeSeriesWithPriorYear(current, prior, (p) => ({
-              value_prior: p?.value ?? null,
-            }))
-          : current;
+        let next: BillingSeriesChartPoint[] = currentPayload.points ?? [];
+        priorPayloads.forEach((priorPayload, index) => {
+          const key = PRIOR_VALUE_KEYS[index];
+          if (!key) return;
+          const prior = priorPayload?.points ?? [];
+          next = mergeSeriesWithPriorYear(next, prior, (p) => ({
+            [key]: p?.value ?? null,
+          }));
+        });
         setPoints(next);
         setCoverage(currentPayload.coverage);
         setError(currentPayload.partialError);
@@ -189,7 +202,7 @@ export function useCustomerBillingSeries(
     startDate,
     endDate,
     granularity,
-    comparePriorYear,
+    compareYears,
   ]);
 
   const displayedPoints = useMemo(
