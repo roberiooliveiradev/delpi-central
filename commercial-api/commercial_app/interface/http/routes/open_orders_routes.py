@@ -104,6 +104,49 @@ def list_commercial_open_orders(
         )
 
 
+@router.get("/recently-closed", operation_id="list_commercial_recently_closed_orders")
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_commercial_recently_closed_orders(
+    request: Request,
+    days: int = Query(default=30, ge=1, le=90),
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    try:
+        pid = (portfolio_id or seller_id or "").strip() or None
+        scope = _open_orders_scope(request, portfolio_id=pid)
+        payload = build_delpi_commercial_gateway().list_recently_closed_orders(days=days)
+        raw = payload.get("data", payload) if isinstance(payload, dict) else {}
+        data = FilterOpenOrdersByScopeService().apply(
+            raw if isinstance(raw, dict) else {},
+            scope,
+        )
+        if isinstance(data, dict) and isinstance(data.get("summary"), dict):
+            data = {
+                **data,
+                "summary": {
+                    **data["summary"],
+                    "days": days,
+                },
+            }
+        return ok(data, message="Pedidos recentemente encerrados carregados.")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="list_commercial_recently_closed_orders")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="list_commercial_recently_closed_orders")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="list_commercial_recently_closed_orders")
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id="list_commercial_recently_closed_orders")
+    except Exception:
+        logger.exception("list_commercial_recently_closed_orders_failed")
+        return fail(
+            "Erro interno ao carregar pedidos recentemente encerrados.",
+            500,
+            operation_id="list_commercial_recently_closed_orders",
+        )
+
+
 @router.get("/ops-abertas", operation_id="list_commercial_open_ops")
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
 def list_commercial_open_ops(_request: Request):

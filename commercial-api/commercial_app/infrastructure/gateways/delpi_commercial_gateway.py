@@ -105,6 +105,13 @@ class DelpiCommercialGateway:
             params=params,
         )
 
+    def list_recently_closed_orders(self, *, days: int = 30) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/pedidos-venda-abertos/totvs-recently-closed-orders",
+            params={"days": days},
+        )
+
     def list_open_orders_by_customer(
         self,
         *,
