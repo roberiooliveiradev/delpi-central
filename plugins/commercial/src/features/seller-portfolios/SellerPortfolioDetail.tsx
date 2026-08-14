@@ -37,6 +37,7 @@ import {
   CustomerSearchPicker,
   type CustomerSearchSelection,
 } from "../customers/components/CustomerSearchPicker";
+import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 
 type SellerPortfolioDetailProps = {
   portfolio: SellerPortfolio;
@@ -45,6 +46,7 @@ type SellerPortfolioDetailProps = {
   busyCustomerKey: string | null;
   linkingCustomers?: boolean;
   busyMemberUserId: string | null;
+  addingMembers?: boolean;
   overlappingCustomerKeys?: ReadonlySet<string>;
   otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
   directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string;
@@ -53,7 +55,7 @@ type SellerPortfolioDetailProps = {
   onRemoveCustomer: (code: string, store: string) => void;
   onRemoveCustomers: (items: Array<{ code: string; store: string }>) => void;
   unlinkingCustomers?: boolean;
-  onAddMember: (userId: string) => void;
+  onAddMembers: (userIds: string[]) => void;
   onRemoveMember: (userId: string) => void;
   onSetOwner: (userId: string) => void;
   onDeactivate: () => void;
@@ -77,6 +79,7 @@ export function SellerPortfolioDetail({
   linkingCustomers = false,
   unlinkingCustomers = false,
   busyMemberUserId,
+  addingMembers = false,
   overlappingCustomerKeys,
   otherPortfolioLabelsFor,
   directoryLabelFor,
@@ -84,7 +87,7 @@ export function SellerPortfolioDetail({
   onAddCustomers,
   onRemoveCustomer,
   onRemoveCustomers,
-  onAddMember,
+  onAddMembers,
   onRemoveMember,
   onSetOwner,
   onDeactivate,
@@ -145,6 +148,10 @@ export function SellerPortfolioDetail({
     () => new Set(members.map((member) => member.user_id)),
     [members],
   );
+
+  useEffect(() => {
+    setMemberPicker((prev) => prev.filter((user) => !memberIds.has(user.id)));
+  }, [memberIds]);
 
   const allLinkedSelected =
     linked.length > 0 &&
@@ -385,19 +392,14 @@ export function SellerPortfolioDetail({
           <UserDirectoryPicker
             value={memberPicker}
             onChange={(users) => {
-              const next = users.filter((user) => !memberIds.has(user.id));
-              setMemberPicker(next);
-              const candidate = next[0];
-              if (candidate) {
-                onAddMember(candidate.id);
-                setMemberPicker([]);
-              }
+              setMemberPicker(users.filter((user) => !memberIds.has(user.id)));
             }}
             searchUsers={async (query, limit, signal) => {
               const hits = await searchDirectoryUsers(query, limit, signal);
               return hits.filter((hit) => !memberIds.has(hit.id));
             }}
-            maxSelected={1}
+            maxSelected={10}
+            disabled={addingMembers}
             labels={{
               title: isOrphan
                 ? "Adicionar responsável"
@@ -407,7 +409,44 @@ export function SellerPortfolioDetail({
                 ? "Buscar responsável…"
                 : "Buscar para adicionar…",
             }}
+            renderOptionLeading={(user) => (
+              <TaskUserChipAvatar
+                userId={user.id}
+                name={(user.name || "").trim() || user.email}
+              />
+            )}
+            renderSelectedChip={({ user, label, disabled, onRemove }) => (
+              <span className="delpi-ui-tag-chip">
+                <TaskUserChipAvatar
+                  userId={user.id}
+                  name={(user.name || "").trim() || user.email}
+                />
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="delpi-ui-tag-chip__remove"
+                  disabled={disabled || addingMembers}
+                  aria-label={`Remover ${label}`}
+                  onClick={onRemove}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </span>
+            )}
           />
+          <div className="cm-portfolios-form__actions">
+            <CommercialActionButton
+              variant="primary"
+              disabled={addingMembers || memberPicker.length === 0}
+              onClick={() => onAddMembers(memberPicker.map((user) => user.id))}
+            >
+              {addingMembers
+                ? "Adicionando…"
+                : memberPicker.length <= 1
+                  ? "Adicionar selecionado"
+                  : `Adicionar selecionados (${memberPicker.length})`}
+            </CommercialActionButton>
+          </div>
 
           <CommercialViewTransition
             transitionKey={`members-${portfolio.id}-${members.length}`}

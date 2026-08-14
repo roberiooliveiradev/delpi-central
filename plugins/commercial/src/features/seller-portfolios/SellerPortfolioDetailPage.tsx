@@ -95,6 +95,7 @@ export function SellerPortfolioDetailPage({
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
   const [linkingCustomers, setLinkingCustomers] = useState(false);
   const [unlinkingCustomers, setUnlinkingCustomers] = useState(false);
+  const [addingMembers, setAddingMembers] = useState(false);
   const [busyMemberUserId, setBusyMemberUserId] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
@@ -375,19 +376,44 @@ export function SellerPortfolioDetailPage({
     }
   }
 
-  async function handleAddMember(userId: string) {
-    if (!portfolio) return;
-    setBusyMemberUserId(userId);
+  async function handleAddMembers(userIds: string[]) {
+    if (!portfolio || userIds.length === 0) return;
+    const uniqueIds = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+    if (uniqueIds.length === 0) return;
+    setAddingMembers(true);
+    let ok = 0;
+    let failed = 0;
     try {
-      const updated = await addSellerPortfolioMember(portfolio.id, { user_id: userId });
-      setPortfolio(updated);
-      notifySuccess("Usuário adicionado à carteira.");
-      reloadAudit();
-      reloadScope();
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao adicionar usuário.");
+      for (const userId of uniqueIds) {
+        try {
+          const updated = await addSellerPortfolioMember(portfolio.id, {
+            user_id: userId,
+          });
+          setPortfolio(updated);
+          ok += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      if (ok > 0) {
+        reloadAudit();
+        reloadScope();
+      }
+      if (ok > 0 && failed === 0) {
+        notifySuccess(
+          ok === 1
+            ? "Usuário adicionado à carteira."
+            : `${ok} usuários adicionados à carteira.`,
+        );
+      } else if (ok > 0 && failed > 0) {
+        notifyWarning(`${ok} adicionado(s); ${failed} falhou/falharam.`, {
+          title: "Inclusão parcial",
+        });
+      } else if (failed > 0) {
+        notifyError("Não foi possível adicionar os usuários selecionados.");
+      }
     } finally {
-      setBusyMemberUserId(null);
+      setAddingMembers(false);
     }
   }
 
@@ -612,6 +638,7 @@ export function SellerPortfolioDetailPage({
             linkingCustomers={linkingCustomers}
             unlinkingCustomers={unlinkingCustomers}
             busyMemberUserId={busyMemberUserId}
+            addingMembers={addingMembers}
             overlappingCustomerKeys={overlappingCustomerKeys}
             otherPortfolioLabelsFor={otherPortfolioLabelsFor}
             directoryLabelFor={directoryLabelFor}
@@ -619,7 +646,7 @@ export function SellerPortfolioDetailPage({
             onAddCustomers={(items) => void handleAddCustomers(items)}
             onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
             onRemoveCustomers={(items) => void handleRemoveCustomers(items)}
-            onAddMember={(userId) => void handleAddMember(userId)}
+            onAddMembers={(userIds) => void handleAddMembers(userIds)}
             onRemoveMember={(userId) => void handleRemoveMember(userId)}
             onSetOwner={(userId) => void handleSetOwner(userId)}
             onDeactivate={() => void handleDeactivate()}
