@@ -29,7 +29,6 @@ import {
 import { formatCurrency } from "../../../utils/format";
 import { validateBillingPeriod } from "../billing/utils/billingPeriod";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
-import { useLazyBillingSeriesActivation } from "../hooks/useLazyBillingSeriesActivation";
 import type { CustomerSummary } from "../types/customerSummary";
 import {
   BILLING_SERIES_GRANULARITY_OPTIONS,
@@ -49,6 +48,8 @@ const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
+  /** Quando false, não dispara fetch (painel oculto). Default true. */
+  active?: boolean;
 };
 
 function formatChartCurrency(value: number): string {
@@ -81,9 +82,11 @@ function billingFilterLabel(
 /**
  * Faturamento da carteira — período (paridade Overview) + YoY opcional.
  */
-export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesChartProps) {
+export function CustomerBillingSeriesChart({
+  customers,
+  active = true,
+}: CustomerBillingSeriesChartProps) {
   const gradientId = useId().replace(/:/g, "");
-  const { anchorRef, open, setOpen, enabled } = useLazyBillingSeriesActivation();
   const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
   const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
     DEFAULT_BILLING_SERIES_PRESET,
@@ -98,7 +101,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
       : periodRangeFromBillingPreset(preset);
   const periodError =
     preset === "custom" ? validateBillingPeriod(range.startDate, range.endDate) : null;
-  const queryEnabled = enabled && !periodError;
+  const queryEnabled = active && !periodError;
   const allowedGrains = allowedBillingSeriesGranularities(
     range.startDate,
     range.endDate,
@@ -159,7 +162,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   const isAllCustomers = selectedKeys.length === 0;
 
   return (
-    <div ref={anchorRef} className="cm-billing-series-chart">
+    <div className="cm-billing-series-chart">
       <CommercialSectionCard
         title={`Faturamento — ${periodLabel}`}
         hint={CM_HELP.customers.billingSeries}
@@ -170,27 +173,22 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
               ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)}`
               : undefined
         }
-        collapsible
-        open={open}
-        onOpenChange={setOpen}
         actions={
-          open ? (
-            <div className="cm-billing-series-chart__customer-filter">
-              <CommercialMultiSelectField
-                label="Cliente"
-                hint={CM_HELP.customerDetail.billingSeriesCustomer}
-                options={customerOptions.map((customer) => ({
-                  value: customer.key,
-                  label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
-                }))}
-                selectedValues={selectedKeys}
-                onChange={setSelectedKeys}
-                emptyLabel="Todos os clientes"
-                searchable
-                disabled={loading && customerOptions.length === 0}
-              />
-            </div>
-          ) : undefined
+          <div className="cm-billing-series-chart__customer-filter">
+            <CommercialMultiSelectField
+              label="Cliente"
+              hint={CM_HELP.customerDetail.billingSeriesCustomer}
+              options={customerOptions.map((customer) => ({
+                value: customer.key,
+                label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
+              }))}
+              selectedValues={selectedKeys}
+              onChange={setSelectedKeys}
+              emptyLabel="Todos os clientes"
+              searchable
+              disabled={loading && customerOptions.length === 0}
+            />
+          </div>
         }
       >
       <div className="cm-billing-series-chart__controls">

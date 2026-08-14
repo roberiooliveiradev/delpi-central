@@ -35,6 +35,8 @@ import {
 
 type PortfolioBillingRankingTableProps = {
   sellerId?: string | null;
+  /** Quando false, não dispara fetch (painel oculto). Default true. */
+  active?: boolean;
 };
 
 type RankingOrder = "growth" | "decline";
@@ -49,6 +51,7 @@ const RANKING_PERIOD_OPTIONS = BILLING_SERIES_PRESET_OPTIONS.filter(
 
 export function PortfolioBillingRankingTable({
   sellerId,
+  active = true,
 }: PortfolioBillingRankingTableProps) {
   const { canUseTeamScope } = usePortfolioScope();
   const [groupBy, setGroupBy] = useState<"customer" | "seller">("customer");
@@ -75,6 +78,7 @@ export function PortfolioBillingRankingTable({
   const cardSubtitle = `Top ${limit} · ${periodLabel} · ${focusLabel}`;
 
   useEffect(() => {
+    if (!active) return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -103,6 +107,7 @@ export function PortfolioBillingRankingTable({
       });
     return () => controller.abort();
   }, [
+    active,
     effectiveGroupBy,
     limit,
     order,
@@ -197,8 +202,6 @@ export function PortfolioBillingRankingTable({
       title="Ranking crescimento/queda"
       subtitle={cardSubtitle}
       hint={CM_HELP.customers.billingRanking}
-      collapsible
-      defaultOpen={false}
       actions={
         <div className="cm-customers-page__filter-actions">
           {canUseTeamScope ? (

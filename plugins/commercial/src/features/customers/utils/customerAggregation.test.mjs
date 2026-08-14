@@ -499,7 +499,7 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(page, /@delpi\/plugin-ui/);
   });
 
-  it("usa conjunto completo filtrado no export e lazy fetch no grafico", () => {
+  it("usa conjunto completo filtrado no export e painéis sem collapsible", () => {
     const page = readFileSync(join(__dirname, "../pages/CustomersPage.tsx"), "utf8");
     const chart = readFileSync(
       join(__dirname, "../components/CustomerBillingSeriesChart.tsx"),
@@ -509,14 +509,13 @@ describe("CustomersPage estrutural", () => {
       join(__dirname, "../hooks/useCustomerBillingSeries.ts"),
       "utf8",
     );
-    const lazyHook = readFileSync(
-      join(__dirname, "../hooks/useLazyBillingSeriesActivation.ts"),
-      "utf8",
-    );
     assert.match(page, /exportRows=\{filteredCustomers\}/);
     assert.match(page, /canUseTeamScope=\{canUseTeamScope\}/);
+    assert.match(page, /CommercialSegmentToggle/);
     assert.match(chart, /CommercialSectionCard/);
-    assert.match(chart, /collapsible/);
+    assert.doesNotMatch(chart, /collapsible/);
+    assert.doesNotMatch(chart, /useLazyBillingSeriesActivation/);
+    assert.match(chart, /active = true/);
     assert.match(chart, /useCustomerBillingSeries\(customers, \{/);
     assert.match(chart, /CommercialMultiSelectField/);
     assert.match(chart, /selectedValues=\{selectedKeys\}/);
@@ -535,8 +534,6 @@ describe("CustomersPage estrutural", () => {
     assert.match(seriesHook, /selectedKeys/);
     assert.match(seriesHook, /if \(!selectedKeys\.length\)/);
     assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);
-    assert.match(lazyHook, /IntersectionObserver/);
-    assert.match(lazyHook, /if \(mobile\)/);
   });
 
   it("nao mantem componentes e CSS espelho da lista legada", () => {

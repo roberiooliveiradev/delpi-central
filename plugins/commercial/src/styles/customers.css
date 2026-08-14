@@ -88,6 +88,17 @@
   gap: 10px;
 }
 
+.dashboard-commercial .cm-customers-page__panels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-customers-page__panel[hidden] {
+  display: none !important;
+}
+
 .dashboard-commercial .cm-customers-page__freshness,
 .dashboard-commercial .cm-customer-identity__code,
 .dashboard-commercial .cm-customer-billing-filters__hint {

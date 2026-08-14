@@ -507,7 +507,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 hidden={panel !== "billing"}
                 aria-hidden={panel !== "billing"}
               >
-                <CustomerBillingSeriesChart customers={aggregation.customers} />
+                <CustomerBillingSeriesChart
+                  customers={aggregation.customers}
+                  active={panel === "billing"}
+                />
               </div>
 
               <div
@@ -517,6 +520,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               >
                 <PortfolioBillingRankingTable
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
+                  active={panel === "ranking"}
                 />
               </div>
 

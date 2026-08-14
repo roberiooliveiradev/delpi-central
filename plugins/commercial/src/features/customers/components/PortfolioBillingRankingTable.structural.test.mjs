@@ -17,8 +17,9 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /runTabularExport/);
     assert.match(source, /canUseTeamScope/);
     assert.match(source, /group_by/);
-    assert.match(source, /collapsible/);
-    assert.match(source, /defaultOpen=\{false\}/);
+    assert.match(source, /active/);
+    assert.doesNotMatch(source, /collapsible/);
+    assert.doesNotMatch(source, /defaultOpen/);
     assert.match(source, /OtdCustomerIdentityCell/);
     assert.match(source, /CommercialAvatar/);
     assert.match(source, /CommercialCompareSparkline/);
@@ -34,9 +35,14 @@ describe("PortfolioBillingRankingTable", () => {
     assert.doesNotMatch(source, /\.delpi-ui-/);
   });
 
-  it("CustomersPage monta o ranking após a série de faturamento", () => {
+  it("CustomersPage alterna painéis com SegmentToggle e ranking/série", () => {
     const page = readFileSync(join(here, "../pages/CustomersPage.tsx"), "utf8");
     assert.match(page, /PortfolioBillingRankingTable/);
     assert.match(page, /CustomerBillingSeriesChart/);
+    assert.match(page, /CommercialSegmentToggle/);
+    assert.match(page, /customers-workspace-panel/);
+    assert.match(page, /setPanel/);
+    assert.match(page, /active=\{panel === "billing"\}/);
+    assert.match(page, /active=\{panel === "ranking"\}/);
   });
 });
