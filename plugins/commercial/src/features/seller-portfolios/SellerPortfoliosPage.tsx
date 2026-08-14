@@ -148,7 +148,8 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
     }
     return [...ids];
   }, [portfolios]);
-  const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
+  const { labelFor: directoryLabelFor, nameFor: directoryNameFor } =
+    useDirectoryUserLabels(directoryUserIds);
 
   const applyLink = useCallback(
     (next: SellerPortfoliosDeepLink) => {
@@ -623,7 +624,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           onAxisChange={(axis: SellerPortfoliosAxis) => applyLink({ ...link, axis })}
           onOpenPortfolio={(portfolio) => openPortfolio(portfolio)}
           onCreate={() => setCreateOpen(true)}
-          directoryLabelFor={directoryLabelFor}
+          directoryNameFor={directoryNameFor}
         />
       ) : (
         <SellerPortfoliosList

@@ -1,4 +1,4 @@
-import { Briefcase, User, UsersRound } from "lucide-react";
+import { Briefcase, UsersRound } from "lucide-react";
 import {
   memo,
   useEffect,
@@ -27,6 +27,10 @@ import "@xyflow/react/dist/style.css";
 import { withBemModifier } from "../../utils/delpiUiClass";
 import { useDelpiDarkMode } from "../bpmn/hooks/useDelpiDarkMode";
 import { DiagramFullscreenFrame } from "../bpmn/shell/DiagramFullscreenFrame";
+import {
+  InitialsAvatar,
+  initialsAvatarBemClasses,
+} from "../layout/InitialsAvatar";
 import { layoutOrgMembershipForest } from "./layoutOrgMembershipForest";
 import {
   orgMembershipFlowBemClasses,
@@ -50,6 +54,8 @@ export type {
 export { layoutOrgMembershipForest } from "./layoutOrgMembershipForest";
 export { orgMembershipFlowBemClasses };
 
+const PERSON_AVATAR_CLASS_NAMES = initialsAvatarBemClasses("delpi-ui");
+
 type FlowNode = Node<OrgMembershipFlowNodeData, "orgMembership">;
 
 type OrgMembershipNodeViewProps = NodeProps<FlowNode> & {
@@ -57,8 +63,7 @@ type OrgMembershipNodeViewProps = NodeProps<FlowNode> & {
 };
 
 function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps) {
-  const Icon =
-    data.kind === "portfolio" ? Briefcase : data.kind === "group" ? UsersRound : User;
+  const Icon = data.kind === "portfolio" ? Briefcase : UsersRound;
   const toneClass =
     data.tone === "muted"
       ? classNames.nodeMuted
@@ -77,8 +82,27 @@ function OrgMembershipNodeView({ data, classNames }: OrgMembershipNodeViewProps)
       title={data.subtitle ? `${data.title} — ${data.subtitle}` : data.title}
     >
       <Handle type="target" position={Position.Top} className="delpi-ui-org-flow__handle" />
-      <span className={classNames.nodeIcon} aria-hidden="true">
-        <Icon size={18} strokeWidth={2.25} />
+      <span
+        className={[
+          classNames.nodeIcon,
+          data.kind === "person" ? "delpi-ui-org-flow__node-icon--avatar" : null,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden="true"
+      >
+        {data.kind === "person" ? (
+          <InitialsAvatar
+            name={data.title}
+            colorKey={data.entityId || data.title}
+            src={data.avatarSrc}
+            size="sm"
+            classNames={PERSON_AVATAR_CLASS_NAMES}
+            previewable={false}
+          />
+        ) : (
+          <Icon size={18} strokeWidth={2.25} />
+        )}
       </span>
       <div className={classNames.nodeBody}>
         <strong className={classNames.nodeTitle}>{data.title}</strong>
@@ -157,6 +181,7 @@ function OrgMembershipCanvas({
             title: node.title,
             subtitle: node.subtitle,
             tone: node.tone,
+            avatarSrc: node.avatarSrc,
           },
           draggable: false,
           connectable: false,
@@ -196,9 +221,9 @@ function OrgMembershipCanvas({
     [classNames],
   );
 
-  const revision = `${colorModeAttr}|${nodes.map((n) => n.id).join(",")}|${edges
-    .map((e) => e.id)
-    .join(",")}`;
+  const revision = `${colorModeAttr}|${nodes
+    .map((n) => `${n.id}:${n.avatarSrc ? "1" : "0"}`)
+    .join(",")}|${edges.map((e) => e.id).join(",")}`;
 
   const rootClass = [
     withBemModifier(classNames.root, isDark ? "dark" : "light"),

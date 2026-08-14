@@ -41,7 +41,6 @@ export function buildCommercialGroupsOrgFlowModel(input: {
     nodeIds.add(personNodeId);
     const title = directoryUserLabelOrFallback({
       name: person.name,
-      email: person.email,
     });
     const email = (person.email || "").trim();
     nodes.push({
@@ -49,7 +48,7 @@ export function buildCommercialGroupsOrgFlowModel(input: {
       kind: "person",
       entityId: person.user_id,
       title,
-      subtitle: email && email !== title ? email : undefined,
+      subtitle: email || undefined,
     });
     return personNodeId;
   };

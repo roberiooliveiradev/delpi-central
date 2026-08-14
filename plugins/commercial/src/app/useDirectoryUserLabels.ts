@@ -62,5 +62,15 @@ export function useDirectoryUserLabels(
     };
   }, [byId]);
 
-  return { byId, labelFor };
+  /** Só o nome (sem e-mail) — diagramas e colunas com avatar. */
+  const nameFor = useMemo((): DirectoryLabelFor => {
+    return (userId, fallback) => {
+      const id = (userId ?? "").trim();
+      if (!id) return directoryUserLabelOrFallback({}, fallback);
+      const hit = byId[id];
+      return directoryUserLabelOrFallback({ name: hit?.name }, fallback);
+    };
+  }, [byId]);
+
+  return { byId, labelFor, nameFor };
 }

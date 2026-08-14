@@ -52,6 +52,8 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /CommercialOrgMembershipFlow/);
     assert.match(source, /parseCommercialTeamView/);
     assert.match(source, /TaskUserChipAvatar/);
+    assert.match(source, /withPersonAvatarSrc/);
+    assert.match(source, /useUserProfilePhotoUrls/);
     assert.match(source, /key: "person"/);
     assert.match(source, /key: "online"/);
     assert.match(source, /key: "groups"/);
@@ -93,6 +95,8 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /parseCommercialTeamView/);
     assert.match(source, /CommercialOrgMembershipFlow/);
     assert.match(source, /buildCommercialGroupsOrgFlowModel/);
+    assert.match(source, /withPersonAvatarSrc/);
+    assert.match(source, /useUserProfilePhotoUrls/);
     const css = readFileSync(join(root, "src/index.css"), "utf8");
     assert.match(
       css,

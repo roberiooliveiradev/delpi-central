@@ -49,7 +49,9 @@ import {
   type CommercialTeamView,
 } from "../../utils/commercialTeamDeepLink";
 import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
+import { withPersonAvatarSrc } from "../../utils/orgFlowPersonAvatars";
 import { directoryUserLabelOrFallback } from "../../shared/directoryUserLabel";
+import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
@@ -162,6 +164,19 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
   const orgFlowModel = useMemo(
     () => buildCommercialGroupsOrgFlowModel({ people: rows }),
     [rows],
+  );
+
+  const personIdsForAvatars = useMemo(
+    () =>
+      orgFlowModel.nodes
+        .filter((node) => node.kind === "person")
+        .map((node) => node.entityId),
+    [orgFlowModel.nodes],
+  );
+  const photoByUserId = useUserProfilePhotoUrls(personIdsForAvatars);
+  const orgFlowNodes = useMemo(
+    () => withPersonAvatarSrc(orgFlowModel.nodes, photoByUserId),
+    [orgFlowModel.nodes, photoByUserId],
   );
 
   const profileReturnNav = currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot);
@@ -426,7 +441,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
             <CommercialEmptyState defaultMessage={copy.orgEmpty} />
           ) : (
             <CommercialOrgMembershipFlow
-              nodes={orgFlowModel.nodes}
+              nodes={orgFlowNodes}
               edges={orgFlowModel.edges}
               portalScopeClassName="dashboard-commercial"
               fullscreenTitle={copy.orgTitle}

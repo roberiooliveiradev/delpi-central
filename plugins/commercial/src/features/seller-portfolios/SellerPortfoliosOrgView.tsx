@@ -13,13 +13,18 @@ import {
 } from "../../app/commercialUi";
 import type { DirectoryLabelFor } from "../../app/useDirectoryUserLabels";
 import { CM_HELP } from "../../content/helpTooltips";
+import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import type {
   PersonLoadItem,
   PortfolioLoadItem,
   SellerPortfolio,
 } from "../../types/portfolio";
 import type { SellerPortfoliosAxis } from "../../utils/sellerPortfoliosDeepLink";
-import { buildSellerPortfoliosOrgFlowModel } from "../../utils/sellerPortfoliosOrgFlow";
+import { withPersonAvatarSrc } from "../../utils/orgFlowPersonAvatars";
+import {
+  buildSellerPortfoliosOrgFlowModel,
+  resolveSellerPortfolioMemberIds,
+} from "../../utils/sellerPortfoliosOrgFlow";
 
 type SellerPortfoliosOrgViewProps = {
   portfolios: SellerPortfolio[];
@@ -32,7 +37,8 @@ type SellerPortfoliosOrgViewProps = {
   onAxisChange: (axis: SellerPortfoliosAxis) => void;
   onOpenPortfolio: (portfolio: SellerPortfolio) => void;
   onCreate: () => void;
-  directoryLabelFor: DirectoryLabelFor;
+  /** Nome sem e-mail — o subtítulo do fluxo já carrega carga/métricas. */
+  directoryNameFor: DirectoryLabelFor;
 };
 
 export function SellerPortfoliosOrgView({
@@ -46,7 +52,7 @@ export function SellerPortfoliosOrgView({
   onAxisChange,
   onOpenPortfolio,
   onCreate,
-  directoryLabelFor,
+  directoryNameFor,
 }: SellerPortfoliosOrgViewProps) {
   const flowModel = useMemo(
     () =>
@@ -55,9 +61,24 @@ export function SellerPortfoliosOrgView({
         axis,
         loadByPortfolioId,
         loadByPersonId,
-        directoryLabelFor,
+        directoryLabelFor: directoryNameFor,
       }),
-    [portfolios, axis, loadByPortfolioId, loadByPersonId, directoryLabelFor],
+    [portfolios, axis, loadByPortfolioId, loadByPersonId, directoryNameFor],
+  );
+
+  const personIdsForAvatars = useMemo(() => {
+    const ids = new Set<string>();
+    for (const portfolio of portfolios) {
+      for (const userId of resolveSellerPortfolioMemberIds(portfolio)) {
+        ids.add(userId);
+      }
+    }
+    return [...ids];
+  }, [portfolios]);
+  const photoByUserId = useUserProfilePhotoUrls(personIdsForAvatars);
+  const flowNodes = useMemo(
+    () => withPersonAvatarSrc(flowModel.nodes, photoByUserId),
+    [flowModel.nodes, photoByUserId],
   );
 
   const portfolioById = useMemo(() => {
@@ -109,7 +130,7 @@ export function SellerPortfoliosOrgView({
           </CommercialViewTransition>
         ) : (
           <CommercialOrgMembershipFlow
-            nodes={flowModel.nodes}
+            nodes={flowNodes}
             edges={flowModel.edges}
             portalScopeClassName="dashboard-commercial"
             fullscreenTitle="Organização"

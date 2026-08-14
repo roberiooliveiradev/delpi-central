@@ -12,4 +12,11 @@ describe("OrgMembershipFlow fitView", () => {
     expect(source).toMatch(/if \(!nodesInitialized\) return/);
     expect(source).toMatch(/FitViewOnChange/);
   });
+
+  it("nós de pessoa usam InitialsAvatar com avatarSrc", () => {
+    const source = readFileSync(join(root, "OrgMembershipFlow.tsx"), "utf8");
+    expect(source).toMatch(/InitialsAvatar/);
+    expect(source).toMatch(/src=\{data\.avatarSrc\}/);
+    expect(source).toMatch(/node-icon--avatar/);
+  });
 });

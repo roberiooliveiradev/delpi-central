@@ -42,6 +42,8 @@ import {
   type CommercialTeamView,
 } from "../../utils/commercialTeamDeepLink";
 import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
+import { withPersonAvatarSrc } from "../../utils/orgFlowPersonAvatars";
+import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
@@ -95,7 +97,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         if (!existing) {
           peopleById.set(member.user_id, {
             user_id: member.user_id,
-            name: labelFor(member.user_id, directory?.name ?? null),
+            name: (directory?.name || "").trim(),
             email: directory?.email ?? null,
             groups: [{ id: group.id, name: group.name, active: group.active }],
           });
@@ -116,7 +118,20 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
         active: group.active,
       })),
     });
-  }, [byId, groups, labelFor]);
+  }, [byId, groups]);
+
+  const personIdsForAvatars = useMemo(
+    () =>
+      orgFlowModel.nodes
+        .filter((node) => node.kind === "person")
+        .map((node) => node.entityId),
+    [orgFlowModel.nodes],
+  );
+  const photoByUserId = useUserProfilePhotoUrls(personIdsForAvatars);
+  const orgFlowNodes = useMemo(
+    () => withPersonAvatarSrc(orgFlowModel.nodes, photoByUserId),
+    [orgFlowModel.nodes, photoByUserId],
+  );
 
   const load = useCallback(
     async (mode: "initial" | "refresh" = "initial", signal?: AbortSignal) => {
@@ -410,7 +425,7 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
             <CommercialEmptyState defaultMessage={copy.orgEmpty} />
           ) : (
             <CommercialOrgMembershipFlow
-              nodes={orgFlowModel.nodes}
+              nodes={orgFlowNodes}
               edges={orgFlowModel.edges}
               portalScopeClassName="dashboard-commercial"
               fullscreenTitle={copy.orgTitle}

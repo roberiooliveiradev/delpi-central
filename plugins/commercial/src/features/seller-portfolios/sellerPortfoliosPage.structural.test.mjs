@@ -76,6 +76,9 @@ describe("seller-portfolios kit-first", () => {
     assert.match(orgSource, /Por pessoa/);
     assert.match(orgSource, /CommercialOrgMembershipFlow/);
     assert.match(orgSource, /buildSellerPortfoliosOrgFlowModel/);
+    assert.match(orgSource, /withPersonAvatarSrc/);
+    assert.match(orgSource, /useUserProfilePhotoUrls/);
+    assert.match(orgSource, /directoryNameFor/);
     assert.match(orgSource, /fullscreenTitle|portalScopeClassName/);
     assert.doesNotMatch(orgSource, /cm-portfolios-org-tree/);
     // Troca Por carteira/Por pessoa atualiza nodes in-place — sem remount via ViewTransition+axis.

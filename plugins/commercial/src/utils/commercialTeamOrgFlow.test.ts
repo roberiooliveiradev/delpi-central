@@ -40,6 +40,23 @@ describe("buildCommercialGroupsOrgFlowModel", () => {
     );
   });
 
+  it("título da pessoa é só o nome; e-mail fica no subtítulo", () => {
+    const model = buildCommercialGroupsOrgFlowModel({
+      people: [
+        {
+          user_id: "u-ana",
+          name: "Ana Silva",
+          email: "ana@ex.com",
+          groups: [{ id: "g1", name: "Inside", active: true }],
+        },
+      ],
+    });
+    const person = model.nodes.find((node) => node.kind === "person");
+    expect(person?.title).toBe("Ana Silva");
+    expect(person?.subtitle).toBe("ana@ex.com");
+    expect(person?.title).not.toContain("@");
+  });
+
   it("nunca usa user_id como título da pessoa", () => {
     const uuid = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
     const model = buildCommercialGroupsOrgFlowModel({

@@ -11,6 +11,8 @@ export type OrgMembershipFlowNodeData = {
   title: string;
   subtitle?: string;
   tone?: OrgMembershipNodeTone;
+  /** Foto opcional (pessoa); sem src → iniciais. */
+  avatarSrc?: string | null;
 };
 
 /** Nó lógico (antes do layout / React Flow). */
@@ -22,6 +24,8 @@ export type OrgMembershipFlowModelNode = {
   title: string;
   subtitle?: string;
   tone?: OrgMembershipNodeTone;
+  /** Foto opcional (pessoa); sem src → iniciais. */
+  avatarSrc?: string | null;
 };
 
 export type OrgMembershipFlowModelEdge = {
