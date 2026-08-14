@@ -435,6 +435,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               end_date: filters.apiParams.end_date,
               customer_segment: filters.apiParams.customer_segment,
               seller_id: filters.apiParams.seller_id,
+              branch: filters.apiParams.branch,
             }}
             onDrillDown={(dateStart, dateEnd) => {
               filters.replaceDateFilters({
@@ -471,6 +472,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               end_date: filters.apiParams.end_date,
               customer_segment: filters.apiParams.customer_segment,
               seller_id: filters.apiParams.seller_id,
+              branch: filters.apiParams.branch,
             }}
             onDrillDown={(dateStart, dateEnd) => {
               filters.replaceDateFilters({

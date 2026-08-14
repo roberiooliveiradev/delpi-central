@@ -37,18 +37,6 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
 }
 
-.delpi-ui-chart-view-shell__toolbar-overlays {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  min-width: 0;
-}
-
-.delpi-ui-chart-view-shell__toolbar-overlays .delpi-ui-native-checkbox {
-  align-items: center;
-}
-
 .delpi-ui-chart-view-shell__export {
   display: inline-flex;
   flex-wrap: wrap;

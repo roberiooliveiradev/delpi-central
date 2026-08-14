@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   EmptyState,
   MultiTypeSeriesChart,
-  NativeCheckboxControl,
   TIME_MULTI_SERIES_TYPES,
   runTabularExport,
   usePersistedChartPreferences,
   type ChartGranularity,
+  type ChartOverlayOption,
   type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
@@ -27,7 +28,10 @@ import type {
   AnalyticsFilterParams,
   SalesConversionRateSeriesPoint,
 } from "../../../types/analytics";
-import { ANALYTICS_CONVERSION_SERIES_LABELS } from "../utils/analyticsBranchFilters";
+import {
+  ANALYTICS_CONVERSION_SERIES_LABELS,
+  resolveAnalyticsSeriesUnits,
+} from "../utils/analyticsBranchFilters";
 import {
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
@@ -51,7 +55,7 @@ type ClosingRateChartPoint = SalesConversionRateSeriesPoint & {
 type ClosingRateSeriesChartProps = {
   filters: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "customer_segment" | "seller_id"
+    "start_date" | "end_date" | "customer_segment" | "seller_id" | "branch"
   >;
   onDrillDown?: (dateStart: string, dateEnd: string) => void;
   onPointsChange?: (points: SalesConversionRateSeriesPoint[]) => void;
@@ -81,6 +85,20 @@ export function AnalyticsClosingRateSeriesChart({
   });
   const yoyActive = Boolean(preferences.comparePriorYear);
   const chartType = preferences.chartType ?? "line";
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "yoy",
+        label: ANALYTICS_CONTENT.overview.comparePriorYear,
+        summaryLabel: ANALYTICS_CONTENT.overview.compareYearsDepth1,
+        checked: yoyActive,
+        onChange: (checked) => setPreferences({ comparePriorYear: checked }),
+        hint: CM_HELP.overview.closingRateSeriesYoy,
+        hintAriaLabel: "Ajuda: comparar ano anterior",
+      },
+    ];
+  }, [setPreferences, yoyActive]);
 
   const [points, setPoints] = useState<ClosingRateChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,35 +179,45 @@ export function AnalyticsClosingRateSeriesChart({
     [],
   );
 
+  const seriesUnits = useMemo(
+    () => resolveAnalyticsSeriesUnits(filters.branch),
+    [filters.branch],
+  );
+
   const series = useMemo((): MultiTypeSeriesSpec[] => {
-    const list: MultiTypeSeriesSpec[] = [
-      {
+    const list: MultiTypeSeriesSpec[] = [];
+    if (seriesUnits.includes("01")) {
+      list.push({
         dataKey: "conversion_filial_01",
         name: ANALYTICS_CONVERSION_SERIES_LABELS.unit01,
         fill: "var(--chart-1, #089bdb)",
-      },
-      {
+      });
+    }
+    if (seriesUnits.includes("02")) {
+      list.push({
         dataKey: "conversion_filial_02",
         name: ANALYTICS_CONVERSION_SERIES_LABELS.unit02,
         fill: "var(--chart-2, #10b981)",
-      },
-    ];
+      });
+    }
     if (yoyActive) {
-      list.push(
-        {
+      if (seriesUnits.includes("01")) {
+        list.push({
           dataKey: "conversion_filial_01_prior",
           name: priorLabels.unit01,
           fill: "var(--chart-3, #94a3b8)",
-        },
-        {
+        });
+      }
+      if (seriesUnits.includes("02")) {
+        list.push({
           dataKey: "conversion_filial_02_prior",
           name: priorLabels.unit02,
           fill: "var(--chart-4, #64748b)",
-        },
-      );
+        });
+      }
     }
     return list;
-  }, [priorLabels.unit01, priorLabels.unit02, yoyActive]);
+  }, [priorLabels.unit01, priorLabels.unit02, seriesUnits, yoyActive]);
 
   const chartData = useMemo(
     () =>
@@ -246,6 +274,7 @@ export function AnalyticsClosingRateSeriesChart({
               onChange={setChartType}
               idPrefix="overview-closing-type"
               prefix="cm"
+              portalScopeClassName="dashboard-commercial"
             />
           }
           exportActions={
@@ -263,15 +292,14 @@ export function AnalyticsClosingRateSeriesChart({
               }}
             />
           }
+          overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
           overlays={
-            <NativeCheckboxControl
-              id="overview-closing-rate-yoy"
-              checked={yoyActive}
-              onChange={(checked) => setPreferences({ comparePriorYear: checked })}
-              label={ANALYTICS_CONTENT.overview.comparePriorYear}
-              hint={CM_HELP.overview.closingRateSeriesYoy}
-              hintPlacement="tooltip"
-              hintAriaLabel="Ajuda: comparar ano anterior"
+            <ChartOverlayOptionsPopover
+              idPrefix="overview-closing-overlays"
+              portalScopeClassName="dashboard-commercial"
+              panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
+              emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
+              options={overlayOptions}
             />
           }
         >

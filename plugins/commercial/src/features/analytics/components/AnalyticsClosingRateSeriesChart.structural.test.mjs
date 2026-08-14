@@ -14,11 +14,14 @@ describe("AnalyticsClosingRateSeriesChart", () => {
     assert.match(chart, /ANALYTICS_CONVERSION_SERIES_LABELS/);
     assert.match(chart, /CM_HELP\.overview\.closingRateSeries/);
     assert.match(chart, /CommercialChartGranularityToggle/);
+    assert.match(chart, /ChartOverlayOptionsPopover/);
     assert.match(chart, /granularityLabel|chartGranularityLabel/);
     assert.match(chart, /ChartViewShell/);
     assert.doesNotMatch(chart, /CommercialChartToolbar/);
-    assert.match(chart, /comparePriorYear|NativeCheckboxControl/);
-    assert.match(chart, /shiftPeriodRangeByYears|mergeSeriesWithPriorYear/);
+    assert.doesNotMatch(chart, /NativeCheckboxControl/);
+    assert.match(chart, /comparePriorYear|shiftPeriodRangeByYears/);
     assert.match(chart, /closingRateSeriesYoy/);
+    assert.match(chart, /resolveAnalyticsSeriesUnits/);
+    assert.match(chart, /filters\.branch/);
   });
 });

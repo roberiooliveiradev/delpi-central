@@ -301,6 +301,22 @@ export {
 } from "./ChartTypeSegmentToggle";
 
 export {
+  ChartOverlayOptionsPopover,
+  summarizeChartOverlayOptions,
+  type ChartOverlayOption,
+  type ChartOverlayOptionsPopoverProps,
+} from "./ChartOverlayOptionsPopover";
+
+export {
+  MAX_COMPARE_YEARS,
+  buildCompareYearsOverlayOptions,
+  clampCompareYears,
+  compareYearOffsets,
+  type CompareYearsCount,
+  type CompareYearsOverlayLabels,
+} from "./compareYearsOverlay";
+
+export {
   delpiChartTypeToPersisted,
   persistedChartTypeToDelpi,
   persistedChartTypesToDelpi,

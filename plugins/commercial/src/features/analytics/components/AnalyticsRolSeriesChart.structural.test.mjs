@@ -13,26 +13,27 @@ describe("AnalyticsRolSeriesChart — paridade dashboard", () => {
     assert.match(chart, /CommercialTabularExportButtons/);
     assert.match(chart, /buildOverviewRolSeriesPayload/);
     assert.match(chart, /CommercialChartGranularityToggle/);
-    assert.match(chart, /granularityLabel|chartGranularityLabel/);
-    assert.match(chart, /typeToggleLabel|chartTypeLabel/);
+    assert.match(chart, /ChartOverlayOptionsPopover/);
+    assert.match(chart, /resolveAnalyticsSeriesUnits/);
+    assert.match(chart, /filters\.branch/);
     assert.doesNotMatch(chart, /CommercialChartToolbar/);
+    assert.doesNotMatch(chart, /NativeCheckboxControl/);
     assert.match(chart, /"year"/);
     assert.match(chart, /onDrillDown/);
-    assert.match(chart, /comparePriorYear|NativeCheckboxControl/);
     assert.match(chart, /shiftPeriodRangeByYears|mergeSeriesWithPriorYear/);
     assert.match(chart, /ChartViewShell|MultiTypeSeriesChart/);
     assert.match(chart, /usePersistedChartPreferences/);
-    assert.match(chart, /hintPlacement/);
     assert.doesNotMatch(chart, /LineChart/);
     assert.doesNotMatch(chart, /ROL filial|ROL matriz/);
   });
 
-  it("Overview liga drill aos filtros de data", () => {
+  it("Overview liga drill e branch aos filtros", () => {
     const overview = readFileSync(
       join(here, "../../overview/OverviewPage.tsx"),
       "utf8",
     );
     assert.match(overview, /onDrillDown/);
     assert.match(overview, /replaceDateFilters/);
+    assert.match(overview, /branch:\s*filters\.apiParams\.branch/);
   });
 });

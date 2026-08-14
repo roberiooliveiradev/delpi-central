@@ -6,7 +6,6 @@ export type ChartViewShellClassNames = {
   root: string;
   toolbar: string;
   toolbarPrimary: string;
-  toolbarOverlays: string;
   control: string;
   controlLabel: string;
   plot: string;
@@ -17,12 +16,17 @@ export type ChartViewShellProps = {
   granularity?: ReactNode;
   /** Label above granularity (empty string hides). */
   granularityLabel?: string;
+  /**
+   * Overlay options popover (YoY / trend) — same primary row as
+   * granularity and chart type.
+   */
+  overlays?: ReactNode;
+  /** Label above overlays (empty string hides). */
+  overlaysLabel?: string;
   /** Chart type segment toggle. */
   typeToggle?: ReactNode;
   /** Label above type toggle (empty string hides). */
   typeToggleLabel?: string;
-  /** Compact overlay checkboxes (YoY, trend). */
-  overlays?: ReactNode;
   /** Export buttons (Excel / CSV / PDF). */
   exportActions?: ReactNode;
   /** Extra trailing controls. */
@@ -41,7 +45,6 @@ export function chartViewShellBemClasses(prefix: string): ChartViewShellClassNam
     root: pair(local, ui),
     toolbar: pair(`${local}__toolbar`, `${ui}__toolbar`),
     toolbarPrimary: pair(`${local}__toolbar-primary`, `${ui}__toolbar-primary`),
-    toolbarOverlays: pair(`${local}__toolbar-overlays`, `${ui}__toolbar-overlays`),
     control: pair(`${local}__control`, `${ui}__control`),
     controlLabel: pair(`${local}__control-label`, `${ui}__control-label`),
     plot: pair(`${local}__plot`, `${ui}__plot`),
@@ -67,14 +70,15 @@ function ChartViewShellControl({
 }
 
 /**
- * Dense chart toolbar shell: granularity + type + overlays + export above the plot.
+ * Dense chart toolbar: granularity + overlays + type + export on one row.
  */
 export function ChartViewShell({
   granularity,
   granularityLabel = "Agrupamento",
+  overlays,
+  overlaysLabel = "Opções",
   typeToggle,
   typeToggleLabel = "Tipo",
-  overlays,
   exportActions,
   extra,
   children,
@@ -87,14 +91,13 @@ export function ChartViewShell({
     root: classNamesOverride?.root ?? base.root,
     toolbar: classNamesOverride?.toolbar ?? base.toolbar,
     toolbarPrimary: classNamesOverride?.toolbarPrimary ?? base.toolbarPrimary,
-    toolbarOverlays: classNamesOverride?.toolbarOverlays ?? base.toolbarOverlays,
     control: classNamesOverride?.control ?? base.control,
     controlLabel: classNamesOverride?.controlLabel ?? base.controlLabel,
     plot: classNamesOverride?.plot ?? base.plot,
   };
 
   const hasToolbar =
-    granularity || typeToggle || overlays || exportActions || extra;
+    granularity || overlays || typeToggle || exportActions || extra;
 
   return (
     <div className={[classNames.root, className].filter(Boolean).join(" ")}>
@@ -109,6 +112,11 @@ export function ChartViewShell({
                 {granularity}
               </ChartViewShellControl>
             ) : null}
+            {overlays ? (
+              <ChartViewShellControl label={overlaysLabel} classNames={classNames}>
+                {overlays}
+              </ChartViewShellControl>
+            ) : null}
             {typeToggle ? (
               <ChartViewShellControl label={typeToggleLabel} classNames={classNames}>
                 {typeToggle}
@@ -119,9 +127,6 @@ export function ChartViewShell({
               <div className="delpi-ui-chart-view-shell__export">{exportActions}</div>
             ) : null}
           </div>
-          {overlays ? (
-            <div className={classNames.toolbarOverlays}>{overlays}</div>
-          ) : null}
         </div>
       ) : null}
       <div className={classNames.plot}>{children}</div>

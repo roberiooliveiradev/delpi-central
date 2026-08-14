@@ -1,15 +1,16 @@
 import { useMemo } from "react";
 import {
   ChartCard,
+  ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   chartCardBemClasses,
   EmptyState,
   MultiTypeSeriesChart,
-  NativeCheckboxControl,
   PERIOD_COMPARE_TYPES,
   runTabularExport,
   usePersistedChartPreferences,
+  type ChartOverlayOption,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -17,6 +18,7 @@ import {
   CommercialTabularExportButtons,
   cmEmptyStateClassNames,
 } from "../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
@@ -82,6 +84,20 @@ export function CustomerPurchaseEvolutionChart({
   });
   const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: showTrend,
+        onChange: (checked) => setPreferences({ showTrend: checked }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+    ];
+  }, [setPreferences, showTrend]);
+
   const hasValues = useMemo(
     () => points.some((p) => p.atual > 0 || p.anterior > 0),
     [points],
@@ -163,6 +179,8 @@ export function CustomerPurchaseEvolutionChart({
       ) : (
         <ChartViewShell
           prefix="cm"
+          overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
+          typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
           typeToggle={
             <ChartTypeSegmentToggle
               family="period_compare"
@@ -170,6 +188,7 @@ export function CustomerPurchaseEvolutionChart({
               onChange={setChartType}
               idPrefix="purchase-evolution-type"
               prefix="cm"
+              portalScopeClassName="dashboard-commercial"
             />
           }
           exportActions={
@@ -186,14 +205,12 @@ export function CustomerPurchaseEvolutionChart({
             />
           }
           overlays={
-            <NativeCheckboxControl
-              id="customer-purchase-evolution-trend"
-              checked={showTrend}
-              onChange={(checked) => setPreferences({ showTrend: checked })}
-              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-              hint={CM_HELP.customerDetail.billingSeriesTrend}
-              hintPlacement="tooltip"
-              hintAriaLabel="Ajuda: linha de tendência"
+            <ChartOverlayOptionsPopover
+              idPrefix="purchase-evolution-overlays"
+              portalScopeClassName="dashboard-commercial"
+              panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
+              emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
+              options={overlayOptions}
             />
           }
         >

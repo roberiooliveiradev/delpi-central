@@ -39,6 +39,7 @@ Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.
 |------|--------|
 | Preferências | `usePersistedChartPreferences` |
 | Type switcher | `ChartTypeSegmentToggle` (ícone + popover `ChartTypeCatalogPanel` filtrado por família) |
+| Overlay options | `ChartOverlayOptionsPopover` + `buildCompareYearsOverlayOptions` (YoY / tendência) |
 | Plot | `MultiTypeSeriesChart` |
-| Shell | `ChartViewShell` |
+| Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Tipo · export |
 | Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` (help no **label**, sem ícone `?`) |

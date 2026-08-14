@@ -1,25 +1,27 @@
 import { useMemo } from "react";
 import {
+  ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   EmptyState,
   MultiTypeSeriesChart,
-  NativeCheckboxControl,
   TIME_MULTI_SERIES_TYPES,
   runTabularExport,
   usePersistedChartPreferences,
+  type ChartOverlayOption,
   type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
-  CommercialChartToolbar,
+  CommercialChartGranularityToggle,
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialTabularExportButtons,
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import { formatCurrency } from "../../../../utils/format";
@@ -101,6 +103,20 @@ export function CustomerAccountBillingChart({
   });
   const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: showTrend,
+        onChange: (checked) => setPreferences({ showTrend: checked }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+    ];
+  }, [setPreferences, showTrend]);
+
   const customers = useMemo(
     () => [accountAsSeriesCustomer(codigo, loja)],
     [codigo, loja],
@@ -175,17 +191,7 @@ export function CustomerAccountBillingChart({
               ? `Total no período: ${formatCurrency(totalValue)}`
               : undefined
         }
-        actions={
-          queryEnabled ? (
-            <CommercialChartToolbar
-              granularity={effectiveGrain}
-              onGranularityChange={setGranularity}
-              options={BILLING_SERIES_GRANULARITY_OPTIONS}
-              modes={allowedGrains}
-              granularityHelp={CM_HELP.customers.billingSeriesGrain}
-            />
-          ) : null
-        }
+        actions={undefined}
       >
         {error && !hasValues ? (
           <EmptyState
@@ -221,6 +227,29 @@ export function CustomerAccountBillingChart({
             ) : null}
             <ChartViewShell
               prefix="cm"
+              granularityLabel={ANALYTICS_CONTENT.overview.chartGranularityLabel}
+              overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
+              typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
+              granularity={
+                queryEnabled ? (
+                  <CommercialChartGranularityToggle
+                    value={effectiveGrain}
+                    onChange={setGranularity}
+                    options={BILLING_SERIES_GRANULARITY_OPTIONS}
+                    modes={allowedGrains}
+                    idPrefix="account-billing"
+                  />
+                ) : null
+              }
+              overlays={
+                <ChartOverlayOptionsPopover
+                  idPrefix="account-billing-overlays"
+                  portalScopeClassName="dashboard-commercial"
+                  panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
+                  emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
+                  options={overlayOptions}
+                />
+              }
               typeToggle={
                 <ChartTypeSegmentToggle
                   family="time_multi_series"
@@ -228,6 +257,7 @@ export function CustomerAccountBillingChart({
                   onChange={setChartType}
                   idPrefix="account-billing-type"
                   prefix="cm"
+                  portalScopeClassName="dashboard-commercial"
                 />
               }
               exportActions={
@@ -244,17 +274,6 @@ export function CustomerAccountBillingChart({
                       }),
                     });
                   }}
-                />
-              }
-              overlays={
-                <NativeCheckboxControl
-                  id="customer-account-billing-trend"
-                  checked={showTrend}
-                  onChange={(checked) => setPreferences({ showTrend: checked })}
-                  label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-                  hint={CM_HELP.customerDetail.billingSeriesTrend}
-                  hintPlacement="tooltip"
-                  hintAriaLabel="Ajuda: linha de tendência"
                 />
               }
             >

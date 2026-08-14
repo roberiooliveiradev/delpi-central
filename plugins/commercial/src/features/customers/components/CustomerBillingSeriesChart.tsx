@@ -1,19 +1,21 @@
 import { useMemo, useState } from "react";
 import {
+  ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   EmptyState,
   MultiTypeSeriesChart,
-  NativeCheckboxControl,
   TIME_MULTI_SERIES_TYPES,
+  buildCompareYearsOverlayOptions,
   runTabularExport,
   usePersistedChartPreferences,
+  type ChartOverlayOption,
   type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
-  CommercialChartToolbar,
+  CommercialChartGranularityToggle,
   CommercialMultiSelectField,
   CommercialSectionCard,
   CommercialStateBanner,
@@ -21,6 +23,7 @@ import {
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
@@ -102,10 +105,38 @@ export function CustomerBillingSeriesChart({
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
   const compareYears = (preferences.compareYears ?? 0) as CompareYearsCount;
-  const setCompareYears = (value: CompareYearsCount) =>
-    setPreferences({ compareYears: value });
   const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    const compare = buildCompareYearsOverlayOptions({
+      compareYears,
+      onCompareYearsChange: (value) => setPreferences({ compareYears: value }),
+      labels: {
+        priorYear: ANALYTICS_CONTENT.overview.comparePriorYear,
+        plus2: ANALYTICS_CONTENT.overview.compareYearsPlus2,
+        plus3: ANALYTICS_CONTENT.overview.compareYearsPlus3,
+        priorYearSummary: ANALYTICS_CONTENT.overview.compareYearsDepth1,
+        plus2Summary: ANALYTICS_CONTENT.overview.compareYearsDepth2,
+        plus3Summary: ANALYTICS_CONTENT.overview.compareYearsDepth3,
+        priorYearHint: CM_HELP.customers.billingSeriesYoy,
+        plus2Hint: "Sobrepõe também o período deslocado −2 anos.",
+        plus3Hint: "Sobrepõe também o período deslocado −3 anos.",
+      },
+    });
+    return [
+      ...compare,
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: showTrend,
+        onChange: (checked) => setPreferences({ showTrend: checked }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+    ];
+  }, [compareYears, setPreferences, showTrend]);
 
   const range =
     preset === "custom"
@@ -245,19 +276,6 @@ export function CustomerBillingSeriesChart({
           customEnd={customEnd}
           onCustomStartChange={setCustomStart}
           onCustomEndChange={setCustomEnd}
-          compareYears={compareYears}
-          onCompareYearsChange={setCompareYears}
-          trailing={
-            periodError ? undefined : (
-              <CommercialChartToolbar
-                granularity={effectiveGrain}
-                onGranularityChange={setGranularity}
-                options={BILLING_SERIES_GRANULARITY_OPTIONS}
-                modes={allowedGrains}
-                granularityHelp={CM_HELP.customers.billingSeriesGrain}
-              />
-            )
-          }
         />
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
@@ -295,6 +313,27 @@ export function CustomerBillingSeriesChart({
           ) : null}
           <ChartViewShell
             prefix="cm"
+            granularityLabel={ANALYTICS_CONTENT.overview.chartGranularityLabel}
+            overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
+            typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
+            granularity={
+              <CommercialChartGranularityToggle
+                value={effectiveGrain}
+                onChange={setGranularity}
+                options={BILLING_SERIES_GRANULARITY_OPTIONS}
+                modes={allowedGrains}
+                idPrefix="customers-billing"
+              />
+            }
+            overlays={
+              <ChartOverlayOptionsPopover
+                idPrefix="customers-billing-overlays"
+                portalScopeClassName="dashboard-commercial"
+                panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
+                emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
+                options={overlayOptions}
+              />
+            }
             typeToggle={
               <ChartTypeSegmentToggle
                 family="time_multi_series"
@@ -302,6 +341,7 @@ export function CustomerBillingSeriesChart({
                 onChange={setChartType}
                 idPrefix="customers-billing-type"
                 prefix="cm"
+                portalScopeClassName="dashboard-commercial"
               />
             }
             exportActions={
@@ -318,17 +358,6 @@ export function CustomerBillingSeriesChart({
                     }),
                   });
                 }}
-              />
-            }
-            overlays={
-              <NativeCheckboxControl
-                id="customers-billing-trend"
-                checked={showTrend}
-                onChange={(checked) => setPreferences({ showTrend: checked })}
-                label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-                hint={CM_HELP.customerDetail.billingSeriesTrend}
-                hintPlacement="tooltip"
-                hintAriaLabel="Ajuda: linha de tendência"
               />
             }
           >

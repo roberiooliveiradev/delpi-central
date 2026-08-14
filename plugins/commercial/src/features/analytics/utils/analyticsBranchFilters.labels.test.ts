@@ -6,6 +6,7 @@ import {
   ANALYTICS_ROL_SERIES_LABELS,
   ANALYTICS_UNIT_FIELD_LABEL,
   formatOperationalUnitCode,
+  resolveAnalyticsSeriesUnits,
 } from "./analyticsBranchFilters";
 
 describe("analyticsBranchFilters — rótulos de unidade", () => {
@@ -22,5 +23,13 @@ describe("analyticsBranchFilters — rótulos de unidade", () => {
     expect(ANALYTICS_OTD_SERIES_LABELS.unit02).toBe("OTD Espírito Santo");
     expect(ANALYTICS_CONVERSION_SERIES_LABELS.unit01).toBe("Conversão Santa Catarina");
     expect(ANALYTICS_CONVERSION_SERIES_LABELS.unit02).toBe("Conversão Espírito Santo");
+  });
+
+  it("resolveAnalyticsSeriesUnits filtra por unidade do Overview", () => {
+    expect(resolveAnalyticsSeriesUnits(undefined)).toEqual(["01", "02"]);
+    expect(resolveAnalyticsSeriesUnits(null)).toEqual(["01", "02"]);
+    expect(resolveAnalyticsSeriesUnits("")).toEqual(["01", "02"]);
+    expect(resolveAnalyticsSeriesUnits("01")).toEqual(["01"]);
+    expect(resolveAnalyticsSeriesUnits("02")).toEqual(["02"]);
   });
 });

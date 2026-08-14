@@ -57,6 +57,18 @@ export function resolveAnalyticsApiBranch(branches: string[]): string | undefine
   return branches.length === 1 ? branches[0] : undefined;
 }
 
+/** Unidades a exibir nas séries dual (ROL / conversão / OTD). */
+export type AnalyticsSeriesUnit = "01" | "02";
+
+export function resolveAnalyticsSeriesUnits(
+  branch?: string | null,
+): readonly AnalyticsSeriesUnit[] {
+  const code = normalizeOperationalUnitCode(branch ?? "");
+  if (code === "01") return ["01"];
+  if (code === "02") return ["02"];
+  return ["01", "02"];
+}
+
 export function formatAnalyticsBranchFilterLabel(branches: string[]): string | null {
   if (branches.length === 0) return null;
   if (branches.length >= ANALYTICS_BRANCH_OPTIONS.length) return null;

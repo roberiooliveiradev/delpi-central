@@ -541,7 +541,7 @@ describe("CustomersPage estrutural", () => {
     assert.match(chart, /selectedValues=\{selectedKeys\}/);
     assert.match(chart, /emptyLabel="Todos os clientes"/);
     assert.match(chart, /searchable/);
-    assert.match(chart, /CommercialChartToolbar/);
+    assert.match(chart, /CommercialChartGranularityToggle|ChartOverlayOptionsPopover/);
     assert.match(chart, /PeriodCompareControls/);
     assert.match(chart, /compareYears/);
     assert.doesNotMatch(chart, /CommercialSelectField/);

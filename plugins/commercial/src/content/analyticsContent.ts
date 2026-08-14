@@ -17,7 +17,7 @@ export const ANALYTICS_CONTENT = {
     otdKpi: "On-time delivery de linhas de pedido de venda.",
     newBusinessKpi: "Participação de novos negócios no ROL do período.",
     rolSeries:
-      "Evolução do ROL por Santa Catarina e Espírito Santo no período.",
+      "Evolução do ROL no período (respeita o filtro de unidade).",
     comparePriorYear: "Comparar ano anterior",
     compareYearsTrigger: "Comparar anos",
     compareYearsPanelTitle: "Comparação com anos anteriores",
@@ -28,7 +28,10 @@ export const ANALYTICS_CONTENT = {
     compareYearsPlus2: "+2 anos",
     compareYearsPlus3: "+3 anos",
     chartGranularityLabel: "Agrupamento",
+    chartOverlaysLabel: "Opções",
     chartTypeLabel: "Tipo",
+    chartOverlaysPanelTitle: "Opções do gráfico",
+    chartOverlaysEmpty: "Opções",
     funnel: "Funil de conversão (propostas → ganhas).",
     funnelFootnote:
       "Largura das etapas proporcional ao volume; números absolutos em cada faixa. Ganhas = propostas com status TOTVS 9 e aceite (AD1_DTASSI) no período filtrado.",

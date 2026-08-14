@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   EmptyState,
   MultiTypeSeriesChart,
-  NativeCheckboxControl,
   TIME_MULTI_SERIES_TYPES,
   runTabularExport,
   usePersistedChartPreferences,
   type ChartGranularity,
+  type ChartOverlayOption,
   type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
@@ -29,7 +30,10 @@ import type {
   CommercialRolSeriesPoint,
 } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
-import { ANALYTICS_ROL_SERIES_LABELS } from "../utils/analyticsBranchFilters";
+import {
+  ANALYTICS_ROL_SERIES_LABELS,
+  resolveAnalyticsSeriesUnits,
+} from "../utils/analyticsBranchFilters";
 import {
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
@@ -53,7 +57,7 @@ type RolChartPoint = CommercialRolSeriesPoint & {
 type RolSeriesChartProps = {
   filters: Pick<
     AnalyticsFilterParams,
-    "start_date" | "end_date" | "customer_segment" | "seller_id"
+    "start_date" | "end_date" | "customer_segment" | "seller_id" | "branch"
   >;
   onDrillDown?: (dateStart: string, dateEnd: string) => void;
   onPointsChange?: (points: CommercialRolSeriesPoint[]) => void;
@@ -84,6 +88,29 @@ export function AnalyticsRolSeriesChart({
   const yoyActive = Boolean(preferences.comparePriorYear);
   const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "yoy",
+        label: ANALYTICS_CONTENT.overview.comparePriorYear,
+        summaryLabel: ANALYTICS_CONTENT.overview.compareYearsDepth1,
+        checked: yoyActive,
+        onChange: (checked) => setPreferences({ comparePriorYear: checked }),
+        hint: CM_HELP.overview.rolSeriesYoy,
+        hintAriaLabel: "Ajuda: comparar ano anterior",
+      },
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: showTrend,
+        onChange: (checked) => setPreferences({ showTrend: checked }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+    ];
+  }, [setPreferences, showTrend, yoyActive]);
 
   const [points, setPoints] = useState<RolChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,37 +191,47 @@ export function AnalyticsRolSeriesChart({
     [],
   );
 
+  const seriesUnits = useMemo(
+    () => resolveAnalyticsSeriesUnits(filters.branch),
+    [filters.branch],
+  );
+
   const series = useMemo((): MultiTypeSeriesSpec[] => {
-    const list: MultiTypeSeriesSpec[] = [
-      {
+    const list: MultiTypeSeriesSpec[] = [];
+    if (seriesUnits.includes("01")) {
+      list.push({
         dataKey: "rol_matrix",
         name: ANALYTICS_ROL_SERIES_LABELS.unit01,
         fill: "var(--chart-1, #089bdb)",
         trendSource: true,
-      },
-      {
+      });
+    }
+    if (seriesUnits.includes("02")) {
+      list.push({
         dataKey: "rol_branch",
         name: ANALYTICS_ROL_SERIES_LABELS.unit02,
         fill: "var(--chart-2, #10b981)",
         trendSource: true,
-      },
-    ];
+      });
+    }
     if (yoyActive) {
-      list.push(
-        {
+      if (seriesUnits.includes("01")) {
+        list.push({
           dataKey: "rol_matrix_prior",
           name: priorLabels.unit01,
           fill: "var(--chart-3, #94a3b8)",
-        },
-        {
+        });
+      }
+      if (seriesUnits.includes("02")) {
+        list.push({
           dataKey: "rol_branch_prior",
           name: priorLabels.unit02,
           fill: "var(--chart-4, #64748b)",
-        },
-      );
+        });
+      }
     }
     return list;
-  }, [priorLabels.unit01, priorLabels.unit02, yoyActive]);
+  }, [priorLabels.unit01, priorLabels.unit02, seriesUnits, yoyActive]);
 
   const chartData = useMemo(
     () =>
@@ -231,6 +268,7 @@ export function AnalyticsRolSeriesChart({
           prefix="cm"
           granularityLabel={ANALYTICS_CONTENT.overview.chartGranularityLabel}
           typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
+          overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
           granularity={
             <CommercialChartGranularityToggle
               value={granularity}
@@ -247,6 +285,7 @@ export function AnalyticsRolSeriesChart({
               onChange={setChartType}
               idPrefix="overview-rol-type"
               prefix="cm"
+              portalScopeClassName="dashboard-commercial"
             />
           }
           exportActions={
@@ -265,26 +304,13 @@ export function AnalyticsRolSeriesChart({
             />
           }
           overlays={
-            <>
-              <NativeCheckboxControl
-                id="overview-rol-yoy"
-                checked={yoyActive}
-                onChange={(checked) => setPreferences({ comparePriorYear: checked })}
-                label={ANALYTICS_CONTENT.overview.comparePriorYear}
-                hint={CM_HELP.overview.rolSeriesYoy}
-                hintPlacement="tooltip"
-                hintAriaLabel="Ajuda: comparar ano anterior"
-              />
-              <NativeCheckboxControl
-                id="overview-rol-trend"
-                checked={showTrend}
-                onChange={(checked) => setPreferences({ showTrend: checked })}
-                label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-                hint={CM_HELP.customerDetail.billingSeriesTrend}
-                hintPlacement="tooltip"
-                hintAriaLabel="Ajuda: linha de tendência"
-              />
-            </>
+            <ChartOverlayOptionsPopover
+              idPrefix="overview-rol-overlays"
+              portalScopeClassName="dashboard-commercial"
+              panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
+              emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
+              options={overlayOptions}
+            />
           }
         >
           <MultiTypeSeriesChart
