@@ -33,6 +33,7 @@ import {
   createDashboardDataCardsGrid,
   createDashboardDataCardsSortBar,
   createDashboardInteractiveDataCard,
+  createDashboardKanbanBoard,
   createDashboardTableFontSizeControls,
   createFilterBarShell,
   createHostContainedModalShell,
@@ -200,6 +201,9 @@ export const CommercialDataCardsSortBar = createDashboardDataCardsSortBar({
   prefix: UI_PREFIX,
 });
 export const CommercialInteractiveDataCard = createDashboardInteractiveDataCard({
+  prefix: UI_PREFIX,
+});
+export const CommercialKanbanBoard = createDashboardKanbanBoard({
   prefix: UI_PREFIX,
 });
 export const CommercialEmptyState = createDashboardEmptyState({
