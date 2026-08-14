@@ -3,12 +3,14 @@ import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   CommercialDateField,
   CommercialFilterBarShell,
+  CommercialSectionCard,
   CommercialSegmentToggle,
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTextField,
 } from "../../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
+import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
   CustomerBillingPeriodPreset,
@@ -63,12 +65,18 @@ export function CustomerBillingFilters({
   onSearchChange,
 }: CustomerBillingFiltersProps) {
   return (
-    <section className="cm-customer-billing-filters" aria-label="Filtros de faturamento">
+    <CommercialSectionCard
+      title={CUSTOMER_BILLING_CONTENT.filtersSectionTitle}
+      hint={CM_HELP.customerDetail.billingFilters}
+      collapsible
+      defaultOpen
+      className="cm-customer-billing-filters"
+    >
       <p
         className="cm-customer-billing-filters__hint"
         style={{ display: "flex", alignItems: "center", gap: 6 }}
       >
-        Período e situação das notas de saída deste cliente.
+        {CUSTOMER_BILLING_CONTENT.filtersIntro}
         <HelpTooltip
           content={CM_HELP.customerDetail.billingFilters}
           ariaLabel="Ajuda: Filtros de faturamento"
@@ -142,10 +150,6 @@ export function CustomerBillingFilters({
           {validationError}
         </CommercialStateBanner>
       ) : null}
-
-      <p className="cm-customer-billing-filters__hint">
-        Notas canceladas no Protheus (exclusão lógica) não aparecem nesta lista.
-      </p>
-    </section>
+    </CommercialSectionCard>
   );
 }

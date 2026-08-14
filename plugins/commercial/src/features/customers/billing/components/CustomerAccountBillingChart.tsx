@@ -20,6 +20,7 @@ import {
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../../app/commercialUi";
+import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import { formatCurrency } from "../../../../utils/format";
 import { useCustomerBillingSeries } from "../../hooks/useCustomerBillingSeries";
@@ -253,6 +254,9 @@ export function CustomerAccountBillingChart({
             </ResponsiveContainer>
           </>
         )}
+        <p className="cm-customer-billing-filters__hint cm-cell-muted">
+          {CUSTOMER_BILLING_CONTENT.cancelledInvoicesHint}
+        </p>
       </CommercialSectionCard>
     </div>
   );

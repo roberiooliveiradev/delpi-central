@@ -155,14 +155,28 @@ describe("CustomerDetailPage billing (fonte)", () => {
     );
     assert.match(filters, /Últimos 90 dias/);
     assert.match(filters, /Devoluções/);
-    assert.match(filters, /exclusão lógica/);
+    assert.match(filters, /CommercialSectionCard/);
+    assert.match(filters, /collapsible/);
+    assert.match(filters, /defaultOpen/);
+    assert.match(filters, /CUSTOMER_BILLING_CONTENT/);
     assert.match(filters, /CommercialSegmentToggle/);
     assert.match(filters, /CommercialDateField/);
     assert.match(filters, /comparePriorYear/);
     assert.match(filters, /NativeCheckboxControl/);
     assert.match(filters, /cm-customer-billing-filters__yoy/);
     assert.match(filters, /CommercialFilterBarShell/);
+    assert.doesNotMatch(filters, /exclusão lógica/);
     assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
+  });
+
+  it("aviso de NF canceladas fica no card do gráfico", () => {
+    const chart = readSrc(
+      "features/customers/billing/components/CustomerAccountBillingChart.tsx",
+    );
+    const content = readSrc("content/customerBillingContent.ts");
+    assert.match(content, /cancelledInvoicesHint/);
+    assert.match(content, /exclusão lógica/);
+    assert.match(chart, /CUSTOMER_BILLING_CONTENT\.cancelledInvoicesHint/);
   });
 
   it("painel Conta Histórico expõe YoY no summary", () => {
