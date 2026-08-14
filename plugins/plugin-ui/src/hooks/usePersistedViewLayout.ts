@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type PersistedViewLayoutMode = "table" | "cards";
+export type PersistedViewLayoutMode = "table" | "cards" | "board";
 
 export type UsePersistedViewLayoutOptions = {
   storageKey: string;
@@ -15,7 +15,7 @@ function readStored(storageKey: string): PersistedViewLayoutMode | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(storageKey);
-    if (raw === "table" || raw === "cards") return raw;
+    if (raw === "table" || raw === "cards" || raw === "board") return raw;
   } catch {
     /* ignore */
   }

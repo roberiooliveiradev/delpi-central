@@ -55,4 +55,15 @@ describe("usePersistedViewLayout", () => {
     );
     expect(result.current.layout).toBe("table");
   });
+
+  it("persiste modo board", () => {
+    const { result } = renderHook(() =>
+      usePersistedViewLayout({ storageKey: "demo:layout", defaultMode: "table" }),
+    );
+    act(() => {
+      result.current.setLayout("board");
+    });
+    expect(result.current.layout).toBe("board");
+    expect(storage.get("demo:layout")).toBe("board");
+  });
 });
