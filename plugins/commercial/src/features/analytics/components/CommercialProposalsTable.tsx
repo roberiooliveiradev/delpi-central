@@ -1,7 +1,15 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
 
-import { CommercialDataTable, CommercialStatusBadge } from "../../../app/commercialUi";
-import { navigateAnalyticsOpportunityDetail } from "../../../app/pluginNavigation";
+import {
+  CommercialDataTable,
+  CommercialEntityLink,
+  CommercialStatusBadge,
+} from "../../../app/commercialUi";
+import {
+  buildAnalyticsOpportunityDetailHref,
+  navigateAnalyticsOpportunityDetail,
+} from "../../../app/pluginNavigation";
+import { opportunityLinkTitle } from "../../../content/entityLinkHints";
 import type {
   CommercialProposal,
   CommercialProposalStatusCategory,
@@ -46,9 +54,32 @@ export function buildCommercialProposalColumns(
     {
       key: "ov",
       header: "OV",
-      render: (row) => (
-        <span className="cm-proposals-table__ov">{row.proposal_number}</span>
-      ),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const href = buildAnalyticsOpportunityDetailHref(row.proposal_number, {
+          basePath: options.basePath,
+          search: options.detailSearch,
+        });
+        if (!href) {
+          return <span className="cm-proposals-table__ov">{row.proposal_number}</span>;
+        }
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={opportunityLinkTitle(row.proposal_number)}
+            className="cm-link-button cm-proposals-table__ov"
+            onNavigate={() =>
+              navigateAnalyticsOpportunityDetail(row.proposal_number, {
+                basePath: options.basePath,
+                search: options.detailSearch,
+              })
+            }
+          >
+            {row.proposal_number}
+          </CommercialEntityLink>
+        );
+      },
     },
     { key: "rev", header: "Rev.", render: (row) => row.revision || "—" },
   ];

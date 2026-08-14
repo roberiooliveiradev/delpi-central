@@ -218,15 +218,24 @@ export function buildUserProfileHref(
   return buildHrefWithReturn(path, options.returnNav, options?.basePath);
 }
 
+/** Href do detalhe da proposta-documento (+ returnTo opcional). */
+export function buildProposalDetailHref(
+  propostaId: string,
+  options?: { basePath?: string; returnNav?: ReturnNavOptions },
+): string | null {
+  const path = buildProposalDetailPath(options?.basePath, propostaId);
+  if (!path) return null;
+  return options?.returnNav
+    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
+    : path;
+}
+
 export function navigateProposalDetail(
   propostaId: string,
   options?: { basePath?: string; returnNav?: ReturnNavOptions },
 ): boolean {
-  const path = buildProposalDetailPath(options?.basePath, propostaId);
-  if (!path) return false;
-  const target = options?.returnNav
-    ? buildHrefWithReturn(path, options.returnNav, options?.basePath)
-    : path;
+  const target = buildProposalDetailHref(propostaId, options);
+  if (!target) return false;
   navigatePluginPath(target);
   return true;
 }

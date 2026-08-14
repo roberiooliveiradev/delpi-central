@@ -5,6 +5,7 @@ import {
   CommercialDataCardsGrid,
   CommercialDataListToolbar,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialInteractiveDataCard,
   CommercialSegmentToggle,
   CommercialTableFontSizeControls,
@@ -12,7 +13,11 @@ import {
   useTableFontSize,
 } from "../../app/commercialUi";
 import { currentLocationAsReturnTo } from "../../app/commercialNavigationReturn";
-import { navigateProposalDetail } from "../../app/pluginNavigation";
+import {
+  buildProposalDetailHref,
+  navigateProposalDetail,
+} from "../../app/pluginNavigation";
+import { proposalLinkTitle } from "../../content/entityLinkHints";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import type { ProposalDocumentListItem } from "../../types/proposalsDocument";
@@ -33,23 +38,29 @@ type ProposalsDocumentsTableProps = {
 
 function buildColumns(
   openDetail: (row: ProposalDocumentListItem) => void,
+  hrefFor: (row: ProposalDocumentListItem) => string | null,
 ): DataTableColumn<ProposalDocumentListItem>[] {
   return [
     {
       key: "ov",
       header: "Nº OV",
-      render: (row) => (
-        <button
-          type="button"
-          className="cm-link-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            openDetail(row);
-          }}
-        >
-          {row.numero_ov || row.proposta_interna}
-        </button>
-      ),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const label = row.numero_ov || row.proposta_interna;
+        const href = hrefFor(row);
+        if (!href) return label;
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={proposalLinkTitle(row.proposta_interna)}
+            className="cm-link-button"
+            onNavigate={() => openDetail(row)}
+          >
+            {label}
+          </CommercialEntityLink>
+        );
+      },
     },
     { key: "interna", header: "Proposta", render: (row) => row.proposta_interna },
     { key: "cliente", header: "Cliente", render: (row) => row.cliente || "—" },
@@ -97,15 +108,21 @@ export function ProposalsDocumentsTable({
     "--delpi-ui-table-font-size": `${fontSize}px`,
   } as CSSProperties;
 
+  const returnNav = {
+    returnTo: currentLocationAsReturnTo(),
+    returnLabel: PROPOSALS_CONTENT.list.title,
+  };
+
   const openDetail = (row: ProposalDocumentListItem) =>
     navigateProposalDetail(row.proposta_interna, {
       basePath,
-      returnNav: {
-        returnTo: currentLocationAsReturnTo(),
-        returnLabel: PROPOSALS_CONTENT.list.title,
-      },
+      returnNav,
     });
-  const baseColumns = buildColumns(openDetail);
+
+  const hrefFor = (row: ProposalDocumentListItem) =>
+    buildProposalDetailHref(row.proposta_interna, { basePath, returnNav });
+
+  const baseColumns = buildColumns(openDetail, hrefFor);
   const columns = withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP);
 
   return (
@@ -176,6 +193,7 @@ export function ProposalsDocumentsTable({
         >
           {rows.map((row) => {
             const label = row.numero_ov || row.proposta_interna;
+            const href = hrefFor(row);
             return (
               <CommercialInteractiveDataCard
                 key={row.proposta_interna}
@@ -187,7 +205,18 @@ export function ProposalsDocumentsTable({
                     id: "ov",
                     label: "Nº OV",
                     valueTone: "title",
-                    value: label,
+                    value: href ? (
+                      <CommercialEntityLink
+                        href={href}
+                        title={proposalLinkTitle(row.proposta_interna)}
+                        className="cm-link-button"
+                        onNavigate={() => openDetail(row)}
+                      >
+                        {label}
+                      </CommercialEntityLink>
+                    ) : (
+                      label
+                    ),
                   },
                   {
                     id: "interna",
