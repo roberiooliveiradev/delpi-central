@@ -47,6 +47,7 @@ def _normalize_item(row: dict[str, Any]) -> dict[str, Any]:
         "saldo": 0.0,
         "data_despacho": _optional_date(row.get("data_despacho")),
         "data_entrega": _optional_date(row.get("data_entrega")),
+        "data_faturamento": _optional_date(row.get("data_faturamento")),
         "no_estoque": 0.0,
         "preco_venda": _as_float(row.get("preco_venda")),
         "valor_aberto": _as_float(row.get("valor_aberto")),

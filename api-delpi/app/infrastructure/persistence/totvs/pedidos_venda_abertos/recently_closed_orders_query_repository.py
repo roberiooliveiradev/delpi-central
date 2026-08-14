@@ -42,6 +42,11 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
                 TRY_CONVERT(DATE, NULLIF(RTRIM(C6.C6_ENTREG), ''), 112),
                 23
             ) AS data_entrega,
+            CONVERT(
+                VARCHAR(10),
+                TRY_CONVERT(DATE, NULLIF(RTRIM(C6.C6_DATFAT), ''), 112),
+                23
+            ) AS data_faturamento,
             CAST(0 AS FLOAT) AS no_estoque,
             CAST(C6.C6_PRCVEN AS FLOAT) AS preco_venda,
             CAST(C6.C6_QTDENT * C6.C6_PRCVEN AS FLOAT) AS valor_aberto,
@@ -59,8 +64,12 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
           AND C5.C5_FILIAL IN ('01', '02')
           AND C6.C6_QTDENT > 0
           AND (C6.C6_QTDVEN - C6.C6_QTDENT) <= 0
-          AND C5.C5_EMISSAO >= CONVERT(VARCHAR(8), DATEADD(DAY, -?, GETDATE()), 112)
-        ORDER BY C5.C5_EMISSAO DESC, C5.C5_NUM DESC, C6.C6_ITEM
+          -- Lookback by invoice date (C6_DATFAT), not emission (C5_EMISSAO)
+          -- nor promised delivery (C6_ENTREG — can be far future).
+          AND NULLIF(RTRIM(C6.C6_DATFAT), '') IS NOT NULL
+          AND TRY_CONVERT(DATE, NULLIF(RTRIM(C6.C6_DATFAT), ''), 112)
+                >= DATEADD(DAY, -?, CAST(GETDATE() AS DATE))
+        ORDER BY C6.C6_DATFAT DESC, C5.C5_NUM DESC, C6.C6_ITEM
         """
         with self:
             return self.execute_query(sql, (lookback,))
