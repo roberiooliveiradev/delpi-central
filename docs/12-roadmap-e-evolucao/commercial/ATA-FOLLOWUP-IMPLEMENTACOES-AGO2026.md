@@ -83,11 +83,11 @@ Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-
 
 | Item da ata | Status vs atual | Ferramenta / entrega |
 |-------------|-----------------|----------------------|
-| Faturamento da **carteira ÷ faturamento total da empresa** | **Falta** | KPI/card % share; precisa ROL consolidado empresa (todas filiais/carteiras) × escopo da carteira; ficha fórmula + BFF |
-| Período atual × **mesmo período ano anterior** | **Parcial** (Overview YoY) | Espelhar na **Minha Carteira / Conta** se a ata exige lá; manter mesma fórmula |
-| Comparação com **períodos e anos escolhidos pelo usuário** | **Parcial** (presets) | Date range livre + N anos de comparação (UI + cache); não só −1a fixo |
-| Evolução da carteira no tempo | **Parcial** (horizon + séries) | Clarificar: valor **aberto** vs **faturado**; series dedicada se faltar |
-| Tendência de faturamento com **período configurável** | **Parcial** | Controles de janela (7/30/90/custom) + sparkline/tendência na carteira |
+| Faturamento da **carteira ÷ faturamento total da empresa** | **Entregue** (T3) | KPI-PORTFOLIO-SHARE · BFF `portfolio-billing-share` · cards Overview + Minha Carteira (RBAC analytics/team/manage) |
+| Período atual × **mesmo período ano anterior** | **Entregue** (T4) | YoY Overview + Minha Carteira + Conta `?secao=historico` via `periodShift` / billing |
+| Comparação com **períodos e anos escolhidos pelo usuário** | **Entregue** (T4) | `PeriodCompareControls`: presets + custom + até 3 anos overlay nas séries |
+| Evolução da carteira no tempo | **Parcial** (horizon + séries) | Aberto = horizon; faturado = séries/billing — glossário CM_HELP |
+| Tendência de faturamento com **período configurável** | **Entregue** (T4) | Janela 7/30/90/custom (default 30) no enrichment + UI Minha Carteira |
 | Cortes cliente × vendedor × período (crescimento/queda) | **Entregue** (T5) | BFF `portfolio-billing-ranking` + tabela/Excel Minha Carteira; `group_by=seller` só team/manage |
 
 ### 2.3 Fora / cuidado
@@ -193,8 +193,8 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 |---|------------|-------------|---------------------|------------|
 | T1 | Discovery «criador do pedido» Protheus | api-delpi (+ doc padroes-totvs) | **Feito** (indisponível) | — |
 | T2 | Kanban Meus pedidos (etapas) | commercial MFE + commercial-api + api-delpi | **Feito** | Homologação UX |
-| T3 | Share faturamento carteira ÷ empresa | commercial-api BFF + Overview/Carteira | P1 | Fórmula KPI + RBAC |
-| T4 | Comparadores de período livres + tendência na Carteira/Conta | MFE + séries existentes | P1 | UX presets vs custom |
+| T3 | Share faturamento carteira ÷ empresa | commercial-api BFF + Overview/Carteira | **Feito** | Fórmula KPI + RBAC |
+| T4 | Comparadores de período livres + tendência na Carteira/Conta | MFE + séries existentes | **Feito** | UX presets vs custom |
 | T5 | Ranking crescimento/queda (cliente/vendedor) | BFF analytics | **Feito** | T3/T4 |
 | T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | **Feito** | Configurar `billing*` no JSON; cron/ops no job |
 | T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
@@ -223,7 +223,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 1. **Workshop curto** — fechar glossário das colunas do Kanban e regra «pronto para faturar».  
 2. **T1 discovery** — campo criador do pedido no Protheus (sim/não + qualidade do dado).  
 3. **T6 + persona faturamento** — maior ganho operacional citado na ata.  
-4. **T3/T4** — comparativos de faturamento na superfície Carteira/Conta.  
+4. ~~**T3/T4** — comparativos de faturamento na superfície Carteira/Conta.~~ **Feito** (T3/T4/T5 — ago/2026).  
 5. **T8** — visita ↔ veículos (reuso Central de Agendamento).  
 6. **T10/T11** — épico colaboração (ADR + spike Graph).
 
