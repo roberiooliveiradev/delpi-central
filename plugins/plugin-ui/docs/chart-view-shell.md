@@ -17,23 +17,23 @@ Consumidor desta onda: **Portal Commercial** (`plugins/commercial`). Dashboard C
 
 ## Inventário Portal Commercial
 
-| Gráfico | Família | Excel (antes do shell) | Preferências alvo |
-|---------|---------|------------------------|-------------------|
+| Gráfico | Família | Excel | Preferências |
+|---------|---------|-------|--------------|
 | `AnalyticsRolSeriesChart` | `time_multi_series` | Sim (CSV/XLS/PDF) | type, yoy, trend |
 | `AnalyticsClosingRateSeriesChart` | `time_multi_series` | Sim | type, yoy |
-| `CustomerBillingSeriesChart` | `time_multi_series` | **Falta** | type, yoy/+2/+3, trend |
-| `CustomerAccountBillingChart` | `time_multi_series` | **Falta** | type, trend |
-| `CustomerPurchaseEvolutionChart` | `period_compare` | **Falta** | type, trend |
-| `AnalyticsOtdInsightBarChart` | `ranking` | **Falta** | type |
-| OP coverage / prazo (`OpenOrdersProductionDetailContent`) | `composition` / `categorical` | **Falta** | type se couber |
+| `CustomerBillingSeriesChart` | `time_multi_series` | Sim | type, yoy/+2/+3, trend |
+| `CustomerAccountBillingChart` | `time_multi_series` | Sim | type, trend |
+| `CustomerPurchaseEvolutionChart` | `period_compare` | Sim | type, trend |
+| `AnalyticsOtdInsightBarChart` | `ranking` | Sim | type |
+| OP coverage / prazo (`OpenOrdersProductionDetailContent`) | `composition` / `categorical` | Sim | — (export; type switcher N/A nesta onda) |
 | `AnalyticsFunnelChart` | `funnel` | Sim | — |
 | Gauges OTD / sparkline ranking | `scalar` / `mini` | N/A | — |
 
-## Gaps Excel (obrigatório nesta onda)
+## Gate Excel
 
-Todos os itens marcados **Falta** devem passar a exportar via `runTabularExport` + `ExcelExportButton` ou `TabularExportButtons`.
+Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.structural.test.mjs` — cada gráfico do inventário (exceto `scalar`/`mini`) menciona `runTabularExport`, `ExcelExportButton` ou `CommercialTabularExportButtons`.
 
-## APIs do kit (alvo)
+## APIs do kit
 
 | Peça | Módulo |
 |------|--------|
@@ -42,7 +42,3 @@ Todos os itens marcados **Falta** devem passar a exportar via `runTabularExport`
 | Plot | `MultiTypeSeriesChart` |
 | Shell | `ChartViewShell` |
 | Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` |
-
-## Critério de pronto (Excel)
-
-Gate estrutural: cada gráfico do inventário (exceto `scalar`/`mini`) menciona `runTabularExport` ou `ExcelExportButton`.
