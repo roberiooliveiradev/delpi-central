@@ -46,6 +46,9 @@ describe("user profile self-only + expand photo", () => {
     assert.match(page, /phone_e164:/);
     assert.match(page, /mobile_e164:/);
     assert.match(page, /whatsapp_e164:/);
+    assert.match(page, /whatsappSource/);
+    assert.match(page, /NativeCheckboxControl/);
+    assert.match(page, /phoneIsWhatsapp|mobileIsWhatsapp/);
     assert.match(page, /USER_ACCESS_COPY\.shortcutEmail/);
     assert.match(page, /USER_ACCESS_COPY\.shortcutCall/);
     assert.match(page, /USER_ACCESS_COPY\.shortcutWhatsapp/);
@@ -54,6 +57,7 @@ describe("user profile self-only + expand photo", () => {
     assert.match(page, /canAssignTaskToProfile/);
     assert.match(copy, /"shortcutAssignTask"/);
     assert.match(copy, /"phonePlaceholder"/);
+    assert.match(copy, /"phoneIsWhatsapp"/);
     assert.match(day, /assignee_user_id/);
     assert.match(day, /link\.assigneeUserId/);
   });

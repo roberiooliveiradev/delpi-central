@@ -1,4 +1,4 @@
-import { EmptyState } from "@delpi/plugin-ui/index";
+import { EmptyState, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   BriefcaseBusiness,
   CalendarCheck,
@@ -76,6 +76,34 @@ type ShortcutItem = {
   onSelect: () => void;
 };
 
+type WhatsappSource = "phone" | "mobile" | null;
+
+function resolveWhatsappSource(data: {
+  phone_e164?: string | null;
+  mobile_e164?: string | null;
+  whatsapp_e164?: string | null;
+} | null | undefined): WhatsappSource {
+  const whatsapp = (data?.whatsapp_e164 || "").trim();
+  if (!whatsapp) return null;
+  const phone = (data?.phone_e164 || "").trim();
+  const mobile = (data?.mobile_e164 || "").trim();
+  if (phone && phone === whatsapp) return "phone";
+  if (mobile && mobile === whatsapp) return "mobile";
+  if (mobile) return "mobile";
+  if (phone) return "phone";
+  return "mobile";
+}
+
+function resolveWhatsappE164(
+  source: WhatsappSource,
+  phone: string,
+  mobile: string,
+): string | null {
+  if (source === "phone") return phone.trim() || null;
+  if (source === "mobile") return mobile.trim() || null;
+  return null;
+}
+
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const {
     currentUserId,
@@ -103,7 +131,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const [jobTitle, setJobTitle] = useState("");
   const [phoneE164, setPhoneE164] = useState("");
   const [mobileE164, setMobileE164] = useState("");
-  const [whatsappE164, setWhatsappE164] = useState("");
+  const [whatsappSource, setWhatsappSource] = useState<WhatsappSource>(null);
   const [photoObjectUrl, setPhotoObjectUrl] = useState<string | null>(null);
   const [mePermissions, setMePermissions] = useState<string[]>([]);
   const [meIsSuperadmin, setMeIsSuperadmin] = useState(false);
@@ -126,7 +154,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         setJobTitle((data.job_title || "").trim());
         setPhoneE164((data.phone_e164 || "").trim());
         setMobileE164((data.mobile_e164 || "").trim());
-        setWhatsappE164((data.whatsapp_e164 || "").trim());
+        setWhatsappSource(resolveWhatsappSource(data));
       } catch (err: unknown) {
         if (signal?.aborted) return;
         setProfile(null);
@@ -240,8 +268,20 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     setJobTitle((data?.job_title || "").trim());
     setPhoneE164((data?.phone_e164 || "").trim());
     setMobileE164((data?.mobile_e164 || "").trim());
-    setWhatsappE164((data?.whatsapp_e164 || "").trim());
+    setWhatsappSource(resolveWhatsappSource(data));
   };
+
+  useEffect(() => {
+    if (whatsappSource === "phone" && !phoneE164.trim()) {
+      setWhatsappSource(null);
+    }
+  }, [phoneE164, whatsappSource]);
+
+  useEffect(() => {
+    if (whatsappSource === "mobile" && !mobileE164.trim()) {
+      setWhatsappSource(null);
+    }
+  }, [mobileE164, whatsappSource]);
 
   const shortcuts = useMemo(() => {
     const items: ShortcutItem[] = [
@@ -370,7 +410,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         job_title: jobTitle.trim() || null,
         phone_e164: phoneE164.trim() || null,
         mobile_e164: mobileE164.trim() || null,
-        whatsapp_e164: whatsappE164.trim() || null,
+        whatsapp_e164: resolveWhatsappE164(whatsappSource, phoneE164, mobileE164),
       });
       setProfile(data);
       syncContactDraftFromProfile(data);
@@ -607,6 +647,15 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     placeholder={USER_ACCESS_COPY.phonePlaceholder}
                     fullWidth
                   />
+                  <NativeCheckboxControl
+                    checked={whatsappSource === "phone"}
+                    disabled={saving || !phoneE164.trim()}
+                    onChange={(checked) =>
+                      setWhatsappSource(checked ? "phone" : null)
+                    }
+                    label={USER_ACCESS_COPY.phoneIsWhatsapp}
+                    hint={CM_HELP.users.phoneIsWhatsapp}
+                  />
                   <CommercialTextField
                     label={USER_ACCESS_COPY.mobileLabel}
                     value={mobileE164}
@@ -615,13 +664,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     placeholder={USER_ACCESS_COPY.phonePlaceholder}
                     fullWidth
                   />
-                  <CommercialTextField
-                    label={USER_ACCESS_COPY.whatsappLabel}
-                    value={whatsappE164}
-                    onChange={setWhatsappE164}
-                    hint={CM_HELP.users.whatsappE164}
-                    placeholder={USER_ACCESS_COPY.phonePlaceholder}
-                    fullWidth
+                  <NativeCheckboxControl
+                    checked={whatsappSource === "mobile"}
+                    disabled={saving || !mobileE164.trim()}
+                    onChange={(checked) =>
+                      setWhatsappSource(checked ? "mobile" : null)
+                    }
+                    label={USER_ACCESS_COPY.mobileIsWhatsapp}
+                    hint={CM_HELP.users.mobileIsWhatsapp}
                   />
                 </div>
               ) : (
@@ -636,6 +686,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       <strong>{USER_ACCESS_COPY.phoneLabel}:</strong>{" "}
                       {(profile.phone_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
                     </span>
+                    {(profile.whatsapp_e164 || "").trim() &&
+                    (profile.whatsapp_e164 || "").trim() ===
+                      (profile.phone_e164 || "").trim() ? (
+                      <CommercialStatusBadge
+                        label={USER_ACCESS_COPY.whatsappLabel}
+                        variant="info"
+                      />
+                    ) : null}
                   </div>
                   <div className="cm-user-profile__meta-row">
                     <Phone size={16} aria-hidden />
@@ -643,13 +701,16 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       <strong>{USER_ACCESS_COPY.mobileLabel}:</strong>{" "}
                       {(profile.mobile_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
                     </span>
-                  </div>
-                  <div className="cm-user-profile__meta-row">
-                    <MessageCircle size={16} aria-hidden />
-                    <span>
-                      <strong>{USER_ACCESS_COPY.whatsappLabel}:</strong>{" "}
-                      {(profile.whatsapp_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
-                    </span>
+                    {(profile.whatsapp_e164 || "").trim() &&
+                    (profile.whatsapp_e164 || "").trim() ===
+                      (profile.mobile_e164 || "").trim() &&
+                    (profile.whatsapp_e164 || "").trim() !==
+                      (profile.phone_e164 || "").trim() ? (
+                      <CommercialStatusBadge
+                        label={USER_ACCESS_COPY.whatsappLabel}
+                        variant="info"
+                      />
+                    ) : null}
                   </div>
                 </>
               )}

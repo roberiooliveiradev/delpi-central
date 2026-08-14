@@ -73,6 +73,8 @@
     "phoneLabel": "Telefone",
     "mobileLabel": "Celular",
     "whatsappLabel": "WhatsApp",
+    "phoneIsWhatsapp": "Telefone também é WhatsApp",
+    "mobileIsWhatsapp": "Celular também é WhatsApp",
     "phoneEmpty": "Não informado",
     "phonePlaceholder": "+5511999999999",
     "portfoliosCount": "{count} carteira(s)"
