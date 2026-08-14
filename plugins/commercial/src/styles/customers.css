@@ -91,9 +91,19 @@
 .dashboard-commercial .cm-customers-page__chip-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px 28px;
+  align-items: center;
+  gap: 8px 24px;
   min-width: 0;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-customers-page__chip-row > [class*="scope-chip-bar"] {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-customers-page__filter-bar [class*="filter-bar__grid"] {
+  align-items: end;
 }
 
 .dashboard-commercial .cm-customers-page__trend-window {
@@ -101,6 +111,11 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  justify-content: flex-end;
+}
+
+.dashboard-commercial .cm-customers-page__search-field {
+  min-width: min(100%, 16rem);
 }
 
 .dashboard-commercial .cm-customers-page__panels {

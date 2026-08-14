@@ -472,6 +472,9 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /CommercialScopeChipBar/);
     assert.match(page, /cm-customers-page__chip-row/);
     assert.match(page, /Dias da janela/);
+    assert.match(page, /cm-customers-page__filter-bar/);
+    assert.match(page, /cm-customers-page__trend-window/);
+    assert.doesNotMatch(page, /layout="inline"/);
     assert.match(page, /CommercialFilterBarShell/);
     assert.match(page, /SellerScopeFilter/);
     assert.doesNotMatch(page, /CustomerSummaryCards/);

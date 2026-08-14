@@ -354,39 +354,37 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
         </div>
         <CommercialFilterBarShell
           embedded
-          layout="inline"
           ariaLabel="Janela da tendência, busca e escopo da carteira"
-          leading={
-            <div className="cm-customers-page__trend-window">
-              <CommercialSectionHintLabel
-                label="Dias da janela"
-                hint={CM_HELP.customers.trendWindow}
-              />
-              <CommercialSegmentToggle
-                ariaLabel={CM_HELP.customers.trendWindow}
-                idPrefix="customers-trend-window"
-                value={String(trendWindowPreset)}
-                onChange={(value) => {
-                  if (value === "custom") {
-                    setTrendWindowPreset("custom");
-                    return;
-                  }
-                  const days = Number(value);
-                  if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
-                    setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
-                  }
-                }}
-                options={[
-                  ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
-                    value: String(days),
-                    label: `${days}d`,
-                  })),
-                  { value: "custom", label: "Custom" },
-                ]}
-              />
-            </div>
-          }
+          className="cm-customers-page__filter-bar"
         >
+          <div className="cm-customers-page__trend-window">
+            <CommercialSectionHintLabel
+              label="Dias da janela"
+              hint={CM_HELP.customers.trendWindow}
+            />
+            <CommercialSegmentToggle
+              ariaLabel={CM_HELP.customers.trendWindow}
+              idPrefix="customers-trend-window"
+              value={String(trendWindowPreset)}
+              onChange={(value) => {
+                if (value === "custom") {
+                  setTrendWindowPreset("custom");
+                  return;
+                }
+                const days = Number(value);
+                if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
+                  setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
+                }
+              }}
+              options={[
+                ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
+                  value: String(days),
+                  label: `${days}d`,
+                })),
+                { value: "custom", label: "Custom" },
+              ]}
+            />
+          </div>
           {trendWindowPreset === "custom" ? (
             <CommercialTextField
               label="Dias"
@@ -398,6 +396,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             />
           ) : null}
           <CommercialTextField
+            className="cm-customers-page__search-field"
             label="Buscar cliente"
             hint={CM_HELP.customers.filterSearch}
             type="search"
