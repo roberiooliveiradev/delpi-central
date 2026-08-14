@@ -17,6 +17,8 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /runTabularExport/);
     assert.match(source, /canUseTeamScope/);
     assert.match(source, /group_by/);
+    assert.match(source, /collapsible/);
+    assert.match(source, /defaultOpen=\{false\}/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
   });

@@ -131,6 +131,8 @@ export function PortfolioBillingRankingTable({
     <CommercialSectionCard
       title="Ranking crescimento/queda"
       hint={CM_HELP.customers.billingRanking}
+      collapsible
+      defaultOpen={false}
       actions={
         <div className="cm-customers-page__filter-actions">
           {canUseTeamScope ? (
