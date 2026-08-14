@@ -625,44 +625,30 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 
 ```text
 ┌─ PageHero · Minha Carteira ── [Ver atrasos (n)] [Atualizar] ──────────────┐
-│ Clientes · Valor aberto · Com atraso · Após filtros                     │
-│ Atualizado 09:04 · CTA atrasos → /open-orders?focus=late (sem dump extra) │
-│ Carteira [Todas as carteiras ▾]                                       │
-│ Foco [Todos] [Atenção] [Em dia] [Sem venda 60d]                       │
-│ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
-│ Buscar cliente, código, loja ou pedido [___________________________]    │
-└─────────────────────────────────────────────────────────────────────────┘
-┌─ Share + tendência (paridade Overview) ────────────────────────────────────┐
-│ Escopo: [Carteira ▾]   Período: [MTD|YTD|Custom] [YoY] [+2a] [+3a]       │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐                   │
-│ │ Faturamento  │ │ Share empresa│ │ Tendência 30d ▾  │                   │
-│ │ R$ …         │ │ 12,4% ‡      │ │ sparkline / Δ%   │                   │
-│ └──────────────┘ └──────────────┘ └──────────────────┘                   │
+│ Clientes · Valor aberto · Com atraso · Após filtros · Share empresa % ‡ │
+│ Atualizado 09:04 · CTA atrasos → /open-orders?focus=late                 │
+│ Foco · Tendência · janela · Buscar | Carteira                            │
 │ ‡ Share só com analytics.view | accounts.team.view | seller-portfolios.manage │
-│ Glossário: aberto = backlog · faturado/share = ROL/NF no período           │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─ [ Faturamento | Ranking | Clientes ]  (?panel=billing|ranking|customers) ─┐
+│ default: Clientes · sem chevron collapsible                               │
 └────────────────────────────────────────────────────────────────────────────┘
-┌─ Faturamento — {preset} ──────────────────────────────── Cliente [Todos ▾] ─┐
-│ [Hoje|Semana|Mês|Mês passado|Trimestre|Ano|12 meses|Personalizado]         │
-│ [datas se Personalizado]                                                   │
-│ PeriodCompareControls [Dia–Ano]  [YoY] [+2a|+3a]                           │
-│ ──── atual ──── ─ ─ ─ anos anteriores ─ ─ ─ (billing-series ×N)            │
+┌─ Painel Faturamento — {preset} ──────────────────── Cliente [Todos ▾] ───┐
+│ PeriodCompareControls · série (billing-series)                            │
 └────────────────────────────────────────────────────────────────────────────┘
-┌─ Ranking crescimento/queda (cliente; vendedor se team) + Excel ────────────┐
-│ delta % faturamento no período vs base (YoY ou janela)                     │
+┌─ Painel Ranking crescimento/queda + Excel ─────────────────────────────────┐
+│ Cliente|Vendedor · Maiores altas|quedas · Top N · período                 │
 └────────────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard · Clientes (1–20 de 24) ─────────────── [Colunas] ────────┐
-│ Cliente       Vendedor  Última venda  Fat.12m  Em aberto  Atrasos      │
-│ ACME 01001/01 Ana       01/08/26      R$ 800k  R$ 90k     2            │
-│ … clique/Enter na linha → Conta; resize/reorder e paginação abaixo     │
+┌─ Painel Clientes da carteira ─────────────────────── [Colunas] ────────┐
+│ Cliente · Vendedor · Última venda · Fat.12m · Tendência · …            │
 └─────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard · Histórico da carteira ───────────────────────────────────┐
-│ (filtro Carteira = id; se «Todas» e N carteiras → seletor obrigatório) │
-│ Timeline GET /seller-portfolios/{id}/audit (membro ou audit/manage)    │
-│ Toast + refetch via WS `portfolio.changed`                             │
+│ Timeline GET /seller-portfolios/{id}/audit                             │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Share / ranking:** BFF `portfolio-billing-share` e `portfolio-billing-ranking`; Conta `?secao=historico` espelha YoY no painel NF.
+**Share / ranking:** Share no hero (`usePortfolioBillingShare`); BFF `portfolio-billing-share` e `portfolio-billing-ranking`; Conta `?secao=historico` espelha YoY no painel NF.
+**Painéis:** `?panel=` no deep link da lista (`customersListDeepLink`).
 **Realtime (carteiras):** mutações auditadas emitem `portfolio.changed` para
 salas `user:{memberId}`. Auth WS: `accounts.view` **ou** `worklist.view`.
 Admin (lista/detalhe) refetch silencioso; membro vê Histórico em Minha Carteira.
