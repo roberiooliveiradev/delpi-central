@@ -34,7 +34,19 @@ def test_v002_adds_sales_order_columns() -> None:
     assert "DROP SCHEMA" not in sql
 
 
+V004 = _MIGRATIONS / "V004__add_carrier_contact.sql"
+
+
 def test_v003_adds_carrier_code() -> None:
     sql = V003.read_text(encoding="utf-8")
     assert "ADD COLUMN IF NOT EXISTS carrier_code" in sql
+    assert "DROP SCHEMA" not in sql
+
+
+def test_v004_adds_carrier_contact() -> None:
+    sql = V004.read_text(encoding="utf-8")
+    assert "ADD COLUMN IF NOT EXISTS carrier_legal_name" in sql
+    assert "ADD COLUMN IF NOT EXISTS carrier_tax_id" in sql
+    assert "ADD COLUMN IF NOT EXISTS carrier_address" in sql
+    assert "ADD COLUMN IF NOT EXISTS carrier_phone" in sql
     assert "DROP SCHEMA" not in sql

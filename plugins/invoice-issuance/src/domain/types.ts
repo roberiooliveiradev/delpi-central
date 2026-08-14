@@ -43,6 +43,8 @@ export type Carrier = {
   carrier_name: string;
   legal_name: string | null;
   tax_id: string | null;
+  address?: string | null;
+  phone?: string | null;
   blocked: boolean;
 };
 
@@ -131,6 +133,10 @@ export type IssuanceRequest = {
   freight_mode: FreightMode;
   carrier_code: string | null;
   carrier_name: string | null;
+  carrier_legal_name?: string | null;
+  carrier_tax_id?: string | null;
+  carrier_address?: string | null;
+  carrier_phone?: string | null;
   weight_kg: number;
   volume_count: number;
   purchase_order_number: string | null;

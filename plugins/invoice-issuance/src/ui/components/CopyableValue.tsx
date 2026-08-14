@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { Check, Copy } from "lucide-react";
 
 type Props = {
   value: string;
@@ -24,11 +25,15 @@ export function CopyableValue({ value, label, children }: Props) {
       <span className="ii-code">{children ?? value}</span>
       <button
         type="button"
-        className="ii-btn ii-btn--ghost ii-btn--sm"
+        className="ii-copy__btn"
+        aria-label={copied ? `Copiado: ${label}` : `Copiar ${label}`}
         onClick={() => void copy()}
-        aria-label={`Copiar ${label}`}
       >
-        {copied ? "Copiado" : "Copiar"}
+        {copied ? (
+          <Check size={12} strokeWidth={2.25} aria-hidden="true" />
+        ) : (
+          <Copy size={12} strokeWidth={2.25} aria-hidden="true" />
+        )}
       </button>
     </span>
   );

@@ -22,7 +22,6 @@ export const II_SHEET = {
   freight: "Transporte",
   extras: "Complemento",
   items: "Itens para lançar",
-  situation: "Situação",
   history: "Histórico",
   actions: "Atendimento",
   hints: {
@@ -33,6 +32,10 @@ export const II_SHEET = {
     salesOrder: "Pedido de venda a faturar, quando a origem for PV.",
     freightMode: "Modalidade de frete da nota (CIF ou FOB).",
     carrier: "Código da transportadora, se houver.",
+    carrierLegal: "Razão social da transportadora.",
+    carrierTaxId: "CNPJ da transportadora.",
+    carrierAddress: "Endereço da transportadora para o conhecimento de transporte.",
+    carrierPhone: "Telefone da transportadora.",
     weight: "Peso bruto informado na solicitação.",
     volumes: "Quantidade de volumes.",
     stockWriteOff: "Se Sim, dê baixa no almoxarifado 01.",

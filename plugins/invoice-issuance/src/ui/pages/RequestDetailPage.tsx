@@ -4,12 +4,11 @@ import { II_SHEET } from "../../content/helpTooltips";
 import { hasAction, historyEventLabel, invoiceTypeLabel } from "../../domain/status";
 import * as api from "../../data/api/invoiceIssuanceApi";
 import { ApiError } from "../../data/api/httpClient";
-import type { AllowedAction, IssuanceRequest, RequestDetail } from "../../domain/types";
-import { CopyableValue } from "../components/CopyableValue";
+import type { AllowedAction, RequestDetail } from "../../domain/types";
 import { IssuanceProtheusSheet } from "../components/IssuanceProtheusSheet";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
-import { formatDateTime, formatMoney, formatQuantity, itemTotal } from "../format";
+import { formatDateTime } from "../format";
 
 type Props = {
   requestId: string;
@@ -59,16 +58,13 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   }
 
   const { request, history, allowed_actions } = detail;
-  const total = request.items.reduce(
-    (sum, item) => sum + itemTotal(item.quantity, item.unit_price),
-    0,
-  );
   const needsReturn = hasAction(allowed_actions, "return");
   const needsCancel = hasAction(allowed_actions, "cancel");
 
   return (
     <div className="ii-stack" data-testid="detail-page">
       <PageHeader
+        compact
         title={request.party_name}
         subtitle={`${request.party_code}/${request.party_store} · ${invoiceTypeLabel(request.invoice_type)}`}
         actions={
@@ -95,13 +91,6 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
       ) : null}
 
       <IssuanceProtheusSheet request={request} />
-
-      <section className="ii-card">
-        <h2>{II_SHEET.items}</h2>
-        <div className="ii-table-wrap">
-          <ItemsTable request={request} total={total} />
-        </div>
-      </section>
 
       {needsReturn || needsCancel ? (
         <section className="ii-card">
@@ -155,8 +144,8 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
         <p className="ii-muted">Acompanhe o andamento nesta tela.</p>
       ) : null}
 
-      <section className="ii-card">
-        <h2>{II_SHEET.history}</h2>
+      <details className="ii-card ii-history-fold">
+        <summary>{II_SHEET.history}</summary>
         <ol className="ii-history">
           {history.map((event) => (
             <li key={event.id}>
@@ -166,7 +155,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
             </li>
           ))}
         </ol>
-      </section>
+      </details>
     </div>
   );
 }
@@ -207,60 +196,5 @@ function DetailHeaderActions({
         </button>
       ) : null}
     </>
-  );
-}
-
-function ItemsTable({ request, total }: { request: IssuanceRequest; total: number }) {
-  return (
-    <table className="ii-table">
-      <thead>
-        <tr>
-          <th>Produto</th>
-          <th>Descrição</th>
-          <th>Pedido</th>
-          <th>Item</th>
-          <th className="ii-cell-num">Qtd</th>
-          <th className="ii-cell-num">Valor unit.</th>
-          <th>Baixa</th>
-          <th className="ii-cell-num">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {request.items.map((item, index) => (
-          <tr key={`${item.product_code}-${item.line_number ?? index}`}>
-            <td>
-              <CopyableValue value={item.product_code} label="Produto">
-                {item.product_code}
-              </CopyableValue>
-            </td>
-            <td>{item.product_description}</td>
-            <td>
-              {item.sales_order ? (
-                <CopyableValue value={item.sales_order} label="Pedido">
-                  {item.sales_order}
-                </CopyableValue>
-              ) : (
-                "—"
-              )}
-            </td>
-            <td>{item.sales_order_item || "—"}</td>
-            <td className="ii-cell-num">{formatQuantity(item.quantity)}</td>
-            <td className="ii-cell-num">{formatMoney(item.unit_price)}</td>
-            <td>{item.stock_write_off ? "Sim" : "Não"}</td>
-            <td className="ii-cell-num ii-cell-strong">
-              {formatMoney(itemTotal(item.quantity, item.unit_price))}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colSpan={7} className="ii-cell-strong">
-            Total
-          </td>
-          <td className="ii-cell-num ii-cell-strong">{formatMoney(total)}</td>
-        </tr>
-      </tfoot>
-    </table>
   );
 }
