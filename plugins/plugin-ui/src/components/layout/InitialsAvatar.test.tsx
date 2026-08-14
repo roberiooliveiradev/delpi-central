@@ -89,4 +89,43 @@ describe("InitialsAvatar", () => {
     fireEvent.click(screen.getByRole("button", { name: /Ampliar foto/i }));
     expect(parentClick).not.toHaveBeenCalled();
   });
+
+  it("com href renderiza link sem lightbox e chama onNavigate", () => {
+    const onNavigate = vi.fn((event: { preventDefault: () => void }) => {
+      event.preventDefault();
+    });
+    const parentClick = vi.fn();
+    render(
+      <div onClick={parentClick}>
+        <InitialsAvatar
+          name="Acme"
+          classNames={classNames}
+          href="/apps/commercial/customers/1/01"
+          title="Abrir conta de Acme"
+          onNavigate={onNavigate}
+        />
+      </div>,
+    );
+    const link = screen.getByRole("link", { name: "Abrir conta de Acme" });
+    expect(link.getAttribute("href")).toBe("/apps/commercial/customers/1/01");
+    expect(link.getAttribute("title")).toBe("Abrir conta de Acme");
+    expect(screen.queryByRole("button", { name: /Ampliar/i })).toBeNull();
+    fireEvent.click(link);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(parentClick).not.toHaveBeenCalled();
+  });
+
+  it("href com foto não abre lightbox", () => {
+    render(
+      <InitialsAvatar
+        name="Acme"
+        src="blob:test"
+        classNames={classNames}
+        href="/apps/commercial/customers/1/01"
+        title="Abrir conta de Acme"
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Abrir conta de Acme" })).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
 });

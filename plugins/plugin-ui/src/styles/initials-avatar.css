@@ -54,6 +54,23 @@ button.delpi-ui-avatar--previewable:focus-visible {
   outline-offset: 2px;
 }
 
+a.delpi-ui-avatar--link {
+  padding: 0;
+  border: none;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.delpi-ui-avatar--link:visited {
+  color: inherit;
+}
+
+a.delpi-ui-avatar--link:focus-visible {
+  outline: 2px solid var(--ds-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 .delpi-ui-avatar__media {
   display: block;
   width: 100%;
