@@ -19,6 +19,17 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /group_by/);
     assert.match(source, /collapsible/);
     assert.match(source, /defaultOpen=\{false\}/);
+    assert.match(source, /OtdCustomerIdentityCell/);
+    assert.match(source, /CommercialAvatar/);
+    assert.match(source, /CommercialCompareSparkline/);
+    assert.match(source, /CommercialTrendDelta/);
+    assert.match(source, /order/);
+    assert.match(source, /limit/);
+    assert.match(source, /RANKING_LIMIT_OPTIONS/);
+    assert.match(source, /Maiores altas/);
+    assert.match(source, /Maiores quedas/);
+    assert.match(source, /CommercialSelectField/);
+    assert.match(source, /CommercialDataCellValue/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
   });
