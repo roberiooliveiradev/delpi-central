@@ -135,6 +135,10 @@ export function useOpenOrdersDashboard(
 
   useEffect(() => {
     if (!urlHydrated || sellerScopeLoading) return;
+    const currentUrl = parseOpenOrdersListUrlState(
+      typeof window !== "undefined" ? window.location.search : "",
+      sellerAccess,
+    );
     syncOpenOrdersListStateToUrl(
       {
         filters,
@@ -142,6 +146,8 @@ export function useOpenOrdersDashboard(
         sortKey,
         sortDirection,
         page: currentPage,
+        view: currentUrl.view,
+        stage: currentUrl.stage,
       },
       basePath,
     );
@@ -149,6 +155,7 @@ export function useOpenOrdersDashboard(
     basePath,
     currentPage,
     filters,
+    sellerAccess,
     sellerId,
     sellerScopeLoading,
     sortDirection,
