@@ -61,6 +61,7 @@
 @import "./styles/worklist-surface.css";
 @import "./styles/underline-nav.css";
 @import "./styles/page-path.css";
+@import "./styles/inline-nav-link.css";
 @import "./styles/top-bar.css";
 @import "./styles/page-hero.css";
 @import "./styles/view-transition.css";

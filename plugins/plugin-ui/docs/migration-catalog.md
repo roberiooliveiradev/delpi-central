@@ -349,6 +349,11 @@ detalhe sem uso. Gates: `sourceHygiene.test.mjs`, `npm test`, `npm run lint`,
 `npm run build` e auditor CSS global (Commercial sem ocorrência; resíduos
 globais são reportados separadamente pelo gate).
 
+**InlineNavLink (ago/2026):** primitivo `<a href>` + SPA (`onNavigate` só em
+left-click limpo) em `components/navigation/InlineNavLink.tsx` — sem skin visual
+própria; `title` obrigatório; factory `createDashboardInlineNavLink`. Consumo
+inicial: Portal Comercial (`CommercialEntityLink`).
+
 ### Checklist por plugin (preencher ao fechar onda)
 
 | Plugin | Onda | CSS kit zerado | TSX cópia/inline resolvido | Dual-class ok | Notas |

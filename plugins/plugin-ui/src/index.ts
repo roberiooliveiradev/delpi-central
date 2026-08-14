@@ -7,6 +7,7 @@
 export * from "./components/actions";
 export * from "./components/help";
 export * from "./components/layout";
+export * from "./components/navigation";
 export * from "./components/feedback";
 export * from "./components/data";
 export * from "./components/forms";
