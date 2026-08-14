@@ -316,6 +316,7 @@ export {
   pageHeroBemClasses,
   type DashboardPageHeroProps,
   type PageHeroClassNames,
+  type PageHeroDensity,
   type PageHeroHighlight,
   type PageHeroHighlightTone,
   type PageHeroProps,

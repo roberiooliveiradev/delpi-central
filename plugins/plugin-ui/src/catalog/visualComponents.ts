@@ -86,7 +86,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
     description:
-      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights.",
+      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
   }),
   vc("layout", "ViewTransition", {
     addedAt: "2026-08-06",

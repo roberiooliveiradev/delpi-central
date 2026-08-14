@@ -59,4 +59,14 @@ describe("PageHero", () => {
     expect(document.querySelector(".delpi-ui-page-hero__body")).toBeTruthy();
     expect(document.querySelector(".delpi-ui-page-hero__actions")).toBeTruthy();
   });
+
+  it("aplica density compact no root", () => {
+    const cn = pageHeroBemClasses("cm");
+    const { container } = render(
+      <PageHero classNames={cn} title="Equipe" density="compact" />,
+    );
+    const root = container.querySelector("[data-density='compact']");
+    expect(root?.className).toContain("delpi-ui-page-hero--compact");
+    expect(root?.className).toContain("cm-page-hero--compact");
+  });
 });

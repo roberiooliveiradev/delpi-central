@@ -203,3 +203,87 @@
     animation: none;
   }
 }
+
+/* Densidade compact — listas / admin (Portal Comercial e consumidores). */
+.delpi-ui-page-hero--compact {
+  padding: 16px 18px;
+  border-radius: 16px;
+  box-shadow: var(--delpi-ui-shadow-sm, 0 4px 14px rgba(0, 0, 0, 0.1));
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__content {
+  gap: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__headline {
+  gap: 10px;
+  align-items: center;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__title {
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  line-height: 1.15;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__description {
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 52rem;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight {
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight-label {
+  font-size: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight-value {
+  font-size: 14px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__body {
+  gap: 8px;
+  margin-top: 0;
+  padding-top: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__glow {
+  width: 160px;
+  height: 160px;
+  opacity: 0.4;
+}
+
+@media (max-width: 900px) {
+  .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-page-hero--compact {
+    padding: 14px 16px;
+  }
+
+  .delpi-ui-page-hero--compact .delpi-ui-page-hero__title {
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
+  }
+
+  .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+    grid-template-columns: 1fr 1fr;
+  }
+}

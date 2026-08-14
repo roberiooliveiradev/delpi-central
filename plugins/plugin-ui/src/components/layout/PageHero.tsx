@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type PageHeroHighlightTone = "neutral" | "warning" | "danger";
+
+export type PageHeroDensity = "comfortable" | "compact";
 
 export type PageHeroHighlight = {
   id: string;
@@ -39,8 +41,10 @@ export type PageHeroProps = {
   /** Ações à direita do headline (ex.: Atualizar). */
   actions?: ReactNode;
   highlights?: PageHeroHighlight[];
-  /** Faixa inferior (filtros, chips, escopo). */
+  /** Faixa inferior (filtros, chips, escopo). Preferir fora do hero em listas densas. */
   children?: ReactNode;
+  /** Densidade vertical — `compact` reduz padding/título/highlights. */
+  density?: PageHeroDensity;
   className?: string;
   "aria-label"?: string;
 };
@@ -81,14 +85,20 @@ export function PageHero({
   actions,
   highlights,
   children,
+  density = "comfortable",
   className,
   "aria-label": ariaLabel,
 }: PageHeroProps) {
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const rootClass = [
+    density === "compact" ? withBemModifier(classNames.root, "compact") : classNames.root,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const hasHighlights = Boolean(highlights?.length);
 
   return (
-    <section className={rootClass} aria-label={ariaLabel}>
+    <section className={rootClass} aria-label={ariaLabel} data-density={density}>
       <span className={classNames.glow} aria-hidden="true" />
       <div className={classNames.content}>
         {eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
