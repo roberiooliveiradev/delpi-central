@@ -437,6 +437,23 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 
 **Histórico:** WF-02 (KPI cards + tabela densa + modal OP) → WF-02R → H/T/C/D.
 
+### WF-OPEN-ORDERS-KANBAN — Board por etapa (ago/2026)
+
+**Status:** entregue (read-only)  
+**Toggle:** Tabela | Cards | **Board** (persistido em `commercial:open-orders:layout`)  
+**Kit:** `KanbanBoard` / `CommercialKanbanBoard` — zero CSS de board no MFE  
+**Estágios (BFF `kanbanStage`):** `upcoming` · `in_progress` · `ready_to_invoice` (+ coluna `completed` via rota recently-closed)  
+**Deep link:** `?view=board&stage=ready_to_invoice` (`buildOpenOrdersBoardHref`)  
+**Não é:** WF-08 Kanban de oportunidades; sem drag-and-drop / escrita Protheus
+
+```
+[Filtros] [Atenção] [Tabela|Cards|Board]
++ Próximos + Em andamento + Pronto faturar + Concluídos +
+| n · R$   | n · R$         | n · R$           | n · R$ (30d)  |
+| [card]   | [card]         | [card]           | [card]        |
++----------+----------------+------------------+---------------+
+```
+
 ### WF-02R-D — Páginas nativas da linha e da OP
 
 **Domínio:** SC5/SC6 + OP SC2 (não misturar com OV AD*).  
