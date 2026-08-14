@@ -94,6 +94,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     setSellerId,
     toggleSort,
     setPage,
+    setPanel,
     resetFilters,
     listSearch,
   } = useCustomersListState({
@@ -163,6 +164,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sort: sortKey,
     dir: sortDirection,
     page: requestedPage,
+    panel,
   } = listState;
   const enrichmentIncomplete =
     !enrichment.loading &&
@@ -482,39 +484,77 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             </CommercialEmptyState>
           ) : null}
 
-          <CustomerBillingSeriesChart customers={aggregation.customers} />
-
-          <PortfolioBillingRankingTable
-            sellerId={canFilterPortfolios ? sellerIdFilter : null}
-          />
-
-          {!showEmptyDataset && !showFilteredEmpty ? (
-            <CommercialSectionCard
-              title="Clientes da carteira"
-              hint={CM_HELP.customers.list}
-            >
-              <CustomersTable
-                customers={pagedCustomers}
-                exportRows={filteredCustomers}
-                canUseTeamScope={canUseTeamScope}
-                sortKey={sortKey}
-                sortDirection={sortDirection}
-                onSort={toggleSort}
-                basePath={basePath}
-                listSearch={listSearch}
-                sellerAccess={sellerAccess}
-                loading={refreshing}
-                sharedCoverageByKey={sharedCoverage.byKey}
+          {!showEmptyDataset ? (
+            <div className="cm-customers-page__panels">
+              <CommercialSegmentToggle
+                ariaLabel="Painel da carteira"
+                idPrefix="customers-workspace-panel"
+                value={panel}
+                onChange={(value) => {
+                  if (value === "billing" || value === "ranking" || value === "customers") {
+                    setPanel(value);
+                  }
+                }}
+                options={[
+                  { value: "billing", label: "Faturamento" },
+                  { value: "ranking", label: "Ranking" },
+                  { value: "customers", label: "Clientes" },
+                ]}
               />
-              {filteredCustomers.length > 20 ? (
-                <CommercialPagination
-                  page={page}
-                  pageSize={20}
-                  total={filteredCustomers.length}
-                  onPageChange={setPage}
+
+              <div
+                className="cm-customers-page__panel"
+                hidden={panel !== "billing"}
+                aria-hidden={panel !== "billing"}
+              >
+                <CustomerBillingSeriesChart customers={aggregation.customers} />
+              </div>
+
+              <div
+                className="cm-customers-page__panel"
+                hidden={panel !== "ranking"}
+                aria-hidden={panel !== "ranking"}
+              >
+                <PortfolioBillingRankingTable
+                  sellerId={canFilterPortfolios ? sellerIdFilter : null}
                 />
-              ) : null}
-            </CommercialSectionCard>
+              </div>
+
+              <div
+                className="cm-customers-page__panel"
+                hidden={panel !== "customers"}
+                aria-hidden={panel !== "customers"}
+              >
+                {!showFilteredEmpty ? (
+                  <CommercialSectionCard
+                    title="Clientes da carteira"
+                    hint={CM_HELP.customers.list}
+                  >
+                    <CustomersTable
+                      customers={pagedCustomers}
+                      exportRows={filteredCustomers}
+                      canUseTeamScope={canUseTeamScope}
+                      sortKey={sortKey}
+                      sortDirection={sortDirection}
+                      onSort={toggleSort}
+                      basePath={basePath}
+                      listSearch={listSearch}
+                      sellerAccess={sellerAccess}
+                      loading={refreshing}
+                      sharedCoverageByKey={sharedCoverage.byKey}
+                    />
+                    {filteredCustomers.length > 20 ? (
+                      <CommercialPagination
+                        page={page}
+                        pageSize={20}
+                        total={filteredCustomers.length}
+                        onPageChange={setPage}
+                      />
+                    ) : null}
+                  </CommercialSectionCard>
+                ) : null}
+              </div>
+            </div>
           ) : null}
         </>
       ) : null}
