@@ -299,3 +299,9 @@ export {
   ChartTypeSegmentToggle,
   type ChartTypeSegmentToggleProps,
 } from "./ChartTypeSegmentToggle";
+
+export {
+  MultiTypeSeriesChart,
+  type MultiTypeSeriesChartProps,
+  type MultiTypeSeriesSpec,
+} from "./MultiTypeSeriesChart";
