@@ -31,10 +31,19 @@ import {
   UI_PREFIX,
 } from "../app/commercialUi";
 import {
+  buildAnalyticsOpportunityDetailHref,
+  buildCustomerDetailHref,
+  buildOpenOrderOpDetailPath,
   navigateAnalyticsOpportunityDetail,
   navigateCustomerDetail,
   navigateOpenOrderOpDetail,
 } from "../app/pluginNavigation";
+import { currentReturnNav } from "../app/commercialNavigationReturn";
+import {
+  accountLinkTitle,
+  opPageLinkTitle,
+  opportunityLinkTitle,
+} from "../content/entityLinkHints";
 import { CM_HELP } from "../content/helpTooltips";
 import { useOpenOrdersLineDetailExtras } from "../hooks/useOpenOrdersLineDetailExtras";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
@@ -154,22 +163,59 @@ export function OpenOrdersProductionDetailContent({
     }
   };
 
+  const accountCode = item.codigo_cadastro?.trim() ?? "";
+  const accountStore = item.loja_cadastro?.trim() ?? "";
+  const accountName = item.nome_cliente?.trim() || accountCode || "cliente";
+  const accountReturnNav = currentReturnNav("Pedidos em aberto");
+  const accountHref =
+    accountCode && accountStore
+      ? buildCustomerDetailHref(accountCode, accountStore, {
+          basePath,
+          search: "",
+          returnNav: accountReturnNav,
+        })
+      : null;
+
+  const ovNumber = extras.proposalNumber?.trim() || "";
+  const ovSearch = (() => {
+    if (!ovNumber) return undefined;
+    const search = new URLSearchParams();
+    if (extras.proposalBranch) search.set("branch", extras.proposalBranch);
+    return search.toString() ? `?${search.toString()}` : undefined;
+  })();
+  const ovHref = ovNumber
+    ? buildAnalyticsOpportunityDetailHref(ovNumber, {
+        basePath,
+        search: ovSearch,
+      })
+    : null;
+
+  const opContextSearch = buildOpenOrdersContextSearch(search);
+  const opHref = selectedOp
+    ? buildOpenOrderOpDetailPath(
+        basePath,
+        item.filial,
+        item.pedido,
+        item.linha,
+        selectedOp,
+        opContextSearch,
+      )
+    : null;
+
   const openAccount = () => {
-    const code = item.codigo_cadastro?.trim();
-    const store = item.loja_cadastro?.trim();
-    if (!code || !store) return;
-    navigateCustomerDetail(code, store, { basePath });
+    if (!accountCode || !accountStore) return;
+    navigateCustomerDetail(accountCode, accountStore, {
+      basePath,
+      returnNav: accountReturnNav,
+    });
     onNavigate?.();
   };
 
   const openOv = () => {
-    const ov = extras.proposalNumber?.trim();
-    if (!ov) return;
-    const search = new URLSearchParams();
-    if (extras.proposalBranch) search.set("branch", extras.proposalBranch);
-    navigateAnalyticsOpportunityDetail(ov, {
+    if (!ovNumber) return;
+    navigateAnalyticsOpportunityDetail(ovNumber, {
       basePath,
-      search: search.toString() ? `?${search.toString()}` : undefined,
+      search: ovSearch,
     });
     onNavigate?.();
   };
@@ -183,7 +229,7 @@ export function OpenOrdersProductionDetailContent({
       selectedOp,
       {
         basePath,
-        search: buildOpenOrdersContextSearch(search),
+        search: opContextSearch,
       },
     );
     onNavigate?.();
@@ -197,8 +243,13 @@ export function OpenOrdersProductionDetailContent({
   return (
     <div className="cm-open-orders-detail">
       <div className="cm-detail-actions" aria-label="Ações do detalhe">
-        {selectedOp && showOpenProductionOrderAction ? (
-          <ActionButton variant="primary" onClick={openProductionOrder}>
+        {selectedOp && showOpenProductionOrderAction && opHref ? (
+          <ActionButton
+            variant="primary"
+            href={opHref}
+            title={opPageLinkTitle(selectedOp)}
+            onClick={openProductionOrder}
+          >
             Abrir página da OP {selectedOp}
           </ActionButton>
         ) : null}
@@ -207,21 +258,33 @@ export function OpenOrdersProductionDetailContent({
               Copiar pedido
             </ActionButton>
           </HintAction>
-          {extras.proposalNumber ? (
+          {ovNumber && ovHref ? (
             <HintAction hint={DETAIL.openOv} ariaLabel="Ajuda: ver OV" placement="top">
-              <ActionButton variant="ghost" onClick={openOv}>
-                Ver OV {extras.proposalNumber}
+              <ActionButton
+                variant="ghost"
+                href={ovHref}
+                title={opportunityLinkTitle(ovNumber)}
+                onClick={openOv}
+              >
+                Ver OV {ovNumber}
               </ActionButton>
             </HintAction>
           ) : null}
           <HintAction hint={DETAIL.openAccount} ariaLabel="Ajuda: abrir conta" placement="top">
-            <ActionButton
-              variant="primary"
-              onClick={openAccount}
-              disabled={!item.codigo_cadastro?.trim() || !item.loja_cadastro?.trim()}
-            >
-              Abrir conta
-            </ActionButton>
+            {accountHref ? (
+              <ActionButton
+                variant="primary"
+                href={accountHref}
+                title={accountLinkTitle(accountName)}
+                onClick={openAccount}
+              >
+                Abrir conta
+              </ActionButton>
+            ) : (
+              <ActionButton variant="primary" disabled>
+                Abrir conta
+              </ActionButton>
+            )}
           </HintAction>
       </div>
         <div className="cm-open-orders-detail__snapshot" aria-label="Resumo da linha">

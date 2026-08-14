@@ -37,6 +37,44 @@ describe("ActionButton", () => {
     expect(onClick).not.toHaveBeenCalled();
     expect(container.querySelector(".delpi-ui-action-btn.cipa-extra")).toBeTruthy();
   });
+
+  it("com href renderiza anchor real e left-click chama onClick", () => {
+    const onClick = vi.fn();
+    render(
+      <ActionButton
+        href="/apps/commercial/open-orders/01/1/01/op/OP1"
+        title="Abrir página da OP OP1"
+        onClick={onClick}
+      >
+        Abrir página da OP
+      </ActionButton>,
+    );
+
+    const link = screen.getByRole("link", { name: "Abrir página da OP OP1" });
+    expect(link.getAttribute("href")).toBe(
+      "/apps/commercial/open-orders/01/1/01/op/OP1",
+    );
+    fireEvent.click(link);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("com href e Ctrl+click não chama onClick (navegação nativa)", () => {
+    const onClick = vi.fn();
+    render(
+      <ActionButton
+        href="/apps/commercial/customers/1/01"
+        title="Abrir conta"
+        onClick={onClick}
+      >
+        Abrir conta
+      </ActionButton>,
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "Abrir conta" }), {
+      ctrlKey: true,
+    });
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });
 
 describe("BackLink", () => {
