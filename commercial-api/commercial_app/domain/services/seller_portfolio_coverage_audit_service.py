@@ -33,8 +33,16 @@ def _normalize(value: str) -> str:
     return str(value or "").strip()
 
 
+def normalize_customer_store(store: str) -> str:
+    """Normaliza loja TOTVS para chave de cobertura (`1` → `01`)."""
+    value = _normalize(store)
+    if value.isdigit():
+        return value.zfill(2)
+    return value
+
+
 def customer_coverage_key(code: str, store: str) -> tuple[str, str]:
-    return (_normalize(code), _normalize(store))
+    return (_normalize(code), normalize_customer_store(store))
 
 
 class SellerPortfolioCoverageAuditService:

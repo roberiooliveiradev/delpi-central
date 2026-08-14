@@ -463,7 +463,7 @@ export const CM_HELP = {
     customers:
       "Clientes vinculados a esta carteira. Busque e selecione vários para vincular de uma vez.",
     searchCustomers:
-      "Busca no cadastro ativo TOTVS (código ou nome). Já selecionados ou vinculados não aparecem nos resultados.",
+      "Busca no cadastro TOTVS (código, razão social ou nome reduzido). Inclui contas bloqueadas com pedido aberto. Já selecionados ou vinculados não aparecem nos resultados.",
     linkSelectedCustomers:
       "Inclui na carteira todos os clientes selecionados nos chips (até 20 por vez).",
     unlinkSelectedCustomers:

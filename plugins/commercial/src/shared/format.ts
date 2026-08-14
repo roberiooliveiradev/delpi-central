@@ -15,6 +15,14 @@ export function formatDateTime(value: Date | null | undefined): string {
   return value.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
+export function normalizeCustomerStore(store: string): string {
+  const value = store.trim();
+  if (/^\d+$/.test(value)) {
+    return value.padStart(2, "0");
+  }
+  return value;
+}
+
 export function customerKey(code: string, store: string): string {
-  return `${code.trim()}|${store.trim()}`;
+  return `${code.trim()}|${normalizeCustomerStore(store)}`;
 }

@@ -24,6 +24,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Princípios SQL Protheus | [principios-sql.md](./principios-sql.md) | `D_E_L_E_T_`, NOLOCK, `*010`, bind, joins |
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
+| Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
 | Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |
 | Pedido de venda — criador | [pedido-venda-criador.md](./pedido-venda-criador.md) | SC5 sem usuário criador resolvível; `C5_MSUIDT` = UUID técnico |

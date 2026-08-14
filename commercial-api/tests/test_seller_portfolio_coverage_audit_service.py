@@ -89,6 +89,36 @@ def test_audit_gap_uses_open_orders_universe() -> None:
     assert audit.gap.uncovered[0].open_value == 900.0
 
 
+def test_audit_gap_treats_store_1_and_01_as_same_coverage_key() -> None:
+    """SC5 pode devolver loja `1`; SA1/vínculo usa `01` — não gerar gap falso."""
+    from commercial_app.domain.ports.open_orders_metrics_port import CustomerOpenOrderMetric
+    from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
+        customer_coverage_key,
+        normalize_customer_store,
+    )
+
+    assert normalize_customer_store("1") == "01"
+    assert normalize_customer_store("01") == "01"
+    assert customer_coverage_key("000597", "1") == customer_coverage_key("000597", "01")
+
+    service = SellerPortfolioCoverageAuditService()
+    audit = service.audit_active_portfolios(
+        [
+            _portfolio(
+                portfolio_id="p1",
+                name="Carteira A",
+                customers=(SellerCustomerAssignment("000597", "01", "CONDVOLT"),),
+            ),
+        ],
+        universe_metrics=[
+            CustomerOpenOrderMetric("000597", "1", "CONDUOLI", 338.5, False),
+        ],
+        uncovered_list_cap=10,
+    )
+    assert audit.gap.available is True
+    assert audit.gap.uncovered_count == 0
+
+
 def test_audit_ignores_duplicate_customer_within_same_portfolio() -> None:
     service = SellerPortfolioCoverageAuditService()
     audit = service.audit_active_portfolios(

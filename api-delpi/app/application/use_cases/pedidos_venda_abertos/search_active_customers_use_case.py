@@ -17,7 +17,11 @@ class SearchActiveCustomersRequest:
 
 
 class SearchActiveCustomersUseCase:
-    """Lista/busca clientes ativos no cadastro TOTVS (SA1) para amarração de carteira."""
+    """Busca clientes no cadastro TOTVS (SA1) para amarração de carteira.
+
+    Inclui contas bloqueadas e match em nome reduzido (`A1_NREDUZ`), alinhado
+    ao universo do gap «sem cobertura» (pedidos abertos).
+    """
 
     def __init__(self, repository: CustomerQueryRepositoryPort):
         self._repository = repository
