@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
 
@@ -6,8 +7,6 @@ import {
   CommercialActionButton,
   CommercialDataTable,
   CommercialEmptyState,
-  CommercialFilterBarShell,
-  CommercialLoadingCard,
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialStatusBadge,
@@ -18,26 +17,30 @@ import {
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { PORTFOLIO_MEMBERS_CONTENT } from "../../content/portfolioMembersContent";
-import { useActiveCustomerSearch } from "../customers/hooks/useActiveCustomerSearch";
 import { customerKey } from "../../shared/format";
 import type {
   SellerCustomer,
   SellerPortfolio,
   SellerPortfolioMember,
-  TotvsCustomerHit,
 } from "../../types/portfolio";
+import { CustomerAvatar } from "../customers/components/CustomerAvatar";
+import {
+  CustomerSearchPicker,
+  type CustomerSearchSelection,
+} from "../customers/components/CustomerSearchPicker";
 
 type SellerPortfolioDetailProps = {
   portfolio: SellerPortfolio;
   userLabel: string;
   savingName: boolean;
   busyCustomerKey: string | null;
+  linkingCustomers?: boolean;
   busyMemberUserId: string | null;
   overlappingCustomerKeys?: ReadonlySet<string>;
   otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
-  directoryLabelFor: (userId: string, fallback?: string | null) => string;
+  directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string;
   onSaveName: (displayName: string) => void;
-  onAddCustomer: (hit: TotvsCustomerHit) => void;
+  onAddCustomers: (items: CustomerSearchSelection[]) => void;
   onRemoveCustomer: (code: string, store: string) => void;
   onAddMember: (userId: string) => void;
   onRemoveMember: (userId: string) => void;
@@ -60,12 +63,13 @@ export function SellerPortfolioDetail({
   userLabel,
   savingName,
   busyCustomerKey,
+  linkingCustomers = false,
   busyMemberUserId,
   overlappingCustomerKeys,
   otherPortfolioLabelsFor,
   directoryLabelFor,
   onSaveName,
-  onAddCustomer,
+  onAddCustomers,
   onRemoveCustomer,
   onAddMember,
   onRemoveMember,
@@ -77,88 +81,35 @@ export function SellerPortfolioDetail({
 }: SellerPortfolioDetailProps) {
   const [editName, setEditName] = useState(portfolio.display_name);
   const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
-  const {
-    query: customerQuery,
-    setQuery: setCustomerQuery,
-    hits: customerHits,
-    searching: searchingCustomers,
-    error: customerSearchError,
-    queryReady,
-    reset: resetCustomerSearch,
-  } = useActiveCustomerSearch();
+  const [customerPicker, setCustomerPicker] = useState<CustomerSearchSelection[]>([]);
 
   useEffect(() => {
     setEditName(portfolio.display_name);
-    resetCustomerSearch();
     setMemberPicker([]);
-  }, [portfolio.id, portfolio.display_name, resetCustomerSearch]);
+    setCustomerPicker([]);
+  }, [portfolio.id, portfolio.display_name]);
 
   const linked = portfolio.customers ?? [];
+  const linkedKeys = useMemo(
+    () =>
+      new Set(
+        linked.map((customer) =>
+          customerKey(customer.customer_code, customer.customer_store),
+        ),
+      ),
+    [linked],
+  );
+
+  useEffect(() => {
+    setCustomerPicker((prev) =>
+      prev.filter((item) => !linkedKeys.has(customerKey(item.code, item.store))),
+    );
+  }, [linkedKeys]);
   const members = resolveMembers(portfolio);
   const isOrphan = members.length === 0;
   const memberIds = useMemo(
     () => new Set(members.map((member) => member.user_id)),
     [members],
-  );
-
-  const hitColumns = useMemo<DataTableColumn<TotvsCustomerHit>[]>(
-    () => [
-      {
-        key: "code",
-        header: "Código/loja",
-        headerHint: CM_HELP.sellerPortfolios.colCustomerCode,
-        render: (row) => `${row.code}/${row.store}`,
-      },
-      {
-        key: "name",
-        header: "Nome",
-        headerHint: CM_HELP.sellerPortfolios.colCustomerName,
-        render: (row) => row.name,
-      },
-      {
-        key: "coverage",
-        header: "Cobertura",
-        headerHint: CM_HELP.sellerPortfolios.colCoverageHit,
-        render: (row) => {
-          const key = customerKey(row.code, row.store);
-          const alreadyLinked = linked.some(
-            (customer) => customerKey(customer.customer_code, customer.customer_store) === key,
-          );
-          if (alreadyLinked) return "—";
-          const others = otherPortfolioLabelsFor?.(row.code, row.store) ?? [];
-          if (others.length === 0) return "—";
-          return (
-            <CommercialStatusBadge
-              label={`${PORTFOLIO_COVERAGE_CONTENT.overlappingAlsoIn}: ${others.join(", ")}`}
-              variant="warning"
-            />
-          );
-        },
-      },
-      {
-        key: "action",
-        header: "Ação",
-        render: (row) => {
-          const key = customerKey(row.code, row.store);
-          const alreadyLinked = linked.some(
-            (customer) => customerKey(customer.customer_code, customer.customer_store) === key,
-          );
-          if (alreadyLinked) {
-            return <CommercialStatusBadge label="Já vinculado" variant="success" />;
-          }
-          return (
-            <CommercialActionButton
-              variant="primary"
-              disabled={busyCustomerKey === key}
-              onClick={() => onAddCustomer(row)}
-            >
-              {busyCustomerKey === key ? "Vinculando…" : "Vincular"}
-            </CommercialActionButton>
-          );
-        },
-      },
-    ],
-    [busyCustomerKey, linked, onAddCustomer, otherPortfolioLabelsFor],
   );
 
   const linkedColumns = useMemo<DataTableColumn<SellerCustomer>[]>(
@@ -206,7 +157,7 @@ export function SellerPortfolioDetail({
           return (
             <CommercialActionButton
               variant="ghost"
-              disabled={busyCustomerKey === key}
+              disabled={busyCustomerKey === key || linkingCustomers}
               onClick={() => onRemoveCustomer(row.customer_code, row.customer_store)}
               aria-label={`Remover ${row.customer_name ?? row.customer_code}`}
             >
@@ -216,7 +167,13 @@ export function SellerPortfolioDetail({
         },
       },
     ],
-    [busyCustomerKey, onRemoveCustomer, otherPortfolioLabelsFor, overlappingCustomerKeys],
+    [
+      busyCustomerKey,
+      linkingCustomers,
+      onRemoveCustomer,
+      otherPortfolioLabelsFor,
+      overlappingCustomerKeys,
+    ],
   );
 
   const memberColumns = useMemo<DataTableColumn<SellerPortfolioMember>[]>(
@@ -396,39 +353,63 @@ export function SellerPortfolioDetail({
         <div className="cm-portfolios-detail-stack">
           <section className="cm-portfolios-detail-block" aria-label="Buscar e vincular">
             <h3 className="cm-section-subtitle">Buscar e vincular</h3>
-            <CommercialFilterBarShell embedded ariaLabel="Buscar no cadastro ativo">
-              <CommercialTextField
-                label="Buscar no cadastro"
-                hint={CM_HELP.sellerPortfolios.searchCustomers}
-                type="search"
-                value={customerQuery}
-                onChange={setCustomerQuery}
-                placeholder="Código ou nome do cliente"
-              />
-            </CommercialFilterBarShell>
-            <div aria-live="polite">
-              {!queryReady ? (
-                <CommercialEmptyState
-                  title="Digite para buscar"
-                  message="Informe código ou nome (ao menos 2 caracteres) para listar clientes ativos."
-                />
-              ) : searchingCustomers ? (
-                <CommercialLoadingCard title="Buscando no cadastro…" variant="panel" />
-              ) : customerSearchError ? (
-                <CommercialStateBanner variant="error">{customerSearchError}</CommercialStateBanner>
-              ) : customerHits.length === 0 ? (
-                <CommercialEmptyState
-                  title="Nenhum cliente encontrado"
-                  message={`Nada para “${customerQuery.trim()}”. Tente outro código ou nome.`}
-                />
-              ) : (
-                <CommercialDataTable
-                  rows={customerHits}
-                  columns={hitColumns}
-                  rowKey={(row, index) => customerKey(row.code, row.store) || `hit-${index}`}
-                  layout="embedded"
+            <CustomerSearchPicker
+              value={customerPicker}
+              onChange={(next) => {
+                setCustomerPicker(
+                  next.filter(
+                    (item) => !linkedKeys.has(customerKey(item.code, item.store)),
+                  ),
+                );
+              }}
+              maxSelected={20}
+              disabled={linkingCustomers}
+              labels={{
+                title: "Buscar no cadastro",
+                hint: CM_HELP.sellerPortfolios.searchCustomers,
+                placeholder: "Código ou nome do cliente",
+              }}
+              renderOptionLeading={(hit) => (
+                <CustomerAvatar
+                  code={hit.code}
+                  store={hit.store}
+                  name={(hit.name || "").trim() || hit.code}
+                  size="sm"
                 />
               )}
+              renderSelectedChip={({ item, label, disabled, onRemove }) => (
+                <span className="delpi-ui-tag-chip">
+                  <CustomerAvatar
+                    code={item.code}
+                    store={item.store}
+                    name={(item.name || "").trim() || item.code}
+                    size="sm"
+                  />
+                  <span>{label}</span>
+                  <button
+                    type="button"
+                    className="delpi-ui-tag-chip__remove"
+                    disabled={disabled || linkingCustomers}
+                    aria-label={`Remover ${label}`}
+                    onClick={onRemove}
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </span>
+              )}
+            />
+            <div className="cm-portfolios-form__actions">
+              <CommercialActionButton
+                variant="primary"
+                disabled={linkingCustomers || customerPicker.length === 0}
+                onClick={() => onAddCustomers(customerPicker)}
+              >
+                {linkingCustomers
+                  ? "Vinculando…"
+                  : customerPicker.length <= 1
+                    ? "Vincular selecionado"
+                    : `Vincular selecionados (${customerPicker.length})`}
+              </CommercialActionButton>
             </div>
           </section>
 

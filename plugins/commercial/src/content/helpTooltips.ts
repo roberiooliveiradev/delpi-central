@@ -438,7 +438,13 @@ export const CM_HELP = {
     removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
     edit: "Altera o nome de exibição da carteira selecionada.",
     customers:
-      "Clientes vinculados a esta carteira. Use a busca por código ou nome para incluir.",
+      "Clientes vinculados a esta carteira. Busque e selecione vários para vincular de uma vez.",
+    searchCustomers:
+      "Busca no cadastro ativo TOTVS (código ou nome). Já vinculados não entram na seleção.",
+    linkSelectedCustomers:
+      "Inclui na carteira todos os clientes selecionados nos chips (até 20 por vez).",
+    unlinkSelectedCustomers:
+      "Remove da carteira os clientes marcados na tabela.",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
     colUserId: "Responsável da carteira (usuário Minha Delpi).",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
@@ -464,8 +470,6 @@ export const CM_HELP = {
     orgLoadSnippet:
       "Carga compacta: clientes, valor aberto, atenção e membros (ou carteiras no eixo pessoa).",
     cardOpenHint: "Abrir carteira",
-    searchCustomers:
-      "Busca clientes ativos por código ou nome (mínimo de dois caracteres).",
     deactivate:
       "A carteira sai do escopo operacional. Os clientes continuam vinculados.",
     purge:

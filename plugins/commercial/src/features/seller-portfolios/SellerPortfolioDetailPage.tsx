@@ -37,8 +37,8 @@ import type {
   SellerPortfolio,
   SellerPortfolioAuditEvent,
   SellerPortfoliosCoverageAudit,
-  TotvsCustomerHit,
 } from "../../types/portfolio";
+import type { CustomerSearchSelection } from "../customers/components/CustomerSearchPicker";
 import {
   overlappingCustomerKeySetForPortfolio,
   readCoverageLinkWarning,
@@ -93,6 +93,7 @@ export function SellerPortfolioDetailPage({
   const [auditError, setAuditError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
+  const [linkingCustomers, setLinkingCustomers] = useState(false);
   const [busyMemberUserId, setBusyMemberUserId] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
@@ -263,39 +264,61 @@ export function SellerPortfolioDetailPage({
     }
   }
 
-  async function handleAddCustomer(hit: TotvsCustomerHit) {
-    if (!portfolio) return;
-    const key = customerKey(hit.code, hit.store);
-    setBusyCustomerKey(key);
+  async function handleAddCustomers(items: CustomerSearchSelection[]) {
+    if (!portfolio || items.length === 0) return;
+    setLinkingCustomers(true);
+    let ok = 0;
+    let failed = 0;
+    let lastWarning: ReturnType<typeof readCoverageLinkWarning> = null;
+    let latest = portfolio;
     try {
-      const result = await addSellerCustomer(portfolio.id, {
-        customer_code: hit.code,
-        customer_store: hit.store,
-        customer_name: hit.name,
-      });
-      setPortfolio(stripPortfolioCoverageFields(result));
-      const warning = readCoverageLinkWarning(result);
-      if (warning) {
-        const others = warning.other_portfolios
+      for (const item of items) {
+        try {
+          const result = await addSellerCustomer(portfolio.id, {
+            customer_code: item.code,
+            customer_store: item.store,
+            customer_name: item.name,
+          });
+          latest = stripPortfolioCoverageFields(result);
+          setPortfolio(latest);
+          const warning = readCoverageLinkWarning(result);
+          if (warning) lastWarning = warning;
+          ok += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      if (lastWarning) {
+        const others = lastWarning.other_portfolios
           .map((item) => item.display_name.trim() || item.id)
           .filter(Boolean)
           .join(", ");
         notifyWarning(
           others
-            ? `${warning.message} Também em: ${others}.`
-            : warning.message,
+            ? `${lastWarning.message} Também em: ${others}.`
+            : lastWarning.message,
           { title: PORTFOLIO_COVERAGE_CONTENT.linkWarningTitle },
         );
         void getSellerPortfoliosCoverageAudit()
           .then((audit) => setCoverageAudit(audit))
           .catch(() => undefined);
-      } else {
-        notifySuccess(`Cliente ${hit.name} adicionado à carteira.`);
       }
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : "Erro ao adicionar cliente.");
+      if (ok > 0 && failed === 0) {
+        notifySuccess(
+          ok === 1
+            ? "Cliente adicionado à carteira."
+            : `${ok} clientes adicionados à carteira.`,
+        );
+      } else if (ok > 0 && failed > 0) {
+        notifyWarning(
+          `${ok} vinculado(s); ${failed} falhou/falharam.`,
+          { title: "Vínculo parcial" },
+        );
+      } else if (failed > 0) {
+        notifyError("Não foi possível vincular os clientes selecionados.");
+      }
     } finally {
-      setBusyCustomerKey(null);
+      setLinkingCustomers(false);
     }
   }
 
@@ -548,12 +571,13 @@ export function SellerPortfolioDetailPage({
             )}
             savingName={savingName}
             busyCustomerKey={busyCustomerKey}
+            linkingCustomers={linkingCustomers}
             busyMemberUserId={busyMemberUserId}
             overlappingCustomerKeys={overlappingCustomerKeys}
             otherPortfolioLabelsFor={otherPortfolioLabelsFor}
             directoryLabelFor={directoryLabelFor}
             onSaveName={(name) => void handleSaveName(name)}
-            onAddCustomer={(hit) => void handleAddCustomer(hit)}
+            onAddCustomers={(items) => void handleAddCustomers(items)}
             onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
             onAddMember={(userId) => void handleAddMember(userId)}
             onRemoveMember={(userId) => void handleRemoveMember(userId)}
