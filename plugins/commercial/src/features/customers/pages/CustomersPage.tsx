@@ -24,13 +24,13 @@ import {
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
-import { PortfolioBillingShareCard } from "../components/PortfolioBillingShareCard";
 import { CustomersTable } from "../components/CustomersTable";
 import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
 import { useCustomersData } from "../hooks/useCustomersData";
 import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
 import { useCustomersListState } from "../hooks/useCustomersListState";
+import { usePortfolioBillingShare } from "../hooks/usePortfolioBillingShare";
 import type {
   CustomerAttentionFilter,
   CustomerTrendFilter,
@@ -138,6 +138,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerNameByKey,
     listState,
     trendWindowDays,
+  });
+
+  const portfolioShare = usePortfolioBillingShare({
+    sellerId: canFilterPortfolios ? sellerIdFilter : null,
   });
 
   const coverageCustomers = useMemo(
@@ -262,6 +266,16 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
       label: "Após filtros",
       value: filteredCustomers.length.toLocaleString("pt-BR"),
     },
+    ...(portfolioShare.allowed
+      ? [
+          {
+            id: "share",
+            label: "Share empresa",
+            value: portfolioShare.shareLabel,
+            tone: "neutral" as const,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -467,10 +481,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 </CommercialActionButton>
             </CommercialEmptyState>
           ) : null}
-
-          <PortfolioBillingShareCard
-            sellerId={canFilterPortfolios ? sellerIdFilter : null}
-          />
 
           <CustomerBillingSeriesChart customers={aggregation.customers} />
 
