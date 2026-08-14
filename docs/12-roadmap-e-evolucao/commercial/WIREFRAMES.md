@@ -78,6 +78,105 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
 
+## WF-HERO — Densidade vertical do PageHero (ago/2026)
+
+> **Kit:** `PageHero` `density="comfortable" | "compact"` · CSS `--compact` em `plugin-ui`  
+> **MFE:** `CommercialPageHero` default `compact` · filtros **fora** do `children` do hero  
+> **Meta:** conteúdo principal (KPI/tabela) visível sem scroll em viewport ~900px
+
+### WF-HERO-00 — Template lista (alvo)
+
+```text
+┌─ TopBar ─────────────────────────────────────────────────────────────┐
+│ Início · Visão geral · …                              [avatar] Nome │
+└──────────────────────────────────────────────────────────────────────┘
+┌─ PagePath / SubNav (se houver) ─ altura mínima ──────────────────────┐
+└──────────────────────────────────────────────────────────────────────┘
+┌─ PageHero compact ───────────────────────────────────────────────────┐
+│ EYEBROW                                                              │
+│ Título  [badge]                          [ações primárias] [Atualizar]│
+│ Subtítulo em uma linha (muted, 13–14px)                              │
+│ [kpi][kpi][kpi][kpi]   ← no máx. 4, altura ~48–56px                  │
+└──────────────────────────────────────────────────────────────────────┘
+┌─ Filtros (fora do hero) ─────────────────────────────────────────────┐
+│ chips / período / busca / selects — FilterBarShell compact           │
+└──────────────────────────────────────────────────────────────────────┘
+┌─ Conteúdo (visível acima da dobra) ──────────────────────────────────┐
+│ Indicadores / tabela / cards …                                       │
+```
+
+### WF-HERO-OV — Visão geral
+
+```text
+┌ Hero compact: Visão geral [IDD] · subtítulo · [Atualizar] ─┐  ~72px
+┌ Filtros: período pills + linha de campos (compact) ───────┐  ~96px
+┌ Indicadores (KPIs) ─ visível sem scroll ──────────────────┐
+```
+
+### WF-HERO-08 — Pedidos em aberto
+
+```text
+┌ Hero: Pedidos em aberto · [Atualizado] [Atualizar] ──────┐
+│ [Linhas] [Valor aberto]   ← ≤4 highlights no hero          │
+┌ Atenção chips | Concentrar chips ─────────────────────────┐
+┌ Filtros (Busca/Unidade/Cliente/Entrega) — preferir colapsado ┐
+┌ Toolbar tabela + primeiras linhas VISÍVEIS ───────────────┐
+```
+
+### WF-HERO-01R — Minha carteira
+
+```text
+┌ Hero: Minha carteira · [Ver atrasos] [Atualizar] ─────────┐
+│ [Clientes] [Valor aberto] [Atraso] [Após filtros] — 4 KPIs │
+┌ Foco · Tendência · 7d/30d/90d (fora do hero) ─────────────┐
+┌ Buscar | Carteira ────────────────────────────────────────┐
+┌ Share / série / ranking — início visível ─────────────────┐
+```
+
+### WF-HERO-05R — Admin Carteiras
+
+```text
+┌ Hero: Carteiras [n ativas] · [+ Nova] [Transferência] [Export] [Atualizar] ┐
+│ (sem grid 6 KPIs dentro do hero)                                           │
+┌ MetricStrip 1 linha: Carteiras|Ativas|Inativas|Clientes|Overlap|Sem cob. ─┐
+┌ Lista|Org · Situação chips · Busca ───────────────────────────────────────┐
+┌ Tabela Carteiras (visível) ───────────────────────────────────────────────┐
+```
+
+CTA «Nova carteira» só no hero (sem duplicata na section da lista).
+
+### WF-HERO-ADM — Equipe / Painel
+
+```text
+Equipe:
+┌ Hero compact: Equipe · desc 1 linha · [Lista|Diagrama] [Atualizar] ┐
+┌ Buscar | Grupo | Carteira | Online ────────────────────────────────┐
+┌ Equipe (n) + tabela ───────────────────────────────────────────────┐
+
+Painel:
+┌ Hero compact: Painel · desc · [Atualizar] ─────────────────────────┐
+┌ KPI cards (fora) · Ações rápidas ──────────────────────────────────┐
+```
+
+### Matriz PageHero × composição
+
+| Página | density | Filtros no hero? | Highlights |
+|--------|---------|------------------|------------|
+| PluginShell Home | compact | não | ≤4 |
+| Overview | compact | fora | 0 |
+| Open Orders | compact | fora | ≤4 |
+| Customers | compact | fora | ≤4 |
+| My Day | compact | chips fora do body | ≤3 |
+| Seller Portfolios | compact | busca/chips fora | 0; MetricStrip 6 |
+| Seller Portfolio Detail | compact | leve | ≤4 |
+| Admin Home / Team / Groups | compact | fora | 0 |
+| Proposals + details | compact | conforme | ≤4 |
+| Analytics * | compact | AnalyticsFilters fora | 0–2 |
+| Customer / Order / Invoice detail | compact | n/a | ≤4 |
+| User Profile | compact | n/a | 0 |
+
+### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
+
 | Tema | Wireframe / nota | Status implementação |
 |------|------------------|----------------------|
 | `returnTo` / `returnLabel` | PagePath em detalhes (pedido Conta, OV, proposta, linha) | helper `commercialNavigationReturn` |
