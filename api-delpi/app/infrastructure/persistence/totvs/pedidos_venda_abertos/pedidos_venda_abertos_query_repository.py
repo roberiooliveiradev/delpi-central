@@ -125,7 +125,11 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
         self,
         customer_keys: Sequence[tuple[str, str]] | None = None,
     ) -> list[dict]:
-        """Agrega valor aberto e atraso por (codigo_cadastro, loja_cadastro).
+        """Agrega valor aberto e atraso por cliente da **tabela SA1**.
+
+        Só retorna pares que existem em `SA1010` (cadastro). Pedidos com
+        `C5_CLIENTE` órfão (ex.: código sem SA1) não entram no gap/load-summary.
+        Loja numérica `1`/`01` casa por valor inteiro. Nome preferencial: `A1_NREDUZ`.
 
         Overdue = data_entrega < hoje e saldo > 0 (mesma regra do MFE commercial).
         """
@@ -142,18 +146,32 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                 for code, store in pairs:
                     clauses.append(
                         "("
-                        "NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ? "
-                        "AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?"
+                        "NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') = ? "
+                        "AND ("
+                        "NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') = ? "
+                        "OR ("
+                        "TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) IS NOT NULL "
+                        "AND TRY_CAST(? AS INT) IS NOT NULL "
+                        "AND TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) "
+                        "= TRY_CAST(? AS INT)"
+                        ")"
+                        ")"
                         ")"
                     )
-                    params.extend([code, store])
+                    params.extend([code, store, store, store])
                 filter_sql = "AND (" + " OR ".join(clauses) + ")"
 
         sql = f"""
             SELECT
-                NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') AS customer_code,
-                NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS customer_store,
-                MAX(NULLIF(LTRIM(RTRIM(v.nome_cliente)), '')) AS customer_name,
+                NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') AS customer_code,
+                NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS customer_store,
+                MAX(
+                    COALESCE(
+                        NULLIF(LTRIM(RTRIM(SA1.A1_NREDUZ)), ''),
+                        NULLIF(LTRIM(RTRIM(SA1.A1_NOME)), ''),
+                        NULLIF(LTRIM(RTRIM(v.nome_cliente)), '')
+                    )
+                ) AS customer_name,
                 ISNULL(SUM(v.valor_aberto), 0) AS open_value,
                 CASE
                     WHEN SUM(
@@ -168,12 +186,26 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                     ELSE 0
                 END AS has_overdue
             {_ITEMS_FROM}
-            WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') IS NOT NULL
-              AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') IS NOT NULL
+            INNER JOIN SA1010 SA1 WITH (NOLOCK)
+              ON SA1.D_E_L_E_T_ = ''
+             AND NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '')
+               = NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '')
+             AND (
+                   NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '')
+                     = NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '')
+                OR (
+                       TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) IS NOT NULL
+                   AND TRY_CAST(NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS INT) IS NOT NULL
+                   AND TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT)
+                     = TRY_CAST(NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS INT)
+                   )
+                 )
+            WHERE NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') IS NOT NULL
+              AND NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') IS NOT NULL
               {filter_sql}
             GROUP BY
-                NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), ''),
-                NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '')
+                NULLIF(LTRIM(RTRIM(SA1.A1_COD)), ''),
+                NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '')
             ORDER BY open_value DESC
         """
         with self:

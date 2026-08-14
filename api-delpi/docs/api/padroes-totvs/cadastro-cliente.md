@@ -21,4 +21,8 @@ Referência de implementação: lookup NF (`TotvsInvoiceIssuanceLookupRepository
 
 ## Loja (`A1_LOJA` / `C5_LOJACLI`)
 
-Loja numérica: normalizar com `zfill(2)` (`1` → `01`) em chaves de cobertura / identidade. SC5 e SA1 podem divergir no padding.
+Loja numérica: normalizar com `zfill(2)` (`1` → `01`) em chaves de cobertura / identidade. SC5 e SA1 podem divergir no padding. Na agregação de métricas, o join SA1×SC5 casa loja por igualdade **ou** por `TRY_CAST(… AS INT)`.
+
+## Gap «sem cobertura» × cadastro
+
+Universo operacional = pedidos abertos **∩ SA1**. Código só no SC5 (órfão, sem linha em `SA1010`) **não** entra no gap nem na busca de vínculo — regularizar cadastro no Protheus antes de amarrar carteira.
