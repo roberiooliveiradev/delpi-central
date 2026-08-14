@@ -770,7 +770,8 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 
 ┌─ Clientes ─────────────────────────────────────────────────────────────┐
 │ CustomerSearchPicker [avatars] chips · [Vincular selecionados]         │
-│ Vinculados: [☑] Código · [avatar] Nome · Cobertura · Remover           │
+│ Vinculados: filtrar · [☑ Selecionar todos filtrados] · Limpar seleção  │
+│ Tabela: [☑] Código · [avatar] Nome · Cobertura · Remover               │
 │ Toolbar: N selecionados · [Desvincular selecionados]                   │
 └────────────────────────────────────────────────────────────────────────┘
 ```

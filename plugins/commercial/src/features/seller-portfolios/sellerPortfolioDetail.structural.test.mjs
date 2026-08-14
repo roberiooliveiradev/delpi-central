@@ -58,4 +58,11 @@ describe("SellerPortfolioDetail UX", () => {
     assert.doesNotMatch(detail, /Nome de exibição/);
     assert.doesNotMatch(detail, /onSaveName|onDeactivate|onTransfer/);
   });
+
+  it("oferece atalhos de seleção filtrada nos vinculados", () => {
+    assert.match(detail, /linkedFilter/);
+    assert.match(detail, /filteredLinked/);
+    assert.match(detail, /Selecionar todos filtrados/);
+    assert.match(detail, /Limpar seleção/);
+  });
 });

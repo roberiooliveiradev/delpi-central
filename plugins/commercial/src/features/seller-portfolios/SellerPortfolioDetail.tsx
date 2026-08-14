@@ -15,6 +15,7 @@ import {
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialStatusBadge,
+  CommercialTextField,
   CommercialViewTransition,
   type DataTableColumn,
 } from "../../app/commercialUi";
@@ -63,6 +64,20 @@ function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
   return owner ? [{ user_id: owner, role: "owner" }] : [];
 }
 
+function linkedCustomerMatchesFilter(row: SellerCustomer, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const haystack = [
+    row.customer_code,
+    row.customer_store,
+    row.customer_name ?? "",
+    `${row.customer_code}/${row.customer_store}`,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(needle);
+}
+
 export function SellerPortfolioDetail({
   portfolio,
   busyCustomerKey,
@@ -85,11 +100,13 @@ export function SellerPortfolioDetail({
   const [selectedLinkedKeys, setSelectedLinkedKeys] = useState<Set<string>>(
     () => new Set(),
   );
+  const [linkedFilter, setLinkedFilter] = useState("");
 
   useEffect(() => {
     setMemberPicker([]);
     setCustomerPicker([]);
     setSelectedLinkedKeys(new Set());
+    setLinkedFilter("");
   }, [portfolio.id]);
 
   const linked = portfolio.customers ?? [];
@@ -144,11 +161,22 @@ export function SellerPortfolioDetail({
     [memberIds],
   );
 
-  const allLinkedSelected =
-    linked.length > 0 &&
-    linked.every((row) =>
-      selectedLinkedKeys.has(customerKey(row.customer_code, row.customer_store)),
-    );
+  const filteredLinked = useMemo(
+    () => linked.filter((row) => linkedCustomerMatchesFilter(row, linkedFilter)),
+    [linked, linkedFilter],
+  );
+
+  const filteredLinkedKeys = useMemo(
+    () =>
+      filteredLinked.map((row) =>
+        customerKey(row.customer_code, row.customer_store),
+      ),
+    [filteredLinked],
+  );
+
+  const allFilteredSelected =
+    filteredLinkedKeys.length > 0 &&
+    filteredLinkedKeys.every((key) => selectedLinkedKeys.has(key));
 
   const linkedColumns = useMemo<DataTableColumn<SellerCustomer>[]>(
     () => [
@@ -505,30 +533,44 @@ export function SellerPortfolioDetail({
 
           <section className="cm-portfolios-detail-block" aria-label="Clientes vinculados">
             <h3 className="cm-section-subtitle">
-              Na carteira ({linked.length.toLocaleString("pt-BR")})
+              Na carteira ({linked.length.toLocaleString("pt-BR")}
+              {linkedFilter.trim()
+                ? ` · ${filteredLinked.length.toLocaleString("pt-BR")} filtrado(s)`
+                : ""}
+              )
             </h3>
             {linked.length > 0 ? (
               <CommercialDataListToolbar
                 leading={
-                  <NativeCheckboxControl
-                    id={`portfolio-linked-select-all-${portfolio.id}`}
-                    checked={allLinkedSelected}
-                    onChange={(checked) => {
-                      if (checked) {
-                        setSelectedLinkedKeys(
-                          new Set(
-                            linked.map((row) =>
-                              customerKey(row.customer_code, row.customer_store),
-                            ),
-                          ),
-                        );
-                      } else {
-                        setSelectedLinkedKeys(new Set());
+                  <div className="cm-row-actions">
+                    <CommercialTextField
+                      label="Filtrar vinculados"
+                      hint={CM_HELP.sellerPortfolios.filterLinkedCustomers}
+                      value={linkedFilter}
+                      onChange={setLinkedFilter}
+                      placeholder="Código, loja ou nome"
+                    />
+                    <NativeCheckboxControl
+                      id={`portfolio-linked-select-filtered-${portfolio.id}`}
+                      checked={allFilteredSelected}
+                      onChange={(checked) => {
+                        setSelectedLinkedKeys((prev) => {
+                          const next = new Set(prev);
+                          for (const key of filteredLinkedKeys) {
+                            if (checked) next.add(key);
+                            else next.delete(key);
+                          }
+                          return next;
+                        });
+                      }}
+                      label={
+                        linkedFilter.trim()
+                          ? "Selecionar todos filtrados"
+                          : "Selecionar todos"
                       }
-                    }}
-                    label="Selecionar todos"
-                    disabled={unlinkingCustomers}
-                  />
+                      disabled={unlinkingCustomers || filteredLinkedKeys.length === 0}
+                    />
+                  </div>
                 }
                 actions={
                   <div className="cm-row-actions">
@@ -536,6 +578,15 @@ export function SellerPortfolioDetail({
                       <span className="cm-muted">
                         {selectedLinkedKeys.size.toLocaleString("pt-BR")} selecionado(s)
                       </span>
+                    ) : null}
+                    {selectedLinkedKeys.size > 0 ? (
+                      <CommercialActionButton
+                        variant="ghost"
+                        disabled={unlinkingCustomers}
+                        onClick={() => setSelectedLinkedKeys(new Set())}
+                      >
+                        Limpar seleção
+                      </CommercialActionButton>
                     ) : null}
                     <CommercialActionButton
                       variant="ghost"
@@ -563,7 +614,7 @@ export function SellerPortfolioDetail({
               />
             ) : null}
             <CommercialViewTransition
-              transitionKey={`linked-${portfolio.id}-${linked.length}`}
+              transitionKey={`linked-${portfolio.id}-${filteredLinked.length}-${linkedFilter}`}
               tone="panel"
             >
               {linked.length === 0 ? (
@@ -571,9 +622,14 @@ export function SellerPortfolioDetail({
                   title="Carteira vazia"
                   message="Use a busca acima para vincular o primeiro cliente."
                 />
+              ) : filteredLinked.length === 0 ? (
+                <CommercialEmptyState
+                  title="Nenhum cliente no filtro"
+                  message="Ajuste a busca ou limpe o filtro para ver os vinculados."
+                />
               ) : (
                 <CommercialDataTable
-                  rows={linked}
+                  rows={filteredLinked}
                   columns={linkedColumns}
                   rowKey={(row, index) =>
                     customerKey(row.customer_code, row.customer_store) || `linked-${index}`

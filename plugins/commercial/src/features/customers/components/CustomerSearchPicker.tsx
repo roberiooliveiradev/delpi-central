@@ -92,6 +92,40 @@ export function CustomerSearchPicker({
     reset();
   };
 
+  const selectAllHits = () => {
+    if (disabled || maxSelected === 1 || hits.length === 0) return;
+    const remaining =
+      typeof maxSelected === "number" && maxSelected > 0
+        ? Math.max(0, maxSelected - value.length)
+        : hits.length;
+    if (remaining === 0) return;
+    const additions: CustomerSearchSelection[] = [];
+    for (const hit of hits) {
+      if (additions.length >= remaining) break;
+      const code = hit.code.trim();
+      const store = hit.store.trim();
+      if (!code || !store) continue;
+      const key = customerKey(code, store);
+      if (selectedKeys.has(key)) continue;
+      if (additions.some((item) => customerKey(item.code, item.store) === key)) {
+        continue;
+      }
+      additions.push({
+        code,
+        store,
+        name: (hit.name || "").trim(),
+      });
+    }
+    if (additions.length === 0) return;
+    onChange([...value, ...additions]);
+    reset();
+  };
+
+  const selectableHitCount = hits.filter((hit) => {
+    const key = customerKey(hit.code, hit.store);
+    return key && !selectedKeys.has(key);
+  }).length;
+
   return (
     <div
       className={["delpi-ui-user-directory-picker", "cm-customer-search-picker", className]
@@ -127,38 +161,59 @@ export function CustomerSearchPicker({
         <p className="delpi-ui-user-directory-picker__status">Nenhum cliente encontrado.</p>
       ) : null}
       {hits.length > 0 ? (
-        <ul className="delpi-ui-user-directory-picker__results">
-          {hits.map((hit) => {
-            const key = customerKey(hit.code, hit.store);
-            return (
-              <li key={key || `${hit.code}-${hit.store}`}>
-                <button
-                  type="button"
-                  className={
-                    renderOptionLeading
-                      ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
-                      : undefined
-                  }
-                  disabled={
-                    disabled ||
-                    selectedKeys.has(key) ||
-                    (atLimit && maxSelected !== 1)
-                  }
-                  onClick={() => selectHit(hit)}
-                >
-                  {renderOptionLeading ? (
-                    <span className="delpi-ui-user-directory-picker__option-leading">
-                      {renderOptionLeading(hit)}
+        <>
+          {maxSelected !== 1 && selectableHitCount > 0 ? (
+            <div className="delpi-ui-user-directory-picker__status">
+              <button
+                type="button"
+                className="delpi-ui-user-directory-picker__option"
+                disabled={disabled || atLimit}
+                onClick={selectAllHits}
+              >
+                {atLimit
+                  ? "Limite de seleção atingido"
+                  : `Selecionar todos filtrados (${Math.min(
+                      selectableHitCount,
+                      typeof maxSelected === "number" && maxSelected > 0
+                        ? Math.max(0, maxSelected - value.length)
+                        : selectableHitCount,
+                    )})`}
+              </button>
+            </div>
+          ) : null}
+          <ul className="delpi-ui-user-directory-picker__results">
+            {hits.map((hit) => {
+              const key = customerKey(hit.code, hit.store);
+              return (
+                <li key={key || `${hit.code}-${hit.store}`}>
+                  <button
+                    type="button"
+                    className={
+                      renderOptionLeading
+                        ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
+                        : undefined
+                    }
+                    disabled={
+                      disabled ||
+                      selectedKeys.has(key) ||
+                      (atLimit && maxSelected !== 1)
+                    }
+                    onClick={() => selectHit(hit)}
+                  >
+                    {renderOptionLeading ? (
+                      <span className="delpi-ui-user-directory-picker__option-leading">
+                        {renderOptionLeading(hit)}
+                      </span>
+                    ) : null}
+                    <span className="delpi-ui-user-directory-picker__option-label">
+                      {hitLabel(hit)}
                     </span>
-                  ) : null}
-                  <span className="delpi-ui-user-directory-picker__option-label">
-                    {hitLabel(hit)}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       ) : null}
       {value.length > 0 ? (
         <div

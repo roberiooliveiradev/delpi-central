@@ -447,6 +447,8 @@ export const CM_HELP = {
       "Inclui na carteira todos os clientes selecionados nos chips (até 20 por vez).",
     unlinkSelectedCustomers:
       "Remove da carteira os clientes marcados na tabela.",
+    filterLinkedCustomers:
+      "Filtra a lista de vinculados por código, loja ou nome. Use com «Selecionar todos filtrados».",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
     colUserId: "Responsável da carteira (usuário Minha Delpi).",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
