@@ -7,6 +7,7 @@ import { runTabularExport } from "@delpi/plugin-ui/index";
 
 import { getPortfolioBillingRanking } from "../../../api/analyticsApi";
 import {
+  CommercialAvatar,
   CommercialDataTable,
   CommercialExcelExportButton,
   CommercialLoadingCard,
