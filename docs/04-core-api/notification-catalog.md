@@ -118,6 +118,7 @@ Não é necessário editar `NotificationPreferencesPanel`, `NotificationCard` et
 | `lancamento_notas_fiscais` | Lançamento de Notas Fiscais | `lancamento-notas-fiscais` | `lancamento-notas-fiscais` |
 | `controle_mp` | Controle MP | `controle_mp` | `controle-mp` |
 | `tv_dashboard` | Painéis TV | `tv-dashboard` | `tv-dashboard` |
+| `commercial` | Portal Comercial | `commercial` | `commercial` |
 
 Categorias `platform` (boas-vindas, aniversário, comunicado, …) não têm `sourceApp` — são disparadas pela Core API ou Admin.
 

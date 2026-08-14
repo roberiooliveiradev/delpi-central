@@ -12,13 +12,13 @@
 | Tema da ata | Situação no Portal | Próximo passo sugerido |
 |-------------|--------------------|------------------------|
 | Pedidos em aberto (filtros, KPI, tabela/cards, colunas) | **Existe** | Homologar UX; não reinventar |
-| Kanban de pedidos por etapa (próximos → faturar → concluídos) | **Falta** | Desenhar etapas + fonte TOTVS; WF novo |
+| Kanban de pedidos por etapa (próximos → faturar → concluídos) | **Existe** | Board + BFF `kanbanStage` + concluídos recently-closed |
 | Responsável pela criação do pedido (Protheus) | **Indisponível** (doc padroes-totvs) | Sem UI de criador neste ciclo |
 | Comparativos de faturamento na carteira (empresa, YoY, períodos, tendência) | **Parcial** | Estender Overview/Conta; faltam % empresa e seletor livre |
 | Meu Dia (tarefas, cliente, anexos, responsável, realtime, gestor) | **Existe** (MVP forte) | P3 CRM (lembrete/notif push); visita→frota |
 | Integração visita × Central de Agendamento (veículos) | **Falta** (app irmão existe) | BFF + deep-link / reserva no fluxo Visita |
 | Home por perfil (vendedor × gestor × orçamentista × faturamento) | **Parcial** | Personas via papéis Minha Delpi + layouts Home |
-| Notificar «pronto para faturar» (faturamento + vendedores) | **Falta** | Definir gatilho TOTVS + outbox/notif |
+| Notificar «pronto para faturar» (faturamento + vendedores) | **Existe** | Snapshot + outbox + sino Minha Delpi; config `billing*` só admin/app |
 | Config sensível só admin da aplicação | **Parcial** | Manter manage interno; não expandir toggles ao gestor |
 | Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Falta** | Epico novo; reusar integração Outlook Minha Delpi |
 
@@ -34,7 +34,8 @@ Legenda: **Existe** · **Parcial** · **Falta** · **Investigar** · **Fora** (o
 |------------|------|-------|
 | Filtros (estoque, atraso, escopo carteira/vendedor, datas…) | `OpenOrdersPage` + deep links | Ver helps `CM_HELP.openOrders` |
 | Indicadores resumidos / strip de status | Página + factory strip | Cobertura, atrasos, etc. |
-| Visualização **tabela** ou **cards** | Preferência persistida | Layout toggle |
+| Visualização **tabela**, **cards** ou **board** (Kanban) | Preferência persistida | Layout toggle + WF-OPEN-ORDERS-KANBAN |
+| Colunas Kanban `upcoming` · `in_progress` · `ready_to_invoice` · `completed` | BFF `kanbanStage` + recently-closed | Classificador em `OpenOrderKanbanStageService`; MFE só agrupa |
 | Escolher e ordenar colunas | Preferências de coluna | Table settings |
 | Detalhe de linha / OP, links reais Conta/Pedido/OP | Detalhe produção + `CommercialEntityLink` | WF pedidos / links ago/2026 |
 | Export Excel | Toolbar | |
@@ -45,8 +46,8 @@ Rota: `/apps/commercial/open-orders` · permissão típica: `commercial.accounts
 
 | Item da ata | Ferramenta / entrega | Dependências |
 |-------------|----------------------|--------------|
-| **Kanban** por etapas (próximos · em andamento · prontos para faturar · concluídos) | Nova visão na página (ou subrota), board com colunas = etapas | (1) Glossário de etapas acordado com Comercial/PCP/Faturamento; (2) campos TOTVS que mapeiam cada coluna; (3) regra de «pronto para faturar»; (4) UX: drag opcional vs. só leitura por status |
-| Coluna / filtro por **criador do pedido** (se o campo existir) | Coluna + filtro na lista + eventual chip | Discovery § 1.3 |
+| **Kanban** por etapas | **Entregue** (ago/2026) — board read-only + deep link `?view=board&stage=` | Homologar com Comercial; DnD / OP movendo coluna = fora |
+| Coluna / filtro por **criador do pedido** | **Cancelado** — campo indisponível no Protheus | Discovery § 1.3 |
 
 **Não fazer:** reimplementar filtros/KPI/tabela/cards já estáveis.
 
@@ -148,7 +149,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | Home **vendedor** = meus clientes / pedidos / carteira / atividades | Layout/prioridade do Início por conjunto de permissões (já parcialmente); validar copy e ordem com Comercial |
 | Home **gestor** = equipe + carteiras + pedidos + indicadores | Reforçar bloco Gestão/Equipe + deep links Overview; ranking produtividade se faltar |
 | Perfis **orçamentista** e **faturamento** | Novos **papéis** Minha Delpi (agrupando codes existentes + futuros `*.view` se necessário); telas/atalhos: OV/propostas vs. «pronto a faturar» |
-| Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | (1) Definir gatilho TOTVS/regra; (2) job/outbox; (3) destinatários (papel + membership do pedido); (4) canal Minha Delpi |
+| Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | **Entregue** — `OpenOrderKanbanStageService` + checkpoint `integration_checkpoints` + outbox + `POST /integrations/jobs/ready-to-invoice-scan` → Core `/integrations/notifications` (deep link board). Destinatários: membership da carteira do cliente + `billingUserIds` / `billingPermissionCodes` em `ready_to_invoice_notification.json` (só ops/admin app). Catálogo: categoria `commercial`. |
 | Permissões sensíveis só equipe da aplicação | Política ops: grants de `manage` / auditoria só internos; documentar no PERFIS |
 
 **Não fazer:** permission codes nomeados `commercial.vendedor` / `commercial.gestor` — manter modelo por capacidade.
@@ -189,12 +190,12 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 
 | # | Ferramenta | Pacote dono | Prioridade sugerida | Depende de |
 |---|------------|-------------|---------------------|------------|
-| T1 | Discovery «criador do pedido» Protheus | api-delpi (+ doc padroes-totvs) | P0 discovery | Acesso TOTVS / DBA |
-| T2 | Kanban Meus pedidos (etapas) | commercial MFE + api-delpi campos | P1 | Glossário etapas + T1 se coluna criador |
+| T1 | Discovery «criador do pedido» Protheus | api-delpi (+ doc padroes-totvs) | **Feito** (indisponível) | — |
+| T2 | Kanban Meus pedidos (etapas) | commercial MFE + commercial-api + api-delpi | **Feito** | Homologação UX |
 | T3 | Share faturamento carteira ÷ empresa | commercial-api BFF + Overview/Carteira | P1 | Fórmula KPI + RBAC |
 | T4 | Comparadores de período livres + tendência na Carteira/Conta | MFE + séries existentes | P1 | UX presets vs custom |
 | T5 | Ranking crescimento/queda (cliente/vendedor) | BFF analytics | P2 | T3/T4 |
-| T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | P1 | Gatilho TOTVS + persona faturamento |
+| T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | **Feito** | Configurar `billing*` no JSON; cron/ops no job |
 | T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
 | T8 | Visita Meu Dia → reserva veículo | commercial + Central de Agendamento | P1 | Contrato HTTP scheduling |
 | T9 | Lembretes tarefa (e-mail/push) | commercial-api outbox + plataforma | P2 | Canal notificação global |

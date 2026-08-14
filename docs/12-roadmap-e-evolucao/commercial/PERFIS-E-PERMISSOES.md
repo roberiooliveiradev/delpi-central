@@ -69,6 +69,21 @@ Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somen
 | Comercial — Emite PDF | + proposals.view + proposals.export |
 | Comercial — Admin carteiras | + seller-portfolios.manage |
 | Comercial — Auditor | accounts.view + audit.view |
+| Comercial — Faturamento (notif) | accounts.view + (opcional) codes em `billingPermissionCodes` do JSON de notificação — **sem** permission `commercial.faturamento` |
+
+## Notificação «pronto para faturar»
+
+| Peça | Onde |
+|------|------|
+| Gatilho | `OpenOrderKanbanStageService` → estágio `ready_to_invoice` (estoque ≥ saldo) |
+| Delta | Checkpoint `commercial.open_orders.ready_to_invoice` (`integration_checkpoints`) |
+| Destinatários vendedor | Membros das carteiras que contêm o cliente da linha |
+| Destinatários faturamento | `billingUserIds` / `billingPermissionCodes` em `commercial_app/content/pt-BR/ready_to_invoice_notification.json` — **somente** equipe da aplicação altera |
+| Canal | Outbox → Core `POST /integrations/notifications` · categoria `commercial` |
+| Deep link | `/apps/commercial/open-orders?view=board&stage=ready_to_invoice` |
+| Job ops | `POST /apps/commercial-api/integrations/jobs/ready-to-invoice-scan` (exige `seller-portfolios.manage`) |
+
+**Política:** grants de `manage` e listas `billing*` ficam com admin da aplicação; não expor toggles de destinatário ao gestor de campo.
 
 ## O que NÃO fazer
 
