@@ -77,6 +77,7 @@ import {
   TABLE_COLUMNS,
   type TableColumnKey,
 } from "../utils/tableColumns";
+import { useRecentlyClosedOrdersTotvs } from "../hooks/useRecentlyClosedOrdersTotvs";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
 import { OpenOrdersKanbanBoardView } from "./OpenOrdersKanbanBoard";
 import { TableColumnSettings } from "./TableColumnSettings";
@@ -90,6 +91,8 @@ type OpenOrdersTableProps = {
   loading?: boolean;
   emptyMessage?: string;
   basePath?: string;
+  /** Portfolio PK for BFF recently-closed (same scope as open list). */
+  sellerId?: string | null;
 };
 
 function rowKey(row: OpenOrdersTotvsItem): string {
@@ -120,6 +123,7 @@ export function OpenOrdersTable({
   loading = false,
   emptyMessage = "Nenhum registro encontrado.",
   basePath,
+  sellerId = null,
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
   const deepLinkHandledRef = useRef(false);
@@ -162,7 +166,14 @@ export function OpenOrdersTable({
     storageKey: OPEN_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY,
     legacyStorageKeys: OPEN_ORDERS_TABLE_FONT_SIZE_LEGACY_KEYS,
   });
-  const customerAvatars = useOpenOrdersCustomerAvatars(rows);
+  const boardEnabled = layout === "board";
+  const closedOrders = useRecentlyClosedOrdersTotvs({
+    enabled: boardEnabled,
+    sellerId,
+  });
+  const customerAvatars = useOpenOrdersCustomerAvatars(
+    boardEnabled ? exportRows : rows,
+  );
 
   useEffect(() => {
     if (loading || deepLinkHandledRef.current) return;
@@ -619,8 +630,14 @@ export function OpenOrdersTable({
 
         {layout === "board" ? (
           <div style={tableStyle}>
+            {closedOrders.error ? (
+              <p className="cm-cell-muted" role="status">
+                Concluídos indisponíveis: {closedOrders.error}
+              </p>
+            ) : null}
             <OpenOrdersKanbanBoardView
-              rows={rows}
+              rows={exportRows}
+              completedRows={closedOrders.items}
               visibleColumns={visibleColumns}
               basePath={basePath}
               focusStage={focusStage}

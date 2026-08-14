@@ -50,7 +50,7 @@ export function resolveItemKanbanStage(item: OpenOrdersTotvsItem): OpenOrderKanb
 
 type OpenOrdersKanbanBoardProps = {
   rows: OpenOrdersTotvsItem[];
-  /** Completed column cards (recently closed). Empty until E5. */
+  /** Completed column cards (recently closed via BFF). */
   completedRows?: OpenOrdersTotvsItem[];
   visibleColumns: ReadonlyArray<{ key: TableColumnKey; label: string }>;
   customerAvatarKeys?: ReadonlySet<string>;

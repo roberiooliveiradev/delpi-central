@@ -47,3 +47,25 @@ export async function getOpsAbertas(signal?: AbortSignal): Promise<OpsAbertasDat
 
   return unwrapEnvelope(response, "Erro ao carregar OPs abertas.");
 }
+
+/** Linhas encerradas recentes (BFF + membership) — coluna Concluídos do Kanban. */
+export async function getRecentlyClosedOrdersTotvs(
+  signal?: AbortSignal,
+  options?: { days?: number; sellerId?: string | null },
+): Promise<OpenOrdersTotvsData> {
+  const params = new URLSearchParams();
+  const days = options?.days ?? 30;
+  params.set("days", String(days));
+  if (options?.sellerId) {
+    params.set("seller_id", options.sellerId);
+  }
+  const response = await httpGet<ApiSuccessResponse<OpenOrdersTotvsData>>(
+    `${commercialApiUrl("/open-orders/recently-closed")}?${params.toString()}`,
+    { signal },
+  );
+
+  return unwrapEnvelope(
+    response,
+    "Erro ao carregar pedidos recentemente encerrados.",
+  );
+}

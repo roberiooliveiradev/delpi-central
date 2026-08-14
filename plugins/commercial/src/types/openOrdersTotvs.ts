@@ -38,8 +38,8 @@ export type OpenOrdersTotvsItem = {
    * Sem o campo, o detalhe resolve via GET /commercial/proposals?search=pedido (não path /{pedido}).
    */
   proposal_number?: string | null;
-  /** BFF kanban stage (OpenOrderKanbanStageService). */
-  kanbanStage?: "upcoming" | "in_progress" | "ready_to_invoice";
+  /** BFF kanban stage (OpenOrderKanbanStageService) or completed from recently-closed. */
+  kanbanStage?: "upcoming" | "in_progress" | "ready_to_invoice" | "completed";
 };
 
 export type OpenOrdersTotvsData = {

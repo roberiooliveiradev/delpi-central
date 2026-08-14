@@ -406,6 +406,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
             basePath={basePath}
             rows={paginatedItems}
             exportRows={sortedItems}
+            sellerId={canFilterPortfolios ? sellerIdFilter : null}
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
