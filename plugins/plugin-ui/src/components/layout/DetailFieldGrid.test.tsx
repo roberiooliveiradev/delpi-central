@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -59,7 +59,7 @@ describe("DetailFieldGrid", () => {
   });
 
   it("renderiza hint no rótulo", () => {
-    render(
+    const { container } = render(
       <DetailFieldGrid
         fields={[{ label: "Meta", hint: "Explicação", value: "90%" }]}
         classNames={detailFieldGridBemClasses("lmps")}
@@ -67,6 +67,10 @@ describe("DetailFieldGrid", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Ajuda: Meta")).toBeTruthy();
+    expect(screen.getByText("Meta")).toBeTruthy();
+    const wrap = container.querySelector(".delpi-ui-help-tooltip--wrap");
+    expect(wrap).toBeTruthy();
+    fireEvent.mouseEnter(wrap!);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe("Explicação");
   });
 });

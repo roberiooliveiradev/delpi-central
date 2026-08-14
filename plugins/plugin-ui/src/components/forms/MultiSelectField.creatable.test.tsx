@@ -78,8 +78,9 @@ describe("createDashboardCreatableMultiSelectField", () => {
     expect(document.querySelector(".delpi-ui-tag-chip")).toBeTruthy();
 
     fireEvent.click(container.querySelector(".pac-multi-select__trigger") as Element);
-    expect(container.querySelectorAll(".delpi-ui-native-checkbox").length).toBeGreaterThanOrEqual(2);
-    const second = container.querySelectorAll(".delpi-ui-native-checkbox__input")[1] as HTMLInputElement;
+    // Painel via AnchoredPanelPortal → document.body (não no container do render).
+    expect(document.querySelectorAll(".delpi-ui-native-checkbox").length).toBeGreaterThanOrEqual(2);
+    const second = document.querySelectorAll(".delpi-ui-native-checkbox__input")[1] as HTMLInputElement;
     fireEvent.click(second);
     expect(onChange).toHaveBeenCalledWith(["automacao"]);
   });
