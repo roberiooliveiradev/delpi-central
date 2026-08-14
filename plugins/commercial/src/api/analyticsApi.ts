@@ -29,6 +29,7 @@ function buildQuery(
     granularity?: ChartGranularity;
     group_by?: string;
     limit?: number;
+    order?: "growth" | "decline";
   },
 ): string {
   const searchParams = new URLSearchParams();
@@ -53,6 +54,7 @@ function buildQuery(
   if (params.search?.trim()) searchParams.set("search", params.search.trim());
   if (params.group_by) searchParams.set("group_by", params.group_by);
   if (params.limit != null) searchParams.set("limit", String(params.limit));
+  if (params.order) searchParams.set("order", params.order);
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
@@ -140,6 +142,7 @@ export function getPortfolioBillingRanking(
   params: AnalyticsFilterParams & {
     group_by?: "customer" | "seller";
     limit?: number;
+    order?: "growth" | "decline";
   },
   signal?: AbortSignal,
 ) {

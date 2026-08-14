@@ -62,6 +62,7 @@ export function PortfolioBillingRankingTable({
         seller_id: sellerId?.trim() || undefined,
         group_by: effectiveGroupBy,
         limit: 50,
+        order: "growth",
       },
       controller.signal,
     )

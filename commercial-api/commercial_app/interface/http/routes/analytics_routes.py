@@ -175,11 +175,13 @@ def bff_portfolio_billing_ranking(
     portfolio_id: str | None = Query(default=None),
     group_by: str = Query(default="customer", pattern="^(customer|seller)$"),
     limit: int = Query(default=50, ge=1, le=500),
+    order: str = Query(default="growth", pattern="^(growth|decline)$"),
 ):
     """Ranking delta % faturamento vs período −1 ano (cliente; vendedor se team/manage)."""
     operation_id = "bff_get_analytics_portfolio_billing_ranking"
     try:
         resolved_group = "seller" if group_by == "seller" else "customer"
+        resolved_order = "decline" if order == "decline" else "growth"
         if resolved_group == "seller" and not can_use_team_scope(
             current_user_from_request(request)
         ):
@@ -207,6 +209,7 @@ def bff_portfolio_billing_ranking(
             customer_segment=customer_segment,
             limit=limit,
             group_by=resolved_group,  # type: ignore[arg-type]
+            order=resolved_order,  # type: ignore[arg-type]
         )
         return ok(
             data,
