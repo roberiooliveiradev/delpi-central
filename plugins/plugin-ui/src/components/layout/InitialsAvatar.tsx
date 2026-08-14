@@ -217,6 +217,6 @@ export function createInitialsAvatar(prefix: string) {
   const classNames = initialsAvatarBemClasses(prefix);
 
   return function DashboardInitialsAvatar(props: DashboardInitialsAvatarProps) {
-    return <InitialsAvatar classNames={classNames} {...props} />;
+    return <InitialsAvatar {...(props as InitialsAvatarProps)} classNames={classNames} />;
   };
 }

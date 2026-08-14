@@ -717,7 +717,8 @@
   gap: var(--cm-section-gap);
 }
 
-.dashboard-commercial .cm-link-button {
+.dashboard-commercial .cm-link-button,
+.dashboard-commercial a.cm-link-button {
   appearance: none;
   border: 0;
   background: transparent;
@@ -727,6 +728,10 @@
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.dashboard-commercial a.cm-link-button:visited {
+  color: var(--cm-accent);
 }
 
 .dashboard-commercial .cm-proposals-table__ov {
@@ -1060,9 +1065,15 @@
 }
 
 .dashboard-commercial button.cm-open-orders-client__name:hover,
-.dashboard-commercial button.cm-open-orders-client__name:focus-visible {
+.dashboard-commercial button.cm-open-orders-client__name:focus-visible,
+.dashboard-commercial a.cm-open-orders-client__name:hover,
+.dashboard-commercial a.cm-open-orders-client__name:focus-visible {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.dashboard-commercial a.cm-open-orders-client__name:visited {
+  color: var(--cm-accent, var(--delpi-ui-accent, #089bdb));
 }
 
 .dashboard-commercial strong.cm-open-orders-client__name {

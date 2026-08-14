@@ -439,6 +439,9 @@ export const CommercialAvatar = createInitialsAvatar(UI_PREFIX);
 export const CommercialAvatarStack = createDashboardAvatarStack(UI_PREFIX);
 export const CommercialSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 
+export { CommercialEntityLink } from "../components/CommercialEntityLink";
+export type { CommercialEntityLinkProps } from "../components/CommercialEntityLink";
+
 export const cmFiltersKit = createDashboardFiltersKit({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
