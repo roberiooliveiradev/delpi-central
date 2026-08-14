@@ -68,7 +68,6 @@ export const CUSTOMER_ORDERS_PREVIEW_COLUMN_HELP: Record<string, string> = {
 export const ADMIN_TEAM_COLUMN_HELP: Record<string, string> = {
   person: CM_HELP.administration.teamColPerson,
   online: CM_HELP.administration.teamColOnline,
-  email: CM_HELP.administration.teamColEmail,
   groups: CM_HELP.administration.teamColGroups,
   portfolios: CM_HELP.administration.teamColPortfolios,
 };

@@ -51,6 +51,13 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     assert.match(source, /buildCommercialGroupsOrgFlowModel/);
     assert.match(source, /CommercialOrgMembershipFlow/);
     assert.match(source, /parseCommercialTeamView/);
+    assert.match(source, /TaskUserChipAvatar/);
+    assert.match(source, /key: "person"/);
+    assert.match(source, /key: "online"/);
+    assert.match(source, /key: "groups"/);
+    assert.match(source, /key: "portfolios"/);
+    assert.doesNotMatch(source, /key: "email"/);
+    assert.doesNotMatch(source, /key: "actions"/);
   });
 
   it("CommercialRealtimeProvider faz replay de presença no subscribe tardio", () => {

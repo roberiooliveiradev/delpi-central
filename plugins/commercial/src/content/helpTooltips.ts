@@ -48,8 +48,10 @@ export const CM_HELP = {
       "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",
     mobileE164:
       "Celular no formato E.164 (+ e DDI), ex.: +5511999999999. Alternativa ao telefone no atalho Ligar.",
-    whatsappE164:
-      "Número do WhatsApp no formato E.164 (+ e DDI). Libera o atalho WhatsApp neste perfil.",
+    phoneIsWhatsapp:
+      "Marca o telefone como WhatsApp (atalho WhatsApp neste perfil). Só um número por vez.",
+    mobileIsWhatsapp:
+      "Marca o celular como WhatsApp (atalho WhatsApp neste perfil). Só um número por vez.",
     portfolios: "Carteiras do usuário com papel, quantidade de clientes e membros.",
     access:
       "Permissões commercial.* e capacidades efetivas desta sessão (somente no próprio perfil).",
@@ -619,9 +621,9 @@ export const CM_HELP = {
     teamFilterPortfolio: "Mostra só pessoas com acesso à carteira selecionada.",
     groupCreateName: "Nome do grupo operacional (visível na Equipe e no MyDay).",
     groupRename: "Altera o nome de exibição do grupo. O tipo (kind) não muda aqui.",
-    teamColPerson: "Pessoa com acesso ao Portal Comercial e vínculo a grupos/carteiras.",
+    teamColPerson:
+      "Pessoa com acesso ao Portal Comercial (avatar e nome; clique abre o perfil).",
     teamColOnline: "Presença em tempo real no Portal (online/offline).",
-    teamColEmail: "E-mail do diretório Minha Delpi.",
     teamColGroups: "Grupos operacionais dos quais a pessoa é membro.",
     teamColPortfolios: "Carteiras às quais a pessoa tem acesso.",
   },

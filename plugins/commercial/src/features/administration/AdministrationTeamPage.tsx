@@ -50,6 +50,7 @@ import {
 } from "../../utils/commercialTeamDeepLink";
 import { buildCommercialGroupsOrgFlowModel } from "../../utils/commercialTeamOrgFlow";
 import { directoryUserLabelOrFallback } from "../../shared/directoryUserLabel";
+import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
 import { AdministrationSubNav } from "./AdministrationSubNav";
 
 type AdministrationTeamPageProps = {
@@ -172,6 +173,8 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       interactive: true,
       rowClick: "stop",
       render: (row) => {
+        const displayName =
+          (row.name || "").trim() || (row.email || "").trim() || "Usuário";
         const label = directoryUserLabelOrFallback({
           name: row.name,
           email: row.email,
@@ -180,21 +183,40 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
           basePath,
           returnNav: profileReturnNav,
         });
-        if (!href) return label;
+        const openProfile = () =>
+          navigateUserProfile(row.user_id, {
+            basePath,
+            returnNav: profileReturnNav,
+          });
         return (
-          <CommercialEntityLink
-            href={href}
-            title={profileLinkTitle(row.name || label)}
-            className="cm-link-button"
-            onNavigate={() =>
-              navigateUserProfile(row.user_id, {
-                basePath,
-                returnNav: profileReturnNav,
-              })
-            }
-          >
-            {label}
-          </CommercialEntityLink>
+          <div className="cm-row-actions">
+            {href ? (
+              <TaskUserChipAvatar
+                userId={row.user_id}
+                name={displayName}
+                href={href}
+                title={profileLinkTitle(row.name || label)}
+                onNavigate={(event) => {
+                  event.preventDefault();
+                  openProfile();
+                }}
+              />
+            ) : (
+              <TaskUserChipAvatar userId={row.user_id} name={displayName} />
+            )}
+            {href ? (
+              <CommercialEntityLink
+                href={href}
+                title={profileLinkTitle(row.name || label)}
+                className="cm-link-button"
+                onNavigate={() => openProfile()}
+              >
+                {displayName}
+              </CommercialEntityLink>
+            ) : (
+              <span>{displayName}</span>
+            )}
+          </div>
         );
       },
     },
@@ -207,11 +229,6 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
           variant={row.online ? "success" : "neutral"}
         />
       ),
-    },
-    {
-      key: "email",
-      header: copy.colEmail,
-      render: (row) => row.email?.trim() || "—",
     },
     {
       key: "groups",
@@ -248,35 +265,6 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
             ))}
           </span>
         ),
-    },
-    {
-      key: "actions",
-      header: "",
-      align: "right",
-      interactive: true,
-      rowClick: "stop",
-      render: (row) => {
-        const href = buildUserProfileHref(row.user_id, {
-          basePath,
-          returnNav: profileReturnNav,
-        });
-        if (!href) return null;
-        return (
-          <CommercialEntityLink
-            href={href}
-            title={profileLinkTitle(row.name || copy.viewProfile)}
-            className="cm-link-button"
-            onNavigate={() =>
-              navigateUserProfile(row.user_id, {
-                basePath,
-                returnNav: profileReturnNav,
-              })
-            }
-          >
-            {copy.viewProfile}
-          </CommercialEntityLink>
-        );
-      },
     },
   ];
 
