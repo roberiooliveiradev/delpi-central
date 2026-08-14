@@ -99,7 +99,7 @@ import {
   type SpeedometerGaugeProps,
   type HorizontalValueBarsProps,
 } from "@delpi/plugin-ui/index";
-import { createElement, type ReactNode } from "react";
+import { createElement, type ComponentProps, type ReactNode } from "react";
 
 export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
 export { usePersistedViewLayout, useTableFontSize, useChartGranularitySelection };
@@ -183,7 +183,13 @@ export function CommercialDataCellValue({
     },
   });
 }
-export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });
+export const CommercialPageHeroBase = createDashboardPageHero({ prefix: UI_PREFIX });
+/** Default `density="compact"` — liberar viewport nas listas do portal. */
+export function CommercialPageHero(
+  props: ComponentProps<typeof CommercialPageHeroBase>,
+) {
+  return createElement(CommercialPageHeroBase, { density: "compact", ...props });
+}
 export const CommercialStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const CommercialPagePath = createDashboardPagePath({
   prefix: UI_PREFIX,
