@@ -32,6 +32,7 @@ describe("customersListDeepLink", () => {
         sort: "billed12m",
         dir: "desc",
         page: 3,
+        panel: "customers",
       },
     );
   });
@@ -47,6 +48,7 @@ describe("customersListDeepLink", () => {
         sort: "attention",
         dir: "asc",
         page: 1,
+        panel: "customers",
       },
     );
     assert.equal(
@@ -72,6 +74,7 @@ describe("customersListDeepLink", () => {
         sort: "attention",
         dir: "asc",
         page: 1,
+        panel: "customers",
       },
     );
   });
@@ -87,6 +90,7 @@ describe("customersListDeepLink", () => {
         sort: "attention",
         dir: "asc",
         page: 1,
+        panel: "customers",
       },
     );
     assert.equal(sanitizeCustomersListSearch("?focus=growth", TEAM_ACCESS), "?trend=up");
@@ -106,6 +110,7 @@ describe("customersListDeepLink", () => {
       sort: "lastPurchaseDate",
       dir: "desc",
       page: 4,
+      panel: "customers",
     };
     const search = buildCustomersListSearch(state, TEAM_ACCESS);
     assert.equal(search, "?q=Metal%C3%BArgica+A&focus=attention&trend=down&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4");
@@ -119,7 +124,7 @@ describe("customersListDeepLink", () => {
   it("aplica defaults e remove toda query fora da allowlist", () => {
     assert.deepEqual(
       parseCustomersListDeepLink("?focus=x&sort=__proto__&dir=up&page=-2&unknown=1", TEAM_ACCESS),
-      { q: "", focus: "all", trend: "all", sellerId: null, sort: "attention", dir: "asc", page: 1 },
+      { q: "", focus: "all", trend: "all", sellerId: null, sort: "attention", dir: "asc", page: 1, panel: "customers" },
     );
     assert.equal(
       sanitizeCustomersListSearch("?q=ACME&focus=all&sort=attention&dir=asc&page=1&unknown=1", TEAM_ACCESS),
@@ -175,7 +180,48 @@ describe("customersListDeepLink", () => {
         sort: "attention",
         dir: "asc",
         page: 2,
+        panel: "customers",
       },
+    );
+  });
+
+  it("persiste panel na query e defaulta customers", () => {
+    assert.deepEqual(
+      parseCustomersListDeepLink("?panel=billing", TEAM_ACCESS),
+      {
+        q: "",
+        focus: "all",
+        trend: "all",
+        sellerId: null,
+        sort: "attention",
+        dir: "asc",
+        page: 1,
+        panel: "billing",
+      },
+    );
+    assert.equal(
+      buildCustomersListSearch(
+        {
+          q: "",
+          focus: "all",
+          trend: "all",
+          sellerId: null,
+          sort: "attention",
+          dir: "asc",
+          page: 1,
+          panel: "ranking",
+        },
+        TEAM_ACCESS,
+      ),
+      "?panel=ranking",
+    );
+    assert.equal(
+      sanitizeCustomersListSearch("?panel=customers&unknown=1", TEAM_ACCESS),
+      "",
+    );
+    assert.equal(
+      parseCustomersListDeepLink("?panel=nope", TEAM_ACCESS).panel,
+      "customers",
     );
   });
 });
@@ -183,7 +229,7 @@ describe("customersListDeepLink", () => {
 describe("updateCustomersListState", () => {
   const state = {
     q: "ACME", focus: "active", trend: "up", sellerId: "seller-1",
-    sort: "nome", dir: "asc", page: 7,
+    sort: "nome", dir: "asc", page: 7, panel: "customers",
   };
   for (const change of [
     { q: "BETA" },
@@ -198,5 +244,9 @@ describe("updateCustomersListState", () => {
   }
   it("preserva pagina quando somente a pagina muda", () => {
     assert.equal(updateCustomersListState(state, { page: 3 }).page, 3);
+  });
+  it("preserva pagina ao trocar panel", () => {
+    assert.equal(updateCustomersListState(state, { panel: "billing" }).page, 7);
+    assert.equal(updateCustomersListState(state, { panel: "billing" }).panel, "billing");
   });
 });

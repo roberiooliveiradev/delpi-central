@@ -17,8 +17,11 @@ export const CUSTOMER_LIST_FOCUS_VALUES = [
 
 export const CUSTOMER_LIST_TREND_VALUES = ["all", "up", "stable", "down"] as const;
 
+export const CUSTOMER_LIST_PANEL_VALUES = ["billing", "ranking", "customers"] as const;
+
 export type CustomerListFocus = (typeof CUSTOMER_LIST_FOCUS_VALUES)[number];
 export type CustomerListTrend = (typeof CUSTOMER_LIST_TREND_VALUES)[number];
+export type CustomerListPanel = (typeof CUSTOMER_LIST_PANEL_VALUES)[number];
 
 export type CustomersListDeepLink = {
   q: string;
@@ -28,6 +31,7 @@ export type CustomersListDeepLink = {
   sort: CustomerListSortKey;
   dir: CustomerListSortDirection;
   page: number;
+  panel: CustomerListPanel;
 };
 
 export type CustomersListDeepLinkInput = {
@@ -38,6 +42,7 @@ export type CustomersListDeepLinkInput = {
   sort?: string | null;
   dir?: string | null;
   page?: number | string | null;
+  panel?: string | null;
 };
 
 export type CustomersListSellerAccess = {
@@ -47,6 +52,7 @@ export type CustomersListSellerAccess = {
 
 const FOCUS_VALUES = new Set<string>(CUSTOMER_LIST_FOCUS_VALUES);
 const TREND_VALUES = new Set<string>(CUSTOMER_LIST_TREND_VALUES);
+const PANEL_VALUES = new Set<string>(CUSTOMER_LIST_PANEL_VALUES);
 const LEGACY_FOCUS_GROWTH = "growth";
 const LEGACY_FOCUS_INACTIVE = "inactive";
 export const CUSTOMER_LIST_SORT_VALUES = [
@@ -66,6 +72,7 @@ export const CUSTOMER_LIST_SORT_VALUES = [
 const SORT_VALUES = new Set<string>(CUSTOMER_LIST_SORT_VALUES);
 export const DEFAULT_CUSTOMERS_LIST_SORT: CustomerListSortKey = "attention";
 export const DEFAULT_CUSTOMERS_LIST_DIRECTION: CustomerListSortDirection = "asc";
+export const DEFAULT_CUSTOMERS_LIST_PANEL: CustomerListPanel = "customers";
 
 const DENY_SELLER_ACCESS: CustomersListSellerAccess = {
   allowSellerId: false,
@@ -80,6 +87,13 @@ function normalizeFocus(value: string | null | undefined): CustomerListFocus {
 function normalizeTrend(value: string | null | undefined): CustomerListTrend {
   const normalized = (value ?? "").trim().toLowerCase();
   return TREND_VALUES.has(normalized) ? (normalized as CustomerListTrend) : "all";
+}
+
+function normalizePanel(value: string | null | undefined): CustomerListPanel {
+  const normalized = (value ?? "").trim().toLowerCase();
+  return PANEL_VALUES.has(normalized)
+    ? (normalized as CustomerListPanel)
+    : DEFAULT_CUSTOMERS_LIST_PANEL;
 }
 
 function normalizeSort(value: string | null | undefined): CustomerListSortKey {
@@ -129,6 +143,7 @@ export function sanitizeCustomersListDeepLink(
     sort: normalizeSort(value.sort),
     dir: normalizeDirection(value.dir),
     page: normalizePage(value.page),
+    panel: normalizePanel(value.panel),
   };
 }
 
@@ -146,6 +161,7 @@ export function parseCustomersListDeepLink(
       sort: params.get("sort"),
       dir: params.get("dir"),
       page: params.get("page"),
+      panel: params.get("panel"),
     },
     access,
   );
@@ -164,6 +180,7 @@ export function buildCustomersListSearch(
   if (sanitized.sort !== DEFAULT_CUSTOMERS_LIST_SORT) params.set("sort", sanitized.sort);
   if (sanitized.dir !== DEFAULT_CUSTOMERS_LIST_DIRECTION) params.set("dir", sanitized.dir);
   if (sanitized.page !== 1) params.set("page", String(sanitized.page));
+  if (sanitized.panel !== DEFAULT_CUSTOMERS_LIST_PANEL) params.set("panel", sanitized.panel);
   const query = params.toString();
   return query ? `?${query}` : "";
 }

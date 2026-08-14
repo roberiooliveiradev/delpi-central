@@ -4,9 +4,11 @@ import {
   buildCustomersListPath,
   buildCustomersListSearch,
   DEFAULT_CUSTOMERS_LIST_DIRECTION,
+  DEFAULT_CUSTOMERS_LIST_PANEL,
   DEFAULT_CUSTOMERS_LIST_SORT,
   isCustomersListPathname,
   parseCustomersListRouteState,
+  type CustomerListPanel,
   type CustomersListDeepLink,
   type CustomersListSellerAccess,
 } from "../../../utils/customersListDeepLink";
@@ -39,6 +41,7 @@ const DEFAULT_STATE: CustomersListState = {
   sort: DEFAULT_CUSTOMERS_LIST_SORT,
   dir: DEFAULT_CUSTOMERS_LIST_DIRECTION,
   page: 1,
+  panel: DEFAULT_CUSTOMERS_LIST_PANEL,
 };
 
 export function useCustomersListState(options: {
@@ -121,6 +124,10 @@ export function useCustomersListState(options: {
     }));
   }, []);
   const setPage = useCallback((page: number) => mutate({ page }), [mutate]);
+  const setPanel = useCallback(
+    (panel: CustomerListPanel) => mutate({ panel }),
+    [mutate],
+  );
   const resetFilters = useCallback(() => {
     setScopeSellerId(null);
     setState(DEFAULT_STATE);
@@ -137,6 +144,7 @@ export function useCustomersListState(options: {
     setSellerId,
     toggleSort,
     setPage,
+    setPanel,
     resetFilters,
     listSearch,
   };
