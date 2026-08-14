@@ -633,6 +633,9 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
           emptyTitle={emptyTitle}
           emptyMessage={emptyMessage}
           onSelect={(portfolio) => openPortfolio(portfolio)}
+          hrefFor={(portfolio) =>
+            buildSellerPortfolioDetailPath(basePath, portfolio.id, link)
+          }
           onCreate={() => setCreateOpen(true)}
           directoryLabelFor={directoryLabelFor}
         />

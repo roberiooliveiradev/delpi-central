@@ -1,7 +1,9 @@
 import {
+  CommercialEntityLink,
   CommercialInteractiveDataCard,
   CommercialStatusBadge,
 } from "../../app/commercialUi";
+import { portfolioLinkTitle } from "../../content/entityLinkHints";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
@@ -16,6 +18,7 @@ type SellerPortfolioListCardProps = {
   userLabel: string;
   hasOverlappingCustomers?: boolean;
   load?: PortfolioLoadItem | null;
+  href?: string | null;
   onSelect: (portfolio: SellerPortfolio) => void;
 };
 
@@ -35,6 +38,7 @@ export function SellerPortfolioListCard({
   userLabel,
   hasOverlappingCustomers = false,
   load = null,
+  href = null,
   onSelect,
 }: SellerPortfolioListCardProps) {
   const customerCount = load?.customer_count ?? portfolio.customer_count;
@@ -59,7 +63,18 @@ export function SellerPortfolioListCard({
           valueTone: "title",
           value: (
             <span className="cm-row-actions">
-              <span>{portfolio.display_name}</span>
+              {href ? (
+                <CommercialEntityLink
+                  href={href}
+                  title={portfolioLinkTitle(portfolio.display_name)}
+                  className="cm-link-button"
+                  onNavigate={() => onSelect(portfolio)}
+                >
+                  {portfolio.display_name}
+                </CommercialEntityLink>
+              ) : (
+                <span>{portfolio.display_name}</span>
+              )}
               {hasOverlappingCustomers ? (
                 <CommercialStatusBadge
                   label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}

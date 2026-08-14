@@ -329,6 +329,7 @@ export function navigateOpenOrderLineDetail(
 }
 
 export {
+  buildPluginPath,
   buildCustomerDetailPath,
   buildCustomerOrderDetailPath,
   buildCustomerInvoiceDetailPath,

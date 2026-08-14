@@ -30,6 +30,7 @@ import {
   CommercialActionButton,
   CommercialAvatar,
   CommercialDataRecordCard,
+  CommercialEntityLink,
   CommercialLoadingCard,
   CommercialPageHero,
   CommercialPagePath,
@@ -39,10 +40,15 @@ import {
   CommercialTextField,
 } from "../../app/commercialUi";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
-import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
+import {
+  buildPluginPath,
+  navigatePluginPath,
+  navigatePluginView,
+} from "../../app/pluginNavigation";
 import { resolvePagePathBack } from "../../app/commercialNavigationReturn";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { buildShellPortfolioCustomersSearch } from "../../app/shellUserPortfolioNav";
+import { portfolioLinkTitle } from "../../content/entityLinkHints";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
   formatPortfolioCountValue,
@@ -635,13 +641,27 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                   ]}
                   context={
                     canOpen ? (
-                      <CommercialActionButton
-                        variant="ghost"
-                        onClick={() => openPortfolio(item)}
-                      >
-                        <Users size={16} aria-hidden />
-                        {USER_ACCESS_COPY.portfolioOpen}
-                      </CommercialActionButton>
+                      (() => {
+                        const href = canManagePortfolios
+                          ? buildSellerPortfolioDetailPath(basePath, item.id)
+                          : buildPluginPath(
+                              "customers",
+                              basePath,
+                              buildShellPortfolioCustomersSearch(item.id, portfolioIds),
+                            );
+                        if (!href) return null;
+                        return (
+                          <CommercialEntityLink
+                            href={href}
+                            title={portfolioLinkTitle(item.name)}
+                            className="cm-link-button"
+                            onNavigate={() => openPortfolio(item)}
+                          >
+                            <Users size={16} aria-hidden />
+                            {USER_ACCESS_COPY.portfolioOpen}
+                          </CommercialEntityLink>
+                        );
+                      })()
                     ) : null
                   }
                 />

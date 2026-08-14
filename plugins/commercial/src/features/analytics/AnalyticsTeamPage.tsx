@@ -9,10 +9,12 @@ import {
   cmSectionLabels,
   CommercialActionButton,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialLoadingCard,
   CommercialPageHero,
 } from "../../app/commercialUi";
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { buildPluginPath, navigatePluginView } from "../../app/pluginNavigation";
+import { entityLinkTitle } from "../../content/entityLinkHints";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import type { SellerPortfolio } from "../../types/portfolio";
@@ -128,19 +130,27 @@ export function AnalyticsTeamPage({ basePath }: AnalyticsTeamPageProps) {
     {
       key: "actions",
       header: "",
-      render: (row) => (
-        <CommercialActionButton
-          variant="ghost"
-          onClick={() =>
-            navigatePluginView("open_orders", {
-              basePath,
-              search: `?seller_id=${encodeURIComponent(row.id)}`,
-            })
-          }
-        >
-          Pedidos
-        </CommercialActionButton>
-      ),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const search = `?seller_id=${encodeURIComponent(row.id)}`;
+        const href = buildPluginPath("open_orders", basePath, search);
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={entityLinkTitle("openOrdersFiltered")}
+            className="cm-link-button"
+            onNavigate={() =>
+              navigatePluginView("open_orders", {
+                basePath,
+                search,
+              })
+            }
+          >
+            Pedidos
+          </CommercialEntityLink>
+        );
+      },
     },
   ];
 

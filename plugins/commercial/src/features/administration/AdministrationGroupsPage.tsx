@@ -17,6 +17,7 @@ import {
   CommercialAvatarStack,
   CommercialDataCardsGrid,
   CommercialEmptyState,
+  CommercialEntityLink,
   CommercialLoadingCard,
   CommercialOrgMembershipFlow,
   CommercialPageHero,
@@ -612,7 +613,19 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                                 })
                               }
                             />
-                            <strong>{name}</strong>
+                            <CommercialEntityLink
+                              href={profileHref}
+                              title={profileLinkTitle(name)}
+                              className="cm-link-button"
+                              onNavigate={() =>
+                                navigateUserProfile(member.user_id, {
+                                  basePath,
+                                  returnNav,
+                                })
+                              }
+                            >
+                              {name}
+                            </CommercialEntityLink>
                             <CommercialActionButton
                               variant="ghost"
                               disabled={busy || busyKey?.startsWith(`${group.id}:add:`)}

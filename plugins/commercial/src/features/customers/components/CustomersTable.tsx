@@ -8,6 +8,7 @@ import {
   CommercialDataCellValue,
   CommercialDataListToolbar,
   CommercialDataTable,
+  CommercialEntityLink,
   CommercialExcelExportButton,
   CommercialSelectField,
   CommercialStatusBadge,
@@ -21,7 +22,11 @@ import {
   useTableFontSize,
   type DataTableColumn,
 } from "../../../app/commercialUi";
-import { navigateCustomerDetail } from "../../../app/pluginNavigation";
+import {
+  buildCustomerDetailHref,
+  navigateCustomerDetail,
+} from "../../../app/pluginNavigation";
+import { accountLinkTitle } from "../../../content/entityLinkHints";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
   CUSTOMERS_LIST_COLUMN_HELP,
@@ -162,36 +167,62 @@ export function CustomersTable({
       sellerAccess,
     });
 
+  const customerHref = (customer: CustomerSummary) =>
+    buildCustomerDetailHref(customer.codigo, customer.loja, {
+      basePath,
+      search: listSearch,
+      sellerAccess,
+    });
+
   const columns: DataTableColumn<CustomerSummary>[] = [
     {
       key: "nome",
       header: "Cliente",
       sortable: true,
+      interactive: true,
+      rowClick: "stop",
       render: (customer) => {
         const { name, codeStore } = customerIdentity(customer);
         const coverage = sharedCoverageByKey?.get(
           customerKey(customer.codigo, customer.loja),
         );
+        const href = customerHref(customer);
+        const title = accountLinkTitle(name);
         return (
           <div className="cm-open-orders-client">
-            <CustomerAvatar
-              code={customer.codigo}
-              store={customer.loja}
-              name={name}
-              hasAvatar={Boolean(customer.hasAvatar)}
-              size="sm"
-            />
+            {href ? (
+              <CustomerAvatar
+                code={customer.codigo}
+                store={customer.loja}
+                name={name}
+                hasAvatar={Boolean(customer.hasAvatar)}
+                size="sm"
+                href={href}
+                title={title}
+                onNavigate={() => openCustomer(customer)}
+              />
+            ) : (
+              <CustomerAvatar
+                code={customer.codigo}
+                store={customer.loja}
+                name={name}
+                hasAvatar={Boolean(customer.hasAvatar)}
+                size="sm"
+              />
+            )}
             <div className="cm-open-orders-client__text">
-              <button
-                type="button"
-                className="cm-link-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openCustomer(customer);
-                }}
-              >
+              {href ? (
+                <CommercialEntityLink
+                  href={href}
+                  title={title}
+                  className="cm-link-button"
+                  onNavigate={() => openCustomer(customer)}
+                >
+                  <strong className="cm-open-orders-client__name">{name}</strong>
+                </CommercialEntityLink>
+              ) : (
                 <strong className="cm-open-orders-client__name">{name}</strong>
-              </button>
+              )}
               <span className="cm-open-orders-client__id">{codeStore}</span>
               <CustomerSharedCoverageBadge coverage={coverage} compact />
             </div>

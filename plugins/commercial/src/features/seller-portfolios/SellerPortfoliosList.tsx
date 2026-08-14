@@ -1,10 +1,12 @@
 import {
   CommercialActionButton,
+  CommercialEntityLink,
   CommercialStatusBadge,
   PORTFOLIOS_LAYOUT_STORAGE_KEY,
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CommercialDataTableSection } from "../../app/dataTableUi";
+import { portfolioLinkTitle } from "../../content/entityLinkHints";
 import { CM_HELP } from "../../content/helpTooltips";
 import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
 import { PORTFOLIO_LOAD_CONTENT } from "../../content/portfolioLoadContent";
@@ -20,6 +22,7 @@ type SellerPortfoliosListProps = {
   emptyTitle: string;
   emptyMessage: string;
   onSelect: (portfolio: SellerPortfolio) => void;
+  hrefFor: (portfolio: SellerPortfolio) => string | null;
   onCreate: () => void;
   directoryLabelFor: (userId: string, fallback?: string | null) => string;
 };
@@ -42,6 +45,7 @@ export function SellerPortfoliosList({
   emptyTitle,
   emptyMessage,
   onSelect,
+  hrefFor,
   onCreate,
   directoryLabelFor,
 }: SellerPortfoliosListProps) {
@@ -50,17 +54,33 @@ export function SellerPortfoliosList({
       key: "display_name",
       header: "Carteira",
       headerHint: CM_HELP.sellerPortfolios.colDisplayName,
-      render: (row) => (
-        <span className="cm-row-actions">
-          <span>{row.display_name}</span>
-          {row.active && overlappingPortfolioIds?.has(row.id) ? (
-            <CommercialStatusBadge
-              label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
-              variant="warning"
-            />
-          ) : null}
-        </span>
-      ),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const href = hrefFor(row);
+        return (
+          <span className="cm-row-actions">
+            {href ? (
+              <CommercialEntityLink
+                href={href}
+                title={portfolioLinkTitle(row.display_name)}
+                className="cm-link-button"
+                onNavigate={() => onSelect(row)}
+              >
+                {row.display_name}
+              </CommercialEntityLink>
+            ) : (
+              <span>{row.display_name}</span>
+            )}
+            {row.active && overlappingPortfolioIds?.has(row.id) ? (
+              <CommercialStatusBadge
+                label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
+                variant="warning"
+              />
+            ) : null}
+          </span>
+        );
+      },
     },
     {
       key: "user_id",
@@ -145,6 +165,7 @@ export function SellerPortfoliosList({
             portfolio.owner_user_id ?? portfolio.user_id,
             portfolio.display_name,
           )}
+          href={hrefFor(portfolio)}
           onSelect={onSelect}
         />
       )}

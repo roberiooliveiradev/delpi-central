@@ -13,6 +13,7 @@ import {
 import {
   CommercialActionButton,
   CommercialEmptyState,
+  CommercialEntityLink,
   CommercialFilterBarShell,
   CommercialLoadingCard,
   CommercialOrgMembershipFlow,
@@ -27,7 +28,12 @@ import {
   type DataTableColumn,
 } from "../../app/commercialUi";
 import { CommercialDataTableSection } from "../../app/dataTableUi";
-import { navigatePluginView, navigateUserProfile } from "../../app/pluginNavigation";
+import {
+  buildUserProfileHref,
+  navigatePluginView,
+  navigateUserProfile,
+} from "../../app/pluginNavigation";
+import { profileLinkTitle } from "../../content/entityLinkHints";
 import { currentReturnNav } from "../../app/commercialNavigationReturn";
 import type { CommercialPresenceUpdatedEvent } from "../../constants/realtime";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
@@ -157,12 +163,40 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
     [rows],
   );
 
+  const profileReturnNav = currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot);
+
   const columns: DataTableColumn<TeamRow>[] = [
     {
       key: "person",
       header: copy.colPerson,
-      render: (row) =>
-        directoryUserLabelOrFallback({ name: row.name, email: row.email }),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const label = directoryUserLabelOrFallback({
+          name: row.name,
+          email: row.email,
+        });
+        const href = buildUserProfileHref(row.user_id, {
+          basePath,
+          returnNav: profileReturnNav,
+        });
+        if (!href) return label;
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={profileLinkTitle(row.name || label)}
+            className="cm-link-button"
+            onNavigate={() =>
+              navigateUserProfile(row.user_id, {
+                basePath,
+                returnNav: profileReturnNav,
+              })
+            }
+          >
+            {label}
+          </CommercialEntityLink>
+        );
+      },
     },
     {
       key: "online",
@@ -219,19 +253,30 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
       key: "actions",
       header: "",
       align: "right",
-      render: (row) => (
-        <CommercialActionButton
-          variant="ghost"
-          onClick={() =>
-            navigateUserProfile(row.user_id, {
-              basePath,
-              returnNav: currentReturnNav(ADMINISTRATION_CONTENT.breadcrumbRoot),
-            })
-          }
-        >
-          {copy.viewProfile}
-        </CommercialActionButton>
-      ),
+      interactive: true,
+      rowClick: "stop",
+      render: (row) => {
+        const href = buildUserProfileHref(row.user_id, {
+          basePath,
+          returnNav: profileReturnNav,
+        });
+        if (!href) return null;
+        return (
+          <CommercialEntityLink
+            href={href}
+            title={profileLinkTitle(row.name || copy.viewProfile)}
+            className="cm-link-button"
+            onNavigate={() =>
+              navigateUserProfile(row.user_id, {
+                basePath,
+                returnNav: profileReturnNav,
+              })
+            }
+          >
+            {copy.viewProfile}
+          </CommercialEntityLink>
+        );
+      },
     },
   ];
 
