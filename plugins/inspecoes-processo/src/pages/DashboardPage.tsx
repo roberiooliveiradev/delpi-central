@@ -7,21 +7,29 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { EmptyState } from "../components/EmptyState";
 import { IndicadorEnsaiadorSection } from "../components/IndicadorEnsaiadorSection";
 import { KpiCard } from "../components/KpiCard";
 import { PageShell } from "../components/PageShell";
+import { PeriodFilters } from "../components/PeriodFilters";
 import { RankingProdutoSection } from "../components/RankingProdutoSection";
 import { branchLabel } from "../constants/branch";
 import { useInspecoesProcessoPorEnsaiador } from "../hooks/useInspecoesProcessoPorEnsaiador";
 import { useInspecoesProcessoPorProduto } from "../hooks/useInspecoesProcessoPorProduto";
 import { useInspecoesProcessoResumo } from "../hooks/useInspecoesProcessoResumo";
+import { validatePeriodRange } from "../utils/dateRange";
 import { formatIsoDatePt, formatNumber, formatPercent } from "../utils/format";
+import {
+  periodFromSearch,
+  syncPeriodInUrl,
+  type DashboardPeriod,
+} from "../utils/periodQuery";
 
 type DashboardPageProps = {
   branch: string;
+  search?: string;
   active?: boolean;
   refreshToken?: number;
   onLoadingChange?: (loading: boolean) => void;
@@ -30,29 +38,53 @@ type DashboardPageProps = {
 
 export function DashboardPage({
   branch,
+  search,
   active = true,
   refreshToken = 0,
   onLoadingChange,
   onLastUpdated,
 }: DashboardPageProps) {
+  const [period, setPeriod] = useState<DashboardPeriod>(() => periodFromSearch(search));
+  const [trackedSearch, setTrackedSearch] = useState(search);
+  if (search !== trackedSearch) {
+    setTrackedSearch(search);
+    setPeriod(periodFromSearch(search));
+  }
+  const rangeError =
+    period.mode === "range" ? validatePeriodRange(period.startDate, period.endDate) : null;
+  const kpiPeriod = {
+    startDate: period.mode === "range" ? period.startDate : undefined,
+    endDate: period.mode === "range" ? period.endDate : undefined,
+    enabled: !rangeError,
+  };
+
+  const handlePeriodChange = useCallback((next: DashboardPeriod) => {
+    setPeriod(next);
+    syncPeriodInUrl(next);
+  }, []);
+
+  useEffect(() => {
+    syncPeriodInUrl(period);
+  }, [period]);
+
   const {
     data,
     loading: resumoLoading,
     error: resumoError,
     reload: reloadResumo,
-  } = useInspecoesProcessoResumo(branch, refreshToken);
+  } = useInspecoesProcessoResumo(branch, refreshToken, kpiPeriod);
   const {
     items: produtoItems,
     loading: produtoLoading,
     error: produtoError,
     reload: reloadProduto,
-  } = useInspecoesProcessoPorProduto(branch, refreshToken);
+  } = useInspecoesProcessoPorProduto(branch, refreshToken, kpiPeriod);
   const {
     items: ensaiadorItems,
     loading: ensaiadorLoading,
     error: ensaiadorError,
     reload: reloadEnsaiador,
-  } = useInspecoesProcessoPorEnsaiador(branch, refreshToken);
+  } = useInspecoesProcessoPorEnsaiador(branch, refreshToken, kpiPeriod);
 
   const refreshing = resumoLoading || produtoLoading || ensaiadorLoading;
 
@@ -67,7 +99,11 @@ export function DashboardPage({
   }, [active, refreshing, data, refreshToken, onLastUpdated]);
 
   const unidade = data?.unidade?.trim() || branchLabel(branch);
-  const periodo =
+  const selectedPeriodLabel =
+    period.mode === "all"
+      ? "Todo o histórico"
+      : `${formatIsoDatePt(period.startDate)} até ${formatIsoDatePt(period.endDate)}`;
+  const measuredPeriod =
     data?.primeira_data_medicao || data?.ultima_data_medicao
       ? `${formatIsoDatePt(data.primeira_data_medicao)} até ${formatIsoDatePt(data.ultima_data_medicao)}`
       : null;
@@ -77,11 +113,18 @@ export function DashboardPage({
     : resumoError
       ? `Não foi possível carregar o resumo de ${branchLabel(branch)}.`
       : data
-        ? `${unidade} · Filial ${data.filial || branch}${periodo ? ` · Período: ${periodo}` : ""}`
+        ? `${unidade} · Filial ${data.filial || branch} · Período: ${selectedPeriodLabel}${
+            measuredPeriod && period.mode === "all" ? ` (${measuredPeriod})` : ""
+          }`
         : `Resumo de ${branchLabel(branch)}.`;
 
   return (
     <PageShell title="Dashboard" description={description}>
+      <PeriodFilters
+        period={period}
+        loading={refreshing}
+        onChange={handlePeriodChange}
+      />
       {resumoLoading && !data ? (
         <div className="ip-alert ip-alert--info" role="status" aria-live="polite">
           <p>Carregando resumo da filial…</p>
@@ -158,7 +201,8 @@ export function DashboardPage({
           </div>
 
           <p className="ip-muted-note">
-            Dados agregados por filial. Detalhes serão carregados somente sob demanda.
+            Dados agregados pela data da medição no período selecionado. Detalhes
+            carregam somente sob demanda.
           </p>
         </>
       ) : null}

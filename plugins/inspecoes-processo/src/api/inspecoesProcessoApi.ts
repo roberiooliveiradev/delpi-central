@@ -23,12 +23,18 @@ function buildQuery(params: Record<string, string | number | undefined>): string
   return search.toString();
 }
 
+export type PeriodQueryParams = {
+  start_date?: string;
+  end_date?: string;
+};
+
 export async function getResumo(
   branch: string,
-  signal?: AbortSignal,
+  params: PeriodQueryParams & { signal?: AbortSignal } = {},
 ): Promise<InspecoesProcessoResumo> {
+  const { signal, ...query } = params;
   const response = await httpGet<ApiSuccessResponse<InspecoesProcessoResumo>>(
-    `${INSPECOES_PROCESSO_API_BASE}/resumo?${buildQuery({ branch })}`,
+    `${INSPECOES_PROCESSO_API_BASE}/resumo?${buildQuery({ branch, ...query })}`,
     { signal },
   );
   return unwrapApiDelpiEnvelope(response, "Não foi possível carregar o resumo.");
@@ -36,13 +42,13 @@ export async function getResumo(
 
 export async function getPorProduto(
   branch: string,
-  limit = 10,
-  signal?: AbortSignal,
+  params: PeriodQueryParams & { limit?: number; signal?: AbortSignal } = {},
 ): Promise<InspecoesProcessoPorProdutoItem[]> {
+  const { signal, limit = 10, ...query } = params;
   const response = await httpGet<
     ApiSuccessResponse<InspecoesProcessoPorProdutoItem[]>
   >(
-    `${INSPECOES_PROCESSO_API_BASE}/por-produto?${buildQuery({ branch, limit })}`,
+    `${INSPECOES_PROCESSO_API_BASE}/por-produto?${buildQuery({ branch, limit, ...query })}`,
     { signal },
   );
   return unwrapApiDelpiEnvelope(
@@ -53,13 +59,13 @@ export async function getPorProduto(
 
 export async function getPorEnsaiador(
   branch: string,
-  limit = 10,
-  signal?: AbortSignal,
+  params: PeriodQueryParams & { limit?: number; signal?: AbortSignal } = {},
 ): Promise<InspecoesProcessoPorEnsaiadorItem[]> {
+  const { signal, limit = 10, ...query } = params;
   const response = await httpGet<
     ApiSuccessResponse<InspecoesProcessoPorEnsaiadorItem[]>
   >(
-    `${INSPECOES_PROCESSO_API_BASE}/por-ensaiador?${buildQuery({ branch, limit })}`,
+    `${INSPECOES_PROCESSO_API_BASE}/por-ensaiador?${buildQuery({ branch, limit, ...query })}`,
     { signal },
   );
   return unwrapApiDelpiEnvelope(

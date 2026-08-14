@@ -54,14 +54,28 @@ router = APIRouter(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_resumo_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_get_inspecoes_processo_resumo_use_case()
-        result = use_case.execute(branch=branch)
+        result = use_case.execute(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         return api_delpi_success(
             result.to_dict(),
@@ -92,14 +106,29 @@ def get_inspecoes_processo_resumo_route(
 def get_inspecoes_processo_ranking_ensaio_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_inspecoes_processo_ranking_ensaio_use_case()
-        items = use_case.execute(branch=branch, limit=limit)
+        items = use_case.execute(
+            branch=branch,
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         return api_delpi_success(
             [item.to_dict() for item in items],
@@ -134,14 +163,29 @@ def get_inspecoes_processo_ranking_ensaio_route(
 def get_inspecoes_processo_por_produto_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_inspecoes_processo_por_produto_use_case()
-        items = use_case.execute(branch=branch, limit=limit)
+        items = use_case.execute(
+            branch=branch,
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         return api_delpi_success(
             [item.to_dict() for item in items],
@@ -176,14 +220,29 @@ def get_inspecoes_processo_por_produto_route(
 def get_inspecoes_processo_por_operacao_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_inspecoes_processo_por_operacao_use_case()
-        items = use_case.execute(branch=branch, limit=limit)
+        items = use_case.execute(
+            branch=branch,
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         return api_delpi_success(
             [item.to_dict() for item in items],
@@ -218,14 +277,29 @@ def get_inspecoes_processo_por_operacao_route(
 def get_inspecoes_processo_por_ensaiador_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_inspecoes_processo_por_ensaiador_use_case()
-        items = use_case.execute(branch=branch, limit=limit)
+        items = use_case.execute(
+            branch=branch,
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         return api_delpi_success(
             [item.to_dict() for item in items],

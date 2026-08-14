@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getPorEnsaiador } from "../api/inspecoesProcessoApi";
 import type { InspecoesProcessoPorEnsaiadorItem } from "../types/api";
+import type { DashboardKpiPeriod } from "./useInspecoesProcessoResumo";
 
 export const POR_ENSAIADOR_LIMIT = 10;
 
@@ -15,17 +16,26 @@ type UseInspecoesProcessoPorEnsaiadorResult = {
 export function useInspecoesProcessoPorEnsaiador(
   branch: string,
   refreshToken = 0,
+  period?: DashboardKpiPeriod,
 ): UseInspecoesProcessoPorEnsaiadorResult {
   const [items, setItems] = useState<InspecoesProcessoPorEnsaiadorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const startDate = period?.startDate;
+  const endDate = period?.endDate;
+  const enabled = period?.enabled ?? true;
 
   const reload = useCallback(() => {
     setReloadKey((value) => value + 1);
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     async function run() {
@@ -34,11 +44,12 @@ export function useInspecoesProcessoPorEnsaiador(
       setItems([]);
 
       try {
-        const ranking = await getPorEnsaiador(
-          branch,
-          POR_ENSAIADOR_LIMIT,
-          controller.signal,
-        );
+        const ranking = await getPorEnsaiador(branch, {
+          limit: POR_ENSAIADOR_LIMIT,
+          start_date: startDate,
+          end_date: endDate,
+          signal: controller.signal,
+        });
         if (controller.signal.aborted) return;
         setItems(Array.isArray(ranking) ? ranking.slice(0, POR_ENSAIADOR_LIMIT) : []);
         setError(null);
@@ -62,7 +73,7 @@ export function useInspecoesProcessoPorEnsaiador(
     return () => {
       controller.abort();
     };
-  }, [branch, reloadKey, refreshToken]);
+  }, [branch, reloadKey, refreshToken, startDate, endDate, enabled]);
 
   return { items, loading, error, reload };
 }

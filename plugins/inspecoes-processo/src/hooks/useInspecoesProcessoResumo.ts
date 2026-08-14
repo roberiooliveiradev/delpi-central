@@ -3,6 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 import { getResumo } from "../api/inspecoesProcessoApi";
 import type { InspecoesProcessoResumo } from "../types/api";
 
+export type DashboardKpiPeriod = {
+  startDate?: string;
+  endDate?: string;
+  enabled?: boolean;
+};
+
 type UseInspecoesProcessoResumoResult = {
   data: InspecoesProcessoResumo | null;
   loading: boolean;
@@ -13,17 +19,26 @@ type UseInspecoesProcessoResumoResult = {
 export function useInspecoesProcessoResumo(
   branch: string,
   refreshToken = 0,
+  period?: DashboardKpiPeriod,
 ): UseInspecoesProcessoResumoResult {
   const [data, setData] = useState<InspecoesProcessoResumo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const startDate = period?.startDate;
+  const endDate = period?.endDate;
+  const enabled = period?.enabled ?? true;
 
   const reload = useCallback(() => {
     setReloadKey((value) => value + 1);
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     async function run() {
@@ -32,7 +47,11 @@ export function useInspecoesProcessoResumo(
       setData(null);
 
       try {
-        const resumo = await getResumo(branch, controller.signal);
+        const resumo = await getResumo(branch, {
+          start_date: startDate,
+          end_date: endDate,
+          signal: controller.signal,
+        });
         if (controller.signal.aborted) return;
         setData(resumo);
         setError(null);
@@ -52,7 +71,7 @@ export function useInspecoesProcessoResumo(
     return () => {
       controller.abort();
     };
-  }, [branch, reloadKey, refreshToken]);
+  }, [branch, reloadKey, refreshToken, startDate, endDate, enabled]);
 
   return { data, loading, error, reload };
 }

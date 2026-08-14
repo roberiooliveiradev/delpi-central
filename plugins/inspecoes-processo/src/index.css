@@ -352,6 +352,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}.inspecoes-processo-app .ip-period-presets{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}.inspecoes-processo-app .ip-period-error{
+  margin: 0;
+  font-size: var(--ip-font-sm);
+  color: var(--ip-danger);
+  line-height: 1.45;
 }.inspecoes-processo-app .ip-auditoria-hint{
   margin: 0;
   font-size: var(--ip-font-sm);
@@ -480,6 +489,16 @@
 
   .inspecoes-processo-app .ip-kpi-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inspecoes-processo-app .ip-period-presets {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inspecoes-processo-app .ip-period-presets .ip-button {
+    width: 100%;
+    justify-content: center;
   }
 
   .inspecoes-processo-app .ip-page-header__main,
