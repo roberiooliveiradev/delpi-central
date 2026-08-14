@@ -1,5 +1,9 @@
 import type { ChangeEvent, ReactNode } from "react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
+
+export type NativeCheckboxHintPlacement = "inline" | "tooltip";
+
 export type NativeCheckboxControlProps = {
   id?: string;
   checked: boolean;
@@ -11,8 +15,15 @@ export type NativeCheckboxControlProps = {
    * sem isso o checkbox aparece sem rótulo (parece “texto invisível” no tema claro).
    */
   children?: ReactNode;
-  /** Texto auxiliar abaixo do label (quando `label` é string simples). */
+  /** Texto auxiliar: inline abaixo do label (legado) ou HelpTooltip compacto. */
   hint?: ReactNode;
+  /**
+   * `inline` (default) — parágrafo sob o label (legado).
+   * `tooltip` — ícone HelpTooltip ao lado do label (toolbar de gráfico densa).
+   */
+  hintPlacement?: NativeCheckboxHintPlacement;
+  /** Aria do botão de ajuda quando `hintPlacement="tooltip"`. */
+  hintAriaLabel?: string;
   disabled?: boolean;
   className?: string;
   inputClassName?: string;
@@ -31,6 +42,8 @@ export function NativeCheckboxControl({
   label,
   children,
   hint,
+  hintPlacement = "inline",
+  hintAriaLabel = "Ajuda",
   disabled,
   className,
   inputClassName,
@@ -38,13 +51,39 @@ export function NativeCheckboxControl({
   "aria-label": ariaLabel,
 }: NativeCheckboxControlProps) {
   const resolvedLabel = label ?? children;
+  const useTooltipHint =
+    hintPlacement === "tooltip" &&
+    typeof hint === "string" &&
+    hint.trim().length > 0;
+
   const copy =
-    resolvedLabel || hint ? (
+    resolvedLabel || (hint && !useTooltipHint) ? (
       <span className="delpi-ui-native-checkbox__copy">
         {resolvedLabel ? (
-          <span className="delpi-ui-native-checkbox__label">{resolvedLabel}</span>
+          <span className="delpi-ui-native-checkbox__label">
+            {resolvedLabel}
+            {useTooltipHint ? (
+              <HelpTooltip
+                content={hint}
+                ariaLabel={hintAriaLabel}
+                className="delpi-ui-native-checkbox__help"
+              />
+            ) : null}
+          </span>
         ) : null}
-        {hint ? <span className="delpi-ui-native-checkbox__hint">{hint}</span> : null}
+        {hint && !useTooltipHint ? (
+          <span className="delpi-ui-native-checkbox__hint">{hint}</span>
+        ) : null}
+      </span>
+    ) : useTooltipHint ? (
+      <span className="delpi-ui-native-checkbox__copy">
+        <span className="delpi-ui-native-checkbox__label">
+          <HelpTooltip
+            content={hint}
+            ariaLabel={hintAriaLabel}
+            className="delpi-ui-native-checkbox__help"
+          />
+        </span>
       </span>
     ) : null;
 
@@ -53,6 +92,7 @@ export function NativeCheckboxControl({
       className={["delpi-ui-native-checkbox", className].filter(Boolean).join(" ")}
       data-checked={checked ? "true" : "false"}
       data-disabled={disabled ? "true" : "false"}
+      data-hint-placement={hintPlacement}
     >
       <input
         id={id}
