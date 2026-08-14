@@ -50,7 +50,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | Rota (relativa a `/apps/commercial`) | Wireframe | Status | Notas |
 |--------------------------------------|-----------|--------|-------|
 | `/` | WF-01R-L | **entregue** | Hub launcher + eventos |
-| `/overview` | **WF-OV** | **entregue** | KPIs + carteira aberta + **gap vs meta** + **carteira no tempo** + ROL (+YoY) + funil + série hit rate (+YoY) |
+| `/overview` | **WF-OV** | **entregue** | KPIs + share empresa‡ + carteira aberta + gap + horizon + ROL (+YoY/N anos) + tendência janela + ranking + funil |
 | `/analytics` | — | **alias** | Redirect → `/overview` |
 | `/gestao` | — | **alias** | Redirect → `/overview` |
 | `/my-tasks` · `/my-day` | WF-TASKS / WF-06R | **entregue** | Alias my-day |
@@ -189,23 +189,28 @@ Favoritos
 
 **Objetivo:** dashboard BI do período (filtros + KPIs + séries + funil). **Sem** Aprofundar / prévia OV.  
 **Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades.  
-**MVP temporal (KPI-CARTEIRA-HORIZON):** 1× `GET /analytics/open-portfolio-horizon`; card **Gap vs meta** (`max(meta_SI − ROL, 0)`); painel **Carteira no tempo** com chips → deep link Meus pedidos (`focus=late` / `date_start`–`date_end`). **Fora:** soma ROL+carteira; F6.
+**MVP temporal (KPI-CARTEIRA-HORIZON):** 1× `GET /analytics/open-portfolio-horizon`; card **Gap vs meta** (`max(meta_SI − ROL, 0)`); painel **Carteira no tempo** com chips → deep link Meus pedidos (`focus=late` / `date_start`–`date_end`). **Fora:** soma ROL+carteira; F6.  
+**Comparativos (KPI-PORTFOLIO-SHARE + T4/T5):** card **Share empresa** (RBAC analytics/team/manage); tendência com janela 7/30/90/custom; ranking delta % (gestor); presets + até 3 anos de overlay nas séries.
 
 ```text
 ┌─ PageHero «Visão geral» ────────────────────────────── [Atualizar] ─┐
 ┌─ Filtros + atalhos de período (hoje…12m) + Unidade + Segmento + Carteira† ┐
-┌─ KPIs (≤8): ROL · Carteira aberta (agora) · Gap vs meta · Hit rate · OTD · … ─┐
+┌─ KPIs (≤8): ROL · Share empresa‡ · Carteira aberta · Gap · Hit rate · OTD · … ─┐
 │  Gap: buraco vs meta ROL · ao lado valor do mês corrente (contexto, sem soma) │
+│  Share: portfolioRol ÷ companyRol (mesmo período) · ‡ só analytics/team/manage │
+┌─ Tendência faturamento [7d|30d|90d|Custom] · sparkline / Δ% ─────────────────┐
 ┌─ Carteira no tempo (chips) → Meus pedidos (atraso / mês / 1–3m / depois) ──┐
-┌─ Evolução ROL [Dia–Ano] [Comparar ano anterior] [Export] ─┬─ Funil ─┐
-│ séries SC/ES (+ prior tracejado se YoY) · drill só ano atual         │
+┌─ Evolução ROL [Dia–Ano] [YoY] [+2a|+3a] [Export] ─┬─ Funil ─┐
+│ séries SC/ES (+ prior tracejado se YoY/N anos) · drill só ano atual         │
 ┌─ Evolução hit rate [Dia–Ano] [Comparar ano anterior] [Export] ──────┐
 │ séries SC/ES (+ prior) · mesma fórmula do KPI por bucket             │
+┌─ Ranking crescimento/queda (cliente; vendedor se team/manage) + Excel ─────┐
 † SellerScopeFilter se canFilterPortfolios
 ```
 
 **Export:** ROL, funil e série de conversão nesta tela. OTD/Opp sem export (D13).  
-**YoY:** 2ª chamada aos BFF `/analytics/rol/series` e `/analytics/closing-rate/series` com datas −1 ano — **sem** rota nova.
+**YoY / N anos:** chamadas adicionais aos BFF de séries com `periodShift` (−1a…−3a) — **sem** rota por ano.  
+**Share:** `GET /analytics/portfolio-billing-share`.
 
 ### WF-TASKS — Minhas tarefas `/my-tasks`
 
@@ -539,11 +544,23 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 │ Tendência [Todas] [Crescimento] [Estável] [Queda]                     │
 │ Buscar cliente, código, loja ou pedido [___________________________]    │
 └─────────────────────────────────────────────────────────────────────────┘
+┌─ Share + tendência (paridade Overview) ────────────────────────────────────┐
+│ Escopo: [Carteira ▾]   Período: [MTD|YTD|Custom] [YoY] [+2a] [+3a]       │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐                   │
+│ │ Faturamento  │ │ Share empresa│ │ Tendência 30d ▾  │                   │
+│ │ R$ …         │ │ 12,4% ‡      │ │ sparkline / Δ%   │                   │
+│ └──────────────┘ └──────────────┘ └──────────────────┘                   │
+│ ‡ Share só com analytics.view | accounts.team.view | seller-portfolios.manage │
+│ Glossário: aberto = backlog · faturado/share = ROL/NF no período           │
+└────────────────────────────────────────────────────────────────────────────┘
 ┌─ Faturamento — {preset} ──────────────────────────────── Cliente [Todos ▾] ─┐
 │ [Hoje|Semana|Mês|Mês passado|Trimestre|Ano|12 meses|Personalizado]         │
 │ [datas se Personalizado]                                                   │
-│ ChartToolbar [Dia–Ano]  [ Comparar ano anterior ]                          │
-│ ──── atual ──── ─ ─ ─ ano ant. ─ ─ ─ (billing-series ×2, sem rota nova)    │
+│ PeriodCompareControls [Dia–Ano]  [YoY] [+2a|+3a]                           │
+│ ──── atual ──── ─ ─ ─ anos anteriores ─ ─ ─ (billing-series ×N)            │
+└────────────────────────────────────────────────────────────────────────────┘
+┌─ Ranking crescimento/queda (cliente; vendedor se team) + Excel ────────────┐
+│ delta % faturamento no período vs base (YoY ou janela)                     │
 └────────────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard · Clientes (1–20 de 24) ─────────────── [Colunas] ────────┐
 │ Cliente       Vendedor  Última venda  Fat.12m  Em aberto  Atrasos      │
@@ -557,6 +574,7 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Share / ranking:** BFF `portfolio-billing-share` e `portfolio-billing-ranking`; Conta `?secao=historico` espelha YoY no painel NF.
 **Realtime (carteiras):** mutações auditadas emitem `portfolio.changed` para
 salas `user:{memberId}`. Auth WS: `accounts.view` **ou** `worklist.view`.
 Admin (lista/detalhe) refetch silencioso; membro vê Histórico em Minha Carteira.
