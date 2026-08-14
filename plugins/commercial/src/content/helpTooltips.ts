@@ -257,6 +257,8 @@ export const CM_HELP = {
       "Glossário: «Em aberto / carteira aberta» = pedidos com saldo (backlog). «Faturamento» = notas fiscais / ROL no período. O share empresa e a tendência usam só faturamento — nunca o valor em aberto.",
     portfolioBillingShare:
       "Share = ROL (ou faturamento agregado) da carteira/escopo ÷ ROL da empresa no mesmo período. Exige permissão de analytics, equipe ou gestão de carteiras.",
+    billingRanking:
+      "Ranking de crescimento/queda do faturamento (ROL) versus o mesmo período no ano anterior. Gestores podem agrupar por vendedor.",
     billingSeries:
       "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a curva dele. Presets iguais à Visão geral; opcionalmente compare com o ano anterior.",
     billingSeriesPeriod:

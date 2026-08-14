@@ -10,6 +10,7 @@ import type {
   NewBusinessRolPctData,
   OpenPortfolioHorizonData,
   OpenPortfolioSummaryData,
+  PortfolioBillingRankingData,
   PortfolioBillingShareData,
   RolTargetData,
   SalesConversionRateSeriesData,
@@ -24,7 +25,11 @@ import { commercialApiUrl, httpGet } from "./httpClient";
 const ANALYTICS_PATH = "/analytics";
 
 function buildQuery(
-  params: AnalyticsFilterParams & { granularity?: ChartGranularity },
+  params: AnalyticsFilterParams & {
+    granularity?: ChartGranularity;
+    group_by?: string;
+    limit?: number;
+  },
 ): string {
   const searchParams = new URLSearchParams();
   if (params.start_date) searchParams.set("start_date", params.start_date);
@@ -46,6 +51,8 @@ function buildQuery(
   if (params.sort_by) searchParams.set("sort_by", params.sort_by);
   if (params.sort_dir) searchParams.set("sort_dir", params.sort_dir);
   if (params.search?.trim()) searchParams.set("search", params.search.trim());
+  if (params.group_by) searchParams.set("group_by", params.group_by);
+  if (params.limit != null) searchParams.set("limit", String(params.limit));
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
@@ -123,6 +130,21 @@ export function getPortfolioBillingShare(
 ) {
   return fetchAnalyticsData<PortfolioBillingShareData>(
     "/portfolio-billing-share",
+    params,
+    signal,
+  );
+}
+
+/** Ranking delta % faturamento vs período −1 ano. */
+export function getPortfolioBillingRanking(
+  params: AnalyticsFilterParams & {
+    group_by?: "customer" | "seller";
+    limit?: number;
+  },
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<PortfolioBillingRankingData>(
+    "/portfolio-billing-ranking",
     params,
     signal,
   );

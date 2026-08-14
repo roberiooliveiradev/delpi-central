@@ -11,7 +11,9 @@ from fastapi import APIRouter, Query, Request
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ANALYTICS_PERMISSIONS,
+    COMMERCIAL_MANAGE_PERMISSIONS,
     COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS,
+    COMMERCIAL_READ_PERMISSIONS,
     can_use_team_scope,
 )
 from commercial_app.application.use_cases.get_open_portfolio_summary import (
@@ -157,7 +159,12 @@ def bff_portfolio_billing_share(
     "/portfolio-billing-ranking",
     operation_id="bff_get_analytics_portfolio_billing_ranking",
 )
-@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS, *COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS)
+@require_any_permission(
+    *COMMERCIAL_READ_PERMISSIONS,
+    *COMMERCIAL_MANAGE_PERMISSIONS,
+    *COMMERCIAL_ANALYTICS_PERMISSIONS,
+    *COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS,
+)
 def bff_portfolio_billing_ranking(
     request: Request,
     start_date: str | None = None,

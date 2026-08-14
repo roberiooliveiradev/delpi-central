@@ -23,6 +23,7 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
+import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
 import { PortfolioBillingShareCard } from "../components/PortfolioBillingShareCard";
 import { CustomersTable } from "../components/CustomersTable";
 import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
@@ -472,6 +473,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           />
 
           <CustomerBillingSeriesChart customers={aggregation.customers} />
+
+          <PortfolioBillingRankingTable
+            sellerId={canFilterPortfolios ? sellerIdFilter : null}
+          />
 
           {!showEmptyDataset && !showFilteredEmpty ? (
             <CommercialSectionCard

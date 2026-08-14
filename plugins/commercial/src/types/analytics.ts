@@ -62,6 +62,30 @@ export type PortfolioBillingShareData = {
   nature: "portfolio_billing_share";
 };
 
+/** Ranking delta % — BFF portfolio-billing-ranking. */
+export type PortfolioBillingRankingItem = {
+  customerCode?: string | null;
+  customerStore?: string | null;
+  customerName?: string | null;
+  sellerName?: string | null;
+  currentRol: number;
+  priorRol: number;
+  delta: number;
+  deltaPct: number | null;
+  rank: number;
+};
+
+export type PortfolioBillingRankingData = {
+  groupBy: "customer" | "seller";
+  items: PortfolioBillingRankingItem[];
+  startDate: string;
+  endDate: string;
+  priorStartDate: string;
+  priorEndDate: string;
+  branch?: string | null;
+  nature: "portfolio_billing_ranking";
+};
+
 export type OpenPortfolioHorizonBucketId =
   | "overdue"
   | "current_month"
