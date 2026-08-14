@@ -155,6 +155,7 @@ def build_manage_customer_avatar_use_case() -> ManageCustomerAvatarUseCase:
             repository=build_customer_avatar_repository(),
             storage=build_avatar_storage(),
             audit_repository=build_audit_log_repository(),
+            portfolio_repository=build_seller_portfolio_repository(),
         )
     return _avatar_use_case
 
@@ -215,6 +216,7 @@ def build_manage_account_contacts_use_case() -> ManageAccountContactsUseCase:
         _account_contacts_use_case = ManageAccountContactsUseCase(
             repository=build_account_contact_repository(),
             audit_repository=build_audit_log_repository(),
+            portfolio_repository=build_seller_portfolio_repository(),
         )
     return _account_contacts_use_case
 

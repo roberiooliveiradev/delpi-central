@@ -14,6 +14,9 @@ from commercial_app.domain.ports.customer_avatar_repository_port import (
     AuditLogRepositoryPort,
     CustomerAvatarRepositoryPort,
 )
+from commercial_app.domain.ports.seller_portfolio_repository_port import (
+    SellerPortfolioRepositoryPort,
+)
 
 _ENTITY_ACCOUNT = "account"
 _ACTION_AVATAR_UPLOADED = "account.avatar.uploaded"
@@ -33,10 +36,30 @@ class ManageCustomerAvatarUseCase:
         repository: CustomerAvatarRepositoryPort,
         storage: CustomerAvatarStorage | None = None,
         audit_repository: AuditLogRepositoryPort | None = None,
+        portfolio_repository: SellerPortfolioRepositoryPort | None = None,
     ):
         self._repository = repository
         self._storage = storage or CustomerAvatarStorage()
         self._audit = audit_repository
+        self._portfolios = portfolio_repository
+
+    def _member_user_ids_for_account(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+    ) -> list[str]:
+        if self._portfolios is None:
+            return []
+        from commercial_app.application.services.commercial_realtime_notify import (
+            member_user_ids_for_customer,
+        )
+
+        return member_user_ids_for_customer(
+            self._portfolios.list_portfolios(active_only=True),
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
 
     def get_meta(
         self,
@@ -166,13 +189,38 @@ class ManageCustomerAvatarUseCase:
         actor = (actor_user_id or "").strip()
         if not actor:
             return
+        safe_payload = payload or {}
         self._audit.append(
             actor_user_id=actor,
             action=action,
             entity_type=_ENTITY_ACCOUNT,
             entity_id=account_entity_id(customer_code, customer_store),
-            payload=payload or {},
+            payload=safe_payload,
         )
+        try:
+            from commercial_app.application.services.commercial_realtime_notify import (
+                notify_account_changed,
+            )
+            from commercial_app.core.auth_actor import (
+                peek_actor_client_id,
+                peek_actor_display_name,
+            )
+
+            notify_account_changed(
+                reason=action,
+                customer_code=customer_code,
+                customer_store=customer_store,
+                member_user_ids=self._member_user_ids_for_account(
+                    customer_code=customer_code,
+                    customer_store=customer_store,
+                ),
+                actor_user_id=actor,
+                actor_display_name=peek_actor_display_name(),
+                actor_client_id=peek_actor_client_id(),
+                payload=safe_payload,
+            )
+        except Exception:  # noqa: BLE001 — realtime não pode falhar a mutação
+            pass
 
     @staticmethod
     def _normalize_identity(customer_code: str, customer_store: str) -> tuple[str, str]:

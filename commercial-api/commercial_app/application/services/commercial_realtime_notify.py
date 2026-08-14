@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
-from typing import Literal, Sequence
+from typing import Any, Literal, Sequence
 
 from commercial_app.application.services.commercial_realtime_hub import (
     commercial_realtime_hub,
+)
+from commercial_app.domain.services.audit_messages_content_service import (
+    AuditMessagesContentService,
 )
 from commercial_app.domain.services.seller_portfolio_messages_content_service import (
     SellerPortfolioMessagesContentService,
@@ -68,6 +71,41 @@ _NOTIFICATION_BY_REASON: dict[WorklistChangeReason, dict[Audience, tuple[str, st
         "team": ("Anexo na tarefa", "{actor} alterou anexo em: {title}", "info"),
     },
 }
+
+
+def member_user_ids_for_customer(
+    portfolios: Sequence[Any],
+    *,
+    customer_code: str,
+    customer_store: str,
+) -> list[str]:
+    """Membros ativos das carteiras que possuem o cliente (code/store)."""
+    code = (customer_code or "").strip()
+    store = (customer_store or "").strip()
+    if not code or not store:
+        return []
+    seen: set[str] = set()
+    members: list[str] = []
+    for portfolio in portfolios:
+        if not getattr(portfolio, "active", True):
+            continue
+        customers = getattr(portfolio, "customers", ()) or ()
+        if not any(
+            (item.customer_code or "").strip() == code
+            and (item.customer_store or "").strip() == store
+            for item in customers
+        ):
+            continue
+        for member in getattr(portfolio, "members", ()) or ():
+            uid = (getattr(member, "user_id", None) or "").strip()
+            if uid and uid not in seen:
+                seen.add(uid)
+                members.append(uid)
+        owner = (getattr(portfolio, "user_id", None) or "").strip()
+        if owner and owner not in seen:
+            seen.add(owner)
+            members.append(owner)
+    return members
 
 
 def user_room(user_id: str) -> str:
@@ -136,6 +174,40 @@ def build_portfolio_notification(
         "title": content.realtime_title(reason),
         "message": message,
         "variant": content.realtime_tone(reason),
+    }
+
+
+def _notification_variant(tone: str | None) -> str:
+    normalized = (tone or "").strip().lower()
+    if normalized in {"success", "warning", "error", "info"}:
+        return normalized
+    if normalized in {"danger", "destructive"}:
+        return "warning"
+    return "info"
+
+
+def build_account_notification(
+    *,
+    reason: str,
+    actor_display_name: str | None = None,
+    payload: dict | None = None,
+) -> dict[str, str]:
+    content = AuditMessagesContentService
+    actor = _safe_label(actor_display_name) or "Alguém da equipe"
+    safe_payload = {
+        key: ("" if value is None else value)
+        for key, value in (payload or {}).items()
+    }
+    safe_payload.setdefault("action", reason)
+    template = content.message_template_for(reason)
+    try:
+        detail = template.format(**safe_payload)
+    except Exception:
+        detail = f"Alteração na conta ({reason})."
+    return {
+        "title": content.title_for(reason),
+        "message": f"{actor}: {detail}",
+        "variant": _notification_variant(content.tone_for(reason)),
     }
 
 
@@ -240,3 +312,48 @@ def notify_portfolio_changed(
     rooms.add(TEAM_ROOM)
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, payload)
+
+
+def notify_account_changed(
+    *,
+    reason: str,
+    customer_code: str,
+    customer_store: str,
+    member_user_ids: Sequence[str] | None = None,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+    payload: dict | None = None,
+) -> None:
+    """Broadcast para salas `user:` dos membros das carteiras do cliente e `team`."""
+    code = (customer_code or "").strip()
+    store = (customer_store or "").strip()
+    if not code or not store:
+        return
+    members = [uid.strip() for uid in (member_user_ids or ()) if uid and str(uid).strip()]
+    actor = (actor_user_id or "").strip()
+    if actor and actor not in members:
+        members.append(actor)
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    notification = build_account_notification(
+        reason=reason,
+        actor_display_name=actor_label,
+        payload=payload,
+    )
+    body = {
+        "type": "account.changed",
+        "reason": reason,
+        "customerCode": code,
+        "customerStore": store,
+        "memberUserIds": members,
+        "actorUserId": actor or None,
+        "actorDisplayName": actor_label,
+        "actorClientId": (actor_client_id or "").strip() or None,
+        "notification": notification,
+    }
+    rooms = {user_room(uid) for uid in members}
+    rooms.add(TEAM_ROOM)
+    for room in rooms:
+        commercial_realtime_hub.schedule_broadcast(room, body)

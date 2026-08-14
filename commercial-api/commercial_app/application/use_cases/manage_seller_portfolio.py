@@ -486,7 +486,8 @@ class ManageSellerPortfolioUseCase:
                     if uid not in members:
                         members.append(uid)
             if not members:
-                return
+                # Ainda notifica a sala `team` (gestores) mesmo sem membership resolvido.
+                members = []
             notify_portfolio_changed(
                 reason=action,
                 portfolio_id=entity_id,

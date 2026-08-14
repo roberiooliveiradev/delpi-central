@@ -277,6 +277,86 @@ def test_notify_portfolio_changed_schedules_member_and_team_rooms(monkeypatch):
     assert by_room[TEAM_ROOM]["portfolioId"] == "p1"
 
 
+def test_notify_account_changed_schedules_member_and_team_rooms(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.resolve_user_display_name",
+        lambda _uid: "Ana Gestora",
+    )
+
+    from commercial_app.application.services.commercial_realtime_notify import (
+        notify_account_changed,
+    )
+    from commercial_app.domain.services.audit_messages_content_service import (
+        AuditMessagesContentService,
+    )
+
+    AuditMessagesContentService.clear_cache()
+    notify_account_changed(
+        reason="account.contact.created",
+        customer_code="000001",
+        customer_store="01",
+        member_user_ids=["seller-a"],
+        actor_user_id="manager-1",
+        actor_display_name="Ana Gestora",
+        actor_client_id="client-9",
+        payload={"full_name": "Ana Souza", "channel": "whatsapp"},
+    )
+
+    by_room = {room: payload for room, payload in scheduled}
+    assert set(by_room) == {TEAM_ROOM, user_room("seller-a"), user_room("manager-1")}
+    body = by_room[user_room("seller-a")]
+    assert body["type"] == "account.changed"
+    assert body["reason"] == "account.contact.created"
+    assert body["customerCode"] == "000001"
+    assert body["customerStore"] == "01"
+    assert body["actorClientId"] == "client-9"
+    assert body["notification"]["title"] == "Contato criado"
+    assert "Ana Gestora" in body["notification"]["message"]
+    assert by_room[TEAM_ROOM]["customerCode"] == "000001"
+
+
+def test_member_user_ids_for_customer():
+    from types import SimpleNamespace
+
+    from commercial_app.application.services.commercial_realtime_notify import (
+        member_user_ids_for_customer,
+    )
+
+    portfolios = [
+        SimpleNamespace(
+            active=True,
+            user_id="owner-1",
+            customers=[
+                SimpleNamespace(customer_code="10", customer_store="01"),
+            ],
+            members=[
+                SimpleNamespace(user_id="owner-1", role="owner"),
+                SimpleNamespace(user_id="helper-1", role="member"),
+            ],
+        ),
+        SimpleNamespace(
+            active=True,
+            user_id="other",
+            customers=[
+                SimpleNamespace(customer_code="99", customer_store="01"),
+            ],
+            members=[SimpleNamespace(user_id="other", role="owner")],
+        ),
+    ]
+    assert member_user_ids_for_customer(
+        portfolios,
+        customer_code="10",
+        customer_store="01",
+    ) == ["owner-1", "helper-1"]
+
+
 def test_build_portfolio_notification_uses_json():
     from commercial_app.application.services.commercial_realtime_notify import (
         build_portfolio_notification,

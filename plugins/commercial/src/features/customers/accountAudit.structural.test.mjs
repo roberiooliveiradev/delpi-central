@@ -15,11 +15,17 @@ describe("Account audit timeline Conta", () => {
     );
     assert.match(page, /AccountAuditSection/);
     assert.match(page, /contactsRefreshKey/);
+    assert.match(page, /useCommercialAccountSync/);
+    assert.match(page, /useCommercialWorklistSync/);
 
     const api = readFileSync(
       join(src, "api/customerAccountAuditApi.ts"),
       "utf8",
     );
     assert.match(api, /\/customers\/.*\/audit/);
+
+    const realtime = readFileSync(join(src, "constants/realtime.ts"), "utf8");
+    assert.match(realtime, /account\.changed/);
+    assert.match(realtime, /accountEventTouchesCustomer/);
   });
 });

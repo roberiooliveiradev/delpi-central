@@ -103,6 +103,35 @@ Transferência: união origem + destino nos `memberUserIds`. Textos em
 Gestores em `team` passam a receber `portfolio.changed` mesmo sem membership na
 carteira mutada — necessário para `reloadScope` / Equipe fresca no MFE.
 
+### `account.changed`
+
+Emitido após gravar `audit_log` em mutações de **conta** (contatos e avatar).
+
+```json
+{
+  "type": "account.changed",
+  "reason": "account.contact.created",
+  "customerCode": "000001",
+  "customerStore": "01",
+  "memberUserIds": ["seller-a"],
+  "actorUserId": "manager-1",
+  "actorDisplayName": "Ana Gestora",
+  "actorClientId": "client-uuid",
+  "notification": {
+    "title": "Contato criado",
+    "message": "Ana Gestora: Contato «…» adicionado à conta.",
+    "variant": "success"
+  }
+}
+```
+
+Valores de `reason`: `account.contact.created|updated|deleted`,
+`account.avatar.uploaded|deleted`.
+
+Fan-out: salas `user:` dos membros das carteiras que possuem o cliente **e**
+sala `team`. Textos em `audit_messages.json`. No MFE,
+`useCommercialAccountSync` atualiza contatos / histórico / avatar sem F5.
+
 ## Fan-out worklist
 
 Após mutação HTTP (create/update/complete/defer/reassign/anexo), notify broadcast para:
@@ -142,4 +171,5 @@ Mutações enviam header `X-Commercial-Client-Id`; evento inclui `actorClientId`
 
 1. Dois browsers (vendedor + gestor): mutação worklist em um → fila do outro atualiza **e** toast aparece no outro sem **Atualizar**.
 2. Dois browsers (membros da mesma carteira): vincular cliente / membro → toast `portfolio.changed` no outro; Histórico em Minha Carteira atualiza.
-3. Usuário sem membership → `GET …/audit` retorna 403.
+3. Dois browsers na mesma conta: criar/editar contato ou avatar → toast `account.changed` no outro; Histórico da conta / lista de contatos atualizam sem F5.
+4. Usuário sem membership → `GET …/audit` retorna 403.

@@ -13,6 +13,9 @@ from commercial_app.domain.ports.account_contact_repository_port import (
 from commercial_app.domain.ports.customer_avatar_repository_port import (
     AuditLogRepositoryPort,
 )
+from commercial_app.domain.ports.seller_portfolio_repository_port import (
+    SellerPortfolioRepositoryPort,
+)
 from commercial_app.domain.services.account_audit_formatter_service import (
     AccountAuditFormatterService,
 )
@@ -108,10 +111,30 @@ class ManageAccountContactsUseCase:
         repository: AccountContactRepositoryPort,
         audit_repository: AuditLogRepositoryPort | None = None,
         audit_formatter: AccountAuditFormatterService | None = None,
+        portfolio_repository: SellerPortfolioRepositoryPort | None = None,
     ) -> None:
         self._repository = repository
         self._audit = audit_repository
         self._audit_formatter = audit_formatter or AccountAuditFormatterService()
+        self._portfolios = portfolio_repository
+
+    def _member_user_ids_for_account(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+    ) -> list[str]:
+        if self._portfolios is None:
+            return []
+        from commercial_app.application.services.commercial_realtime_notify import (
+            member_user_ids_for_customer,
+        )
+
+        return member_user_ids_for_customer(
+            self._portfolios.list_portfolios(active_only=True),
+            customer_code=customer_code,
+            customer_store=customer_store,
+        )
 
     @staticmethod
     def _account(customer_code: str, customer_store: str) -> tuple[str, str]:
@@ -179,13 +202,38 @@ class ManageAccountContactsUseCase:
         actor = (actor_user_id or "").strip()
         if not actor:
             return
+        safe_payload = payload or {}
         self._audit.append(
             actor_user_id=actor,
             action=action,
             entity_type=_ENTITY_ACCOUNT,
             entity_id=account_entity_id(customer_code, customer_store),
-            payload=payload or {},
+            payload=safe_payload,
         )
+        try:
+            from commercial_app.application.services.commercial_realtime_notify import (
+                notify_account_changed,
+            )
+            from commercial_app.core.auth_actor import (
+                peek_actor_client_id,
+                peek_actor_display_name,
+            )
+
+            notify_account_changed(
+                reason=action,
+                customer_code=customer_code,
+                customer_store=customer_store,
+                member_user_ids=self._member_user_ids_for_account(
+                    customer_code=customer_code,
+                    customer_store=customer_store,
+                ),
+                actor_user_id=actor,
+                actor_display_name=peek_actor_display_name(),
+                actor_client_id=peek_actor_client_id(),
+                payload=safe_payload,
+            )
+        except Exception:  # noqa: BLE001 — realtime não pode falhar a mutação
+            pass
 
     @staticmethod
     def _contact_audit_payload(

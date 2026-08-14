@@ -43,6 +43,18 @@ export type CommercialPortfolioChangedEvent = {
   notification?: CommercialRealtimeNotification | null;
 };
 
+export type CommercialAccountChangedEvent = {
+  type: "account.changed";
+  reason: string;
+  customerCode: string;
+  customerStore: string;
+  memberUserIds?: string[];
+  actorUserId?: string | null;
+  actorDisplayName?: string | null;
+  actorClientId?: string | null;
+  notification?: CommercialRealtimeNotification | null;
+};
+
 export type CommercialPresenceUpdatedEvent = {
   type: "presence.updated";
   onlineUserIds: string[];
@@ -51,6 +63,7 @@ export type CommercialPresenceUpdatedEvent = {
 export type CommercialRealtimeEvent =
   | CommercialWorklistChangedEvent
   | CommercialPortfolioChangedEvent
+  | CommercialAccountChangedEvent
   | CommercialPresenceUpdatedEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
@@ -266,4 +279,50 @@ export function portfolioEventTouchesId(
   if (!id) return false;
   if ((event.portfolioId || "").trim() === id) return true;
   return (event.portfolioIds || []).some((item) => (item || "").trim() === id);
+}
+
+export function accountEventTouchesCustomer(
+  event: CommercialAccountChangedEvent,
+  customerCode: string | null | undefined,
+  customerStore: string | null | undefined,
+): boolean {
+  const code = (customerCode || "").trim();
+  const store = (customerStore || "").trim();
+  if (!code || !store) return false;
+  return (
+    (event.customerCode || "").trim() === code &&
+    (event.customerStore || "").trim() === store
+  );
+}
+
+export function resolveAccountNotification(
+  event: CommercialAccountChangedEvent,
+): CommercialRealtimeNotification {
+  const fromServer = event.notification;
+  const actor = actorLabel(event);
+  if (
+    fromServer &&
+    typeof fromServer.title === "string" &&
+    typeof fromServer.message === "string"
+  ) {
+    const variant =
+      fromServer.variant === "success" ||
+      fromServer.variant === "warning" ||
+      fromServer.variant === "error" ||
+      fromServer.variant === "info"
+        ? fromServer.variant
+        : "info";
+    return {
+      title: fromServer.title,
+      message: applyActorToPortfolioMessage(fromServer.message, actor),
+      variant,
+    };
+  }
+  const code = (event.customerCode || "").trim() || "?";
+  const store = (event.customerStore || "").trim() || "?";
+  return {
+    title: "Conta atualizada",
+    message: `${actor} alterou a conta ${code}/${store}.`,
+    variant: "info",
+  };
 }

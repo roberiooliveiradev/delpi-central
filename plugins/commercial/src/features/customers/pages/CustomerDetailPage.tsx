@@ -3,6 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
 import { resolvePagePathBack } from "../../../app/commercialNavigationReturn";
 import {
+  useCommercialAccountSync,
+  useCommercialWorklistSync,
+} from "../../../app/CommercialRealtimeProvider";
+import {
   CommercialActionButton,
   CommercialLoadingCard,
   CommercialStateBanner,
@@ -159,6 +163,19 @@ export function CustomerDetailPage({
     loja,
     fetchPolicy.activities,
   );
+
+  useCommercialAccountSync(
+    () => {
+      setContactsRefreshKey((current) => current + 1);
+    },
+    { customerCode: codigo, customerStore: loja },
+  );
+
+  useCommercialWorklistSync(() => {
+    if (fetchPolicy.activities) {
+      activities.reload();
+    }
+  }, fetchPolicy.activities);
 
   const listBackHref = buildCustomersListPath(basePath, listDeepLink, sellerAccess);
   const pathSearch =

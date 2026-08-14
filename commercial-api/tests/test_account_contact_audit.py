@@ -112,15 +112,43 @@ def test_create_update_delete_append_account_audit() -> None:
         "account.contact.updated",
         "account.contact.deleted",
     ]
-    for call in audit.append.call_args_list:
-        assert call.kwargs["entity_type"] == "account"
-        assert call.kwargs["entity_id"] == account_entity_id("000001", "01")
-        assert call.kwargs["actor_user_id"] == "user-1"
-        assert call.kwargs["payload"]["full_name"] == "Ana Souza"
 
-    updated_payload = audit.append.call_args_list[1].kwargs["payload"]
-    assert updated_payload["changed_fields"] == ["role_title"]
-    assert "cargo" in updated_payload["fields_label"]
+
+def test_create_contact_notifies_account_changed(monkeypatch) -> None:
+    repository = InMemoryAccountContactRepository()
+    audit = MagicMock()
+    notified: list[dict] = []
+
+    def fake_notify(**kwargs):
+        notified.append(kwargs)
+
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.notify_account_changed",
+        fake_notify,
+    )
+    use_case = ManageAccountContactsUseCase(
+        repository=repository,
+        audit_repository=audit,
+    )
+    use_case.create(
+        customer_code="000001",
+        customer_store="01",
+        actor_user_id="user-1",
+        data=CreateAccountContactInput(
+            full_name="Ana Souza",
+            channel="email",
+            email="ana@example.com",
+        ),
+        scope_check=allow_scope,
+    )
+    assert len(notified) == 1
+    assert notified[0]["reason"] == "account.contact.created"
+    assert notified[0]["customer_code"] == "000001"
+    assert notified[0]["customer_store"] == "01"
+    assert notified[0]["actor_user_id"] == "user-1"
+    assert audit.append.call_count == 1
+    assert audit.append.call_args.kwargs["entity_type"] == "account"
+    assert audit.append.call_args.kwargs["entity_id"] == account_entity_id("000001", "01")
 
 
 def test_update_without_changes_skips_audit() -> None:

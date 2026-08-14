@@ -20,9 +20,12 @@ import {
   buildCommercialRealtimeWsUrl,
   isGenericActorDisplayName,
   parseCommercialRealtimeEvent,
+  accountEventTouchesCustomer,
   portfolioEventTouchesId,
+  resolveAccountNotification,
   resolvePortfolioNotification,
   resolveWorklistNotification,
+  type CommercialAccountChangedEvent,
   type CommercialPortfolioChangedEvent,
   type CommercialPresenceUpdatedEvent,
   type CommercialWorklistChangedEvent,
@@ -34,6 +37,7 @@ const RECONNECT_MS = 4_000;
 
 type WorklistChangedHandler = (event: CommercialWorklistChangedEvent) => void;
 type PortfolioChangedHandler = (event: CommercialPortfolioChangedEvent) => void;
+type AccountChangedHandler = (event: CommercialAccountChangedEvent) => void;
 type PresenceUpdatedHandler = (event: CommercialPresenceUpdatedEvent) => void;
 
 type CommercialRealtimeContextValue = {
@@ -41,6 +45,7 @@ type CommercialRealtimeContextValue = {
   connectionError: string | null;
   subscribeWorklistChanged: (handler: WorklistChangedHandler) => () => void;
   subscribePortfolioChanged: (handler: PortfolioChangedHandler) => () => void;
+  subscribeAccountChanged: (handler: AccountChangedHandler) => () => void;
   subscribePresenceUpdated: (handler: PresenceUpdatedHandler) => () => void;
 };
 
@@ -63,6 +68,7 @@ export function CommercialRealtimeProvider({
   const clientIdRef = useRef(getCommercialClientId());
   const worklistHandlersRef = useRef(new Set<WorklistChangedHandler>());
   const portfolioHandlersRef = useRef(new Set<PortfolioChangedHandler>());
+  const accountHandlersRef = useRef(new Set<AccountChangedHandler>());
   const presenceHandlersRef = useRef(new Set<PresenceUpdatedHandler>());
   const lastPresenceRef = useRef<CommercialPresenceUpdatedEvent | null>(null);
   const getAccessTokenRef = useRef(getAccessToken);
@@ -85,6 +91,13 @@ export function CommercialRealtimeProvider({
     portfolioHandlersRef.current.add(handler);
     return () => {
       portfolioHandlersRef.current.delete(handler);
+    };
+  }, []);
+
+  const subscribeAccountChanged = useCallback((handler: AccountChangedHandler) => {
+    accountHandlersRef.current.add(handler);
+    return () => {
+      accountHandlersRef.current.delete(handler);
     };
   }, []);
 
@@ -176,6 +189,12 @@ export function CommercialRealtimeProvider({
           }
           return;
         }
+        if (event.type === "account.changed") {
+          for (const handler of accountHandlersRef.current) {
+            handler(event);
+          }
+          return;
+        }
         if (event.type === "presence.updated") {
           fanPresenceUpdated(lastPresenceRef, presenceHandlersRef.current, event);
         }
@@ -221,6 +240,7 @@ export function CommercialRealtimeProvider({
     connectionError,
     subscribeWorklistChanged,
     subscribePortfolioChanged,
+    subscribeAccountChanged,
     subscribePresenceUpdated,
   };
 
@@ -302,6 +322,52 @@ export function useCommercialPortfolioSync(
 }
 
 /**
+ * Refetch silencioso quando chega `account.changed` (contatos / avatar / histórico da conta).
+ * Filtra por code/store da conta aberta.
+ */
+export function useCommercialAccountSync(
+  onChanged: (event: CommercialAccountChangedEvent) => void,
+  options?: {
+    enabled?: boolean;
+    customerCode?: string | null;
+    customerStore?: string | null;
+  },
+) {
+  const { subscribeAccountChanged } = useCommercialRealtime();
+  const onChangedRef = useRef(onChanged);
+  const customerCode = options?.customerCode ?? null;
+  const customerStore = options?.customerStore ?? null;
+  const enabled = options?.enabled ?? true;
+
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  }, [onChanged]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let timer: number | null = null;
+    const unsubscribe = subscribeAccountChanged((event) => {
+      if (
+        customerCode &&
+        customerStore &&
+        !accountEventTouchesCustomer(event, customerCode, customerStore)
+      ) {
+        return;
+      }
+      if (timer != null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        onChangedRef.current(event);
+      }, 400);
+    });
+    return () => {
+      unsubscribe();
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [customerCode, customerStore, enabled, subscribeAccountChanged]);
+}
+
+/**
  * Presença da Equipe (`presence.updated` — só gestores na sala `team`).
  * UI completa (dot Online) fica em E7.S2.
  */
@@ -330,7 +396,11 @@ export function useCommercialPresenceSync(
  * Portfolio: usa notification do servidor / fallback local.
  */
 export function useCommercialRealtimeNotices(enabled = true) {
-  const { subscribeWorklistChanged, subscribePortfolioChanged } = useCommercialRealtime();
+  const {
+    subscribeWorklistChanged,
+    subscribePortfolioChanged,
+    subscribeAccountChanged,
+  } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
   const { myPortfolio, currentUserId } = usePortfolioScope();
   const clientId = getCommercialClientId();
@@ -444,9 +514,49 @@ export function useCommercialRealtimeNotices(enabled = true) {
         });
     });
 
+    const publishAccount = (event: CommercialAccountChangedEvent) => {
+      const payload = resolveAccountNotification(event);
+      const key = `${(event.customerCode || "").trim()}-${(event.customerStore || "").trim()}`;
+      const options = {
+        title: payload.title,
+        id: `cm-rt-ac-${key}-${event.reason}`,
+        autoDismissMs: 6500 as number | null,
+      };
+      if (payload.variant === "success") {
+        notifySuccess(payload.message, options);
+        return;
+      }
+      if (payload.variant === "warning") {
+        notifyWarning(payload.message, options);
+        return;
+      }
+      notifyInfo(payload.message, options);
+    };
+
+    const unsubAccount = subscribeAccountChanged((event) => {
+      if (event.actorClientId && event.actorClientId === clientId) {
+        return;
+      }
+      const needActor = isGenericActorDisplayName(event.actorDisplayName);
+      const actorId = needActor ? (event.actorUserId || "").trim() : "";
+      if (!actorId) {
+        publishAccount(event);
+        return;
+      }
+      void lookupDirectoryUsers([actorId])
+        .then((items) => {
+          const label = formatDirectoryUserLabel(items[0] || {});
+          publishAccount(label ? { ...event, actorDisplayName: label } : event);
+        })
+        .catch(() => {
+          publishAccount(event);
+        });
+    });
+
     return () => {
       unsubWorklist();
       unsubPortfolio();
+      unsubAccount();
     };
   }, [
     clientId,
@@ -457,5 +567,6 @@ export function useCommercialRealtimeNotices(enabled = true) {
     notifyWarning,
     subscribeWorklistChanged,
     subscribePortfolioChanged,
+    subscribeAccountChanged,
   ]);
 }
