@@ -88,6 +88,21 @@
   gap: 10px;
 }
 
+.dashboard-commercial .cm-customers-page__chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 28px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-customers-page__trend-window {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-customers-page__panels {
   display: flex;
   flex-direction: column;

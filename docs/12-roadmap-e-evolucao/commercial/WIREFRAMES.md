@@ -627,7 +627,7 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 ┌─ PageHero · Minha Carteira ── [Ver atrasos (n)] [Atualizar] ──────────────┐
 │ Clientes · Valor aberto · Com atraso · Após filtros · Share empresa % ‡ │
 │ Atualizado 09:04 · CTA atrasos → /open-orders?focus=late                 │
-│ Foco · Tendência · janela · Buscar | Carteira                            │
+│ Foco + Tendência (mesma linha) · Dias da janela + Buscar | Carteira     │
 │ ‡ Share só com analytics.view | accounts.team.view | seller-portfolios.manage │
 └─────────────────────────────────────────────────────────────────────────┘
 ┌─ [ Faturamento | Ranking | Clientes ]  (?panel=billing|ranking|customers) ─┐
@@ -682,9 +682,9 @@ agrega a cobertura. Campo derivado sem lote coberto mostra
 │ 24 clientes · R$ 1,9 mi                    │
 │ Atualizado 09:04                            │
 │ Carteira [Todas ▾]                         │
-│ Foco [Todos][Atenção][Em dia][Sem venda] → │
-│ Tendência [Todas][Alta][Estável][Queda] →  │
-│ [Buscar_______________________________]    │
+│ Foco [Todos][Atenção]… · Tendência [Todas][Alta]… → │
+│ Dias da janela [7d|30d|90d|Custom] · [Buscar____]  │
+│ Carteira [Todas ▾]                                 │
 └─────────────────────────────────────────────┘
 ┌ [avatar] ACME                    [Atenção] ┐
 │ 01001 · Loja 01                            │

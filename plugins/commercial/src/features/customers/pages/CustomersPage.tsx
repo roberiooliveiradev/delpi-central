@@ -330,49 +330,63 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           </div>
         }
       >
-        <CommercialScopeChipBar
-          label={
-            <CommercialSectionHintLabel
-              label="Foco"
-              hint={CM_HELP.customers.filterFocus}
-            />
-          }
-          aria-label="Foco operacional da carteira"
-          chips={focusChips}
-        />
-        <CommercialScopeChipBar
-          label={
-            <CommercialSectionHintLabel
-              label="Tendência"
-              hint={CM_HELP.customers.filterTrend}
-            />
-          }
-          aria-label="Tendência de faturamento da carteira"
-          chips={trendChips}
-        />
-        <CommercialFilterBarShell embedded ariaLabel="Janela da tendência de faturamento">
-          <CommercialSegmentToggle
-            ariaLabel={CM_HELP.customers.trendWindow}
-            idPrefix="customers-trend-window"
-            value={String(trendWindowPreset)}
-            onChange={(value) => {
-              if (value === "custom") {
-                setTrendWindowPreset("custom");
-                return;
-              }
-              const days = Number(value);
-              if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
-                setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
-              }
-            }}
-            options={[
-              ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
-                value: String(days),
-                label: `${days}d`,
-              })),
-              { value: "custom", label: "Custom" },
-            ]}
+        <div className="cm-customers-page__chip-row">
+          <CommercialScopeChipBar
+            label={
+              <CommercialSectionHintLabel
+                label="Foco"
+                hint={CM_HELP.customers.filterFocus}
+              />
+            }
+            aria-label="Foco operacional da carteira"
+            chips={focusChips}
           />
+          <CommercialScopeChipBar
+            label={
+              <CommercialSectionHintLabel
+                label="Tendência"
+                hint={CM_HELP.customers.filterTrend}
+              />
+            }
+            aria-label="Tendência de faturamento da carteira"
+            chips={trendChips}
+          />
+        </div>
+        <CommercialFilterBarShell
+          embedded
+          layout="inline"
+          ariaLabel="Janela da tendência, busca e escopo da carteira"
+          leading={
+            <div className="cm-customers-page__trend-window">
+              <CommercialSectionHintLabel
+                label="Dias da janela"
+                hint={CM_HELP.customers.trendWindow}
+              />
+              <CommercialSegmentToggle
+                ariaLabel={CM_HELP.customers.trendWindow}
+                idPrefix="customers-trend-window"
+                value={String(trendWindowPreset)}
+                onChange={(value) => {
+                  if (value === "custom") {
+                    setTrendWindowPreset("custom");
+                    return;
+                  }
+                  const days = Number(value);
+                  if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
+                    setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
+                  }
+                }}
+                options={[
+                  ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
+                    value: String(days),
+                    label: `${days}d`,
+                  })),
+                  { value: "custom", label: "Custom" },
+                ]}
+              />
+            </div>
+          }
+        >
           {trendWindowPreset === "custom" ? (
             <CommercialTextField
               label="Dias"
@@ -383,8 +397,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               placeholder="1–365"
             />
           ) : null}
-        </CommercialFilterBarShell>
-        <CommercialFilterBarShell embedded ariaLabel="Busca e escopo da carteira">
           <CommercialTextField
             label="Buscar cliente"
             hint={CM_HELP.customers.filterSearch}

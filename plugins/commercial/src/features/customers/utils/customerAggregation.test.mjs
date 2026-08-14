@@ -464,6 +464,8 @@ describe("CustomersPage estrutural", () => {
     const table = readFileSync(join(__dirname, "../components/CustomersTable.tsx"), "utf8");
     assert.match(page, /CommercialPageHero/);
     assert.match(page, /CommercialScopeChipBar/);
+    assert.match(page, /cm-customers-page__chip-row/);
+    assert.match(page, /Dias da janela/);
     assert.match(page, /CommercialFilterBarShell/);
     assert.match(page, /SellerScopeFilter/);
     assert.doesNotMatch(page, /CustomerSummaryCards/);
