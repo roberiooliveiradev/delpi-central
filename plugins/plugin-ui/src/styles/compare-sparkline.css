@@ -1,44 +1,57 @@
 .delpi-ui-compare-sparkline {
   display: inline-flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 0.35rem;
-  min-width: 3.25rem;
-  height: 1.75rem;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 4.5rem;
+  height: 2.15rem;
   color: var(--delpi-ui-text-muted, #64748b);
 }
 
-.delpi-ui-compare-sparkline__bars {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 0.15rem;
-  height: 100%;
-  width: 1.1rem;
+.delpi-ui-compare-sparkline__chart {
+  display: block;
+  width: 4.5rem;
+  height: 2.15rem;
+  overflow: visible;
+}
+
+.delpi-ui-compare-sparkline__baseline {
+  stroke: color-mix(in srgb, currentColor 22%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.delpi-ui-compare-sparkline__area {
+  fill: color-mix(in srgb, currentColor 16%, transparent);
 }
 
 .delpi-ui-compare-sparkline__bar {
-  display: block;
-  width: 0.4rem;
-  border-radius: 2px 2px 0 0;
-  background: color-mix(in srgb, currentColor 35%, transparent);
-  min-height: 2px;
+  stroke: none;
 }
 
 .delpi-ui-compare-sparkline__bar--prior {
-  opacity: 0.55;
+  fill: color-mix(in srgb, currentColor 38%, transparent);
 }
 
 .delpi-ui-compare-sparkline__bar--current {
-  opacity: 1;
-  background: currentColor;
+  fill: currentColor;
 }
 
-.delpi-ui-compare-sparkline__spark {
-  display: block;
-  width: 2rem;
-  height: 1.1rem;
-  flex: 0 0 auto;
+.delpi-ui-compare-sparkline__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.delpi-ui-compare-sparkline__dot {
+  fill: currentColor;
+  stroke: var(--delpi-ui-surface, var(--delpi-ui-bg, #0f172a));
+  stroke-width: 1.25;
+}
+
+.delpi-ui-compare-sparkline__dot--prior {
+  opacity: 0.85;
 }
 
 .delpi-ui-compare-sparkline--up {

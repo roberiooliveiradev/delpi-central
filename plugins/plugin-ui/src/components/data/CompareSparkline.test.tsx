@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 
 import {
   CompareSparkline,
+  compareBarHeight,
   compareSparklineBemClasses,
   resolveCompareSparklineTone,
 } from "./CompareSparkline";
@@ -17,13 +18,22 @@ describe("resolveCompareSparklineTone", () => {
   });
 });
 
+describe("compareBarHeight", () => {
+  it("escala proporcional e mantém mínimo", () => {
+    expect(compareBarHeight(50, 100)).toBeGreaterThan(compareBarHeight(25, 100));
+    expect(compareBarHeight(0, 100)).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("CompareSparkline", () => {
-  it("renderiza barras e spark com tom up", () => {
+  it("renderiza gráfico SVG unificado com tom up", () => {
     const { container } = render(
       <CompareSparkline classNames={classNames} prior={100} current={150} />,
     );
     expect(container.querySelector(".delpi-ui-compare-sparkline--up")).toBeTruthy();
     expect(container.querySelectorAll(".delpi-ui-compare-sparkline__bar")).toHaveLength(2);
-    expect(container.querySelector("svg path")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-compare-sparkline__line")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-compare-sparkline__area")).toBeTruthy();
+    expect(container.querySelectorAll(".delpi-ui-compare-sparkline__dot")).toHaveLength(2);
   });
 });

@@ -4,9 +4,7 @@ export type CompareSparklineTone = "up" | "down" | "flat";
 
 export type CompareSparklineClassNames = {
   root: string;
-  bars: string;
-  bar: string;
-  spark: string;
+  chart: string;
 };
 
 export type CompareSparklineProps = {
@@ -21,13 +19,20 @@ export type CompareSparklineProps = {
   "aria-label"?: string;
 };
 
+const VB_W = 64;
+const VB_H = 32;
+const PAD_Y = 3;
+const BAR_W = 10;
+const BAR_GAP = 18;
+const BAR_X0 = 14;
+const BAR_X1 = BAR_X0 + BAR_W + BAR_GAP;
+const BASE_Y = VB_H - 2;
+
 export function compareSparklineBemClasses(prefix: string): CompareSparklineClassNames {
   const p = prefix.trim() || "delpi-ui";
   return {
     root: delpiUiClass(`${p}-compare-sparkline`, "delpi-ui-compare-sparkline"),
-    bars: delpiUiClass(`${p}-compare-sparkline__bars`, "delpi-ui-compare-sparkline__bars"),
-    bar: delpiUiClass(`${p}-compare-sparkline__bar`, "delpi-ui-compare-sparkline__bar"),
-    spark: delpiUiClass(`${p}-compare-sparkline__spark`, "delpi-ui-compare-sparkline__spark"),
+    chart: delpiUiClass(`${p}-compare-sparkline__chart`, "delpi-ui-compare-sparkline__chart"),
   };
 }
 
@@ -41,24 +46,19 @@ export function resolveCompareSparklineTone(
   return "flat";
 }
 
-function barHeightPct(value: number, max: number): number {
-  if (!Number.isFinite(value) || value <= 0 || max <= 0) return 8;
-  return Math.max(8, Math.min(100, (value / max) * 100));
+function safeAbs(n: number): number {
+  return Number.isFinite(n) ? Math.abs(n) : 0;
 }
 
-function sparkPath(prior: number, current: number): string {
-  const w = 48;
-  const h = 20;
-  const min = Math.min(prior, current);
-  const max = Math.max(prior, current);
-  const span = max - min || 1;
-  const y0 = h - ((prior - min) / span) * (h - 4) - 2;
-  const y1 = h - ((current - min) / span) * (h - 4) - 2;
-  return `M2,${y0.toFixed(2)} L${(w - 2).toFixed(2)},${y1.toFixed(2)}`;
+/** Altura da barra em coordenadas SVG (do baseline para cima). */
+export function compareBarHeight(value: number, max: number): number {
+  const usable = VB_H - PAD_Y * 2 - 2;
+  if (!Number.isFinite(value) || value <= 0 || max <= 0) return Math.max(3, usable * 0.08);
+  return Math.max(3, (value / max) * usable);
 }
 
 /**
- * Minigráfico prior × atual (duas barras + sparkline de 2 pontos) para células de tabela.
+ * Minigráfico prior × atual unificado (barras + linha + área) para células de tabela.
  */
 export function CompareSparkline({
   classNames,
@@ -69,11 +69,24 @@ export function CompareSparkline({
   "aria-label": ariaLabel,
 }: CompareSparklineProps) {
   const tone = toneProp ?? resolveCompareSparklineTone(prior, current);
-  const max = Math.max(
-    Number.isFinite(prior) ? Math.abs(prior) : 0,
-    Number.isFinite(current) ? Math.abs(current) : 0,
-    1,
-  );
+  const priorAbs = safeAbs(prior);
+  const currentAbs = safeAbs(current);
+  const max = Math.max(priorAbs, currentAbs, 1);
+  const h0 = compareBarHeight(priorAbs, max);
+  const h1 = compareBarHeight(currentAbs, max);
+  const y0 = BASE_Y - h0;
+  const y1 = BASE_Y - h1;
+  const cx0 = BAR_X0 + BAR_W / 2;
+  const cx1 = BAR_X1 + BAR_W / 2;
+  const areaPath = [
+    `M${cx0},${BASE_Y}`,
+    `L${cx0},${y0.toFixed(2)}`,
+    `L${cx1},${y1.toFixed(2)}`,
+    `L${cx1},${BASE_Y}`,
+    "Z",
+  ].join(" ");
+  const linePath = `M${cx0},${y0.toFixed(2)} L${cx1},${y1.toFixed(2)}`;
+
   const rootClass = [
     classNames.root,
     `delpi-ui-compare-sparkline--${tone}`,
@@ -91,29 +104,48 @@ export function CompareSparkline({
         `Comparação período anterior ${prior} e atual ${current}`
       }
     >
-      <div className={classNames.bars} aria-hidden="true">
-        <span
-          className={[classNames.bar, "delpi-ui-compare-sparkline__bar--prior"].join(" ")}
-          style={{ height: `${barHeightPct(Math.abs(prior), max)}%` }}
-        />
-        <span
-          className={[classNames.bar, "delpi-ui-compare-sparkline__bar--current"].join(" ")}
-          style={{ height: `${barHeightPct(Math.abs(current), max)}%` }}
-        />
-      </div>
       <svg
-        className={classNames.spark}
-        viewBox="0 0 48 20"
-        preserveAspectRatio="none"
+        className={classNames.chart}
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
-        <path
-          d={sparkPath(prior, current)}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <line
+          className="delpi-ui-compare-sparkline__baseline"
+          x1={6}
+          y1={BASE_Y}
+          x2={VB_W - 6}
+          y2={BASE_Y}
+        />
+        <path className="delpi-ui-compare-sparkline__area" d={areaPath} />
+        <rect
+          className="delpi-ui-compare-sparkline__bar delpi-ui-compare-sparkline__bar--prior"
+          x={BAR_X0}
+          y={y0}
+          width={BAR_W}
+          height={h0}
+          rx={2}
+        />
+        <rect
+          className="delpi-ui-compare-sparkline__bar delpi-ui-compare-sparkline__bar--current"
+          x={BAR_X1}
+          y={y1}
+          width={BAR_W}
+          height={h1}
+          rx={2}
+        />
+        <path className="delpi-ui-compare-sparkline__line" d={linePath} />
+        <circle
+          className="delpi-ui-compare-sparkline__dot delpi-ui-compare-sparkline__dot--prior"
+          cx={cx0}
+          cy={y0}
+          r={2.25}
+        />
+        <circle
+          className="delpi-ui-compare-sparkline__dot delpi-ui-compare-sparkline__dot--current"
+          cx={cx1}
+          cy={y1}
+          r={2.5}
         />
       </svg>
     </div>
