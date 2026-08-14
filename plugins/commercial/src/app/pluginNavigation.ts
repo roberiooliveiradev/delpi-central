@@ -63,18 +63,38 @@ export function navigateCustomerDetail(
     sellerAccess?: CustomersListSellerAccess;
     /** Abre a Conta já na seção (ex.: contatos). Preserva query allowlisted da lista. */
     section?: CustomerDetailSection;
+    returnNav?: ReturnNavOptions;
   },
 ): boolean {
+  const target = buildCustomerDetailHref(codigo, loja, options);
+  if (!target) return false;
+  navigatePluginPath(target);
+  return true;
+}
+
+/** Href da Conta (path + search de lista/seção + returnTo opcional). */
+export function buildCustomerDetailHref(
+  codigo: string,
+  loja: string,
+  options?: {
+    basePath?: string;
+    search?: string;
+    sellerAccess?: CustomersListSellerAccess;
+    section?: CustomerDetailSection;
+    returnNav?: ReturnNavOptions;
+  },
+): string | null {
   const path = buildCustomerDetailPath(options?.basePath, codigo, loja);
-  if (!path) return false;
+  if (!path) return null;
   const sourceSearch =
     options?.search ?? (typeof window !== "undefined" ? window.location.search : "");
   const listSearch = sanitizeCustomersListSearch(sourceSearch, options?.sellerAccess);
   const search = options?.section
     ? buildCustomerDetailSearch(options.section, listSearch)
     : listSearch;
-  navigatePluginPath(`${path}${search}`);
-  return true;
+  const withSearch = `${path}${search}`;
+  if (!options?.returnNav) return withSearch;
+  return buildHrefWithReturn(withSearch, options.returnNav, options?.basePath);
 }
 
 export function navigateCustomerOrderDetail(
@@ -131,12 +151,27 @@ export function navigateCustomerInvoiceDetail(
 
 export function navigateUserProfile(
   userId: string,
-  options?: { basePath?: string; replace?: boolean },
+  options?: {
+    basePath?: string;
+    replace?: boolean;
+    returnNav?: ReturnNavOptions;
+  },
 ): boolean {
-  const path = buildUserProfilePath(options?.basePath, userId);
-  if (!path) return false;
-  navigatePluginPath(path, { replace: options?.replace });
+  const target = buildUserProfileHref(userId, options);
+  if (!target) return false;
+  navigatePluginPath(target, { replace: options?.replace });
   return true;
+}
+
+/** Href do Perfil com returnTo/returnLabel opcionais. */
+export function buildUserProfileHref(
+  userId: string,
+  options?: { basePath?: string; returnNav?: ReturnNavOptions },
+): string | null {
+  const path = buildUserProfilePath(options?.basePath, userId);
+  if (!path) return null;
+  if (!options?.returnNav) return path;
+  return buildHrefWithReturn(path, options.returnNav, options?.basePath);
 }
 
 export function navigateProposalDetail(
