@@ -13,6 +13,7 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
 )
 
 GroupBy = Literal["customer", "seller"]
+RankingOrder = Literal["growth", "decline"]
 NATURE_PORTFOLIO_BILLING_RANKING = "portfolio_billing_ranking"
 
 
@@ -104,10 +105,12 @@ class GetPortfolioBillingRankingUseCase:
         customer_segment: str | None = None,
         limit: int = 50,
         group_by: GroupBy = "customer",
+        order: RankingOrder = "growth",
         seller_name_by_customer: dict[tuple[str, str], str] | None = None,
     ) -> dict[str, Any]:
         if not start_date or not end_date:
             raise ValueError("start_date e end_date são obrigatórios.")
+        resolved_order: RankingOrder = "decline" if order == "decline" else "growth"
         prior_start = shift_iso_date_by_years(start_date, -1)
         prior_end = shift_iso_date_by_years(end_date, -1)
         base_current: dict[str, object | None] = {
@@ -145,18 +148,28 @@ class GetPortfolioBillingRankingUseCase:
         else:
             rows = self._rank_customers(keys, current_map, prior_map)
 
-        rows.sort(
-            key=lambda row: (
-                row["deltaPct"] is None,
-                -(row["deltaPct"] if row["deltaPct"] is not None else 0.0),
-                -float(row["currentRol"]),
+        if resolved_order == "decline":
+            rows.sort(
+                key=lambda row: (
+                    row["deltaPct"] is None,
+                    row["deltaPct"] if row["deltaPct"] is not None else 0.0,
+                    float(row["currentRol"]),
+                )
             )
-        )
+        else:
+            rows.sort(
+                key=lambda row: (
+                    row["deltaPct"] is None,
+                    -(row["deltaPct"] if row["deltaPct"] is not None else 0.0),
+                    -float(row["currentRol"]),
+                )
+            )
         for index, row in enumerate(rows, start=1):
             row["rank"] = index
 
         return {
             "groupBy": group_by,
+            "order": resolved_order,
             "items": rows[: min(max(int(limit), 1), 500)],
             "startDate": start_date,
             "endDate": end_date,

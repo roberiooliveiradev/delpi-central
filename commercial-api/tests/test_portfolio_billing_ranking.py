@@ -88,6 +88,77 @@ def test_use_case_ranks_customers_by_delta_pct() -> None:
     assert data["items"][0]["deltaPct"] == 100.0
     assert data["items"][1]["customerCode"] == "200"
     assert data["items"][1]["deltaPct"] == -50.0
+    assert data["order"] == "growth"
+
+
+def test_use_case_order_decline_puts_worst_delta_first() -> None:
+    gateway = MagicMock()
+
+    def _analytics(path: str, *, params=None):
+        start = (params or {}).get("start_date")
+        if str(start).startswith("2026"):
+            return {
+                "data": {
+                    "items": [
+                        {
+                            "customer_code": "100",
+                            "customer_store": "01",
+                            "customer_name": "Alta",
+                            "rol_with_ipi": 200,
+                        },
+                        {
+                            "customer_code": "200",
+                            "customer_store": "01",
+                            "customer_name": "Queda",
+                            "rol_with_ipi": 50,
+                        },
+                        {
+                            "customer_code": "300",
+                            "customer_store": "01",
+                            "customer_name": "Pior",
+                            "rol_with_ipi": 10,
+                        },
+                    ]
+                }
+            }
+        return {
+            "data": {
+                "items": [
+                    {
+                        "customer_code": "100",
+                        "customer_store": "01",
+                        "customer_name": "Alta",
+                        "rol_with_ipi": 100,
+                    },
+                    {
+                        "customer_code": "200",
+                        "customer_store": "01",
+                        "customer_name": "Queda",
+                        "rol_with_ipi": 100,
+                    },
+                    {
+                        "customer_code": "300",
+                        "customer_store": "01",
+                        "customer_name": "Pior",
+                        "rol_with_ipi": 100,
+                    },
+                ]
+            }
+        }
+
+    gateway.get_commercial_analytics.side_effect = _analytics
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    data = GetPortfolioBillingRankingUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        limit=2,
+        order="decline",
+    )
+    assert data["order"] == "decline"
+    assert [row["customerCode"] for row in data["items"]] == ["300", "200"]
+    assert data["items"][0]["deltaPct"] == -90.0
 
 
 def test_use_case_group_by_seller() -> None:

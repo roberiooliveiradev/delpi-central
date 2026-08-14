@@ -77,6 +77,7 @@ export type PortfolioBillingRankingItem = {
 
 export type PortfolioBillingRankingData = {
   groupBy: "customer" | "seller";
+  order?: "growth" | "decline";
   items: PortfolioBillingRankingItem[];
   startDate: string;
   endDate: string;

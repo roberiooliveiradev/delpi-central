@@ -27,6 +27,8 @@ import {
   createDashboardStateBanner,
   createCompactPagination,
   createDashboardInlineMeter,
+  createDashboardCompareSparkline,
+  createDashboardTrendDelta,
   createDashboardHorizontalTimeline,
   createDashboardOrgMembershipFlow,
   createDashboardDataListToolbar,
@@ -71,6 +73,8 @@ import {
   fileDropzoneBemClasses,
   filtersRowBemClasses,
   inlineMeterBemClasses,
+  compareSparklineBemClasses,
+  trendDeltaBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
@@ -129,6 +133,11 @@ export const cmStateBannerClassNames = stateBannerBemClasses(UI_PREFIX);
 export const cmStatusBadgeClassNames = statusBadgeBemClasses(UI_PREFIX);
 export const cmInlineMeterClassNames = inlineMeterBemClasses(UI_PREFIX);
 export const CommercialInlineMeter = createDashboardInlineMeter({ prefix: UI_PREFIX });
+export const cmCompareSparklineClassNames = compareSparklineBemClasses(UI_PREFIX);
+export const CommercialCompareSparkline = createDashboardCompareSparkline({
+  prefix: UI_PREFIX,
+});
+export const CommercialTrendDelta = createDashboardTrendDelta({ prefix: UI_PREFIX });
 export const CommercialHorizontalTimeline = createDashboardHorizontalTimeline({
   prefix: UI_PREFIX,
 });
