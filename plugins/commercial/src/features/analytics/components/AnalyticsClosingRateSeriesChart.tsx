@@ -1,20 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChartTypeSegmentToggle,
+  ChartViewShell,
   EmptyState,
+  MultiTypeSeriesChart,
   NativeCheckboxControl,
+  TIME_MULTI_SERIES_TYPES,
   runTabularExport,
+  usePersistedChartPreferences,
   type ChartGranularity,
+  type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { getSalesConversionRateSeries } from "../../../api/analyticsApi";
 import {
@@ -38,6 +34,7 @@ import {
 } from "../utils/periodShift";
 
 const CHART_HEIGHT = 320;
+const STORAGE_KEY = "commercial:overview:closing-rate-series";
 
 const CONVERSION_GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "day", label: "Dia" },
@@ -66,8 +63,7 @@ function formatChartPct(value: number | null | undefined): string {
 }
 
 /**
- * Evolução da taxa de conversão (hit rate) — séries SC/ES, toolbar Dia–Ano,
- * overlay opcional ano anterior e drill no período atual.
+ * Evolução hit rate — Chart View Shell (tipo + YoY persistidos).
  */
 export function AnalyticsClosingRateSeriesChart({
   filters,
@@ -78,15 +74,20 @@ export function AnalyticsClosingRateSeriesChart({
     filters.start_date,
     filters.end_date,
   );
-  const [comparePriorYear, setComparePriorYear] = useState(false);
+  const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
+    storageKey: STORAGE_KEY,
+    defaults: { chartType: "line", comparePriorYear: false },
+    allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+  });
+  const yoyActive = Boolean(preferences.comparePriorYear);
+  const chartType = preferences.chartType ?? "line";
+
   const [points, setPoints] = useState<ClosingRateChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
-
-  const yoyActive = comparePriorYear;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -152,8 +153,6 @@ export function AnalyticsClosingRateSeriesChart({
     yoyActive,
   ]);
 
-  const exportIncludePrior = yoyActive;
-
   const priorLabels = useMemo(
     () => ({
       unit01: `${ANALYTICS_CONVERSION_SERIES_LABELS.unit01} (ano ant.)`,
@@ -162,55 +161,57 @@ export function AnalyticsClosingRateSeriesChart({
     [],
   );
 
-  const handleClick: ComponentProps<typeof LineChart>["onClick"] = (state) => {
-    if (!onDrillDown || !state) return;
-    const rawIndex = state.activeTooltipIndex;
-    const index =
-      typeof rawIndex === "number"
-        ? rawIndex
-        : typeof rawIndex === "string"
-          ? Number(rawIndex)
-          : -1;
-    if (!Number.isFinite(index) || index < 0) return;
-    const point = points[index];
-    if (point?.start_date && point?.end_date) {
-      onDrillDown(point.start_date, point.end_date);
+  const series = useMemo((): MultiTypeSeriesSpec[] => {
+    const list: MultiTypeSeriesSpec[] = [
+      {
+        dataKey: "conversion_filial_01",
+        name: ANALYTICS_CONVERSION_SERIES_LABELS.unit01,
+        fill: "var(--chart-1, #089bdb)",
+      },
+      {
+        dataKey: "conversion_filial_02",
+        name: ANALYTICS_CONVERSION_SERIES_LABELS.unit02,
+        fill: "var(--chart-2, #10b981)",
+      },
+    ];
+    if (yoyActive) {
+      list.push(
+        {
+          dataKey: "conversion_filial_01_prior",
+          name: priorLabels.unit01,
+          fill: "var(--chart-3, #94a3b8)",
+        },
+        {
+          dataKey: "conversion_filial_02_prior",
+          name: priorLabels.unit02,
+          fill: "var(--chart-4, #64748b)",
+        },
+      );
     }
-  };
+    return list;
+  }, [priorLabels.unit01, priorLabels.unit02, yoyActive]);
+
+  const chartData = useMemo(
+    () =>
+      points.map((point) => ({
+        periodo: point.periodo,
+        conversion_filial_01: Number(point.conversion_filial_01) || 0,
+        conversion_filial_02: Number(point.conversion_filial_02) || 0,
+        conversion_filial_01_prior:
+          point.conversion_filial_01_prior == null
+            ? null
+            : Number(point.conversion_filial_01_prior) || 0,
+        conversion_filial_02_prior:
+          point.conversion_filial_02_prior == null
+            ? null
+            : Number(point.conversion_filial_02_prior) || 0,
+      })),
+    [points],
+  );
 
   return (
     <div className="cm-rol-series">
-      <div className="cm-rol-series__toolbar">
-        <p className="cm-rol-series__hint">{CM_HELP.overview.closingRateSeries}</p>
-        <CommercialTabularExportButtons
-          compact
-          disabled={points.length === 0 || loading}
-          onExport={(format) => {
-            runTabularExport({
-              kind: "table",
-              format,
-              payload: buildOverviewClosingRateSeriesPayload(points, {
-                includePriorYear: exportIncludePrior,
-              }),
-            });
-          }}
-        />
-      </div>
-      <div className="cm-rol-series__toolbar">
-        <CommercialChartToolbar
-          granularity={granularity}
-          onGranularityChange={setGranularity}
-          options={CONVERSION_GRANULARITY_OPTIONS}
-          modes={["day", "week", "month", "year"]}
-        />
-        <NativeCheckboxControl
-          id="overview-closing-rate-yoy"
-          checked={yoyActive}
-          onChange={setComparePriorYear}
-          label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={CM_HELP.overview.closingRateSeriesYoy}
-        />
-      </div>
+      <p className="cm-rol-series__hint">{CM_HELP.overview.closingRateSeries}</p>
       {loading ? (
         <CommercialLoadingCard title={emptyCopy.conversionLoading} variant="panel" />
       ) : null}
@@ -225,69 +226,72 @@ export function AnalyticsClosingRateSeriesChart({
         />
       ) : null}
       {!loading && !error && points.length > 0 ? (
-        <div className="cm-chart-wrap" style={{ width: "100%", height: CHART_HEIGHT }}>
-          <ResponsiveContainer>
-            <LineChart data={points} onClick={handleClick}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="periodo" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                tickFormatter={(value) => formatChartPct(Number(value))}
-                width={72}
-                domain={[0, "auto"]}
-              />
-              <Tooltip
-                formatter={(value, name) => [formatChartPct(Number(value)), name]}
-                labelFormatter={(label) => String(label)}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="conversion_filial_01"
-                name={ANALYTICS_CONVERSION_SERIES_LABELS.unit01}
-                stroke="var(--chart-1, #089bdb)"
-                strokeWidth={2}
-                connectNulls
-                dot={{ r: 4, cursor: onDrillDown ? "pointer" : "default" }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="conversion_filial_02"
-                name={ANALYTICS_CONVERSION_SERIES_LABELS.unit02}
-                stroke="var(--chart-2, #10b981)"
-                strokeWidth={2}
-                connectNulls
-                dot={{ r: 4, cursor: onDrillDown ? "pointer" : "default" }}
-                activeDot={{ r: 6 }}
-              />
-              {yoyActive ? (
-                <>
-                  <Line
-                    type="monotone"
-                    dataKey="conversion_filial_01_prior"
-                    name={priorLabels.unit01}
-                    stroke="var(--chart-3, #94a3b8)"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                    connectNulls
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="conversion_filial_02_prior"
-                    name={priorLabels.unit02}
-                    stroke="var(--chart-4, #64748b)"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                    connectNulls
-                    dot={false}
-                  />
-                </>
-              ) : null}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartViewShell
+          prefix="cm"
+          granularity={
+            <CommercialChartToolbar
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+              options={CONVERSION_GRANULARITY_OPTIONS}
+              modes={["day", "week", "month", "year"]}
+            />
+          }
+          typeToggle={
+            <ChartTypeSegmentToggle
+              family="time_multi_series"
+              value={chartType}
+              onChange={setChartType}
+              idPrefix="overview-closing-type"
+              prefix="cm"
+            />
+          }
+          exportActions={
+            <CommercialTabularExportButtons
+              compact
+              disabled={points.length === 0 || loading}
+              onExport={(format) => {
+                runTabularExport({
+                  kind: "table",
+                  format,
+                  payload: buildOverviewClosingRateSeriesPayload(points, {
+                    includePriorYear: yoyActive,
+                  }),
+                });
+              }}
+            />
+          }
+          overlays={
+            <NativeCheckboxControl
+              id="overview-closing-rate-yoy"
+              checked={yoyActive}
+              onChange={(checked) => setPreferences({ comparePriorYear: checked })}
+              label={ANALYTICS_CONTENT.overview.comparePriorYear}
+              hint={CM_HELP.overview.closingRateSeriesYoy}
+              hintPlacement="tooltip"
+              hintAriaLabel="Ajuda: comparar ano anterior"
+            />
+          }
+        >
+          <MultiTypeSeriesChart
+            data={chartData}
+            categoryKey="periodo"
+            series={series}
+            chartType={chartType}
+            height={CHART_HEIGHT}
+            formatY={(value) => formatChartPct(value)}
+            formatTooltipValue={(value) => formatChartPct(value)}
+            onCategoryClick={
+              onDrillDown
+                ? (category) => {
+                    const point = points.find((entry) => entry.periodo === category);
+                    if (point?.start_date && point?.end_date) {
+                      onDrillDown(point.start_date, point.end_date);
+                    }
+                  }
+                : undefined
+            }
+          />
+        </ChartViewShell>
       ) : null}
     </div>
   );

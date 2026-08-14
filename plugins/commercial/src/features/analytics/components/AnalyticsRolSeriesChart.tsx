@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChartTypeSegmentToggle,
+  ChartViewShell,
   EmptyState,
+  MultiTypeSeriesChart,
   NativeCheckboxControl,
+  TIME_MULTI_SERIES_TYPES,
   runTabularExport,
+  usePersistedChartPreferences,
   type ChartGranularity,
+  type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import { getCommercialRolSeries } from "../../../api/analyticsApi";
@@ -14,10 +20,6 @@ import {
   CommercialTabularExportButtons,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
-import {
-  GroupedColumnSeriesChart,
-  type GroupedColumnBarSpec,
-} from "../../../components/GroupedColumnSeriesChart";
 import { buildOverviewRolSeriesPayload } from "../../overview/overviewExportBuilders";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
@@ -34,6 +36,7 @@ import {
 } from "../utils/periodShift";
 
 const CHART_HEIGHT = 320;
+const STORAGE_KEY = "commercial:overview:rol-series";
 
 const ROL_GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "day", label: "Dia" },
@@ -52,9 +55,7 @@ type RolSeriesChartProps = {
     AnalyticsFilterParams,
     "start_date" | "end_date" | "customer_segment" | "seller_id"
   >;
-  /** Clique no ponto → filtra o período analytics ao intervalo do bucket. */
   onDrillDown?: (dateStart: string, dateEnd: string) => void;
-  /** Expõe pontos carregados (export / testes). */
   onPointsChange?: (points: CommercialRolSeriesPoint[]) => void;
 };
 
@@ -64,8 +65,7 @@ function formatChartCurrency(value: number): string {
 }
 
 /**
- * Evolução de ROL — séries Santa Catarina / Espírito Santo, toolbar Dia–Ano,
- * YoY em colunas e tendência linear opcional por filial atual.
+ * Evolução de ROL — Chart View Shell (tipo + YoY + tendência persistidos).
  */
 export function AnalyticsRolSeriesChart({
   filters,
@@ -76,16 +76,21 @@ export function AnalyticsRolSeriesChart({
     filters.start_date,
     filters.end_date,
   );
-  const [comparePriorYear, setComparePriorYear] = useState(false);
-  const [showTrend, setShowTrend] = useState(false);
+  const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
+    storageKey: STORAGE_KEY,
+    defaults: { chartType: "column", comparePriorYear: false, showTrend: false },
+    allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+  });
+  const yoyActive = Boolean(preferences.comparePriorYear);
+  const showTrend = Boolean(preferences.showTrend);
+  const chartType = preferences.chartType ?? "column";
+
   const [points, setPoints] = useState<RolChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const emptyCopy = ANALYTICS_CONTENT.overview.chartEmpty;
   const onPointsChangeRef = useRef(onPointsChange);
   onPointsChangeRef.current = onPointsChange;
-
-  const yoyActive = comparePriorYear;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -151,8 +156,6 @@ export function AnalyticsRolSeriesChart({
     yoyActive,
   ]);
 
-  const exportIncludePrior = yoyActive;
-
   const priorLabels = useMemo(
     () => ({
       unit01: `${ANALYTICS_ROL_SERIES_LABELS.unit01} (ano ant.)`,
@@ -161,8 +164,8 @@ export function AnalyticsRolSeriesChart({
     [],
   );
 
-  const bars = useMemo((): GroupedColumnBarSpec[] => {
-    const list: GroupedColumnBarSpec[] = [
+  const series = useMemo((): MultiTypeSeriesSpec[] => {
+    const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "rol_matrix",
         name: ANALYTICS_ROL_SERIES_LABELS.unit01,
@@ -209,44 +212,7 @@ export function AnalyticsRolSeriesChart({
 
   return (
     <div className="cm-rol-series">
-      <div className="cm-rol-series__toolbar">
-        <p className="cm-rol-series__hint">{CM_HELP.overview.rolSeries}</p>
-        <CommercialTabularExportButtons
-          compact
-          disabled={points.length === 0 || loading}
-          onExport={(format) => {
-            runTabularExport({
-              kind: "table",
-              format,
-              payload: buildOverviewRolSeriesPayload(points, {
-                includePriorYear: exportIncludePrior,
-              }),
-            });
-          }}
-        />
-      </div>
-      <div className="cm-rol-series__toolbar">
-        <CommercialChartToolbar
-          granularity={granularity}
-          onGranularityChange={setGranularity}
-          options={ROL_GRANULARITY_OPTIONS}
-          modes={["day", "week", "month", "year"]}
-        />
-        <NativeCheckboxControl
-          id="overview-rol-yoy"
-          checked={yoyActive}
-          onChange={setComparePriorYear}
-          label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={CM_HELP.overview.rolSeriesYoy}
-        />
-        <NativeCheckboxControl
-          id="overview-rol-trend"
-          checked={showTrend}
-          onChange={setShowTrend}
-          label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-          hint={CM_HELP.customerDetail.billingSeriesTrend}
-        />
-      </div>
+      <p className="cm-rol-series__hint">{CM_HELP.overview.rolSeries}</p>
       {loading ? (
         <CommercialLoadingCard title={emptyCopy.rolLoading} variant="panel" />
       ) : null}
@@ -261,13 +227,71 @@ export function AnalyticsRolSeriesChart({
         />
       ) : null}
       {!loading && !error && points.length > 0 ? (
-        <div className="cm-chart-wrap" style={{ width: "100%", height: CHART_HEIGHT }}>
-          <GroupedColumnSeriesChart
+        <ChartViewShell
+          prefix="cm"
+          granularity={
+            <CommercialChartToolbar
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+              options={ROL_GRANULARITY_OPTIONS}
+              modes={["day", "week", "month", "year"]}
+            />
+          }
+          typeToggle={
+            <ChartTypeSegmentToggle
+              family="time_multi_series"
+              value={chartType}
+              onChange={setChartType}
+              idPrefix="overview-rol-type"
+              prefix="cm"
+            />
+          }
+          exportActions={
+            <CommercialTabularExportButtons
+              compact
+              disabled={points.length === 0 || loading}
+              onExport={(format) => {
+                runTabularExport({
+                  kind: "table",
+                  format,
+                  payload: buildOverviewRolSeriesPayload(points, {
+                    includePriorYear: yoyActive,
+                  }),
+                });
+              }}
+            />
+          }
+          overlays={
+            <>
+              <NativeCheckboxControl
+                id="overview-rol-yoy"
+                checked={yoyActive}
+                onChange={(checked) => setPreferences({ comparePriorYear: checked })}
+                label={ANALYTICS_CONTENT.overview.comparePriorYear}
+                hint={CM_HELP.overview.rolSeriesYoy}
+                hintPlacement="tooltip"
+                hintAriaLabel="Ajuda: comparar ano anterior"
+              />
+              <NativeCheckboxControl
+                id="overview-rol-trend"
+                checked={showTrend}
+                onChange={(checked) => setPreferences({ showTrend: checked })}
+                label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+                hint={CM_HELP.customerDetail.billingSeriesTrend}
+                hintPlacement="tooltip"
+                hintAriaLabel="Ajuda: linha de tendência"
+              />
+            </>
+          }
+        >
+          <MultiTypeSeriesChart
             data={chartData}
             categoryKey="periodo"
-            bars={bars}
+            series={series}
+            chartType={chartType}
             height={CHART_HEIGHT}
             showTrend={showTrend}
+            trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
             formatY={formatChartCurrency}
             formatTooltipValue={formatChartCurrency}
             onCategoryClick={
@@ -281,7 +305,7 @@ export function AnalyticsRolSeriesChart({
                 : undefined
             }
           />
-        </div>
+        </ChartViewShell>
       ) : null}
     </div>
   );
