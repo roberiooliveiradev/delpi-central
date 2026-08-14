@@ -1,0 +1,54 @@
+.delpi-ui-compare-sparkline {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 3.25rem;
+  height: 1.75rem;
+  color: var(--delpi-ui-text-muted, #64748b);
+}
+
+.delpi-ui-compare-sparkline__bars {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.15rem;
+  height: 100%;
+  width: 1.1rem;
+}
+
+.delpi-ui-compare-sparkline__bar {
+  display: block;
+  width: 0.4rem;
+  border-radius: 2px 2px 0 0;
+  background: color-mix(in srgb, currentColor 35%, transparent);
+  min-height: 2px;
+}
+
+.delpi-ui-compare-sparkline__bar--prior {
+  opacity: 0.55;
+}
+
+.delpi-ui-compare-sparkline__bar--current {
+  opacity: 1;
+  background: currentColor;
+}
+
+.delpi-ui-compare-sparkline__spark {
+  display: block;
+  width: 2rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.delpi-ui-compare-sparkline--up {
+  color: var(--delpi-ui-success, #059669);
+}
+
+.delpi-ui-compare-sparkline--down {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-ui-compare-sparkline--flat {
+  color: var(--delpi-ui-text-muted, #64748b);
+}

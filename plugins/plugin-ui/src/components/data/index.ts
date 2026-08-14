@@ -391,6 +391,16 @@ export {
   type InlineMeterSegment,
   type InlineMeterTone,
 } from "./InlineMeter";
+export {
+  CompareSparkline,
+  createDashboardCompareSparkline,
+  compareSparklineBemClasses,
+  resolveCompareSparklineTone,
+  type CompareSparklineClassNames,
+  type CompareSparklineProps,
+  type CompareSparklineTone,
+  type DashboardCompareSparklineProps,
+} from "./CompareSparkline";
 /** Alias de produto (Account 360 / follow-ups) — mesmo componente Timeline. */
 export {
   Timeline as ActivityTimeline,

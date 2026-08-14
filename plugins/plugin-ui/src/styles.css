@@ -46,6 +46,7 @@
 @import "./styles/export-actions.css";
 @import "./styles/data-table.css";
 @import "./styles/inline-meter.css";
+@import "./styles/compare-sparkline.css";
 @import "./styles/horizontal-timeline.css";
 @import "./styles/pagination.css";
 @import "./styles/detail-card.css";
