@@ -11,12 +11,16 @@ from fastapi import APIRouter, Query, Request
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ANALYTICS_PERMISSIONS,
+    COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS,
 )
 from commercial_app.application.use_cases.get_open_portfolio_summary import (
     GetOpenPortfolioSummaryUseCase,
 )
 from commercial_app.application.use_cases.get_open_portfolio_horizon import (
     GetOpenPortfolioHorizonUseCase,
+)
+from commercial_app.application.use_cases.get_portfolio_billing_share import (
+    GetPortfolioBillingShareUseCase,
 )
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
 from commercial_app.core.responses import fail, ok
@@ -95,6 +99,53 @@ def _common_filters(
         "sort_dir": sort_dir,
         "search": search,
     }
+
+
+@router.get(
+    "/portfolio-billing-share",
+    operation_id="bff_get_analytics_portfolio_billing_share",
+)
+@require_any_permission(*COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS)
+def bff_portfolio_billing_share(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    """KPI-PORTFOLIO-SHARE: portfolioRol ÷ companyRol no período filtrado."""
+    operation_id = "bff_get_analytics_portfolio_billing_share"
+    try:
+        scope = resolve_analytics_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
+        gateway = build_delpi_commercial_gateway()
+        data = GetPortfolioBillingShareUseCase().execute(
+            gateway,
+            scope,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        )
+        return ok(
+            data,
+            message="Share de faturamento da carteira carregado.",
+            operation_id=operation_id,
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id=operation_id)
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
 
 
 @router.get(

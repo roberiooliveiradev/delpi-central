@@ -1,8 +1,11 @@
-"""GetPortfolioBillingShareUseCase — KPI-PORTFOLIO-SHARE."""
+"""GetPortfolioBillingShareUseCase + rota BFF — KPI-PORTFOLIO-SHARE."""
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+import json
+from unittest.mock import MagicMock, patch
+
+from starlette.requests import Request
 
 from commercial_app.application.services.resolve_commercial_customer_scope_service import (
     CommercialCustomerScope,
@@ -16,6 +19,31 @@ from commercial_app.application.use_cases.get_portfolio_billing_share import (
     extract_rol_from_target_payload,
     resolve_rol_paths_for_branch,
 )
+from commercial_app.interface.http.routes import analytics_routes
+
+
+class _User:
+    def __init__(self, permissions: list[str], sub: str = "u1"):
+        self.permissions = permissions
+        self.sub = sub
+        self.id = sub
+
+
+def _request(path: str = "/analytics/portfolio-billing-share") -> Request:
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": path,
+        "raw_path": path.encode(),
+        "query_string": b"",
+        "headers": [],
+        "client": ("testclient", 50000),
+        "server": ("testserver", 80),
+    }
+    return Request(scope)
 
 
 def test_compute_share_pct_rounds_one_decimal() -> None:
@@ -81,10 +109,11 @@ def test_use_case_branch_01_only_head_office() -> None:
     assert data["portfolioRol"] == 100.0
     assert data["companyRol"] == 100.0
     assert data["sharePct"] == 100.0
-    paths = [c.kwargs.get("params") and c.args[0] for c in gateway.get_commercial_analytics.call_args_list]
-    # two calls (portfolio + company), both head office
-    assert all(c.args[0] == HEAD_OFFICE_ROL_PATH for c in gateway.get_commercial_analytics.call_args_list)
-    assert len(paths) == 2
+    assert all(
+        c.args[0] == HEAD_OFFICE_ROL_PATH
+        for c in gateway.get_commercial_analytics.call_args_list
+    )
+    assert gateway.get_commercial_analytics.call_count == 2
 
 
 def test_use_case_company_zero_share_null() -> None:
@@ -104,3 +133,92 @@ def test_use_case_company_zero_share_null() -> None:
     assert data["sharePct"] is None
     assert data["portfolioRol"] == 0.0
     assert data["companyRol"] == 0.0
+
+
+def test_portfolio_billing_share_route_ok() -> None:
+    gateway = MagicMock()
+
+    def _analytics(path: str, *, params=None):
+        codes = (params or {}).get("customer_codes")
+        if "head_office" in path:
+            return {"data": {"rol": 30.0 if codes else 100.0}}
+        return {"data": {"rol": 20.0 if codes else 100.0}}
+
+    gateway.get_commercial_analytics.side_effect = _analytics
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01")}),
+    )
+    request = _request()
+    request.state.user = _User(["commercial.analytics.view"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_portfolio_billing_share(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+            branch=None,
+            customer_segment=None,
+            seller_id="p1",
+            portfolio_id=None,
+        )
+
+    assert response.status_code == 200
+    body = json.loads(response.body)
+    assert body["success"] is True
+    assert body["meta"]["operationId"] == "bff_get_analytics_portfolio_billing_share"
+    assert body["data"]["portfolioRol"] == 50.0
+    assert body["data"]["companyRol"] == 200.0
+    assert body["data"]["sharePct"] == 25.0
+
+
+def test_portfolio_billing_share_route_accepts_team_permission() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {"data": {"rol": 10}}
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    request = _request()
+    request.state.user = _User(["commercial.accounts.team.view"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_portfolio_billing_share(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+        )
+
+    assert response.status_code == 200
+    body = json.loads(response.body)
+    assert body["data"]["sharePct"] == 100.0
+
+
+def test_portfolio_billing_share_route_forbids_accounts_view_only() -> None:
+    request = _request()
+    request.state.user = _User(["commercial.accounts.view"])
+    response = analytics_routes.bff_portfolio_billing_share(
+        request,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+    )
+    assert response.status_code == 403

@@ -30,6 +30,14 @@ COMMERCIAL_AUDIT_PERMISSIONS: tuple[str, ...] = (
 
 COMMERCIAL_ANALYTICS_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ANALYTICS_VIEW,)
 
+# Share carteira÷empresa (KPI-PORTFOLIO-SHARE): denominador empresa só para
+# analytics / visão de equipe / gestão de carteiras — não para accounts.view puro.
+COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_ANALYTICS_VIEW,
+    COMMERCIAL_ACCOUNTS_TEAM_VIEW,
+    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
+)
+
 COMMERCIAL_PROPOSALS_VIEW_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_PROPOSALS_VIEW,)
 
 COMMERCIAL_PROPOSALS_EXPORT_PERMISSIONS: tuple[str, ...] = (
@@ -100,6 +108,11 @@ def can_view_audit(user: Any | None) -> bool:
 
 def can_view_analytics(user: Any | None) -> bool:
     return has_any_permission(user, COMMERCIAL_ANALYTICS_PERMISSIONS)
+
+
+def can_view_portfolio_billing_share(user: Any | None) -> bool:
+    """Card/% share empresa — analytics, team ou manage de carteiras."""
+    return has_any_permission(user, COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS)
 
 
 def can_view_proposals(user: Any | None) -> bool:
