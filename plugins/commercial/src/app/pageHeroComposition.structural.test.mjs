@@ -30,7 +30,8 @@ describe("PageHero composition — density compact (conteúdo no hero)", () => {
     );
     assert.match(css, /\.delpi-ui-page-hero--compact\s*\{[^}]*padding:\s*12px/s);
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__content\s*\{[^}]*gap:\s*6px/s);
-    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight\s*\{[^}]*padding:\s*6px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight\s*\{[^}]*padding:\s*8px/s);
+    assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight-value\s*\{[^}]*font-size:\s*15px/s);
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-filter-bar/);
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-scope-chip-bar__chip/);
   });
