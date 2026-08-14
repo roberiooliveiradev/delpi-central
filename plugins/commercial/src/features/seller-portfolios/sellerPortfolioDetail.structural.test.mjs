@@ -37,4 +37,15 @@ describe("SellerPortfolioDetail UX", () => {
     assert.match(page, /unlinkingCustomers/);
     assert.match(page, /Desvínculo parcial|removido\(s\)/);
   });
+
+  it("adiciona usuários em lote com avatares no picker e na tabela", () => {
+    assert.match(detail, /TaskUserChipAvatar/);
+    assert.match(detail, /maxSelected=\{10\}/);
+    assert.match(detail, /Adicionar selecionados/);
+    assert.match(detail, /onAddMembers/);
+    assert.doesNotMatch(detail, /onAddMember\(/);
+    assert.match(page, /handleAddMembers/);
+    assert.match(page, /addingMembers/);
+    assert.match(page, /Inclusão parcial|adicionado\(s\)/);
+  });
 });

@@ -276,21 +276,24 @@ export function SellerPortfolioDetail({
         key: "user",
         header: "Usuário",
         headerHint: CM_HELP.sellerPortfolios.colMemberUser,
-        render: (row) => (
-          <div className="cm-row-actions">
-            <span>{directoryLabelFor(row.user_id)}</span>
-            {row.has_portal_access === false ? (
-              <span title={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessHint}>
-                <CommercialStatusBadge
-                  label={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessBadge}
-                  variant="warning"
-                />
-              </span>
-            ) : null}
-          </div>
-        ),
+        render: (row) => {
+          const name = directoryLabelFor(row.user_id);
+          return (
+            <div className="cm-row-actions">
+              <TaskUserChipAvatar userId={row.user_id} name={name} />
+              <span>{name}</span>
+              {row.has_portal_access === false ? (
+                <span title={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessHint}>
+                  <CommercialStatusBadge
+                    label={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessBadge}
+                    variant="warning"
+                  />
+                </span>
+              ) : null}
+            </div>
+          );
+        },
       },
-      {
         key: "role",
         header: "Papel",
         headerHint: CM_HELP.sellerPortfolios.colMemberRole,
@@ -315,7 +318,7 @@ export function SellerPortfolioDetail({
               {row.role !== "owner" ? (
                 <CommercialActionButton
                   variant="ghost"
-                  disabled={busy}
+                  disabled={busy || addingMembers}
                   onClick={() => onSetOwner(row.user_id)}
                   aria-label={CM_HELP.sellerPortfolios.setOwner}
                 >
@@ -325,7 +328,11 @@ export function SellerPortfolioDetail({
               {row.role !== "owner" || members.length > 1 ? (
                 <CommercialActionButton
                   variant="ghost"
-                  disabled={busy || (row.role === "owner" && members.length <= 1)}
+                  disabled={
+                    busy ||
+                    addingMembers ||
+                    (row.role === "owner" && members.length <= 1)
+                  }
                   onClick={() => onRemoveMember(row.user_id)}
                   aria-label={CM_HELP.sellerPortfolios.removeMember}
                 >
@@ -337,7 +344,7 @@ export function SellerPortfolioDetail({
         },
       },
     ],
-    [busyMemberUserId, directoryLabelFor, members.length, onRemoveMember, onSetOwner],
+    [addingMembers, busyMemberUserId, directoryLabelFor, members.length, onRemoveMember, onSetOwner],
   );
 
   return (
