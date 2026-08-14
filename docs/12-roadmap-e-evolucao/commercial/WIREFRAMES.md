@@ -276,7 +276,8 @@ Favoritos
 ### WF-OV — Visão geral `/overview`
 
 **Objetivo:** dashboard BI do período (filtros + KPIs + séries + funil). **Sem** Aprofundar / prévia OV.  
-**Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades. ROL em **colunas agrupadas** + toggle «Linha de tendência» (regressão linear, default off).  
+**Entregue (Onda A/B):** presets de período, KPI carteira aberta (snapshot ≠ PCP), série hit rate, overlay YoY (mesmo período −1a) em ROL e conversão — todas as granularidades.  
+**Chart View Shell (kit `plugin-ui`):** toolbar densificada — type switcher (column|line|area), overlays YoY/tendência com **HelpTooltip** (sem parágrafo sob checkbox), preferências em `localStorage`, export CSV/XLS/PDF. Doc: [`chart-view-shell.md`](../../../plugins/plugin-ui/docs/chart-view-shell.md).  
 **MVP temporal (KPI-CARTEIRA-HORIZON):** 1× `GET /analytics/open-portfolio-horizon`; card **Gap vs meta** (`max(meta_SI − ROL, 0)`); painel **Carteira no tempo** com chips → deep link Meus pedidos (`focus=late` / `date_start`–`date_end`). **Fora:** soma ROL+carteira; F6.  
 **Comparativos (KPI-PORTFOLIO-SHARE + T4/T5):** card **Share empresa** (RBAC analytics/team/manage); tendência com janela 7/30/90/custom; ranking delta % (gestor); presets + até 3 anos de overlay nas séries.
 
@@ -288,15 +289,15 @@ Favoritos
 │  Share: portfolioRol ÷ companyRol (mesmo período) · ‡ só analytics/team/manage │
 ┌─ Tendência faturamento [7d|30d|90d|Custom] · sparkline / Δ% ─────────────────┐
 ┌─ Carteira no tempo (chips) → Meus pedidos (atraso / mês / 1–3m / depois) ──┐
-┌─ Evolução ROL [Dia–Ano] [YoY] [Linha de tendência] [Export] ─┬─ Funil ─┐
-│ colunas SC/ES (+ priors YoY) · tendência linear opcional · drill só atual │
-┌─ Evolução hit rate [Dia–Ano] [Comparar ano anterior] [Export] ──────┐
-│ séries SC/ES (+ prior) · mesma fórmula do KPI por bucket             │
+┌─ Evolução ROL [Dia–Ano] [▮|╱|░] [YoY(?)] [Tend.(?)] [CSV|Excel|PDF] ┬─ Funil ─┐
+│ ChartViewShell · tipo persistido · overlays compactos · drill só atual       │
+┌─ Evolução hit rate [Dia–Ano] [▮|╱|░] [YoY(?)] [Export] ──────┐
+│ mesmas regras de shell · séries SC/ES (+ prior)                           │
 ┌─ Ranking crescimento/queda (cliente; vendedor se team/manage) + Excel ─────┐
 † SellerScopeFilter se canFilterPortfolios
 ```
 
-**Export:** ROL, funil e série de conversão nesta tela. OTD/Opp sem export (D13).  
+**Export:** ROL, funil, hit rate, OTD insight bars, detalhe OP (cobertura/prazo) e séries de faturamento/conta — inventário fechado no gate `chartExcelCoverage.structural.test.mjs`.  
 **YoY / N anos:** chamadas adicionais aos BFF de séries com `periodShift` (−1a…−3a) — **sem** rota por ano.  
 **Share:** `GET /analytics/portfolio-billing-share`.
 
@@ -559,7 +560,7 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Status fabril (+ chips MP: PA produzível, MP limitante, MPs sem estoque) │
 │ KPIs locais da linha (não bloqueados pelo loading dos extras)            │
-│ Charts compactos: cobertura · prazo                                      │
+│ Charts compactos: cobertura · prazo (+ Excel tabular no header)          │
 │ Produção/OPs: SegmentToggle · meter · Prazo OTD + tabela PI densa        │
 │   Timeline · apontamentos agregados · prefetch até 12 OPs (+ on-demand)  │
 │   «Ver no OTD produção» → /apps/dashboard-production/otd/op/{op}         │
@@ -727,7 +728,8 @@ lista e preservação de `q`, `focus`, `trend` e `seller_id`.
 detalhe (`…/orders/…`); na tabela, chevron expande `CustomerOrderLines` inline via
 `DataTable` `expandedRowKey`/`renderExpandedRow` (sem modal «Ver linhas» / «Abrir pedido»).
 Histórico — SectionCard **Filtros** colapsável (`defaultOpen`); gráfico de
-faturamento em **colunas agrupadas** (+ YoY / ☑ Linha de tendência); aviso de NF
+faturamento via **ChartViewShell** (column|line|area + YoY / tendência com tooltip;
+preferências em `localStorage`; Excel); aviso de NF
 canceladas **no card do gráfico**; KPIs + tabela; clique na linha abre
 detalhe NF (`…/outbound-invoices/{branch}/{n}/{s}`); sem modal de itens. YoY no
 filtro compara colunas do ano anterior e delta nos cards. Oportunidades — OV tipográfico, StatusBadge por `status_category`, coluna Proposta
@@ -739,8 +741,8 @@ Cada fonte mantém loading, erro, vazio, retry e atualização independentes.
 Histórico — layout
 ┌─ SectionCard Filtros ▾ (colapsável, aberto) ─────────────────────────────┐
 │ presets · datas · situação · busca · ☑ Comparar ano anterior             │
-├─ SectionCard Faturamento no período · grain · ☑ Linha de tendência ──────┤
-│ colunas agrupadas (+ YoY) · hint NF canceladas                           │
+├─ SectionCard Faturamento · [▮|╱|░] · ☑ Tend.(?) · [CSV|Excel|PDF] ──────┤
+│ ChartViewShell · tipo persistido · hint NF canceladas                    │
 ├─ KPI cards · tabela NFs ─────────────────────────────────────────────────┤
 ```
 
