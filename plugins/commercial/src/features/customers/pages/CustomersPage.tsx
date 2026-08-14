@@ -22,6 +22,7 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
+import { PortfolioBillingShareCard } from "../components/PortfolioBillingShareCard";
 import { CustomersTable } from "../components/CustomersTable";
 import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
@@ -412,6 +413,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 </CommercialActionButton>
             </CommercialEmptyState>
           ) : null}
+
+          <PortfolioBillingShareCard
+            sellerId={canFilterPortfolios ? sellerIdFilter : null}
+          />
 
           <CustomerBillingSeriesChart customers={aggregation.customers} />
 
