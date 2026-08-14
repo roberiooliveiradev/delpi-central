@@ -338,51 +338,51 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
             </CommercialActionButton>
           </>
         }
-      />
-
-      <CommercialFilterBarShell embedded ariaLabel="Filtros da equipe">
-        <CommercialTextField
-          label={copy.filterSearch}
-          hint={CM_HELP.administration.teamSearch}
-          type="search"
-          value={search}
-          onChange={setSearch}
-          placeholder={copy.filterSearchPlaceholder}
-        />
-        <CommercialSelectField
-          label={copy.filterGroup}
-          hint={CM_HELP.administration.teamFilterGroup}
-          value={groupId}
-          onChange={setGroupId}
-          options={groups.map((group) => ({ value: group.id, label: group.name }))}
-          allowEmpty
-          emptyLabel={copy.filterAllOption}
-        />
-        <CommercialSelectField
-          label={copy.filterPortfolio}
-          hint={CM_HELP.administration.teamFilterPortfolio}
-          value={portfolioId}
-          onChange={setPortfolioId}
-          options={portfolios.map((portfolio) => ({
-            value: portfolio.id,
-            label: portfolio.display_name,
-          }))}
-          allowEmpty
-          emptyLabel={copy.filterAllOption}
-        />
-        <CommercialSegmentToggle
-          size="sm"
-          ariaLabel={copy.filterOnline}
-          idPrefix="administration-team-online"
-          value={onlineFilter}
-          onChange={(value) => setOnlineFilter(value as OnlineFilter)}
-          options={[
-            { value: "all", label: copy.filterOnlineAll },
-            { value: "online", label: copy.filterOnlineOnly },
-            { value: "offline", label: copy.filterOfflineOnly },
-          ]}
-        />
-      </CommercialFilterBarShell>
+      >
+        <CommercialFilterBarShell embedded ariaLabel="Filtros da equipe">
+          <CommercialTextField
+            label={copy.filterSearch}
+            hint={CM_HELP.administration.teamSearch}
+            type="search"
+            value={search}
+            onChange={setSearch}
+            placeholder={copy.filterSearchPlaceholder}
+          />
+          <CommercialSelectField
+            label={copy.filterGroup}
+            hint={CM_HELP.administration.teamFilterGroup}
+            value={groupId}
+            onChange={setGroupId}
+            options={groups.map((group) => ({ value: group.id, label: group.name }))}
+            allowEmpty
+            emptyLabel={copy.filterAllOption}
+          />
+          <CommercialSelectField
+            label={copy.filterPortfolio}
+            hint={CM_HELP.administration.teamFilterPortfolio}
+            value={portfolioId}
+            onChange={setPortfolioId}
+            options={portfolios.map((portfolio) => ({
+              value: portfolio.id,
+              label: portfolio.display_name,
+            }))}
+            allowEmpty
+            emptyLabel={copy.filterAllOption}
+          />
+          <CommercialSegmentToggle
+            size="sm"
+            ariaLabel={copy.filterOnline}
+            idPrefix="administration-team-online"
+            value={onlineFilter}
+            onChange={(value) => setOnlineFilter(value as OnlineFilter)}
+            options={[
+              { value: "all", label: copy.filterOnlineAll },
+              { value: "online", label: copy.filterOnlineOnly },
+              { value: "offline", label: copy.filterOfflineOnly },
+            ]}
+          />
+        </CommercialFilterBarShell>
+      </CommercialPageHero>
 
       {error ? (
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>

@@ -880,26 +880,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             value: loading ? "—" : counts.later.toLocaleString("pt-BR"),
           },
         ]}
-      />
-
-      <CommercialSectionCard
-        title="Fila"
-        subtitle="Atrasadas → hoje → depois → concluídas."
-        hint={CM_HELP.myDay.worklist}
-        
-        
-        actions={
-          <div className="cm-my-day-queue-actions">
-            {canManageFollowups ? (
-              <CommercialActionButton variant="primary" onClick={openCreateForm}>
-                Nova tarefa
-              </CommercialActionButton>
-            ) : null}
-            <CommercialActionButton variant="ghost" onClick={() => void reload()}>
-              Atualizar
-            </CommercialActionButton>
-          </div>
-        }
       >
         <div className="cm-my-day-toolbar">
           {canTeamWorklist ? (
@@ -977,7 +957,25 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             />
           ) : null}
         </div>
+      </CommercialPageHero>
 
+      <CommercialSectionCard
+        title="Fila"
+        subtitle="Atrasadas → hoje → depois → concluídas."
+        hint={CM_HELP.myDay.worklist}
+        actions={
+          <div className="cm-my-day-queue-actions">
+            {canManageFollowups ? (
+              <CommercialActionButton variant="primary" onClick={openCreateForm}>
+                Nova tarefa
+              </CommercialActionButton>
+            ) : null}
+            <CommercialActionButton variant="ghost" onClick={() => void reload()}>
+              Atualizar
+            </CommercialActionButton>
+          </div>
+        }
+      >
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
           <CommercialEmptyState message={error} role="alert" />
