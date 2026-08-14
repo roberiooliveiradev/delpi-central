@@ -1,0 +1,1 @@
+"""Postgres repositories — invoice issuance."""

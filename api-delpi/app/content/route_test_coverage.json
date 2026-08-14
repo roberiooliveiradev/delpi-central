@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-13",
-  "baselineOperationCount": 617,
-  "operationCount": 618,
-  "coveredCount": 546,
-  "gapCount": 71,
+  "generatedAt": "2026-08-14",
+  "baselineOperationCount": 657,
+  "operationCount": 657,
+  "coveredCount": 584,
+  "gapCount": 72,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -91,15 +91,27 @@
       "gap": 0,
       "exempt": 0
     },
+    "invoice-issuance": {
+      "total": 13,
+      "covered": 12,
+      "gap": 1,
+      "exempt": 0
+    },
     "lancamento-notas-fiscais": {
       "total": 15,
       "covered": 15,
       "gap": 0,
       "exempt": 0
     },
+    "mural-acessos": {
+      "total": 14,
+      "covered": 14,
+      "gap": 0,
+      "exempt": 0
+    },
     "pedidos-venda-abertos": {
-      "total": 19,
-      "covered": 19,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -134,8 +146,8 @@
       "exempt": 0
     },
     "public": {
-      "total": 2,
-      "covered": 2,
+      "total": 9,
+      "covered": 9,
       "gap": 0,
       "exempt": 0
     },
@@ -1880,6 +1892,123 @@
       "status": "covered"
     },
     {
+      "operationId": "search_invoice_issuance_parties",
+      "method": "GET",
+      "path": "/invoice-issuance/parties",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_party",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_invoice_issuance_products",
+      "method": "GET",
+      "path": "/invoice-issuance/products",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_product",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_invoice_issuance_warehouse_01_balance",
+      "method": "GET",
+      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_stock_balance",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_invoice_issuance_requests",
+      "method": "GET",
+      "path": "/invoice-issuance/requests",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_invoice_issuance_request",
+      "method": "GET",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_invoice_issuance_request",
+      "method": "PATCH",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "add_invoice_issuance_attachment",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/attachments",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "cancel_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/cancel",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "issue_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/issue",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "resubmit_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/resubmit",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "return_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/return",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "start_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/start",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
@@ -2015,6 +2144,132 @@
       "status": "covered"
     },
     {
+      "operationId": "list_mural_acessos_hubs",
+      "method": "GET",
+      "path": "/mural-acessos/hubs",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_mural_acessos_hub",
+      "method": "POST",
+      "path": "/mural-acessos/hubs",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_hub",
+      "method": "DELETE",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_hub",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_mural_acessos_hub",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_mural_acessos_links",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_mural_acessos_link",
+      "method": "POST",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "reorder_mural_acessos_links",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}/links/reorder",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_hub_qr",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/qr.png",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub_qr",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_link",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_mural_acessos_link",
+      "method": "PUT",
+      "path": "/mural-acessos/links/{link_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_link_image",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upload_mural_acessos_link_image",
+      "method": "POST",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_pedidos_venda_abertos",
       "method": "GET",
       "path": "/pedidos-venda-abertos/",
@@ -2047,6 +2302,15 @@
       "path": "/pedidos-venda-abertos/customers/enrichment",
       "module": "pedidos-venda-abertos",
       "entity": "customers",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_customer_open_order_metrics",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/open-order-metrics",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_open_order_metrics",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -2183,6 +2447,42 @@
       "module": "pedidos-venda-abertos",
       "entity": "seller_portfolio",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_open_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "module": "pedidos-venda-abertos",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_open_orders_by_customer",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "module": "pedidos-venda-abertos",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_totvs_outbound_invoice",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_outbound_invoices",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
       "status": "covered"
     },
     {
@@ -3698,6 +3998,15 @@
       "status": "covered"
     },
     {
+      "operationId": "create_public_canal_denuncia",
+      "method": "POST",
+      "path": "/public/canal-denuncia/denuncias",
+      "module": "public",
+      "entity": "canal_denuncia",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "create_public_kaizen_suggestion",
       "method": "POST",
       "path": "/public/kaizen/suggestions",
@@ -3707,11 +4016,65 @@
       "status": "covered"
     },
     {
+      "operationId": "get_public_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/public/mural-acessos/links/{link_id}/image",
+      "module": "public",
+      "entity": "mural_access_link_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu",
+      "module": "public",
+      "entity": "mural_access_menu",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu_by_token",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu/{public_token}",
+      "module": "public",
+      "entity": "mural_access_menu",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_public_quality_label_inspection",
       "method": "GET",
       "path": "/public/quality-labels/inspection/{token}",
       "module": "public",
       "entity": "quality_label_public_inspection",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_scheduling_resource",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}",
+      "module": "public",
+      "entity": "scheduling_resource",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_scheduling_availability",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}/availability",
+      "module": "public",
+      "entity": "scheduling_booking",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_public_scheduling_booking",
+      "method": "POST",
+      "path": "/public/scheduling/resources/{public_token}/bookings",
+      "module": "public",
+      "entity": "scheduling_booking",
       "shape": "scalar",
       "status": "covered"
     },

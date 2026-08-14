@@ -146,3 +146,13 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             page=paging["page"],
             page_size=paging["page_size"],
         )
+
+    def search_customers_by_query(self, *, query: str, limit: int = 20) -> list[dict]:
+        """Busca SA1 por código, nome, loja ou CNPJ (A1_CGC)."""
+        from app.infrastructure.persistence.totvs.invoice_issuance_repositories.totvs_invoice_issuance_lookup_repository import (
+            TotvsInvoiceIssuanceLookupRepository,
+        )
+
+        return TotvsInvoiceIssuanceLookupRepository().search_customers(
+            query=query, limit=limit
+        )

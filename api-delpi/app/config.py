@@ -266,6 +266,13 @@ class Settings:
     LNF_NOTIFICATIONS_ENABLED: bool = (
         _get_env("LNF_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
     )
+    INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+    INVOICE_ISSUANCE_UPLOAD_DIR: str = _get_env(
+        "INVOICE_ISSUANCE_UPLOAD_DIR",
+        default="/app/data/invoice-issuance",
+    )
 
     # ==========================
     # Central de Agendamento — aprovação + notificações

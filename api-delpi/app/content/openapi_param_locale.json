@@ -1135,6 +1135,28 @@
         }
       }
     },
+    "freight_mode": {
+      "locale": {
+        "en": {
+          "label": "Freight mode",
+          "description": "Shipping terms: CIF or FOB."
+        },
+        "pt-BR": {
+          "label": "Modalidade de transporte",
+          "description": "CIF ou FOB."
+        }
+      },
+      "enumLabels": {
+        "cif": {
+          "en": { "label": "CIF" },
+          "pt-BR": { "label": "CIF" }
+        },
+        "fob": {
+          "en": { "label": "FOB" },
+          "pt-BR": { "label": "FOB" }
+        }
+      }
+    },
     "from": {
       "locale": {
         "en": {
@@ -1487,6 +1509,40 @@
         "pt-BR": {
           "label": "Número da nota",
           "description": "Número da nota fiscal."
+        }
+      }
+    },
+    "invoice_type": {
+      "locale": {
+        "en": {
+          "label": "Invoice type",
+          "description": "Invoice type: sale, return, sample, repair_shipment or other."
+        },
+        "pt-BR": {
+          "label": "Tipo de NF",
+          "description": "Tipo da nota: venda, devolução, amostra, remessa de conserto ou outros."
+        }
+      },
+      "enumLabels": {
+        "sale": {
+          "en": { "label": "Sale" },
+          "pt-BR": { "label": "Venda" }
+        },
+        "return": {
+          "en": { "label": "Return" },
+          "pt-BR": { "label": "Devolução" }
+        },
+        "sample": {
+          "en": { "label": "Sample" },
+          "pt-BR": { "label": "Amostra" }
+        },
+        "repair_shipment": {
+          "en": { "label": "Repair shipment" },
+          "pt-BR": { "label": "Remessa ou retorno de conserto" }
+        },
+        "other": {
+          "en": { "label": "Other" },
+          "pt-BR": { "label": "Outros" }
         }
       }
     },
@@ -2212,6 +2268,52 @@
         }
       }
     },
+    "party_code": {
+      "locale": {
+        "en": {
+          "label": "Party code",
+          "description": "TOTVS customer or supplier code (SA1/SA2)."
+        },
+        "pt-BR": {
+          "label": "Código do destinatário",
+          "description": "Código TOTVS do cliente ou fornecedor (SA1/SA2)."
+        }
+      }
+    },
+    "party_store": {
+      "locale": {
+        "en": {
+          "label": "Party store",
+          "description": "TOTVS store (loja) of the customer or supplier."
+        },
+        "pt-BR": {
+          "label": "Loja do destinatário",
+          "description": "Loja TOTVS do cliente ou fornecedor."
+        }
+      }
+    },
+    "party_type": {
+      "locale": {
+        "en": {
+          "label": "Party type",
+          "description": "Recipient kind: customer (SA1) or supplier (SA2)."
+        },
+        "pt-BR": {
+          "label": "Tipo de destinatário",
+          "description": "Cliente (SA1) ou fornecedor (SA2)."
+        }
+      },
+      "enumLabels": {
+        "customer": {
+          "en": { "label": "Customer" },
+          "pt-BR": { "label": "Cliente" }
+        },
+        "supplier": {
+          "en": { "label": "Supplier" },
+          "pt-BR": { "label": "Fornecedor" }
+        }
+      }
+    },
     "pending_only": {
       "locale": {
         "en": {
@@ -2473,6 +2575,18 @@
         "pt-BR": {
           "label": "Busca",
           "description": "Texto livre de busca (código, nome ou descrição)."
+        }
+      }
+    },
+    "query": {
+      "locale": {
+        "en": {
+          "label": "Query",
+          "description": "Free-text search (code, name or tax ID)."
+        },
+        "pt-BR": {
+          "label": "Busca",
+          "description": "Busca livre (código, nome ou CNPJ)."
         }
       }
     },
@@ -3714,6 +3828,14 @@
             "label": "Em andamento"
           }
         },
+        "issued": {
+          "en": {
+            "label": "Issued"
+          },
+          "pt-BR": {
+            "label": "Emitida"
+          }
+        },
         "late": {
           "en": {
             "label": "Late"
@@ -3754,6 +3876,14 @@
             "label": "Fora da faixa"
           }
         },
+        "pending": {
+          "en": {
+            "label": "Pending"
+          },
+          "pt-BR": {
+            "label": "Pendente"
+          }
+        },
         "published": {
           "en": {
             "label": "Published"
@@ -3768,6 +3898,14 @@
           },
           "pt-BR": {
             "label": "Recebido"
+          }
+        },
+        "returned": {
+          "en": {
+            "label": "Returned"
+          },
+          "pt-BR": {
+            "label": "Devolvida"
           }
         },
         "root_cause_analysis": {

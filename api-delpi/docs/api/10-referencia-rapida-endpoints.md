@@ -135,6 +135,27 @@ Legenda de permissões:
 
 † `create`: somente própria em `pending`.
 
+### Emissão de Notas Fiscais (`/invoice-issuance`)
+
+> Permissões do plugin `invoice-issuance.*` — ver [invoice-issuance.md](./invoice-issuance.md).
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/invoice-issuance/parties` | create |
+| GET | `/invoice-issuance/products` | create |
+| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | create |
+| GET | `/invoice-issuance/open-sales-orders` | create |
+| GET | `/invoice-issuance/carriers` | create |
+| POST | `/invoice-issuance/requests` | create |
+| GET | `/invoice-issuance/requests` | II read |
+| GET | `/invoice-issuance/requests/{id}` | II read |
+| PATCH | `/invoice-issuance/requests/{id}` | criador + returned |
+| POST | `/invoice-issuance/requests/{id}/resubmit` | criador + returned |
+| POST | `/invoice-issuance/requests/{id}/start` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/return` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/issue` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/cancel` | create† / process / manage |
+
 ---
 
 ## Comercial (`/commercial`)

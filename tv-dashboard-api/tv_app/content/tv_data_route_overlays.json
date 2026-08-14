@@ -356,8 +356,7 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial",
-          "enum": ["01", "02"]
+          "label": "Filial"
         },
         "warehouse": {
           "type": "string",

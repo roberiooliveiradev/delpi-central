@@ -105,6 +105,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       pluginId: "lancamento-notas-fiscais",
     },
     {
+      id: "invoice_issuance",
+      label: "Emissão de Notas Fiscais",
+      icon: "file-text",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["invoice-issuance"],
+      pluginId: "invoice-issuance",
+    },
+    {
       id: "tv_dashboard",
       label: "Painéis TV",
       icon: "tv",

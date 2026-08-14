@@ -1133,6 +1133,22 @@ services:
     networks:
       - delpi-network
 
+  invoice-issuance:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: invoice-issuance/Dockerfile
+      target: production
+
+    container_name: delpi-invoice-issuance
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     <<: *plugin-ui-federated
     build:
@@ -1272,6 +1288,8 @@ services:
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1318,6 +1336,7 @@ services:
       - ${DRAWING_PDF_FILESERVER_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/invoice-issuance:/app/data/invoice-issuance
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences

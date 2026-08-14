@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "invoice-issuance",
+  "name": "Emissão de Notas Fiscais",
+  "description": "Solicitação guiada de emissão de notas fiscais e fila de atendimento do Faturamento.",
+  "category": "financeiro",
+  "icon": "file-output",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/invoice-issuance",
+  "entry": "/apps/invoice-issuance/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "invoice-issuance.access",
+      "name": "Acessar Emissão de Notas Fiscais",
+      "description": "Acessar o plugin de solicitação de emissão de notas fiscais.",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.create",
+      "name": "Solicitar emissão de NF",
+      "description": "Cadastrar e acompanhar solicitações próprias de emissão.",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.view",
+      "name": "Consultar solicitações de emissão",
+      "description": "Consultar todas as solicitações (ambas as filiais).",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.view.filial-01",
+      "name": "Emissão de NF — Filial 01",
+      "description": "Acesso à fila e cadastro da filial 01 (SC).",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.view.filial-02",
+      "name": "Emissão de NF — Filial 02",
+      "description": "Acesso à fila e cadastro da filial 02 (ES).",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.process",
+      "name": "Processar solicitações de emissão",
+      "description": "Atender, devolver, marcar emitida e cancelar solicitações.",
+      "module": "invoice-issuance"
+    },
+    {
+      "code": "invoice-issuance.manage",
+      "name": "Administrar Emissão de Notas Fiscais",
+      "description": "Administrar solicitações e executar ações excepcionais.",
+      "module": "invoice-issuance"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/invoice-issuance/filial-01",
+      "label": "Emissão de NF — Filial 01",
+      "permission": "invoice-issuance.view.filial-01",
+      "icon": "file-output",
+      "order": 32,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    },
+    {
+      "path": "/apps/invoice-issuance/filial-02",
+      "label": "Emissão de NF — Filial 02",
+      "permission": "invoice-issuance.view.filial-02",
+      "icon": "file-output",
+      "order": 33,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

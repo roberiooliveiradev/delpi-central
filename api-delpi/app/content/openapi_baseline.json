@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 617,
+  "operation_count": 657,
   "operations": [
     {
       "method": "POST",
@@ -155,6 +155,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         }
       ],
@@ -367,6 +374,13 @@
             "new_business"
           ],
           "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -555,6 +569,13 @@
             "new_business"
           ],
           "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -565,25 +586,23 @@
           "en": {
             "summary": "Sales conversion rate series",
             "description": "Hit rate (conversion %) over time for Santa Catarina and Espírito Santo.",
-            "whenToUse": "Commercial chart: conversion rate by day/week/month/year. Same formula as closing-rate KPI per bucket.",
-            "label": "Sales conversion rate series"
+            "whenToUse": "Commercial chart: conversion rate by day/week/month/year. Same formula as closing-rate KPI per bucket."
           },
           "pt-BR": {
             "summary": "Série da taxa de conversão",
             "description": "Hit rate (taxa de conversão %) ao longo do tempo para Santa Catarina e Espírito Santo.",
-            "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket.",
-            "label": "Série da taxa de conversão"
+            "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket."
           }
         },
         "params": {
           "customer_segment": {
             "locale": {
               "en": {
-                "description": "Filter: weg or new_business. Empty = all segments.",
-                "label": "Segment"
+                "description": "Optional commercial segment filter.",
+                "label": "Customer segment"
               },
               "pt-BR": {
-                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "description": "Filtro opcional de segmento comercial.",
                 "label": "Segmento"
               }
             },
@@ -622,11 +641,11 @@
           "granularity": {
             "locale": {
               "en": {
-                "description": "Series bucket size: day, week, month or year.",
+                "description": "Bucket size: day, week, month, or year.",
                 "label": "Granularity"
               },
               "pt-BR": {
-                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "description": "Tamanho do bucket: day, week, month ou year.",
                 "label": "Granularidade"
               }
             },
@@ -688,8 +707,9 @@
           }
         },
         "tv": {
-          "description": "Indicador numérico para «Série temporal de rol comercial».",
-          "label": "Indicador — Série temporal de rol comercial"
+          "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket.",
+          "description": "Hit rate (taxa de conversão %) ao longo do tempo para Santa Catarina e Espírito Santo.",
+          "label": "Série da taxa de conversão"
         },
         "presentationStrategy": "as_delivered"
       },
@@ -809,6 +829,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         }
       ],
@@ -1020,6 +1047,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         }
       ],
@@ -1507,6 +1541,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         },
         {
@@ -2107,6 +2148,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -2147,6 +2196,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -2161,6 +2218,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -2209,6 +2274,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -2612,6 +2693,13 @@
           "type": "string"
         },
         {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
+        },
+        {
           "name": "limit",
           "in": "query",
           "required": false,
@@ -2837,6 +2925,13 @@
             "new_business"
           ],
           "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -3022,6 +3117,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         }
       ],
@@ -3216,6 +3318,13 @@
             "new_business"
           ],
           "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -3401,6 +3510,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         },
         {
@@ -3993,6 +4109,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -4033,6 +4157,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -4047,6 +4179,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -4095,6 +4235,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -4168,6 +4324,13 @@
             "weg",
             "new_business"
           ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
           "type": "string"
         }
       ],
@@ -17558,6 +17721,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -17598,6 +17769,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -17612,6 +17791,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -17660,6 +17847,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -18172,6 +18375,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -18212,6 +18423,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -18226,6 +18445,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -18274,6 +18501,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -18825,6 +19068,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -18865,6 +19116,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -18879,6 +19138,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -18927,6 +19194,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -19480,6 +19763,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -19520,6 +19811,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -19534,6 +19833,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -19582,6 +19889,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -20247,6 +20570,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -20287,6 +20618,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -20301,6 +20640,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -20349,6 +20696,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -22822,6 +23185,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -22862,6 +23233,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -22876,6 +23255,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -22924,6 +23311,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -26007,6 +26410,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -26047,6 +26458,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -26061,6 +26480,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -26109,6 +26536,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -27593,6 +28036,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -27633,6 +28084,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -27647,6 +28106,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -27695,6 +28162,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -31499,6 +31982,1349 @@
       "description": "Summary KPIs for in-process inspections (orders, tests, approval rates)."
     },
     {
+      "method": "GET",
+      "path": "/invoice-issuance/parties",
+      "operationId": "search_invoice_issuance_parties",
+      "summary": "Search Parties",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "party_type",
+          "in": "query",
+          "required": true,
+          "description": "Recipient kind: customer (SA1) or supplier (SA2).",
+          "type": "string",
+          "enum": [
+            "customer",
+            "supplier"
+          ]
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_party",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "party_type": {
+            "locale": {
+              "en": {
+                "description": "Recipient kind: customer (SA1) or supplier (SA2).",
+                "label": "Party type"
+              },
+              "pt-BR": {
+                "description": "Cliente (SA1) ou fornecedor (SA2).",
+                "label": "Tipo de destinatário"
+              }
+            },
+            "enumLabels": {
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
+              "supplier": {
+                "en": {
+                  "label": "Supplier"
+                },
+                "pt-BR": {
+                  "label": "Fornecedor"
+                }
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search invoice issuance parties",
+            "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID.",
+            "whenToUse": "Pick a registered recipient before requesting invoice issuance.",
+            "label": "Invoice issuance parties"
+          },
+          "pt-BR": {
+            "summary": "Buscar destinatários da emissão de NF",
+            "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+            "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+            "label": "Destinatários da emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+          "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+          "label": "Destinatários da emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/invoice-issuance/products",
+      "operationId": "search_invoice_issuance_products",
+      "summary": "Search Products",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_product",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search invoice issuance products",
+            "description": "Look up SB1 items to add to an invoice issuance request.",
+            "whenToUse": "Select products for the issuance wizard.",
+            "label": "Invoice issuance products"
+          },
+          "pt-BR": {
+            "summary": "Buscar itens da emissão de NF",
+            "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+            "whenToUse": "Selecionar produtos no wizard de emissão.",
+            "label": "Itens da emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Selecionar produtos no wizard de emissão.",
+          "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+          "label": "Itens da emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
+      "operationId": "get_invoice_issuance_warehouse_01_balance",
+      "summary": "Warehouse Balance",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_stock_balance",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          }
+        },
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Warehouse 01 stock hint for issuance",
+            "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission.",
+            "whenToUse": "Show remaining quantity when the item writes off stock.",
+            "label": "Warehouse 01 balance"
+          },
+          "pt-BR": {
+            "summary": "Saldo informativo do almoxarifado 01",
+            "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+            "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+            "label": "Saldo almoxarifado 01"
+          }
+        },
+        "tv": {
+          "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+          "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+          "label": "Saldo almoxarifado 01"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/invoice-issuance/requests",
+      "operationId": "list_invoice_issuance_requests",
+      "summary": "List Requests",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "description": "Request status filter: open (pending/in_progress/returned) or a concrete status.",
+          "enum": [
+            "open",
+            "pending",
+            "in_progress",
+            "issued",
+            "returned",
+            "cancelled"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "invoice_type",
+          "in": "query",
+          "required": false,
+          "description": "Invoice type: sale, return, sample, repair_shipment or other.",
+          "enum": [
+            "sale",
+            "return",
+            "sample",
+            "repair_shipment",
+            "other"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "invoice_type": {
+            "locale": {
+              "en": {
+                "description": "Invoice type: sale, return, sample, repair_shipment or other.",
+                "label": "Invoice type"
+              },
+              "pt-BR": {
+                "description": "Tipo da nota: venda, devolução, amostra, remessa de conserto ou outros.",
+                "label": "Tipo de NF"
+              }
+            },
+            "enumLabels": {
+              "sale": {
+                "en": {
+                  "label": "Sale"
+                },
+                "pt-BR": {
+                  "label": "Venda"
+                }
+              },
+              "return": {
+                "en": {
+                  "label": "Return"
+                },
+                "pt-BR": {
+                  "label": "Devolução"
+                }
+              },
+              "sample": {
+                "en": {
+                  "label": "Sample"
+                },
+                "pt-BR": {
+                  "label": "Amostra"
+                }
+              },
+              "repair_shipment": {
+                "en": {
+                  "label": "Repair shipment"
+                },
+                "pt-BR": {
+                  "label": "Remessa ou retorno de conserto"
+                }
+              },
+              "other": {
+                "en": {
+                  "label": "Other"
+                },
+                "pt-BR": {
+                  "label": "Outros"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "q": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca (código, nome ou descrição).",
+                "label": "Busca"
+              }
+            }
+          },
+          "status": {
+            "locale": {
+              "en": {
+                "description": "Status query parameter.",
+                "label": "Status"
+              },
+              "pt-BR": {
+                "description": "Status do registro no fluxo.",
+                "label": "Status"
+              }
+            },
+            "enumLabels": {
+              "1": {
+                "en": {
+                  "label": "Registered (1)"
+                },
+                "pt-BR": {
+                  "label": "Registrada (1)"
+                }
+              },
+              "2": {
+                "en": {
+                  "label": "Under analysis (2)"
+                },
+                "pt-BR": {
+                  "label": "Em análise (2)"
+                }
+              },
+              "3": {
+                "en": {
+                  "label": "Proceeds (3)"
+                },
+                "pt-BR": {
+                  "label": "Procede (3)"
+                }
+              },
+              "4": {
+                "en": {
+                  "label": "Does not proceed (4)"
+                },
+                "pt-BR": {
+                  "label": "Não procede (4)"
+                }
+              },
+              "5": {
+                "en": {
+                  "label": "Cancelled (5)"
+                },
+                "pt-BR": {
+                  "label": "Cancelada (5)"
+                }
+              },
+              "Andamento": {
+                "en": {
+                  "label": "In progress"
+                },
+                "pt-BR": {
+                  "label": "Andamento"
+                }
+              },
+              "Atrasado": {
+                "en": {
+                  "label": "Late"
+                },
+                "pt-BR": {
+                  "label": "Atrasado"
+                }
+              },
+              "Pontual": {
+                "en": {
+                  "label": "On time"
+                },
+                "pt-BR": {
+                  "label": "Pontual"
+                }
+              },
+              "Retornada": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Retornada"
+                }
+              },
+              "Todos": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              },
+              "above_safety_stock": {
+                "en": {
+                  "label": "Above safety stock"
+                },
+                "pt-BR": {
+                  "label": "Acima do estoque de segurança"
+                }
+              },
+              "action_plan_defined": {
+                "en": {
+                  "label": "Action plan defined"
+                },
+                "pt-BR": {
+                  "label": "Plano de ação definido"
+                }
+              },
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              },
+              "aprovado": {
+                "en": {
+                  "label": "Approved"
+                },
+                "pt-BR": {
+                  "label": "Aprovado"
+                }
+              },
+              "archived": {
+                "en": {
+                  "label": "Archived"
+                },
+                "pt-BR": {
+                  "label": "Arquivado"
+                }
+              },
+              "at_safety_stock": {
+                "en": {
+                  "label": "At safety stock"
+                },
+                "pt-BR": {
+                  "label": "No estoque de segurança"
+                }
+              },
+              "below_safety_stock": {
+                "en": {
+                  "label": "Below safety stock"
+                },
+                "pt-BR": {
+                  "label": "Abaixo do estoque de segurança"
+                }
+              },
+              "cancelado": {
+                "en": {
+                  "label": "Cancelled"
+                },
+                "pt-BR": {
+                  "label": "Cancelado"
+                }
+              },
+              "cancelled": {
+                "en": {
+                  "label": "Cancelled"
+                },
+                "pt-BR": {
+                  "label": "Cancelado"
+                }
+              },
+              "closed": {
+                "en": {
+                  "label": "Closed"
+                },
+                "pt-BR": {
+                  "label": "Encerrado"
+                }
+              },
+              "closed_without_nc_treatment": {
+                "en": {
+                  "label": "Closed without NC treatment"
+                },
+                "pt-BR": {
+                  "label": "Encerrada sem tratamento de NC"
+                }
+              },
+              "completed": {
+                "en": {
+                  "label": "Completed"
+                },
+                "pt-BR": {
+                  "label": "Concluído"
+                }
+              },
+              "containment": {
+                "en": {
+                  "label": "Containment"
+                },
+                "pt-BR": {
+                  "label": "Contenção"
+                }
+              },
+              "descontinuado": {
+                "en": {
+                  "label": "Discontinued"
+                },
+                "pt-BR": {
+                  "label": "Descontinuado"
+                }
+              },
+              "done": {
+                "en": {
+                  "label": "Done"
+                },
+                "pt-BR": {
+                  "label": "Concluído"
+                }
+              },
+              "draft": {
+                "en": {
+                  "label": "Draft"
+                },
+                "pt-BR": {
+                  "label": "Rascunho"
+                }
+              },
+              "evaluation_complete": {
+                "en": {
+                  "label": "Evaluation complete"
+                },
+                "pt-BR": {
+                  "label": "Avaliação concluída"
+                }
+              },
+              "implantado": {
+                "en": {
+                  "label": "Implemented"
+                },
+                "pt-BR": {
+                  "label": "Implantado"
+                }
+              },
+              "in_progress": {
+                "en": {
+                  "label": "In progress"
+                },
+                "pt-BR": {
+                  "label": "Em andamento"
+                }
+              },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
+              "late": {
+                "en": {
+                  "label": "Late"
+                },
+                "pt-BR": {
+                  "label": "Atrasado"
+                }
+              },
+              "nc_in_progress": {
+                "en": {
+                  "label": "NC in progress"
+                },
+                "pt-BR": {
+                  "label": "NC em andamento"
+                }
+              },
+              "on_time": {
+                "en": {
+                  "label": "On time"
+                },
+                "pt-BR": {
+                  "label": "No prazo"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open"
+                },
+                "pt-BR": {
+                  "label": "Aberto"
+                }
+              },
+              "outlier": {
+                "en": {
+                  "label": "Outlier"
+                },
+                "pt-BR": {
+                  "label": "Fora da faixa"
+                }
+              },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
+              "published": {
+                "en": {
+                  "label": "Published"
+                },
+                "pt-BR": {
+                  "label": "Publicado"
+                }
+              },
+              "recebido": {
+                "en": {
+                  "label": "Received"
+                },
+                "pt-BR": {
+                  "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
+                }
+              },
+              "root_cause_analysis": {
+                "en": {
+                  "label": "Root cause analysis"
+                },
+                "pt-BR": {
+                  "label": "Análise de causa raiz"
+                }
+              },
+              "triage": {
+                "en": {
+                  "label": "Triage"
+                },
+                "pt-BR": {
+                  "label": "Triagem"
+                }
+              },
+              "valid": {
+                "en": {
+                  "label": "Valid"
+                },
+                "pt-BR": {
+                  "label": "Válido"
+                }
+              },
+              "waiting_validation": {
+                "en": {
+                  "label": "Waiting validation"
+                },
+                "pt-BR": {
+                  "label": "Aguardando validação"
+                }
+              },
+              "without_safety_stock": {
+                "en": {
+                  "label": "Without safety stock"
+                },
+                "pt-BR": {
+                  "label": "Sem estoque de segurança"
+                }
+              },
+              "won": {
+                "en": {
+                  "label": "Won"
+                },
+                "pt-BR": {
+                  "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
+                }
+              }
+            }
+          }
+        },
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "List invoice issuance requests",
+            "description": "Paged billing queue of invoice issuance requests for a branch.",
+            "whenToUse": "Show the issuance queue filtered by status or type.",
+            "label": "Issuance queue"
+          },
+          "pt-BR": {
+            "summary": "Listar solicitações de emissão de NF",
+            "description": "Fila paginada de solicitações de emissão por filial.",
+            "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+            "label": "Fila de emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+          "description": "Fila paginada de solicitações de emissão por filial.",
+          "label": "Fila de emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests",
+      "operationId": "create_invoice_issuance_request",
+      "summary": "Create Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Create invoice issuance request",
+            "description": "Create a guided invoice issuance request for the billing queue.",
+            "whenToUse": "Submit a new issuance request after the wizard checklist.",
+            "label": "Create issuance request"
+          },
+          "pt-BR": {
+            "summary": "Criar solicitação de emissão de NF",
+            "description": "Cria uma solicitação guiada de emissão para a fila do Faturamento.",
+            "whenToUse": "Enviar uma nova solicitação após o checklist do wizard.",
+            "label": "Criar solicitação de emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Enviar uma nova solicitação após o checklist do wizard.",
+          "description": "Cria uma solicitação guiada de emissão para a fila do Faturamento.",
+          "label": "Criar solicitação de emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "operationId": "get_invoice_issuance_request",
+      "summary": "Get Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Get invoice issuance request",
+            "description": "Request detail with items, attachments, checklist, timeline and allowed actions.",
+            "whenToUse": "Open one issuance request from the queue or a notification deep link.",
+            "label": "Issuance request detail"
+          },
+          "pt-BR": {
+            "summary": "Detalhe da solicitação de emissão de NF",
+            "description": "Detalhe com itens, anexos, checklist, histórico e ações permitidas.",
+            "whenToUse": "Abrir uma solicitação da fila ou pelo link da notificação.",
+            "label": "Detalhe da emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Abrir uma solicitação da fila ou pelo link da notificação.",
+          "description": "Detalhe com itens, anexos, checklist, histórico e ações permitidas.",
+          "label": "Detalhe da emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "operationId": "update_invoice_issuance_request",
+      "summary": "Update Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Update returned issuance request",
+            "description": "Creator updates a returned invoice issuance request before resubmitting.",
+            "whenToUse": "Correct fields after billing sent the request back.",
+            "label": "Update issuance request"
+          },
+          "pt-BR": {
+            "summary": "Corrigir solicitação de emissão devolvida",
+            "description": "O criador atualiza uma solicitação devolvida antes de reenviar.",
+            "whenToUse": "Corrigir dados após devolução do Faturamento.",
+            "label": "Corrigir solicitação"
+          }
+        },
+        "tv": {
+          "whenToUse": "Corrigir dados após devolução do Faturamento.",
+          "description": "O criador atualiza uma solicitação devolvida antes de reenviar.",
+          "label": "Corrigir solicitação"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/attachments",
+      "operationId": "add_invoice_issuance_attachment",
+      "summary": "Add Attachment",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Attach purchase order PDF",
+            "description": "Upload an optional customer purchase-order PDF to an issuance request.",
+            "whenToUse": "Attach the PO file during create or attendance.",
+            "label": "Issuance attachment"
+          },
+          "pt-BR": {
+            "summary": "Anexar PDF do pedido de compra",
+            "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
+            "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
+            "label": "Anexo da emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
+          "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
+          "label": "Anexo da emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/cancel",
+      "operationId": "cancel_invoice_issuance_request",
+      "summary": "Cancel Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Cancel invoice issuance request",
+            "description": "Cancel a non-terminal invoice issuance request.",
+            "whenToUse": "Stop processing a request that should not be issued.",
+            "label": "Cancel issuance"
+          },
+          "pt-BR": {
+            "summary": "Cancelar solicitação de emissão de NF",
+            "description": "Cancela uma solicitação de emissão que ainda não é terminal.",
+            "whenToUse": "Interromper uma solicitação que não deve ser emitida.",
+            "label": "Cancelar emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Interromper uma solicitação que não deve ser emitida.",
+          "description": "Cancela uma solicitação de emissão que ainda não é terminal.",
+          "label": "Cancelar emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/issue",
+      "operationId": "issue_invoice_issuance_request",
+      "summary": "Issue Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Mark invoice issuance as issued",
+            "description": "Mark the request as issued after billing completed the invoice.",
+            "whenToUse": "Close the request when the NF has been issued.",
+            "label": "Mark issued"
+          },
+          "pt-BR": {
+            "summary": "Marcar solicitação de emissão como emitida",
+            "description": "Marca a solicitação como emitida após o Faturamento concluir a NF.",
+            "whenToUse": "Encerrar a solicitação quando a nota foi emitida.",
+            "label": "Marcar emitida"
+          }
+        },
+        "tv": {
+          "whenToUse": "Encerrar a solicitação quando a nota foi emitida.",
+          "description": "Marca a solicitação como emitida após o Faturamento concluir a NF.",
+          "label": "Marcar emitida"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/resubmit",
+      "operationId": "resubmit_invoice_issuance_request",
+      "summary": "Resubmit Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Resubmit invoice issuance request",
+            "description": "Send a returned request back to the pending billing queue.",
+            "whenToUse": "Resubmit after the creator fixed the returned request.",
+            "label": "Resubmit issuance"
+          },
+          "pt-BR": {
+            "summary": "Reenviar solicitação de emissão de NF",
+            "description": "Devolve a solicitação corrigida para a fila pendente do Faturamento.",
+            "whenToUse": "Reenviar após o criador corrigir a devolução.",
+            "label": "Reenviar emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Reenviar após o criador corrigir a devolução.",
+          "description": "Devolve a solicitação corrigida para a fila pendente do Faturamento.",
+          "label": "Reenviar emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/return",
+      "operationId": "return_invoice_issuance_request",
+      "summary": "Return Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Return invoice issuance request",
+            "description": "Send the request back to the creator with a required reason.",
+            "whenToUse": "Ask the requester to correct data before issuing.",
+            "label": "Return issuance"
+          },
+          "pt-BR": {
+            "summary": "Devolver solicitação de emissão de NF",
+            "description": "Devolve a solicitação ao criador com motivo obrigatório.",
+            "whenToUse": "Pedir correção ao solicitante antes de emitir.",
+            "label": "Devolver emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Pedir correção ao solicitante antes de emitir.",
+          "description": "Devolve a solicitação ao criador com motivo obrigatório.",
+          "label": "Devolver emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/start",
+      "operationId": "start_invoice_issuance_request",
+      "summary": "Start Request",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_request",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Start invoice issuance attendance",
+            "description": "Move a pending request to in progress for billing.",
+            "whenToUse": "Begin working a request from the issuance queue.",
+            "label": "Start issuance"
+          },
+          "pt-BR": {
+            "summary": "Iniciar atendimento da emissão de NF",
+            "description": "Move a solicitação pendente para em andamento no Faturamento.",
+            "whenToUse": "Começar a atender um item da fila de emissão.",
+            "label": "Iniciar emissão"
+          }
+        },
+        "tv": {
+          "whenToUse": "Começar a atender um item da fila de emissão.",
+          "description": "Move a solicitação pendente para em andamento no Faturamento.",
+          "label": "Iniciar emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
@@ -31569,12 +33395,14 @@
           "name": "issued_from",
           "in": "query",
           "required": false,
+          "description": "Issue date from (inclusive, YYYY-MM-DD).",
           "type": "string"
         },
         {
           "name": "issued_to",
           "in": "query",
           "required": false,
+          "description": "Issue date to (inclusive, YYYY-MM-DD).",
           "type": "string"
         },
         {
@@ -31932,6 +33760,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -31972,6 +33808,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -31986,6 +33830,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -32035,6 +33887,22 @@
                 "pt-BR": {
                   "label": "Ganha"
                 }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
+                }
               }
             }
           },
@@ -32047,6 +33915,30 @@
               "pt-BR": {
                 "description": "Código ou nome do fornecedor.",
                 "label": "Fornecedor"
+              }
+            }
+          },
+          "issued_from": {
+            "locale": {
+              "en": {
+                "description": "Issue date from (inclusive, YYYY-MM-DD).",
+                "label": "Issued from"
+              },
+              "pt-BR": {
+                "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD).",
+                "label": "Emitida de"
+              }
+            }
+          },
+          "issued_to": {
+            "locale": {
+              "en": {
+                "description": "Issue date to (inclusive, YYYY-MM-DD).",
+                "label": "Issued to"
+              },
+              "pt-BR": {
+                "description": "Data de emissão final (inclusiva, AAAA-MM-DD).",
+                "label": "Emitida até"
               }
             }
           }
@@ -32323,6 +34215,7 @@
           "name": "query",
           "in": "query",
           "required": true,
+          "description": "Free-text search (code, name or tax ID).",
           "type": "string"
         },
         {
@@ -32349,8 +34242,352 @@
                 "label": "Limite"
               }
             }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
           }
         },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mural-acessos/hubs",
+      "operationId": "list_mural_acessos_hubs",
+      "summary": "List Hubs",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "mural_access_hub",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mural-acessos/hubs",
+      "operationId": "create_mural_acessos_hub",
+      "summary": "Create Hub",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "mural_access_hub",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "operationId": "delete_mural_acessos_hub",
+      "summary": "Delete Hub",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_hub",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "operationId": "get_mural_acessos_hub",
+      "summary": "Get Hub",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_hub",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "operationId": "update_mural_acessos_hub",
+      "summary": "Update Hub",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_hub",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "operationId": "list_mural_acessos_links",
+      "summary": "List Links",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "operationId": "create_mural_acessos_link",
+      "summary": "Create Link",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}/links/reorder",
+      "operationId": "reorder_mural_acessos_links",
+      "summary": "Reorder Links",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/qr.png",
+      "operationId": "get_mural_acessos_hub_qr",
+      "summary": "Get Hub Qr",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "hub_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_hub_qr",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}",
+      "operationId": "delete_mural_acessos_link",
+      "summary": "Delete Link",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mural-acessos/links/{link_id}",
+      "operationId": "update_mural_acessos_link",
+      "summary": "Update Link",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "operationId": "delete_mural_acessos_link_image",
+      "summary": "Delete Link Image",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "operationId": "get_mural_acessos_link_image",
+      "summary": "Get Link Image",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link_image",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "operationId": "upload_mural_acessos_link_image",
+      "summary": "Upload Link Image",
+      "tags": [
+        "Mural de Acessos",
+        "Mural de Acessos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link",
+        "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
     },
@@ -32368,7 +34605,7 @@
           "name": "seller_id",
           "in": "query",
           "required": false,
-          "description": "Filtro de carteira (somente admin/gerente).",
+          "description": "Filtro de carteira (team.view, admin/gerente).",
           "type": "string"
         }
       ],
@@ -32572,7 +34809,7 @@
       "method": "POST",
       "path": "/pedidos-venda-abertos/customers/billing-series",
       "operationId": "list_customer_billing_series",
-      "summary": "Customer billing monthly series",
+      "summary": "Customer billing series",
       "tags": [
         "Pedidos de Venda em Aberto"
       ],
@@ -32583,23 +34820,23 @@
         "category": "commercial",
         "locale": {
           "en": {
-            "summary": "Customer billing monthly series",
-            "description": "Monthly billed totals for the last N months for selected portfolio customers.",
+            "summary": "Customer billing series",
+            "description": "Billed totals for selected portfolio customers, bucketed by day, week, month or year. Optional start_date/end_date; months remains the fallback window.",
             "label": "Billing series"
           },
           "pt-BR": {
-            "summary": "Série mensal de faturamento",
-            "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira.",
+            "summary": "Série de faturamento da carteira",
+            "description": "Totais faturados dos clientes selecionados, agrupados por dia, semana, mês ou ano. start_date/end_date opcionais; months continua como janela padrão.",
             "label": "Série de faturamento"
           }
         },
         "tv": {
-          "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira.",
+          "description": "Totais faturados dos clientes selecionados, agrupados por dia, semana, mês ou ano. start_date/end_date opcionais; months continua como janela padrão.",
           "label": "Série de faturamento"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Monthly billed totals for the last N months for selected portfolio customers."
+      "description": "Billed totals for selected portfolio customers, bucketed by day, week, month or year. Optional start_date/end_date; months remains the fallback window."
     },
     {
       "method": "POST",
@@ -32633,6 +34870,22 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Batch city/UF, 12-month billing and avatar flags for portfolio customers."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/open-order-metrics",
+      "operationId": "list_customer_open_order_metrics",
+      "summary": "Lista paginada — Customer open order metrics",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "customer_open_order_metrics",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna customer open order metrics via API DELPI. Lista paginada de registros. Domínio: Pedidos de venda em aberto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
     },
     {
       "method": "GET",
@@ -33371,6 +35624,397 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Moves selected customers from one seller portfolio to another."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "operationId": "list_totvs_open_orders",
+      "summary": "TOTVS open sales orders (no portfolio membership)",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "open_sales_order",
+        "shape": "composite_analysis",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "TOTVS open sales orders (no portfolio membership)",
+            "description": "Pure TOTVS open sales orders for commercial-api BFF. Portfolio scope is applied upstream.",
+            "label": "TOTVS open sales orders"
+          },
+          "pt-BR": {
+            "summary": "Pedidos de venda em aberto TOTVS para o BFF commercial-api",
+            "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api.",
+            "label": "Pedidos em aberto TOTVS (sem membership)"
+          }
+        },
+        "tv": {
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api.",
+          "label": "Pedidos em aberto TOTVS (sem membership)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Pure TOTVS open sales orders for commercial-api BFF. Portfolio scope is applied upstream."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "operationId": "list_totvs_open_orders_by_customer",
+      "summary": "TOTVS open sales orders by customer",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "customer_code",
+          "in": "path",
+          "required": true,
+          "description": "Customer code (CLIENTE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_store",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "open_sales_order",
+        "shape": "composite_analysis",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "TOTVS open sales orders by customer",
+            "description": "Pure TOTVS open sales orders for one customer code/store. Used by commercial Account 360 BFF.",
+            "label": "TOTVS open sales orders by customer"
+          },
+          "pt-BR": {
+            "summary": "Pedidos em aberto TOTVS de um cliente (código/loja)",
+            "description": "Leitura TOTVS pura por par cliente; Conta 360 via commercial-api.",
+            "label": "Pedidos em aberto TOTVS por cliente"
+          }
+        },
+        "params": {
+          "customer_code": {
+            "locale": {
+              "en": {
+                "description": "Customer code (CLIENTE).",
+                "label": "Customer code"
+              },
+              "pt-BR": {
+                "description": "Código do cliente (CLIENTE).",
+                "label": "Código do cliente"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Leitura TOTVS pura por par cliente; Conta 360 via commercial-api.",
+          "label": "Pedidos em aberto TOTVS por cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Pure TOTVS open sales orders for one customer code/store. Used by commercial Account 360 BFF."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "operationId": "get_totvs_outbound_invoice",
+      "summary": "TOTVS outbound invoice by key",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "path",
+          "required": true,
+          "description": "Branch / F2_FILIAL / D2_FILIAL",
+          "type": "string"
+        },
+        {
+          "name": "invoice_number",
+          "in": "path",
+          "required": true,
+          "description": "Invoice number (F2_DOC / D2_DOC)",
+          "type": "string"
+        },
+        {
+          "name": "invoice_series",
+          "in": "path",
+          "required": true,
+          "description": "Invoice series (F2_SERIE / D2_SERIE)",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_outbound_invoice",
+        "shape": "playbook_report",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "TOTVS outbound invoice by key",
+            "description": "Pure TOTVS outbound invoice header and items (SF2/SD2) by branch, number and series.",
+            "label": "TOTVS outbound invoice"
+          },
+          "pt-BR": {
+            "summary": "Nota fiscal de saída TOTVS por unidade, número e série",
+            "description": "Cabeçalho e itens SF2/SD2 para o BFF commercial-api, sem membership PVA.",
+            "label": "Nota fiscal TOTVS por chave"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "invoice_number": {
+            "locale": {
+              "en": {
+                "description": "Invoice number query parameter.",
+                "label": "Invoice number"
+              },
+              "pt-BR": {
+                "description": "Número da nota fiscal.",
+                "label": "Número da nota"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Cabeçalho e itens SF2/SD2 para o BFF commercial-api, sem membership PVA.",
+          "label": "Nota fiscal TOTVS por chave"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Pure TOTVS outbound invoice header and items (SF2/SD2) by branch, number and series."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "operationId": "list_totvs_outbound_invoices",
+      "summary": "TOTVS outbound invoices (no portfolio membership)",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "customer_code",
+          "in": "path",
+          "required": true,
+          "description": "Customer code (A1_COD / D2_CLIENTE)",
+          "type": "string"
+        },
+        {
+          "name": "customer_store",
+          "in": "path",
+          "required": true,
+          "description": "Customer store (A1_LOJA / D2_LOJA)",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). Default: last 90 days.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). Default: today.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "situation",
+          "in": "query",
+          "required": false,
+          "description": "all | emitted | return. Soft-deleted cancelled invoices omitted.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Search by NF number, series, sales order, customer PO or product.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_outbound_invoice",
+        "shape": "playbook_report",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "TOTVS outbound invoices (no portfolio membership)",
+            "description": "Pure TOTVS outbound invoices for commercial-api BFF. Portfolio scope is applied upstream.",
+            "label": "TOTVS outbound invoices"
+          },
+          "pt-BR": {
+            "summary": "Notas fiscais de saída TOTVS para o BFF commercial-api",
+            "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api.",
+            "label": "Notas fiscais TOTVS (sem membership)"
+          }
+        },
+        "params": {
+          "customer_code": {
+            "locale": {
+              "en": {
+                "description": "Customer code (CLIENTE).",
+                "label": "Customer code"
+              },
+              "pt-BR": {
+                "description": "Código do cliente (CLIENTE).",
+                "label": "Código do cliente"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api.",
+          "label": "Notas fiscais TOTVS (sem membership)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Pure TOTVS outbound invoices for commercial-api BFF. Portfolio scope is applied upstream."
     },
     {
       "method": "GET",
@@ -36282,6 +38926,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -36322,6 +38974,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -36336,6 +38996,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -36384,6 +39052,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -36902,6 +39586,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -36942,6 +39634,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -36956,6 +39656,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -37004,6 +39712,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -37490,6 +40214,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -37530,6 +40262,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -37544,6 +40284,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -37592,6 +40340,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -38554,6 +41318,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -38594,6 +41366,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -38608,6 +41388,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -38656,6 +41444,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -44841,7 +47645,7 @@
       "method": "GET",
       "path": "/production/oee",
       "operationId": "get_production_oee",
-      "summary": "Production oee",
+      "summary": "Production OEE — summary and appointments",
       "tags": [
         "Produção"
       ],
@@ -44967,14 +47771,16 @@
         "category": "production",
         "locale": {
           "en": {
-            "summary": "Production oee",
-            "description": "Production oee.",
-            "label": "Production oee"
+            "summary": "Production OEE — summary and appointments",
+            "description": "Paged listing and summary of production efficiency appointments (canonical HY_TEMPAD planned time ÷ actual time; valid band 0–199%).",
+            "whenToUse": "Use for OEE table/panel; same efficiency metric as factory efficiency and overall_equipment_effectiveness_pct.",
+            "label": "Production OEE"
           },
           "pt-BR": {
-            "summary": "OEE produção — resumo e apontamentos (view fabril)",
-            "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV.",
-            "label": "OEE produção — resumo e apontamentos (view fabril)"
+            "summary": "OEE produção — resumo e apontamentos",
+            "description": "Resumo e listagem paginada de apontamentos com eficiência canônica (setup + HY_TEMPAD × qtd ÷ tempo real; faixa 0–199%).",
+            "whenToUse": "Use no painel/tabela OEE; mesma métrica da eficiência fabril e do KPI overall_equipment_effectiveness_pct.",
+            "label": "OEE produção — resumo e apontamentos"
           }
         },
         "params": {
@@ -45540,6 +48346,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -45580,6 +48394,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -45594,6 +48416,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -45643,6 +48473,22 @@
                 "pt-BR": {
                   "label": "Ganha"
                 }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
+                }
               }
             }
           },
@@ -45660,12 +48506,13 @@
           }
         },
         "tv": {
-          "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV.",
-          "label": "OEE produção — resumo e apontamentos (view fabril)"
+          "whenToUse": "Use no painel/tabela OEE; mesma métrica da eficiência fabril e do KPI overall_equipment_effectiveness_pct.",
+          "description": "Resumo e listagem paginada de apontamentos com eficiência canônica (setup + HY_TEMPAD × qtd ÷ tempo real; faixa 0–199%).",
+          "label": "OEE produção — resumo e apontamentos"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Production oee."
+      "description": "Paged listing and summary of production efficiency appointments (canonical HY_TEMPAD planned time ÷ actual time; valid band 0–199%)."
     },
     {
       "method": "GET",
@@ -45835,12 +48682,12 @@
         "locale": {
           "en": {
             "summary": "Production OEE series",
-            "description": "Daily OEE evolution over the period.",
+            "description": "Daily evolution of the canonical production efficiency % (HY_TEMPAD) over the period.",
             "whenToUse": "Choose when the TV needs an OEE trend chart (line/area), not just today's value."
           },
           "pt-BR": {
             "summary": "Série de OEE de produção",
-            "description": "Evolução diária do OEE ao longo do período.",
+            "description": "Evolução diária da eficiência canônica de produção (HY_TEMPAD) ao longo do período.",
             "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia."
           }
         },
@@ -45982,12 +48829,12 @@
         },
         "tv": {
           "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
-          "description": "Evolução diária do OEE ao longo do período.",
+          "description": "Evolução diária da eficiência canônica de produção (HY_TEMPAD) ao longo do período.",
           "label": "Série de OEE de produção"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Daily OEE evolution over the period."
+      "description": "Daily evolution of the canonical production efficiency % (HY_TEMPAD) over the period."
     },
     {
       "method": "GET",
@@ -47443,6 +50290,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -47483,6 +50338,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -47497,6 +50360,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -47545,6 +50416,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -47817,13 +50704,13 @@
         "locale": {
           "en": {
             "summary": "Overall equipment effectiveness %",
-            "description": "Consolidated OEE for the period (availability × performance × quality).",
-            "whenToUse": "Ideal for a large factory-floor KPI card: one number summarizing availability × performance × quality."
+            "description": "Period average of production efficiency (planned time ÷ actual time × 100), using the canonical HY_TEMPAD × quantity formula shared with factory efficiency. Valid band 0–199%. Not classical OEE A×P×Q.",
+            "whenToUse": "Use for a single factory-floor KPI card or Strategic Indicators; same metric as factory efficiency / OEE listing."
           },
           "pt-BR": {
             "summary": "Eficiência global dos equipamentos (%)",
-            "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
-            "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade."
+            "description": "Média no período da eficiência de produção (tempo previsto ÷ tempo real × 100), com fórmula canônica setup + HY_TEMPAD × qtd — a mesma da eficiência fabril. Faixa válida 0–199%. Não é OEE clássico A×P×Q.",
+            "whenToUse": "Use em card KPI na TV/fábrica ou nos Indicadores Estratégicos; mesma métrica da eficiência fabril e da listagem OEE."
           }
         },
         "params": {
@@ -47909,13 +50796,13 @@
           }
         },
         "tv": {
-          "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade.",
-          "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
+          "whenToUse": "Use em card KPI na TV/fábrica ou nos Indicadores Estratégicos; mesma métrica da eficiência fabril e da listagem OEE.",
+          "description": "Média no período da eficiência de produção (tempo previsto ÷ tempo real × 100), com fórmula canônica setup + HY_TEMPAD × qtd — a mesma da eficiência fabril. Faixa válida 0–199%. Não é OEE clássico A×P×Q.",
           "label": "Eficiência global dos equipamentos (%)"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Consolidated OEE for the period (availability × performance × quality)."
+      "description": "Period average of production efficiency (planned time ÷ actual time × 100), using the canonical HY_TEMPAD × quantity formula shared with factory efficiency. Valid band 0–199%. Not classical OEE A×P×Q."
     },
     {
       "method": "GET",
@@ -57225,6 +60112,41 @@
     },
     {
       "method": "POST",
+      "path": "/public/canal-denuncia/denuncias",
+      "operationId": "create_public_canal_denuncia",
+      "summary": "Submit public whistleblowing report",
+      "tags": [
+        "Canal de Denúncia — público"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "canal_denuncia",
+        "shape": "scalar",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Submit public whistleblowing report",
+            "description": "Anonymous report from the public form. No Minha DELPI account required.",
+            "whenToUse": "Use for the public Canal de Denúncia form."
+          },
+          "pt-BR": {
+            "summary": "Enviar denúncia pública",
+            "description": "Relato anônimo pelo formulário público, sem conta no Minha DELPI.",
+            "whenToUse": "Use no formulário público do Canal de Denúncia.",
+            "label": "Enviar denúncia pública"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use no formulário público do Canal de Denúncia.",
+          "description": "Relato anônimo pelo formulário público, sem conta no Minha DELPI.",
+          "label": "Enviar denúncia pública"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Anonymous report from the public form. No Minha DELPI account required."
+    },
+    {
+      "method": "POST",
       "path": "/public/kaizen/suggestions",
       "operationId": "create_public_kaizen_suggestion",
       "summary": "Create Public Kaizen Suggestion",
@@ -57257,6 +60179,68 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create Public Kaizen Suggestion."
+    },
+    {
+      "method": "GET",
+      "path": "/public/mural-acessos/links/{link_id}/image",
+      "operationId": "get_public_mural_acessos_link_image",
+      "summary": "Get Public Link Image",
+      "tags": [
+        "Mural de Acessos — público"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "link_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_link_image",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/public/mural-acessos/menu",
+      "operationId": "list_public_mural_acessos_menu",
+      "summary": "List Public Menu",
+      "tags": [
+        "Mural de Acessos — público"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "mural_access_menu",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/public/mural-acessos/menu/{public_token}",
+      "operationId": "list_public_mural_acessos_menu_by_token",
+      "summary": "List Public Menu By Token",
+      "tags": [
+        "Mural de Acessos — público"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "public_token",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "mural_access_menu",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
     },
     {
       "method": "GET",
@@ -57298,6 +60282,119 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Public quality label inspection."
+    },
+    {
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}",
+      "operationId": "get_public_scheduling_resource",
+      "summary": "Get Public Scheduling Resource",
+      "tags": [
+        "Agendamento — público"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "public_token",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "scheduling_resource",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}/availability",
+      "operationId": "get_public_scheduling_availability",
+      "summary": "Get Public Scheduling Availability",
+      "tags": [
+        "Agendamento — público"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "public_token",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": true,
+          "description": "Interval start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": true,
+          "description": "Interval end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "scheduling_booking",
+        "shape": "paged_list",
+        "params": {
+          "from": {
+            "locale": {
+              "en": {
+                "description": "Interval start (YYYY-MM-DD).",
+                "label": "From date"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo (data ou valor).",
+                "label": "De"
+              }
+            },
+            "format": "date"
+          },
+          "to": {
+            "locale": {
+              "en": {
+                "description": "Interval end (YYYY-MM-DD).",
+                "label": "To date"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo (data ou valor).",
+                "label": "Até"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/public/scheduling/resources/{public_token}/bookings",
+      "operationId": "create_public_scheduling_booking",
+      "summary": "Create Public Scheduling Booking",
+      "tags": [
+        "Agendamento — público"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "public_token",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "scheduling_booking",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
     },
     {
       "method": "GET",
@@ -58133,6 +61230,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -58173,6 +61278,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -58187,6 +61300,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -58235,6 +61356,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -62720,6 +65857,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -62760,6 +65905,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -62774,6 +65927,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -62822,6 +65983,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -65052,6 +68229,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -65092,6 +68277,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -65106,6 +68299,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -65154,6 +68355,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -66348,6 +69565,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -66388,6 +69613,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -66402,6 +69635,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -66450,6 +69691,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -68413,6 +71670,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -68453,6 +71718,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -68467,6 +71740,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -68515,6 +71796,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -70086,6 +73383,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -70126,6 +73431,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -70140,6 +73453,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -70188,6 +73509,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -70814,6 +74151,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -70854,6 +74199,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -70868,6 +74221,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -70916,6 +74277,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -80108,6 +83485,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -80148,6 +83533,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -80162,6 +83555,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -80210,6 +83611,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -81647,6 +85064,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -81687,6 +85112,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -81701,6 +85134,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -81749,6 +85190,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -82622,6 +86079,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -82662,6 +86127,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -82676,6 +86149,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -82724,6 +86205,22 @@
                 },
                 "pt-BR": {
                   "label": "Ganha"
+                }
+              },
+              "partial": {
+                "en": {
+                  "label": "Partial"
+                },
+                "pt-BR": {
+                  "label": "Parcial"
+                }
+              },
+              "no_return": {
+                "en": {
+                  "label": "No return"
+                },
+                "pt-BR": {
+                  "label": "Sem retorno"
                 }
               }
             }
@@ -83615,7 +87112,7 @@
           "name": "customer_reference",
           "in": "query",
           "required": false,
-          "description": "Customer reference (SB1.B1_REFEREN / Ref. Cliente). Prefix match.",
+          "description": "Customer reference query parameter.",
           "type": "string"
         },
         {
@@ -83774,6 +87271,18 @@
               }
             }
           },
+          "customer_reference": {
+            "locale": {
+              "en": {
+                "description": "Customer reference query parameter.",
+                "label": "Customer reference"
+              },
+              "pt-BR": {
+                "description": "Referência do cliente no pedido ou cadastro.",
+                "label": "Referência do cliente"
+              }
+            }
+          },
           "include_test_products": {
             "locale": {
               "en": {
@@ -83795,18 +87304,6 @@
               "pt-BR": {
                 "description": "Código ou identificador do produto.",
                 "label": "Produto"
-              }
-            }
-          },
-          "customer_reference": {
-            "locale": {
-              "en": {
-                "description": "Customer reference query parameter.",
-                "label": "Customer reference"
-              },
-              "pt-BR": {
-                "description": "Referência do cliente no pedido ou cadastro.",
-                "label": "Referência do cliente"
               }
             }
           },
@@ -84054,6 +87551,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -84094,6 +87599,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -84108,6 +87621,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -84209,11 +87730,11 @@
           "issued_from": {
             "locale": {
               "en": {
-                "description": "Shipment issue date from (inclusive, YYYY-MM-DD).",
+                "description": "Issue date from (inclusive, YYYY-MM-DD).",
                 "label": "Issued from"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida de"
               }
             }
@@ -84221,11 +87742,11 @@
           "issued_to": {
             "locale": {
               "en": {
-                "description": "Shipment issue date to (inclusive, YYYY-MM-DD).",
+                "description": "Issue date to (inclusive, YYYY-MM-DD).",
                 "label": "Issued to"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão final (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida até"
               }
             }
@@ -84332,7 +87853,7 @@
           "name": "customer_reference",
           "in": "query",
           "required": false,
-          "description": "Customer reference (SB1.B1_REFEREN / Ref. Cliente). Prefix match.",
+          "description": "Customer reference query parameter.",
           "type": "string"
         },
         {
@@ -84495,6 +88016,18 @@
               }
             }
           },
+          "customer_reference": {
+            "locale": {
+              "en": {
+                "description": "Customer reference query parameter.",
+                "label": "Customer reference"
+              },
+              "pt-BR": {
+                "description": "Referência do cliente no pedido ou cadastro.",
+                "label": "Referência do cliente"
+              }
+            }
+          },
           "include_test_products": {
             "locale": {
               "en": {
@@ -84540,18 +88073,6 @@
               "pt-BR": {
                 "description": "Código ou identificador do produto.",
                 "label": "Produto"
-              }
-            }
-          },
-          "customer_reference": {
-            "locale": {
-              "en": {
-                "description": "Customer reference query parameter.",
-                "label": "Customer reference"
-              },
-              "pt-BR": {
-                "description": "Referência do cliente no pedido ou cadastro.",
-                "label": "Referência do cliente"
               }
             }
           },
@@ -84799,6 +88320,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -84839,6 +88368,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -84853,6 +88390,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -84924,11 +88469,11 @@
           "issued_from": {
             "locale": {
               "en": {
-                "description": "Shipment issue date from (inclusive, YYYY-MM-DD).",
+                "description": "Issue date from (inclusive, YYYY-MM-DD).",
                 "label": "Issued from"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida de"
               }
             }
@@ -84936,11 +88481,11 @@
           "issued_to": {
             "locale": {
               "en": {
-                "description": "Shipment issue date to (inclusive, YYYY-MM-DD).",
+                "description": "Issue date to (inclusive, YYYY-MM-DD).",
                 "label": "Issued to"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão final (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida até"
               }
             }
@@ -85178,7 +88723,7 @@
           "name": "customer_reference",
           "in": "query",
           "required": false,
-          "description": "Customer reference (SB1.B1_REFEREN / Ref. Cliente). Prefix match.",
+          "description": "Customer reference query parameter.",
           "type": "string"
         },
         {
@@ -85325,6 +88870,18 @@
               }
             }
           },
+          "customer_reference": {
+            "locale": {
+              "en": {
+                "description": "Customer reference query parameter.",
+                "label": "Customer reference"
+              },
+              "pt-BR": {
+                "description": "Referência do cliente no pedido ou cadastro.",
+                "label": "Referência do cliente"
+              }
+            }
+          },
           "include_test_products": {
             "locale": {
               "en": {
@@ -85346,18 +88903,6 @@
               "pt-BR": {
                 "description": "Código ou identificador do produto.",
                 "label": "Produto"
-              }
-            }
-          },
-          "customer_reference": {
-            "locale": {
-              "en": {
-                "description": "Customer reference query parameter.",
-                "label": "Customer reference"
-              },
-              "pt-BR": {
-                "description": "Referência do cliente no pedido ou cadastro.",
-                "label": "Referência do cliente"
               }
             }
           },
@@ -85605,6 +89150,14 @@
                   "label": "Em andamento"
                 }
               },
+              "issued": {
+                "en": {
+                  "label": "Issued"
+                },
+                "pt-BR": {
+                  "label": "Emitida"
+                }
+              },
               "late": {
                 "en": {
                   "label": "Late"
@@ -85645,6 +89198,14 @@
                   "label": "Fora da faixa"
                 }
               },
+              "pending": {
+                "en": {
+                  "label": "Pending"
+                },
+                "pt-BR": {
+                  "label": "Pendente"
+                }
+              },
               "published": {
                 "en": {
                   "label": "Published"
@@ -85659,6 +89220,14 @@
                 },
                 "pt-BR": {
                   "label": "Recebido"
+                }
+              },
+              "returned": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Devolvida"
                 }
               },
               "root_cause_analysis": {
@@ -85730,11 +89299,11 @@
           "issued_from": {
             "locale": {
               "en": {
-                "description": "Shipment issue date from (inclusive, YYYY-MM-DD).",
+                "description": "Issue date from (inclusive, YYYY-MM-DD).",
                 "label": "Issued from"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa inicial (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida de"
               }
             }
@@ -85742,11 +89311,11 @@
           "issued_to": {
             "locale": {
               "en": {
-                "description": "Shipment issue date to (inclusive, YYYY-MM-DD).",
+                "description": "Issue date to (inclusive, YYYY-MM-DD).",
                 "label": "Issued to"
               },
               "pt-BR": {
-                "description": "Data de emissão da remessa final (inclusiva, AAAA-MM-DD).",
+                "description": "Data de emissão final (inclusiva, AAAA-MM-DD).",
                 "label": "Emitida até"
               }
             }

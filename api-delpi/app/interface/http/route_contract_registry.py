@@ -1050,6 +1050,26 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "refresh_lancamento_notas_fiscais_reconciliation": RouteContract(
         "invoice_posting_reconciliation_refresh", "scalar"
     ),
+    "search_invoice_issuance_parties": RouteContract("invoice_issuance_party", "paged_list"),
+    "search_invoice_issuance_products": RouteContract("invoice_issuance_product", "paged_list"),
+    "get_invoice_issuance_warehouse_01_balance": RouteContract(
+        "invoice_issuance_stock_balance", "scalar"
+    ),
+    "list_invoice_issuance_open_sales_orders": RouteContract(
+        "invoice_issuance_open_sales_order", "paged_list"
+    ),
+    "search_invoice_issuance_carriers": RouteContract(
+        "invoice_issuance_carrier", "paged_list"
+    ),
+    "create_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "list_invoice_issuance_requests": RouteContract("invoice_issuance_request", "paged_list"),
+    "get_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "update_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "resubmit_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "start_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "return_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "issue_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "cancel_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
     # Planejamento orçamentário
     "get_planejamento_orcamentario_context": RouteContract(
         "budget_planning_context", "scalar"

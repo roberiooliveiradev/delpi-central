@@ -1143,6 +1143,22 @@ services:
     networks:
       - delpi-network
 
+  invoice-issuance:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: invoice-issuance/Dockerfile
+
+    container_name: delpi-invoice-issuance
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     depends_on:
       - plugin-ui
@@ -1294,6 +1310,8 @@ services:
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1341,6 +1359,7 @@ services:
     volumes:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/invoice-issuance:/app/data/invoice-issuance
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/kaizen-evidences:/app/data/kaizen-evidences
@@ -1942,6 +1961,7 @@ services:
       - financeiro-centro-custo
       - financeiro-inadimplencia
       - lancamento-notas-fiscais
+      - invoice-issuance
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

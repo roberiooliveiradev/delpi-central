@@ -687,3 +687,51 @@ def INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY():
         pattern=_enum_pattern(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
         enum=list(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
     )
+
+
+INVOICE_ISSUANCE_PARTY_TYPE_VALUES = ("customer", "supplier")
+INVOICE_ISSUANCE_INVOICE_TYPE_VALUES = (
+    "sale",
+    "return",
+    "sample",
+    "repair_shipment",
+    "other",
+)
+INVOICE_ISSUANCE_FREIGHT_MODE_VALUES = ("cif", "fob")
+INVOICE_ISSUANCE_STATUS_VALUES = (
+    "open",
+    "pending",
+    "in_progress",
+    "issued",
+    "returned",
+    "cancelled",
+)
+
+
+def INVOICE_ISSUANCE_PARTY_TYPE_QUERY():
+    return Query(
+        ...,
+        description="Recipient kind: customer (SA1) or supplier (SA2).",
+        pattern=_enum_pattern(INVOICE_ISSUANCE_PARTY_TYPE_VALUES),
+        enum=list(INVOICE_ISSUANCE_PARTY_TYPE_VALUES),
+    )
+
+
+def INVOICE_ISSUANCE_STATUS_QUERY_OPTIONAL():
+    return Query(
+        None,
+        description=(
+            "Request status filter: open (pending/in_progress/returned) or a concrete status."
+        ),
+        pattern=_enum_pattern(INVOICE_ISSUANCE_STATUS_VALUES),
+        enum=list(INVOICE_ISSUANCE_STATUS_VALUES),
+    )
+
+
+def INVOICE_ISSUANCE_INVOICE_TYPE_QUERY_OPTIONAL():
+    return Query(
+        None,
+        description="Invoice type: sale, return, sample, repair_shipment or other.",
+        pattern=_enum_pattern(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES),
+        enum=list(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES),
+    )

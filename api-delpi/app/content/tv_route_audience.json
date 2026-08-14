@@ -8234,6 +8234,261 @@
           "label": "Exportar retornos"
         }
       }
+    },
+    "search_invoice_issuance_parties": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance parties",
+          "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID.",
+          "whenToUse": "Pick a registered recipient before requesting invoice issuance.",
+          "label": "Invoice issuance parties"
+        },
+        "pt-BR": {
+          "summary": "Buscar destinatários da emissão de NF",
+          "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+          "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+          "label": "Destinatários da emissão"
+        }
+      }
+    },
+    "search_invoice_issuance_products": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance products",
+          "description": "Look up SB1 items to add to an invoice issuance request.",
+          "whenToUse": "Select products for the issuance wizard.",
+          "label": "Invoice issuance products"
+        },
+        "pt-BR": {
+          "summary": "Buscar itens da emissão de NF",
+          "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+          "whenToUse": "Selecionar produtos no wizard de emissão.",
+          "label": "Itens da emissão"
+        }
+      }
+    },
+    "list_invoice_issuance_open_sales_orders": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "List open sales orders for issuance",
+          "description": "Open TOTVS sales-order lines for the selected customer in the wizard branch. No commercial membership.",
+          "whenToUse": "Pick open sales-order lines to bill in the issuance wizard.",
+          "label": "Open sales orders for issuance"
+        },
+        "pt-BR": {
+          "summary": "Listar pedidos de venda em aberto para emissão",
+          "description": "Linhas de PV em aberto do cliente na filial do wizard. Sem membership comercial.",
+          "whenToUse": "Marcar linhas de pedido de venda para faturar no wizard de emissão.",
+          "label": "Pedidos em aberto para emissão"
+        }
+      }
+    },
+    "search_invoice_issuance_carriers": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance carriers",
+          "description": "Look up TOTVS carriers (SA4) by code, short name, legal name or tax ID. Display name is A4_NREDUZ.",
+          "whenToUse": "Pick a registered carrier in the issuance wizard.",
+          "label": "Invoice issuance carriers"
+        },
+        "pt-BR": {
+          "summary": "Buscar transportadoras da emissão de NF",
+          "description": "Consulta transportadoras (SA4) por código, nome reduzido, razão social ou CNPJ. O nome de uso é A4_NREDUZ.",
+          "whenToUse": "Escolher a transportadora cadastrada no wizard de emissão.",
+          "label": "Transportadoras da emissão"
+        }
+      }
+    },
+    "get_invoice_issuance_warehouse_01_balance": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Warehouse 01 stock hint for issuance",
+          "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission.",
+          "whenToUse": "Show remaining quantity when the item writes off stock.",
+          "label": "Warehouse 01 balance"
+        },
+        "pt-BR": {
+          "summary": "Saldo informativo do almoxarifado 01",
+          "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+          "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+          "label": "Saldo almoxarifado 01"
+        }
+      }
+    },
+    "create_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Create invoice issuance request",
+          "description": "Create a guided invoice issuance request for the billing queue.",
+          "whenToUse": "Submit a new issuance request after the wizard checklist.",
+          "label": "Create issuance request"
+        },
+        "pt-BR": {
+          "summary": "Criar solicitação de emissão de NF",
+          "description": "Cria uma solicitação guiada de emissão para a fila do Faturamento.",
+          "whenToUse": "Enviar uma nova solicitação após o checklist do wizard.",
+          "label": "Criar solicitação de emissão"
+        }
+      }
+    },
+    "list_invoice_issuance_requests": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "List invoice issuance requests",
+          "description": "Paged billing queue of invoice issuance requests for a branch.",
+          "whenToUse": "Show the issuance queue filtered by status or type.",
+          "label": "Issuance queue"
+        },
+        "pt-BR": {
+          "summary": "Listar solicitações de emissão de NF",
+          "description": "Fila paginada de solicitações de emissão por filial.",
+          "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+          "label": "Fila de emissão"
+        }
+      }
+    },
+    "get_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Get invoice issuance request",
+          "description": "Request detail with items, attachments, checklist, timeline and allowed actions.",
+          "whenToUse": "Open one issuance request from the queue or a notification deep link.",
+          "label": "Issuance request detail"
+        },
+        "pt-BR": {
+          "summary": "Detalhe da solicitação de emissão de NF",
+          "description": "Detalhe com itens, anexos, checklist, histórico e ações permitidas.",
+          "whenToUse": "Abrir uma solicitação da fila ou pelo link da notificação.",
+          "label": "Detalhe da emissão"
+        }
+      }
+    },
+    "update_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Update returned issuance request",
+          "description": "Creator updates a returned invoice issuance request before resubmitting.",
+          "whenToUse": "Correct fields after billing sent the request back.",
+          "label": "Update issuance request"
+        },
+        "pt-BR": {
+          "summary": "Corrigir solicitação de emissão devolvida",
+          "description": "O criador atualiza uma solicitação devolvida antes de reenviar.",
+          "whenToUse": "Corrigir dados após devolução do Faturamento.",
+          "label": "Corrigir solicitação"
+        }
+      }
+    },
+    "resubmit_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Resubmit invoice issuance request",
+          "description": "Send a returned request back to the pending billing queue.",
+          "whenToUse": "Resubmit after the creator fixed the returned request.",
+          "label": "Resubmit issuance"
+        },
+        "pt-BR": {
+          "summary": "Reenviar solicitação de emissão de NF",
+          "description": "Devolve a solicitação corrigida para a fila pendente do Faturamento.",
+          "whenToUse": "Reenviar após o criador corrigir a devolução.",
+          "label": "Reenviar emissão"
+        }
+      }
+    },
+    "start_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Start invoice issuance attendance",
+          "description": "Move a pending request to in progress for billing.",
+          "whenToUse": "Begin working a request from the issuance queue.",
+          "label": "Start issuance"
+        },
+        "pt-BR": {
+          "summary": "Iniciar atendimento da emissão de NF",
+          "description": "Move a solicitação pendente para em andamento no Faturamento.",
+          "whenToUse": "Começar a atender um item da fila de emissão.",
+          "label": "Iniciar emissão"
+        }
+      }
+    },
+    "return_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Return invoice issuance request",
+          "description": "Send the request back to the creator with a required reason.",
+          "whenToUse": "Ask the requester to correct data before issuing.",
+          "label": "Return issuance"
+        },
+        "pt-BR": {
+          "summary": "Devolver solicitação de emissão de NF",
+          "description": "Devolve a solicitação ao criador com motivo obrigatório.",
+          "whenToUse": "Pedir correção ao solicitante antes de emitir.",
+          "label": "Devolver emissão"
+        }
+      }
+    },
+    "issue_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Mark invoice issuance as issued",
+          "description": "Mark the request as issued after billing completed the invoice.",
+          "whenToUse": "Close the request when the NF has been issued.",
+          "label": "Mark issued"
+        },
+        "pt-BR": {
+          "summary": "Marcar solicitação de emissão como emitida",
+          "description": "Marca a solicitação como emitida após o Faturamento concluir a NF.",
+          "whenToUse": "Encerrar a solicitação quando a nota foi emitida.",
+          "label": "Marcar emitida"
+        }
+      }
+    },
+    "cancel_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Cancel invoice issuance request",
+          "description": "Cancel a non-terminal invoice issuance request.",
+          "whenToUse": "Stop processing a request that should not be issued.",
+          "label": "Cancel issuance"
+        },
+        "pt-BR": {
+          "summary": "Cancelar solicitação de emissão de NF",
+          "description": "Cancela uma solicitação de emissão que ainda não é terminal.",
+          "whenToUse": "Interromper uma solicitação que não deve ser emitida.",
+          "label": "Cancelar emissão"
+        }
+      }
+    },
+    "add_invoice_issuance_attachment": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Attach purchase order PDF",
+          "description": "Upload an optional customer purchase-order PDF to an issuance request.",
+          "whenToUse": "Attach the PO file during create or attendance.",
+          "label": "Issuance attachment"
+        },
+        "pt-BR": {
+          "summary": "Anexar PDF do pedido de compra",
+          "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
+          "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
+          "label": "Anexo da emissão"
+        }
+      }
     }
   }
 }

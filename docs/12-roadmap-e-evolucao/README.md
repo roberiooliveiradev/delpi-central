@@ -113,6 +113,14 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [lancamento-notas-fiscais/ROADMAP.md](./lancamento-notas-fiscais/ROADMAP.md) | Etapas e status do MVP |
 | [lancamento-notas-fiscais/especificacao-funcional-tecnica.md](./lancamento-notas-fiscais/especificacao-funcional-tecnica.md) | Contrato de domínio |
 
+### Emissão de Notas Fiscais
+
+| Arquivo | Conteúdo |
+|---|---|
+| [invoice-issuance/README.md](./invoice-issuance/README.md) | Índice do módulo |
+| [invoice-issuance/PLAYBOOK.md](./invoice-issuance/PLAYBOOK.md) | Playbook — papéis, fluxo, deploy |
+| [invoice-issuance/ROADMAP.md](./invoice-issuance/ROADMAP.md) | Etapas e status do MVP |
+
 ### Inspeções de Entrada
 
 | Arquivo | Conteúdo |
