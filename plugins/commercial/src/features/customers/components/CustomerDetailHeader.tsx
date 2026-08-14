@@ -230,62 +230,62 @@ export function CustomerDetailHeader({
             ) : null}
           </div>
         }
-      >
-        {customer ? (
-          <div className="cm-customer-detail-header__body">
-            <div className="cm-customer-detail-header__avatar-block">
-              <button
-                type="button"
-                className="cm-customer-detail-header__avatar-button"
-                aria-label={CM_HELP.customerDetail.avatarChange}
-                disabled={avatarBusy}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <CustomerAvatar
-                  code={customer.codigo}
-                  store={customer.loja}
-                  name={customer.nome}
-                  hasAvatar={localHasAvatar}
-                  size="lg"
-                  refreshKey={avatarRefreshKey}
-                  previewable={false}
-                />
-                <span className="cm-customer-detail-header__avatar-overlay" aria-hidden>
-                  <Camera size={18} />
-                  <span>Trocar logo</span>
-                </span>
-              </button>
-              <input
-                ref={fileInputRef}
-                id={fileInputId}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="cm-customer-detail-header__file-input"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  void onUploadAvatar(file);
-                }}
+      />
+
+      {customer ? (
+        <div className="cm-customer-detail-header__body cm-page-filters">
+          <div className="cm-customer-detail-header__avatar-block">
+            <button
+              type="button"
+              className="cm-customer-detail-header__avatar-button"
+              aria-label={CM_HELP.customerDetail.avatarChange}
+              disabled={avatarBusy}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <CustomerAvatar
+                code={customer.codigo}
+                store={customer.loja}
+                name={customer.nome}
+                hasAvatar={localHasAvatar}
+                size="lg"
+                refreshKey={avatarRefreshKey}
+                previewable={false}
               />
-              {localHasAvatar ? (
-                <CommercialActionButton
-                  variant="ghost"
-                  disabled={avatarBusy}
-                  onClick={() => void onRemoveAvatar()}
-                  aria-label={CM_HELP.customerDetail.avatarRemove}
-                >
-                  <Trash2 size={16} aria-hidden="true" />
-                  Remover logo
-                </CommercialActionButton>
-              ) : null}
-            </div>
-            {hero?.nextAction ? (
-              <p className="cm-customer-detail-header__next-action">
-                Próxima ação: {hero.nextAction}
-              </p>
+              <span className="cm-customer-detail-header__avatar-overlay" aria-hidden>
+                <Camera size={18} />
+                <span>Trocar logo</span>
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              id={fileInputId}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="cm-customer-detail-header__file-input"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                void onUploadAvatar(file);
+              }}
+            />
+            {localHasAvatar ? (
+              <CommercialActionButton
+                variant="ghost"
+                disabled={avatarBusy}
+                onClick={() => void onRemoveAvatar()}
+                aria-label={CM_HELP.customerDetail.avatarRemove}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                Remover logo
+              </CommercialActionButton>
             ) : null}
           </div>
-        ) : null}
-      </CommercialPageHero>
+          {hero?.nextAction ? (
+            <p className="cm-customer-detail-header__next-action">
+              Próxima ação: {hero.nextAction}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

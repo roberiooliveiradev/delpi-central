@@ -483,7 +483,9 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
             <RefreshCw size={16} aria-hidden="true" /> Atualizar
           </CommercialActionButton>
         }
-      >
+      />
+
+      <div className="cm-page-filters" aria-label="Filtros de OTD">
         <AnalyticsFilters
           dateStart={filters.dateStart}
           dateEnd={filters.dateEnd}
@@ -503,7 +505,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           onCustomerSegment={filters.setCustomerSegment}
           onSellerIds={filters.setSellerIds}
         />
-      </CommercialPageHero>
+      </div>
 
       {loadingPanel && !panel ? (
         <CommercialLoadingCard title="Carregando OTD…" variant="panel" />
