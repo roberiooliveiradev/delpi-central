@@ -129,10 +129,17 @@ function readCreateTaskDeepLink(): {
   createTask: boolean;
   customerCode: string;
   customerStore: string;
+  assigneeUserId: string;
   bucket: BucketKey | null;
 } {
   if (typeof window === "undefined") {
-    return { createTask: false, customerCode: "", customerStore: "", bucket: null };
+    return {
+      createTask: false,
+      customerCode: "",
+      customerStore: "",
+      assigneeUserId: "",
+      bucket: null,
+    };
   }
   const params = new URLSearchParams(window.location.search);
   const rawBucket = (params.get("bucket") ?? "").trim().toLowerCase();
@@ -147,6 +154,7 @@ function readCreateTaskDeepLink(): {
     createTask: params.get("createTask") === "1",
     customerCode: (params.get("customer_code") ?? "").trim(),
     customerStore: (params.get("customer_store") ?? "").trim(),
+    assigneeUserId: (params.get("assignee_user_id") ?? "").trim(),
     bucket,
   };
 }
@@ -155,7 +163,13 @@ function clearCreateTaskQueryFromUrl(): void {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
   let changed = false;
-  for (const key of ["createTask", "customer_code", "customer_store", "bucket"]) {
+  for (const key of [
+    "createTask",
+    "customer_code",
+    "customer_store",
+    "assignee_user_id",
+    "bucket",
+  ]) {
     if (url.searchParams.has(key)) {
       url.searchParams.delete(key);
       changed = true;
@@ -451,21 +465,19 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   useEffect(() => {
     if (!canManageFollowups) return;
     const link = readCreateTaskDeepLink();
-    if (!link.createTask && !link.customerCode && !link.bucket) return;
+    if (
+      !link.createTask &&
+      !link.customerCode &&
+      !link.assigneeUserId &&
+      !link.bucket
+    ) {
+      return;
+    }
     if (link.bucket) {
       deepLinkBucketRef.current = link.bucket;
       setBucket(link.bucket);
     }
-    if (link.customerCode && link.customerStore) {
-      setCustomerSelection([
-        {
-          code: link.customerCode,
-          store: link.customerStore,
-          name: "",
-        },
-      ]);
-    }
-    if (link.createTask || link.customerCode) {
+    if (link.createTask || link.customerCode || link.assigneeUserId) {
       resetTaskFormFields();
       if (link.customerCode && link.customerStore) {
         setCustomerSelection([
@@ -476,12 +488,23 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           },
         ]);
       }
+      if (link.assigneeUserId) {
+        setAssigneeMode("users");
+        setAssigneePicker([
+          directoryOptionFromId(link.assigneeUserId, directoryLabelFor),
+        ]);
+      }
       setFormMode("create");
       scrollToTaskForm();
     }
     clearCreateTaskQueryFromUrl();
     return undefined;
-  }, [canManageFollowups, resetTaskFormFields, scrollToTaskForm]);
+  }, [
+    canManageFollowups,
+    directoryLabelFor,
+    resetTaskFormFields,
+    scrollToTaskForm,
+  ]);
 
   const reload = useCallback(
     async (signal?: AbortSignal, options?: { preferBucket?: BucketKey | null }) => {

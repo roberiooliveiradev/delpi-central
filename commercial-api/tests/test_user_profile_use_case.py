@@ -114,12 +114,23 @@ class InMemoryUserProfileRepo:
     def get(self, user_id: str) -> CommercialUserProfile | None:
         return self.items.get(user_id)
 
-    def upsert_job_title(self, *, user_id: str, job_title: str | None) -> CommercialUserProfile:
+    def upsert_profile_fields(
+        self,
+        *,
+        user_id: str,
+        job_title: str | None,
+        phone_e164: str | None,
+        mobile_e164: str | None,
+        whatsapp_e164: str | None,
+    ) -> CommercialUserProfile:
         now = datetime.now(timezone.utc)
         current = self.items.get(user_id)
         profile = CommercialUserProfile(
             user_id=user_id,
             job_title=job_title,
+            phone_e164=phone_e164,
+            mobile_e164=mobile_e164,
+            whatsapp_e164=whatsapp_e164,
             photo_storage_key=current.photo_storage_key if current else None,
             photo_file_name=current.photo_file_name if current else None,
             photo_content_type=current.photo_content_type if current else None,
@@ -144,6 +155,9 @@ class InMemoryUserProfileRepo:
         profile = CommercialUserProfile(
             user_id=user_id,
             job_title=current.job_title if current else None,
+            phone_e164=current.phone_e164 if current else None,
+            mobile_e164=current.mobile_e164 if current else None,
+            whatsapp_e164=current.whatsapp_e164 if current else None,
             photo_storage_key=storage_key,
             photo_file_name=file_name,
             photo_content_type=content_type,
@@ -162,6 +176,9 @@ class InMemoryUserProfileRepo:
         profile = CommercialUserProfile(
             user_id=user_id,
             job_title=current.job_title,
+            phone_e164=current.phone_e164,
+            mobile_e164=current.mobile_e164,
+            whatsapp_e164=current.whatsapp_e164,
             photo_storage_key=None,
             photo_file_name=None,
             photo_content_type=None,
@@ -216,6 +233,26 @@ def test_user_profile_self_edit_and_photo(tmp_path: Path) -> None:
     assert payload["portfolios"][0]["role"] == "owner"
     assert payload["portfolios"][0]["customer_count"] == 1
     assert payload["portfolios"][0]["member_count"] == 1
+
+    contacts = uc.update_profile(
+        actor_user_id="u1",
+        user_id="u1",
+        job_title="Consultor",
+        phone_e164="+551133334444",
+        mobile_e164="+5511999887766",
+        whatsapp_e164="+5511999887766",
+    )
+    assert contacts["phone_e164"] == "+551133334444"
+    assert contacts["mobile_e164"] == "+5511999887766"
+    assert contacts["whatsapp_e164"] == "+5511999887766"
+
+    with pytest.raises(ValueError):
+        uc.update_profile(
+            actor_user_id="u1",
+            user_id="u1",
+            job_title="Consultor",
+            phone_e164="119999",
+        )
 
     with pytest.raises(PermissionError):
         uc.update_job_title(

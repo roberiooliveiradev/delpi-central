@@ -31,11 +31,21 @@ export type UserProfileDto = {
   name: string;
   email: string;
   job_title?: string | null;
+  phone_e164?: string | null;
+  mobile_e164?: string | null;
+  whatsapp_e164?: string | null;
   has_photo?: boolean;
   photo_url?: string | null;
   portfolios: UserProfilePortfolioDto[];
   groups?: UserProfileGroupDto[];
   updated_at?: string | null;
+};
+
+export type PatchUserProfileBody = {
+  job_title?: string | null;
+  phone_e164?: string | null;
+  mobile_e164?: string | null;
+  whatsapp_e164?: string | null;
 };
 
 export async function getUserProfile(
@@ -51,7 +61,7 @@ export async function getUserProfile(
 
 export async function patchUserProfile(
   userId: string,
-  body: { job_title?: string | null },
+  body: PatchUserProfileBody,
   signal?: AbortSignal,
 ): Promise<UserProfileDto> {
   const response = await httpPatch<ApiSuccessResponse<UserProfileDto>>(

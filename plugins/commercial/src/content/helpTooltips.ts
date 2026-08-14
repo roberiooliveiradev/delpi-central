@@ -42,13 +42,20 @@ export const CM_HELP = {
   },
   users: {
     profile:
-      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório, cargo e foto editáveis (você ou gestor de carteiras).",
+      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório; foto, cargo e contatos editáveis no próprio perfil.",
     jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
+    phoneE164:
+      "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",
+    mobileE164:
+      "Celular no formato E.164 (+ e DDI), ex.: +5511999999999. Alternativa ao telefone no atalho Ligar.",
+    whatsappE164:
+      "Número do WhatsApp no formato E.164 (+ e DDI). Libera o atalho WhatsApp neste perfil.",
     portfolios: "Carteiras do usuário com papel, quantidade de clientes e membros.",
     access:
       "Permissões commercial.* e capacidades efetivas desta sessão (somente no próprio perfil).",
-    shortcuts: "Atalhos para as áreas do Portal Comercial liberadas para você.",
-    editMode: "Ativa o modo edição para alterar cargo e foto do perfil.",
+    shortcuts:
+      "Atalhos do Portal e de contato (e-mail, ligar, WhatsApp). Gestores veem Mandar tarefa em perfis de outros usuários.",
+    editMode: "Ativa o modo edição para alterar cargo, foto e contatos do perfil.",
   },
   myDay: {
     worklist:

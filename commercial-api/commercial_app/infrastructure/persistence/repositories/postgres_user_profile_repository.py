@@ -9,8 +9,9 @@ from commercial_app.infrastructure.persistence.plugins.plugin_base_repository im
 )
 
 _COLUMNS = """
-    user_id, job_title, photo_storage_key, photo_file_name,
-    photo_content_type, photo_byte_size, created_at, updated_at
+    user_id, job_title, phone_e164, mobile_e164, whatsapp_e164,
+    photo_storage_key, photo_file_name, photo_content_type, photo_byte_size,
+    created_at, updated_at
 """
 
 
@@ -20,6 +21,9 @@ def _row(row: dict[str, Any] | None) -> CommercialUserProfile | None:
     return CommercialUserProfile(
         user_id=str(row["user_id"]),
         job_title=row.get("job_title"),
+        phone_e164=row.get("phone_e164"),
+        mobile_e164=row.get("mobile_e164"),
+        whatsapp_e164=row.get("whatsapp_e164"),
         photo_storage_key=row.get("photo_storage_key"),
         photo_file_name=row.get("photo_file_name"),
         photo_content_type=row.get("photo_content_type"),
@@ -41,22 +45,41 @@ class PostgresUserProfileRepository(PluginBaseRepository, UserProfileRepositoryP
         )
         return _row(row)
 
-    def upsert_job_title(self, *, user_id: str, job_title: str | None) -> CommercialUserProfile:
+    def upsert_profile_fields(
+        self,
+        *,
+        user_id: str,
+        job_title: str | None,
+        phone_e164: str | None,
+        mobile_e164: str | None,
+        whatsapp_e164: str | None,
+    ) -> CommercialUserProfile:
         title = (job_title or "").strip() or None
         row = self.execute_returning_one(
             f"""
-            INSERT INTO commercial.commercial_user_profiles (user_id, job_title)
-            VALUES (%s, %s)
+            INSERT INTO commercial.commercial_user_profiles (
+                user_id, job_title, phone_e164, mobile_e164, whatsapp_e164
+            )
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (user_id) DO UPDATE
                SET job_title = EXCLUDED.job_title,
+                   phone_e164 = EXCLUDED.phone_e164,
+                   mobile_e164 = EXCLUDED.mobile_e164,
+                   whatsapp_e164 = EXCLUDED.whatsapp_e164,
                    updated_at = NOW()
          RETURNING {_COLUMNS}
             """,
-            (user_id.strip(), title),
+            (
+                user_id.strip(),
+                title,
+                phone_e164,
+                mobile_e164,
+                whatsapp_e164,
+            ),
         )
         profile = _row(row)
         if profile is None:
-            raise RuntimeError("Falha ao salvar cargo do usuário.")
+            raise RuntimeError("Falha ao salvar perfil do usuário.")
         return profile
 
     def upsert_photo(

@@ -21,6 +21,9 @@ router = APIRouter(prefix="/users", tags=["Users / profile"])
 
 class PatchUserProfileBody(BaseModel):
     job_title: str | None = Field(default=None, max_length=200)
+    phone_e164: str | None = Field(default=None, max_length=17)
+    mobile_e164: str | None = Field(default=None, max_length=17)
+    whatsapp_e164: str | None = Field(default=None, max_length=17)
 
 
 def _user_id(request: Request) -> str | None:
@@ -51,10 +54,13 @@ def patch_user_profile(
         actor = _user_id(request)
         if not actor:
             return fail("Usuário não identificado.", 401, operation_id="patch_user_profile")
-        data = build_manage_user_profile_use_case().update_job_title(
+        data = build_manage_user_profile_use_case().update_profile(
             actor_user_id=actor,
             user_id=user_id,
             job_title=body.job_title,
+            phone_e164=body.phone_e164,
+            mobile_e164=body.mobile_e164,
+            whatsapp_e164=body.whatsapp_e164,
         )
         return ok(data, message="Perfil atualizado.", operation_id="patch_user_profile")
     except PermissionError as exc:

@@ -6,7 +6,9 @@ import {
   Home,
   LayoutDashboard,
   Mail,
+  MessageCircle,
   Pencil,
+  Phone,
   Shield,
   Trash2,
   UsersRound,
@@ -25,6 +27,7 @@ import {
   type UserProfileDto,
   type UserProfilePortfolioDto,
 } from "../../api/userProfileApi";
+import { buildWhatsAppUrl } from "../../content/whatsapp";
 import {
   cmEmptyStateClassNames,
   CommercialActionButton,
@@ -98,6 +101,9 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfileDto | null>(null);
   const [jobTitle, setJobTitle] = useState("");
+  const [phoneE164, setPhoneE164] = useState("");
+  const [mobileE164, setMobileE164] = useState("");
+  const [whatsappE164, setWhatsappE164] = useState("");
   const [photoObjectUrl, setPhotoObjectUrl] = useState<string | null>(null);
   const [mePermissions, setMePermissions] = useState<string[]>([]);
   const [meIsSuperadmin, setMeIsSuperadmin] = useState(false);
@@ -118,6 +124,9 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         if (signal?.aborted) return;
         setProfile(data);
         setJobTitle((data.job_title || "").trim());
+        setPhoneE164((data.phone_e164 || "").trim());
+        setMobileE164((data.mobile_e164 || "").trim());
+        setWhatsappE164((data.whatsapp_e164 || "").trim());
       } catch (err: unknown) {
         if (signal?.aborted) return;
         setProfile(null);
@@ -222,6 +231,18 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     [profile?.portfolios],
   );
 
+  const canAssignTaskToProfile =
+    Boolean(canManageFollowups) &&
+    Boolean(canViewWorklistTeam || isAdmin) &&
+    !isSelf;
+
+  const syncContactDraftFromProfile = (data: UserProfileDto | null | undefined) => {
+    setJobTitle((data?.job_title || "").trim());
+    setPhoneE164((data?.phone_e164 || "").trim());
+    setMobileE164((data?.mobile_e164 || "").trim());
+    setWhatsappE164((data?.whatsapp_e164 || "").trim());
+  };
+
   const shortcuts = useMemo(() => {
     const items: ShortcutItem[] = [
       {
@@ -263,25 +284,81 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         onSelect: () => navigatePluginView("administration", { basePath }),
       });
     }
+
+    const email = (profile?.email || "").trim();
+    if (email) {
+      items.push({
+        id: "mailto",
+        label: USER_ACCESS_COPY.shortcutEmail,
+        icon: <Mail size={18} aria-hidden />,
+        onSelect: () => {
+          window.location.href = `mailto:${email}`;
+        },
+      });
+    }
+    const phone = (profile?.phone_e164 || profile?.mobile_e164 || "").trim();
+    if (phone) {
+      items.push({
+        id: "tel",
+        label: USER_ACCESS_COPY.shortcutCall,
+        icon: <Phone size={18} aria-hidden />,
+        onSelect: () => {
+          window.location.href = `tel:${phone.replace(/\s+/g, "")}`;
+        },
+      });
+    }
+    const whatsapp = (profile?.whatsapp_e164 || "").trim();
+    if (whatsapp) {
+      items.push({
+        id: "whatsapp",
+        label: USER_ACCESS_COPY.shortcutWhatsapp,
+        icon: <MessageCircle size={18} aria-hidden />,
+        onSelect: () => {
+          window.open(
+            buildWhatsAppUrl(whatsapp, ""),
+            "_blank",
+            "noopener,noreferrer",
+          );
+        },
+      });
+    }
+    if (canAssignTaskToProfile) {
+      items.push({
+        id: "assign-task",
+        label: USER_ACCESS_COPY.shortcutAssignTask,
+        icon: <CalendarCheck size={18} aria-hidden />,
+        onSelect: () =>
+          navigatePluginView("my_tasks", {
+            basePath,
+            search: `?createTask=1&assignee_user_id=${encodeURIComponent(userId)}`,
+          }),
+      });
+    }
     return items;
   }, [
     basePath,
     canAccessMyPortfolio,
+    canAssignTaskToProfile,
     canManagePortfolios,
     canViewAnalytics,
     canViewWorklist,
     isAdmin,
+    profile?.email,
+    profile?.mobile_e164,
+    profile?.phone_e164,
+    profile?.whatsapp_e164,
+    userId,
   ]);
 
   const startEditing = () => {
     if (!canEdit || !profile) return;
-    setJobTitle((profile.job_title || "").trim());
+    syncContactDraftFromProfile(profile);
     setEditing(true);
   };
 
   const cancelEditing = () => {
     if (saving) return;
-    setJobTitle((profile?.job_title || "").trim());
+    syncContactDraftFromProfile(profile);
     setEditing(false);
   };
 
@@ -289,9 +366,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     if (!canEdit || !editing) return;
     setSaving(true);
     try {
-      const data = await patchUserProfile(userId, { job_title: jobTitle.trim() || null });
+      const data = await patchUserProfile(userId, {
+        job_title: jobTitle.trim() || null,
+        phone_e164: phoneE164.trim() || null,
+        mobile_e164: mobileE164.trim() || null,
+        whatsapp_e164: whatsappE164.trim() || null,
+      });
       setProfile(data);
-      setJobTitle((data.job_title || "").trim());
+      syncContactDraftFromProfile(data);
       setEditing(false);
       notifySuccess("Perfil atualizado.");
     } catch (err: unknown) {
@@ -505,24 +587,71 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
             <div className="cm-user-profile__identity-fields">
               <div className="cm-user-profile__meta-row">
                 <Mail size={16} aria-hidden />
-                <span>{profile.email || "Sem e-mail"}</span>
+                <span>{profile.email || USER_ACCESS_COPY.emailEmpty}</span>
               </div>
 
               {editing && canEdit ? (
                 <div className="cm-user-profile__job-form">
                   <CommercialTextField
-                    label="Cargo"
+                    label={USER_ACCESS_COPY.jobTitleLabel}
                     value={jobTitle}
                     onChange={setJobTitle}
                     hint={CM_HELP.users.jobTitle}
                     fullWidth
                   />
+                  <CommercialTextField
+                    label={USER_ACCESS_COPY.phoneLabel}
+                    value={phoneE164}
+                    onChange={setPhoneE164}
+                    hint={CM_HELP.users.phoneE164}
+                    placeholder={USER_ACCESS_COPY.phonePlaceholder}
+                    fullWidth
+                  />
+                  <CommercialTextField
+                    label={USER_ACCESS_COPY.mobileLabel}
+                    value={mobileE164}
+                    onChange={setMobileE164}
+                    hint={CM_HELP.users.mobileE164}
+                    placeholder={USER_ACCESS_COPY.phonePlaceholder}
+                    fullWidth
+                  />
+                  <CommercialTextField
+                    label={USER_ACCESS_COPY.whatsappLabel}
+                    value={whatsappE164}
+                    onChange={setWhatsappE164}
+                    hint={CM_HELP.users.whatsappE164}
+                    placeholder={USER_ACCESS_COPY.phonePlaceholder}
+                    fullWidth
+                  />
                 </div>
               ) : (
-                <p className="cm-user-profile__job-readonly">
-                  <strong>Cargo:</strong>{" "}
-                  {(profile.job_title || "").trim() || USER_ACCESS_COPY.jobTitleEmpty}
-                </p>
+                <>
+                  <p className="cm-user-profile__job-readonly">
+                    <strong>{USER_ACCESS_COPY.jobTitleLabel}:</strong>{" "}
+                    {(profile.job_title || "").trim() || USER_ACCESS_COPY.jobTitleEmpty}
+                  </p>
+                  <div className="cm-user-profile__meta-row">
+                    <Phone size={16} aria-hidden />
+                    <span>
+                      <strong>{USER_ACCESS_COPY.phoneLabel}:</strong>{" "}
+                      {(profile.phone_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
+                    </span>
+                  </div>
+                  <div className="cm-user-profile__meta-row">
+                    <Phone size={16} aria-hidden />
+                    <span>
+                      <strong>{USER_ACCESS_COPY.mobileLabel}:</strong>{" "}
+                      {(profile.mobile_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
+                    </span>
+                  </div>
+                  <div className="cm-user-profile__meta-row">
+                    <MessageCircle size={16} aria-hidden />
+                    <span>
+                      <strong>{USER_ACCESS_COPY.whatsappLabel}:</strong>{" "}
+                      {(profile.whatsapp_e164 || "").trim() || USER_ACCESS_COPY.phoneEmpty}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>

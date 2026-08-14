@@ -119,6 +119,9 @@ class ManageUserProfileUseCase:
             "name": directory.name,
             "email": directory.email,
             "job_title": profile.job_title if profile else None,
+            "phone_e164": profile.phone_e164 if profile else None,
+            "mobile_e164": profile.mobile_e164 if profile else None,
+            "whatsapp_e164": profile.whatsapp_e164 if profile else None,
             "has_photo": bool(profile and profile.photo_storage_key),
             "photo_url": (
                 f"/users/{target}/profile/photo"
@@ -133,6 +136,42 @@ class ManageUserProfileUseCase:
         }
         return payload
 
+    @staticmethod
+    def _validate_phone(phone_e164: str | None) -> str | None:
+        phone = (phone_e164 or "").strip() or None
+        if phone is None:
+            return None
+        digits = phone[1:] if phone.startswith("+") else ""
+        if not digits.isdigit() or not 8 <= len(digits) <= 16:
+            raise ValueError(
+                "Telefone deve estar no formato E.164: + seguido de 8 a 16 dígitos."
+            )
+        return phone
+
+    def update_profile(
+        self,
+        *,
+        actor_user_id: str,
+        user_id: str,
+        job_title: str | None,
+        phone_e164: str | None = None,
+        mobile_e164: str | None = None,
+        whatsapp_e164: str | None = None,
+    ) -> dict[str, Any]:
+        target = (user_id or "").strip()
+        self._assert_can_edit(
+            actor_user_id=actor_user_id,
+            target_user_id=target,
+        )
+        self._repo.upsert_profile_fields(
+            user_id=target,
+            job_title=job_title,
+            phone_e164=self._validate_phone(phone_e164),
+            mobile_e164=self._validate_phone(mobile_e164),
+            whatsapp_e164=self._validate_phone(whatsapp_e164),
+        )
+        return self.get_profile(user_id=target)
+
     def update_job_title(
         self,
         *,
@@ -140,13 +179,17 @@ class ManageUserProfileUseCase:
         user_id: str,
         job_title: str | None,
     ) -> dict[str, Any]:
+        """Compat: atualiza só o cargo preservando contatos existentes."""
         target = (user_id or "").strip()
-        self._assert_can_edit(
+        current = self._repo.get(target)
+        return self.update_profile(
             actor_user_id=actor_user_id,
-            target_user_id=target,
+            user_id=target,
+            job_title=job_title,
+            phone_e164=current.phone_e164 if current else None,
+            mobile_e164=current.mobile_e164 if current else None,
+            whatsapp_e164=current.whatsapp_e164 if current else None,
         )
-        self._repo.upsert_job_title(user_id=target, job_title=job_title)
-        return self.get_profile(user_id=target)
 
     def upload_photo(
         self,

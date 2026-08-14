@@ -35,4 +35,26 @@ describe("user profile self-only + expand photo", () => {
     assert.match(page, /heroDescription = \(profile\.job_title/);
     assert.doesNotMatch(page, /heroDescription = \[profile\.email/);
   });
+
+  it("identidade edita contatos E.164 e atalhos de contato/tarefa", () => {
+    const page = readFileSync(
+      join(src, "features/users/UserProfilePage.tsx"),
+      "utf8",
+    );
+    const copy = readFileSync(join(src, "content/userAccess.json"), "utf8");
+    const day = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
+    assert.match(page, /phone_e164:/);
+    assert.match(page, /mobile_e164:/);
+    assert.match(page, /whatsapp_e164:/);
+    assert.match(page, /USER_ACCESS_COPY\.shortcutEmail/);
+    assert.match(page, /USER_ACCESS_COPY\.shortcutCall/);
+    assert.match(page, /USER_ACCESS_COPY\.shortcutWhatsapp/);
+    assert.match(page, /USER_ACCESS_COPY\.shortcutAssignTask/);
+    assert.match(page, /assignee_user_id=/);
+    assert.match(page, /canAssignTaskToProfile/);
+    assert.match(copy, /"shortcutAssignTask"/);
+    assert.match(copy, /"phonePlaceholder"/);
+    assert.match(day, /assignee_user_id/);
+    assert.match(day, /link\.assigneeUserId/);
+  });
 });

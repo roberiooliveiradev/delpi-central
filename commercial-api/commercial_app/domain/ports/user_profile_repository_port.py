@@ -11,7 +11,15 @@ class UserProfileRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def upsert_job_title(self, *, user_id: str, job_title: str | None) -> CommercialUserProfile:
+    def upsert_profile_fields(
+        self,
+        *,
+        user_id: str,
+        job_title: str | None,
+        phone_e164: str | None,
+        mobile_e164: str | None,
+        whatsapp_e164: str | None,
+    ) -> CommercialUserProfile:
         raise NotImplementedError
 
     @abstractmethod
