@@ -295,3 +295,31 @@ def build_manage_team_roster_use_case() -> ManageTeamRosterUseCase:
             directory=CoreApiPortalAccessPort(),
         )
     return _team_roster_use_case
+
+
+def build_integration_checkpoint_repository():
+    from commercial_app.infrastructure.persistence.repositories.postgres_integration_outbox_repository import (
+        PostgresIntegrationCheckpointRepository,
+    )
+
+    return PostgresIntegrationCheckpointRepository()
+
+
+def build_integration_outbox_repository():
+    from commercial_app.infrastructure.persistence.repositories.postgres_integration_outbox_repository import (
+        PostgresIntegrationOutboxRepository,
+    )
+
+    return PostgresIntegrationOutboxRepository()
+
+
+def build_detect_ready_to_invoice_entries_use_case():
+    from commercial_app.application.use_cases.detect_ready_to_invoice_entries import (
+        DetectReadyToInvoiceEntriesUseCase,
+    )
+
+    return DetectReadyToInvoiceEntriesUseCase(
+        gateway=build_delpi_commercial_gateway(),
+        portfolios=build_seller_portfolio_repository(),
+        checkpoints=build_integration_checkpoint_repository(),
+    )

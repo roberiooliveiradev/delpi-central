@@ -1,0 +1,14 @@
+{
+  "checkpointSourceKey": "commercial.open_orders.ready_to_invoice",
+  "boardDeepLinkPath": "/apps/commercial/open-orders?view=board&stage=ready_to_invoice",
+  "eventType": "commercial.order.ready_to_invoice",
+  "aggregateType": "open_order_line",
+  "billingUserIds": [],
+  "billingPermissionCodes": [],
+  "notification": {
+    "title": "Pedido pronto para faturar",
+    "messageTemplate": "A linha {pedido}/{linha} do cliente {cliente} entrou em Pronto para faturar.",
+    "actionLabel": "Abrir board",
+    "type": "info"
+  }
+}
