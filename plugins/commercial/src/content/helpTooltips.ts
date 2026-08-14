@@ -253,6 +253,10 @@ export const CM_HELP = {
     kpiOpenValue: "Soma do valor em aberto de todos os clientes listados (após filtros).",
     kpiOpenOrders: "Quantidade de pedidos distintos em aberto na carteira filtrada.",
     kpiLateCustomers: "Clientes com ao menos uma linha de pedido vencida.",
+    glossaryOpenVsBilled:
+      "Glossário: «Em aberto / carteira aberta» = pedidos com saldo (backlog). «Faturamento» = notas fiscais / ROL no período. O share empresa e a tendência usam só faturamento — nunca o valor em aberto.",
+    portfolioBillingShare:
+      "Share = ROL (ou faturamento agregado) da carteira/escopo ÷ ROL da empresa no mesmo período. Exige permissão de analytics, equipe ou gestão de carteiras.",
     billingSeries:
       "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a curva dele. Presets iguais à Visão geral; opcionalmente compare com o ano anterior.",
     billingSeriesPeriod:
@@ -580,6 +584,10 @@ export const CM_HELP = {
       "Gap vs meta ROL SI do período filtrado. A carteira «este mês» aparece só como contexto — nunca some gap + carteira.",
     openPortfolioHorizon:
       "Buckets por data de entrega dos pedidos em aberto (snapshot). Clique concentra Meus pedidos; ≠ PCP e ≠ forecast F6.",
+    glossaryOpenVsBilled:
+      "Glossário: «Carteira aberta» = backlog de pedidos ainda não faturados (snapshot). «Faturamento / ROL» = notas/receita líquida no período filtrado. Não somar nem comparar % entre as duas bases.",
+    portfolioBillingShare:
+      "Percentual do ROL do escopo atual sobre o ROL consolidado da empresa no mesmo período (carteira ÷ empresa). Visível só com analytics, visão de equipe ou gestão de carteiras — não mistura com valor em aberto.",
   },
   administration: {
     panel:

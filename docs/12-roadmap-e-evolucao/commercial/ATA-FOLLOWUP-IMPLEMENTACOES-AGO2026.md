@@ -92,8 +92,9 @@ Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-
 
 ### 2.3 Fora / cuidado
 
-- Não misturar **carteira aberta (backlog)** com **ROL faturado** no mesmo card sem rótulo (já documentado em KPI-FICHAS).
-- Totais «empresa» = escopo RBAC (gestor com `analytics` / team); vendedor só vê o próprio share se política permitir.
+- Não misturar **carteira aberta (backlog)** com **ROL faturado** no mesmo card sem rótulo (já documentado em KPI-FICHAS · `KPI-PORTFOLIO-SHARE`).
+- Totais «empresa» = escopo RBAC (gestor com `analytics` / team); vendedor operacional **não** vê % empresa (só faturamento do escopo).
+- **Glossário UI (CM_HELP):** `overview.glossaryOpenVsBilled` / `customers.glossaryOpenVsBilled` — aberto = backlog snapshot; faturado = ROL/NF no período; share e tendência usam só faturado.
 
 ---
 
