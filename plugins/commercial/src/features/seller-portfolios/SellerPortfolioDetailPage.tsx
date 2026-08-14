@@ -94,6 +94,7 @@ export function SellerPortfolioDetailPage({
   const [savingName, setSavingName] = useState(false);
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
   const [linkingCustomers, setLinkingCustomers] = useState(false);
+  const [unlinkingCustomers, setUnlinkingCustomers] = useState(false);
   const [busyMemberUserId, setBusyMemberUserId] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
@@ -337,6 +338,43 @@ export function SellerPortfolioDetailPage({
     }
   }
 
+  async function handleRemoveCustomers(items: Array<{ code: string; store: string }>) {
+    if (!portfolio || items.length === 0) return;
+    setUnlinkingCustomers(true);
+    let ok = 0;
+    let failed = 0;
+    try {
+      for (const item of items) {
+        try {
+          const updated = await removeSellerCustomer(
+            portfolio.id,
+            item.code,
+            item.store,
+          );
+          setPortfolio(updated);
+          ok += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      if (ok > 0 && failed === 0) {
+        notifySuccess(
+          ok === 1
+            ? "Cliente removido da carteira."
+            : `${ok} clientes removidos da carteira.`,
+        );
+      } else if (ok > 0 && failed > 0) {
+        notifyWarning(`${ok} removido(s); ${failed} falhou/falharam.`, {
+          title: "Desvínculo parcial",
+        });
+      } else if (failed > 0) {
+        notifyError("Não foi possível desvincular os clientes selecionados.");
+      }
+    } finally {
+      setUnlinkingCustomers(false);
+    }
+  }
+
   async function handleAddMember(userId: string) {
     if (!portfolio) return;
     setBusyMemberUserId(userId);
@@ -572,6 +610,7 @@ export function SellerPortfolioDetailPage({
             savingName={savingName}
             busyCustomerKey={busyCustomerKey}
             linkingCustomers={linkingCustomers}
+            unlinkingCustomers={unlinkingCustomers}
             busyMemberUserId={busyMemberUserId}
             overlappingCustomerKeys={overlappingCustomerKeys}
             otherPortfolioLabelsFor={otherPortfolioLabelsFor}
@@ -579,6 +618,7 @@ export function SellerPortfolioDetailPage({
             onSaveName={(name) => void handleSaveName(name)}
             onAddCustomers={(items) => void handleAddCustomers(items)}
             onRemoveCustomer={(code, store) => void handleRemoveCustomer(code, store)}
+            onRemoveCustomers={(items) => void handleRemoveCustomers(items)}
             onAddMember={(userId) => void handleAddMember(userId)}
             onRemoveMember={(userId) => void handleRemoveMember(userId)}
             onSetOwner={(userId) => void handleSetOwner(userId)}

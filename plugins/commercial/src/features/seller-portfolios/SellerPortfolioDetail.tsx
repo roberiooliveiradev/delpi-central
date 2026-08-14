@@ -1,10 +1,15 @@
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { UserDirectoryPicker, type DirectoryUserOption } from "@delpi/plugin-ui/index";
+import {
+  NativeCheckboxControl,
+  UserDirectoryPicker,
+  type DirectoryUserOption,
+} from "@delpi/plugin-ui/index";
 
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
+  CommercialDataListToolbar,
   CommercialDataTable,
   CommercialEmptyState,
   CommercialSectionCard,
@@ -46,6 +51,8 @@ type SellerPortfolioDetailProps = {
   onSaveName: (displayName: string) => void;
   onAddCustomers: (items: CustomerSearchSelection[]) => void;
   onRemoveCustomer: (code: string, store: string) => void;
+  onRemoveCustomers: (items: Array<{ code: string; store: string }>) => void;
+  unlinkingCustomers?: boolean;
   onAddMember: (userId: string) => void;
   onRemoveMember: (userId: string) => void;
   onSetOwner: (userId: string) => void;
@@ -68,6 +75,7 @@ export function SellerPortfolioDetail({
   savingName,
   busyCustomerKey,
   linkingCustomers = false,
+  unlinkingCustomers = false,
   busyMemberUserId,
   overlappingCustomerKeys,
   otherPortfolioLabelsFor,
@@ -75,6 +83,7 @@ export function SellerPortfolioDetail({
   onSaveName,
   onAddCustomers,
   onRemoveCustomer,
+  onRemoveCustomers,
   onAddMember,
   onRemoveMember,
   onSetOwner,
@@ -86,11 +95,15 @@ export function SellerPortfolioDetail({
   const [editName, setEditName] = useState(portfolio.display_name);
   const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
   const [customerPicker, setCustomerPicker] = useState<CustomerSearchSelection[]>([]);
+  const [selectedLinkedKeys, setSelectedLinkedKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   useEffect(() => {
     setEditName(portfolio.display_name);
     setMemberPicker([]);
     setCustomerPicker([]);
+    setSelectedLinkedKeys(new Set());
   }, [portfolio.id, portfolio.display_name]);
 
   const linked = portfolio.customers ?? [];
@@ -118,6 +131,14 @@ export function SellerPortfolioDetail({
       prev.filter((item) => !linkedKeys.has(customerKey(item.code, item.store))),
     );
   }, [linkedKeys]);
+
+  useEffect(() => {
+    setSelectedLinkedKeys((prev) => {
+      const next = new Set([...prev].filter((key) => linkedKeys.has(key)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [linkedKeys]);
+
   const members = resolveMembers(portfolio);
   const isOrphan = members.length === 0;
   const memberIds = useMemo(
@@ -125,8 +146,37 @@ export function SellerPortfolioDetail({
     [members],
   );
 
+  const allLinkedSelected =
+    linked.length > 0 &&
+    linked.every((row) =>
+      selectedLinkedKeys.has(customerKey(row.customer_code, row.customer_store)),
+    );
+
   const linkedColumns = useMemo<DataTableColumn<SellerCustomer>[]>(
     () => [
+      {
+        key: "select",
+        header: "Sel.",
+        render: (row) => {
+          const key = customerKey(row.customer_code, row.customer_store);
+          return (
+            <NativeCheckboxControl
+              id={`portfolio-linked-${portfolio.id}-${key}`}
+              checked={selectedLinkedKeys.has(key)}
+              onChange={(checked) => {
+                setSelectedLinkedKeys((prev) => {
+                  const next = new Set(prev);
+                  if (checked) next.add(key);
+                  else next.delete(key);
+                  return next;
+                });
+              }}
+              aria-label={`Selecionar ${row.customer_name ?? key}`}
+              disabled={unlinkingCustomers}
+            />
+          );
+        },
+      },
       {
         key: "code",
         header: "Código/loja",
@@ -188,7 +238,9 @@ export function SellerPortfolioDetail({
           return (
             <CommercialActionButton
               variant="ghost"
-              disabled={busyCustomerKey === key || linkingCustomers}
+              disabled={
+                busyCustomerKey === key || linkingCustomers || unlinkingCustomers
+              }
               onClick={() => onRemoveCustomer(row.customer_code, row.customer_store)}
               aria-label={`Remover ${row.customer_name ?? row.customer_code}`}
             >
@@ -205,6 +257,9 @@ export function SellerPortfolioDetail({
       onRemoveCustomer,
       otherPortfolioLabelsFor,
       overlappingCustomerKeys,
+      portfolio.id,
+      selectedLinkedKeys,
+      unlinkingCustomers,
     ],
   );
 
@@ -449,6 +504,61 @@ export function SellerPortfolioDetail({
             <h3 className="cm-section-subtitle">
               Na carteira ({linked.length.toLocaleString("pt-BR")})
             </h3>
+            {linked.length > 0 ? (
+              <CommercialDataListToolbar
+                leading={
+                  <NativeCheckboxControl
+                    id={`portfolio-linked-select-all-${portfolio.id}`}
+                    checked={allLinkedSelected}
+                    onChange={(checked) => {
+                      if (checked) {
+                        setSelectedLinkedKeys(
+                          new Set(
+                            linked.map((row) =>
+                              customerKey(row.customer_code, row.customer_store),
+                            ),
+                          ),
+                        );
+                      } else {
+                        setSelectedLinkedKeys(new Set());
+                      }
+                    }}
+                    label="Selecionar todos"
+                    disabled={unlinkingCustomers}
+                  />
+                }
+                actions={
+                  <div className="cm-row-actions">
+                    {selectedLinkedKeys.size > 0 ? (
+                      <span className="cm-muted">
+                        {selectedLinkedKeys.size.toLocaleString("pt-BR")} selecionado(s)
+                      </span>
+                    ) : null}
+                    <CommercialActionButton
+                      variant="ghost"
+                      disabled={unlinkingCustomers || selectedLinkedKeys.size === 0}
+                      onClick={() => {
+                        const items = linked
+                          .filter((row) =>
+                            selectedLinkedKeys.has(
+                              customerKey(row.customer_code, row.customer_store),
+                            ),
+                          )
+                          .map((row) => ({
+                            code: row.customer_code,
+                            store: row.customer_store,
+                          }));
+                        onRemoveCustomers(items);
+                      }}
+                    >
+                      {unlinkingCustomers
+                        ? "Desvinculando…"
+                        : "Desvincular selecionados"}
+                    </CommercialActionButton>
+                  </div>
+                }
+              />
+            ) : null}
             <CommercialViewTransition
               transitionKey={`linked-${portfolio.id}-${linked.length}`}
               tone="panel"
