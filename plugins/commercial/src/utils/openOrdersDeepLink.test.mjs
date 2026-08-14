@@ -87,6 +87,8 @@ describe("openOrdersDeepLink", () => {
     assert.equal(state.sortKey, "data_entrega");
     assert.equal(state.sortDirection, "asc");
     assert.equal(state.page, 1);
+    assert.equal(state.view, null);
+    assert.equal(state.stage, null);
     assert.equal(
       sanitizeOpenOrdersListSearch("?seller_id=s2&sort=hack&page=0", {
         allowSellerId: false,
@@ -108,6 +110,18 @@ describe("openOrdersDeepLink", () => {
     assert.equal(
       buildOpenOrdersListSearch(state),
       "?q=abc&branch=01&client=C1&stock=com_estoque&date_start=2026-08-01&seller_id=s1&sort=pedido&dir=desc&page=2",
+    );
+  });
+
+  it("parseia e monta deep link view=board&stage", () => {
+    const state = parseOpenOrdersListUrlState(
+      "?view=board&stage=ready_to_invoice",
+    );
+    assert.equal(state.view, "board");
+    assert.equal(state.stage, "ready_to_invoice");
+    assert.equal(
+      buildOpenOrdersListSearch(state),
+      "?view=board&stage=ready_to_invoice",
     );
   });
 

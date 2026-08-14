@@ -62,6 +62,7 @@ import {
   findOpenOrderLine,
   buildOpenOrdersContextSearch,
   parseOpenOrdersLineDeepLink,
+  parseOpenOrdersListUrlState,
 } from "../utils/openOrdersDeepLink";
 import {
   resolveLineCoverage,
@@ -125,6 +126,20 @@ export function OpenOrdersTable({
   const { layout, setLayout } = usePersistedViewLayout({
     storageKey: OPEN_ORDERS_LAYOUT_STORAGE_KEY,
   });
+  const urlListState = useMemo(
+    () => parseOpenOrdersListUrlState(typeof window !== "undefined" ? window.location.search : ""),
+    [],
+  );
+  const [focusStage, setFocusStage] = useState(urlListState.stage);
+
+  useEffect(() => {
+    if (urlListState.view === "board" || urlListState.view === "cards" || urlListState.view === "table") {
+      setLayout(urlListState.view);
+    }
+    if (urlListState.stage) {
+      setFocusStage(urlListState.stage);
+    }
+  }, [urlListState.stage, urlListState.view, setLayout]);
   const {
     preferences,
     visibleColumns,
@@ -608,6 +623,7 @@ export function OpenOrdersTable({
               rows={rows}
               visibleColumns={visibleColumns}
               basePath={basePath}
+              focusStage={focusStage}
               customerAvatarKeys={
                 new Set(
                   [...customerAvatars.entries()]

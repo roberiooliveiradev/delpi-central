@@ -47,7 +47,19 @@ export type OpenOrdersListUrlState = {
   sortKey: SortKey;
   sortDirection: SortDirection;
   page: number;
+  /** Layout deep link: table | cards | board */
+  view: "table" | "cards" | "board" | null;
+  /** Kanban column focus when view=board */
+  stage: "upcoming" | "in_progress" | "ready_to_invoice" | "completed" | null;
 };
+
+const VIEW_QUERY_VALUES = new Set(["table", "cards", "board"]);
+const STAGE_QUERY_VALUES = new Set([
+  "upcoming",
+  "in_progress",
+  "ready_to_invoice",
+  "completed",
+]);
 
 const DENY_SELLER_ACCESS: OpenOrdersSellerAccess = {
   allowSellerId: false,
@@ -85,6 +97,8 @@ export function parseOpenOrdersListUrlState(
   const pageValue = Number(params.get("page"));
   const dateStart = (params.get("date_start") ?? "").trim();
   const dateEnd = (params.get("date_end") ?? "").trim();
+  const viewRaw = (params.get("view") ?? "").trim().toLowerCase();
+  const stageRaw = (params.get("stage") ?? "").trim().toLowerCase();
 
   return {
     filters: {
@@ -105,6 +119,12 @@ export function parseOpenOrdersListUrlState(
       ? direction
       : DEFAULT_SORT.direction,
     page: Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1,
+    view: VIEW_QUERY_VALUES.has(viewRaw)
+      ? (viewRaw as OpenOrdersListUrlState["view"])
+      : null,
+    stage: STAGE_QUERY_VALUES.has(stageRaw)
+      ? (stageRaw as OpenOrdersListUrlState["stage"])
+      : null,
   };
 }
 
@@ -127,8 +147,37 @@ export function buildOpenOrdersListSearch(state: OpenOrdersListUrlState): string
   if (state.sortKey !== DEFAULT_SORT.key) params.set("sort", state.sortKey);
   if (state.sortDirection !== DEFAULT_SORT.direction) params.set("dir", state.sortDirection);
   if (state.page > 1) params.set("page", String(state.page));
+  if (state.view) params.set("view", state.view);
+  if (state.stage) params.set("stage", state.stage);
   const query = params.toString();
   return query ? `?${query}` : "";
+}
+
+/** Deep link: open-orders board focused on a kanban stage. */
+export function buildOpenOrdersBoardHref(options: {
+  stage?: OpenOrdersListUrlState["stage"];
+  sellerId?: string | null;
+  basePath?: string;
+}): string {
+  const base = (options.basePath || COMMERCIAL_BASE_PATH).replace(/\/$/, "");
+  const search = buildOpenOrdersListSearch({
+    filters: {
+      search: "",
+      filial: "",
+      clientCodes: [],
+      stockStatus: "",
+      dateStart: "",
+      dateEnd: "",
+      lateOnly: false,
+    },
+    sellerId: options.sellerId?.trim() || null,
+    sortKey: DEFAULT_SORT.key,
+    sortDirection: DEFAULT_SORT.direction,
+    page: 1,
+    view: "board",
+    stage: options.stage ?? "ready_to_invoice",
+  });
+  return `${base}/open-orders${search}`;
 }
 
 export function sanitizeOpenOrdersListSearch(
@@ -226,6 +275,8 @@ export function buildOpenOrdersHorizonListHref(options: {
     sortKey: DEFAULT_SORT.key,
     sortDirection: DEFAULT_SORT.direction,
     page: 1,
+    view: null,
+    stage: null,
   });
   return `${base}/open-orders${search}`;
 }

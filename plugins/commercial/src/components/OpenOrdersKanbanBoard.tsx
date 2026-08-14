@@ -1,9 +1,13 @@
+import type { ReactNode } from "react";
+import { useEffect } from "react";
+
 import {
   CommercialEmptyState,
   CommercialInteractiveDataCard,
   CommercialKanbanBoard,
 } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
+import { customerAvatarKey } from "../hooks/useOpenOrdersCustomerAvatars";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatCurrency } from "../utils/format";
 import { formatDisplayDate } from "../utils/dates";
@@ -56,8 +60,6 @@ type OpenOrdersKanbanBoardProps = {
   focusStage?: OpenOrderKanbanStageId | null;
 };
 
-import { customerAvatarKey } from "../hooks/useOpenOrdersCustomerAvatars";
-
 function hasAvatarForItem(
   item: OpenOrdersTotvsItem,
   customerAvatarKeys?: ReadonlySet<string>,
@@ -80,6 +82,13 @@ export function OpenOrdersKanbanBoardView({
   onOpenDetail,
   focusStage = null,
 }: OpenOrdersKanbanBoardProps) {
+  useEffect(() => {
+    if (!focusStage || typeof document === "undefined") return;
+    const el = document.querySelector(`[data-kanban-column="${focusStage}"]`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, [focusStage, rows.length, completedRows.length]);
   const byStage = new Map<OpenOrderKanbanStageId, OpenOrdersTotvsItem[]>();
   for (const stage of OPEN_STAGES) byStage.set(stage, []);
   for (const row of rows) {
