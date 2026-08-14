@@ -401,6 +401,16 @@ export {
   type CompareSparklineTone,
   type DashboardCompareSparklineProps,
 } from "./CompareSparkline";
+export {
+  TrendDelta,
+  createDashboardTrendDelta,
+  formatTrendDeltaPct,
+  resolveTrendDeltaTone,
+  trendDeltaBemClasses,
+  type DashboardTrendDeltaProps,
+  type TrendDeltaClassNames,
+  type TrendDeltaProps,
+} from "./TrendDelta";
 /** Alias de produto (Account 360 / follow-ups) — mesmo componente Timeline. */
 export {
   Timeline as ActivityTimeline,

@@ -15,6 +15,7 @@ import {
   CommercialSectionCard,
   CommercialSegmentToggle,
   CommercialStateBanner,
+  CommercialTrendDelta,
   type DataTableColumn,
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -30,15 +31,6 @@ import {
 type PortfolioBillingRankingTableProps = {
   sellerId?: string | null;
 };
-
-function formatDeltaPct(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return "—";
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })}%`;
-}
 
 const RANKING_PERIOD = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
 
@@ -129,6 +121,14 @@ export function PortfolioBillingRankingTable({
     }
     base.push(
       {
+        key: "trend",
+        header: "Tendência",
+        align: "right",
+        render: (row) => (
+          <CommercialCompareSparkline prior={row.priorRol} current={row.currentRol} />
+        ),
+      },
+      {
         key: "current",
         header: "ROL atual",
         align: "right",
@@ -144,7 +144,7 @@ export function PortfolioBillingRankingTable({
         key: "deltaPct",
         header: "Delta %",
         align: "right",
-        render: (row) => formatDeltaPct(row.deltaPct),
+        render: (row) => <CommercialTrendDelta value={row.deltaPct} />,
       },
     );
     return base;
