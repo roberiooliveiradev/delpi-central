@@ -41,4 +41,4 @@ Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.
 | Type switcher | `ChartTypeSegmentToggle` + `chartDataFamilies` |
 | Plot | `MultiTypeSeriesChart` |
 | Shell | `ChartViewShell` |
-| Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` |
+| Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` (help no **label**, sem ícone `?`) |

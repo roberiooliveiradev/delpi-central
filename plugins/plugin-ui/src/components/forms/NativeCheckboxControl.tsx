@@ -19,10 +19,10 @@ export type NativeCheckboxControlProps = {
   hint?: ReactNode;
   /**
    * `inline` (default) — parágrafo sob o label (legado).
-   * `tooltip` — ícone HelpTooltip ao lado do label (toolbar de gráfico densa).
+   * `tooltip` — HelpTooltip no próprio rótulo (sem ícone `?`; toolbar densa).
    */
   hintPlacement?: NativeCheckboxHintPlacement;
-  /** Aria do botão de ajuda quando `hintPlacement="tooltip"`. */
+  /** Aria da ajuda quando `hintPlacement="tooltip"` (wrap no label). */
   hintAriaLabel?: string;
   disabled?: boolean;
   className?: string;
@@ -56,34 +56,29 @@ export function NativeCheckboxControl({
     typeof hint === "string" &&
     hint.trim().length > 0;
 
+  const labelNode = resolvedLabel ? (
+    useTooltipHint ? (
+      <HelpTooltip
+        content={hint}
+        ariaLabel={hintAriaLabel}
+        wrap
+        placement="bottom"
+        className="delpi-ui-native-checkbox__help"
+      >
+        <span className="delpi-ui-native-checkbox__label">{resolvedLabel}</span>
+      </HelpTooltip>
+    ) : (
+      <span className="delpi-ui-native-checkbox__label">{resolvedLabel}</span>
+    )
+  ) : null;
+
   const copy =
-    resolvedLabel || (hint && !useTooltipHint) ? (
+    labelNode || (hint && !useTooltipHint) ? (
       <span className="delpi-ui-native-checkbox__copy">
-        {resolvedLabel ? (
-          <span className="delpi-ui-native-checkbox__label">
-            {resolvedLabel}
-            {useTooltipHint ? (
-              <HelpTooltip
-                content={hint}
-                ariaLabel={hintAriaLabel}
-                className="delpi-ui-native-checkbox__help"
-              />
-            ) : null}
-          </span>
-        ) : null}
+        {labelNode}
         {hint && !useTooltipHint ? (
           <span className="delpi-ui-native-checkbox__hint">{hint}</span>
         ) : null}
-      </span>
-    ) : useTooltipHint ? (
-      <span className="delpi-ui-native-checkbox__copy">
-        <span className="delpi-ui-native-checkbox__label">
-          <HelpTooltip
-            content={hint}
-            ariaLabel={hintAriaLabel}
-            className="delpi-ui-native-checkbox__help"
-          />
-        </span>
       </span>
     ) : null;
 

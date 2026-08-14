@@ -165,12 +165,15 @@ export function ChartToolbar<T extends string>({
     </div>
   ) : granularityHelp && classNames.granularity ? (
     <div className={classNames.granularity}>
-      {toggle}
       <HelpTooltip
         content={granularityHelp}
         ariaLabel={`Ajuda: ${granularityToggleLabels.groupAriaLabel.toLowerCase()}`}
+        wrap
+        placement="bottom"
         className={classNames.granularityHelp}
-      />
+      >
+        {toggle}
+      </HelpTooltip>
     </div>
   ) : (
     toggle

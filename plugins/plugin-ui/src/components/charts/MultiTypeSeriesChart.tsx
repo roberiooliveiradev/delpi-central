@@ -43,7 +43,10 @@ export type MultiTypeSeriesChartProps = {
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
 };
 
-const TREND_STROKE = "var(--delpi-ui-text-muted, #64748b)";
+/** Contraste alto vs. áreas/colunas (claro/escuro). */
+const TREND_STROKE = "var(--delpi-ui-chart-trend-stroke, var(--delpi-ui-warning, #f59e0b))";
+const TREND_STROKE_WIDTH = 3;
+const TREND_DASH = "8 5";
 
 function defaultFormatY(value: number): string {
   if (!Number.isFinite(value)) return "—";
@@ -111,8 +114,10 @@ export function MultiTypeSeriesChart({
                 : trendSeriesName
             }
             stroke={TREND_STROKE}
-            strokeWidth={2}
-            strokeDasharray="4 4"
+            strokeWidth={TREND_STROKE_WIDTH}
+            strokeDasharray={TREND_DASH}
+            strokeLinecap="round"
+            strokeOpacity={1}
             dot={false}
             connectNulls
             legendType="line"

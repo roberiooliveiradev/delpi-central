@@ -20,7 +20,7 @@ describe("NativeCheckboxControl hintPlacement", () => {
     expect(root?.getAttribute("data-hint-placement")).toBe("inline");
   });
 
-  it("usa HelpTooltip quando hintPlacement=tooltip", () => {
+  it("usa HelpTooltip wrap no label quando hintPlacement=tooltip (sem ícone ?)", () => {
     render(
       <NativeCheckboxControl
         checked={false}
@@ -32,7 +32,9 @@ describe("NativeCheckboxControl hintPlacement", () => {
       />,
     );
     expect(screen.queryByText("Regressão linear sobre a série atual.")).toBeNull();
-    expect(screen.getByLabelText("Ajuda: tendência")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ajuda: tendência" })).toBeNull();
+    expect(document.querySelector(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(screen.getByText("Tendência")).toBeTruthy();
     const root = document.querySelector(".delpi-ui-native-checkbox");
     expect(root?.getAttribute("data-hint-placement")).toBe("tooltip");
     expect(document.querySelector(".delpi-ui-native-checkbox__hint")).toBeNull();

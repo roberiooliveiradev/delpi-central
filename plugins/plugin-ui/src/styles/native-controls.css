@@ -243,6 +243,14 @@ textarea.delpi-ui-native-control--compact {
 
 .delpi-ui-native-checkbox__help {
   flex: 0 0 auto;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.delpi-ui-native-checkbox__help .delpi-ui-native-checkbox__label {
+  cursor: help;
+  text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.18em;
 }
 
 .delpi-ui-native-checkbox__hint {
