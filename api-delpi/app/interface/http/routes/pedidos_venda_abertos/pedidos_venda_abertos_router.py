@@ -226,6 +226,45 @@ def list_totvs_open_orders_route():
 
 
 @router.get(
+    "/totvs-recently-closed-orders",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_recently_closed_orders",
+        path="/pedidos-venda-abertos/totvs-recently-closed-orders",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_recently_closed_orders_route(
+    days: int = Query(
+        default=30,
+        ge=1,
+        le=90,
+        description="Lookback window in days for fully delivered sales-order lines.",
+    ),
+):
+    """Fully delivered SC6 lines in the lookback window (TOTVS pure — commercial BFF scopes)."""
+    try:
+        from app.application.use_cases.pedidos_venda_abertos.list_recently_closed_orders_use_case import (
+            ListRecentlyClosedOrdersUseCase,
+        )
+
+        result = ListRecentlyClosedOrdersUseCase().execute(days=days)
+        return api_delpi_success(
+            result,
+            operation_id="list_totvs_recently_closed_orders",
+            message="Recently closed sales-order lines loaded.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error listing recently closed orders: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error listing recently closed orders: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos recentemente encerrados.",
+            status_code=500,
+        )
+
+
+@router.get(
     "/totvs-open-orders/{customer_code}/{customer_store}",
     **OpenApiAgentMetadataBuilder.from_contract(
         "list_totvs_open_orders_by_customer",

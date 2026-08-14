@@ -551,6 +551,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_totvs_open_orders_by_customer": RouteContract(
         "open_sales_order", "composite_analysis"
     ),
+    "list_totvs_recently_closed_orders": RouteContract(
+        "open_sales_order", "paged_list"
+    ),
     "list_customer_open_order_metrics": RouteContract(
         "customer_open_order_metrics", "paged_list"
     ),

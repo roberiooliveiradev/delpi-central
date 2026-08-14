@@ -542,6 +542,30 @@ def test_totvs_open_orders_returns_meta(mock_build) -> None:
 
 
 @patch(
+    "app.application.use_cases.pedidos_venda_abertos.list_recently_closed_orders_use_case.ListRecentlyClosedOrdersUseCase"
+)
+def test_totvs_recently_closed_orders_returns_meta(mock_uc_cls) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_totvs_recently_closed_orders_route,
+    )
+
+    mock_uc = MagicMock()
+    mock_uc.execute.return_value = {
+        "items": [],
+        "summary": {"total_linhas": 0, "valor_total": 0, "days": 30},
+    }
+    mock_uc_cls.return_value = mock_uc
+
+    response = list_totvs_recently_closed_orders_route(days=30)
+    mock_uc.execute.assert_called_once_with(days=30)
+    _assert_meta(
+        _body(response),
+        operation_id="list_totvs_recently_closed_orders",
+        shape="paged_list",
+    )
+
+
+@patch(
     "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_pedidos_venda_abertos_use_case"
 )
 def test_totvs_open_orders_by_customer_returns_meta(mock_build) -> None:
