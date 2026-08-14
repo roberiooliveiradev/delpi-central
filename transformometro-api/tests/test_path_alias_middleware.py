@@ -22,6 +22,16 @@ def test_rewrite_skips_meeting_minutes_dual_mount():
     assert rewrite_en_path_to_legacy_pt("/public/atas/sign-invites/t") == "/public/atas/sign-invites/t"
 
 
+def test_rewrite_skips_engineering_integrations_en_contract():
+    """api-delpi chama paths EN; rewrite /processes|/summary quebrava o contrato (404→500)."""
+    summary = (
+        "/transformometro/integrations/engineering/transforma-mais/processes/summary"
+    )
+    listing = "/transformometro/integrations/engineering/transforma-mais/processes"
+    assert rewrite_en_path_to_legacy_pt(summary) == summary
+    assert rewrite_en_path_to_legacy_pt(listing) == listing
+
+
 def test_rewrite_dashboard_verbs():
     assert (
         rewrite_en_path_to_legacy_pt("/transformometro/dashboard/recalculate")

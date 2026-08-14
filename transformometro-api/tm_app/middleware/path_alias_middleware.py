@@ -58,6 +58,8 @@ _SKIP_PREFIXES: tuple[str, ...] = (
     "/transformometro/atas",
     "/public/atas",
     "/transformometro/signatures",
+    # Contrato S2S EN (api-delpi / SI) — paths canônicos, sem rewrite PT.
+    "/transformometro/integrations",
     "/health",
 )
 
