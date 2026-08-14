@@ -209,6 +209,69 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
     ],
   },
   {
+    id: "data.KanbanBoard",
+    family: "data",
+    exportName: "KanbanBoard",
+    title: "KanbanBoard",
+    description: "Board Kanban somente leitura (colunas + slots de card).",
+    docAnchor: "kanbanboard",
+    propsSummary: ["columns", "ariaLabel"],
+    demos: [
+      {
+        id: "readonly",
+        label: "Quatro colunas",
+        render: () => (
+          <KanbanBoard
+            classNames={kanbanCn}
+            ariaLabel="Demo Kanban"
+            columns={[
+              {
+                id: "upcoming",
+                title: "Upcoming",
+                count: 1,
+                empty: "Empty",
+              },
+              {
+                id: "in_progress",
+                title: "In progress",
+                count: 1,
+                children: (
+                  <div className={kanbanCn.card}>
+                    <InteractiveDataCard
+                      classNames={interactiveCardCn}
+                      ariaLabel="Card demo"
+                      onActivate={() => undefined}
+                      fields={[
+                        {
+                          id: "pedido",
+                          label: "Order",
+                          value: "100 / 01",
+                          valueTone: "title",
+                        },
+                      ]}
+                    />
+                  </div>
+                ),
+              },
+              {
+                id: "ready_to_invoice",
+                title: "Ready",
+                count: 0,
+                empty: "Empty",
+              },
+              {
+                id: "completed",
+                title: "Completed",
+                count: 0,
+                empty: "Empty",
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+  },
+  {
     id: "data.DataTable",
     family: "data",
     exportName: "DataTable",
