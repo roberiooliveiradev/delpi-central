@@ -8,6 +8,7 @@ import { runTabularExport } from "@delpi/plugin-ui/index";
 import { getPortfolioBillingRanking } from "../../../api/analyticsApi";
 import {
   CommercialAvatar,
+  CommercialCompareSparkline,
   CommercialDataTable,
   CommercialExcelExportButton,
   CommercialLoadingCard,
@@ -95,7 +96,17 @@ export function PortfolioBillingRankingTable({
       base.push({
         key: "seller",
         header: "Vendedor",
-        render: (row) => row.sellerName ?? "—",
+        render: (row) => {
+          const name = (row.sellerName || "").trim() || "—";
+          return (
+            <div className="cm-open-orders-client">
+              <CommercialAvatar name={name} colorKey={name} size="sm" previewable={false} />
+              <div className="cm-open-orders-client__text">
+                <strong className="cm-open-orders-client__name">{name}</strong>
+              </div>
+            </div>
+          );
+        },
       });
     } else {
       base.push({
