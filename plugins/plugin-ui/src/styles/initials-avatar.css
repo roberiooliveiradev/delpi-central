@@ -1,5 +1,8 @@
 /**
  * InitialsAvatar — .delpi-ui-avatar*
+ *
+ * Iniciais ficam sempre claras (#fff) sobre o fundo HSL — independente do tema
+ * claro/escuro e de regras de link do host (`color: inherit` quebrava o contraste).
  */
 
 .delpi-ui-avatar {
@@ -13,6 +16,7 @@
   border-radius: 999px;
   object-fit: cover;
   color: #fff;
+  -webkit-text-fill-color: #fff;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -46,7 +50,8 @@ button.delpi-ui-avatar--previewable {
   border: none;
   background: transparent;
   font: inherit;
-  color: inherit;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
 }
 
 button.delpi-ui-avatar--previewable:focus-visible {
@@ -54,16 +59,17 @@ button.delpi-ui-avatar--previewable:focus-visible {
   outline-offset: 2px;
 }
 
-a.delpi-ui-avatar--link {
+a.delpi-ui-avatar--link,
+a.delpi-ui-avatar--link:link,
+a.delpi-ui-avatar--link:visited,
+a.delpi-ui-avatar--link:hover,
+a.delpi-ui-avatar--link:active {
   padding: 0;
   border: none;
   text-decoration: none;
-  color: inherit;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
   cursor: pointer;
-}
-
-a.delpi-ui-avatar--link:visited {
-  color: inherit;
 }
 
 a.delpi-ui-avatar--link:focus-visible {

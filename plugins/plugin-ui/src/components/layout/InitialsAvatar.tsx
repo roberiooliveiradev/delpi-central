@@ -116,7 +116,12 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
   const rootClass = [withBemModifier(classNames.root, size), className].filter(Boolean).join(" ");
   const initials = initialsFromName(name);
   const hue = hueFromKey(colorKey ?? name);
-  const initialStyle = { background: `hsl(${hue} 48% 42%)`, ...style };
+  /** Iniciais sempre claras — fundo HSL escuro; evita herdar texto do tema claro. */
+  const initialStyle = {
+    background: `hsl(${hue} 48% 42%)`,
+    color: "#fff",
+    ...style,
+  };
 
   if (props.href) {
     const safeHref = requireSafeHref(props.href);

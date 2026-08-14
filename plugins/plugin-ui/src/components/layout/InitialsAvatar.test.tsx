@@ -30,10 +30,11 @@ describe("InitialsAvatar", () => {
 
   it("emite dual-class e iniciais sem src", () => {
     render(<InitialsAvatar name="Acme Indústria" classNames={classNames} size="md" />);
-    const el = document.querySelector(".delpi-ui-avatar");
+    const el = document.querySelector(".delpi-ui-avatar") as HTMLElement | null;
     expect(el?.className).toContain("pva-avatar");
     expect(el?.className).toContain("delpi-ui-avatar--md");
     expect(el?.textContent).toBe("AI");
+    expect(el?.style.color).toBe("rgb(255, 255, 255)");
   });
 
   it("com src previewable abre lightbox ao clicar", () => {
@@ -96,7 +97,7 @@ describe("InitialsAvatar", () => {
     });
     const parentClick = vi.fn();
     render(
-      <div onClick={parentClick}>
+      <div onClick={parentClick} style={{ color: "#111111" }}>
         <InitialsAvatar
           name="Acme"
           classNames={classNames}
@@ -109,6 +110,7 @@ describe("InitialsAvatar", () => {
     const link = screen.getByRole("link", { name: "Abrir conta de Acme" });
     expect(link.getAttribute("href")).toBe("/apps/commercial/customers/1/01");
     expect(link.getAttribute("title")).toBe("Abrir conta de Acme");
+    expect((link as HTMLElement).style.color).toBe("rgb(255, 255, 255)");
     expect(screen.queryByRole("button", { name: /Ampliar/i })).toBeNull();
     fireEvent.click(link);
     expect(onNavigate).toHaveBeenCalledTimes(1);
