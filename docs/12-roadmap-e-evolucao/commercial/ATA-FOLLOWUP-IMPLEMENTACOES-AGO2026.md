@@ -88,7 +88,7 @@ Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-
 | Comparação com **períodos e anos escolhidos pelo usuário** | **Parcial** (presets) | Date range livre + N anos de comparação (UI + cache); não só −1a fixo |
 | Evolução da carteira no tempo | **Parcial** (horizon + séries) | Clarificar: valor **aberto** vs **faturado**; series dedicada se faltar |
 | Tendência de faturamento com **período configurável** | **Parcial** | Controles de janela (7/30/90/custom) + sparkline/tendência na carteira |
-| Cortes cliente × vendedor × período (crescimento/queda) | **Parcial** | Ranking delta % por cliente/vendedor no escopo; tabela + export |
+| Cortes cliente × vendedor × período (crescimento/queda) | **Entregue** (T5) | BFF `portfolio-billing-ranking` + tabela/Excel Minha Carteira; `group_by=seller` só team/manage |
 
 ### 2.3 Fora / cuidado
 
@@ -195,7 +195,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | T2 | Kanban Meus pedidos (etapas) | commercial MFE + commercial-api + api-delpi | **Feito** | Homologação UX |
 | T3 | Share faturamento carteira ÷ empresa | commercial-api BFF + Overview/Carteira | P1 | Fórmula KPI + RBAC |
 | T4 | Comparadores de período livres + tendência na Carteira/Conta | MFE + séries existentes | P1 | UX presets vs custom |
-| T5 | Ranking crescimento/queda (cliente/vendedor) | BFF analytics | P2 | T3/T4 |
+| T5 | Ranking crescimento/queda (cliente/vendedor) | BFF analytics | **Feito** | T3/T4 |
 | T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | **Feito** | Configurar `billing*` no JSON; cron/ops no job |
 | T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
 | T8 | Visita Meu Dia → reserva veículo | commercial + Central de Agendamento | P1 | Contrato HTTP scheduling |
