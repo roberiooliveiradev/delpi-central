@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { shiftPeriodRangeByYears } from "../../../analytics/utils/periodShift";
 import { getCustomerOutboundInvoices } from "../api/customerBillingApi";
 import type {
   CustomerBillingData,
   CustomerBillingPeriodPreset,
   CustomerBillingSituationFilter,
+  CustomerBillingSummary,
 } from "../types/customerBilling";
 import {
   periodRangeFromPreset,
@@ -18,6 +20,10 @@ export type UseCustomerBillingResult = {
   validationError: string | null;
   hasData: boolean;
   data: CustomerBillingData | null;
+  /** Summary do mesmo período −1 ano quando YoY ativo. */
+  priorSummary: CustomerBillingSummary | null;
+  comparePriorYear: boolean;
+  setComparePriorYear: (value: boolean) => void;
   preset: CustomerBillingPeriodPreset;
   setPreset: (value: CustomerBillingPeriodPreset) => void;
   startDate: string;
@@ -51,11 +57,13 @@ export function useCustomerBilling(
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
+  const [comparePriorYear, setComparePriorYear] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<CustomerBillingData | null>(null);
+  const [priorSummary, setPriorSummary] = useState<CustomerBillingSummary | null>(null);
   const hasDataRef = useRef(false);
 
   const validationError = useMemo(
@@ -111,7 +119,7 @@ export function useCustomerBilling(
         else setLoading(true);
         setError(null);
 
-        const result = await getCustomerOutboundInvoices(
+        const currentPromise = getCustomerOutboundInvoices(
           {
             codigo,
             loja,
@@ -125,6 +133,31 @@ export function useCustomerBilling(
           controller.signal,
         );
 
+        const priorPromise =
+          comparePriorYear && startDate && endDate
+            ? (() => {
+                const prior = shiftPeriodRangeByYears(
+                  { start_date: startDate, end_date: endDate },
+                  -1,
+                );
+                return getCustomerOutboundInvoices(
+                  {
+                    codigo,
+                    loja,
+                    startDate: prior.start_date,
+                    endDate: prior.end_date,
+                    page: 1,
+                    pageSize: 1,
+                    situation,
+                    search: debouncedSearch,
+                  },
+                  controller.signal,
+                );
+              })()
+            : Promise.resolve(null);
+
+        const [result, priorResult] = await Promise.all([currentPromise, priorPromise]);
+
         if (
           result.pagination.total_pages > 0 &&
           page > result.pagination.total_pages
@@ -134,6 +167,7 @@ export function useCustomerBilling(
         }
 
         setData(result);
+        setPriorSummary(priorResult?.summary ?? null);
         hasDataRef.current = true;
       } catch (err) {
         if (controller.signal.aborted) return;
@@ -142,7 +176,10 @@ export function useCustomerBilling(
             ? err.message
             : "Não foi possível carregar o faturamento.";
         setError(message);
-        if (!hasDataRef.current) setData(null);
+        if (!hasDataRef.current) {
+          setData(null);
+          setPriorSummary(null);
+        }
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -164,6 +201,7 @@ export function useCustomerBilling(
     situation,
     debouncedSearch,
     reloadKey,
+    comparePriorYear,
   ]);
 
   return {
@@ -173,6 +211,9 @@ export function useCustomerBilling(
     validationError,
     hasData: Boolean(data),
     data,
+    priorSummary,
+    comparePriorYear,
+    setComparePriorYear,
     preset,
     setPreset,
     startDate,

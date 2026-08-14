@@ -44,6 +44,9 @@ export function CustomerBillingPanel({
     page,
     setPage,
     reload,
+    comparePriorYear,
+    setComparePriorYear,
+    priorSummary,
   } = billing;
 
   const showInitialLoading = loading && !hasData;
@@ -75,6 +78,8 @@ export function CustomerBillingPanel({
         search={search}
         validationError={validationError}
         disabled={loading && !hasData}
+        comparePriorYear={comparePriorYear}
+        onComparePriorYearChange={setComparePriorYear}
         onPresetChange={setPreset}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
@@ -110,7 +115,12 @@ export function CustomerBillingPanel({
 
       {data && !showInitialLoading ? (
         <>
-          <CustomerBillingSummaryCards summary={data.summary} loading={refreshing} />
+          <CustomerBillingSummaryCards
+            summary={data.summary}
+            priorSummary={priorSummary}
+            comparePriorYear={comparePriorYear}
+            loading={refreshing}
+          />
           {empty ? (
             <CommercialEmptyState
               title="Nenhuma nota fiscal encontrada"

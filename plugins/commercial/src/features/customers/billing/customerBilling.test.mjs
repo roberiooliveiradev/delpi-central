@@ -158,6 +158,19 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /exclusão lógica/);
     assert.match(filters, /CommercialSegmentToggle/);
     assert.match(filters, /CommercialDateField/);
+    assert.match(filters, /comparePriorYear/);
+    assert.match(filters, /NativeCheckboxControl/);
     assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
+  });
+
+  it("painel Conta Histórico expõe YoY no summary", () => {
+    const panel = readSrc(
+      "features/customers/billing/components/CustomerBillingPanel.tsx",
+    );
+    const hook = readSrc("features/customers/billing/hooks/useCustomerBilling.ts");
+    assert.match(panel, /comparePriorYear/);
+    assert.match(panel, /priorSummary/);
+    assert.match(hook, /shiftPeriodRangeByYears/);
+    assert.match(hook, /comparePriorYear/);
   });
 });

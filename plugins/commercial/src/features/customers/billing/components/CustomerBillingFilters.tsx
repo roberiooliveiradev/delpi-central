@@ -1,4 +1,4 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   CommercialDateField,
@@ -8,6 +8,7 @@ import {
   CommercialStateBanner,
   CommercialTextField,
 } from "../../../../app/commercialUi";
+import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
   CustomerBillingPeriodPreset,
@@ -22,6 +23,8 @@ type CustomerBillingFiltersProps = {
   search: string;
   validationError: string | null;
   disabled?: boolean;
+  comparePriorYear: boolean;
+  onComparePriorYearChange: (value: boolean) => void;
   onPresetChange: (value: CustomerBillingPeriodPreset) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
@@ -51,6 +54,8 @@ export function CustomerBillingFilters({
   search,
   validationError,
   disabled,
+  comparePriorYear,
+  onComparePriorYearChange,
   onPresetChange,
   onStartDateChange,
   onEndDateChange,
@@ -121,6 +126,17 @@ export function CustomerBillingFilters({
           disabled={disabled}
         />
       </CommercialFilterBarShell>
+
+      <div className="cm-customer-billing-filters__yoy">
+        <NativeCheckboxControl
+          id="customer-billing-yoy"
+          checked={comparePriorYear}
+          onChange={onComparePriorYearChange}
+          label={ANALYTICS_CONTENT.overview.comparePriorYear}
+          hint={CM_HELP.customers.billingSeriesYoy}
+          disabled={disabled}
+        />
+      </div>
 
       {validationError ? (
         <CommercialStateBanner>
