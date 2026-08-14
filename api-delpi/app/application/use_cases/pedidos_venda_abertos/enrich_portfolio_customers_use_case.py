@@ -12,6 +12,7 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
 )
 from app.domain.services.pedidos_venda_abertos.billing_trend_service import (
     BillingTrendDirection,
+    clamp_billing_trend_window_days,
     resolve_billing_trend,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
@@ -33,6 +34,7 @@ class CustomerEnrichmentItem:
     contact_name: str | None = None
     phone: str | None = None
     email: str | None = None
+    window_days: int = 30
 
     def to_dict(self) -> dict:
         return {
@@ -47,6 +49,7 @@ class CustomerEnrichmentItem:
             "billing_trend": self.billing_trend,
             "billing_trend_pct": self.billing_trend_pct,
             "has_avatar": self.has_avatar,
+            "window_days": self.window_days,
             "avatar_url": (
                 f"/pedidos-venda-abertos/customers/"
                 f"{self.customer_code}/{self.customer_store}/avatar"
@@ -62,6 +65,7 @@ class CustomerEnrichmentItem:
 @dataclass(frozen=True, slots=True)
 class EnrichCustomersRequest:
     customers: Sequence[tuple[str, str]]
+    window_days: int | None = None
 
 
 class EnrichPortfolioCustomersUseCase:
@@ -94,9 +98,10 @@ class EnrichPortfolioCustomersUseCase:
         if not pairs:
             return []
 
+        window_days = clamp_billing_trend_window_days(request.window_days)
         end = date.today()
-        start = end - timedelta(days=364)
-        mid = end - timedelta(days=182)
+        mid = end - timedelta(days=window_days)
+        start = end - timedelta(days=window_days * 2)
         qb = QueryBuilder()
         start_protheus = qb.convert_date_to_protheus(start.isoformat())
         mid_protheus = qb.convert_date_to_protheus(mid.isoformat())
@@ -124,8 +129,8 @@ class EnrichPortfolioCustomersUseCase:
             recent = float(bill_item.billed_recent_6m) if bill_item else 0.0
             prior = float(bill_item.billed_prior_6m) if bill_item else 0.0
             trend = resolve_billing_trend(
-                billed_recent_6m=recent,
-                billed_prior_6m=prior,
+                billed_recent=recent,
+                billed_prior=prior,
             )
             result.append(
                 CustomerEnrichmentItem(
@@ -145,6 +150,7 @@ class EnrichPortfolioCustomersUseCase:
                     contact_name=geo_item.contact_name if geo_item else None,
                     phone=geo_item.phone if geo_item else None,
                     email=geo_item.email if geo_item else None,
+                    window_days=window_days,
                 )
             )
         return result

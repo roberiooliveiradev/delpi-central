@@ -1,5 +1,5 @@
 import { RefreshCw, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -19,6 +19,7 @@ import {
   CommercialSectionHintLabel,
   CommercialStateBanner,
   CommercialTextField,
+  CommercialSegmentToggle,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
@@ -38,6 +39,12 @@ import {
   matchesOperationalFocus,
 } from "../utils/customerFilters";
 import { buildSellerNameByCustomerKey } from "../utils/sellerNameByCustomer";
+import {
+  BILLING_TREND_WINDOW_PRESETS,
+  clampBillingTrendWindowDays,
+  DEFAULT_BILLING_TREND_WINDOW_DAYS,
+  type BillingTrendWindowPreset,
+} from "../utils/billingTrendWindow";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -67,6 +74,17 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   } = usePortfolioScope();
   const sellerAccess = usePortfolioSellerAccess();
   const sellerAccessKey = portfolioSellerAccessKey(sellerAccess);
+  const [trendWindowPreset, setTrendWindowPreset] =
+    useState<BillingTrendWindowPreset>(DEFAULT_BILLING_TREND_WINDOW_DAYS);
+  const [customTrendWindowDays, setCustomTrendWindowDays] = useState(
+    String(DEFAULT_BILLING_TREND_WINDOW_DAYS),
+  );
+  const trendWindowDays = useMemo(() => {
+    if (trendWindowPreset === "custom") {
+      return clampBillingTrendWindowDays(Number(customTrendWindowDays));
+    }
+    return trendWindowPreset;
+  }, [trendWindowPreset, customTrendWindowDays]);
   const {
     state: listState,
     setSearch,
@@ -118,6 +136,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
   } = useCustomersData(canFilterPortfolios ? sellerIdFilter : null, {
     sellerNameByKey,
     listState,
+    trendWindowDays,
   });
 
   const coverageCustomers = useMemo(
@@ -314,6 +333,40 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           aria-label="Tendência de faturamento da carteira"
           chips={trendChips}
         />
+        <CommercialFilterBarShell embedded ariaLabel="Janela da tendência de faturamento">
+          <CommercialSegmentToggle
+            ariaLabel={CM_HELP.customers.trendWindow}
+            idPrefix="customers-trend-window"
+            value={String(trendWindowPreset)}
+            onChange={(value) => {
+              if (value === "custom") {
+                setTrendWindowPreset("custom");
+                return;
+              }
+              const days = Number(value);
+              if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
+                setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
+              }
+            }}
+            options={[
+              ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
+                value: String(days),
+                label: `${days}d`,
+              })),
+              { value: "custom", label: "Custom" },
+            ]}
+          />
+          {trendWindowPreset === "custom" ? (
+            <CommercialTextField
+              label="Dias"
+              hint={CM_HELP.customers.trendWindowCustom}
+              type="number"
+              value={customTrendWindowDays}
+              onChange={setCustomTrendWindowDays}
+              placeholder="1–365"
+            />
+          ) : null}
+        </CommercialFilterBarShell>
         <CommercialFilterBarShell embedded ariaLabel="Busca e escopo da carteira">
           <CommercialTextField
             label="Buscar cliente"

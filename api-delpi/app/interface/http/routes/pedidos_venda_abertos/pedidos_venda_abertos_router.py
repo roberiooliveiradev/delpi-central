@@ -106,6 +106,12 @@ class EnrichCustomerRefBody(BaseModel):
 
 class EnrichCustomersBody(BaseModel):
     customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=200)
+    window_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=365,
+        description="Billing trend window in days (recent vs prior of same length). Presets 7/30/90; default 30.",
+    )
 
 
 class OpenOrderMetricsBody(BaseModel):
@@ -384,7 +390,7 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
         items = build_enrich_portfolio_customers_use_case().execute(
-            EnrichCustomersRequest(customers=pairs)
+            EnrichCustomersRequest(customers=pairs, window_days=body.window_days)
         )
         return api_delpi_success(
             {"items": [item.to_dict() for item in items]},

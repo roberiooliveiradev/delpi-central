@@ -39,8 +39,9 @@ export function customerAvatarUrl(code: string, store: string): string {
 export async function enrichPortfolioCustomers(
   customers: Array<{ customer_code: string; customer_store: string }>,
   signal?: AbortSignal,
+  options?: { windowDays?: number },
 ): Promise<CustomerEnrichmentItem[]> {
-  const items = await commercialEnrich(customers, signal);
+  const items = await commercialEnrich(customers, signal, options);
   return items as CustomerEnrichmentItem[];
 }
 
@@ -53,12 +54,13 @@ export type CustomerEnrichmentBatchPayload = {
 export async function enrichPortfolioCustomersBatched(
   customers: Array<{ customer_code: string; customer_store: string }>,
   signal?: AbortSignal,
+  options?: { windowDays?: number },
 ): Promise<CustomerEnrichmentBatchPayload> {
   const execution = await runDeterministicBatches(customers, {
     chunkSize: CUSTOMER_BATCH_SIZE,
     concurrency: CUSTOMER_BATCH_CONCURRENCY,
     signal,
-    execute: (batch) => enrichPortfolioCustomers([...batch], signal),
+    execute: (batch) => enrichPortfolioCustomers([...batch], signal, options),
   });
   const byKey = new Map<string, CustomerEnrichmentItem>();
   for (const batch of execution.batches) {

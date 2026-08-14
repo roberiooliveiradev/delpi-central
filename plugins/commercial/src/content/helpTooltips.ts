@@ -271,7 +271,10 @@ export const CM_HELP = {
     lateOrdersShortcut:
       "Abre Meus pedidos já filtrado em linhas com entrega atrasada (focus=late), sem novo dump TOTVS nesta tela.",
     filterTrend:
-      "Tendência de faturamento (últimos 6 meses vs. os 6 anteriores). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
+      "Tendência de faturamento (janela recente vs. a anterior de mesma duração). Combina com o foco operacional: um cliente em atenção pode estar em alta, estável ou queda.",
+    trendWindow:
+      "Janela da tendência: 7, 30 ou 90 dias (default 30), ou custom (1–365). Compara o período recente com o imediatamente anterior.",
+    trendWindowCustom: "Quantidade de dias da janela recente (1–365). A janela anterior tem a mesma duração.",
     sellerScope:
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     portfolioAudit:
@@ -288,7 +291,7 @@ export const CM_HELP = {
     tableColumns:
       "Escolha a ordem e as colunas exibidas. A preferência fica salva neste navegador.",
     trend:
-      "Comparamos o faturamento dos últimos 6 meses com o dos 6 meses anteriores. Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; entre −5% e +5%, estável. Sem histórico suficiente, a tendência fica indefinida.",
+      "Comparamos o faturamento da janela recente com a janela anterior de mesma duração (default 30 dias; configurável em 7/30/90/custom). Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; entre −5% e +5%, estável. Sem histórico suficiente, a tendência fica indefinida.",
     contacts:
       "Contatos da conta: cadastro TOTVS somente leitura e contatos locais da equipe comercial (CRUD + WhatsApp).",
     columns: {

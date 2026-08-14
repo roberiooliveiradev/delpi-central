@@ -328,11 +328,19 @@ export async function searchActiveCustomers(
 export async function enrichPortfolioCustomers(
   customers: Array<{ customer_code: string; customer_store: string }>,
   signal?: AbortSignal,
+  options?: { windowDays?: number },
 ): Promise<CustomerEnrichmentItem[]> {
   if (customers.length === 0) return [];
+  const body: {
+    customers: Array<{ customer_code: string; customer_store: string }>;
+    window_days?: number;
+  } = { customers };
+  if (options?.windowDays != null) {
+    body.window_days = options.windowDays;
+  }
   const response = await httpPost<ApiSuccessResponse<{ items?: CustomerEnrichmentItem[] }>>(
     commercialApiUrl("/customers/enrichment"),
-    { customers },
+    body,
     { signal },
   );
   const data = unwrapEnvelope(response, "Erro ao enriquecer clientes.");

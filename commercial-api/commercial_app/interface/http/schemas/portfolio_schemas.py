@@ -80,6 +80,12 @@ class EnrichmentBody(BaseModel):
         default_factory=list,
         max_length=200,
     )
+    window_days: int | None = Field(
+        default=None,
+        ge=1,
+        le=365,
+        description="Janela da tendência (dias); presets 7/30/90; default 30 no TOTVS.",
+    )
 
 
 class BillingSeriesBody(BaseModel):

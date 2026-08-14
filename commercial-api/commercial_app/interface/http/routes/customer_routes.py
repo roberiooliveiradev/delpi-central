@@ -136,6 +136,8 @@ def enrich_portfolio_customers(request: Request, body: EnrichmentBody = Body(...
                 for code, store in allowed_pairs
             ]
         }
+        if body.window_days is not None:
+            payload["window_days"] = body.window_days
         result = build_delpi_commercial_gateway().enrich_portfolio_customers(payload=payload)
         data = result.get("data", result)
         # api-delpi marca has_avatar pelo schema/arquivo legado PVA; o MFE baixa

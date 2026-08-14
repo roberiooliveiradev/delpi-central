@@ -56,9 +56,12 @@ export function useCustomersData(
   options?: {
     sellerNameByKey?: ReadonlyMap<string, string>;
     listState?: CustomersListState;
+    /** Janela da tendência de faturamento (dias); default 30. */
+    trendWindowDays?: number;
   },
 ): UseCustomersDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
+  const trendWindowDays = options?.trendWindowDays;
   const [items, setItems] = useState<OpenOrdersTotvsItem[]>([]);
   const [enrichmentByKey, setEnrichmentByKey] = useState<
     Record<
@@ -133,7 +136,9 @@ export function useCustomersData(
           try {
             setEnrichmentLoading(true);
             setEnrichmentError(null);
-            const enriched = await enrichPortfolioCustomersBatched(pairs, controller.signal);
+            const enriched = await enrichPortfolioCustomersBatched(pairs, controller.signal, {
+              windowDays: trendWindowDays,
+            });
             if (controller.signal.aborted) return;
             const map: typeof enrichmentByKey = {};
             const knownKeys = new Set<string>();
@@ -194,7 +199,7 @@ export function useCustomersData(
 
     void run();
     return () => controller.abort();
-  }, [reloadKey, sellerId]);
+  }, [reloadKey, sellerId, trendWindowDays]);
 
   const aggregation = useMemo(() => {
     if (!lastSuccessAt) return null;

@@ -646,7 +646,8 @@ describe("billingTrendPresentation", () => {
     assert.equal(mod.billingTrendSymbol("insufficient"), "");
     assert.match(mod.formatBillingTrendPct(10), /\+10/);
     assert.match(mod.formatBillingTrendPct(-8.5), /−|-|%/);
-    assert.match(mod.billingTrendTitle("up", 12), /últimos 6 meses/);
+    assert.match(mod.billingTrendTitle("up", 12), /últimos 30 dias/);
+    assert.match(mod.billingTrendTitle("up", 12, 7), /últimos 7 dias/);
   });
 });
 

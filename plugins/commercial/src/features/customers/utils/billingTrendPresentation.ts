@@ -24,8 +24,11 @@ export function formatBillingTrendPct(pct: number | null | undefined): string {
 export function billingTrendTitle(
   trend: BillingTrendDirection | null | undefined,
   pct: number | null | undefined,
+  windowDays?: number | null,
 ): string {
-  const base = "Comparação: últimos 6 meses com os 6 meses anteriores";
+  const days =
+    windowDays != null && Number.isFinite(windowDays) ? Math.trunc(windowDays) : 30;
+  const base = `Comparação: últimos ${days} dias com os ${days} dias anteriores`;
   if (!trend || trend === "insufficient") {
     return `${base}. Sem vendas suficientes para comparar.`;
   }
