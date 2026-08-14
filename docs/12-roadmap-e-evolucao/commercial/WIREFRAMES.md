@@ -757,24 +757,25 @@ Linha / card → `/administration/seller-portfolios/:id` (preserva `q`/`filter`/
 │ [Reativar|Inativar] [Transferir clientes] [Excluir permanente]         │
 └────────────────────────────────────────────────────────────────────────┘
 
-┌─ Membros ──────────────────────────────────────────────────────────────┐
+┌─ Usuários (N) ─────────────────────────────────────────────────────────┐
 │ (órfã) Banner: carteira sem responsável                                │
-│ UserDirectoryPicker · Adicionar responsável                            │
+│ UserDirectoryPicker [avatars] chips · [Adicionar selecionados]         │
 │ Empty: Sem responsável — 1º usuário vira owner                         │
 │ ─ ou, com membros ─                                                    │
-│ Usuário          Papel     Ações                                       │
-│ Ana Silva        owner     [Definir owner] (já é)                      │
-│ Pedro Costa      member    [Tornar owner] [Remover]                    │
-│ Lia Mendes       member    [Tornar owner] [Remover]                    │
+│ [avatar] Nome     Papel     Ações                                      │
+│ Ana Silva         owner     (já é responsável)                         │
+│ Pedro Costa       member    [Tornar responsável] [Remover]             │
+│ Lia Mendes        member    [Tornar responsável] [Remover]             │
 └────────────────────────────────────────────────────────────────────────┘
 
-┌─ Clientes na carteira ─────────────────────────────────────────────────┐
-│ Buscar cadastro [________]  hits · [Vincular]                          │
-│ Na carteira: empty / DataTable (código · loja · nome) · [Remover]      │
+┌─ Clientes ─────────────────────────────────────────────────────────────┐
+│ CustomerSearchPicker [avatars] chips · [Vincular selecionados]         │
+│ Vinculados: [☑] Código · [avatar] Nome · Cobertura · Remover           │
+│ Toolbar: N selecionados · [Desvincular selecionados]                   │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Regras:** mesma lista de clientes para todos os membros; trocar owner mantém membership N:N; remover membro não apaga clientes; picker de diretório filtra quem **não** tem app `commercial`.
+**Regras:** mesma lista de clientes para todos os membros; trocar owner mantém membership N:N; remover membro não apaga clientes; picker de diretório filtra quem **não** tem app `commercial`; vínculo/desvínculo de clientes e inclusão de usuários em **lote sequencial** (sem rota BFF bulk); já vinculados/membros ficam fora da seleção do picker.
 
 ### WF-05R-TEAM — Equipe
 

@@ -446,6 +446,7 @@ export function SellerPortfolioDetail({
               variant="primary"
               disabled={addingMembers || memberPicker.length === 0}
               onClick={() => onAddMembers(memberPicker.map((user) => user.id))}
+              title={CM_HELP.sellerPortfolios.addSelectedMembers}
             >
               {addingMembers
                 ? "Adicionando…"

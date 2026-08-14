@@ -433,7 +433,9 @@ export const CM_HELP = {
     members:
       "Usuários com acesso a esta carteira no Portal Comercial. Defina um responsável e inclua membros.",
     membersAdd:
-      "Busque e adicione usuários que já têm acesso ao Portal Comercial. O primeiro usuário vira responsável se a carteira ainda não tiver.",
+      "Busque até 10 usuários com acesso ao Portal Comercial. Já membros não entram na seleção; o primeiro usuário de uma carteira órfã vira responsável.",
+    addSelectedMembers:
+      "Inclui na carteira todos os usuários selecionados nos chips (até 10 por vez).",
     setOwner: "Define este usuário como responsável da carteira.",
     removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
     edit: "Altera o nome de exibição da carteira selecionada.",
