@@ -71,11 +71,13 @@ Probe: `api-delpi/scripts/sql/sc5_order_creator_probe.py`.
 | Capacidade | Onde | Notas |
 |------------|------|-------|
 | Faturamento / ROL no período | Visão geral `/overview`, Conta `?secao=historico` | Séries BFF analytics / billing |
-| **YoY** (mesmo período −1 ano) em ROL e conversão | Overview (Onda B) | Overlay sem rota nova |
+| **YoY** (mesmo período −1 ano) em ROL e conversão | Overview + Minha Carteira + Conta | Overlay sem rota nova (`periodShift`) |
+| **Share** carteira ÷ empresa | Overview + Minha Carteira | BFF `portfolio-billing-share` (RBAC) |
+| **Ranking** crescimento/queda | Minha Carteira | BFF `portfolio-billing-ranking` + Excel |
 | Carteira aberta + **gap vs meta** + buckets no tempo | Overview (`open-portfolio-horizon`) | Chips → deep link Meus pedidos |
 | Análise por **cliente** | Conta 360 + Minha Carteira | Pedidos, histórico, opp |
 | Escopo por **vendedor / carteira** | Filtro de escopo shell + Admin | Membership N:N |
-| Evolução / série por período (presets) | Overview + Conta | Presets MTD/YTD etc. |
+| Evolução / série por período (presets + N anos) | Overview + Minha Carteira + Conta | `PeriodCompareControls` até 3 anos |
 
 Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § Onda A/B · [WIREFRAMES.md](./WIREFRAMES.md) WF-OV.
 
