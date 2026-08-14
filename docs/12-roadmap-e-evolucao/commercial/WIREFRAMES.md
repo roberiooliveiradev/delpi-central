@@ -121,8 +121,10 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 ### WF-HERO-01R — Minha carteira
 
 ```text
-┌ Hero compact: título · 4 KPIs · Foco/Tendência/busca no body ─┐
-┌ Share / série / ranking — início visível ─────────────────────┐
+┌ Hero compact: título · KPIs + Share empresa % · Foco/Tendência/busca ─┐
+┌ [ Faturamento | Ranking | Clientes ]  ← SegmentToggle (?panel=) ──────┐
+│  um painel ativo (sem collapsible)                                    │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ### WF-HERO-05R — Admin Carteiras
