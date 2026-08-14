@@ -294,6 +294,7 @@ export function SellerPortfolioDetail({
           );
         },
       },
+      {
         key: "role",
         header: "Papel",
         headerHint: CM_HELP.sellerPortfolios.colMemberRole,
