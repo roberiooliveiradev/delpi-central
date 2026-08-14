@@ -227,6 +227,54 @@ _BODY_OVERRIDES: dict[str, Any] = {
         "import_format": "auto",
         "data": {"version": 1, "entities": {}},
     },
+    "create_meeting_minute": {
+        "unit_code": "01",
+        "title": "Ata smoke",
+        "meeting_type": "ordinary",
+        "meeting_date": "2026-01-15",
+        "agenda_html": "<p>agenda</p>",
+        "body_html": "<p>corpo</p>",
+        "decisions_html": "",
+        "pending_html": "",
+        "observations_html": "",
+        "participants": [],
+    },
+    "update_meeting_minute": {
+        "title": "Ata smoke atualizada",
+    },
+    "create_meeting_minute_version": {
+        "change_reason": "smoke",
+        "body_html": "<p>corpo v2</p>",
+    },
+    "replace_meeting_minute_participants": {
+        "participants": [
+            {
+                "display_name": "Participante Smoke",
+                "role_label": "membro",
+                "present": True,
+            }
+        ]
+    },
+    "replace_meeting_minute_signers": {
+        "signers": [
+            {
+                "display_name": "Signatário Smoke",
+                "signer_role": "member",
+                "sort_order": 1,
+            }
+        ]
+    },
+    "refuse_meeting_minute_signature": {"reason": "smoke refuse"},
+    "cancel_meeting_minute": {"reason": "smoke cancel"},
+    "refuse_public_meeting_minute_invite": {"reason": "smoke public refuse"},
+    "generate_meeting_minute_from_transcript": {
+        "unitCode": "01",
+        "meetingDate": "2026-01-15",
+        "title": "Ata gerada",
+        "transcriptHtml": "<p>transcricao smoke</p>",
+        "source": "smoke",
+    },
+    "update_my_signature_profile": {"display_name": "TM Test"},
 }
 
 _QUERY_OVERRIDES: dict[str, dict[str, str]] = {
@@ -344,6 +392,8 @@ def looks_binary_path(path: str) -> bool:
         or lower.endswith("/export")
         or lower.endswith("/export/package")
         or lower.endswith("/arquivo")
+        or lower.endswith(".pdf")
+        or lower.endswith("/image")
     )
 
 

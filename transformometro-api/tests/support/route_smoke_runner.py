@@ -23,6 +23,17 @@ _BINARY_OIDS = frozenset(
         "get_processo_decomposicao_export_csv",
         "download_processo_arquivo",
         "download_revisao_evidencia",
+        "export_meeting_minute_pdf",
+        "get_meeting_minute_signature_image",
+        "get_my_signature_image",
+    }
+)
+
+_MULTIPART_SIGN_OIDS = frozenset(
+    {
+        "sign_meeting_minute",
+        "sign_public_meeting_minute_invite",
+        "upload_my_signature_image",
     }
 )
 
@@ -45,12 +56,23 @@ def run_route_smoke(client, meta: dict[str, Any]) -> None:
         "attach_processo_arquivo",
         "import_package_preview",
         "import_package_apply",
+        *_MULTIPART_SIGN_OIDS,
     }:
         if oid.startswith("import_package"):
             kwargs["files"] = {
                 "file": ("smoke.tmbackup.zip", b"PK\x03\x04smoke", "application/zip"),
             }
             kwargs["data"] = {"mode": "merge", "import_format": "auto"}
+        elif oid in _MULTIPART_SIGN_OIDS:
+            field = "file" if oid == "upload_my_signature_image" else "signature"
+            kwargs["files"] = {
+                field: ("sig.png", b"\x89PNG\r\n\x1a\nsmoke", "image/png"),
+            }
+            if oid != "upload_my_signature_image":
+                kwargs["data"] = {
+                    "display_name_confirmed": "TM Test",
+                    "terms_accepted": "true",
+                }
         else:
             kwargs["data"] = {
                 "tipo": "link",

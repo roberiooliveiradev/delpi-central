@@ -22,6 +22,9 @@ _IDS = {
     "arquivo_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     "evidencia_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     "medicao_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "minute_id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    "signature_id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    "token": "smoke-public-sign-token",
 }
 
 _EMPTY_FLOW = {
@@ -181,8 +184,20 @@ class SmokeDouble:
                 "can_view_consolidated",
             }:
                 return True
-            if name in {"delete", "delete_file", "log", "save_escopo", "notify", "publish"}:
+            if name in {"delete", "delete_file", "log", "save_escopo", "notify", "publish", "_assert"}:
                 return True if name == "delete" else None
+            if name == "export_pdf":
+                return (b"%PDF-1.4 smoke", "ata-smoke.pdf")
+            if name in {"signature_image", "read_image"}:
+                return b"\x89PNG\r\n\x1a\nsmoke"
+            if name == "generate_from_transcript":
+                return {
+                    "agenda_html": "<p>agenda</p>",
+                    "body_html": "<p>corpo</p>",
+                    "decisions_html": "<p>decisoes</p>",
+                    "pending_html": "<p>pendencias</p>",
+                    "observations_html": "<p>obs</p>",
+                }
             if name == "save":
                 return "smoke.bin"
             if name == "resolve_file":
@@ -301,7 +316,15 @@ _ROUTE_MODULES = (
     "tm_app.interface.http.routes.decomposition_routes",
     "tm_app.interface.http.routes.collaboration_routes",
     "tm_app.interface.http.routes.transformometro_routes",
+    "tm_app.interface.http.routes.meeting_minutes_routes",
+    "tm_app.interface.http.routes.public_meeting_minutes_routes",
+    "tm_app.interface.http.routes.signature_profile_routes",
     "tm_app.interface.http.branch_access_http",
+)
+
+_SINGLETON_ATTRS = (
+    "service",
+    "kimi_gateway",
 )
 
 _NOTIFY_TARGETS = (
@@ -350,4 +373,7 @@ def universal_route_mocks() -> Iterator[None]:
                     if name.endswith(("_FIELDS", "_PATTERN", "_CACHE", "_LOCK")):
                         continue
                     stack.enter_context(patch.object(mod, name, _make_instance()))
+            for attr_name in _SINGLETON_ATTRS:
+                if hasattr(mod, attr_name) and not isinstance(getattr(mod, attr_name), type):
+                    stack.enter_context(patch.object(mod, attr_name, _make_instance()))
         yield

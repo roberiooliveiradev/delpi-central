@@ -34,8 +34,13 @@ from tm_app.interface.http.routes.decomposition_routes import router as decompos
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
+from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
 from tm_app.interface.http.routes.process_file_routes import router as processo_arquivo_router
+from tm_app.interface.http.routes.public_meeting_minutes_routes import (
+    public_router as public_meeting_minutes_router,
+)
 from tm_app.interface.http.routes.revision_evidence_routes import router as revisao_evidence_router
+from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 
 TEST_USER = SimpleNamespace(
@@ -80,4 +85,8 @@ def create_test_app() -> FastAPI:
     app.include_router(diagram_router)
     app.include_router(decomposition_router)
     app.include_router(collaboration_router)
+    # Paths EN canônicos (aliases PT `/atas` ficam só no app de produção).
+    app.include_router(meeting_minutes_router, prefix="/transformometro/meeting-minutes")
+    app.include_router(public_meeting_minutes_router, prefix="/public/meeting-minutes/sign-invites")
+    app.include_router(signature_profile_router)
     return app

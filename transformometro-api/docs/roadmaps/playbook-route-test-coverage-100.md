@@ -1,15 +1,15 @@
 # Playbook — cobertura de testes em 100% das rotas (transformometro-api)
 
-**Status:** concluído (jul/2026) — `gap=0`, `--check-complete` verde  
-**Baseline:** [`tm_app/content/openapi_baseline.json`](../../tm_app/content/openapi_baseline.json) (~123 ops)  
+**Status:** concluído (ago/2026) — `gap=0`, `--check-complete` verde (inclui atas/assinaturas)  
+**Baseline:** [`tm_app/content/openapi_baseline.json`](../../tm_app/content/openapi_baseline.json) (~149 ops)  
 **Inventário:** [`tm_app/content/route_test_coverage.json`](../../tm_app/content/route_test_coverage.json)  
 **Gate:** `python scripts/audit_route_test_coverage.py`  
 **CI:** [`.github/workflows/transformometro-api-routes.yml`](../../../.github/workflows/transformometro-api-routes.yml)
 
 | Métrica | Valor |
 |---------|-------|
-| Operações | 123 |
-| Covered | 123 |
+| Operações | 149 |
+| Covered | 149 |
 | Gap | 0 |
 | Exempt | 0 (WebSocket fora do baseline HTTP) |
 
@@ -82,7 +82,8 @@ PYTHONPATH=.:../shared python scripts/audit_route_test_coverage.py --check-compl
 | **2** | dashboard + integrations | `test_route_phase2_dashboard_smoke.py` |
 | **3** | diagrama + decomposição | `test_route_phase3_diagram_decomposition_smoke.py` |
 | **4** | evidência, arquivos, backup, colaboração | `test_route_phase4_files_backup_collab_smoke.py` |
-| **5** | CI `gap=0` | `.github/workflows/transformometro-api-routes.yml` |
+| **5** | atas, convites públicos, perfil de assinatura | `test_route_phase5_meeting_minutes_smoke.py` |
+| **CI** | `gap=0` | `.github/workflows/transformometro-api-routes.yml` |
 
 ## O que não fazer
 
