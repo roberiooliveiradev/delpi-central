@@ -134,6 +134,8 @@ class FakeLookups:
                 "carrier_name": "JADLOG",
                 "legal_name": "JADLOG LOGISTICA LTDA",
                 "tax_id": "12345678000199",
+                "address": "Av. Industrial, 100, Centro, Sao Paulo-SP, CEP 01001-000",
+                "phone": "(11) 3000-0000",
                 "blocked": False,
             },
             {
@@ -364,10 +366,34 @@ def test_create_snapshots_carrier_from_sa4(_stub_notifications) -> None:
     ).execute(_valid_payload(carrier_code="000001", carrier_name="x"), _creator())
     assert created["carrier_code"] == "000001"
     assert created["carrier_name"] == "JADLOG"
+    assert created["carrier_legal_name"] == "JADLOG LOGISTICA LTDA"
+    assert created["carrier_tax_id"] == "12345678000199"
+    assert created["carrier_address"] == "Av. Industrial, 100, Centro, Sao Paulo-SP, CEP 01001-000"
+    assert created["carrier_phone"] == "(11) 3000-0000"
     with pytest.raises(InvoiceIssuanceValidationError):
         CreateInvoiceIssuanceRequestUseCase(
             FakeRequests(), FakeLookups(), FakeSuppliers()
         ).execute(_valid_payload(carrier_code="000099"), _creator())
+
+
+def test_get_enriches_legacy_carrier_contact(_stub_notifications) -> None:
+    lookups = FakeLookups()
+    requests = FakeRequests()
+    created = CreateInvoiceIssuanceRequestUseCase(
+        requests, lookups, FakeSuppliers()
+    ).execute(_valid_payload(carrier_code="000001"), _creator())
+    stored = requests.rows[created["id"]]
+    stored["carrier_legal_name"] = None
+    stored["carrier_tax_id"] = None
+    stored["carrier_address"] = None
+    stored["carrier_phone"] = None
+    detail = GetInvoiceIssuanceRequestUseCase(requests, lookups).execute(
+        created["id"], _creator()
+    )
+    assert detail["request"]["carrier_name"] == "JADLOG"
+    assert detail["request"]["carrier_legal_name"] == "JADLOG LOGISTICA LTDA"
+    assert detail["request"]["carrier_phone"] == "(11) 3000-0000"
+    assert "Sao Paulo-SP" in (detail["request"]["carrier_address"] or "")
 
 
 def test_create_requires_totvs_party_and_derives_review(_stub_notifications) -> None:

@@ -6,6 +6,7 @@ type Props = {
   eyebrow?: string;
   actions?: ReactNode;
   meta?: ReactNode;
+  compact?: boolean;
 };
 
 const DELPI_LOGO_URL =
@@ -19,9 +20,10 @@ export function PageHeader({
   eyebrow = "DELPI · Faturamento",
   actions,
   meta,
+  compact = false,
 }: Props) {
   return (
-    <header className="ii-page-header">
+    <header className={compact ? "ii-page-header ii-page-header--compact" : "ii-page-header"}>
       <div className="ii-page-header__shell ii-card">
         <div className="ii-page-header__main">
           <div className="ii-page-header__brand">

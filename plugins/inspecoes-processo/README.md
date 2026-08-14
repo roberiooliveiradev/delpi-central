@@ -35,6 +35,16 @@ Abas (query):
 | Histórico | `?tab=historico` |
 | Auditoria | `?tab=auditoria` |
 
+Período da Visão Geral (query, compartilhavel):
+
+| Query | Efeito |
+|-------|--------|
+| `start_date` + `end_date` | Filtra KPIs e rankings pela data da medição (`YYYY-MM-DD`). Default: **este mês**. |
+| `period=all` | Todo o histórico (views pré-agregadas). |
+| Atalhos na UI | Este mês, 30 dias, 6 meses, 12 meses (máx. 12 meses) |
+
+O período não se aplica à Auditoria (filtro de um dia) nem ao Histórico (exige OP ou produto).
+
 ### Auditoria
 
 Lista apontamentos produtivos do dia e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador). Também distingue OP/operação **sem inspeção amarrada** (QPK + QP7/QP8 na revisão `QPK_REVI`).
@@ -52,7 +62,7 @@ Base HTTP: **`/apps/api-delpi/inspecoes-processo`**
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/resumo` | KPIs da filial |
+| GET | `/resumo` | KPIs da filial (`start_date`/`end_date` opcionais) |
 | GET | `/por-produto` | Ranking por produto |
 | GET | `/por-ensaiador` | Ranking por ensaiador |
 | GET | `/por-operacao` | Ranking por operação (API) |
@@ -96,6 +106,9 @@ src/
     DashboardPage.tsx
     HistoricoPage.tsx
     AuditoriaPage.tsx
+  components/PeriodFilters.tsx
+  utils/dateRange.ts
+  utils/periodQuery.ts
   hooks/useInspecoesProcessoAuditoria.ts
   components/AuditoriaTable.tsx
   utils/tabs.ts

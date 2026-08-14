@@ -120,4 +120,20 @@ describe("RequestDetailPage", () => {
     expect(screen.getAllByText("000111").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Iniciar atendimento" })).toBeTruthy();
   });
+
+  it("mostra contato da transportadora na ficha", async () => {
+    renderPage(
+      detail({
+        carrier_legal_name: "Mir Transp. Logistica LTDA",
+        carrier_tax_id: "03565095000189",
+        carrier_address: "Rodovia BR-470, 8220, Canta Galo, Rio do Sul-SC, CEP 89163-020",
+        carrier_phone: "(47) 3522-6972",
+      }),
+    );
+    await waitFor(() => expect(screen.getByTestId("issuance-sheet")).toBeTruthy());
+    expect(screen.getByText("Razão social")).toBeTruthy();
+    expect(screen.getByText("Mir Transp. Logistica LTDA")).toBeTruthy();
+    expect(screen.getByText("(47) 3522-6972")).toBeTruthy();
+    expect(screen.getByText(/Rio do Sul-SC/)).toBeTruthy();
+  });
 });

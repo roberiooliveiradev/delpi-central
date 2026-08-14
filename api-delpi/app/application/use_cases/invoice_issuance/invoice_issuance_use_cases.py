@@ -12,6 +12,10 @@ from app.application.services.invoice_issuance_portal_notification_service impor
     notify_request_returned,
     notify_request_cancelled,
 )
+from app.domain.services.invoice_issuance.carrier_contact import (
+    carrier_snapshot_fields,
+    enrich_request_carrier,
+)
 from app.domain.services.invoice_issuance.constants import (
     FREIGHT_MODES,
     INVOICE_TYPES,
@@ -350,16 +354,16 @@ def _resolve_carrier(lookups: Any, payload: dict[str, Any]) -> dict[str, Any]:
     code = str(payload.get("carrier_code") or "").strip() or None
     name = str(payload.get("carrier_name") or "").strip() or None
     if not code:
-        return {"carrier_code": None, "carrier_name": name}
+        return {
+            **carrier_snapshot_fields(None),
+            "carrier_name": name,
+        }
     carrier = lookups.get_carrier(carrier_code=code)
     if carrier is None:
         raise InvoiceIssuanceValidationError("Transportadora não encontrada no Protheus.")
     if carrier.get("blocked"):
         raise InvoiceIssuanceValidationError("Transportadora bloqueada não pode ser usada.")
-    return {
-        "carrier_code": carrier["carrier_code"],
-        "carrier_name": carrier["carrier_name"],
-    }
+    return carrier_snapshot_fields(carrier)
 
 
 class CreateInvoiceIssuanceRequestUseCase:
@@ -431,8 +435,9 @@ class ListInvoiceIssuanceRequestsUseCase:
 
 
 class GetInvoiceIssuanceRequestUseCase:
-    def __init__(self, requests: Any) -> None:
+    def __init__(self, requests: Any, lookups: Any | None = None) -> None:
         self._requests = requests
+        self._lookups = lookups
 
     def execute(self, request_id: str, actor: Actor) -> dict[str, Any]:
         request = self._requests.get_request(request_id)
@@ -441,6 +446,13 @@ class GetInvoiceIssuanceRequestUseCase:
         is_owner = request.get("created_by_user_id") == actor.user_id
         if not actor.can_view_all and not (actor.has_create and is_owner):
             raise InvoiceIssuanceForbiddenError("Sem permissão para consultar esta solicitação.")
+        code = str(request.get("carrier_code") or "").strip()
+        if code and self._lookups and not request.get("carrier_address"):
+            try:
+                live = self._lookups.get_carrier(carrier_code=code)
+            except Exception:
+                live = None
+            request = enrich_request_carrier(request, live)
         return {
             "request": request,
             "history": self._requests.list_history(request_id),

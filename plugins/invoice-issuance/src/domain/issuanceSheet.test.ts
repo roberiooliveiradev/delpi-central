@@ -81,8 +81,32 @@ describe("buildIssuanceSheet", () => {
     expect(carrier?.copyable).toBe(true);
   });
 
+  it("inclui razão, CNPJ, endereço e telefone da transportadora", () => {
+    const freight = buildIssuanceSheet(
+      request({
+        carrier_legal_name: "Mir Transp. Logistica LTDA",
+        carrier_tax_id: "03565095000189",
+        carrier_address: "Rodovia BR-470, 8220, Canta Galo, Rio do Sul-SC, CEP 89163-020",
+        carrier_phone: "(47) 3522-6972",
+      }),
+    ).find((section) => section.id === "freight");
+    const byLabel = Object.fromEntries((freight?.fields ?? []).map((field) => [field.label, field]));
+    expect(byLabel["Razão social"].value).toContain("Mir Transp");
+    expect(byLabel["CNPJ transportadora"].value).toBe("03565095000189");
+    expect(byLabel.Endereço.value).toContain("Rio do Sul-SC");
+    expect(byLabel.Telefone.value).toBe("(47) 3522-6972");
+  });
+
   it("omite complemento quando não há observação", () => {
     const sections = buildIssuanceSheet(request({ observation: null }));
     expect(sections.some((section) => section.id === "extras")).toBe(false);
+  });
+
+  it("não inclui situação na ficha (status fica no cabeçalho)", () => {
+    const sections = buildIssuanceSheet(request());
+    expect(sections.some((section) => section.id === "situation")).toBe(false);
+    expect(
+      sections.flatMap((section) => section.fields).some((field) => field.label === "Status"),
+    ).toBe(false);
   });
 });

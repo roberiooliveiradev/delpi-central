@@ -83,8 +83,10 @@ function seedCarrier(request: IssuanceRequest): Carrier | null {
   return {
     carrier_code: code,
     carrier_name: name,
-    legal_name: null,
-    tax_id: null,
+    legal_name: request.carrier_legal_name || null,
+    tax_id: request.carrier_tax_id || null,
+    address: request.carrier_address || null,
+    phone: request.carrier_phone || null,
     blocked: false,
   };
 }

@@ -79,7 +79,9 @@ def build_list_use_case() -> ListInvoiceIssuanceRequestsUseCase:
 
 
 def build_get_use_case() -> GetInvoiceIssuanceRequestUseCase:
-    return GetInvoiceIssuanceRequestUseCase(build_requests_repository())
+    return GetInvoiceIssuanceRequestUseCase(
+        build_requests_repository(), build_lookups()
+    )
 
 
 def build_update_returned_use_case() -> UpdateReturnedInvoiceIssuanceRequestUseCase:

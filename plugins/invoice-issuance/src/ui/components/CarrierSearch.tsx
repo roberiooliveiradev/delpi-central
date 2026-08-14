@@ -107,6 +107,8 @@ export function CarrierSearch({ selected, onSelect, disabled }: Props) {
         <p className="ii-selected" data-testid="carrier-selected">
           Selecionada: {selected.carrier_code ? `${selected.carrier_code} — ` : ""}
           {selected.carrier_name}
+          {selected.tax_id ? ` · ${formatTaxId(selected.tax_id)}` : ""}
+          {selected.phone ? ` · ${selected.phone}` : ""}
           <button
             type="button"
             className="ii-btn ii-btn--ghost ii-btn--sm"

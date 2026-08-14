@@ -86,6 +86,7 @@ export function FilialAppPage({ pathname, search }: FilialAppPageProps) {
           >
             <DashboardPage
               branch={branch}
+              search={search}
               active={activeTab === "overview"}
               refreshToken={refreshToken}
               onLoadingChange={setLoading}

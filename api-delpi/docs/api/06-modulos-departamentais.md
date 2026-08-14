@@ -456,7 +456,7 @@ Painel operacional de inspeção em processo (views TOTVS + auditoria apontament
 | GET | `/inspecoes-processo/historico/detalhe` | Medições da OP. |
 | GET | `/inspecoes-processo/auditoria-apontamentos` | Apontamentos com inspeção amarrada sem QPR. |
 
-Parâmetro comum: `branch` (`01` \| `02`). Escopo por filial validado no router.
+Parâmetro comum: `branch` (`01` \| `02`). KPIs aceitam `start_date`/`end_date` (data da medição; sem datas = histórico completo). Escopo por filial validado no router.
 
 Documentação completa: [inspecoes-processo.md](./inspecoes-processo.md) · auditoria: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
 

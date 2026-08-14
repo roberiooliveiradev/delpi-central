@@ -66,7 +66,12 @@ def test_inspecoes_processo_ranking_ensaio_returns_meta(
     assert meta.get("shape") == "list"
     assert isinstance(body.get("data"), list)
     assert body["data"][0]["filial"] == "01"
-    mock_use_case.execute.assert_called_once_with(branch="01", limit=10)
+    mock_use_case.execute.assert_called_once_with(
+        branch="01",
+        limit=10,
+        start_date=None,
+        end_date=None,
+    )
 
 
 @patch(

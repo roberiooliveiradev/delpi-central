@@ -16,7 +16,8 @@ SCHEMA = "invoice_issuance"
 
 _REQUEST_COLUMNS = """
     id, branch_code, party_type, party_code, party_store, party_name, tax_id,
-    invoice_type, invoice_type_other, freight_mode, carrier_code, carrier_name, weight_kg,
+    invoice_type, invoice_type_other, freight_mode, carrier_code, carrier_name,
+    carrier_legal_name, carrier_tax_id, carrier_address, carrier_phone, weight_kg,
     volume_count, purchase_order_number, observation, status, return_reason,
     checklist, created_by_user_id, created_by_name, assignee_user_id, assignee_name,
     cancelled_at, cancelled_by_user_id, cancelled_by_name, cancel_justification,
@@ -133,11 +134,13 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
                 INSERT INTO {SCHEMA}.invoice_issuance_requests (
                     branch_code, party_type, party_code, party_store, party_name, tax_id,
                     invoice_type, invoice_type_other, freight_mode, carrier_code, carrier_name,
+                    carrier_legal_name, carrier_tax_id, carrier_address, carrier_phone,
                     weight_kg, volume_count, purchase_order_number, observation,
                     status, checklist, created_by_user_id, created_by_name
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s
                 )
@@ -155,6 +158,10 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
                     request_fields["freight_mode"],
                     request_fields.get("carrier_code"),
                     request_fields.get("carrier_name"),
+                    request_fields.get("carrier_legal_name"),
+                    request_fields.get("carrier_tax_id"),
+                    request_fields.get("carrier_address"),
+                    request_fields.get("carrier_phone"),
                     request_fields["weight_kg"],
                     request_fields["volume_count"],
                     request_fields.get("purchase_order_number"),
@@ -336,6 +343,10 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
                        freight_mode = %s,
                        carrier_code = %s,
                        carrier_name = %s,
+                       carrier_legal_name = %s,
+                       carrier_tax_id = %s,
+                       carrier_address = %s,
+                       carrier_phone = %s,
                        weight_kg = %s,
                        volume_count = %s,
                        purchase_order_number = %s,
@@ -356,6 +367,10 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
                     request_fields["freight_mode"],
                     request_fields.get("carrier_code"),
                     request_fields.get("carrier_name"),
+                    request_fields.get("carrier_legal_name"),
+                    request_fields.get("carrier_tax_id"),
+                    request_fields.get("carrier_address"),
+                    request_fields.get("carrier_phone"),
                     request_fields["weight_kg"],
                     request_fields["volume_count"],
                     request_fields.get("purchase_order_number"),

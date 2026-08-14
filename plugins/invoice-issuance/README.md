@@ -12,10 +12,10 @@ Este plugin é **separado** do [Lançamento de Notas Fiscais](../lancamento-nota
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **MFE** `invoice-issuance` | Wizard de 6 etapas, fila, detalhe (ficha Protheus + ações) |
+| **MFE** `invoice-issuance` | Wizard de 6 etapas, fila, detalhe (ficha única com destinatário, transporte SA4 e itens) |
 | **api-delpi** `/invoice-issuance/*` | CRUD operacional + lookups TOTVS + RBAC por filial |
 | **postgres-plugins** | Schema `invoice_issuance` (solicitações, itens, histórico) |
-| **TOTVS** | Destinatário `SA1`/`SA2`; itens `SB1`; saldo informativo `SB2` local `01`; PV em aberto do cliente; transportadora `SA4` (`A4_NREDUZ`) |
+| **TOTVS** | Destinatário `SA1`/`SA2`; itens `SB1`; saldo informativo `SB2` local `01`; PV em aberto do cliente; transportadora `SA4` (nome de uso, razão, CNPJ, endereço, telefone) |
 
 ```text
 Portal → /apps/invoice-issuance/filial-0x
@@ -46,7 +46,7 @@ Gateway → /apps/api-delpi/invoice-issuance/*
 |------|----------|
 | Fila | Lista + filtros |
 | Nova / Corrigir | Wizard de 6 etapas |
-| Detalhe | Ficha de lançamento (código/loja do destinatário, PV, itens) + ações no topo + histórico |
+| Detalhe | Um card compacto (destinatário, tipo/PV, frete + contato da transportadora, peso/volumes, itens) + ações no topo; histórico recolhido |
 
 | Rota | Permissão de menu |
 |------|-------------------|

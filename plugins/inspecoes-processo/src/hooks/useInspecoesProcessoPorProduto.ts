@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getPorProduto } from "../api/inspecoesProcessoApi";
 import type { InspecoesProcessoPorProdutoItem } from "../types/api";
+import type { DashboardKpiPeriod } from "./useInspecoesProcessoResumo";
 
 export const POR_PRODUTO_LIMIT = 10;
 
@@ -15,17 +16,26 @@ type UseInspecoesProcessoPorProdutoResult = {
 export function useInspecoesProcessoPorProduto(
   branch: string,
   refreshToken = 0,
+  period?: DashboardKpiPeriod,
 ): UseInspecoesProcessoPorProdutoResult {
   const [items, setItems] = useState<InspecoesProcessoPorProdutoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const startDate = period?.startDate;
+  const endDate = period?.endDate;
+  const enabled = period?.enabled ?? true;
 
   const reload = useCallback(() => {
     setReloadKey((value) => value + 1);
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     async function run() {
@@ -34,7 +44,12 @@ export function useInspecoesProcessoPorProduto(
       setItems([]);
 
       try {
-        const ranking = await getPorProduto(branch, POR_PRODUTO_LIMIT, controller.signal);
+        const ranking = await getPorProduto(branch, {
+          limit: POR_PRODUTO_LIMIT,
+          start_date: startDate,
+          end_date: endDate,
+          signal: controller.signal,
+        });
         if (controller.signal.aborted) return;
         setItems(Array.isArray(ranking) ? ranking.slice(0, POR_PRODUTO_LIMIT) : []);
         setError(null);
@@ -56,7 +71,7 @@ export function useInspecoesProcessoPorProduto(
     return () => {
       controller.abort();
     };
-  }, [branch, reloadKey, refreshToken]);
+  }, [branch, reloadKey, refreshToken, startDate, endDate, enabled]);
 
   return { items, loading, error, reload };
 }

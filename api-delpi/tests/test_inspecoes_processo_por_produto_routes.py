@@ -67,7 +67,12 @@ def test_inspecoes_processo_por_produto_returns_meta(
     assert meta.get("shape") == "list"
     assert isinstance(body.get("data"), list)
     assert body["data"][0]["codigo_produto"] == "50232464"
-    mock_use_case.execute.assert_called_once_with(branch="01", limit=10)
+    mock_use_case.execute.assert_called_once_with(
+        branch="01",
+        limit=10,
+        start_date=None,
+        end_date=None,
+    )
 
 
 @patch(

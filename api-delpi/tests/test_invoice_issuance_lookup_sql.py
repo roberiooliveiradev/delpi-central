@@ -8,6 +8,9 @@ from app.domain.totvs.protheus_warehouses import WAREHOUSE_ALMOXARIFADO
 from app.infrastructure.persistence.totvs.customer_repositories.customer_repository import (
     CustomerRepository,
 )
+from app.infrastructure.persistence.totvs.invoice_issuance_repositories import (
+    totvs_invoice_issuance_lookup_repository as lookup_mod,
+)
 from app.infrastructure.persistence.totvs.invoice_issuance_repositories.totvs_invoice_issuance_lookup_repository import (
     TotvsInvoiceIssuanceLookupRepository,
 )
@@ -33,11 +36,16 @@ def test_product_search_uses_sb1() -> None:
 
 
 def test_carrier_search_uses_sa4_nreduz() -> None:
-    source = inspect.getsource(TotvsInvoiceIssuanceLookupRepository.search_carriers)
-    assert "SA4010" in source
-    assert "A4_NREDUZ" in source
-    assert "A4_COD" in source
-    assert "A4_CGC" in source
+    source = inspect.getsource(lookup_mod)
+    method = inspect.getsource(TotvsInvoiceIssuanceLookupRepository.search_carriers)
+    assert "SA4010" in method
+    assert "A4_NREDUZ" in method
+    assert "A4_COD" in method
+    assert "A4_CGC" in method
+    assert "A4_END" in source
+    assert "A4_TEL" in source
+    assert "A4_DDD" in source
+    assert "A4_MSBLQL" not in source
 
 
 def test_warehouse_balance_uses_almoxarifado_01() -> None:

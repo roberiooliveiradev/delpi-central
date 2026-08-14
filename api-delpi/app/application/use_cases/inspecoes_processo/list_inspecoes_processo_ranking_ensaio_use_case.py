@@ -9,6 +9,10 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_ranking_ensaio_re
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.quality.inspecoes_processo.inspecoes_processo_period import (
+    period_repository_kwargs,
+    resolve_optional_period,
+)
 from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
     normalize_optional_branch,
 )
@@ -89,12 +93,16 @@ class ListInspecoesProcessoRankingEnsaioUseCase:
         *,
         branch: str | None,
         limit: int = DEFAULT_LIMIT,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[InspecoesProcessoRankingEnsaioItemResponse]:
         normalized_branch = normalize_optional_branch(branch)
+        start_date, end_date = resolve_optional_period(start_date, end_date)
 
         resolved_limit = min(max(int(limit), 1), MAX_LIMIT)
         rows = self._repository.list_ranking_ensaio_by_branch(
             normalized_branch,
             limit=resolved_limit,
+            **period_repository_kwargs(start_date, end_date),
         )
         return [_normalize_item(row, normalized_branch) for row in rows]

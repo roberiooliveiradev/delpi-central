@@ -15,7 +15,7 @@ Fila de **solicitação de emissão** de NF (saída) para o Faturamento. Destina
 
 Plugin: `plugins/invoice-issuance` · Roadmap: [docs/12-roadmap-e-evolucao/invoice-issuance/](../../../docs/12-roadmap-e-evolucao/invoice-issuance/).
 
-**Persistência:** schema Postgres `invoice_issuance` (migrations `V001`–`V003` em `api-delpi/migrations/plugins/invoice-issuance/`). Aplicar **somente** com `up` — nunca `reset` em produção.
+**Persistência:** schema Postgres `invoice_issuance` (migrations `V001`–`V004` em `api-delpi/migrations/plugins/invoice-issuance/`). Aplicar **somente** com `up` — nunca `reset` em produção.
 
 ## Rotas
 
@@ -44,7 +44,7 @@ Query `parties`: `party_type=customer|supplier`, `query` (mín. 2 caracteres —
 
 Query `open-sales-orders`: `branch` (`01`/`02`), `party_code` e `party_store` do **cliente** (SA1). Retorna pedidos agrupados com linhas em saldo (`saldo > 0`) só da filial do wizard. Sem membership comercial / PVA.
 
-Query `carriers`: `query` (mín. 2 caracteres — código `A4_COD`, nome reduzido `A4_NREDUZ`, razão `A4_NOME` ou CNPJ). Nome de uso = `A4_NREDUZ`. Bloqueadas (`MSBLQL=1`) vêm na lista mas não são selecionáveis. Transportadora é opcional.
+Query `carriers`: `query` (mín. 2 caracteres — código `A4_COD`, nome reduzido `A4_NREDUZ`, razão `A4_NOME` ou CNPJ). Nome de uso = `A4_NREDUZ`. A `SA4` Delpi não tem `MSBLQL` — só `D_E_L_E_T_`. Transportadora é opcional.
 
 Query `requests`: `branch` obrigatório (`01`/`02`); `status` (`open` = pending/in_progress/returned); `invoice_type`; `q`.
 
@@ -71,7 +71,7 @@ Deep link: `/apps/invoice-issuance/filial-0x?requestId={id}`. Categoria Core: `i
 - Itens: `SB1` (permissão do plugin, não `ENGINEERING_LMP_ACCESS`)
 - Saldo informativo: `SB2` `B2_LOCAL = 01` (almoxarifado). Não bloqueia o envio.
 - Pedidos de venda em aberto: view `VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES` (mesmo lookup TOTVS da conta 360, **sem** carteira). Só para destinatário cliente; filtrado pela filial da solicitação.
-- Transportadoras: `SA4` (`A4_COD`, nome de uso `A4_NREDUZ`, fallback `A4_NOME`). Ver [padroes-totvs/transportadora.md](./padroes-totvs/transportadora.md).
+- Transportadoras: `SA4` (`A4_COD`, nome de uso `A4_NREDUZ`, razão `A4_NOME`, CNPJ, endereço e telefone). Snapshot gravado na solicitação para a ficha do Faturamento. Ver [padroes-totvs/transportadora.md](./padroes-totvs/transportadora.md).
 
 ## Migrations
 

@@ -5,8 +5,26 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.domain.services.invoice_issuance.carrier_contact import (
+    format_carrier_address,
+    format_carrier_phone,
+)
 from app.domain.totvs.protheus_warehouses import WAREHOUSE_ALMOXARIFADO
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+
+_CARRIER_SELECT = """
+                RTRIM(SA4.A4_COD) AS carrier_code,
+                RTRIM(SA4.A4_NREDUZ) AS carrier_short_name,
+                RTRIM(SA4.A4_NOME) AS legal_name,
+                RTRIM(SA4.A4_CGC) AS tax_id,
+                RTRIM(SA4.A4_END) AS address_street,
+                RTRIM(SA4.A4_BAIRRO) AS address_district,
+                RTRIM(SA4.A4_MUN) AS address_city,
+                RTRIM(SA4.A4_EST) AS address_state,
+                RTRIM(SA4.A4_CEP) AS address_zip,
+                RTRIM(SA4.A4_DDD) AS phone_area,
+                RTRIM(SA4.A4_TEL) AS phone
+"""
 
 
 class TotvsInvoiceIssuanceLookupRepository(BaseRepository):
@@ -165,11 +183,7 @@ class TotvsInvoiceIssuanceLookupRepository(BaseRepository):
             params.append(f"%{digits}%")
         sql = f"""
             SELECT TOP ({limit})
-                RTRIM(SA4.A4_COD) AS carrier_code,
-                RTRIM(SA4.A4_NREDUZ) AS carrier_short_name,
-                RTRIM(SA4.A4_NOME) AS legal_name,
-                RTRIM(SA4.A4_CGC) AS tax_id,
-                RTRIM(SA4.A4_MSBLQL) AS msblql
+                {_CARRIER_SELECT}
             FROM SA4010 SA4 WITH (NOLOCK)
             WHERE SA4.D_E_L_E_T_ = ''
               AND ({" OR ".join(or_parts)})
@@ -183,13 +197,9 @@ class TotvsInvoiceIssuanceLookupRepository(BaseRepository):
         code = (carrier_code or "").strip()
         if not code:
             return None
-        sql = """
+        sql = f"""
             SELECT TOP 1
-                RTRIM(SA4.A4_COD) AS carrier_code,
-                RTRIM(SA4.A4_NREDUZ) AS carrier_short_name,
-                RTRIM(SA4.A4_NOME) AS legal_name,
-                RTRIM(SA4.A4_CGC) AS tax_id,
-                RTRIM(SA4.A4_MSBLQL) AS msblql
+                {_CARRIER_SELECT}
             FROM SA4010 SA4 WITH (NOLOCK)
             WHERE SA4.D_E_L_E_T_ = ''
               AND RTRIM(SA4.A4_COD) = ?
@@ -219,7 +229,18 @@ def _map_carrier_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "carrier_code": str(row.get("carrier_code") or "").strip(),
         "carrier_name": short_name or legal_name,
-        "legal_name": legal_name,
+        "legal_name": legal_name or None,
         "tax_id": tax_id or None,
-        "blocked": str(row.get("msblql") or "").strip() == "1",
+        "address": format_carrier_address(
+            street=str(row.get("address_street") or ""),
+            district=str(row.get("address_district") or ""),
+            city=str(row.get("address_city") or ""),
+            state=str(row.get("address_state") or ""),
+            zip_code=str(row.get("address_zip") or ""),
+        ),
+        "phone": format_carrier_phone(
+            ddd=str(row.get("phone_area") or ""),
+            phone=str(row.get("phone") or ""),
+        ),
+        "blocked": False,
     }

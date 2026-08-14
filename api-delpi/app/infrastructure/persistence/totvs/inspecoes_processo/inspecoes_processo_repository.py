@@ -15,6 +15,13 @@ from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_
     build_qpk_for_ops_sql,
     build_qpr_for_ops_sql,
 )
+from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_period_sql import (
+    build_por_ensaiador_period_sql,
+    build_por_operacao_period_sql,
+    build_por_produto_period_sql,
+    build_ranking_ensaio_period_sql,
+    build_resumo_period_sql,
+)
 
 RESUMO_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_resumo_filial"
 RANKING_ENSAIO_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_ranking_ensaio"
@@ -630,8 +637,27 @@ def _normalize_op_key(value: object) -> str:
     return str(value).strip()
 
 
+def _has_period(start_date: str | None, end_date: str | None) -> bool:
+    return bool(start_date or end_date)
+
+
 class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPort):
-    def get_resumo_by_branch(self, branch: str) -> dict | None:
+    def get_resumo_by_branch(
+        self,
+        branch: str,
+        *,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict | None:
+        if _has_period(start_date, end_date):
+            sql, params = build_resumo_period_sql(
+                branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            with self:
+                return self.execute_one(sql, tuple(params))
+
         branch_clause, params = _where_branch("Filial", branch)
         with self:
             if not is_all_branches(branch):
@@ -691,7 +717,19 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         branch: str,
         *,
         limit: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[dict]:
+        if _has_period(start_date, end_date):
+            sql, params = build_ranking_ensaio_period_sql(
+                branch,
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit,
+            )
+            with self:
+                return self.execute_query(sql, tuple(params))
+
         branch_clause, params = _where_branch("Filial", branch)
         params.append(limit)
         with self:
@@ -711,7 +749,19 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         branch: str,
         *,
         limit: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[dict]:
+        if _has_period(start_date, end_date):
+            sql, params = build_por_produto_period_sql(
+                branch,
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit,
+            )
+            with self:
+                return self.execute_query(sql, tuple(params))
+
         branch_clause, params = _where_branch("Filial", branch)
         params.append(limit)
         with self:
@@ -731,7 +781,19 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         branch: str,
         *,
         limit: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[dict]:
+        if _has_period(start_date, end_date):
+            sql, params = build_por_operacao_period_sql(
+                branch,
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit,
+            )
+            with self:
+                return self.execute_query(sql, tuple(params))
+
         branch_clause, params = _where_branch("Filial", branch)
         params.append(limit)
         with self:
@@ -751,7 +813,19 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         branch: str,
         *,
         limit: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[dict]:
+        if _has_period(start_date, end_date):
+            sql, params = build_por_ensaiador_period_sql(
+                branch,
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit,
+            )
+            with self:
+                return self.execute_query(sql, tuple(params))
+
         branch_clause, params = _where_branch("Filial", branch)
         params.append(limit)
         with self:

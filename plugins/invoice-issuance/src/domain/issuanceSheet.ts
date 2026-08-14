@@ -1,11 +1,6 @@
 import { branchLabel } from "../constants/branch";
 import { II_SHEET } from "../content/helpTooltips";
-import {
-  freightModeLabel,
-  invoiceTypeLabel,
-  partyTypeLabel,
-  statusLabel,
-} from "./status";
+import { freightModeLabel, invoiceTypeLabel, partyTypeLabel } from "./status";
 import type { IssuanceItem, IssuanceRequest } from "./types";
 
 export type IssuanceSheetField = {
@@ -35,6 +30,12 @@ export function uniqueSalesOrders(items: IssuanceItem[]): string {
   return orders.join(", ");
 }
 
+function optionalField(
+  field: IssuanceSheetField,
+): IssuanceSheetField | null {
+  return field.value ? field : null;
+}
+
 export function buildIssuanceSheet(request: IssuanceRequest): IssuanceSheetSection[] {
   const salesOrders = uniqueSalesOrders(request.items);
   const invoiceType =
@@ -45,6 +46,56 @@ export function buildIssuanceSheet(request: IssuanceRequest): IssuanceSheetSecti
     request.carrier_code || request.carrier_name
       ? [request.carrier_code, request.carrier_name].filter(Boolean).join(" — ")
       : "";
+
+  const freightFields = [
+    {
+      label: "Frete",
+      value: freightModeLabel(request.freight_mode),
+      hint: II_SHEET.hints.freightMode,
+    },
+    {
+      label: "Transportadora",
+      value: carrier,
+      hint: II_SHEET.hints.carrier,
+      copyable: Boolean(request.carrier_code),
+      copyValue: request.carrier_code || undefined,
+    },
+    optionalField({
+      label: "Razão social",
+      value: request.carrier_legal_name || "",
+      hint: II_SHEET.hints.carrierLegal,
+    }),
+    optionalField({
+      label: "CNPJ transportadora",
+      value: request.carrier_tax_id || "",
+      hint: II_SHEET.hints.carrierTaxId,
+      copyable: Boolean(request.carrier_tax_id),
+      format: "taxId",
+    }),
+    optionalField({
+      label: "Endereço",
+      value: request.carrier_address || "",
+      hint: II_SHEET.hints.carrierAddress,
+      wide: true,
+    }),
+    optionalField({
+      label: "Telefone",
+      value: request.carrier_phone || "",
+      hint: II_SHEET.hints.carrierPhone,
+      copyable: Boolean(request.carrier_phone),
+    }),
+    {
+      label: "Peso (kg)",
+      value: String(request.weight_kg ?? ""),
+      hint: II_SHEET.hints.weight,
+      format: "quantity",
+    },
+    {
+      label: "Volumes",
+      value: String(request.volume_count ?? ""),
+      hint: II_SHEET.hints.volumes,
+    },
+  ].filter((field): field is IssuanceSheetField => field != null);
 
   return [
     {
@@ -95,31 +146,7 @@ export function buildIssuanceSheet(request: IssuanceRequest): IssuanceSheetSecti
     {
       id: "freight",
       title: II_SHEET.freight,
-      fields: [
-        {
-          label: "Frete",
-          value: freightModeLabel(request.freight_mode),
-          hint: II_SHEET.hints.freightMode,
-        },
-        {
-          label: "Transportadora",
-          value: carrier,
-          hint: II_SHEET.hints.carrier,
-          copyable: Boolean(request.carrier_code),
-          copyValue: request.carrier_code || undefined,
-        },
-        {
-          label: "Peso (kg)",
-          value: String(request.weight_kg ?? ""),
-          hint: II_SHEET.hints.weight,
-          format: "quantity",
-        },
-        {
-          label: "Volumes",
-          value: String(request.volume_count ?? ""),
-          hint: II_SHEET.hints.volumes,
-        },
-      ],
+      fields: freightFields,
     },
     ...(request.observation
       ? [
@@ -136,14 +163,5 @@ export function buildIssuanceSheet(request: IssuanceRequest): IssuanceSheetSecti
           },
         ]
       : []),
-    {
-      id: "situation",
-      title: II_SHEET.situation,
-      fields: [
-        { label: "Status", value: statusLabel(request.status) },
-        { label: "Solicitante", value: request.created_by_name },
-        { label: "Responsável", value: request.assignee_name || "" },
-      ],
-    },
   ];
 }

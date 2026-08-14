@@ -13,6 +13,7 @@ Parâmetro comum:
 | Parâmetro | Descrição |
 |---|---|
 | `branch` | Filial `all` \| `01` \| `02` (opcional nas listagens/KPI; `01`\|`02` obrigatório em `/historico/detalhe`) |
+| `start_date` / `end_date` | Período das **medições** (`YYYY-MM-DD`). Sem datas, KPIs usam as views pré-agregadas (histórico completo). Com datas, agrega `historico_tela` (janela máxima 12 meses). Aliases legado: `data_inicio` / `data_fim`. |
 
 Plugin consumidor: `plugins/inspecoes-processo` · Auditoria: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
 
@@ -30,6 +31,19 @@ Plugin consumidor: `plugins/inspecoes-processo` · Auditoria: [ESPECIFICACAO-AUD
 | GET | `/inspecoes-processo/historico` | `paged_list` | Histórico por OP (janela de 12 meses) |
 | GET | `/inspecoes-processo/historico/detalhe` | `object` | Detalhe/medições da OP |
 | GET | `/inspecoes-processo/auditoria-apontamentos` | `paged_list` | Apontamentos com inspeção amarrada sem QPR |
+
+---
+
+## GET `/inspecoes-processo/resumo`
+
+**Query:** `branch` · `start_date` · `end_date` (opcionais)
+
+Sem período: KPIs da view `vw_minha_delpi_inspecoes_processo_resumo_filial` (todo o histórico).  
+Com período: agregação em `historico_tela` filtrada por `Data_Medicao_Date` (SARGable, `NOLOCK`). `start_date` não anterior aos últimos 12 meses.
+
+**`meta.operationId`:** `get_inspecoes_processo_resumo`
+
+O mesmo par `start_date`/`end_date` vale para `/por-produto`, `/por-ensaiador`, `/por-operacao` e `/ranking-ensaio`.
 
 ---
 

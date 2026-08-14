@@ -73,6 +73,18 @@ export function FieldLabel(props: { label: string; hint?: string; htmlFor?: stri
   return createElement("label", { htmlFor: props.htmlFor }, props.label);
 }
 
+export function IconButton(props: {
+  children?: ReactNode;
+  "aria-label": string;
+  onClick?: () => void;
+}) {
+  return createElement(
+    "button",
+    { type: "button", "aria-label": props["aria-label"], onClick: props.onClick },
+    props.children,
+  );
+}
+
 export function NativeCheckboxControl(props: {
   label?: string;
   checked?: boolean;
