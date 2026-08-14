@@ -923,7 +923,13 @@
   font-size: var(--cm-font-sm, 0.875rem);
   color: var(--cm-muted, var(--muted, #64748b));
   line-height: 1.4;
-  flex: 1 1 12rem;
+  flex: 0 0 auto;
+}
+
+.dashboard-commercial .cm-rol-series > .cm-chart-view-shell,
+.dashboard-commercial .cm-rol-series > .delpi-ui-chart-view-shell {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .dashboard-commercial .cm-rol-series__toolbar {
