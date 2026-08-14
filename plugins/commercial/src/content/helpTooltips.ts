@@ -642,3 +642,6 @@ export const CM_HELP = {
 
 /** Alias estável usado na coluna Tendência da carteira. */
 export const BILLING_TREND_HELP = CM_HELP.customers.trend;
+
+/** Alias estável do help do share carteira÷empresa. */
+export const PORTFOLIO_BILLING_SHARE_HELP = CM_HELP.customers.portfolioBillingShare;

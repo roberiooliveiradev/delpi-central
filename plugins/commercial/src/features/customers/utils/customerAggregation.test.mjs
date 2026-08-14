@@ -462,8 +462,13 @@ describe("CustomersPage estrutural", () => {
     assert.match(page, /SellerScopeFilter/);
     assert.doesNotMatch(page, /CustomerSummaryCards/);
     assert.ok(
+      page.indexOf("<PortfolioBillingShareCard") < page.indexOf("<CustomerBillingSeriesChart"),
+    );
+    assert.ok(
       page.indexOf("<CustomerBillingSeriesChart") < page.indexOf("<CustomersTable"),
     );
+    assert.match(page, /PortfolioBillingShareCard/);
+    assert.doesNotMatch(page, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     for (const focus of ["all", "attention", "active", "no_sale_60"]) {
       assert.match(page, new RegExp(`id: "${focus}"`));
     }
