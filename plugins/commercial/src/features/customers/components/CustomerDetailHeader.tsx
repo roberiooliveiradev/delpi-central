@@ -36,6 +36,8 @@ type CustomerDetailHeaderProps = {
   notFound?: boolean;
   onBack: () => void;
   backHref: string;
+  /** Rótulo do Path (default Minha carteira). */
+  backLabel?: string;
   onReload: () => void;
   onScheduleFollowUp?: () => void;
   canViewProposals?: boolean;
@@ -86,6 +88,7 @@ export function CustomerDetailHeader({
   notFound = false,
   onBack,
   backHref,
+  backLabel = "Minha carteira",
   onReload,
   onScheduleFollowUp,
   canViewProposals = false,
@@ -148,7 +151,7 @@ export function CustomerDetailHeader({
     <div className="cm-customer-detail-header">
       <CommercialPagePath
         back={{
-          label: "Minha carteira",
+          label: backLabel,
           href: backHref,
           onNavigate: (event) => {
             event.preventDefault();

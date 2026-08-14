@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginPath, navigatePluginView } from "../../../app/pluginNavigation";
+import { resolvePagePathBack } from "../../../app/commercialNavigationReturn";
 import {
   CommercialActionButton,
   CommercialLoadingCard,
@@ -159,11 +160,17 @@ export function CustomerDetailPage({
     fetchPolicy.activities,
   );
 
+  const listBackHref = buildCustomersListPath(basePath, listDeepLink, sellerAccess);
+  const pathSearch =
+    typeof window !== "undefined" ? window.location.search : search;
+  const pageBack = resolvePagePathBack(
+    pathSearch,
+    { href: listBackHref, label: "Minha carteira" },
+    basePath,
+  );
+
   const goBack = () => {
-    const currentSearch =
-      typeof window !== "undefined" ? window.location.search : search;
-    const deepLink = parseCustomersListDeepLink(currentSearch, sellerAccess);
-    navigatePluginPath(buildCustomersListPath(basePath, deepLink, sellerAccess));
+    navigatePluginPath(pageBack.href);
   };
   const showInitialLoading = loading && !customer;
   const canScheduleFollowUp = canViewWorklist && canManageFollowups;
@@ -202,7 +209,8 @@ export function CustomerDetailPage({
         refreshing={refreshing}
         loading={loading}
         onBack={goBack}
-        backHref={buildCustomersListPath(basePath, listDeepLink, sellerAccess)}
+        backHref={pageBack.href}
+        backLabel={pageBack.label}
         onReload={refreshActiveSection}
         onScheduleFollowUp={scheduleFollowUp}
         canViewProposals={canViewProposals}
