@@ -10,3 +10,4 @@ export * from "./valuesEqual";
 export * from "./chartSeriesWindow";
 export * from "./suggestChartGranularity";
 export * from "./tableFontSizePreferences";
+export * from "./linearTrendSeries";
