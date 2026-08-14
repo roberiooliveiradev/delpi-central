@@ -322,6 +322,14 @@ export {
   type PageHeroProps,
 } from "./PageHero";
 export {
+  MetricStrip,
+  createDashboardMetricStrip,
+  metricStripBemClasses,
+  type DashboardMetricStripProps,
+  type MetricStripClassNames,
+  type MetricStripProps,
+} from "./MetricStrip";
+export {
   ViewTransition,
   createDashboardViewTransition,
   viewTransitionBemClasses,

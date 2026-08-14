@@ -41,6 +41,7 @@ import {
   createHostContainedModalShell,
   dateFieldBemClasses,
   createDashboardPageHero,
+  createDashboardMetricStrip,
   createDashboardPagePath,
   createDashboardDataRecordCard,
   ExcelExportButton,
@@ -190,6 +191,7 @@ export function CommercialPageHero(
 ) {
   return createElement(CommercialPageHeroBase, { density: "compact", ...props });
 }
+export const CommercialMetricStrip = createDashboardMetricStrip({ prefix: UI_PREFIX });
 export const CommercialStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const CommercialPagePath = createDashboardPagePath({
   prefix: UI_PREFIX,
