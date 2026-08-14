@@ -114,7 +114,9 @@ export function PeriodCompareControls({
             onCompareYearsChange(checked ? clampCompareYears(Math.max(compareYears, 1)) : 0)
           }
           label={ANALYTICS_CONTENT.overview.comparePriorYear}
-          hint={yoyHint}
+          hint={typeof yoyHint === "string" ? yoyHint : undefined}
+          hintPlacement="tooltip"
+          hintAriaLabel="Ajuda: comparar ano anterior"
           disabled={disabled}
         />
         <NativeCheckboxControl
@@ -131,6 +133,8 @@ export function PeriodCompareControls({
           }
           label="+2 anos"
           hint="Sobrepõe também o período deslocado −2 anos."
+          hintPlacement="tooltip"
+          hintAriaLabel="Ajuda: +2 anos"
           disabled={disabled || !yoyActive}
         />
         <NativeCheckboxControl
@@ -143,6 +147,8 @@ export function PeriodCompareControls({
           }
           label="+3 anos"
           hint="Sobrepõe também o período deslocado −3 anos."
+          hintPlacement="tooltip"
+          hintAriaLabel="Ajuda: +3 anos"
           disabled={disabled || compareYears < 2}
         />
       </div>

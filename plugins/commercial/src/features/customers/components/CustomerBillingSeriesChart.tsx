@@ -1,5 +1,15 @@
 import { useMemo, useState } from "react";
-import { EmptyState, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import {
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  EmptyState,
+  MultiTypeSeriesChart,
+  NativeCheckboxControl,
+  TIME_MULTI_SERIES_TYPES,
+  runTabularExport,
+  usePersistedChartPreferences,
+  type MultiTypeSeriesSpec,
+} from "@delpi/plugin-ui/index";
 
 import {
   CommercialActionButton,
@@ -7,11 +17,10 @@ import {
   CommercialMultiSelectField,
   CommercialSectionCard,
   CommercialStateBanner,
+  CommercialTabularExportButtons,
   cmEmptyStateClassNames,
   useChartGranularitySelection,
 } from "../../../app/commercialUi";
-import { GroupedColumnSeriesChart } from "../../../components/GroupedColumnSeriesChart";
-import type { GroupedColumnBarSpec } from "../../../components/GroupedColumnSeriesChart";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
@@ -19,6 +28,7 @@ import {
   type CompareYearsCount,
 } from "../../analytics/components/PeriodCompareControls";
 import { formatCurrency } from "../../../utils/format";
+import { buildBillingSeriesExportPayload } from "../utils/billingSeriesExportBuilders";
 import { validateBillingPeriod } from "../billing/utils/billingPeriod";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -86,8 +96,16 @@ export function CustomerBillingSeriesChart({
   );
   const [customStart, setCustomStart] = useState(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
-  const [compareYears, setCompareYears] = useState<CompareYearsCount>(0);
-  const [showTrend, setShowTrend] = useState(false);
+  const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
+    storageKey: "commercial:customers:billing-series",
+    defaults: { chartType: "column", compareYears: 0, showTrend: false },
+    allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+  });
+  const compareYears = (preferences.compareYears ?? 0) as CompareYearsCount;
+  const setCompareYears = (value: CompareYearsCount) =>
+    setPreferences({ compareYears: value });
+  const showTrend = Boolean(preferences.showTrend);
+  const chartType = preferences.chartType ?? "column";
 
   const range =
     preset === "custom"
@@ -143,8 +161,8 @@ export function CustomerBillingSeriesChart({
     [points],
   );
 
-  const bars = useMemo((): GroupedColumnBarSpec[] => {
-    const list: GroupedColumnBarSpec[] = [
+  const bars = useMemo((): MultiTypeSeriesSpec[] => {
+    const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "faturamento",
         name: "Faturamento",
@@ -241,17 +259,6 @@ export function CustomerBillingSeriesChart({
             )
           }
         />
-        {!periodError ? (
-          <div className="cm-field cm-billing-series-chart__trend">
-            <NativeCheckboxControl
-              id="customers-billing-trend"
-              checked={showTrend}
-              onChange={setShowTrend}
-              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-              hint={CM_HELP.customerDetail.billingSeriesTrend}
-            />
-          </div>
-        ) : null}
         {periodError ? (
           <CommercialStateBanner>{periodError}</CommercialStateBanner>
         ) : null}
@@ -286,16 +293,58 @@ export function CustomerBillingSeriesChart({
               </CommercialActionButton>
             </CommercialStateBanner>
           ) : null}
-          <GroupedColumnSeriesChart
-            data={chartData}
-            categoryKey="periodo"
-            bars={bars}
-            height={CHART_HEIGHT}
-            showTrend={showTrend}
-            showLegend={yoyActive || showTrend}
-            formatY={formatChartCurrency}
-            formatTooltipValue={formatCurrency}
-          />
+          <ChartViewShell
+            prefix="cm"
+            typeToggle={
+              <ChartTypeSegmentToggle
+                family="time_multi_series"
+                value={chartType}
+                onChange={setChartType}
+                idPrefix="customers-billing-type"
+                prefix="cm"
+              />
+            }
+            exportActions={
+              <CommercialTabularExportButtons
+                compact
+                disabled={!hasValues || loading}
+                onExport={(format) => {
+                  runTabularExport({
+                    kind: "table",
+                    format,
+                    payload: buildBillingSeriesExportPayload(chartData, {
+                      title: `Faturamento — ${periodLabel}`,
+                      compareYears,
+                    }),
+                  });
+                }}
+              />
+            }
+            overlays={
+              <NativeCheckboxControl
+                id="customers-billing-trend"
+                checked={showTrend}
+                onChange={(checked) => setPreferences({ showTrend: checked })}
+                label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+                hint={CM_HELP.customerDetail.billingSeriesTrend}
+                hintPlacement="tooltip"
+                hintAriaLabel="Ajuda: linha de tendência"
+              />
+            }
+          >
+            <MultiTypeSeriesChart
+              data={chartData}
+              categoryKey="periodo"
+              series={bars}
+              chartType={chartType}
+              height={CHART_HEIGHT}
+              showTrend={showTrend}
+              showLegend={yoyActive || showTrend}
+              trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
+              formatY={formatChartCurrency}
+              formatTooltipValue={formatCurrency}
+            />
+          </ChartViewShell>
         </>
       )}
       </CommercialSectionCard>

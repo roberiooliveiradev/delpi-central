@@ -1,16 +1,26 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ChartCard,
+  ChartTypeSegmentToggle,
+  ChartViewShell,
   chartCardBemClasses,
   EmptyState,
+  MultiTypeSeriesChart,
   NativeCheckboxControl,
+  PERIOD_COMPARE_TYPES,
+  runTabularExport,
+  usePersistedChartPreferences,
 } from "@delpi/plugin-ui/index";
 
-import { CommercialSelectField, cmEmptyStateClassNames } from "../../../app/commercialUi";
-import { GroupedColumnSeriesChart } from "../../../components/GroupedColumnSeriesChart";
+import {
+  CommercialSelectField,
+  CommercialTabularExportButtons,
+  cmEmptyStateClassNames,
+} from "../../../app/commercialUi";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
+import { buildPurchaseEvolutionExportPayload } from "../utils/billingSeriesExportBuilders";
 import type {
   PurchaseEvolutionPoint,
   PurchaseEvolutionWindowMonths,
@@ -65,7 +75,13 @@ export function CustomerPurchaseEvolutionChart({
   windowMonths,
   onWindowMonthsChange,
 }: CustomerPurchaseEvolutionChartProps) {
-  const [showTrend, setShowTrend] = useState(false);
+  const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
+    storageKey: "commercial:account:purchase-evolution",
+    defaults: { chartType: "column", showTrend: false },
+    allowedChartTypes: PERIOD_COMPARE_TYPES,
+  });
+  const showTrend = Boolean(preferences.showTrend);
+  const chartType = preferences.chartType ?? "column";
   const hasValues = useMemo(
     () => points.some((p) => p.atual > 0 || p.anterior > 0),
     [points],
@@ -118,25 +134,14 @@ export function CustomerPurchaseEvolutionChart({
       classNames={CHART_CLASSES}
       className="cm-purchase-evolution"
       headerActions={
-        <div className="cm-purchase-evolution__header-actions">
-          <CommercialSelectField
-            label="Período"
-            hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
-            options={PERIOD_OPTIONS}
-            value={String(windowMonths)}
-            onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
-            allowEmpty={false}
-          />
-          <div className="cm-field">
-            <NativeCheckboxControl
-              id="customer-purchase-evolution-trend"
-              checked={showTrend}
-              onChange={setShowTrend}
-              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
-              hint={CM_HELP.customerDetail.billingSeriesTrend}
-            />
-          </div>
-        </div>
+        <CommercialSelectField
+          label="Período"
+          hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
+          options={PERIOD_OPTIONS}
+          value={String(windowMonths)}
+          onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
+          allowEmpty={false}
+        />
       }
     >
       {error ? (
@@ -156,15 +161,54 @@ export function CustomerPurchaseEvolutionChart({
           defaultMessage={emptyMessage}
         />
       ) : (
-        <GroupedColumnSeriesChart
-          data={chartData}
-          categoryKey="periodo"
-          bars={bars}
-          height={CHART_HEIGHT}
-          showTrend={showTrend}
-          formatY={formatChartCurrency}
-          formatTooltipValue={formatCurrency}
-        />
+        <ChartViewShell
+          prefix="cm"
+          typeToggle={
+            <ChartTypeSegmentToggle
+              family="period_compare"
+              value={chartType}
+              onChange={setChartType}
+              idPrefix="purchase-evolution-type"
+              prefix="cm"
+            />
+          }
+          exportActions={
+            <CommercialTabularExportButtons
+              compact
+              disabled={!hasValues || loading}
+              onExport={(format) => {
+                runTabularExport({
+                  kind: "table",
+                  format,
+                  payload: buildPurchaseEvolutionExportPayload(chartData),
+                });
+              }}
+            />
+          }
+          overlays={
+            <NativeCheckboxControl
+              id="customer-purchase-evolution-trend"
+              checked={showTrend}
+              onChange={(checked) => setPreferences({ showTrend: checked })}
+              label={CUSTOMER_BILLING_CONTENT.showTrendLine}
+              hint={CM_HELP.customerDetail.billingSeriesTrend}
+              hintPlacement="tooltip"
+              hintAriaLabel="Ajuda: linha de tendência"
+            />
+          }
+        >
+          <MultiTypeSeriesChart
+            data={chartData}
+            categoryKey="periodo"
+            series={bars}
+            chartType={chartType}
+            height={CHART_HEIGHT}
+            showTrend={showTrend}
+            trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
+            formatY={formatChartCurrency}
+            formatTooltipValue={formatCurrency}
+          />
+        </ChartViewShell>
       )}
     </ChartCard>
   );

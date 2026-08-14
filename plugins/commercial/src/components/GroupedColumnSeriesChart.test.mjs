@@ -10,24 +10,11 @@ const src = readFileSync(
   join(__dirname, "GroupedColumnSeriesChart.tsx"),
   "utf8",
 );
-const content = readFileSync(
-  join(__dirname, "../content/customerBillingContent.ts"),
-  "utf8",
-);
 
 describe("GroupedColumnSeriesChart (fonte)", () => {
-  it("usa ComposedChart com Bar agrupadas e Line de tendência", () => {
-    assert.match(src, /ComposedChart/);
-    assert.match(src, /\bBar\b/);
-    assert.match(src, /\bLine\b/);
-    assert.match(src, /withLinearTrendField/);
-    assert.match(src, /showTrend/);
-    assert.match(src, /trendSource/);
-    assert.doesNotMatch(src, /AreaChart|\bArea\b/);
-  });
-
-  it("expõe copy do toggle de tendência no content", () => {
-    assert.match(content, /showTrendLine/);
-    assert.match(content, /Linha de tendência/);
+  it("delega ao MultiTypeSeriesChart do kit", () => {
+    assert.match(src, /MultiTypeSeriesChart/);
+    assert.match(src, /chartType="column"/);
+    assert.match(src, /bars/);
   });
 });

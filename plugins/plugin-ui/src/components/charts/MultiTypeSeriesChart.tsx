@@ -85,12 +85,16 @@ export function MultiTypeSeriesChart({
 
   const tooltipValue = formatTooltipValue ?? formatY;
 
-  const tooltipProps = {
-    formatter: (value: unknown, name: unknown) => [
-      value == null || Number.isNaN(Number(value)) ? "—" : tooltipValue(Number(value)),
-      name,
-    ],
-    labelFormatter: (label: unknown) => String(label),
+  const formatTooltip = (value: unknown, name: unknown): [string, string] => [
+    value == null || Number.isNaN(Number(value)) ? "—" : tooltipValue(Number(value)),
+    String(name ?? ""),
+  ];
+
+  const handleBarCategoryClick = (bar: unknown) => {
+    if (!onCategoryClick) return;
+    const payload = (bar as { payload?: Record<string, unknown> } | null)?.payload;
+    const category = payload?.[categoryKey];
+    if (category != null) onCategoryClick(String(category));
   };
 
   const trendLines =
@@ -176,7 +180,10 @@ export function MultiTypeSeriesChart({
             width={120}
             tick={{ fontSize: 11 }}
           />
-          <Tooltip {...tooltipProps} />
+          <Tooltip
+            formatter={formatTooltip}
+            labelFormatter={(label) => String(label)}
+          />
           {showLegend ? <Legend /> : null}
           {series.map((entry) => (
             <Bar
@@ -186,11 +193,7 @@ export function MultiTypeSeriesChart({
               fill={entry.fill}
               radius={[0, 4, 4, 0]}
               cursor={onCategoryClick ? "pointer" : undefined}
-              onClick={(bar) => {
-                if (!onCategoryClick) return;
-                const category = bar?.[categoryKey];
-                if (category != null) onCategoryClick(String(category));
-              }}
+              onClick={handleBarCategoryClick}
             />
           ))}
         </BarChart>
@@ -213,7 +216,10 @@ export function MultiTypeSeriesChart({
             tick={{ fontSize: 12 }}
             tickFormatter={(value) => formatY(Number(value))}
           />
-          <Tooltip {...tooltipProps} />
+          <Tooltip
+            formatter={formatTooltip}
+            labelFormatter={(label) => String(label)}
+          />
           {showLegend ? <Legend /> : null}
           {series.map((entry) => (
             <Line
@@ -251,7 +257,10 @@ export function MultiTypeSeriesChart({
             tickLine={false}
             axisLine={false}
           />
-          <Tooltip {...tooltipProps} />
+          <Tooltip
+            formatter={formatTooltip}
+            labelFormatter={(label) => String(label)}
+          />
           {showLegend ? <Legend /> : null}
           {series.map((entry) => (
             <Area
@@ -290,7 +299,10 @@ export function MultiTypeSeriesChart({
           tickLine={false}
           axisLine={false}
         />
-        <Tooltip {...tooltipProps} />
+        <Tooltip
+            formatter={formatTooltip}
+            labelFormatter={(label) => String(label)}
+          />
         {showLegend ? <Legend /> : null}
         {series.map((entry) => (
           <Bar
@@ -302,11 +314,7 @@ export function MultiTypeSeriesChart({
             radius={[4, 4, 0, 0]}
             maxBarSize={48}
             cursor={onCategoryClick ? "pointer" : undefined}
-            onClick={(bar) => {
-              if (!onCategoryClick) return;
-              const category = bar?.[categoryKey];
-              if (category != null) onCategoryClick(String(category));
-            }}
+            onClick={handleBarCategoryClick}
           />
         ))}
         {trendLines}
