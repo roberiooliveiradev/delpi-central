@@ -139,10 +139,11 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
   const directoryUserIds = useMemo(() => {
     const ids = new Set<string>();
     for (const portfolio of portfolios) {
-      const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+      const owner = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
       if (owner) ids.add(owner);
       for (const member of portfolio.members ?? []) {
-        if (member.user_id.trim()) ids.add(member.user_id.trim());
+        const memberId = member.user_id?.trim();
+        if (memberId) ids.add(memberId);
       }
     }
     return [...ids];

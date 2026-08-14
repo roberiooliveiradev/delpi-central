@@ -101,10 +101,11 @@ export function SellerPortfolioDetailPage({
   const directoryUserIds = useMemo(() => {
     if (!portfolio) return [];
     const ids = new Set<string>();
-    const owner = (portfolio.owner_user_id ?? portfolio.user_id).trim();
+    const owner = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
     if (owner) ids.add(owner);
     for (const member of portfolio.members ?? []) {
-      if (member.user_id.trim()) ids.add(member.user_id.trim());
+      const memberId = member.user_id?.trim();
+      if (memberId) ids.add(memberId);
     }
     for (const event of auditEvents) {
       const actor = event.actor_user_id?.trim();

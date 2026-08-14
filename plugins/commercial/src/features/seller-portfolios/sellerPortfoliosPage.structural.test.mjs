@@ -110,6 +110,19 @@ describe("seller-portfolios kit-first", () => {
     assert.match(pageSource, /onCreate=\{\(input\)\s*=>\s*void handleCreate\(input\)\}/);
   });
 
+  it("carteira órfã: owner_user_id/user_id null não chama trim em null", () => {
+    const detailPage = readFileSync(
+      join(featureDirectory, "SellerPortfolioDetailPage.tsx"),
+      "utf8",
+    );
+    assert.match(detailPage, /owner_user_id \?\? portfolio\.user_id \?\? ""\)\.trim\(\)/);
+    assert.match(pageSource, /owner_user_id \?\? portfolio\.user_id \?\? ""\)\.trim\(\)/);
+    assert.doesNotMatch(
+      detailPage,
+      /\(portfolio\.owner_user_id \?\? portfolio\.user_id\)\.trim\(\)/,
+    );
+  });
+
   it("timeline de auditoria usa kit Timeline, filtros e estados vazios", () => {
     const auditSource = readFileSync(
       join(featureDirectory, "SellerPortfolioAuditTimeline.tsx"),
