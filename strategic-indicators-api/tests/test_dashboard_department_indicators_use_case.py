@@ -13,6 +13,10 @@ from si_app.application.use_cases.strategic_indicators.get_dashboard_department_
 from si_app.application.use_cases.strategic_indicators.get_dashboard_departments_indicators_use_case import (
     GetDashboardDepartmentsIndicatorsUseCase,
 )
+from si_app.domain.services.strategic_indicators_calculator import (
+    StrategicIndicatorsCalculator,
+)
+from tests.fixtures.si_goal_contract_cases import CASE_B_PARTIAL
 
 
 def _indicator(**overrides) -> StrategicIndicatorCalculatedValue:
@@ -181,3 +185,52 @@ def test_get_dashboard_departments_indicators_filters_department() -> None:
 
     assert len(result["items"]) == 1
     assert result["items"][0]["department_id"] == "commercial"
+
+
+def test_department_indicators_partial_goal_value_differs_from_goals_map() -> None:
+    """goal_value cadastrado ≠ valores em goals (comparable do período)."""
+    case = CASE_B_PARTIAL
+    snapshot_service = MagicMock()
+    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
+        departments=[
+            _department(
+                indicators=[
+                    _indicator(
+                        indicator_id="kaizen-ideas",
+                        goal_value=case["registered_goal_value"],
+                        value_unit=case["value_unit"],
+                        value=4.0,
+                        unit_values={"01": 4.0, "02": 4.0},
+                    )
+                ]
+            )
+        ]
+    )
+    snap = snapshot_service.get_current_and_previous_snapshot.return_value
+    snap.current.period = SimpleNamespace(
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    use_case = GetDashboardDepartmentIndicatorsUseCase(
+        snapshot_service=snapshot_service,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    result = use_case.execute(
+        department_id="quality",
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    assert result is not None
+    indicator = result["indicators"][0]
+    assert indicator["goal_value"] == case["expected_goal_value"]
+    goals = indicator["goals"] or {}
+    comparable_values = [float(v) for v in goals.values() if v is not None]
+    assert comparable_values, "goals map must expose period comparable"
+    assert all(
+        abs(v - case["expected_comparable_goal"]) < 0.02 for v in comparable_values
+    )
+    assert all(v != indicator["goal_value"] for v in comparable_values)

@@ -6,6 +6,12 @@ from si_app.application.use_cases.strategic_indicators.get_dashboard_goals_by_so
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from tests.fixtures.si_goal_contract_cases import (
+    CASE_A_EXACT,
+    CASE_B_PARTIAL,
+    CASE_CURVE,
+    assert_triad_invariants,
+)
 
 
 class _FakeIndicatorsRepository:
@@ -144,3 +150,53 @@ def test_dashboard_goals_curve_reference_goal_is_average_of_filter_months() -> N
     # comparable_goal é o nível do período (prorata/média ponderada), distinto da média simples
     assert items[0]["comparable_goal"] is not None
     assert items[0]["comparable_goal"] > 0
+
+
+def test_dashboard_goals_partial_matches_contract_case_b() -> None:
+    use_case = GetDashboardGoalsBySourceKeysUseCase(
+        indicators_repository=_FakeIndicatorsRepository(),
+        goals_repository=_FakeGoalsRepository(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    # Fake repo uses percent + goal 10; adapt CASE_B dates with percent prorata 10*17/31
+    items = use_case.execute(
+        source_keys=["commercial_sales_conversion_rate"],
+        start_date=CASE_B_PARTIAL["start_date"],
+        end_date=CASE_B_PARTIAL["end_date"],
+    )
+    assert len(items) == 1
+    assert items[0]["goal_value"] == 10.0
+    assert items[0]["reference_goal"] == 10.0
+    assert items[0]["goal_period_kind"] == "partial"
+    assert abs(float(items[0]["comparable_goal"]) - round(10.0 * 17 / 31, 2)) < 0.02
+    assert items[0]["goal_value"] != items[0]["comparable_goal"]
+
+
+def test_dashboard_goals_exact_matches_contract_case_a() -> None:
+    use_case = GetDashboardGoalsBySourceKeysUseCase(
+        indicators_repository=_FakeIndicatorsRepository(),
+        goals_repository=_FakeGoalsRepository(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    items = use_case.execute(
+        source_keys=["commercial_sales_conversion_rate"],
+        start_date=CASE_A_EXACT["start_date"],
+        end_date=CASE_A_EXACT["end_date"],
+    )
+    assert_triad_invariants(CASE_A_EXACT, items[0])
+
+
+def test_dashboard_goals_curve_matches_contract_reference() -> None:
+    use_case = GetDashboardGoalsBySourceKeysUseCase(
+        indicators_repository=_FakeIndicatorsRepository(),
+        goals_repository=_FakeCurveGoalsRepository(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    items = use_case.execute(
+        source_keys=["commercial_sales_conversion_rate"],
+        start_date=CASE_CURVE["start_date"],
+        end_date=CASE_CURVE["end_date"],
+    )
+    assert items[0]["goal_value"] == CASE_CURVE["expected_goal_value"]
+    assert items[0]["reference_goal"] == CASE_CURVE["expected_reference_goal"]
+    assert items[0]["comparable_goal"] != items[0]["goal_value"]

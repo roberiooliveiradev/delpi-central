@@ -10,6 +10,15 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 from si_app.application.use_cases.strategic_indicators.get_dashboard_indicator_metric_use_case import (
     GetDashboardIndicatorMetricUseCase,
 )
+from si_app.domain.services.strategic_indicators_calculator import (
+    StrategicIndicatorsCalculator,
+)
+from tests.fixtures.si_goal_contract_cases import (
+    CASE_A_EXACT,
+    CASE_B_PARTIAL,
+    CASE_B_PARTIAL_PPM,
+    assert_triad_invariants,
+)
 
 
 def _indicator(**overrides) -> StrategicIndicatorCalculatedValue:
@@ -138,3 +147,132 @@ def test_get_dashboard_indicator_metric_returns_none_when_missing() -> None:
     assert (
         use_case.execute(indicator_id="missing-indicator", kind="realized") is None
     )
+
+
+def test_get_dashboard_indicator_meta_partial_keeps_registered_goal_value() -> None:
+    """Mês parcial: goal_value cadastrado; value/comparable = prorata (Kaizen/TV)."""
+    case = CASE_B_PARTIAL
+    snapshot_service = MagicMock()
+    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
+        departments=[
+            _department(
+                indicators=[
+                    _indicator(
+                        indicator_id="kaizen-ideas-per-month",
+                        department_id="hr",
+                        indicator_name="Ideias/mês",
+                        goal_value=case["registered_goal_value"],
+                        value_unit=case["value_unit"],
+                        value=4.0,
+                        unit_values={"01": 4.0},
+                    )
+                ]
+            )
+        ]
+    )
+    # Override period to partial August
+    snap = snapshot_service.get_current_and_previous_snapshot.return_value
+    snap.current.period = SimpleNamespace(
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    use_case = GetDashboardIndicatorMetricUseCase(
+        snapshot_service=snapshot_service,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    result = use_case.execute(
+        indicator_id="kaizen-ideas-per-month",
+        kind="meta",
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    assert result is not None
+    assert_triad_invariants(case, result)
+    assert result["goal_value"] == 8.0
+    assert abs(float(result["comparable_goal"]) - 4.39) < 0.01
+    assert result["value"] == result["comparable_goal"]
+    assert result["reference_goal"] == 8.0
+
+
+def test_get_dashboard_indicator_meta_partial_ppm_registered_not_prorata() -> None:
+    case = CASE_B_PARTIAL_PPM
+    snapshot_service = MagicMock()
+    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
+        departments=[
+            _department(
+                indicators=[
+                    _indicator(
+                        goal_value=case["registered_goal_value"],
+                        value_unit=case["value_unit"],
+                        value=835.19,
+                        unit_values={"01": 835.19},
+                    )
+                ]
+            )
+        ]
+    )
+    snap = snapshot_service.get_current_and_previous_snapshot.return_value
+    snap.current.period = SimpleNamespace(
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    use_case = GetDashboardIndicatorMetricUseCase(
+        snapshot_service=snapshot_service,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    result = use_case.execute(
+        indicator_id="quality-ppm-internal",
+        kind="meta",
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    assert result is not None
+    assert_triad_invariants(case, result)
+    assert result["goal_value"] == 1400.0
+    assert abs(float(result["comparable_goal"]) - round(1400.0 * 17 / 31, 2)) < 0.02
+
+
+def test_get_dashboard_indicator_meta_exact_triad_equal() -> None:
+    case = CASE_A_EXACT
+    snapshot_service = MagicMock()
+    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
+        departments=[
+            _department(
+                indicators=[
+                    _indicator(
+                        goal_value=case["registered_goal_value"],
+                        value_unit=case["value_unit"],
+                    )
+                ]
+            )
+        ]
+    )
+    snap = snapshot_service.get_current_and_previous_snapshot.return_value
+    snap.current.period = SimpleNamespace(
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    use_case = GetDashboardIndicatorMetricUseCase(
+        snapshot_service=snapshot_service,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    result = use_case.execute(
+        indicator_id="quality-ppm-internal",
+        kind="meta",
+        start_date=case["start_date"],
+        end_date=case["end_date"],
+        competence=case["competence"],
+    )
+
+    assert result is not None
+    assert_triad_invariants(case, result)

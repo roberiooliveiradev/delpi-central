@@ -1527,9 +1527,36 @@ class StrategicIndicatorsCalculator:
                 )
                 if comparable_goal is not None:
                     unit_goals = {single_branch: round(float(comparable_goal), 2)}
+
+        # goals.* = meta do período (comparable); goal_value no indicador permanece cadastrado.
+        period_goal: float | None = calculated.goal_value
+        goal_mode = (getattr(calculated, "goal_mode", "standard") or "standard").strip().lower()
+        if calculated.goal_value is not None or goal_mode == "monthly_curve":
+            period_goal = self.calculate_comparable_goal(
+                goal_value=float(calculated.goal_value or 0),
+                goal_periodicity=calculated.goal_periodicity or "monthly",
+                goal_mode=goal_mode,
+                monthly_targets=getattr(calculated, "monthly_targets", None) or [],
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+                value_unit=getattr(calculated, "value_unit", None)
+                or (
+                    getattr(catalog_item, "value_unit", None)
+                    if catalog_item is not None
+                    else None
+                ),
+                indicator_id=calculated.indicator_id
+                or (
+                    getattr(catalog_item, "indicator_id", None)
+                    if catalog_item is not None
+                    else None
+                ),
+            )
+
         return self.build_goals_payload(
             unit_goals=unit_goals,
-            goal_value=calculated.goal_value,
+            goal_value=period_goal,
             department_id=calculated.department_id,
         )
 
@@ -1540,6 +1567,7 @@ class StrategicIndicatorsCalculator:
         goal_value: float | None,
         department_id: str | None = None,
     ) -> dict[str, float | None]:
+        """Monta o mapa goals.* com meta do período (comparable), não a cadastrada."""
         if is_consolidated_aggregation_department(department_id):
             if goal_value is None:
                 return {}
