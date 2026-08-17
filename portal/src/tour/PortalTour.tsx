@@ -51,9 +51,11 @@ import {
   resolveQuestGuide,
 } from "./portalTourQuestGuide";
 import {
+  orderCategoriesPendingFirst,
   questListVisualClassName,
   resolveQuestListHint,
   resolveQuestListVisualState,
+  sortQuestsForCompanionList,
 } from "./portalTourQuestListVisual";
 import { setPortalTourSidebarPanel } from "./portalTourSidebar";
 import { clearPortalTourTimers, schedulePortalTourTimer } from "./portalTourTimers";
@@ -754,9 +756,19 @@ export function PortalTour() {
             </p>
 
             <ul className="portal-tour-quest-list">
-              {PORTAL_TOUR_CATEGORY_ORDER.map((category) => {
+              {orderCategoriesPendingFirst(
+                PORTAL_TOUR_CATEGORY_ORDER,
+                questsByCategory,
+                completedIds,
+              ).map((category) => {
                 const categoryQuests = questsByCategory.get(category);
                 if (!categoryQuests?.length) return null;
+                // location.pathname: reavalia near/pending (e a ordem) ao navegar
+                void location.pathname;
+                const sortedQuests = sortQuestsForCompanionList(
+                  categoryQuests,
+                  completedIds,
+                );
 
                 return (
                   <li key={category} className="portal-tour-quest-group">
@@ -764,10 +776,8 @@ export function PortalTour() {
                       {PORTAL_TOUR_CATEGORY_LABELS[category]}
                     </p>
                     <ul className="portal-tour-quest-group-list">
-                      {categoryQuests.map((quest) => {
+                      {sortedQuests.map((quest) => {
                         const done = completedIds.has(quest.id);
-                        // location.pathname: reavalia near/pending ao navegar
-                        void location.pathname;
                         const visualState = resolveQuestListVisualState(
                           quest,
                           done,
