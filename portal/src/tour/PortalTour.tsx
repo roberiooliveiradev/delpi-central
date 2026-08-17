@@ -23,6 +23,7 @@ import {
   hydratePortalTourSessionFromRemote,
   loadPortalTourProgress,
   markPortalTourCompletedEverywhere,
+  repairLocalCompletedWhenRemoteIncomplete,
   resolveShouldShowPortalTour,
   shouldSkipPortalTourSyncOnOpen,
   syncPortalTourCompleted,
@@ -443,6 +444,7 @@ export function PortalTour() {
       coreApi.getPortalTourCatalog().catch(() => null),
     ]).then(([remote, remoteCatalog]) => {
       if (cancelled) return;
+      repairLocalCompletedWhenRemoteIncomplete(user.id, remote, remoteCatalog);
       remoteProgressRef.current = remote;
       if (remoteCatalog) setCatalog(remoteCatalog);
       setRemoteReady(true);
@@ -470,24 +472,25 @@ export function PortalTour() {
     autoStartCheckedRef.current = true;
 
     const remote = remoteProgressRef.current;
-    if (canReopenPortalTourPanel(remote)) {
-      setCompletedIds(hydratePortalTourSessionFromRemote(remote));
+    const currentCatalog = catalog;
+    if (canReopenPortalTourPanel(remote, currentCatalog)) {
+      setCompletedIds(hydratePortalTourSessionFromRemote(remote, currentCatalog));
     }
 
-    if (!resolveShouldShowPortalTour(user.id, remote)) return;
+    if (!resolveShouldShowPortalTour(user.id, remote, currentCatalog)) return;
 
     const timer = window.setTimeout(() => {
       setActive(true);
-      setPanelOpen(shouldAutoOpenPortalTourPanel(remote));
+      setPanelOpen(shouldAutoOpenPortalTourPanel(remote, currentCatalog));
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [remoteReady, coreLoaded, user?.id]);
+  }, [remoteReady, coreLoaded, user?.id, catalog]);
 
   useEffect(() => {
     if (!active) return;
-    if (shouldSkipPortalTourSyncOnOpen(remoteProgressRef.current)) return;
+    if (shouldSkipPortalTourSyncOnOpen(remoteProgressRef.current, catalog)) return;
     syncPortalTourStarted(coreApi, Array.from(completedRef.current));
-  }, [active, coreApi]);
+  }, [active, coreApi, catalog]);
 
   useEffect(() => {
     const tourUiActive = active && panelOpen && !showCompletionModal;

@@ -12,6 +12,9 @@ from dataclasses import dataclass
 
 
 CURRENT_PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels"
+# Versão anterior: default de introduced_in para desafios já existentes.
+# Só desafios novos devem passar introduced_in_version=CURRENT_PORTAL_TOUR_VERSION.
+LEGACY_PORTAL_TOUR_VERSION = "2026-06-portal-v6-explore"
 
 ADMIN_PERMISSION = "rbac.manage"
 
@@ -25,7 +28,7 @@ class PortalTourQuestDefinition:
     scope: str
     optional: bool = False
     required_permissions: tuple[str, ...] = ()
-    introduced_in_version: str = CURRENT_PORTAL_TOUR_VERSION
+    introduced_in_version: str = LEGACY_PORTAL_TOUR_VERSION
 
 
 CATEGORY_LABELS: dict[str, str] = {
@@ -58,7 +61,7 @@ def _quest(
     scope: str,
     optional: bool = False,
     required_permissions: tuple[str, ...] = (),
-    introduced_in_version: str = CURRENT_PORTAL_TOUR_VERSION,
+    introduced_in_version: str = LEGACY_PORTAL_TOUR_VERSION,
 ) -> PortalTourQuestDefinition:
     return PortalTourQuestDefinition(
         id=id,
@@ -180,6 +183,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Importantes abrem painel na tela (e-mail é o envelope).",
             category="notifications",
             scope="notifications",
+            introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
             id="page-notifications-email",
@@ -187,6 +191,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Envelope liga o e-mail; estrela é só o painel importante.",
             category="notifications",
             scope="notifications",
+            introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
             id="page-notifications-desktop-toast",
@@ -194,6 +199,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Toasts do Windows/macOS com o portal aberto.",
             category="notifications",
             scope="notifications",
+            introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
             id="sidebar-profile",

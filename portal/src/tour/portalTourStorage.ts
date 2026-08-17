@@ -1,7 +1,7 @@
 const STORAGE_KEY = "delpi.portal.tourState.v1";
 
-/** Incrementar quando houver novidades que exijam reexibir o tour. */
-export const PORTAL_TOUR_VERSION = "2026-06-portal-v6-explore";
+/** Incrementar junto com CURRENT_PORTAL_TOUR_VERSION no Core. */
+export const PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels";
 
 type TourState = {
   completedVersion: string | null;

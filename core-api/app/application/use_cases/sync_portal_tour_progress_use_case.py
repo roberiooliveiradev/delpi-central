@@ -52,8 +52,8 @@ class SyncPortalTourProgressUseCase:
         existing = self.uow.portal_tour.get_progress(user_id)
         merged_quest_ids = list(existing.completed_quest_ids) if existing else []
 
-        if existing and existing.tour_version != version:
-            merged_quest_ids = []
+        # Bump de versão: preserva conclusões (desafios novos entram como pendentes).
+        # Não zerar progresso ao migrar v6 → v7 etc.
 
         if completed_quest_ids is not None:
             incoming = list(completed_quest_ids)
