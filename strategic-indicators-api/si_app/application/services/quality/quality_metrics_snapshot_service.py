@@ -55,6 +55,10 @@ class QualityMetricsSnapshotService:
             tuple[str | None, str | None, str | None],
             QualityMetricsSnapshot,
         ] = {}
+        self._ppm_series_lookup: dict[
+            tuple[str, str | None, str | None, str],
+            float | None,
+        ] | None = None
 
     def get_snapshot(
         self,
@@ -84,24 +88,133 @@ class QualityMetricsSnapshotService:
         branch: str | None = None,
     ) -> dict[str, QualityMetricsSnapshot]:
         result: dict[str, QualityMetricsSnapshot] = {}
+        if not periods:
+            return result
 
-        for period in periods:
-            key = (period.start_date, period.end_date, branch)
-            cached = self._cache.get(key)
-            if cached is not None:
-                result[period.competence] = cached
-                continue
+        overall_start = periods[0].start_date
+        overall_end = periods[-1].end_date
+        if branch:
+            branch_codes = [branch]
+        else:
+            branch_codes = self._resolve_branches(
+                start_date=overall_start,
+                end_date=overall_end,
+            ) or ["01", "02"]
 
-            snapshot = self._build_snapshot(
-                start_date=period.start_date,
-                end_date=period.end_date,
-                branch=branch,
-                branches_override=None,
-            )
-            self._cache[key] = snapshot
-            result[period.competence] = snapshot
+        self._ppm_series_lookup = self._prefetch_ppm_series(
+            start_date=overall_start,
+            end_date=overall_end,
+            query_branch=branch,
+            branch_codes=branch_codes,
+        )
+        try:
+            for period in periods:
+                key = (period.start_date, period.end_date, branch)
+                cached = self._cache.get(key)
+                if cached is not None:
+                    result[period.competence] = cached
+                    continue
+
+                snapshot = self._build_snapshot(
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    branch=branch,
+                    branches_override=branch_codes if branch is None else None,
+                )
+                self._cache[key] = snapshot
+                result[period.competence] = snapshot
+        finally:
+            self._ppm_series_lookup = None
 
         return result
+
+    def _prefetch_ppm_series(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        query_branch: str | None,
+        branch_codes: list[str],
+    ) -> dict[tuple[str, str | None, str | None, str], float | None]:
+        """Indexa PPM por (type, product_prefix, branch, competence YYYY-MM)."""
+        lookup: dict[tuple[str, str | None, str | None, str], float | None] = {}
+        prefixes: tuple[str | None, ...] = (
+            None,
+            PLUGS_FINISHED_PRODUCT_PREFIX,
+            COMPONENTS_FINISHED_PRODUCT_PREFIX,
+        )
+        scopes: list[str | None] = [query_branch]
+        if query_branch is None:
+            scopes.extend(branch_codes)
+
+        seen_scopes: list[str | None] = []
+        for scope in scopes:
+            if scope not in seen_scopes:
+                seen_scopes.append(scope)
+
+        for ppm_type in ("internal", "external"):
+            for product_prefix in prefixes:
+                for scope in seen_scopes:
+                    payload = self._quality_gateway.get_ppm_series(
+                        ppm_type=ppm_type,
+                        branch=scope,
+                        date_start=start_date,
+                        date_end=end_date,
+                        product_prefix=product_prefix,
+                    )
+                    for point in self._iter_ppm_series_points(payload):
+                        competence = self._competence_from_ppm_point(point)
+                        if not competence:
+                            continue
+                        lookup[
+                            (ppm_type, product_prefix, scope, competence)
+                        ] = self._ppm_value_from_point(point)
+        return lookup
+
+    def _iter_ppm_series_points(self, payload: object) -> list[dict]:
+        data = payload.to_dict() if hasattr(payload, "to_dict") else payload
+        if not isinstance(data, dict):
+            return []
+        body = data.get("data", data)
+        if not isinstance(body, dict):
+            return []
+        points = body.get("points") or []
+        return [p for p in points if isinstance(p, dict)]
+
+    def _competence_from_ppm_point(self, point: dict) -> str | None:
+        sort_key = str(point.get("sort_key") or "").strip()
+        if len(sort_key) >= 7 and sort_key[4] == "-":
+            return sort_key[:7]
+        start = str(point.get("start_date") or "").strip()
+        parts = _parse_dashboard_date_parts(start) if start else None
+        if parts:
+            _day, month, year = parts
+            return f"{year}-{str(month).zfill(2)}"
+        return None
+
+    def _ppm_value_from_point(self, point: dict) -> float | None:
+        raw = point.get("ppm")
+        if raw is None:
+            return None
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return None
+
+    def _competence_for_period_dates(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> str | None:
+        for value in (end_date, start_date):
+            if not value:
+                continue
+            parts = _parse_dashboard_date_parts(value)
+            if parts:
+                _day, month, year = parts
+                return f"{year}-{str(month).zfill(2)}"
+        return None
 
     def _build_snapshot(
         self,
@@ -370,6 +483,16 @@ class QualityMetricsSnapshotService:
     ) -> float | None:
         if ppm_type not in {"internal", "external"}:
             raise ValueError("ppm_type deve ser internal ou external")
+
+        if self._ppm_series_lookup is not None:
+            competence = self._competence_for_period_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if competence:
+                key = (ppm_type, product_prefix, branch, competence)
+                if key in self._ppm_series_lookup:
+                    return self._ppm_series_lookup[key]
 
         result = self._quality_gateway.get_ppm_summary(
             ppm_type=ppm_type,

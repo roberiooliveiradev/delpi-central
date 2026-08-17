@@ -43,6 +43,43 @@ class DelpiQualityGateway:
             authorization=bearer_authorization_from_context(),
         )
 
+    def get_ppm_series(
+        self,
+        *,
+        ppm_type: str,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+        product_prefix: str | None = None,
+        granularity: str = "month",
+    ) -> dict[str, Any]:
+        params: dict[str, str | None] = {
+            "branch": branch,
+            "date_start": date_start,
+            "date_end": date_end,
+            "granularity": granularity,
+        }
+        if product_prefix:
+            params["product_prefix"] = product_prefix
+
+        key = _cache_key(
+            "ppm-series",
+            ppm_type,
+            branch,
+            date_start,
+            date_end,
+            product_prefix,
+            granularity,
+        )
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_ppm_series(
+                ppm_type,
+                params=params,
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
     def list_branches(
         self,
         *,
