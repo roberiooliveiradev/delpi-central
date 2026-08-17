@@ -4331,6 +4331,126 @@
       }
     },
     {
+      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
+      "httpMethod": "GET",
+      "label": "PPM Externo Chicotes — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "labelAliases": [
+        "PPM Externo Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ]
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
+      "httpMethod": "GET",
+      "label": "PPM Externo Chicotes — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "labelAliases": [
+        "PPM Externo Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
+    },
+    {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
       "httpMethod": "GET",
       "label": "PPM Externo Plugues — meta",
@@ -4573,6 +4693,126 @@
       "valueFieldTypes": {
         "value": "number"
       }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
+      "httpMethod": "GET",
+      "label": "PPM Interno Chicotes — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "labelAliases": [
+        "PPM Interno Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ]
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
+      "httpMethod": "GET",
+      "label": "PPM Interno Chicotes — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "labelAliases": [
+        "PPM Interno Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",

@@ -8574,6 +8574,74 @@
           "label": "Anexo da emissão"
         }
       }
+    },
+    "get_si_indicator_quality_ppm_internal_components_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno Chicotes — actual",
+          "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Interno Chicotes.",
+          "label": "PPM Interno Chicotes — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno Chicotes — realizado",
+          "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+          "label": "PPM Interno Chicotes — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_internal_components_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno Chicotes — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Interno Chicotes goal.",
+          "label": "PPM Interno Chicotes — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno Chicotes — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+          "label": "PPM Interno Chicotes — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_components_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo Chicotes — actual",
+          "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Externo Chicotes.",
+          "label": "PPM Externo Chicotes — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo Chicotes — realizado",
+          "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+          "label": "PPM Externo Chicotes — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_components_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo Chicotes — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Externo Chicotes goal.",
+          "label": "PPM Externo Chicotes — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo Chicotes — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+          "label": "PPM Externo Chicotes — meta"
+        }
+      }
     }
   }
 }

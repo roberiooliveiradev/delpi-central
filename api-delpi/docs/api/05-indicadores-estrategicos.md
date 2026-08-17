@@ -33,7 +33,7 @@ Rotas envelope na api-delpi que consomem a Strategic Indicators API (S2S) e devo
 
 Query comum: `department_id` (quando aplicável), `competence` (`YYYY-MM`), `start_date` / `end_date`, `branch` (`01`/`02`).
 
-As rotas por indicador são geradas a partir de `app/content/si_indicator_tv_catalog.json` (~32 indicadores ativos → ~64 `operationId`). Payload flat com `value` (shape `scalar`) para o picker «Fontes de dados» da TV. Sync: `scripts/sync_si_indicator_tv_catalog.py --check|--write|--sync-artifacts`.
+As rotas por indicador são geradas a partir de `app/content/si_indicator_tv_catalog.json` (~36 indicadores ativos → ~72 `operationId`). Payload flat com `value` (shape `scalar`) para o picker «Fontes de dados» da TV. Sync: `scripts/sync_si_indicator_tv_catalog.py --check|--write|--sync-artifacts`.
 
 Integrações SI correspondentes (token interno):
 

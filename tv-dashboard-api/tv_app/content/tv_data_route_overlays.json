@@ -131,6 +131,30 @@
       "description": "Hub de PPM de não conformidades internas: KPI, totais produzidos e meta SI no período.",
       "whenToUse": "Use no painel rico de qualidade interna (realizado + meta + totais produzidos), não no card SI só de realizado."
     },
+    "get_si_indicator_quality_ppm_internal_components_meta": {
+      "labelAliases": [
+        "PPM Interno Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ]
+    },
+    "get_si_indicator_quality_ppm_internal_components_realized": {
+      "labelAliases": [
+        "PPM Interno Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
+    },
+    "get_si_indicator_quality_ppm_external_components_meta": {
+      "labelAliases": [
+        "PPM Externo Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ]
+    },
+    "get_si_indicator_quality_ppm_external_components_realized": {
+      "labelAliases": [
+        "PPM Externo Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
+    },
     "get_production_oee_series": {
       "seriesField": "points",
       "fixedQueryParams": null,

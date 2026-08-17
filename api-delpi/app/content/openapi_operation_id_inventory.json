@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 671,
-  "stableCount": 671,
+  "operationCount": 675,
+  "stableCount": 675,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -4702,6 +4702,34 @@
       "method": "GET",
       "path": "/system/tables/{tableName}/schema",
       "tag": "system",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
+      "method": "GET",
+      "tag": "Dashboard",
       "stable": true
     }
   ]

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-08-17",
-  "baselineOperationCount": 671,
-  "operationCount": 671,
-  "coveredCount": 599,
+  "baselineOperationCount": 675,
+  "operationCount": 675,
+  "coveredCount": 603,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -32,8 +32,8 @@
       "exempt": 0
     },
     "dashboard": {
-      "total": 71,
-      "covered": 71,
+      "total": 75,
+      "covered": 75,
       "gap": 0,
       "exempt": 0
     },
@@ -877,6 +877,42 @@
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
       "method": "GET",
       "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
       "module": "dashboard",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
