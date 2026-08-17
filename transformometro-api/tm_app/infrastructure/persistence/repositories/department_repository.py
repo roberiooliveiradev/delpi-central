@@ -56,7 +56,7 @@ class SetorRepository(PluginBaseRepository):
 
     def _active_filial_codigos(self) -> set[str]:
         try:
-            active = FilialRepository(connection=self._connection).list_active_codigos()
+            active = FilialRepository(connection=self._injected_connection).list_active_codigos()
         except PluginsRepositoryError:
             active = set()
         if active:
@@ -91,7 +91,7 @@ class SetorRepository(PluginBaseRepository):
         return str(row["setor_id"]) if row else None
 
     def _resolve_filial_uuid(self, codigo_filial: str) -> str | None:
-        row = FilialRepository(connection=self._connection).get(codigo_filial)
+        row = FilialRepository(connection=self._injected_connection).get(codigo_filial)
         if not row:
             return None
         return str(row["filial_id"])

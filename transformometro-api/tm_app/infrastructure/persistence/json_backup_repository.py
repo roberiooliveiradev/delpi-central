@@ -274,7 +274,7 @@ BUNDLE_KEYS = (
 
 class JsonBackupRepository(PluginBaseRepository):
     def load_export_bundle(self) -> TransformometroRawData:
-        return DashboardDataRepository(self._connection).load_raw()
+        return DashboardDataRepository(connection=self._injected_connection).load_raw()
 
     def fetch_setores(self) -> list[dict[str, Any]]:
         return self.fetch_all(

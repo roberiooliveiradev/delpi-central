@@ -174,7 +174,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             raise ProcessoInstanciaDomainError(
                 "Informe filial_id ou marque todas_filiais_ativas."
             )
-        filial = FilialRepository(connection=self._connection).get(filial_codigo)
+        filial = FilialRepository(connection=self._injected_connection).get(filial_codigo)
         if not filial:
             raise ProcessoInstanciaDomainError("Unidade inválida.")
         return filial
@@ -189,7 +189,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
         if not setor_refs:
             raise ProcessoInstanciaDomainError("Informe ao menos um setor (setor_ids).")
 
-        setor_repo = SetorRepository(connection=self._connection)
+        setor_repo = SetorRepository(connection=self._injected_connection)
         resolved: list[dict[str, Any]] = []
         for setor_codigo in setor_refs:
             if not todas_filiais_ativas:

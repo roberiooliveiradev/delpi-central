@@ -174,10 +174,11 @@ class RecursoCustoRepository(PluginBaseRepository):
         )
         if not row:
             return
-        recurso = RecursoRepository(connection=self._connection).get(recurso_id)
+        recurso_repo = RecursoRepository(connection=self._injected_connection)
+        recurso = recurso_repo.get(recurso_id)
         if not recurso:
             return
-        RecursoRepository(connection=self._connection).update(
+        recurso_repo.update(
             recurso_id,
             {
                 **recurso,

@@ -95,8 +95,6 @@ class PostgresStrategicIndicatorsSettingsRepository(
             PostgresStrategicIndicatorsSettingsAuditRepository,
         )
 
-        audit_repository = PostgresStrategicIndicatorsSettingsAuditRepository(self.connection)
-
         select_settings_query = """
             SELECT setting_key, payload_json
             FROM strategic_indicators.module_settings
@@ -115,42 +113,46 @@ class PostgresStrategicIndicatorsSettingsRepository(
         """
 
         try:
-            self._update_departments_weights_and_goals(
-                weights=weights,
-                goals=goals,
-                actor_user_id=actor_user_id,
-                audit_repository=audit_repository,
-            )
-
-            for setting_key, payload_after in [
-                ("parameters.global", parameters),
-                ("governance.notes", governance),
-            ]:
-                row_before = self.fetch_one(select_settings_query, (setting_key,))
-                payload_before = row_before["payload_json"] if row_before else None
-
-                self.execute(
-                    update_settings_query,
-                    (
-                        json.dumps(payload_after, ensure_ascii=False),
-                        actor_user_id,
-                        None,
-                        setting_key,
-                    ),
+            with self.db():
+                audit_repository = PostgresStrategicIndicatorsSettingsAuditRepository(
+                    self.connection
+                )
+                self._update_departments_weights_and_goals(
+                    weights=weights,
+                    goals=goals,
+                    actor_user_id=actor_user_id,
+                    audit_repository=audit_repository,
                 )
 
-                audit_repository.insert_audit_event(
-                    entity_key=setting_key,
-                    payload_before=payload_before,
-                    payload_after=payload_after,
-                    changed_by_user_id=actor_user_id,
-                )
+                for setting_key, payload_after in [
+                    ("parameters.global", parameters),
+                    ("governance.notes", governance),
+                ]:
+                    row_before = self.fetch_one(select_settings_query, (setting_key,))
+                    payload_before = row_before["payload_json"] if row_before else None
 
-            self.commit()
+                    self.execute(
+                        update_settings_query,
+                        (
+                            json.dumps(payload_after, ensure_ascii=False),
+                            actor_user_id,
+                            None,
+                            setting_key,
+                        ),
+                    )
 
-            return {
-                "message": "Configurações do Strategic Indicators atualizadas com sucesso.",
-            }
+                    audit_repository.insert_audit_event(
+                        entity_key=setting_key,
+                        payload_before=payload_before,
+                        payload_after=payload_after,
+                        changed_by_user_id=actor_user_id,
+                    )
+
+                self.commit()
+
+                return {
+                    "message": "Configurações do Strategic Indicators atualizadas com sucesso.",
+                }
         except Exception:
             self.rollback()
             raise

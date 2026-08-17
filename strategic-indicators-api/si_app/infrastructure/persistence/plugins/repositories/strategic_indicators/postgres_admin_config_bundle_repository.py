@@ -398,7 +398,9 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
         )
 
         goal_mode = str(row.get("goal_mode") or "standard")
-        goals_repo = PostgresStrategicIndicatorsIndicatorGoalsRepository(self.connection)
+        goals_repo = PostgresStrategicIndicatorsIndicatorGoalsRepository(
+            connection=self._injected_connection
+        )
         goals_repo.create_indicator_goal(
             indicator_id=indicator_id,
             goal_year=goal_year,

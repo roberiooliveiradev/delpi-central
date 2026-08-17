@@ -111,7 +111,7 @@ class ProcessoEscopoRepository(PluginBaseRepository):
         return row
 
     def _resolve_filiais(self, filial_refs: list[str]) -> list[dict[str, Any]]:
-        filial_repo = FilialRepository(connection=self._connection)
+        filial_repo = FilialRepository(connection=self._injected_connection)
         resolved: list[dict[str, Any]] = []
         for codigo in filial_refs:
             filial = filial_repo.get(codigo)
@@ -129,7 +129,7 @@ class ProcessoEscopoRepository(PluginBaseRepository):
     ) -> list[dict[str, Any]]:
         if not setor_refs:
             return []
-        setor_repo = SetorRepository(connection=self._connection)
+        setor_repo = SetorRepository(connection=self._injected_connection)
         resolved: list[dict[str, Any]] = []
         for setor_codigo in setor_refs:
             if not todas_filiais_ativas:

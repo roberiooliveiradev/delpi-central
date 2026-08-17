@@ -30,13 +30,14 @@ _PROCESSO_SELECT = """
 
 class ProcessoRepository(PluginBaseRepository):
     def _enrich_rows(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        escopo_repo = ProcessoEscopoRepository(connection=self._connection)
+        # Preferir injeção só se o pai já passou connection; senão o escopo abre lease próprio.
+        escopo_repo = ProcessoEscopoRepository(connection=self._injected_connection)
         return [escopo_repo.enrich_row(row) for row in rows]
 
     def _enrich_row(self, row: dict[str, Any] | None) -> dict[str, Any] | None:
         if not row:
             return None
-        return ProcessoEscopoRepository(connection=self._connection).enrich_row(row)
+        return ProcessoEscopoRepository(connection=self._injected_connection).enrich_row(row)
     def next_codigo(self) -> str:
         # Inclui registros deletados: uq_processos_codigo vale para todos.
         row = self.fetch_one(
