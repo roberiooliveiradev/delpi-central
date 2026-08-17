@@ -56,20 +56,24 @@ Antes deste catálogo, categorias e rótulos ficavam espalhados em Python (`noti
 
 ### Padrão visual das Preferências (obrigatório)
 
-Todo card de silêncio segue **somente** este layout (não reinventar no MFE):
+Todo card de preferência segue **somente** este layout (não reinventar no MFE):
 
 ```text
-{notificationLabel}     ← o que o usuário silencia
+{notificationLabel}     ← o que o usuário silencia / marca importante
 {nome do app}           ← plugin via pluginId ou «Minha Delpi» (platform)
-{Recebendo|Silenciada}
-[+ ícone] [sino|silêncio]  ← toque no sino para silenciar / receber (salva na hora)
+{Recebendo|Silenciada|Importante}
+[+ ícone] [estrela] [sino|silêncio]  ← auto-save; importante e silêncio são mutuamente exclusivos
 ```
+
+- **Estrela:** categoria em `importantCategories` — novas notificações nascem com `isImportant=true` e disparam o painel de atenção no Portal.
+- **Sino:** categoria em `mutedCategories` — deixa de receber.
+- Mute e importante não coexistem na mesma categoria (API e UI reconciliam).
 
 Ícone de plugin: **manifesto publicado** (`apps.icon`), nunca hardcode no catálogo como fonte de verdade.
 
 Visibilidade: categorias `kind=app` só entram nas preferências se o usuário tiver o `pluginId` em `GET /me/apps` (mesma regra de autorização do launcher). Platform permanece sempre.
 
-Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `filter_mutable_categories_for_user` + `NotificationPreferencesPanel`.  
+Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `filter_mutable_categories_for_user` + `NotificationPreferencesPanel` + `ImportantNotificationAttention`.  
 Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 
 ### Aliases legados
@@ -83,8 +87,8 @@ Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 | Método | Path | Descrição |
 |--------|------|-----------|
 | GET | `/me/notifications/catalog` | Catálogo completo (autenticado) |
-| GET | `/me/notifications/preferences` | Preferências + campo `categories` |
-| PATCH | `/me/notifications/preferences` | Resposta também inclui `categories` |
+| GET | `/me/notifications/preferences` | Preferências (`mutedCategories`, `importantCategories`) + `categories` |
+| PATCH | `/me/notifications/preferences` | Body: `mutedCategories` (obrigatório) + `importantCategories` (opcional); resposta espelha GET |
 
 Exemplo `GET /me/notifications/catalog`:
 

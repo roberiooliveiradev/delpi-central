@@ -1,6 +1,6 @@
 ---
 description: Padrão de preferências de notificação — nome + app + status + ícone via catálogo
-globs: "**/notification_catalog.json,**/notificationCatalog.ts,**/NotificationPreferencesPanel.*,**/notification_catalog_*.py,**/check_notification_catalog.py"
+globs: "**/notification_catalog.json,**/notificationCatalog.ts,**/NotificationPreferencesPanel.*,**/ImportantNotificationAttention.*,**/notification_catalog_*.py,**/check_notification_catalog.py"
 alwaysApply: false
 ---
 
@@ -11,11 +11,15 @@ alwaysApply: false
 Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara no catálogo canônico; a aba Preferências renderiza o padrão fixo:
 
 ```text
-{notificationLabel}     ← nome da notificação (o que o usuário silencia)
+{notificationLabel}     ← nome da notificação (o que o usuário silencia / marca importante)
 {appName}               ← app de origem (plugin registrado ou «Minha Delpi»)
-{Recebendo|Silenciada}  ← status
-[+ ícone do manifesto] [sino|silêncio]  ← silenciar salva na hora (sem botão Salvar)
+{Recebendo|Silenciada|Importante}  ← status
+[+ ícone do manifesto] [estrela] [sino|BellOff]  ← auto-save (sem botão Salvar)
 ```
+
+- **Estrela** → `importantCategories` — dispatch cria com `isImportant=true`; painel `ImportantNotificationAttention` (soft pulse, sem auto-dismiss).
+- **Sino** → `mutedCategories` — deixa de receber.
+- Mute × importante: **mutuamente exclusivos** (UI e `notification_preference_policy`).
 
 **Ícone (`kind=app`):** sempre de `apps.icon` (sincronizado do manifesto no register/update) — Core enriquece o catálogo API via `NotificationCatalogIconService`; Portal prioriza `GET /me/apps`. **Não** hardcodar ícone de plugin no JSON do catálogo como fonte de verdade.
 
@@ -26,7 +30,8 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 | Catálogo | `core-api/app/content/notification_catalog.json` (labels / pluginId — **não** ícone do app) |
 | Ícone app | manifesto → `apps.icon` → `NotificationCatalogIconService` / AuthContext `apps` |
 | Loader | `notification_catalog_loader.py` + `NotificationCatalogService` |
-| Preferências UI | `Switch` auto-save + `resolveNotificationPreferenceDisplay` + `NotificationPreferencesPanel` |
+| Preferências UI | estrela + sino auto-save + `resolveNotificationPreferenceDisplay` + `NotificationPreferencesPanel` |
+| Alerta importante | `ImportantNotificationAttention` + snooze session (`importantNotificationSnooze.ts`) — **não** acoplar ao tour |
 | Espelho offline | `portal/src/utils/notificationCatalog.ts` → `FALLBACK_NOTIFICATION_CATALOG` |
 
 Doc: `docs/04-core-api/notification-catalog.md`.
@@ -49,6 +54,8 @@ Doc: `docs/04-core-api/notification-catalog.md`.
 - Patch de label/ícone só no MFE ou só no catálogo quando o manifesto já define o ícone.
 - Categoria `kind=app` sem `sourceApps` / sem espelho no FALLBACK do portal.
 - Usar `getNotificationCategoryIcon` só com catálogo (ignora manifesto) — usar `resolveNotificationCategoryIcon(..., apps)`.
+- Reusar `PortalTour` / confetti para alerta de notificação importante.
+- Auto-dismiss do painel importante (só ACK, abrir app ou adiar 15 min).
 
 ## Checklist (nova notificação)
 
