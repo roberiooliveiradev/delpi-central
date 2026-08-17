@@ -112,6 +112,8 @@ export function buildRolPerUnitKpiView(
     const data = branch === "01" ? filial01 : filial02;
     const single = buildKpiGoalPresentation(contextLabel, data, undefined, {
       realizedValue: data?.rol,
+      dateStart: options?.dateStart,
+      dateEnd: options?.dateEnd,
     });
     return {
       ...single,
@@ -123,7 +125,6 @@ export function buildRolPerUnitKpiView(
         filial02,
         activeBranch,
       ),
-      goalPrefix: data ? resolveAccumulatedGoalPrefix(data, dateOpts) : goalPrefix,
       periodKindBadge,
     };
   }
@@ -135,6 +136,7 @@ export function buildRolPerUnitKpiView(
     value: consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
     valueVariant: "default",
     goalLabel: null,
+    goalPrefix,
     goalScopeBadge: null,
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,
@@ -143,7 +145,6 @@ export function buildRolPerUnitKpiView(
       { realized: filial01?.rol, goal: filial01 },
       { realized: filial02?.rol, goal: filial02 },
     ]),
-    goalPrefix,
     periodKindBadge,
   };
 }

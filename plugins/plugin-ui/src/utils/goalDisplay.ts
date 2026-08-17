@@ -80,6 +80,8 @@ export function formatDashboardMetricValue(
 
 export type KpiGoalPresentation = {
   goalLabel: string | null;
+  /** Prefixo Meta / Meta parcial / Meta acumulada; null se meta oculta. */
+  goalPrefix: string | null;
   goalScopeBadge: GoalScopeBadge | null;
   goalScopeHint: string | null;
   goalPerformanceBadge: GoalPerformanceBadge | null;
@@ -216,6 +218,8 @@ export function buildKpiGoalPresentationWithBranchIdd<T extends DashboardGoalFie
     branches?: PerBranchMetricSlices<T> | null;
     formatComparable?: (value: number) => string;
     showGoal?: boolean;
+    dateStart?: string | null;
+    dateEnd?: string | null;
   },
 ): KpiGoalPresentation {
   const base = buildKpiGoalPresentation(
@@ -225,6 +229,8 @@ export function buildKpiGoalPresentationWithBranchIdd<T extends DashboardGoalFie
     {
       showGoal: options.showGoal,
       realizedValue: options.realizedValue,
+      dateStart: options.dateStart,
+      dateEnd: options.dateEnd,
     },
   );
 
@@ -427,11 +433,11 @@ export function resolveGoalPeriodKind(
   const start = (goal?.start_date ?? options?.dateStart ?? "").trim();
   const end = (goal?.end_date ?? options?.dateEnd ?? "").trim();
   if (!start || !end) {
-    // Sem datas e sem kind: se partial explícito false, assume mês fechado (Meta).
-    if (goal?.goal_period_partial === false) {
-      return "exact";
+    // Sem datas: partial explícito manda; caso contrário Meta (não acumulada).
+    if (goal?.goal_period_partial === true) {
+      return "partial";
     }
-    return "accumulated";
+    return "exact";
   }
 
   return resolveCalendarPeriodKind(start, end);
@@ -486,16 +492,30 @@ export function buildKpiGoalPresentation(
   contextLabel: string,
   goal?: DashboardGoalFields | null,
   formatComparable?: (value: number) => string,
-  options?: { showGoal?: boolean; realizedValue?: number | null },
+  options?: {
+    showGoal?: boolean;
+    realizedValue?: number | null;
+    dateStart?: string | null;
+    dateEnd?: string | null;
+  },
 ): KpiGoalPresentation {
   const showGoal = options?.showGoal ?? true;
   const scopeBadge = showGoal ? resolveGoalScopeBadge(goal) : null;
   const goalLabel = showGoal ? resolveGoalLabel(goal, formatComparable) : null;
   const scopeHint =
     scopeBadge?.tone === "info" ? scopeBadge.label : goal?.goal_scope_hint?.trim() || null;
+  const dateOpts = {
+    dateStart: options?.dateStart,
+    dateEnd: options?.dateEnd,
+  };
+  const goalPrefix =
+    showGoal && goalLabel
+      ? resolveAccumulatedGoalPrefix(goal, dateOpts)
+      : null;
 
   return {
     goalLabel,
+    goalPrefix,
     goalScopeBadge: scopeBadge?.tone === "scope" ? scopeBadge : null,
     goalScopeHint: scopeHint,
     goalPerformanceBadge: showGoal

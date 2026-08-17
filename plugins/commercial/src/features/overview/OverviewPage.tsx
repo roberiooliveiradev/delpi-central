@@ -43,7 +43,6 @@ import { pickPrimaryRolTarget, resolveGapToTarget } from "./gapToTarget";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
-  resolveAccumulatedGoalPrefix,
 } from "./goalDisplay";
 import { buildRolPerUnitKpiView } from "./rolPerUnitPresentation";
 
@@ -304,12 +303,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   realizedValue: dashboard.salesOrderOtd?.sales_order_otd_pct,
                   activeBranch,
                   branches: dashboard.salesOrderOtdBranches,
+                  dateStart: filters.dateStart,
+                  dateEnd: filters.dateEnd,
                 },
               )}
-              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.salesOrderOtd, {
-                dateStart: filters.dateStart,
-                dateEnd: filters.dateEnd,
-              })}
               periodKindBadge={periodKindBadge}
               icon={<PackageCheck size={22} aria-hidden="true" />}
               loading={dashboard.loading}
@@ -383,12 +380,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   realizedValue: dashboard.closingRate?.sales_conversion_rate_pct,
                   activeBranch,
                   branches: dashboard.closingRateBranches,
+                  dateStart: filters.dateStart,
+                  dateEnd: filters.dateEnd,
                 },
               )}
-              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.closingRate, {
-                dateStart: filters.dateStart,
-                dateEnd: filters.dateEnd,
-              })}
               periodKindBadge={periodKindBadge}
               icon={<Percent size={22} aria-hidden="true" />}
               loading={dashboard.loading}
@@ -407,12 +402,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   realizedValue: dashboard.newBusinessRol?.new_business_rol_pct,
                   activeBranch,
                   branches: dashboard.newBusinessRolBranches,
+                  dateStart: filters.dateStart,
+                  dateEnd: filters.dateEnd,
                 },
               )}
-              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.newBusinessRol, {
-                dateStart: filters.dateStart,
-                dateEnd: filters.dateEnd,
-              })}
               periodKindBadge={periodKindBadge}
               icon={<Sparkles size={22} aria-hidden="true" />}
               loading={dashboard.loading}

@@ -35,6 +35,30 @@ describe("goalDisplay", () => {
     expect(presentation.goalLabel).toContain("90");
     expect(presentation.contextLabel).toBe("Jan/2026");
     expect(presentation.goalPerformanceBadge?.tone).toBe("success");
+    expect(presentation.goalPrefix).toBe("Meta");
+  });
+
+  it("emite goalPrefix parcial / acumulada via kind", () => {
+    expect(
+      buildKpiGoalPresentation("ctx", {
+        comparable_goal: 10,
+        goal_period_kind: "partial",
+      }).goalPrefix,
+    ).toBe("Meta parcial");
+    expect(
+      buildKpiGoalPresentation("ctx", {
+        comparable_goal: 10,
+        goal_period_kind: "accumulated",
+      }).goalPrefix,
+    ).toBe("Meta acumulada");
+    expect(
+      buildKpiGoalPresentation(
+        "ctx",
+        { comparable_goal: 10 },
+        undefined,
+        { dateStart: "2026-01-01", dateEnd: "2026-08-15" },
+      ).goalPrefix,
+    ).toBe("Meta acumulada");
   });
 
   it("formata escopo consolidado por unidade", () => {
