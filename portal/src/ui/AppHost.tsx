@@ -23,6 +23,7 @@ import { resolveIcon } from "../utils/iconResolver";
 import { useAppHostRouteTransition } from "./appHostRouteTransition";
 import { AppHostLoadingScreen } from "./AppHostLoadingScreen";
 import { useAppHostLoadingOverlay } from "./useAppHostLoadingOverlay";
+import { useSameAppAnchorNavigation } from "./useSameAppAnchorNavigation";
 import {
   resolveFederationEntry,
   resolveHostedEntry,
@@ -64,7 +65,6 @@ export const AppHost = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const routeTransitionClass = useAppHostRouteTransition(location.pathname);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const federatedHostRef = useRef<HTMLDivElement>(null);
@@ -85,6 +85,8 @@ export const AppHost = () => {
     );
   }, [apps, location.pathname]);
 
+  const routeTransitionClass = useAppHostRouteTransition(app?.id);
+  useSameAppAnchorNavigation(app?.basePath);
   const route = useMemo<RouteItem | null>(() => {
     if (!app) return null;
     return resolveMatchingRoute(app.routes, location.pathname);

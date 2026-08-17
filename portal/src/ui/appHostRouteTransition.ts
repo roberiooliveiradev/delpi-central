@@ -1,20 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 
-export function useAppHostRouteTransition(pathname: string): string {
-  const previousPathRef = useRef<string | null>(null);
+/**
+ * Animação de entrada do AppHost só ao trocar de aplicativo (appId),
+ * não a cada deep-link interno (Voltar / sub-rotas) — evita sensação de
+ * “abrir o app de novo”.
+ */
+export function useAppHostRouteTransition(appId: string | null | undefined): string {
+  const previousAppIdRef = useRef<string | null | undefined>(undefined);
   const [className, setClassName] = useState("");
 
   useEffect(() => {
-    if (previousPathRef.current === null) {
-      previousPathRef.current = pathname;
+    const nextId = appId ?? null;
+
+    if (previousAppIdRef.current === undefined) {
+      previousAppIdRef.current = nextId;
       return;
     }
 
-    if (previousPathRef.current === pathname) {
+    if (previousAppIdRef.current === nextId) {
       return;
     }
 
-    previousPathRef.current = pathname;
+    previousAppIdRef.current = nextId;
     setClassName("app-host--route-enter");
 
     const timer = window.setTimeout(() => {
@@ -22,7 +29,7 @@ export function useAppHostRouteTransition(pathname: string): string {
     }, 500);
 
     return () => window.clearTimeout(timer);
-  }, [pathname]);
+  }, [appId]);
 
   return className;
 }

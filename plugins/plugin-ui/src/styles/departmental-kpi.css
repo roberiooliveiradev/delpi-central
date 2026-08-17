@@ -96,9 +96,13 @@
 
 .delpi-ui-kpi-value {
   margin: 0 0 4px;
-  /* cqi: escala com a largura do card (grid); evita vazamento de R$ milhares. */
-  font-size: var(--delpi-ui-font-kpi, clamp(1.15rem, 12cqi, 2rem));
-  line-height: 1.1;
+  /*
+   * cqi relativo à largura do card. Mínimo baixo + coeficiente moderado:
+   * grids com 4–5 KPIs (~160–220px) ainda mostram «R$ 122.600,00» inteiro.
+   * Ellipsis em valor monetário engana — em card estreito preferir quebra.
+   */
+  font-size: var(--delpi-ui-font-kpi, clamp(0.95rem, 7.5cqi, 2rem));
+  line-height: 1.15;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -110,7 +114,17 @@
 
 @supports not (font-size: 1cqi) {
   .delpi-ui-kpi-value {
-    font-size: var(--delpi-ui-font-kpi, clamp(1.15rem, 1.8vw, 1.85rem));
+    font-size: var(--delpi-ui-font-kpi, clamp(0.95rem, 1.5vw, 1.85rem));
+  }
+}
+
+/** Card estreito (grid denso): quebra em vez de «R$ 122.600…». */
+@container delpi-ui-kpi (max-width: 260px) {
+  .delpi-ui-kpi-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: unset;
+    line-height: 1.2;
   }
 }
 

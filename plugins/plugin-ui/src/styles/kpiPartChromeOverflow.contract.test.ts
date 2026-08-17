@@ -18,6 +18,15 @@ describe("KPI part chrome overflow (valor selecionado)", () => {
     );
   });
 
+  it("card estreito quebra valor em vez de ellipsis monetário", () => {
+    expect(departmentalCss).toMatch(
+      /@container\s+delpi-ui-kpi\s*\(max-width:\s*260px\)/,
+    );
+    expect(departmentalCss).toMatch(
+      /@container\s+delpi-ui-kpi\s*\(max-width:\s*260px\)\s*\{[^}]*overflow-wrap:\s*anywhere/s,
+    );
+  });
+
   it("kpi-card força overflow visible no valor com chrome de parte", () => {
     expect(kpiCardCss).toContain(".delpi-ui-kpi-value.delpi-kpi-part--resizable");
     expect(kpiCardCss).toContain(".delpi-kpi-card__value.delpi-kpi-part--resizable");
