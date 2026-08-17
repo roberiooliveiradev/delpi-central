@@ -131,6 +131,14 @@
   color: var(--text-muted);
 }
 
+.notification-preferences__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.notification-preferences__important,
 .notification-preferences__mute {
   flex: 0 0 auto;
   width: 40px;
@@ -142,6 +150,22 @@
     border-color 0.22s ease,
     box-shadow 0.22s ease,
     transform 0.18s ease;
+}
+
+.notification-preferences__important:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.notification-preferences__important:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.notification-preferences__important--on {
+  color: color-mix(in srgb, #ca8a04 85%, var(--text));
+}
+
+.notification-preferences__important--off {
+  color: var(--text-muted);
 }
 
 .notification-preferences__mute:hover:not(:disabled) {

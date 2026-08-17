@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Bell, BellOff, Settings2 } from "lucide-react";
+import { Bell, BellOff, Settings2, Star } from "lucide-react";
 
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient } from "../../data/apiClient";
@@ -18,6 +18,17 @@ type Props = {
   onSaved?: () => void;
   variant?: "embedded" | "page";
 };
+
+function preferenceStatusLabel(
+  isImportant: boolean,
+  isMuted: boolean,
+  isSaving: boolean,
+): string {
+  if (isSaving) return "Salvando…";
+  if (isImportant) return "Importante";
+  if (isMuted) return "Silenciada";
+  return "Recebendo";
+}
 
 export function NotificationPreferencesPanel({
   coreApi: coreApiProp,
@@ -43,6 +54,7 @@ export function NotificationPreferencesPanel({
 
   const [mutableCategories, setMutableCategories] = useState<NotificationCategory[]>([]);
   const [mutedCategories, setMutedCategories] = useState<NotificationCategory[]>([]);
+  const [importantCategories, setImportantCategories] = useState<NotificationCategory[]>([]);
   const [catalogCategories, setCatalogCategories] = useState<NotificationCatalogCategoryItem[]>(
     catalog.categories,
   );
@@ -51,56 +63,98 @@ export function NotificationPreferencesPanel({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const applyPreferencesResponse = useCallback(
+    (data: {
+      mutedCategories: NotificationCategory[];
+      importantCategories: NotificationCategory[];
+      categories: NotificationCatalogCategoryItem[];
+    }) => {
+      setMutedCategories(data.mutedCategories);
+      setImportantCategories(data.importantCategories);
+      if (data.categories.length > 0) {
+        setCatalogCategories(data.categories);
+      }
+    },
+    [],
+  );
+
   const loadPreferences = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await coreApi.getNotificationPreferences();
       setMutableCategories(data.mutableCategories);
-      setMutedCategories(data.mutedCategories);
-      if (data.categories.length > 0) {
-        setCatalogCategories(data.categories);
-      }
+      applyPreferencesResponse(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar preferências");
     } finally {
       setLoading(false);
     }
-  }, [coreApi]);
+  }, [applyPreferencesResponse, coreApi]);
 
   useEffect(() => {
     void loadPreferences();
   }, [loadPreferences]);
 
-  const persistMuted = useCallback(
-    async (nextMuted: NotificationCategory[], category: NotificationCategory) => {
-      const previous = mutedCategories;
+  const persistPreferences = useCallback(
+    async (
+      nextMuted: NotificationCategory[],
+      nextImportant: NotificationCategory[],
+      category: NotificationCategory,
+    ) => {
+      const previousMuted = mutedCategories;
+      const previousImportant = importantCategories;
       setMutedCategories(nextMuted);
+      setImportantCategories(nextImportant);
       setSavingCategory(category);
       setError(null);
       try {
-        const data = await coreApi.updateNotificationPreferences(nextMuted);
-        setMutedCategories(data.mutedCategories);
-        if (data.categories.length > 0) {
-          setCatalogCategories(data.categories);
-        }
+        const data = await coreApi.updateNotificationPreferences(nextMuted, nextImportant);
+        applyPreferencesResponse(data);
         onSaved?.();
       } catch (err) {
-        setMutedCategories(previous);
+        setMutedCategories(previousMuted);
+        setImportantCategories(previousImportant);
         setError(err instanceof Error ? err.message : "Falha ao salvar preferências");
       } finally {
         setSavingCategory(null);
       }
     },
-    [coreApi, mutedCategories, onSaved],
+    [applyPreferencesResponse, coreApi, importantCategories, mutedCategories, onSaved],
   );
 
-  function handleToggle(category: NotificationCategory, currentlyMuted: boolean) {
+  function handleToggleMute(category: NotificationCategory, currentlyMuted: boolean) {
     if (savingCategory) return;
-    const nextMuted = currentlyMuted
-      ? mutedCategories.filter((item) => item !== category)
-      : [...mutedCategories, category];
-    void persistMuted(nextMuted, category);
+    if (currentlyMuted) {
+      void persistPreferences(
+        mutedCategories.filter((item) => item !== category),
+        importantCategories,
+        category,
+      );
+      return;
+    }
+    void persistPreferences(
+      [...mutedCategories.filter((item) => item !== category), category],
+      importantCategories.filter((item) => item !== category),
+      category,
+    );
+  }
+
+  function handleToggleImportant(category: NotificationCategory, currentlyImportant: boolean) {
+    if (savingCategory) return;
+    if (currentlyImportant) {
+      void persistPreferences(
+        mutedCategories,
+        importantCategories.filter((item) => item !== category),
+        category,
+      );
+      return;
+    }
+    void persistPreferences(
+      mutedCategories.filter((item) => item !== category),
+      [...importantCategories.filter((item) => item !== category), category],
+      category,
+    );
   }
 
   const catalogForLabels = useMemo(
@@ -138,11 +192,7 @@ export function NotificationPreferencesPanel({
         catalogForLabels,
         appRefs,
       );
-      const haystack = [
-        display.notificationName,
-        display.applicationName,
-        category,
-      ]
+      const haystack = [display.notificationName, display.applicationName, category]
         .join(" ")
         .toLocaleLowerCase("pt-BR");
       return haystack.includes(query);
@@ -161,7 +211,9 @@ export function NotificationPreferencesPanel({
           <Settings2 size={18} aria-hidden="true" />
           <div>
             <h2 id="notification-preferences-title">Preferências</h2>
-            <p>Toque no sino para silenciar ou voltar a receber cada tipo.</p>
+            <p>
+              Estrela marca como importante; sino silencia. A alteração é salva na hora.
+            </p>
           </div>
         </header>
       ) : (
@@ -170,8 +222,9 @@ export function NotificationPreferencesPanel({
             Preferências de notificação
           </h2>
           <p className="notification-preferences__intro">
-            Ative o <strong>silêncio</strong> (sino riscado) para deixar de receber um tipo. A
-            alteração é salva na hora; o histórico anterior permanece na aba Histórico.
+            Use a <strong>estrela</strong> para alertas persistentes na tela e o{" "}
+            <strong>sino</strong> para silenciar. Importante e silêncio não se combinam; a
+            alteração é salva na hora. O histórico anterior permanece na aba Histórico.
           </p>
         </>
       )}
@@ -203,6 +256,7 @@ export function NotificationPreferencesPanel({
             <ul className="notification-preferences__list">
               {filteredCategories.map((category) => {
                 const isMuted = mutedCategories.includes(category);
+                const isImportant = importantCategories.includes(category);
                 const isSaving = savingCategory === category;
                 const display = resolveNotificationPreferenceDisplay(
                   category,
@@ -224,53 +278,80 @@ export function NotificationPreferencesPanel({
                           {display.applicationName}
                         </span>
                         <span className="notification-preferences__hint">
-                          {isSaving ? "Salvando…" : isMuted ? "Silenciada" : "Recebendo"}
+                          {preferenceStatusLabel(isImportant, isMuted, isSaving)}
                         </span>
                       </span>
                     </span>
                     {isSaving ? (
                       <Spinner size={18} label={`Salvando ${display.notificationName}`} />
                     ) : (
-                      <Button
-                        type="button"
-                        variant={isMuted ? "danger-soft" : "ghost"}
-                        size="sm"
-                        className={[
-                          "notification-preferences__mute",
-                          isMuted
-                            ? "notification-preferences__mute--silenced"
-                            : "notification-preferences__mute--receiving",
-                        ].join(" ")}
-                        pressed={isMuted}
-                        disabled={Boolean(savingCategory)}
-                        onClick={() => handleToggle(category, isMuted)}
-                        aria-label={
-                          isMuted
-                            ? `Voltar a receber: ${display.notificationName}`
-                            : `Silenciar: ${display.notificationName}`
-                        }
-                        title={
-                          isMuted
-                            ? `Silenciada — ${display.notificationName}. Clique para voltar a receber.`
-                            : `Recebendo — ${display.notificationName}. Clique para silenciar.`
-                        }
-                        icon={
-                          <span
-                            className="notification-preferences__mute-icons"
-                            data-muted={isMuted ? "true" : "false"}
-                            aria-hidden="true"
-                          >
-                            <Bell
-                              size={18}
-                              className="notification-preferences__mute-icon notification-preferences__mute-icon--bell"
-                            />
-                            <BellOff
-                              size={18}
-                              className="notification-preferences__mute-icon notification-preferences__mute-icon--off"
-                            />
-                          </span>
-                        }
-                      />
+                      <span className="notification-preferences__actions">
+                        <Button
+                          type="button"
+                          variant={isImportant ? "primary" : "ghost"}
+                          size="sm"
+                          className={[
+                            "notification-preferences__important",
+                            isImportant
+                              ? "notification-preferences__important--on"
+                              : "notification-preferences__important--off",
+                          ].join(" ")}
+                          pressed={isImportant}
+                          disabled={Boolean(savingCategory)}
+                          onClick={() => handleToggleImportant(category, isImportant)}
+                          aria-label={
+                            isImportant
+                              ? `Remover importante: ${display.notificationName}`
+                              : `Marcar como importante: ${display.notificationName}`
+                          }
+                          title={
+                            isImportant
+                              ? `Importante — ${display.notificationName}. Clique para remover.`
+                              : `Marcar como importante — ${display.notificationName}.`
+                          }
+                          icon={<Star size={18} fill={isImportant ? "currentColor" : "none"} />}
+                        />
+                        <Button
+                          type="button"
+                          variant={isMuted ? "danger-soft" : "ghost"}
+                          size="sm"
+                          className={[
+                            "notification-preferences__mute",
+                            isMuted
+                              ? "notification-preferences__mute--silenced"
+                              : "notification-preferences__mute--receiving",
+                          ].join(" ")}
+                          pressed={isMuted}
+                          disabled={Boolean(savingCategory)}
+                          onClick={() => handleToggleMute(category, isMuted)}
+                          aria-label={
+                            isMuted
+                              ? `Voltar a receber: ${display.notificationName}`
+                              : `Silenciar: ${display.notificationName}`
+                          }
+                          title={
+                            isMuted
+                              ? `Silenciada — ${display.notificationName}. Clique para voltar a receber.`
+                              : `Recebendo — ${display.notificationName}. Clique para silenciar.`
+                          }
+                          icon={
+                            <span
+                              className="notification-preferences__mute-icons"
+                              data-muted={isMuted ? "true" : "false"}
+                              aria-hidden="true"
+                            >
+                              <Bell
+                                size={18}
+                                className="notification-preferences__mute-icon notification-preferences__mute-icon--bell"
+                              />
+                              <BellOff
+                                size={18}
+                                className="notification-preferences__mute-icon notification-preferences__mute-icon--off"
+                              />
+                            </span>
+                          }
+                        />
+                      </span>
                     )}
                   </li>
                 );
