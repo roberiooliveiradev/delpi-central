@@ -40,6 +40,13 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 | OTD | `/analytics/otd` |
 | Oportunidades OV | `/analytics/opportunities` |
 
+**Nav futuro (ata alinhamento 2):**
+
+| Página | Path (proposto) | Nota |
+|--------|-----------------|------|
+| Reunião Diretoria | a definir após modelo Junior/Laércio | Stub WF-DIR — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §34 |
+| GR de Vendas | **não** no Portal | Implementação no [tv-dashboard](../../../plugins/tv-dashboard/README.md); Comercial alimenta/reusa painéis |
+
 **Depreciado:** Equipe (`/analytics/team`) → **redirect** `/administration`.
 
 **Redirects:** `/analytics` e `/gestao` → `/overview`. `/seller-portfolios` → `/administration/seller-portfolios`. `/analytics/team` → `/administration`.

@@ -7,7 +7,8 @@
 > **Ecossistema:** §7 — MFEs/APIs irmãos (reuso Link / HTTP / Fora)  
 > **«Documento» / área na ata:** = aplicação **Portal Comercial** (`/apps/commercial`)  
 > **Onda A KPIs:** [KPI-FICHAS.md](./KPI-FICHAS.md) · [KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)  
-> **Sequência GR:** Portal (cockpit) → rotas api-delpi se faltar → slide [tv-dashboard](../../../plugins/tv-dashboard/README.md)
+> **Sequência GR:** Portal (cockpit) → rotas api-delpi se faltar → slide [tv-dashboard](../../../plugins/tv-dashboard/README.md)  
+> **Ata alinhamento 2:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) — meta proporcional diária, rename faturamento, confirmação, sala, Diretoria, MyVEG; **GR de Vendas = TV Dashboard**
 
 Este documento responde, para cada ponto da ata: **já temos?** · **onde acessar?** · **o que falta?** · **próximo passo**.
 
@@ -80,7 +81,8 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | ROL | **Existe** | `/overview` | `/commercial/*rol*` via BFF analytics | Documentar fórmula (`KPI-ROL`) |
 | Carteira | **Parcial** | `/open-orders`, métricas Conta | open-orders | KPI consolidado |
 | Carteira + ROL | **Bloqueado** | — | — | `KPI-ROL-CARTEIRA` |
-| MTD / YTD | **Parcial** | Filtro de período no Overview | séries ROL | Presets MTD/YTD + labels |
+| MTD / YTD | **Parcial** | Filtro de período no Overview | séries ROL | Presets existem; **rótulos MTD/YTD nos cards** = P0-LABEL — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §5 |
+| Meta acumulada no período | **Parcial** | % meta no Overview (SI) | comparable_goal | Hoje meses civis; **corrigir soma proporcional por dia** = P0-META — ATA-2 §5 |
 | Projeção de fechamento | **Falta** | — | — | Onda B / FCT-\* |
 | Comparação anos anteriores | **Entregue** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Mesmo período filtrado −1a; todas as granularidades |
 | Produtividade comercial | **Parcial** | Opp/Proposals counts; Admin | — | Ofertas/colaborador (Onda C) |
@@ -171,7 +173,8 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
-| Prazo confirmação, áreas, motivo atraso | **Falta** | — | ORD-004–007 | Onda D; owner negócio: Junior Cesar Pedersetti |
+| Prazo confirmação, áreas, motivo atraso | **Falta** | — | ORD-004–007 · ATA-2 §9–10 | Onda D / **P2-CONF**; owner negócio: Junior Cesar Pedersetti; SLA ainda Comercial+áreas |
+| Fluxo mensagem cliente / 2 momentos (recebimento + data firme) | **Falta** | — | ATA-2 §10 | Spec no epico confirmação |
 | Fluxo mensagem cliente / status divergente na ata | **Falta** | — | — | Esclarecer status do levantamento antes de modelar |
 
 ### §14 — OTD e cumprimento de prazos
@@ -179,6 +182,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
 | OTD pedido (painel/série/linha) | **Existe** | `/analytics/otd` | sales-order-otd | Completar `KPI-OTD` |
+| OTD comercial fluxo completo (entrada Apoio → faturamento) | **Parcial** | Um OTD comercial hoje (DatFat vs Entreg) | ATA-2 §16 | Depende confirmação (§13); variantes + causas Onda D |
 | OTD colocação / solicitado vs confirmado vs atendido / prometido vs executado | **Parcial** | Um OTD comercial hoje | — | Onda D — variantes + causas |
 | Classificação de desvios (interno, cliente, material, capacidade…) | **Falta** | — | — | Onda D |
 
@@ -194,7 +198,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
 | Nível 01 Gestão à Vista (ROL, carteira, ticket, ofertas, amostras, FNE) | **Parcial** | `/overview` + Opp + OTD (não TV) | — | Pacote GAV TV; itens faltantes Ondas B–D |
-| Nível 02 GR (rupturas 30d, FNE+justificativa, problemas entrega SC/ES, amostras, confirmação, ocupação) | **Falta / parcial** | — | — | Onda D/E + domínios externos; justificativa persistente |
+| Nível 02 GR de Vendas (indicadores do depto.; meta 1º uso fim ago/2026) | **TV-GR** | [tv-dashboard](../../../plugins/tv-dashboard/README.md) | [ATA-2 §4](./ATA-ALINHAMENTO-AGO2026-2.md) | **Implementar no TV Dashboard**; Comercial reutiliza/alimenta painéis — não duplicar editor GR no MFE |
 
 ### §17 — Faturado e não embarcado
 

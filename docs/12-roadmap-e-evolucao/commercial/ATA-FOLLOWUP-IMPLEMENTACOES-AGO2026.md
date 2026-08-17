@@ -3,7 +3,7 @@
 > **Origem:** ata de follow-up comercial (pedidos, carteira, Meu Dia, perfis/notificações, colaboração)  
 > **Produto:** Portal Comercial · `/apps/commercial` · `commercial-api` · TOTVS via `api-delpi`  
 > **Como ler:** cada bloco = **já temos** · **implementar** · **investigar / decisão** · **fora / irmão**  
-> **Não substitui:** [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) · [WIREFRAMES.md](./WIREFRAMES.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
+> **Não substitui:** [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) · [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [WIREFRAMES.md](./WIREFRAMES.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)
 
 ---
 
@@ -22,7 +22,17 @@
 | Config sensível só admin da aplicação | **Parcial** | Manter manage interno; não expandir toggles ao gestor |
 | Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Falta** | Epico novo; reusar integração Outlook Minha Delpi |
 
-Legenda: **Existe** · **Parcial** · **Falta** · **Investigar** · **Fora** (outro bounded context).
+### Ata alinhamento 2 (epicos apontados)
+
+| Tema | Situação | Doc canônico |
+|------|----------|--------------|
+| Sala de interação / passagem de bastão | **Falta** | [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §11–12 · P2-SALA |
+| Confirmação de pedidos (2 momentos + SLA) | **Falta** | ATA-2 §9–10 · P2-CONF · API-ROUTES §3.13 |
+| Reunião Diretoria | **Falta** (aguardar modelo) | ATA-2 §34 · P2-DIR |
+| MyVEG | **Falta** (estudo) | ATA-2 §33 · P2-MYVEG |
+| GR de Vendas | **TV-GR** | ATA-2 §4 · tv-dashboard |
+
+Legenda: **Existe** · **Parcial** · **Falta** · **Investigar** · **Fora** (outro bounded context) · **TV-GR**.
 
 ---
 

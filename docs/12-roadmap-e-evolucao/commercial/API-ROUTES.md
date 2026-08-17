@@ -251,13 +251,23 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 ### 3.13 Order confirmations (F7)
 
+> **Placeholder F7** — rotas **ainda não implementadas** no commercial-api. Spec de negócio e UI: [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §9–10 · WF-CONF · P2-CONF. Dois momentos (recebimento + data firme); SLA formal Comercial+áreas.
+
 | Method | Path | operationId | Fase | Permissão | entity | shape | WF |
 |--------|------|-------------|------|-----------|--------|-------|-----|
-| GET | `/order-confirmations` | `list_order_confirmations` | F7 | `commercial.order-confirmation.view` | `order_confirmation` | `paged_list` | — |
-| POST | `/order-confirmations` | `create_order_confirmation` | F7 | manage | `order_confirmation` | `scalar` | — |
-| GET | `/order-confirmations/{id}` | `get_order_confirmation` | F7 | view | `order_confirmation` | `scalar` | — |
-| POST | `/order-confirmations/{id}/stage-transitions` | `transition_order_confirmation_stage` | F7 | manage | `order_confirmation_stage_history` | `scalar` | — |
-| POST | `/order-confirmations/{id}/confirm` | `confirm_order_delivery_date` | F7 | manage | `order_confirmation` | `scalar` | — |
+| GET | `/order-confirmations` | `list_order_confirmations` | F7 | `commercial.order-confirmation.view` | `order_confirmation` | `paged_list` | WF-CONF |
+| POST | `/order-confirmations` | `create_order_confirmation` | F7 | manage | `order_confirmation` | `scalar` | WF-CONF |
+| GET | `/order-confirmations/{id}` | `get_order_confirmation` | F7 | view | `order_confirmation` | `scalar` | WF-CONF |
+| POST | `/order-confirmations/{id}/stage-transitions` | `transition_order_confirmation_stage` | F7 | manage | `order_confirmation_stage_history` | `scalar` | WF-CONF |
+| POST | `/order-confirmations/{id}/confirm` | `confirm_order_delivery_date` | F7 | manage | `order_confirmation` | `scalar` | WF-CONF |
+
+### 3.13a Superfícies futuras (ata alinhamento 2) — investigar / não inventar contrato
+
+| Tema | Status | Nota |
+|------|--------|------|
+| Reunião Diretoria | **Falta** | UI após modelo Junior/Laércio; paths `operationId` em inglês quando existir; ATA-2 §34 · WF-DIR |
+| MyVEG | **Investigar** | Estudo PCP/Elaine/Michael — **sem** integração nesta onda; ATA-2 §33 |
+| GR de Vendas | **TV-GR** | Não é rota commercial-api; slides no [tv-dashboard](../../../plugins/tv-dashboard/README.md) |
 
 ### 3.14 Delivery exceptions (F7)
 

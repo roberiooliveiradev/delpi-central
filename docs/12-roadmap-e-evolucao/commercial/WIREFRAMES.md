@@ -74,6 +74,8 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | `/seller-portfolios` · `/:id` | WF-05R* | **alias** | → administration/… |
 | (pipeline kanban) | WF-08 | **backlog** | Não implementado — não inventar UI |
 | (forecast) | WF-09 | **backlog** | Não implementado — não inventar UI |
+| (confirmação de pedidos) | **WF-CONF** | **stub** | Ata alinhamento 2 §9–10 — epico P2-CONF; sem UI inventada |
+| (reunião Diretoria) | **WF-DIR** | **stub** | Ata alinhamento 2 §34 — aguardar modelo Junior/Laércio |
 | WF-G «Gestão» top nav | — | **supersedido** | Substituído por WF-OV + top «Visão geral» |
 
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
@@ -563,6 +565,7 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 │ Charts compactos: cobertura · prazo (+ Excel tabular no header)          │
 │ Produção/OPs: SegmentToggle · meter · Prazo OTD + tabela PI densa        │
 │   Timeline · apontamentos agregados · prefetch até 12 OPs (+ on-demand)  │
+│   Labels: «data de faturamento» (não «data de entrega do pedido») — P0-RENAME │
 │   «Ver no OTD produção» → /apps/dashboard-production/otd/op/{op}         │
 │ Tabela OP rica — clique sincroniza OP selecionada                        │
 │ Estrutura do produto (BOM: empty/erro/loading visíveis)                  │
@@ -573,6 +576,10 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 │ loading / erro / 404 / retry · troca OP na URL · sem CTA para a própria OP│
 └───────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Nomenclatura (ata alinhamento 2 §14–15):** na timeline/ficha OP, o marco que hoje
+aparece como «entrega do pedido» deve ser **«data de faturamento»** (P0-RENAME).
+Distinto de data de entrega física / expedição (irmão ou futuro).
 
 **Entrada por contexto de pedido:** `?pedido=&linha=&filial=` localiza a linha e
 substitui o endereço pela rota nativa `/open-orders/:filial/:pedido/:linha`.
@@ -1246,6 +1253,22 @@ URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
 
 ---
 
+## Stubs — ata alinhamento 2
+
+### WF-CONF — Confirmação de pedidos (P2)
+
+**Status:** stub — **não** inventar UI até spec do epico.  
+**Fonte:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §9–10 · API placeholder §3.13.  
+**Intenção:** digitalizar Apoio→PCP→cliente; dois momentos (recebimento + data firme); SLA formal ainda Comercial+áreas.
+
+### WF-DIR — Reunião Diretoria (P2)
+
+**Status:** stub — aguardar modelo Junior/Laércio.  
+**Fonte:** ATA-2 §34 · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) nav futuro.  
+**Intenção:** nova superfície no Portal após o modelo; não confundir com GR (TV).
+
+---
+
 ## Próximos artefatos
 
 | Artefato | Quando |
@@ -1253,6 +1276,7 @@ URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
 | `HOMOLOGACAO-PARIDADE-PEDIDOS.md` | Checklist QA F2b |
 | Wireframes mobile detalhados | Antes do build F2b se UX mobile for critério de aceite |
 | Fluxos convert prospect / forecast approve | Ao iniciar F5–F6 |
+| WF-CONF / WF-DIR detalhados | Após spec confirmação / modelo Diretoria (ata alinhamento 2) |
 | High-fi no design system | Opcional; wireframe ASCII basta para implementação |
 
 ---
@@ -1260,6 +1284,7 @@ URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
 ## Referências
 
 - [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 2.1, § 6, § 11  
+- [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md)  
 - [PORTAL-VENDEDOR-ESPECIFICACAO.md](../pedidos-venda-abertos/PORTAL-VENDEDOR-ESPECIFICACAO.md)  
 - [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 - Padrão ASCII: `plugins/transformometro/docs/wireframes/`  

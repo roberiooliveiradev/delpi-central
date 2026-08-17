@@ -33,6 +33,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline de rotas, plugins e gaps |
 | **[ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)** | Ata × Portal — temos/falta/onde acessar + ondas A–E + **ecossistema MFEs** (§7) |
 | **[ATA-FOLLOWUP-IMPLEMENTACOES-AGO2026.md](./ATA-FOLLOWUP-IMPLEMENTACOES-AGO2026.md)** | Follow-up ata — pedidos/Kanban, carteira YoY, Meu Dia×frota, perfis/notif, colaboração Teams/Outlook |
+| **[ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md)** | **Ata alinhamento 2** — meta proporcional, rename faturamento, confirmação, sala, Diretoria, MyVEG; **GR → TV Dashboard** |
 | **[HELP-COVERAGE.md](./HELP-COVERAGE.md)** | Cobertura de help (`hint` / `headerHint`) no MFE |
 | **[adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)** | ADR — API própria e migração carteira |
 | **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR — depreciação Portal do Vendedor |
@@ -60,6 +61,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **Onda B YoY Overview** — overlay ano anterior em ROL + conversão | **Entregue** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [WIREFRAMES.md](./WIREFRAMES.md) WF-OV |
 | **MVP KPI-CARTEIRA-HORIZON** — gap vs meta + buckets + deep links | **Entregue** — BFF `open-portfolio-horizon` · [KPI-FICHAS.md](./KPI-FICHAS.md) · [API-ROUTES.md](./API-ROUTES.md) |
 | **B-fecho docs** — matriz rotas×WF + README/GESTAO/helps + polish carteira≠PCP | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) matriz · [HELP-COVERAGE.md](./HELP-COVERAGE.md) |
+| **Ata alinhamento 2** — inventário meta/rename/confirmação/sala/Diretoria/MyVEG; GR→TV | **Entregue (docs)** — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md); código P0 em backlog |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 
