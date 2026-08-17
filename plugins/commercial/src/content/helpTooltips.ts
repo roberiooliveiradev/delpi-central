@@ -535,8 +535,8 @@ export const CM_HELP = {
       "Unidades incluídas no consolidado (Santa Catarina / Espírito Santo). Vazio = todas as unidades do escopo.",
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
     otdPage:
-      "Pontualidade de linhas de pedido no período: KPIs, série por unidade, insights e linhas com busca/filtro/ordenação.",
-    otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado.",
+      "Pontualidade comercial das linhas: compara data de faturamento (DatFat) com a data de entrega prometida no pedido. Ciclo Apoio→confirmação→fabricação→faturamento completo fica na onda W4.",
+    otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado (DatFat × entrega prometida).",
     otdKpiLatePct: "Percentual de linhas atrasadas sobre o total elegível no período.",
     otdKpiLateDays:
       "Distribuição dos dias de atraso (média, P50 e P90) apenas nas linhas classificadas como atrasadas.",
@@ -575,7 +575,8 @@ export const CM_HELP = {
       product: "Código do produto da linha no período OTD.",
       productDesc: "Descrição do produto (truncada na lista).",
       status: "Pontualidade da linha: no prazo ou atrasado no período.",
-      promised: "Data de entrega prometida usada no cálculo de OTD.",
+      promised:
+        "Data de entrega prometida no pedido, confrontada com a data de faturamento (DatFat) no cálculo de OTD.",
       invoice: "Data de faturamento da linha, quando houver.",
       daysDiff: "Diferença em dias entre a promessa e o faturamento (ou data de referência se aberta).",
       qty: "Quantidade vendida da linha.",

@@ -92,7 +92,7 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 
 | Necessidade | Status | Evidência | Próximo passo |
 |-------------|--------|-----------|---------------|
-| OTD fabricação / DatFat vs Entreg | **Existe** (parcial vs desejo) | `/analytics/otd` | Manter |
+| OTD fabricação / DatFat vs Entreg | **Existe** | `/analytics/otd` · help DatFat × prometida | Manter; fluxo completo = W4 |
 | Marco entrada Apoio → análise → confirmação → fab → fat → expedição | **Falta** | Depende §9–10 | Roadmap Onda D; documentar etapas |
 
 ### §17 — Expedição
