@@ -2,6 +2,7 @@
 
 > **Status:** canônico · sincronizado com ATA-2 / ATA-MAPA / Follow-up / Playbook  
 > **Atualização W0:** **fechada** (E0–E7) — itens W0 = Existe; W1–W5 = backlog  
+> **Correções pós-W0:** hub SI + shell (meta sum/average, rótulos, favoritos na topbar, filtros Opp) — **Existe**  
 > **Não substitui:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)
 
 Inventário **deduplicado** de itens com status **Parcial** (e afins) na documentação commercial. Classes: `W0` (implementação imediata) · `W1`…`W5` (backlog) · `HOMOLOG` · `DOC` · `FORA`.
@@ -24,13 +25,23 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Etapa | Status | Pacotes | Fontes |
 |----|------|-------|--------|---------|--------|
-| P-META | Meta proporcional diária + flags + parity notas | E1 | **Existe** (SI) | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
-| P-META-LABEL | «Meta acumulada» / «· parcial» na UI | E2 | **Existe** | `plugins/commercial` + plugin-ui | ATA-2 §5 |
+| P-META | Meta proporcional diária + flags + parity notas | E1 | **Existe** (SI; pós-W0: sum/average por `value_unit`) | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
+| P-META-LABEL | «Meta parcial» / «Meta acumulada» (sem composto · parcial) | E2 | **Existe** | `plugins/commercial` + plugin-ui | ATA-2 §5 |
 | P-LABEL | Chip MTD/YTD nos cards Overview | E2 | **Existe** | `plugins/commercial` | ATA-2 §5 |
 | P-RENAME | «Data de faturamento» + FOB/CIF | E3 | **Existe** | MFE + help | ATA-2 §14–15 |
-| P-OPP | Filtros Conta: período, produto, família | E4 | **Existe** | api-delpi + BFF + MFE | ATA-2 §21 |
+| P-OPP | Filtros Conta: período, produto, família (grid + debounce/foco) | E4 | **Existe** | api-delpi + BFF + MFE | ATA-2 §21 |
 | P-OTD-COPY | Help OTD = DatFat × entrega prometida | E5 | **Existe** | MFE help | ATA-2 §16 |
-| P-FAV | Favoritos no PluginShell | E6 | **Existe** | MFE shell | ATA-2 §39 |
+| P-FAV | Favoritos no slot `secondary` da TopBar | E6 | **Existe** | MFE shell + plugin-ui | ATA-2 §39 |
+
+### Correções pós-W0 (hub)
+
+| Tema | Decisão | Status |
+|------|--------|--------|
+| Meta % no YTD | `average` ponderada por dias (não soma de meses) | **Existe** |
+| Meta R$/count | `sum` prorata diária | **Existe** |
+| Rótulo | Intervalo &lt; 1 mês → «Meta parcial»; multi-mês → «Meta acumulada» | **Existe** |
+| Favoritos | Na topbar (`secondary`), sem faixa abaixo da nav | **Existe** |
+| Opp Conta | Filtros em linha; inputs estáveis no refetch | **Existe** |
 
 ---
 

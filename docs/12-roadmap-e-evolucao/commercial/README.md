@@ -63,7 +63,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **MVP KPI-CARTEIRA-HORIZON** — gap vs meta + buckets + deep links | **Entregue** — BFF `open-portfolio-horizon` · [KPI-FICHAS.md](./KPI-FICHAS.md) · [API-ROUTES.md](./API-ROUTES.md) |
 | **B-fecho docs** — matriz rotas×WF + README/GESTAO/helps + polish carteira≠PCP | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) matriz · [HELP-COVERAGE.md](./HELP-COVERAGE.md) |
 | **Ata alinhamento 2** — inventário meta/rename/confirmação/sala/Diretoria/MyVEG; GR→TV | **Entregue (docs)** — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) |
-| **Inventário Parcial + W0** — meta SI, labels, rename, filtros Conta, OTD copy, favoritos | **Existe** (W0) · backlog W1–W5 — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
+| **Inventário Parcial + W0** — meta SI, labels, rename, filtros Conta, OTD copy, favoritos | **Existe** (W0) + correções pós-W0 (sum/average, topbar, Opp UX) — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) · backlog W1–W5 |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
 
