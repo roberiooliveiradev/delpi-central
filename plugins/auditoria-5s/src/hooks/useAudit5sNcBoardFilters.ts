@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { AuditListItem } from "../api/audit5sApi";
 import { fetchMeProfile } from "../api/meApi";
+import { normalizeNcBoardStatusFilter } from "../constants/audit5s";
 import type { NcBoardFilterParams } from "../types/ncManagement";
 import { computeAuditDateRange } from "../utils/auditDashboardDefaults";
 import { formatPersonName } from "../utils/formatPersonName";
@@ -27,7 +28,7 @@ function createDefaultFilters(audits: AuditListItem[]): NcBoardFilterState {
     dateStart,
     dateEnd,
     areaId: "",
-    status: "",
+    status: "pending",
     responsible: "",
     responsibleUserId: "",
     overdueOnly: false,
@@ -58,9 +59,12 @@ function toApiParams(
   const responsibleUserId = filters.responsibleUserId.trim();
   const dateStart = filters.dateStart.trim();
   const dateEnd = filters.dateEnd.trim();
-  const pendingOnly = filters.status === "pending";
+  const normalizedStatus = normalizeNcBoardStatusFilter(filters.status);
+  const pendingOnly = normalizedStatus === "pending";
   const status =
-    filters.status && filters.status !== "pending" ? filters.status : undefined;
+    normalizedStatus && normalizedStatus !== "pending"
+      ? normalizedStatus
+      : undefined;
 
   return {
     branch,
@@ -155,7 +159,8 @@ export function useAudit5sNcBoardFilters(
     setDateStart: (value: string) => patchFilters({ dateStart: value }),
     setDateEnd: (value: string) => patchFilters({ dateEnd: value }),
     setAreaId: (value: string) => patchFilters({ areaId: value }),
-    setStatus: (value: string) => patchFilters({ status: value }),
+    setStatus: (value: string) =>
+      patchFilters({ status: normalizeNcBoardStatusFilter(value) }),
     setResponsible: (value: string) =>
       patchFilters({ responsible: value, responsibleUserId: "" }),
     setOverdueOnly: (value: boolean) => patchFilters({ overdueOnly: value }),

@@ -1,14 +1,8 @@
 import { RefreshCw } from "lucide-react";
 
 import type { AuditArea } from "../api/audit5sApi";
-import { NC_STATUS_OPTIONS } from "../constants/audit5s";
+import { NC_BOARD_STATUS_FILTER_OPTIONS, normalizeNcBoardStatusFilter } from "../constants/audit5s";
 import { formatPersonName } from "../utils/formatPersonName";
-
-const STATUS_OPTIONS = [
-  { value: "", label: "Todos os status" },
-  { value: "pending", label: "Em aberto" },
-  ...NC_STATUS_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
-];
 
 type Props = {
   areas: AuditArea[];
@@ -117,11 +111,11 @@ export function NcManagementFilters({
 
       <select
         className="a5s-nc-board-filters__select"
-        value={status}
+        value={normalizeNcBoardStatusFilter(status)}
         aria-label="Status"
         onChange={(event) => onStatusChange(event.target.value)}
       >
-        {STATUS_OPTIONS.map((option) => (
+        {NC_BOARD_STATUS_FILTER_OPTIONS.map((option) => (
           <option key={option.value || "all"} value={option.value}>
             {option.label}
           </option>

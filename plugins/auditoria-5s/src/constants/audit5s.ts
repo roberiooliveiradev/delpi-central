@@ -272,6 +272,23 @@ export const NC_STATUS_OPTIONS = [
   { value: "closed" as const, label: "Ação finalizada", tone: "closed" },
 ];
 
+/**
+ * Filtro do board de NCs.
+ * «Em aberto» (`pending`) = open + in_progress (plano em registro e aguardando evidências).
+ */
+export const NC_BOARD_STATUS_FILTER_OPTIONS = [
+  { value: "", label: "Todos os status" },
+  { value: "pending", label: "Em aberto" },
+  { value: "closed", label: "Ação finalizada" },
+  { value: "cancelled", label: "Cancelada" },
+] as const;
+
+/** Legado: `open` / `in_progress` no filtro do board viram `pending` (Em aberto). */
+export function normalizeNcBoardStatusFilter(value: string): string {
+  if (value === "open" || value === "in_progress") return "pending";
+  return value;
+}
+
 export function ncStatusVariant(value: string): "draft" | "nc" | "closed" | "default" {
   switch (value) {
     case "open":

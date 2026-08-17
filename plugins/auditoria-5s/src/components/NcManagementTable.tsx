@@ -20,7 +20,7 @@ import {
 import { formatDisplayDate } from "../utils/dates";
 import { resolveNcBoardRowStatus } from "../utils/ncDueSla";
 import { AuditRowMenuPortal } from "./AuditRowMenuPortal";
-import { NcWorkflowPill } from "./NcWorkflowPill";
+import { NcBoardProgressBar } from "./NcBoardProgressBar";
 
 type Props = {
   items: NcBoardItem[];
@@ -136,11 +136,7 @@ export function NcManagementTable({
                     </span>
                   </td>
                   <td data-label="Progresso">
-                    <NcWorkflowPill
-                      planStarted={item.plan_started}
-                      workflowStep={item.workflow_step}
-                      status={item.status}
-                    />
+                    <NcBoardProgressBar item={item} />
                   </td>
                   <td data-label="Ação corretiva">
                     <span className="a5s-nc-board-action" title={item.corrective_action ?? undefined}>
