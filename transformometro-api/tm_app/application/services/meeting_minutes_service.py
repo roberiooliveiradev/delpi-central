@@ -380,6 +380,7 @@ class MeetingMinutesService:
         version=self.repo.get_version(minute_id)
         if not version: raise LookupError("Versão não encontrada.")
         result=self.repo.register_signature(minute_id=minute_id,version_id=str(version["id"]),signer_id=str(signer["id"]),unit_code=str(minute["unit_code"]),user_id=self._user_id(user),display_name_confirmed=display_name_confirmed.strip(),content_hash=str(version["content_hash"]),image_path=self.signature_storage.save_png(unit_code=str(minute["unit_code"]),minute_id=minute_id,raw=png_bytes),terms_accepted=True,client_ip=client_ip,user_agent=user_agent,session_id=session_id,idempotency_key=idempotency_key,actor_user_id=self._user_id(user))
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         if result.get("duplicate"): return {"signature":result["signature"],"minute":minute,"duplicate":True}
         new_status=MinuteStatusTransitionService.status_after_signature_progress(signed_count=result["signed_count"],required_count=result["required_count"])
         if new_status != minute["status"]: minute=self.repo.set_status(minute_id=minute_id,status=new_status,actor_user_id=self._user_id(user),action="signature_progress")
@@ -454,6 +455,7 @@ class MeetingMinutesService:
         signer=self.repo.get_signer_for_user(minute_id,self._user_id(user))
         if not signer: raise PermissionError("Você não é signatário desta ata.")
         self.repo.refuse_signature(minute_id=minute_id,signer_id=str(signer["id"]),reason=reason.strip(),actor_user_id=self._user_id(user),unit_code=str(minute["unit_code"]))
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         updated=self.repo.set_status(minute_id=minute_id,status="in_review",actor_user_id=self._user_id(user),action="signature_refused")
         self._notify_managers_refused(
             updated,

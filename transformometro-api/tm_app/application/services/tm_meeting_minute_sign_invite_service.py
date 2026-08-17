@@ -11,6 +11,23 @@ from tm_app.config import settings
 
 logger = logging.getLogger("transformometro.atas.sign_invites")
 
+_ELIGIBLE_SIGNER_STATUSES = frozenset({"pending", "viewed"})
+_AWAITING_MINUTE_STATUSES = frozenset({"awaiting_signatures", "partially_signed"})
+
+_MSG_NOT_FOUND = "Convite de assinatura não encontrado."
+_MSG_CONSUMED = "Este link de assinatura já foi utilizado."
+_MSG_EXPIRED = "Este link de assinatura expirou."
+_MSG_SIGNER_MISSING = "Signatário não encontrado."
+_MSG_MINUTE_MISSING = "Ata não encontrada."
+_MSG_MINUTE_NOT_AWAITING = "Ata não está aguardando assinaturas."
+_MSG_ALREADY_SIGNED = "Esta assinatura já foi registrada."
+_MSG_REFUSED = "Esta assinatura foi recusada."
+_MSG_CANCELLED = "Este convite de assinatura foi cancelado."
+_MSG_REVISED = (
+    "Esta ata foi revisada. Solicite um novo envio do link de assinatura."
+)
+_MSG_NOT_ELIGIBLE = "Signatário não está elegível para assinar."
+
 
 class SignInviteRepository(Protocol):
     def invalidate_open_invites(self, *, signer_id: str) -> int: ...
@@ -28,6 +45,16 @@ class SignInviteRepository(Protocol):
     def get_invite_by_token_hash(self, token_hash: str) -> dict[str, Any] | None: ...
 
     def consume_invite(self, invite_id: str) -> dict[str, Any] | None: ...
+
+    def rebind_invite_signer(self, *, invite_id: str, signer_id: str) -> dict[str, Any] | None: ...
+
+    def find_eligible_signer_match(
+        self,
+        *,
+        minute_id: str,
+        user_id: str | None,
+        invite_email: str | None,
+    ) -> dict[str, Any] | None: ...
 
     def get_signer(self, signer_id: str) -> dict[str, Any] | None: ...
 
@@ -81,30 +108,100 @@ class TmMeetingMinuteSignInviteService:
             "expires_at": expires_at,
         }
 
+    @staticmethod
+    def _message_for_ineligible_signer(status: str | None) -> str:
+        key = str(status or "").strip().lower()
+        if key == "signed":
+            return _MSG_ALREADY_SIGNED
+        if key == "refused":
+            return _MSG_REFUSED
+        if key == "cancelled":
+            return _MSG_CANCELLED
+        if key == "invalidated":
+            return _MSG_REVISED
+        return _MSG_NOT_ELIGIBLE
+
+    def _try_remap_stale_signer(
+        self,
+        *,
+        invite: dict[str, Any],
+        signer: dict[str, Any],
+        minute: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Se a ata foi reenviada, reassocia o token ao signatário elegível atual."""
+        if minute.get("status") not in _AWAITING_MINUTE_STATUSES:
+            return None
+        match = self.repo.find_eligible_signer_match(
+            minute_id=str(minute["id"]),
+            user_id=str(signer.get("user_id") or "").strip() or None,
+            invite_email=str(signer.get("invite_email") or "").strip() or None,
+        )
+        if not match:
+            return None
+        if str(match["id"]) == str(signer["id"]):
+            return match
+        rebound = self.repo.rebind_invite_signer(
+            invite_id=str(invite["id"]),
+            signer_id=str(match["id"]),
+        )
+        if rebound:
+            invite.update(rebound)
+        logger.info(
+            "sign_invite_rebound invite_id=%s from_signer=%s to_signer=%s minute_id=%s",
+            invite.get("id"),
+            signer.get("id"),
+            match.get("id"),
+            minute.get("id"),
+        )
+        return match
+
     def resolve(self, raw_token: str) -> dict[str, Any]:
         token = str(raw_token or "").strip()
         if not token:
-            raise LookupError("Convite de assinatura não encontrado.")
+            raise LookupError(_MSG_NOT_FOUND)
         invite = self.repo.get_invite_by_token_hash(hash_token(token))
         if not invite:
-            raise LookupError("Convite de assinatura não encontrado.")
+            raise LookupError(_MSG_NOT_FOUND)
         if invite.get("consumed_at"):
-            raise ValueError("Este link de assinatura já foi utilizado.")
+            raise ValueError(_MSG_CONSUMED)
         expires_at = invite.get("expires_at")
         if isinstance(expires_at, datetime):
             exp = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
             if exp < datetime.now(timezone.utc):
-                raise ValueError("Este link de assinatura expirou.")
-        signer = self.repo.get_signer(str(invite["signer_id"]))
-        if not signer:
-            raise LookupError("Signatário não encontrado.")
-        if signer.get("status") not in {"pending", "viewed"}:
-            raise ValueError("Signatário não está elegível para assinar.")
+                raise ValueError(_MSG_EXPIRED)
+
         minute = self.repo.get_minute(str(invite["minute_id"]))
         if not minute or minute.get("deleted_at"):
-            raise LookupError("Ata não encontrada.")
-        if minute.get("status") not in {"awaiting_signatures", "partially_signed"}:
-            raise ValueError("Ata não está aguardando assinaturas.")
+            raise LookupError(_MSG_MINUTE_MISSING)
+
+        signer = self.repo.get_signer(str(invite["signer_id"]))
+        if not signer:
+            raise LookupError(_MSG_SIGNER_MISSING)
+
+        current_version_id = str(minute.get("current_version_id") or "")
+        signer_version_id = str(signer.get("version_id") or "")
+        stale_version = bool(
+            current_version_id
+            and signer_version_id
+            and current_version_id != signer_version_id
+        )
+        status = str(signer.get("status") or "")
+
+        if status not in _ELIGIBLE_SIGNER_STATUSES or stale_version:
+            remapped = self._try_remap_stale_signer(
+                invite=invite, signer=signer, minute=minute
+            )
+            if remapped and remapped.get("status") in _ELIGIBLE_SIGNER_STATUSES:
+                signer = remapped
+            else:
+                if minute.get("status") not in _AWAITING_MINUTE_STATUSES:
+                    raise ValueError(_MSG_MINUTE_NOT_AWAITING)
+                if stale_version or status == "invalidated":
+                    raise ValueError(_MSG_REVISED)
+                raise ValueError(self._message_for_ineligible_signer(status))
+
+        if minute.get("status") not in _AWAITING_MINUTE_STATUSES:
+            raise ValueError(_MSG_MINUTE_NOT_AWAITING)
         return {"invite": invite, "signer": signer, "minute": minute}
 
     def consume(self, invite_id: str) -> dict[str, Any] | None:
