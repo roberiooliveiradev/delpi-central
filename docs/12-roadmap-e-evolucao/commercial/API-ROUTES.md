@@ -300,7 +300,7 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 | PATCH | `/groups/{id}` | `rename_commercial_group` | manage | Body `{ name }` — kind imutável |
 | DELETE | `/groups/{id}` | `delete_commercial_group` | manage | Exclui grupo + membros (CASCADE) |
 | POST/PUT/DELETE | `/groups/{id}/members…` | add/replace/remove | manage | |
-| GET | `/administration/team-roster` | `list_commercial_team_roster` | manage | Directory + grupos + carteiras; **sem** online (WS) |
+| GET | `/administration/team-roster` | `list_commercial_team_roster` | manage | Directory **completo** (`/integrations/directory/users/by-app`, paginado até esgotar) + grupos + carteiras; **sem** online (WS) |
 | GET | `/users/{id}/profile` | (profile) | accounts.view | Inclui `groups[]` (summary) + `portfolios[]` |
 
 Presença online: evento WS `presence.updated` na sala `team` (só manage).

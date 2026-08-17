@@ -29,13 +29,7 @@ class TeamRosterDirectoryPort(Protocol):
     ) -> dict[str, dict[str, str]]:
         ...
 
-    def search_directory_users(
-        self,
-        *,
-        query: str | None = None,
-        limit: int = 20,
-        browse: bool = False,
-    ) -> list[dict[str, str]]:
+    def list_directory_users_with_app_access(self) -> list[dict[str, str]]:
         ...
 
 
@@ -170,15 +164,23 @@ class ManageTeamRosterUseCase:
         for portfolio in portfolios:
             for uid in _member_ids(portfolio):
                 candidates.add(uid)
-        for item in self._search_directory_commercial():
+        for item in self._list_directory_commercial():
             uid = _normalize(item.get("id"))
             if uid:
                 candidates.add(uid)
         return candidates
 
-    def _search_directory_commercial(self) -> list[dict[str, str]]:
+    def _list_directory_commercial(self) -> list[dict[str, str]]:
         if self._directory is None:
             return []
+        list_all = getattr(self._directory, "list_directory_users_with_app_access", None)
+        if callable(list_all):
+            try:
+                items = list_all()
+            except Exception:
+                return []
+            return [item for item in items if isinstance(item, dict)]
+        # Fallback legado (typeahead) — não cobre o universo completo.
         search = getattr(self._directory, "search_directory_users", None)
         if not callable(search):
             return []

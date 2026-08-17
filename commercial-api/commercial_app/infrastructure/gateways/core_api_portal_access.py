@@ -249,3 +249,78 @@ class CoreApiPortalAccessPort(PortalAccessPort):
                 }
             )
         return result
+
+    def list_directory_users_with_app_access(
+        self,
+        *,
+        page_size: int = 100,
+        max_pages: int = 50,
+    ) -> list[dict[str, str]]:
+        """Lista completa de usuários com acesso ao app (paginação real até esgotar).
+
+        Não usa o typeahead `/users` (limit≤20 / page=1).
+        """
+        if not self.configured():
+            return []
+        safe_size = max(1, min(int(page_size or 100), 200))
+        safe_max_pages = max(1, min(int(max_pages or 50), 100))
+        headers = {
+            "Authorization": f"Bearer {self._service_token}",
+            "X-Delpi-Service-Token": self._service_token,
+            "Accept": "application/json",
+        }
+        collected: list[dict[str, str]] = []
+        page = 1
+        while page <= safe_max_pages:
+            try:
+                response = httpx.get(
+                    f"{self._base_url}/integrations/directory/users/by-app",
+                    headers=headers,
+                    params={
+                        "app": self._app_id,
+                        "page": page,
+                        "pageSize": safe_size,
+                    },
+                    timeout=self._timeout,
+                )
+            except Exception:
+                logger.exception("core_api_directory_by_app_failed page=%s", page)
+                break
+            if response.status_code >= 400:
+                logger.warning(
+                    "core_api_directory_by_app_rejected status=%s body=%s",
+                    response.status_code,
+                    response.text[:300],
+                )
+                break
+            try:
+                payload: Any = response.json()
+            except ValueError:
+                break
+            if not isinstance(payload, dict):
+                break
+            items = payload.get("items")
+            if not isinstance(items, list):
+                break
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                user_id = str(item.get("id") or "").strip()
+                if not user_id:
+                    continue
+                name = str(item.get("name") or item.get("display_name") or "").strip()
+                email = str(item.get("email") or "").strip()
+                collected.append(
+                    {
+                        "id": user_id,
+                        "name": name or user_id,
+                        "email": email,
+                    }
+                )
+            has_more = bool(payload.get("hasMore") or payload.get("has_more"))
+            if not has_more:
+                break
+            if not items:
+                break
+            page += 1
+        return collected
