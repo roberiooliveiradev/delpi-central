@@ -75,6 +75,7 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string;
     portalScopeClassName: string;
     containedLayout?: "fill" | "dialog";
+    closeAriaLabel?: string;
     labels?: Record<string, string>;
   };
 
@@ -91,4 +92,36 @@ declare module "@delpi/plugin-ui/index" {
   export function createHostContainedModalShell(
     config: CreateModalShellConfig,
   ): ComponentType<DashboardModalShellProps>;
+
+  export type ConfirmModalClassNames = {
+    root: string;
+    rootDanger: string;
+    iconWrap: string;
+    iconWrapDanger: string;
+    message: string;
+    actions: string;
+    cancelButton: string;
+    confirmButton: string;
+    confirmButtonDanger: string;
+    secondaryButton?: string;
+  };
+
+  export type ConfirmModalPanelProps = {
+    message: ReactNode;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    secondaryLabel?: string;
+    confirmBusy?: boolean;
+    confirmBusyLabel?: string;
+    variant?: "default" | "danger";
+    showCancel?: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+    onSecondary?: () => void;
+    classNames: ConfirmModalClassNames;
+  };
+
+  export function confirmModalBemClasses(prefix: string): ConfirmModalClassNames;
+
+  export function ConfirmModalPanel(props: ConfirmModalPanelProps): ReactNode;
 }

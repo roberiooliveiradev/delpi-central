@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Play, RefreshCw, Search } from "lucide-react";
+import { ConsoleConfirmDialog } from "../app/consoleUi";
 import { API_DELPI_DOCS_URL } from "../constants/routes";
 import { apiFetch, fetchOpenApiSpec, type ApiFetchResult } from "../api/httpClient";
 import { ResponsePanel } from "../components/ResponsePanel";
@@ -10,6 +11,8 @@ import {
   type OpenApiOperation,
 } from "../lib/openapi";
 import { appendHistory } from "../lib/requestHistory";
+
+const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -27,6 +30,7 @@ export function ExplorerPage({ onNavigate }: Props) {
   const [result, setResult] = useState<ApiFetchResult | null>(null);
   const [executing, setExecuting] = useState(false);
   const [execError, setExecError] = useState<string | null>(null);
+  const [writeConfirmOpen, setWriteConfirmOpen] = useState(false);
 
   const loadSpec = useCallback(async () => {
     setLoadingSpec(true);
@@ -86,6 +90,7 @@ export function ExplorerPage({ onNavigate }: Props) {
     if (!selected) return;
     setExecuting(true);
     setExecError(null);
+    setWriteConfirmOpen(false);
     try {
       const resolvedPath = buildPathWithParams(selected.path, pathValues);
       const query: Record<string, string> = {};
@@ -122,8 +127,31 @@ export function ExplorerPage({ onNavigate }: Props) {
     }
   };
 
+  const requestExecute = () => {
+    if (!selected) return;
+    if (WRITE_METHODS.has(selected.method)) {
+      setWriteConfirmOpen(true);
+      return;
+    }
+    void execute();
+  };
+
   return (
     <div className="adc-page adc-explorer">
+      <ConsoleConfirmDialog
+        open={writeConfirmOpen}
+        title="Confirmar mutação"
+        message={
+          selected
+            ? `Executar ${selected.method} em ${selected.path}? Esta operação pode alterar dados.`
+            : "Confirmar execução mutável?"
+        }
+        confirmLabel="Executar mesmo assim"
+        cancelLabel="Cancelar"
+        confirmBusy={executing}
+        onCancel={() => setWriteConfirmOpen(false)}
+        onConfirm={() => void execute()}
+      />
       <header className="adc-header adc-header--compact">
         <div>
           <button type="button" className="adc-link" onClick={() => onNavigate("")}>
@@ -278,7 +306,7 @@ export function ExplorerPage({ onNavigate }: Props) {
                 <button
                   type="button"
                   className="adc-btn adc-btn--primary"
-                  onClick={() => void execute()}
+                  onClick={requestExecute}
                   disabled={executing}
                 >
                   <Play size={16} />
