@@ -33,6 +33,7 @@ import {
 } from "../../../components/notifications/dispatchEditForm";
 import { useNotificationCatalog } from "../../../state/NotificationCatalogContext";
 import { buildNotificationCategoryOptions } from "../../../utils/notificationCatalog";
+import { NOTIFICATION_TYPE_OPTIONS } from "../../../utils/notificationSeverityTone";
 
 import {
   Alert,
@@ -50,8 +51,6 @@ import {
 import "./NotificationsTab.css";
 
 type AdminNotificationsView = "send" | "history";
-
-const NOTIFICATION_TYPES: NotificationType[] = ["info", "success", "warning", "error"];
 
 const PRESENTATION_MODES: {
   value: NotificationPresentation;
@@ -632,10 +631,7 @@ export function NotificationsTab() {
                       id="admin-notif-type"
                       value={type}
                       onChange={(value) => setType(value as NotificationType)}
-                      options={NOTIFICATION_TYPES.map((item) => ({
-                        value: item,
-                        label: item,
-                      }))}
+                      options={NOTIFICATION_TYPE_OPTIONS}
                     />
                   </FormField>
                 </FormGrid>

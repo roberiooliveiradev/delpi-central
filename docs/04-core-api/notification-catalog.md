@@ -76,7 +76,20 @@ Visibilidade: categorias `kind=app` só entram nas preferências se o usuário t
 Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `filter_mutable_categories_for_user` + `NotificationPreferencesPanel` + `ImportantNotificationAttention`.  
 Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 
-### Aliases legados
+### Severidade visual (`type`)
+
+Campo `type` no dispatch / notificação (contrato **EN**; labels PT só na UI):
+
+| Label PT | `type` | Cor | Aliases aceitos no ingest |
+|----------|--------|-----|---------------------------|
+| Aviso | `info` | azul | `aviso`, `informação` |
+| Atenção | `warning` | amarelo | `atenção`, `atencao` |
+| Alerta | `error` | vermelho | `alerta`, `erro` |
+| Sucesso | `success` | verde | `sucesso` |
+
+Persistido sempre o valor EN. O painel de atenção importante e os cards usam o tom via `resolveNotificationSeverityTone` / classes `--info|--warning|--error|--success`. **Importante** (`isImportant` / preferência) é independente da severidade.
+
+### Aliases legados (categoria)
 
 `legacyCategoryAliases` normaliza categorias antigas no dispatch (ex.: `quality` → `quality_action_plans`, `cadastro_kaizen` → `kaizometro`).
 

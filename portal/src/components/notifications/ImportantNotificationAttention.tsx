@@ -17,6 +17,8 @@ import {
   shouldBreakImportantNotificationSnooze,
   snoozeImportantNotificationOverlay,
 } from "../../utils/importantNotificationSnooze";
+import { playImportantNotificationChime } from "../../utils/importantNotificationChime";
+import { resolveNotificationSeverityTone } from "../../utils/notificationSeverityTone";
 import { Button } from "../../ui-kit";
 
 import "./ImportantNotificationAttention.css";
@@ -104,6 +106,11 @@ export function ImportantNotificationAttention() {
   const current = queue[0] ?? null;
   const othersCount = Math.max(0, queue.length - 1);
 
+  useEffect(() => {
+    if (!current?.id) return;
+    void playImportantNotificationChime({ notificationId: current.id });
+  }, [current?.id]);
+
   const display = useMemo(() => {
     if (!current) return null;
     return resolveNotificationPreferenceDisplay(current.category, catalog, apps);
@@ -146,6 +153,7 @@ export function ImportantNotificationAttention() {
 
   const title = (current.title || "").trim() || display.notificationName;
   const message = (current.message || "").trim();
+  const severity = resolveNotificationSeverityTone(current.type);
 
   return (
     <div
@@ -154,16 +162,22 @@ export function ImportantNotificationAttention() {
       aria-labelledby="important-notification-attention-title"
       aria-describedby="important-notification-attention-body"
     >
-      <div className="important-notification-attention__panel">
+      <div
+        className={[
+          "important-notification-attention__panel",
+          `important-notification-attention__panel--${severity.cssModifier}`,
+        ].join(" ")}
+        data-tone={severity.tone}
+      >
         <header className="important-notification-attention__header">
           <span className="important-notification-attention__badge" aria-hidden="true">
-            <AlertTriangle size={16} />
+            <AlertTriangle size={20} />
           </span>
           <span
             id="important-notification-attention-title"
             className="important-notification-attention__eyebrow"
           >
-            Notificação importante
+            {severity.attentionEyebrow}
           </span>
           <button
             type="button"
@@ -188,10 +202,10 @@ export function ImportantNotificationAttention() {
         </div>
 
         <footer className="important-notification-attention__footer">
-          <Button type="button" variant="ghost" size="sm" onClick={() => void handleMarkRead()}>
+          <Button type="button" variant="ghost" size="md" onClick={() => void handleMarkRead()}>
             Marcar como lida
           </Button>
-          <Button type="button" variant="primary" size="sm" onClick={() => void handleOpenApp()}>
+          <Button type="button" variant="primary" size="md" onClick={() => void handleOpenApp()}>
             Abrir aplicativo
           </Button>
         </footer>

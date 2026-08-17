@@ -23,6 +23,7 @@ import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
 import { PortalTour } from "../tour/PortalTour";
 import { ImportantNotificationAttention } from "../components/notifications/ImportantNotificationAttention";
+import { installImportantNotificationAudioUnlock } from "../utils/importantNotificationChime";
 
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
@@ -87,6 +88,10 @@ function normalizeAppBasePath(basePath: string) {
 
 function AppShell() {
   const { routes, apps } = useContext(AuthContext);
+
+  useEffect(() => {
+    installImportantNotificationAudioUnlock();
+  }, []);
 
   const federatedAppHosts = useMemo(() => {
     return apps

@@ -17,9 +17,10 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 [+ ícone do manifesto] [estrela] [sino|BellOff]  ← auto-save (sem botão Salvar)
 ```
 
-- **Estrela** → `importantCategories` — dispatch cria com `isImportant=true`; painel `ImportantNotificationAttention` (soft pulse, sem auto-dismiss).
+- **Estrela** → `importantCategories` — dispatch cria com `isImportant=true`; painel `ImportantNotificationAttention` (soft pulse, sem auto-dismiss); tom visual segue `type` (aviso/atenção/alerta).
 - **Sino** → `mutedCategories` — deixa de receber.
 - Mute × importante: **mutuamente exclusivos** (UI e `notification_preference_policy`).
+- Severidade: `type` EN (`info|warning|error|success`) + aliases PT no Core (`normalize_notification_type`); UI via `notificationSeverityTone.ts`.
 
 **Ícone (`kind=app`):** sempre de `apps.icon` (sincronizado do manifesto no register/update) — Core enriquece o catálogo API via `NotificationCatalogIconService`; Portal prioriza `GET /me/apps`. **Não** hardcodar ícone de plugin no JSON do catálogo como fonte de verdade.
 

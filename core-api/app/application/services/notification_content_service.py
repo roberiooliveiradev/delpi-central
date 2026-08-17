@@ -12,6 +12,7 @@ from app.domain.notifications.notification_constants import (
     ALLOWED_ACTION_TYPES,
     ALLOWED_NOTIFICATION_TYPES,
     ALLOWED_PRESENTATION_MODES,
+    normalize_notification_type,
 )
 from app.application.services.notification_catalog_icon_service import (
     NotificationCatalogIconService,
@@ -130,8 +131,8 @@ class NotificationContentService:
             if normalized_title and len(normalized_title) > 120:
                 raise NotificationContentValidationError("title must be at most 120 characters")
 
-            notification_type = (type or "info").strip().lower()
-            if notification_type not in ALLOWED_NOTIFICATION_TYPES:
+            notification_type = normalize_notification_type(type)
+            if notification_type is None:
                 raise NotificationContentValidationError(
                     f"type must be one of: {', '.join(sorted(ALLOWED_NOTIFICATION_TYPES))}"
                 )
@@ -336,9 +337,12 @@ class NotificationContentService:
         if normalized_category not in allowed_categories:
             normalized_category = spec.category
 
-        normalized_type = (notification_type or spec.default_type).strip().lower()
-        if normalized_type not in ALLOWED_NOTIFICATION_TYPES:
-            normalized_type = spec.default_type
+        normalized_type = normalize_notification_type(
+            notification_type or spec.default_type,
+            default=spec.default_type,
+        )
+        if normalized_type is None:
+            normalized_type = normalize_notification_type(spec.default_type) or "info"
 
         return {
             "category": normalized_category,

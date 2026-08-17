@@ -80,6 +80,11 @@
   color: var(--primary);
 }
 
+.notification-card--info .notification-card__icon {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
 .notification-card--success .notification-card__icon {
   color: #047857;
   background: color-mix(in srgb, #047857 12%, transparent);
@@ -93,6 +98,26 @@
 .notification-card--error .notification-card__icon {
   color: #b91c1c;
   background: color-mix(in srgb, #b91c1c 12%, transparent);
+}
+
+.notification-card--info.notification-card--unread {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+
+.notification-card--success.notification-card--unread {
+  border-color: color-mix(in srgb, #047857 40%, var(--border));
+  background: color-mix(in srgb, #047857 7%, var(--surface));
+}
+
+.notification-card--warning.notification-card--unread {
+  border-color: color-mix(in srgb, #b45309 40%, var(--border));
+  background: color-mix(in srgb, #b45309 7%, var(--surface));
+}
+
+.notification-card--error.notification-card--unread {
+  border-color: color-mix(in srgb, #b91c1c 40%, var(--border));
+  background: color-mix(in srgb, #b91c1c 7%, var(--surface));
 }
 
 .notification-card__meta {

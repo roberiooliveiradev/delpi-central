@@ -9,6 +9,7 @@ import type {
   NotificationType,
 } from "../../data/coreApi";
 import { Alert, Button, Checkbox, FormField, FormGrid, Input, Select, Textarea } from "../../ui-kit";
+import { NOTIFICATION_TYPE_OPTIONS } from "../../utils/notificationSeverityTone";
 import { NotificationVariableToolbar } from "./NotificationVariableToolbar";
 
 import "./CustomTemplateModal.css";
@@ -28,8 +29,6 @@ const CATEGORIES: NotificationCategory[] = [
   "birthday",
   "system",
 ];
-
-const TYPES: NotificationType[] = ["info", "success", "warning", "error"];
 
 export function CustomTemplateModal({
   open,
@@ -128,7 +127,7 @@ export function CustomTemplateModal({
                 id="custom-template-type"
                 value={defaultType}
                 onChange={(value) => setDefaultType(value as NotificationType)}
-                options={TYPES.map((item) => ({ value: item, label: item }))}
+                options={NOTIFICATION_TYPE_OPTIONS}
               />
             </FormField>
           </FormGrid>

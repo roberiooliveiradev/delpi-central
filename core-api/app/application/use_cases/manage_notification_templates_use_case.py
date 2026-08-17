@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.domain.notifications.notification_constants import normalize_notification_type
 from app.domain.notifications.notification_template_registry import NotificationTemplateRegistry
 from app.domain.notifications.notification_variables import (
     ADMIN_VARIABLE_KEYS,
@@ -56,11 +57,19 @@ class CreateNotificationCustomTemplateUseCase:
 
         _validate_var_keys(required_vars, optional_vars, recipient_vars)
 
+        default_type = normalize_notification_type(
+            payload.get("defaultType") or payload.get("default_type") or "info"
+        )
+        if default_type is None:
+            raise ManageNotificationTemplatesValidationError(
+                "defaultType must be one of: info, success, warning, error"
+            )
+
         row = NotificationCustomTemplate(
             id=NotificationCustomTemplate.new_id(),
             label=label,
             category=(payload.get("category") or "custom").strip().lower(),
-            default_type=(payload.get("defaultType") or payload.get("default_type") or "info").strip().lower(),
+            default_type=default_type,
             title_template=title_template[:120],
             message_template=message_template[:500],
             layout={
