@@ -18,15 +18,16 @@ describe("ready_to_invoice notification wiring", () => {
     assert.match(src, /COMMERCIAL_MANAGE_PERMISSIONS/);
   });
 
-  it("content JSON declares billing lists and board deep link", () => {
+  it("content JSON declares billing lists and deep link without forced board view", () => {
     const raw = readFileSync(
       join(apiRoot, "commercial_app/content/pt-BR/ready_to_invoice_notification.json"),
       "utf8",
     );
     const json = JSON.parse(raw);
-    assert.equal(typeof json.boardDeepLinkPath, "string");
-    assert.match(json.boardDeepLinkPath, /view=board/);
-    assert.match(json.boardDeepLinkPath, /ready_to_invoice/);
+    const deepLink = json.deepLinkPath || json.boardDeepLinkPath;
+    assert.equal(typeof deepLink, "string");
+    assert.ok(!/view=board/.test(deepLink));
+    assert.match(deepLink, /ready_to_invoice|open-orders/);
     assert.ok(Array.isArray(json.billingUserIds));
     assert.ok(Array.isArray(json.billingPermissionCodes));
   });

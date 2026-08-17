@@ -6,6 +6,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 _CONTENT_PATH = (
@@ -15,12 +16,31 @@ _CONTENT_PATH = (
     / "ready_to_invoice_notification.json"
 )
 
+_DEFAULT_DEEP_LINK = "/apps/commercial/open-orders?stage=ready_to_invoice"
+
 
 @lru_cache(maxsize=1)
 def _load() -> dict[str, Any]:
     with _CONTENT_PATH.open(encoding="utf-8") as handle:
         payload = json.load(handle)
     return payload if isinstance(payload, dict) else {}
+
+
+def _merge_query(path: str, **params: str) -> str:
+    """Merge query params into a path; does not force view= (respeita layout do usuário)."""
+    split = urlsplit(path)
+    query = dict(parse_qsl(split.query, keep_blank_values=True))
+    # Never force layout — MFE usa persistência local do usuário.
+    query.pop("view", None)
+    for key, value in params.items():
+        cleaned = str(value or "").strip()
+        if cleaned:
+            query[key] = cleaned
+        else:
+            query.pop(key, None)
+    return urlunsplit(
+        (split.scheme, split.netloc, split.path, urlencode(query), split.fragment)
+    )
 
 
 class ReadyToInvoiceNotificationContentService:
@@ -36,9 +56,45 @@ class ReadyToInvoiceNotificationContentService:
         return value or "commercial.open_orders.ready_to_invoice"
 
     @classmethod
+    def deep_link_path(cls) -> str:
+        """Base deep link sem forçar view=board (layout = preferência do usuário)."""
+        raw = _load()
+        value = str(
+            raw.get("deepLinkPath") or raw.get("boardDeepLinkPath") or ""
+        ).strip()
+        if not value:
+            return _DEFAULT_DEEP_LINK
+        return _merge_query(value)
+
+    @classmethod
     def board_deep_link_path(cls) -> str:
-        value = str(_load().get("boardDeepLinkPath") or "").strip()
-        return value or "/apps/commercial/open-orders?view=board&stage=ready_to_invoice"
+        """Alias legado — mesmo que deep_link_path (sem forçar board)."""
+        return cls.deep_link_path()
+
+    @classmethod
+    def build_deep_link_path(
+        cls,
+        *,
+        pedido: str = "",
+        linha: str = "",
+        filial: str = "",
+    ) -> str:
+        """Deep link com filtros de pedido/filial; stage pronto para faturar; sem view."""
+        extras: dict[str, str] = {"stage": "ready_to_invoice"}
+        pedido_s = str(pedido or "").strip()
+        filial_s = str(filial or "").strip()
+        if pedido_s:
+            extras["q"] = pedido_s
+        if filial_s:
+            extras["branch"] = filial_s
+        # linha fica no metadata / mensagem; busca por pedido já filtra a lista
+        _ = linha
+        return _merge_query(cls.deep_link_path(), **extras)
+
+    @classmethod
+    def without_forced_view(cls, path: str) -> str:
+        """Remove view= da URL para respeitar o layout persistido no MFE."""
+        return _merge_query(path or _DEFAULT_DEEP_LINK)
 
     @classmethod
     def event_type(cls) -> str:

@@ -130,16 +130,23 @@ class CommercialPortalNotificationService:
         linha: str,
         cliente: str,
         action_target: str | None = None,
+        filial: str = "",
     ) -> bool:
         content = ReadyToInvoiceNotificationContentService
         block = content.notification_block()
         title = str(block.get("title") or "Pedido pronto para faturar").strip()
-        action_label = str(block.get("actionLabel") or "Abrir board").strip()
+        action_label = str(block.get("actionLabel") or "Abrir pedidos").strip()
         notification_type = str(block.get("type") or "info").strip() or "info"
         message = content.format_message(
             pedido=pedido, linha=linha, cliente=cliente or "—"
         )
-        target = (action_target or content.board_deep_link_path()).strip()
+        target = (action_target or "").strip() or content.build_deep_link_path(
+            pedido=pedido,
+            linha=linha,
+            filial=filial,
+        )
+        # Layout do usuário (tabela/cards/board) — nunca forçar view=board.
+        target = content.without_forced_view(target)
         return self.send(
             user_ids=user_ids,
             permission_codes=permission_codes,
@@ -154,5 +161,6 @@ class CommercialPortalNotificationService:
                 "lineKey": line_key,
                 "pedido": pedido,
                 "linha": linha,
+                "filial": filial,
             },
         )

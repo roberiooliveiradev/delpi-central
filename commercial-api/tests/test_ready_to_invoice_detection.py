@@ -176,7 +176,7 @@ def test_detect_use_case_persists_snapshot_and_resolves_sellers() -> None:
     assert result.entered[0].recipients.seller_user_ids == frozenset({"seller-1"})
     assert checkpoints.saved is not None
     assert checkpoints.saved["metadata"]["keys"] == ["01|9|01"]
-    assert "view=board" in result.board_deep_link_path
+    assert "view=board" not in result.board_deep_link_path
     assert "ready_to_invoice" in result.board_deep_link_path
 
 

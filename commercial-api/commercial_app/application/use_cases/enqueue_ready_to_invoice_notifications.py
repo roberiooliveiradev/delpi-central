@@ -51,7 +51,6 @@ class EnqueueReadyToInvoiceNotificationsUseCase:
         detection = self._detect.execute(persist_snapshot=True)
         event_type = self._content.event_type()
         aggregate_type = self._content.aggregate_type()
-        deep_link = detection.board_deep_link_path
         enqueued = 0
         for entry in detection.entered:
             item = entry.item
@@ -59,7 +58,11 @@ class EnqueueReadyToInvoiceNotificationsUseCase:
                 "lineKey": entry.line_key,
                 "userIds": sorted(entry.recipients.all_user_ids),
                 "permissionCodes": list(entry.recipients.billing_permission_codes),
-                "actionTarget": deep_link,
+                "actionTarget": self._content.build_deep_link_path(
+                    pedido=str(item.get("pedido") or "").strip(),
+                    linha=str(item.get("linha") or "").strip(),
+                    filial=str(item.get("filial") or "").strip(),
+                ),
                 "pedido": str(item.get("pedido") or "").strip(),
                 "linha": str(item.get("linha") or "").strip(),
                 "cliente": str(item.get("nome_cliente") or "").strip(),
@@ -117,6 +120,7 @@ class PublishIntegrationOutboxUseCase:
                 pedido=str(payload.get("pedido") or ""),
                 linha=str(payload.get("linha") or ""),
                 cliente=str(payload.get("cliente") or ""),
+                filial=str(payload.get("filial") or ""),
                 action_target=str(payload.get("actionTarget") or "") or None,
             )
             if ok:

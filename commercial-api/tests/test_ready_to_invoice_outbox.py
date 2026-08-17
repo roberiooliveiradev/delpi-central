@@ -82,7 +82,7 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
                 ),
             ),
         ),
-        board_deep_link_path="/apps/commercial/open-orders?view=board&stage=ready_to_invoice",
+        board_deep_link_path="/apps/commercial/open-orders?stage=ready_to_invoice",
     )
     result = EnqueueReadyToInvoiceNotificationsUseCase(
         detect=_DetectStub(detection),  # type: ignore[arg-type]
@@ -93,8 +93,10 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
     payload = outbox.rows[0].payload
     assert payload["userIds"] == ["u1"]
     assert payload["permissionCodes"] == ["commercial.billing.notify"]
-    assert payload["actionTarget"].endswith("stage=ready_to_invoice")
-    assert "view=board" in payload["actionTarget"]
+    assert "stage=ready_to_invoice" in payload["actionTarget"]
+    assert "view=board" not in payload["actionTarget"]
+    assert "q=10" in payload["actionTarget"]
+    assert "branch=01" in payload["actionTarget"]
 
 
 def test_publish_calls_portal_notifier(monkeypatch) -> None:
@@ -107,10 +109,11 @@ def test_publish_calls_portal_notifier(monkeypatch) -> None:
             "lineKey": "01|10|01",
             "userIds": ["u1"],
             "permissionCodes": [],
-            "actionTarget": "/apps/commercial/open-orders?view=board&stage=ready_to_invoice",
+            "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice&q=10&branch=01",
             "pedido": "10",
             "linha": "01",
             "cliente": "ACME",
+            "filial": "01",
         },
     )
     calls: list[dict] = []
@@ -130,7 +133,8 @@ def test_publish_calls_portal_notifier(monkeypatch) -> None:
     assert result.published == 1
     assert outbox.published == ["ob-1"]
     assert calls[0]["line_key"] == "01|10|01"
-    assert calls[0]["action_target"].endswith("ready_to_invoice")
+    assert "ready_to_invoice" in calls[0]["action_target"]
+    assert "view=board" not in calls[0]["action_target"]
 
 
 def test_portal_notification_payload_shape(monkeypatch) -> None:
@@ -161,13 +165,17 @@ def test_portal_notification_payload_shape(monkeypatch) -> None:
         pedido="1",
         linha="01",
         cliente="ACME",
-        action_target="/apps/commercial/open-orders?view=board&stage=ready_to_invoice",
+        filial="01",
     )
     body = captured["json"]
     assert body["category"] == "commercial"
     assert body["sourceApp"] == "commercial"
     assert body["action"]["type"] == "portal_route"
+    assert body["action"]["label"] == "Abrir pedidos"
     assert "stage=ready_to_invoice" in body["action"]["target"]
+    assert "view=board" not in body["action"]["target"]
+    assert "q=1" in body["action"]["target"]
+    assert "branch=01" in body["action"]["target"]
     assert body["userIds"] == ["u1"]
     assert body["permissionCodes"] == ["commercial.billing.notify"]
     assert body["metadata"]["dedupeKey"] == "commercial:ready_to_invoice:01|1|01"
