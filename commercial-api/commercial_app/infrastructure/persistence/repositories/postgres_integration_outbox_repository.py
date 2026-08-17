@@ -88,7 +88,7 @@ class PostgresIntegrationCheckpointRepository(
         last_success_at: datetime | None = None,
     ) -> IntegrationCheckpoint:
         success_at = last_success_at or datetime.now(timezone.utc)
-        row = self.fetch_one(
+        row = self.execute_returning_one(
             """
             INSERT INTO commercial.integration_checkpoints (
                 source_key, cursor_value, last_success_at, metadata, updated_at
@@ -130,7 +130,7 @@ class PostgresIntegrationOutboxRepository(
         aggregate_id: str,
         payload: dict[str, Any],
     ) -> IntegrationOutboxRow:
-        row = self.fetch_one(
+        row = self.execute_returning_one(
             """
             INSERT INTO commercial.integration_outbox (
                 event_type, aggregate_type, aggregate_id, payload
