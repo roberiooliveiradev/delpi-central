@@ -90,8 +90,64 @@ def test_process_console_alerts_stores_history() -> None:
     portal_mock.assert_not_called()
 
 
-def test_slow_sql_alert() -> None:
-    record_sql_query(query="SELECT slow", duration_ms=5000, repository="SlowRepo")
+def test_evaluate_pool_saturation_alert() -> None:
+    saturated = {
+        "enabled": True,
+        "max_size": 10,
+        "created": 10,
+        "available": 0,
+        "in_use": 10,
+        "occupancy_pct": 95.0,
+    }
+    idle = {
+        "enabled": True,
+        "max_size": 10,
+        "created": 1,
+        "available": 1,
+        "in_use": 0,
+        "occupancy_pct": 0.0,
+    }
+    with patch(
+        "app.domain.services.console_alerts_service.get_connection_pools_glance",
+        return_value={
+            "captured_at": "2026-01-01T00:00:00+00:00",
+            "plugins_postgres": saturated,
+            "totvs": idle,
+            "max_occupancy_pct": 95.0,
+        },
+    ):
+        with patch("app.domain.services.console_alerts_service.settings") as settings:
+            settings.CONSOLE_ALERT_POOL_SATURATION_PCT = "90"
+            settings.CONSOLE_ALERT_P95_THRESHOLD_MS = "3000"
+            settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS = "2500"
+            alerts = evaluate_console_alerts()
 
-    alerts = evaluate_console_alerts()
-    assert any(alert.code == "slow_sql" for alert in alerts)
+    pool_alerts = [alert for alert in alerts if alert.code == "pool_saturation"]
+    assert len(pool_alerts) == 1
+    assert pool_alerts[0].details.get("pool_name") == "plugins_postgres"
+    assert pool_alerts[0].details.get("occupancy_pct") == 95.0
+    assert "Cache" in str(pool_alerts[0].details.get("guidance") or "")
+
+
+def test_evaluate_pool_saturation_below_threshold_silent() -> None:
+    idle = {
+        "enabled": True,
+        "max_size": 10,
+        "in_use": 5,
+        "occupancy_pct": 50.0,
+    }
+    with patch(
+        "app.domain.services.console_alerts_service.get_connection_pools_glance",
+        return_value={
+            "plugins_postgres": idle,
+            "totvs": {**idle, "enabled": False},
+            "max_occupancy_pct": 50.0,
+        },
+    ):
+        with patch("app.domain.services.console_alerts_service.settings") as settings:
+            settings.CONSOLE_ALERT_POOL_SATURATION_PCT = "90"
+            settings.CONSOLE_ALERT_P95_THRESHOLD_MS = "3000"
+            settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS = "2500"
+            alerts = evaluate_console_alerts()
+
+    assert all(alert.code != "pool_saturation" for alert in alerts)

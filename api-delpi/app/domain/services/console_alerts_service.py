@@ -23,6 +23,7 @@ from app.domain.services.caller_request_stats_service import (
     get_caller_traffic_summary,
 )
 from app.domain.services.connection_pool_stats_service import get_connection_pools_glance
+from app.domain.services.console_alert_content_service import ConsoleAlertContentService
 from app.domain.services.observability_snapshot_service import build_observability_snapshot
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
@@ -56,6 +57,29 @@ def _slow_sql_threshold_ms() -> float:
     return float(settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS or 2500)
 
 
+def _pool_saturation_threshold_pct() -> float:
+    raw = (settings.CONSOLE_ALERT_POOL_SATURATION_PCT or "").strip()
+    if raw:
+        return float(raw)
+    return ConsoleAlertContentService.pool_saturation_pct_default()
+
+
+def _alert_from_content(
+    code: str,
+    *,
+    fields: dict[str, Any],
+    details: dict[str, Any],
+    severity: str | None = None,
+) -> ConsoleAlert:
+    guidance = ConsoleAlertContentService.alert_guidance(code)
+    return ConsoleAlert(
+        code=code,
+        severity=severity or ConsoleAlertContentService.alert_severity(code),
+        message=ConsoleAlertContentService.format_alert_message(code, **fields),
+        details={**details, "guidance": guidance} if guidance else details,
+    )
+
+
 def _webhook_enabled() -> bool:
     return bool((settings.CONSOLE_ALERT_WEBHOOK_URL or "").strip())
 
@@ -70,10 +94,9 @@ def evaluate_console_alerts(
         failed = int(smoke_result.get("failed") or 0)
         if failed > 0:
             alerts.append(
-                ConsoleAlert(
-                    code="smoke_failure",
-                    severity="critical",
-                    message=f"Smoke suite falhou: {failed} caso(s).",
+                _alert_from_content(
+                    "smoke_failure",
+                    fields={"failed": failed},
                     details={
                         "suite_id": smoke_result.get("suiteId"),
                         "passed": smoke_result.get("passed"),
@@ -96,10 +119,9 @@ def evaluate_console_alerts(
     p95_limit = _p95_threshold_ms()
     if p95_ms > p95_limit:
         alerts.append(
-            ConsoleAlert(
-                code="p95_latency",
-                severity="warning",
-                message=f"p95 de latência ({p95_ms} ms) acima do limiar ({p95_limit} ms).",
+            _alert_from_content(
+                "p95_latency",
+                fields={"p95_ms": p95_ms, "threshold_ms": p95_limit},
                 details={"p95_ms": p95_ms, "threshold_ms": p95_limit},
             )
         )
@@ -109,10 +131,9 @@ def evaluate_console_alerts(
         max_ms = float(row.get("max_ms") or 0)
         if max_ms >= _slow_sql_threshold_ms():
             alerts.append(
-                ConsoleAlert(
-                    code="slow_sql",
-                    severity="warning",
-                    message=f"Query lenta detectada ({max_ms} ms).",
+                _alert_from_content(
+                    "slow_sql",
+                    fields={"max_ms": max_ms},
                     details={
                         "query_hash": row.get("query_hash"),
                         "preview": row.get("preview"),
@@ -124,6 +145,33 @@ def evaluate_console_alerts(
                 )
             )
             break
+
+    pool_limit = _pool_saturation_threshold_pct()
+    pools = get_connection_pools_glance()
+    for pool_name in ("plugins_postgres", "totvs"):
+        pool = pools.get(pool_name) or {}
+        if not pool.get("enabled"):
+            continue
+        occupancy_pct = float(pool.get("occupancy_pct") or 0.0)
+        if occupancy_pct >= pool_limit:
+            alerts.append(
+                _alert_from_content(
+                    "pool_saturation",
+                    fields={
+                        "pool_name": pool_name,
+                        "occupancy_pct": occupancy_pct,
+                        "threshold_pct": pool_limit,
+                    },
+                    details={
+                        "pool_name": pool_name,
+                        "occupancy_pct": occupancy_pct,
+                        "threshold_pct": pool_limit,
+                        "in_use": pool.get("in_use"),
+                        "max_size": pool.get("max_size"),
+                        "runbook_segment": "cache",
+                    },
+                )
+            )
 
     return alerts
 
@@ -254,6 +302,7 @@ def build_console_health_summary() -> dict[str, Any]:
         "thresholds": {
             "p95_ms": _p95_threshold_ms(),
             "slow_sql_ms": _slow_sql_threshold_ms(),
+            "pool_saturation_pct": _pool_saturation_threshold_pct(),
         },
         "traffic": traffic,
         "pools": pools,
@@ -288,6 +337,7 @@ def list_console_alert_history(*, limit: int = 25) -> dict[str, Any]:
         "thresholds": {
             "p95_ms": _p95_threshold_ms(),
             "slow_sql_ms": _slow_sql_threshold_ms(),
+            "pool_saturation_pct": _pool_saturation_threshold_pct(),
         },
     }
 

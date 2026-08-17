@@ -2,7 +2,7 @@ import {
   createDashboardSectionCard,
   createMetricKpiCard,
   sectionCardPacBemClasses,
-} from "@delpi/plugin-ui";
+} from "@delpi/plugin-ui/index";
 
 /** Prefixo BEM local; estilos visuais vêm do dual-class `delpi-ui-*` no kit. */
 export const UI_PREFIX = "adc";

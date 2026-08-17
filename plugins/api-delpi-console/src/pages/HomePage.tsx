@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { MetricKpiCardTone } from "@delpi/plugin-ui";
+import type { MetricKpiCardTone } from "@delpi/plugin-ui/index";
 import {
   Activity,
   Bell,
@@ -43,6 +43,14 @@ function p95Tone(health: ConsoleHealthPayload): MetricKpiCardTone {
   if (!threshold || !health.traffic?.total_requests) return "default";
   if (p95 >= threshold) return "negative";
   return "positive";
+}
+
+function poolTone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  const occupancy = health.metrics.pool_occupancy_pct ?? health.pools?.max_occupancy_pct ?? 0;
+  const threshold = health.thresholds.pool_saturation_pct;
+  if (threshold == null) return "default";
+  if (occupancy >= threshold) return "negative";
+  return "default";
 }
 
 function alertTone(health: ConsoleHealthPayload): MetricKpiCardTone {
@@ -100,8 +108,12 @@ function ConsoleHealthGlance({
         <ConsoleMetricKpiCard
           label="Pool"
           value={formatPct(health.metrics.pool_occupancy_pct ?? health.pools?.max_occupancy_pct)}
-          hint="Máx. ocupação Plugins/TOTVS"
-          tone="default"
+          hint={
+            health.thresholds.pool_saturation_pct != null
+              ? `Limiar ${formatPct(health.thresholds.pool_saturation_pct)}`
+              : "Máx. ocupação Plugins/TOTVS"
+          }
+          tone={poolTone(health)}
           titleHint="Detalhe dos pools na aba Cache"
         />
         <ConsoleMetricKpiCard

@@ -51,6 +51,7 @@ export type ConsoleHealthPayload = {
   thresholds: {
     p95_ms: number;
     slow_sql_ms: number;
+    pool_saturation_pct?: number;
   };
   webhook_configured: boolean;
   portal_notifications_configured?: boolean;
