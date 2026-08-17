@@ -262,9 +262,9 @@ def STOCK_METHOD_QUERY():
     pattern=_enum_pattern(STOCK_METHOD_VALUES),
     enum=list(STOCK_METHOD_VALUES),
 )
-def NONCONFORMITY_TYPE_QUERY():
+def NONCONFORMITY_TYPE_QUERY(*, default: str = "all"):
     return Query(
-    "all",
+    default,
     description=(
         "Nonconformity type filter: internal (QI2_TIPO=1), customer (2), "
         "supplier (3), external (2+3 legacy), or all."

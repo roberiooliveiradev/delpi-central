@@ -60,3 +60,13 @@ def test_streak_current_becomes_record() -> None:
     # 2026-03-01 - 2026-01-01 = 59
     assert result["current_days_without_nc"] == 59
     assert result["record_days_without_nc"] == 59
+
+
+def test_streak_accepts_isoformat_strings_from_sql_normalize() -> None:
+    result = compute_lmp_nc_streak(
+        ["2026-08-10", "2026-08-10T00:00:00"],
+        as_of=date(2026, 8, 17),
+    )
+    assert result["last_nc_date"] == "2026-08-10"
+    assert result["current_days_without_nc"] == 7
+    assert result["nc_count"] == 1

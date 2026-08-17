@@ -2276,6 +2276,23 @@
       },
       "category": "quality"
     },
+    "get_nonconformity_streak": {
+      "locale": {
+        "en": {
+          "summary": "Days without quality nonconformity",
+          "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). No period: history until today.",
+          "label": "Days without customer NC",
+          "whenToUse": "Use as a TV KPI card for days without customer nonconformity (or another type via the type parameter)."
+        },
+        "pt-BR": {
+          "label": "Dias sem NC de cliente",
+          "summary": "Dias sem não conformidade de qualidade",
+          "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Sem período: histórico até hoje.",
+          "whenToUse": "Use em card KPI na TV para o placar de dias sem NC de cliente (ou outro tipo via parâmetro type)."
+        }
+      },
+      "category": "quality"
+    },
     "get_observability_snapshot": {
       "locale": {
         "en": {

@@ -20,6 +20,7 @@ PRESENTATION_DOMAIN_SAMPLES: tuple[dict[str, str], ...] = (
     {"domain": "supplies", "path": "/supplies/cpv", "entity": "supplies_cpv"},
     {"domain": "hr", "path": "/hr/snapshot", "entity": "hr_snapshot"},
     {"domain": "quality", "path": "/quality/nonconformities/series", "entity": "nonconformity_series"},
+    {"domain": "quality", "path": "/quality/nonconformities/streak", "entity": "nonconformity_streak"},
     {"domain": "commercial", "path": "/commercial/closing-rate", "entity": "sales_conversion_rate"},
     {"domain": "sql", "path": "/data/sql", "entity": "sql_result"},
     {"domain": "system", "path": "/system/tables/search", "entity": "protheus_table"},

@@ -923,6 +923,19 @@ DATA_SQL = agent_route(
     operation_id="execute_readonly_sql",
 )
 
+QUALITY_NONCONFORMITY_STREAK = agent_route(
+    summary="Days without quality nonconformity",
+    description=(
+        "Current and record calendar days without TOTVS QI2 nonconformity, using the same "
+        "type filter as the quality dashboard (internal, customer, supplier, external, all). "
+        "Default type is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional "
+        "product_prefix (digits only; 9048 plugs, 9026 components) filters QI2_ITEM. "
+        "No period filter: history is counted until today. KPI field `value` equals "
+        "current_days_without_nc."
+    ),
+    operation_id="get_nonconformity_streak",
+)
+
 QUALITY_KAIZEN_SUMMARY = agent_route(
     summary="Kaizens — resumo e listagem (PostgreSQL)",
     description=(

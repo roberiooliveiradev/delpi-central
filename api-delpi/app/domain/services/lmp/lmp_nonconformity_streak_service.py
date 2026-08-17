@@ -1,70 +1,7 @@
 """Cálculo de dias sem NC em LMP (streak atual e recorde)."""
 
-from __future__ import annotations
+from app.domain.services.calendar_occurrence_streak_service import (
+    compute_occurrence_streak as compute_lmp_nc_streak,
+)
 
-from datetime import date
-from typing import Any
-
-
-def compute_lmp_nc_streak(
-    occurrence_dates: list[date],
-    *,
-    as_of: date,
-    reference_start_date: date | None = None,
-) -> dict[str, Any]:
-    """
-    Calcula streak a partir das datas de ocorrência (``occurrence_date``).
-
-    - ``current_days_without_nc``: dias desde a última NC até ``as_of``
-      (NC no próprio ``as_of`` → 0).
-    - ``record_days_without_nc``: maior intervalo entre NCs consecutivas
-      (diferença em dias) ou o streak atual, o que for maior.
-
-    Sem NCs: usa ``reference_start_date`` (ex.: data da primeira OV) como
-    âncora do streak; se também ausente, ambos ficam 0.
-    """
-    unique = sorted({d for d in occurrence_dates if isinstance(d, date)})
-    as_of_date = as_of
-    reference = (
-        reference_start_date
-        if isinstance(reference_start_date, date)
-        else None
-    )
-
-    if not unique:
-        if reference is None:
-            return {
-                "current_days_without_nc": 0,
-                "record_days_without_nc": 0,
-                "last_nc_date": None,
-                "reference_start_date": None,
-                "as_of_date": as_of_date.isoformat(),
-                "nc_count": 0,
-            }
-        current = max(0, (as_of_date - reference).days)
-        return {
-            "current_days_without_nc": current,
-            "record_days_without_nc": current,
-            "last_nc_date": None,
-            "reference_start_date": reference.isoformat(),
-            "as_of_date": as_of_date.isoformat(),
-            "nc_count": 0,
-        }
-
-    last = unique[-1]
-    current = max(0, (as_of_date - last).days)
-
-    gaps: list[int] = []
-    for previous, current_date in zip(unique, unique[1:]):
-        gaps.append((current_date - previous).days)
-
-    record = max([current, *gaps]) if gaps else current
-
-    return {
-        "current_days_without_nc": current,
-        "record_days_without_nc": record,
-        "last_nc_date": last.isoformat(),
-        "reference_start_date": reference.isoformat() if reference else None,
-        "as_of_date": as_of_date.isoformat(),
-        "nc_count": len(unique),
-    }
+__all__ = ["compute_lmp_nc_streak"]

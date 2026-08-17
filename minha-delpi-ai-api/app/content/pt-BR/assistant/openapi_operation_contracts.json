@@ -943,6 +943,10 @@
     "entity": "nonconformity_series",
     "shape": "scalar"
   },
+  "get_nonconformity_streak": {
+    "entity": "nonconformity_streak",
+    "shape": "scalar"
+  },
   "list_nonconformities": {
     "entity": "nonconformity",
     "shape": "paged_list"
