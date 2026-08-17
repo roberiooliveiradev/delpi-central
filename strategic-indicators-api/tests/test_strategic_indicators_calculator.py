@@ -319,6 +319,36 @@ def test_monthly_curve_closed_month_full_point() -> None:
     assert comparable == 500_000.0
 
 
+def test_resolve_reference_goal_standard_keeps_cadastrado() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    assert (
+        calculator.resolve_reference_goal(
+            goal_value=10.0,
+            goal_mode="standard",
+            start_date="01-04-2026",
+            end_date="15-04-2026",
+        )
+        == 10.0
+    )
+
+
+def test_resolve_reference_goal_curve_averages_overlap_months() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    reference = calculator.resolve_reference_goal(
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        monthly_targets=[
+            {"month_number": 1, "target_value": 90.0},
+            {"month_number": 2, "target_value": 100.0},
+            {"month_number": 3, "target_value": 110.0},
+        ],
+        start_date="01-01-2026",
+        end_date="28-02-2026",
+    )
+    assert reference == 95.0
+
+
 def test_goal_prorata_anti_zero_guard() -> None:
     calculator = StrategicIndicatorsCalculator()
     comparable = calculator.calculate_comparable_goal(

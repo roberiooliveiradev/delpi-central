@@ -127,6 +127,10 @@ class GetDashboardIndicatorMetricUseCase:
         )
         goals: dict = {}
         comparable_goal = None
+        reference_goal = None
+        goal_mode = "standard"
+        goal_periodicity = "monthly"
+        monthly_targets: list = []
         if calculated is not None:
             goals = self._calculator.resolve_goals_payload_for_calculated(
                 calculated=calculated,
@@ -135,12 +139,28 @@ class GetDashboardIndicatorMetricUseCase:
                 end_date=period.end_date,
                 competence=period.competence,
             )
-            if calculated.goal_value is not None:
+            goal_mode = getattr(calculated, "goal_mode", "standard") or "standard"
+            goal_periodicity = calculated.goal_periodicity or "monthly"
+            monthly_targets = getattr(calculated, "monthly_targets", None) or []
+            reference_goal = self._calculator.resolve_reference_goal(
+                goal_value=float(calculated.goal_value)
+                if calculated.goal_value is not None
+                else None,
+                goal_periodicity=goal_periodicity,
+                goal_mode=goal_mode,
+                monthly_targets=monthly_targets,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                competence=period.competence,
+            )
+            if calculated.goal_value is not None or (
+                goal_mode or ""
+            ).strip().lower() == "monthly_curve":
                 comparable_goal = self._calculator.calculate_comparable_goal(
-                    goal_value=float(calculated.goal_value),
-                    goal_periodicity=calculated.goal_periodicity or "monthly",
-                    goal_mode=getattr(calculated, "goal_mode", "standard") or "standard",
-                    monthly_targets=getattr(calculated, "monthly_targets", None),
+                    goal_value=float(calculated.goal_value or 0),
+                    goal_periodicity=goal_periodicity,
+                    goal_mode=goal_mode,
+                    monthly_targets=monthly_targets,
                     start_date=period.start_date,
                     end_date=period.end_date,
                     competence=period.competence,
@@ -149,6 +169,19 @@ class GetDashboardIndicatorMetricUseCase:
                     indicator_id=getattr(calculated, "indicator_id", None)
                     or getattr(catalog_item, "indicator_id", None),
                 )
+        else:
+            catalog_mode = getattr(catalog_item, "goal_mode", "standard") or "standard"
+            catalog_periodicity = getattr(catalog_item, "goal_periodicity", None) or "monthly"
+            catalog_targets = getattr(catalog_item, "monthly_targets", None) or []
+            reference_goal = self._calculator.resolve_reference_goal(
+                goal_value=float(goal_value) if goal_value is not None else None,
+                goal_periodicity=catalog_periodicity,
+                goal_mode=catalog_mode,
+                monthly_targets=catalog_targets,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                competence=period.competence,
+            )
 
         if comparable_goal is None and goals:
             for key in ("consolidated", "01", "02"):
@@ -166,6 +199,7 @@ class GetDashboardIndicatorMetricUseCase:
             "value": comparable_goal,
             "comparable_goal": comparable_goal,
             "goal_value": goal_value,
+            "reference_goal": reference_goal,
             "goal_label": goal_label,
             "goals": goals,
             "has_value": comparable_goal is not None,

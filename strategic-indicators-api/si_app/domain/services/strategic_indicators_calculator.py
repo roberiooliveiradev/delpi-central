@@ -508,6 +508,81 @@ class StrategicIndicatorsCalculator:
             aggregation=aggregation,
         )
 
+    def resolve_reference_goal(
+        self,
+        *,
+        goal_value: float | None,
+        goal_periodicity: str = "monthly",
+        goal_mode: str = "standard",
+        monthly_targets: list[dict] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+    ) -> float | None:
+        """Meta de referência para «Meta mês»: cadastro (standard) ou média da curva no filtro."""
+        normalized_goal_mode = (goal_mode or "standard").strip().lower()
+        if normalized_goal_mode != "monthly_curve":
+            if goal_value is None:
+                return None
+            try:
+                return float(goal_value)
+            except (TypeError, ValueError):
+                return None
+
+        targets = monthly_targets or []
+        if not targets:
+            return None
+
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            curve_point_indices_for_calendar_months,
+            expected_monthly_curve_points,
+            parse_year_from_competence,
+        )
+
+        max_points = expected_monthly_curve_points(goal_periodicity)
+        targets_by_point: dict[int, float] = {}
+        for item in targets:
+            point_number = int(item.get("month_number") or 0)
+            if point_number < 1 or point_number > max_points:
+                continue
+            targets_by_point[point_number] = float(item.get("target_value") or 0)
+
+        if not targets_by_point:
+            return None
+
+        # Prefer explicit filter dates so multi-month ranges are not collapsed to
+        # competence month alone (resolve_period always sets competence from end_date).
+        calendar_months = (
+            self._resolve_month_numbers_from_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if start_date and end_date
+            else self._resolve_period_month_numbers(
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+        )
+        start = self._parse_date(start_date)
+        year = parse_year_from_competence(competence)
+        if year is None and start is not None:
+            year = start.year
+        resolved_year = year or 2026
+        point_indices = curve_point_indices_for_calendar_months(
+            goal_periodicity,
+            calendar_months,
+            year=resolved_year,
+        )
+        values = [
+            targets_by_point[point_number]
+            for point_number in point_indices
+            if point_number in targets_by_point
+        ]
+        if not values:
+            return None
+        return round(sum(values) / len(values), 2)
+
     def resolve_goal_period_flags(
         self,
         *,

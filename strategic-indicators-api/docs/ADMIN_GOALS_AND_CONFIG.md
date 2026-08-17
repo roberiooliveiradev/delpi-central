@@ -45,6 +45,7 @@ Regras:
 - Meta comparável do período = **soma proporcional por dia** dos pontos/metas que caem no intervalo (`meta_mês / dias_do_mês × dias_sobrepostos`). Em curva, mês civil fechado mantém o ponto cheio; mês aberto aplica fração só no ponto parcial.
 - Flags no contrato `dashboard-goals`: `goal_aggregation: "sum" | "average"`, `goal_period_kind: "exact" | "partial" | "accumulated"`, `goal_period_partial: bool` (`true` só se `kind=partial`). Percentual em mês incompleto usa **sum** de parcelas diárias; multi-mês YTD percentual usa **average**.
 - Sem pontos válidos na curva → meta comparável **0** (nota sem meta).
+- Contrato de valores: `goal_value` = meta **cadastrada**; `comparable_goal` = meta **calculada** do período; `reference_goal` = referência «Meta mês» (`goal_value` no padrão; na curva = média dos pontos dos meses que intersectam o filtro).
 - Persistência admin (`indicator_goals` + curva mensal) **não muda**: continua meta mensal; a prorata é só no cálculo de `comparable_goal`.
 
 Migration **V025** zera `goal_value` legado em metas `monthly_curve` já existentes.

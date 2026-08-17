@@ -218,7 +218,11 @@ class GetDashboardGoalsBySourceKeysUseCase:
         goal_scope_hint: str | None,
     ) -> dict:
         goal_value = float(goal["goal_value"]) if goal and goal.get("goal_value") is not None else None
+        goal_mode = (goal.get("goal_mode") if goal else None) or "standard"
+        goal_periodicity = (goal.get("goal_periodicity") if goal else None) or "monthly"
+        monthly_targets = (goal.get("monthly_targets") if goal else None) or []
         comparable_goal = None
+        reference_goal = None
         goal_flags = self._calculator.resolve_goal_period_flags(
             start_date=period.start_date,
             end_date=period.end_date,
@@ -226,18 +230,28 @@ class GetDashboardGoalsBySourceKeysUseCase:
             value_unit=indicator.get("value_unit"),
             indicator_id=indicator.get("indicator_id"),
         )
-        if goal and goal_value is not None:
-            comparable_goal = self._calculator.calculate_comparable_goal(
+        if goal:
+            reference_goal = self._calculator.resolve_reference_goal(
                 goal_value=goal_value,
-                goal_periodicity=goal.get("goal_periodicity") or "monthly",
-                goal_mode=goal.get("goal_mode") or "standard",
-                monthly_targets=goal.get("monthly_targets") or [],
+                goal_periodicity=goal_periodicity,
+                goal_mode=goal_mode,
+                monthly_targets=monthly_targets,
                 start_date=period.start_date,
                 end_date=period.end_date,
                 competence=period.competence,
-                value_unit=indicator.get("value_unit"),
-                indicator_id=indicator.get("indicator_id"),
             )
+            if goal_value is not None or (goal_mode or "").strip().lower() == "monthly_curve":
+                comparable_goal = self._calculator.calculate_comparable_goal(
+                    goal_value=float(goal_value or 0),
+                    goal_periodicity=goal_periodicity,
+                    goal_mode=goal_mode,
+                    monthly_targets=monthly_targets,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    competence=period.competence,
+                    value_unit=indicator.get("value_unit"),
+                    indicator_id=indicator.get("indicator_id"),
+                )
 
         goal_scope_branch = (
             normalize_goal_scope_branch(goal.get("goal_scope_branch"))
@@ -271,6 +285,7 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "goal_periodicity": goal.get("goal_periodicity") if goal else None,
             "goal_mode": goal.get("goal_mode") if goal else None,
             "comparable_goal": comparable_goal,
+            "reference_goal": reference_goal,
             "goal_aggregation": goal_flags["goal_aggregation"],
             "goal_period_kind": goal_flags["goal_period_kind"],
             "goal_period_partial": goal_flags["goal_period_partial"],
