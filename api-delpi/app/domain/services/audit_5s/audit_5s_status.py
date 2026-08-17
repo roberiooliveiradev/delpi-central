@@ -35,3 +35,11 @@ AUDIT_ALL_STATUSES = frozenset(
 
 def is_audit_closed(status: str | None) -> bool:
     return str(status or "") in AUDIT_CLOSED_STATUSES
+
+
+AUDIT_REOPEN_EVALUATION_SOURCE_STATUSES = frozenset(
+    {
+        AUDIT_STATUS_EVALUATION_COMPLETE,
+        AUDIT_STATUS_NC_IN_PROGRESS,
+    }
+)

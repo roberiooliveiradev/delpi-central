@@ -228,6 +228,11 @@ export function canReopenEvaluation(status: string): boolean {
   return status === "evaluation_complete" || status === "nc_in_progress";
 }
 
+/** Notas/observações/fotos de critério só na fase de avaliação. */
+export function canEditEvaluation(status: string): boolean {
+  return status === "draft";
+}
+
 export function ncActionLabel(status: string, scorePct?: number | null): string {
   if (canFinalizeWithoutNc(status, scorePct)) {
     return "Finalizar";

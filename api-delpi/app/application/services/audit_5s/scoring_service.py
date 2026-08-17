@@ -44,6 +44,11 @@ def is_nc_candidate(score: int | None, is_not_applicable: bool) -> bool:
     return not is_not_applicable and score in (1, 3)
 
 
+def nc_cleared_by_score(score: int | None, is_not_applicable: bool) -> bool:
+    """True quando a nota deixa o critério fora da regra de NC (5 ou NA)."""
+    return not is_nc_candidate(score, is_not_applicable)
+
+
 def can_attach_criterion_photo(score: int | None, is_not_applicable: bool) -> bool:
     """Foto opcional em qualquer nota aplicável (1, 3 ou 5); não em NA."""
     return not is_not_applicable and score in (1, 3, 5)
