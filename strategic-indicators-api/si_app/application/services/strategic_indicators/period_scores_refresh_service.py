@@ -28,13 +28,24 @@ logger = logging.getLogger("strategic_indicators.period_scores_refresh")
 _refresh_materialized_lock = threading.Lock()
 
 
-def _parse_branch_scopes() -> list[str | None]:
-    raw = (settings.SI_PERIOD_SCORES_REFRESH_BRANCHES or "").strip()
-    if not raw:
+def parse_branch_scopes(raw: str | None = None) -> list[str | None]:
+    """
+    Interpreta CSV de escopos de filial para o refresh.
+
+    - Vazio / None → default (consolidado + 01 + 02).
+    - `consolidated` / `all` → só consolidado (None).
+    - Códigos TOTVS (ex.: `01,02`) → só essas filiais.
+    """
+    resolved = (
+        raw
+        if raw is not None
+        else (settings.SI_PERIOD_SCORES_REFRESH_BRANCHES or "")
+    ).strip()
+    if not resolved:
         return list(DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES)
 
     scopes: list[str | None] = []
-    for item in raw.split(","):
+    for item in resolved.split(","):
         normalized = item.strip()
         if normalized in {"", "consolidated", "all"}:
             if None not in scopes:
@@ -43,6 +54,10 @@ def _parse_branch_scopes() -> list[str | None]:
         scopes.append(normalized)
 
     return scopes or [None]
+
+
+def _parse_branch_scopes() -> list[str | None]:
+    return parse_branch_scopes()
 
 
 def _department_scopes(

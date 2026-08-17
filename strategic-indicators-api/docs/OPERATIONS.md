@@ -26,6 +26,17 @@ trends failed competence=2026-05 months=6 duration_ms=4
 
 Arquivo dev (se configurado): `strategic-indicators-api/logs/api_YYYYMMDD.log`.
 
+## Refresh period_scores — Fase A (horário) e Fase B (filiais)
+
+| Fase | Escopo | Como |
+|------|--------|------|
+| **A — horário** | Só consolidado | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` (default Compose) |
+| **B — noturna** | Filiais `01` e `02` | CLI com `--branches 01,02` (ver E1.S2) + `--no-invalidate` |
+
+O botão **Atualizar** do MFE usa o mesmo `SI_PERIOD_SCORES_REFRESH_BRANCHES` do processo: após o default Compose, atualiza o consolidado; a visão por filial pode atrasar até a Fase B.
+
+Visão **filial 01/02** no painel pode ficar stale até o job noturno (ou refresh manual Fase B).
+
 ## Warm-up
 
 Automático: `SI_WARMUP_ON_STARTUP=true` — aquece executive + trends (`SI_WARMUP_TRENDS_MONTHS`).
