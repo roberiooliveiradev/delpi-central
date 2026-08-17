@@ -26,6 +26,7 @@ _BINARY_OIDS = frozenset(
         "export_meeting_minute_pdf",
         "get_meeting_minute_signature_image",
         "get_my_signature_image",
+        "get_public_meeting_minute_signature_image",
     }
 )
 

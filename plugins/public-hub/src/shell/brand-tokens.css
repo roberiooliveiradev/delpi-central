@@ -69,6 +69,13 @@
     radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 14%, transparent), transparent),
     radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 10%, transparent), transparent),
     linear-gradient(160deg, #eaf3fb, #ffffff 55%, #eef5fb);
+
+  /* Ponte para @delpi/plugin-ui (DocumentReader toolbar etc.) — public-hub não herda o portal. */
+  --delpi-ui-text: var(--pub-text);
+  --delpi-ui-muted: var(--pub-text-soft);
+  --delpi-ui-surface: var(--pub-card-bg);
+  --delpi-ui-border: var(--pub-card-border);
+  --delpi-ui-accent: var(--pub-accent);
 }
 
 /* ----- Tema ESCURO (fixado pelo usuário) ----- */
@@ -122,6 +129,12 @@
     radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 38%, transparent), transparent),
     radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 18%, transparent), transparent),
     linear-gradient(160deg, #041b2e, var(--pub-secondary) 55%, #041b2e);
+
+  --delpi-ui-text: var(--pub-text);
+  --delpi-ui-muted: var(--pub-text-soft);
+  --delpi-ui-surface: var(--pub-card-bg);
+  --delpi-ui-border: var(--pub-card-border);
+  --delpi-ui-accent: var(--pub-accent);
 }
 
 /* ----- Tema ESCURO (preferência do SO, sem escolha manual de claro) ----- */
@@ -176,5 +189,11 @@
       radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 38%, transparent), transparent),
       radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 18%, transparent), transparent),
       linear-gradient(160deg, #041b2e, var(--pub-secondary) 55%, #041b2e);
+
+    --delpi-ui-text: var(--pub-text);
+    --delpi-ui-muted: var(--pub-text-soft);
+    --delpi-ui-surface: var(--pub-card-bg);
+    --delpi-ui-border: var(--pub-card-border);
+    --delpi-ui-accent: var(--pub-accent);
   }
 }

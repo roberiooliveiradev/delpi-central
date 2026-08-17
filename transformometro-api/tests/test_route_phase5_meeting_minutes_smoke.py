@@ -24,6 +24,7 @@ OPERATION_IDS = (
     "get_my_signature_image",
     "get_my_signature_profile",
     "get_public_meeting_minute_sign_invite",
+    "get_public_meeting_minute_signature_image",
     "list_meeting_minutes",
     "list_meeting_minutes_pending_signatures",
     "refuse_meeting_minute_signature",

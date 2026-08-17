@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-08-17",
-  "operation_count": 150,
+  "operation_count": 151,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -901,6 +901,12 @@
       "operationId": "sign_public_meeting_minute_invite",
       "method": "POST",
       "path": "/public/meeting-minutes/sign-invites/{token}/sign",
+      "module": "meeting_minutes_public"
+    },
+    {
+      "operationId": "get_public_meeting_minute_signature_image",
+      "method": "GET",
+      "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
       "module": "meeting_minutes_public"
     }
   ]

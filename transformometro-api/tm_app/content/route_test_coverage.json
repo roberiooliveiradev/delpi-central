@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-08-17",
-  "baselineOperationCount": 150,
-  "operationCount": 150,
-  "coveredCount": 150,
+  "baselineOperationCount": 151,
+  "operationCount": 151,
+  "coveredCount": 151,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -50,8 +50,8 @@
       "exempt": 0
     },
     "meeting_minutes_public": {
-      "total": 3,
-      "covered": 3,
+      "total": 4,
+      "covered": 4,
       "gap": 0,
       "exempt": 0
     }
@@ -1104,6 +1104,13 @@
       "operationId": "sign_public_meeting_minute_invite",
       "method": "POST",
       "path": "/public/meeting-minutes/sign-invites/{token}/sign",
+      "module": "meeting_minutes_public",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_meeting_minute_signature_image",
+      "method": "GET",
+      "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
       "module": "meeting_minutes_public",
       "status": "covered"
     }

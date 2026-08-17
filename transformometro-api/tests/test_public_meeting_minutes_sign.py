@@ -189,6 +189,7 @@ def test_public_sign_context_and_refuse():
     repo.list_signers.return_value = [
         {"id": "s1", "user_id": None, "display_name": "Ana", "status": "pending"}
     ]
+    repo.list_signatures.return_value = []
     repo.get_version.return_value = {
         "id": "v1",
         "title": "T",
@@ -261,6 +262,15 @@ def test_public_sign_context_already_signed_includes_version_content():
     repo.list_signers.return_value = [
         {"id": "s1", "user_id": None, "display_name": "Ana", "status": "signed"}
     ]
+    repo.list_signatures.return_value = [
+        {
+            "id": "sig1",
+            "signer_id": "s1",
+            "user_id": None,
+            "display_name_confirmed": "Ana",
+            "image_path": "/data/sig1.png",
+        }
+    ]
     svc = MeetingMinutesService(
         repo,
         notifications=MagicMock(),
@@ -271,5 +281,33 @@ def test_public_sign_context_already_signed_includes_version_content():
     assert ctx["outcome"] == "already_signed"
     assert ctx["version"]["body_html"] == "<p>Conteúdo assinado</p>"
     assert ctx["signers"][0]["status"] == "signed"
+    assert ctx["signatures"][0]["id"] == "sig1"
+    assert ctx["signatures"][0]["has_image"] is True
     repo.get_version.assert_called_with("m1", version_id="v1")
+    repo.list_signatures.assert_called_with("m1", version_id="v1")
     repo.mark_signer_viewed.assert_not_called()
+
+
+def test_public_signature_image(tmp_path):
+    image_path = tmp_path / "sig.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\npublic")
+    repo = MagicMock()
+    invites = MagicMock()
+    invites.resolve.return_value = {
+        "outcome": "already_signed",
+        "invite": {"id": "inv1"},
+        "signer": {"id": "s1", "status": "signed"},
+        "minute": {"id": "m1"},
+    }
+    repo.get_signature.return_value = {"id": "sig1", "image_path": str(image_path)}
+    storage = MagicMock()
+    storage.read.return_value = image_path.read_bytes()
+    svc = MeetingMinutesService(
+        repo,
+        notifications=MagicMock(),
+        sign_invites=invites,
+        sign_pending_mail=MagicMock(),
+    )
+    svc.signature_storage = storage
+    assert svc.public_signature_image("tok", "sig1").startswith(b"\x89PNG")
+    storage.read.assert_called_once_with(str(image_path))

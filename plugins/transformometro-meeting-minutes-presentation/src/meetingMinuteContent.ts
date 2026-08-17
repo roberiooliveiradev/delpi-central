@@ -25,7 +25,7 @@ const SECTIONS = [
   { key: "observations_html" as const, title: "Observações" },
 ];
 
-/** Une seções legadas em um único HTML — mesmo critério do MFE Transformômetro. */
+/** Une seções legadas em um único HTML para edição contínua. */
 export function mergeAtaContentHtml(version: AtaVersionFields | null | undefined): string {
   if (!version) return "<p></p>";
 
@@ -39,4 +39,15 @@ export function mergeAtaContentHtml(version: AtaVersionFields | null | undefined
       return `<h2>${section.title}</h2>${html}`;
     })
     .join("");
+}
+
+/** Persistência: conteúdo unificado vai para body_html; demais campos ficam vazios. */
+export function splitAtaContentForSave(contentHtml: string) {
+  return {
+    agenda_html: "<p></p>",
+    body_html: contentHtml || "<p></p>",
+    decisions_html: "<p></p>",
+    pending_html: "<p></p>",
+    observations_html: "<p></p>",
+  };
 }

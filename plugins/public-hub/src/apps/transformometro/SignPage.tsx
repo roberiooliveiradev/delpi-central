@@ -1,13 +1,14 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 
 import { SignatureCapturePanel } from "@delpi/signature-kit";
+import { MeetingMinuteDocumentView } from "@delpi/transformometro-meeting-minutes-presentation";
 
 import {
+  fetchPublicSignatureImageBlob,
   submitPublicRefuse,
   submitPublicSign,
   type PublicSignContext,
 } from "./api";
-import { PublicMeetingMinutePreview } from "./PublicMeetingMinutePreview";
 import "./sign.css";
 
 type Phase = "form" | "submitting" | "done" | "refused";
@@ -32,6 +33,11 @@ export function SignPage({ context, token }: Props) {
     const title = context.minute.title || "";
     return [number, title].filter(Boolean).join(" — ");
   }, [context.minute.minute_number, context.minute.title]);
+
+  const getSignatureImage = useCallback(
+    (signatureId: string) => fetchPublicSignatureImageBlob(token, signatureId),
+    [token],
+  );
 
   async function onSign(event: FormEvent) {
     event.preventDefault();
@@ -112,7 +118,15 @@ export function SignPage({ context, token }: Props) {
         </header>
       )}
 
-      <PublicMeetingMinutePreview context={context} />
+      <MeetingMinuteDocumentView
+        minute={context.minute}
+        version={context.version}
+        participants={context.participants}
+        signers={context.signers}
+        signatures={context.signatures}
+        getSignatureImage={getSignatureImage}
+        ariaLabel="Prévia da ata Transforma+"
+      />
 
       {!showSignedBanner ? (
         <form className="tm-sign__form" onSubmit={onSign}>

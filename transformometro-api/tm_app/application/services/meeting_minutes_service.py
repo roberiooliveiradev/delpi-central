@@ -385,6 +385,17 @@ class MeetingMinutesService:
             }
             for item in self.repo.list_signers(minute_id)
         ]
+        preview_version_id = str(version.get("id") or "").strip() or None if version else None
+        signatures = [
+            {
+                "id": item.get("id"),
+                "signer_id": item.get("signer_id"),
+                "user_id": item.get("user_id"),
+                "display_name_confirmed": item.get("display_name_confirmed"),
+                "has_image": bool(str(item.get("image_path") or "").strip()),
+            }
+            for item in self.repo.list_signatures(minute_id, version_id=preview_version_id)
+        ]
         return {
             "outcome": outcome,
             "minute": {
@@ -416,8 +427,17 @@ class MeetingMinutesService:
             },
             "participants": participants,
             "signers": signers,
+            "signatures": signatures,
             "terms": _TERMS,
         }
+
+    def public_signature_image(self, raw_token: str, signature_id: str) -> bytes:
+        resolved = self.sign_invites.resolve(raw_token)
+        minute = resolved["minute"]
+        signature = self.repo.get_signature(str(minute["id"]), signature_id)
+        if not signature or not str(signature.get("image_path") or "").strip():
+            raise LookupError("Imagem de assinatura não encontrada.")
+        return self.signature_storage.read(str(signature["image_path"]))
 
     def _notify_managers_signed(self, minute: dict[str, Any]) -> None:
         for user_id in {

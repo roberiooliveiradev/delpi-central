@@ -1,6 +1,6 @@
-import logoTransformaMaisUrl from "../../assets/logoTransformaMaisDelpi.svg";
+import logoTransformaMaisUrl from "./assets/logoTransformaMaisDelpi.svg";
 
-/** Logo Transforma+ Delpi embutida no bundle do MFE (não depende de /public do remote). */
+/** Logo Transforma+ Delpi embutida no bundle do consumidor. */
 export function transformaMaisLogoSrc(): string {
   return logoTransformaMaisUrl;
 }

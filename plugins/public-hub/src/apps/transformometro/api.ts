@@ -39,6 +39,13 @@ export type PublicSignContext = {
     display_name?: string | null;
     status?: string | null;
   }>;
+  signatures?: Array<{
+    id?: string | null;
+    signer_id?: string | null;
+    user_id?: string | null;
+    display_name_confirmed?: string | null;
+    has_image?: boolean | null;
+  }>;
   terms: string;
 };
 
@@ -74,6 +81,20 @@ export async function fetchPublicSignContext(token: string): Promise<PublicSignC
   const envelope = (await response.json()) as ApiEnvelope<PublicSignContext>;
   if (envelope.success === false) return null;
   return envelope.data;
+}
+
+export async function fetchPublicSignatureImageBlob(
+  token: string,
+  signatureId: string,
+): Promise<Blob> {
+  const response = await fetch(
+    `${API_BASE}/public/meeting-minutes/sign-invites/${encodeURIComponent(token)}/signatures/${encodeURIComponent(signatureId)}/image`,
+    { headers: { Accept: "image/png" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Não foi possível carregar a assinatura."));
+  }
+  return response.blob();
 }
 
 export async function submitPublicSign(

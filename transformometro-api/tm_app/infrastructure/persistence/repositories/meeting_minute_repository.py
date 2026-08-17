@@ -338,9 +338,21 @@ class MeetingMinuteRepository(PluginBaseRepository):
             conn.commit(); return {"signature":signature,"duplicate":False,"signed_count":int(progress["signed_count"]),"required_count":int(progress["required_count"])}
         except Exception: conn.rollback(); raise
 
-    def list_signatures(self, minute_id: str) -> list[dict[str, Any]]:
-        return self.fetch_all(f"""SELECT sig.* FROM {_S}.tm_meeting_minute_signatures sig JOIN {_S}.tm_meeting_minutes m ON m.id=sig.minute_id
-            WHERE sig.minute_id=%s::uuid AND sig.version_id=m.current_version_id ORDER BY sig.created_at""",(minute_id,))
+    def list_signatures(self, minute_id: str, version_id: str | None = None) -> list[dict[str, Any]]:
+        if version_id:
+            return self.fetch_all(
+                f"""SELECT * FROM {_S}.tm_meeting_minute_signatures
+                WHERE minute_id=%s::uuid AND version_id=%s::uuid
+                ORDER BY created_at""",
+                (minute_id, version_id),
+            )
+        return self.fetch_all(
+            f"""SELECT sig.* FROM {_S}.tm_meeting_minute_signatures sig
+            JOIN {_S}.tm_meeting_minutes m ON m.id=sig.minute_id
+            WHERE sig.minute_id=%s::uuid AND sig.version_id=m.current_version_id
+            ORDER BY sig.created_at""",
+            (minute_id,),
+        )
     def get_signature(self, minute_id: str, signature_id: str) -> dict[str, Any] | None:
         return self.fetch_one(f"SELECT * FROM {_S}.tm_meeting_minute_signatures WHERE id=%s::uuid AND minute_id=%s::uuid",(signature_id,minute_id))
     def refuse_signature(self, *, minute_id: str, signer_id: str, reason: str, actor_user_id: str, unit_code: str) -> dict[str, Any]:

@@ -29,6 +29,10 @@ export default defineConfig({
     alias: {
       ...reactResolveAliases(__dirname),
       "@xyflow/react": path.resolve(__dirname, "node_modules/@xyflow/react"),
+      "@delpi/transformometro-meeting-minutes-presentation": path.resolve(
+        __dirname,
+        "../transformometro-meeting-minutes-presentation/src/index.ts",
+      ),
     },
     dedupe: ["react", "react-dom", "@xyflow/react"],
   },

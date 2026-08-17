@@ -36,6 +36,17 @@
         "tv-dashboard-presentation/",
         "../tv-dashboard-presentation/"
       ]
+    },
+    {
+      "id": "transformometro-meeting-minutes-presentation",
+      "directory": "transformometro-meeting-minutes-presentation",
+      "packageName": "@delpi/transformometro-meeting-minutes-presentation",
+      "consumptionMode": "bundled",
+      "markers": [
+        "@delpi/transformometro-meeting-minutes-presentation",
+        "transformometro-meeting-minutes-presentation/",
+        "../transformometro-meeting-minutes-presentation/"
+      ]
     }
   ]
 }
