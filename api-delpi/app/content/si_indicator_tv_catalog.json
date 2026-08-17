@@ -1,6 +1,6 @@
 {
-  "version": "2026.07.20",
-  "description": "Indicadores SI ativos para rotas TV escalares (meta + realizado). Fonte: seed V009 + migrações V015/V019/V026/V030/V031.",
+  "version": "2026.08.17",
+  "description": "Indicadores SI ativos para rotas TV escalares (meta + realizado). Fonte: seed V009 + migrações V015/V019/V026/V030/V031/V032.",
   "departmentCategories": {
     "financial": "financial",
     "hr": "hr",
@@ -159,6 +159,18 @@
       "indicatorId": "quality-ppm-external-plugs",
       "sourceKey": "quality_ppm_external_plugs",
       "name": "PPM Externo Plugues",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-ppm-internal-components",
+      "sourceKey": "quality_ppm_internal_components",
+      "name": "PPM Interno Chicotes",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-ppm-external-components",
+      "sourceKey": "quality_ppm_external_components",
+      "name": "PPM Externo Chicotes",
       "departmentId": "quality"
     },
     {

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 671,
+  "operation_count": 675,
   "operations": [
     {
       "method": "POST",
@@ -13355,6 +13355,462 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Goal (comparable) for SI indicator «PPM Externo Plugues» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
+      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
+      "summary": "PPM Externo Chicotes — goal",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "TOTVS branch code (01/02) when applicable.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_meta",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Externo Chicotes — goal",
+            "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the PPM Externo Chicotes goal.",
+            "label": "PPM Externo Chicotes — goal"
+          },
+          "pt-BR": {
+            "summary": "PPM Externo Chicotes — meta",
+            "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — meta"
+          }
+        },
+        "params": {
+          "competence": {
+            "locale": {
+              "en": {
+                "label": "Competence",
+                "description": "Competence query parameter."
+              },
+              "pt-BR": {
+                "label": "Competência",
+                "description": "Competência no formato AAAA-MM (mês de referência)."
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "label": "Start date",
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data início",
+                "description": "Início do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "label": "End date",
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data fim",
+                "description": "Fim do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "branch": {
+            "locale": {
+              "en": {
+                "label": "Branch",
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
+              },
+              "pt-BR": {
+                "label": "Filial",
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+          "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "label": "PPM Externo Chicotes — meta"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
+      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
+      "summary": "PPM Externo Chicotes — actual",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "TOTVS branch code (01/02) when applicable.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_realized",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Externo Chicotes — actual",
+            "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the actual PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — actual"
+          },
+          "pt-BR": {
+            "summary": "PPM Externo Chicotes — realizado",
+            "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — realizado"
+          }
+        },
+        "params": {
+          "competence": {
+            "locale": {
+              "en": {
+                "label": "Competence",
+                "description": "Competence query parameter."
+              },
+              "pt-BR": {
+                "label": "Competência",
+                "description": "Competência no formato AAAA-MM (mês de referência)."
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "label": "Start date",
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data início",
+                "description": "Início do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "label": "End date",
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data fim",
+                "description": "Fim do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "branch": {
+            "locale": {
+              "en": {
+                "label": "Branch",
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
+              },
+              "pt-BR": {
+                "label": "Filial",
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+          "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "label": "PPM Externo Chicotes — realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
+      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
+      "summary": "PPM Interno Chicotes — goal",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "TOTVS branch code (01/02) when applicable.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_meta",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Interno Chicotes — goal",
+            "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the PPM Interno Chicotes goal.",
+            "label": "PPM Interno Chicotes — goal"
+          },
+          "pt-BR": {
+            "summary": "PPM Interno Chicotes — meta",
+            "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — meta"
+          }
+        },
+        "params": {
+          "competence": {
+            "locale": {
+              "en": {
+                "label": "Competence",
+                "description": "Competence query parameter."
+              },
+              "pt-BR": {
+                "label": "Competência",
+                "description": "Competência no formato AAAA-MM (mês de referência)."
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "label": "Start date",
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data início",
+                "description": "Início do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "label": "End date",
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data fim",
+                "description": "Fim do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "branch": {
+            "locale": {
+              "en": {
+                "label": "Branch",
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
+              },
+              "pt-BR": {
+                "label": "Filial",
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+          "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "label": "PPM Interno Chicotes — meta"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
+      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
+      "summary": "PPM Interno Chicotes — actual",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "TOTVS branch code (01/02) when applicable.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_realized",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Interno Chicotes — actual",
+            "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the actual PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — actual"
+          },
+          "pt-BR": {
+            "summary": "PPM Interno Chicotes — realizado",
+            "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — realizado"
+          }
+        },
+        "params": {
+          "competence": {
+            "locale": {
+              "en": {
+                "label": "Competence",
+                "description": "Competence query parameter."
+              },
+              "pt-BR": {
+                "label": "Competência",
+                "description": "Competência no formato AAAA-MM (mês de referência)."
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "label": "Start date",
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data início",
+                "description": "Início do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "label": "End date",
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
+              },
+              "pt-BR": {
+                "label": "Data fim",
+                "description": "Fim do período (AAAA-MM-DD)."
+              }
+            }
+          },
+          "branch": {
+            "locale": {
+              "en": {
+                "label": "Branch",
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
+              },
+              "pt-BR": {
+                "label": "Filial",
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+          "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "label": "PPM Interno Chicotes — realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view)."
     },
     {
       "method": "GET",

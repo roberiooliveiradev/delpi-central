@@ -10,11 +10,16 @@ from tests.support.si_indicator_tv_operation_ids import SI_INDICATOR_TV_OPERATIO
 
 
 def test_si_indicator_catalog_operation_ids_inventory() -> None:
-    assert len(SI_INDICATOR_TV_OPERATION_IDS) == 64
+    assert len(SI_INDICATOR_TV_OPERATION_IDS) == 72
     assert "get_si_indicator_quality_ppm_internal_realized" in SI_INDICATOR_TV_OPERATION_IDS
     assert "get_si_indicator_quality_ppm_internal_meta" in SI_INDICATOR_TV_OPERATION_IDS
     assert "get_si_indicator_quality_ppm_external_realized" in SI_INDICATOR_TV_OPERATION_IDS
     assert "get_si_indicator_quality_ppm_external_meta" in SI_INDICATOR_TV_OPERATION_IDS
+    assert "get_si_indicator_quality_ppm_internal_plugs_realized" in SI_INDICATOR_TV_OPERATION_IDS
+    assert "get_si_indicator_quality_ppm_internal_components_realized" in SI_INDICATOR_TV_OPERATION_IDS
+    assert "get_si_indicator_quality_ppm_internal_components_meta" in SI_INDICATOR_TV_OPERATION_IDS
+    assert "get_si_indicator_quality_ppm_external_components_realized" in SI_INDICATOR_TV_OPERATION_IDS
+    assert "get_si_indicator_quality_ppm_external_components_meta" in SI_INDICATOR_TV_OPERATION_IDS
 
 
 def test_resolve_contract_si_indicator_families() -> None:

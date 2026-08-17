@@ -110,47 +110,51 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         history_fields: dict[str, Any],
     ) -> dict[str, Any]:
         try:
-            row = self.execute_returning_one(
-                f"""
-                INSERT INTO {SCHEMA}.invoice_posting_requests (
-                    branch_code, document_number, document_match_key, series,
-                    supplier_code, supplier_store, supplier_name, supplier_short_name,
-                    issue_date, amount, received_at, observation, status,
-                    created_by_user_id, created_by_name
-                ) VALUES (
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s,
-                    %s, %s
+            # Lease único: cada execute(auto_commit=False) sem lease externo
+            # devolve a conexão ao pool com rollback — o INSERT some e o
+            # histórico seguinte falha com FK («Erro ao criar solicitação.»).
+            with self.db():
+                row = self.execute_returning_one(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_posting_requests (
+                        branch_code, document_number, document_match_key, series,
+                        supplier_code, supplier_store, supplier_name, supplier_short_name,
+                        issue_date, amount, received_at, observation, status,
+                        created_by_user_id, created_by_name
+                    ) VALUES (
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s
+                    )
+                    RETURNING {_REQUEST_COLUMNS}
+                    """,
+                    (
+                        request_fields["branch_code"],
+                        request_fields["document_number"],
+                        request_fields["document_match_key"],
+                        request_fields["series"],
+                        request_fields["supplier_code"],
+                        request_fields["supplier_store"],
+                        request_fields["supplier_name"],
+                        request_fields.get("supplier_short_name"),
+                        request_fields["issue_date"],
+                        request_fields["amount"],
+                        request_fields["received_at"],
+                        request_fields.get("observation"),
+                        request_fields["status"],
+                        request_fields["created_by_user_id"],
+                        request_fields["created_by_name"],
+                    ),
+                    auto_commit=False,
                 )
-                RETURNING {_REQUEST_COLUMNS}
-                """,
-                (
-                    request_fields["branch_code"],
-                    request_fields["document_number"],
-                    request_fields["document_match_key"],
-                    request_fields["series"],
-                    request_fields["supplier_code"],
-                    request_fields["supplier_store"],
-                    request_fields["supplier_name"],
-                    request_fields.get("supplier_short_name"),
-                    request_fields["issue_date"],
-                    request_fields["amount"],
-                    request_fields["received_at"],
-                    request_fields.get("observation"),
-                    request_fields["status"],
-                    request_fields["created_by_user_id"],
-                    request_fields["created_by_name"],
-                ),
-                auto_commit=False,
-            )
-            assert row is not None
-            history_fields = {
-                **history_fields,
-                "request_id": row["id"],
-            }
-            self._insert_history(history_fields, auto_commit=False)
-            self.commit()
+                assert row is not None
+                history_fields = {
+                    **history_fields,
+                    "request_id": row["id"],
+                }
+                self._insert_history(history_fields, auto_commit=False)
+                self.commit()
             out = _serialize_request(row)
             out["linked_purchase_orders"] = []
             return out
@@ -280,79 +284,80 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             if current is None:
                 raise LookupError(request_id)
 
-            self.execute(
-                f"""
-                DELETE FROM {SCHEMA}.invoice_posting_request_linked_pos
-                 WHERE request_id = %s::uuid
-                """,
-                (request_id,),
-                auto_commit=False,
-            )
-            for row in rows:
-                inserted = self.execute_returning_one(
+            with self.db():
+                self.execute(
                     f"""
-                    INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
-                        request_id, order_number, delivery_date, issue_date,
-                        open_value, product_count, linked_at,
-                        linked_by_user_id, linked_by_name
-                    ) VALUES (
-                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
-                    )
-                    RETURNING id
+                    DELETE FROM {SCHEMA}.invoice_posting_request_linked_pos
+                     WHERE request_id = %s::uuid
                     """,
-                    (
-                        request_id,
-                        row["order_number"],
-                        row.get("delivery_date"),
-                        row.get("issue_date"),
-                        row.get("open_value"),
-                        row.get("product_count"),
-                        row.get("linked_at"),
-                        row.get("linked_by_user_id"),
-                        row.get("linked_by_name"),
-                    ),
+                    (request_id,),
                     auto_commit=False,
                 )
-                linked_po_id = inserted["id"] if inserted else None
-                for line in row.get("lines") or []:
-                    order_item = str(line.get("order_item") or "").strip()
-                    if not order_item or linked_po_id is None:
-                        continue
-                    product_code = str(line.get("product_code") or "").strip() or None
-                    self.execute(
+                for row in rows:
+                    inserted = self.execute_returning_one(
                         f"""
-                        INSERT INTO {SCHEMA}.invoice_posting_request_linked_po_lines (
-                            linked_po_id, order_item, product_code
-                        ) VALUES (%s::uuid, %s, %s)
+                        INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
+                            request_id, order_number, delivery_date, issue_date,
+                            open_value, product_count, linked_at,
+                            linked_by_user_id, linked_by_name
+                        ) VALUES (
+                            %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                        RETURNING id
                         """,
-                        (linked_po_id, order_item, product_code),
+                        (
+                            request_id,
+                            row["order_number"],
+                            row.get("delivery_date"),
+                            row.get("issue_date"),
+                            row.get("open_value"),
+                            row.get("product_count"),
+                            row.get("linked_at"),
+                            row.get("linked_by_user_id"),
+                            row.get("linked_by_name"),
+                        ),
                         auto_commit=False,
                     )
+                    linked_po_id = inserted["id"] if inserted else None
+                    for line in row.get("lines") or []:
+                        order_item = str(line.get("order_item") or "").strip()
+                        if not order_item or linked_po_id is None:
+                            continue
+                        product_code = str(line.get("product_code") or "").strip() or None
+                        self.execute(
+                            f"""
+                            INSERT INTO {SCHEMA}.invoice_posting_request_linked_po_lines (
+                                linked_po_id, order_item, product_code
+                            ) VALUES (%s::uuid, %s, %s)
+                            """,
+                            (linked_po_id, order_item, product_code),
+                            auto_commit=False,
+                        )
 
-            assignments = []
-            params: list[Any] = []
-            for key, value in mirror_updates.items():
-                assignments.append(f"{key} = %s")
-                params.append(value)
-            assignments.append("updated_at = NOW()")
-            params.append(request_id)
-            updated = self.execute_returning_one(
-                f"""
-                UPDATE {SCHEMA}.invoice_posting_requests
-                   SET {", ".join(assignments)}
-                 WHERE id = %s::uuid
-             RETURNING {_REQUEST_COLUMNS}
-                """,
-                tuple(params),
-                auto_commit=False,
-            )
-            if updated is None:
-                self.rollback()
-                raise LookupError(request_id)
+                assignments = []
+                params: list[Any] = []
+                for key, value in mirror_updates.items():
+                    assignments.append(f"{key} = %s")
+                    params.append(value)
+                assignments.append("updated_at = NOW()")
+                params.append(request_id)
+                updated = self.execute_returning_one(
+                    f"""
+                    UPDATE {SCHEMA}.invoice_posting_requests
+                       SET {", ".join(assignments)}
+                     WHERE id = %s::uuid
+                 RETURNING {_REQUEST_COLUMNS}
+                    """,
+                    tuple(params),
+                    auto_commit=False,
+                )
+                if updated is None:
+                    self.rollback()
+                    raise LookupError(request_id)
 
-            history_fields = {**history_fields, "request_id": updated["id"]}
-            self._insert_history(history_fields, auto_commit=False)
-            self.commit()
+                history_fields = {**history_fields, "request_id": updated["id"]}
+                self._insert_history(history_fields, auto_commit=False)
+                self.commit()
             return self._serialize_request_with_links(updated)
         except Exception:
             self.rollback()
@@ -559,58 +564,59 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
 
         posted = 0
         try:
-            for item in items:
-                request_id = item["request_id"]
-                from_status = item.get("from_status")
-                row = self.execute_returning_one(
-                    f"""
-                    UPDATE {SCHEMA}.invoice_posting_requests
-                       SET status = 'posted',
-                           block_reason = NULL,
-                           block_description = NULL,
-                           completion_source = 'auto',
-                           sf1_recno = %s,
-                           erp_entry_date = %s,
-                           reconciled_at = NOW(),
-                           updated_at = NOW()
-                     WHERE id = %s::uuid
-                       AND status = ANY(%s)
-                 RETURNING {_REQUEST_COLUMNS}
-                    """,
-                    (
-                        item.get("sf1_recno"),
-                        item.get("erp_entry_date"),
-                        request_id,
-                        list(sorted(RECONCILIATION_ELIGIBLE_STATUSES)),
-                    ),
-                    auto_commit=False,
-                )
-                if row is None:
-                    continue
-                self._insert_history(
-                    {
-                        "request_id": request_id,
-                        "event_type": "reconciled",
-                        "actor_origin": "system",
-                        "actor_user_id": None,
-                        "actor_name": None,
-                        "from_status": from_status,
-                        "to_status": "posted",
-                        "changes": {
-                            "completion_source": "auto",
-                            "sf1_recno": item.get("sf1_recno"),
-                            "erp_entry_date": (
-                                item["erp_entry_date"].isoformat()
-                                if hasattr(item.get("erp_entry_date"), "isoformat")
-                                else item.get("erp_entry_date")
-                            ),
+            with self.db():
+                for item in items:
+                    request_id = item["request_id"]
+                    from_status = item.get("from_status")
+                    row = self.execute_returning_one(
+                        f"""
+                        UPDATE {SCHEMA}.invoice_posting_requests
+                           SET status = 'posted',
+                               block_reason = NULL,
+                               block_description = NULL,
+                               completion_source = 'auto',
+                               sf1_recno = %s,
+                               erp_entry_date = %s,
+                               reconciled_at = NOW(),
+                               updated_at = NOW()
+                         WHERE id = %s::uuid
+                           AND status = ANY(%s)
+                     RETURNING {_REQUEST_COLUMNS}
+                        """,
+                        (
+                            item.get("sf1_recno"),
+                            item.get("erp_entry_date"),
+                            request_id,
+                            list(sorted(RECONCILIATION_ELIGIBLE_STATUSES)),
+                        ),
+                        auto_commit=False,
+                    )
+                    if row is None:
+                        continue
+                    self._insert_history(
+                        {
+                            "request_id": request_id,
+                            "event_type": "reconciled",
+                            "actor_origin": "system",
+                            "actor_user_id": None,
+                            "actor_name": None,
+                            "from_status": from_status,
+                            "to_status": "posted",
+                            "changes": {
+                                "completion_source": "auto",
+                                "sf1_recno": item.get("sf1_recno"),
+                                "erp_entry_date": (
+                                    item["erp_entry_date"].isoformat()
+                                    if hasattr(item.get("erp_entry_date"), "isoformat")
+                                    else item.get("erp_entry_date")
+                                ),
+                            },
+                            "justification": None,
                         },
-                        "justification": None,
-                    },
-                    auto_commit=False,
-                )
-                posted += 1
-            self.commit()
+                        auto_commit=False,
+                    )
+                    posted += 1
+                self.commit()
             return posted
         except Exception:
             self.rollback()
@@ -727,22 +733,23 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         params.append(request_id)
 
         try:
-            row = self.execute_returning_one(
-                f"""
-                UPDATE {SCHEMA}.invoice_posting_requests
-                   SET {", ".join(assignments)}
-                 WHERE id = %s::uuid
-             RETURNING {_REQUEST_COLUMNS}
-                """,
-                tuple(params),
-                auto_commit=False,
-            )
-            if row is None:
-                self.rollback()
-                raise LookupError(request_id)
-            history_fields = {**history_fields, "request_id": row["id"]}
-            self._insert_history(history_fields, auto_commit=False)
-            self.commit()
+            with self.db():
+                row = self.execute_returning_one(
+                    f"""
+                    UPDATE {SCHEMA}.invoice_posting_requests
+                       SET {", ".join(assignments)}
+                     WHERE id = %s::uuid
+                 RETURNING {_REQUEST_COLUMNS}
+                    """,
+                    tuple(params),
+                    auto_commit=False,
+                )
+                if row is None:
+                    self.rollback()
+                    raise LookupError(request_id)
+                history_fields = {**history_fields, "request_id": row["id"]}
+                self._insert_history(history_fields, auto_commit=False)
+                self.commit()
             return self._serialize_request_with_links(row)
         except PluginsRepositoryError as exc:
             if _is_unique_violation(exc):
@@ -764,32 +771,33 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         body: str,
     ) -> dict[str, Any]:
         try:
-            row = self.execute_returning_one(
-                f"""
-                INSERT INTO {SCHEMA}.invoice_posting_comments (
-                    request_id, author_user_id, author_name, body
-                ) VALUES (%s::uuid, %s, %s, %s)
-                RETURNING id, request_id, author_user_id, author_name, body, created_at
-                """,
-                (request_id, author_user_id, author_name, body),
-                auto_commit=False,
-            )
-            assert row is not None
-            self._insert_history(
-                {
-                    "request_id": request_id,
-                    "event_type": "comment_added",
-                    "actor_origin": "user",
-                    "actor_user_id": author_user_id,
-                    "actor_name": author_name,
-                    "from_status": None,
-                    "to_status": None,
-                    "changes": {"comment_id": str(row["id"])},
-                    "justification": None,
-                },
-                auto_commit=False,
-            )
-            self.commit()
+            with self.db():
+                row = self.execute_returning_one(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_posting_comments (
+                        request_id, author_user_id, author_name, body
+                    ) VALUES (%s::uuid, %s, %s, %s)
+                    RETURNING id, request_id, author_user_id, author_name, body, created_at
+                    """,
+                    (request_id, author_user_id, author_name, body),
+                    auto_commit=False,
+                )
+                assert row is not None
+                self._insert_history(
+                    {
+                        "request_id": request_id,
+                        "event_type": "comment_added",
+                        "actor_origin": "user",
+                        "actor_user_id": author_user_id,
+                        "actor_name": author_name,
+                        "from_status": None,
+                        "to_status": None,
+                        "changes": {"comment_id": str(row["id"])},
+                        "justification": None,
+                    },
+                    auto_commit=False,
+                )
+                self.commit()
             return _serialize_comment(row)
         except ForeignKeyViolation as exc:
             self.rollback()

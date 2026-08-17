@@ -38,6 +38,8 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V024 | department_aggregation_alignment | Comercial/Engenharia `consolidated`; Produção/Suprimentos `average_of_units` |
 | V025 | zero_monthly_curve_goal_value | Zera `goal_value` em metas `monthly_curve` (meta só na curva mensal) |
 | V026 | commercial_per_unit_restructure | Comercial `average_of_units`; `commercial-rol` único; inativa rol-matrix/branch |
+| V031 | quality_ppm_plugs_indicators | PPM interno/externo plugues (PA 9048*) — TV meta/realizado |
+| V032 | quality_ppm_components_indicators | PPM interno/externo chicotes (PA 9026*, dashboard qualidade: Componentes) — TV meta/realizado |
 
 ## Comandos
 
