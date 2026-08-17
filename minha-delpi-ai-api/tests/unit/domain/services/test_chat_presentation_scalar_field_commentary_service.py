@@ -212,3 +212,58 @@ def test_si_goal_fields_appear_in_scalar_commentary_highlights():
     assert "Meta cadastrada" in joined
     assert "Meta do período" in joined
     assert "Meta mês (referência)" in joined
+
+
+def test_si_goal_partial_triad_all_distinct_in_highlights():
+    """Mês parcial: três campos distintos devem aparecer nos highlights (matriz E)."""
+    metadata = {
+        "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
+        "apiDelpiResponseMeta": {
+            "entity": "dashboard_si_indicator_meta",
+            "shape": "scalar",
+            "fields": {
+                "value": "Valor",
+                "comparable_goal": "Meta do período",
+                "goal_value": "Meta cadastrada",
+                "reference_goal": "Meta mês (referência)",
+            },
+        },
+    }
+    data = {
+        "value": 4.39,
+        "comparable_goal": 4.39,
+        "goal_value": 8.0,
+        "reference_goal": 8.0,
+    }
+
+    commentary = ChatPresentationScalarFieldCommentaryService.build(metadata, data)
+
+    assert commentary is not None
+    highlights = commentary.get("highlights") or []
+    joined = "\n".join(highlights)
+    assert "Meta cadastrada" in joined
+    assert "Meta do período" in joined
+    assert "Meta mês (referência)" in joined
+    assert "8" in joined
+    assert "4,39" in joined or "4.39" in joined
+
+
+def test_si_goal_triad_absent_from_skip_field_keys():
+    import json
+    from pathlib import Path
+
+    path = (
+        Path(__file__).resolve().parents[4]
+        / "app"
+        / "content"
+        / "pt-BR"
+        / "assistant"
+        / "humanized_data_response.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    skip = set()
+    for section in payload.values():
+        if isinstance(section, dict) and isinstance(section.get("skipFieldKeys"), list):
+            skip.update(str(k) for k in section["skipFieldKeys"])
+    for key in ("goal_value", "comparable_goal", "reference_goal"):
+        assert key not in skip, f"{key} must not be in skipFieldKeys"
