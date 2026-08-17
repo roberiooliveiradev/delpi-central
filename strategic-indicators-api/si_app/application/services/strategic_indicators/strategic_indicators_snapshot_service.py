@@ -804,6 +804,9 @@ class StrategicIndicatorsSnapshotService:
                     period=period,
                     department_id=department_id,
                     branch=branch,
+                    # Mat-only: mês corrente ainda aberto não pode recomputar no GET;
+                    # serve a última materialização em vez de fingir "missing".
+                    allow_open_month=prefer_materialized_only,
                 ):
                     continue
                 stored_snapshots[period.competence] = entry.snapshot
@@ -989,6 +992,7 @@ class StrategicIndicatorsSnapshotService:
         period: ResolvedPeriod,
         department_id: str | None,
         branch: str | None,
+        allow_open_month: bool = False,
     ) -> bool:
         stored_hash = (entry.catalog_inputs_hash or "").strip()
         if not stored_hash:
@@ -1027,7 +1031,7 @@ class StrategicIndicatorsSnapshotService:
                     entry.snapshot.period.end_date,
                 )
                 return False
-            if period_extends_beyond_today(period):
+            if period_extends_beyond_today(period) and not allow_open_month:
                 logger.info(
                     (
                         "si_period_scores_stale period_extends_beyond_today "
