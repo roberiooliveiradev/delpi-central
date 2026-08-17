@@ -100,7 +100,7 @@ import {
   type SpeedometerGaugeProps,
   type HorizontalValueBarsProps,
 } from "@delpi/plugin-ui/index";
-import { createElement, type ComponentProps, type ReactNode } from "react";
+import { createElement, type ComponentProps, type KeyboardEvent, type ReactNode } from "react";
 
 export type { DataTableColumn, DataTableColumnWidths } from "@delpi/plugin-ui/index";
 export { usePersistedViewLayout, useTableFontSize, useChartGranularitySelection };
@@ -266,12 +266,21 @@ export function CommercialMetricCard({
     className: hero ? "cm-kpi-card--wide" : undefined,
   });
   if (!onClick) return card;
+  // `div` + role="button": MetricKpiCard pode embutir HelpTooltip (também <button>).
+  // Wrapper <button> aninhado quebra HTML e dispara hydration error no React.
   return createElement(
-    "button",
+    "div",
     {
-      type: "button",
+      role: "button",
+      tabIndex: 0,
       className: "cm-metric-card-button",
       onClick,
+      onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      },
       "aria-label": ariaLabel ?? label,
     },
     card,

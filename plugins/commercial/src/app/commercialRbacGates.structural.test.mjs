@@ -115,4 +115,12 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(source, /canViewWorklistTeam,/);
     assert.match(source, /canAssignTaskToProfile/);
   });
+
+  it("CommercialMetricCard clicável não usa <button> (evita HelpTooltip aninhado)", () => {
+    const source = readFileSync(join(src, "app/commercialUi.ts"), "utf8");
+    const fn = source.slice(source.indexOf("export function CommercialMetricCard"));
+    const body = fn.slice(0, fn.indexOf("/** KPI acionável"));
+    assert.match(body, /role:\s*"button"/);
+    assert.doesNotMatch(body, /createElement\(\s*"button"/);
+  });
 });
