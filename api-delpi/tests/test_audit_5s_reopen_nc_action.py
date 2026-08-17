@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Iterator
 
 import pytest
 
@@ -30,6 +31,10 @@ class ReopenNcActionProbeRepo(PostgresAudit5sRepository):
         object.__setattr__(self, "committed", False)
         object.__setattr__(self, "nc_new_status", None)
         object.__setattr__(self, "audit_new_status", None)
+
+    @contextmanager
+    def db(self) -> Iterator[None]:
+        yield None
 
     def fetch_one(
         self,

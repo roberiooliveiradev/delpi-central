@@ -5,6 +5,15 @@ from typing import Any
 
 ACTION_DUE_SOON_DAYS = 2
 TERMINAL_NC_STATUSES = frozenset({"closed", "cancelled"})
+NC_CANCELLED_VIEW_ONLY_MESSAGE = "NC cancelada — somente visualização."
+
+
+def is_nc_cancelled(status: str | None) -> bool:
+    return str(status or "").strip().lower() == "cancelled"
+
+
+def is_nc_plan_locked(status: str | None) -> bool:
+    return str(status or "").strip().lower() in TERMINAL_NC_STATUSES
 
 
 def _as_date(value: date | datetime | str | None) -> date | None:
