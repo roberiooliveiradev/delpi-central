@@ -1,11 +1,3 @@
-const API_BASE = "/apps/transformometro-api";
-
-type ApiEnvelope<T> = {
-  success: boolean;
-  message?: string;
-  data: T;
-};
-
 export type PublicSignContext = {
   outcome?: "ready" | "already_signed" | string | null;
   minute: {
@@ -13,6 +5,10 @@ export type PublicSignContext = {
     title?: string | null;
     minute_number?: string | null;
     meeting_date?: string | null;
+    meeting_type?: string | null;
+    location?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
     status?: string | null;
     unit_code?: string | null;
   };
@@ -31,7 +27,27 @@ export type PublicSignContext = {
     display_name?: string | null;
     status?: string | null;
   };
+  participants?: Array<{
+    user_id?: string | null;
+    display_name?: string | null;
+    role_in_meeting?: string | null;
+    is_external?: boolean;
+  }>;
+  signers?: Array<{
+    id?: string | null;
+    user_id?: string | null;
+    display_name?: string | null;
+    status?: string | null;
+  }>;
   terms: string;
+};
+
+const API_BASE = "/apps/transformometro-api";
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  message?: string;
+  data: T;
 };
 
 export type PublicActionResult = { ok: true } | { ok: false; status: number; message: string };

@@ -183,6 +183,12 @@ def test_public_sign_context_and_refuse():
         "display_name": "Ana",
         "status": "viewed",
     }
+    repo.list_participants.return_value = [
+        {"user_id": None, "display_name": "Ana", "role_in_meeting": "chair", "is_external": False}
+    ]
+    repo.list_signers.return_value = [
+        {"id": "s1", "user_id": None, "display_name": "Ana", "status": "pending"}
+    ]
     repo.get_version.return_value = {
         "id": "v1",
         "title": "T",
@@ -251,6 +257,10 @@ def test_public_sign_context_already_signed_includes_version_content():
         "observations_html": "",
         "content_hash": "h",
     }
+    repo.list_participants.return_value = []
+    repo.list_signers.return_value = [
+        {"id": "s1", "user_id": None, "display_name": "Ana", "status": "signed"}
+    ]
     svc = MeetingMinutesService(
         repo,
         notifications=MagicMock(),
@@ -260,5 +270,6 @@ def test_public_sign_context_already_signed_includes_version_content():
     ctx = svc.public_sign_context("tok")
     assert ctx["outcome"] == "already_signed"
     assert ctx["version"]["body_html"] == "<p>Conteúdo assinado</p>"
+    assert ctx["signers"][0]["status"] == "signed"
     repo.get_version.assert_called_with("m1", version_id="v1")
     repo.mark_signer_viewed.assert_not_called()

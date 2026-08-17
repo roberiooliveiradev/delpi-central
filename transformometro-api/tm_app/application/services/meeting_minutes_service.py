@@ -366,6 +366,25 @@ class MeetingMinutesService:
         version = self.repo.get_version(str(minute["id"]), version_id=version_id)
         if outcome == "already_signed" and not version:
             version = self.repo.get_version(str(minute["id"]))
+        minute_id = str(minute["id"])
+        participants = [
+            {
+                "user_id": item.get("user_id"),
+                "display_name": item.get("display_name"),
+                "role_in_meeting": item.get("role_in_meeting"),
+                "is_external": bool(item.get("is_external")),
+            }
+            for item in self.repo.list_participants(minute_id)
+        ]
+        signers = [
+            {
+                "id": item.get("id"),
+                "user_id": item.get("user_id"),
+                "display_name": item.get("display_name"),
+                "status": item.get("status"),
+            }
+            for item in self.repo.list_signers(minute_id)
+        ]
         return {
             "outcome": outcome,
             "minute": {
@@ -373,6 +392,10 @@ class MeetingMinutesService:
                 "title": minute.get("title"),
                 "minute_number": minute.get("minute_number"),
                 "meeting_date": minute.get("meeting_date"),
+                "meeting_type": minute.get("meeting_type"),
+                "location": minute.get("location"),
+                "start_time": minute.get("start_time"),
+                "end_time": minute.get("end_time"),
                 "status": minute.get("status"),
                 "unit_code": minute.get("unit_code"),
             },
@@ -391,6 +414,8 @@ class MeetingMinutesService:
                 "display_name": signer.get("display_name"),
                 "status": signer.get("status"),
             },
+            "participants": participants,
+            "signers": signers,
             "terms": _TERMS,
         }
 

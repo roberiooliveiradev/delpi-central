@@ -7,6 +7,7 @@ import {
   submitPublicSign,
   type PublicSignContext,
 } from "./api";
+import { PublicMeetingMinutePreview } from "./PublicMeetingMinutePreview";
 import "./sign.css";
 
 type Phase = "form" | "submitting" | "done" | "refused";
@@ -15,28 +16,6 @@ type Props = {
   context: PublicSignContext;
   token: string;
 };
-
-function Section({ title, html }: { title: string; html?: string }) {
-  if (!html?.trim()) return null;
-  return (
-    <section className="tm-sign__section">
-      <h2>{title}</h2>
-      <div className="tm-sign__html" dangerouslySetInnerHTML={{ __html: html }} />
-    </section>
-  );
-}
-
-function AtaBody({ context }: { context: PublicSignContext }) {
-  return (
-    <>
-      <Section title="Pauta" html={context.version.agenda_html} />
-      <Section title="Desenvolvimento" html={context.version.body_html} />
-      <Section title="Decisões" html={context.version.decisions_html} />
-      <Section title="Pendências" html={context.version.pending_html} />
-      <Section title="Observações" html={context.version.observations_html} />
-    </>
-  );
-}
 
 export function SignPage({ context, token }: Props) {
   const alreadySigned = context.outcome === "already_signed";
@@ -66,7 +45,10 @@ export function SignPage({ context, token }: Props) {
     }
     setPhase("submitting");
     setError(null);
-    const result = await submitPublicSign(token, { signature: png, displayName: name.trim() });
+    const result = await submitPublicSign(token, {
+      signature: png,
+      displayName: name.trim(),
+    });
     if (!result.ok) {
       setError(result.message);
       setPhase("form");
@@ -103,94 +85,89 @@ export function SignPage({ context, token }: Props) {
     );
   }
 
-  if (phase === "done" || alreadySigned) {
-    return (
-      <div className="tm-sign">
+  const showSignedBanner = phase === "done" || alreadySigned;
+
+  return (
+    <div className="tm-sign tm-sign--preview">
+      {showSignedBanner ? (
         <div className="tm-sign__banner tm-sign__banner--success" role="status">
           <div className="tm-sign__done-badge" aria-hidden>
             ✓
           </div>
           <div>
-            <h1>
-              {alreadySigned ? "Ata já assinada" : "Assinatura registrada"}
-            </h1>
+            <h1>{alreadySigned ? "Ata já assinada" : "Assinatura registrada"}</h1>
             <p>
               {alreadySigned
-                ? "Sua assinatura já consta nesta ata. Você pode consultar o conteúdo abaixo."
-                : "Obrigado. Sua assinatura da ata Transforma+ foi recebida. Conteúdo da ata abaixo."}
+                ? "Sua assinatura já consta nesta ata. Consulte a prévia do documento abaixo."
+                : "Obrigado. Sua assinatura da ata Transforma+ foi recebida."}
             </p>
+            {subtitle ? <p className="tm-sign__banner-meta">{subtitle}</p> : null}
           </div>
         </div>
-
+      ) : (
         <header className="tm-sign__header">
           <p className="tm-sign__eyebrow">Transformômetro · Transforma+</p>
-          <h1>Ata assinada</h1>
+          <h1>Assinatura de ata</h1>
           <p className="tm-sign__subtitle">{subtitle}</p>
         </header>
+      )}
 
-        <AtaBody context={context} />
-      </div>
-    );
-  }
+      <PublicMeetingMinutePreview context={context} />
 
-  return (
-    <div className="tm-sign">
-      <header className="tm-sign__header">
-        <p className="tm-sign__eyebrow">Transformômetro · Transforma+</p>
-        <h1>Assinatura de ata</h1>
-        <p className="tm-sign__subtitle">{subtitle}</p>
-      </header>
+      {!showSignedBanner ? (
+        <form className="tm-sign__form" onSubmit={onSign}>
+          <label className="tm-sign__label">
+            Nome do signatário
+            <input
+              className="tm-sign__input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={phase === "submitting"}
+              required
+            />
+          </label>
 
-      <AtaBody context={context} />
+          <label className="tm-sign__check">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              disabled={phase === "submitting"}
+            />
+            <span>{context.terms}</span>
+          </label>
 
-      <form className="tm-sign__form" onSubmit={onSign}>
-        <label className="tm-sign__label">
-          Nome do signatário
-          <input
-            className="tm-sign__input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+          <SignatureCapturePanel
             disabled={phase === "submitting"}
-            required
+            displayName={name}
+            showPreview
+            padProps={{ className: "delpi-ui-signature-pad--tall" }}
+            onChange={setPng}
           />
-        </label>
 
-        <label className="tm-sign__check">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
-            disabled={phase === "submitting"}
-          />
-          <span>{context.terms}</span>
-        </label>
+          {error ? <p className="tm-sign__error">{error}</p> : null}
 
-        <SignatureCapturePanel
-          disabled={phase === "submitting"}
-          displayName={name}
-          showPreview
-          padProps={{ className: "delpi-ui-signature-pad--tall" }}
-          onChange={setPng}
-        />
+          <div className="tm-sign__actions">
+            <button
+              type="submit"
+              className="tm-sign__primary"
+              disabled={phase === "submitting"}
+            >
+              {phase === "submitting" ? "Enviando…" : "Assinar"}
+            </button>
+            <button
+              type="button"
+              className="tm-sign__secondary"
+              disabled={phase === "submitting"}
+              onClick={() => setShowRefuse((v) => !v)}
+            >
+              Recusar
+            </button>
+          </div>
+        </form>
+      ) : null}
 
-        {error ? <p className="tm-sign__error">{error}</p> : null}
-
-        <div className="tm-sign__actions">
-          <button type="submit" className="tm-sign__primary" disabled={phase === "submitting"}>
-            {phase === "submitting" ? "Enviando…" : "Assinar"}
-          </button>
-          <button
-            type="button"
-            className="tm-sign__secondary"
-            disabled={phase === "submitting"}
-            onClick={() => setShowRefuse((v) => !v)}
-          >
-            Recusar
-          </button>
-        </div>
-      </form>
-
-      {showRefuse ? (
+      {!showSignedBanner && showRefuse ? (
         <div className="tm-sign__refuse">
           <label className="tm-sign__label">
             Motivo da recusa
@@ -202,7 +179,12 @@ export function SignPage({ context, token }: Props) {
               disabled={phase === "submitting"}
             />
           </label>
-          <button type="button" className="tm-sign__secondary" onClick={onRefuse} disabled={phase === "submitting"}>
+          <button
+            type="button"
+            className="tm-sign__secondary"
+            onClick={onRefuse}
+            disabled={phase === "submitting"}
+          >
             Confirmar recusa
           </button>
         </div>
