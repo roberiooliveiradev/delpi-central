@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { resolveIcon } from "./iconResolver";
 import {
   Activity,
@@ -14,6 +15,8 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+
+type NotificationIconComponent = ComponentType<{ size?: number }>;
 
 export type NotificationCatalogCategory = {
   id: string;
@@ -172,14 +175,14 @@ export function resolveNotificationCategoryIcon(
   categoryId: string,
   catalog: NotificationCatalogResponse = FALLBACK_NOTIFICATION_CATALOG,
   apps: AppRef[] = [],
-): LucideIcon {
+): NotificationIconComponent {
   const { iconName } = resolveNotificationPreferenceDisplay(categoryId, catalog, apps);
   return resolveNotificationCategoryIconComponent(iconName);
 }
 
 export function resolveNotificationCategoryIconComponent(
   iconName: string | null | undefined,
-): LucideIcon {
+): NotificationIconComponent {
   const key = (iconName || "bell").trim();
   return resolveIcon(key) ?? ICON_BY_NAME[key.toLowerCase()] ?? Bell;
 }
@@ -188,7 +191,7 @@ export function resolveNotificationCategoryIconComponent(
 export function getNotificationCategoryIcon(
   categoryId: string,
   catalog: NotificationCatalogResponse = FALLBACK_NOTIFICATION_CATALOG,
-): LucideIcon {
+): NotificationIconComponent {
   return resolveNotificationCategoryIcon(categoryId, catalog, []);
 }
 
