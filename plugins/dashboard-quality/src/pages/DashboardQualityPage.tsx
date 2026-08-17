@@ -27,6 +27,8 @@ import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -112,38 +114,98 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   const kpiExportRows = useMemo(
-    () => [
+    () => {
+      const dateOpts = { dateStart, dateEnd };
+      const ppmInternalGoal = buildKpiGoalPresentationWithBranchIdd(
+        `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`,
+        ppmInternal,
+        {
+          realizedValue: ppmInternal?.ppm,
+          activeBranch: activeApiBranch,
+          branches: ppmInternalBranches,
+          ...dateOpts,
+        },
+      );
+      const ppmExternalGoal = buildKpiGoalPresentationWithBranchIdd(
+        `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`,
+        ppmExternal,
+        {
+          realizedValue: ppmExternal?.ppm,
+          activeBranch: activeApiBranch,
+          branches: ppmExternalBranches,
+          ...dateOpts,
+        },
+      );
+      const kaizenIdeasGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        kaizen?.ideas_goal ?? kaizen,
+        {
+          realizedValue: kaizen?.total_kaizens,
+          activeBranch: activeApiBranch,
+          branches: kaizenIdeasBranches,
+          ...dateOpts,
+        },
+      );
+      const audit5sGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        audit5s,
+        {
+          realizedValue: audit5s?.average_score,
+          activeBranch: activeApiBranch,
+          branches: audit5sBranches,
+          ...dateOpts,
+        },
+      );
+
+      return [
       {
         indicador: "PPM interno",
         valor: formatQualityKpiValue(ppmInternal?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+          ...formatKpiGoalExportFragments(ppmInternalGoal),
+        ),
       },
       {
         indicador: "PPM externo",
         valor: formatQualityKpiValue(ppmExternal?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+          ...formatKpiGoalExportFragments(ppmExternalGoal),
+        ),
       },
       {
         indicador: "Kaizens",
         valor: formatQualityKpiValue(kaizen?.total_kaizens, (v) => String(Math.round(v))),
-        contexto: `Economia: ${formatDecimal(kaizen?.total_savings)} · ${branchLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          `Economia: ${formatDecimal(kaizen?.total_savings)} · ${branchLabel} · ${periodLabel}`,
+          ...formatKpiGoalExportFragments(kaizenIdeasGoal),
+        ),
       },
       {
         indicador: "Auditoria 5S",
         valor: formatQualityPercentKpi(audit5s?.average_score),
-        contexto: `${branchLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          `${branchLabel} · ${periodLabel}`,
+          ...formatKpiGoalExportFragments(audit5sGoal),
+        ),
       },
-    ],
+    ];
+    },
     [
-      audit5s?.average_score,
+      activeApiBranch,
+      audit5s,
+      audit5sBranches,
       branchLabel,
-      kaizen?.total_kaizens,
-      kaizen?.total_savings,
+      dateEnd,
+      dateStart,
+      kaizen,
+      kaizenIdeasBranches,
       periodLabel,
-      ppmExternal?.ppm,
-      ppmExternal?.total_devolvido_un,
-      ppmInternal?.ppm,
-      ppmInternal?.total_devolvido_un,
+      ppmExternal,
+      ppmExternalBranches,
+      ppmInternal,
+      ppmInternalBranches,
     ],
   );
 

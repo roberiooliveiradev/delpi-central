@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildKpiGoalPresentation,
   calculateIndicatorIddScore,
+  formatKpiGoalExportFragments,
   isGoalOnTrack,
+  joinKpiExportContext,
   resolveAccumulatedGoalPrefix,
   resolveGoalPeriodPartial,
 } from "./goalDisplay";
@@ -55,6 +57,21 @@ describe("goalDisplay", () => {
     expect(presentation.monthlyGoalLabel).toContain("10");
     expect(presentation.goalHint).toMatch(/calculada/i);
     expect(presentation.monthlyGoalHint).toMatch(/cadastrado/i);
+  });
+
+  it("formata fragmentos de export com Meta mês", () => {
+    const presentation = buildKpiGoalPresentation("ctx", {
+      comparable_goal: 5,
+      goal_value: 10,
+      reference_goal: 10,
+      goal_period_kind: "partial",
+      value_suffix: "%",
+      value_decimals: 1,
+    });
+    const fragments = formatKpiGoalExportFragments(presentation);
+    expect(fragments.some((part) => part.startsWith("Meta parcial"))).toBe(true);
+    expect(fragments.some((part) => part.startsWith("Meta mês"))).toBe(true);
+    expect(joinKpiExportContext("SC", ...fragments)).toContain("Meta mês");
   });
 
   it("emite goalPrefix parcial / acumulada via kind", () => {

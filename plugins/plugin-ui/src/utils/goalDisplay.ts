@@ -570,6 +570,38 @@ export function buildKpiGoalPresentation(
   };
 }
 
+/** Fragmentos de meta para export tabular (Meta do período + Meta mês). */
+export function formatKpiGoalExportFragments(
+  presentation: Pick<
+    KpiGoalPresentation,
+    "goalLabel" | "goalPrefix" | "monthlyGoalLabel" | "monthlyGoalPrefix"
+  > | null | undefined,
+): string[] {
+  if (!presentation) {
+    return [];
+  }
+  const parts: string[] = [];
+  if (presentation.goalLabel) {
+    const prefix = (presentation.goalPrefix ?? "Meta").trim();
+    parts.push(`${prefix} ${presentation.goalLabel}`.trim());
+  }
+  if (presentation.monthlyGoalLabel) {
+    const prefix = (presentation.monthlyGoalPrefix ?? "Meta mês").trim();
+    parts.push(`${prefix} ${presentation.monthlyGoalLabel}`.trim());
+  }
+  return parts;
+}
+
+/** Junta contexto base + fragmentos de meta para coluna `contexto` do export. */
+export function joinKpiExportContext(
+  ...parts: Array<string | null | undefined>
+): string {
+  return parts
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" · ");
+}
+
 /** @deprecated Prefer buildKpiGoalPresentation + KpiCard goalLabel */
 export function formatGoalSubtitle(
   periodLabel: string,

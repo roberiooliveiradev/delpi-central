@@ -49,6 +49,8 @@ import { formatPeriodLabel } from "../utils/dates";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 import { resolveApiBranch } from "../utils/branchClientFilters";
@@ -202,53 +204,130 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
   }, [otdSeries.points]);
 
   const kpiExportRows = useMemo(
-    () => [
-      {
-        indicador: "MO direta / ROL",
-        valor: formatDashboardMetricValue(
-          directLabor?.direct_labor_cost_pct,
-          directLabor,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Custo de produção / ROL",
-        valor: formatDashboardMetricValue(
-          productionCost?.production_cost_pct,
-          productionCost,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Depreciação / ROL",
-        valor: formatDashboardMetricValue(
-          depreciation?.depreciation_pct,
-          depreciation,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "OEE",
-        valor: formatDashboardMetricValue(
-          oee?.overall_equipment_effectiveness_pct,
-          oee,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "OTD — entrega no prazo",
-        valor: formatDashboardMetricValue(otd?.on_time_delivery_pct, otd),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-    ],
+    () => {
+      const dateOpts = { dateStart, dateEnd };
+      const directLaborGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${periodLabel}`,
+        directLabor,
+        {
+          realizedValue: directLabor?.direct_labor_cost_pct,
+          activeBranch: selectedBranch,
+          branches: directLaborBranches,
+          ...dateOpts,
+        },
+      );
+      const productionCostGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${periodLabel}`,
+        productionCost,
+        {
+          realizedValue: productionCost?.production_cost_pct,
+          activeBranch: selectedBranch,
+          branches: productionCostBranches,
+          ...dateOpts,
+        },
+      );
+      const depreciationGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${periodLabel}`,
+        depreciation,
+        {
+          realizedValue: depreciation?.depreciation_pct,
+          activeBranch: selectedBranch,
+          branches: depreciationBranches,
+          ...dateOpts,
+        },
+      );
+      const oeeGoal = buildKpiGoalPresentationWithBranchIdd(
+        `TOTVS · ${branchLabel} · ${periodLabel}`,
+        oee,
+        {
+          realizedValue: oee?.overall_equipment_effectiveness_pct,
+          activeBranch: selectedBranch,
+          branches: oeeBranches,
+          ...dateOpts,
+        },
+      );
+      const otdGoal = buildKpiGoalPresentationWithBranchIdd(
+        `TOTVS · ${branchLabel} · ${periodLabel}`,
+        otd,
+        {
+          realizedValue: otd?.on_time_delivery_pct,
+          activeBranch: selectedBranch,
+          branches: otdBranches,
+          ...dateOpts,
+        },
+      );
+
+      return [
+        {
+          indicador: "MO direta / ROL",
+          valor: formatDashboardMetricValue(
+            directLabor?.direct_labor_cost_pct,
+            directLabor,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(directLaborGoal),
+          ),
+        },
+        {
+          indicador: "Custo de produção / ROL",
+          valor: formatDashboardMetricValue(
+            productionCost?.production_cost_pct,
+            productionCost,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(productionCostGoal),
+          ),
+        },
+        {
+          indicador: "Depreciação / ROL",
+          valor: formatDashboardMetricValue(
+            depreciation?.depreciation_pct,
+            depreciation,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(depreciationGoal),
+          ),
+        },
+        {
+          indicador: "OEE",
+          valor: formatDashboardMetricValue(
+            oee?.overall_equipment_effectiveness_pct,
+            oee,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(oeeGoal),
+          ),
+        },
+        {
+          indicador: "OTD — entrega no prazo",
+          valor: formatDashboardMetricValue(otd?.on_time_delivery_pct, otd),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(otdGoal),
+          ),
+        },
+      ];
+    },
     [
       branchLabel,
+      dateEnd,
+      dateStart,
       depreciation,
+      depreciationBranches,
       directLabor,
+      directLaborBranches,
       oee,
+      oeeBranches,
       otd,
+      otdBranches,
       periodLabel,
       productionCost,
+      productionCostBranches,
+      selectedBranch,
     ],
   );
 

@@ -25,6 +25,8 @@ import { formatPeriodLabel } from "../utils/dates";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -113,35 +115,91 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
   const hasChartValues = comparisonChartData.some((item) => item.value > 0);
 
   const kpiExportRows = useMemo(
-    () => [
-      {
-        indicador: "ROL",
-        valor: formatCurrency(rol?.rol_with_ipi),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "EBITDA / ROL",
-        valor: formatDashboardMetricValue(
-          ebitda?.ebitda_over_rol_pct,
-          ebitda,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Custos fixos / ROL",
-        valor: formatDashboardMetricValue(
-          fixedCost?.fixed_cost_over_rol_pct,
-          fixedCost,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "PMR (dias)",
-        valor: formatDashboardMetricValue(pmr?.pmr_days, pmr),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
+    () => {
+      const dateOpts = { dateStart, dateEnd };
+      const ebitdaGoal = buildKpiGoalPresentationWithBranchIdd(
+        ebitda?.ebitda_value != null
+          ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
+          : periodLabel,
+        ebitda,
+        {
+          realizedValue: ebitda?.ebitda_over_rol_pct,
+          activeBranch: activeApiBranch,
+          branches: ebitdaBranches,
+          ...dateOpts,
+        },
+      );
+      const fixedCostGoal = buildKpiGoalPresentationWithBranchIdd(
+        fixedCost?.fixed_cost_value != null
+          ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)} · ${periodLabel}`
+          : periodLabel,
+        fixedCost,
+        {
+          realizedValue: fixedCost?.fixed_cost_over_rol_pct,
+          activeBranch: activeApiBranch,
+          branches: fixedCostBranches,
+          ...dateOpts,
+        },
+      );
+      const pmrGoal = buildKpiGoalPresentationWithBranchIdd(periodLabel, pmr, {
+        realizedValue: pmr?.pmr_days,
+        activeBranch: activeApiBranch,
+        branches: pmrBranches,
+        ...dateOpts,
+      });
+
+      return [
+        {
+          indicador: "ROL",
+          valor: formatCurrency(rol?.rol_with_ipi),
+          contexto: `${branchLabel} · ${periodLabel}`,
+        },
+        {
+          indicador: "EBITDA / ROL",
+          valor: formatDashboardMetricValue(
+            ebitda?.ebitda_over_rol_pct,
+            ebitda,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(ebitdaGoal),
+          ),
+        },
+        {
+          indicador: "Custos fixos / ROL",
+          valor: formatDashboardMetricValue(
+            fixedCost?.fixed_cost_over_rol_pct,
+            fixedCost,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(fixedCostGoal),
+          ),
+        },
+        {
+          indicador: "PMR (dias)",
+          valor: formatDashboardMetricValue(pmr?.pmr_days, pmr),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(pmrGoal),
+          ),
+        },
+      ];
+    },
+    [
+      activeApiBranch,
+      branchLabel,
+      dateEnd,
+      dateStart,
+      ebitda,
+      ebitdaBranches,
+      fixedCost,
+      fixedCostBranches,
+      periodLabel,
+      pmr,
+      pmrBranches,
+      rol,
     ],
-    [branchLabel, ebitda, fixedCost, periodLabel, pmr, rol],
   );
 
   const dashboardExportContext = useMemo(

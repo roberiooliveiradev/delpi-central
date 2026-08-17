@@ -34,6 +34,8 @@ import { formatPeriodLabel } from "../utils/dates";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import {
   buildHrMetricIddSlices,
@@ -270,47 +272,148 @@ export function DashboardHrPage() {
   );
 
   const kpiExportRows = useMemo(
-    () => [
-      {
-        indicador: "Absenteísmo",
-        valor: formatPercent(absenteeism),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Turnover",
-        valor: formatPercent(turnover),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Satisfação interna",
-        valor: formatPercent(satisfaction),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "PDIs ativos",
-        valor: formatDecimal(activePdiCount, 0),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Avaliações concluídas",
-        valor: formatPercent(performanceReviewsCompletion),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Horas de treinamento / colaborador",
-        valor: formatDecimal(trainingHours, 2),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-    ],
+    () => {
+      const dateOpts = { dateStart, dateEnd };
+      const absenteeismGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        snapshot?.goals_by_metric?.absenteeism_pct,
+        {
+          realizedValue: absenteeism,
+          activeBranch: activeApiBranch,
+          branches: absenteeismBranches,
+          ...dateOpts,
+        },
+      );
+      const turnoverGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        snapshot?.goals_by_metric?.turnover_pct,
+        {
+          realizedValue: turnover,
+          activeBranch: activeApiBranch,
+          branches: turnoverBranches,
+          ...dateOpts,
+        },
+      );
+      const satisfactionGoal = buildKpiGoalPresentationWithBranchIdd(
+        "Consolidado no período",
+        snapshot?.goals_by_metric?.internal_satisfaction_pct,
+        {
+          realizedValue: satisfaction,
+          activeBranch: activeApiBranch,
+          branches: satisfactionBranches,
+          ...dateOpts,
+        },
+      );
+      const activePdiGoal = buildKpiGoalPresentationWithBranchIdd(
+        branches.length === 1
+          ? formatOperationalUnitCode(branches[0], branches[0])
+          : branches.length > 1
+            ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+            : "Soma das unidades",
+        snapshot?.goals_by_metric?.active_pdi_count,
+        {
+          realizedValue: activePdiCount,
+          activeBranch: activeApiBranch,
+          branches: activePdiBranches,
+          ...dateOpts,
+        },
+      );
+      const performanceReviewsGoal = buildKpiGoalPresentationWithBranchIdd(
+        branches.length === 1
+          ? formatOperationalUnitCode(branches[0], branches[0])
+          : branches.length > 1
+            ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+            : "Média das unidades",
+        snapshot?.goals_by_metric?.performance_reviews_completion_pct,
+        {
+          realizedValue: performanceReviewsCompletion,
+          activeBranch: activeApiBranch,
+          branches: performanceReviewsBranches,
+          ...dateOpts,
+        },
+      );
+      const trainingHoursGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        snapshot?.goals_by_metric?.training_hours_per_collaborator,
+        {
+          realizedValue: trainingHours,
+          activeBranch: activeApiBranch,
+          branches: trainingHoursBranches,
+          ...dateOpts,
+        },
+      );
+
+      return [
+        {
+          indicador: "Absenteísmo",
+          valor: formatPercent(absenteeism),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(absenteeismGoal),
+          ),
+        },
+        {
+          indicador: "Turnover",
+          valor: formatPercent(turnover),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(turnoverGoal),
+          ),
+        },
+        {
+          indicador: "Satisfação interna",
+          valor: formatPercent(satisfaction),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(satisfactionGoal),
+          ),
+        },
+        {
+          indicador: "PDIs ativos",
+          valor: formatDecimal(activePdiCount, 0),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(activePdiGoal),
+          ),
+        },
+        {
+          indicador: "Avaliações concluídas",
+          valor: formatPercent(performanceReviewsCompletion),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(performanceReviewsGoal),
+          ),
+        },
+        {
+          indicador: "Horas de treinamento / colaborador",
+          valor: formatDecimal(trainingHours, 2),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(trainingHoursGoal),
+          ),
+        },
+      ];
+    },
     [
       absenteeism,
+      absenteeismBranches,
+      activeApiBranch,
+      activePdiBranches,
       activePdiCount,
       branchLabel,
+      branches,
+      dateEnd,
+      dateStart,
+      performanceReviewsBranches,
       performanceReviewsCompletion,
       periodLabel,
       satisfaction,
+      satisfactionBranches,
+      snapshot?.goals_by_metric,
       trainingHours,
+      trainingHoursBranches,
       turnover,
+      turnoverBranches,
     ],
   );
 

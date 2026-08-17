@@ -66,7 +66,9 @@ def test_enrich_dashboard_metric_preserves_partial_kind_under_summary() -> None:
     service = DashboardGoalsService()
     goal = {
         **_sample_goal(),
+        "goal_value": 10.0,
         "comparable_goal": 5.0,
+        "reference_goal": 10.0,
         "goal_aggregation": "sum",
         "goal_period_kind": "partial",
         "goal_period_partial": True,
@@ -88,6 +90,8 @@ def test_enrich_dashboard_metric_preserves_partial_kind_under_summary() -> None:
     assert result["ideas_goal"]["goal_period_partial"] is True
     assert result["ideas_goal"]["goal_aggregation"] == "sum"
     assert result["ideas_goal"]["comparable_goal"] == 5.0
+    assert result["ideas_goal"]["goal_value"] == 10.0
+    assert result["ideas_goal"]["reference_goal"] == 10.0
     assert result["ideas_goal"]["total_kaizens"] == 3
 
 
@@ -97,8 +101,12 @@ def test_si_goal_field_labels_include_period_kind() -> None:
     assert "goal_period_kind" in SI_GOAL_FIELD_LABELS
     assert "goal_period_partial" in SI_GOAL_FIELD_LABELS
     assert "goal_aggregation" in SI_GOAL_FIELD_LABELS
+    assert SI_GOAL_FIELD_LABELS["goal_value"] == "Meta cadastrada"
+    assert SI_GOAL_FIELD_LABELS["comparable_goal"] == "Meta do período"
+    assert SI_GOAL_FIELD_LABELS["reference_goal"] == "Meta mês (referência)"
     merged = kpi_fields({"otd_percentage": "OTD"})
     assert merged["goal_period_kind"] == SI_GOAL_FIELD_LABELS["goal_period_kind"]
+    assert merged["reference_goal"] == SI_GOAL_FIELD_LABELS["reference_goal"]
 
 
 def test_enrich_dashboard_metric_attaches_goal_under_summary_key() -> None:

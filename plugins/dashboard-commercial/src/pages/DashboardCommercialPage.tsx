@@ -53,6 +53,8 @@ import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
@@ -290,62 +292,109 @@ export function DashboardCommercialPage({
 
 
   const kpiExportRows = useMemo(
-    () => [
+    () => {
+      const otdPresentation = buildKpiGoalPresentationWithBranchIdd(
+        `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        salesOrderOtd,
+        {
+          realizedValue: salesOrderOtd?.sales_order_otd_pct,
+          activeBranch: activeApiBranch,
+          branches: salesOrderOtdBranches,
+          dateStart,
+          dateEnd,
+        },
+      );
+      const closingPresentation = buildKpiGoalPresentationWithBranchIdd(
+        `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        closingRate,
+        {
+          realizedValue: closingRate?.sales_conversion_rate_pct,
+          activeBranch: activeApiBranch,
+          branches: closingRateBranches,
+          dateStart,
+          dateEnd,
+        },
+      );
+      const newBusinessPctPresentation = buildKpiGoalPresentationWithBranchIdd(
+        `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        newBusinessRol,
+        {
+          realizedValue: newBusinessRol?.new_business_rol_pct,
+          activeBranch: activeApiBranch,
+          branches: newBusinessRolBranches,
+          dateStart,
+          dateEnd,
+        },
+      );
+
+      return [
       {
         indicador: COMMERCIAL_KPI_TITLES.rol,
         valor: rolKpi.value,
-        contexto: [rolKpi.contextLabel, rolKpi.goalLabel].filter(Boolean).join(" · "),
+        contexto: joinKpiExportContext(
+          rolKpi.contextLabel,
+          ...formatKpiGoalExportFragments(rolKpi),
+        ),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.rolWeg,
         valor: wegRolKpi.value,
-        contexto: [wegRolKpi.contextLabel, wegRolKpi.goalLabel]
-          .filter(Boolean)
-          .join(" · "),
+        contexto: joinKpiExportContext(
+          wegRolKpi.contextLabel,
+          ...formatKpiGoalExportFragments(wegRolKpi),
+        ),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.rolNewBusiness,
         valor: segmentNewBusinessRolKpi.value,
-        contexto: [
+        contexto: joinKpiExportContext(
           segmentNewBusinessRolKpi.contextLabel,
-          segmentNewBusinessRolKpi.goalLabel,
-        ]
-          .filter(Boolean)
-          .join(" · "),
+          ...formatKpiGoalExportFragments(segmentNewBusinessRolKpi),
+        ),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.salesOrderOtd,
         valor: formatPercent(salesOrderOtd?.sales_order_otd_pct),
-        contexto: `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          otdPresentation.contextLabel,
+          ...formatKpiGoalExportFragments(otdPresentation),
+        ),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.closingRate,
         valor: formatPercent(closingRate?.sales_conversion_rate_pct),
-        contexto: `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          closingPresentation.contextLabel,
+          ...formatKpiGoalExportFragments(closingPresentation),
+        ),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.newBusinessRol,
         valor: formatPercent(newBusinessRol?.new_business_rol_pct),
-        contexto: `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+        contexto: joinKpiExportContext(
+          newBusinessPctPresentation.contextLabel,
+          ...formatKpiGoalExportFragments(newBusinessPctPresentation),
+        ),
       },
-    ],
+    ];
+    },
     [
+      activeApiBranch,
       branchLabel,
       closingRate,
+      closingRateBranches,
       consolidatedOtherKpisLabel,
       customerSegment,
+      dateEnd,
+      dateStart,
       newBusinessRol,
+      newBusinessRolBranches,
       periodLabel,
-      rolKpi.contextLabel,
-      rolKpi.goalLabel,
-      rolKpi.value,
-      segmentNewBusinessRolKpi.contextLabel,
-      segmentNewBusinessRolKpi.goalLabel,
-      segmentNewBusinessRolKpi.value,
+      rolKpi,
       salesOrderOtd,
-      wegRolKpi.contextLabel,
-      wegRolKpi.goalLabel,
-      wegRolKpi.value,
+      salesOrderOtdBranches,
+      segmentNewBusinessRolKpi,
+      wegRolKpi,
     ],
   );
 

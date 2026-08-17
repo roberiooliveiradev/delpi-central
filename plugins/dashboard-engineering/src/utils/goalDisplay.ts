@@ -28,4 +28,6 @@ export {
   resolveGoalLabel,
   buildKpiGoalPresentation,
   formatGoalSubtitle,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "@delpi/plugin-ui/index";

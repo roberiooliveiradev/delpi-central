@@ -21,6 +21,8 @@ import {
   buildKpiGoalPresentation,
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
 } from "../utils/goalDisplay";
 import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -102,63 +104,142 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     negotiationSavings !== null;
 
   const kpiExportRows = useMemo(
-    () => [
-      {
-        indicador: "CPV total",
-        valor: formatCurrency(cpv?.summary.cpv_total),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "CPV / ROL",
-        valor: formatDashboardMetricValue(
-          cpv?.summary.cpv_percentage,
-          cpv?.summary,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "OTD compras",
-        valor: formatDashboardMetricValue(
-          otd?.summary.otd_percentage,
-          otd?.summary,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Valor de estoque",
-        valor: formatDashboardMetricValue(
-          stockValue?.summary.total_stock_value,
-          stockValue?.summary,
-        ),
-        contexto: `${branchLabel} · ${locationLabel}`,
-      },
-      {
-        indicador: "Giro de estoque",
-        valor: formatDashboardMetricValue(
-          inventoryTurnover?.summary.inventory_turnover_times,
-          inventoryTurnover?.summary,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "Economia em negociações",
-        valor: formatDashboardMetricValue(
-          negotiationSavings?.summary.total_savings ??
+    () => {
+      const dateOpts = { dateStart, dateEnd };
+      const cpvRolGoal = buildKpiGoalPresentationWithBranchIdd(
+        `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
+        cpv?.summary,
+        {
+          realizedValue: cpv?.summary.cpv_percentage,
+          activeBranch: activeApiBranch,
+          branches: cpvBranches,
+          ...dateOpts,
+        },
+      );
+      const otdGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
+        otd?.summary,
+        {
+          realizedValue: otd?.summary.otd_percentage,
+          activeBranch: activeApiBranch,
+          branches: otdBranches,
+          ...dateOpts,
+        },
+      );
+      const stockValueGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${locationLabel}`,
+        stockValue?.summary,
+        {
+          realizedValue: stockValue?.summary.total_stock_value,
+          activeBranch: activeApiBranch,
+          branches: stockValueBranches,
+          ...dateOpts,
+        },
+      );
+      const inventoryTurnoverGoal = buildKpiGoalPresentationWithBranchIdd(
+        periodLabel,
+        inventoryTurnover?.summary,
+        {
+          realizedValue: inventoryTurnover?.summary.inventory_turnover_times,
+          activeBranch: activeApiBranch,
+          branches: inventoryTurnoverBranches,
+          ...dateOpts,
+        },
+      );
+      const negotiationSavingsGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${periodLabel}`,
+        negotiationSavings?.summary,
+        {
+          realizedValue:
+            negotiationSavings?.summary.total_savings ??
             negotiationSavings?.total_savings,
-          negotiationSavings?.summary,
-        ),
-        contexto: `${branchLabel} · ${periodLabel}`,
-      },
-    ],
+          activeBranch: activeApiBranch,
+          branches: negotiationSavingsBranches,
+          ...dateOpts,
+        },
+      );
+
+      return [
+        {
+          indicador: "CPV total",
+          valor: formatCurrency(cpv?.summary.cpv_total),
+          contexto: `${branchLabel} · ${periodLabel}`,
+        },
+        {
+          indicador: "CPV / ROL",
+          valor: formatDashboardMetricValue(
+            cpv?.summary.cpv_percentage,
+            cpv?.summary,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(cpvRolGoal),
+          ),
+        },
+        {
+          indicador: "OTD compras",
+          valor: formatDashboardMetricValue(
+            otd?.summary.otd_percentage,
+            otd?.summary,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(otdGoal),
+          ),
+        },
+        {
+          indicador: "Valor de estoque",
+          valor: formatDashboardMetricValue(
+            stockValue?.summary.total_stock_value,
+            stockValue?.summary,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${locationLabel}`,
+            ...formatKpiGoalExportFragments(stockValueGoal),
+          ),
+        },
+        {
+          indicador: "Giro de estoque",
+          valor: formatDashboardMetricValue(
+            inventoryTurnover?.summary.inventory_turnover_times,
+            inventoryTurnover?.summary,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(inventoryTurnoverGoal),
+          ),
+        },
+        {
+          indicador: "Economia em negociações",
+          valor: formatDashboardMetricValue(
+            negotiationSavings?.summary.total_savings ??
+              negotiationSavings?.total_savings,
+            negotiationSavings?.summary,
+          ),
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(negotiationSavingsGoal),
+          ),
+        },
+      ];
+    },
     [
+      activeApiBranch,
       branchLabel,
       cpv?.summary,
+      cpvBranches,
+      dateEnd,
+      dateStart,
       inventoryTurnover?.summary,
+      inventoryTurnoverBranches,
       locationLabel,
       negotiationSavings,
+      negotiationSavingsBranches,
       otd?.summary,
+      otdBranches,
       periodLabel,
       stockValue?.summary,
+      stockValueBranches,
     ],
   );
 
