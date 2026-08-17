@@ -627,6 +627,18 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
       readSrc("features/customers/components/CustomerOpportunitiesSection.tsx"),
       /account_customer_code/,
     );
+    assert.match(
+      readSrc("features/customers/components/CustomerOpportunitiesSection.tsx"),
+      /product_code/,
+    );
+    assert.match(
+      readSrc("features/customers/components/CustomerOpportunitiesSection.tsx"),
+      /product_group/,
+    );
+    assert.match(
+      readSrc("features/customers/components/CustomerOpportunitiesSection.tsx"),
+      /CommercialDateField/,
+    );
     assert.doesNotMatch(page, /getOpsAbertas|ops-abertas/);
     assert.doesNotMatch(hook, /getOpsAbertas|ops-abertas/);
   });

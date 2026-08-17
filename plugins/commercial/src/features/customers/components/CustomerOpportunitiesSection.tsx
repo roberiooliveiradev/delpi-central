@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getCommercialProposals } from "../../../api/analyticsApi";
 import {
   CommercialActionButton,
+  CommercialDateField,
   CommercialEmptyState,
   CommercialFilterBarShell,
   CommercialLoadingCard,
@@ -29,21 +30,6 @@ type CustomerOpportunitiesSectionProps = {
 
 type StatusFilter = "all" | CommercialProposalStatusCategory;
 
-function proposalMatchesSearch(row: CommercialProposal, query: string): boolean {
-  if (!query) return true;
-  const haystack = [
-    row.proposal_number,
-    row.revision,
-    row.status_label,
-    row.status_code,
-    row.stage,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(query);
-}
-
 /**
  * Lista real de OVs do cliente (mesmo contrato da página global, filtrada por código).
  */
@@ -59,6 +45,10 @@ export function CustomerOpportunitiesSection({
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [productCode, setProductCode] = useState("");
+  const [productGroup, setProductGroup] = useState("");
   const code = customerCode.trim();
   const detailSearch = code
     ? `?${new URLSearchParams({ search: code }).toString()}`
@@ -75,14 +65,26 @@ export function CustomerOpportunitiesSection({
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+
+    const apiStatus =
+      statusFilter === "open" || statusFilter === "won" ? statusFilter : undefined;
+    const ovSearch = search.trim();
+    const product = productCode.trim();
+    const group = productGroup.trim();
+
     void getCommercialProposals(
       {
         page: 1,
-        page_size: 50,
-        search: code,
+        page_size: 100,
         sort_by: "proposal_date",
         sort_dir: "desc",
         account_customer_code: code,
+        status: apiStatus,
+        start_date: dateStart.trim() || undefined,
+        end_date: dateEnd.trim() || undefined,
+        product_code: product || undefined,
+        product_group: group || undefined,
+        search: ovSearch || undefined,
       },
       controller.signal,
     )
@@ -92,7 +94,7 @@ export function CustomerOpportunitiesSection({
           (row) => (row.customer_code || "").trim() === code,
         );
         setItems(rows);
-        setTotal(rows.length);
+        setTotal(typeof page.total === "number" ? page.total : rows.length);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -104,7 +106,16 @@ export function CustomerOpportunitiesSection({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [canViewAnalytics, code]);
+  }, [
+    canViewAnalytics,
+    code,
+    statusFilter,
+    dateStart,
+    dateEnd,
+    productCode,
+    productGroup,
+    search,
+  ]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<StatusFilter, number> = {
@@ -122,15 +133,14 @@ export function CustomerOpportunitiesSection({
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return items.filter((row) => {
-      if (statusFilter !== "all") {
+      if (statusFilter === "lost" || statusFilter === "other") {
         const category = row.status_category ?? "other";
         if (category !== statusFilter) return false;
       }
-      return proposalMatchesSearch(row, query);
+      return true;
     });
-  }, [items, search, statusFilter]);
+  }, [items, statusFilter]);
 
   if (!canViewAnalytics) {
     return (
@@ -176,13 +186,7 @@ export function CustomerOpportunitiesSection({
       {error ? (
         <CommercialEmptyState defaultMessage={error} />
       ) : null}
-      {!loading && !error && items.length === 0 ? (
-        <CommercialEmptyState
-          defaultTitle="Nenhuma OV deste cliente"
-          defaultMessage="Não há oportunidades com este código de cliente no recorte atual."
-        />
-      ) : null}
-      {!loading && !error && items.length > 0 ? (
+      {!loading && !error ? (
         <>
           <CommercialScopeChipBar
             aria-label={copy.statusFilterAriaLabel}
@@ -198,37 +202,57 @@ export function CustomerOpportunitiesSection({
             chips={[
               {
                 id: "all",
-                label: `${copy.statusAll} (${statusCounts.all.toLocaleString("pt-BR")})`,
+                label: `${copy.statusAll}${
+                  statusFilter === "all"
+                    ? ` (${statusCounts.all.toLocaleString("pt-BR")})`
+                    : ""
+                }`,
                 active: statusFilter === "all",
                 onSelect: () => setStatusFilter("all"),
               },
               {
                 id: "open",
-                label: `${copy.statusOpen} (${statusCounts.open.toLocaleString("pt-BR")})`,
+                label: copy.statusOpen,
                 active: statusFilter === "open",
                 onSelect: () => setStatusFilter("open"),
               },
               {
                 id: "won",
-                label: `${copy.statusWon} (${statusCounts.won.toLocaleString("pt-BR")})`,
+                label: copy.statusWon,
                 active: statusFilter === "won",
                 onSelect: () => setStatusFilter("won"),
               },
               {
                 id: "lost",
-                label: `${copy.statusLost} (${statusCounts.lost.toLocaleString("pt-BR")})`,
+                label: copy.statusLost,
                 active: statusFilter === "lost",
                 onSelect: () => setStatusFilter("lost"),
               },
               {
                 id: "other",
-                label: `${copy.statusOther} (${statusCounts.other.toLocaleString("pt-BR")})`,
+                label: copy.statusOther,
                 active: statusFilter === "other",
                 onSelect: () => setStatusFilter("other"),
               },
             ]}
           />
-          <CommercialFilterBarShell embedded layout="inline" ariaLabel={copy.searchLabel}>
+          <CommercialFilterBarShell
+            embedded
+            layout="inline"
+            ariaLabel={copy.accountFiltersAriaLabel}
+          >
+            <CommercialDateField
+              label={copy.dateStartLabel}
+              hint={CM_HELP.customerDetail.opportunitiesDateStart}
+              value={dateStart}
+              onChange={setDateStart}
+            />
+            <CommercialDateField
+              label={copy.dateEndLabel}
+              hint={CM_HELP.customerDetail.opportunitiesDateEnd}
+              value={dateEnd}
+              onChange={setDateEnd}
+            />
             <CommercialTextField
               label={copy.searchLabel}
               hint={CM_HELP.customerDetail.opportunitiesSearch}
@@ -236,10 +260,31 @@ export function CustomerOpportunitiesSection({
               value={search}
               onChange={setSearch}
             />
+            <CommercialTextField
+              label={copy.productCodeLabel}
+              hint={CM_HELP.customerDetail.opportunitiesProductCode}
+              placeholder={copy.productCodePlaceholder}
+              value={productCode}
+              onChange={setProductCode}
+            />
+            <CommercialTextField
+              label={copy.productGroupLabel}
+              hint={CM_HELP.customerDetail.opportunitiesProductGroup}
+              placeholder={copy.productGroupPlaceholder}
+              value={productGroup}
+              onChange={setProductGroup}
+            />
           </CommercialFilterBarShell>
-          {filteredItems.length === 0 ? (
+          {items.length === 0 ? (
+            <CommercialEmptyState
+              defaultTitle="Nenhuma OV neste filtro"
+              defaultMessage="Não há oportunidades com este código de cliente no recorte atual."
+            />
+          ) : null}
+          {items.length > 0 && filteredItems.length === 0 ? (
             <CommercialEmptyState defaultMessage={copy.emptyFiltered} />
-          ) : (
+          ) : null}
+          {filteredItems.length > 0 ? (
             <CommercialProposalsTable
               rows={filteredItems}
               basePath={basePath}
@@ -247,7 +292,7 @@ export function CustomerOpportunitiesSection({
               hideCustomerColumn
               showOpenProposal={canViewProposals}
             />
-          )}
+          ) : null}
         </>
       ) : null}
     </CommercialSectionCard>

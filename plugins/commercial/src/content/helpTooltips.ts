@@ -393,7 +393,13 @@ export const CM_HELP = {
     opportunitiesStatusFilter:
       "Restringe as OVs deste cliente por categoria de status (abertas, ganhas, perdidas).",
     opportunitiesSearch:
-      "Busca por número da OV, revisão, rótulo de status ou etapa.",
+      "Busca por número da OV ou revisão (enviada ao servidor).",
+    opportunitiesDateStart: "Início do período da OV (data da proposta ou aceite, conforme status).",
+    opportunitiesDateEnd: "Fim do período da OV.",
+    opportunitiesProductCode:
+      "Filtra OVs que contenham este código de produto nos itens (ADJ).",
+    opportunitiesProductGroup:
+      "Filtra OVs com produto da família/grupo Protheus (B1_GRUPO, 4 dígitos).",
     opportunities:
       "Oportunidades de venda (OV) só deste cliente. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:

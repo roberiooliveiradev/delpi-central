@@ -28,7 +28,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-META-LABEL | «Meta acumulada» / «· parcial» na UI | E2 | **Existe** | `plugins/commercial` + plugin-ui | ATA-2 §5 |
 | P-LABEL | Chip MTD/YTD nos cards Overview | E2 | **Existe** | `plugins/commercial` | ATA-2 §5 |
 | P-RENAME | «Data de faturamento» + FOB/CIF | E3 | **Existe** | MFE + help | ATA-2 §14–15 |
-| P-OPP | Filtros Conta: período, produto, família | E4 | **W0-pendente** | api-delpi + BFF + MFE | ATA-2 §21 |
+| P-OPP | Filtros Conta: período, produto, família | E4 | **Existe** | api-delpi + BFF + MFE | ATA-2 §21 |
 | P-OTD-COPY | Help OTD = DatFat × entrega prometida | E5 | **W0-pendente** | MFE help | ATA-2 §16 |
 | P-FAV | Favoritos no PluginShell | E6 | **W0-pendente** | MFE shell | ATA-2 §39 |
 
