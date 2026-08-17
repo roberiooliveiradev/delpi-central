@@ -31,6 +31,13 @@ export function branchLabel(branch?: string | null): string {
   return found ? `Filial ${code} (${found.label})` : `Filial ${code}`;
 }
 
+/** Só a cidade/UF — para UI de usuário final (sem código de filial). */
+export function branchCityLabel(branch?: string | null): string {
+  const code = normalizeBranchCode(branch);
+  if (!code) return String(branch ?? "").trim() || "—";
+  return BUDGET_BRANCHES.find((b) => b.code === code)?.label ?? `Filial ${code}`;
+}
+
 /** Chave estável para React keys / selects: prioriza UUID interno, senão branch+code. */
 export function costCenterKey(cc: CostCenterIdentity): string {
   const id = String(cc.id ?? "").trim();

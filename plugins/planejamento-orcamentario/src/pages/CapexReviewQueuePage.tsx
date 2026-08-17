@@ -16,6 +16,7 @@ import {
   formatDateTimeBr,
   mapCapexPlanError,
   planStatusLabel,
+  planSubmitterDisplayName,
   sumEstimatedAmounts,
   CAPEX_PLAN_STATUS_OPTIONS,
 } from "../utils/capexPlans";
@@ -181,7 +182,7 @@ export function CapexReviewQueuePage() {
   return (
     <PageShell
       title="Aprovações CAPEX"
-      subtitle="Analise planejamentos por centro de custo — aprovação do conjunto, não linha a linha."
+      subtitle="Analise cada investimento do centro — aprove ou reprove item a item."
       icon={<ClipboardCheck size={28} strokeWidth={1.75} aria-hidden="true" />}
       backRoute="home"
       actions={
@@ -323,7 +324,7 @@ export function CapexReviewQueuePage() {
                     </div>
                     <div>
                       <dt>Responsável (envio)</dt>
-                      <dd>{row.submitted_by || "—"}</dd>
+                      <dd>{planSubmitterDisplayName(row)}</dd>
                     </div>
                     <div>
                       <dt>Investimentos</dt>

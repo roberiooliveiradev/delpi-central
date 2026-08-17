@@ -108,6 +108,17 @@ beforeEach(() => {
     source: "erp",
     active: true,
   });
+
+  vi.mocked(budgetApi.updateOrgCostCenterIcon).mockImplementation(async (input) => ({
+    id: "cc-01-205",
+    branch: input.branch,
+    code: input.code,
+    name: "TI SC",
+    unit_code: input.branch,
+    source: "erp",
+    active: true,
+    icon_key: input.icon_key,
+  }));
 });
 
 afterEach(() => {
@@ -206,5 +217,21 @@ describe("AdminCentrosCustoPage", () => {
     permissionsState.profile.permissions = ["planejamento-orcamentario.access"];
     render(<AdminCentrosCustoPage />);
     expect(await screen.findByText(/Sem permissão/i)).toBeTruthy();
+  });
+
+  it("permite personalizar ícone do centro cadastrado", async () => {
+    render(<AdminCentrosCustoPage />);
+    const trigger = await screen.findByRole("button", {
+      name: /Ícone de Filial 01 · 205/i,
+    });
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByTitle("TI"));
+    await waitFor(() => {
+      expect(budgetApi.updateOrgCostCenterIcon).toHaveBeenCalledWith({
+        branch: "01",
+        code: "205",
+        icon_key: "laptop",
+      });
+    });
   });
 });

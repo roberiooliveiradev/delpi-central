@@ -33,7 +33,10 @@ describe("routing pessoal workflow", () => {
     );
   });
 
-  it("detalhe não aparece como rota de menu implícita no resolve de /pessoal", () => {
-    expect(resolveAppRoute("/apps/planejamento-orcamentario/pessoal")).toBe("pessoal");
+  it("elaboração /pessoal redireciona para centros; filas permanecem em /pessoal/aprovacoes", () => {
+    expect(resolveAppRoute("/apps/planejamento-orcamentario/pessoal")).toBe("centros");
+    expect(
+      resolveAppRoute("/apps/planejamento-orcamentario/pessoal/aprovacoes"),
+    ).toBe("pessoal-approvals");
   });
 });

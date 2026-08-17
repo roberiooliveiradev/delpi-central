@@ -2,9 +2,12 @@ import {
   downloadAuthenticatedBinary,
   downloadAuthenticatedFile,
   httpGetEnvelope,
+  httpPatchEnvelope,
   httpPostEnvelope,
   httpPostFormEnvelope,
   httpPutEnvelope,
+  httpDeleteEnvelope,
+  HttpRequestError,
   type UploadProgressCallback,
 } from "./httpClient";
 import type {
@@ -335,6 +338,18 @@ export async function upsertOrgCostCenter(
   );
 }
 
+export async function updateOrgCostCenterIcon(
+  input: { branch: string; code: string; icon_key: string | null },
+  signal?: AbortSignal,
+): Promise<OrgCostCenter> {
+  return httpPatchEnvelope(
+    "/admin/org/cost-centers/icon",
+    input,
+    "Não foi possível atualizar o ícone do centro de custo.",
+    { signal },
+  );
+}
+
 export async function listAdminBudgetResponsibilities(
   filters: BudgetResponsibilityListFilters = {},
   signal?: AbortSignal,
@@ -374,12 +389,56 @@ export async function createAdminBudgetResponsibility(
   input: BudgetResponsibilityCreateInput,
   signal?: AbortSignal,
 ): Promise<BudgetResponsibility> {
+  const module = (input.module || "capex").trim().toLowerCase();
   return httpPostEnvelope(
     "/admin/budget-responsibilities",
-    { module: "capex", ...input },
+    { ...input, module },
     "Não foi possível criar a responsabilidade orçamentária.",
     { signal },
   );
+}
+
+/**
+ * Cria vínculos CAPEX e Pessoal para o mesmo usuário/exercício/filial/CC.
+ * Um vínculo lógico = os dois módulos. Se ambos já existirem, rejeita.
+ * Se faltar só um módulo, completa o par sem criar duplicata do outro.
+ */
+export async function createAdminBudgetResponsibilityPair(
+  input: Omit<BudgetResponsibilityCreateInput, "module">,
+  signal?: AbortSignal,
+): Promise<{ capex: BudgetResponsibility | null; personnel: BudgetResponsibility | null }> {
+  const results: {
+    capex: BudgetResponsibility | null;
+    personnel: BudgetResponsibility | null;
+  } = { capex: null, personnel: null };
+  let created = 0;
+  let conflicts = 0;
+
+  for (const module of ["capex", "personnel"] as const) {
+    try {
+      const row = await createAdminBudgetResponsibility({ ...input, module }, signal);
+      results[module] = row;
+      created += 1;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const conflict =
+        /já existe|conflict|conflito/i.test(msg) ||
+        (err instanceof HttpRequestError && err.status === 409);
+      if (!conflict) throw err;
+      conflicts += 1;
+    }
+  }
+
+  if (created === 0) {
+    throw new Error(
+      "Já existe vínculo ativo para este usuário, exercício, filial e centro de custo (CAPEX e Pessoal).",
+    );
+  }
+
+  // Se os dois módulos já estavam ativos, created seria 0.
+  // Se um existia e o outro foi criado, created=1 — ok (completa o par).
+  void conflicts;
+  return results;
 }
 
 export async function updateAdminBudgetResponsibility(
@@ -525,6 +584,45 @@ export async function reactivateAdminCapexCategory(
   );
 }
 
+export async function uploadAdminCapexCategoryIconImage(
+  categoryId: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<CapexCategory> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return httpPostFormEnvelope(
+    `/admin/capex/categories/${categoryId}/icon-image`,
+    formData,
+    "Não foi possível enviar a imagem do ícone.",
+    { signal },
+  );
+}
+
+export async function clearAdminCapexCategoryIconImage(
+  categoryId: string,
+  signal?: AbortSignal,
+): Promise<CapexCategory> {
+  return httpDeleteEnvelope(
+    `/admin/capex/categories/${categoryId}/icon-image`,
+    "Não foi possível remover a imagem do ícone.",
+    { signal },
+  );
+}
+
+export async function fetchCapexCategoryIconImageBlob(
+  categoryId: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const result = await downloadAuthenticatedBinary(
+    `/capex/categories/${categoryId}/icon-image`,
+  );
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+  return result.blob;
+}
+
 export async function listCapexInvestments(
   filters: CapexInvestmentListFilters = {},
   signal?: AbortSignal,
@@ -600,10 +698,13 @@ export async function archiveCapexInvestment(
   return httpPostEnvelope(
     `/capex/investments/${investmentId}/archive`,
     { reason: reason ?? null },
-    "Não foi possível arquivar o investimento CAPEX.",
+    "Não foi possível excluir o investimento CAPEX.",
     { signal },
   );
 }
+
+/** Alias semântico da UI (soft-delete via archive no backend). */
+export const deleteCapexInvestment = archiveCapexInvestment;
 
 export async function listCapexInvestmentAttachments(
   investmentId: string,
@@ -802,6 +903,34 @@ export async function approveCapexPlan(
     `/capex/review/${planId}/approve`,
     input,
     "Não foi possível aprovar o planejamento CAPEX.",
+    { signal },
+  );
+}
+
+export async function approveCapexInvestment(
+  planId: string,
+  investmentId: string,
+  input: { version: number; comment?: string | null },
+  signal?: AbortSignal,
+): Promise<CapexPlan> {
+  return httpPostEnvelope(
+    `/capex/review/${planId}/investments/${investmentId}/approve`,
+    input,
+    "Não foi possível aprovar o investimento CAPEX.",
+    { signal },
+  );
+}
+
+export async function rejectCapexInvestment(
+  planId: string,
+  investmentId: string,
+  input: { version: number; comment: string },
+  signal?: AbortSignal,
+): Promise<CapexPlan> {
+  return httpPostEnvelope(
+    `/capex/review/${planId}/investments/${investmentId}/reject`,
+    input,
+    "Não foi possível reprovar o investimento CAPEX.",
     { signal },
   );
 }

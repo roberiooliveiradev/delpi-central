@@ -24,6 +24,29 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     function StateBox({ children }: { children: ReactNode }) {
       return <div role="alert">{children}</div>;
     },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedModal({
+      open,
+      title,
+      onClose,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      onClose: () => void;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-modal="true" aria-label={String(title)}>
+          <button type="button" aria-label="Fechar" onClick={onClose}>
+            Fechar
+          </button>
+          {children}
+        </div>
+      );
+    },
 }));
 
 vi.mock("../hooks/usePermissions", () => ({
@@ -116,7 +139,7 @@ beforeEach(() => {
     items: [investment],
     pagination: { page: 1, page_size: 20, total: 1, has_more: false },
   });
-  vi.mocked(budgetApi.archiveCapexInvestment).mockResolvedValue({
+  vi.mocked(budgetApi.deleteCapexInvestment).mockResolvedValue({
     ...investment,
     status: "archived",
   });
@@ -210,14 +233,14 @@ describe("CapexMyCostCentersPage", () => {
     });
   });
 
-  it("exibe rascunho incompleto com campos pendentes", async () => {
+  it("exibe campos pendentes do rascunho incompleto", async () => {
     window.history.pushState(
       {},
       "",
       "/apps/planejamento-orcamentario/capex?cost_center_id=205",
     );
     render(<CapexMyCostCentersPage />);
-    await screen.findByText(/Rascunho incompleto/i);
+    await screen.findByText("Notebooks");
     expect(screen.getByText(/Pendências:.*Categoria/i)).toBeTruthy();
   });
 
@@ -232,10 +255,31 @@ describe("CapexMyCostCentersPage", () => {
       pagination: { page: 1, page_size: 20, total: 0, has_more: false },
     });
     render(<CapexMyCostCentersPage />);
-    await screen.findByText(/Nenhum investimento encontrado/i);
+    await screen.findByText(/Nenhum investimento ainda/i);
   });
 
-  it("arquiva investimento com confirmação", async () => {
+  it("abre modal de novo investimento sem sair do centro", async () => {
+    window.history.pushState(
+      {},
+      "",
+      "/apps/planejamento-orcamentario/capex?cost_center_id=205&unit_id=01",
+    );
+    vi.mocked(budgetApi.listCapexInvestments).mockResolvedValue({
+      items: [],
+      pagination: { page: 1, page_size: 20, total: 0, has_more: false },
+    });
+    render(<CapexMyCostCentersPage />);
+    await screen.findByText(/Nenhum investimento ainda/i);
+    const createButtons = screen.getAllByRole("button", { name: /Novo investimento/i });
+    fireEvent.click(createButtons[0]!);
+    const dialog = await screen.findByRole("dialog", { name: /Novo investimento/i });
+    expect(dialog).toBeTruthy();
+    await within(dialog).findByLabelText(/Categoria de investimento/i);
+    expect(window.location.pathname).toContain("/capex");
+    expect(window.location.pathname).not.toContain("/investimentos/novo");
+  });
+
+  it("exclui investimento com confirmação", async () => {
     vi.stubGlobal(
       "confirm",
       vi.fn(() => true),
@@ -247,9 +291,9 @@ describe("CapexMyCostCentersPage", () => {
     );
     render(<CapexMyCostCentersPage />);
     await screen.findByText("Notebooks");
-    fireEvent.click(screen.getByRole("button", { name: /Arquivar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Excluir/i }));
     await waitFor(() => {
-      expect(budgetApi.archiveCapexInvestment).toHaveBeenCalledWith("inv-1");
+      expect(budgetApi.deleteCapexInvestment).toHaveBeenCalledWith("inv-1");
     });
   });
 });

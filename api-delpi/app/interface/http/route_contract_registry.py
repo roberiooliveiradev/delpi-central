@@ -1071,6 +1071,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "reactivate_planejamento_orcamentario_admin_capex_category": RouteContract(
         "capex_category", "scalar"
     ),
+    "upload_planejamento_orcamentario_admin_capex_category_icon_image": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "clear_planejamento_orcamentario_admin_capex_category_icon_image": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "get_planejamento_orcamentario_capex_category_icon_image": RouteContract(
+        "capex_category", "scalar"
+    ),
     "list_planejamento_orcamentario_capex_investments": RouteContract(
         "capex_investment", "paged_list"
     ),
@@ -1126,6 +1135,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "capex_plan", "scalar"
     ),
     "approve_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "approve_planejamento_orcamentario_capex_investment": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "reject_planejamento_orcamentario_capex_investment": RouteContract(
         "capex_plan", "scalar"
     ),
     "get_planejamento_orcamentario_capex_consolidation_summary": RouteContract(

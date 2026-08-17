@@ -129,7 +129,10 @@ export function AdminScopesPage() {
 
   if (permLoading || loading) {
     return (
-      <PageShell title="Escopos" subtitle="Catálogo e vínculos.">
+      <PageShell
+        title="Escopos"
+        subtitle="Cadastro auxiliar — não libera CAPEX nem Pessoal."
+      >
         <LoadingActivityCard title="Carregando…" variant="panel" />
       </PageShell>
     );
@@ -148,7 +151,7 @@ export function AdminScopesPage() {
   return (
     <PageShell
       title="Escopos organizacionais"
-      subtitle="Vínculos de usuários a filiais e centros de custo já cadastrados no planejamento."
+      subtitle="Cadastro auxiliar de vínculos. Para liberar elaboração por centro, use Responsáveis orçamentários."
       icon={<Users size={28} strokeWidth={1.75} aria-hidden="true" />}
       backRoute="admin"
     >
@@ -157,6 +160,13 @@ export function AdminScopesPage() {
           {error}
         </StateBox>
       ) : null}
+
+      <StateBox variant="warning" dismissible={false}>
+        Vinculações nesta tela <strong>não</strong> aparecem em Orçamento por centro. Para o
+        Fabiano (ou qualquer responsável) ver os centros 0205 / 0405, cadastre em{" "}
+        <a href={routeHref("admin-responsaveis")}>Administração → Responsáveis orçamentários</a>, no
+        exercício vigente (CAPEX + Pessoal juntos).
+      </StateBox>
 
       <SectionCard
         title="Catálogo de centros de custo"

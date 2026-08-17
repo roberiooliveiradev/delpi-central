@@ -49,10 +49,10 @@ DETAILS_SORT_FIELDS = frozenset(
 )
 
 PRIORITY_LABELS = {
-    "1": "1 — Compra aprovada/em andamento",
-    "2": "2 — Maior necessidade",
-    "3": "3 — Média",
-    "4": "4 — Menor",
+    "1": "Alta",  # legado planilha (compra aprovada)
+    "2": "Alta",
+    "3": "Média",
+    "4": "Baixa",
 }
 
 ORIGIN_LABELS = {

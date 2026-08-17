@@ -117,6 +117,7 @@ class FakeRepo:
             "origin": origin,
             "probable_supplier_name": "Fornecedor X",
             "status": status,
+            "review_status": "pending",
             "version": 1,
             "updated_at": "2026-08-01T10:00:00Z",
             "created_at": "2026-07-01T10:00:00Z",
@@ -336,6 +337,24 @@ def test_summary_multiple_cost_centers(uc, repo):
     assert repo.audits and repo.audits[-1]["action"] == "capex_consolidation.summary_viewed"
 
 
+def test_summary_exclui_investimento_reprovado_do_aprovado(uc, repo):
+    eid = repo.seed_exercise()
+    cat = repo.seed_category()
+    approved = repo.seed_investment(
+        exercise_id=eid, cost_center_id="205", category_id=cat, amount="800.00"
+    )
+    rejected = repo.seed_investment(
+        exercise_id=eid, cost_center_id="205", category_id=cat, amount="200.00"
+    )
+    repo.investments[approved]["review_status"] = "approved"
+    repo.investments[rejected]["review_status"] = "rejected"
+    repo.seed_plan(exercise_id=eid, cost_center_id="205", status="approved")
+    result = uc.get_summary(_admin(), exercise_id=eid, audit=False)
+    s = result["summary"]
+    assert Decimal(s["total_estimated_amount"]) == Decimal("1000.00")
+    assert Decimal(s["approved_amount"]) == Decimal("800.00")
+
+
 def test_groupings(uc, repo):
     eid = repo.seed_exercise()
     cat_a = repo.seed_category(code="A", name="Cat A")
@@ -549,3 +568,49 @@ def test_excel_structure(uc, repo):
     # resumo contém filtros
     resumo_values = [ws_inv.parent["Resumo"].cell(r, 2).value for r in range(1, 10)]
     assert any(isinstance(v, str) and "unit_id=01" in v for v in resumo_values)
+
+
+def test_grouping_by_cost_center_keeps_same_code_per_branch_separate(uc, repo):
+    """Mesmo código de CC em 01 e 02 não soma valores na consolidação."""
+    eid = repo.seed_exercise()
+    cat = repo.seed_category()
+    repo.ccs[("02", "205")] = {
+        **deepcopy(repo.ccs[("01", "205")]),
+        "branch": "02",
+        "unit_code": "02",
+        "name": "TI ES",
+    }
+    for unit_id, amount, desc in (
+        ("01", "8000.00", "Jaraguá"),
+        ("02", "122600.00", "Rio Bananal"),
+    ):
+        iid = str(uuid4())
+        repo.investments[iid] = {
+            "id": iid,
+            "exercise_id": eid,
+            "unit_id": unit_id,
+            "area_id": "PROD",
+            "cost_center_id": "205",
+            "category_id": cat,
+            "description": desc,
+            "estimated_amount": amount,
+            "currency": "BRL",
+            "required_date": "2027-06-01",
+            "priority": "2",
+            "origin": "national",
+            "probable_supplier_name": "Fornecedor X",
+            "status": "draft",
+            "review_status": "pending",
+            "version": 1,
+            "updated_at": "2026-08-01T10:00:00Z",
+            "created_at": "2026-07-01T10:00:00Z",
+        }
+
+    by_cc = uc.get_grouping(_admin(), group_by="cost_center", exercise_id=eid)
+    assert len(by_cc["items"]) == 2
+    by_pair = {
+        (i.get("unit_id"), i.get("cost_center_id")): Decimal(str(i["total_amount"]))
+        for i in by_cc["items"]
+    }
+    assert by_pair[("01", "205")] == Decimal("8000.00")
+    assert by_pair[("02", "205")] == Decimal("122600.00")

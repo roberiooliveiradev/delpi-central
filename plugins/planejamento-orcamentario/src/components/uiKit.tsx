@@ -2,10 +2,14 @@ import {
   createDashboardLoadingActivityCard,
   createDashboardSectionCard,
   createDashboardStateBox,
+  createHostContainedModalShell,
   sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "po";
+
+/** Classe do root do MFE — portal de modal host-contained. */
+export const PO_ROOT_CLASS = "dashboard-planejamento-orcamentario";
 
 const LOADING_LABELS = {
   progressRemaining: (remainingPercent: number) => `Faltam ${remainingPercent}%`,
@@ -27,3 +31,19 @@ export const LoadingActivityCard = createDashboardLoadingActivityCard({
 });
 
 export const StateBox = createDashboardStateBox({ prefix: UI_PREFIX });
+
+/** Workbench do formulário — preenche a área do plugin sem cobrir a sidebar. */
+export const HostContainedModal = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: PO_ROOT_CLASS,
+  containedLayout: "fill",
+  closeAriaLabel: "Fechar",
+});
+
+/** Card centralizado (detalhe / aviso) — overlay só na área do plugin. */
+export const HostContainedDialog = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: PO_ROOT_CLASS,
+  containedLayout: "dialog",
+  closeAriaLabel: "Fechar",
+});

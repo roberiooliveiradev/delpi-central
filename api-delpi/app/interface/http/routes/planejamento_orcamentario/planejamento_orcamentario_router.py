@@ -127,6 +127,12 @@ class CostCenterBody(BaseModel):
     area_name: str | None = None
 
 
+class CostCenterIconBody(BaseModel):
+    branch: str
+    code: str
+    icon_key: str | None = None
+
+
 class CostCenterFromErpBody(BaseModel):
     branch: str
     code: str
@@ -165,6 +171,7 @@ class CapexCategoryCreateBody(BaseModel):
     name: str
     description: str | None = None
     display_order: int | None = 0
+    icon_key: str | None = None
 
 
 class CapexCategoryUpdateBody(BaseModel):
@@ -172,6 +179,7 @@ class CapexCategoryUpdateBody(BaseModel):
     name: str | None = None
     description: str | None = None
     display_order: int | None = None
+    icon_key: str | None = None
 
 
 class CapexCategoryDeactivateBody(BaseModel):
@@ -675,6 +683,21 @@ def admin_create_cost_center_from_erp(body: CostCenterFromErpBody):
     ))
 
 
+@router.patch(
+    "/admin/org/cost-centers/icon",
+    operation_id="update_planejamento_orcamentario_admin_cost_center_icon",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_SCOPES_MANAGE_PERMISSIONS)
+def admin_update_cost_center_icon(body: CostCenterIconBody):
+    return _run(lambda: api_delpi_success(
+        build_budget_planning_use_cases().update_org_cost_center_icon(
+            build_actor(), body.model_dump()
+        ),
+        operation_id="update_planejamento_orcamentario_admin_cost_center_icon",
+        message="Ícone do centro de custo atualizado.",
+    ))
+
+
 @router.get(
     "/org/erp-cost-centers",
     operation_id="list_planejamento_orcamentario_org_erp_cost_centers",
@@ -926,6 +949,71 @@ def admin_reactivate_capex_category(category_id: str):
     ))
 
 
+@router.post(
+    "/admin/capex/categories/{category_id}/icon-image",
+    operation_id="upload_planejamento_orcamentario_admin_capex_category_icon_image",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_SCOPES_MANAGE_PERMISSIONS)
+async def admin_upload_capex_category_icon_image(
+    category_id: str,
+    file: UploadFile = File(...),
+):
+    try:
+        content = await file.read()
+        data = build_capex_category_use_cases().upload_icon_image(
+            build_actor(),
+            category_id,
+            original_name=file.filename or "icon.png",
+            content=content,
+            mime_type=file.content_type,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="upload_planejamento_orcamentario_admin_capex_category_icon_image",
+            message="Imagem do ícone da categoria atualizada.",
+        )
+    except BudgetPlanningError as exc:
+        return handle_budget_error(exc)
+    except Exception as exc:
+        log_error(f"upload category icon error: {type(exc).__name__}")
+        return error_response("Erro ao enviar imagem do ícone.", status_code=500)
+
+
+@router.delete(
+    "/admin/capex/categories/{category_id}/icon-image",
+    operation_id="clear_planejamento_orcamentario_admin_capex_category_icon_image",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_SCOPES_MANAGE_PERMISSIONS)
+def admin_clear_capex_category_icon_image(category_id: str):
+    return _run(lambda: api_delpi_success(
+        build_capex_category_use_cases().clear_icon_image(build_actor(), category_id),
+        operation_id="clear_planejamento_orcamentario_admin_capex_category_icon_image",
+        message="Imagem do ícone removida.",
+    ))
+
+
+@router.get(
+    "/capex/categories/{category_id}/icon-image",
+    operation_id="get_planejamento_orcamentario_capex_category_icon_image",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_ACCESS_PERMISSIONS)
+def get_capex_category_icon_image(category_id: str):
+    try:
+        result = build_capex_category_use_cases().resolve_icon_image(
+            build_actor(), category_id
+        )
+        return FileResponse(
+            path=str(result["path"]),
+            media_type=result["mime_type"],
+            filename=result["filename"],
+        )
+    except BudgetPlanningError as exc:
+        return handle_budget_error(exc)
+    except Exception as exc:
+        log_error(f"get category icon error: {type(exc).__name__}")
+        return error_response("Erro ao obter imagem do ícone.", status_code=500)
+
+
 # -------- capex investments (Fase 2B.1) --------
 @router.get(
     "/capex/investments",
@@ -934,6 +1022,7 @@ def admin_reactivate_capex_category(category_id: str):
 @require_any_permission(PLANEJAMENTO_ORCAMENTARIO_ACCESS_PERMISSIONS)
 def list_capex_investments(
     exercise_id: str | None = None,
+    unit_id: str | None = None,
     cost_center_id: str | None = None,
     category_id: str | None = None,
     priority: str | None = None,
@@ -947,6 +1036,7 @@ def list_capex_investments(
         build_capex_investment_use_cases().list_investments(
             build_actor(),
             exercise_id=exercise_id,
+            unit_id=unit_id,
             cost_center_id=cost_center_id,
             category_id=category_id,
             priority=priority,
@@ -1308,6 +1398,46 @@ def approve_capex_plan(plan_id: str, body: CapexPlanDecisionBody):
         ),
         operation_id="approve_planejamento_orcamentario_capex_plan",
         message="Planejamento CAPEX aprovado.",
+    ))
+
+
+@router.post(
+    "/capex/review/{plan_id}/investments/{investment_id}/approve",
+    operation_id="approve_planejamento_orcamentario_capex_investment",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_CAPEX_APPROVE_PERMISSIONS)
+def approve_capex_investment(plan_id: str, investment_id: str, body: CapexPlanDecisionBody):
+    return _run(lambda: api_delpi_success(
+        build_capex_plan_use_cases().decide_investment(
+            build_actor(),
+            plan_id,
+            investment_id,
+            version=body.version,
+            action="approve",
+            comment=body.comment,
+        ),
+        operation_id="approve_planejamento_orcamentario_capex_investment",
+        message="Investimento CAPEX aprovado.",
+    ))
+
+
+@router.post(
+    "/capex/review/{plan_id}/investments/{investment_id}/reject",
+    operation_id="reject_planejamento_orcamentario_capex_investment",
+)
+@require_any_permission(PLANEJAMENTO_ORCAMENTARIO_CAPEX_APPROVE_PERMISSIONS)
+def reject_capex_investment(plan_id: str, investment_id: str, body: CapexPlanRejectBody):
+    return _run(lambda: api_delpi_success(
+        build_capex_plan_use_cases().decide_investment(
+            build_actor(),
+            plan_id,
+            investment_id,
+            version=body.version,
+            action="reject",
+            comment=body.comment,
+        ),
+        operation_id="reject_planejamento_orcamentario_capex_investment",
+        message="Investimento CAPEX reprovado.",
     ))
 
 

@@ -81,6 +81,18 @@ beforeEach(() => {
     is_active: false,
   });
   vi.mocked(budgetApi.reactivateAdminCapexCategory).mockResolvedValue(row);
+  vi.mocked(budgetApi.uploadAdminCapexCategoryIconImage).mockResolvedValue({
+    ...row,
+    has_custom_icon: true,
+    icon_image_mime: "image/png",
+  });
+  vi.mocked(budgetApi.clearAdminCapexCategoryIconImage).mockResolvedValue({
+    ...row,
+    has_custom_icon: false,
+  });
+  vi.mocked(budgetApi.fetchCapexCategoryIconImageBlob).mockResolvedValue(
+    new Blob(["x"], { type: "image/png" }),
+  );
 });
 
 afterEach(() => {
@@ -131,15 +143,15 @@ describe("AdminCategoriasCapexPage", () => {
     fireEvent.click(within(form).getByRole("button", { name: "Salvar categoria" }));
     await waitFor(() => {
       expect(budgetApi.createAdminCapexCategory).toHaveBeenCalledWith(
-        expect.objectContaining({ code: "NOVA", name: "Nova" }),
+        expect.objectContaining({ code: "NOVA", name: "Nova", icon_key: null }),
       );
     });
   });
 
-  it("edita nome/ordem", async () => {
+  it("edita nome/ordem e ícone após selecionar tile", async () => {
     render(<AdminCategoriasCapexPage />);
-    await screen.findByText("Ferramentas");
-    fireEvent.click(screen.getByRole("button", { name: /Editar/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ferramentas/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Editar$/i }));
     const edit = screen.getByTestId("section-Editar categoria");
     fireEvent.change(within(edit).getByLabelText("Nome"), {
       target: { value: "Ferramentas editada" },
@@ -148,7 +160,26 @@ describe("AdminCategoriasCapexPage", () => {
     await waitFor(() => {
       expect(budgetApi.updateAdminCapexCategory).toHaveBeenCalledWith(
         "c1",
-        expect.objectContaining({ name: "Ferramentas editada" }),
+        expect.objectContaining({ name: "Ferramentas editada", icon_key: null }),
+      );
+    });
+  });
+
+  it("envia imagem customizada ao editar categoria", async () => {
+    render(<AdminCategoriasCapexPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /Ferramentas/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Editar$/i }));
+    const edit = screen.getByTestId("section-Editar categoria");
+    const fileInput = edit.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+    const file = new File([new Uint8Array([1, 2, 3])], "icone.png", {
+      type: "image/png",
+    });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => {
+      expect(budgetApi.uploadAdminCapexCategoryIconImage).toHaveBeenCalledWith(
+        "c1",
+        file,
       );
     });
   });
@@ -159,7 +190,7 @@ describe("AdminCategoriasCapexPage", () => {
       vi.fn(() => true),
     );
     render(<AdminCategoriasCapexPage />);
-    await screen.findByText("Ferramentas");
+    fireEvent.click(await screen.findByRole("button", { name: /Ferramentas/i }));
     fireEvent.click(screen.getByRole("button", { name: /Desativar/i }));
     await waitFor(() => {
       expect(budgetApi.deactivateAdminCapexCategory).toHaveBeenCalledWith("c1");
@@ -170,13 +201,15 @@ describe("AdminCategoriasCapexPage", () => {
     });
     cleanup();
     render(<AdminCategoriasCapexPage />);
-    await screen.findByText("Reativar");
+    fireEvent.click(await screen.findByRole("button", { name: /Ferramentas/i }));
     fireEvent.click(screen.getByRole("button", { name: /Reativar/i }));
     await waitFor(() => {
       expect(budgetApi.reactivateAdminCapexCategory).toHaveBeenCalledWith("c1");
     });
   });
+});
 
+describe("AdminCategoriasCapexPage access", () => {
   it("nega acesso sem permissão", async () => {
     permissionsState.profile.permissions = ["planejamento-orcamentario.access"];
     render(<AdminCategoriasCapexPage />);

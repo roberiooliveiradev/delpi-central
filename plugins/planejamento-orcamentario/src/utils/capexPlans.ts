@@ -24,6 +24,8 @@ const HISTORY_ACTION_LABELS: Record<CapexPlanHistoryAction, string> = {
   request_changes: "Ajustes solicitados",
   rejected: "Reprovado",
   approved: "Aprovado",
+  investment_approved: "Investimento aprovado",
+  investment_rejected: "Investimento reprovado",
 };
 
 const EDITABLE_STATUSES = new Set<string>(["draft", "changes_requested"]);
@@ -37,6 +39,24 @@ export function planStatusLabel(status?: string | null): string {
 export function planHistoryActionLabel(action?: string | null): string {
   if (!action) return "—";
   return HISTORY_ACTION_LABELS[action as CapexPlanHistoryAction] ?? action;
+}
+
+/** Nome completo de quem enviou o plano — nunca exibir o sub/UUID cru. */
+export function planSubmitterDisplayName(
+  plan: {
+    submitted_by_name?: string | null;
+    submitted_by?: string | null;
+  } | null | undefined,
+  history?: Array<{ action?: string | null; actor_name?: string | null }> | null,
+): string {
+  const fromPlan = String(plan?.submitted_by_name || "").trim();
+  if (fromPlan) return fromPlan;
+  const fromHistory = (history ?? [])
+    .filter((h) => h.action === "submitted")
+    .map((h) => String(h.actor_name || "").trim())
+    .find(Boolean);
+  if (fromHistory) return fromHistory;
+  return "—";
 }
 
 /** Plano inexistente ≡ draft (editável). */
@@ -143,6 +163,10 @@ export function mapCapexPlanError(err: unknown): string {
       return "Esta ação não é permitida no status atual do planejamento.";
     case "budget_capex_plan_not_found":
       return "Planejamento CAPEX não encontrado ou sem permissão de visualização.";
+    case "budget_capex_investment_not_found":
+      return "Investimento não encontrado neste planejamento.";
+    case "budget_capex_investment_review_invalid":
+      return "Não foi possível registrar a decisão deste investimento.";
     case "budget_capex_approval_forbidden":
       return "Sem permissão para esta operação de submissão ou aprovação.";
     default:

@@ -31,6 +31,7 @@ from app.domain.services.planejamento_orcamentario.org_cost_center_constants imp
     COST_CENTER_SOURCE_ERP,
     COST_CENTER_SOURCE_MANUAL,
     normalize_budget_branch,
+    normalize_cost_center_icon_key,
     serialize_org_cost_center,
 )
 from app.domain.services.planejamento_orcamentario.exercise_state_service import (
@@ -802,6 +803,45 @@ class BudgetPlanningUseCases:
             actor_user_id=actor.user_id,
             actor_name=actor.user_name,
             before_state=serialize_org_cost_center(existing) if existing else None,
+            after_state=public,
+        )
+        return public
+
+    def update_org_cost_center_icon(
+        self, actor: BudgetActor, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        try:
+            branch = normalize_budget_branch(body.get("branch"))
+        except ValueError as exc:
+            raise BudgetCostCenterInvalidError(str(exc)) from exc
+        code = str(body.get("code") or "").strip()
+        if not code:
+            raise BudgetCostCenterInvalidError("Código do centro de custo é obrigatório.")
+        try:
+            icon_key = normalize_cost_center_icon_key(body.get("icon_key"))
+        except ValueError as exc:
+            raise BudgetCostCenterInvalidError(str(exc)) from exc
+        existing = self._repo.get_org_cost_center(code, branch=branch)
+        if not existing:
+            raise BudgetCostCenterNotFoundError(
+                "Centro de custo não encontrado no catálogo interno."
+            )
+        updated = self._repo.update_org_cost_center_icon(
+            branch=branch, code=code, icon_key=icon_key
+        )
+        if not updated:
+            raise BudgetCostCenterNotFoundError(
+                "Centro de custo não encontrado no catálogo interno."
+            )
+        public = serialize_org_cost_center(updated)
+        self._repo.append_audit(
+            exercise_id=None,
+            entity_type="org_cost_center",
+            entity_id=str(updated.get("id") or ""),
+            action="org_cost_center.icon_updated",
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+            before_state=serialize_org_cost_center(existing),
             after_state=public,
         )
         return public

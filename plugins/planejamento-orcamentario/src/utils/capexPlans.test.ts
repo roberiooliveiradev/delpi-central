@@ -9,6 +9,7 @@ import {
   isPlanVersionConflictError,
   mapCapexPlanError,
   planStatusLabel,
+  planSubmitterDisplayName,
   sumEstimatedAmounts,
 } from "./capexPlans";
 
@@ -19,6 +20,26 @@ describe("capexPlans utils", () => {
     expect(planStatusLabel("changes_requested")).toBe("Ajustes solicitados");
     expect(planStatusLabel("rejected")).toBe("Reprovado");
     expect(planStatusLabel("approved")).toBe("Aprovado");
+  });
+
+  it("exibe nome do responsável, nunca o UUID", () => {
+    expect(
+      planSubmitterDisplayName({
+        submitted_by: "a2b41ad2-0d41-4faf-b5bd-2f97e56e77eb",
+        submitted_by_name: "Maria Silva",
+      }),
+    ).toBe("Maria Silva");
+    expect(
+      planSubmitterDisplayName(
+        { submitted_by: "a2b41ad2-0d41-4faf-b5bd-2f97e56e77eb" },
+        [{ action: "submitted", actor_name: "João Souza" }],
+      ),
+    ).toBe("João Souza");
+    expect(
+      planSubmitterDisplayName({
+        submitted_by: "a2b41ad2-0d41-4faf-b5bd-2f97e56e77eb",
+      }),
+    ).toBe("—");
   });
 
   it("editável em draft e changes_requested; plano nulo ≡ draft", () => {

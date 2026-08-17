@@ -300,6 +300,11 @@ class CapexApprovalForbiddenError(BudgetPlanningError):
     status_code = 403
 
 
+class CapexInvestmentReviewInvalidError(BudgetPlanningError):
+    code = "budget_capex_investment_review_invalid"
+    status_code = 422
+
+
 class CapexPlanInvalidError(BudgetPlanningError):
     code = "budget_capex_plan_invalid"
     status_code = 422

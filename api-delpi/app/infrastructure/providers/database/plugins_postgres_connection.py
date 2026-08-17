@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 from dataclasses import dataclass
-from threading import Lock
 from typing import Any
 
 import psycopg
@@ -13,8 +13,9 @@ from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 
-_connection_lock = Lock()
-_cached_connection: Connection[dict[str, Any]] | None = None
+_thread_local = threading.local()
+_registry_lock = threading.Lock()
+_registered_connections: set[Connection[dict[str, Any]]] = set()
 
 
 class PluginsDatabaseConfigError(RuntimeError):
@@ -100,71 +101,73 @@ def _is_connection_usable(
         return False
 
 
+def _open_plugins_connection() -> Connection[dict[str, Any]]:
+    settings = get_plugins_connection_settings()
+    try:
+        logger.info(
+            "Opening plugins PostgreSQL connection.",
+            extra={
+                "db_host": settings.host,
+                "db_port": settings.port,
+                "db_name": settings.database,
+                "thread": threading.current_thread().name,
+            },
+        )
+        return psycopg.connect(
+            conninfo=settings.dsn,
+            row_factory=dict_row,
+            autocommit=False,
+        )
+    except Exception as exc:
+        logger.exception(
+            "Failed to connect to plugins PostgreSQL database.",
+            extra={
+                "db_host": settings.host,
+                "db_port": settings.port,
+                "db_name": settings.database,
+            },
+        )
+        raise PluginsDatabaseConnectionError(
+            "Não foi possível conectar ao banco PostgreSQL de plugins."
+        ) from exc
+
+
 def get_plugins_connection() -> Connection[dict[str, Any]]:
     """
-    Retorna uma conexão PostgreSQL reutilizável para o contexto plugins.
+    Retorna uma conexão PostgreSQL reutilizável **por thread**.
 
-    A conexão é criada sob demanda e reaproveitada enquanto estiver válida.
+    Requests concorrentes (uvicorn threadpool) não podem compartilhar a mesma
+    Connection psycopg: UniqueViolation/rollback em um request aborta o outro
+    (InFailedSqlTransaction) e pode desfazer INSERT ainda não commitado.
     """
-    global _cached_connection
+    connection = getattr(_thread_local, "connection", None)
+    if _is_connection_usable(connection):
+        return connection  # type: ignore[return-value]
 
-    if _is_connection_usable(_cached_connection):
-        return _cached_connection  # type: ignore[return-value]
-
-    with _connection_lock:
-        if _is_connection_usable(_cached_connection):
-            return _cached_connection  # type: ignore[return-value]
-
-        settings = get_plugins_connection_settings()
-
-        try:
-            logger.info(
-                "Opening plugins PostgreSQL connection.",
-                extra={
-                    "db_host": settings.host,
-                    "db_port": settings.port,
-                    "db_name": settings.database,
-                },
-            )
-
-            connection = psycopg.connect(
-                conninfo=settings.dsn,
-                row_factory=dict_row,
-                autocommit=False,
-            )
-
-            _cached_connection = connection
-            return connection
-        except Exception as exc:
-            logger.exception(
-                "Failed to connect to plugins PostgreSQL database.",
-                extra={
-                    "db_host": settings.host,
-                    "db_port": settings.port,
-                    "db_name": settings.database,
-                },
-            )
-            raise PluginsDatabaseConnectionError(
-                "Não foi possível conectar ao banco PostgreSQL de plugins."
-            ) from exc
+    connection = _open_plugins_connection()
+    _thread_local.connection = connection
+    with _registry_lock:
+        _registered_connections.add(connection)
+    return connection
 
 
 def close_plugins_connection() -> None:
     """
-    Fecha a conexão cacheada do contexto plugins, se existir.
+    Fecha todas as conexões de plugins registradas (shutdown / testes).
     """
-    global _cached_connection
+    with _registry_lock:
+        connections = list(_registered_connections)
+        _registered_connections.clear()
 
-    with _connection_lock:
-        if _cached_connection is None:
-            return
-
+    for connection in connections:
         try:
-            if not _cached_connection.closed:
-                _cached_connection.close()
-                logger.info("Plugins PostgreSQL connection closed.")
-        finally:
-            _cached_connection = None
+            if not connection.closed:
+                connection.close()
+        except Exception:
+            logger.exception("Failed to close plugins PostgreSQL connection.")
+
+    _thread_local.connection = None
+    logger.info("Plugins PostgreSQL connections closed.")
 
 
 def check_plugins_connection() -> bool:

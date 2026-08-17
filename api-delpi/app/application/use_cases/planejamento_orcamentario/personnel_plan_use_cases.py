@@ -380,6 +380,7 @@ class PersonnelPlanUseCases:
             "status",
             "version",
             "submitted_by",
+            "submitted_by_name",
             "submitted_at",
             "reviewed_by",
             "reviewed_at",
@@ -388,6 +389,10 @@ class PersonnelPlanUseCases:
             "created_at",
             "updated_by",
             "updated_at",
+            "cost_center_icon_key",
+            "cost_center_name",
+            "cost_center_owner_name",
+            "cost_center_owner_sub",
         )
         out = {k: plan.get(k) for k in keys}
         out["branch"] = plan.get("unit_id")
@@ -487,6 +492,11 @@ class PersonnelPlanUseCases:
                 }
             )
         except PluginsRepositoryError:
+            # Corrida / conflito único: garante txn limpa antes do SELECT de recuperação.
+            try:
+                self._repo.rollback()
+            except PluginsRepositoryError:
+                pass
             raced = self._repo.get_personnel_plan_by_exercise_cc(
                 exercise_id=exercise_id,
                 cost_center_id=cost_center_id,
@@ -852,6 +862,7 @@ class PersonnelPlanUseCases:
                 new_status=STATUS_SUBMITTED,
                 actor_id=actor.user_id,
                 submitted_by=actor.user_id,
+                submitted_by_name=actor.user_name,
                 clear_review=True,
                 decision_comment=(comment.strip() if comment else None),
             )

@@ -86,6 +86,7 @@ def test_submissao_valida(ctx):
     submitted = uc.submit_plan(actor, plan["id"], version=1)
     assert submitted["status"] == "submitted"
     assert submitted["submitted_by"] == "u1"
+    assert submitted["submitted_by_name"] == "u1"
     assert submitted["version"] == 2
     assert any(h["action"] == "submitted" for h in repo.history)
 

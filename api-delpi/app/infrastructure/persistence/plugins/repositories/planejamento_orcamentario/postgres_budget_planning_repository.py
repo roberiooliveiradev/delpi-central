@@ -55,6 +55,45 @@ def _append_unit_cost_center_pairs(
     return True
 
 
+def _plan_cost_center_owner_lateral_sql(*, module: str, plan_alias: str = "p") -> str:
+    """Owner ativo do CC no exercício (nome para filas/aprovação)."""
+    return f"""
+                LEFT JOIN LATERAL (
+                    SELECT
+                        COALESCE(
+                            NULLIF(BTRIM(r.user_name_snapshot), ''),
+                            r.user_sub
+                        ) AS cost_center_owner_name,
+                        r.user_sub AS cost_center_owner_sub
+                    FROM {SCHEMA}.budget_responsibilities r
+                    WHERE r.exercise_id = {plan_alias}.exercise_id
+                      AND r.unit_id = {plan_alias}.unit_id
+                      AND r.cost_center_id = {plan_alias}.cost_center_id
+                      AND r.module = '{module}'
+                      AND r.responsibility_type = 'owner'
+                      AND r.is_active = TRUE
+                      AND (r.valid_from IS NULL OR r.valid_from <= CURRENT_DATE)
+                      AND (r.valid_until IS NULL OR r.valid_until >= CURRENT_DATE)
+                    ORDER BY r.created_at DESC
+                    LIMIT 1
+                ) owner ON TRUE
+    """
+
+
+def _plan_investment_count_lateral_sql(*, plan_alias: str = "p") -> str:
+    """Contagem de investimentos ativos (status draft) do CC no exercício."""
+    return f"""
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS investment_count
+                    FROM {SCHEMA}.capex_investments i
+                    WHERE i.exercise_id = {plan_alias}.exercise_id
+                      AND i.unit_id = {plan_alias}.unit_id
+                      AND i.cost_center_id = {plan_alias}.cost_center_id
+                      AND i.status = 'draft'
+                ) inv ON TRUE
+    """
+
+
 class PostgresBudgetPlanningRepository(PluginBaseRepository):
     # ---- exercises ----
     def list_exercises(self) -> list[dict[str, Any]]:
@@ -570,6 +609,25 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         self.commit()
         return _row(row) or {}
 
+    def update_org_cost_center_icon(
+        self,
+        *,
+        branch: str,
+        code: str,
+        icon_key: str | None,
+    ) -> dict[str, Any] | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE {SCHEMA}.org_cost_centers
+            SET icon_key = %s
+            WHERE branch = %s AND code = %s
+            RETURNING *
+            """,
+            (icon_key, branch, code),
+        )
+        self.commit()
+        return _row(row)
+
     def upsert_org_unit(self, code: str, name: str) -> None:
         self.execute(
             f"""
@@ -916,27 +974,34 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         active_only: bool = True,
         on_date: date | None = None,
     ) -> list[dict[str, Any]]:
-        clauses = ["user_sub = %s"]
+        clauses = ["r.user_sub = %s"]
         params: list[Any] = [user_sub]
         if module:
-            clauses.append("module = %s")
+            clauses.append("r.module = %s")
             params.append(module)
         if exercise_id:
-            clauses.append("exercise_id = %s")
+            clauses.append("r.exercise_id = %s")
             params.append(exercise_id)
         if active_only:
-            clauses.append("is_active = TRUE")
+            clauses.append("r.is_active = TRUE")
             check = on_date or date.today()
-            clauses.append("(valid_from IS NULL OR valid_from <= %s)")
+            clauses.append("(r.valid_from IS NULL OR r.valid_from <= %s)")
             params.append(check)
-            clauses.append("(valid_until IS NULL OR valid_until >= %s)")
+            clauses.append("(r.valid_until IS NULL OR r.valid_until >= %s)")
             params.append(check)
         return _rows(
             self.fetch_all(
                 f"""
-                SELECT * FROM {SCHEMA}.budget_responsibilities
+                SELECT
+                    r.*,
+                    cc.name AS cost_center_name,
+                    cc.icon_key AS cost_center_icon_key
+                FROM {SCHEMA}.budget_responsibilities r
+                LEFT JOIN {SCHEMA}.org_cost_centers cc
+                    ON cc.code = r.cost_center_id
+                   AND cc.branch = r.unit_id
                 WHERE {' AND '.join(clauses)}
-                ORDER BY cost_center_id, created_at DESC
+                ORDER BY r.cost_center_id, r.created_at DESC
                 """,
                 tuple(params),
             )
@@ -1100,11 +1165,11 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             f"""
             INSERT INTO {SCHEMA}.capex_categories (
-                code, name, description, display_order, is_system_default,
+                code, name, description, display_order, icon_key, is_system_default,
                 created_by, updated_by
             ) VALUES (
-                %(code)s, %(name)s, %(description)s, %(display_order)s, %(is_system_default)s,
-                %(created_by)s, %(updated_by)s
+                %(code)s, %(name)s, %(description)s, %(display_order)s, %(icon_key)s,
+                %(is_system_default)s, %(created_by)s, %(updated_by)s
             )
             RETURNING *
             """,
@@ -1113,6 +1178,7 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
                 "name": payload["name"],
                 "description": payload.get("description"),
                 "display_order": int(payload.get("display_order") or 0),
+                "icon_key": payload.get("icon_key"),
                 "is_system_default": bool(payload.get("is_system_default", False)),
                 "created_by": payload["created_by"],
                 "updated_by": payload.get("updated_by") or payload["created_by"],
@@ -1126,7 +1192,7 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
     def update_capex_category(
         self, category_id: str, fields: dict[str, Any]
     ) -> dict[str, Any]:
-        allowed = ("name", "description", "display_order", "updated_by")
+        allowed = ("name", "description", "display_order", "icon_key", "icon_image_key", "icon_image_mime", "updated_by")
         sets: list[str] = []
         params: list[Any] = []
         for key in allowed:
@@ -1492,7 +1558,22 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
     def get_capex_plan(self, plan_id: str) -> dict[str, Any] | None:
         return _row(
             self.fetch_one(
-                f"SELECT * FROM {SCHEMA}.capex_plans WHERE id = %s",
+                f"""
+                SELECT
+                    p.*,
+                    cc.icon_key AS cost_center_icon_key,
+                    cc.name AS cost_center_name,
+                    owner.cost_center_owner_name,
+                    owner.cost_center_owner_sub,
+                    COALESCE(inv.investment_count, 0) AS investment_count
+                FROM {SCHEMA}.capex_plans p
+                LEFT JOIN {SCHEMA}.org_cost_centers cc
+                    ON cc.code = p.cost_center_id
+                   AND cc.branch = p.unit_id
+                {_plan_cost_center_owner_lateral_sql(module="capex")}
+                {_plan_investment_count_lateral_sql()}
+                WHERE p.id = %s
+                """,
                 (plan_id,),
             )
         )
@@ -1525,6 +1606,7 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         )
 
     def create_capex_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # ON CONFLICT evita UniqueViolation (aborta a transação) em corrida de resolve.
         row = self.execute_returning_one(
             f"""
             INSERT INTO {SCHEMA}.capex_plans (
@@ -1534,14 +1616,17 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
                 %(exercise_id)s, %(unit_id)s, %(area_id)s, %(cost_center_id)s, 'draft', 1,
                 %(created_by)s, %(created_by)s
             )
+            ON CONFLICT (exercise_id, unit_id, cost_center_id) DO NOTHING
             RETURNING *
             """,
             payload,
         )
-        if not row:
-            raise PluginsRepositoryError("Falha ao criar planejamento CAPEX.")
-        self.commit()
-        return _row(row) or {}
+        if row:
+            return _row(row) or {}
+        # Conflito sem abortar txn → use case recupera via get_*_by_exercise_cc.
+        raise PluginsRepositoryError(
+            "Planejamento CAPEX já existe para exercício/filial/centro de custo."
+        )
 
     def list_capex_plans(
         self,
@@ -1599,10 +1684,24 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         items = _rows(
             self.fetch_all(
                 f"""
-                SELECT * FROM {SCHEMA}.capex_plans
-                WHERE {where}
-                ORDER BY updated_at DESC, created_at DESC, id DESC
-                LIMIT %s OFFSET %s
+                SELECT
+                    p.*,
+                    cc.icon_key AS cost_center_icon_key,
+                    cc.name AS cost_center_name,
+                    owner.cost_center_owner_name,
+                    owner.cost_center_owner_sub,
+                    COALESCE(inv.investment_count, 0) AS investment_count
+                FROM (
+                    SELECT * FROM {SCHEMA}.capex_plans
+                    WHERE {where}
+                    ORDER BY updated_at DESC, created_at DESC, id DESC
+                    LIMIT %s OFFSET %s
+                ) p
+                LEFT JOIN {SCHEMA}.org_cost_centers cc
+                    ON cc.code = p.cost_center_id
+                   AND cc.branch = p.unit_id
+                {_plan_cost_center_owner_lateral_sql(module="capex")}
+                {_plan_investment_count_lateral_sql()}
                 """,
                 tuple(list(params) + [limit, offset]),
             )
@@ -1617,6 +1716,7 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         new_status: str,
         actor_id: str,
         submitted_by: str | None = None,
+        submitted_by_name: str | None = None,
         clear_submission: bool = False,
         reviewed_by: str | None = None,
         decision_comment: str | None = None,
@@ -1633,8 +1733,12 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
             sets.append("submitted_by = %s")
             sets.append("submitted_at = NOW()")
             params.append(submitted_by)
+            if submitted_by_name is not None:
+                sets.append("submitted_by_name = %s")
+                params.append(submitted_by_name)
         if clear_submission:
             sets.append("submitted_by = NULL")
+            sets.append("submitted_by_name = NULL")
             sets.append("submitted_at = NULL")
         if reviewed_by is not None:
             sets.append("reviewed_by = %s")
@@ -1662,23 +1766,114 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         return _row(row) or {}
 
     def append_capex_plan_history(self, payload: dict[str, Any]) -> dict[str, Any]:
+        data = {
+            "plan_id": payload.get("plan_id"),
+            "action": payload.get("action"),
+            "previous_status": payload.get("previous_status"),
+            "new_status": payload.get("new_status"),
+            "comment": payload.get("comment"),
+            "actor_sub": payload.get("actor_sub"),
+            "actor_name": payload.get("actor_name"),
+            "investment_id": payload.get("investment_id"),
+        }
         row = self.execute_returning_one(
             f"""
             INSERT INTO {SCHEMA}.capex_plan_history (
                 plan_id, action, previous_status, new_status, comment,
-                actor_sub, actor_name
+                actor_sub, actor_name, investment_id
             ) VALUES (
                 %(plan_id)s, %(action)s, %(previous_status)s, %(new_status)s, %(comment)s,
-                %(actor_sub)s, %(actor_name)s
+                %(actor_sub)s, %(actor_name)s, %(investment_id)s
             )
             RETURNING *
             """,
-            payload,
+            data,
         )
         if not row:
             raise PluginsRepositoryError("Falha ao registrar histórico do planejamento.")
         self.commit()
         return _row(row) or {}
+
+    def set_capex_investment_review(
+        self,
+        investment_id: str,
+        *,
+        review_status: str,
+        review_comment: str | None,
+        reviewed_by: str,
+        reviewed_by_name: str | None = None,
+    ) -> dict[str, Any]:
+        clear = review_status == "pending"
+        row = self.execute_returning_one(
+            f"""
+            UPDATE {SCHEMA}.capex_investments
+            SET review_status = %s,
+                review_comment = %s,
+                reviewed_by = %s,
+                reviewed_by_name = %s,
+                reviewed_at = CASE WHEN %s THEN NULL ELSE NOW() END
+            WHERE id = %s AND status = 'draft'
+            RETURNING *
+            """,
+            (
+                review_status,
+                None if clear else review_comment,
+                None if clear else reviewed_by,
+                None if clear else reviewed_by_name,
+                clear,
+                investment_id,
+            ),
+        )
+        if not row:
+            raise PluginsRepositoryError("Investimento CAPEX não encontrado ou arquivado.")
+        self.commit()
+        return _row(row) or {}
+
+    def stamp_capex_investment_reviews(
+        self,
+        *,
+        exercise_id: str,
+        cost_center_id: str,
+        unit_id: str | None,
+        review_status: str,
+        reviewed_by: str | None = None,
+        reviewed_by_name: str | None = None,
+        review_comment: str | None = None,
+    ) -> None:
+        unit = str(unit_id or "").strip()
+        if not unit:
+            raise PluginsRepositoryError(
+                "Filial (unit_id) é obrigatória ao carimbar revisões de investimentos."
+            )
+        clauses = [
+            "exercise_id = %s",
+            "unit_id = %s",
+            "cost_center_id = %s",
+            "status = 'draft'",
+        ]
+        where_params: list[Any] = [exercise_id, unit, cost_center_id]
+        clear = review_status == "pending"
+        params: list[Any] = [
+            review_status,
+            None if clear else review_comment,
+            None if clear else reviewed_by,
+            None if clear else reviewed_by_name,
+            clear,
+            *where_params,
+        ]
+        self.execute(
+            f"""
+            UPDATE {SCHEMA}.capex_investments
+            SET review_status = %s,
+                review_comment = %s,
+                reviewed_by = %s,
+                reviewed_by_name = %s,
+                reviewed_at = CASE WHEN %s THEN NULL ELSE NOW() END
+            WHERE {" AND ".join(clauses)}
+            """,
+            tuple(params),
+        )
+        self.commit()
 
     def list_capex_plan_history(self, plan_id: str) -> list[dict[str, Any]]:
         return _rows(
@@ -1835,7 +2030,20 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
     def get_personnel_plan(self, plan_id: str) -> dict[str, Any] | None:
         return _row(
             self.fetch_one(
-                f"SELECT * FROM {SCHEMA}.personnel_plans WHERE id = %s",
+                f"""
+                SELECT
+                    p.*,
+                    cc.icon_key AS cost_center_icon_key,
+                    cc.name AS cost_center_name,
+                    owner.cost_center_owner_name,
+                    owner.cost_center_owner_sub
+                FROM {SCHEMA}.personnel_plans p
+                LEFT JOIN {SCHEMA}.org_cost_centers cc
+                    ON cc.code = p.cost_center_id
+                   AND cc.branch = p.unit_id
+                {_plan_cost_center_owner_lateral_sql(module="personnel")}
+                WHERE p.id = %s
+                """,
                 (plan_id,),
             )
         )
@@ -1858,6 +2066,7 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         )
 
     def create_personnel_plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # ON CONFLICT evita UniqueViolation (aborta a transação) em corrida de resolve.
         row = self.execute_returning_one(
             f"""
             INSERT INTO {SCHEMA}.personnel_plans (
@@ -1867,14 +2076,17 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
                 %(exercise_id)s, %(unit_id)s, %(area_id)s, %(cost_center_id)s, 'draft', 1,
                 %(created_by)s, %(created_by)s
             )
+            ON CONFLICT (exercise_id, unit_id, cost_center_id) DO NOTHING
             RETURNING *
             """,
             payload,
         )
-        if not row:
-            raise PluginsRepositoryError("Falha ao criar planejamento de Pessoal.")
-        self.commit()
-        return _row(row) or {}
+        if row:
+            return _row(row) or {}
+        # Conflito sem abortar txn → use case recupera via get_*_by_exercise_cc.
+        raise PluginsRepositoryError(
+            "Planejamento de Pessoal já existe para exercício/filial/centro de custo."
+        )
 
     def list_personnel_plans(
         self,
@@ -1926,10 +2138,22 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         items = _rows(
             self.fetch_all(
                 f"""
-                SELECT * FROM {SCHEMA}.personnel_plans
-                WHERE {where}
-                ORDER BY updated_at DESC, created_at DESC, id DESC
-                LIMIT %s OFFSET %s
+                SELECT
+                    p.*,
+                    cc.icon_key AS cost_center_icon_key,
+                    cc.name AS cost_center_name,
+                    owner.cost_center_owner_name,
+                    owner.cost_center_owner_sub
+                FROM (
+                    SELECT * FROM {SCHEMA}.personnel_plans
+                    WHERE {where}
+                    ORDER BY updated_at DESC, created_at DESC, id DESC
+                    LIMIT %s OFFSET %s
+                ) p
+                LEFT JOIN {SCHEMA}.org_cost_centers cc
+                    ON cc.code = p.cost_center_id
+                   AND cc.branch = p.unit_id
+                {_plan_cost_center_owner_lateral_sql(module="personnel")}
                 """,
                 tuple(list(params) + [limit, offset]),
             )
@@ -1944,9 +2168,11 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
         new_status: str,
         actor_id: str,
         submitted_by: str | None = None,
+        submitted_by_name: str | None = None,
         reviewed_by: str | None = None,
         decision_comment: str | None = None,
         clear_review: bool = False,
+        clear_submission: bool = False,
     ) -> dict[str, Any]:
         sets = [
             "status = %s",
@@ -1959,6 +2185,13 @@ class PostgresBudgetPlanningRepository(PluginBaseRepository):
             sets.append("submitted_by = %s")
             sets.append("submitted_at = NOW()")
             params.append(submitted_by)
+            if submitted_by_name is not None:
+                sets.append("submitted_by_name = %s")
+                params.append(submitted_by_name)
+        if clear_submission:
+            sets.append("submitted_by = NULL")
+            sets.append("submitted_by_name = NULL")
+            sets.append("submitted_at = NULL")
         if reviewed_by is not None:
             sets.append("reviewed_by = %s")
             sets.append("reviewed_at = NOW()")

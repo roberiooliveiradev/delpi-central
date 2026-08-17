@@ -203,6 +203,15 @@ export async function httpPatch<T>(
   return parseJson<T>(response);
 }
 
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export async function httpGetEnvelope<T>(
   path: string,
   fallbackMessage: string,
@@ -239,6 +248,15 @@ export async function httpPatchEnvelope<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const envelope = await httpPatch<ApiEnvelope<T>>(apiUrl(path), body, options);
+  return unwrapApiDelpiEnvelope(envelope, fallbackMessage);
+}
+
+export async function httpDeleteEnvelope<T>(
+  path: string,
+  fallbackMessage: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const envelope = await httpDelete<ApiEnvelope<T>>(apiUrl(path), options);
   return unwrapApiDelpiEnvelope(envelope, fallbackMessage);
 }
 

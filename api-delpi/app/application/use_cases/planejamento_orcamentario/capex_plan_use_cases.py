@@ -16,9 +16,15 @@ from app.domain.services.planejamento_orcamentario.acknowledgement_guard import 
     BudgetGuidanceAcknowledgementGuard,
 )
 from app.domain.services.planejamento_orcamentario.capex_investment_constants import (
+    ENTITY_TYPE_CAPEX_INVESTMENT,
+    REVIEW_APPROVED,
+    REVIEW_PENDING,
+    REVIEW_REJECTED,
     STATUS_DRAFT as INVESTMENT_STATUS_DRAFT,
 )
 from app.domain.services.planejamento_orcamentario.capex_plan_constants import (
+    AUDIT_INVESTMENT_APPROVED,
+    AUDIT_INVESTMENT_REJECTED,
     AUDIT_PLAN_APPROVED,
     AUDIT_PLAN_CREATED,
     AUDIT_PLAN_REJECTED,
@@ -28,6 +34,8 @@ from app.domain.services.planejamento_orcamentario.capex_plan_constants import (
     ENTITY_TYPE_CAPEX_PLAN,
     HISTORY_ACTION_APPROVED,
     HISTORY_ACTION_CREATED,
+    HISTORY_ACTION_INVESTMENT_APPROVED,
+    HISTORY_ACTION_INVESTMENT_REJECTED,
     HISTORY_ACTION_REJECTED,
     HISTORY_ACTION_REQUEST_CHANGES,
     HISTORY_ACTION_SUBMITTED,
@@ -45,6 +53,8 @@ from app.domain.services.planejamento_orcamentario.exceptions import (
     BudgetResponsibilityForbiddenError,
     BudgetUserNotAuthorizedError,
     CapexApprovalForbiddenError,
+    CapexInvestmentNotFoundError,
+    CapexInvestmentReviewInvalidError,
     CapexPlanAlreadyApprovedError,
     CapexPlanCommentRequiredError,
     CapexPlanIncompleteError,
@@ -119,6 +129,7 @@ def _public_plan(row: dict[str, Any]) -> dict[str, Any]:
         "status",
         "version",
         "submitted_by",
+        "submitted_by_name",
         "submitted_at",
         "reviewed_by",
         "reviewed_at",
@@ -127,9 +138,19 @@ def _public_plan(row: dict[str, Any]) -> dict[str, Any]:
         "created_at",
         "updated_by",
         "updated_at",
+        "cost_center_icon_key",
+        "cost_center_name",
+        "cost_center_owner_name",
+        "cost_center_owner_sub",
+        "investment_count",
     )
     out = {k: row.get(k) for k in keys}
     out["branch"] = row.get("unit_id")
+    if out.get("investment_count") is not None:
+        try:
+            out["investment_count"] = int(out["investment_count"])
+        except (TypeError, ValueError):
+            out["investment_count"] = 0
     return out
 
 
@@ -144,6 +165,7 @@ def _public_history(row: dict[str, Any]) -> dict[str, Any]:
         "actor_sub",
         "actor_name",
         "created_at",
+        "investment_id",
     )
     return {k: row.get(k) for k in keys}
 
@@ -289,7 +311,11 @@ class CapexPlanUseCases:
                 }
             )
         except PluginsRepositoryError:
-            # Corrida: outro processo criou
+            # Corrida / conflito único: garante txn limpa antes do SELECT de recuperação.
+            try:
+                self._repo.rollback()
+            except PluginsRepositoryError:
+                pass
             raced = self._repo.get_capex_plan_by_exercise_cc(
                 exercise_id=exercise_id,
                 cost_center_id=cost_center_id,
@@ -409,6 +435,112 @@ class CapexPlanUseCases:
             limit=1000,
         )
         return items
+
+    def _plan_org(self, plan: dict[str, Any]) -> tuple[str, str, str | None]:
+        return (
+            str(plan["exercise_id"]),
+            str(plan["cost_center_id"]),
+            str(plan.get("unit_id") or "") or None,
+        )
+
+    def _stamp_reviews(
+        self,
+        plan: dict[str, Any],
+        *,
+        review_status: str,
+        reviewed_by: str | None = None,
+        reviewed_by_name: str | None = None,
+        review_comment: str | None = None,
+    ) -> None:
+        exercise_id, cost_center_id, unit_id = self._plan_org(plan)
+        self._repo.stamp_capex_investment_reviews(
+            exercise_id=exercise_id,
+            cost_center_id=cost_center_id,
+            unit_id=unit_id,
+            review_status=review_status,
+            reviewed_by=reviewed_by,
+            reviewed_by_name=reviewed_by_name,
+            review_comment=review_comment,
+        )
+
+    def _investment_belongs_to_plan(
+        self, investment: dict[str, Any], plan: dict[str, Any]
+    ) -> bool:
+        if str(investment.get("status") or "") != INVESTMENT_STATUS_DRAFT:
+            return False
+        if str(investment.get("exercise_id")) != str(plan.get("exercise_id")):
+            return False
+        if str(investment.get("cost_center_id")) != str(plan.get("cost_center_id")):
+            return False
+        inv_unit = str(investment.get("unit_id") or "")
+        plan_unit = str(plan.get("unit_id") or "")
+        return not plan_unit or inv_unit == plan_unit
+
+    def _review_status_of(self, row: dict[str, Any]) -> str:
+        value = str(row.get("review_status") or REVIEW_PENDING).strip() or REVIEW_PENDING
+        return value
+
+    def _maybe_close_plan_after_item_decisions(
+        self, actor: BudgetActor, plan: dict[str, Any]
+    ) -> dict[str, Any]:
+        current = self._repo.get_capex_plan(str(plan["id"])) or plan
+        if str(current.get("status") or "") != STATUS_SUBMITTED:
+            return current
+        exercise_id, cost_center_id, unit_id = self._plan_org(current)
+        investments = self._collect_active_investments(
+            exercise_id=exercise_id,
+            cost_center_id=cost_center_id,
+            unit_id=unit_id,
+        )
+        statuses = [self._review_status_of(row) for row in investments]
+        if not statuses or any(status == REVIEW_PENDING for status in statuses):
+            return current
+        new_status = (
+            STATUS_APPROVED
+            if any(status == REVIEW_APPROVED for status in statuses)
+            else STATUS_REJECTED
+        )
+        history_action = (
+            HISTORY_ACTION_APPROVED
+            if new_status == STATUS_APPROVED
+            else HISTORY_ACTION_REJECTED
+        )
+        audit_action = (
+            AUDIT_PLAN_APPROVED if new_status == STATUS_APPROVED else AUDIT_PLAN_REJECTED
+        )
+        try:
+            updated = self._repo.transition_capex_plan(
+                str(current["id"]),
+                expected_version=int(current.get("version") or 0),
+                new_status=new_status,
+                actor_id=actor.user_id,
+                reviewed_by=actor.user_id,
+                decision_comment=None,
+            )
+        except PluginsRepositoryError:
+            return self._repo.get_capex_plan(str(current["id"])) or current
+        self._repo.append_capex_plan_history(
+            {
+                "plan_id": str(current["id"]),
+                "action": history_action,
+                "previous_status": STATUS_SUBMITTED,
+                "new_status": new_status,
+                "comment": None,
+                "actor_sub": actor.user_id,
+                "actor_name": actor.user_name,
+            }
+        )
+        self._repo.append_audit(
+            exercise_id=str(current["exercise_id"]),
+            entity_type=ENTITY_TYPE_CAPEX_PLAN,
+            entity_id=str(current["id"]),
+            action=audit_action,
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+            before_state=_public_plan(current),
+            after_state=_public_plan(updated),
+        )
+        return updated
 
     def _validate_for_submit(
         self, investments: list[dict[str, Any]]
@@ -537,6 +669,7 @@ class CapexPlanUseCases:
                 new_status=STATUS_SUBMITTED,
                 actor_id=actor.user_id,
                 submitted_by=actor.user_id,
+                submitted_by_name=actor.user_name,
                 clear_review=True,
                 decision_comment=(comment.strip() if comment else None),
             )
@@ -566,6 +699,7 @@ class CapexPlanUseCases:
             before_state=_public_plan(plan),
             after_state=_public_plan(updated),
         )
+        self._stamp_reviews(updated, review_status=REVIEW_PENDING)
         return _public_plan(updated)
 
     def list_review_queue(
@@ -732,7 +866,7 @@ class CapexPlanUseCases:
         version: int,
         comment: str,
     ) -> dict[str, Any]:
-        return self._decide(
+        updated = self._decide(
             actor,
             plan_id,
             version=version,
@@ -743,6 +877,8 @@ class CapexPlanUseCases:
             audit_action=AUDIT_PLAN_REQUEST_CHANGES,
             new_status=STATUS_CHANGES_REQUESTED,
         )
+        self._stamp_reviews(updated, review_status=REVIEW_PENDING)
+        return updated
 
     def reject_plan(
         self,
@@ -752,7 +888,7 @@ class CapexPlanUseCases:
         version: int,
         comment: str,
     ) -> dict[str, Any]:
-        return self._decide(
+        updated = self._decide(
             actor,
             plan_id,
             version=version,
@@ -763,6 +899,14 @@ class CapexPlanUseCases:
             audit_action=AUDIT_PLAN_REJECTED,
             new_status=STATUS_REJECTED,
         )
+        self._stamp_reviews(
+            updated,
+            review_status=REVIEW_REJECTED,
+            reviewed_by=actor.user_id,
+            reviewed_by_name=actor.user_name,
+            review_comment=comment,
+        )
+        return updated
 
     def approve_plan(
         self,
@@ -772,7 +916,7 @@ class CapexPlanUseCases:
         version: int,
         comment: str | None = None,
     ) -> dict[str, Any]:
-        return self._decide(
+        updated = self._decide(
             actor,
             plan_id,
             version=version,
@@ -783,3 +927,114 @@ class CapexPlanUseCases:
             audit_action=AUDIT_PLAN_APPROVED,
             new_status=STATUS_APPROVED,
         )
+        self._stamp_reviews(
+            updated,
+            review_status=REVIEW_APPROVED,
+            reviewed_by=actor.user_id,
+            reviewed_by_name=actor.user_name,
+            review_comment=(comment.strip() if comment else None),
+        )
+        return updated
+
+    def decide_investment(
+        self,
+        actor: BudgetActor,
+        plan_id: str,
+        investment_id: str,
+        *,
+        version: int,
+        action: str,
+        comment: str | None = None,
+    ) -> dict[str, Any]:
+        _require_access(actor)
+        self._assert_unlocked(actor)
+        if not _can_approve(actor):
+            raise CapexApprovalForbiddenError(
+                "Sem permissão para decidir sobre planejamento CAPEX."
+            )
+        if action not in {"approve", "reject"}:
+            raise CapexInvestmentReviewInvalidError(
+                "Ação de decisão inválida para o investimento."
+            )
+
+        plan = self._repo.get_capex_plan(plan_id)
+        if not plan:
+            raise CapexPlanNotFoundError("Planejamento CAPEX não encontrado.")
+        if str(plan.get("status") or "") != STATUS_SUBMITTED:
+            raise CapexPlanInvalidTransitionError(
+                "Decisão por investimento só é aceita com o planejamento enviado para aprovação."
+            )
+        if plan.get("submitted_by") and str(plan["submitted_by"]) == actor.user_id:
+            if not _is_admin(actor):
+                raise CapexApprovalForbiddenError(
+                    "Segregação de funções: quem submeteu não pode decidir o próprio planejamento."
+                )
+        if int(plan.get("version") or 0) != int(version):
+            self._repo.append_audit(
+                exercise_id=str(plan["exercise_id"]),
+                entity_type=ENTITY_TYPE_CAPEX_PLAN,
+                entity_id=plan_id,
+                action=AUDIT_PLAN_VERSION_CONFLICT,
+                actor_user_id=actor.user_id,
+                actor_name=actor.user_name,
+                before_state=_public_plan(plan),
+                after_state={"expected_version": version, "action": action},
+            )
+            raise CapexPlanVersionConflictError(
+                "O planejamento foi alterado em outra sessão. Recarregue e tente novamente."
+            )
+
+        investment = self._repo.get_capex_investment(investment_id)
+        if not investment or not self._investment_belongs_to_plan(investment, plan):
+            raise CapexInvestmentNotFoundError(
+                "Investimento não encontrado neste planejamento."
+            )
+
+        note = (comment or "").strip() or None
+        if action == "reject" and not note:
+            raise CapexPlanCommentRequiredError(
+                "Justificativa obrigatória para reprovar o investimento."
+            )
+
+        review_status = REVIEW_APPROVED if action == "approve" else REVIEW_REJECTED
+        updated_investment = self._repo.set_capex_investment_review(
+            investment_id,
+            review_status=review_status,
+            review_comment=note,
+            reviewed_by=actor.user_id,
+            reviewed_by_name=actor.user_name,
+        )
+        label = str(updated_investment.get("description") or "Investimento").strip()
+        hist_comment = f"{label}: {note}" if note else label
+        history_action = (
+            HISTORY_ACTION_INVESTMENT_APPROVED
+            if action == "approve"
+            else HISTORY_ACTION_INVESTMENT_REJECTED
+        )
+        audit_action = (
+            AUDIT_INVESTMENT_APPROVED if action == "approve" else AUDIT_INVESTMENT_REJECTED
+        )
+        self._repo.append_capex_plan_history(
+            {
+                "plan_id": plan_id,
+                "action": history_action,
+                "previous_status": STATUS_SUBMITTED,
+                "new_status": STATUS_SUBMITTED,
+                "comment": hist_comment,
+                "actor_sub": actor.user_id,
+                "actor_name": actor.user_name,
+                "investment_id": investment_id,
+            }
+        )
+        self._repo.append_audit(
+            exercise_id=str(plan["exercise_id"]),
+            entity_type=ENTITY_TYPE_CAPEX_INVESTMENT,
+            entity_id=investment_id,
+            action=audit_action,
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+            before_state=_public_investment(investment),
+            after_state=_public_investment(updated_investment),
+        )
+        self._maybe_close_plan_after_item_decisions(actor, plan)
+        return self.get_plan_detail(actor, plan_id)

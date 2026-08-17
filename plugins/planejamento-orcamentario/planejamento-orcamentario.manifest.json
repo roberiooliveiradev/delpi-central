@@ -4,7 +4,7 @@
   "name": "Planejamento Orçamentário",
   "description": "Elaboração, orientações institucionais e administração do ciclo orçamentário",
   "icon": "chart-pie-icon",
-  "version": "0.2.5",
+  "version": "0.4.0",
   "type": "microfrontend",
   "basePath": "/apps/planejamento-orcamentario",
   "entry": "/apps/planejamento-orcamentario/assets/remoteEntry.js",
@@ -106,11 +106,19 @@
       "showInMenu": true
     },
     {
+      "path": "/apps/planejamento-orcamentario/gestao-aprovacoes",
+      "label": "Gestão de aprovações",
+      "permission": "planejamento-orcamentario.access",
+      "icon": "shield-check-icon",
+      "order": 32,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/planejamento-orcamentario/capex/aprovacoes",
-      "label": "Aprovações CAPEX",
+      "label": "Fila CAPEX",
       "permission": "planejamento-orcamentario.capex.approve",
       "icon": "clipboard-check-icon",
-      "order": 32,
+      "order": 33,
       "showInMenu": true
     },
     {
@@ -118,23 +126,23 @@
       "label": "Consolidação de Investimentos",
       "permission": "planejamento-orcamentario.capex.consolidation.view",
       "icon": "chart-bar-icon",
-      "order": 33,
-      "showInMenu": true
-    },
-    {
-      "path": "/apps/planejamento-orcamentario/pessoal",
-      "label": "Orçamento de Pessoal",
-      "permission": "planejamento-orcamentario.personnel.view",
-      "icon": "users-icon",
       "order": 34,
       "showInMenu": true
     },
     {
+      "path": "/apps/planejamento-orcamentario/centros",
+      "label": "Orçamento por centro",
+      "permission": "planejamento-orcamentario.access",
+      "icon": "building-office-icon",
+      "order": 35,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/planejamento-orcamentario/pessoal/aprovacoes",
-      "label": "Aprovações de Pessoal",
+      "label": "Fila Pessoal",
       "permission": "planejamento-orcamentario.personnel.approve",
       "icon": "clipboard-check-icon",
-      "order": 35,
+      "order": 36,
       "showInMenu": true
     },
     {
@@ -142,7 +150,7 @@
       "label": "Administração orçamentária",
       "permission": "planejamento-orcamentario.admin",
       "icon": "settings-icon",
-      "order": 36,
+      "order": 37,
       "showInMenu": true
     },
     {

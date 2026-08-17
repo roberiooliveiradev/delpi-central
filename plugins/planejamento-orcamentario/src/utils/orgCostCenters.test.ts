@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  branchCityLabel,
   costCenterKey,
   formatCostCenterLabel,
   isSameCostCenter,
@@ -13,6 +14,11 @@ describe("orgCostCenters", () => {
     expect(normalizeBranchCode("01")).toBe("01");
     expect(normalizeBranchCode("02")).toBe("02");
     expect(normalizeBranchCode("99")).toBe("");
+  });
+
+  it("cidade sem código de filial nem parênteses", () => {
+    expect(branchCityLabel("01")).toBe("Jaraguá do Sul/SC");
+    expect(branchCityLabel("02")).toBe("Rio Bananal/ES");
   });
 
   it("formata sempre com filial + código + descrição", () => {

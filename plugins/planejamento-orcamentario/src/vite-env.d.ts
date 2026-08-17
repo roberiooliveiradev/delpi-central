@@ -91,4 +91,24 @@ declare module "@delpi/plugin-ui/index" {
       block?: string;
     },
   ): ComponentType<DashboardSimpleKpiCardProps>;
+
+  export type DashboardModalShellProps = {
+    open: boolean;
+    title: ReactNode;
+    onClose: () => void;
+    children?: ReactNode;
+    description?: string;
+    className?: string;
+    footer?: ReactNode;
+    closeAriaLabel?: string;
+    containedLayout?: "fill" | "dialog";
+  };
+
+  export function createHostContainedModalShell(config: {
+    prefix: string;
+    portalScopeClassName: string;
+    containedLayout?: "fill" | "dialog";
+    closeAriaLabel?: string;
+    variant?: "default" | "wide" | "page";
+  }): ComponentType<DashboardModalShellProps>;
 }

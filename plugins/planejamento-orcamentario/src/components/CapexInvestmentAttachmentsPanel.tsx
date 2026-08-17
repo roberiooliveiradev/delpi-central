@@ -25,11 +25,14 @@ import { LoadingActivityCard, SectionCard, StateBox } from "./uiKit";
 type CapexInvestmentAttachmentsPanelProps = {
   investmentId: string | null;
   readOnly?: boolean;
+  /** Sem SectionCard externo (ex.: etapa do wizard). */
+  embedded?: boolean;
 };
 
 export function CapexInvestmentAttachmentsPanel({
   investmentId,
   readOnly = false,
+  embedded = false,
 }: CapexInvestmentAttachmentsPanelProps) {
   const [items, setItems] = useState<CapexInvestmentAttachment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -213,26 +216,23 @@ export function CapexInvestmentAttachmentsPanel({
   }
 
   if (!investmentId) {
+    const empty = (
+      <StateBox variant="default" dismissible={false}>
+        Salve o rascunho para adicionar documentos.
+      </StateBox>
+    );
+    if (embedded) return empty;
     return (
       <SectionCard title="Documentos e Anexos" hint="Anexos só após o primeiro salvamento do rascunho.">
-        <StateBox variant="default" dismissible={false}>
-          Salve o rascunho para adicionar documentos.
-        </StateBox>
+        {empty}
       </SectionCard>
     );
   }
 
   const busyUpload = uploadState === "uploading" || uploadState === "processing";
 
-  return (
-    <SectionCard
-      title="Documentos e Anexos"
-      hint={
-        readOnly
-          ? "Investimento arquivado — anexos em somente leitura."
-          : "Upload multipart autenticado (máx. 25 MB). O caminho físico não é exposto."
-      }
-    >
+  const body = (
+    <>
       {feedback ? (
         <StateBox variant={feedbackVariant} dismissible={false}>
           {feedback}
@@ -301,58 +301,84 @@ export function CapexInvestmentAttachmentsPanel({
 
       {!readOnly ? (
         <form
-          className="po-form po-attachment-upload"
+          className="po-attachment-upload"
           data-testid="capex-attachment-upload-form"
           onSubmit={(e) => void handleUpload(e)}
         >
-          <h3 className="po-attachment-upload__title">Enviar anexo</h3>
-          <label>
-            Arquivo
+          <div className="po-attachment-upload__intro">
+            <h3 className="po-attachment-upload__title">Enviar anexo</h3>
+            <p className="po-attachment-upload__lead">
+              Orçamentos, propostas ou imagens de apoio (máx. 25 MB).
+            </p>
+          </div>
+
+          <label className={`po-attachment-drop${file ? " has-file" : ""}`}>
             <input
               ref={fileInputRef}
               type="file"
+              aria-label="Arquivo"
+              className="po-attachment-drop__input"
               disabled={busyUpload}
               onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
             />
-          </label>
-          <label>
-            Nome de exibição
-            <input
-              required
-              value={displayName}
-              disabled={busyUpload}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
-          </label>
-          <label>
-            Tipo
-            <select
-              required
-              value={attachmentType}
-              disabled={busyUpload}
-              onChange={(e) => setAttachmentType(e.target.value)}
-            >
-              <option value="">Selecione…</option>
-              {CAPEX_ATTACHMENT_TYPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Descrição (opcional)
-            <input
-              value={description}
-              disabled={busyUpload}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <span className="po-attachment-drop__icon" aria-hidden="true">
+              <Upload size={22} />
+            </span>
+            <span className="po-attachment-drop__copy">
+              {file ? (
+                <>
+                  <strong>{file.name}</strong>
+                  <span>{formatBytes(file.size)}</span>
+                </>
+              ) : (
+                <>
+                  <strong>Selecione um arquivo</strong>
+                  <span>Clique aqui ou arraste o documento</span>
+                </>
+              )}
+            </span>
           </label>
 
-          <p className="po-muted" aria-live="polite">
-            {file
-              ? `Selecionado: ${file.name} (${formatBytes(file.size)}) — ${uploadStatusLabel(uploadState)}`
-              : `Nenhum arquivo selecionado — ${uploadStatusLabel(uploadState)}`}
+          <div className="po-attachment-upload__grid">
+            <label className="po-attachment-upload__field">
+              Nome de exibição
+              <input
+                required
+                value={displayName}
+                disabled={busyUpload}
+                placeholder="Ex.: Orçamento fornecedor X"
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </label>
+            <label className="po-attachment-upload__field">
+              Tipo
+              <select
+                required
+                value={attachmentType}
+                disabled={busyUpload}
+                onChange={(e) => setAttachmentType(e.target.value)}
+              >
+                <option value="">Selecione…</option>
+                {CAPEX_ATTACHMENT_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="po-attachment-upload__field po-attachment-upload__field--span2">
+              Descrição (opcional)
+              <input
+                value={description}
+                disabled={busyUpload}
+                placeholder="Breve contexto do documento"
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <p className="po-attachment-upload__status" aria-live="polite">
+            {uploadStatusLabel(uploadState)}
             {busyUpload ? ` · ${Math.round(uploadProgress * 100)}%` : ""}
           </p>
 
@@ -377,7 +403,7 @@ export function CapexInvestmentAttachmentsPanel({
             </StateBox>
           ) : null}
 
-          <div className="po-form-actions">
+          <div className="po-attachment-upload__actions">
             <button
               type="submit"
               className="po-btn po-btn--primary"
@@ -392,11 +418,28 @@ export function CapexInvestmentAttachmentsPanel({
               disabled={busyUpload}
               onClick={cancelUploadForm}
             >
-              Cancelar
+              Limpar
             </button>
           </div>
         </form>
       ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="po-attachment-panel">{body}</div>;
+  }
+
+  return (
+    <SectionCard
+      title="Documentos e Anexos"
+      hint={
+        readOnly
+          ? "Investimento arquivado — anexos em somente leitura."
+          : "Upload multipart autenticado (máx. 25 MB). O caminho físico não é exposto."
+      }
+    >
+      {body}
     </SectionCard>
   );
 }

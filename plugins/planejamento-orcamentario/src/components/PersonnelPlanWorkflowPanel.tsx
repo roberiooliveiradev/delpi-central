@@ -13,6 +13,7 @@ import type {
   PersonnelPlanIncompleteLine,
 } from "../types/budgetPlanning";
 import { formatCostCenterLabel } from "../utils/orgCostCenters";
+import { planSubmitterDisplayName } from "../utils/capexPlans";
 import {
   canSubmitPersonnelPlanStatus,
   extractIncompletePersonnelLines,
@@ -299,7 +300,10 @@ export function PersonnelPlanWorkflowPanel({
               <dt>Submissão</dt>
               <dd>
                 {formatPersonnelDateTimeBr(plan.submitted_at)}
-                {plan.submitted_by ? ` · ${plan.submitted_by}` : ""}
+                {(() => {
+                  const who = planSubmitterDisplayName(plan);
+                  return who !== "—" ? ` · ${who}` : "";
+                })()}
               </dd>
             </div>
             <div>

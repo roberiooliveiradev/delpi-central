@@ -21,8 +21,26 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     },
   createDashboardStateBox:
     () =>
-    function StateBox({ children }: { children: ReactNode }) {
+    function StateBox({ children }: { title?: string; children: ReactNode }) {
       return <div role="alert">{children}</div>;
+    },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedDialog({
+      open,
+      title,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-label={String(title)}>
+          {children}
+        </div>
+      );
     },
 }));
 
@@ -68,7 +86,11 @@ const plan = {
       origin: "national",
       required_date: "2027-06-01",
       probable_supplier_name: "Fornecedor X",
+      justification: "Substituir equipamentos fora de garantia.",
+      observations: "Priorizar a filial 02 no segundo semestre.",
+      application: "TI / escritório",
       status: "draft",
+      review_status: "pending",
       version: 1,
       is_complete: true,
       missing_fields: [],
@@ -110,70 +132,93 @@ beforeEach(() => {
     ],
   });
   vi.mocked(budgetApi.listCapexInvestmentAttachments).mockResolvedValue([]);
-  vi.stubGlobal(
-    "confirm",
-    vi.fn(() => true),
-  );
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  vi.unstubAllGlobals();
 });
 
 describe("CapexReviewDetailPage", () => {
-  it("tela de análise somente leitura com investimentos", async () => {
+  it("mostra grade gerencial com observações e decisão por investimento", async () => {
     render(<CapexReviewDetailPage planId="plan-1" />);
     await screen.findByText(/Notebooks/);
+    expect(screen.getAllByText(/Priorizar a filial 02/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Substituir equipamentos fora de garantia/i)).toBeTruthy();
     expect(screen.getByText(/Fornecedor X/)).toBeTruthy();
-    expect(screen.getByText(/Somente leitura/i)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Aprovar/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Aprovar$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Reprovar$/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Aprovar orçamento$/i })).toBeNull();
   });
 
-  it("aprovação válida", async () => {
-    vi.mocked(budgetApi.approveCapexPlan).mockResolvedValue({
+  it("aprovação do investimento", async () => {
+    vi.mocked(budgetApi.approveCapexInvestment).mockResolvedValue({
       ...plan,
       status: "approved",
       version: 3,
+      investments: [{ ...plan.investments[0], review_status: "approved" }],
     } as never);
     render(<CapexReviewDetailPage planId="plan-1" />);
-    await screen.findByRole("button", { name: /Aprovar/i });
-    fireEvent.click(screen.getByRole("button", { name: /Aprovar/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Aprovar$/i }));
     await waitFor(() => {
-      expect(budgetApi.approveCapexPlan).toHaveBeenCalledWith("plan-1", {
+      expect(budgetApi.approveCapexInvestment).toHaveBeenCalledWith("plan-1", "inv-1", {
         version: 2,
-        comment: null,
       });
     });
-    await screen.findByText(/Planejamento aprovado/i);
+    await screen.findByText(/Investimento aprovado/i);
+    expect(budgetApi.approveCapexPlan).not.toHaveBeenCalled();
   });
 
-  it("reprovação sem comentário", async () => {
+  it("reprovação sem justificativa", async () => {
     render(<CapexReviewDetailPage planId="plan-1" />);
-    await screen.findByRole("button", { name: /Reprovar/i });
-    fireEvent.click(screen.getByRole("button", { name: /Reprovar/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Reprovar$/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Confirmar reprovação/i }));
     await screen.findByText(/Justificativa obrigatória/i);
-    expect(budgetApi.rejectCapexPlan).not.toHaveBeenCalled();
+    expect(budgetApi.rejectCapexInvestment).not.toHaveBeenCalled();
+  });
+
+  it("reprovação com justificativa", async () => {
+    vi.mocked(budgetApi.rejectCapexInvestment).mockResolvedValue({
+      ...plan,
+      status: "rejected",
+      version: 3,
+      investments: [
+        {
+          ...plan.investments[0],
+          review_status: "rejected",
+          review_comment: "Fora do teto",
+        },
+      ],
+    } as never);
+    render(<CapexReviewDetailPage planId="plan-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /^Reprovar$/i }));
+    fireEvent.change(await screen.findByPlaceholderText(/Explique o motivo/i), {
+      target: { value: "Fora do teto" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Confirmar reprovação/i }));
+    await waitFor(() => {
+      expect(budgetApi.rejectCapexInvestment).toHaveBeenCalledWith("plan-1", "inv-1", {
+        version: 2,
+        comment: "Fora do teto",
+      });
+    });
   });
 
   it("ajustes sem comentário", async () => {
     render(<CapexReviewDetailPage planId="plan-1" />);
-    await screen.findByRole("button", { name: /Solicitar ajustes/i });
-    fireEvent.click(screen.getByRole("button", { name: /Solicitar ajustes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Solicitar ajustes/i }));
     await screen.findByText(/Comentário obrigatório/i);
     expect(budgetApi.requestCapexPlanChanges).not.toHaveBeenCalled();
   });
 
   it("conflito 409", async () => {
-    vi.mocked(budgetApi.approveCapexPlan).mockRejectedValue(
+    vi.mocked(budgetApi.approveCapexInvestment).mockRejectedValue(
       new HttpRequestError("conflito", 409, {
         code: "budget_capex_plan_version_conflict",
       }),
     );
     render(<CapexReviewDetailPage planId="plan-1" />);
-    await screen.findByRole("button", { name: /Aprovar/i });
-    fireEvent.click(screen.getByRole("button", { name: /Aprovar/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Aprovar$/i }));
     await screen.findByText(/Recarregar dados/i);
   });
 
@@ -188,6 +233,7 @@ describe("CapexReviewDetailPage", () => {
       ...plan,
       status: "approved",
       version: 3,
+      investments: [{ ...plan.investments[0], review_status: "approved" }],
     } as never);
     render(<CapexReviewDetailPage planId="plan-1" />);
     await screen.findByText(/não está aguardando decisão|Novas decisões só são aceitas/i);

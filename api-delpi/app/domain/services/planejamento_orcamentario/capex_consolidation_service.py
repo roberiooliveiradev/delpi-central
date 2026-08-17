@@ -23,6 +23,9 @@ from app.domain.services.planejamento_orcamentario.capex_consolidation_constants
 )
 from app.domain.services.planejamento_orcamentario.capex_investment_constants import (
     COMPLETENESS_FIELDS,
+    REVIEW_PENDING,
+    REVIEW_REJECTED,
+    REVIEW_APPROVED,
 )
 from app.domain.services.planejamento_orcamentario.capex_plan_constants import (
     STATUS_APPROVED,
@@ -129,16 +132,22 @@ def build_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     for row in enriched:
         amount = row["estimated_amount_decimal"]
         total_amount += amount
-        cost_centers.add(str(row.get("cost_center_id") or ""))
+        unit = str(row.get("unit_id") or "").strip()
+        cc = str(row.get("cost_center_id") or "").strip()
+        cost_centers.add(f"{unit}|{cc}" if unit and cc else cc)
         if not row["is_complete"]:
             incomplete += 1
         status = _plan_status_of(row)
-        cc_key = f"{row.get('exercise_id')}|{row.get('cost_center_id')}"
+        cc_key = f"{row.get('exercise_id')}|{unit}|{cc}"
         plans_by_status[status].add(cc_key)
         if status == STATUS_APPROVED:
+            if str(row.get("review_status") or REVIEW_PENDING) != REVIEW_REJECTED:
+                amount_approved += amount
+        elif str(row.get("review_status") or "") == REVIEW_APPROVED:
             amount_approved += amount
         elif status in {STATUS_SUBMITTED, STATUS_CHANGES_REQUESTED}:
-            amount_in_review += amount
+            if str(row.get("review_status") or REVIEW_PENDING) == REVIEW_PENDING:
+                amount_in_review += amount
 
     def _plan_count(status: str) -> int:
         return len(plans_by_status.get(status, set()))
@@ -171,9 +180,12 @@ def _group_key_and_label(
         name = str(row.get("area_name") or code)
         return code, name
     if group_by == GROUP_BY_COST_CENTER:
-        code = str(row.get("cost_center_id") or "") or "—"
+        # Identidade = filial + código (mesmo CC em 01 e 02 não pode somar junto).
+        unit = str(row.get("unit_id") or "").strip()
+        code = str(row.get("cost_center_id") or "").strip() or "—"
+        key = f"{unit}::{code}" if unit else code
         name = str(row.get("cost_center_name") or code)
-        return code, name
+        return key, name
     if group_by == GROUP_BY_CATEGORY:
         code = str(row.get("category_id") or "") or "—"
         name = str(row.get("category_name") or row.get("category_code") or code)
@@ -252,9 +264,13 @@ def build_grouping(
         }
         if group_by == GROUP_BY_COST_CENTER:
             statuses = sorted(bucket["plan_statuses"])
-            item["unit_id"] = bucket.get("unit_id")
+            unit_id = bucket.get("unit_id")
+            cost_center_id = bucket.get("cost_center_id")
+            item["unit_id"] = unit_id
             item["area_id"] = bucket.get("area_id")
-            item["cost_center_id"] = bucket.get("cost_center_id") or key
+            item["cost_center_id"] = cost_center_id or key
+            # `code` permanece o código do CC (UI); unicidade vem do par unit+cc.
+            item["code"] = str(cost_center_id or key)
             item["plan_status"] = statuses[0] if len(statuses) == 1 else ",".join(statuses)
             item["plan_status_label"] = (
                 PLAN_STATUS_LABELS.get(statuses[0], statuses[0])

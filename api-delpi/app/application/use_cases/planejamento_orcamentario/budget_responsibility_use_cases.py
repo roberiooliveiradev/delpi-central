@@ -86,6 +86,11 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
     )
     out = {k: row.get(k) for k in keys}
     out["branch"] = row.get("unit_id")
+    name = str(row.get("cost_center_name") or "").strip() or None
+    icon_raw = row.get("cost_center_icon_key")
+    icon_key = str(icon_raw).strip().lower() if icon_raw else None
+    out["cost_center_name"] = name
+    out["cost_center_icon_key"] = icon_key
     return out
 
 

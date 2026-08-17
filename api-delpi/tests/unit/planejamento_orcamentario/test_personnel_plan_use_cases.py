@@ -173,6 +173,13 @@ class FakeRepo:
         return None
 
     def create_personnel_plan(self, payload: dict[str, Any]):
+        for p in self.plans.values():
+            if (
+                p["exercise_id"] == payload["exercise_id"]
+                and p["cost_center_id"] == payload["cost_center_id"]
+                and p["unit_id"] == payload["unit_id"]
+            ):
+                raise PluginsRepositoryError("duplicate plan")
         pid = str(uuid4())
         row = {
             **payload,
@@ -190,6 +197,9 @@ class FakeRepo:
         }
         self.plans[pid] = row
         return deepcopy(row)
+
+    def rollback(self) -> None:
+        return None
 
     def list_personnel_plans(self, **kwargs):
         items = list(self.plans.values())
@@ -224,9 +234,11 @@ class FakeRepo:
         new_status: str,
         actor_id: str,
         submitted_by: str | None = None,
+        submitted_by_name: str | None = None,
         reviewed_by: str | None = None,
         decision_comment: str | None = None,
         clear_review: bool = False,
+        clear_submission: bool = False,
     ):
         row = self.plans.get(plan_id)
         if not row or int(row["version"]) != int(expected_version):
@@ -240,6 +252,12 @@ class FakeRepo:
         if submitted_by is not None:
             row["submitted_by"] = submitted_by
             row["submitted_at"] = "t"
+            if submitted_by_name is not None:
+                row["submitted_by_name"] = submitted_by_name
+        if clear_submission:
+            row["submitted_by"] = None
+            row["submitted_by_name"] = None
+            row["submitted_at"] = None
         if clear_review:
             row["reviewed_by"] = None
             row["reviewed_at"] = None
@@ -470,6 +488,28 @@ def test_resolve_idempotent_and_access(setup_ready, editor):
     assert _resolve_plan(uc, editor, eid, "01")["id"] == p01["id"]
     p02 = _resolve_plan(uc, editor, eid, "02")
     assert p01["id"] != p02["id"]
+
+
+def test_resolve_recovers_from_create_race(setup_ready, editor):
+    """Corrida: get inicial não vê o plano, create falha por unique → recupera via SELECT."""
+    repo, eid, uc = setup_ready
+    repo.seed_responsibility(
+        user_sub="u1", exercise_id=eid, cost_center_id="205", unit_id="01"
+    )
+    first = _resolve_plan(uc, editor, eid, "01")
+    original_get = repo.get_personnel_plan_by_exercise_cc
+    calls = {"n": 0}
+
+    def flaky_get(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return None
+        return original_get(**kwargs)
+
+    repo.get_personnel_plan_by_exercise_cc = flaky_get  # type: ignore[method-assign]
+    second = _resolve_plan(uc, editor, eid, "01")
+    assert second["id"] == first["id"]
+    assert calls["n"] >= 2
 
 
 def test_access_denied_without_responsibility(setup_ready, editor):

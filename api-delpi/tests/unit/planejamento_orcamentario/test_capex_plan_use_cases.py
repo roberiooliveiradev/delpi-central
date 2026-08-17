@@ -20,9 +20,11 @@ from app.domain.services.planejamento_orcamentario.exceptions import (
     BudgetGuidanceAcknowledgementRequiredError,
     CapexApprovalForbiddenError,
     CapexInvestmentCostCenterForbiddenError,
+    CapexInvestmentNotFoundError,
     CapexPlanAlreadyApprovedError,
     CapexPlanCommentRequiredError,
     CapexPlanIncompleteError,
+    CapexPlanInvalidTransitionError,
     CapexPlanLockedError,
     CapexPlanNotFoundError,
     CapexPlanVersionConflictError,
@@ -119,6 +121,7 @@ class FakeRepo:
             "priority": "2",
             "origin": "national",
             "status": "draft",
+            "review_status": "pending",
             "version": 1,
             "created_by": "u1",
         }
@@ -266,6 +269,9 @@ class FakeRepo:
         self.plans[pid] = row
         return deepcopy(row)
 
+    def rollback(self) -> None:
+        return None
+
     def list_capex_plans(self, **kwargs):
         items = list(self.plans.values())
         if kwargs.get("exercise_id"):
@@ -299,6 +305,7 @@ class FakeRepo:
         new_status: str,
         actor_id: str,
         submitted_by: str | None = None,
+        submitted_by_name: str | None = None,
         clear_submission: bool = False,
         reviewed_by: str | None = None,
         decision_comment: str | None = None,
@@ -313,8 +320,11 @@ class FakeRepo:
         if submitted_by is not None:
             row["submitted_by"] = submitted_by
             row["submitted_at"] = "t"
+            if submitted_by_name is not None:
+                row["submitted_by_name"] = submitted_by_name
         if clear_submission:
             row["submitted_by"] = None
+            row["submitted_by_name"] = None
             row["submitted_at"] = None
         if reviewed_by is not None:
             row["reviewed_by"] = reviewed_by
@@ -336,6 +346,51 @@ class FakeRepo:
 
     def append_audit(self, **kwargs):
         self.audits.append(kwargs)
+
+    def set_capex_investment_review(
+        self,
+        investment_id: str,
+        *,
+        review_status: str,
+        review_comment: str | None,
+        reviewed_by: str,
+        reviewed_by_name: str | None = None,
+    ):
+        row = self.investments.get(investment_id)
+        if not row or row.get("status") != "draft":
+            raise PluginsRepositoryError("Investimento CAPEX não encontrado ou arquivado.")
+        row["review_status"] = review_status
+        row["review_comment"] = review_comment
+        row["reviewed_by"] = None if review_status == "pending" else reviewed_by
+        row["reviewed_by_name"] = None if review_status == "pending" else reviewed_by_name
+        row["reviewed_at"] = None if review_status == "pending" else "t"
+        return deepcopy(row)
+
+    def stamp_capex_investment_reviews(
+        self,
+        *,
+        exercise_id: str,
+        cost_center_id: str,
+        unit_id: str | None,
+        review_status: str,
+        reviewed_by: str | None = None,
+        reviewed_by_name: str | None = None,
+        review_comment: str | None = None,
+    ):
+        for row in self.investments.values():
+            if row["exercise_id"] != exercise_id:
+                continue
+            if row["cost_center_id"] != cost_center_id:
+                continue
+            if unit_id and row.get("unit_id") != unit_id:
+                continue
+            if row.get("status") != "draft":
+                continue
+            row["review_status"] = review_status
+            row["review_comment"] = None if review_status == "pending" else review_comment
+            row["reviewed_by"] = None if review_status == "pending" else reviewed_by
+            row["reviewed_by_name"] = None if review_status == "pending" else reviewed_by_name
+            row["reviewed_at"] = None if review_status == "pending" else "t"
 
 
 def _actor(
@@ -381,6 +436,26 @@ def test_resolve_cria_e_unicidade(ctx):
     assert len(repo.plans) == 1
 
 
+def test_resolve_recovers_from_create_race(ctx):
+    """Corrida: get inicial não vê o plano, create falha por unique → recupera via SELECT."""
+    repo, plans, _inv = ctx
+    eid, _cat = _ready(repo)
+    first = plans.resolve_plan(_actor(), exercise_id=eid, cost_center_id="205")
+    original_get = repo.get_capex_plan_by_exercise_cc
+    calls = {"n": 0}
+
+    def flaky_get(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return None
+        return original_get(**kwargs)
+
+    repo.get_capex_plan_by_exercise_cc = flaky_get  # type: ignore[method-assign]
+    second = plans.resolve_plan(_actor(), exercise_id=eid, cost_center_id="205")
+    assert second["id"] == first["id"]
+    assert calls["n"] >= 2
+
+
 def test_submissao_valida(ctx):
     repo, plans, _inv = ctx
     eid, cat = _ready(repo)
@@ -389,7 +464,24 @@ def test_submissao_valida(ctx):
     submitted = plans.submit_plan(_actor(), plan["id"], version=1)
     assert submitted["status"] == "submitted"
     assert submitted["submitted_by"] == "u1"
+    assert submitted["submitted_by_name"] == "u1"
     assert any(h["action"] == "submitted" for h in repo.history)
+
+
+def test_plano_publico_expoe_icone_do_centro_de_custo(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    plan = plans.resolve_plan(_actor(), exercise_id=eid, cost_center_id="205")
+    repo.plans[plan["id"]]["cost_center_icon_key"] = "wrench"
+    repo.plans[plan["id"]]["cost_center_name"] = "Manutenção"
+    repo.plans[plan["id"]]["cost_center_owner_name"] = "Ana Silva"
+    repo.plans[plan["id"]]["investment_count"] = 3
+    public = plans.get_plan(_actor(), plan["id"])
+    assert public["cost_center_icon_key"] == "wrench"
+    assert public["cost_center_name"] == "Manutenção"
+    assert public["cost_center_owner_name"] == "Ana Silva"
+    assert public["investment_count"] == 3
 
 
 def test_submissao_sem_investimentos(ctx):
@@ -665,3 +757,135 @@ def test_fila_paginada_filtrada(ctx):
     )
     assert queue["pagination"]["total"] == 1
     assert queue["items"][0]["status"] == "submitted"
+
+
+def _approver(repo: FakeRepo, exercise_id: str) -> BudgetActor:
+    gid = repo.guidance[exercise_id]["id"]
+    repo.acks.add(("approver", gid))
+    return _actor("approver", submit=False, approve=True)
+
+
+def test_aprovacao_por_investimento_nao_fecha_plano_parcial(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    first = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    second = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    repo.investments[second]["description"] = "Impressora"
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    submitted = plans.submit_plan(_actor("u1"), plan["id"], version=1)
+    actor = _approver(repo, eid)
+    detail = plans.decide_investment(
+        actor,
+        submitted["id"],
+        first,
+        version=submitted["version"],
+        action="approve",
+    )
+    assert detail["status"] == "submitted"
+    by_id = {row["id"]: row for row in detail["investments"]}
+    assert by_id[first]["review_status"] == "approved"
+    assert by_id[second]["review_status"] == "pending"
+
+
+def test_reprovacao_investimento_exige_comentario(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    iid = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    submitted = plans.submit_plan(_actor("u1"), plan["id"], version=1)
+    actor = _approver(repo, eid)
+    with pytest.raises(CapexPlanCommentRequiredError):
+        plans.decide_investment(
+            actor,
+            submitted["id"],
+            iid,
+            version=submitted["version"],
+            action="reject",
+            comment="  ",
+        )
+
+
+def test_decisao_mista_fecha_plano_aprovado(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    first = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    second = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    repo.investments[second]["description"] = "Impressora"
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    submitted = plans.submit_plan(_actor("u1"), plan["id"], version=1)
+    actor = _approver(repo, eid)
+    after_first = plans.decide_investment(
+        actor,
+        submitted["id"],
+        first,
+        version=submitted["version"],
+        action="approve",
+    )
+    closed = plans.decide_investment(
+        actor,
+        after_first["id"],
+        second,
+        version=after_first["version"],
+        action="reject",
+        comment="Fora do teto do centro",
+    )
+    assert closed["status"] == "approved"
+    by_id = {row["id"]: row for row in closed["investments"]}
+    assert by_id[first]["review_status"] == "approved"
+    assert by_id[second]["review_status"] == "rejected"
+    actions = [h["action"] for h in plans.list_history(actor, closed["id"])["items"]]
+    assert "investment_approved" in actions
+    assert "investment_rejected" in actions
+    assert "approved" in actions
+
+
+def test_todos_reprovados_fecha_plano_reprovado(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    iid = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    submitted = plans.submit_plan(_actor("u1"), plan["id"], version=1)
+    actor = _approver(repo, eid)
+    closed = plans.decide_investment(
+        actor,
+        submitted["id"],
+        iid,
+        version=submitted["version"],
+        action="reject",
+        comment="Não cabe no ciclo",
+    )
+    assert closed["status"] == "rejected"
+
+
+def test_investimento_de_outro_plano(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    iid = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    submitted = plans.submit_plan(_actor("u1"), plan["id"], version=1)
+    actor = _approver(repo, eid)
+    with pytest.raises(CapexInvestmentNotFoundError):
+        plans.decide_investment(
+            actor,
+            submitted["id"],
+            "missing-id",
+            version=submitted["version"],
+            action="approve",
+        )
+    del iid
+
+
+def test_decisao_item_so_em_submitted(ctx):
+    repo, plans, _inv = ctx
+    eid, cat = _ready(repo)
+    iid = repo.seed_complete_investment(exercise_id=eid, category_id=cat)
+    plan = plans.resolve_plan(_actor("u1"), exercise_id=eid, cost_center_id="205")
+    actor = _approver(repo, eid)
+    with pytest.raises(CapexPlanInvalidTransitionError):
+        plans.decide_investment(
+            actor,
+            plan["id"],
+            iid,
+            version=plan["version"],
+            action="approve",
+        )

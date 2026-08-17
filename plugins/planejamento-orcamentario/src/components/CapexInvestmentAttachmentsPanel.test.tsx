@@ -24,6 +24,29 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     function StateBox({ children }: { children: ReactNode }) {
       return <div role="alert">{children}</div>;
     },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedModal({
+      open,
+      title,
+      onClose,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      onClose: () => void;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-label={String(title)}>
+          <button type="button" onClick={onClose}>
+            Fechar
+          </button>
+          {children}
+        </div>
+      );
+    },
 }));
 
 import { CapexInvestmentAttachmentsPanel } from "../components/CapexInvestmentAttachmentsPanel";
@@ -119,7 +142,7 @@ describe("CapexInvestmentAttachmentsPanel", () => {
       target: { value: "other" },
     });
     fireEvent.click(within(form).getByRole("button", { name: /Enviar anexo/i }));
-    await screen.findByText(/25 MB/i);
+    await screen.findByText(/Arquivo excede o limite de 25 MB/i);
     expect(budgetApi.uploadCapexInvestmentAttachment).not.toHaveBeenCalled();
   });
 

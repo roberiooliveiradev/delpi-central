@@ -3,6 +3,8 @@ export const BASE_PATH = "/apps/planejamento-orcamentario";
 export type AppRoute =
   | "home"
   | "orientacoes"
+  | "centros"
+  | "gestao-aprovacoes"
   | "capex"
   | "capex-investment-new"
   | "capex-investment-edit"
@@ -52,15 +54,19 @@ export function resolveAppRoute(pathname?: string): AppRoute {
       return "home";
     case "/orientacoes":
       return "orientacoes";
+    case "/centros":
+      return "centros";
+    case "/gestao-aprovacoes":
+      return "gestao-aprovacoes";
     case "/capex":
     case "/capex/meus-centros":
-      return "capex";
+      return "centros";
     case "/capex/aprovacoes":
       return "capex-approvals";
     case "/capex/consolidacao":
       return "capex-consolidation";
     case "/pessoal":
-      return "pessoal";
+      return "centros";
     case "/pessoal/aprovacoes":
       return "pessoal-approvals";
     case "/admin":
@@ -102,8 +108,12 @@ export function routeHref(route: AppRoute): string {
       return BASE_PATH;
     case "orientacoes":
       return `${BASE_PATH}/orientacoes`;
+    case "centros":
     case "capex":
-      return `${BASE_PATH}/capex`;
+    case "pessoal":
+      return `${BASE_PATH}/centros`;
+    case "gestao-aprovacoes":
+      return `${BASE_PATH}/gestao-aprovacoes`;
     case "capex-investment-new":
       return `${BASE_PATH}/capex/investimentos/novo`;
     case "capex-investment-edit":
@@ -114,8 +124,6 @@ export function routeHref(route: AppRoute): string {
       return `${BASE_PATH}/capex/aprovacoes`;
     case "capex-consolidation":
       return `${BASE_PATH}/capex/consolidacao`;
-    case "pessoal":
-      return `${BASE_PATH}/pessoal`;
     case "pessoal-approvals":
       return `${BASE_PATH}/pessoal/aprovacoes`;
     case "pessoal-approval-detail":
@@ -139,26 +147,53 @@ export function routeHref(route: AppRoute): string {
   }
 }
 
+export function gestaoAprovacoesHref(params?: {
+  costCenterId?: string;
+  unitId?: string;
+}): string {
+  const base = routeHref("gestao-aprovacoes");
+  if (!params?.costCenterId || !params?.unitId) return base;
+  const qs = new URLSearchParams({
+    cost_center_id: params.costCenterId,
+    unit_id: params.unitId,
+  });
+  return `${base}?${qs.toString()}`;
+}
+
+export type CostCenterTab = "investimentos" | "equipe";
+
+export function centrosHref(params?: {
+  costCenterId?: string;
+  unitId?: string;
+  tab?: CostCenterTab;
+}): string {
+  const base = routeHref("centros");
+  if (!params?.costCenterId) return base;
+  const qs = new URLSearchParams({ cost_center_id: params.costCenterId });
+  if (params.unitId) qs.set("unit_id", params.unitId);
+  if (params.tab) qs.set("tab", params.tab);
+  return `${base}?${qs.toString()}`;
+}
+
+export function readCostCenterTab(fallback: CostCenterTab = "investimentos"): CostCenterTab {
+  const raw = readQueryParam("tab").toLowerCase();
+  if (raw === "equipe" || raw === "pessoal") return "equipe";
+  if (raw === "investimentos" || raw === "capex") return "investimentos";
+  return fallback;
+}
+
 export function capexHref(params?: {
   costCenterId?: string;
   unitId?: string;
 }): string {
-  const base = routeHref("capex");
-  if (!params?.costCenterId) return base;
-  const qs = new URLSearchParams({ cost_center_id: params.costCenterId });
-  if (params.unitId) qs.set("unit_id", params.unitId);
-  return `${base}?${qs.toString()}`;
+  return centrosHref(params);
 }
 
 export function pessoalHref(params?: {
   costCenterId?: string;
   unitId?: string;
 }): string {
-  const base = routeHref("pessoal");
-  if (!params?.costCenterId) return base;
-  const qs = new URLSearchParams({ cost_center_id: params.costCenterId });
-  if (params.unitId) qs.set("unit_id", params.unitId);
-  return `${base}?${qs.toString()}`;
+  return centrosHref(params);
 }
 
 export function capexNewInvestmentHref(params?: {

@@ -46,8 +46,11 @@ export function CapexConsolidationBarChart({
           const tip = `${label}: ${formatMoneyBr(item.total_amount, currency)} · ${item.investment_count} investimento(s)${
             item.percent_of_total != null ? ` · ${item.percent_of_total}% do total` : ""
           }`;
+          const rowKey = [item.unit_id, item.cost_center_id || item.code]
+            .filter(Boolean)
+            .join(":") || item.code || label;
           return (
-            <li key={item.code} className="po-bar-chart__item" title={tip}>
+            <li key={rowKey} className="po-bar-chart__item" title={tip}>
               <div className="po-bar-chart__label">
                 <span>{label}</span>
                 <span className="po-bar-chart__meta">

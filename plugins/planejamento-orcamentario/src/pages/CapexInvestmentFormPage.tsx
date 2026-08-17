@@ -1,12 +1,18 @@
 import {
   type FormEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { FilePenLine, Save } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleAlert,
+  MapPin,
+  Save,
+} from "lucide-react";
 
 import { HttpRequestError } from "../api/httpClient";
 import {
@@ -26,6 +32,8 @@ import type {
   CapexPlan,
 } from "../types/budgetPlanning";
 import { CapexInvestmentAttachmentsPanel } from "../components/CapexInvestmentAttachmentsPanel";
+import { CapexCategoryVisual } from "../components/CapexCategoryVisual";
+import { CapexInvestmentFormWizard } from "../components/CapexInvestmentFormWizard";
 import { PageShell } from "../components/PageShell";
 import { LoadingActivityCard, SectionCard, StateBox } from "../components/uiKit";
 import {
@@ -33,12 +41,19 @@ import {
   CAPEX_ORIGIN_OPTIONS,
   CAPEX_PRIORITY_OPTIONS,
   CAPEX_SHIFT_OPTIONS,
+  CAPEX_WIZARD_STEPS,
+  exerciseMonthOptions,
   isVersionConflictError,
+  isWizardStepComplete,
   missingFieldLabel,
+  monthValueToRequiredDate,
   normalizeMoneyInput,
+  requiredDateToMonthValue,
+  wizardProgressPercent,
+  wizardStepBlockingMessage,
 } from "../utils/capexInvestments";
 import { isPlanEditable, planLockReason, planStatusLabel } from "../utils/capexPlans";
-import { formatCostCenterLabel } from "../utils/orgCostCenters";
+import { formatCostCenterLabel, branchCityLabel } from "../utils/orgCostCenters";
 import {
   capexHref,
   capexInvestmentHref,
@@ -144,11 +159,28 @@ function saveStatusLabel(status: SaveStatus): string {
 type CapexInvestmentFormPageProps = {
   mode: "create" | "edit";
   investmentId?: string | null;
+  /** Centro pré-selecionado (cockpit). Sobrescreve query string. */
+  costCenterId?: string | null;
+  unitId?: string | null;
+  /** `page` = rota dedicada; `panel` = conteúdo do modal (sem PageShell). */
+  presentation?: "page" | "panel";
+  onClose?: () => void;
+  onSaved?: (investment: CapexInvestment) => void;
 };
 
-export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentFormPageProps) {
-  const preselectedCc = readQueryParam("cost_center_id");
-  const preselectedUnit = readQueryParam("unit_id");
+export function CapexInvestmentFormPage({
+  mode,
+  investmentId,
+  costCenterId: costCenterIdProp,
+  unitId: unitIdProp,
+  presentation = "page",
+  onClose,
+  onSaved,
+}: CapexInvestmentFormPageProps) {
+  const preselectedCc = (costCenterIdProp ?? readQueryParam("cost_center_id")).trim();
+  const preselectedUnit = (unitIdProp ?? readQueryParam("unit_id")).trim();
+  const lockCostCenter = Boolean(costCenterIdProp?.trim());
+  const isPanel = presentation === "panel";
 
   const [exercise, setExercise] = useState<BudgetExercise | null>(null);
   const [modulesUnlocked, setModulesUnlocked] = useState(true);
@@ -170,6 +202,9 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
   const [plan, setPlan] = useState<CapexPlan | null>(null);
 
   const [persistedId, setPersistedId] = useState<string | null>(investmentId ?? null);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardMax, setWizardMax] = useState(0);
+  const [stepError, setStepError] = useState<string | null>(null);
   const dirtyRef = useRef(false);
   const savingRef = useRef(false);
   const formRef = useRef(form);
@@ -224,7 +259,7 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
         });
         investmentIdRef.current = saved.id;
         setPersistedId(saved.id);
-        if (reason === "manual" || mode === "create") {
+        if (!isPanel && (reason === "manual" || mode === "create")) {
           window.history.replaceState({}, "", capexInvestmentHref(saved.id));
         }
       } else {
@@ -240,6 +275,7 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
       dirtyRef.current = false;
       setSaveStatus("saved");
       setSuccessMsg(reason === "manual" ? "Rascunho salvo." : null);
+      onSaved?.(saved);
     } catch (err: unknown) {
       if (isVersionConflictError(err)) {
         setVersionConflict(true);
@@ -254,7 +290,7 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
     } finally {
       savingRef.current = false;
     }
-  }, [exercise, mode, readOnly, versionConflict]);
+  }, [exercise, isPanel, mode, onSaved, readOnly, versionConflict]);
 
   const scheduleAutosave = useCallback(() => {
     if (readOnly || versionConflict) return;
@@ -387,6 +423,42 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
     await persist("manual");
   }
 
+  async function handleWizardNext() {
+    const msg = wizardStepBlockingMessage(wizardStep, form, { lockCostCenter });
+    if (msg) {
+      setStepError(msg);
+      return;
+    }
+    setStepError(null);
+    const last = wizardStep >= CAPEX_WIZARD_STEPS.length - 1;
+    if (last) {
+      if (!readOnly) {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        await persist("manual");
+      }
+      onClose?.();
+      return;
+    }
+    const next = wizardStep + 1;
+    if (CAPEX_WIZARD_STEPS[next]?.id === "attachments" && !investmentIdRef.current) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      await persist("manual");
+    }
+    setWizardStep(next);
+    setWizardMax((m) => Math.max(m, next));
+  }
+
+  function handleWizardBack() {
+    setStepError(null);
+    setWizardStep((s) => Math.max(0, s - 1));
+  }
+
+  function handleWizardJump(index: number) {
+    if (index < 0 || index > wizardMax) return;
+    setStepError(null);
+    setWizardStep(index);
+  }
+
   const missingLabels = useMemo(
     () => (investment?.missing_fields ?? []).map(missingFieldLabel),
     [investment?.missing_fields],
@@ -394,55 +466,57 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
 
   const backHref = capexHref({
     costCenterId: form.cost_center_id || preselectedCc || undefined,
+    unitId: form.unit_id || preselectedUnit || undefined,
   });
 
-  if (bootLoading) {
+  const wrapShell = (title: string, subtitle: string | undefined, content: ReactNode) => {
+    if (isPanel) {
+      return <div className="po-inv-form po-inv-form--panel">{content}</div>;
+    }
     return (
-      <PageShell title="Investimento CAPEX" subtitle="Carregando…" backHref={backHref}>
-        <LoadingActivityCard title="Carregando formulário…" variant="panel" />
+      <PageShell title={title} subtitle={subtitle} backHref={backHref}>
+        <div className="po-inv-form">{content}</div>
       </PageShell>
     );
+  };
+
+  if (bootLoading) {
+    return wrapShell("Investimento CAPEX", "Carregando…", (
+      <LoadingActivityCard title="Carregando formulário…" variant="panel" />
+    ));
   }
 
   if (bootError) {
-    return (
-      <PageShell title="Investimento CAPEX" backHref={backHref}>
-        <StateBox variant="error" dismissible={false}>
-          {bootError}
-        </StateBox>
-      </PageShell>
-    );
+    return wrapShell("Investimento CAPEX", undefined, (
+      <StateBox variant="error" dismissible={false}>
+        {bootError}
+      </StateBox>
+    ));
   }
 
   if (!exercise) {
-    return (
-      <PageShell title="Investimento CAPEX" backHref={routeHref("home")}>
-        <StateBox variant="warning" dismissible={false}>
-          Sem exercício ativo. Não é possível criar investimentos agora.
-        </StateBox>
-      </PageShell>
-    );
+    return wrapShell("Investimento CAPEX", undefined, (
+      <StateBox variant="warning" dismissible={false}>
+        Sem exercício ativo. Não é possível criar investimentos agora.
+      </StateBox>
+    ));
   }
 
   if (!modulesUnlocked) {
-    return (
-      <PageShell title="Investimento CAPEX" backHref={routeHref("orientacoes")}>
-        <StateBox variant="warning" dismissible={false}>
-          Confirme a leitura das orientações vigentes para liberar o módulo CAPEX.{" "}
-          <a href={routeHref("orientacoes")}>Ir para Orientações</a>
-        </StateBox>
-      </PageShell>
-    );
+    return wrapShell("Investimento CAPEX", undefined, (
+      <StateBox variant="warning" dismissible={false}>
+        Confirme a leitura das orientações vigentes para liberar o módulo CAPEX.{" "}
+        <a href={routeHref("orientacoes")}>Ir para Orientações</a>
+      </StateBox>
+    ));
   }
 
   if (responsibilities.length === 0) {
-    return (
-      <PageShell title="Investimento CAPEX" backHref={routeHref("capex")}>
-        <StateBox variant="default" dismissible={false}>
-          Você não possui centros de custo atribuídos neste exercício.
-        </StateBox>
-      </PageShell>
-    );
+    return wrapShell("Investimento CAPEX", undefined, (
+      <StateBox variant="default" dismissible={false}>
+        Você não possui centros de custo atribuídos neste exercício.
+      </StateBox>
+    ));
   }
 
   const pageTitle = planLocked
@@ -450,295 +524,566 @@ export function CapexInvestmentFormPage({ mode, investmentId }: CapexInvestmentF
     : investment?.status === "archived"
       ? "Investimento arquivado"
       : "Rascunho de investimento";
+  const heroTitle =
+    mode === "create"
+      ? "Novo investimento"
+      : investment?.status === "archived"
+        ? "Visualizar investimento"
+        : planLocked
+          ? "Somente leitura"
+          : "Editar investimento";
   const pageSubtitle = planLocked
     ? `Planejamento em status “${planStatusLabel(plan?.status)}”. Edição e anexos bloqueados.`
     : investment?.status === "archived"
       ? "Somente leitura — arquivamento não pode ser editado nesta etapa."
       : "Salve parcialmente a qualquer momento. Envie o planejamento do centro quando estiver completo.";
 
-  return (
-    <PageShell
-      title={pageTitle}
-      subtitle={pageSubtitle}
-      icon={<FilePenLine size={28} strokeWidth={1.75} aria-hidden="true" />}
-      backHref={backHref}
-      actions={
-        !readOnly ? (
-          <span className={`po-save-status po-save-status--${saveStatus}`} aria-live="polite">
-            {saveStatusLabel(saveStatus)}
-          </span>
-        ) : null
-      }
-    >
-      {lockBanner ? (
-        <StateBox variant="warning" dismissible={false}>
-          {lockBanner}
-        </StateBox>
-      ) : null}
+  const selectedCategory = categories.find((c) => c.id === form.category_id) ?? null;
+  const locationLabel = selectedCc
+    ? branchCityLabel(selectedCc.branch ?? selectedCc.unit_id)
+    : "—";
+  const completenessPct = investment
+    ? investment.is_complete
+      ? 100
+      : Math.max(
+          12,
+          Math.round(
+            (1 -
+              (investment.missing_fields?.length ?? 0) /
+                Math.max(1, (investment.missing_fields?.length ?? 0) + 4)) *
+              100,
+          ),
+        )
+    : form.description.trim() || form.estimated_amount || form.category_id
+      ? 28
+      : 8;
 
-      {mode === "create" && planLocked ? (
-        <StateBox variant="error" dismissible={false}>
-          Não é possível criar novos investimentos enquanto o planejamento estiver{" "}
-          {planStatusLabel(plan?.status)}.{" "}
-          <a href={backHref}>Voltar ao centro de custo</a>
-        </StateBox>
-      ) : null}
-
-      {successMsg ? (
-        <StateBox variant="success" dismissible={false}>
-          {successMsg}
-        </StateBox>
-      ) : null}
-
-      {saveError ? (
-        <StateBox variant="error" dismissible={false}>
-          {saveError}
-        </StateBox>
-      ) : null}
-
-      {versionConflict ? (
-        <StateBox variant="warning" dismissible={false}>
-          Conflito de versão detectado.{" "}
-          <button type="button" className="po-btn po-btn--secondary" onClick={() => void reloadFromServer()}>
-            Recarregar versão atual
-          </button>{" "}
-          <span className="po-muted">ou permaneça na tela para copiar/revisar os dados locais.</span>
-        </StateBox>
-      ) : null}
-
-      {investment ? (
-        <StateBox variant={investment.is_complete ? "success" : "warning"} dismissible={false}>
-          {investment.is_complete
-            ? "Rascunho completo para futura submissão (submissão ainda não disponível)."
-            : `Rascunho incompleto. Pendências: ${missingLabels.join(", ") || "—"}. O salvamento parcial continua permitido.`}
-        </StateBox>
-      ) : null}
-
-      <form className="po-form" onSubmit={(e) => void handleManualSave(e)}>
-        <SectionCard title="Identificação" hint="Centro de custo apenas entre suas responsabilidades.">
-          <label>
-            Exercício
-            <input
-              type="text"
-              readOnly
-              value={`${exercise.year} — ${exercise.name}`}
-            />
-          </label>
-          <label>
-            Centro de custo
-            <select
-              required
-              disabled={readOnly || Boolean(persistedId)}
-              value={
-                form.cost_center_id && form.unit_id
-                  ? `${form.unit_id}|${form.cost_center_id}`
-                  : form.cost_center_id
-                    ? `${selectedCc?.unit_id || ""}|${form.cost_center_id}`
-                    : ""
-              }
-              onChange={(e) => {
-                const raw = e.target.value;
-                const sep = raw.indexOf("|");
-                if (sep < 0) {
-                  patchForm({ cost_center_id: raw, unit_id: "" });
-                  return;
-                }
-                patchForm({
-                  unit_id: raw.slice(0, sep),
-                  cost_center_id: raw.slice(sep + 1),
-                });
-              }}
-            >
-              <option value="">Selecione…</option>
-              {responsibilities.map((r) => (
-                <option key={r.id} value={`${r.unit_id}|${r.cost_center_id}`}>
-                  {formatCostCenterLabel({
-                    branch: r.branch ?? r.unit_id,
-                    code: r.cost_center_id,
-                  })}
-                  {r.area_id ? ` · ${r.area_id}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Filial
-            <input type="text" readOnly value={selectedCc?.unit_id || form.unit_id || "—"} />
-          </label>
-          <label>
-            Área
-            <input type="text" readOnly value={selectedCc?.area_id || "—"} />
-          </label>
-          <label>
-            Categoria de investimento
-            <select
-              disabled={readOnly}
-              value={form.category_id}
-              onChange={(e) => patchForm({ category_id: e.target.value })}
-            >
-              <option value="">Selecione…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="po-muted">
-            A categoria classifica o tipo de investimento. Não confundir com conta contábil do ERP
-            (não disponível nesta fase).
-          </p>
-        </SectionCard>
-
-        <SectionCard title="Dados do investimento">
-          <label>
-            Descrição
-            <textarea
-              rows={3}
-              disabled={readOnly}
-              value={form.description}
-              onChange={(e) => patchForm({ description: e.target.value })}
-            />
-          </label>
-          <label>
-            Justificativa
-            <textarea
-              rows={3}
-              disabled={readOnly}
-              value={form.justification}
-              onChange={(e) => patchForm({ justification: e.target.value })}
-            />
-          </label>
-          <label>
-            Fornecedor provável
-            <input
-              disabled={readOnly}
-              value={form.probable_supplier_name}
-              onChange={(e) => patchForm({ probable_supplier_name: e.target.value })}
-            />
-          </label>
-          <label>
-            Código do fornecedor
-            <input
-              disabled={readOnly}
-              value={form.probable_supplier_code}
-              onChange={(e) => patchForm({ probable_supplier_code: e.target.value })}
-            />
-          </label>
-          <label>
-            Valor previsto
-            <input
-              inputMode="decimal"
-              disabled={readOnly}
-              value={form.estimated_amount}
-              placeholder="0,00"
-              onChange={(e) =>
-                patchForm({ estimated_amount: normalizeMoneyInput(e.target.value) })
-              }
-            />
-          </label>
-          <label>
-            Moeda
-            <input type="text" readOnly value={form.currency || "BRL"} />
-          </label>
-          <label>
-            Data necessária de recebimento
-            <input
-              type="date"
-              disabled={readOnly}
-              value={form.required_date}
-              onChange={(e) => patchForm({ required_date: e.target.value })}
-            />
-          </label>
-          <p className="po-field-help">
-            Informe a data em que o bem precisa estar faturado, recebido ou disponível para a área.
-          </p>
-          <label>
-            Prioridade
-            <select
-              disabled={readOnly}
-              value={form.priority}
-              onChange={(e) => patchForm({ priority: e.target.value })}
-            >
-              <option value="">Selecione…</option>
-              {CAPEX_PRIORITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Origem
-            <select
-              disabled={readOnly}
-              value={form.origin}
-              onChange={(e) => patchForm({ origin: e.target.value })}
-            >
-              <option value="">Selecione…</option>
-              {CAPEX_ORIGIN_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Classificação
-            <select
-              disabled={readOnly}
-              value={form.classification}
-              onChange={(e) => patchForm({ classification: e.target.value })}
-            >
-              <option value="">Opcional…</option>
-              {CAPEX_CLASSIFICATION_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Turno
-            <select
-              disabled={readOnly}
-              value={form.shift}
-              onChange={(e) => patchForm({ shift: e.target.value })}
-            >
-              <option value="">Opcional…</option>
-              {CAPEX_SHIFT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Observações
-            <textarea
-              rows={3}
-              disabled={readOnly}
-              value={form.observations}
-              onChange={(e) => patchForm({ observations: e.target.value })}
-            />
-          </label>
-        </SectionCard>
-
-        {!readOnly ? (
-          <div className="po-form-actions">
-            <button
-              type="submit"
-              className="po-btn po-btn--primary"
-              disabled={saveStatus === "saving" || versionConflict}
-            >
-              <Save size={16} aria-hidden="true" />
-              {saveStatus === "saving" ? "Salvando…" : "Salvar rascunho"}
-            </button>
-          </div>
+  if (isPanel) {
+    const panelAlerts = (
+      <>
+        {lockBanner ? (
+          <StateBox variant="warning" dismissible={false}>
+            {lockBanner}
+          </StateBox>
         ) : null}
-      </form>
+        {mode === "create" && planLocked ? (
+          <StateBox variant="error" dismissible={false}>
+            Não é possível criar novos investimentos enquanto o planejamento estiver{" "}
+            {planStatusLabel(plan?.status)}.{" "}
+            {onClose ? (
+              <button type="button" className="po-btn po-btn--secondary" onClick={onClose}>
+                Fechar
+              </button>
+            ) : null}
+          </StateBox>
+        ) : null}
+        {successMsg ? (
+          <StateBox variant="success" dismissible={false}>
+            {successMsg}
+          </StateBox>
+        ) : null}
+        {saveError ? (
+          <StateBox variant="error" dismissible={false}>
+            {saveError}
+          </StateBox>
+        ) : null}
+        {versionConflict ? (
+          <StateBox variant="warning" dismissible={false}>
+            Conflito de versão detectado.{" "}
+            <button
+              type="button"
+              className="po-btn po-btn--secondary"
+              onClick={() => void reloadFromServer()}
+            >
+              Recarregar versão atual
+            </button>
+          </StateBox>
+        ) : null}
+      </>
+    );
 
-      <CapexInvestmentAttachmentsPanel investmentId={persistedId} readOnly={readOnly} />
-    </PageShell>
-  );
+    return wrapShell(
+      pageTitle,
+      undefined,
+      <CapexInvestmentFormWizard
+        form={form}
+        patchForm={patchForm}
+        exercise={exercise}
+        categories={categories}
+        responsibilities={responsibilities}
+        selectedCc={selectedCc}
+        lockCostCenter={lockCostCenter}
+        readOnly={readOnly}
+        persistedId={persistedId}
+        wizardStep={wizardStep}
+        wizardMax={wizardMax}
+        stepError={stepError}
+        saveStatus={saveStatus}
+        versionConflict={versionConflict}
+        saveStatusLabel={saveStatusLabel(saveStatus)}
+        alerts={panelAlerts}
+        onJump={handleWizardJump}
+        onBack={handleWizardBack}
+        onNext={() => {
+          void handleWizardNext();
+        }}
+        onClose={onClose}
+        onManualSave={(e) => void handleManualSave(e)}
+      />,
+    );
+  }
+
+  return wrapShell(pageTitle, undefined, (
+      <>
+        <header className="po-centros__hero">
+          <div className="po-centros__hero-copy">
+            <p className="po-centros__eyebrow">
+              Elaboração · {exercise.year}
+              {!readOnly && saveStatus !== "idle" ? (
+                <>
+                  {" "}
+                  ·{" "}
+                  <span className={`po-save-status po-save-status--${saveStatus}`}>
+                    {saveStatusLabel(saveStatus)}
+                  </span>
+                </>
+              ) : null}
+            </p>
+            <h2 className="po-centros__title">{heroTitle}</h2>
+            <p className="po-centros__lead">{pageSubtitle}</p>
+          </div>
+          <aside className="po-centros__hero-panel" aria-label="Resumo do rascunho">
+            <dl className="po-centros__meta">
+              <div>
+                <dt>Ciclo</dt>
+                <dd>{exercise.year}</dd>
+              </div>
+              <div>
+                <dt>Local</dt>
+                <dd className="po-cockpit__meta-local">
+                  <MapPin size={13} aria-hidden="true" />
+                  {locationLabel}
+                </dd>
+              </div>
+            </dl>
+            {investment ? (
+              <div
+                className={`po-inv-form__progress${
+                  investment.is_complete ? " is-complete" : " is-pending"
+                }`}
+              >
+                <div className="po-inv-form__progress-head">
+                  {investment.is_complete ? (
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                  ) : (
+                    <CircleAlert size={16} aria-hidden="true" />
+                  )}
+                  <span>{investment.is_complete ? "Pronto para o plano" : "Campos pendentes"}</span>
+                </div>
+                <div
+                  className="po-inv-form__progress-track"
+                  role="progressbar"
+                  aria-valuenow={completenessPct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <span style={{ width: `${completenessPct}%` }} />
+                </div>
+              </div>
+            ) : null}
+          </aside>
+        </header>
+
+        {lockBanner ? (
+          <StateBox variant="warning" dismissible={false}>
+            {lockBanner}
+          </StateBox>
+        ) : null}
+
+        {mode === "create" && planLocked ? (
+          <StateBox variant="error" dismissible={false}>
+            Não é possível criar novos investimentos enquanto o planejamento estiver{" "}
+            {planStatusLabel(plan?.status)}.{" "}
+            <a href={backHref}>Voltar ao centro de custo</a>
+          </StateBox>
+        ) : null}
+
+        {successMsg ? (
+          <StateBox variant="success" dismissible={false}>
+            {successMsg}
+          </StateBox>
+        ) : null}
+
+        {saveError ? (
+          <StateBox variant="error" dismissible={false}>
+            {saveError}
+          </StateBox>
+        ) : null}
+
+        {versionConflict ? (
+          <StateBox variant="warning" dismissible={false}>
+            Conflito de versão detectado.{" "}
+            <button
+              type="button"
+              className="po-btn po-btn--secondary"
+              onClick={() => void reloadFromServer()}
+            >
+              Recarregar versão atual
+            </button>{" "}
+            <span className="po-muted">
+              ou permaneça na tela para copiar/revisar os dados locais.
+            </span>
+          </StateBox>
+        ) : null}
+
+        {investment ? (
+          <StateBox variant={investment.is_complete ? "success" : "warning"} dismissible={false}>
+            {investment.is_complete
+              ? "Rascunho completo para futura submissão (submissão ainda não disponível)."
+              : `Rascunho incompleto. Pendências: ${missingLabels.join(", ") || "—"}. O salvamento parcial continua permitido.`}
+          </StateBox>
+        ) : null}
+
+        <form className="po-inv-form__body" onSubmit={(e) => void handleManualSave(e)}>
+          <SectionCard
+            title="Identificação"
+            hint="Escolha o centro (entre os seus) e a categoria do investimento."
+          >
+            <div className="po-inv-form__grid po-inv-form__grid--2">
+              {lockCostCenter ? (
+                <div className="po-inv-form__chips po-inv-form__field--span2" aria-label="Contexto">
+                  <span className="po-inv-form__chip">
+                    {formatCostCenterLabel({
+                      branch: selectedCc?.branch ?? selectedCc?.unit_id ?? form.unit_id,
+                      code: form.cost_center_id,
+                    })}
+                  </span>
+                  <span className="po-inv-form__chip">
+                    Exercício {exercise.year} — {exercise.name}
+                  </span>
+                  <span className="po-inv-form__chip">
+                    Filial {selectedCc?.unit_id || form.unit_id || "—"}
+                  </span>
+                  <span className="po-inv-form__chip">
+                    Área {selectedCc?.area_id || "—"}
+                  </span>
+                </div>
+              ) : (
+                <>
+              <label className="po-inv-form__field po-inv-form__field--span2">
+                Centro de custo
+                <select
+                  required
+                  disabled={readOnly || Boolean(persistedId)}
+                  value={
+                    form.cost_center_id && form.unit_id
+                      ? `${form.unit_id}|${form.cost_center_id}`
+                      : form.cost_center_id
+                        ? `${selectedCc?.unit_id || ""}|${form.cost_center_id}`
+                        : ""
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const sep = raw.indexOf("|");
+                    if (sep < 0) {
+                      patchForm({ cost_center_id: raw, unit_id: "" });
+                      return;
+                    }
+                    patchForm({
+                      unit_id: raw.slice(0, sep),
+                      cost_center_id: raw.slice(sep + 1),
+                    });
+                  }}
+                >
+                  <option value="">Selecione…</option>
+                  {responsibilities.map((r) => (
+                    <option key={r.id} value={`${r.unit_id}|${r.cost_center_id}`}>
+                      {formatCostCenterLabel({
+                        branch: r.branch ?? r.unit_id,
+                        code: r.cost_center_id,
+                      })}
+                      {r.area_id ? ` · ${r.area_id}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {(selectedCc || form.unit_id) && (
+                <div className="po-inv-form__chips po-inv-form__field--span2" aria-label="Contexto">
+                  <span className="po-inv-form__chip">
+                    Exercício {exercise.year} — {exercise.name}
+                  </span>
+                  <span className="po-inv-form__chip">
+                    Filial {selectedCc?.unit_id || form.unit_id || "—"}
+                  </span>
+                  <span className="po-inv-form__chip">
+                    Área {selectedCc?.area_id || "—"}
+                  </span>
+                </div>
+              )}
+                </>
+              )}
+
+              <label className="po-inv-form__field po-inv-form__field--span2">
+                Categoria de investimento
+                <select
+                  disabled={readOnly}
+                  value={form.category_id}
+                  onChange={(e) => patchForm({ category_id: e.target.value })}
+                >
+                  <option value="">Selecione…</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {categories.length > 0 ? (
+              <div className="po-inv-form__cat-tiles" role="list" aria-label="Atalhos de categoria">
+                {categories.map((c) => {
+                  const active = form.category_id === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="listitem"
+                      disabled={readOnly}
+                      className={`po-inv-form__cat-tile${active ? " is-active" : ""}`}
+                      onClick={() => patchForm({ category_id: c.id })}
+                    >
+                      <CapexCategoryVisual
+                        categoryId={c.id}
+                        iconKey={c.icon_key}
+                        hasCustomIcon={Boolean(c.has_custom_icon)}
+                        size={22}
+                      />
+                      <span>{c.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {selectedCategory ? (
+              <p className="po-muted po-inv-form__hint">
+                Categoria selecionada: <strong>{selectedCategory.name}</strong>. Classifica o tipo
+                de investimento — não confundir com conta contábil do ERP.
+              </p>
+            ) : (
+              <p className="po-muted po-inv-form__hint">
+                A categoria classifica o tipo de investimento. Não confundir com conta contábil do
+                ERP (não disponível nesta fase).
+              </p>
+            )}
+
+            {/* Campos ocultos para leitores/teste que ainda referenciam Filial/Área/Exercício como inputs */}
+            <div className="po-sr-only">
+              <label>
+                Exercício
+                <input type="text" readOnly value={`${exercise.year} — ${exercise.name}`} />
+              </label>
+              <label>
+                Filial
+                <input type="text" readOnly value={selectedCc?.unit_id || form.unit_id || "—"} />
+              </label>
+              <label>
+                Área
+                <input type="text" readOnly value={selectedCc?.area_id || "—"} />
+              </label>
+              {lockCostCenter ? (
+                <label>
+                  Centro de custo
+                  <input
+                    type="text"
+                    readOnly
+                    value={formatCostCenterLabel({
+                      branch: selectedCc?.branch ?? selectedCc?.unit_id ?? form.unit_id,
+                      code: form.cost_center_id,
+                    })}
+                  />
+                </label>
+              ) : null}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Dados do investimento">
+            <div className="po-inv-form__group">
+              <h3 className="po-inv-form__group-title">O que você precisa</h3>
+              <div className="po-inv-form__grid">
+                <label className="po-inv-form__field po-inv-form__field--span2">
+                  Descrição
+                  <textarea
+                    rows={3}
+                    disabled={readOnly}
+                    placeholder="Ex.: Notebooks para a equipe de RH"
+                    value={form.description}
+                    onChange={(e) => patchForm({ description: e.target.value })}
+                  />
+                </label>
+                <label className="po-inv-form__field po-inv-form__field--span2">
+                  Justificativa
+                  <textarea
+                    rows={3}
+                    disabled={readOnly}
+                    placeholder="Por que este investimento é necessário neste ciclo?"
+                    value={form.justification}
+                    onChange={(e) => patchForm({ justification: e.target.value })}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="po-inv-form__group">
+              <h3 className="po-inv-form__group-title">Quanto e quando</h3>
+              <div className="po-inv-form__grid po-inv-form__grid--2">
+                <div className="po-inv-form__field">
+                  <label htmlFor="po-inv-estimated-amount">Valor previsto</label>
+                  <div className="po-inv-form__money">
+                    <span aria-hidden="true">R$</span>
+                    <input
+                      id="po-inv-estimated-amount"
+                      inputMode="decimal"
+                      disabled={readOnly}
+                      value={form.estimated_amount}
+                      placeholder="0,00"
+                      onChange={(e) =>
+                        patchForm({ estimated_amount: normalizeMoneyInput(e.target.value) })
+                      }
+                    />
+                  </div>
+                </div>
+                <label className="po-inv-form__field">
+                  Mês necessário de recebimento
+                  <select
+                    disabled={readOnly}
+                    value={requiredDateToMonthValue(form.required_date)}
+                    onChange={(e) =>
+                      patchForm({
+                        required_date: monthValueToRequiredDate(e.target.value),
+                      })
+                    }
+                  >
+                    <option value="">Selecione…</option>
+                    {exerciseMonthOptions(exercise.year).map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="po-inv-form__field">
+                  Prioridade
+                  <select
+                    disabled={readOnly}
+                    value={form.priority}
+                    onChange={(e) => patchForm({ priority: e.target.value })}
+                  >
+                    <option value="">Selecione…</option>
+                    {CAPEX_PRIORITY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="po-inv-form__field">
+                  Origem
+                  <select
+                    disabled={readOnly}
+                    value={form.origin}
+                    onChange={(e) => patchForm({ origin: e.target.value })}
+                  >
+                    <option value="">Selecione…</option>
+                    {CAPEX_ORIGIN_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p className="po-field-help">
+                Escolha o mês do ciclo em que o bem precisa estar disponível para a área.
+              </p>
+            </div>
+
+            <div className="po-inv-form__group">
+              <h3 className="po-inv-form__group-title">Fornecedor e detalhes</h3>
+              <div className="po-inv-form__grid po-inv-form__grid--2">
+                <label className="po-inv-form__field po-inv-form__field--span2">
+                  Fornecedor provável
+                  <input
+                    disabled={readOnly}
+                    value={form.probable_supplier_name}
+                    onChange={(e) => patchForm({ probable_supplier_name: e.target.value })}
+                  />
+                </label>
+                <label className="po-inv-form__field">
+                  Classificação
+                  <select
+                    disabled={readOnly}
+                    value={form.classification}
+                    onChange={(e) => patchForm({ classification: e.target.value })}
+                  >
+                    <option value="">Opcional…</option>
+                    {CAPEX_CLASSIFICATION_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="po-inv-form__field">
+                  Turno
+                  <select
+                    disabled={readOnly}
+                    value={form.shift}
+                    onChange={(e) => patchForm({ shift: e.target.value })}
+                  >
+                    <option value="">Opcional…</option>
+                    {CAPEX_SHIFT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="po-inv-form__field po-inv-form__field--span2">
+                  Observações
+                  <textarea
+                    rows={3}
+                    disabled={readOnly}
+                    value={form.observations}
+                    onChange={(e) => patchForm({ observations: e.target.value })}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {!readOnly ? (
+              <div className="po-inv-form__footer">
+                <p className="po-muted">
+                  O autosave grava enquanto você digita. Use o botão para forçar o salvamento.
+                </p>
+                <div className="po-inv-form__footer-actions">
+                  <button
+                    type="submit"
+                    className="po-btn po-btn--primary"
+                    disabled={saveStatus === "saving" || versionConflict}
+                  >
+                    <Save size={16} aria-hidden="true" />
+                    {saveStatus === "saving" ? "Salvando…" : "Salvar rascunho"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </SectionCard>
+        </form>
+
+        <CapexInvestmentAttachmentsPanel investmentId={persistedId} readOnly={readOnly} />
+      </>
+  ));
 }

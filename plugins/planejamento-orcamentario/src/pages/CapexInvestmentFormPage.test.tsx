@@ -24,6 +24,29 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     function StateBox({ children }: { children: ReactNode }) {
       return <div role="alert">{children}</div>;
     },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedModal({
+      open,
+      title,
+      onClose,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      onClose: () => void;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-modal="true" aria-label={String(title)}>
+          <button type="button" aria-label="Fechar" onClick={onClose}>
+            Fechar
+          </button>
+          {children}
+        </div>
+      );
+    },
 }));
 
 import { CapexInvestmentFormPage } from "./CapexInvestmentFormPage";
@@ -158,8 +181,8 @@ describe("CapexInvestmentFormPage", () => {
     fireEvent.change(within(data).getByLabelText("Valor previsto"), {
       target: { value: "1000,00" },
     });
-    fireEvent.change(within(data).getByLabelText("Data necessária de recebimento"), {
-      target: { value: "2027-06-01" },
+    fireEvent.change(within(data).getByLabelText("Mês necessário de recebimento"), {
+      target: { value: "2027-06" },
     });
     fireEvent.change(within(data).getByLabelText("Prioridade"), {
       target: { value: "2" },
@@ -306,6 +329,30 @@ describe("CapexInvestmentFormPage", () => {
     await screen.findByText("Dados do investimento");
     expect(screen.getByText(/Salve o rascunho para adicionar documentos/i)).toBeTruthy();
     expect(budgetApi.listCapexInvestmentAttachments).not.toHaveBeenCalled();
+  });
+
+  it("no modal, avança o wizard por etapas com faixa de progresso", async () => {
+    render(
+      <CapexInvestmentFormPage
+        mode="create"
+        presentation="panel"
+        costCenterId="205"
+        unitId="01"
+      />,
+    );
+    await screen.findByLabelText("Progresso do cadastro");
+    expect(screen.getByText(/Etapa 1 de 5/i)).toBeTruthy();
+    expect(screen.getByRole("progressbar", { name: /Avanço do cadastro/i })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Continuar/i }));
+    await screen.findByText(/Selecione a categoria/i);
+
+    const catSelect = screen.getByLabelText("Categoria de investimento") as HTMLSelectElement;
+    fireEvent.change(catSelect, { target: { value: "cat-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Continuar/i }));
+
+    await screen.findByText(/Etapa 2 de 5/i);
+    expect(screen.getByLabelText("Descrição")).toBeTruthy();
   });
 
   it("anexos não disparam update/autosave do investimento", async () => {

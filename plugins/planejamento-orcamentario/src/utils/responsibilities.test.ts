@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildCreateSummary,
   filterCostCenters,
+  mergeResponsibilityPairs,
   validateValidityRange,
 } from "./responsibilities";
 
 describe("responsibilities utils", () => {
-  it("monta resumo de amarração com dados reais", () => {
+  it("monta resumo de amarração com CAPEX e Pessoal", () => {
     const text = buildCreateSummary({
       userName: "Maria da Silva",
       costCenterLabel: "1234 – Produção",
@@ -17,6 +18,7 @@ describe("responsibilities utils", () => {
     expect(text).toContain("1234 – Produção");
     expect(text).toContain("2027");
     expect(text).toMatch(/responsável/i);
+    expect(text).toMatch(/CAPEX e Pessoal/i);
   });
 
   it("valida período inválido", () => {
@@ -40,5 +42,48 @@ describe("responsibilities utils", () => {
       "205",
       "999",
     ]);
+  });
+
+  it("agrupa CAPEX e Pessoal do mesmo usuário/filial/CC em um vínculo", () => {
+    const pairs = mergeResponsibilityPairs([
+      {
+        id: "a",
+        exercise_id: "ex",
+        module: "capex",
+        user_sub: "u1",
+        user_name_snapshot: "Ana",
+        unit_id: "02",
+        cost_center_id: "0502",
+        responsibility_type: "owner",
+        is_active: true,
+      },
+      {
+        id: "b",
+        exercise_id: "ex",
+        module: "personnel",
+        user_sub: "u1",
+        user_name_snapshot: "Ana",
+        unit_id: "02",
+        cost_center_id: "0502",
+        responsibility_type: "owner",
+        is_active: true,
+      },
+      {
+        id: "c",
+        exercise_id: "ex",
+        module: "capex",
+        user_sub: "u1",
+        user_name_snapshot: "Ana",
+        unit_id: "02",
+        cost_center_id: "0301",
+        responsibility_type: "collaborator",
+        is_active: true,
+      },
+    ]);
+    expect(pairs).toHaveLength(2);
+    const compras = pairs.find((p) => p.cost_center_id === "0502");
+    expect(compras?.capex?.id).toBe("a");
+    expect(compras?.personnel?.id).toBe("b");
+    expect(compras?.rows).toHaveLength(2);
   });
 });

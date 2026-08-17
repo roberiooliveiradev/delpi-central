@@ -15,6 +15,7 @@ import {
   PERSONNEL_PLAN_STATUS_OPTIONS,
   personnelPlanStatusLabel,
 } from "../utils/personnelPlans";
+import { planSubmitterDisplayName } from "../utils/capexPlans";
 import { hasPersonnelApproveAccess } from "../utils/permissions";
 import {
   pessoalApprovalsHref,
@@ -340,7 +341,7 @@ export function PersonnelReviewQueuePage() {
                     </div>
                     <div>
                       <dt>Responsável (envio)</dt>
-                      <dd>{row.submitted_by || "—"}</dd>
+                      <dd>{planSubmitterDisplayName(row)}</dd>
                     </div>
                     <div>
                       <dt>Cargos</dt>

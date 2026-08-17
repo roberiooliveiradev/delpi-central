@@ -21,6 +21,7 @@ from app.domain.services.planejamento_orcamentario.exceptions import (
     CapexInvestmentCategoryInvalidError,
     CapexInvestmentCostCenterForbiddenError,
     CapexInvestmentDateInvalidError,
+    CapexInvestmentInvalidError,
     CapexInvestmentNotFoundError,
     CapexInvestmentValueInvalidError,
     CapexInvestmentVersionConflictError,
@@ -98,7 +99,14 @@ class FakeRepo:
         }
         return cid
 
-    def seed_responsibility(self, *, user_sub: str, exercise_id: str, cost_center_id: str):
+    def seed_responsibility(
+        self,
+        *,
+        user_sub: str,
+        exercise_id: str,
+        cost_center_id: str,
+        unit_id: str = "01",
+    ):
         self.responsibilities.append(
             {
                 "id": str(uuid4()),
@@ -106,7 +114,7 @@ class FakeRepo:
                 "exercise_id": exercise_id,
                 "module": "capex",
                 "cost_center_id": cost_center_id,
-                "unit_id": "01",
+                "unit_id": unit_id,
                 "area_id": "PROD",
                 "is_active": True,
                 "valid_from": None,
@@ -576,3 +584,66 @@ def test_admin_list_all_cost_centers():
     )
     listed = uc.list_investments(_admin(), exercise_id=eid)
     assert listed["pagination"]["total"] == 2
+
+
+def test_list_by_cost_center_requires_unit_id():
+    uc, repo, eid, _cat = _setup()
+    with pytest.raises(CapexInvestmentInvalidError):
+        uc.list_investments(_user(), exercise_id=eid, cost_center_id="205")
+
+
+def test_list_same_cc_code_does_not_mix_branches():
+    """Mesmo código de CC em 01 e 02 — listar filial 01 não traz investimentos da 02."""
+    uc, repo, eid, cat = _setup(cc="205")
+    repo.ccs[("02", "205")] = {
+        **repo.ccs[("01", "205")],
+        "branch": "02",
+        "unit_code": "02",
+        "name": "TI ES",
+    }
+    repo.seed_responsibility(
+        user_sub="user-1", exercise_id=eid, cost_center_id="205", unit_id="02"
+    )
+
+    inv_01 = uc.create_investment(
+        _user("user-1"),
+        {
+            "exercise_id": eid,
+            "unit_id": "01",
+            "cost_center_id": "205",
+            "description": "Jaraguá",
+            "category_id": cat,
+        },
+    )
+    inv_02 = uc.create_investment(
+        _user("user-1"),
+        {
+            "exercise_id": eid,
+            "unit_id": "02",
+            "cost_center_id": "205",
+            "description": "Rio Bananal",
+            "category_id": cat,
+        },
+    )
+    assert inv_01["unit_id"] == "01"
+    assert inv_02["unit_id"] == "02"
+
+    listed_01 = uc.list_investments(
+        _user("user-1"),
+        exercise_id=eid,
+        unit_id="01",
+        cost_center_id="205",
+    )
+    ids_01 = {i["id"] for i in listed_01["items"]}
+    assert inv_01["id"] in ids_01
+    assert inv_02["id"] not in ids_01
+
+    listed_02 = uc.list_investments(
+        _user("user-1"),
+        exercise_id=eid,
+        unit_id="02",
+        cost_center_id="205",
+    )
+    ids_02 = {i["id"] for i in listed_02["items"]}
+    assert inv_02["id"] in ids_02
+    assert inv_01["id"] not in ids_02

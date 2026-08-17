@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 import pytest
 
+from app.application.services.planejamento_orcamentario.category_icon_storage import (
+    CategoryIconStorage,
+)
 from app.application.use_cases.planejamento_orcamentario.budget_planning_use_cases import (
     BudgetActor,
 )
@@ -17,6 +21,8 @@ from app.domain.services.planejamento_orcamentario.capex_category_constants impo
     DEFAULT_CAPEX_CATEGORIES,
 )
 from app.domain.services.planejamento_orcamentario.exceptions import (
+    BudgetDocumentNotFoundError,
+    BudgetDocumentTypeNotAllowedError,
     BudgetUserNotAuthorizedError,
     CapexCategoryConflictError,
     CapexCategoryInvalidError,
@@ -140,8 +146,15 @@ def _user() -> BudgetActor:
     )
 
 
-def _uc(repo: FakeRepo | None = None) -> CapexCategoryUseCases:
-    return CapexCategoryUseCases(repository=repo or FakeRepo())  # type: ignore[arg-type]
+def _uc(
+    repo: FakeRepo | None = None,
+    *,
+    icon_storage: CategoryIconStorage | None = None,
+) -> CapexCategoryUseCases:
+    return CapexCategoryUseCases(
+        repository=repo or FakeRepo(),  # type: ignore[arg-type]
+        icon_storage=icon_storage,
+    )
 
 
 def test_default_seed_catalog_has_twenty_four():
@@ -206,6 +219,24 @@ def test_update_name_description_order():
     assert "capex_category.order_changed" in actions
 
 
+def test_create_and_update_icon_key():
+    repo = FakeRepo()
+    uc = _uc(repo)
+    created = uc.create_category(
+        _admin(),
+        {"code": "ICON", "name": "Com ícone", "icon_key": "wrench"},
+    )
+    assert created["icon_key"] == "wrench"
+    updated = uc.update_category(
+        _admin(), created["id"], {"icon_key": "truck"}
+    )
+    assert updated["icon_key"] == "truck"
+    cleared = uc.update_category(_admin(), created["id"], {"icon_key": None})
+    assert cleared["icon_key"] is None
+    with pytest.raises(CapexCategoryInvalidError):
+        uc.update_category(_admin(), created["id"], {"icon_key": "not-real"})
+
+
 def test_code_immutable():
     repo = FakeRepo()
     uc = _uc(repo)
@@ -262,3 +293,70 @@ def test_authorization():
 def test_not_found():
     with pytest.raises(CapexCategoryNotFoundError):
         _uc().update_category(_admin(), str(uuid4()), {"name": "x"})
+
+
+def test_upload_clear_and_resolve_icon_image(tmp_path: Path):
+    repo = FakeRepo()
+    storage = CategoryIconStorage(base_dir=str(tmp_path))
+    uc = _uc(repo, icon_storage=storage)
+    created = uc.create_category(
+        _admin(),
+        {"code": "IMG_CAT", "name": "Com imagem", "display_order": 1},
+    )
+    assert created.get("has_custom_icon") is False
+
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+    uploaded = uc.upload_icon_image(
+        _admin(),
+        created["id"],
+        original_name="icone.png",
+        content=png,
+        mime_type="image/png",
+    )
+    assert uploaded["has_custom_icon"] is True
+    assert uploaded["icon_image_mime"] == "image/png"
+    assert "icon_image_key" not in uploaded
+
+    resolved = uc.resolve_icon_image(_user(), created["id"])
+    assert Path(resolved["path"]).is_file()
+    assert Path(resolved["path"]).read_bytes() == png
+
+    cleared = uc.clear_icon_image(_admin(), created["id"])
+    assert cleared["has_custom_icon"] is False
+    with pytest.raises(BudgetDocumentNotFoundError):
+        uc.resolve_icon_image(_user(), created["id"])
+    assert any(a["action"] == "capex_category.icon_image_uploaded" for a in repo.audits)
+    assert any(a["action"] == "capex_category.icon_image_cleared" for a in repo.audits)
+
+
+def test_upload_icon_rejects_invalid_type(tmp_path: Path):
+    repo = FakeRepo()
+    storage = CategoryIconStorage(base_dir=str(tmp_path))
+    uc = _uc(repo, icon_storage=storage)
+    created = uc.create_category(
+        _admin(), {"code": "BAD_IMG", "name": "Bad", "display_order": 1}
+    )
+    with pytest.raises(BudgetDocumentTypeNotAllowedError):
+        uc.upload_icon_image(
+            _admin(),
+            created["id"],
+            original_name="doc.pdf",
+            content=b"%PDF-1.4",
+            mime_type="application/pdf",
+        )
+
+
+# operationIds — inventário de cobertura de rotas (icon image)
+_CAPEX_CATEGORY_ICON_OPERATION_IDS = (
+    "upload_planejamento_orcamentario_admin_capex_category_icon_image",
+    "clear_planejamento_orcamentario_admin_capex_category_icon_image",
+    "get_planejamento_orcamentario_capex_category_icon_image",
+)
+
+
+def test_capex_category_icon_operation_ids_registered():
+    from app.interface.http.route_contract_registry import ROUTE_CONTRACTS
+
+    for op in _CAPEX_CATEGORY_ICON_OPERATION_IDS:
+        assert op in ROUTE_CONTRACTS, f"operationId ausente no registry: {op}"
+        assert ROUTE_CONTRACTS[op].entity == "capex_category"

@@ -7,12 +7,12 @@ import {
 } from "./utils/routing";
 import { HomePage } from "./pages/HomePage";
 import { OrientacoesPage } from "./pages/OrientacoesPage";
-import { CapexMyCostCentersPage } from "./pages/CapexMyCostCentersPage";
 import { CapexInvestmentFormPage } from "./pages/CapexInvestmentFormPage";
 import { CapexReviewQueuePage } from "./pages/CapexReviewQueuePage";
 import { CapexReviewDetailPage } from "./pages/CapexReviewDetailPage";
 import { CapexConsolidationPage } from "./pages/CapexConsolidationPage";
-import { PersonnelBudgetPage } from "./pages/PersonnelBudgetPage";
+import { CostCenterBudgetPage } from "./pages/CostCenterBudgetPage";
+import { ApprovalManagementPage } from "./pages/ApprovalManagementPage";
 import { PersonnelReviewQueuePage } from "./pages/PersonnelReviewQueuePage";
 import { PersonnelReviewDetailPage } from "./pages/PersonnelReviewDetailPage";
 import { AdminHomePage } from "./pages/admin/AdminHomePage";
@@ -39,8 +39,12 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       return <HomePage />;
     case "orientacoes":
       return <OrientacoesPage />;
+    case "centros":
     case "capex":
-      return <CapexMyCostCentersPage />;
+    case "pessoal":
+      return <CostCenterBudgetPage />;
+    case "gestao-aprovacoes":
+      return <ApprovalManagementPage />;
     case "capex-investment-new":
       return <CapexInvestmentFormPage mode="create" />;
     case "capex-investment-edit":
@@ -61,8 +65,6 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       );
     case "capex-consolidation":
       return <CapexConsolidationPage />;
-    case "pessoal":
-      return <PersonnelBudgetPage />;
     case "pessoal-approvals":
       return <PersonnelReviewQueuePage />;
     case "pessoal-approval-detail":

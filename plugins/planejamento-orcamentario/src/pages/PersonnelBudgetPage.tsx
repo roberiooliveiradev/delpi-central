@@ -119,7 +119,10 @@ function exerciseTitle(exercise: BudgetExercise | null | undefined): string {
   return `${exercise.year} — ${exercise.name}`;
 }
 
-export function PersonnelBudgetPage() {
+export function PersonnelBudgetPage({
+  embedded = false,
+  hideSectionChrome = false,
+}: { embedded?: boolean; hideSectionChrome?: boolean } = {}) {
   const selectedCc = readQueryParam("cost_center_id");
   const selectedUnit = readQueryParam("unit_id");
   const { profile } = usePermissions();
@@ -609,24 +612,8 @@ export function PersonnelBudgetPage() {
   const readOnly = !canEdit;
   const lockReason = personnelPlanLockReason(plan);
 
-  return (
-    <PageShell
-      title="Orçamento de Pessoal"
-      subtitle="Preencha o headcount por cargo nos centros de custo atribuídos a você."
-      icon={<Users size={28} strokeWidth={1.75} aria-hidden="true" />}
-      actions={
-        <>
-          {canApprove ? (
-            <a className="po-btn po-btn--secondary" href={pessoalApprovalsHref()}>
-              Aprovações
-            </a>
-          ) : null}
-          <a className="po-btn po-btn--secondary" href={routeHref("home")}>
-            Voltar ao início
-          </a>
-        </>
-      }
-    >
+  const body = (
+    <>
       {bootLoading ? (
         <LoadingActivityCard title="Carregando Orçamento de Pessoal…" variant="panel" />
       ) : null}
@@ -643,7 +630,7 @@ export function PersonnelBudgetPage() {
         </StateBox>
       ) : null}
 
-      {!bootLoading && !error && modulesUnlocked && responsibilities.length === 0 ? (
+      {!embedded && !bootLoading && !error && modulesUnlocked && responsibilities.length === 0 ? (
         <SectionCard
           title="Nenhum centro atribuído"
           hint="Responsabilidades do módulo personnel."
@@ -656,7 +643,7 @@ export function PersonnelBudgetPage() {
         </SectionCard>
       ) : null}
 
-      {!bootLoading && !error && responsibilities.length > 0 ? (
+      {!embedded && !bootLoading && !error && responsibilities.length > 0 ? (
         <SectionCard
           title="Centros de custo"
           hint={exerciseTitle(exercise)}
@@ -913,6 +900,43 @@ export function PersonnelBudgetPage() {
           filial e código).
         </StateBox>
       ) : null}
+    </>
+  );
+
+  if (embedded) {
+    if (hideSectionChrome) {
+      return <div className="po-cockpit-equipe">{body}</div>;
+    }
+    return (
+      <section className="po-workspace-section" aria-labelledby="po-personnel-section-title">
+        <div className="po-workspace-section__head">
+          <h2 id="po-personnel-section-title">Equipe</h2>
+        </div>
+        {body}
+      </section>
+    );
+  }
+
+  return (
+    <PageShell
+      title="Orçamento de Pessoal"
+      subtitle="Preencha o headcount por cargo nos centros de custo atribuídos a você."
+      icon={<Users size={28} strokeWidth={1.75} aria-hidden="true" />}
+      backRoute="centros"
+      actions={
+        <>
+          {canApprove ? (
+            <a className="po-btn po-btn--secondary" href={pessoalApprovalsHref()}>
+              Aprovações
+            </a>
+          ) : null}
+          <a className="po-btn po-btn--secondary" href={routeHref("centros")}>
+            Meus centros
+          </a>
+        </>
+      }
+    >
+      {body}
     </PageShell>
   );
 }

@@ -12,9 +12,15 @@ STATUS_DRAFT = "draft"
 STATUS_ARCHIVED = "archived"
 ALLOWED_STATUSES = frozenset({STATUS_DRAFT, STATUS_ARCHIVED})
 
+REVIEW_PENDING = "pending"
+REVIEW_APPROVED = "approved"
+REVIEW_REJECTED = "rejected"
+ALLOWED_REVIEW_STATUSES = frozenset({REVIEW_PENDING, REVIEW_APPROVED, REVIEW_REJECTED})
+
 DEFAULT_CURRENCY = "BRL"
 
-# Planilha: 1 Compra aprovada/em andamento; 2 Maior; 3 Média; 4 Menor
+# Prioridade operacional na UI: Alta / Média / Baixa (códigos 2 / 3 / 4).
+# «1» permanece válido só para rascunhos legados da planilha.
 ALLOWED_PRIORITIES = frozenset({"1", "2", "3", "4"})
 
 # Carta: nacional / importado

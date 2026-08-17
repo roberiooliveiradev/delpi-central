@@ -167,6 +167,11 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "application",
         "observations",
         "status",
+        "review_status",
+        "review_comment",
+        "reviewed_by",
+        "reviewed_by_name",
+        "reviewed_at",
         "version",
         "created_by",
         "created_at",
@@ -176,6 +181,8 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "archived_at",
     )
     out = {k: row.get(k) for k in keys}
+    if not out.get("review_status"):
+        out["review_status"] = "pending"
     amount = out.get("estimated_amount")
     if amount is not None and not isinstance(amount, str):
         out["estimated_amount"] = str(amount)
@@ -434,6 +441,7 @@ class CapexInvestmentUseCases:
         actor: BudgetActor,
         *,
         exercise_id: str | None = None,
+        unit_id: str | None = None,
         cost_center_id: str | None = None,
         category_id: str | None = None,
         priority: str | None = None,
@@ -465,6 +473,14 @@ class CapexInvestmentUseCases:
             active = self._repo.get_active_exercise()
             exercise_filter = str(active["id"]) if active else None
 
+        unit_filter = (unit_id or "").strip() or None
+        cc_filter = (cost_center_id or "").strip() or None
+        # Mesmo código de CC existe em 01 e 02 — filtrar só por código mistura filiais.
+        if cc_filter and not unit_filter:
+            raise CapexInvestmentInvalidError(
+                "Informe a filial (unit_id) junto com o centro de custo para listar investimentos."
+            )
+
         allowed_pairs = self._authorized_cost_centers(actor, exercise_id=exercise_filter)
         if allowed_pairs is not None and len(allowed_pairs) == 0:
             return {
@@ -477,8 +493,10 @@ class CapexInvestmentUseCases:
                 },
             }
 
-        if cost_center_id and not self._pair_authorized(
-            allowed_pairs, cost_center_id=cost_center_id
+        if cc_filter and not self._pair_authorized(
+            allowed_pairs,
+            cost_center_id=cc_filter,
+            unit_id=unit_filter,
         ):
             raise CapexInvestmentCostCenterForbiddenError(
                 "Sem responsabilidade orçamentária para o centro de custo filtrado."
@@ -486,7 +504,8 @@ class CapexInvestmentUseCases:
 
         items, total = self._repo.list_capex_investments(
             exercise_id=exercise_filter,
-            cost_center_id=cost_center_id or None,
+            unit_id=unit_filter,
+            cost_center_id=cc_filter,
             category_id=category_id or None,
             priority=priority_norm,
             origin=origin_norm,

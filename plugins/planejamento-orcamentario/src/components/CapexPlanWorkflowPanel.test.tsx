@@ -24,6 +24,35 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     function StateBox({ children }: { children: ReactNode }) {
       return <div role="alert">{children}</div>;
     },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedModal({
+      open,
+      title,
+      description,
+      onClose,
+      footer,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      description?: ReactNode;
+      onClose: () => void;
+      footer?: ReactNode;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-modal="true" aria-label={String(title)}>
+          {description ? <p>{description}</p> : null}
+          <button type="button" aria-label="Fechar" onClick={onClose}>
+            Fechar
+          </button>
+          {children}
+          {footer}
+        </div>
+      );
+    },
 }));
 
 import { CapexPlanWorkflowPanel } from "./CapexPlanWorkflowPanel";
@@ -85,20 +114,20 @@ beforeEach(() => {
       },
     ],
   });
-  vi.stubGlobal(
-    "confirm",
-    vi.fn(() => true),
-  );
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  vi.unstubAllGlobals();
 });
 
 async function waitSubmitButton() {
   return screen.findByRole("button", { name: /Enviar planejamento para aprovação/i });
+}
+
+async function confirmSubmitDialog() {
+  expect(await screen.findByRole("dialog", { name: /Enviar para aprovação/i })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /Sim, enviar/i }));
 }
 
 describe("CapexPlanWorkflowPanel", () => {
@@ -122,6 +151,35 @@ describe("CapexPlanWorkflowPanel", () => {
     expect(screen.getByText(/Planejamento criado/i)).toBeTruthy();
   });
 
+  it("variant cockpit: métricas e CTA sem grade de metadados", async () => {
+    render(
+      <CapexPlanWorkflowPanel
+        exercise={exercise}
+        costCenterId="205"
+        unitId="01"
+        canSubmit
+        variant="cockpit"
+        cockpitHero={{
+          title: "DEPARTAMENTO DE RH",
+          locationLabel: "Rio Bananal/ES",
+          cycleYear: "2027",
+        }}
+      />,
+    );
+    await screen.findByRole("button", { name: /Enviar para aprovação/i });
+    expect(screen.getByRole("heading", { name: "DEPARTAMENTO DE RH" })).toBeTruthy();
+    expect(screen.getByText(/Elaboração · 2027/i)).toBeTruthy();
+    expect(screen.getByText("Rio Bananal/ES")).toBeTruthy();
+    expect(screen.getByText("Rascunho")).toBeTruthy();
+    expect(screen.getByText("Incompletos")).toBeTruthy();
+    expect(screen.getByText("Valor total")).toBeTruthy();
+    expect(screen.queryByText("Tudo pronto para enviar")).toBeNull();
+    expect(screen.queryByText("Planejamento do centro de custo")).toBeNull();
+    expect(screen.queryByText(/Histórico do workflow/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Ver histórico/i }));
+    expect(screen.getByText(/Planejamento criado/i)).toBeTruthy();
+  });
+
   it("submissão válida atualiza status", async () => {
     vi.mocked(budgetApi.submitCapexPlan).mockResolvedValue({
       ...planDraft,
@@ -137,10 +195,28 @@ describe("CapexPlanWorkflowPanel", () => {
       />,
     );
     fireEvent.click(await waitSubmitButton());
+    await confirmSubmitDialog();
     await waitFor(() => {
       expect(budgetApi.submitCapexPlan).toHaveBeenCalledWith("plan-1", { version: 1 });
     });
     await screen.findByText(/Edição bloqueada até a decisão/i);
+  });
+
+  it("cancelar no modal não envia o planejamento", async () => {
+    render(
+      <CapexPlanWorkflowPanel
+        exercise={exercise}
+        costCenterId="205"
+        canSubmit
+      />,
+    );
+    fireEvent.click(await waitSubmitButton());
+    expect(await screen.findByRole("dialog", { name: /Enviar para aprovação/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Cancelar$/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: /Enviar para aprovação/i })).toBeNull();
+    });
+    expect(budgetApi.submitCapexPlan).not.toHaveBeenCalled();
   });
 
   it("plano incompleto lista links de pendências", async () => {
@@ -166,6 +242,7 @@ describe("CapexPlanWorkflowPanel", () => {
       />,
     );
     fireEvent.click(await waitSubmitButton());
+    await confirmSubmitDialog();
     await screen.findByRole("link", { name: /Notebooks/i });
     expect(screen.getByText(/pendências:/i)).toBeTruthy();
   });
@@ -236,6 +313,7 @@ describe("CapexPlanWorkflowPanel", () => {
       />,
     );
     fireEvent.click(await waitSubmitButton());
+    await confirmSubmitDialog();
     await screen.findByRole("button", { name: /Recarregar dados/i });
   });
 });

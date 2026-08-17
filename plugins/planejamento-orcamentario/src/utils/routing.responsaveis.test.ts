@@ -11,11 +11,11 @@ describe("rotas de responsáveis e CAPEX", () => {
     );
   });
 
-  it("resolve meus centros de custo CAPEX", () => {
-    expect(resolveAppRoute("/apps/planejamento-orcamentario/capex")).toBe("capex");
+  it("resolve elaboração CAPEX via alias para centros", () => {
+    expect(resolveAppRoute("/apps/planejamento-orcamentario/capex")).toBe("centros");
     expect(
       resolveAppRoute("/apps/planejamento-orcamentario/capex/meus-centros"),
-    ).toBe("capex");
+    ).toBe("centros");
   });
 
   it("resolve categorias CAPEX administrativas", () => {

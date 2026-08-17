@@ -77,7 +77,9 @@ export function AdminHomePage() {
             <Users size={24} aria-hidden="true" />
             <div>
               <strong>Escopos</strong>
-              <span className="po-muted">Vínculos de usuários e centros de custo</span>
+              <span className="po-muted">
+                Cadastro auxiliar — não libera CAPEX nem Pessoal
+              </span>
             </div>
           </a>
         ) : null}
@@ -86,8 +88,10 @@ export function AdminHomePage() {
           <a className="po-admin-card" href={routeHref("admin-responsaveis")}>
             <Network size={24} aria-hidden="true" />
             <div>
-              <strong>Responsáveis</strong>
-              <span className="po-muted">Responsáveis CAPEX por centro de custo</span>
+              <strong>Responsáveis orçamentários</strong>
+              <span className="po-muted">
+                Libera CAPEX + Pessoal no mesmo centro de custo
+              </span>
             </div>
           </a>
         ) : null}

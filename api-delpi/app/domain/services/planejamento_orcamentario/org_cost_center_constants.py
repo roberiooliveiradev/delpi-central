@@ -28,6 +28,57 @@ ALLOWED_COST_CENTER_SOURCES = frozenset(
     {COST_CENTER_SOURCE_MANUAL, COST_CENTER_SOURCE_ERP}
 )
 
+# Catálogo fixo Lucide (espelhado no MFE). Valores em kebab-case como no lucide-react.
+ALLOWED_COST_CENTER_ICON_KEYS = frozenset(
+    {
+        "building-2",
+        "users",
+        "laptop",
+        "factory",
+        "flask-conical",
+        "shield-check",
+        "warehouse",
+        "truck",
+        "calculator",
+        "heart-handshake",
+        "wrench",
+        "clipboard-list",
+        "landmark",
+        "briefcase",
+        "cpu",
+        "hard-hat",
+        "monitor",
+        "car",
+        "hammer",
+        "cog",
+        "zap",
+        "package",
+        "ruler",
+        "bot",
+        "radio",
+        "leaf",
+        "fan",
+        "gauge",
+        "boxes",
+        "circuit-board",
+        "tags",
+    }
+)
+
+
+def normalize_cost_center_icon_key(raw: str | None) -> str | None:
+    """None/vazio limpa o ícone; chave inválida levanta ValueError."""
+    if raw is None:
+        return None
+    key = str(raw).strip().lower()
+    if not key:
+        return None
+    if key not in ALLOWED_COST_CENTER_ICON_KEYS:
+        raise ValueError(
+            "Ícone inválido. Escolha um ícone do catálogo permitido."
+        )
+    return key
+
 
 def normalize_budget_branch(raw: str | None) -> str:
     """Exige filial 01 ou 02."""
@@ -50,6 +101,10 @@ def serialize_org_cost_center(row: dict[str, Any] | None) -> dict[str, Any] | No
     branch = str(row.get("branch") or row.get("unit_code") or "").strip()
     code = str(row.get("code") or "").strip()
     name = str(row.get("name") or "").strip()
+    icon_key = row.get("icon_key")
+    icon_norm = str(icon_key).strip().lower() if icon_key else None
+    if icon_norm and icon_norm not in ALLOWED_COST_CENTER_ICON_KEYS:
+        icon_norm = None
     return {
         "id": row.get("id"),
         "branch": branch,
@@ -59,6 +114,7 @@ def serialize_org_cost_center(row: dict[str, Any] | None) -> dict[str, Any] | No
         "unit_code": str(row.get("unit_code") or branch).strip(),
         "area_code": row.get("area_code"),
         "source": row.get("source") or COST_CENTER_SOURCE_MANUAL,
+        "icon_key": icon_norm,
         "active": bool(row.get("active", True)),
         "created_at": row.get("created_at"),
         "created_by_user_id": row.get("created_by_user_id"),

@@ -108,11 +108,23 @@ class FakeRepo:
             "unit_code": payload["unit_code"],
             "area_code": payload.get("area_code"),
             "source": payload.get("source") or "manual",
+            "icon_key": (existing or {}).get("icon_key"),
             "active": True,
             "created_by_user_id": payload.get("created_by_user_id"),
         }
         self.ccs[key] = row
         return deepcopy(row)
+
+    def update_org_cost_center_icon(
+        self, *, branch: str, code: str, icon_key: str | None
+    ) -> dict[str, Any] | None:
+        key = (branch, code)
+        existing = self.ccs.get(key)
+        if not existing:
+            return None
+        updated = {**existing, "icon_key": icon_key}
+        self.ccs[key] = updated
+        return deepcopy(updated)
 
     def get_org_unit(self, code: str):
         return deepcopy(self.units.get(code))
@@ -305,6 +317,38 @@ def test_from_erp_registers_snapshot_and_source():
     assert created["description"] == "Produção ES"
     assert created["source"] == COST_CENTER_SOURCE_ERP
     assert any(a["action"] == "org_cost_center.from_erp" for a in repo.audits)
+
+
+def test_update_org_cost_center_icon_sets_and_clears():
+    """update_planejamento_orcamentario_admin_cost_center_icon — catálogo Lucide."""
+    repo = FakeRepo()
+    erp = FakeErp()
+    uc = BudgetPlanningUseCases(repository=repo, erp_cost_centers=erp)  # type: ignore[arg-type]
+    uc.create_org_cost_center_from_erp(
+        _admin(), {"branch": "01", "code": "205", "unit_id": "01"}
+    )
+    updated = uc.update_org_cost_center_icon(
+        _admin(), {"branch": "01", "code": "205", "icon_key": "laptop"}
+    )
+    assert updated["icon_key"] == "laptop"
+    assert any(a["action"] == "org_cost_center.icon_updated" for a in repo.audits)
+    cleared = uc.update_org_cost_center_icon(
+        _admin(), {"branch": "01", "code": "205", "icon_key": None}
+    )
+    assert cleared["icon_key"] is None
+
+
+def test_update_org_cost_center_icon_rejects_unknown_key():
+    repo = FakeRepo()
+    erp = FakeErp()
+    uc = BudgetPlanningUseCases(repository=repo, erp_cost_centers=erp)  # type: ignore[arg-type]
+    uc.create_org_cost_center_from_erp(
+        _admin(), {"branch": "01", "code": "205", "unit_id": "01"}
+    )
+    with pytest.raises(BudgetCostCenterInvalidError):
+        uc.update_org_cost_center_icon(
+            _admin(), {"branch": "01", "code": "205", "icon_key": "not-a-real-icon"}
+        )
 
 
 def test_list_erp_cost_centers_filtered_by_branch():

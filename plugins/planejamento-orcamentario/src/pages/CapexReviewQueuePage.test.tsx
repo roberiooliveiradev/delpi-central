@@ -24,6 +24,24 @@ vi.mock("@delpi/plugin-ui/index", () => ({
     function StateBox({ children }: { children: ReactNode }) {
       return <div role="alert">{children}</div>;
     },
+  createHostContainedModalShell:
+    () =>
+    function HostContainedDialog({
+      open,
+      title,
+      children,
+    }: {
+      open: boolean;
+      title: ReactNode;
+      children?: ReactNode;
+    }) {
+      if (!open) return null;
+      return (
+        <div role="dialog" aria-label={String(title)}>
+          {children}
+        </div>
+      );
+    },
 }));
 
 const permissionsState = {
@@ -52,6 +70,7 @@ const plan = {
   status: "submitted",
   version: 2,
   submitted_by: "owner-1",
+  submitted_by_name: "Owner",
   submitted_at: "2026-08-05T12:00:00Z",
 };
 
@@ -110,7 +129,7 @@ describe("CapexReviewQueuePage", () => {
     async () => {
       render(<CapexReviewQueuePage />);
       await screen.findByText(/Filial 01 · 205/);
-      expect(screen.getByText(/owner-1/)).toBeTruthy();
+      expect(screen.getByText(/Owner/)).toBeTruthy();
       expect(screen.getByRole("link", { name: /Analisar/i })).toBeTruthy();
     },
     15000,

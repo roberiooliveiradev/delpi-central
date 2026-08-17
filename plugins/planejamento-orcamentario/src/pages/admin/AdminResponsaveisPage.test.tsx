@@ -119,6 +119,12 @@ const row = {
   updated_at: "2026-08-04T12:00:00Z",
 };
 
+const rowPersonnel = {
+  ...row,
+  id: "r2",
+  module: "personnel" as const,
+};
+
 beforeEach(() => {
   permissionsState.profile.permissions = [
     "planejamento-orcamentario.access",
@@ -129,10 +135,13 @@ beforeEach(() => {
   vi.mocked(budgetApi.listAdminExercises).mockResolvedValue([exercise]);
   vi.mocked(budgetApi.listAdminScopes).mockResolvedValue({ items: [], catalog });
   vi.mocked(budgetApi.listAdminBudgetResponsibilities).mockResolvedValue({
-    items: [row],
-    pagination: { page: 1, page_size: 20, total: 1, has_more: false },
+    items: [row, rowPersonnel],
+    pagination: { page: 1, page_size: 20, total: 2, has_more: false },
   });
-  vi.mocked(budgetApi.createAdminBudgetResponsibility).mockResolvedValue(row);
+  vi.mocked(budgetApi.createAdminBudgetResponsibilityPair).mockResolvedValue({
+    capex: row,
+    personnel: rowPersonnel,
+  });
   vi.mocked(budgetApi.updateAdminBudgetResponsibility).mockResolvedValue({
     ...row,
     responsibility_type: "collaborator",
@@ -155,11 +164,14 @@ function createSection() {
 }
 
 describe("AdminResponsaveisPage", () => {
-  it("carrega listagem e exibe vínculo", async () => {
+  it("carrega listagem e exibe vínculo unificado CAPEX+Pessoal", async () => {
     render(<AdminResponsaveisPage />);
     await screen.findByText("Maria da Silva");
     expect(budgetApi.listAdminBudgetResponsibilities).toHaveBeenCalled();
     expect(screen.getAllByText(/Filial 01 · 1234 — Produção/).length).toBeGreaterThan(0);
+    expect(screen.getByText("CAPEX")).toBeTruthy();
+    expect(screen.getByText("Pessoal")).toBeTruthy();
+    expect(screen.getAllByText("Maria da Silva")).toHaveLength(1);
   });
 
   it("aplica filtros e paginação via API", async () => {
@@ -224,7 +236,7 @@ describe("AdminResponsaveisPage", () => {
     await within(form).findByText(/Maria da Silva será responsável/i);
     fireEvent.click(within(form).getByRole("button", { name: "Salvar vínculo" }));
     await waitFor(() => {
-      expect(budgetApi.createAdminBudgetResponsibility).toHaveBeenCalledWith(
+      expect(budgetApi.createAdminBudgetResponsibilityPair).toHaveBeenCalledWith(
         expect.objectContaining({
           user_sub: "sub-maria",
           unit_id: "01",
@@ -253,12 +265,14 @@ describe("AdminResponsaveisPage", () => {
     });
     fireEvent.click(within(form).getByRole("button", { name: "Salvar vínculo" }));
     await screen.findByText(/não pode ser anterior/i);
-    expect(budgetApi.createAdminBudgetResponsibility).not.toHaveBeenCalled();
+    expect(budgetApi.createAdminBudgetResponsibilityPair).not.toHaveBeenCalled();
   });
 
   it("trata duplicidade retornada pela API", async () => {
-    vi.mocked(budgetApi.createAdminBudgetResponsibility).mockRejectedValueOnce(
-      new Error("[budget_responsibility_conflict] Já existe responsabilidade ativa"),
+    vi.mocked(budgetApi.createAdminBudgetResponsibilityPair).mockRejectedValueOnce(
+      new Error(
+        "Já existe vínculo ativo para este usuário, exercício, filial e centro de custo (CAPEX e Pessoal).",
+      ),
     );
     render(<AdminResponsaveisPage />);
     fireEvent.click(await screen.findByRole("button", { name: /Novo vínculo/i }));
@@ -269,10 +283,10 @@ describe("AdminResponsaveisPage", () => {
       target: { value: "1234" },
     });
     fireEvent.click(within(form).getByRole("button", { name: "Salvar vínculo" }));
-    await screen.findByText(/Já existe responsabilidade ativa/i);
+    await screen.findByText(/Já existe vínculo ativo/i);
   });
 
-  it("edita tipo/vigência e desativa com confirmação", async () => {
+  it("edita tipo/vigência e desativa o par com confirmação", async () => {
     vi.stubGlobal(
       "confirm",
       vi.fn(() => true),
@@ -286,15 +300,25 @@ describe("AdminResponsaveisPage", () => {
     });
     fireEvent.click(within(edit).getByRole("button", { name: "Salvar alterações" }));
     await waitFor(() => {
+      expect(budgetApi.updateAdminBudgetResponsibility).toHaveBeenCalledTimes(2);
       expect(budgetApi.updateAdminBudgetResponsibility).toHaveBeenCalledWith(
         "r1",
+        expect.objectContaining({ responsibility_type: "collaborator" }),
+      );
+      expect(budgetApi.updateAdminBudgetResponsibility).toHaveBeenCalledWith(
+        "r2",
         expect.objectContaining({ responsibility_type: "collaborator" }),
       );
     });
     fireEvent.click(screen.getByRole("button", { name: /Desativar/i }));
     await waitFor(() => {
+      expect(budgetApi.deactivateAdminBudgetResponsibility).toHaveBeenCalledTimes(2);
       expect(budgetApi.deactivateAdminBudgetResponsibility).toHaveBeenCalledWith(
         "r1",
+        "Desativação pela administração",
+      );
+      expect(budgetApi.deactivateAdminBudgetResponsibility).toHaveBeenCalledWith(
+        "r2",
         "Desativação pela administração",
       );
     });
@@ -302,14 +326,19 @@ describe("AdminResponsaveisPage", () => {
 
   it("reativa vínculo inativo", async () => {
     vi.mocked(budgetApi.listAdminBudgetResponsibilities).mockResolvedValue({
-      items: [{ ...row, is_active: false }],
-      pagination: { page: 1, page_size: 20, total: 1, has_more: false },
+      items: [
+        { ...row, is_active: false },
+        { ...rowPersonnel, is_active: false },
+      ],
+      pagination: { page: 1, page_size: 20, total: 2, has_more: false },
     });
     render(<AdminResponsaveisPage />);
     await screen.findByText("Reativar");
     fireEvent.click(screen.getByRole("button", { name: /Reativar/i }));
     await waitFor(() => {
+      expect(budgetApi.reactivateAdminBudgetResponsibility).toHaveBeenCalledTimes(2);
       expect(budgetApi.reactivateAdminBudgetResponsibility).toHaveBeenCalledWith("r1");
+      expect(budgetApi.reactivateAdminBudgetResponsibility).toHaveBeenCalledWith("r2");
     });
   });
 

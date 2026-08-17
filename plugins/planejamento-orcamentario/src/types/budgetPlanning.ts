@@ -160,6 +160,8 @@ export type OrgCostCenter = {
   unit_code?: string | null;
   area_code?: string | null;
   source?: "manual" | "erp" | string | null;
+  /** Chave Lucide do catálogo (ex.: laptop). null/ausente = padrão. */
+  icon_key?: string | null;
   active?: boolean;
 };
 
@@ -192,6 +194,9 @@ export type BudgetResponsibility = {
   branch?: string | null;
   area_id?: string | null;
   cost_center_id: string;
+  /** Nome amigável do CC (catálogo interno), quando disponível. */
+  cost_center_name?: string | null;
+  cost_center_icon_key?: string | null;
   responsibility_type: ResponsibilityType;
   valid_from?: string | null;
   valid_until?: string | null;
@@ -247,6 +252,10 @@ export type CapexCategory = {
   name: string;
   description?: string | null;
   display_order: number;
+  icon_key?: string | null;
+  /** Imagem customizada enviada (PNG/JPEG/WebP/GIF). Tem prioridade sobre icon_key. */
+  has_custom_icon?: boolean;
+  icon_image_mime?: string | null;
   is_active: boolean;
   is_system_default: boolean;
   created_by?: string;
@@ -262,12 +271,14 @@ export type CapexCategoryCreateInput = {
   name: string;
   description?: string | null;
   display_order?: number;
+  icon_key?: string | null;
 };
 
 export type CapexCategoryUpdateInput = {
   name?: string;
   description?: string | null;
   display_order?: number;
+  icon_key?: string | null;
 };
 
 export type CapexCategoryListResult = {
@@ -275,6 +286,7 @@ export type CapexCategoryListResult = {
 };
 
 export type CapexInvestmentStatus = "draft" | "archived";
+export type CapexInvestmentReviewStatus = "pending" | "approved" | "rejected";
 export type CapexPriority = "1" | "2" | "3" | "4";
 export type CapexOrigin = "national" | "imported";
 export type CapexClassification = "1" | "2" | "3" | "4" | "5" | "6";
@@ -303,6 +315,11 @@ export type CapexInvestment = {
   application?: string | null;
   observations?: string | null;
   status: CapexInvestmentStatus | string;
+  review_status?: CapexInvestmentReviewStatus | string | null;
+  review_comment?: string | null;
+  reviewed_by?: string | null;
+  reviewed_by_name?: string | null;
+  reviewed_at?: string | null;
   version: number;
   created_by?: string;
   created_at?: string;
@@ -423,7 +440,9 @@ export type CapexPlanHistoryAction =
   | "submitted"
   | "request_changes"
   | "rejected"
-  | "approved";
+  | "approved"
+  | "investment_approved"
+  | "investment_rejected";
 
 export type CapexPlan = {
   id: string;
@@ -432,9 +451,18 @@ export type CapexPlan = {
   branch?: string | null;
   area_id?: string | null;
   cost_center_id: string;
+  /** Lucide key do CC (`org_cost_centers.icon_key`), quando enriquecido na listagem. */
+  cost_center_icon_key?: string | null;
+  cost_center_name?: string | null;
+  /** Responsável (owner) do CC no exercício, quando enriquecido. */
+  cost_center_owner_name?: string | null;
+  cost_center_owner_sub?: string | null;
+  /** Investimentos ativos (status draft) do CC — listagem/fila. */
+  investment_count?: number | null;
   status: CapexPlanStatus | string;
   version: number;
   submitted_by?: string | null;
+  submitted_by_name?: string | null;
   submitted_at?: string | null;
   reviewed_by?: string | null;
   reviewed_at?: string | null;
@@ -457,6 +485,7 @@ export type CapexPlanHistoryEntry = {
   actor_sub: string;
   actor_name?: string | null;
   created_at: string;
+  investment_id?: string | null;
 };
 
 export type CapexPlanHistoryResult = {
@@ -681,9 +710,16 @@ export type PersonnelPlan = {
   branch?: string | null;
   area_id?: string | null;
   cost_center_id: string;
+  /** Lucide key do CC (`org_cost_centers.icon_key`), quando enriquecido na listagem. */
+  cost_center_icon_key?: string | null;
+  cost_center_name?: string | null;
+  /** Responsável (owner) do CC no exercício, quando enriquecido. */
+  cost_center_owner_name?: string | null;
+  cost_center_owner_sub?: string | null;
   status: PersonnelPlanStatus | string;
   version: number;
   submitted_by?: string | null;
+  submitted_by_name?: string | null;
   submitted_at?: string | null;
   reviewed_by?: string | null;
   reviewed_at?: string | null;

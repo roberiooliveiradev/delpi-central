@@ -4,8 +4,11 @@ import { ArrowLeft } from "lucide-react";
 import { routeHref, type AppRoute } from "../utils/routing";
 
 type PageShellProps = {
+  /** Mantido para acessibilidade (sr-only); não é exibido no header. */
   title: string;
+  /** @deprecated Não exibido — conteúdo da página deve trazer o contexto. */
   subtitle?: string;
+  /** @deprecated Não exibido no header. */
   icon?: ReactNode;
   actions?: ReactNode;
   backRoute?: AppRoute;
@@ -14,10 +17,11 @@ type PageShellProps = {
   children: ReactNode;
 };
 
+const DELPI_LOGO_URL =
+  typeof window !== "undefined" ? `${window.location.origin}/logoDelpi.svg` : "/logoDelpi.svg";
+
 export function PageShell({
   title,
-  subtitle,
-  icon,
   actions,
   backRoute,
   backHref,
@@ -34,16 +38,19 @@ export function PageShell({
                 <ArrowLeft size={16} aria-hidden="true" />
                 Voltar
               </a>
-            ) : null}
-            <div className="po-page-header__title-row">
-              {icon ? <span className="po-page-header__icon">{icon}</span> : null}
-              <div>
-                <h1 className="po-page-header__title">{title}</h1>
-                {subtitle ? <p className="po-page-header__subtitle">{subtitle}</p> : null}
-              </div>
-            </div>
+            ) : (
+              <span className="po-page-header__spacer" aria-hidden="true" />
+            )}
+            <h1 className="po-sr-only">{title}</h1>
           </div>
-          {actions ? <div className="po-page-header__actions">{actions}</div> : null}
+          <div className="po-page-header__end">
+            {actions ? <div className="po-page-header__actions">{actions}</div> : null}
+            <img
+              className="po-page-header__logo"
+              src={DELPI_LOGO_URL}
+              alt="DELPI Conexões Elétricas"
+            />
+          </div>
         </header>
         {children}
       </div>

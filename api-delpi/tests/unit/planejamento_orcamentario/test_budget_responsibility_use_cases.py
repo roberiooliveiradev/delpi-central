@@ -149,8 +149,18 @@ class FakeRepo:
                 if vu and check > vu:
                     continue
                 filtered.append(i)
-            return filtered
-        return items
+            items = filtered
+        enriched = []
+        for i in items:
+            row = deepcopy(i)
+            cc = get_org_cost_center_from_store(
+                self.ccs, row.get("cost_center_id") or "", branch=row.get("unit_id")
+            )
+            if cc:
+                row["cost_center_name"] = cc.get("name")
+                row["cost_center_icon_key"] = cc.get("icon_key")
+            enriched.append(row)
+        return enriched
 
     def create_budget_responsibility(self, payload: dict[str, Any]):
         rid = str(uuid4())
@@ -376,6 +386,7 @@ def test_my_responsibilities_from_jwt_only(uc):
     assert mine["user_sub"] == "user-1"
     assert len(mine["items"]) == 1
     assert mine["items"][0]["cost_center_id"] == "205"
+    assert mine["items"][0].get("cost_center_name")
     # unknown JWT
     with pytest.raises(BudgetResponsibilityForbiddenError):
         use_cases.list_my_responsibilities(
