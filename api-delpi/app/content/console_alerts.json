@@ -1,0 +1,37 @@
+{
+  "thresholds": {
+    "poolSaturationPct": 90
+  },
+  "slo": {
+    "availability_pct": 99.0,
+    "p95_ms": 3000
+  },
+  "alerts": {
+    "pool_saturation": {
+      "severity": "warning",
+      "messageTemplate": "Pool {pool_name} saturado: {occupancy_pct}% (limiar {threshold_pct}%).",
+      "guidance": "Abra Cache → connection pools para ver ocupação Plugins Postgres e TOTVS. Ajuste PLUGINS_DB_POOL_* / TOTVS_POOL_* ou investigue vazamento de conexões."
+    },
+    "p95_latency": {
+      "severity": "warning",
+      "messageTemplate": "p95 de latência ({p95_ms} ms) acima do limiar ({threshold_ms} ms).",
+      "guidance": "Latência HTTP alta na janela amostrada. Use Cache para callers e SQL para queries pesadas."
+    },
+    "slow_sql": {
+      "severity": "warning",
+      "messageTemplate": "Query lenta detectada ({max_ms} ms).",
+      "guidance": "Abra SQL para ver preview, operation id e repetição. Confira hit rate na aba Cache se for LMP/estoque."
+    },
+    "smoke_failure": {
+      "severity": "critical",
+      "messageTemplate": "Smoke suite falhou: {failed} caso(s).",
+      "guidance": "Reexecute a suite em Verificações e confira operation id e status HTTP de cada caso."
+    }
+  },
+  "sliLabels": {
+    "availability_pct": "Disponibilidade (janela)",
+    "p95_ms": "p95 HTTP (janela)",
+    "error_budget_remaining_pct": "Error budget restante (janela)"
+  },
+  "emptyTrafficHint": "Sem tráfego na janela."
+}
