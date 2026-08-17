@@ -18,7 +18,13 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/index": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"]
+    }
   },
   "include": ["src"]
 }

@@ -8,9 +8,17 @@ export type ConsoleAlert = {
   details?: Record<string, unknown>;
 };
 
+export type ConsolePoolOccupancy = {
+  enabled?: boolean;
+  max_size?: number;
+  in_use?: number;
+  occupancy_pct?: number;
+};
+
 export type ConsoleHealthPayload = {
   status: "ok" | "warning" | "critical";
   open_alert_count: number;
+  open_alerts_count?: number;
   open_alerts: ConsoleAlert[];
   recent_alerts: Array<
     ConsoleAlert & {
@@ -19,8 +27,23 @@ export type ConsoleHealthPayload = {
       portal_notified?: boolean;
     }
   >;
+  traffic?: {
+    total_requests: number;
+    error_count: number;
+    error_rate_pct: number;
+    server_error_count?: number;
+    server_error_rate_pct?: number;
+  };
+  pools?: {
+    captured_at?: string;
+    plugins_postgres?: ConsolePoolOccupancy;
+    totvs?: ConsolePoolOccupancy;
+    max_occupancy_pct?: number;
+  };
   metrics: {
     p95_ms: number;
+    error_rate_pct?: number;
+    pool_occupancy_pct?: number;
     caller_requests: number;
     sql_samples: number;
     cache_hit_rate_pct: number;

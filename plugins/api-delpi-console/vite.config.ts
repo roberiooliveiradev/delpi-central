@@ -5,6 +5,7 @@ import { federationReactProxyFixPlugin } from "../vite/federationReactProxyFix";
 
 import {
   FEDERATION_SHARED_REACT,
+  pluginUiRemote,
   reactResolveAliases,
 } from "../vite/federation.shared";
 
@@ -13,6 +14,7 @@ export default defineConfig({
     federation({
       name: "api-delpi-console",
       filename: "remoteEntry.js",
+      remotes: pluginUiRemote(),
       exposes: {
         "./App": "./src/bootstrap.tsx",
       },

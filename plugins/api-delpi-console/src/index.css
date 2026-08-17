@@ -194,6 +194,12 @@
   margin: 0.35rem 0 0;
   color: var(--adc-muted);
   font-size: 0.95rem;
+}.api-delpi-console .adc-glance{
+  margin-bottom: var(--adc-section-gap);
+}.api-delpi-console .adc-glance-kpis{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--adc-grid-gap);
 }.api-delpi-console .adc-card-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

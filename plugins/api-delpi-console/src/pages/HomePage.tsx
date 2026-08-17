@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import type { MetricKpiCardTone } from "@delpi/plugin-ui";
 import {
   Activity,
   Bell,
@@ -10,6 +11,7 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
+import { ConsoleMetricKpiCard, ConsoleSectionCard } from "../app/consoleUi";
 import { MONITOR_REFRESH_MS } from "../constants/monitoring";
 import { fetchConsoleHealth, type ConsoleHealthPayload } from "../lib/consoleAlerts";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
@@ -23,6 +25,94 @@ function statusClass(status: ConsoleHealthPayload["status"] | undefined): string
   if (status === "critical") return "adc-health__err";
   if (status === "warning") return "adc-health__warn";
   return "adc-health__ok";
+}
+
+function formatPct(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toFixed(value >= 10 ? 0 : 1)}%`;
+}
+
+function formatMs(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${Math.round(value)} ms`;
+}
+
+function p95Tone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  const p95 = health.metrics.p95_ms;
+  const threshold = health.thresholds.p95_ms;
+  if (!threshold || !health.traffic?.total_requests) return "default";
+  if (p95 >= threshold) return "negative";
+  return "positive";
+}
+
+function alertTone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  if (health.status === "critical") return "negative";
+  if (health.status === "warning" || health.open_alert_count > 0) return "warning";
+  return "positive";
+}
+
+function ConsoleHealthGlance({
+  health,
+  onNavigate,
+}: {
+  health: ConsoleHealthPayload;
+  onNavigate: Props["onNavigate"];
+}) {
+  const requests = health.traffic?.total_requests ?? health.metrics.caller_requests ?? 0;
+  const emptyWindow = requests <= 0;
+
+  return (
+    <ConsoleSectionCard
+      title="Glance operacional"
+      subtitle="RED da janela amostrada (polling 30 s) — saturação e alertas vêm do contrato da API."
+      actions={
+        <button type="button" className="adc-link" onClick={() => onNavigate("alertas")}>
+          Ver alertas
+        </button>
+      }
+    >
+      {emptyWindow ? (
+        <p className="adc-muted">Sem tráfego na janela.</p>
+      ) : null}
+      <div className="adc-glance-kpis" role="group" aria-label="Métricas RED do console">
+        <ConsoleMetricKpiCard
+          label="Requisições"
+          value={emptyWindow ? "—" : String(requests)}
+          hint="Janela em memória"
+          tone="default"
+        />
+        <ConsoleMetricKpiCard
+          label="Erros"
+          value={emptyWindow ? "—" : formatPct(health.traffic?.error_rate_pct ?? health.metrics.error_rate_pct)}
+          hint={
+            emptyWindow
+              ? "Sem amostras"
+              : `${health.traffic?.error_count ?? 0} com status ≥ 400`
+          }
+          tone="default"
+        />
+        <ConsoleMetricKpiCard
+          label="p95"
+          value={emptyWindow ? "—" : formatMs(health.metrics.p95_ms)}
+          hint={emptyWindow ? "Sem amostras" : `Limiar ${formatMs(health.thresholds.p95_ms)}`}
+          tone={p95Tone(health)}
+        />
+        <ConsoleMetricKpiCard
+          label="Pool"
+          value={formatPct(health.metrics.pool_occupancy_pct ?? health.pools?.max_occupancy_pct)}
+          hint="Máx. ocupação Plugins/TOTVS"
+          tone="default"
+          titleHint="Detalhe dos pools na aba Cache"
+        />
+        <ConsoleMetricKpiCard
+          label="Alertas"
+          value={String(health.open_alerts_count ?? health.open_alert_count)}
+          hint={health.status}
+          tone={alertTone(health)}
+        />
+      </div>
+    </ConsoleSectionCard>
+  );
 }
 
 export function HomePage({ onNavigate }: Props) {
@@ -56,6 +146,14 @@ export function HomePage({ onNavigate }: Props) {
           </p>
         </div>
       </header>
+
+      {consoleHealth ? (
+        <div className="adc-glance">
+          <ConsoleHealthGlance health={consoleHealth} onNavigate={onNavigate} />
+        </div>
+      ) : loading ? (
+        <p className="adc-muted">Carregando glance operacional…</p>
+      ) : null}
 
       <section className="adc-card-grid">
         <article className="adc-card">
