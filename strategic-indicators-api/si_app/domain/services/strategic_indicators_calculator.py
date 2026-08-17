@@ -298,6 +298,8 @@ class StrategicIndicatorsCalculator:
                     start_date=start_date,
                     end_date=end_date,
                     competence=competence,
+                    value_unit=getattr(indicator, "value_unit", None),
+                    indicator_id=indicator.indicator_id,
                 )
                 if comparable_goal <= 0:
                     calculated.append(
@@ -472,7 +474,13 @@ class StrategicIndicatorsCalculator:
         start_date: str | None = None,
         end_date: str | None = None,
         competence: str | None = None,
+        value_unit: str | None = None,
+        indicator_id: str | None = None,
     ) -> float:
+        aggregation = resolve_consolidated_value_aggregation(
+            indicator_id=(indicator_id or "").strip(),
+            value_unit=value_unit,
+        )
         normalized_goal_mode = (goal_mode or "standard").strip().lower()
 
         if normalized_goal_mode == "monthly_curve":
@@ -482,6 +490,7 @@ class StrategicIndicatorsCalculator:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                aggregation=aggregation,
             )
 
         return self._calculate_standard_period_goal(
@@ -490,6 +499,7 @@ class StrategicIndicatorsCalculator:
             start_date=start_date,
             end_date=end_date,
             competence=competence,
+            aggregation=aggregation,
         )
 
     def resolve_goal_period_flags(
@@ -498,10 +508,16 @@ class StrategicIndicatorsCalculator:
         start_date: str | None = None,
         end_date: str | None = None,
         competence: str | None = None,
+        value_unit: str | None = None,
+        indicator_id: str | None = None,
     ) -> dict[str, str | bool]:
-        """Flags de apresentação: meta acumulada no intervalo (com ou sem mês parcial)."""
+        """Flags: goal_aggregation sum|average; partial só se intervalo < 1 unidade (mês)."""
+        aggregation = resolve_consolidated_value_aggregation(
+            indicator_id=(indicator_id or "").strip(),
+            value_unit=value_unit,
+        )
         return {
-            "goal_aggregation": "accumulated",
+            "goal_aggregation": aggregation,
             "goal_period_partial": self._is_goal_period_partial(
                 start_date=start_date,
                 end_date=end_date,
@@ -517,6 +533,7 @@ class StrategicIndicatorsCalculator:
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
+        aggregation: str = "sum",
     ) -> float:
         if goal_value <= 0:
             return 0.0
@@ -532,6 +549,14 @@ class StrategicIndicatorsCalculator:
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
         if start is not None and end is not None:
+            if aggregation == "average":
+                return self._guard_positive_rounded_goal(
+                    self._average_constant_monthly_prorata(
+                        monthly_base=monthly_base,
+                        start=start.date(),
+                        end=end.date(),
+                    )
+                )
             return self._guard_positive_rounded_goal(
                 self._sum_constant_monthly_prorata(
                     monthly_base=monthly_base,
@@ -545,6 +570,8 @@ class StrategicIndicatorsCalculator:
             end_date=end_date,
             competence=competence,
         )
+        if aggregation == "average":
+            return round(monthly_base, 2)
         return round(monthly_base * months, 2)
 
     def _monthly_equivalent_goal(
@@ -579,6 +606,27 @@ class StrategicIndicatorsCalculator:
                 continue
             total += monthly_base * (overlapped / days_in_month)
         return total
+
+    def _average_constant_monthly_prorata(
+        self,
+        *,
+        monthly_base: float,
+        start: date,
+        end: date,
+    ) -> float:
+        """Nível médio ponderado por dias (meta constante → ≈ monthly_base)."""
+        weighted = 0.0
+        total_days = 0
+        for _year, _month, days_in_month, overlapped in self._iter_month_day_overlaps(
+            start, end
+        ):
+            if days_in_month <= 0 or overlapped <= 0:
+                continue
+            weighted += monthly_base * overlapped
+            total_days += overlapped
+        if total_days <= 0:
+            return 0.0
+        return weighted / total_days
 
     def _iter_month_day_overlaps(
         self,
@@ -616,19 +664,25 @@ class StrategicIndicatorsCalculator:
         end_date: str | None,
         competence: str | None,
     ) -> bool:
+        """True só se o intervalo cabe em uma unidade (mês) incompleta — não em multi-mês."""
         del competence  # datas explícitas mandam; competência sozinha = mês cheio
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
         if start is None or end is None:
             return False
 
-        for _year, _month, days_in_month, overlapped in self._iter_month_day_overlaps(
-            start.date(),
-            end.date(),
-        ):
-            if 0 < overlapped < days_in_month:
-                return True
-        return False
+        months_with_overlap = [
+            (days_in_month, overlapped)
+            for _year, _month, days_in_month, overlapped in self._iter_month_day_overlaps(
+                start.date(),
+                end.date(),
+            )
+            if overlapped > 0
+        ]
+        if len(months_with_overlap) != 1:
+            return False
+        days_in_month, overlapped = months_with_overlap[0]
+        return 0 < overlapped < days_in_month
 
     def _guard_positive_rounded_goal(self, raw: float) -> float:
         rounded = round(raw, 2)
@@ -762,6 +816,8 @@ class StrategicIndicatorsCalculator:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                value_unit=getattr(indicator, "value_unit", None),
+                indicator_id=indicator.indicator_id,
             )
             branch_scores.append(
                 self.calculate_indicator_score(
@@ -1388,6 +1444,8 @@ class StrategicIndicatorsCalculator:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                value_unit=getattr(indicator, "value_unit", None),
+                indicator_id=indicator.indicator_id,
             )
 
         resolved_scope = normalize_goal_scope_branch(
@@ -1406,6 +1464,8 @@ class StrategicIndicatorsCalculator:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                value_unit=getattr(indicator, "value_unit", None),
+                indicator_id=indicator.indicator_id,
             )
 
         if (
@@ -1421,6 +1481,8 @@ class StrategicIndicatorsCalculator:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                value_unit=getattr(indicator, "value_unit", None),
+                indicator_id=indicator.indicator_id,
             )
 
         return None
@@ -1534,12 +1596,12 @@ class StrategicIndicatorsCalculator:
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
+        aggregation: str = "sum",
     ) -> float:
         if not monthly_targets:
             return 0.0
 
         from si_app.application.services.strategic_indicators.goal_value_policy import (
-            calendar_month_to_curve_point,
             expected_monthly_curve_points,
             parse_year_from_competence,
         )
@@ -1560,8 +1622,16 @@ class StrategicIndicatorsCalculator:
         resolved_year = year or 2026
 
         if start is not None and end is not None:
-            return self._guard_positive_rounded_goal(
-                self._sum_curve_prorata(
+            raw = (
+                self._average_curve_prorata(
+                    targets_by_point=targets_by_point,
+                    goal_periodicity=goal_periodicity,
+                    start=start.date(),
+                    end=end.date(),
+                    year=resolved_year,
+                )
+                if aggregation == "average"
+                else self._sum_curve_prorata(
                     targets_by_point=targets_by_point,
                     goal_periodicity=goal_periodicity,
                     start=start.date(),
@@ -1569,6 +1639,7 @@ class StrategicIndicatorsCalculator:
                     year=resolved_year,
                 )
             )
+            return self._guard_positive_rounded_goal(raw)
 
         from si_app.application.services.strategic_indicators.goal_value_policy import (
             curve_point_indices_for_calendar_months,
@@ -1584,10 +1655,48 @@ class StrategicIndicatorsCalculator:
             calendar_months,
             year=resolved_year,
         )
-        comparable_goal = sum(
+        values = [
             targets_by_point.get(point_number, 0.0) for point_number in point_indices
-        )
+        ]
+        if aggregation == "average":
+            positive = [v for v in values if v > 0]
+            if not positive:
+                return 0.0
+            return round(sum(positive) / len(positive), 2)
+        comparable_goal = sum(values)
         return round(comparable_goal, 2)
+
+    def _average_curve_prorata(
+        self,
+        *,
+        targets_by_point: dict[int, float],
+        goal_periodicity: str,
+        start: date,
+        end: date,
+        year: int,
+    ) -> float:
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            calendar_month_to_curve_point,
+        )
+
+        weighted = 0.0
+        total_days = 0
+        for cursor_year, cursor_month, days_in_month, overlapped in self._iter_month_day_overlaps(
+            start, end
+        ):
+            if overlapped <= 0:
+                continue
+            point = calendar_month_to_curve_point(
+                goal_periodicity,
+                cursor_month,
+                year=cursor_year or year,
+            )
+            target = float(targets_by_point.get(point, 0.0) or 0.0)
+            weighted += target * overlapped
+            total_days += overlapped
+        if total_days <= 0:
+            return 0.0
+        return weighted / total_days
 
     def _sum_curve_prorata(
         self,

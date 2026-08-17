@@ -514,6 +514,8 @@ class GetStrategicIndicatorsPresentationUseCase:
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
+                value_unit=getattr(indicator, "value_unit", None),
+                indicator_id=getattr(indicator, "indicator_id", None),
             )
 
             for unit_id, raw_value in indicator.unit_values.items():

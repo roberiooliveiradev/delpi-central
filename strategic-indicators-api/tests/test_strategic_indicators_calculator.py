@@ -137,14 +137,16 @@ def test_standard_closed_month_goal_unchanged() -> None:
         start_date="01-05-2026",
         end_date="31-05-2026",
         competence="2026-05",
+        value_unit="currency",
     )
     assert comparable == 310_000.0
     flags = calculator.resolve_goal_period_flags(
         start_date="01-05-2026",
         end_date="31-05-2026",
         competence="2026-05",
+        value_unit="currency",
     )
-    assert flags["goal_aggregation"] == "accumulated"
+    assert flags["goal_aggregation"] == "sum"
     assert flags["goal_period_partial"] is False
 
 
@@ -157,13 +159,16 @@ def test_standard_mtd_day_15_prorata() -> None:
         start_date="01-05-2026",
         end_date="15-05-2026",
         competence="2026-05",
+        value_unit="currency",
     )
     assert comparable == 150_000.0
     flags = calculator.resolve_goal_period_flags(
         start_date="01-05-2026",
         end_date="15-05-2026",
+        value_unit="currency",
     )
     assert flags["goal_period_partial"] is True
+    assert flags["goal_aggregation"] == "sum"
 
 
 def test_standard_ytd_partial_last_month() -> None:
@@ -174,9 +179,57 @@ def test_standard_ytd_partial_last_month() -> None:
         goal_periodicity="monthly",
         start_date="01-01-2026",
         end_date="15-05-2026",
+        value_unit="currency",
     )
     expected = 400_000.0 + round(100_000.0 * (15 / 31), 2)
     assert comparable == expected
+    flags = calculator.resolve_goal_period_flags(
+        start_date="01-01-2026",
+        end_date="15-05-2026",
+        value_unit="currency",
+    )
+    # Multi-mês: acumulada, sem parcial no rótulo
+    assert flags["goal_period_partial"] is False
+
+
+def test_percent_ytd_average_not_sum() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    comparable = calculator.calculate_comparable_goal(
+        goal_value=95.0,
+        goal_periodicity="monthly",
+        start_date="01-01-2026",
+        end_date="15-08-2026",
+        value_unit="percent",
+        indicator_id="commercial-sales-order-otd",
+    )
+    assert comparable == 95.0
+    flags = calculator.resolve_goal_period_flags(
+        start_date="01-01-2026",
+        end_date="15-08-2026",
+        value_unit="percent",
+        indicator_id="commercial-sales-order-otd",
+    )
+    assert flags["goal_aggregation"] == "average"
+    assert flags["goal_period_partial"] is False
+
+
+def test_percent_mtd_partial_keeps_level() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    comparable = calculator.calculate_comparable_goal(
+        goal_value=10.0,
+        goal_periodicity="monthly",
+        start_date="01-04-2026",
+        end_date="15-04-2026",
+        value_unit="percent",
+    )
+    assert comparable == 10.0
+    flags = calculator.resolve_goal_period_flags(
+        start_date="01-04-2026",
+        end_date="15-04-2026",
+        value_unit="percent",
+    )
+    assert flags["goal_aggregation"] == "average"
+    assert flags["goal_period_partial"] is True
 
 
 def test_standard_annual_periodicity_prorata() -> None:
@@ -187,6 +240,7 @@ def test_standard_annual_periodicity_prorata() -> None:
         goal_periodicity="annual",
         start_date="01-06-2026",
         end_date="10-06-2026",
+        value_unit="currency",
     )
     assert comparable == round(100_000.0 * (10 / 30), 2)
 
@@ -201,8 +255,26 @@ def test_monthly_curve_partial_month_fraction() -> None:
         start_date="01-05-2026",
         end_date="15-05-2026",
         competence="2026-05",
+        value_unit="currency",
     )
     assert comparable == 150_000.0
+
+
+def test_monthly_curve_percent_average_level() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    comparable = calculator.calculate_comparable_goal(
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        monthly_targets=[
+            {"month_number": 1, "target_value": 90.0},
+            {"month_number": 2, "target_value": 90.0},
+        ],
+        start_date="01-01-2026",
+        end_date="28-02-2026",
+        value_unit="percent",
+    )
+    assert comparable == 90.0
 
 
 def test_monthly_curve_closed_month_full_point() -> None:
@@ -215,6 +287,7 @@ def test_monthly_curve_closed_month_full_point() -> None:
         start_date="01-05-2026",
         end_date="31-05-2026",
         competence="2026-05",
+        value_unit="currency",
     )
     assert comparable == 500_000.0
 
@@ -226,6 +299,7 @@ def test_goal_prorata_anti_zero_guard() -> None:
         goal_periodicity="monthly",
         start_date="01-02-2026",
         end_date="01-02-2026",
+        value_unit="currency",
     )
     # 0.01 / 28 ≈ 0.000357 → round 0 → guard 0.01
     assert comparable == 0.01

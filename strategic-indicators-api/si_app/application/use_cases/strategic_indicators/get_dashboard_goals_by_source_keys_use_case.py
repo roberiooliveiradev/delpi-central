@@ -223,6 +223,8 @@ class GetDashboardGoalsBySourceKeysUseCase:
             start_date=period.start_date,
             end_date=period.end_date,
             competence=period.competence,
+            value_unit=indicator.get("value_unit"),
+            indicator_id=indicator.get("indicator_id"),
         )
         if goal and goal_value is not None:
             comparable_goal = self._calculator.calculate_comparable_goal(
@@ -233,6 +235,8 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 start_date=period.start_date,
                 end_date=period.end_date,
                 competence=period.competence,
+                value_unit=indicator.get("value_unit"),
+                indicator_id=indicator.get("indicator_id"),
             )
 
         goal_scope_branch = (

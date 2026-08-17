@@ -144,6 +144,10 @@ class GetDashboardIndicatorMetricUseCase:
                     start_date=period.start_date,
                     end_date=period.end_date,
                     competence=period.competence,
+                    value_unit=getattr(calculated, "value_unit", None)
+                    or getattr(catalog_item, "value_unit", None),
+                    indicator_id=getattr(calculated, "indicator_id", None)
+                    or getattr(catalog_item, "indicator_id", None),
                 )
 
         if comparable_goal is None and goals:

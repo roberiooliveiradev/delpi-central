@@ -71,7 +71,7 @@ def test_dashboard_goals_returns_comparable_goal_for_source_key() -> None:
     assert items[0]["has_goal"] is True
     assert items[0]["goal_scope_branch"] == ""
     assert items[0]["goal_scope_label"] == "Meta consolidada"
-    assert items[0]["goal_aggregation"] == "accumulated"
+    assert items[0]["goal_aggregation"] == "average"
     assert items[0]["goal_period_partial"] is False
 
 
@@ -89,6 +89,7 @@ def test_dashboard_goals_partial_month_prorata_and_flags() -> None:
     )
 
     assert len(items) == 1
-    assert items[0]["comparable_goal"] == 5.0
-    assert items[0]["goal_aggregation"] == "accumulated"
+    # percent → average: nível mensal, não metade
+    assert items[0]["comparable_goal"] == 10.0
+    assert items[0]["goal_aggregation"] == "average"
     assert items[0]["goal_period_partial"] is True
