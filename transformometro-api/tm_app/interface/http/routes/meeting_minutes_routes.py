@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, File, Form, Header, Query, Request, UploadFile
@@ -99,7 +100,8 @@ def _handle(exc: Exception):
         return fail(str(exc), 400)
     if isinstance(exc, AtaGenerationError):
         return fail(str(exc), 502)
-    raise exc
+    logging.getLogger(__name__).exception("meeting_minutes_route_error")
+    return fail("Erro interno ao processar a ata.", 500)
 
 
 @router.get("", operation_id="list_meeting_minutes")
