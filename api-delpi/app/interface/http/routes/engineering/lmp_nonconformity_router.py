@@ -28,6 +28,7 @@ from app.composition.engineering_composer import (
 from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
+    PluginsSchemaOutdatedError,
 )
 from app.interface.http.openapi_agent_metadata import (
     LMP_NONCONFORMITIES_EXPORT,
@@ -377,6 +378,9 @@ def get_lmp_nonconformity_streak():
             message="Streak sem NC em LMPs calculado com sucesso.",
             fields=_STREAK_FIELDS,
         )
+    except PluginsSchemaOutdatedError as exc:
+        log_error(f"Schema desatualizado ao calcular streak NC LMP: {exc}")
+        return error_response(str(exc), status_code=503)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao calcular streak NC LMP: {exc}")
         return error_response(

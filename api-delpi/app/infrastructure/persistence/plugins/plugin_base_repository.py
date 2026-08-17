@@ -6,14 +6,41 @@ import logging
 from typing import Any, Iterable
 
 from psycopg import Connection
+from psycopg.errors import UndefinedColumn, UndefinedTable
 
 from app.infrastructure.providers.database.plugins_postgres_connection import get_plugins_connection
 
 logger = logging.getLogger(__name__)
 
+_SCHEMA_OUTDATED_MESSAGE = (
+    "Schema do banco de plugins desatualizado. "
+    "No container api-delpi: "
+    "python scripts/run_plugins_migrations.py status "
+    "e depois up --plugin <slug> (nunca reset em produção)."
+)
+
 
 class PluginsRepositoryError(RuntimeError):
     """Erro base de persistência do contexto plugins."""
+
+
+class PluginsSchemaOutdatedError(PluginsRepositoryError):
+    """Código espera colunas/tabelas que as migrations ainda não aplicaram."""
+
+
+def wrap_plugins_db_error(operation: str, exc: BaseException) -> PluginsRepositoryError:
+    """Mapeia falhas de SQL do plugins DB para erros tipados."""
+    if isinstance(exc, (UndefinedColumn, UndefinedTable)):
+        detail = str(exc).strip().split("\n", 1)[0]
+        logger.error(
+            "Plugins schema outdated during %s: %s",
+            operation,
+            detail,
+        )
+        return PluginsSchemaOutdatedError(_SCHEMA_OUTDATED_MESSAGE)
+    return PluginsRepositoryError(
+        f"Falha ao executar {operation} no banco de plugins."
+    )
 
 
 class PluginBaseRepository:
@@ -51,9 +78,7 @@ class PluginBaseRepository:
                 "Plugins repository fetch_one failed.",
                 extra={"query": query},
             )
-            raise PluginsRepositoryError(
-                "Falha ao executar fetch_one no banco de plugins."
-            ) from exc
+            raise wrap_plugins_db_error("fetch_one", exc) from exc
 
     def fetch_all(
         self,
@@ -71,9 +96,7 @@ class PluginBaseRepository:
                 "Plugins repository fetch_all failed.",
                 extra={"query": query},
             )
-            raise PluginsRepositoryError(
-                "Falha ao executar fetch_all no banco de plugins."
-            ) from exc
+            raise wrap_plugins_db_error("fetch_all", exc) from exc
 
     def execute(
         self,
@@ -94,9 +117,7 @@ class PluginBaseRepository:
                 "Plugins repository execute failed.",
                 extra={"query": query},
             )
-            raise PluginsRepositoryError(
-                "Falha ao executar comando no banco de plugins."
-            ) from exc
+            raise wrap_plugins_db_error("comando", exc) from exc
 
     def execute_returning_one(
         self,
@@ -120,9 +141,7 @@ class PluginBaseRepository:
                 "Plugins repository execute_returning_one failed.",
                 extra={"query": query},
             )
-            raise PluginsRepositoryError(
-                "Falha ao executar comando com retorno no banco de plugins."
-            ) from exc
+            raise wrap_plugins_db_error("comando com retorno", exc) from exc
 
     def execute_many(
         self,
@@ -143,9 +162,7 @@ class PluginBaseRepository:
                 "Plugins repository execute_many failed.",
                 extra={"query": query},
             )
-            raise PluginsRepositoryError(
-                "Falha ao executar múltiplos comandos no banco de plugins."
-            ) from exc
+            raise wrap_plugins_db_error("múltiplos comandos", exc) from exc
 
     def commit(self) -> None:
         try:

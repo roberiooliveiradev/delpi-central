@@ -29,7 +29,10 @@ from app.application.use_cases.scheduling.expire_pending_scheduling_bookings_use
 )
 from app.composition.scheduling_composer import build_scheduling_repository
 from app.core.responses import error_response
-from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
+from app.infrastructure.persistence.plugins.plugin_base_repository import (
+    PluginsRepositoryError,
+    PluginsSchemaOutdatedError,
+)
 from app.infrastructure.persistence.plugins.repositories.scheduling.postgres_scheduling_repository import (
     BookingConflictError,
 )
@@ -194,6 +197,9 @@ def list_resources(
         repo = build_scheduling_repository()
         data = repo.list_resources(branch, active_only=active)
         return api_delpi_success(data, operation_id="list_scheduling_resources")
+    except PluginsSchemaOutdatedError as exc:
+        log_error(f"Schema desatualizado ao listar recursos: {exc}")
+        return error_response(str(exc), status_code=503)
     except Exception as exc:
         log_error(f"Erro ao listar recursos de agendamento: {exc}")
         return error_response("Erro interno ao listar recursos.", status_code=500)
@@ -297,6 +303,9 @@ def list_bookings(
             resource_id=resource_id,
         )
         return api_delpi_success(data, operation_id="list_scheduling_bookings")
+    except PluginsSchemaOutdatedError as exc:
+        log_error(f"Schema desatualizado ao listar reservas: {exc}")
+        return error_response(str(exc), status_code=503)
     except Exception as exc:
         log_error(f"Erro ao listar reservas: {exc}")
         return error_response("Erro interno ao listar reservas.", status_code=500)
@@ -324,6 +333,9 @@ def list_pending_bookings(
         booked_by = _current_user_id() if mine else None
         data = repo.list_pending_bookings(branch, booked_by_user_id=booked_by)
         return api_delpi_success(data, operation_id="list_pending_scheduling_bookings")
+    except PluginsSchemaOutdatedError as exc:
+        log_error(f"Schema desatualizado ao listar pendências: {exc}")
+        return error_response(str(exc), status_code=503)
     except Exception as exc:
         log_error(f"Erro ao listar reservas pendentes: {exc}")
         return error_response("Erro interno ao listar pendências.", status_code=500)
@@ -352,6 +364,9 @@ def list_my_bookings(
             limit=limit,
         )
         return api_delpi_success(data, operation_id="list_my_scheduling_bookings")
+    except PluginsSchemaOutdatedError as exc:
+        log_error(f"Schema desatualizado ao listar minhas reservas: {exc}")
+        return error_response(str(exc), status_code=503)
     except Exception as exc:
         log_error(f"Erro ao listar minhas reservas: {exc}")
         return error_response("Erro interno ao listar suas reservas.", status_code=500)

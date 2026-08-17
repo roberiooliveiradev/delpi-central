@@ -72,7 +72,15 @@ Categoria catálogo: `central_agendamento`.
 ## Migrations
 
 ```bash
-python scripts/run_plugins_migrations.py up --plugin scheduling
+# Diagnóstico
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin scheduling
+
+# Aplicar pendentes (produção: só up — nunca reset)
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin scheduling
 ```
 
 Relevante: `V004__booking_approval_workflow.sql`, `V005__public_booking.sql`.
+
+Se a API retornar **503** com «Schema do banco de plugins desatualizado» (ou **500** genérico
+em listagens de recursos/reservas após deploy de código novo), o código está à frente do
+schema: confira `status` e rode `up` — tipicamente V004/V005 pendentes.
