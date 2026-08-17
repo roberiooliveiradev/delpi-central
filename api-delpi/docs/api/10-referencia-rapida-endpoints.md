@@ -291,6 +291,7 @@ Legenda de permissões:
 | GET | `/quality/nonconformities/series` | Q |
 | GET | `/quality/nonconformities/streak` | Q |
 | GET | `/quality/kaizens/summary` | Q |
+| GET | `/quality/kaizens/summary/series` | Q |
 | GET | `/quality/kaizens/{kaizen_id}` | Q |
 | GET | `/quality/kaizens/records` | KZ-R |
 | GET | `/quality/kaizens/records/summary` | KZ-R |
@@ -299,6 +300,7 @@ Legenda de permissões:
 | POST | `/quality/kaizens/records/import` | KZ-W |
 | POST | `/public/kaizen/suggestions` | público |
 | GET | `/quality/audit-5s/summary` | Q |
+| GET | `/quality/audit-5s/summary/series` | Q |
 | GET | `/quality/ppm/internal/summary` | Q |
 | GET | `/quality/ppm/external/summary` | Q |
 | GET | `/quality/ppm/internal/series` | Q |
@@ -307,6 +309,10 @@ Legenda de permissões:
 | GET | `/quality/ppm/external` | Q |
 | GET | `/quality/returned-totals` | Q |
 | GET | `/quality/produced-quantity` | Q |
+| GET | `/quality/scrap-cost-pct` | Q |
+| GET | `/quality/scrap-cost-pct/series` | Q |
+| GET | `/quality/rework-cost-pct` | Q |
+| GET | `/quality/rework-cost-pct/series` | Q |
 
 ---
 

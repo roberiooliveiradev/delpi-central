@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 658,
+  "operation_count": 671,
   "operations": [
     {
       "method": "POST",
@@ -3564,6 +3564,13 @@
             "asc",
             "desc"
           ]
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Search query parameter.",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -3701,6 +3708,18 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
               }
             }
           },
@@ -31404,6 +31423,40 @@
           "description": "Limit query parameter.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "data_inicio",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "data_fim",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
         }
       ],
       "xDelpi": {
@@ -31478,6 +31531,45 @@
               }
             }
           },
+          "data_fim": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "data_inicio": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
           "limit": {
             "locale": {
               "en": {
@@ -31489,6 +31581,19 @@
                 "label": "Limite"
               }
             }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
           }
         },
         "tv": {
@@ -31529,6 +31634,40 @@
           "description": "Limit query parameter.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "data_inicio",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "data_fim",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
         }
       ],
       "xDelpi": {
@@ -31603,6 +31742,45 @@
               }
             }
           },
+          "data_fim": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "data_inicio": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
           "limit": {
             "locale": {
               "en": {
@@ -31614,6 +31792,19 @@
                 "label": "Limite"
               }
             }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
           }
         },
         "tv": {
@@ -31654,6 +31845,40 @@
           "description": "Limit query parameter.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "data_inicio",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "data_fim",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
         }
       ],
       "xDelpi": {
@@ -31728,6 +31953,45 @@
               }
             }
           },
+          "data_fim": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "data_inicio": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
           "limit": {
             "locale": {
               "en": {
@@ -31739,6 +32003,19 @@
                 "label": "Limite"
               }
             }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
           }
         },
         "tv": {
@@ -31779,6 +32056,40 @@
           "description": "Limit query parameter.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "data_inicio",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "data_fim",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
         }
       ],
       "xDelpi": {
@@ -31853,6 +32164,45 @@
               }
             }
           },
+          "data_fim": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "data_inicio": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
           "limit": {
             "locale": {
               "en": {
@@ -31864,6 +32214,19 @@
                 "label": "Limite"
               }
             }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
           }
         },
         "tv": {
@@ -31896,6 +32259,40 @@
             "02"
           ],
           "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "data_inicio",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "data_fim",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
         }
       ],
       "xDelpi": {
@@ -31970,6 +32367,58 @@
                 }
               }
             }
+          },
+          "data_fim": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "data_inicio": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
           }
         },
         "tv": {
@@ -31983,9 +32432,231 @@
     },
     {
       "method": "GET",
+      "path": "/invoice-issuance/carriers",
+      "operationId": "search_invoice_issuance_carriers",
+      "summary": "Search invoice issuance carriers",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_carrier",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search invoice issuance carriers",
+            "description": "Look up TOTVS carriers (SA4) by code, short name, legal name or tax ID. Display name is A4_NREDUZ.",
+            "whenToUse": "Pick a registered carrier in the issuance wizard.",
+            "label": "Invoice issuance carriers"
+          },
+          "pt-BR": {
+            "summary": "Buscar transportadoras da emissão de NF",
+            "description": "Consulta transportadoras (SA4) por código, nome reduzido, razão social ou CNPJ. O nome de uso é A4_NREDUZ.",
+            "whenToUse": "Escolher a transportadora cadastrada no wizard de emissão.",
+            "label": "Transportadoras da emissão"
+          }
+        },
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Escolher a transportadora cadastrada no wizard de emissão.",
+          "description": "Consulta transportadoras (SA4) por código, nome reduzido, razão social ou CNPJ. O nome de uso é A4_NREDUZ.",
+          "label": "Transportadoras da emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Look up TOTVS carriers (SA4) by code, short name, legal name or tax ID. Display name is A4_NREDUZ."
+    },
+    {
+      "method": "GET",
+      "path": "/invoice-issuance/open-sales-orders",
+      "operationId": "list_invoice_issuance_open_sales_orders",
+      "summary": "List open sales orders for issuance",
+      "tags": [
+        "Invoice issuance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "party_code",
+          "in": "query",
+          "required": true,
+          "description": "TOTVS customer or supplier code (SA1/SA2).",
+          "type": "string"
+        },
+        {
+          "name": "party_store",
+          "in": "query",
+          "required": true,
+          "description": "TOTVS store (loja) of the customer or supplier.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_open_sales_order",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "List open sales orders for issuance",
+            "description": "Open TOTVS sales-order lines for the selected customer in the wizard branch. No commercial membership.",
+            "whenToUse": "Pick open sales-order lines to bill in the issuance wizard.",
+            "label": "Open sales orders for issuance"
+          },
+          "pt-BR": {
+            "summary": "Listar pedidos de venda em aberto para emissão",
+            "description": "Linhas de PV em aberto do cliente na filial do wizard. Sem membership comercial.",
+            "whenToUse": "Marcar linhas de pedido de venda para faturar no wizard de emissão.",
+            "label": "Pedidos em aberto para emissão"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "party_code": {
+            "locale": {
+              "en": {
+                "description": "TOTVS customer or supplier code (SA1/SA2).",
+                "label": "Party code"
+              },
+              "pt-BR": {
+                "description": "Código TOTVS do cliente ou fornecedor (SA1/SA2).",
+                "label": "Código do destinatário"
+              }
+            }
+          },
+          "party_store": {
+            "locale": {
+              "en": {
+                "description": "TOTVS store (loja) of the customer or supplier.",
+                "label": "Party store"
+              },
+              "pt-BR": {
+                "description": "Loja TOTVS do cliente ou fornecedor.",
+                "label": "Loja do destinatário"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Marcar linhas de pedido de venda para faturar no wizard de emissão.",
+          "description": "Linhas de PV em aberto do cliente na filial do wizard. Sem membership comercial.",
+          "label": "Pedidos em aberto para emissão"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Open TOTVS sales-order lines for the selected customer in the wizard branch. No commercial membership."
+    },
+    {
+      "method": "GET",
       "path": "/invoice-issuance/parties",
       "operationId": "search_invoice_issuance_parties",
-      "summary": "Search Parties",
+      "summary": "Search invoice issuance parties",
       "tags": [
         "Invoice issuance"
       ],
@@ -32021,6 +32692,21 @@
       "xDelpi": {
         "entity": "invoice_issuance_party",
         "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search invoice issuance parties",
+            "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID.",
+            "whenToUse": "Pick a registered recipient before requesting invoice issuance.",
+            "label": "Invoice issuance parties"
+          },
+          "pt-BR": {
+            "summary": "Buscar destinatários da emissão de NF",
+            "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+            "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+            "label": "Destinatários da emissão"
+          }
+        },
         "params": {
           "limit": {
             "locale": {
@@ -32077,34 +32763,20 @@
             }
           }
         },
-        "category": "financial",
-        "locale": {
-          "en": {
-            "summary": "Search invoice issuance parties",
-            "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID.",
-            "whenToUse": "Pick a registered recipient before requesting invoice issuance.",
-            "label": "Invoice issuance parties"
-          },
-          "pt-BR": {
-            "summary": "Buscar destinatários da emissão de NF",
-            "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
-            "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
-            "label": "Destinatários da emissão"
-          }
-        },
         "tv": {
           "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
           "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
           "label": "Destinatários da emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID."
     },
     {
       "method": "GET",
       "path": "/invoice-issuance/products",
       "operationId": "search_invoice_issuance_products",
-      "summary": "Search Products",
+      "summary": "Search invoice issuance products",
       "tags": [
         "Invoice issuance"
       ],
@@ -32129,6 +32801,21 @@
       "xDelpi": {
         "entity": "invoice_issuance_product",
         "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search invoice issuance products",
+            "description": "Look up SB1 items to add to an invoice issuance request.",
+            "whenToUse": "Select products for the issuance wizard.",
+            "label": "Invoice issuance products"
+          },
+          "pt-BR": {
+            "summary": "Buscar itens da emissão de NF",
+            "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+            "whenToUse": "Selecionar produtos no wizard de emissão.",
+            "label": "Itens da emissão"
+          }
+        },
         "params": {
           "limit": {
             "locale": {
@@ -32155,34 +32842,20 @@
             }
           }
         },
-        "category": "financial",
-        "locale": {
-          "en": {
-            "summary": "Search invoice issuance products",
-            "description": "Look up SB1 items to add to an invoice issuance request.",
-            "whenToUse": "Select products for the issuance wizard.",
-            "label": "Invoice issuance products"
-          },
-          "pt-BR": {
-            "summary": "Buscar itens da emissão de NF",
-            "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
-            "whenToUse": "Selecionar produtos no wizard de emissão.",
-            "label": "Itens da emissão"
-          }
-        },
         "tv": {
           "whenToUse": "Selecionar produtos no wizard de emissão.",
           "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
           "label": "Itens da emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Look up SB1 items to add to an invoice issuance request."
     },
     {
       "method": "GET",
       "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
       "operationId": "get_invoice_issuance_warehouse_01_balance",
-      "summary": "Warehouse Balance",
+      "summary": "Warehouse 01 stock hint for issuance",
       "tags": [
         "Invoice issuance"
       ],
@@ -32210,6 +32883,21 @@
       "xDelpi": {
         "entity": "invoice_issuance_stock_balance",
         "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Warehouse 01 stock hint for issuance",
+            "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission.",
+            "whenToUse": "Show remaining quantity when the item writes off stock.",
+            "label": "Warehouse 01 balance"
+          },
+          "pt-BR": {
+            "summary": "Saldo informativo do almoxarifado 01",
+            "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+            "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+            "label": "Saldo almoxarifado 01"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -32278,34 +32966,20 @@
             }
           }
         },
-        "category": "financial",
-        "locale": {
-          "en": {
-            "summary": "Warehouse 01 stock hint for issuance",
-            "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission.",
-            "whenToUse": "Show remaining quantity when the item writes off stock.",
-            "label": "Warehouse 01 balance"
-          },
-          "pt-BR": {
-            "summary": "Saldo informativo do almoxarifado 01",
-            "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
-            "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
-            "label": "Saldo almoxarifado 01"
-          }
-        },
         "tv": {
           "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
           "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
           "label": "Saldo almoxarifado 01"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission."
     },
     {
       "method": "GET",
       "path": "/invoice-issuance/requests",
       "operationId": "list_invoice_issuance_requests",
-      "summary": "List Requests",
+      "summary": "List invoice issuance requests",
       "tags": [
         "Invoice issuance"
       ],
@@ -32378,6 +33052,21 @@
       "xDelpi": {
         "entity": "invoice_issuance_request",
         "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "List invoice issuance requests",
+            "description": "Paged billing queue of invoice issuance requests for a branch.",
+            "whenToUse": "Show the issuance queue filtered by status or type.",
+            "label": "Issuance queue"
+          },
+          "pt-BR": {
+            "summary": "Listar solicitações de emissão de NF",
+            "description": "Fila paginada de solicitações de emissão por filial.",
+            "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+            "label": "Fila de emissão"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -32914,34 +33603,20 @@
             }
           }
         },
-        "category": "financial",
-        "locale": {
-          "en": {
-            "summary": "List invoice issuance requests",
-            "description": "Paged billing queue of invoice issuance requests for a branch.",
-            "whenToUse": "Show the issuance queue filtered by status or type.",
-            "label": "Issuance queue"
-          },
-          "pt-BR": {
-            "summary": "Listar solicitações de emissão de NF",
-            "description": "Fila paginada de solicitações de emissão por filial.",
-            "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
-            "label": "Fila de emissão"
-          }
-        },
         "tv": {
           "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
           "description": "Fila paginada de solicitações de emissão por filial.",
           "label": "Fila de emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Paged billing queue of invoice issuance requests for a branch."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests",
       "operationId": "create_invoice_issuance_request",
-      "summary": "Create Request",
+      "summary": "Create invoice issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -32970,13 +33645,14 @@
           "label": "Criar solicitação de emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Create a guided invoice issuance request for the billing queue."
     },
     {
       "method": "GET",
       "path": "/invoice-issuance/requests/{request_id}",
       "operationId": "get_invoice_issuance_request",
-      "summary": "Get Request",
+      "summary": "Get invoice issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -33014,13 +33690,14 @@
           "label": "Detalhe da emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Request detail with items, attachments, checklist, timeline and allowed actions."
     },
     {
       "method": "PATCH",
       "path": "/invoice-issuance/requests/{request_id}",
       "operationId": "update_invoice_issuance_request",
-      "summary": "Update Request",
+      "summary": "Update returned issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -33058,57 +33735,14 @@
           "label": "Corrigir solicitação"
         },
         "presentationStrategy": "as_delivered"
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/invoice-issuance/requests/{request_id}/attachments",
-      "operationId": "add_invoice_issuance_attachment",
-      "summary": "Add Attachment",
-      "tags": [
-        "Invoice issuance"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "request_id",
-          "in": "path",
-          "required": true,
-          "type": "string",
-          "format": "uuid"
-        }
-      ],
-      "xDelpi": {
-        "entity": "invoice_issuance_request",
-        "shape": "scalar",
-        "category": "financial",
-        "locale": {
-          "en": {
-            "summary": "Attach purchase order PDF",
-            "description": "Upload an optional customer purchase-order PDF to an issuance request.",
-            "whenToUse": "Attach the PO file during create or attendance.",
-            "label": "Issuance attachment"
-          },
-          "pt-BR": {
-            "summary": "Anexar PDF do pedido de compra",
-            "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
-            "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
-            "label": "Anexo da emissão"
-          }
-        },
-        "tv": {
-          "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
-          "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
-          "label": "Anexo da emissão"
-        },
-        "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Creator updates a returned invoice issuance request before resubmitting."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/cancel",
       "operationId": "cancel_invoice_issuance_request",
-      "summary": "Cancel Request",
+      "summary": "Cancel invoice issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -33146,13 +33780,14 @@
           "label": "Cancelar emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Cancel a non-terminal invoice issuance request."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/issue",
       "operationId": "issue_invoice_issuance_request",
-      "summary": "Issue Request",
+      "summary": "Mark invoice issuance as issued",
       "tags": [
         "Invoice issuance"
       ],
@@ -33190,13 +33825,14 @@
           "label": "Marcar emitida"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Mark the request as issued after billing completed the invoice."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/resubmit",
       "operationId": "resubmit_invoice_issuance_request",
-      "summary": "Resubmit Request",
+      "summary": "Resubmit invoice issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -33234,13 +33870,14 @@
           "label": "Reenviar emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Send a returned request back to the pending billing queue."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/return",
       "operationId": "return_invoice_issuance_request",
-      "summary": "Return Request",
+      "summary": "Return invoice issuance request",
       "tags": [
         "Invoice issuance"
       ],
@@ -33278,13 +33915,14 @@
           "label": "Devolver emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Send the request back to the creator with a required reason."
     },
     {
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/start",
       "operationId": "start_invoice_issuance_request",
-      "summary": "Start Request",
+      "summary": "Start invoice issuance attendance",
       "tags": [
         "Invoice issuance"
       ],
@@ -33322,7 +33960,8 @@
           "label": "Iniciar emissão"
         },
         "presentationStrategy": "as_delivered"
-      }
+      },
+      "description": "Move a pending request to in progress for billing."
     },
     {
       "method": "POST",
@@ -36018,6 +36657,32 @@
     },
     {
       "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-recently-closed-orders",
+      "operationId": "list_totvs_recently_closed_orders",
+      "summary": "Lista paginada — Pedidos de venda em aberto",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "days",
+          "in": "query",
+          "required": false,
+          "description": "Lookback window in days for fully delivered sales-order lines.",
+          "type": "integer",
+          "default": 30
+        }
+      ],
+      "xDelpi": {
+        "entity": "open_sales_order",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna pedidos de venda em aberto via API DELPI. Lista paginada de registros. Domínio: Pedidos de venda em aberto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/budget-responsibilities",
       "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
       "summary": "Admin List Budget Responsibilities",
@@ -36330,6 +36995,52 @@
       "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/deactivate",
       "operationId": "deactivate_planejamento_orcamentario_admin_capex_category",
       "summary": "Admin Deactivate Capex Category",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "capex_category",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "operationId": "clear_planejamento_orcamentario_admin_capex_category_icon_image",
+      "summary": "Admin Clear Capex Category Icon Image",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "capex_category",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "operationId": "upload_planejamento_orcamentario_admin_capex_category_icon_image",
+      "summary": "Admin Upload Capex Category Icon Image",
       "tags": [
         "Planejamento Orçamentário"
       ],
@@ -36685,6 +37396,21 @@
       }
     },
     {
+      "method": "PATCH",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers/icon",
+      "operationId": "update_planejamento_orcamentario_admin_cost_center_icon",
+      "summary": "Admin Update Cost Center Icon",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "planejamento_orcamentario_admin_cost_center_icon",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
       "method": "GET",
       "path": "/planejamento-orcamentario/admin/scopes",
       "operationId": "list_planejamento_orcamentario_admin_scopes",
@@ -36818,6 +37544,29 @@
       "xDelpi": {
         "entity": "capex_category",
         "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/categories/{category_id}/icon-image",
+      "operationId": "get_planejamento_orcamentario_capex_category_icon_image",
+      "summary": "Get Capex Category Icon Image",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "capex_category",
+        "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
     },
@@ -38544,6 +39293,12 @@
       "parameters": [
         {
           "name": "exercise_id",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "unit_id",
           "in": "query",
           "required": false,
           "type": "string"
@@ -40417,6 +41172,94 @@
           "in": "path",
           "required": true,
           "description": "Plan query parameter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "capex_plan",
+        "shape": "scalar",
+        "params": {
+          "plan_id": {
+            "locale": {
+              "en": {
+                "description": "Plan query parameter.",
+                "label": "Plan"
+              },
+              "pt-BR": {
+                "description": "Identificador do plano de ação.",
+                "label": "Plano"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/approve",
+      "operationId": "approve_planejamento_orcamentario_capex_investment",
+      "summary": "Approve Capex Investment",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "plan_id",
+          "in": "path",
+          "required": true,
+          "description": "Plan query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "investment_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "capex_plan",
+        "shape": "scalar",
+        "params": {
+          "plan_id": {
+            "locale": {
+              "en": {
+                "description": "Plan query parameter.",
+                "label": "Plan"
+              },
+              "pt-BR": {
+                "description": "Identificador do plano de ação.",
+                "label": "Plano"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/reject",
+      "operationId": "reject_planejamento_orcamentario_capex_investment",
+      "summary": "Reject Capex Investment",
+      "tags": [
+        "Planejamento Orçamentário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "plan_id",
+          "in": "path",
+          "required": true,
+          "description": "Plan query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "investment_id",
+          "in": "path",
+          "required": true,
           "type": "string"
         }
       ],
@@ -68890,6 +69733,222 @@
     },
     {
       "method": "GET",
+      "path": "/quality/audit-5s/summary/series",
+      "operationId": "get_audit_5s_summary_series",
+      "summary": "Audit 5S summary series",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "audit_5s_summary_series",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Audit 5S summary series",
+            "description": "Monthly series of Audit 5S average score for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+            "whenToUse": "Use for SI multi-month quality refresh and charts that need Audit 5S over time.",
+            "label": "Audit 5S — series"
+          },
+          "pt-BR": {
+            "summary": "Série do resumo Auditoria 5S",
+            "description": "Série mensal da nota média de Auditoria 5S na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+            "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos de Auditoria 5S ao longo do tempo.",
+            "label": "Auditoria 5S — série"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos de Auditoria 5S ao longo do tempo.",
+          "description": "Série mensal da nota média de Auditoria 5S na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "label": "Auditoria 5S — série"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Monthly series of Audit 5S average score for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls."
+    },
+    {
+      "method": "GET",
       "path": "/quality/branches",
       "operationId": "list_quality_branches",
       "summary": "List Quality Branches",
@@ -71840,6 +72899,266 @@
     },
     {
       "method": "GET",
+      "path": "/quality/kaizens/summary/series",
+      "operationId": "get_kaizen_summary_series",
+      "summary": "Kaizen summary series",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "kaizen_summary_series",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Kaizen summary series",
+            "description": "Monthly series of Kaizen idea count and financial savings for a date window. Branch optional. Dense points for SI YTD without N× summary calls.",
+            "whenToUse": "Use for SI multi-month quality refresh and Kaizen time-series charts.",
+            "label": "Kaizen — series"
+          },
+          "pt-BR": {
+            "summary": "Série do resumo Kaizen",
+            "description": "Série mensal de ideias Kaizen e ganhos financeiros na janela. Filial opcional. Pontos densos para YTD do SI sem N× summary.",
+            "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos temporais de Kaizen.",
+            "label": "Kaizen — série"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos temporais de Kaizen.",
+          "description": "Série mensal de ideias Kaizen e ganhos financeiros na janela. Filial opcional. Pontos densos para YTD do SI sem N× summary.",
+          "label": "Kaizen — série"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Monthly series of Kaizen idea count and financial savings for a date window. Branch optional. Dense points for SI YTD without N× summary calls."
+    },
+    {
+      "method": "GET",
       "path": "/quality/kaizens/{kaizen_id}",
       "operationId": "get_kaizen_by_id",
       "summary": "Kaizen detail (PostgreSQL)",
@@ -74478,6 +75797,18 @@
               }
             }
           },
+          "product_prefix": {
+            "locale": {
+              "en": {
+                "description": "Product prefix query parameter.",
+                "label": "Product prefix"
+              },
+              "pt-BR": {
+                "description": "Prefixo do código de produto para filtrar famílias.",
+                "label": "Prefixo do produto"
+              }
+            }
+          },
           "type": {
             "locale": {
               "en": {
@@ -74529,18 +75860,6 @@
                 "pt-BR": {
                   "label": "Fornecedor"
                 }
-              }
-            }
-          },
-          "product_prefix": {
-            "locale": {
-              "en": {
-                "description": "Finished-product family prefix (QI2_ITEM). 9048 = plugs, 9026 = components.",
-                "label": "Product prefix"
-              },
-              "pt-BR": {
-                "description": "Prefixo da família do produto (QI2_ITEM). 9048 = plugues, 9026 = componentes.",
-                "label": "Prefixo do produto"
               }
             }
           }
@@ -76706,6 +78025,267 @@
     },
     {
       "method": "GET",
+      "path": "/quality/rework-cost-pct/series",
+      "operationId": "get_quality_rework_cost_pct_series",
+      "summary": "Quality rework cost / ROL series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — Perdas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "quality_rework_cost_pct_series",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Quality rework cost / ROL series",
+            "description": "Monthly series of rework cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+            "whenToUse": "Use for SI multi-month quality refresh and rework-cost time series.",
+            "label": "Rework cost / ROL — series"
+          },
+          "pt-BR": {
+            "summary": "Série custo de retrabalho / ROL",
+            "description": "Série mensal de custo de retrabalho / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+            "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de retrabalho.",
+            "label": "Custo de retrabalho / ROL — série"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de retrabalho.",
+          "description": "Série mensal de custo de retrabalho / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "label": "Custo de retrabalho / ROL — série"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Monthly series of rework cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls."
+    },
+    {
+      "method": "GET",
       "path": "/quality/scrap-cost-pct",
       "operationId": "get_quality_scrap_cost_pct",
       "summary": "Quality scrap cost / ROL",
@@ -76895,6 +78475,267 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Scrap cost over financial ROL (with IPI) for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /refugos/scrap_cost_pct; params use branch/date_start/date_end."
+    },
+    {
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct/series",
+      "operationId": "get_quality_scrap_cost_pct_series",
+      "summary": "Quality scrap cost / ROL series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — Perdas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "quality_scrap_cost_pct_series",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Quality scrap cost / ROL series",
+            "description": "Monthly series of scrap cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+            "whenToUse": "Use for SI multi-month quality refresh and scrap-cost time series.",
+            "label": "Scrap cost / ROL — series"
+          },
+          "pt-BR": {
+            "summary": "Série custo de refugo / ROL",
+            "description": "Série mensal de custo de refugo / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+            "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de refugo.",
+            "label": "Custo de refugo / ROL — série"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de refugo.",
+          "description": "Série mensal de custo de refugo / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "label": "Custo de refugo / ROL — série"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Monthly series of scrap cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls."
     },
     {
       "method": "GET",
@@ -89736,6 +91577,21 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Protheus columns by description."
+    },
+    {
+      "method": "GET",
+      "path": "/system/connection-pools",
+      "operationId": "get_connection_pool_stats",
+      "summary": "Ocupação dos pools Plugins Postgres e TOTVS",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "connection_pool_stats",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
     },
     {
       "method": "GET",

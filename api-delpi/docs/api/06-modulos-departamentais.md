@@ -388,6 +388,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
 | GET | `/quality/nonconformities/streak` | Dias corridos sem NC (mesmo filtro `type` do dashboard; default `customer`). `product_prefix` opcional (`9048` plugues, `9026` componentes). |
 | GET | `/quality/kaizens/summary` | Resumo analítico: `total_savings`, `total_hours_saved`. |
+| GET | `/quality/kaizens/summary/series` | Série mensal do resumo Kaizen (SI YTD / charts). |
 | GET | `/quality/kaizens/{kaizen_id}` | Detalhe analítico de um kaizen (PostgreSQL; `{kaizen_id:path}`). |
 | GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |
 | POST | `/quality/kaizens/records` | Cria kaizen no PostgreSQL. |
@@ -398,6 +399,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |
 | POST | `/public/kaizen/suggestions` | Sugestão pública (**sem JWT**); status inicial `recebido`. |
 | GET | `/quality/audit-5s/summary` | Resumo auditorias 5S (Postgres `quality.audit_5s_*`; média `%` das avaliações não-rascunho com nota). |
+| GET | `/quality/audit-5s/summary/series` | Série mensal da nota média 5S (SI YTD). |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
 | GET | `/quality/ppm/external/summary` | PPM externo (resumo). |
 | GET | `/quality/ppm/internal/series` | Série PPM interno. |
@@ -407,7 +409,9 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/returned-totals` | Totais de quantidade devolvida (numerador PPM — `QI2_QTDDEV`). |
 | GET | `/quality/produced-quantity` | Quantidade produzida por produto (detalhe). |
 | GET | `/quality/scrap-cost-pct` | Custo de refugo / ROL (%) — aba Perdas + SI `quality_scrap_cost_pct` (mesmo cálculo de `/refugos/scrap_cost_pct`; params `branch`/`date_start`/`date_end`). |
+| GET | `/quality/scrap-cost-pct/series` | Série mensal de custo de refugo / ROL (SI YTD). |
 | GET | `/quality/rework-cost-pct` | Custo de retrabalho / ROL (%) — aba Perdas + SI `quality_rework_cost_pct` (mesmo cálculo de `/retrabalhos/rework_cost_pct`). |
+| GET | `/quality/rework-cost-pct/series` | Série mensal de custo de retrabalho / ROL (SI YTD). |
 
 **Performance (PPM — jun/2026):**
 

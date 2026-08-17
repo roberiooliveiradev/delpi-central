@@ -1012,6 +1012,23 @@
       },
       "category": "quality"
     },
+    "get_audit_5s_summary_series": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Audit 5S summary series",
+          "description": "Monthly series of Audit 5S average score for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+          "whenToUse": "Use for SI multi-month quality refresh and charts that need Audit 5S over time.",
+          "label": "Audit 5S — series"
+        },
+        "pt-BR": {
+          "summary": "Série do resumo Auditoria 5S",
+          "description": "Série mensal da nota média de Auditoria 5S na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos de Auditoria 5S ao longo do tempo.",
+          "label": "Auditoria 5S — série"
+        }
+      }
+    },
     "get_branch_new_business_rol_target_pct": {
       "locale": {
         "en": {
@@ -2080,6 +2097,23 @@
         }
       },
       "category": "quality"
+    },
+    "get_kaizen_summary_series": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Kaizen summary series",
+          "description": "Monthly series of Kaizen idea count and financial savings for a date window. Branch optional. Dense points for SI YTD without N× summary calls.",
+          "whenToUse": "Use for SI multi-month quality refresh and Kaizen time-series charts.",
+          "label": "Kaizen — series"
+        },
+        "pt-BR": {
+          "summary": "Série do resumo Kaizen",
+          "description": "Série mensal de ideias Kaizen e ganhos financeiros na janela. Filial opcional. Pontos densos para YTD do SI sem N× summary.",
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em gráficos temporais de Kaizen.",
+          "label": "Kaizen — série"
+        }
+      }
     },
     "get_label_qr": {
       "locale": {
@@ -7574,6 +7608,23 @@
         }
       }
     },
+    "get_quality_scrap_cost_pct_series": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Quality scrap cost / ROL series",
+          "description": "Monthly series of scrap cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+          "whenToUse": "Use for SI multi-month quality refresh and scrap-cost time series.",
+          "label": "Scrap cost / ROL — series"
+        },
+        "pt-BR": {
+          "summary": "Série custo de refugo / ROL",
+          "description": "Série mensal de custo de refugo / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de refugo.",
+          "label": "Custo de refugo / ROL — série"
+        }
+      }
+    },
     "get_quality_rework_cost_pct": {
       "category": "quality",
       "locale": {
@@ -7587,6 +7638,23 @@
           "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /retrabalhos/rework_cost_pct; parâmetros branch/date_start/date_end.",
           "whenToUse": "Usar no KPI da aba Perdas e no indicador SI quality_rework_cost_pct.",
           "label": "Custo de retrabalho / ROL"
+        }
+      }
+    },
+    "get_quality_rework_cost_pct_series": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Quality rework cost / ROL series",
+          "description": "Monthly series of rework cost / ROL (%) for a date window. Branch optional. Dense points for SI YTD materialization without N× summary calls.",
+          "whenToUse": "Use for SI multi-month quality refresh and rework-cost time series.",
+          "label": "Rework cost / ROL — series"
+        },
+        "pt-BR": {
+          "summary": "Série custo de retrabalho / ROL",
+          "description": "Série mensal de custo de retrabalho / ROL (%) na janela. Filial opcional. Pontos densos para materialização YTD do SI sem N× summary.",
+          "whenToUse": "Usar no refresh multi-mês de qualidade do SI e em séries temporais de retrabalho.",
+          "label": "Custo de retrabalho / ROL — série"
         }
       }
     },

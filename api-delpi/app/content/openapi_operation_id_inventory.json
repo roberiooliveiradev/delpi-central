@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 533,
-  "stableCount": 533,
+  "operationCount": 671,
+  "stableCount": 671,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -1317,6 +1317,104 @@
       "stable": true
     },
     {
+      "operationId": "search_invoice_issuance_carriers",
+      "method": "GET",
+      "path": "/invoice-issuance/carriers",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "list_invoice_issuance_open_sales_orders",
+      "method": "GET",
+      "path": "/invoice-issuance/open-sales-orders",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "search_invoice_issuance_parties",
+      "method": "GET",
+      "path": "/invoice-issuance/parties",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "search_invoice_issuance_products",
+      "method": "GET",
+      "path": "/invoice-issuance/products",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "get_invoice_issuance_warehouse_01_balance",
+      "method": "GET",
+      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "list_invoice_issuance_requests",
+      "method": "GET",
+      "path": "/invoice-issuance/requests",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "create_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "get_invoice_issuance_request",
+      "method": "GET",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "update_invoice_issuance_request",
+      "method": "PATCH",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "cancel_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/cancel",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "issue_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/issue",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "resubmit_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/resubmit",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "return_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/return",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "start_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/start",
+      "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
@@ -1422,6 +1520,104 @@
       "stable": true
     },
     {
+      "operationId": "list_mural_acessos_hubs",
+      "method": "GET",
+      "path": "/mural-acessos/hubs",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "create_mural_acessos_hub",
+      "method": "POST",
+      "path": "/mural-acessos/hubs",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "delete_mural_acessos_hub",
+      "method": "DELETE",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "get_mural_acessos_hub",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "update_mural_acessos_hub",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "list_mural_acessos_links",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "create_mural_acessos_link",
+      "method": "POST",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "reorder_mural_acessos_links",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}/links/reorder",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "get_mural_acessos_hub_qr",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/qr.png",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "delete_mural_acessos_link",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "update_mural_acessos_link",
+      "method": "PUT",
+      "path": "/mural-acessos/links/{link_id}",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "delete_mural_acessos_link_image",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "get_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
+      "operationId": "upload_mural_acessos_link_image",
+      "method": "POST",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "tag": "Mural de Acessos",
+      "stable": true
+    },
+    {
       "operationId": "list_pedidos_venda_abertos",
       "method": "GET",
       "path": "/pedidos-venda-abertos/",
@@ -1446,6 +1642,13 @@
       "operationId": "enrich_portfolio_customers",
       "method": "POST",
       "path": "/pedidos-venda-abertos/customers/enrichment",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_customer_open_order_metrics",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/open-order-metrics",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
     },
@@ -1555,38 +1758,682 @@
       "stable": true
     },
     {
+      "operationId": "list_totvs_open_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_totvs_open_orders_by_customer",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_totvs_outbound_invoice",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_totvs_outbound_invoices",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_totvs_recently_closed_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-recently-closed-orders",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}/deactivate",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "reactivate_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}/reactivate",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_capex_categories",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/capex/categories",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_capex_category",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/deactivate",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "clear_planejamento_orcamentario_admin_capex_category_icon_image",
+      "method": "DELETE",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_admin_capex_category_icon_image",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "reactivate_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/reactivate",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_document",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/documents/{document_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_admin_document",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/documents/{document_id}/archive",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_exercises",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_exercise",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_exercise",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_exercise",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_guidance",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_guidance_draft",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "transition_planejamento_orcamentario_admin_exercise",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/transitions",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_guidance",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_documents",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/documents",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_admin_document",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/documents",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "publish_planejamento_orcamentario_admin_guidance",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/publish",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_planejamento_orcamentario_admin_cost_center",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_cost_center_from_erp",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers/from-erp",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_cost_center_icon",
+      "method": "PATCH",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers/icon",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_scopes",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/scopes",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_scope",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/scopes",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_scope",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/scopes/{scope_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_scope",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/scopes/{scope_id}/deactivate",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_capex_attachment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/attachments/{attachment_id}/archive",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_capex_attachment",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/attachments/{attachment_id}/download",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_categories",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/categories",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_category_icon_image",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/categories/{category_id}/icon-image",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_area",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-area",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_category",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-category",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-cost-center",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_month",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-month",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_origin",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-origin",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_plan_status",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-plan-status",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_priority",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-priority",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_unit",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-unit",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_details",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/details",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "export_planejamento_orcamentario_capex_consolidation_xlsx",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/export.xlsx",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_consolidation_summary",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/summary",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investments",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_investment",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_capex_investment",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/archive",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investment_attachments",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/attachments",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_capex_investment_attachment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/attachments",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_my_responsibilities",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/my-responsibilities",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plans",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "resolve_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/plans/resolve",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_plan",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plan_history",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}/history",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "submit_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}/submit",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_review_queue",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/review-queue",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_review",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/approve",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/approve",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/reject",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/reject",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "request_changes_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/request-changes",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_context",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/context",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_document",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/documents/{document_id}/download",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_guidance_current",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/guidance/current",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "acknowledge_planejamento_orcamentario_guidance",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/guidance/current/acknowledge",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_guidance_documents",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/guidance/current/documents",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/org/erp-cost-centers",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_personnel_plan_line",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/personnel/lines/{line_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_personnel_plan_line",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/lines/{line_id}/archive",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plans",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "resolve_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/resolve",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_plan",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plan_history",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/history",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_personnel_plan_line",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/lines",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "submit_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/submit",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_review_queue",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/review-queue",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_review",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/approve",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/reject",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
+      "operationId": "request_changes_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/request-changes",
+      "tag": "Planejamento Orçamentário",
+      "stable": true
+    },
+    {
       "operationId": "get_process_inspection_plans_orders_without_plan",
       "method": "GET",
       "path": "/process-inspection-plans/orders-without-plan",
-      "tag": "(sem tag)",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_products",
       "method": "GET",
       "path": "/process-inspection-plans/products",
-      "tag": "(sem tag)",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_products_without_plan",
       "method": "GET",
       "path": "/process-inspection-plans/products-without-plan",
-      "tag": "(sem tag)",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_product",
       "method": "GET",
       "path": "/process-inspection-plans/products/{code}",
-      "tag": "(sem tag)",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
       "operationId": "get_process_inspection_plans_summary",
       "method": "GET",
       "path": "/process-inspection-plans/summary",
-      "tag": "(sem tag)",
+      "tag": "Planos de inspeção de processo",
       "stable": true
     },
     {
@@ -1705,6 +2552,13 @@
       "operationId": "get_eficiencia_fabril_dashboard",
       "method": "GET",
       "path": "/production/eficiencia-fabril/dashboard",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_eficiencia_fabril_efficiency_by_work_center",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/efficiency-by-work-center",
       "tag": "Produção",
       "stable": true
     },
@@ -2157,6 +3011,13 @@
       "stable": true
     },
     {
+      "operationId": "create_public_canal_denuncia",
+      "method": "POST",
+      "path": "/public/canal-denuncia/denuncias",
+      "tag": "Canal de Denúncia — público",
+      "stable": true
+    },
+    {
       "operationId": "create_public_kaizen_suggestion",
       "method": "POST",
       "path": "/public/kaizen/suggestions",
@@ -2164,10 +3025,52 @@
       "stable": true
     },
     {
+      "operationId": "get_public_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/public/mural-acessos/links/{link_id}/image",
+      "tag": "Mural de Acessos — público",
+      "stable": true
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu",
+      "tag": "Mural de Acessos — público",
+      "stable": true
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu_by_token",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu/{public_token}",
+      "tag": "Mural de Acessos — público",
+      "stable": true
+    },
+    {
       "operationId": "get_public_quality_label_inspection",
       "method": "GET",
       "path": "/public/quality-labels/inspection/{token}",
       "tag": "Quality Labels (público)",
+      "stable": true
+    },
+    {
+      "operationId": "get_public_scheduling_resource",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}",
+      "tag": "Agendamento — público",
+      "stable": true
+    },
+    {
+      "operationId": "get_public_scheduling_availability",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}/availability",
+      "tag": "Agendamento — público",
+      "stable": true
+    },
+    {
+      "operationId": "create_public_scheduling_booking",
+      "method": "POST",
+      "path": "/public/scheduling/resources/{public_token}/bookings",
+      "tag": "Agendamento — público",
       "stable": true
     },
     {
@@ -2752,6 +3655,13 @@
       "stable": true
     },
     {
+      "operationId": "get_audit_5s_summary_series",
+      "method": "GET",
+      "path": "/quality/audit-5s/summary/series",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "list_quality_branches",
       "method": "GET",
       "path": "/quality/branches",
@@ -2930,6 +3840,13 @@
       "operationId": "get_kaizen_summary",
       "method": "GET",
       "path": "/quality/kaizens/summary",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_kaizen_summary_series",
+      "method": "GET",
+      "path": "/quality/kaizens/summary/series",
       "tag": "Qualidade",
       "stable": true
     },
@@ -3144,9 +4061,23 @@
       "stable": true
     },
     {
+      "operationId": "get_quality_rework_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/rework-cost-pct/series",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "get_quality_scrap_cost_pct",
       "method": "GET",
       "path": "/quality/scrap-cost-pct",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_scrap_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct/series",
       "tag": "Qualidade",
       "stable": true
     },
@@ -3606,6 +4537,34 @@
       "stable": true
     },
     {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/returns/export",
+      "tag": "Suprimentos — Materiais de terceiros",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments",
+      "tag": "Suprimentos — Materiais de terceiros",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "tag": "Suprimentos — Materiais de terceiros",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/summary",
+      "tag": "Suprimentos — Materiais de terceiros",
+      "stable": true
+    },
+    {
       "operationId": "get_caller_stats",
       "method": "GET",
       "path": "/system/caller-stats",
@@ -3616,6 +4575,13 @@
       "operationId": "search_protheus_columns_by_description",
       "method": "GET",
       "path": "/system/columns/search",
+      "tag": "system",
+      "stable": true
+    },
+    {
+      "operationId": "get_connection_pool_stats",
+      "method": "GET",
+      "path": "/system/connection-pools",
       "tag": "system",
       "stable": true
     },

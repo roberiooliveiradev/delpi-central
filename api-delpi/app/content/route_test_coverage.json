@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-14",
-  "baselineOperationCount": 658,
-  "operationCount": 658,
-  "coveredCount": 585,
-  "gapCount": 72,
+  "generatedAt": "2026-08-17",
+  "baselineOperationCount": 671,
+  "operationCount": 671,
+  "coveredCount": 599,
+  "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -92,9 +92,9 @@
       "exempt": 0
     },
     "invoice-issuance": {
-      "total": 13,
-      "covered": 12,
-      "gap": 1,
+      "total": 14,
+      "covered": 14,
+      "gap": 0,
       "exempt": 0
     },
     "lancamento-notas-fiscais": {
@@ -110,14 +110,14 @@
       "exempt": 0
     },
     "pedidos-venda-abertos": {
-      "total": 24,
-      "covered": 24,
+      "total": 25,
+      "covered": 25,
       "gap": 0,
       "exempt": 0
     },
     "planejamento-orcamentario": {
-      "total": 81,
-      "covered": 11,
+      "total": 87,
+      "covered": 17,
       "gap": 70,
       "exempt": 0
     },
@@ -158,8 +158,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 140,
-      "covered": 140,
+      "total": 144,
+      "covered": 144,
       "gap": 0,
       "exempt": 0
     },
@@ -200,8 +200,8 @@
       "exempt": 0
     },
     "system": {
-      "total": 19,
-      "covered": 19,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     }
@@ -1892,6 +1892,24 @@
       "status": "covered"
     },
     {
+      "operationId": "search_invoice_issuance_carriers",
+      "method": "GET",
+      "path": "/invoice-issuance/carriers",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_carrier",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_invoice_issuance_open_sales_orders",
+      "method": "GET",
+      "path": "/invoice-issuance/open-sales-orders",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_open_sales_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "search_invoice_issuance_parties",
       "method": "GET",
       "path": "/invoice-issuance/parties",
@@ -1953,15 +1971,6 @@
       "entity": "invoice_issuance_request",
       "shape": "scalar",
       "status": "covered"
-    },
-    {
-      "operationId": "add_invoice_issuance_attachment",
-      "method": "POST",
-      "path": "/invoice-issuance/requests/{request_id}/attachments",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_request",
-      "shape": "scalar",
-      "status": "gap"
     },
     {
       "operationId": "cancel_invoice_issuance_request",
@@ -2486,6 +2495,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_totvs_recently_closed_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-recently-closed-orders",
+      "module": "pedidos-venda-abertos",
+      "entity": "open_sales_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
       "method": "GET",
       "path": "/planejamento-orcamentario/admin/budget-responsibilities",
@@ -2574,6 +2592,24 @@
       "entity": "capex_category",
       "shape": "scalar",
       "status": "gap"
+    },
+    {
+      "operationId": "clear_planejamento_orcamentario_admin_capex_category_icon_image",
+      "method": "DELETE",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_admin_capex_category_icon_image",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/icon-image",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "covered"
     },
     {
       "operationId": "reactivate_planejamento_orcamentario_admin_capex_category",
@@ -2720,6 +2756,15 @@
       "status": "gap"
     },
     {
+      "operationId": "update_planejamento_orcamentario_admin_cost_center_icon",
+      "method": "PATCH",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers/icon",
+      "module": "planejamento-orcamentario",
+      "entity": "planejamento_orcamentario_admin_cost_center_icon",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_planejamento_orcamentario_admin_scopes",
       "method": "GET",
       "path": "/planejamento-orcamentario/admin/scopes",
@@ -2781,6 +2826,15 @@
       "entity": "capex_category",
       "shape": "paged_list",
       "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_category_icon_image",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/categories/{category_id}/icon-image",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "covered"
     },
     {
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_area",
@@ -3024,6 +3078,24 @@
       "entity": "capex_plan",
       "shape": "scalar",
       "status": "gap"
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/approve",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/investments/{investment_id}/reject",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "covered"
     },
     {
       "operationId": "reject_planejamento_orcamentario_capex_plan",
@@ -4826,6 +4898,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_audit_5s_summary_series",
+      "method": "GET",
+      "path": "/quality/audit-5s/summary/series",
+      "module": "quality",
+      "entity": "audit_5s_summary_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_quality_branches",
       "method": "GET",
       "path": "/quality/branches",
@@ -5056,6 +5137,15 @@
       "path": "/quality/kaizens/summary",
       "module": "quality",
       "entity": "kaizen_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_kaizen_summary_series",
+      "method": "GET",
+      "path": "/quality/kaizens/summary/series",
+      "module": "quality",
+      "entity": "kaizen_summary_series",
       "shape": "scalar",
       "status": "covered"
     },
@@ -5330,11 +5420,29 @@
       "status": "covered"
     },
     {
+      "operationId": "get_quality_rework_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/rework-cost-pct/series",
+      "module": "quality",
+      "entity": "quality_rework_cost_pct_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_quality_scrap_cost_pct",
       "method": "GET",
       "path": "/quality/scrap-cost-pct",
       "module": "quality",
       "entity": "quality_scrap_cost_pct",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_quality_scrap_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct/series",
+      "module": "quality",
+      "entity": "quality_scrap_cost_pct_series",
       "shape": "scalar",
       "status": "covered"
     },
@@ -5975,6 +6083,15 @@
       "module": "system",
       "entity": "protheus_column",
       "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_connection_pool_stats",
+      "method": "GET",
+      "path": "/system/connection-pools",
+      "module": "system",
+      "entity": "connection_pool_stats",
+      "shape": "scalar",
       "status": "covered"
     },
     {
