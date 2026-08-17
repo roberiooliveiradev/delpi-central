@@ -234,64 +234,72 @@ class QualityMetricsSnapshotService:
                 end_date=end_date,
             )
 
-        ppm_internal_consolidated = self._resolve_ppm(
-            ppm_type="internal",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        # Com filial explícita, o bloco "consolidado" com o mesmo branch
+        # duplicava PPM/custo — preenche só no loop e espelha no fim.
+        fetch_consolidated_block = branch is None
 
-        ppm_external_consolidated = self._resolve_ppm(
-            ppm_type="external",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        ppm_internal_consolidated = None
+        ppm_external_consolidated = None
+        ppm_internal_plugs_consolidated = None
+        ppm_external_plugs_consolidated = None
+        ppm_internal_components_consolidated = None
+        ppm_external_components_consolidated = None
+        scrap_cost_pct_consolidated = None
+        rework_cost_pct_consolidated = None
 
-        ppm_internal_plugs_consolidated = self._resolve_ppm(
-            ppm_type="internal",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-            product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
-        )
-
-        ppm_external_plugs_consolidated = self._resolve_ppm(
-            ppm_type="external",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-            product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
-        )
-
-        ppm_internal_components_consolidated = self._resolve_ppm(
-            ppm_type="internal",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-            product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
-        )
-
-        ppm_external_components_consolidated = self._resolve_ppm(
-            ppm_type="external",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-            product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
-        )
-
-        scrap_cost_pct_consolidated = self._resolve_cost_pct(
-            kind="scrap",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
-        rework_cost_pct_consolidated = self._resolve_cost_pct(
-            kind="rework",
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        if fetch_consolidated_block:
+            ppm_internal_consolidated = self._resolve_ppm(
+                ppm_type="internal",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            ppm_external_consolidated = self._resolve_ppm(
+                ppm_type="external",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            ppm_internal_plugs_consolidated = self._resolve_ppm(
+                ppm_type="internal",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+            )
+            ppm_external_plugs_consolidated = self._resolve_ppm(
+                ppm_type="external",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=PLUGS_FINISHED_PRODUCT_PREFIX,
+            )
+            ppm_internal_components_consolidated = self._resolve_ppm(
+                ppm_type="internal",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+            )
+            ppm_external_components_consolidated = self._resolve_ppm(
+                ppm_type="external",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+                product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+            )
+            scrap_cost_pct_consolidated = self._resolve_cost_pct(
+                kind="scrap",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            rework_cost_pct_consolidated = self._resolve_cost_pct(
+                kind="rework",
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
         snapshots: list[QualityBranchSnapshot] = []
 
@@ -425,6 +433,17 @@ class QualityMetricsSnapshotService:
                     ),
                 )
             )
+
+        if not fetch_consolidated_block and snapshots:
+            only = snapshots[0]
+            ppm_internal_consolidated = only.ppm_internal
+            ppm_external_consolidated = only.ppm_external
+            ppm_internal_plugs_consolidated = only.ppm_internal_plugs
+            ppm_external_plugs_consolidated = only.ppm_external_plugs
+            ppm_internal_components_consolidated = only.ppm_internal_components
+            ppm_external_components_consolidated = only.ppm_external_components
+            scrap_cost_pct_consolidated = only.scrap_cost_pct
+            rework_cost_pct_consolidated = only.rework_cost_pct
 
         return QualityMetricsSnapshot(
             start_date=start_date,
