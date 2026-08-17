@@ -64,7 +64,6 @@ function errorBudgetTone(
 ): "neutral" | "success" | "warning" | "danger" {
   if (remainingPct == null) return "neutral";
   if (remainingPct <= 0) return "danger";
-  if (remainingPct < 50) return "warning";
   return "success";
 }
 
