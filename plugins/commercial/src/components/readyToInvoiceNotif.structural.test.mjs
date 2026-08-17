@@ -37,4 +37,16 @@ describe("ready_to_invoice notification wiring", () => {
     assert.match(src, /buildOpenOrdersBoardHref/);
     assert.match(src, /ready_to_invoice|stage/);
   });
+
+  it("MFE realtime toast wires orders.ready_to_invoice", () => {
+    const realtime = readFileSync(join(root, "constants/realtime.ts"), "utf8");
+    assert.match(realtime, /orders\.ready_to_invoice/);
+    assert.match(realtime, /resolveReadyToInvoiceNotification/);
+    const provider = readFileSync(
+      join(root, "app/CommercialRealtimeProvider.tsx"),
+      "utf8",
+    );
+    assert.match(provider, /subscribeReadyToInvoice/);
+    assert.match(provider, /resolveReadyToInvoiceNotification/);
+  });
 });

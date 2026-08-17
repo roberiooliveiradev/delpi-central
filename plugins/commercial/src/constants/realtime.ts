@@ -7,6 +7,8 @@ export type WorklistChangeReason =
   | "task.deferred"
   | "task.reassigned"
   | "task.deleted"
+  | "task.due_soon"
+  | "task.overdue"
   | "attachment.changed";
 
 export type CommercialRealtimeNotification = {
@@ -27,6 +29,18 @@ export type CommercialWorklistChangedEvent = {
   /** Nome do responsável atual (assigneeUserIds[0]). */
   assigneeDisplayName?: string | null;
   actorClientId?: string | null;
+  notification?: CommercialRealtimeNotification | null;
+};
+
+export type CommercialOrdersReadyToInvoiceEvent = {
+  type: "orders.ready_to_invoice";
+  lineKey?: string | null;
+  pedido?: string | null;
+  linha?: string | null;
+  cliente?: string | null;
+  filial?: string | null;
+  actionTarget?: string | null;
+  userIds?: string[];
   notification?: CommercialRealtimeNotification | null;
 };
 
@@ -65,6 +79,7 @@ export type CommercialRealtimeEvent =
   | CommercialPortfolioChangedEvent
   | CommercialAccountChangedEvent
   | CommercialPresenceUpdatedEvent
+  | CommercialOrdersReadyToInvoiceEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
 
@@ -183,6 +198,25 @@ export function resolveWorklistNotification(
   event: CommercialWorklistChangedEvent,
   currentUserId?: string | null,
 ): CommercialRealtimeNotification {
+  if (
+    (event.reason === "task.due_soon" || event.reason === "task.overdue") &&
+    event.notification &&
+    typeof event.notification.title === "string" &&
+    typeof event.notification.message === "string"
+  ) {
+    const variant =
+      event.notification.variant === "success" ||
+      event.notification.variant === "warning" ||
+      event.notification.variant === "error" ||
+      event.notification.variant === "info"
+        ? event.notification.variant
+        : "warning";
+    return {
+      title: event.notification.title,
+      message: event.notification.message,
+      variant,
+    };
+  }
   return fallbackWorklistNotification(event, {
     audience: resolveWorklistNotificationAudience(event, currentUserId),
   });
@@ -256,6 +290,18 @@ export function fallbackWorklistNotification(
         message: `${actor} excluiu: ${titleLabel}`,
         variant: "warning",
       };
+    case "task.due_soon":
+      return {
+        title: "Tarefa vence em breve",
+        message: titleLabel,
+        variant: "warning",
+      };
+    case "task.overdue":
+      return {
+        title: "Tarefa atrasada",
+        message: titleLabel,
+        variant: "error",
+      };
     case "attachment.changed":
       return {
         title: "Anexo na tarefa",
@@ -269,6 +315,38 @@ export function fallbackWorklistNotification(
         variant: "info",
       };
   }
+}
+
+export function resolveReadyToInvoiceNotification(
+  event: CommercialOrdersReadyToInvoiceEvent,
+): CommercialRealtimeNotification {
+  const fromServer = event.notification;
+  if (
+    fromServer &&
+    typeof fromServer.title === "string" &&
+    typeof fromServer.message === "string"
+  ) {
+    const variant =
+      fromServer.variant === "success" ||
+      fromServer.variant === "warning" ||
+      fromServer.variant === "error" ||
+      fromServer.variant === "info"
+        ? fromServer.variant
+        : "info";
+    return {
+      title: fromServer.title,
+      message: fromServer.message,
+      variant,
+    };
+  }
+  const pedido = (event.pedido || "").trim() || "?";
+  const linha = (event.linha || "").trim() || "?";
+  const cliente = (event.cliente || "").trim() || "cliente";
+  return {
+    title: "Pedido pronto para faturar",
+    message: `A linha ${pedido}/${linha} do cliente ${cliente} entrou em Pronto para faturar.`,
+    variant: "info",
+  };
 }
 
 export function portfolioEventTouchesId(

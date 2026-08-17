@@ -24,8 +24,10 @@ import {
   portfolioEventTouchesId,
   resolveAccountNotification,
   resolvePortfolioNotification,
+  resolveReadyToInvoiceNotification,
   resolveWorklistNotification,
   type CommercialAccountChangedEvent,
+  type CommercialOrdersReadyToInvoiceEvent,
   type CommercialPortfolioChangedEvent,
   type CommercialPresenceUpdatedEvent,
   type CommercialWorklistChangedEvent,
@@ -39,6 +41,7 @@ type WorklistChangedHandler = (event: CommercialWorklistChangedEvent) => void;
 type PortfolioChangedHandler = (event: CommercialPortfolioChangedEvent) => void;
 type AccountChangedHandler = (event: CommercialAccountChangedEvent) => void;
 type PresenceUpdatedHandler = (event: CommercialPresenceUpdatedEvent) => void;
+type ReadyToInvoiceHandler = (event: CommercialOrdersReadyToInvoiceEvent) => void;
 
 type CommercialRealtimeContextValue = {
   connected: boolean;
@@ -47,6 +50,7 @@ type CommercialRealtimeContextValue = {
   subscribePortfolioChanged: (handler: PortfolioChangedHandler) => () => void;
   subscribeAccountChanged: (handler: AccountChangedHandler) => () => void;
   subscribePresenceUpdated: (handler: PresenceUpdatedHandler) => () => void;
+  subscribeReadyToInvoice: (handler: ReadyToInvoiceHandler) => () => void;
 };
 
 const CommercialRealtimeContext = createContext<CommercialRealtimeContextValue | null>(null);
@@ -70,6 +74,7 @@ export function CommercialRealtimeProvider({
   const portfolioHandlersRef = useRef(new Set<PortfolioChangedHandler>());
   const accountHandlersRef = useRef(new Set<AccountChangedHandler>());
   const presenceHandlersRef = useRef(new Set<PresenceUpdatedHandler>());
+  const readyToInvoiceHandlersRef = useRef(new Set<ReadyToInvoiceHandler>());
   const lastPresenceRef = useRef<CommercialPresenceUpdatedEvent | null>(null);
   const getAccessTokenRef = useRef(getAccessToken);
 
@@ -103,6 +108,13 @@ export function CommercialRealtimeProvider({
 
   const subscribePresenceUpdated = useCallback((handler: PresenceUpdatedHandler) => {
     return subscribePresenceWithReplay(lastPresenceRef, presenceHandlersRef.current, handler);
+  }, []);
+
+  const subscribeReadyToInvoice = useCallback((handler: ReadyToInvoiceHandler) => {
+    readyToInvoiceHandlersRef.current.add(handler);
+    return () => {
+      readyToInvoiceHandlersRef.current.delete(handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -197,6 +209,12 @@ export function CommercialRealtimeProvider({
         }
         if (event.type === "presence.updated") {
           fanPresenceUpdated(lastPresenceRef, presenceHandlersRef.current, event);
+          return;
+        }
+        if (event.type === "orders.ready_to_invoice") {
+          for (const handler of readyToInvoiceHandlersRef.current) {
+            handler(event);
+          }
         }
       };
 
@@ -242,6 +260,7 @@ export function CommercialRealtimeProvider({
     subscribePortfolioChanged,
     subscribeAccountChanged,
     subscribePresenceUpdated,
+    subscribeReadyToInvoice,
   };
 
   return (
@@ -282,6 +301,32 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
       if (timer != null) window.clearTimeout(timer);
     };
   }, [enabled, subscribeWorklistChanged]);
+}
+
+/** Refetch badge / lista quando chega `orders.ready_to_invoice`. */
+export function useCommercialReadyToInvoiceSync(onChanged: () => void, enabled = true) {
+  const { subscribeReadyToInvoice } = useCommercialRealtime();
+  const onChangedRef = useRef(onChanged);
+
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  }, [onChanged]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let timer: number | null = null;
+    const unsubscribe = subscribeReadyToInvoice(() => {
+      if (timer != null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        onChangedRef.current();
+      }, 400);
+    });
+    return () => {
+      unsubscribe();
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [enabled, subscribeReadyToInvoice]);
 }
 
 /**
@@ -400,8 +445,10 @@ export function useCommercialRealtimeNotices(enabled = true) {
     subscribeWorklistChanged,
     subscribePortfolioChanged,
     subscribeAccountChanged,
+    subscribeReadyToInvoice,
   } = useCommercialRealtime();
-  const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
+  const { notifyInfo, notifySuccess, notifyWarning, notifyError } =
+    useCommercialFloatingNotice();
   const { myPortfolio, currentUserId } = usePortfolioScope();
   const clientId = getCommercialClientId();
   const resolvedUserId = currentUserId ?? myPortfolio?.user_id ?? null;
@@ -409,13 +456,10 @@ export function useCommercialRealtimeNotices(enabled = true) {
   useEffect(() => {
     if (!enabled) return;
 
-    const publishWorklist = (event: CommercialWorklistChangedEvent) => {
-      const payload = resolveWorklistNotification(event, resolvedUserId);
-      const options = {
-        title: payload.title,
-        id: `cm-rt-${event.taskId}-${event.reason}`,
-        autoDismissMs: 6500 as number | null,
-      };
+    const publishByVariant = (
+      payload: { title: string; message: string; variant: string },
+      options: { title: string; id: string; autoDismissMs: number | null },
+    ) => {
       if (payload.variant === "success") {
         notifySuccess(payload.message, options);
         return;
@@ -424,7 +468,20 @@ export function useCommercialRealtimeNotices(enabled = true) {
         notifyWarning(payload.message, options);
         return;
       }
+      if (payload.variant === "error") {
+        notifyError(payload.message, options);
+        return;
+      }
       notifyInfo(payload.message, options);
+    };
+
+    const publishWorklist = (event: CommercialWorklistChangedEvent) => {
+      const payload = resolveWorklistNotification(event, resolvedUserId);
+      publishByVariant(payload, {
+        title: payload.title,
+        id: `cm-rt-${event.taskId}-${event.reason}`,
+        autoDismissMs: 6500,
+      });
     };
 
     const unsubWorklist = subscribeWorklistChanged((event) => {
@@ -474,20 +531,11 @@ export function useCommercialRealtimeNotices(enabled = true) {
     const publishPortfolio = (event: CommercialPortfolioChangedEvent) => {
       const payload = resolvePortfolioNotification(event);
       const pid = (event.portfolioId || "").trim() || "portfolio";
-      const options = {
+      publishByVariant(payload, {
         title: payload.title,
         id: `cm-rt-pf-${pid}-${event.reason}`,
-        autoDismissMs: 6500 as number | null,
-      };
-      if (payload.variant === "success") {
-        notifySuccess(payload.message, options);
-        return;
-      }
-      if (payload.variant === "warning") {
-        notifyWarning(payload.message, options);
-        return;
-      }
-      notifyInfo(payload.message, options);
+        autoDismissMs: 6500,
+      });
     };
 
     const unsubPortfolio = subscribePortfolioChanged((event) => {
@@ -501,13 +549,10 @@ export function useCommercialRealtimeNotices(enabled = true) {
         publishPortfolio(event);
         return;
       }
-
       void lookupDirectoryUsers([actorId])
         .then((items) => {
           const label = formatDirectoryUserLabel(items[0] || {});
-          publishPortfolio(
-            label ? { ...event, actorDisplayName: label } : event,
-          );
+          publishPortfolio(label ? { ...event, actorDisplayName: label } : event);
         })
         .catch(() => {
           publishPortfolio(event);
@@ -517,20 +562,11 @@ export function useCommercialRealtimeNotices(enabled = true) {
     const publishAccount = (event: CommercialAccountChangedEvent) => {
       const payload = resolveAccountNotification(event);
       const key = `${(event.customerCode || "").trim()}-${(event.customerStore || "").trim()}`;
-      const options = {
+      publishByVariant(payload, {
         title: payload.title,
         id: `cm-rt-ac-${key}-${event.reason}`,
-        autoDismissMs: 6500 as number | null,
-      };
-      if (payload.variant === "success") {
-        notifySuccess(payload.message, options);
-        return;
-      }
-      if (payload.variant === "warning") {
-        notifyWarning(payload.message, options);
-        return;
-      }
-      notifyInfo(payload.message, options);
+        autoDismissMs: 6500,
+      });
     };
 
     const unsubAccount = subscribeAccountChanged((event) => {
@@ -553,10 +589,21 @@ export function useCommercialRealtimeNotices(enabled = true) {
         });
     });
 
+    const unsubReady = subscribeReadyToInvoice((event) => {
+      const payload = resolveReadyToInvoiceNotification(event);
+      const key = (event.lineKey || `${event.pedido}-${event.linha}` || "r2i").trim();
+      publishByVariant(payload, {
+        title: payload.title,
+        id: `cm-rt-r2i-${key}`,
+        autoDismissMs: 6500,
+      });
+    });
+
     return () => {
       unsubWorklist();
       unsubPortfolio();
       unsubAccount();
+      unsubReady();
     };
   }, [
     clientId,
@@ -565,8 +612,10 @@ export function useCommercialRealtimeNotices(enabled = true) {
     notifyInfo,
     notifySuccess,
     notifyWarning,
+    notifyError,
     subscribeWorklistChanged,
     subscribePortfolioChanged,
     subscribeAccountChanged,
+    subscribeReadyToInvoice,
   ]);
 }
