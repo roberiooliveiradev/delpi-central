@@ -12,14 +12,25 @@ describe("ShellFavoritesStrip", () => {
     const shell = readFileSync(join(here, "PluginShell.tsx"), "utf8");
     assert.match(shell, /ShellFavoritesStrip/);
     assert.match(shell, /secondary=\{<ShellFavoritesStrip/);
-    assert.doesNotMatch(
-      shell,
-      /<\/CommercialTopBar>\s*<ShellFavoritesStrip/,
-    );
+  });
+
+  it("usa popover AnchoredPanelPortal e store compartilhado", () => {
     const strip = readFileSync(join(here, "ShellFavoritesStrip.tsx"), "utf8");
-    assert.match(strip, /getHomeFavorites/);
-    assert.match(strip, /putHomeFavorites/);
-    assert.match(strip, /CommercialHubChipRow/);
-    assert.match(strip, /CommercialRouteChip/);
+    assert.match(strip, /AnchoredPanelPortal/);
+    assert.match(strip, /subscribeHomeFavorites/);
+    assert.match(strip, /refreshHomeFavorites/);
+    assert.match(strip, /cm-shell-favorites__trigger/);
+    assert.match(strip, /favoritesEmpty/);
+  });
+
+  it("HomePage publica favoritos no store (sync topbar)", () => {
+    const home = readFileSync(
+      join(here, "../features/home/HomePage.tsx"),
+      "utf8",
+    );
+    assert.match(home, /subscribeHomeFavorites/);
+    assert.match(home, /setHomeFavoritesLocal/);
+    assert.match(home, /replaceHomeFavorites/);
+    assert.doesNotMatch(home, /putHomeFavorites\(/);
   });
 });

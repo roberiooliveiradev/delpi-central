@@ -54,11 +54,10 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  max-width: min(42vw, 28rem);
-  flex: 0 1 auto;
-  overflow-x: auto;
+  flex: 0 0 auto;
+  max-width: none;
+  overflow: visible;
   padding-bottom: 6px;
-  scrollbar-width: thin;
 }
 
 .delpi-ui-topbar__actions {

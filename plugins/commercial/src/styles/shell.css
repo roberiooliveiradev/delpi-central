@@ -285,3 +285,107 @@ button.cm-shell-user__portfolio:focus-visible {
 .cm-shell-user--open .cm-shell-user__chevron {
   transform: rotate(180deg);
 }
+
+/* TopBar — favoritos (gatilho + popover) */
+.cm-shell-favorites {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.cm-shell-favorites__trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cm-text, #111) 4%, transparent);
+  color: var(--cm-text, var(--text, #111));
+  font: inherit;
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.cm-shell-favorites__trigger:hover {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 35%, transparent);
+}
+
+.cm-shell-favorites__trigger:focus-visible {
+  outline: 2px solid var(--cm-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.cm-shell-favorites--open .cm-shell-favorites__trigger {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 16%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 45%, transparent);
+}
+
+.cm-shell-favorites__trigger-icon {
+  flex: 0 0 auto;
+  color: var(--cm-accent, #089bdb);
+}
+
+.cm-shell-favorites__trigger-label {
+  white-space: nowrap;
+}
+
+.cm-shell-favorites__panel {
+  min-width: min(18rem, 90vw);
+  max-width: min(22rem, 94vw);
+  max-height: min(70vh, 24rem);
+  overflow: auto;
+  padding: 6px;
+}
+
+.cm-shell-favorites__status {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: var(--cm-font-sm, 0.875rem);
+  color: color-mix(in srgb, var(--cm-text, #111) 72%, transparent);
+  line-height: 1.35;
+}
+
+.cm-shell-favorites__row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cm-shell-favorites__row .delpi-ui-context-menu__item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cm-shell-favorites__remove {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--cm-text, #111) 55%, transparent);
+  cursor: pointer;
+}
+
+.cm-shell-favorites__remove:hover {
+  background: color-mix(in srgb, var(--cm-text, #111) 8%, transparent);
+  color: var(--cm-text, #111);
+}
+
+.cm-shell-favorites__remove:focus-visible {
+  outline: 2px solid var(--cm-accent, #089bdb);
+  outline-offset: 1px;
+}

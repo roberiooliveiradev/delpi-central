@@ -13,7 +13,13 @@ import {
 } from "lucide-react";
 import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
-import { getHomeFavorites, putHomeFavorites, homeFavoriteKey, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
+import { homeFavoriteKey, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
+import {
+  refreshHomeFavorites,
+  replaceHomeFavorites,
+  setHomeFavoritesLocal,
+  subscribeHomeFavorites,
+} from "../../app/homeFavoritesStore";
 import { getOpenOrders } from "../../api/openOrdersApi";
 import { useHomeHeroMetrics } from "../../app/HomeHeroMetricsContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -159,18 +165,17 @@ export function HomePage({
 
   useEffect(() => reloadOrders(), [reloadOrders]);
 
+  useEffect(() => subscribeHomeFavorites(setFavorites), []);
+
   useEffect(() => {
     const controller = new AbortController();
-    void getHomeFavorites(controller.signal)
-      .then((items) => {
-        if (!controller.signal.aborted) {
-          setFavorites(items);
-          setFavoritesError(null);
-        }
+    void refreshHomeFavorites(controller.signal)
+      .then(() => {
+        if (!controller.signal.aborted) setFavoritesError(null);
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setFavorites([]);
+          setHomeFavoritesLocal([]);
           setFavoritesError(FEATURES.favoritesLoadError);
         }
       });
@@ -450,13 +455,12 @@ export function HomePage({
       const next = favoriteKeys.has(key)
         ? favorites.filter((entry) => homeFavoriteKey(entry) !== key)
         : [...favorites, item].slice(0, 20);
-      setFavorites(next);
+      setHomeFavoritesLocal(next);
       try {
-        const saved = await putHomeFavorites(next);
-        setFavorites(saved);
+        await replaceHomeFavorites(next);
         setFavoritesError(null);
       } catch {
-        setFavorites(previous);
+        setHomeFavoritesLocal(previous);
         setFavoritesError(FEATURES.favoritesSaveError);
       }
     },
