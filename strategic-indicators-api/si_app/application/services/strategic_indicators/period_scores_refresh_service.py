@@ -83,6 +83,7 @@ def refresh_period_scores_materialized(
     reference_competence: str | None = None,
     trends_months: int | None = None,
     per_department: bool | None = None,
+    branches: str | None = None,
     invalidate_cache: bool = True,
 ) -> int:
     """
@@ -91,8 +92,9 @@ def refresh_period_scores_materialized(
 
     `reference_competence`: competência YYYY-MM de referência para a janela de tendência
     (default: mês atual do servidor).
-    `trends_months` / `per_department`: sobrescrevem YTD / env (útil no script CLI).
+    `trends_months` / `per_department` / `branches`: sobrescrevem YTD / env (útil no CLI).
     Sem `trends_months` e sem env → materializa do início do ano até a competência (YTD).
+    `branches`: CSV (`consolidated`, `01,02`, …); None → env SI_PERIOD_SCORES_REFRESH_BRANCHES.
     `invalidate_cache`: quando False, não apaga period_scores existentes (refresh incremental).
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
@@ -124,14 +126,20 @@ def refresh_period_scores_materialized(
         trends_months=trends_months,
         env_override=settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
     )
+    branch_scopes = (
+        parse_branch_scopes(branches)
+        if branches is not None
+        else parse_branch_scopes()
+    )
 
     logger.info(
         (
             "si_period_scores_refresh_start competence=%s trends_months=%d "
-            "per_department=%s invalidate_cache=%s"
+            "branches=%s per_department=%s invalidate_cache=%s"
         ),
         resolved_reference,
         resolved_trends_months,
+        ",".join("consolidated" if b is None else b for b in branch_scopes),
         resolved_per_department,
         invalidate_cache,
     )
@@ -151,7 +159,6 @@ def refresh_period_scores_materialized(
             months=resolved_trends_months,
         )
 
-        branch_scopes = _parse_branch_scopes()
         department_scopes = _department_scopes(
             include_per_department=resolved_per_department,
             reference_competence=reference_competence,

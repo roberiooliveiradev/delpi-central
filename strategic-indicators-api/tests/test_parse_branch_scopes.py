@@ -20,3 +20,23 @@ def test_parse_branch_scopes_consolidated_only() -> None:
 def test_parse_branch_scopes_explicit_filiais() -> None:
     assert parse_branch_scopes("01,02") == ["01", "02"]
     assert parse_branch_scopes(" 01 , 02 ") == ["01", "02"]
+
+
+def test_cli_parser_exposes_branches_flag() -> None:
+    import importlib.util
+    from pathlib import Path
+
+    script = (
+        Path(__file__).resolve().parents[1] / "scripts" / "refresh_period_scores.py"
+    )
+    spec = importlib.util.spec_from_file_location("refresh_period_scores_cli", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    parser = module.build_parser()
+    args = parser.parse_args(["--branches", "01,02", "--no-invalidate"])
+    assert args.branches == "01,02"
+    assert args.no_invalidate is True
+    assert "--branches" in parser.format_help()
+    assert parse_branch_scopes(args.branches) == ["01", "02"]

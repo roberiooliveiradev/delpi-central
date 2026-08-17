@@ -31,7 +31,16 @@ Arquivo dev (se configurado): `strategic-indicators-api/logs/api_YYYYMMDD.log`.
 | Fase | Escopo | Como |
 |------|--------|------|
 | **A — horário** | Só consolidado | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` (default Compose) |
-| **B — noturna** | Filiais `01` e `02` | CLI com `--branches 01,02` (ver E1.S2) + `--no-invalidate` |
+| **B — noturna** | Filiais `01` e `02` | CLI abaixo + `--no-invalidate` |
+
+Comando Fase B (sem recreate do container):
+
+```bash
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence 2026-08 --branches 01,02 --no-invalidate --no-per-department
+```
+
+Cron sugerido (host): mesmo comando após `git pull` / imagem atualizada, fora do pico.
 
 O botão **Atualizar** do MFE usa o mesmo `SI_PERIOD_SCORES_REFRESH_BRANCHES` do processo: após o default Compose, atualiza o consolidado; a visão por filial pode atrasar até a Fase B.
 
