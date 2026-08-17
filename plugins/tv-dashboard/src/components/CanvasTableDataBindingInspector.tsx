@@ -7,7 +7,6 @@ import {
   catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
   formatCanvasTableDataBindingLabel,
-  formatSupportsDecimalPlaces,
   listCanvasTableDataBindings,
   normalizeCanvasTableCell,
   resolveCanvasTableCellResolved,
@@ -16,14 +15,12 @@ import {
   suggestCanvasTableCellDataRef,
   type ApplyCanvasTableDataRefScope,
   type ComunicadoTextDataRef,
-  type TextProjectionFormat,
 } from "@delpi/tv-dashboard-presentation";
 import { useMemo } from "react";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
-import { DecimalPlacesField } from "./DecimalPlacesField";
 import { DynamicContentInsertControl } from "./DynamicContentInsertControl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
@@ -31,14 +28,6 @@ import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.data;
-const FORMAT_OPTIONS: Array<{ value: TextProjectionFormat; label: string }> = [
-  { value: "number", label: "Número" },
-  { value: "percent", label: "Percentual" },
-  { value: "currency", label: "Moeda" },
-  { value: "compact", label: "Compacto" },
-  { value: "raw", label: "Texto bruto" },
-  { value: "date", label: "Data" },
-];
 
 const AGG_LABEL = Object.fromEntries(
   TEXT_FIELD_AGGREGATION_OPTIONS.map((item) => [item.value, item.label]),
@@ -203,12 +192,16 @@ export function CanvasTableDataBindingInspector({
       suggestCanvasTableCellDataRef(resolved, catalogFields, preferSeries) ?? {
         field,
         aggregation: preferSeries ? ("list" as const) : ("first" as const),
-        format: "number" as const,
+        displayFormat: { category: "general", presetId: "general" },
+        format: "raw" as const,
       };
     patchCellDataRef({
       ...suggested,
       field,
       format: selectedCell.dataRef?.format ?? suggested.format,
+      displayFormat:
+        selectedCell.dataRef?.displayFormat ??
+        suggested.displayFormat ?? { category: "general", presetId: "general" },
       aggregation: selectedCell.dataRef?.aggregation ?? suggested.aggregation,
     });
   }
@@ -359,32 +352,6 @@ export function CanvasTableDataBindingInspector({
                       }))}
                     />
                   </DeckField>
-                  <DeckField label="Formato">
-                    <FormSelectControl
-                      className={compactSelect}
-                      value={dataRef.format ?? "number"}
-                      onChange={(value) => {
-                        const format = value as TextProjectionFormat;
-                        const next: ComunicadoTextDataRef = { ...dataRef, format };
-                        if (!formatSupportsDecimalPlaces(format)) {
-                          delete next.decimalPlaces;
-                        }
-                        patchCellDataRef(next);
-                      }}
-                      options={FORMAT_OPTIONS.map((item) => ({
-                        value: item.value,
-                        label: item.label,
-                      }))}
-                    />
-                  </DeckField>
-                  <DecimalPlacesField
-                    format={dataRef.format ?? "number"}
-                    value={dataRef.decimalPlaces}
-                    compactClassName={compactSelect}
-                    onChange={(decimalPlaces) =>
-                      patchCellDataRef({ ...dataRef, decimalPlaces })
-                    }
-                  />
                   <div className="td-deck-ribbon__toolbar-row">
                     <button
                       type="button"

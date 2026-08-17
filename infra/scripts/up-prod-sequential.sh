@@ -113,6 +113,7 @@ FASE_MFE=(
   dashboard-quality
   dashboard-supplies
   estoque-seguranca
+  materiais-terceiros
   transformometro
   quality-action-plans
   kaizometro
@@ -123,10 +124,12 @@ FASE_MFE=(
   inspecoes-entrada
   inspecoes-processo
   pedidos-venda-abertos
+  commercial
   propostas-comerciais
   financeiro-centro-custo
   financeiro-inadimplencia
   lancamento-notas-fiscais
+  invoice-issuance
   strategic-indicators
   customer-experience
   cultura-delpi
@@ -134,6 +137,7 @@ FASE_MFE=(
   guias-procedimentos
   central-agendamento
   canal-denuncia
+  mural-acessos
   reports
   planejamento-orcamentario
   cipa
@@ -148,6 +152,7 @@ FASE_API=(
   strategic-indicators-api
   transformometro-api
   maintenance-api
+  commercial-api
   cipa-api
   comite-etica-conduta-api
   customer-experience-api

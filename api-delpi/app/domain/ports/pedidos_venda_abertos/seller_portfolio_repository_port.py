@@ -18,6 +18,14 @@ class SellerPortfolioRepositoryPort(ABC):
 
     @abstractmethod
     def get_by_user_id(self, user_id: str) -> SellerPortfolio | None:
+        """Compat 1:1 — primeira carteira do usuário (preferir list_by_user_id)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_by_user_id(
+        self, user_id: str, *, active_only: bool = True
+    ) -> list[SellerPortfolio]:
+        """Todas as carteiras do usuário via membership (ou 0–1 no legado)."""
         raise NotImplementedError
 
     @abstractmethod

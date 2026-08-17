@@ -40,5 +40,7 @@
 - Inventário: [../08-plugins/README.md](../08-plugins/README.md)
 - Modelo de dados: [../09-banco-de-dados/modelo-plugin-system.md](../09-banco-de-dados/modelo-plugin-system.md)
 - Portal (consumo): [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
+- **Excelência lista+detalhe:** [playbook-mfe-page-excellence.md](./playbook-mfe-page-excellence.md) (P0→P1→P2; regra `plugin-mfe-page-excellence.mdc`)
+- Scaffold MF: [novo-plugin-mfe-checklist.md](./novo-plugin-mfe-checklist.md)
 
 **Nota:** plugin LMPs no repositório usa `id` **`dashboard-lmps`** (microfrontend, `basePath` `/apps/dashboard-lmps`). O manifesto iframe legado `dash-lmps` foi removido.

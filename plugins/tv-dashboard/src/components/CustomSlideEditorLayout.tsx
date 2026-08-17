@@ -10,6 +10,7 @@ import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
 import { DeckElementSidePanel } from "./deck";
 import { SlideDataFiltersPanel } from "./SlideDataFiltersPanel";
+import { TvCopilotDockSlot } from "./TvCopilotDock";
 import {
   buildFilmstripSlidesWithThumbnailCache,
   serializeComunicadoConfigForThumbnail,
@@ -123,6 +124,13 @@ export function CustomSlideEditorLayout({
           <div className="td-deck-right-stack">
             <DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />
           </div>
+        }
+        copilotPanel={
+          <TvCopilotDockSlot
+            playlistId={workspaceProps.playlistId}
+            slideId={selectedSlide.id}
+            branchScope={chromeProps.branchScope}
+          />
         }
         stage={
           <div className="td-deck-stage__editor">

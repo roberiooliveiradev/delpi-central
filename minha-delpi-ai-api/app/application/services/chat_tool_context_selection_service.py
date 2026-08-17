@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -9,11 +10,19 @@ from app.application.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_host_surface_context_service import (
+    ChatHostSurfaceContextService,
+)
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+    ChatTvDashboardCopilotIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 if TYPE_CHECKING:
     from app.application.services.chat_tool_context_service import ChatToolContextService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -58,6 +67,11 @@ class ChatToolContextSelectionService:
                 allowed_tool_names=allowed_tool_names,
                 tools_registry=host.execute_tool_use_case.tools,
                 agent_context=agent_context,
+                access_token=(
+                    getattr(host, "_access_token", None)
+                    if isinstance(getattr(host, "_access_token", None), str)
+                    else None
+                ),
             )
             native_meta = native_result.get("meta") or native_meta
             native_selections = list(native_result.get("selections") or [])
@@ -70,6 +84,85 @@ class ChatToolContextSelectionService:
                 attachment_context=attachment_context,
                 previous_messages=previous_messages,
             )
+
+        from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
+            ChatTvDashboardPlatformToolSelectionService,
+            TvPlatformToolSelectionResult,
+        )
+
+        workspace_context = getattr(host, "_build_workspace_context", None)
+        if not isinstance(workspace_context, dict):
+            workspace_context = None
+        access_token = getattr(host, "_access_token", None)
+        if not isinstance(access_token, str):
+            access_token = None
+
+        try:
+            tv_selection = ChatTvDashboardPlatformToolSelectionService.select(
+                message,
+                workspace_context=workspace_context,
+                previous_messages=previous_messages,
+                access_token=access_token,
+            )
+        except Exception:
+            # Na superfície TV o usuário pediu uma mutação: cair no LLM produz
+            # slide fictício em markdown. Responder o motivo factual.
+            logger.exception("Falha no caminho do copiloto TV Dashboard")
+            tv_selection = TvPlatformToolSelectionResult()
+
+            if ChatHostSurfaceContextService.is_tv_dashboard(
+                ChatHostSurfaceContextService.host_from_workspace(workspace_context)
+            ):
+                return ToolSelectionOutcome(
+                    early_result=host._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result={
+                            "context": "",
+                            "toolCalls": [],
+                            "nativeToolCalling": native_meta,
+                            "directAnswer": (
+                                ChatTvDashboardCopilotIntentService.copilot_path_failed_message()
+                            ),
+                            "skipRag": True,
+                            "currentMessage": raw_message,
+                        },
+                    ),
+                )
+        if tv_selection.catalog and isinstance(workspace_context, dict):
+            workspace_context["tvDashboardCatalog"] = tv_selection.catalog
+            host._build_workspace_context = workspace_context
+
+        if tv_selection.direct_answer and not tv_selection.tool_call:
+            early_payload: dict = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": native_meta,
+                "directAnswer": tv_selection.direct_answer,
+                "skipRag": True,
+                "currentMessage": raw_message,
+                "platformDirectAnswer": bool(
+                    tv_selection.platform_direct_answer
+                    or tv_selection.selection_pending
+                ),
+            }
+            if isinstance(tv_selection.selection_pending, dict):
+                early_payload["selectionPending"] = tv_selection.selection_pending
+            return ToolSelectionOutcome(
+                early_result=host._finalize_tool_context_result(
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    result=early_payload,
+                ),
+            )
+
+        tv_tool = tv_selection.tool_call
+        if tv_tool:
+            # A superfície reivindicou o turno: não misturar action OpenAPI/SQL
+            # selecionada pelas keywords do dado (ex.: OEE) com a mutação do host.
+            selected_tools = [tv_tool]
+            actions_enabled = False
+            native_selections = []
 
         if allowed_tool_names:
             allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}
@@ -204,23 +297,36 @@ class ChatToolContextSelectionService:
                     first_planned
                 ):
                     args = first_planned.get("arguments") or {}
+                    route_clarification = {
+                        "scoreGap": args.get("scoreGap"),
+                        "rivalIds": args.get("rivalIds") or [],
+                        "suggestions": args.get("suggestions") or [],
+                    }
+                    from app.application.services.chat_catalog_selection_pending_service import (
+                        ChatCatalogSelectionPendingService,
+                    )
+
+                    selection_pending = (
+                        ChatCatalogSelectionPendingService.build_from_score_gap_clarification(
+                            route_clarification
+                        )
+                    )
+                    early_payload = {
+                        "context": "",
+                        "toolCalls": [],
+                        "nativeToolCalling": native_meta,
+                        "directAnswer": str(args.get("directAnswer") or ""),
+                        "skipRag": True,
+                        "currentMessage": raw_message,
+                        "routeSelectionClarification": route_clarification,
+                    }
+                    if selection_pending:
+                        early_payload["selectionPending"] = selection_pending
                     return ToolSelectionOutcome(
                         early_result=host._finalize_tool_context_result(
                             message=raw_message,
                             previous_messages=previous_messages,
-                            result={
-                                "context": "",
-                                "toolCalls": [],
-                                "nativeToolCalling": native_meta,
-                                "directAnswer": str(args.get("directAnswer") or ""),
-                                "skipRag": True,
-                                "currentMessage": raw_message,
-                                "routeSelectionClarification": {
-                                    "scoreGap": args.get("scoreGap"),
-                                    "rivalIds": args.get("rivalIds") or [],
-                                    "suggestions": args.get("suggestions") or [],
-                                },
-                            },
+                            result=early_payload,
                         ),
                     )
 

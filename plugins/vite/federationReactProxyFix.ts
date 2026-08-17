@@ -30,25 +30,71 @@ type VitePlugin = {
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
 
-const REACT_INTERNALS_KEY = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
+/** Instância canônica de react-dom (createPortal) — host semeia antes do remote. */
+export const DELPI_MF_REACT_DOM_GLOBAL = "__DELPI_MF_REACT_DOM__";
 
-function reactHookDispatcher(mod: unknown): unknown {
-  return (mod as Record<string, { H?: unknown } | undefined>)?.[REACT_INTERNALS_KEY]?.H;
+/**
+ * React canônico para MF: exige hooks usados em runtime pelos chunks remotos.
+ *
+ * **Não** exigir `internals.H != null` — H (dispatcher) só é preenchido *durante*
+ * o render. Chunks TipTap/recharts (ex.: `ContextMenuToolbarButton-*.js`) chamam o
+ * bridge CJS no *init* do módulo; com o check de H o global era rejeitado e o
+ * shim caía no React bundled → `Cannot access property "useRef", f.H is null`.
+ *
+ * Exigir `useMemo` + `useState` além de `useRef` — um global só com `useRef`
+ * (guard antigo) quebrava `const {useMemo:BA}=await O("react")` →
+ * `BA is not a function` na página pública de assinatura.
+ */
+export function isUsableReact(mod: unknown): mod is {
+  useRef: (...args: unknown[]) => unknown;
+  useMemo: (...args: unknown[]) => unknown;
+  useState: (...args: unknown[]) => unknown;
+} {
+  const m = mod as {
+    useRef?: unknown;
+    useMemo?: unknown;
+    useState?: unknown;
+  } | null;
+  return (
+    typeof m?.useRef === "function" &&
+    typeof m?.useMemo === "function" &&
+    typeof m?.useState === "function"
+  );
 }
 
-/** React flatten quebrado expõe useRef mas H=null — tratar como inválido. */
-export function isUsableReact(mod: unknown): mod is { useRef: (...args: unknown[]) => unknown } {
-  return typeof (mod as { useRef?: unknown })?.useRef === "function" && reactHookDispatcher(mod) != null;
-}
+/** Guard runtime: preferir global semeado pelo portal/MFE (sem checar H). */
+const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function"&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useMemo=="function"&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useState=="function")`;
 
-const USABLE_REACT_GLOBAL_GUARD = `(globalThis.${DELPI_MF_REACT_GLOBAL}&&typeof globalThis.${DELPI_MF_REACT_GLOBAL}.useRef=="function"&&globalThis.${DELPI_MF_REACT_GLOBAL}.${REACT_INTERNALS_KEY}?.H)`;
-
-/** Publica React canônico — não sobrescreve instância válida já semeada pelo portal. */
+/** Publica React canônico — não sobrescreve instância já semeada (primeiro vence). */
 export function publishDelpiMfReact(react: unknown): void {
   const g = globalThis as Record<string, unknown>;
   if (isUsableReact(g[DELPI_MF_REACT_GLOBAL])) return;
   if (isUsableReact(react)) {
     g[DELPI_MF_REACT_GLOBAL] = react;
+  }
+}
+
+function extractCreatePortal(mod: unknown): ((...args: unknown[]) => unknown) | null {
+  if (!mod || typeof mod !== "object") return null;
+  const record = mod as {
+    createPortal?: unknown;
+    default?: { createPortal?: unknown };
+  };
+  for (const candidate of [record.createPortal, record.default?.createPortal]) {
+    if (typeof candidate === "function") {
+      return candidate as (...args: unknown[]) => unknown;
+    }
+  }
+  return null;
+}
+
+/** Publica react-dom com createPortal — sobrescreve se o share atual não tiver portal. */
+export function publishDelpiMfReactDom(reactDom: unknown): void {
+  const g = globalThis as Record<string, unknown>;
+  const existing = g[DELPI_MF_REACT_DOM_GLOBAL];
+  if (extractCreatePortal(existing)) return;
+  if (extractCreatePortal(reactDom)) {
+    g[DELPI_MF_REACT_DOM_GLOBAL] = reactDom;
   }
 }
 
@@ -143,8 +189,15 @@ export function listBundledReactBridgeImports(code: string): string[] {
  *
  * Também casa imports multi-spec (`import{r as Lv,g as Xv}from…`) — o React core
  * costuma exportar `r` + `g`; regex só `{r as X}` ignorava esse bridge (api-delpi-console).
+ *
+ * **Não** redirecionar o wrapper `__federation_shared_react-dom` (`getDefaultExportFromCjs(o())`
+ * sem CLIENT_INTERNALS) — virava React e `createPortal` sumia → HelpTooltip `X is not a function`.
  */
 export function resolveBundledReactBridgeName(code: string): string | null {
+  if (isFederationSharedReactDomInterop(code)) {
+    return null;
+  }
+
   const bridges = listBundledReactBridgeImports(code);
   if (bridges.length === 0) return null;
 
@@ -166,6 +219,38 @@ export function resolveBundledReactBridgeName(code: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Chunk Vite `__federation_shared_react-dom-*`: só faz
+ * `getDefaultExportFromCjs(reactDomCjsBridge())` e exporta default (~136 bytes).
+ *
+ * **Não** usar só `_commonjsHelpers` + `export default` — App/expose (ex.:
+ * controle-retrabalhos) também importam o helper CJS e exportam default; o
+ * falso positivo bloqueava o fallback `__DELPI_MF_REACT__` no bridge React.
+ */
+export function isFederationSharedReactDomInterop(code: string): boolean {
+  if (!code.includes("_commonjsHelpers")) return false;
+  if (!/export\{\w+ as default\}/.test(code)) return false;
+  if (code.includes(REACT_CLIENT_INTERNALS)) return false;
+  if (code.includes("n.useRef=function")) return false;
+  // App/expose: federation runtime + importShared — nunca o wrapper shared.
+  if (
+    code.includes("importShared") ||
+    code.includes("__federation_fn_import") ||
+    code.includes("_virtual___federation__")
+  ) {
+    return false;
+  }
+  const bridges = listBundledReactBridgeImports(code);
+  if (bridges.length !== 1) return false;
+  // Wrapper real é minúsculo; App chunks são dezenas/centenas de KB.
+  if (code.length > 2000) return false;
+  return true;
+}
+
+export function isFederationSharedReactDomFileName(fileName: string): boolean {
+  return /__federation_shared_react-dom/i.test(fileName);
 }
 
 /**
@@ -261,7 +346,7 @@ export function patchBundledReactCjsBridge(code: string): string {
   }
   return code.replace(
     fnStart,
-    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function"&&__g.${REACT_INTERNALS_KEY}?.H)return __g;return`,
+    `function ${fnName}(){const __g=globalThis.${DELPI_MF_REACT_GLOBAL};if(__g&&typeof __g.useRef=="function"&&typeof __g.useMemo=="function"&&typeof __g.useState=="function")return __g;return`,
   );
 }
 
@@ -289,9 +374,17 @@ export function patchRemoteEntryCacheBust(code: string): string {
   return code.replace(/(\/__federation_expose_[^"?]+\.js)/g, `$1${q}`);
 }
 
+function chunkConsumesBundledReactBridge(code: string): boolean {
+  return listBundledReactBridgeImports(code).length > 0;
+}
+
 function applyMfChunkPatches(code: string, fileName: string): string {
   if (fileName.includes("remoteEntry.js")) {
     return patchRemoteEntryCacheBust(code);
+  }
+  // Nunca redirecionar shared react-dom → React (createPortal some).
+  if (isFederationSharedReactDomFileName(fileName) || isFederationSharedReactDomInterop(code)) {
+    return code;
   }
   if (fileName.includes("__federation_fn_import")) {
     return patchMfRuntimeImportCacheBust(patchFederationImportPublishReact(code));
@@ -299,8 +392,17 @@ function applyMfChunkPatches(code: string, fileName: string): string {
   if (isBundledReactCoreChunk(code)) {
     return patchBundledReactCjsBridge(code);
   }
-  if (isAppOrExposeChunk(fileName) || fileName.includes("_virtual___federation__")) {
-    return patchMfRuntimeImportCacheBust(patchBundledReactConsumerChunk(code));
+  // App/expose *e* chunks TipTap/recharts (ContextMenuToolbarButton-*.js, etc.)
+  if (
+    isAppOrExposeChunk(fileName) ||
+    fileName.includes("_virtual___federation__") ||
+    chunkConsumesBundledReactBridge(code)
+  ) {
+    const patched = patchBundledReactConsumerChunk(code);
+    if (isAppOrExposeChunk(fileName) || fileName.includes("_virtual___federation__")) {
+      return patchMfRuntimeImportCacheBust(patched);
+    }
+    return patched;
   }
   return code;
 }

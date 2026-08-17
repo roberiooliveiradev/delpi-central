@@ -41,24 +41,6 @@
   min-width: 200px;
 }
 
-.admin-template-section__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.admin-template-section__btn--danger {
-  color: #b91c1c;
-  border-color: color-mix(in srgb, #b91c1c 35%, var(--border));
-}
-
 .admin-template-section__readonly {
   padding: 12px 14px;
   border: 1px dashed var(--border);

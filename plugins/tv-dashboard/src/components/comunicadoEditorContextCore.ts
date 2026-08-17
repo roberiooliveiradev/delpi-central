@@ -2,6 +2,7 @@ import { createContext, useContext, type RefObject } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
 import type {
+  ComunicadoBackground,
   ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoDataFilters,
@@ -28,6 +29,7 @@ import type {
 import type { MediaAsset } from "../api/tvDashboardApi";
 import type { ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import type { SameSizeAxis } from "../utils/comunicadoSameSize";
 import type { StageGroupGesture } from "../utils/stageGroupGesture";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
@@ -104,6 +106,8 @@ export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
   /** Perfil de viewport da playlist — define o tamanho de design do palco. */
   viewportProfile: string;
+  viewportWidth: number | null;
+  viewportHeight: number | null;
   /** Slide cujo config já foi aplicado no provider (pode atrasar 1 frame vs selectedSlideId). */
   appliedSlideId?: string;
   blocks: ComunicadoBlock[];
@@ -119,8 +123,11 @@ export type ComunicadoEditorContextValue = {
   /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
   remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;
-  selectBlock: (blockId: string, options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean }) => void;
-  selectBlocksByIds: (blockIds: string[]) => void;
+  selectBlock: (
+    blockId: string,
+    options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean; keepPanelTab?: boolean },
+  ) => void;
+  selectBlocksByIds: (blockIds: string[], options?: { keepPanelTab?: boolean }) => void;
   clearSelection: () => void;
   /** Ids efetivos para mutações (override do menu de contexto). */
   getActionSelectedIds: () => string[];
@@ -334,23 +341,30 @@ export type ComunicadoEditorContextValue = {
     fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
   ) => void;
   updateBlockLink: (blockId: string, href: string | undefined) => void;
-  updateSelectedStyle: (patch: NonNullable<ComunicadoBlock["style"]>) => void;
+  updateSelectedStyle: (
+    patch: NonNullable<ComunicadoBlock["style"]>,
+    applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
+  ) => void;
   /** Tipografia Formatar — bloco text/heading ou parte textual KPI/chart. */
-  updateSelectedTextFormatStyle: (patch: {
-    fontFamily?: string;
-    fontSize?: number;
-    fontWeight?: string;
-    fontStyle?: string;
-    color?: string;
-    textDecoration?: string;
-    textHighlight?: string;
-    textAlign?: string;
-    verticalAlign?: string;
-    textShadow?: string;
-    textStrokeColor?: string;
-    textStrokeWidth?: number;
-    textReflection?: boolean;
-  }) => void;
+  updateSelectedTextFormatStyle: (
+    patch: {
+      fontFamily?: string;
+      fontSize?: number;
+      fontWeight?: string;
+      fontStyle?: string;
+      color?: string;
+      textDecoration?: string;
+      textHighlight?: string;
+      textAlign?: string;
+      verticalAlign?: string;
+      textShadow?: string;
+      textStrokeColor?: string;
+      textStrokeWidth?: number;
+      textReflection?: boolean;
+      fontSizeAuto?: boolean;
+    },
+    applyOptions?: import("../utils/selectionPropertyApply").SelectionPropertyApplyOptions,
+  ) => void;
   /** @deprecated Use `applyDynamicContentSpec` via picker `{ }`. */
   insertDataFieldAtCursor: () => void;
   /** Aplica spec do fluxo de conteúdo dinâmico no alvo ativo (texto/forma/Grade). */
@@ -377,13 +391,18 @@ export type ComunicadoEditorContextValue = {
   clearRibbonTabRequest: () => void;
   replaceSelectedDataRoute: (block: ComunicadoBlock) => void;
   moveLayer: (direction: "up" | "down") => void;
-  reorderBlockLayer: (blockId: string, targetIndex: number) => void;
+  reorderBlockLayer: (movedIds: string[], targetId: string) => void;
   nudgeSelected: (dx: number, dy: number) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
   playlistId: string;
+  /**
+   * Token público da programação — mídia em `<img>`/`<video>`/CSS via
+   * `/public/present/...` (sem JWT). Ver `resolveBrowserDisplayMediaUrl`.
+   */
+  publicToken: string | null;
   /** dataDefaults live da programação — preview/refresh canônicos. */
   playlistDefaults: Record<string, unknown> | null;
   /** Master slide da programação (fundo/logo herdados no palco — 4E.3). */
@@ -404,13 +423,20 @@ export type ComunicadoEditorContextValue = {
   replaceSelectedMediaFromClipboard: () => Promise<boolean>;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
+  setBackground: (background: ComunicadoBackground) => void;
   /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */
   bindSelectedVisualBoxToData: () => void;
   /** Insere bloco de texto e vincula campo dinâmico quando há fonte no slide. */
   insertTextDataFieldBlock: () => void;
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
+  /**
+   * Substitui o native_config do draft preservando ids dos blocos
+   * (preview/apply do Copiloto — hint `replaceNativeConfig`).
+   */
+  replaceSlideNativeConfig: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
+  sameSizeSelected: (axis: SameSizeAxis) => void;
   rotateSelected: (deltaDeg: number) => void;
   flipSelectedHorizontal: () => void;
   flipSelectedVertical: () => void;

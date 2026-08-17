@@ -12,4 +12,6 @@ URL pública esperada após o build/deploy:
 /apps/codigo-etica/documents/codigo-de-etica.pdf
 ```
 
+Página sem login (public-hub): `/p/codigo-etica/codigo/aberto`.
+
 Não renomeie o arquivo. Não versionar PDFs de rascunho com outros nomes.

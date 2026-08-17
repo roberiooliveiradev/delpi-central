@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import {
   BarChart3,
   Database,
+  Goal,
   Grid3x3,
   LayoutTemplate,
   Palette,
@@ -11,6 +12,7 @@ import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
   ElementTogglePopover,
+  FormSelectControl,
   type DelpiChartType,
   useRibbonSectionPopoverSurface,
 } from "@delpi/plugin-ui/index";
@@ -24,6 +26,7 @@ import {
   mergeComunicadoChartOptions,
   partsToChartOptions,
   toSeriesChartKind,
+  CHART_LEGEND_SORT_OPTIONS,
   type ChartAddElementChoiceId,
   type ChartElementId,
   type ComunicadoBlock,
@@ -43,6 +46,7 @@ import { ChartAddElementMenu } from "../ChartAddElementMenu";
 import { ChartColorsStylesMenu } from "../ChartColorsStylesMenu";
 import { InsertCatalogPortal } from "../InsertCatalogPortal";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { DeckField } from "../deck/DeckField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "../deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -129,7 +133,12 @@ function useChartDesignControls() {
     const part = chartElementPrimaryPartRef(elementId);
     if (part) selectChartPart(block.id, part);
     setSelectionPanelTab("element");
-    document.getElementById("td-chart-pane-elements")?.scrollIntoView({ block: "nearest" });
+    // Com parte selecionada a lista de elementos some; o campo da meta fica no ChartPartInspector.
+    const scrollId =
+      elementId === "goalLine" ? "td-chart-part-goal-value" : "td-chart-pane-elements";
+    queueMicrotask(() => {
+      document.getElementById(scrollId)?.scrollIntoView({ block: "nearest" });
+    });
     setAddElementOpen(false);
   };
 
@@ -485,44 +494,73 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
   if (!ctrl) return null;
 
   const body = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-      {(
-        [
-          {
-            id: "axes" as const,
-            icon: BarChart3,
-            label: "Eixos",
-            hint: "Liga os eixos e abre opções de estilo.",
-          },
-          {
-            id: "gridlines" as const,
-            icon: Grid3x3,
-            label: "Grade",
-            hint: "Liga a grade horizontal e edita o traço das linhas.",
-          },
-        ] as const
-      ).map((item) => {
-        const enabled = isChartElementEnabled(item.id, ctrl.options);
-        const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
-        return (
-          <ElementTogglePopover
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            hint={item.hint}
-            active={enabled}
-            focused={focused}
-            presence={{
-              enabled,
-              onAdd: () => ctrl.toggleElement(item.id, true),
-              onRemove: () => ctrl.toggleElement(item.id, false),
-              onOpenOptions: () => ctrl.openAddElementMoreOptions(item.id),
-            }}
-          />
-        );
-      })}
+    <div className="td-deck-ribbon__stack td-deck-ribbon__stack--ribbon-row">
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        {(
+          [
+            {
+              id: "axes" as const,
+              icon: BarChart3,
+              label: "Eixos",
+              hint: "Liga os eixos e abre opções de estilo.",
+            },
+            {
+              id: "gridlines" as const,
+              icon: Grid3x3,
+              label: "Grade",
+              hint: "Liga a grade horizontal e edita o traço das linhas.",
+            },
+            {
+              id: "goalLine" as const,
+              icon: Goal,
+              label: "Meta",
+              hint: "Liga a linha de meta e abre o campo do valor no inspetor.",
+            },
+          ] as const
+        ).map((item) => {
+          const enabled = isChartElementEnabled(item.id, ctrl.options);
+          const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
+          return (
+            <ElementTogglePopover
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              hint={item.hint}
+              active={enabled}
+              focused={focused}
+              presence={{
+                enabled,
+                onAdd: () => ctrl.toggleElement(item.id, true),
+                onRemove: () => ctrl.toggleElement(item.id, false),
+                onOpenOptions: () => ctrl.openAddElementMoreOptions(item.id),
+              }}
+            />
+          );
+        })}
+      </div>
+      <DeckField
+        id="td-chart-ribbon-category-sort"
+        label="Ordenar categorias"
+        hint="A→Z nos centros de trabalho; Valor para ranking."
+      >
+        <FormSelectControl
+          id="td-chart-ribbon-category-sort"
+          ariaLabel="Ordenar categorias do eixo"
+          value={ctrl.options.legendSort ?? "auto"}
+          onChange={(value) =>
+            ctrl.persistOptions({
+              ...ctrl.options,
+              legendSort: value as ComunicadoChartOptions["legendSort"],
+            })
+          }
+          options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
+            value: entry.value,
+            label: entry.label,
+          }))}
+        />
+      </DeckField>
     </div>
   );
 
-  return wrapPane("Eixos", H.chartAxes, layout, body, false, "chart-axes");
+  return wrapPane("Eixos", H.chartAxes, layout, body, true, "chart-axes");
 }

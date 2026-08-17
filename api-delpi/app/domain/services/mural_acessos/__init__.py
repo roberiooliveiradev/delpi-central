@@ -1,0 +1,1 @@
+"""Domínio — Mural de Acessos."""

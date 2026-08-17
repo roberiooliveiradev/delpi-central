@@ -251,6 +251,8 @@ export type InspecoesProcessoAuditoriaApontamentosResponse = {
 export type FetchAuditoriaApontamentosParams = {
   branch: string;
   data?: string;
+  /** Query OpenAPI: inspecao_status */
+  inspecao_status?: string;
   page?: number;
   page_size?: number;
   signal?: AbortSignal;

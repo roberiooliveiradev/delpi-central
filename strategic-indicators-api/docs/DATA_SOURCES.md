@@ -1,6 +1,6 @@
 # Fontes de dados — medições do painel
 
-**Última atualização:** 2026-06-08
+**Última atualização:** 2026-08-10
 
 O painel SI **não** armazena valores realizados no Postgres (exceto cache `period_scores`). Os realizados vêm de fontes operacionais por `source_key` / departamento, sempre via **api-delpi HTTP**.
 
@@ -18,7 +18,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 | RH | Parcial — satisfação/PDI só entram no snapshot se existirem |
 | Comercial | Repassa `null` do snapshot quando aplicável |
 | Qualidade | PPM / perdas × ROL usam `null` quando a api-delpi não retorna dado (ex.: ROL = 0) |
-| Produção | Gateways retornam `null`; provider não força `0.0` |
+| Produção | Gateways retornam `null`; provider não força `0.0`. **OEE (ago/2026):** `GET /production/overall_equipment_effectiveness_pct` usa o mesmo % canônico da eficiência fabril (`HY_TEMPAD × qtd`) — ver `api-delpi/docs/api/padroes-totvs/apontamentos-tempo-padrao.md`. |
 | Suprimentos / Engenharia | Depende do snapshot upstream (api-delpi) |
 
 ## Resumo por departamento

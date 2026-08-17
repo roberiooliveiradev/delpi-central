@@ -306,6 +306,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 ("Nome", _display(contato.get("nome"))),
                 ("Departamento", _display(contato.get("departamento"))),
                 ("E-mail", _display(contato.get("email"))),
+                ("Telefone", _display(contato.get("telefone"))),
             ],
             styles,
             card_width,

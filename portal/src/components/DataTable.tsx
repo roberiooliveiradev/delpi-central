@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import type { ReactNode } from "react";
-import { ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button, Checkbox, SearchInput, Select } from "../ui-kit";
 import "./DataTable.css";
 
 export type DataTableColumn<T> = {
@@ -152,29 +153,29 @@ export function DataTable<T>({
         <div className="datatable-toolbar-right">
           {hasSearch && (
             <div className="datatable-search">
-              <Search size={16} />
-              <input
+              <SearchInput
+                size="sm"
                 placeholder="Buscar..."
                 value={searchValue ?? ""}
                 onChange={(e) => onSearchChange?.(e.target.value)}
+                onClear={() => onSearchChange?.("")}
               />
             </div>
           )}
 
           {hasPageSize && (
-            <select
+            <Select
               className="datatable-pagesize"
-              value={pagination!.pageSize}
-              onChange={(e) =>
-                onPageSizeChange?.(Number(e.target.value))
-              }
-            >
-              {pageSizeOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n} por página
-                </option>
-              ))}
-            </select>
+              size="sm"
+              searchable={false}
+              value={String(pagination!.pageSize)}
+              onChange={(next) => onPageSizeChange?.(Number(next))}
+              aria-label="Registros por página"
+              options={pageSizeOptions.map((n) => ({
+                value: String(n),
+                label: `${n} por página`,
+              }))}
+            />
           )}
         </div>
       </div>
@@ -185,10 +186,10 @@ export function DataTable<T>({
             <tr>
               {selectable && (
                 <th>
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={allSelected}
                     onChange={toggleAll}
+                    aria-label="Selecionar todos"
                   />
                 </th>
               )}
@@ -248,10 +249,10 @@ export function DataTable<T>({
                 >
                   {selectable && (
                     <td>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected(row)}
                         onChange={() => toggleRow(row)}
+                        aria-label="Selecionar linha"
                       />
                     </td>
                   )}
@@ -288,32 +289,27 @@ export function DataTable<T>({
           </span>
 
           <div className="datatable-pagination-actions">
-            <button
+            <Button
+              size="sm"
               disabled={pagination!.page <= 1}
-              onClick={() =>
-                onPageChange?.(
-                  Math.max(1, pagination!.page - 1)
-                )
-              }
+              onClick={() => onPageChange?.(Math.max(1, pagination!.page - 1))}
+              icon={<ChevronLeft size={16} />}
             >
-              <ChevronLeft size={16} />
               Anterior
-            </button>
+            </Button>
 
-            <button
+            <Button
+              size="sm"
               disabled={pagination!.page >= pagination!.totalPages}
               onClick={() =>
                 onPageChange?.(
-                  Math.min(
-                    pagination!.totalPages,
-                    pagination!.page + 1
-                  )
+                  Math.min(pagination!.totalPages, pagination!.page + 1)
                 )
               }
             >
               Próxima
               <ChevronRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       )}

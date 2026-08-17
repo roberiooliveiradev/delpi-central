@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "commercial",
+  "name": "Portal Comercial",
+  "description": "Portal comercial nativo: início, visão geral, minhas tarefas, pedidos, carteira e administração de carteiras.",
+  "icon": "briefcase-business",
+  "version": "0.4.0",
+  "type": "microfrontend",
+  "basePath": "/apps/commercial",
+  "entry": "/apps/commercial/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "commercial.access",
+      "name": "Acessar Portal Comercial",
+      "description": "Acesso às funcionalidades do produto (pedidos, tarefas, visão geral, propostas). Minha Carteira exige membership ou commercial.manage.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.manage",
+      "name": "Administrar Portal Comercial",
+      "description": "Administração (CRUD carteiras/equipe/grupos), escopo irrestrito e visão de todas as carteiras.",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.billing.notify",
+      "name": "Receber notificação de faturamento",
+      "description": "Receber notificação quando pedido entra em Pronto para faturar. Não libera telas admin nem escopo de carteiras.",
+      "module": "commercial"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/commercial",
+      "label": "Portal Comercial",
+      "permission": "commercial.access",
+      "icon": "briefcase-business",
+      "order": 13,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/commercial/overview",
+      "label": "Visão geral",
+      "permission": "commercial.access",
+      "icon": "bar-chart-2",
+      "order": 14,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/my-tasks",
+      "label": "Minhas tarefas",
+      "permission": "commercial.access",
+      "icon": "calendar-check",
+      "order": 15,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/my-day",
+      "label": "Minhas tarefas",
+      "permission": "commercial.access",
+      "icon": "calendar-check",
+      "order": 16,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/open-orders",
+      "label": "Meus pedidos",
+      "permission": "commercial.access",
+      "icon": "clipboard-list",
+      "order": 17,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/customers",
+      "label": "Minha Carteira",
+      "permission": "commercial.access",
+      "icon": "users",
+      "order": 18,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/proposals",
+      "label": "Propostas",
+      "permission": "commercial.access",
+      "icon": "file-text",
+      "order": 19,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/analytics",
+      "label": "Visão geral",
+      "permission": "commercial.access",
+      "icon": "bar-chart-2",
+      "order": 20,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/analytics/otd",
+      "label": "Pontualidade (OTD)",
+      "permission": "commercial.access",
+      "icon": "clock",
+      "order": 21,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/analytics/team",
+      "label": "Equipe",
+      "permission": "commercial.manage",
+      "icon": "users",
+      "order": 22,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/analytics/opportunities",
+      "label": "Oportunidades",
+      "permission": "commercial.access",
+      "icon": "target",
+      "order": 23,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration",
+      "label": "Administração",
+      "permission": "commercial.manage",
+      "icon": "settings",
+      "order": 24,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration/seller-portfolios",
+      "label": "Carteiras",
+      "permission": "commercial.manage",
+      "icon": "settings",
+      "order": 25,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration/team",
+      "label": "Equipe",
+      "permission": "commercial.manage",
+      "icon": "users",
+      "order": 26,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/administration/groups",
+      "label": "Grupos",
+      "permission": "commercial.manage",
+      "icon": "users",
+      "order": 27,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/seller-portfolios",
+      "label": "Carteiras",
+      "permission": "commercial.manage",
+      "icon": "settings",
+      "order": 28,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

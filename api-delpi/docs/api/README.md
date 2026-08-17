@@ -56,19 +56,25 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [supplies-stock-balances.md](./supplies-stock-balances.md) | Saldos por armazém (`/supplies/stock-balances`) — qtd produtos + valor QATU×CM1. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
+| [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md) | OTD de pedidos de compra (MP). |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
 | [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Lançamento de NF de entrada — fila, atendimento, conciliação SF1, Já lançada. |
+| [invoice-issuance.md](./invoice-issuance.md) | Solicitação de emissão de NF (saída) — wizard, fila do Faturamento, lookups SA1/SA2/SB1. |
 | [scrap-monitoring.md](./scrap-monitoring.md) | Monitoramento de refugos / scrap. |
-| [inspecoes-entrada.md](./inspecoes-entrada.md) · [inspecoes-processo.md](./inspecoes-processo.md) | Inspeções de entrada e de processo. |
+| [inspecoes-entrada.md](./inspecoes-entrada.md) · [inspecoes-processo.md](./inspecoes-processo.md) · [process-inspection-plans.md](./process-inspection-plans.md) | Inspeções de entrada, execução de processo e **cadastro** de planos (QP6). |
 | [controle-retrabalhos.md](./controle-retrabalhos.md) | Controle de retrabalhos. |
 | [central-agendamento.md](./central-agendamento.md) | Central de agendamento. |
 | [production-appointments.md](./production-appointments.md) | Apontamentos de produção. |
 | [production-machine-programs.md](./production-machine-programs.md) | Programas de máquina. |
-| [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) | Faixas de eficiência fabril. |
+| [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) | Faixa 0–199% OEE/EF + métrica canônica `HY_TEMPAD`. |
+| [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) | Tempo padrão / eficiência de apontamento (`HY_TEMPAD` vs `HY_TEMPOM`). |
+| [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) | Changelog eficiência/OEE (jun–ago/2026). |
 | [delpi-reports.md](./delpi-reports.md) | Relatórios DELPI. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
 | [guias-procedimentos.md](./guias-procedimentos.md) | Guias e Procedimentos — leitura pública (departamentos e procedimentos publicados). |
+| [canal-denuncia.md](./canal-denuncia.md) | Canal de Denúncia — relato anônimo (portal + formulário público). |
+| [mural-acessos.md](./mural-acessos.md) | Mural de Acessos — vários murais de links + QR público por mural. |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
 | [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
 | [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |

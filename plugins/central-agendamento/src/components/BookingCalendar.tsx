@@ -65,6 +65,8 @@ function toEvent(booking: SchedulingBooking, resources: SchedulingResource[]): C
     bookedByName: booking.booked_by_name,
     notes: booking.notes,
     bookedByUserId: booking.booked_by_user_id,
+    requesterEmail: booking.requester_email,
+    requesterPhone: booking.requester_phone,
     status: booking.status,
     decidedByName: booking.decided_by_name,
     decisionReason: booking.decision_reason,

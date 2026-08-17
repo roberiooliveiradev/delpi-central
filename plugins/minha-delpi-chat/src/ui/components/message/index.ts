@@ -60,6 +60,11 @@ export {
   ChatActionConfirmationPanel,
   type ChatActionConfirmation,
 } from "./ChatActionConfirmationPanel";
+export {
+  ChatSelectionPendingPanel,
+  type ChatSelectionPending,
+  type ChatSelectionCandidate,
+} from "./ChatSelectionPendingPanel";
 export { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 export { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
 export { ChatBranchNavigator } from "./ChatBranchNavigator";

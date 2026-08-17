@@ -13,8 +13,8 @@ from tm_app.application.services.json_backup_service import (
     ImportFormat,
     JsonBackupService,
 )
-from tm_app.application.services.processo_arquivo_storage import ProcessoArquivoStorage
-from tm_app.application.services.revisao_evidence_storage import RevisaoEvidenceStorage
+from tm_app.application.services.process_file_storage import ProcessoArquivoStorage
+from tm_app.application.services.revision_evidence_storage import RevisaoEvidenceStorage
 from tm_app.config import settings
 from tm_app.core.serialize import json_safe
 from tm_app.infrastructure.persistence.json_backup_repository import (
@@ -64,12 +64,12 @@ class TransformometroBackupPackageService:
         self,
         json_backup: JsonBackupService | None = None,
         storage: RevisaoEvidenceStorage | None = None,
-        processo_arquivo_storage: ProcessoArquivoStorage | None = None,
+        process_file_storage: ProcessoArquivoStorage | None = None,
     ) -> None:
         self._json_backup = json_backup or JsonBackupService()
         self._storage = storage or RevisaoEvidenceStorage()
-        self._processo_arquivo_storage = (
-            processo_arquivo_storage or ProcessoArquivoStorage()
+        self._process_file_storage = (
+            process_file_storage or ProcessoArquivoStorage()
         )
         self._max_bytes = int(
             getattr(settings, "TM_BACKUP_PACKAGE_MAX_BYTES", 500 * 1024 * 1024)
@@ -135,7 +135,7 @@ class TransformometroBackupPackageService:
                     missing_files.append(f"arquivo do processo {label}")
                     continue
                 try:
-                    file_path = self._processo_arquivo_storage.resolve_file(
+                    file_path = self._process_file_storage.resolve_file(
                         processo_id=processo_id, stored_name=stored_name
                     )
                 except Exception:
@@ -379,7 +379,7 @@ class TransformometroBackupPackageService:
 
         if mode == "replace":
             self._clear_evidence_storage()
-            self._clear_processo_arquivo_storage()
+            self._clear_process_file_storage()
 
         restored_evidence = self._restore_evidence_files(files)
         restored_processo = self._restore_processo_arquivo_files(files)
@@ -415,7 +415,7 @@ class TransformometroBackupPackageService:
             if len(parts) != 3:
                 continue
             processo_id, stored_name = parts[1], parts[2]
-            target_dir = self._processo_arquivo_storage.base_dir / processo_id
+            target_dir = self._process_file_storage.base_dir / processo_id
             target_dir.mkdir(parents=True, exist_ok=True)
             (target_dir / stored_name).write_bytes(content)
             restored += 1
@@ -424,8 +424,8 @@ class TransformometroBackupPackageService:
     def _clear_evidence_storage(self) -> None:
         _clear_storage_dir_contents(self._storage.base_dir)
 
-    def _clear_processo_arquivo_storage(self) -> None:
-        _clear_storage_dir_contents(self._processo_arquivo_storage.base_dir)
+    def _clear_process_file_storage(self) -> None:
+        _clear_storage_dir_contents(self._process_file_storage.base_dir)
 
 
 def _clear_storage_dir_contents(base) -> None:

@@ -80,6 +80,14 @@ export type ShapeColorLabels = {
   colorModel?: string;
   ok?: string;
   cancel?: string;
+  fillSolid?: string;
+  fillGradient?: string;
+  fillAngle?: string;
+  fillStopPosition?: string;
+  fillStopOpacity?: string;
+  fillAddStop?: string;
+  fillRemoveStop?: string;
+  fillPresets?: string;
 };
 
 export type ThemePalette = readonly string[];

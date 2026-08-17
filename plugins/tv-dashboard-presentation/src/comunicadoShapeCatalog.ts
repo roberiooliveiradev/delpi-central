@@ -43,6 +43,7 @@ export type ComunicadoLineToolDefinition = {
 
 const SHAPE_LABELS: Record<ComunicadoShapeKind, string> = {
   point: "Ponto",
+  "efficiency-pin": "Pin CT (eficiência)",
   rectangle: "Retângulo",
   "rounded-rect": "Retângulo arredondado",
   "snip-rect": "Retângulo recortado",
@@ -140,6 +141,7 @@ export const COMUNICADO_SHAPE_CATALOG_CATEGORIES: ComunicadoShapeCatalogCategory
     libraryFlyout: true,
     shapes: [
       "point",
+      "efficiency-pin",
       "rectangle",
       "rounded-rect",
       "round-1-rect",

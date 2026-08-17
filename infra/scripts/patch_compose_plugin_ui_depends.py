@@ -13,6 +13,7 @@ FEDERATED_PLUGINS = {
     "controle-retrabalhos",
     "scrap-monitoring",
     "estoque-seguranca",
+    "materiais-terceiros",
     "production-appointments",
     "dashboard-production",
     "dashboard-commercial",

@@ -52,6 +52,8 @@ export function chartPartSelectionLabel(part: ComunicadoChartPartRef): string {
       return part.axis === "x" ? "Título eixo X" : "Título eixo Y";
     case "grid":
       return "Grade";
+    case "goalLine":
+      return "Linha de meta";
     case "dataTable":
       return "Tabela de dados";
     default:

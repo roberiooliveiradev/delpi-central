@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Home, ShieldAlert, UserCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { Button } from "../ui-kit";
 import "./Unauthorized.css";
 
 type UnauthorizedLocationState = {
@@ -53,32 +54,30 @@ export const Unauthorized = () => {
         </p>
 
         <div className="unauthorized-actions">
-          <button
-            type="button"
-            className="unauthorized-btn unauthorized-btn--primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => navigate("/")}
+            icon={<Home size={18} />}
           >
-            <Home size={18} aria-hidden />
             Ir para o início
-          </button>
+          </Button>
 
-          <button
-            type="button"
-            className="unauthorized-btn unauthorized-btn--secondary"
+          <Button
+            size="lg"
             onClick={() => navigate("/profile")}
+            icon={<UserCircle size={18} />}
           >
-            <UserCircle size={18} aria-hidden />
             Meu perfil
-          </button>
+          </Button>
 
-          <button
-            type="button"
-            className="unauthorized-btn unauthorized-btn--secondary"
+          <Button
+            size="lg"
             onClick={() => navigate(-1)}
+            icon={<ArrowLeft size={18} />}
           >
-            <ArrowLeft size={18} aria-hidden />
             Voltar
-          </button>
+          </Button>
         </div>
       </motion.article>
     </div>

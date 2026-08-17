@@ -1,0 +1,354 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Trash2 } from "lucide-react";
+
+import type { AppProps } from "../../App";
+import { DepartmentReadView } from "../../components/department/DepartmentReadView";
+import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
+import { PageHeader } from "../../components/PageHeader";
+import { InlineErrorState } from "../../components/ErrorStateBox";
+import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
+import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  createSetor,
+  deleteSetor,
+  fetchOptions,
+  fetchSetor,
+  updateSetor,
+  type OptionsData,
+  type Setor,
+} from "../../data/api/transformometroApi";
+import { buildSetorPath } from "../../utils/routeParser";
+import { valuesEqual } from "@delpi/plugin-ui/index";
+import { SetorFormFields } from "../departments/SetorFormFields";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import {
+  createPayloadFromSetorForm,
+  emptySetorForm,
+  payloadFromSetorForm,
+  setorFormFromEntity,
+  type SetorFormState,
+} from "../departments/setorCatalogForm";
+
+type Props = Pick<AppProps, "getAccessToken"> & {
+  setorId: string;
+  pathname?: string;
+  onNavigate: (path: string) => void;
+  onBack: () => void;
+  embedded?: boolean;
+};
+
+export function DepartmentDetailPage({
+  getAccessToken,
+  setorId,
+  pathname,
+  onNavigate,
+  onBack,
+  embedded = false,
+}: Props) {
+  const confirm = useConfirm();
+  const isCreate = isCatalogCreateId("setor", setorId);
+  const [setor, setSetor] = useState<Setor | null>(null);
+  const [options, setOptions] = useState<OptionsData | null>(null);
+  const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
+  const [formBaseline, setFormBaseline] = useState<SetorFormState>(() => emptySetorForm());
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!isCreate);
+  const [saving, setSaving] = useState(false);
+
+  const filialLabels = useMemo(
+    () => new Map((options?.filiais ?? []).map((filial) => [filial.id, filial.label])),
+    [options?.filiais]
+  );
+
+  useEffect(() => {
+    setLoadError(null);
+    setSaveError(null);
+    setSetor(null);
+    setLoading(!isCreate);
+  }, [isCreate, setorId]);
+
+  const load = useCallback(async () => {
+    if (isCreate) {
+      setLoading(true);
+      try {
+        const opts = await fetchOptions(getAccessToken);
+        setOptions(opts);
+        const empty = emptySetorForm();
+        setForm(empty);
+        setFormBaseline(empty);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Erro ao carregar opções");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    setLoadError(null);
+    setLoading(true);
+    try {
+      const [row, opts] = await Promise.all([
+        fetchSetor(setorId, getAccessToken),
+        fetchOptions(getAccessToken),
+      ]);
+      setSetor(row);
+      setOptions(opts);
+      const next = setorFormFromEntity(row);
+      setForm(next);
+      setFormBaseline(next);
+    } catch (err) {
+      setSetor(null);
+      setLoadError(err instanceof Error ? err.message : "Erro ao carregar departamento");
+    } finally {
+      setLoading(false);
+    }
+  }, [getAccessToken, isCreate, setorId]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "setor",
+    entityId: setorId,
+    getAccessToken,
+    enabled: !isCreate,
+    onResync: () => void load(),
+  });
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const editingSetor = sectionEdit.isEditing("setor");
+
+  useEffect(() => {
+    if (isCreate) {
+      sectionEdit.startEdit("setor");
+    }
+  }, [isCreate, sectionEdit.startEdit]);
+
+  useEffect(() => {
+    if (!setor || editingSetor) return;
+    const next = setorFormFromEntity(setor);
+    setForm(next);
+    setFormBaseline(next);
+  }, [setor, editingSetor]);
+
+  async function handleSave() {
+    if (form.filiais.length === 0) {
+      setSaveError("Selecione ao menos uma unidade para o departamento.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    const payload = payloadFromSetorForm(form);
+    try {
+      if (isCreate) {
+        const created = await createSetor(createPayloadFromSetorForm(form), getAccessToken);
+        setSetor(created);
+        setForm(setorFormFromEntity(created));
+        onNavigate(buildSetorPath(created.setor_id));
+        return;
+      }
+      const updated = await updateSetor(setorId, payload, getAccessToken);
+      setSetor(updated);
+      const saved = setorFormFromEntity(updated);
+      setForm(saved);
+      setFormBaseline(saved);
+      sectionEdit.stopEdit("setor");
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erro ao salvar departamento");
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!setor) return;
+    const label = `${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}`;
+    const confirmed = await confirm({
+      title: "Excluir departamento",
+      message: `Excluir departamento ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    setSaveError(null);
+    try {
+      await deleteSetor(setor.setor_id, getAccessToken);
+      onBack();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erro ao excluir departamento");
+    }
+  }
+
+  function cancelEdit() {
+    if (isCreate) {
+      onBack();
+      return;
+    }
+    setForm(formBaseline);
+    sectionEdit.cancelEdit("setor");
+  }
+
+  useUnsavedChangesGuard({
+    id: `setor:${setorId}`,
+    editing: isCreate || sectionEdit.isEditing("setor"),
+    dirty: !valuesEqual(form, formBaseline),
+    onSave: handleSave,
+    onDiscard: cancelEdit,
+  });
+
+  const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !setor);
+  const loadingProgress = useLoadingProgress(loading && !isCreate && !setor, fetchProgress);
+
+  if (loading && !isCreate && !setor) {
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando departamento"
+        description="Dados do departamento e unidades vinculadas."
+        progressPercent={loadingProgress}
+      />
+    );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
+  }
+
+  if (!isCreate && !setor && !loading) {
+    const errorView = (
+      <InlineErrorState
+        title={loadError ? "Não foi possível carregar o departamento" : "Departamento não encontrado"}
+        message={
+          loadError ??
+          "Este departamento pode ter sido excluído ou você não tem acesso."
+        }
+        actionLabel="Voltar à lista"
+        onAction={onBack}
+      />
+    );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
+  }
+
+  const title = isCreate
+    ? "Novo departamento"
+    : `${setor?.codigo_setor ?? setorId} — ${setor?.nome_setor ?? ""}`;
+
+  const pageBody = (
+    <>
+      {embedded ? (
+        <div className="tm-cadastro-detail-toolbar">
+          <div>
+            <h2 className="ds-section-title">{title}</h2>
+            <p className="ds-hint">
+              {isCreate
+                ? "Cadastre departamento e vínculo com unidades"
+                : `Status: ${setor?.status_setor ?? "ativo"}`}
+            </p>
+          </div>
+          {!isCreate ? (
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+              <Trash2 size={16} />
+              Excluir
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <StatusAlerts
+        error={saveError ?? loadError}
+        loading={false}
+        hasData
+        onDismissError={() => {
+          setSaveError(null);
+          setLoadError(null);
+        }}
+        onRetry={() => {
+          if (saveError) {
+            void handleSave();
+            return;
+          }
+          setLoadError(null);
+          void load();
+        }}
+      />
+
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      {options ? (
+        <EditableSectionCard
+          title="Dados do departamento"
+          hint={TM_HELP_TOOLTIPS.setores.nome}
+          description="Código, nome, status e unidades onde o departamento aparece nos processos."
+          isEditing={isCreate || sectionEdit.isEditing("setor")}
+          onEdit={() => void sectionEdit.startEdit("setor")}
+          onCancel={cancelEdit}
+          onSave={() => void handleSave()}
+          saving={saving}
+          dirty={!valuesEqual(form, formBaseline)}
+          editable={!isCreate}
+          readContent={
+            setor ? <DepartmentReadView setor={setor} filialLabels={filialLabels} /> : null
+          }
+          editContent={
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSave();
+              }}
+            >
+              <SetorFormFields form={form} options={options} onChange={setForm} />
+            </form>
+          }
+        />
+      ) : null}
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre departamento e vínculo com unidades"
+            : `Status: ${setor?.status_setor ?? "ativo"}`
+        }
+        currentPath={pathname ?? (isCreate ? buildSetorPath(CATALOG_CREATE.setor) : buildSetorPath(setorId))}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
+        }
+      />
+      {pageBody}
+    </TransformometroShell>
+  );
+}

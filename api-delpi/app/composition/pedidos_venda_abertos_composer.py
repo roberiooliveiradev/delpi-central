@@ -4,8 +4,14 @@ from app.application.use_cases.pedidos_venda_abertos.enrich_portfolio_customers_
 from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case import (
     ListCustomerBillingSeriesUseCase,
 )
+from app.application.use_cases.pedidos_venda_abertos.get_outbound_invoice_use_case import (
+    GetOutboundInvoiceUseCase,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesUseCase,
+)
+from app.application.use_cases.pedidos_venda_abertos.list_customer_open_order_metrics_use_case import (
+    ListCustomerOpenOrderMetricsUseCase,
 )
 from app.application.use_cases.pedidos_venda_abertos.list_ops_abertas_use_case import (
     ListOpsAbertasUseCase,
@@ -24,6 +30,9 @@ from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use
 )
 from app.application.use_cases.pedidos_venda_abertos.search_active_customers_use_case import (
     SearchActiveCustomersUseCase,
+)
+from app.domain.ports.pedidos_venda_abertos.seller_portfolio_repository_port import (
+    SellerPortfolioRepositoryPort,
 )
 from app.infrastructure.persistence.plugins.repositories.pedidos_venda_abertos.postgres_customer_avatar_repository import (
     PostgresCustomerAvatarRepository,
@@ -48,7 +57,8 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.pedidos_venda_ab
 )
 
 
-def build_seller_portfolio_repository() -> PostgresSellerPortfolioRepository:
+def build_seller_portfolio_repository() -> SellerPortfolioRepositoryPort:
+    """Somente schema PVA (`pedidos_venda_abertos.*`) — sem dual-read do Portal Comercial."""
     return PostgresSellerPortfolioRepository()
 
 
@@ -87,6 +97,12 @@ def build_list_pedidos_venda_abertos_use_case() -> ListPedidosVendaAbertosUseCas
     )
 
 
+def build_list_customer_open_order_metrics_use_case() -> ListCustomerOpenOrderMetricsUseCase:
+    return ListCustomerOpenOrderMetricsUseCase(
+        repository=PedidosVendaAbertosQueryRepository(),
+    )
+
+
 def build_list_ops_abertas_use_case() -> ListOpsAbertasUseCase:
     return ListOpsAbertasUseCase(
         repository=OpsAbertasQueryRepository(),
@@ -95,5 +111,11 @@ def build_list_ops_abertas_use_case() -> ListOpsAbertasUseCase:
 
 def build_list_customer_outbound_invoices_use_case() -> ListCustomerOutboundInvoicesUseCase:
     return ListCustomerOutboundInvoicesUseCase(
+        repository=CustomerOutboundInvoicesRepository(),
+    )
+
+
+def build_get_outbound_invoice_use_case() -> GetOutboundInvoiceUseCase:
+    return GetOutboundInvoiceUseCase(
         repository=CustomerOutboundInvoicesRepository(),
     )

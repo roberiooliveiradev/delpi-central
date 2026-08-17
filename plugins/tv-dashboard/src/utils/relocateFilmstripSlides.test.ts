@@ -40,6 +40,15 @@ describe("relocateFilmstripSlides", () => {
     ).toBe(true);
   });
 
+  it("edge after insere depois do alvo", () => {
+    const next = relocateFilmstripSlides(base, ["d"], {
+      kind: "index",
+      targetIndex: 0,
+      edge: "after",
+    });
+    expect(next.map((item) => item.id)).toEqual(["a", "d", "b", "c"]);
+  });
+
   it("no-op ao soltar sobre um item do bloco movido", () => {
     const next = relocateFilmstripSlides(base, ["a", "b"], { kind: "index", targetIndex: 1 });
     expect(next.map((item) => item.id)).toEqual(["a", "b", "c", "d"]);

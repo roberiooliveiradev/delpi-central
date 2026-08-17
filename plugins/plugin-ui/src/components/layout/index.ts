@@ -259,6 +259,15 @@ export {
   type InitialsAvatarProps,
   type InitialsAvatarSize,
 } from "./InitialsAvatar";
+export {
+  AvatarStack,
+  avatarStackBemClasses,
+  createDashboardAvatarStack,
+  type AvatarStackClassNames,
+  type AvatarStackItem,
+  type AvatarStackProps,
+  type DashboardAvatarStackProps,
+} from "./AvatarStack";
 export { FitText } from "./FitText";
 export {
   PageHeader,
@@ -273,6 +282,62 @@ export {
   type PageHeaderLayout,
   type PageHeaderProps,
 } from "./PageHeader";
+export {
+  UnderlineNav,
+  createDashboardUnderlineNav,
+  underlineNavBemClasses,
+  type DashboardUnderlineNavProps,
+  type UnderlineNavClassNames,
+  type UnderlineNavItem,
+  type UnderlineNavProps,
+} from "./UnderlineNav";
+export {
+  PagePath,
+  createDashboardPagePath,
+  isSafeNavigationHref,
+  pagePathBemClasses,
+  type DashboardPagePathProps,
+  type PagePathClassNames,
+  type PagePathItem,
+  type PagePathLink,
+  type PagePathProps,
+} from "./PagePath";
+export {
+  TopBar,
+  createDashboardTopBar,
+  topBarBemClasses,
+  type DashboardTopBarProps,
+  type TopBarClassNames,
+  type TopBarProps,
+} from "./TopBar";
+export {
+  PageHero,
+  createDashboardPageHero,
+  pageHeroBemClasses,
+  type DashboardPageHeroProps,
+  type PageHeroClassNames,
+  type PageHeroDensity,
+  type PageHeroHighlight,
+  type PageHeroHighlightTone,
+  type PageHeroProps,
+} from "./PageHero";
+export {
+  MetricStrip,
+  createDashboardMetricStrip,
+  metricStripBemClasses,
+  type DashboardMetricStripProps,
+  type MetricStripClassNames,
+  type MetricStripProps,
+} from "./MetricStrip";
+export {
+  ViewTransition,
+  createDashboardViewTransition,
+  viewTransitionBemClasses,
+  type DashboardViewTransitionProps,
+  type ViewTransitionClassNames,
+  type ViewTransitionProps,
+  type ViewTransitionTone,
+} from "./ViewTransition";
 export {
   FormGrid,
   createDashboardFormGrid,
@@ -307,8 +372,53 @@ export {
   navigationCardBemClasses,
   type DashboardNavigationCardProps,
   type NavigationCardClassNames,
+  type NavigationCardDensity,
   type NavigationCardProps,
 } from "./NavigationCard";
+export {
+  SectionRouteCard,
+  createDashboardSectionRouteCard,
+  sectionRouteCardBemClasses,
+  type DashboardSectionRouteCardProps,
+  type SectionRouteCardClassNames,
+  type SectionRouteCardProps,
+  type SectionRouteItem,
+} from "./SectionRouteCard";
+export {
+  CatalogSearchBar,
+  createDashboardCatalogSearchBar,
+  catalogSearchBarBemClasses,
+  type CatalogSearchBarClassNames,
+  type CatalogSearchBarProps,
+  type CatalogSearchHit,
+  type DashboardCatalogSearchBarProps,
+} from "./CatalogSearchBar";
+
+export {
+  RouteChip,
+  createDashboardRouteChip,
+  routeChipBemClasses,
+  type DashboardRouteChipProps,
+  type RouteChipClassNames,
+  type RouteChipProps,
+  type RouteChipTone,
+} from "./RouteChip";
+export {
+  HubChipRow,
+  createDashboardHubChipRow,
+  hubChipRowBemClasses,
+  type DashboardHubChipRowProps,
+  type HubChipRowClassNames,
+  type HubChipRowProps,
+} from "./HubChipRow";
+export {
+  CommandPalette,
+  createDashboardCommandPalette,
+  commandPaletteBemClasses,
+  type CommandPaletteClassNames,
+  type CommandPaletteProps,
+  type DashboardCommandPaletteProps,
+} from "./CommandPalette";
 export {
   PreviewDetailCard,
   createDashboardPreviewDetailCard,

@@ -55,6 +55,11 @@ import {
   aggregateVisualBoxTextFormatStyle,
   isHomogeneousVisualBoxSelection,
 } from "../../utils/selectionStyleAggregate";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToColorStylePatch,
+  styleToColorFill,
+} from "../../utils/delpiFillAdapter";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { DynamicContentInsertControl } from "../DynamicContentInsertControl";
@@ -266,13 +271,16 @@ export function FormatRibbonTypographySections({
         effectivePartialSelection.end,
       ),
   );
-  const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
+  const applyTextFormatStyle = (
+    patch: Parameters<typeof updateSelectedTextFormatStyle>[0],
+    applyOptions?: Parameters<typeof updateSelectedTextFormatStyle>[1],
+  ) => {
     if (multiVisualBox) {
-      updateSelectedTextFormatStyle(patch);
+      updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
     if (fullContentSelectionActive) {
-      updateSelectedTextFormatStyle(patch);
+      updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
     /*
@@ -317,7 +325,7 @@ export function FormatRibbonTypographySections({
       }
       if (applyEditingTextRunStylePatch(runPatch)) return;
     }
-    updateSelectedTextFormatStyle(patch);
+    updateSelectedTextFormatStyle(patch, applyOptions);
   };
 
   function applyToggleOrContainer(
@@ -675,22 +683,31 @@ export function FormatRibbonTypographySections({
               clamp={clampFontSize}
               portalScopeClassName="dashboard-tv-dashboard"
               onChange={(next) =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(next),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  {
+                    fontSize: clampFontSize(next),
+                    fontSizeAuto: false,
+                  },
+                  { fontSizeMode: "absolute" },
+                )
               }
               onStepDown={() =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  { fontSizeAuto: false },
+                  {
+                    fontSizeMode: "delta",
+                    fontSizeDelta: -COMUNICADO_FONT_SIZE_STEP,
+                  },
+                )
               }
               onStepUp={() =>
-                applyTextFormatStyle({
-                  fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                  fontSizeAuto: false,
-                })
+                applyTextFormatStyle(
+                  { fontSizeAuto: false },
+                  {
+                    fontSizeMode: "delta",
+                    fontSizeDelta: COMUNICADO_FONT_SIZE_STEP,
+                  },
+                )
               }
               stepDownDisabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
               stepDownAriaLabel="Diminuir fonte"
@@ -808,6 +825,12 @@ export function FormatRibbonTypographySections({
               ariaLabel="Cor do texto"
               inline
               variant="text"
+              fill={styleToColorFill({
+                color: currentTextColor,
+                colorPaint: selected?.style?.colorPaint,
+              })}
+              onFillChange={(next) => applyTextFormatStyle(fillToColorStylePatch(next))}
+              allowedFillKinds={TV_ALLOWED_FILL_KINDS}
               contrastBackground={
                 (selected?.type === "kpi_view"
                   ? (selected.kpiParts?.card?.style?.fill ??
@@ -833,7 +856,7 @@ export function FormatRibbonTypographySections({
                   ? undefined
                   : (currentTextColor ?? "#0f172a")
               }
-              onChange={(color) => applyTextFormatStyle({ color })}
+              onChange={(color) => applyTextFormatStyle(fillToColorStylePatch({ kind: "solid", color }))}
             />
             {showClearFormatting && visualBoxBlock ? (
               <TdRibbonIconButton
@@ -859,7 +882,7 @@ export function FormatRibbonTypographySections({
       <TypographyPaneOrGroup
         embed={embed}
         groupId="typo-effects"
-        title="Efeitos de texto"
+        title={embed ? "Efeitos de texto" : "Efeitos"}
         hint={H.textEffects}
         defaultOpen={false}
       >

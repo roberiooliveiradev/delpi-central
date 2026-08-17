@@ -16,7 +16,7 @@ import {
   buildInstanciaSectionHref,
   buildProcessoSectionHref,
   buildRevisaoSectionHref,
-} from "../processos/processoWorkspaceNav";
+} from "../processes/processWorkspaceNav";
 
 export type DiagramEditorKind = "processo" | "instancia" | "revisao";
 

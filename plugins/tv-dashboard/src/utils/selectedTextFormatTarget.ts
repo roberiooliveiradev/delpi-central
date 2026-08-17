@@ -18,6 +18,7 @@ import {
   resolveInputPartFontSize,
   resolveKpiPartFontSize,
   type ComunicadoBlock,
+  type ComunicadoBlockStyle,
   type ComunicadoCanvasTableBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
@@ -45,6 +46,7 @@ export type TextFormatStyleSnapshot = {
   fontWeight?: string;
   fontStyle?: string;
   color?: string;
+  colorPaint?: ComunicadoBlockStyle["colorPaint"];
   textDecoration?: string;
   textHighlight?: string;
   textAlign?: string;
@@ -161,6 +163,7 @@ function snapshotFromPartStyle(
     fontWeight: style?.fontWeight != null ? String(style.fontWeight) : undefined,
     fontStyle: style?.fontStyle,
     color: style?.color,
+    colorPaint: style?.colorPaint,
     textDecoration: style?.textDecoration,
     textAlign: style?.textAlign,
     verticalAlign: style?.verticalAlign,

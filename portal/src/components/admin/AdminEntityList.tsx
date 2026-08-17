@@ -1,7 +1,8 @@
 // src/components/admin/AdminEntityList.tsx
 
 import type { ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button, Checkbox, SearchInput } from "../../ui-kit";
 import "./AdminEntityList.css";
 
 export type AdminEntitySummaryItem = {
@@ -11,6 +12,7 @@ export type AdminEntitySummaryItem = {
 
 export type AdminEntityToolbarAction = {
   label: ReactNode;
+  icon?: ReactNode;
   active?: boolean;
   danger?: boolean;
   primary?: boolean;
@@ -25,6 +27,7 @@ export type AdminEntityBadge = {
 
 export type AdminEntityCardAction = {
   label: ReactNode;
+  icon?: ReactNode;
   danger?: boolean;
   disabled?: boolean;
   onClick: () => void | Promise<void>;
@@ -155,34 +158,37 @@ export function AdminEntityList<T>({
       {(search || toolbarActions.length > 0) && (
         <section className="admin-entity-toolbar">
           {search && (
-            <label className="admin-entity-search">
-              <Search size={16} />
-              <input
+            <div className="admin-entity-search">
+              <SearchInput
                 value={search.value}
                 onChange={(event) => search.onChange(event.target.value)}
+                onClear={() => search.onChange("")}
                 placeholder={search.placeholder}
               />
-            </label>
+            </div>
           )}
 
           {toolbarActions.length > 0 && (
             <div className="admin-entity-toolbar-actions">
               {toolbarActions.map((action, index) => (
-                <button
+                <Button
                   key={index}
                   type="button"
-                  className={[
-                    action.active ? "active" : "",
-                    action.primary ? "admin-entity-primary-button" : "",
-                    action.danger ? "admin-entity-danger-button" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  size="sm"
+                  variant={
+                    action.danger
+                      ? "danger"
+                      : action.primary
+                        ? "primary"
+                        : "secondary"
+                  }
+                  pressed={action.active}
                   disabled={action.disabled}
                   onClick={action.onClick}
+                  icon={action.icon}
                 >
                   {action.label}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -201,26 +207,29 @@ export function AdminEntityList<T>({
 
           <div>
             {onClearSelection && (
-              <button type="button" onClick={onClearSelection}>
+              <Button type="button" size="sm" variant="ghost" onClick={onClearSelection}>
                 Limpar seleção
-              </button>
+              </Button>
             )}
 
             {bulkActions.map((action, index) => (
-              <button
+              <Button
                 key={index}
                 type="button"
-                className={[
-                  action.danger ? "admin-entity-danger-button" : "",
-                  action.primary ? "admin-entity-primary-button" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                size="sm"
+                variant={
+                  action.danger
+                    ? "danger"
+                    : action.primary
+                      ? "primary"
+                      : "secondary"
+                }
                 disabled={action.disabled}
                 onClick={action.onClick}
+                icon={action.icon}
               >
                 {action.label}
-              </button>
+              </Button>
             ))}
           </div>
         </section>
@@ -234,13 +243,15 @@ export function AdminEntityList<T>({
           </div>
 
           {onSelectVisible && (
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="secondary"
               onClick={onSelectVisible}
               disabled={items.length === 0}
             >
               Selecionar visíveis
-            </button>
+            </Button>
           )}
         </div>
 
@@ -275,14 +286,13 @@ export function AdminEntityList<T>({
                     .join(" ")}
                 >
                   {selectable && (
-                    <label className="admin-entity-card-select">
-                      <input
-                        type="checkbox"
+                    <div className="admin-entity-card-select">
+                      <Checkbox
                         checked={selected}
                         onChange={() => onToggleSelected?.(id)}
                         aria-label={`Selecionar ${String(renderTitle(item))}`}
                       />
-                    </label>
+                    </div>
                   )}
 
                   <div className="admin-entity-card-icon" aria-hidden="true">
@@ -335,19 +345,17 @@ export function AdminEntityList<T>({
                   {actions.length > 0 && (
                     <div className="admin-entity-card-actions">
                       {actions.map((action, index) => (
-                        <button
+                        <Button
                           key={index}
                           type="button"
-                          className={
-                            action.danger
-                              ? "admin-entity-danger-button"
-                              : ""
-                          }
+                          size="sm"
+                          variant={action.danger ? "danger-soft" : "secondary"}
                           disabled={action.disabled}
                           onClick={action.onClick}
+                          icon={action.icon}
                         >
                           {action.label}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -360,28 +368,32 @@ export function AdminEntityList<T>({
 
       {pagination && (
         <section className="admin-entity-pagination">
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="secondary"
             onClick={pagination.onPrevious}
             disabled={pagination.page <= 1}
+            icon={<ChevronLeft size={16} />}
           >
-            <ChevronLeft size={16} />
             Anterior
-          </button>
+          </Button>
 
           <span>
             Página <strong>{pagination.page}</strong> de{" "}
             <strong>{pagination.totalPages}</strong>
           </span>
 
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="secondary"
             onClick={pagination.onNext}
             disabled={pagination.page >= pagination.totalPages}
           >
             Próxima
             <ChevronRight size={16} />
-          </button>
+          </Button>
         </section>
       )}
     </div>

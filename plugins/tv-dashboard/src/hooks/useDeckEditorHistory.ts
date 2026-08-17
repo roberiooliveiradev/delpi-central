@@ -8,7 +8,11 @@ import {
   type PlaylistHistoryPage,
 } from "../api/tvDashboardApi";
 import { HttpRequestError } from "../api/httpClient";
-import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
+import {
+  pickRemoteUndoPointer,
+  shouldStackRemoteDeckUndo,
+  type DeckEditorSnapshot,
+} from "../utils/deckEditorHistory";
 import {
   clearDeckEditorHistory,
   DECK_EDITOR_HISTORY_POINTER_LIMIT,
@@ -252,6 +256,7 @@ export function useDeckEditorHistory({
   );
 
   const handleRemoteUpdate = useCallback(async () => {
+    const previousRevision = currentRevisionRef.current;
     const refreshed = await loadHistory(1);
     if (refreshed?.currentRevision == null) return;
     /*
@@ -261,8 +266,29 @@ export function useDeckEditorHistory({
      */
     if (pendingCountRef.current > 0) {
       lastLocalRevisionRef.current = refreshed.currentRevision;
+      return;
     }
-  }, [loadHistory]);
+    if (
+      !shouldStackRemoteDeckUndo({
+        previousRevision,
+        currentRevision: refreshed.currentRevision,
+        lastLocalRevision: lastLocalRevisionRef.current,
+        pendingLocalChanges: pendingCountRef.current,
+        restoring: restoringRef.current,
+      })
+    ) {
+      return;
+    }
+    const pointer = pickRemoteUndoPointer(refreshed.items, previousRevision);
+    if (!pointer) return;
+    pastRef.current = [
+      ...pastRef.current.slice(-(DECK_EDITOR_HISTORY_POINTER_LIMIT - 1)),
+      pointer,
+    ];
+    futureRef.current = [];
+    refreshAvailability();
+    persistStacks();
+  }, [loadHistory, persistStacks, refreshAvailability]);
 
   const reset = useCallback(() => {
     pastRef.current = [];

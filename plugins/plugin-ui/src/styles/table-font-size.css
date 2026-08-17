@@ -1,0 +1,84 @@
+/* Controles de tamanho de fonte de tabela operacional */
+
+.delpi-ui-table-font-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delpi-ui-table-font-size__label {
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+  font-size: var(--delpi-ui-font-sm, 13px);
+  white-space: nowrap;
+}
+
+.delpi-ui-table-font-size__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delpi-ui-table-font-size__value {
+  min-width: 42px;
+  text-align: center;
+  font-size: var(--delpi-ui-font-sm, 13px);
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-table-font-size__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding-inline: 8px;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.delpi-ui-table-font-size__btn:hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-table-font-size__btn:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
+.delpi-ui-table-font-size__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-table-font-size {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

@@ -6,9 +6,9 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 
 | Arquivo | Uso |
 |---------|-----|
-| `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial** (8 serviços); profiles `chat` e `plugins` |
+| `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial + TV Dashboard**; profiles `chat`, `plugins`, `optional-heavy` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
-| `docker-compose.minimal.yml` | Override dev — desliga LanguageTool/SearXNG e limita RAM do chat |
+| `docker-compose.minimal.yml` | Override dev — desliga Ollama/LanguageTool/SearXNG e limita RAM do chat |
 | `docker-compose.prod.cpu.yml` | Override prod — hosts com ~8 GB RAM (LanguageTool/SearXNG em profile `optional-heavy`) |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
@@ -16,23 +16,26 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
 ```bash
-# Desenvolvimento — stack essencial (portal + api-delpi, ~8 containers)
+# Desenvolvimento — stack essencial + TV (portal + api-delpi + plugin-ui + tv-dashboard*)
 cp infra/.env.dev.example infra/.env
 docker compose -f infra/docker-compose.dev.yml up -d
 
-# Chat (ollama + minha-delpi-ai-api + MFE chat)
+# Chat (minha-delpi-ai-api + MFE chat — sem Ollama)
 docker compose -f infra/docker-compose.dev.yml --profile chat up -d
+
+# Ollama / LanguageTool / SearXNG (pesados — só sob demanda)
+docker compose -f infra/docker-compose.dev.yml --profile optional-heavy up -d ollama
 
 # Um plugin/MFE específico (ex.: controle-retrabalhos)
 docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
 
-# Atalho stack mínimo (equivalente ao up -d padrão)
+# Atalho stack mínimo (essencial + TV)
 ./infra/scripts/up-minimal-dev.sh
 
 # Chat + rebuild explícito com extras de visão (opcional — dev já inclui EasyOCR/Docling)
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 
-# Chat + RAM reduzida (dev WSL ~8 GB)
+# Chat + RAM reduzida (dev WSL ~8 GB; sem Ollama)
 docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
   --profile chat --env-file infra/.env up -d
 
@@ -77,8 +80,8 @@ cp infra/.env.dev.example infra/.env
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build '*-production'
 
-# Serviços pesados (LanguageTool + SearXNG — profile chat)
-./infra/scripts/up-dev-sequential.sh --heavy --build languagetool searxng
+# Serviços pesados (Ollama + LanguageTool + SearXNG — profile optional-heavy)
+./infra/scripts/up-dev-sequential.sh --heavy --build ollama languagetool searxng
 
 # Simular comandos sem executar
 ./infra/scripts/up-dev-sequential.sh --dry-run --build --fase mfe dashboard-commercial
@@ -215,6 +218,7 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase core --build
 ./infra/scripts/up-dev-sequential.sh --fase remote --build
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build controle-retrabalhos public-hub transformometro
+./infra/scripts/up-dev-sequential.sh --fase mfe --build materiais-terceiros
 ```
 
 ### Parar stack inflada (recuperação)
@@ -418,14 +422,19 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
 | `PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR` | `/app/data/planejamento-orcamentario` | `${DELPI_DATA_HOST_DIR}/planejamento-orcamentario` |
 | `PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR` | `/app/data/pedidos-venda-abertos/avatars` | `${DELPI_DATA_HOST_DIR}/pedidos-venda-abertos/avatars` |
+| `COMMERCIAL_AVATAR_UPLOAD_DIR` | `/app/data/commercial-avatars` | `${DELPI_DATA_HOST_DIR}/commercial-avatars` |
+| `COMMERCIAL_ATTACHMENT_UPLOAD_DIR` | `/app/data/commercial-attachments` | `${DELPI_DATA_HOST_DIR}/commercial-attachments` |
+| `COMMERCIAL_USER_AVATAR_UPLOAD_DIR` | `/app/data/commercial-user-avatars` | `${DELPI_DATA_HOST_DIR}/commercial-user-avatars` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
 | `GUIAS_PROCEDIMENTOS_UPLOAD_DIR` | `/app/data/guias-procedimentos` | `${DELPI_DATA_HOST_DIR}/guias-procedimentos` |
+| `MURAL_ACESSOS_UPLOAD_DIR` | `/app/data/mural-acessos` | `${DELPI_DATA_HOST_DIR}/mural-acessos` |
 | `AUDIT_5S_RESPONSE_UPLOAD_DIR` | `/app/data/audit-5s-responses` | `${DELPI_DATA_HOST_DIR}/audit-5s-responses` |
 | `AUDIT_5S_NC_UPLOAD_DIR` | `/app/data/audit-5s-nc` | `${DELPI_DATA_HOST_DIR}/audit-5s-nc` |
 | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` | `${DELPI_DATA_HOST_DIR}/quality-labels/qr` |
 | `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels/signatures` | `${DELPI_DATA_HOST_DIR}/quality-labels/signatures` |
 | `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels/certificates` | `${DELPI_DATA_HOST_DIR}/quality-labels/certificates` |
 | `REPORTS_RUN_ARTIFACTS_DIR` | `/app/data/reports-runs` | `${DELPI_DATA_HOST_DIR}/reports-runs` |
+| `INVOICE_ISSUANCE_UPLOAD_DIR` | `/app/data/invoice-issuance` | `${DELPI_DATA_HOST_DIR}/invoice-issuance` |
 
 > As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`, as assinaturas dos inspetores (PNG) em `QUALITY_LABELS_SIGNATURE_DIR` e os certificados emitidos (PDF) em `QUALITY_LABELS_CERTIFICATE_DIR`. Mesmo padrão: o Postgres mantém o registro; sem volume, os binários somem no recreate.
 
@@ -433,7 +442,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/mural-acessos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs /var/lib/delpi/invoice-issuance
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 
@@ -468,10 +477,31 @@ Assinaturas PNG e PDF final das atas (metadado em `transformometro.tm_meeting_*`
 |----------|----------------------|---------------|
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
 | `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
+> **Exceção operacional:** o path físico `…/transformometro/atas/…` no host/container permanece (não migrar volume). Só HTTP/código usam `meeting-minutes`.
+
+
+### Notificações portal + e-mail Graph + magic link
+
+No `send-for-signature`:
+
+1. Emite convite (token hasheado, TTL `TM_ATA_SIGN_INVITE_TTL_DAYS`, default 14)
+2. Notifica no portal Core (`userIds` + `action.portal_route`) se o signatário tem `user_id`
+3. Envia e-mail Graph com CTA `{PUBLIC_BASE_URL}/p/transformometro/sign/{token}` (public-hub)
+
+| Variável | Default | Notas |
+|----------|---------|-------|
+| `TM_PORTAL_NOTIFICATIONS_ENABLED` | `true` | Sino do portal |
+| `TM_MAIL_ENABLED` | `true` | Desligar só o canal e-mail |
+| `TM_ATA_SIGN_INVITE_TTL_DAYS` | `14` | Validade do magic link |
+| `PUBLIC_BASE_URL` | vazio | Base absoluta dos links do e-mail |
+| `GRAPH_REPORTS_*` | — | Mesmas credenciais do Delpi Reports / CEC |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | S2S Core (notificações + directory) |
+
+Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/meeting-minutes/sign-invites/{token}`.
 
 ### Kimi / OpenRouter (geração de ata)
 
-Opcional no boot; **obrigatório** para `POST /transformometro/atas/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
+Opcional no boot; **obrigatório** para `POST /transformometro/meeting-minutes/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
 
 | Variável | Default | Notas |
 |----------|---------|-------|

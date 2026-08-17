@@ -28,6 +28,8 @@ def _module_for_path(path: str) -> str:
     parts = [p for p in path.strip("/").split("/") if p]
     if not parts:
         return "root"
+    if parts[0] == "public":
+        return "meeting_minutes_public"
     if parts[0] != "transformometro":
         return parts[0]
     if len(parts) == 1:
@@ -37,6 +39,8 @@ def _module_for_path(path: str) -> str:
         return second
     if second == "integrations" or (len(parts) > 2 and parts[1] == "integrations"):
         return "integrations"
+    if second in {"meeting-minutes", "signatures"}:
+        return "meeting_minutes"
     return "crud"
 
 

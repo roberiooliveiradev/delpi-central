@@ -72,6 +72,7 @@ describe("App smoke", () => {
       name: "Comunicado",
       isActive: false,
       viewportProfile: "16:9",
+      publicToken: "tok-test",
       slides: [
         {
           id: "slide-custom",

@@ -9,7 +9,7 @@ import React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as LucideReact from "lucide-react";
-import { publishDelpiMfReact } from "./federationReactProxyFix";
+import { publishDelpiMfReact, publishDelpiMfReactDom } from "./federationReactProxyFix";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
 
 /** Amarrado ao bundle — invalida hash quando o patch MF muda. */
@@ -50,11 +50,20 @@ function getShareScope(): FederationShareScope {
 }
 
 function buildReactDomSharedExport() {
-  return {
+  const shared = {
     ...ReactDOM,
     createRoot: ReactDOMClient.createRoot,
     hydrateRoot: ReactDOMClient.hydrateRoot,
   };
+  // Garante named createPortal mesmo se o spread ESM/CJS omitir a chave.
+  if (typeof shared.createPortal !== "function") {
+    const fromDefault = (ReactDOM as { default?: { createPortal?: unknown } }).default
+      ?.createPortal;
+    if (typeof fromDefault === "function") {
+      (shared as { createPortal: unknown }).createPortal = fromDefault;
+    }
+  }
+  return shared;
 }
 
 function shareEntry(mod: unknown, from: FederationShareFrom): FederationShareEntry {
@@ -116,6 +125,10 @@ async function sharedReactDomHasCreateRoot(): Promise<boolean> {
 /**
  * Registra React/lucide no share scope.
  * Usa par portal (react + react-dom) só se o host expõe createRoot — senão par MFE.
+ *
+ * Importante: nunca misturar React DEV do portal com react-dom PRODUCTION do MFE.
+ * Em DEV, `getOwner()` lê `SharedInternals.A.getOwner`; o DefaultAsyncDispatcher
+ * de produção não expõe `getOwner` → tela em branco (`dispatcher.getOwner is not a function`).
  */
 export async function ensureMfeFederationShareScopeReady(): Promise<void> {
   const scope = getShareScope();
@@ -138,8 +151,26 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
     preservePortalPair = false;
   }
 
+  if (preservePortalPair) {
+    try {
+      publishDelpiMfReactDom(await loadSharedModule("react-dom"));
+    } catch {
+      publishDelpiMfReactDom(reactDomShared);
+    }
+  } else {
+    // Sem portal: garantir createPortal no share (remote não pode deixar DOM incompleto).
+    publishDelpiMfReactDom(reactDomShared);
+  }
+
   registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
-  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", preservePortalPair);
+  registerModule(
+    scope,
+    "react-dom",
+    reactDomShared,
+    ReactDOM.version,
+    "mfe-host",
+    preservePortalPair,
+  );
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
 }
 
@@ -147,11 +178,21 @@ export async function ensureMfeFederationShareScopeReady(): Promise<void> {
 export function ensureMfeFederationShareScope(): void {
   const scope = getShareScope();
   const reactDomShared = buildReactDomSharedExport();
+  const preservePortalPair =
+    hasPortalHostEntry(scope, "react") && hasPortalHostEntry(scope, "react-dom");
 
-  registerModule(scope, "react", React, React.version, "mfe-host", true);
-  registerModule(scope, "react-dom", reactDomShared, ReactDOM.version, "mfe-host", false);
+  registerModule(scope, "react", React, React.version, "mfe-host", preservePortalPair);
+  registerModule(
+    scope,
+    "react-dom",
+    reactDomShared,
+    ReactDOM.version,
+    "mfe-host",
+    preservePortalPair,
+  );
   registerModule(scope, "lucide-react", LucideReact, "0.0.0", "mfe-host", true);
   publishDelpiMfReact(React);
+  publishDelpiMfReactDom(reactDomShared);
 }
 
 /** createRoot/hydrateRoot via share scope — mesma instância que importShared('react'). */
@@ -170,4 +211,6 @@ export async function getReactDomClient(): Promise<typeof import("react-dom/clie
 export async function preparePluginUiRemote(): Promise<void> {
   await ensureMfeFederationShareScopeReady();
   await import("@delpi/plugin-ui/styles");
+  // Init do remote pode poluir o share — reasserta react-dom + global createPortal.
+  await ensureMfeFederationShareScopeReady();
 }

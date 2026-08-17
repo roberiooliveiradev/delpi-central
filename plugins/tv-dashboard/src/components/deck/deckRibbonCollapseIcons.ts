@@ -10,6 +10,7 @@ import {
   Eye,
   Filter,
   Grid3x3,
+  Hash,
   Image,
   Layers,
   LayoutTemplate,
@@ -107,6 +108,7 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "chart-styles": Palette,
   "chart-data": Database,
   "chart-series": LineChart,
+  "number-format": Hash,
 };
 
 export function resolveDeckRibbonCollapseIcon(

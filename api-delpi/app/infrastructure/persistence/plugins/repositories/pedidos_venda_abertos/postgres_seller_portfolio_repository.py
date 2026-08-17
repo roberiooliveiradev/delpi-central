@@ -40,6 +40,16 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         )
         return self._hydrate(row)
 
+    def list_by_user_id(
+        self, user_id: str, *, active_only: bool = True
+    ) -> list[SellerPortfolio]:
+        portfolio = self.get_by_user_id(user_id)
+        if portfolio is None:
+            return []
+        if active_only and not portfolio.active:
+            return []
+        return [portfolio]
+
     def list_sellers(self, *, active_only: bool = False) -> list[SellerPortfolio]:
         if active_only:
             rows = self.fetch_all(

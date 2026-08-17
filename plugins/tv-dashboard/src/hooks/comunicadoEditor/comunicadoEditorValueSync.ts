@@ -49,6 +49,24 @@ export function shouldForceAcceptRemoteComunicadoValue(params: {
   );
 }
 
+/**
+ * Mudança aceita do servidor (copiloto, outro editor) entra na pilha local de undo.
+ * Sem isso o Ctrl+Z pula a alteração remota e desfaz a edição manual anterior,
+ * recriando o que a IA acabou de mudar.
+ * Restore de revisão não empilha: o passo já pertence ao histórico do deck.
+ */
+export function shouldStackRemoteComunicadoUndo(params: {
+  identityChanged: boolean;
+  remoteRevisionChanged: boolean;
+  fromHistoryRestore: boolean;
+  incomingFingerprint: string;
+  currentFingerprint: string;
+}): boolean {
+  if (params.identityChanged || params.fromHistoryRestore) return false;
+  if (!params.remoteRevisionChanged) return false;
+  return params.incomingFingerprint !== params.currentFingerprint;
+}
+
 export function fingerprintComunicadoValue(value: Record<string, unknown>): string {
   return JSON.stringify(value);
 }

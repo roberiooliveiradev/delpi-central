@@ -55,6 +55,16 @@ describe("chartStyleRecipes", () => {
     expect(next.categoryColors).toHaveLength(5);
   });
 
+  it("applyChartColorScaleMode by_goal grava mode sem exigir paleta", () => {
+    const next = applyChartColorScaleMode(
+      mergeComunicadoChartOptions({}),
+      "by_goal",
+      "high_is_good",
+    );
+    expect(next.colorScale?.mode).toBe("by_goal");
+    expect(next.colorScale?.polarity).toBe("high_is_good");
+  });
+
   it("applyChartColorPalette define seriesColor e categoryColors", () => {
     const palette = CHART_COLOR_PALETTES[0]!;
     const next = applyChartColorPalette(palette, mergeComunicadoChartOptions({}));

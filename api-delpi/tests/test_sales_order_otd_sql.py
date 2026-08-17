@@ -3,11 +3,15 @@ from app.application.dto.commercial.get_sales_order_otd_panel_request import (
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_sql import (
     build_sales_order_otd_filters,
+    build_sales_order_otd_late_days_stats_sql,
     build_sales_order_otd_line_detail_sql,
     build_sales_order_otd_line_detail_where,
     build_sales_order_otd_lines_count_sql,
     build_sales_order_otd_lines_list_sql,
+    build_sales_order_otd_recurring_customers_sql,
     build_sales_order_otd_sql,
+    build_sales_order_otd_upcoming_promises_sql,
+    build_sales_order_otd_worst_delays_sql,
     compose_sales_order_otd_lines_params,
     _list_order_clause,
 )
@@ -101,3 +105,63 @@ def test_build_sales_order_otd_line_detail_sql_uses_shared_cte() -> None:
 
     assert "LINHAS_ELEGIVEIS" in sql
     assert "SELECT TOP 1 *" in sql
+    assert "A1_NREDUZ" in sql
+    assert "customer_short_name" in sql
+    assert "COALESCE" in sql
+
+
+def test_build_sales_order_otd_lines_list_supports_search() -> None:
+    request = GetSalesOrderOtdPanelRequest(
+        status="late",
+        page=1,
+        page_size=20,
+        search="WEG",
+    )
+    sql, _ = build_sales_order_otd_lines_list_sql(
+        where_clause="1=1",
+        request=request,
+        reference_end_date="2026-07-08",
+    )
+    assert "order_number LIKE ?" in sql
+    assert "product_code LIKE ?" in sql
+    assert "WHERE status = 'late'" in sql
+
+
+def test_compose_sales_order_otd_lines_params_includes_search() -> None:
+    params = compose_sales_order_otd_lines_params(
+        where_params=("02",),
+        reference_end_date="2026-07-08",
+        search_params=("%WEG%",) * 6,
+        offset=0,
+        page_size=20,
+    )
+    assert params[:3] == ("20260708", "20260708", "20260708")
+    assert params[3] == "02"
+    assert params[4:10] == ("%WEG%",) * 6
+    assert params[-2:] == (0, 20)
+
+
+def test_build_sales_order_otd_insights_sql_shapes() -> None:
+    stats_sql, _ = build_sales_order_otd_late_days_stats_sql(
+        where_clause="1=1",
+        reference_end_date="2026-07-08",
+    )
+    recurring_sql, _ = build_sales_order_otd_recurring_customers_sql(
+        where_clause="1=1",
+        reference_end_date="2026-07-08",
+    )
+    worst_sql, _ = build_sales_order_otd_worst_delays_sql(
+        where_clause="1=1",
+        reference_end_date="2026-07-08",
+    )
+    upcoming_sql, _ = build_sales_order_otd_upcoming_promises_sql(
+        where_clause="1=1",
+        reference_end_date="2026-07-08",
+    )
+    assert "PERCENTILE_CONT(0.5)" in stats_sql
+    assert "C5_LOJACLI" in recurring_sql
+    assert "HAVING COUNT(*) >= 2" in recurring_sql
+    assert "customer_store" in recurring_sql
+    assert "GROUP BY customer_code, customer_store" in recurring_sql
+    assert "WHERE status = 'late'" in worst_sql
+    assert "is_invoiced = 0" in upcoming_sql

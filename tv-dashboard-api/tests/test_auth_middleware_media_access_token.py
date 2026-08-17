@@ -1,16 +1,33 @@
 from __future__ import annotations
 
-from tv_app.middleware.media_access_token import resolve_media_query_authorization
+from tv_app.middleware.auth_middleware import _is_public
+from tv_app.middleware.media_access_token import (
+    normalize_tv_api_path,
+    resolve_media_query_authorization,
+)
 
 _ASSET = "11111111-1111-1111-1111-111111111111"
 _PLAYLIST = "22222222-2222-2222-2222-222222222222"
 _MEDIA_PATH = f"/playlists/{_PLAYLIST}/media/{_ASSET}"
+_GATED_MEDIA_PATH = f"/apps/tv-dashboard-api{_MEDIA_PATH}"
 
 
 def test_resolve_media_query_authorization_injects_bearer():
     assert (
         resolve_media_query_authorization(
             path=_MEDIA_PATH,
+            method="GET",
+            access_token="jwt-abc",
+            existing_authorization=None,
+        )
+        == "Bearer jwt-abc"
+    )
+
+
+def test_resolve_media_query_authorization_accepts_gateway_prefix():
+    assert (
+        resolve_media_query_authorization(
+            path=_GATED_MEDIA_PATH,
             method="GET",
             access_token="jwt-abc",
             existing_authorization=None,
@@ -53,3 +70,17 @@ def test_resolve_media_query_authorization_ignores_post():
         )
         is None
     )
+
+
+def test_normalize_tv_api_path_strips_gateway_prefix():
+    assert normalize_tv_api_path(_GATED_MEDIA_PATH) == _MEDIA_PATH
+    assert normalize_tv_api_path(
+        "/apps/tv-dashboard-api/public/present/tok/media/" + _ASSET
+    ) == f"/public/present/tok/media/{_ASSET}"
+
+
+def test_public_present_paths_bypass_jwt():
+    assert _is_public("/public/present/tok/media/" + _ASSET)
+    assert _is_public("/apps/tv-dashboard-api/public/present/tok/media/" + _ASSET)
+    assert not _is_public(_MEDIA_PATH)
+    assert not _is_public(_GATED_MEDIA_PATH)

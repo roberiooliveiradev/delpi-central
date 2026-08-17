@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-import { printScopedWindow } from "../../export/pdf/printOnce";
+import {
+  printDocumentReaderInWindow,
+  type PrintDocumentReaderOptions,
+} from "./printDocumentReaderHtml";
+import { DocumentPageWatermark } from "./DocumentPageWatermark";
+
+export type { PrintDocumentReaderOptions };
 
 export type DocumentReaderProps = {
   children: ReactNode;
@@ -67,11 +73,7 @@ export function DocumentPage({
 }: DocumentPageProps) {
   return (
     <article className={["delpi-ui-document-page", className].filter(Boolean).join(" ")}>
-      {watermark ? (
-        <div className="delpi-ui-document-page__watermark" aria-hidden="true">
-          {watermark}
-        </div>
-      ) : null}
+      {watermark ? <DocumentPageWatermark>{watermark}</DocumentPageWatermark> : null}
       {header ? <div className="delpi-ui-document-page__header">{header}</div> : null}
       <div className="delpi-ui-document-page__body">{children}</div>
       {footer ? <div className="delpi-ui-document-page__footer">{footer}</div> : null}
@@ -134,12 +136,9 @@ export function DocumentSignatureBlock({
 }
 
 /**
- * Imprime somente o DocumentReader ativo sem exigir CSS específico do MFE.
- * Usa o helper canônico (um `print()` por sessão — sem reabrir ao cancelar/duplo clique).
+ * Imprime o DocumentReader em janela/iframe (mesmo fluxo do chat / certificados).
+ * Não usa print in-place — evita corte em 1 página no Chrome.
  */
-export function printDocumentReader(): boolean {
-  return printScopedWindow({
-    bodyClassName: "delpi-ui-document-printing",
-    deferFrames: false,
-  });
+export function printDocumentReader(options?: PrintDocumentReaderOptions): boolean {
+  return printDocumentReaderInWindow(options);
 }

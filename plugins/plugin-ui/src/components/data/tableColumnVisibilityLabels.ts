@@ -5,7 +5,8 @@ export const DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS: TableColumnVisibilityMenuLa
   trigger: "Colunas",
   panelTitle: "Exibir colunas",
   reset: "Restaurar",
-  hint: "Escolha quais colunas exibir. A preferência é salva neste navegador.",
+  hint: "Marque para exibir e arraste para reordenar. A preferência é salva neste navegador.",
   columnAriaLabel: (columnLabel: string) => `Exibir coluna ${columnLabel}`,
   panelAriaLabel: "Colunas visíveis",
+  reorderAriaLabel: (columnLabel: string) => `Reordenar coluna ${columnLabel}`,
 };

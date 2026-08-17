@@ -10,6 +10,10 @@ import {
   withDataBlockLoadingClass,
 } from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
+import {
+  mergeChartViewFilterParams,
+  shouldApplyExcludeWeekends,
+} from "./chartWeekendFilter";
 import { applyViewProjection } from "./viewProjection";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
@@ -18,6 +22,8 @@ type Props = {
   interactive?: boolean;
   loading?: boolean;
   interaction?: ComunicadoChartInteraction | null;
+  /** Playlist + slide + fonte (live). Enrichment também carimba `resolved.viewFilterParams`. */
+  filterParams?: Record<string, unknown> | null;
 };
 
 function ChartTypePlaceholder({
@@ -55,10 +61,16 @@ export function ChartViewBlockView({
   interactive = false,
   loading = false,
   interaction = null,
+  filterParams = null,
 }: Props) {
+  const viewFilters = mergeChartViewFilterParams([
+    block.resolved?.viewFilterParams,
+    filterParams,
+  ]);
   const resolved = applyViewProjection(block.resolved, {
     chartProjection: block.chartProjection,
     chartType: block.chartType,
+    excludeWeekends: shouldApplyExcludeWeekends(viewFilters),
   });
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;

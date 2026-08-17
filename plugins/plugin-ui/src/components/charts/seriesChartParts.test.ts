@@ -82,6 +82,20 @@ describe("seriesChartParts", () => {
     expect(next.dataLabels?.style?.fontSize).toBe(20);
   });
 
+  it("applyChartTextStyleToSiblingParts com patch esparso preserva estilo local", () => {
+    const base = applyChartTextStyleToSiblingParts(
+      {},
+      { fontSize: 22, color: "#111", fontWeight: "bold" },
+    );
+    const next = applyChartTextStyleToSiblingParts(base, { fontFamily: "Georgia" });
+    expect(next.title?.style).toMatchObject({
+      fontFamily: "Georgia",
+      fontSize: 22,
+      color: "#111",
+      fontWeight: "bold",
+    });
+  });
+
   it("resolveSeriesPaintColor lê chartParts da série N", () => {
     const parts = upsertChartPartState({}, { kind: "series", seriesIndex: 1 }, {
       style: { stroke: "#aabbcc" },
@@ -143,6 +157,36 @@ describe("seriesChartParts", () => {
         colorScale: { mode: "off", polarity: "high_is_bad" },
       }),
     ).toBe("#15803d");
+  });
+
+  it("resolveCategorySlicePaintColor by_goal usa faixas vs meta", () => {
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 100,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#15803d");
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 96,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#f97316");
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 0,
+        value: 90,
+        seriesColor: "#089bdb",
+        colorScale: { mode: "by_goal", polarity: "high_is_good" },
+        goalValue: 100,
+      }),
+    ).toBe("#be123c");
   });
 
   it("resolve cor e marcador a partir de primitivos (stroke/fill)", () => {

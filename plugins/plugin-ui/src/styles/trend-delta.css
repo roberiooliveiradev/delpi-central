@@ -1,0 +1,18 @@
+.delpi-ui-trend-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--delpi-ui-text-muted, #64748b);
+}
+
+.delpi-ui-trend-delta--up {
+  color: var(--delpi-ui-success, #059669);
+}
+
+.delpi-ui-trend-delta--down {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-ui-trend-delta--flat {
+  color: var(--delpi-ui-text-muted, #64748b);
+}

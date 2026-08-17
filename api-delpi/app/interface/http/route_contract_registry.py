@@ -115,6 +115,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Suprimentos
     "get_supplies_cpv": RouteContract("supplies_cpv", "scalar"),
     "get_supplies_otd": RouteContract("supplies_otd", "scalar"),
+    "get_supplies_purchase_order_otd": RouteContract(
+        "supplies_purchase_order_otd", "scalar"
+    ),
+    "get_supplies_purchase_order_otd_series": RouteContract(
+        "supplies_purchase_order_otd_series", "scalar"
+    ),
+    "get_supplies_purchase_order_otd_panel": RouteContract(
+        "supplies_purchase_order_otd_panel", "paged_list"
+    ),
     "get_supplies_stock_value": RouteContract("supplies_stock_value", "scalar"),
     "get_supplies_stock_balances_summary": RouteContract(
         "supplies_stock_balances_summary", "playbook_report"
@@ -154,6 +163,18 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_supplies_safety_stock_consumption_analysis_item_details": RouteContract(
         "supplies_safety_stock_consumption_analysis_detail", "composite_analysis"
+    ),
+    "get_supplies_third_party_materials_shipments": RouteContract(
+        "third_party_material_shipment", "paged_list"
+    ),
+    "get_supplies_third_party_materials_shipment": RouteContract(
+        "third_party_material_shipment", "playbook_report"
+    ),
+    "get_supplies_third_party_materials_summary": RouteContract(
+        "third_party_material_summary", "scalar"
+    ),
+    "export_supplies_third_party_materials_returns": RouteContract(
+        "third_party_material_return_export", "document_export"
     ),
     # Engenharia
     "list_lmps": RouteContract("lmp", "paged_list"),
@@ -243,6 +264,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "commercial_proposal_history", "paged_list"
     ),
     "get_sales_conversion_rate": RouteContract("sales_conversion_rate", "scalar"),
+    "get_sales_conversion_rate_series": RouteContract(
+        "sales_conversion_rate_series", "scalar"
+    ),
+    "get_sales_conversion_rate_series": RouteContract(
+        "sales_conversion_rate_series", "scalar"
+    ),
     "get_new_clients_average": RouteContract("new_clients_average", "scalar"),
     "get_sales_order_otd": RouteContract("sales_order_otd", "scalar"),
     "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),
@@ -340,8 +367,26 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_eficiencia_fabril_dashboard": RouteContract(
         "eficiencia_fabril_dashboard", "composite_analysis"
     ),
+    "get_eficiencia_fabril_efficiency_by_work_center": RouteContract(
+        "eficiencia_fabril_efficiency_by_work_center", "paged_list"
+    ),
     "get_inspecoes_entrada_resumo": RouteContract(
         "inspecoes_entrada_resumo", "scalar"
+    ),
+    "get_process_inspection_plans_summary": RouteContract(
+        "process_inspection_plans_summary", "scalar"
+    ),
+    "get_process_inspection_plans_orders_without_plan": RouteContract(
+        "process_inspection_plans_orders_without_plan", "paged_list"
+    ),
+    "get_process_inspection_plans_products_without_plan": RouteContract(
+        "process_inspection_plans_products_without_plan", "paged_list"
+    ),
+    "get_process_inspection_plans_products": RouteContract(
+        "process_inspection_plans_products", "paged_list"
+    ),
+    "get_process_inspection_plans_product": RouteContract(
+        "process_inspection_plans_product", "composite_analysis"
     ),
     "get_inspecoes_processo_resumo": RouteContract(
         "inspecoes_processo_resumo", "scalar"
@@ -500,10 +545,28 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),
+    "list_totvs_open_orders": RouteContract(
+        "open_sales_order", "composite_analysis"
+    ),
+    "list_totvs_open_orders_by_customer": RouteContract(
+        "open_sales_order", "composite_analysis"
+    ),
+    "list_totvs_recently_closed_orders": RouteContract(
+        "open_sales_order", "paged_list"
+    ),
+    "list_customer_open_order_metrics": RouteContract(
+        "customer_open_order_metrics", "paged_list"
+    ),
     "list_ops_abertas_pedidos_venda": RouteContract(
         "open_production_order", "composite_analysis"
     ),
     "list_cliente_notas_fiscais_saida": RouteContract(
+        "customer_outbound_invoice", "playbook_report"
+    ),
+    "list_totvs_outbound_invoices": RouteContract(
+        "customer_outbound_invoice", "playbook_report"
+    ),
+    "get_totvs_outbound_invoice": RouteContract(
         "customer_outbound_invoice", "playbook_report"
     ),
     "get_my_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
@@ -748,7 +811,32 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "approve_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "reject_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "cancel_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
+    "get_public_scheduling_resource": RouteContract("scheduling_resource", "scalar"),
+    "get_public_scheduling_availability": RouteContract("scheduling_booking", "paged_list"),
+    "create_public_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "create_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
+    "create_public_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
+    "list_mural_acessos_hubs": RouteContract("mural_access_hub", "paged_list"),
+    "create_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "get_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "update_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "delete_mural_acessos_hub": RouteContract("mural_access_hub", "scalar"),
+    "get_mural_acessos_hub_qr": RouteContract("mural_access_hub_qr", "scalar"),
+    "list_mural_acessos_links": RouteContract("mural_access_link", "paged_list"),
+    "create_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "update_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "delete_mural_acessos_link": RouteContract("mural_access_link", "scalar"),
+    "reorder_mural_acessos_links": RouteContract("mural_access_link", "paged_list"),
+    "upload_mural_acessos_link_image": RouteContract("mural_access_link", "scalar"),
+    "delete_mural_acessos_link_image": RouteContract("mural_access_link", "scalar"),
+    "get_mural_acessos_link_image": RouteContract("mural_access_link_image", "scalar"),
+    "list_public_mural_acessos_menu": RouteContract("mural_access_menu", "paged_list"),
+    "list_public_mural_acessos_menu_by_token": RouteContract(
+        "mural_access_menu", "paged_list"
+    ),
+    "get_public_mural_acessos_link_image": RouteContract(
+        "mural_access_link_image", "scalar"
+    ),
     "list_guias_procedimentos_departments": RouteContract(
         "guias_procedimentos_department", "paged_list"
     ),
@@ -962,6 +1050,26 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "refresh_lancamento_notas_fiscais_reconciliation": RouteContract(
         "invoice_posting_reconciliation_refresh", "scalar"
     ),
+    "search_invoice_issuance_parties": RouteContract("invoice_issuance_party", "paged_list"),
+    "search_invoice_issuance_products": RouteContract("invoice_issuance_product", "paged_list"),
+    "get_invoice_issuance_warehouse_01_balance": RouteContract(
+        "invoice_issuance_stock_balance", "scalar"
+    ),
+    "list_invoice_issuance_open_sales_orders": RouteContract(
+        "invoice_issuance_open_sales_order", "paged_list"
+    ),
+    "search_invoice_issuance_carriers": RouteContract(
+        "invoice_issuance_carrier", "paged_list"
+    ),
+    "create_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "list_invoice_issuance_requests": RouteContract("invoice_issuance_request", "paged_list"),
+    "get_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "update_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "resubmit_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "start_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "return_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "issue_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
+    "cancel_invoice_issuance_request": RouteContract("invoice_issuance_request", "scalar"),
     # Planejamento orçamentário
     "get_planejamento_orcamentario_context": RouteContract(
         "budget_planning_context", "scalar"

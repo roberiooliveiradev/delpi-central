@@ -1,6 +1,6 @@
 // src/ui/admin/modals/base/IframeBaseFields.tsx
 
-import { FormField } from "../../../../components/FormField";
+import { FormField, Input } from "../../../../ui-kit";
 
 type Props = {
   manifest: any;
@@ -18,24 +18,19 @@ export const IframeBaseFields = ({
   getFieldErrors,
 }: Props) => {
   return (
-    <>
-      <FormField
-        label="Entry (URL do iframe)"
-        required
-        htmlFor="manifest-entry"
-        error={isTouched("entry") ? getFieldErrors("entry") : []}
-      >
-        <input
-          value={manifest.entry ?? ""}
-          onBlur={() => markTouched("entry")}
-          onChange={(e) => setBase({ entry: e.target.value })}
-          placeholder="ex: https://glpi.suaempresa.com"
-        />
-      </FormField>
-
-      <div className="hint">
-        <strong>Dica:</strong> Iframe deve apontar para uma URL externa iniciando com http:// ou https://
-      </div>
-    </>
+    <FormField
+      label="Entry (URL do iframe)"
+      required
+      htmlFor="manifest-entry"
+      error={isTouched("entry") ? getFieldErrors("entry") : []}
+      hint="Deve apontar para uma URL externa iniciando com http:// ou https://"
+    >
+      <Input
+        value={manifest.entry ?? ""}
+        onBlur={() => markTouched("entry")}
+        onChange={(e) => setBase({ entry: e.target.value })}
+        placeholder="ex: https://glpi.suaempresa.com"
+      />
+    </FormField>
   );
 };

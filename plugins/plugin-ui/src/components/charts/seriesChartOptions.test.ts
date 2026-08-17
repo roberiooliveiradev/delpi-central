@@ -13,6 +13,8 @@ import {
   resolveSeriesChartTicks,
   resolveSeriesChartValueDomain,
   resolveValueScaleColor,
+  resolveGoalThresholdColor,
+  GOAL_SCALE_COLORS,
   seriesValueExtent,
 } from "./seriesChartOptions";
 
@@ -130,13 +132,46 @@ describe("formatSeriesChartValue / category label", () => {
   });
 
   it("autoDate encurta ISO date", () => {
-    expect(formatSeriesChartCategoryLabel("2026-07-01", "autoDate")).toMatch(/jul/i);
+    expect(formatSeriesChartCategoryLabel("2026-07-01", "autoDate")).toBe("01 Jul");
+  });
+
+  it("month usa abreviação pt-BR fixa (não depende de ICU)", () => {
+    expect(formatSeriesChartCategoryLabel("2026-02", "month")).toBe("Fev. de 2026");
+    expect(formatSeriesChartCategoryLabel("2026-05", "month")).toBe("Mai. de 2026");
+  });
+
+  it("raw localiza abreviações EN remanescentes (cache antigo)", () => {
+    expect(formatSeriesChartCategoryLabel("Feb. de 26", "raw")).toBe("Fev. de 26");
+    expect(formatSeriesChartCategoryLabel("Aug. de 25", "raw")).toBe("Ago. de 25");
   });
 
   it("defaults de label format preservam playlists antigas", () => {
     expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelRotation).toBe("auto");
     expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelOverflow).toBe("skip");
     expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelFormat).toBe("raw");
+  });
+
+  it("day em rótulo mensal da API preserva o texto (não vira 26/01/2001)", () => {
+    expect(formatSeriesChartCategoryLabel("Jan. de 26", "day")).toBe("Jan. de 26");
+    expect(formatSeriesChartCategoryLabel("Fev. de 26", "day")).toBe("Fev. de 26");
+    expect(formatSeriesChartCategoryLabel("Mar. de 26", "day")).toBe("Mar. de 26");
+    expect(formatSeriesChartCategoryLabel("Jun. de 26", "day")).toBe("Jun. de 26");
+    expect(formatSeriesChartCategoryLabel("Feb. de 26", "day")).toBe("Fev. de 26");
+  });
+
+  it("day formata ISO UTC sem virar dia anterior", () => {
+    expect(formatSeriesChartCategoryLabel("2026-08-03", "raw")).toBe("2026-08-03");
+    expect(formatSeriesChartCategoryLabel("2026-08-03", "day")).toBe("03/08/2026");
+  });
+
+  it("spec de categoria ganha do enum legado", () => {
+    expect(
+      formatSeriesChartCategoryLabel("2026-08-03", "raw", {
+        category: "date",
+        presetId: "date-short",
+        pattern: "dd/mm/yyyy",
+      }),
+    ).toBe("03/08/2026");
   });
 });
 
@@ -229,6 +264,42 @@ describe("resolveValueScaleColor — colorir por valor", () => {
 
   it("seriesValueExtent ignora null/NaN", () => {
     expect(seriesValueExtent([10, null, 40, Number.NaN, 5])).toEqual({ min: 5, max: 40 });
+  });
+});
+
+describe("resolveGoalThresholdColor — colorir pela meta", () => {
+  it("high_is_good: ≥ meta verde; faixa 5% laranja; abaixo vermelho", () => {
+    expect(
+      resolveGoalThresholdColor({ value: 100, goal: 100, polarity: "high_is_good" }),
+    ).toBe(GOAL_SCALE_COLORS.good);
+    expect(
+      resolveGoalThresholdColor({ value: 96, goal: 100, polarity: "high_is_good" }),
+    ).toBe(GOAL_SCALE_COLORS.warn);
+    expect(
+      resolveGoalThresholdColor({ value: 90, goal: 100, polarity: "high_is_good" }),
+    ).toBe(GOAL_SCALE_COLORS.bad);
+  });
+
+  it("high_is_bad: ≤ meta verde; faixa 5% acima laranja; acima vermelho", () => {
+    expect(
+      resolveGoalThresholdColor({ value: 10, goal: 10, polarity: "high_is_bad" }),
+    ).toBe(GOAL_SCALE_COLORS.good);
+    expect(
+      resolveGoalThresholdColor({ value: 10.4, goal: 10, polarity: "high_is_bad" }),
+    ).toBe(GOAL_SCALE_COLORS.warn);
+    expect(
+      resolveGoalThresholdColor({ value: 12, goal: 10, polarity: "high_is_bad" }),
+    ).toBe(GOAL_SCALE_COLORS.bad);
+  });
+
+  it("meta inválida usa fallback", () => {
+    expect(
+      resolveGoalThresholdColor({
+        value: 50,
+        goal: Number.NaN,
+        fallbackColor: "#089bdb",
+      }),
+    ).toBe("#089bdb");
   });
 });
 

@@ -139,15 +139,113 @@ def test_resolve_scope_admin_unrestricted() -> None:
     repo.get_by_user_id.assert_not_called()
 
 
+def test_resolve_scope_admin_filter_by_user_id_fallback() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = None
+    repo.get_by_user_id.return_value = _portfolio(id="s1", user_id="u-filter")
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="admin",
+        is_unrestricted=True,
+        seller_id_filter="u-filter",
+    )
+    assert scope.unrestricted is False
+    assert scope.seller_id == "s1"
+    assert ("100", "01") in (scope.allowed_customers or frozenset())
+    repo.get_by_id.assert_called_once_with("u-filter")
+    repo.get_by_user_id.assert_called_once_with("u-filter")
+
+
+def test_resolve_scope_admin_filter_missing_raises() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = None
+    repo.get_by_user_id.return_value = None
+    try:
+        ResolvePortfolioScopeUseCase(repo).execute(
+            user_id="admin",
+            is_unrestricted=True,
+            seller_id_filter="missing",
+        )
+        raise AssertionError("expected LookupError")
+    except LookupError as exc:
+        assert "não encontrado" in str(exc).lower()
+
+
 def test_resolve_scope_seller_without_portfolio() -> None:
     repo = MagicMock()
-    repo.get_by_user_id.return_value = None
+    repo.list_by_user_id.return_value = []
     scope = ResolvePortfolioScopeUseCase(repo).execute(
         user_id="u1",
         is_unrestricted=False,
     )
     assert scope.empty_portfolio is True
     assert scope.allowed_customers == frozenset()
+    repo.list_by_user_id.assert_called_once_with("u1", active_only=True)
+
+
+def test_open_orders_scope_without_portfolio_is_unrestricted() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = []
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="u1",
+        is_unrestricted=False,
+    ).for_open_orders()
+    assert scope.unrestricted is True
+    assert scope.empty_portfolio is False
+    assert scope.allowed_customers is None
+
+
+def test_resolve_scope_seller_unions_customers_across_portfolios() -> None:
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(
+                SellerCustomerAssignment("100", "01", "A"),
+                SellerCustomerAssignment("200", "01", "B"),
+            ),
+        ),
+        _portfolio(
+            id="p2",
+            user_id="u1",
+            display_name="Carteira compartilhada",
+            customers=(
+                SellerCustomerAssignment("200", "01", "B"),  # overlap → dedupe
+                SellerCustomerAssignment("300", "02", "C"),
+            ),
+        ),
+    ]
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="u1",
+        is_unrestricted=False,
+    )
+    assert scope.empty_portfolio is False
+    assert scope.seller_id == "p1"
+    assert scope.allowed_customers == frozenset(
+        {("100", "01"), ("200", "01"), ("300", "02")}
+    )
+    repo.list_by_user_id.assert_called_once_with("u1", active_only=True)
+    repo.get_by_user_id.assert_not_called()
+
+
+def test_resolve_scope_admin_filter_single_seller_id() -> None:
+    repo = MagicMock()
+    repo.get_by_id.return_value = _portfolio(
+        id="s1",
+        customers=(
+            SellerCustomerAssignment("100", "01", "A"),
+            SellerCustomerAssignment("200", "01", "B"),
+        ),
+    )
+    scope = ResolvePortfolioScopeUseCase(repo).execute(
+        user_id="admin",
+        is_unrestricted=True,
+        seller_id_filter="s1",
+    )
+    assert scope.unrestricted is False
+    assert scope.seller_id == "s1"
+    assert scope.allowed_customers == frozenset({("100", "01"), ("200", "01")})
+    repo.get_by_id.assert_called_once_with("s1")
+    repo.list_by_user_id.assert_not_called()
 
 
 def test_manage_create_and_parse_customers() -> None:
@@ -256,3 +354,35 @@ def test_transfer_customers_rejects_same_seller() -> None:
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "diferentes" in str(exc)
+
+
+def test_customer_allowed_respects_membership_scope() -> None:
+    from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use_case import (
+        PortfolioScope,
+    )
+
+    usecase = ResolvePortfolioScopeUseCase(MagicMock())
+    scoped = PortfolioScope(
+        unrestricted=False,
+        seller_id="s1",
+        allowed_customers=frozenset({("100", "01")}),
+        empty_portfolio=False,
+        message=None,
+    )
+    assert usecase.customer_allowed(
+        scoped, customer_code="100", customer_store="01"
+    )
+    assert not usecase.customer_allowed(
+        scoped, customer_code="999", customer_store="01"
+    )
+
+    open_scope = PortfolioScope(
+        unrestricted=True,
+        seller_id=None,
+        allowed_customers=None,
+        empty_portfolio=False,
+        message=None,
+    )
+    assert usecase.customer_allowed(
+        open_scope, customer_code="999", customer_store="01"
+    )

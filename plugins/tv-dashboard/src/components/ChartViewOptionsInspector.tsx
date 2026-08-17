@@ -1,10 +1,9 @@
 import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
-  CHART_VALUE_FORMAT_OPTIONS,
   CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
   CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS,
-  CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
+  CHART_LEGEND_SORT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   toSeriesChartKind,
@@ -136,48 +135,8 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               pane={pane}
               title="Aparência"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
-              defaultOpen={false}
+              defaultOpen
             >
-              <DeckField
-                id="td-chart-value-format"
-                label="Formato dos valores"
-                hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartValueFormat}
-              >
-                <FormSelectControl
-                  id="td-chart-value-format"
-                  ariaLabel="Formato dos valores"
-                  value={options.valueFormat ?? "auto"}
-                  onChange={(value) =>
-                    setOptions({ valueFormat: value as ComunicadoChartOptions["valueFormat"] })
-                  }
-                  options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
-                    value: entry.value,
-                    label: entry.label,
-                  }))}
-                />
-              </DeckField>
-              <DeckField id="td-chart-decimal-places" label="Casas decimais">
-                <FormSelectControl
-                  id="td-chart-decimal-places"
-                  ariaLabel="Casas decimais"
-                  value={
-                    options.decimalPlaces == null ? "auto" : String(options.decimalPlaces)
-                  }
-                  onChange={(value) =>
-                    setOptions({
-                      decimalPlaces: value === "auto" ? null : Number(value),
-                    })
-                  }
-                  options={[
-                    { value: "auto", label: "Automático" },
-                    { value: "0", label: "0" },
-                    { value: "1", label: "1" },
-                    { value: "2", label: "2" },
-                    { value: "3", label: "3" },
-                    { value: "4", label: "4" },
-                  ]}
-                />
-              </DeckField>
               <DeckField id="td-chart-category-rotation" label="Rotação dos rótulos (categoria)">
                 <FormSelectControl
                   id="td-chart-category-rotation"
@@ -218,18 +177,21 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
                   }))}
                 />
               </DeckField>
-              <DeckField id="td-chart-category-format" label="Formato da categoria">
+              <DeckField
+                id="td-chart-category-sort"
+                label="Ordenação do eixo (categorias)"
+                hint="A→Z para centros de trabalho; Valor para ranking. Automático = ordem dos dados."
+              >
                 <FormSelectControl
-                  id="td-chart-category-format"
-                  ariaLabel="Formato da categoria"
-                  value={options.categoryLabelFormat ?? "raw"}
+                  id="td-chart-category-sort"
+                  ariaLabel="Ordenação das categorias do eixo"
+                  value={options.legendSort ?? "auto"}
                   onChange={(value) =>
                     setOptions({
-                      categoryLabelFormat:
-                        value as ComunicadoChartOptions["categoryLabelFormat"],
+                      legendSort: value as ComunicadoChartOptions["legendSort"],
                     })
                   }
-                  options={CHART_CATEGORY_LABEL_FORMAT_OPTIONS.map((entry) => ({
+                  options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
                     value: entry.value,
                     label: entry.label,
                   }))}

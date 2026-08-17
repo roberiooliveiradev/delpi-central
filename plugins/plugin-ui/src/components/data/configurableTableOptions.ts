@@ -1,4 +1,9 @@
-import { formatNumber } from "../../utils/localeFormat";
+import {
+  formatDisplayValue,
+  resolveDisplayFormatSpec,
+  specFromTableValueFormat,
+  type DisplayFormatSpec,
+} from "../../displayFormat";
 import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableClassNames } from "./configurableTableClasses";
 
@@ -7,6 +12,10 @@ export type PresentationTableColumn = {
   label: string;
   /** Largura relativa da coluna (% do total da tabela). Omitido = auto. */
   widthPct?: number;
+  /** Spec canônico por coluna — prevalece sobre `displayValueFormat` global. */
+  displayFormat?: DisplayFormatSpec;
+  /** Espelho legado por coluna (fallback de leitura). */
+  valueFormat?: ConfigurableTableValueFormat;
 };
 
 export type ConfigurableTableTextAlign = "left" | "center" | "right";
@@ -51,6 +60,8 @@ export type ConfigurableTableOptions = {
   zebraStripe?: boolean;
   showBorders?: boolean;
   valueFormat?: ConfigurableTableValueFormat;
+  /** Spec canônico global da grade (fallback quando a coluna não tem override). */
+  displayValueFormat?: DisplayFormatSpec;
   headerUppercase?: boolean;
   /** Quebra texto nas células (Excel → Quebrar Texto Automaticamente). */
   wrapText?: boolean;
@@ -139,27 +150,14 @@ export function resolveConfigurableTableDisplayOptions(
 export function formatConfigurableTableCellValue(
   value: unknown,
   format: ConfigurableTableValueFormat = "auto",
+  spec?: DisplayFormatSpec | null,
 ): string {
   if (value === null || value === undefined) return "—";
-  if (typeof value !== "number") return String(value);
-
-  if (format === "currency") {
-    const hasCents = Math.abs(value % 1) > 1e-9;
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: hasCents ? 2 : 0,
-      maximumFractionDigits: hasCents ? 2 : 0,
-    });
+  const resolved = resolveDisplayFormatSpec(spec, specFromTableValueFormat(format));
+  if (typeof value !== "number" && resolved.category === "general") {
+    return String(value);
   }
-  if (format === "percent") {
-    return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
-  }
-  if (format === "number") {
-    return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-  }
-  /* Automático: número — não inferir % por magnitude (R$ pequeno ≠ percentual). */
-  return formatNumber(value);
+  return formatDisplayValue(value, resolved);
 }
 
 /** Soma colunas numéricas; primeira coluna não numérica recebe o rótulo «Total». */

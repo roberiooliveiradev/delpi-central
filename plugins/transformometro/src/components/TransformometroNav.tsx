@@ -30,11 +30,22 @@ function isActive(path: string, currentPath?: string): boolean {
   }
   if (path === TRANSFORMOMETRO_ROUTES.configuracoesUnidades) {
     return (
+      currentPath.includes("/settings") ||
       currentPath.includes("/configuracoes") ||
       currentPath.includes("/cadastros") ||
       currentPath.includes("/filiais") ||
       currentPath.includes("/setores") ||
       currentPath.includes("/recursos")
+    );
+  }
+  if (path === TRANSFORMOMETRO_ROUTES.atas) {
+    return (
+      currentPath === path ||
+      currentPath.startsWith(`${path}/`) ||
+      currentPath.includes("/meeting-minutes") ||
+      currentPath.includes("/atas") ||
+      currentPath.includes("/my-signature") ||
+      currentPath.includes("/minha-assinatura")
     );
   }
   return currentPath === path || currentPath.startsWith(`${path}/`);

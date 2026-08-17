@@ -28,7 +28,6 @@ from app.domain.ports.production.overall_equipment_effectiveness_repository_port
 )
 from app.domain.production.production_efficiency_valid_range import (
     EFFICIENCY_BAND_VERIFY,
-    PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
     parse_efficiency_bands,
     resolve_production_list_status_filter_clause,
 )
@@ -56,13 +55,19 @@ from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh
     build_fabril_sh6010_scoped_left_join,
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
-    OEE_FABRIL_KPI_AVG_SELECT,
-    OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT,
+    build_oee_fabril_kpi_avg_sql,
+    build_oee_fabril_kpi_by_day_and_branch_sql,
+)
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_standard_time_sql import (
+    build_fabril_standard_time_ranked_ctes,
 )
 from app.infrastructure.persistence.totvs.production_repositories.production_oee_sql import (
     OEE_APPOINTMENT_DETAIL_SELECT,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.domain.production.production_fabril_appointment_scope import (
+    DEFAULT_PRODUCTION_BRANCHES,
+)
 
 
 class OverallEquipmentEffectivenessRepository(
@@ -105,12 +110,13 @@ class OverallEquipmentEffectivenessRepository(
         if not request.start_date or not request.end_date:
             return "1=0", []
 
+        # Faixa 0–199 aplica-se ao % recalculado (HY_TEMPAD), não ao % cru da view.
         where_clause, where_params = build_fabril_view_filters(
             date_start=request.start_date,
             date_end=request.end_date,
             branch=request.branch,
             status_ok_only=True,
-            efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+            efficiency_cap_pct=None,
             column_prefix="EF",
         )
         return where_clause, list(where_params)
@@ -222,14 +228,15 @@ class OverallEquipmentEffectivenessRepository(
             )
 
         where_clause, where_params = self._build_kpi_filters(request)
-
-        sql = f"""
-            {OEE_FABRIL_KPI_AVG_SELECT}
-            WHERE {where_clause}
-        """
+        sql, params = build_oee_fabril_kpi_avg_sql(
+            where_clause=where_clause,
+            where_params=tuple(where_params),
+            branch=request.branch,
+            branches=DEFAULT_PRODUCTION_BRANCHES,
+        )
 
         with self:
-            result = self.execute_query(sql, where_params)
+            result = self.execute_query(sql, params)
 
         if result:
             row = result[0]
@@ -294,16 +301,15 @@ class OverallEquipmentEffectivenessRepository(
             return []
 
         where_clause, where_params = self._build_kpi_filters(request)
-
-        sql = f"""
-            {OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT}
-            WHERE {where_clause}
-            GROUP BY EF.DATA_PRODUCAO, EF.FILIAL
-            ORDER BY production_date, branch
-        """
+        sql, params = build_oee_fabril_kpi_by_day_and_branch_sql(
+            where_clause=where_clause,
+            where_params=tuple(where_params),
+            branch=request.branch,
+            branches=DEFAULT_PRODUCTION_BRANCHES,
+        )
 
         with self:
-            rows = self.execute_query(sql, where_params)
+            rows = self.execute_query(sql, params)
 
         return rows or []
 
@@ -334,14 +340,19 @@ class OverallEquipmentEffectivenessRepository(
             date_end_protheus=date_end,
             branch=request.branch,
         )
+        std_cte, std_params = build_fabril_standard_time_ranked_ctes(
+            branch=request.branch,
+            branches=DEFAULT_PRODUCTION_BRANCHES,
+        )
         appointments_select = build_oee_fabril_appointments_select(
             sh6010_join_sql=sh6010_join,
         )
         sql = format_oee_appointments_materialize_sql(
             appointments_select=appointments_select,
             where_clause=where_clause,
+            leading_ctes=std_cte,
         )
-        query_params = tuple(list(sh6010_params) + list(where_params))
+        query_params = tuple(list(std_params) + list(sh6010_params) + list(where_params))
 
         with self:
             resultsets = self.execute_query_multiple(sql, query_params)

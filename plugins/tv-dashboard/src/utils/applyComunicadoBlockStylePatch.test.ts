@@ -64,6 +64,28 @@ describe("applyComunicadoBlockStylePatch", () => {
     expect(next.style?.opacity).toBe(0.8);
   });
 
+  it("sólido remove fillPaint e deixa o hex", () => {
+    const gradient = {
+      kind: "gradient" as const,
+      angle: 180,
+      stops: [
+        { color: "#089bdb", position: 0 },
+        { color: "#0f172a", position: 100 },
+      ],
+    };
+    const block = {
+      ...createShapeBlock("rectangle"),
+      style: { fill: "#089bdb", fillPaint: gradient },
+    };
+    const next = applyComunicadoBlockStylePatch(block, {
+      fill: "#ef4444",
+      backgroundColor: "#ef4444",
+      fillPaint: undefined,
+    });
+    expect(next.style?.fill).toBe("#ef4444");
+    expect(next.style?.fillPaint).toBeUndefined();
+  });
+
   it("tipografia do container remove override pontual nos contentRuns", () => {
     const block = {
       ...createShapeBlock("rectangle"),

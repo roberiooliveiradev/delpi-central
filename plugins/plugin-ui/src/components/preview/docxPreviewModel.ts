@@ -1,3 +1,5 @@
+import { normalizeRichTextPastedHtml } from "../rich-text/richTextTable";
+
 export type DocxPreviewData = {
   html: string;
   truncated: boolean;
@@ -5,11 +7,17 @@ export type DocxPreviewData = {
 
 const MAX_DOCX_HTML_CHARS = 250_000;
 
+/** Aplica classes de tabela do rich text quando o DOCX trouxer `<table>`. */
+function normalizeDocxHtml(html: string): string {
+  if (!/<table[\s>]/i.test(html)) return html;
+  return normalizeRichTextPastedHtml(html) || html;
+}
+
 export async function parseDocxPreview(blob: Blob): Promise<DocxPreviewData> {
   const mammoth = await import("mammoth");
   const arrayBuffer = await blob.arrayBuffer();
   const result = await mammoth.convertToHtml({ arrayBuffer });
-  const html = result.value.trim();
+  const html = normalizeDocxHtml(result.value.trim());
 
   if (!html) {
     return {

@@ -1,0 +1,213 @@
+from datetime import datetime, timezone
+from unittest.mock import MagicMock
+
+from commercial_app.application.use_cases.manage_seller_portfolio import (
+    ManageSellerPortfolioUseCase,
+)
+from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
+from commercial_app.domain.entities.seller_portfolio import (
+    SellerPortfolio,
+    SellerPortfolioMember,
+)
+from commercial_app.domain.services.audit_messages_content_service import (
+    AuditMessagesContentService,
+)
+from commercial_app.domain.services.seller_portfolio_audit_formatter_service import (
+    SellerPortfolioAuditFormatterService,
+)
+
+
+def _portfolio(**kwargs) -> SellerPortfolio:
+    defaults = dict(
+        id="p1",
+        user_id="u1",
+        display_name="Sul",
+        active=True,
+        customers=(),
+        members=(SellerPortfolioMember(user_id="u1", role="owner"),),
+    )
+    defaults.update(kwargs)
+    return SellerPortfolio(**defaults)
+
+
+def test_audit_messages_content_has_portfolio_actions() -> None:
+    AuditMessagesContentService.clear_cache()
+    bundle = AuditMessagesContentService.bundle()
+    assert "seller_portfolio.add_member" in bundle["titles"]
+    assert "seller_portfolio.transfer_customers" in bundle["messages"]
+    assert "seller_portfolio.transfer_customers_bulk" in bundle["titles"]
+    assert "seller_portfolio.transfer_customers_bulk" in bundle["messages"]
+    assert "seller_portfolio.add_customer" in bundle["titles"]
+    assert "seller_portfolio.remove_customer" in bundle["messages"]
+    assert "seller_portfolio.create" in bundle["titles"]
+    assert "seller_portfolio.rename" in bundle["titles"]
+    assert "seller_portfolio.replace_customers" in bundle["titles"]
+    assert AuditMessagesContentService.role_label("owner") == "responsável"
+
+
+def test_formatter_add_customer_uses_customer_name() -> None:
+    AuditMessagesContentService.clear_cache()
+    formatted = SellerPortfolioAuditFormatterService().format_entry(
+        AuditLogEntry(
+            id="a1",
+            actor_user_id="admin",
+            action="seller_portfolio.add_customer",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={
+                "customer_code": "000240",
+                "customer_store": "01",
+                "customer_name": "BUHLER DO BRASIL LTDA.",
+            },
+            created_at=None,
+        )
+    )
+    assert formatted["title"] == "Cliente vinculado"
+    assert "BUHLER DO BRASIL LTDA." in formatted["message"]
+    assert "000240/01" not in formatted["message"]
+
+
+def test_formatter_builds_pt_br_message_for_bulk_transfer() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    entry = AuditLogEntry(
+        id="a-bulk",
+        actor_user_id="admin",
+        action="seller_portfolio.transfer_customers_bulk",
+        entity_type="seller_portfolio",
+        entity_id="p1",
+        payload={
+            "source_portfolio_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+            "target_portfolio_id": "ffffffff-1111-4222-8333-444444444444",
+            "source_display_name": "Sul",
+            "target_display_name": "Norte",
+            "transferred_count": 3,
+            "failed_count": 1,
+            "reason_note": "Reorg",
+        },
+    )
+    formatted = formatter.format_entry(entry)
+    assert formatted["title"] == "Transferência em massa"
+    assert "3 ok" in formatted["message"]
+    assert "1 falha" in formatted["message"]
+    assert "Sul" in formatted["message"]
+    assert "Norte" in formatted["message"]
+    assert "aaaaaaaa-bbbb" not in formatted["message"]
+    assert formatted["tone"] == "info"
+
+
+def test_formatter_builds_pt_br_message_for_add_member() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    entry = AuditLogEntry(
+        id="a1",
+        actor_user_id="admin",
+        action="seller_portfolio.add_member",
+        entity_type="seller_portfolio",
+        entity_id="p1",
+        payload={"user_id": "u2", "role": "member"},
+        created_at=datetime(2026, 8, 12, 12, 0, tzinfo=timezone.utc),
+    )
+    formatted = formatter.format_entry(entry)
+    assert formatted["title"] == "Membro adicionado"
+    assert "u2" in formatted["message"]
+    assert "membro" in formatted["message"]
+    assert formatted["tone"] == "success"
+
+
+def test_formatter_hides_uuid_user_id_in_member_messages() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    uid = "3bfdd634-a3a5-41af-b6b3-607025c2bdf5"
+    formatted = formatter.format_entry(
+        AuditLogEntry(
+            id="a-uuid",
+            actor_user_id="admin",
+            action="seller_portfolio.remove_member",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={"user_id": uid},
+        )
+    )
+    assert uid not in formatted["message"]
+    assert "um usuário" in formatted["message"]
+
+    named = formatter.format_entry(
+        AuditLogEntry(
+            id="a-named",
+            actor_user_id="admin",
+            action="seller_portfolio.set_owner",
+            entity_type="seller_portfolio",
+            entity_id="p1",
+            payload={"user_id": uid, "user_display_name": "Ana Gestora"},
+        )
+    )
+    assert "Ana Gestora" in named["message"]
+    assert uid not in named["message"]
+
+
+def test_formatter_fallback_for_unknown_action() -> None:
+    formatter = SellerPortfolioAuditFormatterService()
+    entry = AuditLogEntry(
+        id="a2",
+        actor_user_id="admin",
+        action="seller_portfolio.unknown",
+        entity_type="seller_portfolio",
+        entity_id="p1",
+        payload={},
+    )
+    formatted = formatter.format_entry(entry)
+    assert formatted["title"] == "Evento de auditoria"
+    assert "seller_portfolio.unknown" in formatted["message"]
+
+
+def test_list_portfolio_audit_formats_rows() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio()
+    audit = MagicMock()
+    audit.list_for_entity.return_value = (
+        [
+            {
+                "id": "evt-1",
+                "actor_user_id": "admin",
+                "action": "seller_portfolio.deactivate",
+                "entity_type": "seller_portfolio",
+                "entity_id": "p1",
+                "payload": {"active": False},
+                "created_at": datetime(2026, 8, 1, tzinfo=timezone.utc),
+            }
+        ],
+        1,
+    )
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=audit)
+
+    result = use_case.list_portfolio_audit("p1", page=1, page_size=10)
+
+    assert result["total"] == 1
+    assert result["page"] == 1
+    assert result["page_size"] == 10
+    assert result["items"][0]["action"] == "seller_portfolio.deactivate"
+    assert result["items"][0]["title"] == "Carteira inativada"
+    audit.list_for_entity.assert_called_once_with(
+        entity_type="seller_portfolio",
+        entity_id="p1",
+        page=1,
+        page_size=10,
+        related_target_key="target_portfolio_id",
+    )
+
+
+def test_list_portfolio_audit_raises_when_missing() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = None
+    use_case = ManageSellerPortfolioUseCase(repository, audit_repository=MagicMock())
+    try:
+        use_case.list_portfolio_audit("missing")
+        assert False, "expected LookupError"
+    except LookupError:
+        pass
+
+
+def test_list_portfolio_audit_empty_without_audit_repo() -> None:
+    repository = MagicMock()
+    repository.get_by_id.return_value = _portfolio()
+    use_case = ManageSellerPortfolioUseCase(repository)
+    result = use_case.list_portfolio_audit("p1")
+    assert result == {"items": [], "total": 0, "page": 1, "page_size": 20}

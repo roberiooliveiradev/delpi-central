@@ -25,18 +25,23 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  /*
+   * Não encolher abaixo do conteúdo — encolher + overflow:hidden cortava tiles.
+   * Folga na faixa: colapso responsivo (RibbonGroupsRow), não flex-shrink.
+   */
   flex: 0 0 auto;
   align-items: stretch;
-  min-width: 0;
-  /* Não comprimir o bbox ao width do host — senão a medida expandida fica subestimada. */
+  min-width: max-content;
   max-width: none;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
-/* Separador suave entre seções da ribbon (exceto a primeira). */
+/* Separador suave entre seções da ribbon (exceto a primeira).
+ * Única fonte de divisor — MFEs dual-class não devem somar border-right. */
 .delpi-ui-ribbon-group + .delpi-ui-ribbon-group {
   margin-left: 4px;
-  padding-left: 12px;
+  padding-left: 10px;
   border-left: 1px solid color-mix(
     in srgb,
     var(--delpi-ui-border, var(--border, rgba(160, 160, 160, 0.55))) 70%,
@@ -46,7 +51,8 @@
 
 .delpi-ui-ribbon-group--wide {
   flex: 1 1 auto;
-  min-width: 12rem;
+  /* Pode crescer; piso = conteúdo (não comprimir controles). */
+  min-width: max-content;
 }
 
 .delpi-ui-ribbon-group__body {
@@ -55,16 +61,32 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
+  min-height: 0;
+  /* Só vertical: evita pintar na caption; horizontal segue o conteúdo. */
+  overflow-x: visible;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  align-self: center;
 }
 
 .delpi-ui-ribbon-group__caption {
   display: flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 2px;
   min-height: 1.1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .delpi-ui-ribbon-group__caption--above {
@@ -78,6 +100,9 @@
   letter-spacing: 0.01em;
   color: var(--delpi-ui-muted, var(--text-muted, #666666));
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .delpi-ui-ribbon-group--no-caption .delpi-ui-ribbon-group__caption {

@@ -6,14 +6,6 @@
 .notification-html-editor__area {
   width: 100%;
   min-height: 140px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text);
   resize: vertical;
 }
 
@@ -30,15 +22,6 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-}
-
-.notification-html-editor__preview-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-  cursor: pointer;
 }
 
 .notification-html-editor__split {

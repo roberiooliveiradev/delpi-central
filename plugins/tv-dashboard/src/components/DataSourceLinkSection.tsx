@@ -18,9 +18,10 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 const H = TV_DASHBOARD_HELP_TOOLTIPS.data;
 
 export function canLinkBlockToProjectDataSource(
-  block: { type: string } | null | undefined,
+  block: { type: string; shape?: string } | null | undefined,
 ): boolean {
   if (!block) return false;
+  if (block.type === "shape" && block.shape === "efficiency-pin") return true;
   return (
     isDataViewBlockType(block.type) ||
     isTextDataBoundBlockType(block.type) ||
@@ -40,6 +41,8 @@ type LinkSectionProps = {
   emptyHint?: string;
   /** Catálogo vivo para rótulos (sem snapshot). */
   labelCatalog?: DataSourceLabelCatalog | null;
+  /** Sobrescreve opções (ex.: fontes de eficiência primeiro). */
+  sourceOptions?: Array<{ value: string; label: string }>;
   onChangeSourceId: (sourceId: string) => void;
   onOpenCatalog?: () => void;
   catalogLabel?: string;
@@ -59,11 +62,13 @@ export function DataSourceLinkSection({
   sectionTitle = "Fonte de dados",
   emptyHint,
   labelCatalog = null,
+  sourceOptions: sourceOptionsProp,
   onChangeSourceId,
   onOpenCatalog,
   catalogLabel = "Inserir nova fonte…",
 }: LinkSectionProps) {
-  const sourceOptions = dataSourceOptionsForInspector(blocks, selectedId, labelCatalog);
+  const sourceOptions =
+    sourceOptionsProp ?? dataSourceOptionsForInspector(blocks, selectedId, labelCatalog);
   const hint =
     emptyHint ??
     (sourceOptions.length === 0

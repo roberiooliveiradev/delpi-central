@@ -28,6 +28,23 @@ function expandTargetGroupMembers(
 }
 
 /**
+ * Decide se o right-click aplica seleção live (modelo mercado).
+ * `null` = não mudar; array = substituir (alvo fora → membros do grupo, alvo por último).
+ */
+export function resolveContextMenuSelectionApply(params: {
+  selectedIds: readonly string[];
+  targetBlockId: string | null;
+  blocks: readonly BlockWithGroup[];
+}): { nextSelectedIds: string[] | null } {
+  const { selectedIds, targetBlockId, blocks } = params;
+  if (!targetBlockId) return { nextSelectedIds: null };
+  if (selectedIds.includes(targetBlockId)) return { nextSelectedIds: null };
+  const members = expandTargetGroupMembers(blocks, targetBlockId);
+  const rest = members.filter((id) => id !== targetBlockId);
+  return { nextSelectedIds: [...rest, targetBlockId] };
+}
+
+/**
  * Congela os ids da seleção no momento em que o menu abre.
  * - Alvo já na seleção → preserva a seleção inteira (grupo fechado incluso).
  * - Alvo fora da seleção → expande o grupo do alvo (sem alterar live até o apply).

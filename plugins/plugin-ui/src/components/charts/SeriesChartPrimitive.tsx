@@ -73,6 +73,8 @@ export type SeriesPlotRenderProps = {
   showAxes: boolean;
   showGrid: boolean;
   showVerticalGrid: boolean;
+  showGoalLine?: boolean;
+  goalLineValue?: number | null;
   showMarkers: boolean;
   showDataLabels: boolean;
   dataLabels: SeriesChartDataLabelsResolved | null;
@@ -164,6 +166,22 @@ export function SeriesChartPrimitive({
         ? collectSeriesValues(axisSourceSeries)
         : undefined
     : undefined;
+  const goalAxisValue =
+    config.showGoalLine &&
+    config.goalLineValue != null &&
+    Number.isFinite(Number(config.goalLineValue))
+      ? Number(config.goalLineValue)
+      : null;
+  const axisValuesWithGoal = (() => {
+    if (goalAxisValue == null) return axisValues;
+    const base =
+      axisValues && axisValues.length > 0
+        ? axisValues
+        : usable
+            .map((point) => (point.value == null ? null : Number(point.value)))
+            .filter((value): value is number => value != null && Number.isFinite(value));
+    return [...base, goalAxisValue];
+  })();
   const secondaryAxisValues =
     multiSeries && chartType !== "stacked_bar" && secondarySeriesForAxis.length > 0
       ? collectSeriesValues(secondarySeriesForAxis)
@@ -246,7 +264,7 @@ export function SeriesChartPrimitive({
   });
   const layout = buildSeriesChartLayout({
     points: usable,
-    axisValues,
+    axisValues: axisValuesWithGoal,
     secondaryAxisValues,
     showXAxisLabels:
       !centeredPlot && config.showAxes !== false && config.showXAxisLabels !== false,
@@ -269,6 +287,10 @@ export function SeriesChartPrimitive({
     categoryLabelRotation: config.categoryLabelRotation,
     categoryLabelOverflow: config.categoryLabelOverflow,
     categoryLabelFormat: config.categoryLabelFormat,
+    displayCategoryFormat: config.displayCategoryFormat,
+    valueFormat,
+    decimalPlaces: config.decimalPlaces,
+    displayValueFormat: config.displayValueFormat,
     markerGutterPx: chartType === "bubble" ? SERIES_CHART_BUBBLE_MAX_R + 2 : undefined,
     plotPadExtraPx: centeredPlot
       ? dataLabelOutsideGutterPx(resolvedDataLabels, chartType)
@@ -293,6 +315,11 @@ export function SeriesChartPrimitive({
     categoryColors: config.categoryColors,
     chartParts,
     sort: config.legendSort,
+    colorScale: config.colorScale,
+    goalValue:
+      config.showGoalLine && config.goalLineValue != null && Number.isFinite(Number(config.goalLineValue))
+        ? Number(config.goalLineValue)
+        : null,
   });
   const legendPosition = config.legendPosition ?? "bottom";
   const legendLayout = resolveSeriesChartLegendLayout({
@@ -350,6 +377,8 @@ export function SeriesChartPrimitive({
     showAxes,
     showGrid: config.showGrid !== false,
     showVerticalGrid: Boolean(config.showVerticalGrid),
+    showGoalLine: Boolean(config.showGoalLine),
+    goalLineValue: config.goalLineValue,
     showMarkers: config.showMarkers !== false,
     showDataLabels: Boolean(config.showDataLabels),
     dataLabels: resolvedDataLabels,
@@ -440,6 +469,8 @@ export function SeriesChartPrimitive({
           points={usable}
           seriesName={seriesName}
           valueFormat={valueFormat}
+          decimalPlaces={config.decimalPlaces}
+          displayValueFormat={config.displayValueFormat}
           visible={Boolean(config.showDataTable)}
           interaction={interaction}
           chartParts={chartParts}

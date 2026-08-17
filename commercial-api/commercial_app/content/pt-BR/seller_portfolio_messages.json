@@ -1,0 +1,80 @@
+{
+  "errors": {
+    "sourceTargetRequired": "Origem e destino da transferência são obrigatórios.",
+    "sourceTargetMustDiffer": "Origem e destino devem ser vendedores diferentes.",
+    "customersRequired": "Selecione ao menos um cliente para transferir.",
+    "reasonRequired": "reason_note é obrigatório para transferência de clientes.",
+    "sourceNotFound": "Vendedor de origem não encontrado.",
+    "targetNotFound": "Vendedor de destino não encontrado.",
+    "targetInactive": "Não é possível transferir para um vendedor inativo.",
+    "customerCodeStoreRequired": "Cada cliente precisa de customer_code e customer_store.",
+    "customerNotInSource": "Cliente {code}/{store} não pertence à carteira de origem.",
+    "portalAccessDenied": "Usuário sem acesso ao Portal Comercial.",
+    "customerOutsidePortfolio": "Cliente fora da sua carteira.",
+    "emptyPortfolioLink": "Nenhuma carteira de clientes cadastrada para o seu usuário. Peça ao gerente para vincular seus clientes na Configuração.",
+    "emptyPortfolioCustomers": "Sua carteira ainda não possui clientes vinculados.",
+    "portfolioFilterRequiresTeam": "Filtro por vendedor disponível apenas para equipe ou gerentes.",
+    "portfolioFilterOutsideMembership": "Você só pode filtrar pelas carteiras em que participa.",
+    "portfolioNotFound": "Vendedor não encontrado para filtro de carteira.",
+    "portfolioInactiveFilter": "Vendedor inativo não pode ser usado como filtro."
+  },
+  "bulk": {
+    "itemOk": "ok",
+    "itemFailed": "falha"
+  },
+  "realtime": {
+    "titles": {
+      "seller_portfolio.create": "Carteira criada",
+      "seller_portfolio.rename": "Carteira renomeada",
+      "seller_portfolio.add_member": "Membro adicionado",
+      "seller_portfolio.remove_member": "Membro removido",
+      "seller_portfolio.replace_members": "Membros atualizados",
+      "seller_portfolio.set_owner": "Responsável alterado",
+      "seller_portfolio.deactivate": "Carteira inativada",
+      "seller_portfolio.reactivate": "Carteira reativada",
+      "seller_portfolio.purge": "Carteira excluída",
+      "seller_portfolio.add_customer": "Cliente vinculado",
+      "seller_portfolio.remove_customer": "Cliente desvinculado",
+      "seller_portfolio.replace_customers": "Clientes atualizados",
+      "seller_portfolio.transfer_customers": "Clientes transferidos",
+      "seller_portfolio.transfer_customers_bulk": "Transferência em massa"
+    },
+    "messages": {
+      "seller_portfolio.create": "{actor} criou a carteira «{display_name}».",
+      "seller_portfolio.rename": "{actor} renomeou a carteira para «{display_name}».",
+      "seller_portfolio.add_member": "{actor} adicionou um membro em «{display_name}».",
+      "seller_portfolio.remove_member": "{actor} removeu um membro de «{display_name}».",
+      "seller_portfolio.replace_members": "{actor} atualizou os membros de «{display_name}».",
+      "seller_portfolio.set_owner": "{actor} alterou o responsável de «{display_name}».",
+      "seller_portfolio.deactivate": "{actor} inativou a carteira «{display_name}».",
+      "seller_portfolio.reactivate": "{actor} reativou a carteira «{display_name}».",
+      "seller_portfolio.purge": "{actor} excluiu a carteira «{display_name}».",
+      "seller_portfolio.add_customer": "{actor} vinculou um cliente em «{display_name}».",
+      "seller_portfolio.remove_customer": "{actor} desvinculou um cliente de «{display_name}».",
+      "seller_portfolio.replace_customers": "{actor} atualizou os clientes de «{display_name}».",
+      "seller_portfolio.transfer_customers": "{actor} transferiu clientes envolvendo «{display_name}».",
+      "seller_portfolio.transfer_customers_bulk": "{actor} fez transferência em massa envolvendo «{display_name}»."
+    },
+    "tones": {
+      "seller_portfolio.create": "success",
+      "seller_portfolio.rename": "info",
+      "seller_portfolio.add_member": "info",
+      "seller_portfolio.remove_member": "warning",
+      "seller_portfolio.replace_members": "info",
+      "seller_portfolio.set_owner": "info",
+      "seller_portfolio.deactivate": "warning",
+      "seller_portfolio.reactivate": "success",
+      "seller_portfolio.purge": "warning",
+      "seller_portfolio.add_customer": "success",
+      "seller_portfolio.remove_customer": "warning",
+      "seller_portfolio.replace_customers": "info",
+      "seller_portfolio.transfer_customers": "info",
+      "seller_portfolio.transfer_customers_bulk": "info"
+    },
+    "fallback": {
+      "title": "Carteira atualizada",
+      "message": "{actor} alterou a carteira «{display_name}».",
+      "tone": "info"
+    }
+  }
+}

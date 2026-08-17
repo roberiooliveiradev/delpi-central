@@ -1,0 +1,287 @@
+.dashboard-commercial,
+.dashboard-commercial * {
+  box-sizing: border-box;
+}
+
+.dashboard-commercial.dashboard-page {
+  min-height: 100%;
+  padding: var(--cm-page-padding);
+  color: var(--cm-text);
+  background-color: var(--app-canvas, var(--bg, #f3f6f9));
+  background-image:
+    radial-gradient(
+      1200px 420px at 8% -10%,
+      color-mix(in srgb, var(--cm-accent) 14%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cm-brand) 4%, var(--app-canvas, #f3f6f9)),
+      var(--app-canvas, #f3f6f9) 320px
+    );
+}
+
+.dashboard-commercial button,
+.dashboard-commercial input,
+.dashboard-commercial select {
+  font: inherit;
+}
+
+.cm-app-shell {
+  max-width: var(--cm-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-gap);
+}
+
+.cm-module-chrome {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px 16px;
+  border: 1px solid var(--cm-border-strong);
+  border-radius: var(--cm-radius-lg);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--cm-brand) 92%, #000) 0%,
+      color-mix(in srgb, var(--cm-brand) 75%, var(--cm-accent)) 52%,
+      color-mix(in srgb, var(--cm-accent) 88%, #fff) 160%
+    );
+  color: #f8fbff;
+  box-shadow: var(--cm-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.cm-module-chrome::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    #013866 0%,
+    #015488 33%,
+    #089bdb 66%,
+    #4fc3f7 100%
+  );
+}
+
+.cm-module-chrome__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.cm-module-chrome__brand {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: min(100%, 280px);
+  flex: 1 1 320px;
+}
+
+.cm-module-chrome__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #fff 16%, transparent);
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.cm-module-chrome__eyebrow {
+  margin: 0 0 4px;
+  font-size: var(--cm-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+.cm-module-chrome__title {
+  margin: 0;
+  font-size: var(--cm-font-title);
+  line-height: 1.15;
+  font-weight: 750;
+  color: #fff;
+}
+
+.cm-module-chrome__subtitle {
+  margin: 6px 0 0;
+  font-size: var(--cm-font-md);
+  color: color-mix(in srgb, #fff 82%, transparent);
+  max-width: 44rem;
+}
+
+.cm-module-chrome__meta {
+  margin: 8px 0 0;
+  font-size: var(--cm-font-sm);
+  color: color-mix(in srgb, #fff 72%, transparent);
+}
+
+.cm-plugin-nav {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.cm-plugin-nav__scroller {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 18%, transparent);
+  max-width: 100%;
+}
+
+.cm-plugin-nav__tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, #fff 78%, transparent);
+  font: inherit;
+  font-size: var(--cm-font-md);
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.cm-plugin-nav__tab:hover {
+  color: #fff;
+  background: color-mix(in srgb, #fff 10%, transparent);
+}
+
+.cm-plugin-nav__tab--active {
+  color: var(--cm-brand);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cm-plugin-nav__tab-label {
+  display: inline-block;
+}
+
+.cm-internal-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-gap);
+}
+
+.cm-internal-page__title {
+  margin: 0;
+  font-size: clamp(20px, 1.8vw, 26px);
+  line-height: 1.2;
+  color: var(--cm-brand);
+  font-weight: 750;
+}
+
+.cm-internal-page__text {
+  margin: 0;
+  color: var(--cm-muted);
+  font-size: var(--cm-font-md);
+  max-width: 52rem;
+  line-height: 1.45;
+}
+
+/* TopBar — avatar (perfil) + nome (carteira) */
+.cm-shell-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: min(100%, 260px);
+}
+
+.cm-shell-user__profile,
+.cm-shell-user__portfolio {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--cm-text, #111) 4%, transparent);
+  color: var(--cm-text, var(--text, #111));
+  font: inherit;
+  font-size: var(--cm-font-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.cm-shell-user__profile {
+  flex: 0 0 auto;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.cm-shell-user__profile--static {
+  cursor: default;
+}
+
+.cm-shell-user__portfolio {
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  text-align: left;
+}
+
+button.cm-shell-user__profile:hover,
+button.cm-shell-user__portfolio:hover {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 28%, transparent);
+}
+
+button.cm-shell-user__profile:focus-visible,
+button.cm-shell-user__portfolio:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.cm-shell-user--open .cm-shell-user__portfolio {
+  background: color-mix(in srgb, var(--cm-accent, #089bdb) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cm-accent, #089bdb) 32%, transparent);
+}
+
+.cm-shell-user--disabled .cm-shell-user__portfolio {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.cm-shell-user__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cm-shell-user__chevron,
+.cm-shell-user__portfolio-icon {
+  flex: 0 0 auto;
+  opacity: 0.72;
+}
+
+.cm-shell-user--open .cm-shell-user__chevron {
+  transform: rotate(180deg);
+}

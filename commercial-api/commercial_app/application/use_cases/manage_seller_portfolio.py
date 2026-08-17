@@ -1,0 +1,1263 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Sequence
+
+from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
+from commercial_app.domain.entities.portfolio_coverage import (
+    CustomerOverlapWarning,
+    CustomerSharedCoverageItem,
+    PortfolioCoverageAudit,
+)
+from commercial_app.domain.entities.portfolio_load import PortfolioLoadSummary
+from commercial_app.domain.entities.seller_portfolio import (
+    SellerCustomerAssignment,
+    SellerPortfolio,
+    SellerPortfolioMember,
+)
+from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
+from commercial_app.domain.ports.open_orders_metrics_port import OpenOrdersMetricsPort
+from commercial_app.domain.ports.portal_access_port import PortalAccessPort
+from commercial_app.domain.ports.seller_portfolio_repository_port import (
+    SellerPortfolioRepositoryPort,
+)
+from commercial_app.domain.services.seller_portfolio_audit_formatter_service import (
+    SellerPortfolioAuditFormatterService,
+)
+from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
+    SellerPortfolioCoverageAuditService,
+)
+from commercial_app.domain.services.seller_portfolio_load_summary_service import (
+    SellerPortfolioLoadSummaryService,
+)
+from commercial_app.domain.services.seller_portfolio_messages_content_service import (
+    SellerPortfolioMessagesContentService,
+)
+from commercial_app.domain.services.portfolio_membership_summary_service import (
+    portfolio_membership_summary,
+)
+
+_ENTITY_SELLER_PORTFOLIO = "seller_portfolio"
+_TRANSFER_TARGET_KEY = "target_portfolio_id"
+
+
+def _normalize_code(value: str) -> str:
+    return str(value or "").strip()
+
+
+def customer_key(code: str, store: str) -> tuple[str, str]:
+    return (_normalize_code(code), _normalize_code(store))
+
+
+def _member_user_ids(portfolio: SellerPortfolio) -> list[str]:
+    members = [
+        _normalize_code(member.user_id)
+        for member in portfolio.members
+        if _normalize_code(member.user_id)
+    ]
+    if members:
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for user_id in members:
+            if user_id in seen:
+                continue
+            seen.add(user_id)
+            ordered.append(user_id)
+        return ordered
+    owner = _normalize_code(portfolio.owner_user_id or portfolio.user_id)
+    return [owner] if owner else []
+
+
+def portfolio_to_dict(
+    portfolio: SellerPortfolio,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    members = []
+    for member in portfolio.members:
+        item: dict[str, Any] = {"user_id": member.user_id, "role": member.role}
+        if portal_access_by_user is not None:
+            item["has_portal_access"] = bool(
+                portal_access_by_user.get(_normalize_code(member.user_id), False)
+            )
+        else:
+            item["has_portal_access"] = True
+        members.append(item)
+    summary = portfolio_membership_summary(portfolio)
+    return {
+        "id": portfolio.id,
+        "user_id": portfolio.user_id,
+        "owner_user_id": portfolio.owner_user_id,
+        "display_name": portfolio.display_name,
+        "active": portfolio.active,
+        "customer_count": summary["customer_count"],
+        "member_count": summary["member_count"],
+        "customers": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "customer_name": item.customer_name,
+            }
+            for item in portfolio.customers
+        ],
+        "members": members,
+    }
+
+
+def load_summary_to_dict(summary: PortfolioLoadSummary) -> dict[str, Any]:
+    return {
+        "portfolios": [
+            {
+                "id": item.id,
+                "display_name": item.display_name,
+                "active": item.active,
+                "customer_count": item.customer_count,
+                "member_count": item.member_count,
+                "open_value": item.open_value,
+                "attention_count": item.attention_count,
+            }
+            for item in summary.portfolios
+        ],
+        "by_person": [
+            {
+                "user_id": item.user_id,
+                "portfolio_ids": list(item.portfolio_ids),
+                "portfolio_count": item.portfolio_count,
+                "customer_count": item.customer_count,
+                "open_value": item.open_value,
+                "attention_count": item.attention_count,
+            }
+            for item in summary.by_person
+        ],
+        "totvs_metrics": {
+            "available": summary.totvs_metrics.available,
+            "reason": summary.totvs_metrics.reason,
+        },
+    }
+
+
+def parse_customer_assignments(raw: Sequence[dict[str, Any]] | None) -> list[SellerCustomerAssignment]:
+    if not raw:
+        return []
+    parsed: list[SellerCustomerAssignment] = []
+    seen: set[tuple[str, str]] = set()
+    for item in raw:
+        code = _normalize_code(str(item.get("customer_code") or item.get("codigo") or ""))
+        store = _normalize_code(str(item.get("customer_store") or item.get("loja") or ""))
+        if not code or not store:
+            raise ValueError("Cada cliente precisa de customer_code e customer_store.")
+        key = (code, store)
+        if key in seen:
+            continue
+        seen.add(key)
+        name_raw = item.get("customer_name") or item.get("nome")
+        name = str(name_raw).strip() if name_raw else None
+        parsed.append(
+            SellerCustomerAssignment(
+                customer_code=code,
+                customer_store=store,
+                customer_name=name or None,
+            )
+        )
+    return parsed
+
+
+@dataclass(frozen=True, slots=True)
+class CreatePortfolioRequest:
+    user_id: str = ""
+    display_name: str = ""
+    created_by_user_id: str | None = None
+    customers: tuple[SellerCustomerAssignment, ...] = ()
+    user_ids: tuple[str, ...] = ()
+    owner_user_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AddCustomerResult:
+    portfolio: SellerPortfolio
+    warning: CustomerOverlapWarning | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BulkTransferItemResult:
+    customer_code: str
+    customer_store: str
+    ok: bool
+    error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BulkTransferResult:
+    source: SellerPortfolio
+    target: SellerPortfolio
+    results: tuple[BulkTransferItemResult, ...]
+    transferred_count: int
+    failed_count: int
+
+
+def coverage_audit_to_dict(audit: PortfolioCoverageAudit) -> dict[str, Any]:
+    return {
+        "overlapping_count": audit.overlapping_count,
+        "overlapping": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "customer_name": item.customer_name,
+                "portfolio_ids": list(item.portfolio_ids),
+                "portfolios": [
+                    {"id": ref.id, "display_name": ref.display_name}
+                    for ref in item.portfolios
+                ],
+            }
+            for item in audit.overlapping
+        ],
+        "portfolios_with_overlap": [
+            {
+                "id": item.id,
+                "display_name": item.display_name,
+                "overlapping_customer_count": item.overlapping_customer_count,
+            }
+            for item in audit.portfolios_with_overlap
+        ],
+        "gap": {
+            "available": audit.gap.available,
+            "reason": audit.gap.reason,
+            "universe": audit.gap.universe,
+            "uncovered_count": audit.gap.uncovered_count,
+            "uncovered": [
+                {
+                    "customer_code": item.customer_code,
+                    "customer_store": item.customer_store,
+                    "customer_name": item.customer_name,
+                    "open_value": item.open_value,
+                }
+                for item in audit.gap.uncovered
+            ],
+        },
+    }
+
+
+def customer_overlap_warning_to_dict(
+    warning: CustomerOverlapWarning | None,
+) -> dict[str, Any] | None:
+    if warning is None:
+        return None
+    return {
+        "code": warning.code,
+        "message": warning.message,
+        "other_portfolios": [
+            {"id": item.id, "display_name": item.display_name}
+            for item in warning.other_portfolios
+        ],
+    }
+
+
+def customer_shared_coverage_to_dict(
+    items: Sequence[CustomerSharedCoverageItem],
+) -> dict[str, Any]:
+    return {
+        "items": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "shared": True,
+                "also_in_portfolios": [
+                    {"id": ref.id, "display_name": ref.display_name}
+                    for ref in item.portfolios
+                ],
+            }
+            for item in items
+            if item.shared
+        ]
+    }
+
+
+def add_customer_result_to_dict(
+    result: AddCustomerResult,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    payload = portfolio_to_dict(
+        result.portfolio,
+        portal_access_by_user=portal_access_by_user,
+    )
+    warning = customer_overlap_warning_to_dict(result.warning)
+    if warning is not None:
+        payload["warnings"] = [warning]
+        payload["coverage_warning"] = warning
+    else:
+        payload["warnings"] = []
+        payload["coverage_warning"] = None
+    return payload
+
+
+def bulk_transfer_result_to_dict(
+    result: BulkTransferResult,
+    *,
+    portal_access_by_user: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    return {
+        "source": portfolio_to_dict(
+            result.source,
+            portal_access_by_user=portal_access_by_user,
+        ),
+        "target": portfolio_to_dict(
+            result.target,
+            portal_access_by_user=portal_access_by_user,
+        ),
+        "transferred_count": result.transferred_count,
+        "failed_count": result.failed_count,
+        "results": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "ok": item.ok,
+                "error": item.error,
+            }
+            for item in result.results
+        ],
+    }
+
+
+def _row_to_audit_entry(row: dict[str, Any]) -> AuditLogEntry:
+    payload = row.get("payload") or {}
+    if not isinstance(payload, dict):
+        payload = {}
+    created_at = row.get("created_at")
+    if isinstance(created_at, str):
+        try:
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except ValueError:
+            created_at = None
+    return AuditLogEntry(
+        id=str(row.get("id") or ""),
+        actor_user_id=str(row.get("actor_user_id") or ""),
+        action=str(row.get("action") or ""),
+        entity_type=str(row.get("entity_type") or ""),
+        entity_id=str(row.get("entity_id") or ""),
+        payload=payload,
+        created_at=created_at if isinstance(created_at, datetime) else None,
+    )
+
+
+def audit_page_to_dict(
+    *,
+    items: Sequence[dict[str, Any]],
+    total: int,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    return {
+        "items": list(items),
+        "total": int(total),
+        "page": int(page),
+        "page_size": int(page_size),
+    }
+
+
+class ManageSellerPortfolioUseCase:
+    def __init__(
+        self,
+        repository: SellerPortfolioRepositoryPort,
+        audit_repository: AuditLogRepositoryPort | None = None,
+        portal_access: PortalAccessPort | None = None,
+        coverage_audit: SellerPortfolioCoverageAuditService | None = None,
+        load_summary: SellerPortfolioLoadSummaryService | None = None,
+        audit_formatter: SellerPortfolioAuditFormatterService | None = None,
+        open_orders_metrics: OpenOrdersMetricsPort | None = None,
+    ):
+        self._repository = repository
+        self._audit = audit_repository
+        # None = permissivo (mesmo efeito de PermissivePortalAccessPort).
+        self._portal_access = portal_access
+        self._coverage_audit = coverage_audit or SellerPortfolioCoverageAuditService()
+        self._load_summary = load_summary or SellerPortfolioLoadSummaryService()
+        self._audit_formatter = audit_formatter or SellerPortfolioAuditFormatterService()
+        self._open_orders_metrics = open_orders_metrics
+
+    def _fetch_open_order_metrics(self):
+        if self._open_orders_metrics is None:
+            return None, False, "open_orders_aggregation_not_wired"
+        try:
+            metrics = self._open_orders_metrics.list_customer_metrics(None)
+            return metrics, True, None
+        except Exception:
+            return None, False, "open_orders_metrics_fetch_failed"
+
+    def _portal_access_map(self, user_ids: Sequence[str]) -> dict[str, bool] | None:
+        if self._portal_access is None:
+            return None
+        ids = [_normalize_code(uid) for uid in user_ids if _normalize_code(uid)]
+        if not ids:
+            return {}
+        return self._portal_access.has_commercial_portal_access_batch(ids)
+
+    def serialize_portfolio(self, portfolio: SellerPortfolio) -> dict[str, Any]:
+        access_map = self._portal_access_map(_member_user_ids(portfolio))
+        return portfolio_to_dict(portfolio, portal_access_by_user=access_map)
+
+    def serialize_portfolios(
+        self,
+        portfolios: Sequence[SellerPortfolio],
+    ) -> list[dict[str, Any]]:
+        all_ids: list[str] = []
+        for portfolio in portfolios:
+            all_ids.extend(_member_user_ids(portfolio))
+        access_map = self._portal_access_map(all_ids)
+        return [
+            portfolio_to_dict(item, portal_access_by_user=access_map)
+            for item in portfolios
+        ]
+
+    def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
+        if self._portal_access is None:
+            return
+        access_map = self._portal_access.has_commercial_portal_access_batch(user_ids)
+        for uid in user_ids:
+            normalized = _normalize_code(uid)
+            if not normalized:
+                continue
+            if not access_map.get(normalized, False):
+                raise ValueError(
+                    SellerPortfolioMessagesContentService.error("portalAccessDenied")
+                )
+
+    def _append_audit(
+        self,
+        *,
+        actor_user_id: str | None,
+        action: str,
+        entity_id: str,
+        payload: dict[str, Any] | None = None,
+        member_user_ids: Sequence[str] | None = None,
+        related_portfolio_ids: Sequence[str] | None = None,
+        display_name: str | None = None,
+        actor_client_id: str | None = None,
+        actor_display_name: str | None = None,
+    ) -> None:
+        if self._audit is None or not actor_user_id:
+            return
+        from commercial_app.core.auth_actor import (
+            peek_actor_client_id,
+            peek_actor_display_name,
+        )
+
+        safe_payload = payload or {}
+        resolved_display = (actor_display_name or "").strip() or peek_actor_display_name()
+        resolved_client = (actor_client_id or "").strip() or peek_actor_client_id()
+        self._audit.append(
+            actor_user_id=actor_user_id,
+            action=action,
+            entity_type=_ENTITY_SELLER_PORTFOLIO,
+            entity_id=entity_id,
+            payload=safe_payload,
+        )
+        try:
+            from commercial_app.application.services.commercial_realtime_notify import (
+                notify_portfolio_changed,
+            )
+
+            members = [
+                _normalize_code(uid)
+                for uid in (member_user_ids or ())
+                if _normalize_code(uid)
+            ]
+            portfolio_label = display_name
+            if not members or not portfolio_label:
+                portfolio = self._repository.get_by_id(entity_id)
+                if portfolio is not None:
+                    if not members:
+                        members = _member_user_ids(portfolio)
+                    if not portfolio_label:
+                        portfolio_label = portfolio.display_name
+            related = [
+                _normalize_code(pid)
+                for pid in (related_portfolio_ids or ())
+                if _normalize_code(pid)
+            ]
+            for related_id in related:
+                if related_id == entity_id:
+                    continue
+                related_portfolio = self._repository.get_by_id(related_id)
+                if related_portfolio is None:
+                    continue
+                for uid in _member_user_ids(related_portfolio):
+                    if uid not in members:
+                        members.append(uid)
+            if not members:
+                # Ainda notifica a sala `team` (gestores) mesmo sem membership resolvido.
+                members = []
+            notify_portfolio_changed(
+                reason=action,
+                portfolio_id=entity_id,
+                member_user_ids=members,
+                portfolio_ids=related or None,
+                display_name=portfolio_label
+                or str(safe_payload.get("display_name") or "")
+                or None,
+                actor_user_id=actor_user_id,
+                actor_display_name=resolved_display,
+                actor_client_id=resolved_client,
+            )
+        except Exception:  # noqa: BLE001 — realtime não pode falhar a mutação
+            pass
+
+    def list_portfolio_audit(
+        self,
+        portfolio_id: str,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> dict[str, Any]:
+        """Lista eventos de audit_log da carteira (e transferências recebidas)."""
+        portfolio_id = _normalize_code(portfolio_id)
+        if not portfolio_id:
+            raise ValueError("portfolio_id é obrigatório.")
+        if self._repository.get_by_id(portfolio_id) is None:
+            raise LookupError("Vendedor não encontrado.")
+        if self._audit is None:
+            return audit_page_to_dict(items=[], total=0, page=page, page_size=page_size)
+
+        safe_page = max(1, int(page or 1))
+        safe_size = min(100, max(1, int(page_size or 20)))
+        rows, total = self._audit.list_for_entity(
+            entity_type=_ENTITY_SELLER_PORTFOLIO,
+            entity_id=portfolio_id,
+            page=safe_page,
+            page_size=safe_size,
+            related_target_key=_TRANSFER_TARGET_KEY,
+        )
+        items = [
+            self._audit_formatter.format_entry(_row_to_audit_entry(row)) for row in rows
+        ]
+        return audit_page_to_dict(
+            items=items,
+            total=total,
+            page=safe_page,
+            page_size=safe_size,
+        )
+
+    def get_me_portfolios(self, user_id: str) -> list[SellerPortfolio]:
+        # /me só lista carteiras ativas — desativadas ficam fora do escopo do vendedor.
+        return self._repository.list_by_user_id(user_id, active_only=True)
+
+    def get_me(self, user_id: str) -> SellerPortfolio | None:
+        portfolios = self.get_me_portfolios(user_id)
+        return portfolios[0] if portfolios else None
+
+    def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
+        return self._repository.list_portfolios(active_only=active_only)
+
+    def get_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
+        return self._repository.get_by_id(portfolio_id)
+
+    def audit_customer_coverage(self) -> PortfolioCoverageAudit:
+        """Relatório de overlapping + gap (universo = clientes com pedido aberto)."""
+        portfolios = self._repository.list_portfolios(active_only=True)
+        metrics, available, _reason = self._fetch_open_order_metrics()
+        return self._coverage_audit.audit_active_portfolios(
+            portfolios,
+            universe_metrics=metrics if available else None,
+        )
+
+    def lookup_customer_shared_coverage(
+        self,
+        *,
+        customers: Sequence[tuple[str, str]],
+        portfolio_ids: Sequence[str] | None = None,
+        actor_user_id: str | None = None,
+        team_scope: bool = False,
+    ) -> tuple[CustomerSharedCoverageItem, ...]:
+        """Batch: clientes em 2+ carteiras do escopo (Minha Carteira / Conta)."""
+        keys = [
+            customer_key(code, store)
+            for code, store in customers
+            if _normalize_code(code) and _normalize_code(store)
+        ]
+        if not keys:
+            return ()
+
+        wanted_ids = {
+            _normalize_code(portfolio_id)
+            for portfolio_id in (portfolio_ids or ())
+            if _normalize_code(portfolio_id)
+        }
+
+        if team_scope:
+            universe = self._repository.list_portfolios(active_only=True)
+        else:
+            actor = _normalize_code(actor_user_id or "")
+            if not actor:
+                return ()
+            universe = self._repository.list_by_user_id(actor, active_only=True)
+
+        if wanted_ids:
+            portfolios = [item for item in universe if item.id in wanted_ids]
+        else:
+            portfolios = list(universe)
+
+        return self._coverage_audit.lookup_shared_customer_memberships(
+            portfolios,
+            keys,
+        )
+
+    def summarize_portfolio_load(self, *, active_only: bool = False) -> PortfolioLoadSummary:
+        """KPIs de carga (clientes/membros + métricas TOTVS quando disponíveis)."""
+        portfolios = self._repository.list_portfolios(active_only=active_only)
+        metrics, available, reason = self._fetch_open_order_metrics()
+        return self._load_summary.summarize(
+            portfolios,
+            metrics=metrics if available else None,
+            totvs_available=available,
+            totvs_reason=reason,
+        )
+
+    def create_portfolio(self, request: CreatePortfolioRequest) -> SellerPortfolio:
+        display_name = _normalize_code(request.display_name)
+        if not display_name:
+            raise ValueError("display_name é obrigatório.")
+
+        user_ids = [
+            uid
+            for uid in (_normalize_code(raw) for raw in request.user_ids)
+            if uid
+        ]
+        if not user_ids:
+            sole = _normalize_code(request.user_id)
+            if sole:
+                user_ids = [sole]
+
+        # Name-first: permite criar só com display_name (carteira órfã).
+        if not user_ids:
+            portfolio = self._repository.create_portfolio(
+                user_id=None,
+                display_name=display_name,
+                created_by_user_id=request.created_by_user_id,
+                member_user_ids=[],
+            )
+            if request.customers:
+                updated = self._repository.replace_customers(
+                    portfolio_id=portfolio.id,
+                    customers=request.customers,
+                )
+                if updated is not None:
+                    portfolio = updated
+            self._append_audit(
+                actor_user_id=request.created_by_user_id,
+                action="seller_portfolio.create",
+                entity_id=portfolio.id,
+                payload={
+                    "display_name": portfolio.display_name,
+                    "member_count": 0,
+                    "customer_count": len(portfolio.customers),
+                    "owner_user_id": None,
+                    "orphan": True,
+                },
+            )
+            return portfolio
+
+        owner = _normalize_code(request.owner_user_id) if request.owner_user_id else user_ids[0]
+        if not owner:
+            raise ValueError("owner_user_id inválido.")
+
+        all_new = list(dict.fromkeys([owner, *user_ids]))
+        self._ensure_portal_access(all_new)
+
+        extras = [uid for uid in user_ids if uid != owner]
+        portfolio = self._repository.create_portfolio(
+            user_id=owner,
+            display_name=display_name,
+            created_by_user_id=request.created_by_user_id,
+            member_user_ids=extras,
+        )
+        if request.customers:
+            updated = self._repository.replace_customers(
+                portfolio_id=portfolio.id,
+                customers=request.customers,
+            )
+            if updated is not None:
+                portfolio = updated
+        self._append_audit(
+            actor_user_id=request.created_by_user_id,
+            action="seller_portfolio.create",
+            entity_id=portfolio.id,
+            payload={
+                "display_name": portfolio.display_name,
+                "member_count": len(portfolio.members) or len(all_new),
+                "customer_count": len(portfolio.customers),
+                "owner_user_id": portfolio.owner_user_id or owner,
+            },
+        )
+        return portfolio
+
+    def update_portfolio(
+        self,
+        *,
+        portfolio_id: str,
+        display_name: str | None = None,
+        active: bool | None = None,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        if display_name is not None and not _normalize_code(display_name):
+            raise ValueError("display_name não pode ser vazio.")
+        previous = (
+            self._repository.get_by_id(portfolio_id)
+            if active is not None or display_name is not None
+            else None
+        )
+        updated = self._repository.update_portfolio(
+            portfolio_id=portfolio_id,
+            display_name=_normalize_code(display_name) if display_name is not None else None,
+            active=active,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        # Auditoria quando active flipa (desativa ou reativa); /me já exclui inactive.
+        if previous is not None and active is not None and previous.active != updated.active:
+            action = (
+                "seller_portfolio.deactivate"
+                if not updated.active
+                else "seller_portfolio.reactivate"
+            )
+            self._append_audit(
+                actor_user_id=actor_user_id,
+                action=action,
+                entity_id=portfolio_id,
+                payload={"active": updated.active},
+            )
+        if (
+            previous is not None
+            and display_name is not None
+            and previous.display_name != updated.display_name
+        ):
+            self._append_audit(
+                actor_user_id=actor_user_id,
+                action="seller_portfolio.rename",
+                entity_id=portfolio_id,
+                payload={
+                    "previous_display_name": previous.display_name,
+                    "display_name": updated.display_name,
+                },
+            )
+        return updated
+
+    def deactivate_portfolio(
+        self,
+        portfolio_id: str,
+        *,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        updated = self._repository.deactivate_portfolio(portfolio_id)
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.deactivate",
+            entity_id=portfolio_id,
+            payload={"active": False},
+        )
+        return updated
+
+    def purge_portfolio(
+        self,
+        portfolio_id: str,
+        *,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        portfolio_id = _normalize_code(portfolio_id)
+        if not portfolio_id:
+            raise ValueError("portfolio_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        deleted = self._repository.delete_portfolio(portfolio_id)
+        if deleted is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.purge",
+            entity_id=portfolio_id,
+            payload={
+                "user_id": current.user_id,
+                "display_name": current.display_name,
+                "customer_count": len(current.customers),
+            },
+            member_user_ids=_member_user_ids(current),
+            display_name=current.display_name,
+        )
+        return deleted
+
+    def replace_customers(
+        self,
+        *,
+        portfolio_id: str,
+        customers: Sequence[SellerCustomerAssignment],
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        updated = self._repository.replace_customers(
+            portfolio_id=portfolio_id,
+            customers=customers,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.replace_customers",
+            entity_id=portfolio_id,
+            payload={"customer_count": len(updated.customers)},
+        )
+        return updated
+
+    def add_customer(
+        self,
+        *,
+        portfolio_id: str,
+        customer: SellerCustomerAssignment,
+        actor_user_id: str | None = None,
+    ) -> AddCustomerResult:
+        if not customer.customer_code or not customer.customer_store:
+            raise ValueError("customer_code e customer_store são obrigatórios.")
+        portfolio_id = _normalize_code(portfolio_id)
+        active_portfolios = self._repository.list_portfolios(active_only=True)
+        other = self._coverage_audit.find_other_active_portfolios_for_customer(
+            active_portfolios,
+            customer_code=customer.customer_code,
+            customer_store=customer.customer_store,
+            exclude_portfolio_id=portfolio_id,
+        )
+        warning = self._coverage_audit.build_link_overlap_warning(other)
+        updated = self._repository.add_customer(portfolio_id=portfolio_id, customer=customer)
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.add_customer",
+            entity_id=portfolio_id,
+            payload={
+                "customer_code": customer.customer_code,
+                "customer_store": customer.customer_store,
+                "customer_name": customer.customer_name,
+                "overlap_portfolio_ids": [item.id for item in other],
+            },
+        )
+        return AddCustomerResult(portfolio=updated, warning=warning)
+
+    def remove_customer(
+        self,
+        *,
+        portfolio_id: str,
+        customer_code: str,
+        customer_store: str,
+        actor_user_id: str | None = None,
+        customer_name: str | None = None,
+    ) -> SellerPortfolio:
+        code, store = customer_key(customer_code, customer_store)
+        if not code or not store:
+            raise ValueError("customer_code e customer_store são obrigatórios.")
+        current = self._repository.get_by_id(portfolio_id)
+        resolved_name = customer_name
+        if current is not None and not resolved_name:
+            for item in current.customers:
+                if item.customer_code == code and item.customer_store == store:
+                    resolved_name = item.customer_name
+                    break
+        updated = self._repository.remove_customer(
+            portfolio_id=portfolio_id,
+            customer_code=code,
+            customer_store=store,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.remove_customer",
+            entity_id=portfolio_id,
+            payload={
+                "customer_code": code,
+                "customer_store": store,
+                "customer_name": resolved_name,
+            },
+        )
+        return updated
+
+    def replace_members(
+        self,
+        *,
+        portfolio_id: str,
+        members: Sequence[SellerPortfolioMember],
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        normalized: list[SellerPortfolioMember] = []
+        seen: set[str] = set()
+        for member in members:
+            uid = _normalize_code(member.user_id)
+            if not uid or uid in seen:
+                continue
+            seen.add(uid)
+            role = "owner" if member.role == "owner" else "member"
+            normalized.append(SellerPortfolioMember(user_id=uid, role=role))
+        if not normalized:
+            raise ValueError("A carteira deve ter ao menos um membro.")
+        owners = [item for item in normalized if item.role == "owner"]
+        if len(owners) != 1:
+            raise ValueError("A carteira deve ter exatamente um owner.")
+
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        existing_ids = {member.user_id for member in current.members}
+        if not existing_ids and current.user_id:
+            existing_ids = {current.user_id}
+        new_ids = [item.user_id for item in normalized if item.user_id not in existing_ids]
+        self._ensure_portal_access(new_ids)
+
+        updated = self._repository.replace_members(
+            portfolio_id=portfolio_id,
+            members=normalized,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.replace_members",
+            entity_id=portfolio_id,
+            payload={
+                "members": [
+                    {"user_id": item.user_id, "role": item.role} for item in normalized
+                ]
+            },
+        )
+        return updated
+
+    def add_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+        role: str = "member",
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        next_role = "owner" if role == "owner" else "member"
+        self._ensure_portal_access([uid])
+        updated = self._repository.add_member(
+            portfolio_id=portfolio_id,
+            user_id=uid,
+            role=next_role,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.add_member",
+            entity_id=portfolio_id,
+            payload={"user_id": uid, "role": next_role},
+        )
+        return updated
+
+    def remove_member(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        members = list(current.members)
+        if not members and current.user_id:
+            members = [SellerPortfolioMember(user_id=current.user_id, role="owner")]
+        if len(members) <= 1:
+            raise ValueError("Não é possível remover o último membro da carteira.")
+        target = next((item for item in members if item.user_id == uid), None)
+        if target is None:
+            raise LookupError("Membro não encontrado na carteira.")
+        if target.role == "owner":
+            raise ValueError("Não é possível remover o único owner da carteira.")
+        updated = self._repository.remove_member(
+            portfolio_id=portfolio_id,
+            user_id=uid,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.remove_member",
+            entity_id=portfolio_id,
+            payload={"user_id": uid},
+        )
+        return updated
+
+    def set_owner(
+        self,
+        *,
+        portfolio_id: str,
+        user_id: str,
+        actor_user_id: str | None = None,
+    ) -> SellerPortfolio:
+        uid = _normalize_code(user_id)
+        if not uid:
+            raise ValueError("user_id é obrigatório.")
+        current = self._repository.get_by_id(portfolio_id)
+        if current is None:
+            raise LookupError("Vendedor não encontrado.")
+        existing_ids = {member.user_id for member in current.members}
+        if not existing_ids and current.user_id:
+            existing_ids = {current.user_id}
+        # Se o usuário ainda não for membro, o repositório o inclui como owner.
+        if uid not in existing_ids:
+            self._ensure_portal_access([uid])
+        updated = self._repository.set_owner(
+            portfolio_id=portfolio_id,
+            user_id=uid,
+        )
+        if updated is None:
+            raise LookupError("Vendedor não encontrado.")
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.set_owner",
+            entity_id=portfolio_id,
+            payload={"user_id": uid},
+        )
+        return updated
+
+    def transfer_customers(
+        self,
+        *,
+        source_portfolio_id: str,
+        target_portfolio_id: str,
+        customers: Sequence[SellerCustomerAssignment],
+        actor_user_id: str | None = None,
+        reason_note: str | None = None,
+    ) -> tuple[SellerPortfolio, SellerPortfolio]:
+        messages = SellerPortfolioMessagesContentService
+        source_id = _normalize_code(source_portfolio_id)
+        target_id = _normalize_code(target_portfolio_id)
+        if not source_id or not target_id:
+            raise ValueError(messages.error("sourceTargetRequired"))
+        if source_id == target_id:
+            raise ValueError(messages.error("sourceTargetMustDiffer"))
+        if not customers:
+            raise ValueError(messages.error("customersRequired"))
+        if not (reason_note or "").strip():
+            raise ValueError(messages.error("reasonRequired"))
+
+        source = self._repository.get_by_id(source_id)
+        if source is None:
+            raise LookupError(messages.error("sourceNotFound"))
+        target = self._repository.get_by_id(target_id)
+        if target is None:
+            raise LookupError(messages.error("targetNotFound"))
+        if not target.active:
+            raise ValueError(messages.error("targetInactive"))
+
+        owned = {
+            (item.customer_code, item.customer_store): item for item in source.customers
+        }
+        to_move: list[SellerCustomerAssignment] = []
+        seen: set[tuple[str, str]] = set()
+        for item in customers:
+            key = customer_key(item.customer_code, item.customer_store)
+            if not key[0] or not key[1]:
+                raise ValueError(messages.error("customerCodeStoreRequired"))
+            if key in seen:
+                continue
+            seen.add(key)
+            owned_item = owned.get(key)
+            if owned_item is None:
+                raise ValueError(
+                    messages.error("customerNotInSource", code=key[0], store=key[1])
+                )
+            to_move.append(
+                SellerCustomerAssignment(
+                    customer_code=owned_item.customer_code,
+                    customer_store=owned_item.customer_store,
+                    customer_name=item.customer_name or owned_item.customer_name,
+                )
+            )
+
+        result = self._repository.transfer_customers(
+            source_portfolio_id=source_id,
+            target_portfolio_id=target_id,
+            customers=to_move,
+        )
+        if result is None:
+            raise LookupError(messages.error("sourceNotFound"))
+
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.transfer_customers",
+            entity_id=source_id,
+            payload={
+                "source_portfolio_id": source_id,
+                "target_portfolio_id": target_id,
+                "source_display_name": source.display_name,
+                "target_display_name": target.display_name,
+                "transferred_count": len(to_move),
+                "customers": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                    }
+                    for item in to_move
+                ],
+                "reason_note": reason_note.strip(),
+            },
+            related_portfolio_ids=[target_id],
+            display_name=source.display_name,
+        )
+
+        return result
+
+    def transfer_customers_bulk(
+        self,
+        *,
+        source_portfolio_id: str,
+        target_portfolio_id: str,
+        customers: Sequence[SellerCustomerAssignment],
+        actor_user_id: str | None = None,
+        reason_note: str | None = None,
+    ) -> BulkTransferResult:
+        """Best-effort: tenta cada cliente; retorna resultado por item + audit único."""
+        messages = SellerPortfolioMessagesContentService
+        source_id = _normalize_code(source_portfolio_id)
+        target_id = _normalize_code(target_portfolio_id)
+        if not source_id or not target_id:
+            raise ValueError(messages.error("sourceTargetRequired"))
+        if source_id == target_id:
+            raise ValueError(messages.error("sourceTargetMustDiffer"))
+        if not customers:
+            raise ValueError(messages.error("customersRequired"))
+        if not (reason_note or "").strip():
+            raise ValueError(messages.error("reasonRequired"))
+
+        source = self._repository.get_by_id(source_id)
+        if source is None:
+            raise LookupError(messages.error("sourceNotFound"))
+        target = self._repository.get_by_id(target_id)
+        if target is None:
+            raise LookupError(messages.error("targetNotFound"))
+        if not target.active:
+            raise ValueError(messages.error("targetInactive"))
+
+        owned = {
+            (item.customer_code, item.customer_store): item for item in source.customers
+        }
+        results: list[BulkTransferItemResult] = []
+        transferred: list[SellerCustomerAssignment] = []
+        seen: set[tuple[str, str]] = set()
+
+        for item in customers:
+            code, store = customer_key(item.customer_code, item.customer_store)
+            if not code or not store:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code or str(item.customer_code or "").strip(),
+                        customer_store=store or str(item.customer_store or "").strip(),
+                        ok=False,
+                        error=messages.error("customerCodeStoreRequired"),
+                    )
+                )
+                continue
+            if (code, store) in seen:
+                continue
+            seen.add((code, store))
+            owned_item = owned.get((code, store))
+            if owned_item is None:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=False,
+                        error=messages.error(
+                            "customerNotInSource", code=code, store=store
+                        ),
+                    )
+                )
+                continue
+
+            to_move = SellerCustomerAssignment(
+                customer_code=owned_item.customer_code,
+                customer_store=owned_item.customer_store,
+                customer_name=item.customer_name or owned_item.customer_name,
+            )
+            try:
+                moved = self._repository.transfer_customers(
+                    source_portfolio_id=source_id,
+                    target_portfolio_id=target_id,
+                    customers=[to_move],
+                )
+                if moved is None:
+                    raise LookupError(messages.error("sourceNotFound"))
+                del owned[(code, store)]
+                transferred.append(to_move)
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=True,
+                        error=None,
+                    )
+                )
+            except Exception as exc:
+                results.append(
+                    BulkTransferItemResult(
+                        customer_code=code,
+                        customer_store=store,
+                        ok=False,
+                        error=str(exc) or messages.error("customerNotInSource", code=code, store=store),
+                    )
+                )
+
+        source_final = self._repository.get_by_id(source_id) or source
+        target_final = self._repository.get_by_id(target_id) or target
+        failed_count = sum(1 for item in results if not item.ok)
+        transferred_count = len(transferred)
+
+        self._append_audit(
+            actor_user_id=actor_user_id,
+            action="seller_portfolio.transfer_customers_bulk",
+            entity_id=source_id,
+            payload={
+                "source_portfolio_id": source_id,
+                "target_portfolio_id": target_id,
+                "source_display_name": source.display_name,
+                "target_display_name": target.display_name,
+                "transferred_count": transferred_count,
+                "failed_count": failed_count,
+                "customers": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                    }
+                    for item in transferred
+                ],
+                "failures": [
+                    {
+                        "customer_code": item.customer_code,
+                        "customer_store": item.customer_store,
+                        "error": item.error,
+                    }
+                    for item in results
+                    if not item.ok
+                ],
+                "reason_note": reason_note.strip(),
+            },
+            related_portfolio_ids=[target_id],
+            display_name=source.display_name,
+        )
+
+        return BulkTransferResult(
+            source=source_final,
+            target=target_final,
+            results=tuple(results),
+            transferred_count=transferred_count,
+            failed_count=failed_count,
+        )

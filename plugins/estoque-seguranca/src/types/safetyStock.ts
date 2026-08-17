@@ -124,6 +124,31 @@ export type SafetyStockOpenPurchaseOrder = {
   coverage_eligible: boolean;
 };
 
+/** Solicitação de compra em aberto (SC1010). */
+export type SafetyStockOpenPurchaseRequest = {
+  branch: string;
+  request_number: string;
+  request_item: string;
+  product_code: string;
+  product_description: string;
+  warehouse: string;
+  unit: string;
+  requested_quantity: number;
+  ordered_quantity: number;
+  open_quantity: number;
+  open_quantity_primary_unit: number | null;
+  issue_date: string | null;
+  required_date: string | null;
+  supplier_code: string;
+  supplier_store: string;
+  supplier_name: string;
+  purchase_order_number: string;
+  unit_price: number;
+  total_value: number;
+  unit_compatible: boolean;
+  unit_conversion_reason: string | null;
+};
+
 export type SafetyStockOpenCommitment = {
   branch: string;
   product_code: string;
@@ -254,6 +279,7 @@ export type SafetyStockItemDetails = {
   } | null;
   purchase_coverage: SafetyStockPurchaseCoverage;
   open_purchase_orders: SafetyStockCollectionBlock<SafetyStockOpenPurchaseOrder>;
+  open_purchase_requests?: SafetyStockCollectionBlock<SafetyStockOpenPurchaseRequest>;
   open_commitments: SafetyStockCollectionBlock<
     SafetyStockOpenCommitment,
     SafetyStockCommitmentsSummary

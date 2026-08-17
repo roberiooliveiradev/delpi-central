@@ -664,19 +664,13 @@ def force_delete_audit(audit_id: str):
 @router.post("/audits/{audit_id}/join", operation_id="join_audit_5s_audit")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def join_audit(audit_id: str):
+    """Abre/recarrega a auditoria sem alterar auditores do cabeçalho.
+
+    Presença/colaboração fica no Socket (`audit5s.join`). Auditores oficiais
+    só mudam via create/update do cabeçalho — nunca ao visualizar.
+    """
     try:
         repo = build_audit_5s_repository()
-        audit = repo.get_audit(audit_id)
-        if not audit:
-            return error_response("Auditoria não encontrada.", status_code=404)
-
-        user_id = _current_user_id()
-        display_name = _current_user_name()
-        repo.ensure_auditor(
-            audit_id=audit_id,
-            user_id=user_id,
-            display_name=display_name,
-        )
         data = repo.get_audit(audit_id)
         if not data:
             return error_response("Auditoria não encontrada.", status_code=404)
@@ -684,8 +678,8 @@ def join_audit(audit_id: str):
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
-        log_error(f"Erro ao registrar participação na auditoria 5S: {exc}")
-        return error_response("Erro interno ao registrar participação.", status_code=500)
+        log_error(f"Erro ao abrir auditoria 5S: {exc}")
+        return error_response("Erro interno ao abrir auditoria.", status_code=500)
 
 
 @router.put("/audits/{audit_id}/responses/{criterion_id}", operation_id="upsert_audit_5s_response")

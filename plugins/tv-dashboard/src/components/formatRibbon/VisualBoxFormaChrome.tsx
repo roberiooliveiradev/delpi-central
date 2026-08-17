@@ -28,6 +28,13 @@ import { ShapeChangeControl } from "../selectionSections/ShapeGallerySection";
 import type { SelectionSectionLayout } from "../selectionSections/types";
 import { resolveVisualBoxElementCapabilitiesForSelection } from "../selectionSections/visualBoxElementCapabilities";
 import { aggregateEqualValues } from "../../utils/selectionSectionIntersect";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../../utils/delpiFillAdapter";
 import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "./ShapeMenuHint";
 
@@ -233,8 +240,11 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
           <ShapeFillMenu
             value={fillValue === "transparent" ? undefined : fillValue}
             fillLabel={primitive === "point" ? "Cor" : "Preench."}
-            onChange={(color) => patchStyle({ fill: color })}
-            onNoFill={() => patchStyle({ fill: "transparent" })}
+            fill={styleToFill(block.style)}
+            onChange={(color) => patchStyle(fillToFillStylePatch({ kind: "solid", color }))}
+            onFillChange={(next) => patchStyle(fillToFillStylePatch(next))}
+            allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+            onNoFill={() => patchStyle(fillToFillStylePatch({ kind: "none" }))}
           />
         </ShapeMenuHint>
       ) : null}
@@ -246,17 +256,23 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
             minWidth={0}
             maxWidth={primitive === "point" ? 8 : 20}
             outlineLabel="Contorno"
+            fill={styleToStrokeFill(block.style)}
             onColorChange={(color) =>
-              patchStyle({
-                stroke: color,
-                strokeWidth: Math.max(1, strokeWidth || 1),
-              })
+              patchStyle(
+                fillToStrokeStylePatch(
+                  { kind: "solid", color },
+                  { strokeWidth: Math.max(1, strokeWidth || 1) },
+                ),
+              )
             }
+            onFillChange={(next) =>
+              patchStyle(
+                fillToStrokeStylePatch(next, { strokeWidth: Math.max(1, strokeWidth || 1) }),
+              )
+            }
+            allowedFillKinds={TV_ALLOWED_FILL_KINDS}
             onNoOutline={() =>
-              patchStyle({
-                stroke: "transparent",
-                strokeWidth: 0,
-              })
+              patchStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))
             }
             onStrokeWidthChange={(width) => patchStyle({ strokeWidth: width })}
           />

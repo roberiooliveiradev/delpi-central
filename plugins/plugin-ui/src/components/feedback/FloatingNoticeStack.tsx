@@ -56,7 +56,8 @@ export type FloatingNoticeStackProps = {
   labels?: Partial<FloatingNoticeStackLabels>;
   /**
    * Auto-dismiss padrão por variante quando o item não define `autoDismissMs`.
-   * Erro/aviso permanecem até fechar; sucesso/info fecham sozinhos.
+   * Sem override no item: erro/aviso permanecem até fechar; sucesso/info fecham sozinhos.
+   * Com `autoDismissMs` no item (número ou `null`), o valor do item prevalece.
    */
   defaultAutoDismissMs?: Partial<Record<FloatingNoticeVariant, number | null>>;
   /** Escopo CSS do MFE (ex.: `dashboard-cipa`) — portal vai para o body. */
@@ -113,12 +114,13 @@ function resolveAutoDismissMs(
   itemAutoDismissMs: number | null | undefined,
   defaultAutoDismissMs: FloatingNoticeStackProps["defaultAutoDismissMs"],
 ): number | null {
-  /** Erro/aviso só saem com fechar manual — ignoram timer do item ou do host. */
-  if (variant === "error" || variant === "warning") {
-    return null;
-  }
+  /** Valor explícito no item prevalece (ex.: validação de form temporária). */
   if (itemAutoDismissMs !== undefined) {
     return itemAutoDismissMs;
+  }
+  /** Sem override: erro/aviso só saem com fechar manual. */
+  if (variant === "error" || variant === "warning") {
+    return defaultAutoDismissMs?.[variant] ?? null;
   }
   return defaultAutoDismissMs?.[variant] ?? VARIANT_AUTO_DISMISS_MS[variant];
 }

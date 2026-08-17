@@ -1,0 +1,282 @@
+.dashboard-mural-acessos {
+  --ma-accent: var(--primary, #089bdb);
+  --ma-surface: var(--surface, #ffffff);
+  --ma-text: var(--text, #111111);
+  --ma-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --ma-border: var(--border, #e5e7eb);
+  --ma-card-padding: 20px;
+  --ma-section-gap: 20px;
+  --ma-grid-gap: 12px;
+  --delpi-ui-accent: var(--ma-accent);
+  --delpi-ui-surface: var(--ma-surface);
+  --delpi-ui-text: var(--ma-text);
+  --delpi-ui-border: var(--ma-border);
+  --delpi-ui-muted: var(--ma-text-muted);
+  --delpi-ui-card-padding: var(--ma-card-padding);
+  --delpi-ui-section-gap: var(--ma-section-gap);
+  --delpi-ui-grid-gap: var(--ma-grid-gap);
+}
+
+:root[data-theme="dark"] .dashboard-mural-acessos {
+  --ma-surface: var(--surface, #1b2030);
+  --ma-text: rgba(255, 255, 255, 0.9);
+  --ma-text-muted: rgba(255, 255, 255, 0.68);
+  --ma-border: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-mural-acessos.dashboard-page {
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ma-accent) 6%, var(--app-canvas, var(--bg))),
+    var(--app-canvas, var(--bg)) 240px
+  );
+}
+
+.dashboard-mural-acessos .ma-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ma-section-gap);
+  padding: 24px;
+  min-width: 0;
+}
+
+.dashboard-mural-acessos .ma-banner {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+}
+
+.dashboard-mural-acessos .ma-banner--error {
+  color: var(--danger, #b42318);
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
+}
+
+.dashboard-mural-acessos .ma-banner--success {
+  color: var(--success, #0f7b4a);
+  background: color-mix(in srgb, var(--success, #0f7b4a) 12%, transparent);
+}
+
+.dashboard-mural-acessos .ma-qr-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  padding: var(--ma-card-padding);
+  border: 1px solid var(--ma-border);
+  border-radius: 18px;
+  background: var(--ma-surface);
+}
+
+.dashboard-mural-acessos .ma-qr-panel__image,
+.dashboard-mural-acessos .ma-qr-panel__placeholder {
+  width: 168px;
+  height: 168px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ma-accent) 8%, var(--ma-surface));
+}
+
+.dashboard-mural-acessos .ma-qr-panel__image {
+  display: block;
+  object-fit: contain;
+}
+
+.dashboard-mural-acessos .ma-qr-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-mural-acessos .ma-qr-panel__body h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.dashboard-mural-acessos .ma-qr-panel__body p {
+  margin: 0;
+  color: var(--ma-text-muted);
+}
+
+.dashboard-mural-acessos .ma-qr-panel__url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  word-break: break-all;
+  color: var(--ma-text);
+}
+
+.dashboard-mural-acessos .ma-qr-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.dashboard-mural-acessos .ma-qr-panel__open {
+  color: var(--ma-accent);
+  font-weight: 600;
+}
+
+.dashboard-mural-acessos .ma-hub-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 420px;
+}
+
+.dashboard-mural-acessos .ma-hub-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-mural-acessos .ma-hub-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--ma-grid-gap);
+}
+
+.dashboard-mural-acessos .ma-hub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-height: 132px;
+  padding: 16px;
+  border: 1px solid var(--ma-border);
+  border-radius: 18px;
+  background: var(--ma-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-mural-acessos .ma-hub-card:hover,
+.dashboard-mural-acessos .ma-hub-card:focus-visible {
+  border-color: color-mix(in srgb, var(--ma-accent) 55%, var(--ma-border));
+  outline: none;
+}
+
+.dashboard-mural-acessos .ma-hub-card strong {
+  font-size: 1.05rem;
+}
+
+.dashboard-mural-acessos .ma-hub-card span,
+.dashboard-mural-acessos .ma-hub-card em {
+  color: var(--ma-text-muted);
+  font-size: 0.85rem;
+  font-style: normal;
+}
+
+.dashboard-mural-acessos .ma-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ma-grid-gap);
+}
+
+.dashboard-mural-acessos .ma-link-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--ma-border);
+  border-radius: 16px;
+  background: var(--ma-surface);
+}
+
+.dashboard-mural-acessos .ma-link-row--inactive {
+  opacity: 0.62;
+}
+
+.dashboard-mural-acessos .ma-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ma-accent) 12%, var(--ma-surface));
+  color: var(--ma-accent);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.dashboard-mural-acessos .ma-icon__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-mural-acessos .ma-link-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-mural-acessos .ma-link-row__body strong {
+  font-size: 0.98rem;
+}
+
+.dashboard-mural-acessos .ma-link-row__body span,
+.dashboard-mural-acessos .ma-link-row__body em {
+  color: var(--ma-text-muted);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-mural-acessos .ma-link-row__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.dashboard-mural-acessos .ma-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-mural-acessos .ma-editor__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-mural-acessos .ma-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-mural-acessos .ma-page-stack {
+    padding: 16px;
+  }
+
+  .dashboard-mural-acessos .ma-qr-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-mural-acessos .ma-link-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .dashboard-mural-acessos .ma-link-row__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+#root:has(> .dashboard-mural-acessos) {
+  min-height: 100vh;
+}

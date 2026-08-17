@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type DirectoryUserOption = {
   id: string;
@@ -16,7 +18,7 @@ export type UserDirectoryPickerProps = {
   ) => Promise<DirectoryUserOption[]>;
   disabled?: boolean;
   /**
-   * Exibe a lista interna de selecionados com botão «Remover» (default true).
+   * Exibe chips dos selecionados com × (default true).
    * Passe false quando o consumidor já renderiza a própria lista (evita duplicação).
    */
   showSelectedList?: boolean;
@@ -29,6 +31,17 @@ export type UserDirectoryPickerProps = {
    * Limite de selecionados. Com `1`, a próxima escolha substitui a atual (single-select).
    */
   maxSelected?: number;
+  /** Conteúdo à esquerda de cada sugestão (ex.: avatar). */
+  renderOptionLeading?: (user: DirectoryUserOption) => ReactNode;
+  /**
+   * Chip selecionado customizado. Sem slot, usa tag-chip padrão com label + ×.
+   */
+  renderSelectedChip?: (args: {
+    user: DirectoryUserOption;
+    label: string;
+    disabled: boolean;
+    onRemove: () => void;
+  }) => ReactNode;
   labels?: {
     title?: string;
     hint?: string;
@@ -45,6 +58,12 @@ function directoryUserLabel(user: DirectoryUserOption, showEmail: boolean): stri
   return `${name} · ${user.email}`;
 }
 
+function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String((error as { name?: unknown }).name) : "";
+  return name === "AbortError";
+}
+
 export function UserDirectoryPicker({
   value,
   onChange,
@@ -53,28 +72,36 @@ export function UserDirectoryPicker({
   showSelectedList = true,
   showEmail = true,
   maxSelected,
+  renderOptionLeading,
+  renderSelectedChip,
   labels,
   className,
 }: UserDirectoryPickerProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryUserOption[]>([]);
   const [searching, setSearching] = useState(false);
+  /** Evita re-abortar a busca quando o pai passa `searchUsers` inline a cada render. */
+  const searchUsersRef = useRef(searchUsers);
+  searchUsersRef.current = searchUsers;
 
   useEffect(() => {
     const normalized = query.trim();
     if (normalized.length < 2) {
       setResults([]);
+      setSearching(false);
       return;
     }
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       setSearching(true);
-      void searchUsers(normalized, 10, controller.signal)
+      void searchUsersRef
+        .current(normalized, 10, controller.signal)
         .then((items) => {
           if (!controller.signal.aborted) setResults(items);
         })
-        .catch(() => {
-          if (!controller.signal.aborted) setResults([]);
+        .catch((error: unknown) => {
+          if (controller.signal.aborted || isAbortError(error)) return;
+          setResults([]);
         })
         .finally(() => {
           if (!controller.signal.aborted) setSearching(false);
@@ -84,11 +111,12 @@ export function UserDirectoryPicker({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [query, searchUsers]);
+  }, [query]);
 
   const selectedIds = new Set(value.map((item) => item.id));
   const atLimit =
     typeof maxSelected === "number" && maxSelected > 0 && value.length >= maxSelected;
+  const visibleResults = results.filter((user) => !selectedIds.has(user.id));
 
   return (
     <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
@@ -113,17 +141,25 @@ export function UserDirectoryPicker({
       {searching ? (
         <p className="delpi-ui-user-directory-picker__status">Buscando…</p>
       ) : null}
-      {results.length > 0 ? (
+      {!searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
+        <p className="delpi-ui-user-directory-picker__status">
+          {results.length > 0
+            ? "Nenhum resultado disponível — já selecionados ou membros."
+            : "Nenhum usuário encontrado."}
+        </p>
+      ) : null}
+      {visibleResults.length > 0 ? (
         <ul className="delpi-ui-user-directory-picker__results">
-          {results.map((user) => (
+          {visibleResults.map((user) => (
             <li key={user.id}>
               <button
                 type="button"
-                disabled={
-                  disabled ||
-                  selectedIds.has(user.id) ||
-                  (atLimit && maxSelected !== 1)
+                className={
+                  renderOptionLeading
+                    ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
+                    : undefined
                 }
+                disabled={disabled || (atLimit && maxSelected !== 1)}
                 onClick={() => {
                   if (selectedIds.has(user.id)) return;
                   if (maxSelected === 1) {
@@ -137,27 +173,51 @@ export function UserDirectoryPicker({
                   setResults([]);
                 }}
               >
-                {directoryUserLabel(user, showEmail)}
+                {renderOptionLeading ? (
+                  <span className="delpi-ui-user-directory-picker__option-leading">
+                    {renderOptionLeading(user)}
+                  </span>
+                ) : null}
+                <span className="delpi-ui-user-directory-picker__option-label">
+                  {directoryUserLabel(user, showEmail)}
+                </span>
               </button>
             </li>
           ))}
         </ul>
       ) : null}
-      {showSelectedList ? (
-        <ul className="delpi-ui-user-directory-picker__selected">
-          {value.map((user) => (
-            <li key={user.id}>
-              <span>{directoryUserLabel(user, showEmail)}</span>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange(value.filter((item) => item.id !== user.id))}
-              >
-                Remover
-              </button>
-            </li>
-          ))}
-        </ul>
+      {showSelectedList && value.length > 0 ? (
+        <div
+          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
+          aria-label="Usuários selecionados"
+        >
+          {value.map((user) => {
+            const label = directoryUserLabel(user, showEmail);
+            const onRemove = () =>
+              onChange(value.filter((item) => item.id !== user.id));
+            if (renderSelectedChip) {
+              return (
+                <span key={user.id}>
+                  {renderSelectedChip({ user, label, disabled, onRemove })}
+                </span>
+              );
+            }
+            return (
+              <span key={user.id} className="delpi-ui-tag-chip">
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="delpi-ui-tag-chip__remove"
+                  disabled={disabled}
+                  aria-label={`Remover ${label}`}
+                  onClick={onRemove}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

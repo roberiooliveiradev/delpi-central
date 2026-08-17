@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createAnalyticsKpiCard,
@@ -41,6 +41,39 @@ describe("SimpleKpiCard", () => {
     );
 
     expect(screen.getByText("…")).toBeTruthy();
+  });
+
+  it("dispara onClick quando interativo", () => {
+    const onClick = vi.fn();
+    render(
+      <SimpleKpiCard
+        title="Linhas"
+        value="10"
+        icon={null}
+        classNames={simpleKpiCardBemClasses("cm")}
+        onClick={onClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Abrir detalhes: Linhas/i }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("com onClick + titleHint não aninha button dentro de button", () => {
+    const onClick = vi.fn();
+    render(
+      <SimpleKpiCard
+        title="Linhas em aberto"
+        titleHint="Ajuda do KPI"
+        value="10"
+        icon={null}
+        classNames={simpleKpiCardBemClasses("pva", "kpi-card", { withBody: true })}
+        onClick={onClick}
+      />,
+    );
+    const card = screen.getByRole("button", { name: /Abrir detalhes: Linhas em aberto/i });
+    expect(card.tagName).toBe("ARTICLE");
+    expect(card.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeTruthy();
+    expect(card.querySelector("button button")).toBeNull();
   });
 
   it("exibe HelpTooltip quando titleHint é informado", () => {

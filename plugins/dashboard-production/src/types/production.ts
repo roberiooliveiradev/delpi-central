@@ -306,6 +306,10 @@ export type ProductionOrderDetail = {
   finish_date: string | null;
   days_diff: number | null;
   otd_status: ProductionOrderOtdStatus;
+  /** Pedido de venda (C2_PEDIDO), quando preenchido. */
+  sales_order?: string | null;
+  /** Item do pedido (C2_ITEMPV). */
+  sales_order_item?: string | null;
 };
 
 export type ProductionOrderByOpData = {

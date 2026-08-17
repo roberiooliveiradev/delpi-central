@@ -19,8 +19,8 @@ def _coerce_float(value: object) -> float:
 def resolve_period_oee_by_branch(daily_rows: list[dict]) -> list[dict]:
     """Deriva o OEE médio por filial no período a partir das linhas diárias.
 
-    Equivale exatamente a ``ROUND(AVG(EFICIENCIA_PERCENTUAL), 2)`` por filial:
-    soma os componentes brutos (``efficiency_sum`` / ``efficiency_sample_count``)
+    Equivale a ``ROUND(AVG(efficiency_pct), 2)`` por filial sobre o % canônico
+    (HY_TEMPAD × qtd): soma ``efficiency_sum`` / ``efficiency_sample_count``
     de cada dia e arredonda uma única vez. Evita um segundo scan da view fabril,
     reaproveitando a agregação diária já cacheada.
     """

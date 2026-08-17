@@ -196,7 +196,7 @@ export function resolveBlockWrapChromeFlags(params: {
 
   if (closedGroupActive) {
     return {
-      showOutline: false,
+      showOutline: true,
       showHandles: false,
       mutedAsGroupMember: true,
       partChildrenActive: false,

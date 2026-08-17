@@ -185,7 +185,7 @@ export function SelectControl({
 
         <ul id={listId} className={classNames.list} role="listbox">
           {allowEmpty ? (
-            <li>
+            <li key="__empty">
               <button
                 type="button"
                 className={!value ? classNames.optionActive : classNames.option}
@@ -199,10 +199,12 @@ export function SelectControl({
             </li>
           ) : null}
           {filteredOptions.length === 0 ? (
-            <li className={classNames.empty}>{labels.emptyOptions}</li>
+            <li key="__no-options" className={classNames.empty}>
+              {labels.emptyOptions}
+            </li>
           ) : (
             filteredOptions.map((option) => (
-              <li key={option.value}>
+              <li key={option.value || `__opt-${option.label}`}>
                 <button
                   type="button"
                   className={
@@ -277,10 +279,10 @@ export function selectFieldPacClasses(prefix: string): {
 } {
   return {
     field: {
-      root: `${prefix}-field`,
-      labelWrapper: `${prefix}-field__label`,
+      root: delpiUiClass(`${prefix}-field`, "delpi-ui-filter-box"),
+      labelWrapper: delpiUiClass(`${prefix}-field__label`, "delpi-ui-field__label"),
       fieldLabel: "",
-      required: `${prefix}-field__required`,
+      required: delpiUiClass(`${prefix}-field__required`, "delpi-ui-field__required"),
     },
     control: selectControlBemClasses(prefix),
   };

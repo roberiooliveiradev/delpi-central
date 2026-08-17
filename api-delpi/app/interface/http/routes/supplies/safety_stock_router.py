@@ -56,6 +56,7 @@ from app.utils.logger import log_error
 
 _SAFETY_STOCK_DETAIL_SECTIONS = (
     "open_purchase_orders",
+    "open_purchase_requests",
     "open_commitments",
     "stock_projection",
     "monthly_consumption",

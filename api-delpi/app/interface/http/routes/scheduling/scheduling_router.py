@@ -55,6 +55,7 @@ class CreateResourceBody(BaseModel):
     capacity: int | None = Field(default=None, ge=1, le=9999)
     metadata: dict[str, Any] | None = None
     requires_approval: bool = False
+    public_booking_enabled: bool = False
 
 
 class UpdateResourceBody(BaseModel):
@@ -68,6 +69,8 @@ class UpdateResourceBody(BaseModel):
     metadata: dict[str, Any] | None = None
     active: bool | None = None
     requires_approval: bool | None = None
+    public_booking_enabled: bool | None = None
+    rotate_public_token: bool | None = None
 
 
 class RecurrenceBody(BaseModel):
@@ -214,6 +217,7 @@ def create_resource(body: CreateResourceBody):
             metadata=body.metadata,
             created_by_user_id=_current_user_id(),
             requires_approval=body.requires_approval,
+            public_booking_enabled=body.public_booking_enabled,
         )
         return api_delpi_success(
             data,
@@ -249,6 +253,8 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
             metadata=body.metadata,
             active=body.active,
             requires_approval=body.requires_approval,
+            public_booking_enabled=body.public_booking_enabled,
+            rotate_public_token=bool(body.rotate_public_token),
         )
         return api_delpi_success(
             data,

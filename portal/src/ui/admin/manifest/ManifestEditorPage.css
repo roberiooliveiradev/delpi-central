@@ -1,0 +1,414 @@
+/* portal/src/ui/admin/manifest/ManifestEditorPage.css
+   Regras específicas da página — chrome/tabs/botões/alerts vêm do ui-kit. */
+
+.manifest-editor-page__app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.manifest-hidden-input {
+  display: none;
+}
+
+.manifest-editor-panel,
+.manifest-json-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  /* Painel da aba ocupa a altura restante da página, com o rodapé colado no fim. */
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.manifest-editor-page .hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.manifest-icon-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.manifest-icon-field__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.manifest-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-json-textarea {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 320px;
+  resize: vertical;
+}
+
+.manifest-editor-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.manifest-editor-status__error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.manifest-editor-status__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.manifest-editor-page__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Painel de acesso */
+
+.manifest-editor-page .manifest-access {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.manifest-editor-page .manifest-access-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-access-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.manifest-editor-page .manifest-access-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/* Árvore do caminho de acesso: grupo → papel → codes. */
+
+.manifest-editor-page .manifest-access-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manifest-editor-page .manifest-access-tree--nested {
+  margin: 4px 0 2px 7px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.manifest-editor-page .manifest-access-tree__item {
+  position: relative;
+}
+
+/* Conector horizontal até o nó filho. */
+.manifest-editor-page
+  .manifest-access-tree--nested
+  > .manifest-access-tree__item::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 12px;
+  width: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.manifest-editor-page .manifest-access-node {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.manifest-editor-page .manifest-access-node__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+}
+
+.manifest-editor-page .manifest-access-node__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.manifest-editor-page .manifest-access-node__link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.manifest-editor-page .manifest-access-codes {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.manifest-editor-page .manifest-access-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+}
+
+.manifest-editor-page .manifest-access-summary {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Cards de permissões e rotas: mais espaço vertical para os campos de texto
+   (nome, descrição, label) do que a tabela densa permitia. */
+
+.manifest-editor-page .manifest-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-cards__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-cards__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manifest-editor-page .manifest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.manifest-editor-page .manifest-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.manifest-editor-page .manifest-card--dragging {
+  opacity: 0.45;
+}
+
+.manifest-editor-page .manifest-card--drop-target {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.manifest-editor-page .manifest-card__handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 32px;
+  align-self: flex-end;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, var(--muted));
+  cursor: grab;
+  touch-action: none;
+}
+
+.manifest-editor-page .manifest-card__handle:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.manifest-editor-page .manifest-card__handle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.manifest-editor-page .manifest-card__handle:active:not(:disabled) {
+  cursor: grabbing;
+}
+
+.manifest-editor-page .manifest-card__handle:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.manifest-editor-page .manifest-card__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-card__code {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-card__order {
+  flex: 0 0 72px;
+}
+
+.manifest-editor-page .manifest-card__path {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-card__head-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.manifest-editor-page .manifest-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.manifest-editor-page .manifest-card__grid--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.manifest-editor-page .manifest-card__field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .manifest-editor-page .manifest-cards__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manifest-editor-page .manifest-card__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manifest-editor-page .manifest-card__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+.manifest-editor-page .manifest-perm-accordion {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  margin-bottom: 6px;
+}
+
+.manifest-editor-page .manifest-perm-accordion > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.manifest-editor-page .manifest-perm-accordion ul {
+  margin: 8px 0 0;
+  padding-left: 16px;
+}
+
+@media (max-width: 860px) {
+  .manifest-editor-page__footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Sem esticar no celular: a página inteira rola, em vez de espremer a tabela
+     num painel de poucas dezenas de pixels. */
+  .manifest-editor-panel,
+  .manifest-json-editor {
+    flex: 0 0 auto;
+    padding: 12px;
+  }
+
+  .manifest-editor-page .manifest-json-textarea {
+    min-height: 240px;
+  }
+
+  .manifest-editor-toolbar__actions {
+    width: 100%;
+  }
+}

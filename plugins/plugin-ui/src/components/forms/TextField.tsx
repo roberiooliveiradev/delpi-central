@@ -30,10 +30,10 @@ export type TextFieldProps = {
 export function textFieldBemClasses(prefix: string): TextFieldClassNames {
   return {
     root: delpiUiClass(`${prefix}-field`, "delpi-ui-filter-box"),
-    labelWrapper: `${prefix}-field__label`,
+    labelWrapper: delpiUiClass(`${prefix}-field__label`, "delpi-ui-field__label"),
     fieldLabel: "",
     control: `${prefix}-field__control`,
-    required: `${prefix}-field__required`,
+    required: delpiUiClass(`${prefix}-field__required`, "delpi-ui-field__required"),
     fullWidthModifier: `${prefix}-field--full`,
   };
 }

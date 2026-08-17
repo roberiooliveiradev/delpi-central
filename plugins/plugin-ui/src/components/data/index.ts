@@ -153,6 +153,71 @@ export {
 } from "./DataCellValue";
 
 export {
+  DataRecordCard,
+  createDashboardDataRecordCard,
+  dataRecordCardBemClasses,
+  type DashboardDataRecordCardProps,
+  type DataRecordCardClassNames,
+  type DataRecordCardField,
+  type DataRecordCardProps,
+} from "./DataRecordCard";
+
+export {
+  TableFontSizeControls,
+  createDashboardTableFontSizeControls,
+  tableFontSizeControlsBemClasses,
+  type DashboardTableFontSizeControlsProps,
+  type TableFontSizeControlsClassNames,
+  type TableFontSizeControlsLabels,
+  type TableFontSizeControlsProps,
+} from "./TableFontSizeControls";
+
+export {
+  DataListToolbar,
+  createDashboardDataListToolbar,
+  dataListToolbarBemClasses,
+  type DashboardDataListToolbarProps,
+  type DataListToolbarClassNames,
+  type DataListToolbarProps,
+} from "./DataListToolbar";
+
+export {
+  DataCardsGrid,
+  DataCardsSortBar,
+  createDashboardDataCardsGrid,
+  createDashboardDataCardsSortBar,
+  dataCardsGridBemClasses,
+  dataCardsSortBarBemClasses,
+  type DashboardDataCardsGridProps,
+  type DashboardDataCardsSortBarProps,
+  type DataCardsGridClassNames,
+  type DataCardsGridProps,
+  type DataCardsSortBarClassNames,
+  type DataCardsSortBarProps,
+} from "./DataCardsGrid";
+
+export {
+  KanbanBoard,
+  createDashboardKanbanBoard,
+  kanbanBoardBemClasses,
+  type DashboardKanbanBoardProps,
+  type KanbanBoardClassNames,
+  type KanbanBoardColumn,
+  type KanbanBoardProps,
+} from "./KanbanBoard";
+
+export {
+  InteractiveDataCard,
+  createDashboardInteractiveDataCard,
+  interactiveDataCardBemClasses,
+  type DashboardInteractiveDataCardProps,
+  type InteractiveDataCardClassNames,
+  type InteractiveDataCardField,
+  type InteractiveDataCardProps,
+  type InteractiveDataCardValueTone,
+} from "./InteractiveDataCard";
+
+export {
   isCellSelected,
   isColumnSelected,
   isRowSelected,
@@ -187,6 +252,7 @@ export {
   dataTableSectionBemClasses,
   type DashboardDataTableSectionProps,
   type DataTableSectionClassNames,
+  type DataTableSectionExcelExport,
   type DataTableSectionLabels,
   type DataTableSectionProps,
   type ServerPaginationConfig,
@@ -265,10 +331,15 @@ export {
 export { DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS } from "./tableColumnVisibilityLabels";
 
 export {
+  applyVisibleColumnReorder,
+  createDefaultColumnOrder,
   createDefaultColumnVisibility,
   loadColumnVisibilityPreferences,
+  reorderColumnKeys,
   saveColumnVisibilityPreferences,
+  sanitizeColumnOrder,
   sanitizeColumnVisibility,
+  sanitizeColumnVisibilityPreferences,
   type TableColumnVisibilityMap,
   type TableColumnVisibilityPreferences,
 } from "../../utils/tableColumnVisibilityPreferences";
@@ -277,6 +348,24 @@ export {
   TreeGuideRails,
   type TreeGuideRailsProps,
 } from "./TreeGuideRails";
+
+export {
+  HorizontalTimeline,
+  createDashboardHorizontalTimeline,
+  horizontalTimelineBemClasses,
+  horizontalTimelinePositionPercent,
+  layoutHorizontalTimeline,
+  formatClusterCaptionText,
+  normalizeTimelineDayKey,
+  DEFAULT_HORIZONTAL_TIMELINE_LABELS,
+  type DashboardHorizontalTimelineProps,
+  type HorizontalTimelineClassNames,
+  type HorizontalTimelineCluster,
+  type HorizontalTimelineLabels,
+  type HorizontalTimelinePoint,
+  type HorizontalTimelineProps,
+  type HorizontalTimelineTone,
+} from "./HorizontalTimeline";
 
 export {
   Timeline,
@@ -291,4 +380,40 @@ export {
   type TimelineProps,
   type TimelineTone,
   type TimelineTreeNode,
+} from "./Timeline";
+export {
+  InlineMeter,
+  createDashboardInlineMeter,
+  inlineMeterBemClasses,
+  type DashboardInlineMeterProps,
+  type InlineMeterClassNames,
+  type InlineMeterProps,
+  type InlineMeterSegment,
+  type InlineMeterTone,
+} from "./InlineMeter";
+export {
+  CompareSparkline,
+  createDashboardCompareSparkline,
+  compareSparklineBemClasses,
+  resolveCompareSparklineTone,
+  type CompareSparklineClassNames,
+  type CompareSparklineProps,
+  type CompareSparklineTone,
+  type DashboardCompareSparklineProps,
+} from "./CompareSparkline";
+export {
+  TrendDelta,
+  createDashboardTrendDelta,
+  formatTrendDeltaPct,
+  resolveTrendDeltaTone,
+  trendDeltaBemClasses,
+  type DashboardTrendDeltaProps,
+  type TrendDeltaClassNames,
+  type TrendDeltaProps,
+} from "./TrendDelta";
+/** Alias de produto (Account 360 / follow-ups) — mesmo componente Timeline. */
+export {
+  Timeline as ActivityTimeline,
+  createTimeline as createActivityTimeline,
+  timelineBemClasses as activityTimelineBemClasses,
 } from "./Timeline";

@@ -30,6 +30,9 @@ from app.application.dto.commercial.list_commercial_proposals_request import (
     ListCommercialProposalsRequest,
 )
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
+from app.application.dto.commercial.sales_conversion_rate_series_request import (
+    SalesConversionRateSeriesRequest,
+)
 from app.application.dto.commercial.new_clients_average_request import NewClientsAverageRequest
 from app.application.dto.commercial.new_clients_rol_pct_request import NewClientsRolPctRequest
 from app.application.dto.commercial.commercial_rol_series_request import (
@@ -54,6 +57,7 @@ from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
     build_get_branch_rol_target_pct_use_case,
     build_get_sales_conversion_rate_use_case,
+    build_get_sales_conversion_rate_series_use_case,
     build_list_commercial_proposals_use_case,
     build_get_commercial_proposal_use_case,
     build_get_new_clients_average_use_case,
@@ -75,6 +79,7 @@ from app.composition.engineering_composer import (
 )
 from app.interface.http.routes.commercial.commercial_route_helpers import (
     build_get_commercial_proposal_request,
+    parse_customer_codes,
     parse_customer_segment,
 )
 from app.interface.http.routes.engineering.lmp_route_helpers import (
@@ -110,6 +115,7 @@ def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_head_office_rol_target_pct_use_case()
@@ -119,6 +125,7 @@ def get_head_office_rol_target_pct(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = enrich_dashboard_metric(
@@ -161,6 +168,7 @@ def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_branch_rol_target_pct_use_case()
@@ -170,6 +178,7 @@ def get_branch_rol_target_pct(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = enrich_dashboard_metric(
@@ -411,6 +420,7 @@ def get_commercial_rol_series(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         request = CommercialRolSeriesRequest(
@@ -418,6 +428,7 @@ def get_commercial_rol_series(
             date_start=start_date,
             date_end=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         request.validate()
@@ -456,6 +467,7 @@ def get_commercial_rol_by_customer(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
     limit: int = Query(20, ge=1, le=500),
     include_others: bool = Query(True),
 ):
@@ -465,6 +477,7 @@ def get_commercial_rol_by_customer(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
             limit=limit,
             include_others=include_others,
         )
@@ -493,6 +506,7 @@ def list_commercial_proposals(
     end_date: Optional[str] = Query(None),
     status: Optional[str] = COMMERCIAL_PROPOSAL_STATUS_QUERY(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(
@@ -521,6 +535,7 @@ def list_commercial_proposals(
             end_date=end_date,
             status=status,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
             page=page,
             page_size=page_size,
             sort_by=sort_by,
@@ -649,6 +664,7 @@ def get_sales_conversion_rate(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_sales_conversion_rate_use_case()
@@ -658,6 +674,7 @@ def get_sales_conversion_rate(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = enrich_dashboard_metric(
@@ -683,6 +700,54 @@ def get_sales_conversion_rate(
         log_error(f"Error while fetching Sales Conversion Rate: {exc}")
         return error_response(
             "Internal error while fetching Sales Conversion Rate.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/closing-rate/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_conversion_rate_series",
+        path="/commercial/closing-rate/series",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_conversion_rate_series(
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
+    ),
+):
+    try:
+        request = SalesConversionRateSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+        )
+        request.validate()
+
+        use_case = build_get_sales_conversion_rate_series_use_case()
+        result = use_case.execute(request)
+
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_sales_conversion_rate_series",
+            message="Sales conversion rate series fetched successfully.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales conversion rate series: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching sales conversion rate series: {exc}")
+        return error_response(
+            "Internal error while fetching sales conversion rate series.",
             status_code=500,
         )
     
@@ -744,6 +809,7 @@ def get_sales_order_otd_series(
     end_date: Optional[str] = Query(None),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         request = SalesOrderOtdSeriesRequest(
@@ -752,6 +818,7 @@ def get_sales_order_otd_series(
             date_end=end_date,
             branch=branch,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         use_case = build_get_sales_order_otd_series_use_case()
@@ -788,11 +855,17 @@ def get_sales_order_otd_panel(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
     status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: Optional[str] = Query(default=None),
     sort_dir: str = SORT_DIR_QUERY(),
+    search: Optional[str] = Query(
+        default=None,
+        description="Busca em pedido, cliente ou produto (painel OTD).",
+        max_length=80,
+    ),
 ):
     try:
         use_case = build_get_sales_order_otd_panel_use_case()
@@ -802,11 +875,13 @@ def get_sales_order_otd_panel(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
             status=status,
             page=page,
             page_size=page_size,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            search=search,
         )
 
         result = enrich_dashboard_metric(
@@ -852,6 +927,7 @@ def get_sales_order_otd_line_detail(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_sales_order_otd_line_detail_use_case()
@@ -863,6 +939,7 @@ def get_sales_order_otd_line_detail(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = use_case.execute(request)
@@ -900,6 +977,7 @@ def get_sales_order_otd(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_sales_order_otd_use_case()
@@ -909,6 +987,7 @@ def get_sales_order_otd(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = enrich_dashboard_metric(
@@ -951,6 +1030,7 @@ def get_new_business_rol_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
 ):
     try:
         use_case = build_get_new_business_rol_pct_use_case()
@@ -960,6 +1040,7 @@ def get_new_business_rol_pct(
             start_date=start_date,
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
         )
 
         result = enrich_dashboard_metric(

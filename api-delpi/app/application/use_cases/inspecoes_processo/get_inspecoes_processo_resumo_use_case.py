@@ -9,6 +9,10 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_resumo_response i
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.quality.inspecoes_processo.inspecoes_processo_period import (
+    period_repository_kwargs,
+    resolve_optional_period,
+)
 from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
     normalize_optional_branch,
 )
@@ -51,10 +55,20 @@ class GetInspecoesProcessoResumoUseCase:
     def __init__(self, repository: InspecoesProcessoRepositoryPort) -> None:
         self._repository = repository
 
-    def execute(self, *, branch: str | None) -> InspecoesProcessoResumoResponse:
+    def execute(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> InspecoesProcessoResumoResponse:
         normalized_branch = normalize_optional_branch(branch)
+        start_date, end_date = resolve_optional_period(start_date, end_date)
 
-        row = self._repository.get_resumo_by_branch(normalized_branch)
+        row = self._repository.get_resumo_by_branch(
+            normalized_branch,
+            **period_repository_kwargs(start_date, end_date),
+        )
         if not row:
             return InspecoesProcessoResumoResponse(filial=normalized_branch)
 

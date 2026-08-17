@@ -95,6 +95,14 @@ def configure_domain_infrastructure_ports() -> None:
     ChatLabelContentService.configure(
         lambda bundle: ContentService.load_json(f"labels/{bundle}")
     )
+    from app.application.services.chat_tv_dashboard_catalog_service import (
+        configure_tv_dashboard_catalog_port,
+    )
+    from app.infrastructure.adapters.tv_dashboard_capability_catalog_adapter import (
+        TvDashboardCapabilityCatalogAdapter,
+    )
+
+    configure_tv_dashboard_catalog_port(TvDashboardCapabilityCatalogAdapter())
     _configure_typo_correction_rules()
     _CONFIGURED = True
 

@@ -1,4 +1,4 @@
-import { normalizeTransformometroPath } from "./routeParser";
+import { canonicalizeTransformometroPath, normalizeTransformometroPath } from "./routeParser";
 
 export const TRANSFORMOMETRO_WORKSPACE_HASH_EVENT = "transformometro:workspace-hash";
 /** Árvore do processo (melhorias/revisões) ficou desatualizada após mutação. */
@@ -10,10 +10,10 @@ const TREE_REFRESH_CHANNEL = "transformometro-workspace";
 function splitPathAndHash(path: string): { pathname: string; hash: string } {
   const hashIndex = path.indexOf("#");
   if (hashIndex === -1) {
-    return { pathname: normalizeTransformometroPath(path), hash: "" };
+    return { pathname: canonicalizeTransformometroPath(path), hash: "" };
   }
   return {
-    pathname: normalizeTransformometroPath(path.slice(0, hashIndex)),
+    pathname: canonicalizeTransformometroPath(path.slice(0, hashIndex)),
     hash: path.slice(hashIndex),
   };
 }
@@ -35,7 +35,7 @@ function publishTreeRefreshToOtherTabs() {
   }
 }
 
-/** Pede ao ProcessoWorkspacePage para recarregar processo/instâncias/revisões da sidebar. */
+/** Pede ao ProcessWorkspacePage para recarregar processo/instâncias/revisões da sidebar. */
 export function requestWorkspaceTreeRefresh() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT));

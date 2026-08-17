@@ -32,7 +32,7 @@ class DashboardGoalsService:
             source_keys=[source_key],
             start_date=normalize_si_period_date(start_date),
             end_date=normalize_si_period_date(end_date),
-            branch=branch,
+            branch=normalize_si_branch(branch),
             department_id=department_id,
         )
         return goals_map.get(source_key)

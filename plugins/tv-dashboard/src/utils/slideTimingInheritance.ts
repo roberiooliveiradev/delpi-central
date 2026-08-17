@@ -2,6 +2,13 @@
  * Cascata duração/transição: slide → seção → playlist (espelha a API).
  */
 
+export {
+  formatPresentationTransitionLabel as formatSlideTransitionLabel,
+  PRESENTATION_TRANSITION_LABELS,
+  PRESENTATION_TRANSITION_STYLES,
+  type PresentationTransitionStyle,
+} from "@delpi/tv-dashboard-presentation";
+
 export function resolveSlideDurationSec(args: {
   slideDuration: number | null | undefined;
   sectionDefault?: number | null;
@@ -37,12 +44,3 @@ export function slideDurationIsOverride(slideDuration: number | null | undefined
   return slideDuration != null;
 }
 
-const TRANSITION_LABELS: Record<string, string> = {
-  fade: "Fade",
-  slide: "Deslizar",
-  none: "Sem transição",
-};
-
-export function formatSlideTransitionLabel(style: string): string {
-  return TRANSITION_LABELS[style] ?? style;
-}

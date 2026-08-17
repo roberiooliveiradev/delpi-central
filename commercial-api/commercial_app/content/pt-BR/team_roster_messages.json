@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "groupNotFound": "Grupo operacional não encontrado.",
+    "portfolioNotFound": "Carteira não encontrada."
+  },
+  "messages": {
+    "listOk": "Equipe carregada."
+  }
+}

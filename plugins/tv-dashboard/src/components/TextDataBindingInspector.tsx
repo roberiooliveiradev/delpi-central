@@ -4,20 +4,18 @@ import {
   buildTextDataLinkPatch,
   catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
-  formatSupportsDecimalPlaces,
   isComunicadoVisualBoxBlock,
+  isEfficiencyPinBlock,
   staticLabelFromTextBoundBlock,
   suggestDefaultTextProjection,
   textProjectionPrefixFromStaticLabel,
   type ComunicadoTextProjection,
-  type TextProjectionFormat,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useRef } from "react";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
-import { DecimalPlacesField } from "./DecimalPlacesField";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
@@ -25,14 +23,6 @@ import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.data;
-const FORMAT_OPTIONS: Array<{ value: TextProjectionFormat; label: string }> = [
-  { value: "number", label: "Número" },
-  { value: "percent", label: "Percentual" },
-  { value: "currency", label: "Moeda" },
-  { value: "compact", label: "Compacto" },
-  { value: "raw", label: "Texto bruto" },
-  { value: "date", label: "Data" },
-];
 
 type Props = {
   pane?: boolean;
@@ -104,7 +94,10 @@ export function TextDataBindingInspector({
         ...current,
         field,
         aggregation: current.aggregation ?? suggested?.aggregation ?? "first",
-        format: current.format ?? suggested?.format ?? "number",
+        format: current.format ?? suggested?.format ?? "raw",
+        displayFormat:
+          current.displayFormat ??
+          suggested?.displayFormat ?? { category: "general", presetId: "general" },
         ...(labelPrefix ? { prefix: labelPrefix } : {}),
       },
     });
@@ -209,27 +202,6 @@ export function TextDataBindingInspector({
                 }))}
               />
             </DeckField>
-            <DeckField label="Formato">
-              <FormSelectControl
-                className={compactSelect}
-                value={projection.format ?? "number"}
-                onChange={(value) => {
-                  const format = value as TextProjectionFormat;
-                  const patch: Partial<ComunicadoTextProjection> = { format };
-                  if (!formatSupportsDecimalPlaces(format)) {
-                    patch.decimalPlaces = undefined;
-                  }
-                  patchProjection(patch);
-                }}
-                options={FORMAT_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
-              />
-            </DeckField>
-            <DecimalPlacesField
-              format={projection.format ?? "number"}
-              value={projection.decimalPlaces}
-              compactClassName={compactSelect}
-              onChange={(decimalPlaces) => patchProjection({ decimalPlaces })}
-            />
             <DeckField label="Prefixo">
               <NativeTextControl
                 className={compactNative}
@@ -267,6 +239,8 @@ export function TextDataBindingInspector({
   );
 }
 
-export function canShowTextDataBindingInspector(selected: { type: string } | null | undefined): boolean {
-  return Boolean(selected && isComunicadoVisualBoxBlock(selected as never));
+export function canShowTextDataBindingInspector(selected: { type: string; shape?: string } | null | undefined): boolean {
+  if (!selected || !isComunicadoVisualBoxBlock(selected as never)) return false;
+  if (isEfficiencyPinBlock(selected as never)) return false;
+  return true;
 }

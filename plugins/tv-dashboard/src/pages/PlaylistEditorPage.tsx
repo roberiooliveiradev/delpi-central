@@ -47,10 +47,15 @@ import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SectionPropertiesPanel } from "../components/SectionPropertiesPanel";
 import { SlideStagePreview } from "../components/SlideStagePreview";
-import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
+import {
+  buildSlideThumbnailNative,
+  enrichComunicadoConfigForEditor,
+  mergeMasterConfigs,
+} from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
 import { relocateFilmstripSlides } from "../utils/relocateFilmstripSlides";
+import type { ListDropEdge } from "../utils/listReorderDrag";
 import { claimSlidesForNewSection } from "../utils/claimSlidesForNewSection";
 import {
   DeckEditorHistoryProvider,
@@ -58,9 +63,11 @@ import {
 } from "../context/deckEditorHistoryContext";
 import { KeyboardShortcutsTipsProvider } from "../context/KeyboardShortcutsTipsProvider";
 import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
+import { TvCopilotDockProvider } from "../context/tvCopilotDockContext";
 import { EditorShortcutsProvider } from "../keyboard";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
+import { TvCopilotDockSlot } from "../components/TvCopilotDock";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
@@ -72,8 +79,26 @@ import {
   slidePayloadForClipboard,
   type SlideClipboardPayload,
 } from "../utils/slideDeckClipboard";
-import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
-import { exportSlidePptx } from "../utils/exportSlidePptx";
+import { ExportPdfDialog } from "../components/ExportPdfDialog";
+import {
+  captureOffscreenNativeToPngDataUrl,
+  exportActivePlaylistSlidesToPdf,
+  exportSlidesToPdf,
+  resolvePlaylistDesignSize,
+} from "../utils/exportPlaylistPdf";
+import {
+  captureSlideElementToPngDataUrl,
+  downloadPngDataUrls,
+  exportSlideElementToPng,
+  exportSlideElementToPdf,
+  resolveSlideExportTarget,
+} from "../utils/exportSlidePng";
+import { exportSlidesPptx } from "../utils/exportSlidePptx";
+import {
+  resolveExportPptxTargets,
+  resolveExportSlideTargets,
+  uniqueExportFileName,
+} from "../utils/exportSlideSelection";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
 import { registerPreviewHandoff } from "../utils/previewHandoff";
 import { clearPreviewPayloadCache } from "../utils/previewPayloadCache";
@@ -105,7 +130,15 @@ import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
+import {
+  applySlideBatchPatch,
+  isCustomMessageSlide,
+  pickSharedCustomSlideConfig,
+  resolveSelectedSlides,
+  type SlideBatchInput,
+} from "../utils/applySlideBatchPatch";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type DeckSettingsProps = {
   onSaveSlide: (
@@ -161,10 +194,17 @@ export function PlaylistEditorPage({
     nativeConfig: Record<string, unknown>;
     version: number;
   } | null>(null);
+  const customFanOutBaselineRef = useRef<{
+    slideId: string;
+    nativeConfig: Record<string, unknown>;
+  } | null>(null);
+  const selectedSlidesRef = useRef<Slide[]>([]);
   const comunicadoAutosaveVersionRef = useRef<Map<string, number>>(new Map());
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
+  const [exportPdfOpen, setExportPdfOpen] = useState(false);
+  const [exportPdfProgress, setExportPdfProgress] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBusy, setRenameBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
@@ -388,6 +428,12 @@ export function PlaylistEditorPage({
     [slides, selectedSlideId],
   );
 
+  const selectedSlides = useMemo(
+    () => resolveSelectedSlides(slides, selectedSlideIds, selectedSlide),
+    [slides, selectedSlideIds, selectedSlide],
+  );
+  selectedSlidesRef.current = selectedSlides;
+
   const sectionPropertiesTarget = useMemo(
     () => sections.find((section) => section.id === sectionPropertiesId) ?? null,
     [sections, sectionPropertiesId],
@@ -464,13 +510,15 @@ export function PlaylistEditorPage({
     }
   }, [playlistId, slides.length]);
 
-  const reloadPlaylistFromServer = useCallback(async () => {
+  const reloadPlaylistFromServer = useCallback(async (opts?: { focusSlideId?: string | null }) => {
     try {
       const pl = await getPlaylist(playlistId);
       const pending = pendingComunicadoSaveRef.current;
       const activeId = selectedSlideIdRef.current;
+      // liveComunicadoConfigRef espelha o slide aberto — só sobrepõe o remoto
+      // quando há save pendente de verdade (senão o WS do copiloto nunca entra).
       const live =
-        activeId && liveComunicadoConfigRef.current
+        pending && activeId && liveComunicadoConfigRef.current
           ? { slideId: activeId, nativeConfig: liveComunicadoConfigRef.current }
           : null;
       const merged = applyServerPlaylistPreservingLocalEdits({
@@ -482,7 +530,6 @@ export function PlaylistEditorPage({
         live,
       });
       setPlaylist((current) => (current ? { ...merged } : merged));
-      // Com dirty local, não forçar o editor a aceitar o payload remoto (perderia fontes novas).
       const dirty = hasLocalComunicadoEdits({
         playlistId,
         slideId: activeId,
@@ -490,12 +537,25 @@ export function PlaylistEditorPage({
       });
       if (!dirty) {
         setRemoteConfigRevision((revision) => revision + 1);
+        if (activeId && liveComunicadoConfigRef.current) {
+          const remoteSlide = (merged.slides ?? []).find((s) => s.id === activeId);
+          if (remoteSlide?.nativeScreenKey === "custom_message" && remoteSlide.nativeConfig) {
+            liveComunicadoConfigRef.current = remoteSlide.nativeConfig;
+          }
+        }
+      }
+      const focusId = opts?.focusSlideId?.trim();
+      if (focusId) {
+        const created = (merged.slides ?? []).find((s) => s.id === focusId);
+        if (created) {
+          selectSlide(created.id, created);
+        }
       }
       await refreshPreviewThumbnails();
     } catch {
       // mantém estado local se a sincronização falhar
     }
-  }, [playlistId, refreshPreviewThumbnails]);
+  }, [playlistId, refreshPreviewThumbnails, selectSlide]);
 
   const applyRemoteSlideDraft = useCallback(
     (slideId: string, nativeConfig: Record<string, unknown>, clientId: string) => {
@@ -609,8 +669,11 @@ export function PlaylistEditorPage({
     presence: editorPresence,
     enabled: editorActive,
     onPresenceUpdate: handlePresenceUpdate,
-    onSync: () => {
-      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
+    onSync: (event) => {
+      // Sync canônico (WS presentation_updated) — inclui mutações do copiloto via CRUD.
+      void reloadPlaylistFromServer({ focusSlideId: event?.slideId ?? null }).then(() =>
+        deckHistory.handleRemoteUpdate(),
+      );
     },
     onSlideDraft: (event) => {
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
@@ -715,12 +778,29 @@ export function PlaylistEditorPage({
     if (field === "dataDefaults" && value && typeof value === "object") {
       setPlaylist({ ...playlist, dataDefaults: value as Record<string, unknown> });
     }
+    if (field === "viewport" && value && typeof value === "object") {
+      const patch = value as {
+        viewportProfile?: string;
+        viewportWidth?: number | null;
+        viewportHeight?: number | null;
+      };
+      setPlaylist({
+        ...playlist,
+        viewportProfile: patch.viewportProfile ?? playlist.viewportProfile,
+        viewportWidth: patch.viewportWidth ?? null,
+        viewportHeight: patch.viewportHeight ?? null,
+      });
+    }
     try {
-      const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      const body =
+        field === "viewport" && value && typeof value === "object"
+          ? (value as Parameters<typeof updatePlaylist>[1])
+          : ({ [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      const updated = await updatePlaylist(playlist.id, body);
       setPlaylist({ ...updated, slides: previousPlaylist.slides });
       await deckHistory.confirmChange();
     } catch (caught) {
-      if (field === "dataDefaults") {
+      if (field === "dataDefaults" || field === "viewport") {
         setPlaylist(previousPlaylist);
       }
       deckHistory.cancelChange();
@@ -728,17 +808,90 @@ export function PlaylistEditorPage({
     }
   }
 
+  function formatExportNotice(template: string, values: Record<string, string | number>): string {
+    return Object.entries(values).reduce(
+      (text, [key, value]) => text.replace(`{${key}}`, String(value)),
+      template,
+    );
+  }
+
   async function handleExportPng() {
-    if (!selectedSlide) return;
-    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
-    if (!target) {
-      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+    if (!playlist) return;
+    const targets = resolveExportSlideTargets({
+      scope: "selected",
+      slides,
+      selectedSlides,
+      primary: selectedSlide,
+    });
+    if (targets.length === 0) return;
+    const liveTarget = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+    const onlyPrimary =
+      targets.length === 1 && selectedSlide && targets[0]?.id === selectedSlide.id;
+    if (onlyPrimary) {
+      if (!liveTarget) {
+        tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+        return;
+      }
+      setExportBusy(true);
+      try {
+        await exportSlideElementToPng(liveTarget, {
+          fileName: uniqueExportFileName(selectedSlide.title, new Set(), "png"),
+        });
+      } catch (err) {
+        tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PNG.");
+      } finally {
+        setExportBusy(false);
+      }
       return;
     }
+
+    const designSize = resolvePlaylistDesignSize(playlist);
     setExportBusy(true);
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      await exportSlideElementToPng(target, { fileName: `${safeTitle}.png` });
+      const used = new Set<string>();
+      const pages: Array<{ dataUrl: string; fileName: string }> = [];
+      let skipped = 0;
+      for (const slide of targets) {
+        if (slide.slideType === "external") {
+          skipped += 1;
+          continue;
+        }
+        if (slide.id === selectedSlide?.id && liveTarget) {
+          pages.push({
+            dataUrl: await captureSlideElementToPngDataUrl(liveTarget),
+            fileName: uniqueExportFileName(slide.title, used, "png"),
+          });
+          continue;
+        }
+        const native = buildSlideThumbnailNative(
+          slide,
+          playlist.id,
+          previewBySlideId[slide.id],
+          playlist.masterConfig,
+          playlist.publicToken,
+        );
+        if (!native) {
+          skipped += 1;
+          continue;
+        }
+        pages.push({
+          dataUrl: await captureOffscreenNativeToPngDataUrl(native, designSize),
+          fileName: uniqueExportFileName(slide.title, used, "png"),
+        });
+      }
+      if (pages.length === 0) {
+        tvDashboardNotice("Nenhuma tela exportável (nativa) encontrada.");
+        return;
+      }
+      await downloadPngDataUrls(pages);
+      if (skipped > 0) {
+        tvDashboardNotice(
+          formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportSkipped, {
+            exported: pages.length,
+            skipped,
+          }),
+        );
+      }
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PNG.");
     } finally {
@@ -746,38 +899,131 @@ export function PlaylistEditorPage({
     }
   }
 
-  async function handleExportPdf() {
-    if (!selectedSlide) return;
-    const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
-    if (!target) {
-      tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+  function handleExportPdf() {
+    if (!selectedSlide && slides.every((slide) => slide.isActive === false)) {
+      tvDashboardNotice("Não há telas para exportar.");
       return;
     }
+    setExportPdfProgress(null);
+    setExportPdfOpen(true);
+  }
+
+  async function handleGenerateExportPdf(options: {
+    scope: "playlist" | "current" | "selected";
+    pixelRatio: 1 | 2;
+  }) {
+    if (!playlist) return;
+    const designSize = resolvePlaylistDesignSize(playlist);
+    const safePlaylist = playlist.name.replace(/[^\w\-]+/g, "_").slice(0, 40) || "programacao";
     setExportBusy(true);
+    setExportPdfProgress(options.scope === "current" ? "Capturando slide…" : "Preparando…");
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      await exportSlideElementToPdf(target, { fileName: `${safeTitle}.pdf` });
+      if (options.scope === "current") {
+        if (!selectedSlide) {
+          tvDashboardNotice("Selecione um slide para exportar.");
+          return;
+        }
+        const target = resolveSlideExportTarget(document.querySelector(".td-deck-stage__main"));
+        if (!target) {
+          tvDashboardNotice("Não foi possível localizar o palco para exportar.");
+          return;
+        }
+        await exportSlideElementToPdf(target, {
+          fileName: uniqueExportFileName(selectedSlide.title, new Set(), "pdf"),
+          pixelRatio: options.pixelRatio,
+          designSize,
+        });
+      } else {
+        const targets =
+          options.scope === "selected"
+            ? resolveExportSlideTargets({
+                scope: "selected",
+                slides,
+                selectedSlides,
+                primary: selectedSlide,
+              })
+            : slides;
+        const result =
+          options.scope === "selected"
+            ? await exportSlidesToPdf(targets, {
+                playlistId: playlist.id,
+                designSize,
+                previewBySlideId,
+                masterConfig: playlist.masterConfig,
+                publicToken: playlist.publicToken,
+                pixelRatio: options.pixelRatio,
+                fileName: `${safePlaylist}-selecao.pdf`,
+                onProgress: ({ current, total, slideTitle }) => {
+                  setExportPdfProgress(
+                    `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
+                  );
+                },
+              })
+            : await exportActivePlaylistSlidesToPdf({
+                playlistId: playlist.id,
+                slides: targets,
+                designSize,
+                previewBySlideId,
+                masterConfig: playlist.masterConfig,
+                publicToken: playlist.publicToken,
+                pixelRatio: options.pixelRatio,
+                fileName: `${safePlaylist}.pdf`,
+                onProgress: ({ current, total, slideTitle }) => {
+                  setExportPdfProgress(
+                    `Capturando ${current}/${total}${slideTitle ? ` · ${slideTitle}` : ""}`,
+                  );
+                },
+              });
+        if (result.skipped > 0) {
+          tvDashboardNotice(
+            formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportSkipped, {
+              exported: result.pageCount,
+              skipped: result.skipped,
+            }),
+          );
+        }
+      }
+      setExportPdfOpen(false);
+      setExportPdfProgress(null);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PDF.");
     } finally {
       setExportBusy(false);
+      setExportPdfProgress(null);
     }
   }
 
   async function handleExportPptx() {
-    if (!selectedSlide) return;
-    if (selectedSlide.nativeScreenKey !== "custom_message") {
-      tvDashboardNotice("A exportação PPTX MVP está disponível para telas personalizadas.");
+    if (!playlist) return;
+    const { targets, skipped } = resolveExportPptxTargets(
+      selectedSlides,
+      selectedSlide,
+      slides,
+    );
+    if (targets.length === 0) {
+      tvDashboardNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportPptxCustomOnly);
       return;
     }
     setExportBusy(true);
     try {
-      const safeTitle = selectedSlide.title.replace(/[^\w\-]+/g, "_").slice(0, 40) || "slide";
-      const rawConfig = liveComunicadoConfigRef.current ?? selectedSlide.nativeConfig ?? {};
-      await exportSlidePptx(
-        enrichComunicadoConfigForEditor(rawConfig, playlistId),
-        `${safeTitle}.pptx`,
-      );
+      const configs = targets.map((slide) => {
+        const raw =
+          slide.id === selectedSlide?.id
+            ? (liveComunicadoConfigRef.current ?? slide.nativeConfig ?? {})
+            : (slide.nativeConfig ?? {});
+        return enrichComunicadoConfigForEditor(raw, playlistId);
+      });
+      const fileName =
+        targets.length === 1
+          ? uniqueExportFileName(targets[0]?.title ?? "slide", new Set(), "pptx")
+          : uniqueExportFileName(playlist.name, new Set(), "pptx");
+      await exportSlidesPptx(configs, fileName);
+      if (skipped > 0) {
+        tvDashboardNotice(
+          formatExportNotice(TV_DASHBOARD_HELP_TOOLTIPS.ribbon.exportPptxSkipped, { skipped }),
+        );
+      }
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Falha ao exportar PPTX.");
     } finally {
@@ -835,7 +1081,8 @@ export function PlaylistEditorPage({
         nativeConfig: serializeComunicadoConfig(
           parseComunicadoConfig({ headline: "", blocks: [] }),
         ),
-        durationSec: customCatalogItem?.defaultDurationSec ?? 30,
+        durationSec: null,
+        transitionStyle: null,
         sectionId: anchorSectionId,
       });
       let placed = slide;
@@ -1194,10 +1441,6 @@ export function PlaylistEditorPage({
     }
   }
 
-  async function handleRemoveSlide(slide: Slide) {
-    await handleRemoveSlides([slide]);
-  }
-
   async function handleRemoveSlides(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     const unique = targets.filter(
@@ -1381,6 +1624,69 @@ export function PlaylistEditorPage({
     }
   }
 
+  async function persistSharedCustomFanOut(
+    source: Slide,
+    nextConfig: Record<string, unknown>,
+  ) {
+    const pl = playlistRef.current;
+    if (!pl) return;
+    const baseline =
+      customFanOutBaselineRef.current?.slideId === source.id
+        ? customFanOutBaselineRef.current.nativeConfig
+        : source.nativeConfig;
+    const slice = pickSharedCustomSlideConfig(nextConfig, baseline);
+    if (!slice) return;
+    const others = selectedSlidesRef.current.filter(
+      (item) => item.id !== source.id && isCustomMessageSlide(item),
+    );
+    if (others.length === 0) return;
+    const { applied } = applySlideBatchPatch(others, { nativeConfig: slice });
+    if (applied.length === 0) return;
+    const updates = new Map<string, Slide>();
+    for (const item of applied) {
+      updates.set(item.slideId, await updateSlide(pl.id, item.slideId, item.payload));
+    }
+    setPlaylist((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        slides: (current.slides ?? []).map((item) => updates.get(item.id) ?? item),
+      };
+    });
+  }
+
+  async function handleSaveSlides(targets: Slide[], patch: SlideBatchInput) {
+    if (!playlist || targets.length === 0) return;
+    const { applied } = applySlideBatchPatch(targets, patch);
+    if (applied.length === 0) return;
+    deckHistory.recordBeforeChange();
+    try {
+      const updates = new Map<string, Slide>();
+      for (const item of applied) {
+        updates.set(item.slideId, await updateSlide(playlist.id, item.slideId, item.payload));
+      }
+      setPlaylist((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slides: (current.slides ?? []).map((item) => updates.get(item.id) ?? item),
+        };
+      });
+      await deckHistory.confirmChange();
+      if (applied.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchSaved.replace(
+            "{count}",
+            String(applied.length),
+          ),
+        );
+      }
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
   const persistComunicadoPending = useCallback(
     async (
       captured: {
@@ -1475,6 +1781,7 @@ export function PlaylistEditorPage({
         pendingComunicadoSaveRef.current = null;
       }
       await persistComunicadoPending(pending, options);
+      await persistSharedCustomFanOut(pending.slide, pending.nativeConfig);
     },
     [persistComunicadoPending],
   );
@@ -1497,21 +1804,42 @@ export function PlaylistEditorPage({
       }
       pendingComunicadoSaveRef.current = null;
       void persistComunicadoPending(previous);
+      void persistSharedCustomFanOut(previous.slide, previous.nativeConfig);
+      customFanOutBaselineRef.current = null;
+    }
+    if (!previous || previous.slide.id !== slide.id) {
+      customFanOutBaselineRef.current = {
+        slideId: slide.id,
+        nativeConfig: { ...(slide.nativeConfig ?? {}) },
+      };
     }
 
     liveComunicadoConfigRef.current = nativeConfig;
     const version = bumpComunicadoAutosaveVersion(comunicadoAutosaveVersionRef.current, slide.id);
     writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig, Date.now(), version);
     pendingComunicadoSaveRef.current = { slide, nativeConfig, version };
+    const sharedSlice = pickSharedCustomSlideConfig(
+      nativeConfig,
+      customFanOutBaselineRef.current?.nativeConfig,
+    );
+    const fanOutIds = new Set(
+      selectedSlidesRef.current
+        .filter((item) => item.id !== slide.id && isCustomMessageSlide(item))
+        .map((item) => item.id),
+    );
     // Otimista: atualiza nativeConfig no estado já — o save API continua debounced.
     // Sem isso, re-renders (WS/thumbnails) reaplicam o config antigo no editor mid-drag.
     setPlaylist((current) => {
       if (!current) return current;
       return {
         ...current,
-        slides: (current.slides ?? []).map((item) =>
-          item.id === slide.id ? { ...item, nativeConfig } : item,
-        ),
+        slides: (current.slides ?? []).map((item) => {
+          if (item.id === slide.id) return { ...item, nativeConfig };
+          if (sharedSlice && fanOutIds.has(item.id)) {
+            return { ...item, nativeConfig: { ...(item.nativeConfig ?? {}), ...sharedSlice } };
+          }
+          return item;
+        }),
       };
     });
     if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
@@ -1531,6 +1859,7 @@ export function PlaylistEditorPage({
             : "Falha ao salvar o slide. Suas alterações ficaram guardadas localmente.",
         );
       });
+      void persistSharedCustomFanOut(slide, nativeConfig);
     }, 400);
 
     if (wsDraftTimerRef.current) window.clearTimeout(wsDraftTimerRef.current);
@@ -1559,10 +1888,6 @@ export function PlaylistEditorPage({
     };
   }, [flushPendingComunicadoSave]);
 
-  async function handleDuplicateSlide(slide: Slide) {
-    await handleDuplicateSlides([slide]);
-  }
-
   async function handleDuplicateSlides(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     await flushPendingComunicadoSave();
@@ -1579,6 +1904,14 @@ export function PlaylistEditorPage({
       }
       if (lastPlaced) selectSlide(lastPlaced.id, lastPlaced);
       await deckHistory.confirmChange();
+      if (unique.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchDuplicated.replace(
+            "{count}",
+            String(unique.length),
+          ),
+        );
+      }
     } catch (caught) {
       deckHistory.cancelChange();
       throw caught;
@@ -1629,10 +1962,6 @@ export function PlaylistEditorPage({
   const canPasteSlide = slideClipboardRef.current != null;
   void slideClipboardRevision;
 
-  async function handleToggleSlideActive(slide: Slide) {
-    await handleToggleSlidesActive([slide]);
-  }
-
   async function handleToggleSlidesActive(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
     const unique = targets.filter(
@@ -1650,6 +1979,14 @@ export function PlaylistEditorPage({
         slides: (playlist.slides ?? []).map((item) => updates.get(item.id) ?? item),
       });
       await deckHistory.confirmChange();
+      if (unique.length > 1) {
+        tvDashboardNotice(
+          TV_DASHBOARD_HELP_TOOLTIPS.ribbon.slideBatchSaved.replace(
+            "{count}",
+            String(unique.length),
+          ),
+        );
+      }
     } catch (caught) {
       deckHistory.cancelChange();
       throw caught;
@@ -1671,7 +2008,7 @@ export function PlaylistEditorPage({
     return "td-badge td-badge--inactive";
   }
 
-  async function handleDropSlide(targetIndex: number) {
+  async function handleDropSlide(targetIndex: number, edge?: ListDropEdge) {
     if (!playlist) return;
     const movingIds =
       dragSlideIds.length > 0
@@ -1687,6 +2024,7 @@ export function PlaylistEditorPage({
     const ordered = relocateFilmstripSlides(slides, movingIds, {
       kind: "index",
       targetIndex,
+      edge,
     });
     const unchanged =
       ordered.length === slides.length &&
@@ -1738,18 +2076,21 @@ export function PlaylistEditorPage({
 
   const admin = uiContent?.admin ?? {};
   const isCustomSlide = selectedSlide?.nativeScreenKey === "custom_message";
+  const activeSlideCount = slides.filter((slide) => slide.isActive !== false).length;
 
   const slideDeckProps = {
     slides,
     selectedSlide,
     onAdd: () => void handleAddCustomSlide(),
     onSelect: selectSlide,
-    onDuplicate: (slide: Slide) => void handleDuplicateSlide(slide),
-    onToggleActive: (slide: Slide) => void handleToggleSlideActive(slide),
-    onRemove: (slide: Slide) => void handleRemoveSlide(slide),
+    onDuplicate: (targets: Slide[]) => void handleDuplicateSlides(targets),
+    onToggleActive: (targets: Slide[]) => void handleToggleSlidesActive(targets),
+    onRemove: (targets: Slide[]) => void handleRemoveSlides(targets),
     onExportPng: () => void handleExportPng(),
     onExportPdf: () => void handleExportPdf(),
-    onExportPptx: isCustomSlide ? () => void handleExportPptx() : undefined,
+    onExportPptx: selectedSlides.some(isCustomMessageSlide)
+      ? () => void handleExportPptx()
+      : undefined,
     exportBusy,
     playlistChrome: {
       playlistName: playlist.name,
@@ -1785,10 +2126,13 @@ export function PlaylistEditorPage({
     isCustomSlide,
     adminLabels: admin,
     slideDeck: slideDeckProps,
+    selectedSlideCount: selectedSlides.length,
+    selectedSlides,
     onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
       void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
       void handleSaveSlide(slide, payload, { recordHistory: true }),
+    onSaveSlides: (targets: Slide[], patch: SlideBatchInput) => void handleSaveSlides(targets, patch),
   };
 
   const workspaceProps = {
@@ -1809,6 +2153,8 @@ export function PlaylistEditorPage({
     inactiveLabel: admin.slideInactive ?? "Pausada",
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
+    viewportWidth: playlist.viewportWidth,
+    viewportHeight: playlist.viewportHeight,
     masterConfig: playlist.masterConfig,
     defaultDurationSec: playlist.defaultDurationSec,
     defaultTransitionStyle: playlist.transitionStyle,
@@ -1817,7 +2163,7 @@ export function PlaylistEditorPage({
     onLongPressSelect: handleFilmstripLongPress,
     onClearMultiSelection: clearFilmstripMultiSelection,
     onDragStart: beginFilmstripDrag,
-    onDrop: (index: number) => void handleDropSlide(index),
+    onDrop: (index, edge) => void handleDropSlide(index, edge),
     onDragEnd: endFilmstripDrag,
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),
@@ -1847,13 +2193,17 @@ export function PlaylistEditorPage({
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <KeyboardShortcutsTipsProvider>
       <DeckKeyTipsProvider>
+      <TvCopilotDockProvider>
       <div className="td-deck td-deck--editor">
       {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
+          publicToken={playlist.publicToken}
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
           viewportProfile={playlist.viewportProfile}
+          viewportWidth={playlist.viewportWidth}
+          viewportHeight={playlist.viewportHeight}
           masterConfig={selectedSlideMaster}
           playlistDefaults={playlist.dataDefaults}
           value={editorComunicadoValue}
@@ -1874,6 +2224,13 @@ export function PlaylistEditorPage({
           <DeckEditorChrome {...chromeProps} />
           <DeckWorkspace
             {...workspaceProps}
+            copilotPanel={
+              <TvCopilotDockSlot
+                playlistId={playlistId}
+                slideId={selectedSlide?.id ?? null}
+                branchScope={branchScope}
+              />
+            }
             stage={
               !selectedSlide ? (
                 <div className="td-deck-stage__empty">
@@ -1886,6 +2243,8 @@ export function PlaylistEditorPage({
                     playlistId={playlistId}
                     previewSlide={previewBySlideId[selectedSlide.id]}
                     viewportProfile={playlist.viewportProfile}
+                    viewportWidth={playlist.viewportWidth}
+                    viewportHeight={playlist.viewportHeight}
                     masterConfig={selectedSlideMaster}
                     publicToken={playlist.publicToken}
                   />
@@ -1916,7 +2275,20 @@ export function PlaylistEditorPage({
         }}
         onConfirm={(name) => void handleRenamePlaylist(name)}
       />
+      <ExportPdfDialog
+        open={exportPdfOpen}
+        onClose={() => {
+          if (!exportBusy) setExportPdfOpen(false);
+        }}
+        onGenerate={(opts) => handleGenerateExportPdf(opts)}
+        activeSlideCount={activeSlideCount}
+        selectedSlideCount={selectedSlides.length}
+        hasCurrentSlide={Boolean(selectedSlide)}
+        progressLabel={exportPdfProgress}
+        busy={exportBusy}
+      />
       <KeyboardShortcutsCatalogModal />
+      </TvCopilotDockProvider>
       </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>

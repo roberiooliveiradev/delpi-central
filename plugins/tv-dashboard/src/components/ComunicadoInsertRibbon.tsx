@@ -9,6 +9,7 @@ import {
   Heading,
   Image as ImageIcon,
   Minus,
+  Radio,
   Shapes,
   Sparkles,
   Table2,
@@ -192,6 +193,15 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               />
             ) : null}
           </div>
+          <DeckRibbonTile
+            icon={Radio}
+            label={labels.comunicadoAddEfficiencyPin ?? "Pin CT"}
+            hint={
+              H.insertEfficiencyPin ??
+              "Pin de centro de trabalho na planta — radar pela eficiência do dia"
+            }
+            onClick={() => insertShape("efficiency-pin")}
+          />
           <div ref={lineAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
               icon={Minus}

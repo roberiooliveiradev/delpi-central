@@ -190,8 +190,8 @@ function computeUnitOrigins(
 }
 
 /**
- * Alinha/distribui a seleção por **unidades de layout** (grupos fechados ou blocos).
- * Membros de um grupo recebem o mesmo delta — layout interno preservado.
+ * Alinha/distribui a seleção por **membros** (grupo fechado = multi-seleção).
+ * Move/resize da moldura continua com `expandClosedGroups: false` no gesture.
  * Comandos `align-slide-*` alinham ao slide (0…100%) com 1+ unidades.
  */
 export function alignComunicadoBlocks(
@@ -200,7 +200,9 @@ export function alignComunicadoBlocks(
   command: LayoutAlignCommand,
   options?: { slideBounds?: ComunicadoFrame },
 ): ComunicadoBlock[] {
-  const units = partitionSelectionIntoLayoutUnits(blocks, selectedIds);
+  const units = partitionSelectionIntoLayoutUnits(blocks, selectedIds, {
+    expandClosedGroups: true,
+  });
   if (units.length === 0) return blocks;
 
   if (isSlideAlignCommand(command)) {

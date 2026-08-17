@@ -99,6 +99,14 @@
       "sourceApps": ["lancamento-notas-fiscais"],
       "pluginId": "lancamento-notas-fiscais"
     },
+    "invoice_issuance": {
+      "label": "Emissão de Notas Fiscais",
+      "icon": "file-text",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["invoice-issuance"],
+      "pluginId": "invoice-issuance"
+    },
     "comite_etica_conduta": {
       "label": "Comitê de Ética e Conduta",
       "icon": "clipboard-check",
@@ -114,6 +122,14 @@
       "kind": "app",
       "sourceApps": ["tv-dashboard"],
       "pluginId": "tv-dashboard"
+    },
+    "commercial": {
+      "label": "Portal Comercial",
+      "icon": "briefcase",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["commercial"],
+      "pluginId": "commercial"
     }
   },
   "legacyCategoryAliases": {

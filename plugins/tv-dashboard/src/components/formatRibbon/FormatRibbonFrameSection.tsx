@@ -172,9 +172,14 @@ export function FormatRibbonFrameSection({
     updateSelected,
     updateSelectedStyle,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
   } = useComunicadoEditor();
 
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
 
   if (!selected || selectedIds.length > 1) return null;
 

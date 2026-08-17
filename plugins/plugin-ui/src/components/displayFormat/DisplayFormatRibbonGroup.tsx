@@ -1,0 +1,184 @@
+import { ChevronDown, Maximize2 } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+
+import {
+  bumpDisplayFormatDecimalPlaces,
+  displayFormatTriggerLabel,
+  isNumericDisplayCategory,
+  togglePercentDisplayFormat,
+  toggleThousandsDisplayFormat,
+  type DisplayFormatSpec,
+  type DisplayFormatTarget,
+} from "../../displayFormat";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
+import { dismissActiveExclusiveAnchoredPanel } from "../shape/exclusiveAnchoredPanel";
+import { DisplayFormatDialog } from "./DisplayFormatDialog";
+import { DisplayFormatMenu } from "./DisplayFormatMenu";
+import { DisplayFormatTargetHint } from "./DisplayFormatTargetHint";
+import { DEFAULT_DISPLAY_FORMAT_CN } from "./displayFormatClasses";
+
+export type DisplayFormatRibbonGroupProps = {
+  spec: DisplayFormatSpec;
+  onChange: (spec: DisplayFormatSpec) => void;
+  target: DisplayFormatTarget;
+  /** Rótulo fino do alvo (ex.: Coluna "Qtd"). Fallback = label genérico do target. */
+  targetHint?: string;
+  sampleValue?: unknown;
+  density?: "ribbon" | "compact";
+  portalScopeClassName?: string;
+  /**
+   * Modal Formatar controlado pelo pai (fora do popover do grupo Número).
+   * Evita desmontar o dialog quando o ribbon colapsado fecha o popover.
+   */
+  formatDialog?: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  };
+};
+
+export function DisplayFormatRibbonGroup({
+  spec,
+  onChange,
+  target,
+  targetHint,
+  sampleValue,
+  density = "ribbon",
+  portalScopeClassName,
+  formatDialog,
+}: DisplayFormatRibbonGroupProps) {
+  const cn = DEFAULT_DISPLAY_FORMAT_CN;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [uncontrolledDialogOpen, setUncontrolledDialogOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  const numeric = isNumericDisplayCategory(spec.category);
+  /* Eixo X (categoria): % ainda aplica nos valores via displayFormatSelection. */
+  const percentShortcutEnabled = numeric || target === "chartCategory";
+  const dialogOpen = formatDialog?.open ?? uncontrolledDialogOpen;
+  const setDialogOpen = formatDialog?.onOpenChange ?? setUncontrolledDialogOpen;
+  const dialogOwnedByParent = Boolean(formatDialog);
+
+  const openFormatDialog = () => {
+    setMenuOpen(false);
+    /* Fecha o popover do RibbonGroup colapsado antes de montar o Formatar fora dele. */
+    dismissActiveExclusiveAnchoredPanel();
+    setDialogOpen(true);
+  };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  return (
+    <div
+      ref={rootRef}
+      className={[cn.group, density === "compact" ? cn.groupCompact : ""].filter(Boolean).join(" ")}
+    >
+      <DisplayFormatTargetHint target={target} label={targetHint} />
+      <button
+        type="button"
+        className={cn.trigger}
+        aria-haspopup="listbox"
+        aria-expanded={menuOpen}
+        aria-controls={menuId}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        <span>{displayFormatTriggerLabel(spec)}</span>
+        <ChevronDown size={14} aria-hidden />
+      </button>
+      {menuOpen ? (
+        <AnchoredPanelPortal
+          open
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          variant="bare"
+          density="compact"
+          matchAnchorWidth
+          portalScopeClassName={portalScopeClassName}
+          onDismiss={() => setMenuOpen(false)}
+          aria-label="Categorias de formato"
+        >
+          <div id={menuId} ref={panelRef}>
+            <DisplayFormatMenu
+              spec={spec}
+              onSelect={(next) => {
+                onChange(next);
+                setMenuOpen(false);
+              }}
+              onMore={openFormatDialog}
+            />
+          </div>
+        </AnchoredPanelPortal>
+      ) : null}
+      <div className={cn.shortcuts}>
+        <button
+          type="button"
+          className={cn.shortcut}
+          disabled={!percentShortcutEnabled}
+          title="Porcentagem"
+          aria-label="Porcentagem"
+          onClick={() => onChange(togglePercentDisplayFormat(spec))}
+        >
+          %
+        </button>
+        <button
+          type="button"
+          className={cn.shortcut}
+          disabled={!numeric}
+          title="Separador de milhar"
+          aria-label="Separador de milhar"
+          onClick={() => onChange(toggleThousandsDisplayFormat(spec))}
+        >
+          000
+        </button>
+        <button
+          type="button"
+          className={cn.shortcut}
+          disabled={!numeric}
+          title="Diminuir casas decimais"
+          aria-label="Diminuir casas decimais"
+          onClick={() => onChange(bumpDisplayFormatDecimalPlaces(spec, -1))}
+        >
+          .0←
+        </button>
+        <button
+          type="button"
+          className={cn.shortcut}
+          disabled={!numeric}
+          title="Aumentar casas decimais"
+          aria-label="Aumentar casas decimais"
+          onClick={() => onChange(bumpDisplayFormatDecimalPlaces(spec, 1))}
+        >
+          .0→
+        </button>
+        <button
+          type="button"
+          className={cn.launcher}
+          title="Mais formatos"
+          aria-label="Mais formatos de número"
+          onClick={openFormatDialog}
+        >
+          <Maximize2 size={14} aria-hidden />
+        </button>
+      </div>
+      {dialogOwnedByParent ? null : (
+        <DisplayFormatDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          spec={spec}
+          onApply={onChange}
+          sampleValue={sampleValue}
+          target={target}
+          targetHint={targetHint}
+          portalScopeClassName={portalScopeClassName}
+        />
+      )}
+    </div>
+  );
+}

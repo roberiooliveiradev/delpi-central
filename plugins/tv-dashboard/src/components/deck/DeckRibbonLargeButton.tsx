@@ -25,6 +25,7 @@ export function DeckRibbonLargeButton({
   primary,
   keyTip,
 }: Props) {
+  const accessibleLabel = label.replace(/\s+/g, " ").trim();
   const button = (
     <button
       type="button"
@@ -33,10 +34,10 @@ export function DeckRibbonLargeButton({
         .join(" ")}
       disabled={disabled}
       onClick={onClick}
-      aria-label={label}
+      aria-label={accessibleLabel}
     >
       <Icon size={22} aria-hidden="true" />
-      <span>{label}</span>
+      <span className="td-ribbon-large-btn__label">{label}</span>
     </button>
   );
 

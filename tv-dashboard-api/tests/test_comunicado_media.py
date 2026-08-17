@@ -117,6 +117,34 @@ def test_comunicado_enrichment_default_background_is_white():
     assert data["background"] == {"type": "color", "value": "#ffffff"}
 
 
+def test_comunicado_enrichment_preserves_gradient_stops_and_angle():
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "version": 4,
+            "blocks": [],
+            "background": {
+                "type": "gradient",
+                "from": "#111111",
+                "to": "#eeeeee",
+                "angle": 45,
+                "stops": [
+                    {"color": "#111111", "position": 0},
+                    {"color": "#445566", "position": 50},
+                    {"color": "#eeeeee", "position": 100},
+                ],
+            },
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    background = data["background"]
+    assert background["type"] == "gradient"
+    assert background["angle"] == 45
+    assert background["stops"][1]["color"] == "#445566"
+    assert background["stops"][1]["position"] == 50
+
+
 def test_comunicado_enrichment_preserves_frame_outside_slide():
     """Preview/apresentação não pode clampar X/Y a 0–100 (paridade com o editor)."""
     service = ComunicadoEnrichmentService(media_repo=MagicMock())

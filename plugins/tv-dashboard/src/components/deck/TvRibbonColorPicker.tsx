@@ -1,4 +1,11 @@
-import { HintAction, RibbonColorPicker, type ColorPickerVariant } from "@delpi/plugin-ui/index";
+import {
+  HintAction,
+  RibbonColorPicker,
+  solidFromFill,
+  type ColorPickerVariant,
+  type DelpiFill,
+  type DelpiFillKind,
+} from "@delpi/plugin-ui/index";
 import { useState } from "react";
 
 import { readRecentComunicadoColors, rememberComunicadoColor } from "../../utils/comunicadoRecentColors";
@@ -18,6 +25,9 @@ type TvRibbonColorPickerProps = {
   showAutomatic?: boolean;
   contrastBackground?: string | null;
   onAutomatic?: (color: "#000000" | "#ffffff") => void;
+  fill?: DelpiFill;
+  onFillChange?: (fill: DelpiFill) => void;
+  allowedFillKinds?: readonly DelpiFillKind[];
 };
 
 /** Seletor de cor do ribbon tv-dashboard — delega ao componente canônico do plugin-ui. */
@@ -34,12 +44,26 @@ export function TvRibbonColorPicker({
   showAutomatic,
   contrastBackground,
   onAutomatic,
+  fill,
+  onFillChange,
+  allowedFillKinds,
 }: TvRibbonColorPickerProps) {
   const [recentColors, setRecentColors] = useState(readRecentComunicadoColors);
 
+  const remember = (color: string) => {
+    if (color && color !== "transparent" && color !== "auto") {
+      setRecentColors(rememberComunicadoColor(color));
+    }
+  };
+
   const handleChange = (color: string) => {
-    setRecentColors(rememberComunicadoColor(color));
+    remember(color);
     onChange(color);
+  };
+
+  const handleFillChange = (next: DelpiFill) => {
+    remember(solidFromFill(next));
+    onFillChange?.(next);
   };
 
   const picker = (
@@ -61,6 +85,9 @@ export function TvRibbonColorPicker({
         showAutomatic={showAutomatic}
         contrastBackground={contrastBackground}
         onAutomatic={onAutomatic}
+        fill={fill}
+        onFillChange={onFillChange ? handleFillChange : undefined}
+        allowedFillKinds={allowedFillKinds}
         recentColors={recentColors}
         className={inline ? "delpi-ui-color-picker-trigger--inline" : undefined}
       />

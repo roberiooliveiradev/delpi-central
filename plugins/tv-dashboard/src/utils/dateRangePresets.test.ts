@@ -28,13 +28,21 @@ describe("dateRangePresets", () => {
   it("expõe presets relativos e personalizado", () => {
     const values = DATE_RANGE_PRESET_OPTIONS.map((item) => item.value);
     expect(values).toContain("this_month");
+    expect(values).toContain("this_month_until_yesterday");
     expect(values).toContain("this_week");
     expect(values).toContain("this_quarter");
     expect(values).toContain("this_year");
+    expect(values).toContain("previous_day");
     expect(values).toContain("previous_month");
     expect(values).toContain("previous_year");
     expect(values).toContain("last_90_days");
     expect(values).toContain("last_n_days");
     expect(values).toContain("custom");
+    expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "previous_day")?.label).toBe(
+      "Dia anterior",
+    );
+    expect(
+      DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_month_until_yesterday")?.label,
+    ).toBe("Este mês (até ontem)");
   });
 });

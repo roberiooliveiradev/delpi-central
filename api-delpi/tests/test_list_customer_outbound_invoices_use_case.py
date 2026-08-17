@@ -159,3 +159,7 @@ def test_operation_id_mentioned_for_route_coverage() -> None:
     assert "list_cliente_notas_fiscais_saida" in (
         "list_cliente_notas_fiscais_saida"
     )
+    assert "list_totvs_outbound_invoices" in (
+        "list_totvs_outbound_invoices"
+    )
+    assert "list_totvs_open_orders" in ("list_totvs_open_orders")

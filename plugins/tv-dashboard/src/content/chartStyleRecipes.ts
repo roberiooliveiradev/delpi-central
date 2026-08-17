@@ -207,10 +207,10 @@ export function applyChartStyleRecipe(
   return { ...options, ...recipe.patch };
 }
 
-/** Liga/desliga colorir-por-valor; garante rampa semântica em `categoryColors`. */
+/** Liga/desliga colorir-por-valor ou pela meta; garante rampa semântica em `by_value`. */
 export function applyChartColorScaleMode(
   options: ComunicadoChartOptions,
-  mode: "off" | "by_value",
+  mode: "off" | "by_value" | "by_goal",
   polarity: "high_is_bad" | "high_is_good" = "high_is_bad",
 ): ComunicadoChartOptions {
   if (mode === "off") {
@@ -219,6 +219,16 @@ export function applyChartColorScaleMode(
       colorScale: {
         mode: "off",
         polarity: options.colorScale?.polarity ?? polarity,
+        paletteId: options.colorScale?.paletteId,
+      },
+    };
+  }
+  if (mode === "by_goal") {
+    return {
+      ...options,
+      colorScale: {
+        mode: "by_goal",
+        polarity,
         paletteId: options.colorScale?.paletteId,
       },
     };

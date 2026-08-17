@@ -111,6 +111,40 @@ def test_enrich_data_kpi_block_resolves_scalar():
     assert call_kwargs["params"]["periodDays"] == 7
 
 
+def test_enrich_stamps_view_filter_params_for_exclude_weekends():
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct"},
+        "data": {"value": 80},
+        "route": {"label": "OEE", "allowedDisplayModes": ["kpi", "line_chart", "auto"]},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {
+                    "periodDays": 7,
+                    "granularity": "day",
+                    "excludeWeekends": True,
+                },
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert enriched[0]["resolved"]["viewFilterParams"] == {
+        "excludeWeekends": True,
+        "granularity": "day",
+    }
+    assert gateway.fetch_by_operation_id.call_args.kwargs["params"]["excludeWeekends"] is True
+
+
 def test_enrich_dashboard_department_indicators_unwraps_item_wrapper():
     """Ponte SI devolve `{ item: { idd, indicators } }` — preview TV precisa do IDD e da tabela."""
     gateway = MagicMock()
@@ -417,6 +451,50 @@ def test_enrich_table_accepts_bare_list_payload_like_eficiencia_appointments():
     assert rows[1]["op"] == "OP002"
     columns = enriched[0]["resolved"]["table"]["columns"]
     assert any(column["key"] == "appointment_id" for column in columns)
+
+
+def test_resolve_table_max_rows_bulk_list_and_appointments_overlay():
+    """Bulk list / overlay de apontamentos não pode ficar no default 90 (distorce AVG por CT)."""
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _DEFAULT_BULK_LIST_MAX_ROWS,
+        _DEFAULT_TABLE_MAX_ROWS,
+        _merge_route_info_for_presentation,
+        _resolve_table_max_rows,
+    )
+
+    assert _resolve_table_max_rows({}, {}) == _DEFAULT_TABLE_MAX_ROWS
+    assert (
+        _resolve_table_max_rows({}, {"tvConstraints": {"bulkList": True}})
+        == _DEFAULT_BULK_LIST_MAX_ROWS
+    )
+    assert (
+        _resolve_table_max_rows({}, {"tvConstraints": {"maxRows": 10000, "bulkList": True}})
+        == 10000
+    )
+    # Bloco legado com maxRows=90 não pode vencer o floor bulk (regressão 58,8% vs 75,7%).
+    assert (
+        _resolve_table_max_rows(
+            {"maxRows": 90},
+            {"tvConstraints": {"maxRows": 10000, "bulkList": True}},
+        )
+        == 10000
+    )
+
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route("list_eficiencia_fabril_appointments")
+    assert route is not None
+    assert int((route.get("tvConstraints") or {}).get("maxRows") or 0) >= 10000
+
+    # Payload em cache sem overlay não pode apagar constraints do catálogo.
+    merged = _merge_route_info_for_presentation(
+        route,
+        {"label": "stale", "tvConstraints": {}},
+    )
+    assert merged.get("tvConstraints", {}).get("bulkList") is True
+    assert int(merged.get("tvConstraints", {}).get("maxRows") or 0) >= 10000
+    assert (
+        _resolve_table_max_rows({"maxRows": 90}, merged) >= 10000
+    )
 
 
 def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
@@ -1939,3 +2017,70 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
         "value",
     }
     assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"
+
+
+def test_enrich_sales_order_otd_panel_unwraps_lines_items_page():
+    """Painel OTD devolve `{ lines: { items: [...] } }` — tabela TV não pode ficar vazia."""
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_sales_order_otd_panel",
+            "shape": "paged_list",
+            "entity": "sales_order_otd_panel",
+        },
+        "data": {
+            "branch": "02",
+            "summary": {
+                "total_lines": 1,
+                "on_time_lines": 0,
+                "late_lines": 1,
+                "sales_order_otd_pct": 0.0,
+                "late_percentage": 100.0,
+            },
+            "lines": {
+                "items": [
+                    {
+                        "order_number": "000123",
+                        "line_item": "01",
+                        "branch": "02",
+                        "status": "late",
+                        "customer_name": "Cliente ES",
+                        "promised_date": "2026-01-10",
+                    }
+                ],
+                "total": 1,
+                "page": 1,
+                "page_size": 20,
+            },
+        },
+        "route": {
+            "label": "Pedidos de venda — painel OTD",
+            "tableFields": "lines",
+            "allowedDisplayModes": ["table", "kpi", "auto"],
+            "metaShape": "paged_list",
+            "tvConstraints": {"maxRows": 200},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "otd-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_sales_order_otd_panel",
+                    "params": {"branch": "02", "status": "late"},
+                    "displayMode": "table",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    resolved = enriched[0]["resolved"]
+    assert resolved["table"]["rows"], "esperado lines.items desembrulhado"
+    assert resolved["table"]["rows"][0]["order_number"] == "000123"
+    assert resolved["table"]["rows"][0]["status"] == "late"

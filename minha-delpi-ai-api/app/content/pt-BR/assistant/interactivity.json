@@ -273,6 +273,7 @@
     { "key": "helpFollowUpSuggestions", "group": "ajuda", "priority": 40 },
     { "key": "helpErrorFollowUpSuggestions", "group": "ajuda", "priority": 6 },
     { "key": "routingDisambiguationSuggestions", "group": "consultar", "priority": 12 },
+    { "key": "selectionFollowUpSuggestions", "group": "consultar", "priority": 4 },
     { "key": "onboardingFollowUpSuggestions", "group": "ajuda", "priority": 50 },
     { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },
     { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 },

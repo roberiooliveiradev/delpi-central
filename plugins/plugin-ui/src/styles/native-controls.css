@@ -137,6 +137,9 @@ textarea.delpi-ui-native-control--compact {
   --delpi-ui-checkbox-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   --delpi-ui-checkbox-check: #ffffff;
 
+  /* Containing block do input absoluto — sem isso o a11y ancora no painel
+     (ex.: side panel position:relative) e empilha checkboxes no canto. */
+  position: relative;
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -232,7 +235,22 @@ textarea.delpi-ui-native-control--compact {
 }
 
 .delpi-ui-native-checkbox__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   line-height: 1.35;
+}
+
+.delpi-ui-native-checkbox__help {
+  flex: 0 0 auto;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.delpi-ui-native-checkbox__help .delpi-ui-native-checkbox__label {
+  cursor: help;
+  text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.18em;
 }
 
 .delpi-ui-native-checkbox__hint {
@@ -250,6 +268,7 @@ textarea.delpi-ui-native-control--compact {
 
 /* Switch — mesmo reforço de eixo horizontal (é <label>). */
 .delpi-ui-native-switch {
+  position: relative;
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;

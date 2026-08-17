@@ -1,0 +1,92 @@
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+
+import { AlertQueue, alertQueueBemClasses } from "./AlertQueue";
+import { ScopeChipBar, scopeChipBarBemClasses } from "./ScopeChipBar";
+import { WorklistItem, worklistItemBemClasses } from "./WorklistItem";
+
+describe("Wave G worklist surface", () => {
+  it("alertQueueBemClasses emite dual-class", () => {
+    const cn = alertQueueBemClasses("cm");
+    expect(cn.root).toContain("cm-alert-queue");
+    expect(cn.root).toContain("delpi-ui-alert-queue");
+  });
+
+  it("AlertQueue renderiza item e empty", () => {
+    const cn = alertQueueBemClasses("cm");
+    const { rerender } = render(
+      <AlertQueue
+        classNames={cn}
+        items={[{ id: "1", title: "Atraso", actionLabel: "Ver", onAction: () => undefined }]}
+      />,
+    );
+    expect(screen.getByText("Atraso")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver" })).toBeTruthy();
+
+    rerender(<AlertQueue classNames={cn} items={[]} emptyMessage="Vazio" />);
+    expect(screen.getByText("Vazio")).toBeTruthy();
+  });
+
+  it("ScopeChipBar e WorklistItem dual-class + active", () => {
+    const chipCn = scopeChipBarBemClasses("cm");
+    const wlCn = worklistItemBemClasses("cm");
+    expect(chipCn.chip).toContain("delpi-ui-scope-chip-bar__chip");
+    expect(wlCn.root).toContain("delpi-ui-worklist-item");
+
+    render(
+      <ScopeChipBar
+        classNames={chipCn}
+        chips={[{ id: "me", label: "Minha carteira", active: true }]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Minha carteira" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+
+    render(
+      <WorklistItem
+        classNames={wlCn}
+        title="Follow-up"
+        meta="Hoje · Alta · Ligar"
+        detail="Confirmar NF e prazo de entrega"
+        primaryActionLabel="Concluir"
+        onPrimaryAction={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Concluir" })).toBeTruthy();
+    expect(screen.getByText("Confirmar NF e prazo de entrega")).toBeTruthy();
+    expect(wlCn.detail).toContain("delpi-ui-worklist-item__detail");
+  });
+
+  it("AlertQueue e WorklistItem renderizam leadingIcon", () => {
+    const alertCn = alertQueueBemClasses("cm");
+    const wlCn = worklistItemBemClasses("cm");
+    expect(alertCn.icon).toContain("delpi-ui-alert-queue__icon");
+    expect(wlCn.icon).toContain("delpi-ui-worklist-item__icon");
+
+    const { container: alertRoot } = render(
+      <AlertQueue
+        classNames={alertCn}
+        items={[
+          {
+            id: "1",
+            title: "Atraso",
+            leadingIcon: <span data-testid="alert-leading-icon">A</span>,
+          },
+        ]}
+      />,
+    );
+    expect(alertRoot.querySelector('[data-testid="alert-leading-icon"]')).toBeTruthy();
+    expect(alertRoot.querySelector(".delpi-ui-alert-queue__icon")).toBeTruthy();
+
+    const { container: wlRoot } = render(
+      <WorklistItem
+        classNames={wlCn}
+        title="Follow-up"
+        leadingIcon={<span data-testid="worklist-leading-icon">W</span>}
+      />,
+    );
+    expect(wlRoot.querySelector('[data-testid="worklist-leading-icon"]')).toBeTruthy();
+    expect(wlRoot.querySelector(".delpi-ui-worklist-item__icon")).toBeTruthy();
+  });
+});

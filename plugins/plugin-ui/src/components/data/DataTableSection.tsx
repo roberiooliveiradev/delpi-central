@@ -1,12 +1,16 @@
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { HelpTooltip } from "../help/HelpTooltip";
+import { ExcelExportButton } from "../../export/ExportButtons";
+import { usePersistedViewLayout } from "../../hooks/usePersistedViewLayout";
 import { useTableColumnVisibility } from "../../hooks/useTableColumnVisibility";
+import { useTableFontSize } from "../../hooks/useTableFontSize";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useClientPagination } from "../../utils/useClientPagination";
+import { HelpTooltip } from "../help/HelpTooltip";
+import { SegmentToggle } from "../forms/SegmentToggle";
 import {
   DataTable,
   dataTableBemClasses,
@@ -15,8 +19,30 @@ import {
   type DataTableLabels,
   type DashboardDataTableProps,
 } from "./DataTable";
+import {
+  createDashboardDataCardsGrid,
+  type DashboardDataCardsGridProps,
+} from "./DataCardsGrid";
+import {
+  createDashboardTableFontSizeControls,
+  type DashboardTableFontSizeControlsProps,
+} from "./TableFontSizeControls";
 import { DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS } from "./tableColumnVisibilityLabels";
 import { TableColumnVisibilityMenu } from "./TableColumnVisibilityMenu";
+
+export type DataTableSectionExcelExport = {
+  onExport: () => void | Promise<void>;
+  disabled?: boolean;
+  exporting?: boolean;
+  label?: string;
+  exportingLabel?: string;
+};
+
+const DEFAULT_VIEW_LAYOUT_LABELS = {
+  ariaLabel: "Modo de visualização",
+  table: "Tabela",
+  cards: "Cards",
+} as const;
 
 export type {
   DataTableColumn,
@@ -126,6 +152,8 @@ export type DataTableSectionProps<T> = {
   serverSort?: ServerSortConfig;
   serverSearch?: ServerSearchConfig;
   toolbarExtra?: ReactNode;
+  /** Conteúdo à esquerda da toolbar (além do toggle Tabela/Cards nativo). */
+  toolbarLeading?: ReactNode;
   /**
    * Chave estável de localStorage para preferências de colunas.
    * Quando definida, exibe o menu “Colunas” e filtra a tabela.
@@ -138,6 +166,25 @@ export type DataTableSectionProps<T> = {
   defaultColumnVisibility?: Record<string, boolean>;
   /** Notifica chaves visíveis (export Excel, etc.). */
   onVisibleColumnKeysChange?: (keys: string[]) => void;
+  /**
+   * Chave localStorage — ativa controles nativos de tamanho de fonte.
+   */
+  fontSizePreferencesKey?: string;
+  /** Chaves legadas lidas uma vez ao migrar preferência de fonte. */
+  fontSizeLegacyStorageKeys?: readonly string[];
+  /**
+   * Chave localStorage — ativa toggle Tabela/Cards (exige `renderCard`).
+   */
+  viewLayoutPreferencesKey?: string;
+  /** Render de cada linha no modo Cards. */
+  renderCard?: (row: T) => ReactNode;
+  /** Export Excel nativo na toolbar (opt-in). */
+  excelExport?: DataTableSectionExcelExport;
+  /**
+   * Prefixo BEM do plugin — usado em SegmentToggle / factories internas.
+   * `createDashboardDataTableKit` preenche automaticamente.
+   */
+  uiPrefix?: string;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   headerActions?: ReactNode;
@@ -156,6 +203,8 @@ export type DataTableSectionProps<T> = {
   LoadingActivityCard: ComponentType<LoadingActivityCardInjectedProps>;
   Pagination: ComponentType<PaginationInjectedProps>;
   TablePageSizeSelect: ComponentType<TablePageSizeSelectInjectedProps>;
+  TableFontSizeControls?: ComponentType<DashboardTableFontSizeControlsProps>;
+  DataCardsGrid?: ComponentType<DashboardDataCardsGridProps>;
   useLoadingProgress: (active: boolean, requestProgress: RequestProgress) => number;
   useTrackedSingleFetchProgress: (active: boolean) => RequestProgress;
 };
@@ -259,9 +308,16 @@ export function DataTableSection<T>({
   serverSort,
   serverSearch,
   toolbarExtra,
+  toolbarLeading,
   columnPreferencesKey,
   defaultColumnVisibility,
   onVisibleColumnKeysChange,
+  fontSizePreferencesKey,
+  fontSizeLegacyStorageKeys,
+  viewLayoutPreferencesKey,
+  renderCard,
+  excelExport,
+  uiPrefix = "ds",
   onRowClick,
   getRowClassName,
   headerActions,
@@ -280,6 +336,8 @@ export function DataTableSection<T>({
   LoadingActivityCard,
   Pagination,
   TablePageSizeSelect,
+  TableFontSizeControls: TableFontSizeControlsProp,
+  DataCardsGrid: DataCardsGridProp,
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 }: DataTableSectionProps<T>) {
@@ -301,10 +359,23 @@ export function DataTableSection<T>({
     [columns],
   );
   const columnVisibilityEnabled = Boolean(columnPreferencesKey);
+  const fontSizeEnabled = Boolean(fontSizePreferencesKey);
+  const viewLayoutEnabled = Boolean(viewLayoutPreferencesKey && renderCard);
+  const excelExportEnabled = Boolean(excelExport?.onExport);
+
+  const FontSizeControls =
+    TableFontSizeControlsProp ??
+    createDashboardTableFontSizeControls({ prefix: uiPrefix });
+  const CardsGrid =
+    DataCardsGridProp ?? createDashboardDataCardsGrid({ prefix: uiPrefix });
+
   const {
     visibility,
+    orderedColumns,
     visibleKeys,
     setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
     reset: resetColumnVisibility,
     filterColumns,
   } = useTableColumnVisibility({
@@ -312,6 +383,17 @@ export function DataTableSection<T>({
     columns: columnCatalog,
     enabled: columnVisibilityEnabled,
     defaultVisibility: defaultColumnVisibility,
+  });
+
+  const fontSizeControls = useTableFontSize({
+    storageKey: fontSizePreferencesKey ?? "",
+    legacyStorageKeys: fontSizeLegacyStorageKeys,
+    enabled: fontSizeEnabled,
+  });
+
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: viewLayoutPreferencesKey ?? "",
+    enabled: viewLayoutEnabled,
   });
 
   const visibleColumns = useMemo(
@@ -428,26 +510,105 @@ export function DataTableSection<T>({
     .join(" ");
 
   const showHeader = Boolean(title.trim() || hint);
+  const showNativeChrome =
+    columnVisibilityEnabled ||
+    fontSizeEnabled ||
+    viewLayoutEnabled ||
+    excelExportEnabled;
   const showToolbar =
     !hidePageSizeSelect ||
     !hideSearch ||
     Boolean(toolbarExtra) ||
-    columnVisibilityEnabled;
+    Boolean(toolbarLeading) ||
+    showNativeChrome;
+
+  const sectionStyle: CSSProperties | undefined = fontSizeEnabled
+    ? ({ "--delpi-ui-table-font-size": `${fontSizeControls.fontSize}px` } as CSSProperties)
+    : undefined;
+
+  const showCards = viewLayoutEnabled && layout === "cards";
+  const resolvedEmpty = emptyMessage ?? labels.emptyMessage;
+
+  const viewToggle = viewLayoutEnabled ? (
+    <SegmentToggle
+      prefix={uiPrefix}
+      size="sm"
+      ariaLabel={DEFAULT_VIEW_LAYOUT_LABELS.ariaLabel}
+      idPrefix={`${uiPrefix}-datatable-layout`}
+      value={layout}
+      onChange={setLayout}
+      options={[
+        { value: "table", label: DEFAULT_VIEW_LAYOUT_LABELS.table },
+        { value: "cards", label: DEFAULT_VIEW_LAYOUT_LABELS.cards },
+      ]}
+    />
+  ) : null;
+
+  const nativeToolbarExtra = (
+    <>
+      {excelExportEnabled && excelExport ? (
+        <ExcelExportButton
+          onExport={excelExport.onExport}
+          disabled={excelExport.disabled}
+          exporting={excelExport.exporting}
+          label={excelExport.label}
+          exportingLabel={excelExport.exportingLabel}
+        />
+      ) : null}
+      {fontSizeEnabled ? (
+        <FontSizeControls
+          fontSize={fontSizeControls.fontSize}
+          canIncrease={fontSizeControls.canIncrease}
+          canDecrease={fontSizeControls.canDecrease}
+          isDefault={fontSizeControls.isDefault}
+          onIncrease={fontSizeControls.increase}
+          onDecrease={fontSizeControls.decrease}
+          onReset={fontSizeControls.reset}
+        />
+      ) : null}
+      {columnVisibilityEnabled ? (
+        <TableColumnVisibilityMenu
+          columns={orderedColumns}
+          visibility={visibility}
+          onToggleColumn={setColumnVisible}
+          onReorderColumns={reorderColumns}
+          onReset={resetColumnVisibility}
+          labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+        />
+      ) : null}
+      {toolbarExtra}
+    </>
+  );
+
+  const hasToolbarExtra =
+    excelExportEnabled ||
+    fontSizeEnabled ||
+    columnVisibilityEnabled ||
+    Boolean(toolbarExtra);
 
   return (
-    <section className={sectionClass || sectionClassNames.section} aria-busy={loading || refreshing}>
+    <section
+      className={sectionClass || sectionClassNames.section}
+      style={sectionStyle}
+      aria-busy={loading || refreshing}
+    >
       {showHeader ? (
         <div className={sectionClassNames.header}>
           {title.trim() ? (
             <h2 className={sectionClassNames.title}>
-              {title}
               {titleHint ? (
                 <HelpTooltip
                   content={titleHint}
                   ariaLabel={labels.titleHelpAriaLabel(title)}
+                  wrap
+                  placement="bottom"
                   className={sectionClassNames.titleHelp}
-                />
-              ) : null}
+                >
+                  <span className="delpi-ui-section-hint-label">{title}</span>
+                </HelpTooltip>
+              ) : (
+                title
+              )}
             </h2>
           ) : (
             <span />
@@ -488,6 +649,13 @@ export function DataTableSection<T>({
         <>
           {showToolbar ? (
             <div className={sectionClassNames.toolbar}>
+              {viewToggle || toolbarLeading ? (
+                <div className={sectionClassNames.searchGroup}>
+                  {viewToggle}
+                  {toolbarLeading}
+                </div>
+              ) : null}
+
               {!hidePageSizeSelect ? (
                 <TablePageSizeSelect
                   pageSize={paginationSize}
@@ -519,39 +687,44 @@ export function DataTableSection<T>({
               </div>
             ) : null}
 
-            {columnVisibilityEnabled || toolbarExtra ? (
-              <div className={sectionClassNames.toolbarExtra}>
-                {columnVisibilityEnabled ? (
-                  <TableColumnVisibilityMenu
-                    columns={columnCatalog}
-                    visibility={visibility}
-                    onToggleColumn={setColumnVisible}
-                    onReset={resetColumnVisibility}
-                    labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-                  />
-                ) : null}
-                {toolbarExtra}
-              </div>
+            {hasToolbarExtra ? (
+              <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
             ) : null}
             </div>
           ) : null}
 
-          <DataTable
-            columns={visibleColumns}
-            rows={displayRows}
-            rowKey={(row, _index) => rowKey(row)}
-            emptyMessage={emptyMessage}
-            onRowClick={onRowClick}
-            getRowClassName={getRowClassName}
-            sortKey={effectiveSortKey}
-            sortDirection={effectiveSortDirection}
-            onSortChange={
-              serverSort?.onSortChange ?? (serverPagination ? undefined : handleSortChange)
-            }
-            layout="section"
-            classNames={tableClassNames}
-            labels={tableLabels}
-          />
+          {showCards ? (
+            <CardsGrid
+              ariaLabel={title.trim() || DEFAULT_VIEW_LAYOUT_LABELS.cards}
+              empty={displayRows.length === 0 ? resolvedEmpty : undefined}
+              style={sectionStyle}
+            >
+              {displayRows.map((row) => (
+                <div key={rowKey(row)}>{renderCard?.(row)}</div>
+              ))}
+            </CardsGrid>
+          ) : (
+            <DataTable
+              columns={visibleColumns}
+              rows={displayRows}
+              rowKey={(row, _index) => rowKey(row)}
+              emptyMessage={resolvedEmpty}
+              onRowClick={onRowClick}
+              getRowClassName={getRowClassName}
+              sortKey={effectiveSortKey}
+              sortDirection={effectiveSortDirection}
+              onSortChange={
+                serverSort?.onSortChange ?? (serverPagination ? undefined : handleSortChange)
+              }
+              layout="section"
+              enableColumnReorder={columnVisibilityEnabled}
+              onColumnOrderChange={
+                columnVisibilityEnabled ? applyVisibleOrder : undefined
+              }
+              classNames={tableClassNames}
+              labels={tableLabels}
+            />
+          )}
 
           <Pagination
             page={paginationPage}
@@ -575,6 +748,9 @@ export type DashboardDataTableSectionProps<T> = Omit<
   | "LoadingActivityCard"
   | "Pagination"
   | "TablePageSizeSelect"
+  | "TableFontSizeControls"
+  | "DataCardsGrid"
+  | "uiPrefix"
   | "useLoadingProgress"
   | "useTrackedSingleFetchProgress"
 >;
@@ -597,6 +773,10 @@ export function createDashboardDataTableKit(config: {
     ...config.sectionClassNames,
   };
   const tableClassNames = config.tableClassNames ?? dataTableBemClasses(config.prefix);
+  const TableFontSizeControls = createDashboardTableFontSizeControls({
+    prefix: config.prefix,
+  });
+  const DataCardsGrid = createDashboardDataCardsGrid({ prefix: config.prefix });
 
   function DashboardDataTable<T>(props: DashboardDataTableProps<T>) {
     return <DataTable classNames={tableClassNames} labels={config.labels} {...props} />;
@@ -613,6 +793,9 @@ export function createDashboardDataTableKit(config: {
         LoadingActivityCard={config.LoadingActivityCard}
         Pagination={config.Pagination}
         TablePageSizeSelect={config.TablePageSizeSelect}
+        TableFontSizeControls={TableFontSizeControls}
+        DataCardsGrid={DataCardsGrid}
+        uiPrefix={config.prefix}
         useLoadingProgress={config.useLoadingProgress}
         useTrackedSingleFetchProgress={config.useTrackedSingleFetchProgress}
         {...props}

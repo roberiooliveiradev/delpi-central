@@ -1,0 +1,293 @@
+.cm-customers-page__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.cm-seller-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 220px);
+}
+
+.cm-seller-scope__label {
+  font-size: var(--cm-font-xs);
+  font-weight: 650;
+  color: var(--cm-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cm-seller-scope__select,
+.cm-config-page .cm-input {
+  min-height: var(--cm-control-height);
+  padding: 0 12px;
+  border-radius: var(--cm-control-radius);
+  border: 1px solid var(--cm-border-strong);
+  background: var(--cm-surface);
+  color: var(--cm-text);
+  font: inherit;
+}
+
+.cm-config-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.4fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.cm-config-portfolio-panel {
+  min-width: 0;
+  max-height: min(72vh, 720px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cm-config-portfolio-panel > .cm-section__header,
+.cm-config-portfolio-panel > .cm-config-customer-form {
+  flex: 0 0 auto;
+}
+
+.cm-config-linked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.cm-config-subtitle {
+  margin: 0;
+  font-size: var(--cm-font-sm);
+  font-weight: 700;
+  color: var(--cm-brand);
+}
+
+.cm-config-user-hits,
+.cm-config-seller-list,
+.cm-config-customer-list,
+.cm-config-customer-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-config-seller-list {
+  max-height: min(52vh, 480px);
+  overflow: auto;
+  margin-top: 4px;
+  padding-right: 2px;
+}
+
+.cm-config-seller {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--cm-radius-md);
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-brand) 2%, var(--cm-surface));
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.cm-config-seller--active {
+  border-color: color-mix(in srgb, var(--cm-accent) 40%, var(--cm-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cm-accent) 28%, transparent);
+}
+
+.cm-config-seller span,
+.cm-config-customer-hits span {
+  color: var(--cm-muted);
+  font-size: var(--cm-font-sm);
+}
+
+.cm-config-customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+}
+
+.cm-config-customer-form__search {
+  width: 100%;
+}
+
+.cm-config-customer-hits {
+  max-height: 220px;
+  overflow: auto;
+  padding: 4px;
+  border-radius: var(--cm-radius-md);
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-brand) 2%, var(--cm-surface-soft));
+}
+
+.cm-config-customer-list {
+  max-height: min(42vh, 360px);
+  overflow: auto;
+  padding: 6px;
+  border-radius: var(--cm-radius-md);
+  border: 1px solid var(--cm-border);
+  background: color-mix(in srgb, var(--cm-brand) 1.5%, var(--cm-surface));
+  flex: 1 1 auto;
+  gap: 8px;
+}
+
+.cm-config-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.cm-config-transfer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--cm-radius-md);
+  border: 1px solid color-mix(in srgb, var(--cm-accent) 28%, var(--cm-border));
+  background: color-mix(in srgb, var(--cm-accent) 5%, var(--cm-surface));
+}
+
+.cm-config-transfer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cm-config-transfer-check {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cm-config-transfer-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cm-accent);
+  cursor: pointer;
+}
+
+.cm-config-customer-list li {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--cm-radius-sm);
+  border: 1px solid transparent;
+  background: var(--cm-surface);
+}
+
+.cm-config-customer-hits li {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--cm-radius-sm);
+  border: 1px solid transparent;
+  background: var(--cm-surface);
+}
+
+.cm-config-customer-hits li > div,
+.cm-config-customer-list li > div:not(.cm-config-linked__actions) {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cm-config-customer-hits li strong,
+.cm-config-customer-list li strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--cm-font-sm);
+}
+
+.cm-config-customer-hits li .cm-btn,
+.cm-config-customer-list li .cm-btn {
+  flex-shrink: 0;
+}
+
+.cm-config-linked__actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cm-config-icon-btn {
+  appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cm-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cm-config-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cm-brand) 6%, transparent);
+  color: var(--cm-brand);
+}
+
+.cm-config-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cm-config-icon-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cm-danger) 10%, transparent);
+  color: var(--cm-danger);
+}
+
+.cm-config-logo-upload {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .cm-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-config-portfolio-panel {
+    max-height: none;
+  }
+
+  .cm-config-customer-hits {
+    max-height: 180px;
+  }
+
+  .cm-config-customer-list {
+    max-height: 280px;
+  }
+}

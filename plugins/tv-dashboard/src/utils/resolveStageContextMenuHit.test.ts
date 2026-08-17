@@ -18,7 +18,7 @@ describe("resolveStageContextMenuHit", () => {
     expect(menuSrc).toMatch(/resolveContextMenuIconPickerTargetId/);
   });
 
-  it("botão direito não seleciona no pointerdown nem no contextmenu", () => {
+  it("botão direito seleciona o alvo fora da seleção e não inicia drag", () => {
     const composerSrc = readFileSync(join(componentsBase, "ComunicadoComposer.tsx"), "utf8");
     const menuSrc = readFileSync(join(componentsBase, "ComunicadoStageContextMenu.tsx"), "utf8");
     const dragSrc = readFileSync(
@@ -26,10 +26,11 @@ describe("resolveStageContextMenuHit", () => {
       "utf8",
     );
     expect(composerSrc).toMatch(/event\.button !== 0/);
-    expect(composerSrc).toMatch(/só abre opções/);
-    expect(composerSrc).not.toMatch(/if \(!isBlockSelected\(hit\.blockId\)\) \{\s*selectBlock/);
+    expect(composerSrc).toMatch(/resolveContextMenuSelectionApply/);
+    expect(composerSrc).toMatch(/if \(apply\.nextSelectedIds\) \{\s*selectBlocksByIds\(apply\.nextSelectedIds\)/);
+    expect(composerSrc).not.toMatch(/só abre opções/);
     expect(dragSrc).toMatch(/event\.button !== 0/);
-    expect(menuSrc).toMatch(/não força seleção no right-click/);
+    expect(menuSrc).toMatch(/seleção live já veio do apply/);
     expect(menuSrc).not.toMatch(/if \(missing\) selectBlocksByIds\(menuSelectedIds\)/);
   });
 

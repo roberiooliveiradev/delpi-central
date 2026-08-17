@@ -288,6 +288,16 @@
   }
 }
 
+/* Abaixo de 720px dois painéis lado a lado deixam a coluna menor que o mínimo
+   dos cards internos (140px), estourando a largura do painel. */
+@media (max-width: 720px) {
+  .profile-rbac-grid,
+  .profile-page .profile-rbac-stack .profile-rbac-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
 .profile-info {
   display: flex;
   flex-direction: column;
@@ -396,28 +406,7 @@
 }
 
 .apps-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
   margin-bottom: 16px;
-  background: var(--surface-2);
-  color: var(--text-muted);
-}
-
-.apps-search input {
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 100%;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.apps-search input::placeholder {
-  color: var(--control-placeholder);
 }
 
 .apps-empty {
@@ -443,5 +432,30 @@
     overflow: visible;
     text-overflow: unset;
     word-break: break-word;
+  }
+
+  .profile-rbac-card-grid,
+  .profile-rbac-card-grid--permission,
+  .profile-page .profile-rbac-stack .profile-rbac-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 8px;
+  }
+
+  .profile-rbac-card {
+    min-height: 96px;
+    padding: 10px 8px;
+  }
+
+  .profile-rbac-card__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .profile-rbac-pagination__controls {
+    padding: 10px;
+  }
+
+  .profile-rbac-empty {
+    padding: 14px 12px;
   }
 }

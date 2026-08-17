@@ -123,3 +123,27 @@ def test_manual_route_path_markers_require_all_fragments() -> None:
         "list_lmps_dashboard",
         "/engineering/lmps/dashboard",
     ) is True
+
+
+def test_manual_route_does_not_cover_process_inspection_plans() -> None:
+    """Marker «inspection» / «/products/» não engole process-inspection-plans."""
+    assert (
+        OperationalRouteRegistryGeneratorService.is_operation_covered_by_manual_registry(
+            operation_id="get_process_inspection_plans_summary",
+            path="/process-inspection-plans/summary",
+        )
+        is False
+    )
+    assert (
+        OperationalRouteRegistryGeneratorService.is_operation_covered_by_manual_registry(
+            operation_id="get_process_inspection_plans_product",
+            path="/process-inspection-plans/products/{code}",
+        )
+        is False
+    )
+
+    generated = OperationalRouteRegistryGeneratorService.generate_routes()
+    oids = {str(route.get("operationId") or "") for route in generated}
+    assert "get_process_inspection_plans_summary" in oids
+    assert "get_process_inspection_plans_products_without_plan" in oids
+    assert "get_process_inspection_plans_product" in oids

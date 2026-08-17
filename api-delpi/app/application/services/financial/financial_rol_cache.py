@@ -7,6 +7,7 @@ from app.composition.query_cache_composer import build_query_cache
 
 
 def financial_rol_cache_key(request: GetRolRequest) -> str:
+    codes = ",".join(request.customer_codes or [])
     return "|".join(
         [
             "financial-rol",
@@ -14,6 +15,7 @@ def financial_rol_cache_key(request: GetRolRequest) -> str:
             request.start_date or "",
             request.end_date or "",
             request.customer_segment or "",
+            codes,
         ]
     )
 

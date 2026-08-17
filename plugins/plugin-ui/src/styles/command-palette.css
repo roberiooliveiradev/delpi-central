@@ -1,0 +1,8 @@
+/** Command palette body spacing (dialog chrome vem do ModalShell). */
+
+.delpi-ui-command-palette__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: min(420px, 100%);
+}

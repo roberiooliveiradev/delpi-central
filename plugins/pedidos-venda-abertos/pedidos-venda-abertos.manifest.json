@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "pedidos-venda-abertos",
   "name": "Portal do Vendedor",
-  "description": "Portal comercial para acompanhamento da carteira de clientes e pedidos de venda em aberto.",
+  "description": "Portal comercial para acompanhamento da carteira de clientes e pedidos de venda em aberto. Coexiste com o Portal Comercial até paridade UX completa (F2c).",
   "icon": "clipboard-list",
-  "version": "1.2.0",
+  "version": "1.2.3",
   "type": "microfrontend",
 
   "basePath": "/apps/pedidos-venda-abertos",

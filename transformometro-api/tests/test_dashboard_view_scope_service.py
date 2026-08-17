@@ -123,7 +123,7 @@ def test_filter_raw_preserves_empresa_resource_pool():
 
 
 @patch(
-    "tm_app.infrastructure.persistence.repositories.filial_repository.FilialRepository"
+    "tm_app.infrastructure.persistence.repositories.branch_repository.FilialRepository"
 )
 def test_resolve_escopo_unidades_consolidado_usa_filiais_ativas(mock_repo):
     mock_repo.return_value.list_active_codigos.return_value = {"01", "02"}
@@ -159,7 +159,7 @@ def test_resolve_escopo_unidades_departamento_conta_filiais_selecionadas():
 
 
 @patch(
-    "tm_app.infrastructure.persistence.repositories.filial_repository.FilialRepository"
+    "tm_app.infrastructure.persistence.repositories.branch_repository.FilialRepository"
 )
 def test_count_active_filiais_minimo_um(mock_repo):
     mock_repo.return_value.list_active_codigos.return_value = set()

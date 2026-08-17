@@ -1,0 +1,252 @@
+import type { Medicao } from "../../../data/api/transformometroApi";
+import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
+import { medicaoCategoriaHints } from "../../../content/beneficioCalculoLabels";
+import { toMonthInputValue } from "../../../utils/dateInputs";
+import { RegistrationSection } from "./RegistrationSection";
+import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN } from "../../../components/filterChrome";
+
+const R = TM_HELP_TOOLTIPS.revisao;
+
+type Props = {
+  medicao: Medicao;
+  beneficioCalculoCategoria?: string | null;
+  volumeReferencia?: number | null;
+  readOnly?: boolean;
+  embeddedInCard?: boolean;
+  hideSubmit?: boolean;
+  onChange: (value: Medicao) => void;
+  onSubmit: (e: React.FormEvent) => void;
+};
+
+function MedicaoHints({ hints }: { hints: string[] }) {
+  if (!hints.length) return null;
+  return (
+    <ul className="ds-hint" style={{ margin: "0 0 0.75rem", paddingLeft: "1.25rem" }}>
+      {hints.map((hint) => (
+        <li key={hint}>{hint}</li>
+      ))}
+    </ul>
+  );
+}
+
+function MedicaoReadContent({
+  medicao,
+  hints,
+}: {
+  medicao: Medicao;
+  hints: string[];
+}) {
+  return (
+    <>
+      <MedicaoHints hints={hints} />
+      <dl className="ds-dl-grid">
+        <div><dt>Volume mensal</dt><dd>{medicao.volume_mensal}</dd></div>
+        <div><dt>Tempo médio (min)</dt><dd>{medicao.tempo_medio_execucao_min}</dd></div>
+        <div><dt>Tempo retrabalho (min)</dt><dd>{medicao.tempo_retrabalho_min}</dd></div>
+        <div><dt>Custo hora MO</dt><dd>{medicao.custo_hora_mao_obra}</dd></div>
+        <div><dt>% retrabalho</dt><dd>{medicao.percentual_retrabalho}</dd></div>
+        <div><dt>% erro</dt><dd>{medicao.percentual_erro}</dd></div>
+        <div><dt>Qtd. erros/mês</dt><dd>{medicao.quantidade_erros_mes}</dd></div>
+        <div><dt>Custo unit. erro</dt><dd>{medicao.custo_unitario_erro}</dd></div>
+        <div><dt>Custo unit. retrabalho</dt><dd>{medicao.custo_unitario_retrabalho}</dd></div>
+        <div><dt>Outros desperdícios</dt><dd>{medicao.custo_outros_desperdicios}</dd></div>
+        <div><dt>Mês referência</dt><dd>{toMonthInputValue(medicao.base_referencia_mes) || "—"}</dd></div>
+      </dl>
+      {medicao.observacoes ? (
+        <p className="ds-hint"><strong>Observações:</strong> {medicao.observacoes}</p>
+      ) : null}
+    </>
+  );
+}
+
+export function RevisionMeasurementSection({
+  medicao,
+  beneficioCalculoCategoria,
+  volumeReferencia,
+  readOnly = false,
+  embeddedInCard = false,
+  hideSubmit = false,
+  onChange,
+  onSubmit,
+}: Props) {
+  const hints = medicaoCategoriaHints(
+    beneficioCalculoCategoria,
+    medicao.volume_mensal,
+    volumeReferencia
+  );
+
+  if (readOnly) {
+    const content = <MedicaoReadContent medicao={medicao} hints={hints} />;
+    if (embeddedInCard) return content;
+    return (
+      <RegistrationSection embedded title="Medição operacional">
+        {content}
+      </RegistrationSection>
+    );
+  }
+
+  const form = (
+    <form onSubmit={onSubmit}>
+      <MedicaoHints hints={hints} />
+      <div className={DS_FILTERS_ROW}>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.volume_mensal}
+            onChange={(value) => onChange({ ...medicao, volume_mensal: Number(value) })}
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Tempo médio (min)" hint={R.tempoMedio} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.tempo_medio_execucao_min}
+            onChange={(value) =>
+              onChange({ ...medicao, tempo_medio_execucao_min: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Tempo retrabalho (min)" hint={R.tempoRetrabalho} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.tempo_retrabalho_min}
+            onChange={(value) =>
+              onChange({ ...medicao, tempo_retrabalho_min: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Custo hora MO (R$)" hint={R.custoHoraMo} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.custo_hora_mao_obra}
+            onChange={(value) =>
+              onChange({ ...medicao, custo_hora_mao_obra: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="% retrabalho" hint={R.percentualRetrabalho} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.percentual_retrabalho}
+            onChange={(value) =>
+              onChange({ ...medicao, percentual_retrabalho: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="% erro" hint={R.percentualErro} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.percentual_erro}
+            onChange={(value) => onChange({ ...medicao, percentual_erro: Number(value) })}
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Qtd. erros/mês" hint={R.quantidadeErros} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.quantidade_erros_mes}
+            onChange={(value) =>
+              onChange({ ...medicao, quantidade_erros_mes: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Custo unit. erro (R$)" hint={R.custoUnitarioErro} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.custo_unitario_erro}
+            onChange={(value) =>
+              onChange({ ...medicao, custo_unitario_erro: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Custo unit. retrabalho (R$)" hint={R.custoUnitarioRetrabalho} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.custo_unitario_retrabalho}
+            onChange={(value) =>
+              onChange({ ...medicao, custo_unitario_retrabalho: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Outros desperdícios (R$/mês)" hint={R.outrosDesperdicios} />
+          <NativeTextControl
+            type="number"
+            min={0}
+            step="any"
+            value={medicao.custo_outros_desperdicios}
+            onChange={(value) =>
+              onChange({ ...medicao, custo_outros_desperdicios: Number(value) })
+            }
+          />
+        </label>
+        <label className={DS_FILTER_BOX_PLAIN}>
+          <FieldLabel className="tm-field__label" label="Mês de referência" hint={R.mesReferencia} />
+          <NativeTextControl
+            type="month"
+            value={toMonthInputValue(medicao.base_referencia_mes)}
+            onChange={(value) =>
+              onChange({
+                ...medicao,
+                base_referencia_mes: value || undefined,
+              })
+            }
+          />
+        </label>
+      </div>
+      <TmNativeTextAreaField
+        id="revisao-medicao-observacoes"
+        label="Observações"
+        hint={R.medicaoObservacoes}
+        span
+        rows={2}
+        value={medicao.observacoes ?? ""}
+        onChange={(value) => onChange({ ...medicao, observacoes: value })}
+      />
+      {hideSubmit ? null : (
+        <button type="submit" className="ds-primary-btn">
+          Salvar medição
+        </button>
+      )}
+    </form>
+  );
+
+  if (embeddedInCard) return form;
+
+  return (
+    <RegistrationSection
+      embedded
+      title="Medição operacional"
+      hint="Volume, tempos e custos usados para calcular economia bruta da revisão."
+    >
+      {form}
+    </RegistrationSection>
+  );
+}

@@ -19,6 +19,7 @@ _DOMAIN_LABELS: dict[str, str] = {
     "/sales/": "Vendas",
     "/purchases/": "Compras",
     "/inspecoes-entrada/": "Inspeções de entrada",
+    "/process-inspection-plans/": "Planos de inspeção de processo",
     "/pedidos-venda-abertos/": "Pedidos de venda em aberto",
     "/propostas-comerciais/": "Propostas comerciais",
     "/system/": "Sistema",
@@ -34,11 +35,16 @@ _ENTITY_LABELS: dict[str, str] = {
     "commercial_proposal_document": "proposta comercial interna (PDF/Totvs)",
     "commercial_proposal": "propostas comerciais",
     "sales_conversion_rate": "taxa de fechamento comercial",
+    "sales_conversion_rate_series": "série temporal da taxa de conversão de vendas",
+    "sales_conversion_rate_series": "série temporal da taxa de conversão de vendas",
     "new_clients_average": "média de novos clientes",
     "sales_order_otd": "OTD de pedidos de venda",
     "sales_order_otd_panel": "Painel OTD de pedidos de venda",
     "sales_order_otd_series": "Série temporal OTD de pedidos de venda",
     "sales_order_otd_line": "Detalhe de linha OTD de pedido de venda",
+    "supplies_purchase_order_otd": "OTD de pedidos de compra (MP)",
+    "supplies_purchase_order_otd_panel": "Painel OTD de pedidos de compra (MP)",
+    "supplies_purchase_order_otd_series": "Série temporal OTD de pedidos de compra (MP)",
     "new_business_rol_pct": "percentual ROL de novos negócios",
     "new_clients_rol_pct": "percentual ROL de clientes novos",
     "financial_rol": "ROL financeiro",
@@ -73,6 +79,15 @@ _ENTITY_LABELS: dict[str, str] = {
         "histórico de preço unitário do produto com um fornecedor"
     ),
     "supplies_safety_stock_item": "itens de estoque de segurança",
+    "process_inspection_plans_summary": "resumo de planos de inspeção de processo",
+    "process_inspection_plans_orders_without_plan": (
+        "OPs abertas sem plano de inspeção de processo cadastrado"
+    ),
+    "process_inspection_plans_products_without_plan": (
+        "produtos sem plano de inspeção com OP aberta"
+    ),
+    "process_inspection_plans_products": "produtos com plano de inspeção de processo",
+    "process_inspection_plans_product": "detalhe do plano de inspeção de processo",
     "supplies_safety_stock_summary": "resumo de estoque de segurança",
     "supplies_safety_stock_filters": "filtros de estoque de segurança",
     "supplies_stock_balances_summary": "resumo de saldos de estoque por armazém",
@@ -85,6 +100,13 @@ _ENTITY_LABELS: dict[str, str] = {
     ),
     "supplies_safety_stock_consumption_analysis_detail": (
         "detalhe da análise de consumo com série mensal e memória de cálculo"
+    ),
+    "third_party_material_shipment": (
+        "remessas de materiais de terceiros para beneficiamento"
+    ),
+    "third_party_material_summary": "resumo de materiais de terceiros",
+    "third_party_material_return_export": (
+        "exportação de retornos de materiais de terceiros"
     ),
 }
 

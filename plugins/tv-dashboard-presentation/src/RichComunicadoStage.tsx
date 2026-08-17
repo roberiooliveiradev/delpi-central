@@ -6,7 +6,10 @@ import {
   ensureComunicadoDualClass,
 } from "@delpi/plugin-ui/index";
 
-import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
+import {
+  comunicadoBackgroundImageUrl,
+  comunicadoBackgroundRootStyle,
+} from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { useComunicadoCustomFonts } from "./comunicadoCustomFonts";
 import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
@@ -17,6 +20,7 @@ import {
 } from "./comunicadoHelpers";
 import { filterBlocksVisibleOnStage } from "./comunicadoStageVisibility";
 import type { ComunicadoBackground, ComunicadoBlock } from "./comunicadoTypes";
+import { RichComunicadoBackground } from "./RichComunicadoBackground";
 import { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 
 export type RichComunicadoMasterPayload = {
@@ -96,9 +100,8 @@ export function RichComunicadoStage({
     slideBackground ??
     master?.background ??
     ({ type: "color", value: "#ffffff" } as ComunicadoBackground);
-  const imageUrl =
-    background.type === "image" ? background.url ?? background.value : undefined;
-  const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
+  const imageUrl = comunicadoBackgroundImageUrl(background);
+  const bgStyle: CSSProperties = comunicadoBackgroundRootStyle(background);
 
   const blocks = filterBlocksVisibleOnStage(sortBlocksByZIndex(normalized.blocks ?? []));
   const logo = master?.logo;
@@ -108,6 +111,7 @@ export function RichComunicadoStage({
       className={className}
       stageClassName={stageClassName}
       style={bgStyle}
+      backgroundLayer={<RichComunicadoBackground url={imageUrl} />}
     >
       <RichComunicadoMasterLogo
         url={logo?.url}
@@ -130,6 +134,8 @@ export function RichComunicadoStage({
                 : undefined
             }
             onInputValueChange={onInputValueChange}
+            slideDataFilters={normalized.dataFilters}
+            stageBlocks={normalized.blocks}
           />
         ),
       )}

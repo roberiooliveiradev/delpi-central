@@ -1,6 +1,6 @@
 # Estoque de Segurança — API
 
-Rotas de análise de matérias-primas (MP) versus estoque de segurança cadastrado (SBZ), saldos SB2 e cobertura futura por pedidos (SC7) e empenhos (SD4).
+Rotas de análise de matérias-primas (MP) versus estoque de segurança cadastrado (SBZ), saldos SB2 e cobertura futura por pedidos (SC7), solicitações em aberto (SC1) e empenhos (SD4).
 
 Plugin MFE: [plugins/estoque-seguranca/README.md](../../../plugins/estoque-seguranca/README.md).
 
@@ -103,13 +103,14 @@ Blocos em `data`:
 | `stock` | Saldos 01/98/99, ESTSEG, déficit **físico** |
 | `peer_branch_stock` | Saldo disponível na outra filial (01↔02) + `last_consumption_date` (última baixa elegível), se o usuário tiver permissão de visualização |
 | `purchase_coverage` | Cobertura do déficit físico só com SC7 elegível |
-| `open_purchase_orders` | `{ items, total }` pedidos abertos |
+| `open_purchase_orders` | `{ items, total }` pedidos abertos (SC7) |
+| `open_purchase_requests` | `{ items, total }` solicitações abertas (SC1: `C1_QUANT > C1_QUJE`, sem residual) — informativo, **não** entra na projeção |
 | `open_commitments` | `{ items, total, summary }` empenhos SD4 com `D4_QUANT > 0` |
 | `stock_projection` | `{ items, total, summary }` extrato cronológico consolidado |
 | `monthly_consumption` | Série mensal (12 meses) + `period_consumption` para o gráfico |
 | `annual_comparison` | Pivot Jan–Dez × 3 anos civis (comparativo sazonal) |
 
-`meta.sections` lista `open_purchase_orders`, `open_commitments`, `stock_projection`, `monthly_consumption` e `annual_comparison`.
+`meta.sections` lista `open_purchase_orders`, `open_purchase_requests`, `open_commitments`, `stock_projection`, `monthly_consumption` e `annual_comparison`.
 
 ### Regras de negócio
 

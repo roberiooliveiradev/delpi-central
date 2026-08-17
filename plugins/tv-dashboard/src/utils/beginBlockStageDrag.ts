@@ -7,6 +7,7 @@ import {
   resolveMultiDragBlockIds,
   resolveStageSelectionHierarchy,
 } from "./stageGroupedSelection";
+import { promoteSelectionPrimary } from "./promoteSelectionPrimary";
 import {
   resolveStagePointerDownAction,
   shouldArmTapDeselectOnDragCurrent,
@@ -113,12 +114,18 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
   const dragIds = resolveMultiDragBlockIds(blocks, selectedIds, {
     preferGroupChildrenSelection,
   });
-  if (shouldArmTapDeselectOnDragCurrent(block)) {
+  const promoting =
+    selectedIds.includes(block.id) && selectedId !== block.id && hierarchy.mode !== "children";
+  if (promoting) {
+    /* Promote não é 2º toque para limpar — o clicado vira referência e o drag segue. */
+    armTapDeselect?.(null);
+    selectBlocksByIds(promoteSelectionPrimary(dragIds, block.id));
+  } else if (shouldArmTapDeselectOnDragCurrent(block)) {
     armTapDeselect?.(block.id);
   } else {
     armTapDeselect?.(null);
   }
-  if (selectedId !== block.id && hierarchy.mode !== "children") {
+  if (!promoting && selectedId !== block.id && hierarchy.mode !== "children") {
     selectBlocksByIds(dragIds);
   }
   armMultiDragSelection(dragIds);

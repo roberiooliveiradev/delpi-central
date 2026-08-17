@@ -361,6 +361,22 @@
         }
       }
     },
+    "create_public_canal_denuncia": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "Submit public whistleblowing report",
+          "description": "Anonymous report from the public form. No Minha DELPI account required.",
+          "whenToUse": "Use for the public Canal de Denúncia form."
+        },
+        "pt-BR": {
+          "summary": "Enviar denúncia pública",
+          "description": "Relato anônimo pelo formulário público, sem conta no Minha DELPI.",
+          "whenToUse": "Use no formulário público do Canal de Denúncia.",
+          "label": "Enviar denúncia pública"
+        }
+      }
+    },
     "create_guias_procedimentos_admin_department": {
       "category": "quality",
       "locale": {
@@ -1260,6 +1276,21 @@
           "label": "Eficiência fabril — dashboard MOD e gráficos",
           "summary": "Eficiência fabril — dashboard MOD e gráficos",
           "description": "Análise composta: «Eficiência fabril — dashboard MOD e gráficos»."
+        }
+      },
+      "category": "production"
+    },
+    "get_eficiencia_fabril_efficiency_by_work_center": {
+      "locale": {
+        "en": {
+          "summary": "Factory efficiency average % by work center",
+          "description": "Average efficiency percent per work center (OK appointments in 0–199% band), same rule as the factory efficiency plugin.",
+          "label": "Factory efficiency by work center"
+        },
+        "pt-BR": {
+          "label": "Eficiência fabril — média % por CT",
+          "summary": "Eficiência fabril — média % por centro de trabalho",
+          "description": "Média de eficiência (%) por CT (apontamentos OK na faixa 0–199%), mesma regra do plugin eficiência-fabril. Ideal para gráfico de barras no TV."
         }
       },
       "category": "production"
@@ -2295,13 +2326,13 @@
       "locale": {
         "en": {
           "summary": "Overall equipment effectiveness %",
-          "description": "Consolidated OEE for the period (availability × performance × quality).",
-          "whenToUse": "Ideal for a large factory-floor KPI card: one number summarizing availability × performance × quality."
+          "description": "Period average of production efficiency (planned time ÷ actual time × 100), using the canonical HY_TEMPAD × quantity formula shared with factory efficiency. Valid band 0–199%. Not classical OEE A×P×Q.",
+          "whenToUse": "Use for a single factory-floor KPI card or Strategic Indicators; same metric as factory efficiency / OEE listing."
         },
         "pt-BR": {
           "summary": "Eficiência global dos equipamentos (%)",
-          "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
-          "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade."
+          "description": "Média no período da eficiência de produção (tempo previsto ÷ tempo real × 100), com fórmula canônica setup + HY_TEMPAD × qtd — a mesma da eficiência fabril. Faixa válida 0–199%. Não é OEE clássico A×P×Q.",
+          "whenToUse": "Use em card KPI na TV/fábrica ou nos Indicadores Estratégicos; mesma métrica da eficiência fabril e da listagem OEE."
         }
       }
     },
@@ -3109,14 +3140,16 @@
     "get_production_oee": {
       "locale": {
         "en": {
-          "summary": "Production oee",
-          "description": "Production oee.",
-          "label": "Production oee"
+          "summary": "Production OEE — summary and appointments",
+          "description": "Paged listing and summary of production efficiency appointments (canonical HY_TEMPAD planned time ÷ actual time; valid band 0–199%).",
+          "label": "Production OEE",
+          "whenToUse": "Use for OEE table/panel; same efficiency metric as factory efficiency and overall_equipment_effectiveness_pct."
         },
         "pt-BR": {
-          "label": "OEE produção — resumo e apontamentos (view fabril)",
-          "summary": "OEE produção — resumo e apontamentos (view fabril)",
-          "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV."
+          "label": "OEE produção — resumo e apontamentos",
+          "summary": "OEE produção — resumo e apontamentos",
+          "description": "Resumo e listagem paginada de apontamentos com eficiência canônica (setup + HY_TEMPAD × qtd ÷ tempo real; faixa 0–199%).",
+          "whenToUse": "Use no painel/tabela OEE; mesma métrica da eficiência fabril e do KPI overall_equipment_effectiveness_pct."
         }
       },
       "category": "production"
@@ -3141,12 +3174,12 @@
       "locale": {
         "en": {
           "summary": "Production OEE series",
-          "description": "Daily OEE evolution over the period.",
+          "description": "Daily evolution of the canonical production efficiency % (HY_TEMPAD) over the period.",
           "whenToUse": "Choose when the TV needs an OEE trend chart (line/area), not just today's value."
         },
         "pt-BR": {
           "summary": "Série de OEE de produção",
-          "description": "Evolução diária do OEE ao longo do período.",
+          "description": "Evolução diária da eficiência canônica de produção (HY_TEMPAD) ao longo do período.",
           "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia."
         }
       }
@@ -3231,13 +3264,13 @@
       "locale": {
         "en": {
           "summary": "Production OTD series",
-          "description": "Daily OTD (on-time delivery) evolution over the period.",
-          "whenToUse": "Use for an on-time trend chart across days — useful in production/logistics TV meetings."
+          "description": "OTD (on-time delivery) evolution by day, week, month or year.",
+          "whenToUse": "Use for an on-time trend chart on TV. Choose month for monthly trends; day remains the default for existing panels."
         },
         "pt-BR": {
           "summary": "Série de OTD de produção",
-          "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
-          "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV."
+          "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
+          "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes."
         }
       }
     },
@@ -3923,6 +3956,47 @@
         }
       }
     },
+    "get_sales_conversion_rate_series": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "Sales conversion rate series",
+          "description": "Hit rate (conversion %) over time for Santa Catarina and Espírito Santo.",
+          "whenToUse": "Commercial chart: conversion rate by day/week/month/year. Same formula as closing-rate KPI per bucket."
+        },
+        "pt-BR": {
+          "summary": "Série da taxa de conversão",
+          "description": "Hit rate (taxa de conversão %) ao longo do tempo para Santa Catarina e Espírito Santo.",
+          "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket."
+        }
+      },
+      "params": {
+        "granularity": {
+          "locale": {
+            "en": {
+              "label": "Granularity",
+              "description": "Bucket size: day, week, month, or year."
+            },
+            "pt-BR": {
+              "label": "Granularidade",
+              "description": "Tamanho do bucket: day, week, month ou year."
+            }
+          }
+        },
+        "customer_segment": {
+          "locale": {
+            "en": {
+              "label": "Customer segment",
+              "description": "Optional commercial segment filter."
+            },
+            "pt-BR": {
+              "label": "Segmento",
+              "description": "Filtro opcional de segmento comercial."
+            }
+          }
+        }
+      }
+    },
     "get_sales_order_otd": {
       "locale": {
         "en": {
@@ -4069,6 +4143,53 @@
           "label": "OTD — entrega no prazo (suprimentos)",
           "summary": "OTD — entrega no prazo (suprimentos)",
           "description": "Indicador numérico para «OTD — entrega no prazo (suprimentos)»."
+        }
+      },
+      "category": "supplies"
+    },
+    "get_supplies_purchase_order_otd": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD (raw materials)",
+          "description": "On-time delivery percentage for purchase-order lines of raw materials (MP).",
+          "label": "Purchase order OTD (MP)",
+          "whenToUse": "Use for MP purchase-order on-time delivery KPI (not general supplies OTD)."
+        },
+        "pt-BR": {
+          "label": "OTD pedidos de compra (MP)",
+          "summary": "OTD de pedidos de compra — matéria-prima",
+          "description": "Percentual de linhas de pedido de compra de MP recebidas no prazo (VW_PONTUALIDADE).",
+          "whenToUse": "Use para atendimento de PC de matéria-prima no prazo (não confundir com /supplies/otd geral)."
+        }
+      },
+      "category": "supplies"
+    },
+    "get_supplies_purchase_order_otd_panel": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD panel (MP)",
+          "description": "Paged purchase-order OTD lines for raw materials with on_time/late filter.",
+          "label": "Purchase order OTD panel (MP)"
+        },
+        "pt-BR": {
+          "label": "Painel OTD pedidos de compra (MP)",
+          "summary": "Painel OTD de pedidos de compra (MP)",
+          "description": "Listagem paginada de linhas de PC de MP no prazo ou atrasadas."
+        }
+      },
+      "category": "supplies"
+    },
+    "get_supplies_purchase_order_otd_series": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD series (MP)",
+          "description": "Time series of purchase-order OTD for raw materials by branch.",
+          "label": "Purchase order OTD series (MP)"
+        },
+        "pt-BR": {
+          "label": "Série OTD pedidos de compra (MP)",
+          "summary": "Série temporal OTD de pedidos de compra (MP)",
+          "description": "Série temporal do OTD de PC de matéria-prima por filial."
         }
       },
       "category": "supplies"
@@ -4884,6 +5005,36 @@
       },
       "category": "commercial"
     },
+    "list_totvs_outbound_invoices": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS outbound invoices (no portfolio membership)",
+          "description": "Pure TOTVS outbound invoices for commercial-api BFF. Portfolio scope is applied upstream.",
+          "label": "TOTVS outbound invoices"
+        },
+        "pt-BR": {
+          "label": "Notas fiscais TOTVS (sem membership)",
+          "summary": "Notas fiscais de saída TOTVS para o BFF commercial-api",
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_totvs_outbound_invoice": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS outbound invoice by key",
+          "description": "Pure TOTVS outbound invoice header and items (SF2/SD2) by branch, number and series.",
+          "label": "TOTVS outbound invoice"
+        },
+        "pt-BR": {
+          "label": "Nota fiscal TOTVS por chave",
+          "summary": "Nota fiscal de saída TOTVS por unidade, número e série",
+          "description": "Cabeçalho e itens SF2/SD2 para o BFF commercial-api, sem membership PVA."
+        }
+      },
+      "category": "commercial"
+    },
     "list_pedidos_venda_abertos": {
       "locale": {
         "en": {
@@ -4895,6 +5046,36 @@
           "label": "Análise consolidada — Pedidos de venda em aberto",
           "summary": "Análise consolidada — Pedidos de venda em aberto",
           "description": "Análise composta: «Análise consolidada — Pedidos de venda em aberto»."
+        }
+      },
+      "category": "commercial"
+    },
+    "list_totvs_open_orders": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS open sales orders (no portfolio membership)",
+          "description": "Pure TOTVS open sales orders for commercial-api BFF. Portfolio scope is applied upstream.",
+          "label": "TOTVS open sales orders"
+        },
+        "pt-BR": {
+          "label": "Pedidos em aberto TOTVS (sem membership)",
+          "summary": "Pedidos de venda em aberto TOTVS para o BFF commercial-api",
+          "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api."
+        }
+      },
+      "category": "commercial"
+    },
+    "list_totvs_open_orders_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "TOTVS open sales orders by customer",
+          "description": "Pure TOTVS open sales orders for one customer code/store. Used by commercial Account 360 BFF.",
+          "label": "TOTVS open sales orders by customer"
+        },
+        "pt-BR": {
+          "label": "Pedidos em aberto TOTVS por cliente",
+          "summary": "Pedidos em aberto TOTVS de um cliente (código/loja)",
+          "description": "Leitura TOTVS pura por par cliente; Conta 360 via commercial-api."
         }
       },
       "category": "commercial"
@@ -7694,14 +7875,14 @@
     "list_customer_billing_series": {
       "locale": {
         "en": {
-          "summary": "Customer billing monthly series",
-          "description": "Monthly billed totals for the last N months for selected portfolio customers.",
+          "summary": "Customer billing series",
+          "description": "Billed totals for selected portfolio customers, bucketed by day, week, month or year. Optional start_date/end_date; months remains the fallback window.",
           "label": "Billing series"
         },
         "pt-BR": {
           "label": "Série de faturamento",
-          "summary": "Série mensal de faturamento",
-          "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira."
+          "summary": "Série de faturamento da carteira",
+          "description": "Totais faturados dos clientes selecionados, agrupados por dia, semana, mês ou ano. start_date/end_date opcionais; months continua como janela padrão."
         }
       },
       "category": "commercial"
@@ -7900,6 +8081,414 @@
         }
       },
       "category": "commercial"
+    },
+    "get_process_inspection_plans_summary": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Process inspection plans — summary KPIs",
+          "description": "KPIs for registered process inspection plans versus open production orders (products/orders without plan, coverage percentage, distribution).",
+          "label": "Process inspection plans summary",
+          "whenToUse": "Use for KPI tiles of the process inspection plan registration dashboard."
+        },
+        "pt-BR": {
+          "summary": "Planos de inspeção de processo — resumo",
+          "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+          "label": "Resumo de planos de inspeção de processo",
+          "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo."
+        }
+      }
+    },
+    "get_process_inspection_plans_orders_without_plan": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Open production orders without inspection plan",
+          "description": "Paged list of open production orders whose product has no QP6 process inspection plan.",
+          "label": "Orders without inspection plan",
+          "whenToUse": "Use when listing open OPs missing process inspection registration."
+        },
+        "pt-BR": {
+          "summary": "OPs abertas sem plano de inspeção",
+          "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+          "label": "OPs sem plano de inspeção",
+          "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar."
+        }
+      }
+    },
+    "get_process_inspection_plans_products_without_plan": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Products without inspection plan (open OPs)",
+          "description": "Paged distinct products that have open production orders and no QP6 process inspection plan.",
+          "label": "Products without inspection plan",
+          "whenToUse": "Use when drilling into products missing process inspection registration."
+        },
+        "pt-BR": {
+          "summary": "Produtos sem plano de inspeção (com OP aberta)",
+          "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+          "label": "Produtos sem plano de inspeção",
+          "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção."
+        }
+      }
+    },
+    "get_process_inspection_plans_products": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Products with process inspection plan",
+          "description": "Paged list of products that have a registered QP6 process inspection plan (active revision).",
+          "label": "Products with inspection plan",
+          "whenToUse": "Use when browsing registered process inspection plans by product."
+        },
+        "pt-BR": {
+          "summary": "Produtos com plano de inspeção de processo",
+          "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+          "label": "Produtos com plano de inspeção",
+          "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto."
+        }
+      }
+    },
+    "get_process_inspection_plans_product": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Process inspection plan detail by product",
+          "description": "QP6 header plus QP7/QP8 tests for a product (optional BOM expansion).",
+          "label": "Inspection plan detail",
+          "whenToUse": "Use when opening how to inspect a specific product."
+        },
+        "pt-BR": {
+          "summary": "Detalhe do plano de inspeção por produto",
+          "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+          "label": "Detalhe do plano de inspeção",
+          "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto."
+        }
+      }
+    },
+    "get_supplies_third_party_materials_shipments": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party material shipments",
+          "description": "Paged inbound processing shipments with pending balance and linked returns.",
+          "whenToUse": "Track customer materials received for processing and remaining quantity to return.",
+          "label": "Third-party shipments"
+        },
+        "pt-BR": {
+          "summary": "Remessas de materiais de terceiros",
+          "description": "Lista paginada de remessas de beneficiamento com saldo pendente e retornos vinculados.",
+          "whenToUse": "Acompanhar materiais recebidos de clientes para beneficiamento e o saldo ainda a devolver.",
+          "label": "Remessas de terceiros"
+        }
+      }
+    },
+    "get_supplies_third_party_materials_shipment": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party material shipment detail",
+          "description": "One inbound processing shipment with all linked return invoices.",
+          "whenToUse": "Inspect a specific receipt invoice and its returns.",
+          "label": "Shipment detail"
+        },
+        "pt-BR": {
+          "summary": "Detalhe da remessa de materiais de terceiros",
+          "description": "Uma remessa de beneficiamento com todas as notas de retorno vinculadas.",
+          "whenToUse": "Consultar uma NF de recebimento específica e seus retornos.",
+          "label": "Detalhe da remessa"
+        }
+      }
+    },
+    "get_supplies_third_party_materials_summary": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Third-party materials summary",
+          "description": "Open shipments, partial returns and pending quantity for third-party materials.",
+          "whenToUse": "KPI of remaining quantity still to return to customers.",
+          "label": "Third-party summary"
+        },
+        "pt-BR": {
+          "summary": "Resumo de materiais de terceiros",
+          "description": "Remessas abertas, parciais e saldo pendente de materiais de terceiros.",
+          "whenToUse": "KPI da quantidade ainda a devolver aos clientes.",
+          "label": "Resumo de terceiros"
+        }
+      }
+    },
+    "export_supplies_third_party_materials_returns": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Export third-party material returns",
+          "description": "CSV/XLSX export with one row per return. Shipment balance repeats per row.",
+          "whenToUse": "Download return lines for audit without summing repeated balances.",
+          "label": "Export returns"
+        },
+        "pt-BR": {
+          "summary": "Exportar retornos de materiais de terceiros",
+          "description": "Exportação CSV/XLSX com uma linha por retorno. O saldo da remessa se repete.",
+          "whenToUse": "Baixar linhas de retorno para auditoria sem somar saldos repetidos.",
+          "label": "Exportar retornos"
+        }
+      }
+    },
+    "search_invoice_issuance_parties": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance parties",
+          "description": "Look up TOTVS customers (SA1) or suppliers (SA2) by code, name or tax ID.",
+          "whenToUse": "Pick a registered recipient before requesting invoice issuance.",
+          "label": "Invoice issuance parties"
+        },
+        "pt-BR": {
+          "summary": "Buscar destinatários da emissão de NF",
+          "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+          "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+          "label": "Destinatários da emissão"
+        }
+      }
+    },
+    "search_invoice_issuance_products": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance products",
+          "description": "Look up SB1 items to add to an invoice issuance request.",
+          "whenToUse": "Select products for the issuance wizard.",
+          "label": "Invoice issuance products"
+        },
+        "pt-BR": {
+          "summary": "Buscar itens da emissão de NF",
+          "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+          "whenToUse": "Selecionar produtos no wizard de emissão.",
+          "label": "Itens da emissão"
+        }
+      }
+    },
+    "list_invoice_issuance_open_sales_orders": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "List open sales orders for issuance",
+          "description": "Open TOTVS sales-order lines for the selected customer in the wizard branch. No commercial membership.",
+          "whenToUse": "Pick open sales-order lines to bill in the issuance wizard.",
+          "label": "Open sales orders for issuance"
+        },
+        "pt-BR": {
+          "summary": "Listar pedidos de venda em aberto para emissão",
+          "description": "Linhas de PV em aberto do cliente na filial do wizard. Sem membership comercial.",
+          "whenToUse": "Marcar linhas de pedido de venda para faturar no wizard de emissão.",
+          "label": "Pedidos em aberto para emissão"
+        }
+      }
+    },
+    "search_invoice_issuance_carriers": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search invoice issuance carriers",
+          "description": "Look up TOTVS carriers (SA4) by code, short name, legal name or tax ID. Display name is A4_NREDUZ.",
+          "whenToUse": "Pick a registered carrier in the issuance wizard.",
+          "label": "Invoice issuance carriers"
+        },
+        "pt-BR": {
+          "summary": "Buscar transportadoras da emissão de NF",
+          "description": "Consulta transportadoras (SA4) por código, nome reduzido, razão social ou CNPJ. O nome de uso é A4_NREDUZ.",
+          "whenToUse": "Escolher a transportadora cadastrada no wizard de emissão.",
+          "label": "Transportadoras da emissão"
+        }
+      }
+    },
+    "get_invoice_issuance_warehouse_01_balance": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Warehouse 01 stock hint for issuance",
+          "description": "Informative SB2 balance at warehouse 01 (storeroom). Does not block submission.",
+          "whenToUse": "Show remaining quantity when the item writes off stock.",
+          "label": "Warehouse 01 balance"
+        },
+        "pt-BR": {
+          "summary": "Saldo informativo do almoxarifado 01",
+          "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+          "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+          "label": "Saldo almoxarifado 01"
+        }
+      }
+    },
+    "create_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Create invoice issuance request",
+          "description": "Create a guided invoice issuance request for the billing queue.",
+          "whenToUse": "Submit a new issuance request after the wizard checklist.",
+          "label": "Create issuance request"
+        },
+        "pt-BR": {
+          "summary": "Criar solicitação de emissão de NF",
+          "description": "Cria uma solicitação guiada de emissão para a fila do Faturamento.",
+          "whenToUse": "Enviar uma nova solicitação após o checklist do wizard.",
+          "label": "Criar solicitação de emissão"
+        }
+      }
+    },
+    "list_invoice_issuance_requests": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "List invoice issuance requests",
+          "description": "Paged billing queue of invoice issuance requests for a branch.",
+          "whenToUse": "Show the issuance queue filtered by status or type.",
+          "label": "Issuance queue"
+        },
+        "pt-BR": {
+          "summary": "Listar solicitações de emissão de NF",
+          "description": "Fila paginada de solicitações de emissão por filial.",
+          "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+          "label": "Fila de emissão"
+        }
+      }
+    },
+    "get_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Get invoice issuance request",
+          "description": "Request detail with items, attachments, checklist, timeline and allowed actions.",
+          "whenToUse": "Open one issuance request from the queue or a notification deep link.",
+          "label": "Issuance request detail"
+        },
+        "pt-BR": {
+          "summary": "Detalhe da solicitação de emissão de NF",
+          "description": "Detalhe com itens, anexos, checklist, histórico e ações permitidas.",
+          "whenToUse": "Abrir uma solicitação da fila ou pelo link da notificação.",
+          "label": "Detalhe da emissão"
+        }
+      }
+    },
+    "update_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Update returned issuance request",
+          "description": "Creator updates a returned invoice issuance request before resubmitting.",
+          "whenToUse": "Correct fields after billing sent the request back.",
+          "label": "Update issuance request"
+        },
+        "pt-BR": {
+          "summary": "Corrigir solicitação de emissão devolvida",
+          "description": "O criador atualiza uma solicitação devolvida antes de reenviar.",
+          "whenToUse": "Corrigir dados após devolução do Faturamento.",
+          "label": "Corrigir solicitação"
+        }
+      }
+    },
+    "resubmit_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Resubmit invoice issuance request",
+          "description": "Send a returned request back to the pending billing queue.",
+          "whenToUse": "Resubmit after the creator fixed the returned request.",
+          "label": "Resubmit issuance"
+        },
+        "pt-BR": {
+          "summary": "Reenviar solicitação de emissão de NF",
+          "description": "Devolve a solicitação corrigida para a fila pendente do Faturamento.",
+          "whenToUse": "Reenviar após o criador corrigir a devolução.",
+          "label": "Reenviar emissão"
+        }
+      }
+    },
+    "start_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Start invoice issuance attendance",
+          "description": "Move a pending request to in progress for billing.",
+          "whenToUse": "Begin working a request from the issuance queue.",
+          "label": "Start issuance"
+        },
+        "pt-BR": {
+          "summary": "Iniciar atendimento da emissão de NF",
+          "description": "Move a solicitação pendente para em andamento no Faturamento.",
+          "whenToUse": "Começar a atender um item da fila de emissão.",
+          "label": "Iniciar emissão"
+        }
+      }
+    },
+    "return_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Return invoice issuance request",
+          "description": "Send the request back to the creator with a required reason.",
+          "whenToUse": "Ask the requester to correct data before issuing.",
+          "label": "Return issuance"
+        },
+        "pt-BR": {
+          "summary": "Devolver solicitação de emissão de NF",
+          "description": "Devolve a solicitação ao criador com motivo obrigatório.",
+          "whenToUse": "Pedir correção ao solicitante antes de emitir.",
+          "label": "Devolver emissão"
+        }
+      }
+    },
+    "issue_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Mark invoice issuance as issued",
+          "description": "Mark the request as issued after billing completed the invoice.",
+          "whenToUse": "Close the request when the NF has been issued.",
+          "label": "Mark issued"
+        },
+        "pt-BR": {
+          "summary": "Marcar solicitação de emissão como emitida",
+          "description": "Marca a solicitação como emitida após o Faturamento concluir a NF.",
+          "whenToUse": "Encerrar a solicitação quando a nota foi emitida.",
+          "label": "Marcar emitida"
+        }
+      }
+    },
+    "cancel_invoice_issuance_request": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Cancel invoice issuance request",
+          "description": "Cancel a non-terminal invoice issuance request.",
+          "whenToUse": "Stop processing a request that should not be issued.",
+          "label": "Cancel issuance"
+        },
+        "pt-BR": {
+          "summary": "Cancelar solicitação de emissão de NF",
+          "description": "Cancela uma solicitação de emissão que ainda não é terminal.",
+          "whenToUse": "Interromper uma solicitação que não deve ser emitida.",
+          "label": "Cancelar emissão"
+        }
+      }
+    },
+    "add_invoice_issuance_attachment": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Attach purchase order PDF",
+          "description": "Upload an optional customer purchase-order PDF to an issuance request.",
+          "whenToUse": "Attach the PO file during create or attendance.",
+          "label": "Issuance attachment"
+        },
+        "pt-BR": {
+          "summary": "Anexar PDF do pedido de compra",
+          "description": "Envia o PDF opcional do pedido do cliente na solicitação de emissão.",
+          "whenToUse": "Anexar o arquivo do PC no cadastro ou no atendimento.",
+          "label": "Anexo da emissão"
+        }
+      }
     }
   }
 }

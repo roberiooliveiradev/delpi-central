@@ -16,6 +16,7 @@ import {
   listBundledReactBridgeImports,
   resolveBundledReactBridgeName,
   upgradeUnconditionalReactGlobalPublish,
+  isFederationSharedReactDomInterop,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
@@ -26,15 +27,29 @@ const REACT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT
 function portalReact() {
   return {
     useRef: () => "portal",
+    useMemo: (fn) => fn(),
+    useState: (v) => [v, () => undefined],
     [REACT_INTERNALS]: { H: {} },
   };
 }
 
-function brokenReact() {
+function brokenFlattenReact() {
   return {
     useRef: () => "broken",
+    useMemo: (fn) => fn(),
+    useState: (v) => [v, () => undefined],
     [REACT_INTERNALS]: { H: null },
   };
+}
+
+function incompleteReactOnlyUseRef() {
+  return {
+    useRef: () => "partial",
+  };
+}
+
+function notReact() {
+  return { version: "0" };
 }
 
 const UNPATCHED_H = String.raw`function H(e,t){return typeof e.default=="function"?(Object.keys(e).forEach(s=>{s!=="default"&&(e.default[s]=e[s])}),w[t]=e.default,e.default):(e.default&&(e=Object.assign({},e.default,e)),w[t]=e,e)}`;
@@ -61,7 +76,7 @@ function testFlattenFromBrokenProxy() {
 function testFlattenRuntimeStrict() {
   const code = patchFederationImportPublishReact(patchFederationFlattenModule(UNPATCHED_H));
   const result = new Function(
-    `const w={}; const mock={useRef:()=>"ok",__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE:{H:{}}}; ${code}; return H({ default: mock }, "react");`,
+    `const w={}; const mock={useRef:()=>"ok",useMemo:(f)=>f(),useState:(v)=>[v,()=>{}],__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE:{H:{}}}; ${code}; return H({ default: mock }, "react");`,
   )();
   assert.equal(typeof result.useRef, "function");
   assert.ok(isUsableReact(globalThis[DELPI_MF_REACT_GLOBAL]));
@@ -71,26 +86,57 @@ function testFlattenRuntimeStrict() {
 function testReactShimUsesGlobal() {
   const out = patchBundledReactCjsBridge(REACT_SHIM);
   assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "shim consulta global");
-  assert.ok(out.includes(REACT_INTERNALS), "shim valida dispatcher H");
+  assert.ok(out.includes('typeof __g.useRef=="function"'), "shim valida useRef");
+  assert.ok(out.includes('typeof __g.useMemo=="function"'), "shim valida useMemo");
+  assert.ok(out.includes('typeof __g.useState=="function"'), "shim valida useState");
+  assert.ok(!out.includes(`${REACT_INTERNALS}?.H`), "shim não exige H (null fora do render)");
 }
 
 function testPublishDoesNotOverwritePortalReact() {
   globalThis[DELPI_MF_REACT_GLOBAL] = portalReact();
-  publishDelpiMfReact(brokenReact());
+  publishDelpiMfReact(brokenFlattenReact());
   assert.equal(globalThis[DELPI_MF_REACT_GLOBAL].useRef(), "portal");
   delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
-function testBrokenReactNotUsable() {
-  assert.ok(!isUsableReact(brokenReact()));
+function testUsableReactAcceptsModuleOutsideRender() {
+  // H=null é o estado normal fora do render — ainda é React canônico.
+  assert.ok(isUsableReact(brokenFlattenReact()));
   assert.ok(isUsableReact(portalReact()));
+  assert.ok(!isUsableReact(incompleteReactOnlyUseRef()), "só useRef não basta (BA/useMemo)");
+  assert.ok(!isUsableReact(notReact()));
+  assert.ok(!isUsableReact(null));
+}
+
+/** Regressão kaizometro: bridge no init do módulo com global.H=null deve usar o global. */
+function testCjsBridgePrefersGlobalWhenDispatcherHIsNull() {
+  const out = patchBundledReactCjsBridge(REACT_SHIM);
+  globalThis[DELPI_MF_REACT_GLOBAL] = brokenFlattenReact();
+  const bridge = new Function(
+    `${out.replace(/export\{(\w+) as r\}/, "return $1;")}`,
+  )();
+  const mod = bridge();
+  assert.equal(mod.useRef(), "broken", "com H=null ainda retorna o global semeado");
+  delete globalThis[DELPI_MF_REACT_GLOBAL];
 }
 
 function testAppChunkReactBridgeFallback() {
   const raw = String.raw`import{r as Nu}from"./index-ABC.js";function x(){if(Ws)return al;Ws=1;var e=Nu(),t=DA();return e.useRef}`;
   const out = patchBundledReactConsumerChunk(raw);
-  assert.ok(out.includes(REACT_INTERNALS), "App shim valida dispatcher H");
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "App shim consulta global");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useRef=="function"'), "App shim valida useRef");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useMemo=="function"'), "App shim valida useMemo");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useState=="function"'), "App shim valida useState");
   assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
+}
+
+/** TipTap/recharts (chunk ContextMenuToolbarButton) também precisa do fallback — não só App-*. */
+function testRichTextChunkReactBridgeFallback() {
+  const raw = String.raw`import{r as US}from"./index-B4SFKWmm.js";var Jm;function YR(){if(Jm)return Vc;Jm=1;var e=US();return e.useRef}`;
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "chunk rich-text consulta global");
+  assert.ok(out.includes('typeof globalThis.__DELPI_MF_REACT__.useMemo=="function"'), "rich-text valida useMemo");
+  assert.ok(!out.includes("var e=US()"), "não chama US() sem fallback");
 }
 
 /** Regressão: `$h`=React e `kh`=react-dom — não redirecionar `kh()` para o global React. */
@@ -123,6 +169,33 @@ function testAppChunkSkipsLoneReactDomBridge() {
   assert.equal(resolveBundledReactBridgeName(raw), null, "não escolhe bridge react-dom");
   const out = patchBundledReactConsumerChunk(raw);
   assert.equal(out, raw, "chunk só com react-dom permanece intacto");
+}
+
+/**
+ * Regressão public-hub /sign (HelpTooltip): shared react-dom era redirecionado para
+ * __DELPI_MF_REACT__ → createPortal undefined → «X is not a function».
+ */
+function testSharedReactDomInteropNotRedirectedToReact() {
+  const raw = String.raw`import{g as r}from"./_commonjsHelpers-CqkleIqs.js";import{r as o}from"./index-q540vByz.js";var t=o();const m=r(t);export{m as default};`;
+  assert.ok(isFederationSharedReactDomInterop(raw), "detecta interop shared react-dom");
+  assert.equal(resolveBundledReactBridgeName(raw), null, "não escolhe bridge para redirect");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.equal(out, raw, "não injeta __DELPI_MF_REACT__ no shared react-dom");
+  assert.ok(!out.includes(DELPI_MF_REACT_GLOBAL), "shared react-dom intacto");
+}
+
+/**
+ * Regressão controle-retrabalhos (ago/2026): App-*.js importa _commonjsHelpers +
+ * export default (padrão do expose) — detector frouxo classificava como shared
+ * react-dom e pulava o fallback → verify-federation-react-patch FAIL.
+ */
+function testAppChunkWithCommonjsHelpersStillGetsReactFallback() {
+  const raw = String.raw`import{importShared as E}from"./__federation_fn_import-X.js";import{r as Nu}from"./index-B4SFKWmm.js";import{g as Yb}from"./_commonjsHelpers-CqkleIqs.js";function boot(){var e=Nu();return e.useRef}export{boot as default};`;
+  assert.equal(isFederationSharedReactDomInterop(raw), false, "App ≠ shared react-dom");
+  assert.equal(resolveBundledReactBridgeName(raw), "Nu", "escolhe bridge React");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes(DELPI_MF_REACT_GLOBAL), "injeta fallback no App");
+  assert.ok(!out.includes("var e=Nu()"), "não chama Nu() sem fallback");
 }
 
 /**
@@ -184,15 +257,19 @@ testFlattenFromBrokenProxy();
 testFlattenRuntimeStrict();
 testReactShimUsesGlobal();
 testPublishDoesNotOverwritePortalReact();
-testBrokenReactNotUsable();
+testUsableReactAcceptsModuleOutsideRender();
+testCjsBridgePrefersGlobalWhenDispatcherHIsNull();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
+testRichTextChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
 testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
 testAppChunkSkipsLoneReactDomBridge();
+testSharedReactDomInteropNotRedirectedToReact();
+testAppChunkWithCommonjsHelpersStillGetsReactFallback();
 testBridgeImportScanIsLinearOnCommaHeavyImports();
 testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 15 testes passaram");
+console.log("OK: federationReactProxyFix — 19 testes passaram");

@@ -9,6 +9,9 @@ from app.domain.ports.financial.financial_query_repository_port import Financial
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
+from app.domain.services.commercial_customer_codes_filter_service import (
+    CommercialCustomerCodesFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -36,6 +39,11 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             "D2.D2_CLIENTE",
             request.customer_segment,
         )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            vendas_qb,
+            "D2.D2_CLIENTE",
+            request.customer_codes,
+        )
         vendas_where, vendas_params = vendas_qb.build()
 
         exists_qb = QueryBuilder()
@@ -51,6 +59,11 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             dev_qb,
             "D1.D1_FORNECE",
             request.customer_segment,
+        )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            dev_qb,
+            "D1.D1_FORNECE",
+            request.customer_codes,
         )
         dev_where, dev_params = dev_qb.build()
 

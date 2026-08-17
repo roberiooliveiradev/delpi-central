@@ -33,7 +33,8 @@
   min-height: 297mm;
   margin: 0 auto;
   padding: 14mm 21mm 16mm;
-  overflow: hidden;
+  /* visible: atas longas precisam crescer além de 1×A4 (print e tela). */
+  overflow: visible;
   background: #fff;
   color: #151515;
   box-shadow: 0 12px 34px color-mix(in srgb, #000 18%, transparent);
@@ -43,14 +44,25 @@
 .delpi-ui-document-page__watermark {
   position: absolute;
   z-index: 0;
-  inset: 24% 20%;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.delpi-ui-document-page__watermark-tile {
+  flex: 0 0 297mm;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24% 20%;
   opacity: 0.09;
-  pointer-events: none;
 }
 
+.delpi-ui-document-page__watermark-tile img,
+.delpi-ui-document-page__watermark-tile svg,
 .delpi-ui-document-page__watermark img,
 .delpi-ui-document-page__watermark svg {
   display: block;
@@ -103,6 +115,45 @@
 .delpi-ui-document-rich-content li > p + p,
 .delpi-ui-document-rich-content li > div + div {
   margin-top: 1mm;
+}
+
+/*
+ * Tabelas no modo leitura/apresentação.
+ * Estilos visuais canônicos ficam em rich-text-editor.css (mesmo seletor
+ * `.delpi-ui-document-rich-content table`); aqui só reforçamos display de
+ * tabela para o papel A4 não herdar resets que colapsem células em texto.
+ */
+.delpi-ui-document-rich-content table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 3mm 0;
+  table-layout: fixed;
+}
+
+.delpi-ui-document-rich-content thead,
+.delpi-ui-document-rich-content tbody,
+.delpi-ui-document-rich-content tfoot {
+  display: table-row-group;
+}
+
+.delpi-ui-document-rich-content tr {
+  display: table-row;
+}
+
+.delpi-ui-document-rich-content th,
+.delpi-ui-document-rich-content td {
+  display: table-cell;
+  padding: 1.5mm 2mm;
+  border: 1px solid #c5cdd6;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.delpi-ui-document-rich-content th {
+  font-weight: 600;
+  background: #e8f4fb;
+  text-align: left;
 }
 
 .delpi-ui-document-header {
@@ -231,12 +282,24 @@
   }
 }
 
+/* Margens ABNT na janela dedicada: printDocumentReaderHtml (padding único; @page 0). */
 @page {
-  size: A4;
+  size: A4 portrait;
   margin: 0;
 }
 
 @media print {
+  /*
+   * Não usar inset:0 — altura fica presa ao viewport e o Chrome imprime
+   * só a 1ª página (conteúdo “cortado” com folha em branco embaixo).
+   */
+  html:has(body.delpi-ui-document-printing),
+  body.delpi-ui-document-printing {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
   body.delpi-ui-document-printing * {
     visibility: hidden !important;
   }
@@ -247,9 +310,15 @@
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-reader {
-    position: absolute;
-    inset: 0;
+    position: static;
+    top: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
     display: block;
+    overflow: visible !important;
     background: #fff;
   }
 
@@ -258,15 +327,100 @@
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-reader__viewport {
-    overflow: visible;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
     padding: 0;
     background: #fff;
   }
 
   body.delpi-ui-document-printing .delpi-ui-document-page {
-    width: 210mm;
-    min-height: 297mm;
+    width: 100%;
+    max-width: none;
+    height: auto !important;
+    min-height: 0;
     margin: 0;
+    padding: 0;
+    overflow: visible !important;
     box-shadow: none;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
   }
+
+  body.delpi-ui-document-printing .delpi-ui-document-page__body {
+    overflow: visible !important;
+    padding: 0;
+  }
+
+  body.delpi-ui-document-printing .delpi-ui-document-rich-content p,
+  body.delpi-ui-document-printing .delpi-ui-document-page p {
+    text-align: justify;
+    orphans: 3;
+    widows: 3;
+  }
+
+  body.delpi-ui-document-printing h1,
+  body.delpi-ui-document-printing h2,
+  body.delpi-ui-document-printing h3,
+  body.delpi-ui-document-printing h4 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+    break-inside: avoid;
+  }
+
+  body.delpi-ui-document-printing .delpi-ui-document-signature,
+  body.delpi-ui-document-printing tr,
+  body.delpi-ui-document-printing img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+.delpi-ui-document-reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-document-reader-toolbar__label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-document-reader-toolbar__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delpi-ui-document-reader-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.delpi-ui-document-reader-toolbar__btn:hover,
+.delpi-ui-document-reader-toolbar__btn:focus-visible {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 40%, var(--delpi-ui-border, #e5e7eb));
+  outline: none;
+}
+
+.delpi-ui-document-reader-toolbar__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

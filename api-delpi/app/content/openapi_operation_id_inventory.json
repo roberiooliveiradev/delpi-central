@@ -1,12 +1,19 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 370,
-  "stableCount": 370,
+  "operationCount": 531,
+  "stableCount": 531,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
   "operations": [
+    {
+      "operationId": "create_canal_denuncia",
+      "method": "POST",
+      "path": "/canal-denuncia/denuncias",
+      "tag": "Canal de Denúncia",
+      "stable": true
+    },
     {
       "operationId": "get_branch_new_business_rol_target_pct",
       "method": "GET",
@@ -32,6 +39,13 @@
       "operationId": "get_sales_conversion_rate",
       "method": "GET",
       "path": "/commercial/closing-rate",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "method": "GET",
+      "path": "/commercial/closing-rate/series",
       "tag": "Comercial",
       "stable": true
     },
@@ -95,6 +109,13 @@
       "operationId": "get_commercial_proposal_history_events",
       "method": "GET",
       "path": "/commercial/proposals/{proposal_number}/history/events",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer",
       "tag": "Comercial",
       "stable": true
     },
@@ -176,6 +197,482 @@
       "stable": true
     },
     {
+      "operationId": "get_si_indicator_commercial_closing_rate_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-closing-rate/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-closing-rate/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-ebitda/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-ebitda/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-pmr/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-pmr/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-absenteeism/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-absenteeism/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-pdi/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-pdi/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-performance-reviews/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-performance-reviews/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-satisfaction/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-satisfaction/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-training-hours/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-training-hours/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-turnover/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-turnover/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-oee/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-oee/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-otd/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-otd/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-audit-5s/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-audit-5s/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-cpv/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-cpv/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-otd/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-otd/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-value/meta",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-value/realized",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
       "operationId": "execute_readonly_sql",
       "method": "POST",
       "path": "/data/sql",
@@ -214,6 +711,76 @@
       "operationId": "get_lmps_dashboard_summary",
       "method": "GET",
       "path": "/engineering/lmps/dashboard/summary",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmp_nonconformities",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "create_lmp_nonconformity",
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "export_lmp_nonconformities",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/export",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "import_lmp_nonconformities",
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities/import",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmp_problem_tags",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/problem-tags",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_nonconformity_streak",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/streak",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "delete_lmp_nonconformity",
+      "method": "DELETE",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_nonconformity",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "update_lmp_nonconformity",
+      "method": "PUT",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmp_nonconformity_history",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}/history",
       "tag": "Engenharia",
       "stable": true
     },
@@ -295,6 +862,13 @@
       "stable": true
     },
     {
+      "operationId": "get_transformometro_savings_investment_series",
+      "method": "GET",
+      "path": "/engineering/transformometro/savings-investment/series",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
       "method": "GET",
       "path": "/financeiro/despesas-centro-custo/filtros",
@@ -337,6 +911,41 @@
       "stable": true
     },
     {
+      "operationId": "get_financeiro_inadimplencia_clientes",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/clientes",
+      "tag": "Financeiro — Inadimplência",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_faixas_atraso",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/faixas-atraso",
+      "tag": "Financeiro — Inadimplência",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_mensal",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/mensal",
+      "tag": "Financeiro — Inadimplência",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_resumo",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/resumo",
+      "tag": "Financeiro — Inadimplência",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_titulos",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/titulos",
+      "tag": "Financeiro — Inadimplência",
+      "stable": true
+    },
+    {
       "operationId": "get_financial_ebitda_pct",
       "method": "GET",
       "path": "/financial/ebitda_pct",
@@ -362,6 +971,209 @@
       "method": "GET",
       "path": "/financial/rol",
       "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "update_guias_procedimentos_admin_attachment",
+      "method": "PUT",
+      "path": "/guias-procedimentos/admin/attachments/{attachment_id}",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "archive_guias_procedimentos_admin_attachment",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/attachments/{attachment_id}/archive",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_departments",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/departments",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "create_guias_procedimentos_admin_department",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/departments",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "get_guias_procedimentos_admin_department",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/departments/{department_id}",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "update_guias_procedimentos_admin_department",
+      "method": "PUT",
+      "path": "/guias-procedimentos/admin/departments/{department_id}",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "update_guias_procedimentos_admin_media",
+      "method": "PUT",
+      "path": "/guias-procedimentos/admin/media/{media_id}",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "archive_guias_procedimentos_admin_media",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/media/{media_id}/archive",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedures",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/procedures",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "create_guias_procedimentos_admin_procedure",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "get_guias_procedimentos_admin_procedure",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "update_guias_procedimentos_admin_procedure",
+      "method": "PUT",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "archive_guias_procedimentos_admin_procedure",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/archive",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedure_attachments",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/attachments",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "upload_guias_procedimentos_admin_procedure_attachment",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/attachments",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedure_media",
+      "method": "GET",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/media",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "create_guias_procedimentos_admin_external_video",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/media/external-videos",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "upload_guias_procedimentos_admin_procedure_image",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/media/images",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "upload_guias_procedimentos_admin_procedure_video",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/media/videos",
+      "tag": "Guias e Procedimentos — Admin Media",
+      "stable": true
+    },
+    {
+      "operationId": "publish_guias_procedimentos_admin_procedure",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/publish",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "restore_guias_procedimentos_admin_procedure",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/restore",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "unpublish_guias_procedimentos_admin_procedure",
+      "method": "POST",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/unpublish",
+      "tag": "Guias e Procedimentos — Admin",
+      "stable": true
+    },
+    {
+      "operationId": "download_guias_procedimentos_attachment_file",
+      "method": "GET",
+      "path": "/guias-procedimentos/attachments/{attachment_id}/file",
+      "tag": "Guias e Procedimentos — Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_departments",
+      "method": "GET",
+      "path": "/guias-procedimentos/departments",
+      "tag": "Guias e Procedimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_guias_procedimentos_department",
+      "method": "GET",
+      "path": "/guias-procedimentos/departments/{slug}",
+      "tag": "Guias e Procedimentos",
+      "stable": true
+    },
+    {
+      "operationId": "download_guias_procedimentos_media_file",
+      "method": "GET",
+      "path": "/guias-procedimentos/media/{media_id}/file",
+      "tag": "Guias e Procedimentos — Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_procedure_attachments",
+      "method": "GET",
+      "path": "/guias-procedimentos/procedures/{procedure_id}/attachments",
+      "tag": "Guias e Procedimentos — Media",
+      "stable": true
+    },
+    {
+      "operationId": "list_guias_procedimentos_procedure_media",
+      "method": "GET",
+      "path": "/guias-procedimentos/procedures/{procedure_id}/media",
+      "tag": "Guias e Procedimentos — Media",
+      "stable": true
+    },
+    {
+      "operationId": "get_guias_procedimentos_procedure",
+      "method": "GET",
+      "path": "/guias-procedimentos/procedures/{slug}",
+      "tag": "Guias e Procedimentos",
       "stable": true
     },
     {
@@ -449,9 +1261,219 @@
       "stable": true
     },
     {
+      "operationId": "get_inspecoes_processo_auditoria_apontamentos",
+      "method": "GET",
+      "path": "/inspecoes-processo/auditoria-apontamentos",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_historico",
+      "method": "GET",
+      "path": "/inspecoes-processo/historico",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_historico_detalhe",
+      "method": "GET",
+      "path": "/inspecoes-processo/historico/detalhe",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_ensaiador",
+      "method": "GET",
+      "path": "/inspecoes-processo/por-ensaiador",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_operacao",
+      "method": "GET",
+      "path": "/inspecoes-processo/por-operacao",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_produto",
+      "method": "GET",
+      "path": "/inspecoes-processo/por-produto",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_ranking_ensaio",
+      "method": "GET",
+      "path": "/inspecoes-processo/ranking-ensaio",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_processo_resumo",
+      "method": "GET",
+      "path": "/inspecoes-processo/resumo",
+      "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/reconciliation/refresh",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "run_lancamento_notas_fiscais_reconciliation",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/reconciliation/run",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_requests",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "create_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_request",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "update_lancamento_notas_fiscais_request",
+      "method": "PATCH",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "block_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/block",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "cancel_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/cancel",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "add_lancamento_notas_fiscais_comment",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/comments",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "post_manual_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "resume_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/resume",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "start_lancamento_notas_fiscais_request",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/start",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "search_lancamento_notas_fiscais_suppliers",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/suppliers",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
       "operationId": "list_pedidos_venda_abertos",
       "method": "GET",
       "path": "/pedidos-venda-abertos/",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_customer_billing_series",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/billing-series",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "enrich_portfolio_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/enrichment",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "search_active_customers_for_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/search",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "delete_customer_avatar",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_customer_avatar",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_customer_avatar",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
     },
@@ -463,10 +1485,171 @@
       "stable": true
     },
     {
+      "operationId": "list_seller_portfolios",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "create_seller_portfolio",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_my_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/me",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "deactivate_seller_portfolio",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "update_seller_portfolio",
+      "method": "PATCH",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "remove_seller_customer",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "add_seller_customer",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "replace_seller_customers",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "transfer_seller_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_process_inspection_plans_orders_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/orders-without-plan",
+      "tag": "(sem tag)",
+      "stable": true
+    },
+    {
+      "operationId": "get_process_inspection_plans_products",
+      "method": "GET",
+      "path": "/process-inspection-plans/products",
+      "tag": "(sem tag)",
+      "stable": true
+    },
+    {
+      "operationId": "get_process_inspection_plans_products_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/products-without-plan",
+      "tag": "(sem tag)",
+      "stable": true
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "method": "GET",
+      "path": "/process-inspection-plans/products/{code}",
+      "tag": "(sem tag)",
+      "stable": true
+    },
+    {
+      "operationId": "get_process_inspection_plans_summary",
+      "method": "GET",
+      "path": "/process-inspection-plans/summary",
+      "tag": "(sem tag)",
+      "stable": true
+    },
+    {
       "operationId": "get_production_allocation_gaps",
       "method": "GET",
       "path": "/production/allocation-gaps",
       "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "list_production_appointments",
+      "method": "GET",
+      "path": "/production/appointments",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "list_production_appointments_by_op",
+      "method": "GET",
+      "path": "/production/appointments/by-op",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "list_production_appointments_child_ops",
+      "method": "GET",
+      "path": "/production/appointments/child-ops",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_appointments_finished_ops_series",
+      "method": "GET",
+      "path": "/production/appointments/finished-ops/series",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_appointments_produced_totals",
+      "method": "GET",
+      "path": "/production/appointments/produced-totals",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_appointments_series",
+      "method": "GET",
+      "path": "/production/appointments/series",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_appointments_summary",
+      "method": "GET",
+      "path": "/production/appointments/summary",
+      "tag": "Produção — Apontamento de Produção",
+      "stable": true
+    },
+    {
+      "operationId": "list_production_appointment_work_centers",
+      "method": "GET",
+      "path": "/production/appointments/work-centers",
+      "tag": "Produção — Apontamento de Produção",
       "stable": true
     },
     {
@@ -536,6 +1719,13 @@
       "operationId": "get_production_losses_top_materials",
       "method": "GET",
       "path": "/production/losses/top-materials",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "list_production_machine_program_top_intermediates",
+      "method": "GET",
+      "path": "/production/machine-programs/top-intermediates",
       "tag": "Produção operacional",
       "stable": true
     },
@@ -617,6 +1807,27 @@
       "stable": true
     },
     {
+      "operationId": "get_production_pcp_orders_items",
+      "method": "GET",
+      "path": "/production/pcp-orders/items",
+      "tag": "Produção — Ordens de produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_pcp_orders_ranking",
+      "method": "GET",
+      "path": "/production/pcp-orders/ranking",
+      "tag": "Produção — Ordens de produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_pcp_orders_summary",
+      "method": "GET",
+      "path": "/production/pcp-orders/summary",
+      "tag": "Produção — Ordens de produção",
+      "stable": true
+    },
+    {
       "operationId": "get_production_planned_vs_real_time",
       "method": "GET",
       "path": "/production/planned-vs-real-time",
@@ -638,6 +1849,27 @@
       "stable": true
     },
     {
+      "operationId": "get_production_unproductive_hours_items",
+      "method": "GET",
+      "path": "/production/unproductive-hours/items",
+      "tag": "Produção — Horas improdutivas",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_unproductive_hours_ranking",
+      "method": "GET",
+      "path": "/production/unproductive-hours/ranking",
+      "tag": "Produção — Horas improdutivas",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_unproductive_hours_summary",
+      "method": "GET",
+      "path": "/production/unproductive-hours/summary",
+      "tag": "Produção — Horas improdutivas",
+      "stable": true
+    },
+    {
       "operationId": "get_production_work_center_average_planned_time",
       "method": "GET",
       "path": "/production/work-centers/average-planned-time",
@@ -649,6 +1881,13 @@
       "method": "GET",
       "path": "/production/work-centers/order-summary",
       "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "search_products_by_supplier_part_number",
+      "method": "GET",
+      "path": "/products/by-supplier-part-number",
+      "tag": "products",
       "stable": true
     },
     {
@@ -915,6 +2154,13 @@
       "method": "POST",
       "path": "/propostas-comerciais/{proposta_interna}/pdf",
       "tag": "Propostas Comerciais",
+      "stable": true
+    },
+    {
+      "operationId": "create_public_kaizen_suggestion",
+      "method": "POST",
+      "path": "/public/kaizen/suggestions",
+      "tag": "Kaizen — público",
       "stable": true
     },
     {
@@ -1303,6 +2549,13 @@
       "stable": true
     },
     {
+      "operationId": "close_audit_5s_audit_without_nc_treatment",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/close-without-nc-treatment",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "complete_audit_5s_evaluation",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
@@ -1366,7 +2619,7 @@
       "stable": true
     },
     {
-      "operationId": "audit_5s_upsert_response",
+      "operationId": "upsert_audit_5s_response",
       "method": "PUT",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
       "tag": "Qualidade",
@@ -1380,7 +2633,7 @@
       "stable": true
     },
     {
-      "operationId": "upload_audit_5s_response_attachment",
+      "operationId": "attach_audit_5s_response_photo",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
       "tag": "Qualidade",
@@ -1429,6 +2682,13 @@
       "stable": true
     },
     {
+      "operationId": "list_audit_5s_nonconformities_board",
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "update_audit_5s_nonconformity",
       "method": "PATCH",
       "path": "/quality/audit-5s/nonconformities/{nc_id}",
@@ -1457,7 +2717,7 @@
       "stable": true
     },
     {
-      "operationId": "upload_audit_5s_nc_attachment",
+      "operationId": "attach_audit_5s_evidence",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
       "tag": "Qualidade",
@@ -1474,6 +2734,13 @@
       "operationId": "complete_audit_5s_nc_action",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "reopen_audit_5s_nc_action",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/reopen-action",
       "tag": "Qualidade",
       "stable": true
     },
@@ -1516,6 +2783,13 @@
       "operationId": "import_kaizen_records",
       "method": "POST",
       "path": "/quality/kaizens/records/import",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_kaizen_savings_investment_series",
+      "method": "GET",
+      "path": "/quality/kaizens/records/savings-investment/series",
       "tag": "Qualidade",
       "stable": true
     },
@@ -1709,14 +2983,14 @@
       "stable": true
     },
     {
-      "operationId": "get_my_signature",
+      "operationId": "get_quality_label_inspector_signature",
       "method": "GET",
       "path": "/quality/labels/inspectors/me/signature",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "upload_my_signature",
+      "operationId": "upload_quality_label_inspector_signature",
       "method": "POST",
       "path": "/quality/labels/inspectors/me/signature",
       "tag": "Qualidade",
@@ -1772,14 +3046,14 @@
       "stable": true
     },
     {
-      "operationId": "get_certificate_pdf",
+      "operationId": "get_quality_label_certificate_pdf",
       "method": "GET",
       "path": "/quality/labels/{label_id}/certificate/pdf",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "get_label_qr",
+      "operationId": "get_quality_label_qr",
       "method": "GET",
       "path": "/quality/labels/{label_id}/qr",
       "tag": "Qualidade",
@@ -1849,10 +3123,213 @@
       "stable": true
     },
     {
+      "operationId": "get_quality_returned_totals",
+      "method": "GET",
+      "path": "/quality/returned-totals",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_rework_cost_pct",
+      "method": "GET",
+      "path": "/quality/rework-cost-pct",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_scrap_cost_pct",
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "list_quality_solution_patterns",
       "method": "GET",
       "path": "/quality/solution-patterns",
       "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_filtros",
+      "method": "GET",
+      "path": "/refugos/filtros",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_health",
+      "method": "GET",
+      "path": "/refugos/health",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_rankings",
+      "method": "GET",
+      "path": "/refugos/rankings",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_registros",
+      "method": "GET",
+      "path": "/refugos/registros",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_resumo",
+      "method": "GET",
+      "path": "/refugos/resumo",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_scrap_cost_pct",
+      "method": "GET",
+      "path": "/refugos/scrap_cost_pct",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "get_refugos_serie",
+      "method": "GET",
+      "path": "/refugos/serie",
+      "tag": "Produção — Acompanhamento de Refugos",
+      "stable": true
+    },
+    {
+      "operationId": "list_report_definitions",
+      "method": "GET",
+      "path": "/reports/definitions",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "create_report_definition",
+      "method": "POST",
+      "path": "/reports/definitions",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "get_report_definition",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "update_report_definition",
+      "method": "PATCH",
+      "path": "/reports/definitions/{definition_id}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "list_report_shortage_item_notes",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/item-notes",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "delete_report_shortage_item_note",
+      "method": "DELETE",
+      "path": "/reports/definitions/{definition_id}/item-notes/{product_code}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_report_shortage_item_note",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/item-notes/{product_code}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "list_report_recipients",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/recipients",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "replace_report_recipients",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/recipients",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "run_report_definition",
+      "method": "POST",
+      "path": "/reports/definitions/{definition_id}/run",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "delete_report_schedule",
+      "method": "DELETE",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "get_report_schedule",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_report_schedule",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "list_report_providers",
+      "method": "GET",
+      "path": "/reports/providers",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "preview_report_provider_management_revenue_monthly",
+      "method": "GET",
+      "path": "/reports/providers/management_revenue_monthly/preview",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "preview_report_provider_safety_stock_shortage_30d",
+      "method": "GET",
+      "path": "/reports/providers/safety_stock_shortage_30d/preview",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "list_report_runs",
+      "method": "GET",
+      "path": "/reports/runs",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "get_report_run",
+      "method": "GET",
+      "path": "/reports/runs/{run_id}",
+      "tag": "Delpi Reports",
+      "stable": true
+    },
+    {
+      "operationId": "process_pending_report_schedules",
+      "method": "POST",
+      "path": "/reports/schedules/process-pending",
+      "tag": "Delpi Reports",
       "stable": true
     },
     {
@@ -1905,6 +3382,13 @@
       "stable": true
     },
     {
+      "operationId": "get_retrabalhos_rework_cost_pct",
+      "method": "GET",
+      "path": "/retrabalhos/rework_cost_pct",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
       "operationId": "list_sale_orders",
       "method": "GET",
       "path": "/sales/",
@@ -1919,9 +3403,30 @@
       "stable": true
     },
     {
-      "operationId": "create_booking",
+      "operationId": "create_scheduling_booking",
       "method": "POST",
       "path": "/scheduling/bookings",
+      "tag": "Agendamento",
+      "stable": true
+    },
+    {
+      "operationId": "list_my_scheduling_bookings",
+      "method": "GET",
+      "path": "/scheduling/bookings/mine",
+      "tag": "Agendamento",
+      "stable": true
+    },
+    {
+      "operationId": "list_pending_scheduling_bookings",
+      "method": "GET",
+      "path": "/scheduling/bookings/pending",
+      "tag": "Agendamento",
+      "stable": true
+    },
+    {
+      "operationId": "approve_scheduling_booking",
+      "method": "POST",
+      "path": "/scheduling/bookings/{booking_id}/approve",
       "tag": "Agendamento",
       "stable": true
     },
@@ -1929,6 +3434,13 @@
       "operationId": "cancel_scheduling_booking",
       "method": "PATCH",
       "path": "/scheduling/bookings/{booking_id}/cancel",
+      "tag": "Agendamento",
+      "stable": true
+    },
+    {
+      "operationId": "reject_scheduling_booking",
+      "method": "POST",
+      "path": "/scheduling/bookings/{booking_id}/reject",
       "tag": "Agendamento",
       "stable": true
     },
@@ -1979,6 +3491,104 @@
       "method": "GET",
       "path": "/supplies/otd",
       "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/panel",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/series",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/summary",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_filters",
+      "method": "GET",
+      "path": "/supplies/safety-stock/filters",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_items",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/details",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_suppliers",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/suppliers",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_safety_stock_summary",
+      "method": "GET",
+      "path": "/supplies/safety-stock/summary",
+      "tag": "Suprimentos — Estoque de segurança",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_stock_balances_items",
+      "method": "GET",
+      "path": "/supplies/stock-balances/items",
+      "tag": "Suprimentos — Saldos de estoque",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_stock_balances_summary",
+      "method": "GET",
+      "path": "/supplies/stock-balances/summary",
+      "tag": "Suprimentos — Saldos de estoque",
       "stable": true
     },
     {
@@ -2119,537 +3729,6 @@
       "method": "GET",
       "path": "/system/tables/{tableName}/schema",
       "tag": "system",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_ebitda_realized",
-      "path": "/dashboard/indicators/financial-ebitda/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_ebitda_meta",
-      "path": "/dashboard/indicators/financial-ebitda/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_realized",
-      "path": "/dashboard/indicators/financial-fixed-cost/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_meta",
-      "path": "/dashboard/indicators/financial-fixed-cost/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_pmr_realized",
-      "path": "/dashboard/indicators/financial-pmr/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_financial_pmr_meta",
-      "path": "/dashboard/indicators/financial-pmr/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_absenteeism_realized",
-      "path": "/dashboard/indicators/hr-absenteeism/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_absenteeism_meta",
-      "path": "/dashboard/indicators/hr-absenteeism/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_turnover_realized",
-      "path": "/dashboard/indicators/hr-turnover/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_turnover_meta",
-      "path": "/dashboard/indicators/hr-turnover/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_satisfaction_realized",
-      "path": "/dashboard/indicators/hr-satisfaction/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_satisfaction_meta",
-      "path": "/dashboard/indicators/hr-satisfaction/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_pdi_realized",
-      "path": "/dashboard/indicators/hr-pdi/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_pdi_meta",
-      "path": "/dashboard/indicators/hr-pdi/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_performance_reviews_realized",
-      "path": "/dashboard/indicators/hr-performance-reviews/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_performance_reviews_meta",
-      "path": "/dashboard/indicators/hr-performance-reviews/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_training_hours_realized",
-      "path": "/dashboard/indicators/hr-training-hours/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_hr_training_hours_meta",
-      "path": "/dashboard/indicators/hr-training-hours/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_realized",
-      "path": "/dashboard/indicators/commercial-rol/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_meta",
-      "path": "/dashboard/indicators/commercial-rol/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_closing_rate_realized",
-      "path": "/dashboard/indicators/commercial-closing-rate/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_closing_rate_meta",
-      "path": "/dashboard/indicators/commercial-closing-rate/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
-      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
-      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
-      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
-      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_realized",
-      "path": "/dashboard/indicators/production-direct-labor/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_meta",
-      "path": "/dashboard/indicators/production-direct-labor/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_realized",
-      "path": "/dashboard/indicators/production-costs/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_meta",
-      "path": "/dashboard/indicators/production-costs/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_realized",
-      "path": "/dashboard/indicators/production-depreciation/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_meta",
-      "path": "/dashboard/indicators/production-depreciation/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_oee_realized",
-      "path": "/dashboard/indicators/production-oee/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_oee_meta",
-      "path": "/dashboard/indicators/production-oee/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_otd_realized",
-      "path": "/dashboard/indicators/production-otd/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_production_otd_meta",
-      "path": "/dashboard/indicators/production-otd/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_realized",
-      "path": "/dashboard/indicators/quality-ppm-internal/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_meta",
-      "path": "/dashboard/indicators/quality-ppm-internal/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_realized",
-      "path": "/dashboard/indicators/quality-ppm-external/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_meta",
-      "path": "/dashboard/indicators/quality-ppm-external/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
-      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
-      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_audit_5s_realized",
-      "path": "/dashboard/indicators/quality-audit-5s/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_audit_5s_meta",
-      "path": "/dashboard/indicators/quality-audit-5s/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
-      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
-      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
-      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
-      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
-      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
-      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_cpv_realized",
-      "path": "/dashboard/indicators/supplies-cpv/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_cpv_meta",
-      "path": "/dashboard/indicators/supplies-cpv/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_otd_realized",
-      "path": "/dashboard/indicators/supplies-otd/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_otd_meta",
-      "path": "/dashboard/indicators/supplies-otd/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
-      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
-      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_value_realized",
-      "path": "/dashboard/indicators/supplies-stock-value/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_value_meta",
-      "path": "/dashboard/indicators/supplies-stock-value/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
-      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
-      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
-      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
-      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
-      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
-      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
-      "method": "GET",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
-      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
-      "method": "GET",
-      "tag": "Dashboard",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
-      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
-      "method": "GET",
-      "tag": "Dashboard",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
-      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
-      "method": "GET",
-      "tag": "Dashboard",
-      "stable": true
-    },
-    {
-      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
-      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
-      "method": "GET",
-      "tag": "Dashboard",
-      "stable": true
-    },
-    {
-      "operationId": "list_cliente_notas_fiscais_saida",
-      "method": "get",
-      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "search_active_customers_for_portfolio",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/customers/search",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "enrich_portfolio_customers",
-      "method": "POST",
-      "path": "/pedidos-venda-abertos/customers/enrichment",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "list_customer_billing_series",
-      "method": "POST",
-      "path": "/pedidos-venda-abertos/customers/billing-series",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "get_customer_avatar",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "upsert_customer_avatar",
-      "method": "PUT",
-      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "delete_customer_avatar",
-      "method": "DELETE",
-      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "get_my_seller_portfolio",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/sellers/me",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "list_seller_portfolios",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/sellers",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "create_seller_portfolio",
-      "method": "POST",
-      "path": "/pedidos-venda-abertos/sellers",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "get_seller_portfolio",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "update_seller_portfolio",
-      "method": "PATCH",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "deactivate_seller_portfolio",
-      "method": "DELETE",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "replace_seller_customers",
-      "method": "PUT",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "add_seller_customer",
-      "method": "POST",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "transfer_seller_customers",
-      "method": "POST",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
-      "tag": "Pedidos de Venda em Aberto",
-      "stable": true
-    },
-    {
-      "operationId": "remove_seller_customer",
-      "method": "DELETE",
-      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
-      "tag": "Pedidos de Venda em Aberto",
       "stable": true
     }
   ]

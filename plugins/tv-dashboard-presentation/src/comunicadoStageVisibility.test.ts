@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   filterStageSelectableIds,
+  listStageSelectableIds,
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,
@@ -55,6 +56,7 @@ describe("comunicadoStageVisibility", () => {
       "chart-1",
       "src-free",
     ]);
+    expect(listStageSelectableIds(blocks)).toEqual(["chart-1", "src-free"]);
   });
 
   it("lista visuais ligados e redireciona seleção da fonte oculta", () => {

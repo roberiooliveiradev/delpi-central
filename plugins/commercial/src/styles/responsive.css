@@ -1,0 +1,118 @@
+@media (max-width: 1480px) {
+  .cm-metrics {
+    grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-metrics > .cm-kpi-card:nth-child(n + 5) {
+    grid-column: span 1;
+  }
+
+  .cm-metrics--portfolio {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cm-metrics--overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  .cm-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-metrics > .cm-kpi-card--wide {
+    grid-column: 1 / -1;
+  }
+
+  .cm-metrics--portfolio {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-metrics--portfolio > .cm-kpi-card--wide {
+    grid-column: auto;
+  }
+
+  .cm-metrics--overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-billing-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-checkup-context {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .cm-checkup-context {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cm-checkup-panel__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-billing-note__summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-commercial.dashboard-page {
+    padding: 12px;
+  }
+
+  .cm-module-chrome {
+    padding: 14px 14px 12px;
+  }
+
+  .cm-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cm-metrics--overview {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-detail-header__actions {
+    width: 100%;
+  }
+
+  .cm-detail-header__actions .cm-btn {
+    flex: 1 1 auto;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .cm-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-checkup-context {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-billing-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-billing-note__summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark theme Portal — tokens canônicos em tokens.css (--cm-brand claro etc.) */
+:root[data-theme="dark"] .cm-module-chrome,
+.theme-dark .cm-module-chrome {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--secundary, #003866) 70%, #000) 0%,
+      color-mix(in srgb, var(--secundary, #003866) 45%, var(--primary, #089bdb)) 60%,
+      color-mix(in srgb, var(--primary, #089bdb) 55%, #000) 160%
+    );
+}

@@ -48,6 +48,7 @@ export function ComunicadoChartRibbon() {
           "chartType",
           "chartLabels",
           "chartAxes",
+          "numberFormat",
           "chartSeries",
         ]}
       />

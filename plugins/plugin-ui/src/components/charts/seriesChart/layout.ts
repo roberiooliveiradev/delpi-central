@@ -1,3 +1,4 @@
+import type { DisplayFormatSpec } from "../../../displayFormat";
 import {
   formatSeriesChartCategoryLabel,
   formatSeriesChartValue,
@@ -155,6 +156,12 @@ export type BuildSeriesChartLayoutInput = {
   categoryLabelOverflow?: SeriesChartCategoryLabelOverflow;
   /** Formato dos rótulos de categoria (já aplicados nos `points[].label` preferencialmente). */
   categoryLabelFormat?: SeriesChartCategoryLabelFormat;
+  /** Spec canônico das categorias — mesma fonte dos ticks pintados. */
+  displayCategoryFormat?: DisplayFormatSpec;
+  valueFormat?: SeriesChartValueFormat;
+  decimalPlaces?: number | null;
+  /** Spec canônico dos valores — mesma fonte dos ticks pintados (evita cortar R$). */
+  displayValueFormat?: DisplayFormatSpec;
 };
 
 /** Tipos que usam band scale no eixo de categoria. */
@@ -735,6 +742,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
           label,
           input.categoryLabelFormat,
           input.categoryLabelOverflow,
+          input.displayCategoryFormat,
         ),
       )
     : labels;
@@ -744,7 +752,14 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       : 0;
   const valueTickLabels =
     orientation === "vertical" && showYAxisLabels
-      ? ticks.map((tick) => formatChartTick(tick, "auto"))
+      ? ticks.map((tick) =>
+          formatChartTick(
+            tick,
+            input.valueFormat ?? "auto",
+            input.decimalPlaces,
+            input.displayValueFormat,
+          ),
+        )
       : [];
   const valueAxisLeftPad =
     orientation === "vertical" && showYAxisLabels
@@ -928,8 +943,9 @@ export function formatChartTick(
   value: number,
   valueFormat: SeriesChartValueFormat,
   decimalPlaces?: number | null,
+  spec?: DisplayFormatSpec | null,
 ): string {
-  return formatSeriesChartValue(value, valueFormat, decimalPlaces);
+  return formatSeriesChartValue(value, valueFormat, decimalPlaces, spec);
 }
 
 /** Aplica formato + overflow ao rótulo de categoria para paint. */
@@ -937,8 +953,9 @@ export function resolveCategoryAxisLabelText(
   raw: string,
   format: SeriesChartCategoryLabelFormat | undefined,
   overflow: SeriesChartCategoryLabelOverflow | undefined,
+  spec?: DisplayFormatSpec | null,
 ): string {
-  let text = formatSeriesChartCategoryLabel(raw, format ?? "raw");
+  let text = formatSeriesChartCategoryLabel(raw, format ?? "raw", spec);
   if (overflow === "truncate") {
     text = truncateSeriesChartCategoryLabel(text);
   }

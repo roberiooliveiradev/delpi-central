@@ -15,6 +15,7 @@ import {
   resolveXLabelTextAnchor,
   type SeriesChartLayout,
 } from "./layout";
+import type { DisplayFormatSpec } from "../../../displayFormat";
 import type {
   SeriesChartCategoryLabelFormat,
   SeriesChartPoint,
@@ -33,6 +34,8 @@ export type ChartAxisXProps = {
   valueFormat?: SeriesChartValueFormat;
   decimalPlaces?: number | null;
   categoryLabelFormat?: SeriesChartCategoryLabelFormat;
+  displayValueFormat?: DisplayFormatSpec | null;
+  displayCategoryFormat?: DisplayFormatSpec | null;
 };
 
 export function ChartAxisX({
@@ -46,6 +49,8 @@ export function ChartAxisX({
   valueFormat = "auto",
   decimalPlaces,
   categoryLabelFormat = "raw",
+  displayValueFormat,
+  displayCategoryFormat,
 }: ChartAxisXProps) {
   const cn = useSeriesChartClasses();
   const {
@@ -129,7 +134,7 @@ export function ChartAxisX({
                 dominantBaseline={baseline}
                 style={axisTypography}
               >
-                {formatChartTick(tick, valueFormat, decimalPlaces)}
+                {formatChartTick(tick, valueFormat, decimalPlaces, displayValueFormat)}
               </text>
             );
           })
@@ -142,6 +147,7 @@ export function ChartAxisX({
               String(point.label ?? index + 1),
               categoryLabelFormat,
               layout.categoryLabelOverflow,
+              displayCategoryFormat,
             );
             const rotatedClass =
               categoryLabelRotationDeg === -90

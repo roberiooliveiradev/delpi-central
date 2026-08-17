@@ -8,6 +8,7 @@ import type {
   AdminStatisticsRankItem,
 } from "../../../data/adminApi";
 import { formatGeneratedAt } from "./StatsShared";
+import { Button } from "../../../ui-kit";
 
 export function statPercent(part: number, total: number): number {
   if (total <= 0) return 0;
@@ -125,19 +126,23 @@ export function GhostAppsCompact({ apps }: { apps: AdminStatisticsRankItem[] }) 
         ))}
       </ul>
       {hasMore ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           className="admin-stats-ghost-panel__toggle"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
+          icon={
+            <ChevronDown
+              size={14}
+              className={
+                expanded ? "admin-stats-ghost-panel__chevron--open" : ""
+              }
+            />
+          }
         >
-          <ChevronDown
-            size={14}
-            className={expanded ? "admin-stats-ghost-panel__chevron--open" : ""}
-            aria-hidden="true"
-          />
           {expanded ? "Mostrar menos" : `Ver mais ${count - GHOST_PREVIEW}`}
-        </button>
+        </Button>
       ) : null}
     </aside>
   );

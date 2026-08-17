@@ -1,4 +1,14 @@
 import {
+  formatDisplayValue,
+  isLocalizedChartPeriodLabel,
+  localizeEnglishMonthTokensInLabel,
+  parseDisplayDate,
+  resolveDisplayFormatSpec,
+  specFromCategoryLabelFormat,
+  specFromChartValueFormat,
+  type DisplayFormatSpec,
+} from "../../displayFormat";
+import {
   DECK_CATEGORY_PALETTE,
   DECK_THEME_DARK,
   DECK_THEME_LIGHT,
@@ -55,14 +65,26 @@ export type SeriesChartTheme = "light" | "dark";
 /**
  * Escala semântica por valor (Excel/Power BI color scales).
  * `off` = cor por índice de categoria/série (padrão).
+ * `by_value` = rampa min→max.
+ * `by_goal` = faixas vs `goalLineValue` (atingiu / perto / abaixo).
  */
 export type SeriesChartColorScale = {
-  mode: "off" | "by_value";
-  /** high = pior (refugo, NC) | high = melhor (eficiência, OEE). */
+  mode: "off" | "by_value" | "by_goal";
+  /** high = pior (refugo, NC) | high = melhor (eficiência, OEE / meta). */
   polarity: "high_is_bad" | "high_is_good";
-  /** Id da paleta semântica cujos `colors` definem a rampa. */
+  /** Id da paleta semântica cujos `colors` definem a rampa (`by_value`). */
   paletteId?: string;
 };
+
+/** Faixa «perto da meta» (±5% do |goal|). */
+export const GOAL_SCALE_BAND_RATIO = 0.05;
+
+/** Cores fixas da escala por meta (RAG). */
+export const GOAL_SCALE_COLORS = {
+  good: "#15803d",
+  warn: "#f97316",
+  bad: "#be123c",
+} as const;
 
 /** @deprecated Preferir import de `@delpi/plugin-ui` theme / DECK_COLOR_*. */
 export {
@@ -99,6 +121,13 @@ export type SeriesChartOptions = {
   showDataTable?: boolean;
   showGrid?: boolean;
   showVerticalGrid?: boolean;
+  /**
+   * Linha de meta (referência horizontal/vertical no plot).
+   * Só pinta com `goalLineValue` numérico finito.
+   */
+  showGoalLine?: boolean;
+  /** Valor constante da linha de meta no eixo de valores. */
+  goalLineValue?: number | null;
   showMarkers?: boolean;
   /**
    * Linha/área com curva suave (Catmull-Rom). Default false = segmentos retos.
@@ -106,6 +135,16 @@ export type SeriesChartOptions = {
    */
   smoothLines?: boolean;
   valueFormat?: SeriesChartValueFormat;
+  /**
+   * Spec canônico dos valores (eixo Y, rótulos, tabela interna).
+   * Na leitura ganha do enum `valueFormat`.
+   */
+  displayValueFormat?: DisplayFormatSpec;
+  /**
+   * Spec canônico das categorias (eixo X / datas).
+   * Na leitura ganha do enum `categoryLabelFormat`.
+   */
+  displayCategoryFormat?: DisplayFormatSpec;
   /**
    * Casas decimais fixas; `null`/ausente = comportamento do format (auto).
    * Aplica a ticks, data labels e tabela.
@@ -202,6 +241,8 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showDataTable: false,
   showGrid: true,
   showVerticalGrid: false,
+  showGoalLine: false,
+  goalLineValue: null,
   showMarkers: true,
   smoothLines: false,
   valueFormat: "auto",
@@ -418,116 +459,69 @@ export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChart
   });
 }
 
-function resolveFractionDigits(
-  decimalPlaces: number | null | undefined,
-  fallbackMax: number,
-  fallbackMin = 0,
-): { minimumFractionDigits: number; maximumFractionDigits: number } {
-  if (typeof decimalPlaces === "number" && Number.isFinite(decimalPlaces) && decimalPlaces >= 0) {
-    const places = Math.min(8, Math.floor(decimalPlaces));
-    return { minimumFractionDigits: places, maximumFractionDigits: places };
-  }
-  return { minimumFractionDigits: fallbackMin, maximumFractionDigits: fallbackMax };
+export function resolveSeriesChartValueDisplaySpec(
+  options: Pick<SeriesChartOptions, "displayValueFormat" | "valueFormat" | "decimalPlaces">,
+): DisplayFormatSpec {
+  return resolveDisplayFormatSpec(
+    options.displayValueFormat,
+    specFromChartValueFormat(options.valueFormat, options.decimalPlaces),
+  );
+}
+
+export function resolveSeriesChartCategoryDisplaySpec(
+  options: Pick<SeriesChartOptions, "displayCategoryFormat" | "categoryLabelFormat">,
+): DisplayFormatSpec {
+  return resolveDisplayFormatSpec(
+    options.displayCategoryFormat,
+    specFromCategoryLabelFormat(options.categoryLabelFormat),
+  );
 }
 
 export function formatSeriesChartValue(
   value: number,
   format: SeriesChartValueFormat,
   decimalPlaces?: number | null,
+  spec?: DisplayFormatSpec | null,
 ): string {
-  if (format === "compact") {
-    const digits = resolveFractionDigits(decimalPlaces, 1);
-    return value.toLocaleString("pt-BR", {
-      notation: "compact",
-      compactDisplay: "short",
-      ...digits,
-    });
-  }
-  if (format === "currency") {
-    const hasCents = Math.abs(value % 1) > 1e-9;
-    const digits = resolveFractionDigits(decimalPlaces, hasCents ? 2 : 0, hasCents ? 2 : 0);
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      ...digits,
-    });
-  }
-  if (format === "currency4") {
-    const digits = resolveFractionDigits(decimalPlaces, 4, 2);
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      ...digits,
-    });
-  }
-  if (format === "percent") {
-    const digits = resolveFractionDigits(decimalPlaces, 1);
-    return `${value.toLocaleString("pt-BR", digits)}%`;
-  }
-  if (format === "number") {
-    const digits = resolveFractionDigits(decimalPlaces, 2);
-    return value.toLocaleString("pt-BR", digits);
-  }
-  /* Geral (auto): número localizado — sem inferir % ou R$ (escolha do usuário). */
-  const digits = resolveFractionDigits(decimalPlaces, 2);
-  return value.toLocaleString("pt-BR", digits);
+  return formatDisplayValue(
+    value,
+    resolveDisplayFormatSpec(spec, specFromChartValueFormat(format, decimalPlaces)),
+  );
 }
 
 /** Parse ISO / YYYY-MM / YYYY-MM-DD (e variantes com hora). */
 export function parseSeriesChartCategoryDate(raw: string): Date | null {
-  const text = raw.trim();
-  if (!text) return null;
-  const ym = /^(\d{4})-(\d{2})$/.exec(text);
-  if (ym) {
-    const year = Number(ym[1]);
-    const month = Number(ym[2]);
-    if (month < 1 || month > 12) return null;
-    return new Date(Date.UTC(year, month - 1, 1));
-  }
-  const ymd = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(text);
-  if (ymd) {
-    const year = Number(ymd[1]);
-    const month = Number(ymd[2]);
-    const day = Number(ymd[3]);
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return new Date(Date.UTC(year, month - 1, day));
-  }
-  const parsed = Date.parse(text);
-  if (!Number.isFinite(parsed)) return null;
-  return new Date(parsed);
+  const parsed = parseDisplayDate(raw);
+  if (!parsed) return null;
+  return new Date(
+    Date.UTC(parsed.year, parsed.month, parsed.day, parsed.hour, parsed.minute, parsed.second),
+  );
 }
+
+/** @deprecated Preferir import de `displayFormat` — reexport de compat. */
+export { localizeEnglishMonthTokensInLabel };
 
 export function formatSeriesChartCategoryLabel(
   raw: string,
   format: SeriesChartCategoryLabelFormat = "raw",
+  spec?: DisplayFormatSpec | null,
 ): string {
-  if (format === "raw") return raw;
-  const date = parseSeriesChartCategoryDate(raw);
-  if (!date) return raw;
-  if (format === "year") {
-    return String(date.getUTCFullYear());
+  const resolved = resolveDisplayFormatSpec(spec, specFromCategoryLabelFormat(format));
+  /*
+   * API já entrega «Jan. de 26» / «Fev. de 26». Reaplicar date-short (default do chart_view)
+   * via Date.parse gerava 26/01/2001 nos meses EN-ambíguos e deixava PT cru — inconsistente.
+   */
+  if (isLocalizedChartPeriodLabel(raw)) {
+    return localizeEnglishMonthTokensInLabel(raw);
   }
-  if (format === "month") {
-    return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric", timeZone: "UTC" });
+  if (resolved.category === "text" || resolved.presetId === "text") {
+    return localizeEnglishMonthTokensInLabel(raw);
   }
-  if (format === "day") {
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+  const formatted = formatDisplayValue(raw, resolved);
+  if (!formatted || formatted === raw) {
+    if (!parseSeriesChartCategoryDate(raw)) return localizeEnglishMonthTokensInLabel(raw);
   }
-  /* autoDate: curto e legível */
-  const hasDay = /^\d{4}-\d{2}-\d{2}/.test(raw.trim());
-  if (hasDay) {
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      timeZone: "UTC",
-    });
-  }
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit", timeZone: "UTC" });
+  return formatted;
 }
 
 /** Trunca rótulo de categoria com reticências (overflow=truncate). */
@@ -642,6 +636,47 @@ export function resolveValueScaleColor(args: {
   /* Valor no máximo cai no último stop (não no penúltimo por floor). */
   const index = t >= 1 ? colors.length - 1 : bucket;
   return colors[index]!;
+}
+
+/**
+ * Cor vs linha de meta.
+ * `high_is_good` (padrão para meta): ≥ meta verde; até 5% abaixo laranja; mais abaixo vermelho.
+ * `high_is_bad`: ≤ meta verde; até 5% acima laranja; mais acima vermelho.
+ */
+export function resolveGoalThresholdColor(args: {
+  value: number;
+  goal: number;
+  polarity?: "high_is_bad" | "high_is_good";
+  bandRatio?: number;
+  fallbackColor?: string;
+}): string {
+  const goal = Number(args.goal);
+  const value = Number(args.value);
+  const fallback = args.fallbackColor ?? SERIES_CHART_CATEGORY_PALETTE[0]!;
+  if (!Number.isFinite(goal) || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  const polarity = args.polarity ?? "high_is_good";
+  const band = Math.max(0, Number(args.bandRatio) || GOAL_SCALE_BAND_RATIO);
+  const absGoal = Math.abs(goal);
+
+  if (absGoal < 1e-12) {
+    if (polarity === "high_is_good") {
+      return value >= 0 ? GOAL_SCALE_COLORS.good : GOAL_SCALE_COLORS.bad;
+    }
+    return value <= 0 ? GOAL_SCALE_COLORS.good : GOAL_SCALE_COLORS.bad;
+  }
+
+  const delta = (value - goal) / absGoal;
+  if (polarity === "high_is_good") {
+    if (delta >= 0) return GOAL_SCALE_COLORS.good;
+    if (delta >= -band) return GOAL_SCALE_COLORS.warn;
+    return GOAL_SCALE_COLORS.bad;
+  }
+  if (delta <= 0) return GOAL_SCALE_COLORS.good;
+  if (delta <= band) return GOAL_SCALE_COLORS.warn;
+  return GOAL_SCALE_COLORS.bad;
 }
 
 /** Min/max finitos de uma lista de valores (ignora null/NaN). */

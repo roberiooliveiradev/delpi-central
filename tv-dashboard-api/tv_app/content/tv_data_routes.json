@@ -74,6 +74,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -173,6 +179,12 @@
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
         },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
+        },
         "periodDays": {
           "type": "integer",
           "label": "Período (dias)",
@@ -192,6 +204,69 @@
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
+      ]
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "httpMethod": "GET",
+      "label": "Série da taxa de conversão",
+      "category": "commercial",
+      "path": "/commercial/closing-rate/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Hit rate (taxa de conversão %) ao longo do tempo para Santa Catarina e Espírito Santo.",
+      "whenToUse": "Gráfico comercial: taxa de conversão por dia/semana/mês/ano. Mesma fórmula do KPI closing-rate por bucket.",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
       ]
     },
     {
@@ -268,6 +343,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -365,6 +446,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -528,6 +615,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         },
         "page": {
           "type": "integer",
@@ -715,6 +808,12 @@
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
         },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
+        },
         "limit": {
           "type": "integer",
           "optional": true,
@@ -785,6 +884,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -840,6 +945,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -908,6 +1019,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -919,15 +1036,16 @@
     {
       "operationId": "get_sales_order_otd_panel",
       "httpMethod": "GET",
-      "label": "Lista paginada — Painel otd de pedidos de venda",
+      "label": "Pedidos de venda — painel OTD (linhas)",
       "category": "commercial",
       "path": "/commercial/sales-order-otd/panel",
       "allowedDisplayModes": [
+        "table",
         "kpi",
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Lista paginada — Painel otd de pedidos de venda» para uso em tabela ou gráfico no TV.",
+      "description": "Linhas de pedido com status no prazo/atrasado. Payload em lines.items. Sem Data início/fim retorna todo o histórico elegível (útil para «todos os atrasados»).",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -963,6 +1081,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         },
         "status": {
           "type": "string",
@@ -1010,7 +1134,27 @@
       "dateRangeKeys": [
         "start_date",
         "end_date"
-      ]
+      ],
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "openEndedDateRange": true,
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "tableFields": "lines",
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date"
+      }
     },
     {
       "operationId": "get_sales_order_otd_series",
@@ -1072,6 +1216,12 @@
             "new_business"
           ],
           "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Customer codes",
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira)."
         }
       },
       "paramStrategy": "date_range",
@@ -1422,12 +1572,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -1483,12 +1633,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -1544,12 +1694,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -1605,12 +1755,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -1666,12 +1816,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -1727,12 +1877,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -1788,12 +1938,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -1849,12 +1999,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -1910,12 +2060,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -1971,12 +2121,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -2032,12 +2182,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -2093,12 +2243,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -2154,12 +2304,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -2215,12 +2365,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -2276,12 +2426,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -2337,12 +2487,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -2398,12 +2548,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -2459,12 +2609,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -2520,12 +2670,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -2581,12 +2731,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -2642,12 +2792,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -2703,12 +2853,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -2764,12 +2914,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -2825,12 +2975,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -2886,12 +3036,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -2947,12 +3097,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -3008,12 +3158,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -3069,12 +3219,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -3130,12 +3280,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -3191,12 +3341,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -3252,12 +3402,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -3313,12 +3463,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -3374,12 +3524,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -3435,12 +3585,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -3496,12 +3646,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -3557,12 +3707,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -3618,12 +3768,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -3679,12 +3829,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -3740,12 +3890,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -3801,12 +3951,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -3862,12 +4012,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -3923,12 +4073,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -3984,12 +4134,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -4045,12 +4195,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -4106,12 +4256,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -4167,12 +4317,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -4228,12 +4378,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -4289,12 +4439,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -4350,12 +4500,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -4411,12 +4561,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -4472,12 +4622,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -4533,12 +4683,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -4594,12 +4744,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -4655,12 +4805,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
@@ -4960,12 +5110,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -5021,12 +5171,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -5082,12 +5232,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -5143,12 +5293,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -5204,12 +5354,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -5265,12 +5415,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -5326,12 +5476,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -5387,12 +5537,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -5448,12 +5598,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -5509,12 +5659,12 @@
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "list_lmps",
@@ -6051,7 +6201,6 @@
         "start_date",
         "end_date"
       ],
-      "openEndedDateRange": true,
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -6061,7 +6210,8 @@
         "product_code": "Código do produto",
         "status": "Status"
       },
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
+      "openEndedDateRange": true
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -6732,6 +6882,13 @@
         "investment_total_month": "Investimento total (mês)",
         "net_savings_month": "Economia líquida (mês)"
       },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ],
       "valueFieldTypes": {
         "total_investment_in_period": "number",
         "total_gross_savings_in_period": "number",
@@ -6746,14 +6903,7 @@
         "shared_resource_cost_month": "number",
         "investment_total_month": "number",
         "net_savings_month": "number"
-      },
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ]
+      }
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -6829,6 +6979,17 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "openEndedDateRange": true,
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
+      "tableFields": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6844,24 +7005,13 @@
           "direction": "asc"
         }
       ],
-      "openEndedDateRange": true,
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
         "investimento": "number",
         "economia_liquida": "number",
         "horas_economizadas": "number"
-      },
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "tableFields": "points"
+      }
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -8278,11 +8428,10 @@
           "optional": true,
           "label": "Resultado",
           "enum": [
-            "A",
-            "R",
-            "T"
+            "APROVADA",
+            "REJEITADA"
           ],
-          "description": "Resultado da inspeção ou avaliação."
+          "description": "Filtro de resultado da inspeção. Histórico de entrada: APROVADA/REJEITADA; inspeção de processo: A/R/T."
         },
         "start_date": {
           "type": "string",
@@ -8556,6 +8705,19 @@
           "label": "Data",
           "format": "date",
           "description": "Data de referência (AAAA-MM-DD)."
+        },
+        "inspecao_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status da inspeção",
+          "default": "all",
+          "enum": [
+            "all",
+            "nao_inspecionou",
+            "inspecionou",
+            "sem_cadastro"
+          ],
+          "description": "Filtra apontamentos pelo status de inspeção na auditoria de processo."
         },
         "page": {
           "type": "integer",
@@ -8872,6 +9034,208 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "search_invoice_issuance_parties",
+      "httpMethod": "GET",
+      "label": "Destinatários da emissão",
+      "category": "financial",
+      "path": "/invoice-issuance/parties",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Consulta clientes (SA1) ou fornecedores (SA2) no TOTVS por código, nome ou CNPJ.",
+      "whenToUse": "Escolher um destinatário cadastrado antes de solicitar a emissão.",
+      "paramSchema": {
+        "party_type": {
+          "type": "string",
+          "optional": false,
+          "label": "Tipo de destinatário",
+          "enum": [
+            "customer",
+            "supplier"
+          ],
+          "description": "Cliente (SA1) ou fornecedor (SA2)."
+        },
+        "query": {
+          "type": "string",
+          "optional": false,
+          "label": "Busca",
+          "description": "Busca livre (código, nome ou CNPJ)."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 20,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "search_invoice_issuance_products",
+      "httpMethod": "GET",
+      "label": "Itens da emissão",
+      "category": "financial",
+      "path": "/invoice-issuance/products",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Consulta itens SB1 para incluir na solicitação de emissão.",
+      "whenToUse": "Selecionar produtos no wizard de emissão.",
+      "paramSchema": {
+        "query": {
+          "type": "string",
+          "optional": false,
+          "label": "Busca",
+          "description": "Busca livre (código, nome ou CNPJ)."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 20,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_invoice_issuance_warehouse_01_balance",
+      "httpMethod": "GET",
+      "label": "Saldo almoxarifado 01",
+      "category": "financial",
+      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Saldo SB2 no local 01 (almoxarifado). Não bloqueia o envio da solicitação.",
+      "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_invoice_issuance_requests",
+      "httpMethod": "GET",
+      "label": "Fila de emissão",
+      "category": "financial",
+      "path": "/invoice-issuance/requests",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Fila paginada de solicitações de emissão por filial.",
+      "whenToUse": "Exibir a fila de emissão filtrada por status ou tipo.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "open",
+            "pending",
+            "in_progress",
+            "issued",
+            "returned",
+            "cancelled"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "invoice_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Tipo de NF",
+          "enum": [
+            "sale",
+            "return",
+            "sample",
+            "repair_shipment",
+            "other"
+          ],
+          "description": "Tipo da nota: venda, devolução, amostra, remessa de conserto ou outros."
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_invoice_issuance_request",
+      "httpMethod": "GET",
+      "label": "Detalhe da emissão",
+      "category": "financial",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Detalhe com itens, anexos, checklist, histórico e ações permitidas.",
+      "whenToUse": "Abrir uma solicitação da fila ou pelo link da notificação.",
+      "paramSchema": {
+        "request_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Request id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "list_lancamento_notas_fiscais_requests",
       "httpMethod": "GET",
       "label": "List Requests",
@@ -8914,12 +9278,14 @@
         "issued_from": {
           "type": "string",
           "optional": true,
-          "label": "Issued from"
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
         },
         "issued_to": {
           "type": "string",
           "optional": true,
-          "label": "Issued to"
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
         },
         "received_from": {
           "type": "string",
@@ -9007,7 +9373,8 @@
         "query": {
           "type": "string",
           "optional": false,
-          "label": "Query"
+          "label": "Busca",
+          "description": "Busca livre (código, nome ou CNPJ)."
         },
         "limit": {
           "type": "integer",
@@ -9015,6 +9382,106 @@
           "label": "Limite",
           "default": 20,
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_mural_acessos_hubs",
+      "httpMethod": "GET",
+      "label": "List Hubs",
+      "category": "other",
+      "path": "/mural-acessos/hubs",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_mural_acessos_hub",
+      "httpMethod": "GET",
+      "label": "Get Hub",
+      "category": "other",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "hub_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Hub id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_mural_acessos_links",
+      "httpMethod": "GET",
+      "label": "List Links",
+      "category": "other",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "hub_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Hub id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_mural_acessos_hub_qr",
+      "httpMethod": "GET",
+      "label": "Get Hub Qr",
+      "category": "other",
+      "path": "/mural-acessos/hubs/{hub_id}/qr.png",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "hub_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Hub id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_mural_acessos_link_image",
+      "httpMethod": "GET",
+      "label": "Get Link Image",
+      "category": "other",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "link_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Link id",
+          "in": "path",
+          "format": "uuid"
         }
       },
       "paramStrategy": "direct"
@@ -9030,7 +9497,156 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Pedidos de venda em aberto»."
+      "description": "Análise composta: «Análise consolidada — Pedidos de venda em aberto».",
+      "paramSchema": {
+        "seller_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro de carteira (team.view, admin/gerente).",
+          "description": "Filtro de carteira (team.view, admin/gerente)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "httpMethod": "GET",
+      "label": "Notas fiscais de saída do cliente",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Lista notas fiscais de saída (SD2/SF2) do cliente com período, busca e paginação.",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
+        "loja": {
+          "type": "string",
+          "optional": false,
+          "label": "Loja do cliente (A1_LOJA / D2_LOJA)",
+          "in": "path",
+          "description": "Loja do cliente (A1_LOJA / D2_LOJA)"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "situation": {
+          "type": "string",
+          "optional": true,
+          "label": "Situation",
+          "default": "all",
+          "description": "all | emitted | return (devolução). Canceladas soft-deleted não retornam."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "search_active_customers_for_portfolio",
+      "httpMethod": "GET",
+      "label": "Clientes ativos para carteira",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/customers/search",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista clientes ativos do SA1 (não bloqueados/excluídos) para amarração na carteira do vendedor.",
+      "paramSchema": {
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_customer_avatar",
+      "httpMethod": "GET",
+      "label": "Avatar do cliente",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Baixa a logo/avatar do cliente.",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
+        "loja": {
+          "type": "string",
+          "optional": false,
+          "label": "Loja",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_ops_abertas_pedidos_venda",
@@ -9044,6 +9660,2022 @@
       ],
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Análise consolidada — Ops abertas (pedidos de venda)»."
+    },
+    {
+      "operationId": "list_seller_portfolios",
+      "httpMethod": "GET",
+      "label": "Listar carteiras de vendedores",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/sellers",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista carteiras de vendedores para gerentes.",
+      "paramSchema": {
+        "active_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Se true, lista apenas ativos.",
+          "default": false,
+          "description": "Se true, lista apenas ativos."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_my_seller_portfolio",
+      "httpMethod": "GET",
+      "label": "Carteira do vendedor logado",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/sellers/me",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Retorna a carteira do usuário autenticado."
+    },
+    {
+      "operationId": "get_seller_portfolio",
+      "httpMethod": "GET",
+      "label": "Obter carteira do vendedor",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Obtém uma carteira de vendedor pelo id.",
+      "paramSchema": {
+        "seller_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Seller id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_totvs_open_orders",
+      "httpMethod": "GET",
+      "label": "Pedidos em aberto TOTVS (sem membership)",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api."
+    },
+    {
+      "operationId": "list_totvs_open_orders_by_customer",
+      "httpMethod": "GET",
+      "label": "Pedidos em aberto TOTVS por cliente",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "Leitura TOTVS pura por par cliente; Conta 360 via commercial-api.",
+      "paramSchema": {
+        "customer_code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código do cliente",
+          "in": "path",
+          "description": "Código do cliente (CLIENTE)."
+        },
+        "customer_store": {
+          "type": "string",
+          "optional": false,
+          "label": "Customer store",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_totvs_outbound_invoice",
+      "httpMethod": "GET",
+      "label": "Nota fiscal TOTVS por chave",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Cabeçalho e itens SF2/SD2 para o BFF commercial-api, sem membership PVA.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "in": "path",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "invoice_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Número da nota",
+          "in": "path",
+          "description": "Número da nota fiscal."
+        },
+        "invoice_series": {
+          "type": "string",
+          "optional": false,
+          "label": "Invoice series (F2_SERIE / D2_SERIE)",
+          "in": "path",
+          "description": "Invoice series (F2_SERIE / D2_SERIE)"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_totvs_outbound_invoices",
+      "httpMethod": "GET",
+      "label": "Notas fiscais TOTVS (sem membership)",
+      "category": "commercial",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Leitura TOTVS pura; o escopo de carteira fica no commercial-api.",
+      "paramSchema": {
+        "customer_code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código do cliente",
+          "in": "path",
+          "description": "Código do cliente (CLIENTE)."
+        },
+        "customer_store": {
+          "type": "string",
+          "optional": false,
+          "label": "Customer store (A1_LOJA / D2_LOJA)",
+          "in": "path",
+          "description": "Customer store (A1_LOJA / D2_LOJA)"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "situation": {
+          "type": "string",
+          "optional": true,
+          "label": "Situation",
+          "default": "all",
+          "description": "all | emitted | return. Soft-deleted cancelled invoices omitted."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
+      "httpMethod": "GET",
+      "label": "Admin List Budget Responsibilities",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "module": {
+          "type": "string",
+          "optional": true,
+          "label": "Module"
+        },
+        "user_sub": {
+          "type": "string",
+          "optional": true,
+          "label": "User sub"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "responsibility_type": {
+          "type": "string",
+          "optional": true,
+          "label": "Responsibility type"
+        },
+        "is_active": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Is active"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_budget_responsibility",
+      "httpMethod": "GET",
+      "label": "Admin Get Budget Responsibility",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "responsibility_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Responsibility id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_capex_categories",
+      "httpMethod": "GET",
+      "label": "Admin List Capex Categories",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/capex/categories",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "is_active": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Is active"
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_exercises",
+      "httpMethod": "GET",
+      "label": "Admin List Exercises",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/exercises",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_exercise",
+      "httpMethod": "GET",
+      "label": "Admin Get Exercise",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Exercise id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_guidance",
+      "httpMethod": "GET",
+      "label": "Admin Get Guidance",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Exercise id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_documents",
+      "httpMethod": "GET",
+      "label": "Admin List Documents",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/documents",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "guidance_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Guidance id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_scopes",
+      "httpMethod": "GET",
+      "label": "Admin List Scopes",
+      "category": "other",
+      "path": "/planejamento-orcamentario/admin/scopes",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_capex_attachment",
+      "httpMethod": "GET",
+      "label": "Download Capex Attachment",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/attachments/{attachment_id}/download",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "attachment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Attachment id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_categories",
+      "httpMethod": "GET",
+      "label": "List Capex Categories",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/categories",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_area",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Area",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-area",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_category",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Category",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-category",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Cost Center",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-cost-center",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_month",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Month",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-month",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_origin",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Origin",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-origin",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_plan_status",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Plan Status",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-plan-status",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_priority",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Priority",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-priority",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_unit",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation By Unit",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-unit",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_details",
+      "httpMethod": "GET",
+      "label": "List Capex Consolidation Details",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/details",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "default": "updated_at",
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação",
+          "default": "desc",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "export_planejamento_orcamentario_capex_consolidation_xlsx",
+      "httpMethod": "GET",
+      "label": "Export Capex Consolidation Xlsx",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/export.xlsx",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "document_export",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_consolidation_summary",
+      "httpMethod": "GET",
+      "label": "Get Capex Consolidation Summary",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/consolidation/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "year": {
+          "type": "integer",
+          "optional": true,
+          "label": "Year"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "plan_status": {
+          "type": "string",
+          "optional": true,
+          "label": "Plan status"
+        },
+        "required_date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date from"
+        },
+        "required_date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Required date to"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investments",
+      "httpMethod": "GET",
+      "label": "List Capex Investments",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/investments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "category_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Category id"
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
+        },
+        "origin": {
+          "type": "string",
+          "optional": true,
+          "label": "Origin"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "description": "Status do registro no fluxo."
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_investment",
+      "httpMethod": "GET",
+      "label": "Get Capex Investment",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "investment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Investment id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investment_attachments",
+      "httpMethod": "GET",
+      "label": "List Capex Investment Attachments",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "investment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Investment id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_my_responsibilities",
+      "httpMethod": "GET",
+      "label": "List Capex My Responsibilities",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/my-responsibilities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista vínculos do usuário autenticado (JWT). Ignora qualquer user_sub de query.",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "module": {
+          "type": "string",
+          "optional": true,
+          "label": "Module",
+          "default": "capex"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plans",
+      "httpMethod": "GET",
+      "label": "List Capex Plans",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/plans",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "description": "Status do registro no fluxo."
+        },
+        "submitted_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Submitted by"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_plan",
+      "httpMethod": "GET",
+      "label": "Get Capex Plan",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plan_history",
+      "httpMethod": "GET",
+      "label": "List Capex Plan History",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}/history",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_review_queue",
+      "httpMethod": "GET",
+      "label": "List Capex Review Queue",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/review-queue",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "description": "Status do registro no fluxo."
+        },
+        "submitted_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Submitted by"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_review",
+      "httpMethod": "GET",
+      "label": "Get Capex Review",
+      "category": "other",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_context",
+      "httpMethod": "GET",
+      "label": "Get Context",
+      "category": "other",
+      "path": "/planejamento-orcamentario/context",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_document",
+      "httpMethod": "GET",
+      "label": "Download Document",
+      "category": "other",
+      "path": "/planejamento-orcamentario/documents/{document_id}/download",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "document_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Document id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_guidance_current",
+      "httpMethod": "GET",
+      "label": "Get Guidance Current",
+      "category": "other",
+      "path": "/planejamento-orcamentario/guidance/current",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_guidance_documents",
+      "httpMethod": "GET",
+      "label": "List Guidance Documents",
+      "category": "other",
+      "path": "/planejamento-orcamentario/guidance/current/documents",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
+      "httpMethod": "GET",
+      "label": "List Erp Cost Centers",
+      "category": "other",
+      "path": "/planejamento-orcamentario/org/erp-cost-centers",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plans",
+      "httpMethod": "GET",
+      "label": "List Personnel Plans",
+      "category": "other",
+      "path": "/planejamento-orcamentario/personnel/plans",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_plan",
+      "httpMethod": "GET",
+      "label": "Get Personnel Plan",
+      "category": "other",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plan_history",
+      "httpMethod": "GET",
+      "label": "List Personnel Plan History",
+      "category": "other",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/history",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_review_queue",
+      "httpMethod": "GET",
+      "label": "List Personnel Review Queue",
+      "category": "other",
+      "path": "/planejamento-orcamentario/personnel/review-queue",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "exercise_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Exercise id"
+        },
+        "unit_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Unit id"
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "cost_center_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost center id"
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "description": "Status do registro no fluxo."
+        },
+        "submitted_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Submitted by"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_review",
+      "httpMethod": "GET",
+      "label": "Get Personnel Review",
+      "category": "other",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_process_inspection_plans_orders_without_plan",
+      "httpMethod": "GET",
+      "label": "OPs sem plano de inspeção",
+      "category": "quality",
+      "path": "/process-inspection-plans/orders-without-plan",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+      "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products",
+      "httpMethod": "GET",
+      "label": "Produtos com plano de inspeção",
+      "category": "quality",
+      "path": "/process-inspection-plans/products",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+      "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto.",
+      "paramSchema": {
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products_without_plan",
+      "httpMethod": "GET",
+      "label": "Produtos sem plano de inspeção",
+      "category": "quality",
+      "path": "/process-inspection-plans/products-without-plan",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+      "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "httpMethod": "GET",
+      "label": "Detalhe do plano de inspeção",
+      "category": "quality",
+      "path": "/process-inspection-plans/products/{code}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+      "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto.",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
+        "include_bom": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir estrutura (BOM)",
+          "default": false,
+          "description": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_process_inspection_plans_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de planos de inspeção de processo",
+      "category": "quality",
+      "path": "/process-inspection-plans/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+      "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_allocation_gaps",
@@ -10029,7 +12661,7 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Eficiência fabril — apontamentos (carga bulk)» para uso em tabela ou gráfico no TV.",
+      "description": "Apontamentos do período para tabela/gráfico. Agregações (média por CT) exigem a lista completa — maxRows alto evita média distorcida.",
       "paramSchema": {
         "start_date": {
           "type": "string",
@@ -10080,13 +12712,41 @@
           "label": "Somente status OK",
           "default": false,
           "description": "Retorna apenas registros com status OK."
+        },
+        "shift": {
+          "type": "string",
+          "optional": true,
+          "label": "Turno",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ],
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
         }
       },
       "paramStrategy": "date_range",
       "dateRangeKeys": [
         "start_date",
         "end_date"
-      ]
+      ],
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
+      "valueFields": [
+        "eficiencia_percentual",
+        "resultado_mod",
+        "tempo_real_horas",
+        "tempo_previsto_horas"
+      ],
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
+      }
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -10170,6 +12830,98 @@
         "start_date",
         "end_date"
       ]
+    },
+    {
+      "operationId": "get_eficiencia_fabril_efficiency_by_work_center",
+      "httpMethod": "GET",
+      "label": "Eficiência fabril — média % por CT",
+      "category": "production",
+      "path": "/production/eficiencia-fabril/efficiency-by-work-center",
+      "allowedDisplayModes": [
+        "table",
+        "bar_chart",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Uma linha por centro de trabalho com efficiency_pct (média OK 0–199%), igual ao plugin.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "employee": {
+          "type": "string",
+          "optional": true,
+          "label": "Colaborador",
+          "description": "Código ou matrícula do colaborador."
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        },
+        "shift": {
+          "type": "string",
+          "optional": true,
+          "label": "Turno",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ],
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
+      },
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ],
+      "valueFieldTypes": {
+        "efficiency_pct": "number",
+        "appointment_count": "number"
+      }
     },
     {
       "operationId": "get_production_losses_records",
@@ -10366,7 +13118,7 @@
     {
       "operationId": "get_production_oee",
       "httpMethod": "GET",
-      "label": "OEE produção — resumo e apontamentos (view fabril)",
+      "label": "OEE produção — resumo e apontamentos",
       "category": "production",
       "path": "/production/oee",
       "allowedDisplayModes": [
@@ -10374,7 +13126,8 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «OEE produção — resumo e apontamentos (view fabril)» para uso em tabela ou gráfico no TV.",
+      "description": "Resumo e listagem paginada de apontamentos com eficiência canônica (setup + HY_TEMPAD × qtd ÷ tempo real; faixa 0–199%).",
+      "whenToUse": "Use no painel/tabela OEE; mesma métrica da eficiência fabril e do KPI overall_equipment_effectiveness_pct.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -10527,9 +13280,22 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Evolução diária do OEE ao longo do período.",
-      "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
+      "description": "Evolução do OEE por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de tendência do OEE na TV. Escolha granularidade mês para visão mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "default": "day"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -10567,9 +13333,14 @@
         "start_date",
         "end_date"
       ],
-      "fixedQueryParams": {
-        "granularity": "day"
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10585,9 +13356,6 @@
           "direction": "asc"
         }
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10595,12 +13363,7 @@
         "end_date": "date",
         "oee_filial_01": "number",
         "oee_filial_02": "number"
-      },
-      "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ]
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -10964,9 +13727,22 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
-      "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV.",
+      "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+          "default": "day"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -11004,21 +13780,18 @@
         "start_date",
         "end_date"
       ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "valueFieldTypes": {
-        "periodo": "date",
+        "periodo": "string",
         "sort_key": "string",
         "start_date": "date",
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -12239,13 +15012,13 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
+      },
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
       },
       "tableFields": "items"
     },
@@ -13644,6 +16417,61 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "get_public_mural_acessos_link_image",
+      "httpMethod": "GET",
+      "label": "Get Public Link Image",
+      "category": "other",
+      "path": "/public/mural-acessos/links/{link_id}/image",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "link_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Link id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu",
+      "httpMethod": "GET",
+      "label": "List Public Menu",
+      "category": "other",
+      "path": "/public/mural-acessos/menu",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu_by_token",
+      "httpMethod": "GET",
+      "label": "List Public Menu By Token",
+      "category": "other",
+      "path": "/public/mural-acessos/menu/{public_token}",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "public_token": {
+          "type": "string",
+          "optional": false,
+          "label": "Public token",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_public_quality_label_inspection",
       "httpMethod": "GET",
       "label": "Inspeção pública (etiqueta)",
@@ -13661,6 +16489,62 @@
           "optional": false,
           "label": "Token",
           "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_public_scheduling_resource",
+      "httpMethod": "GET",
+      "label": "Get Public Scheduling Resource",
+      "category": "other",
+      "path": "/public/scheduling/resources/{public_token}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "public_token": {
+          "type": "string",
+          "optional": false,
+          "label": "Public token",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_public_scheduling_availability",
+      "httpMethod": "GET",
+      "label": "Get Public Scheduling Availability",
+      "category": "other",
+      "path": "/public/scheduling/resources/{public_token}/availability",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "public_token": {
+          "type": "string",
+          "optional": false,
+          "label": "Public token",
+          "in": "path"
+        },
+        "from": {
+          "type": "string",
+          "optional": false,
+          "label": "De",
+          "format": "date",
+          "description": "Início do intervalo (data ou valor)."
+        },
+        "to": {
+          "type": "string",
+          "optional": false,
+          "label": "Até",
+          "format": "date",
+          "description": "Fim do intervalo (data ou valor)."
         }
       },
       "paramStrategy": "direct"
@@ -14633,7 +17517,7 @@
             "TURNO_3",
             "ADMINISTRATIVO"
           ],
-          "description": "Turno de produção."
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
         },
         "audit_status": {
           "type": "string",
@@ -15051,7 +17935,7 @@
             "TURNO_3",
             "ADMINISTRATIVO"
           ],
-          "description": "Turno de produção."
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
         },
         "status": {
           "type": "string",
@@ -18719,6 +21603,217 @@
       ]
     },
     {
+      "operationId": "get_supplies_purchase_order_otd",
+      "httpMethod": "GET",
+      "label": "OTD pedidos de compra (MP)",
+      "category": "supplies",
+      "path": "/supplies/purchase-order-otd",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Percentual de linhas de pedido de compra de MP recebidas no prazo (VW_PONTUALIDADE).",
+      "whenToUse": "Use para atendimento de PC de matéria-prima no prazo (não confundir com /supplies/otd geral).",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "httpMethod": "GET",
+      "label": "Pedidos de compra MP — painel OTD (linhas)",
+      "category": "supplies",
+      "path": "/supplies/purchase-order-otd/panel",
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Linhas de PC MP com status no prazo/atrasado. Inclui supplier_short_name (A2_NREDUZ). Payload em lines.items.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "on_time",
+            "late"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação",
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
+      "openEndedDateRange": true,
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "tableFields": "lines",
+      "valueFieldTypes": {
+        "purchase_order_otd_pct": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "expected_delivery_date": "date",
+        "receipt_entry_date": "date",
+        "invoice_issue_date": "date",
+        "purchase_order_issue_date": "date"
+      }
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "httpMethod": "GET",
+      "label": "Série OTD pedidos de compra (MP)",
+      "category": "supplies",
+      "path": "/supplies/purchase-order-otd/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Série temporal do OTD de PC de matéria-prima por filial.",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
       "httpMethod": "GET",
       "label": "Lista paginada — Itens da análise de consumo e estoque de segurança sugerido",
@@ -19248,6 +22343,7 @@
           "optional": true,
           "label": "Filial",
           "enum": [
+            "all",
             "01",
             "02"
           ],
@@ -19298,12 +22394,6 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 50,
-        "only_positive": true,
-        "sort": "stock_value_desc"
-      },
       "valueFieldLabels": {
         "stock_value": "Valor (R$)",
         "quantity": "Quantidade"
@@ -19311,6 +22401,12 @@
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
+      },
+      "defaultParams": {
+        "page": 1,
+        "page_size": 50,
+        "only_positive": true,
+        "sort": "stock_value_desc"
       },
       "valueFields": [
         "stock_value",
@@ -19464,6 +22560,371 @@
         "total"
       ],
       "tableFields": "top_products"
+    },
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "httpMethod": "GET",
+      "label": "Exportar retornos",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/returns/export",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "document_export",
+      "description": "Exportação CSV/XLSX com uma linha por retorno. O saldo da remessa se repete.",
+      "whenToUse": "Baixar linhas de retorno para auditoria sem somar saldos repetidos.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        },
+        "export_format": {
+          "type": "string",
+          "optional": true,
+          "label": "Formato de exportação",
+          "default": "csv",
+          "enum": [
+            "csv",
+            "xlsx"
+          ],
+          "description": "Formato do arquivo: csv ou xlsx."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "httpMethod": "GET",
+      "label": "Remessas de terceiros",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/shipments",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de remessas de beneficiamento com saldo pendente e retornos vinculados.",
+      "whenToUse": "Acompanhar materiais recebidos de clientes para beneficiamento e o saldo ainda a devolver.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "httpMethod": "GET",
+      "label": "Detalhe da remessa",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Uma remessa de beneficiamento com todas as notas de retorno vinculadas.",
+      "whenToUse": "Consultar uma NF de recebimento específica e seus retornos.",
+      "paramSchema": {
+        "shipment_recno": {
+          "type": "integer",
+          "optional": false,
+          "label": "Shipment recno",
+          "in": "path"
+        },
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de terceiros",
+      "category": "supplies",
+      "path": "/supplies/third-party-materials/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Remessas abertas, parciais e saldo pendente de materiais de terceiros.",
+      "whenToUse": "KPI da quantidade ainda a devolver aos clientes.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "customer_reference": {
+          "type": "string",
+          "optional": true,
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        },
+        "partner_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        },
+        "partner_store": {
+          "type": "string",
+          "optional": true,
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        },
+        "receipt_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        },
+        "return_number": {
+          "type": "string",
+          "optional": true,
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "issued_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "completed",
+            "partial",
+            "no_return"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "only_with_balance": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com saldo",
+          "default": false,
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        },
+        "include_test_products": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir produtos de teste",
+          "default": false,
+          "description": "Inclui produtos de teste no resultado."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_caller_stats",

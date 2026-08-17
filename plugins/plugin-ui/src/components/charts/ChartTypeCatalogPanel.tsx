@@ -12,6 +12,8 @@ export type ChartTypeCatalogPanelProps = {
   className?: string;
   /** Tipo atual (ex.: Alterar tipo) — destaca o item correspondente. */
   selectedType?: DelpiChartType | null;
+  /** When set, only these catalog types are listed (family filter). */
+  allowedTypes?: readonly DelpiChartType[] | null;
 };
 
 function ChartCatalogItem({
@@ -43,35 +45,48 @@ function ChartCatalogItem({
   );
 }
 
-/** Catálogo completo de tipos de gráfico (estilo PowerPoint/Excel). */
+/** Catálogo de tipos de gráfico (estilo PowerPoint/Excel). Filtrável por família. */
 export function ChartTypeCatalogPanel({
   title = "Inserir gráfico",
   onSelect,
   className = "",
   selectedType = null,
+  allowedTypes = null,
 }: ChartTypeCatalogPanelProps) {
+  const allowed =
+    allowedTypes && allowedTypes.length > 0 ? new Set(allowedTypes) : null;
+
+  const visibleCategories = DELPI_CHART_CATALOG_CATEGORIES.map((category) => {
+    const items = DELPI_CHART_TYPE_CATALOG.filter((entry) => {
+      if (entry.category !== category.id) return false;
+      if (allowed && !allowed.has(entry.type)) return false;
+      return true;
+    });
+    return { category, items };
+  }).filter((entry) => entry.items.length > 0);
+
+  const showCategoryLabels = visibleCategories.length > 1;
+
   return (
     <div className={["delpi-ui-chart-catalog", className].filter(Boolean).join(" ")} role="menu">
       <h3 className="delpi-ui-chart-catalog__title">{title}</h3>
-      {DELPI_CHART_CATALOG_CATEGORIES.map((category) => {
-        const items = DELPI_CHART_TYPE_CATALOG.filter((entry) => entry.category === category.id);
-        if (items.length === 0) return null;
-        return (
-          <section key={category.id} className="delpi-ui-chart-catalog__category">
+      {visibleCategories.map(({ category, items }) => (
+        <section key={category.id} className="delpi-ui-chart-catalog__category">
+          {showCategoryLabels ? (
             <h4 className="delpi-ui-chart-catalog__category-label">{category.label}</h4>
-            <div className="delpi-ui-chart-catalog__grid">
-              {items.map((entry) => (
-                <ChartCatalogItem
-                  key={entry.type}
-                  entry={entry}
-                  selected={selectedType === entry.type}
-                  onSelect={onSelect}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+          ) : null}
+          <div className="delpi-ui-chart-catalog__grid">
+            {items.map((entry) => (
+              <ChartCatalogItem
+                key={entry.type}
+                entry={entry}
+                selected={selectedType === entry.type}
+                onSelect={onSelect}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

@@ -2,6 +2,10 @@ export {
   FilePreviewModal,
   type FilePreviewModalProps,
 } from "./FilePreviewModal";
+export {
+  ImageLightboxModal,
+  type ImageLightboxModalProps,
+} from "./ImageLightboxModal";
 export { FilePreviewMetaFooter } from "./FilePreviewMetaFooter";
 export { FilePreviewView, type FilePreviewViewProps } from "./FilePreviewView";
 export {

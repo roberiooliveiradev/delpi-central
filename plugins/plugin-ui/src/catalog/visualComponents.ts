@@ -66,9 +66,37 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     updatedAt: "2026-07-16",
     changeNote: "Dual-class delpi-ui-page-header + slot nav",
   }),
+  vc("layout", "UnderlineNav", {
+    addedAt: "2026-08-06",
+    updatedAt: "2026-08-10",
+    changeNote: "Modo tabs com semântica ARIA, roving tabindex e teclado.",
+    description:
+      "Nav secundária underline (áreas do plugin); aria-current, badge count, scroll mobile.",
+  }),
+  vc("layout", "PagePath", {
+    addedAt: "2026-08-10",
+    description:
+      "Caminho responsivo de página com back/current fixos e ancestrais em overflow acessível.",
+  }),
+  vc("layout", "TopBar", {
+    addedAt: "2026-08-06",
+    description:
+      "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions; flush por padrão.",
+  }),
+  vc("layout", "PageHero", {
+    addedAt: "2026-08-06",
+    description:
+      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
+  }),
+  vc("layout", "ViewTransition", {
+    addedAt: "2026-08-06",
+    description:
+      "Fade + slide curto na troca de tela/painel; respeita prefers-reduced-motion.",
+  }),
   vc("layout", "NavigationCard", {
     addedAt: "2026-07-16",
-    description: "Card clicável de navegação/atalho (unidades, submódulos).",
+    description:
+      "Card clicável de navegação/atalho (unidades, submódulos); density featured para launcher primary.",
   }),
   vc("layout", "PreviewDetailCard", {
     addedAt: "2026-07-31",
@@ -102,7 +130,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "KpiCard"),
   vc("layout", "DelpiKpiCard"),
-  vc("layout", "SimpleKpiCard"),
+  vc("layout", "SimpleKpiCard", {
+    updatedAt: "2026-08-06",
+    changeNote: "Card interativo usa article+role=button para coexistir com HelpTooltip.",
+  }),
   vc("layout", "MetricKpiCard"),
   vc("layout", "InitialsAvatar", {
     addedAt: "2026-08-04",
@@ -152,6 +183,36 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "DrawerShell"),
   vc("feedback", "ConfirmModalPanel"),
   // data
+  vc("data", "DataRecordCard", {
+    addedAt: "2026-08-10",
+    description:
+      "Card genérico de registro com dl/dt/dd e raiz navegável opcional.",
+  }),
+  vc("data", "InteractiveDataCard", {
+    addedAt: "2026-08-10",
+    description:
+      "Card operacional interativo (role=button) para listas em modo cards.",
+  }),
+  vc("data", "DataListToolbar", {
+    addedAt: "2026-08-10",
+    description: "Toolbar de lista operacional (leading + hint + actions).",
+  }),
+  vc("data", "DataCardsGrid", {
+    addedAt: "2026-08-10",
+    description: "Grid auto-fill de cards operacionais.",
+  }),
+  vc("data", "KanbanBoard", {
+    addedAt: "2026-08-14",
+    description: "Board Kanban somente leitura (colunas + slots de card, sem DnD).",
+  }),
+  vc("data", "DataCardsSortBar", {
+    addedAt: "2026-08-10",
+    description: "Barra de ordenação do modo cards.",
+  }),
+  vc("data", "TableFontSizeControls", {
+    addedAt: "2026-08-10",
+    description: "Controles de tamanho de fonte da tabela/cards.",
+  }),
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
     updatedAt: "2026-07-17",
@@ -179,6 +240,15 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: CATALOG_EXPAND_DATE,
     changeNote: "Menu Colunas / Exibir colunas canônico",
   }),
+  vc("data", "InlineMeter", {
+    addedAt: "2026-08-07",
+    changeNote: "Barra de proporção compacta para células e cards",
+  }),
+  vc("data", "HorizontalTimeline", {
+    addedAt: "2026-08-07",
+    changeNote:
+      "Timeline OTD: eixo temporal proporcional; marcador Agora (bandeira) acima do trilho",
+  }),
   vc("data", "TreeGuideRails", {
     addedAt: "2026-07-13",
     changeNote: "Linhas pontilhadas suaves para árvores hierárquicas",
@@ -200,6 +270,17 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "MultiSelectField"),
   vc("forms", "ReadOnlyField"),
   vc("forms", "FileDropzone"),
+  vc("forms", "AttachmentFileList", {
+    addedAt: "2026-08-05",
+    description: "Lista de anexos com Abrir / Baixar / Remover.",
+  }),
+  vc("forms", "AttachmentPreviewStrip", {
+    addedAt: "2026-08-06",
+    updatedAt: "2026-08-13",
+    description:
+      "Prévia visual de anexos (thumbs / ícones); mode preview|manage com onRemove no manage.",
+    changeNote: "mode=manage + botão X de remover no thumb",
+  }),
   vc("forms", "FilterCheckboxField"),
   vc("forms", "FormFieldShell"),
   vc("forms", "FormSelectControl"),
@@ -252,6 +333,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("charts", "TableInsertCatalogPanel"),
   // preview
   vc("preview", "FilePreviewModal"),
+  vc("preview", "ImageLightboxModal"),
   vc("preview", "FilePreviewView"),
   vc("preview", "FilePreviewMetaFooter"),
   vc("preview", "CenteredScaledPreview"),
@@ -265,6 +347,16 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("bpmn", "DiagramMermaidPreview", { updatedAt: "2026-07-30" }),
   vc("bpmn", "DiagramFullscreenFrame", { updatedAt: "2026-07-30" }),
   vc("bpmn", "TabPanelTransition", { updatedAt: "2026-07-30" }),
+  // org — organograma membership (read-only React Flow)
+  vc("org", "OrgMembershipFlow", {
+    addedAt: "2026-08-12",
+    updatedAt: "2026-08-12",
+    changeNote: "Claro/escuro, tela cheia, controles pan/zoom/fit e nós temáticos",
+    description:
+      "Canvas read-only carteira/grupo↔pessoa (@xyflow/react): pan/zoom, fit-view, fullscreen, tema Delpi; kind portfolio|person|group; factory createDashboardOrgMembershipFlow.",
+    changeNote: "kind group + CSS nó; SegmentToggle factory cm",
+    updatedAt: "2026-08-13",
+  }),
   // shape
   vc("shape", "ShapeFillMenu"),
   vc("shape", "ShapeOutlineMenu"),
@@ -274,7 +366,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ShapeStyleRibbonStrip"),
   vc("shape", "ShapeStyleGallery"),
   vc("shape", "ColorDialog"),
-  vc("shape", "ColorPickerPopover"),
+  vc("shape", "ColorPickerPopover", {
+    updatedAt: "2026-08-11",
+    changeNote: "FillPicker Cor|Gradiente via onFillChange + allowedFillKinds",
+  }),
+  vc("shape", "FillGradientPanel", {
+    addedAt: "2026-08-11",
+    description: "Painel de gradiente linear (presets, ângulo, stops) no FillPicker",
+  }),
   vc("shape", "RibbonColorPicker"),
   vc("shape", "ColorThemeGrid"),
   vc("shape", "ColorStandardRow"),
@@ -306,6 +405,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "DeckSectionContextMenu", {
     addedAt: "2026-07-28",
     description: "Menu de ações da seção (renomear, colapsar, excluir, propriedades).",
+  }),
+  vc("layout", "TransitionGallery", {
+    addedAt: "2026-08-11",
+    description: "Galeria acessível de transições com prévia visual A→B.",
+  }),
+  vc("layout", "TransitionGalleryPopover", {
+    addedAt: "2026-08-11",
+    description: "Popover ancorado para seleção visual de transições.",
   }),
   // menu
   vc("menu", "FixedPanelPortal", {

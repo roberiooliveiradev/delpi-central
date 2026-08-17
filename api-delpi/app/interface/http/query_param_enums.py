@@ -44,6 +44,8 @@ SI_DEPARTMENT_ID_VALUES = (
 )
 SEVERITY_VALUES = ("low", "medium", "high", "critical")
 SHIFT_5S_VALUES = ("TURNO_1", "TURNO_2", "TURNO_3", "ADMINISTRATIVO")
+# Eficiência fabril / apontamentos — ids 1|2|3 (heurística por hora_inicio).
+FACTORY_SHIFT_VALUES = ("1", "2", "3")
 ACTIVE_BOOL_VALUES = ("true", "false")
 YES_NO_VALUES = ("sim", "nao")
 AUDIT_5S_STATUS_VALUES = ("open", "in_progress", "closed", "cancelled")
@@ -73,6 +75,7 @@ SCHEDULING_RECURRENCE_VALUES = ("weekly", "monthly")
 GRANULARITY_DAY_WEEK_MONTH_VALUES = ("day", "week", "month")
 GRANULARITY_DAY_MONTH_AUTO_VALUES = ("day", "month", "auto")
 INSPECTION_RESULT_VALUES = ("A", "R", "T")
+INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES = ("APROVADA", "REJEITADA")
 KAIZEN_STATUS_VALUES = (
     "recebido",
     "aprovado",
@@ -334,11 +337,23 @@ def SEVERITY_QUERY():
 )
 def SHIFT_5S_QUERY():
     return Query(
-    None,
+        None,
     description="5S shift: TURNO_1, TURNO_2, TURNO_3 or ADMINISTRATIVO.",
     pattern=_enum_pattern(SHIFT_5S_VALUES),
     enum=list(SHIFT_5S_VALUES),
-)
+    )
+
+
+def FACTORY_SHIFT_QUERY():
+    """Turno de fábrica (eficiência fabril): 1|2|3 (CSV ainda aceito pelo use case se chegar)."""
+    return Query(
+        None,
+        description=(
+            "Factory shift filter by appointment start time: 1 (1st), 2 (2nd) or 3 (3rd)."
+        ),
+        pattern=_enum_pattern(FACTORY_SHIFT_VALUES),
+        enum=list(FACTORY_SHIFT_VALUES),
+    )
 def AUDIT_5S_STATUS_QUERY():
     return Query(
     None,
@@ -443,6 +458,15 @@ def INSPECTION_RESULT_QUERY():
     pattern=_enum_pattern(INSPECTION_RESULT_VALUES),
     enum=list(INSPECTION_RESULT_VALUES),
 )
+
+
+def INSPECOES_ENTRADA_HISTORICO_RESULT_QUERY():
+    return Query(
+        None,
+        description="Inbound inspection history result: APROVADA or REJEITADA.",
+        pattern=_enum_pattern(INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES),
+        enum=list(INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES),
+    )
 def KAIZEN_STATUS_QUERY():
     return Query(
     None,
@@ -631,3 +655,83 @@ def PAC_PLAN_STATUS_QUERY():
     pattern=_enum_pattern(PAC_PLAN_STATUS_VALUES),
     enum=list(PAC_PLAN_STATUS_VALUES),
 )
+
+
+INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES = (
+    "all",
+    "nao_inspecionou",
+    "inspecionou",
+    "sem_cadastro",
+)
+
+
+THIRD_PARTY_MATERIALS_STATUS_VALUES = ("completed", "partial", "no_return")
+
+
+def THIRD_PARTY_MATERIALS_STATUS_QUERY():
+    return Query(
+        None,
+        description="Shipment status: completed, partial or no_return.",
+        pattern=_enum_pattern(THIRD_PARTY_MATERIALS_STATUS_VALUES),
+        enum=list(THIRD_PARTY_MATERIALS_STATUS_VALUES),
+    )
+
+
+def INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY():
+    return Query(
+        "all",
+        description=(
+            "Inspection audit status filter: all, nao_inspecionou, "
+            "inspecionou or sem_cadastro."
+        ),
+        pattern=_enum_pattern(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
+        enum=list(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
+    )
+
+
+INVOICE_ISSUANCE_PARTY_TYPE_VALUES = ("customer", "supplier")
+INVOICE_ISSUANCE_INVOICE_TYPE_VALUES = (
+    "sale",
+    "return",
+    "sample",
+    "repair_shipment",
+    "other",
+)
+INVOICE_ISSUANCE_FREIGHT_MODE_VALUES = ("cif", "fob")
+INVOICE_ISSUANCE_STATUS_VALUES = (
+    "open",
+    "pending",
+    "in_progress",
+    "issued",
+    "returned",
+    "cancelled",
+)
+
+
+def INVOICE_ISSUANCE_PARTY_TYPE_QUERY():
+    return Query(
+        ...,
+        description="Recipient kind: customer (SA1) or supplier (SA2).",
+        pattern=_enum_pattern(INVOICE_ISSUANCE_PARTY_TYPE_VALUES),
+        enum=list(INVOICE_ISSUANCE_PARTY_TYPE_VALUES),
+    )
+
+
+def INVOICE_ISSUANCE_STATUS_QUERY_OPTIONAL():
+    return Query(
+        None,
+        description=(
+            "Request status filter: open (pending/in_progress/returned) or a concrete status."
+        ),
+        pattern=_enum_pattern(INVOICE_ISSUANCE_STATUS_VALUES),
+        enum=list(INVOICE_ISSUANCE_STATUS_VALUES),
+    )
+
+
+def INVOICE_ISSUANCE_INVOICE_TYPE_QUERY_OPTIONAL():
+    return Query(
+        None,
+        description="Invoice type: sale, return, sample, repair_shipment or other.",
+        pattern=_enum_pattern(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES),
+        enum=list(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES),
+    )

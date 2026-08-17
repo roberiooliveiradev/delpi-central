@@ -83,6 +83,31 @@ Plugin: `lancamento-notas-fiscais`.
 
 Documentação completa: [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) · playbook: [PLAYBOOK.md](../../../docs/12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md).
 
+### Emissão de Notas Fiscais — `/invoice-issuance`
+
+Fila de solicitações de emissão de NF de saída (Postgres plugins + lookups TOTVS SA1/SA2/SB1).  
+Plugin: `invoice-issuance`.  
+**Permissões:** `invoice-issuance.access|create|view|process|manage` (não só `api-delpi.access`).
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/invoice-issuance/parties` | Busca cliente (SA1) ou fornecedor (SA2), inclusive CNPJ. |
+| GET | `/invoice-issuance/products` | Busca itens SB1. |
+| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | Saldo informativo almoxarifado 01. |
+| GET | `/invoice-issuance/open-sales-orders` | PV em aberto do cliente na filial (sem membership). |
+| GET | `/invoice-issuance/carriers` | Busca transportadora SA4 (`A4_NREDUZ`). |
+| POST | `/invoice-issuance/requests` | Criar solicitação. |
+| GET | `/invoice-issuance/requests` | Fila paginada. |
+| GET | `/invoice-issuance/requests/{id}` | Detalhe + timeline + `allowed_actions`. |
+| PATCH | `/invoice-issuance/requests/{id}` | Corrigir solicitação devolvida. |
+| POST | `/invoice-issuance/requests/{id}/resubmit` | Reenviar. |
+| POST | `/invoice-issuance/requests/{id}/start` | Iniciar atendimento. |
+| POST | `/invoice-issuance/requests/{id}/return` | Devolver (motivo). |
+| POST | `/invoice-issuance/requests/{id}/issue` | Marcar emitida. |
+| POST | `/invoice-issuance/requests/{id}/cancel` | Cancelar. |
+
+Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playbook: [PLAYBOOK.md](../../../docs/12-roadmap-e-evolucao/invoice-issuance/PLAYBOOK.md).
+
 ---
 
 ## Comercial — `/commercial`
@@ -138,12 +163,13 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/direct_labor_cost_pct` | Custo de mão de obra direta % ROL. |
 | GET | `/production/production_cost_pct` | Custo de produção % ROL. |
 | GET | `/production/depreciation_pct` | Depreciação % ROL. |
-| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real). |
-| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
+| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média do % canônico (`setup + HY_TEMPAD × qtd` ÷ tempo real), mesma fórmula da eficiência fabril; faixa 0–199%. SI e dashboard produção consomem esta rota. |
+| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril + % recalculado), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento — roteiro (SG2), estrutura (BOM), análise de tempos e **`time_analysis.findings`** (alertas automáticos). |
-| GET | `/production/oee/series` | Série temporal de OEE por filial. Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
+| GET | `/production/oee/series` | Série temporal de OEE por filial (mesmo % canônico). Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
-| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe). |
+| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; % recalculado `HY_TEMPAD`; `appointment_id` para detalhe; campos `turno`/`turno_label`; filtro opcional `shift=1\|2\|3` ou CSV). |
+| GET | `/production/eficiencia-fabril/efficiency-by-work-center` | Média de eficiência (%) por CT — mesma regra do plugin (OK + faixa 0–199%); filtro `shift` opcional. Ideal para gráfico no TV. |
 | GET | `/production/machine-programs/top-intermediates` | Ranking de intermediários (PI) mais produzidos — programas de máquina (Manutenção). Doc: [production-machine-programs.md](./production-machine-programs.md). |
 
 **Performance (`/production/eficiencia-fabril/appointments`):**
@@ -153,7 +179,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - Console: `operation_id=list_eficiencia_fabril_appointments`; caller `eficiencia-fabril` — após o primeiro load do período, recargas devem ser cache hit (&lt; 500 ms).
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no prazo **ou** em andamento já atrasadas (`C2_DATRF` vazio e `C2_DATPRF` &lt; hoje); período por data prevista. |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs mãe (sequência `001`) e filtro `status` (`on_time` / `late`). |
-| GET | `/production/otd/series` | Série temporal de OTD por filial. |
+| GET | `/production/otd/series` | Série temporal de OTD por filial (`granularity`: day, week, month, year). |
 | GET | `/production/unproductive-hours/summary` | Resumo de horas improdutivas (paradas PCP — todos os motivos). |
 | GET | `/production/unproductive-hours/items` | Listagem paginada de apontamentos de parada (+ descrição do motivo). |
 | GET | `/production/unproductive-hours/ranking` | Ranking top N por motivo, recurso, centro de custo, operador, produto ou operação. |
@@ -165,16 +191,18 @@ Doc: [production-unproductive-hours.md](./production-unproductive-hours.md). Vie
 
 Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_ORDENS_PRODUCAO` — não confundir com [`/production/orders/*`](./13-producao-operacional.md) (SC2010).
 
-**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
+**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Fórmula canônica (`HY_TEMPAD`): [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md). Changelog jun/2026 + alinhamento ago/2026: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 
-**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` na listagem = `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real); `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
+**Métrica compartilhada (ago/2026):** KPI OEE (`/overall_equipment_effectiveness_pct`), listagem/série OEE e apontamentos da eficiência fabril usam a **mesma** expressão SQL (`production_fabril_efficiency_sql.py`): `tempo_previsto = setup + HY_TEMPAD × qtd_apontada`; `% = previsto ÷ real × 100`. **Não** usar o `EFICIENCIA_PERCENTUAL` cru da view (legado `HY_TEMPOM × qtd/C2`).
+
+**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` = % canônico (TEMPAD); `status` valid/outlier sobre esse %; `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
 
 **Detalhe (`GET /production/oee/appointments/{id}`):** `oee_pct` e `time_analysis.efficiency_from_times_pct` calculados por tempos (roteiro SG2/SHY + horários); diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis`.
 
-**Performance (KPI e séries OEE/OTD — jun/2026):**
+**Performance (KPI e séries OEE/OTD):**
 
-- `GET /production/overall_equipment_effectiveness_pct`: KPI por filial via query agrupada + `NOLOCK` (`production_fabril_oee_kpi_sql.py`); cache `production-oee` e `production-oee-by-branch`. Changelog: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7.
-- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`, `production-oee-by-branch|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
+- `GET /production/overall_equipment_effectiveness_pct`: KPI via `build_oee_fabril_kpi_*` + joins SHY/SG2 + `NOLOCK`; cache versionado `production-oee-tempad-v2` / `production-oee-by-branch-tempad-v2` / `production-oee-series-daily-tempad-v2`. Histórico de performance: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7–§7.2.
+- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa + cache por filial/período nos repositórios. TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
 - Séries usam no máximo **366 buckets** (`MAX_PERIOD_BUCKETS`): cobre um ano bissexto completo com `granularity=day`, preservando um ponto por dia. Intervalos diários multi-ano acima desse limite retornam `truncated=true`; o consumidor não deve reagrupar ou renomear os pontos silenciosamente.
 - OTD: `WITH (NOLOCK)` em SC2/SB1. Console: `get_production_oee_series` / `get_production_otd_series` — após primeiro carregamento, polling do dashboard deve gerar hits na aba **Cache**.
 
@@ -188,7 +216,10 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
-| GET | `/supplies/otd` | On-Time Delivery compras. |
+| GET | `/supplies/otd` | OTD compras — universo **MP ou** código com prefixo `3019`. Ver [padroes-totvs/cadastro-produto.md](./padroes-totvs/cadastro-produto.md). |
+| GET | `/supplies/purchase-order-otd` | OTD de pedidos de compra **só MP** (KPI). Ver [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md). |
+| GET | `/supplies/purchase-order-otd/series` | Série temporal OTD PC MP por filial. |
+| GET | `/supplies/purchase-order-otd/panel` | Painel OTD PC MP — resumo + linhas paginadas. |
 | GET | `/supplies/safety-stock/filters` | Filtros do painel de estoque de segurança. |
 | GET | `/supplies/safety-stock/summary` | Resumo / KPIs de estoque de segurança. |
 | GET | `/supplies/safety-stock/items` | Lista paginada de MPs vs ESTSEG. |
@@ -198,13 +229,23 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | KPIs da análise consumo × ESTSEG sugerido (12 meses). |
 | GET | `/supplies/safety-stock/consumption-analysis/items` | Lista paginada da simulação de ESTSEG por consumo SD3 + lead time `BZ_PE`. |
 | GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | Detalhe com série mensal, comparativo anual (3 anos) e memória de cálculo. |
+| GET | `/supplies/third-party-materials/shipments` | Remessas paginadas de materiais de terceiros (SB6). Ver [materiais-terceiros.md](./materiais-terceiros.md). |
+| GET | `/supplies/third-party-materials/shipments/{shipment_recno}` | Detalhe da remessa + retornos. |
+| GET | `/supplies/third-party-materials/summary` | KPIs de remessas únicas (abertas, parciais, saldo pendente). |
+| GET | `/supplies/third-party-materials/returns/export` | Exportação CSV/XLSX (1 linha por retorno; saldo se repete). |
 
 **Performance (`/supplies/otd`):**
 
-- Use case: summary derivado do `monthly_breakdown` (uma varredura em `VW_PONTUALIDADE_FORNECEDORES_MENSAL` em vez de duas).
+- Agregação a partir de `VW_PONTUALIDADE_FORNECEDORES` com filtro `TIPO_PRODUTO = MP` **ou** `PRODUTO` prefixo `3019` (a view mensal pré-agregada não permite esse recorte).
 - Views com `WITH (NOLOCK)` (leitura analítica).
 - Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).
+
+**Performance (`/supplies/purchase-order-otd*`):**
+
+- Fonte: `VW_PONTUALIDADE_FORNECEDORES` com `WITH (NOLOCK)` e filtro fixo `TIPO_PRODUTO = MP`.
+- Cache KPI: `supplies-purchase-order-otd`; série: `supplies-purchase-order-otd-series` (TTL `QUERY_CACHE_TTL_SECONDS`).
+- Série: um KPI por bucket/filial (mitigado pelo cache do KPI e da série completa).
 
 | GET | `/supplies/stock-value` | Valor de estoque (SB2 atual, fechamento SB9 na `end_date` ou modo híbrido `register_snapshot`). `stock_method=auto|hybrid|estimated|official_closure`. Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md) e [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). Herda `stock_method=auto` e expõe `stock_estimation` quando o período é histórico. |
@@ -415,9 +456,27 @@ Painel operacional de inspeção em processo (views TOTVS + auditoria apontament
 | GET | `/inspecoes-processo/historico/detalhe` | Medições da OP. |
 | GET | `/inspecoes-processo/auditoria-apontamentos` | Apontamentos com inspeção amarrada sem QPR. |
 
-Parâmetro comum: `branch` (`01` \| `02`). Escopo por filial validado no router.
+Parâmetro comum: `branch` (`01` \| `02`). KPIs aceitam `start_date`/`end_date` (data da medição; sem datas = histórico completo). Escopo por filial validado no router.
 
 Documentação completa: [inspecoes-processo.md](./inspecoes-processo.md) · auditoria: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
+
+---
+
+## Planos de inspeção de processo — `/process-inspection-plans`
+
+**Permissão:** mesmas de inspeções de processo (`inspecoes-processo.view` / filiais) ou `api-delpi.access`
+
+Cadastro de **como inspecionar** (QP6/QP7/QP8) e lacunas versus OPs abertas (`SC2010`). Não substitui `/inspecoes-processo` (execução em linha).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/process-inspection-plans/summary` | KPIs + distribuição com/sem plano. |
+| GET | `/process-inspection-plans/orders-without-plan` | OPs abertas sem QP6. |
+| GET | `/process-inspection-plans/products-without-plan` | Produtos sem plano com OP aberta. |
+| GET | `/process-inspection-plans/products` | Produtos com plano cadastrado. |
+| GET | `/process-inspection-plans/products/{code}` | Detalhe QP6+QP7+QP8. |
+
+Documentação completa: [process-inspection-plans.md](./process-inspection-plans.md).
 
 ---
 
@@ -604,6 +663,35 @@ Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo 
 **Indicadores:** `recebido` fora de quantidade/ganhos; `aprovado` só quantidade; `implantado` quantidade + ganhos. Detalhe: README do plugin.
 
 **Fonte analítica:** `GET /quality/kaizens/summary` e `GET /quality/kaizens/{kaizen_id}` leem PostgreSQL (`PostgresKaizenQueryRepository`). Cálculo temporal por revisão: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
+
+## Canal de Denúncia — `/canal-denuncia`
+
+Relato anônimo à Ouvidoria. Quem tem conta usa o plugin; quem não tem usa o formulário público.
+
+Doc: [canal-denuncia.md](./canal-denuncia.md) · Plugin: [plugins/canal-denuncia/README.md](../../../plugins/canal-denuncia/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| POST | `/canal-denuncia/denuncias` | `create_canal_denuncia` |
+| POST | `/public/canal-denuncia/denuncias` | `create_public_canal_denuncia` |
+
+Página pública: `/p/canal-denuncia/denuncia/aberto`.
+
+## Mural de Acessos — `/mural-acessos`
+
+Vários murais de links, cada um com QR e menu público. Admin no portal; leitura pública sem JWT.
+
+Doc: [mural-acessos.md](./mural-acessos.md) · Plugin: [plugins/mural-acessos/README.md](../../../plugins/mural-acessos/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| GET | `/mural-acessos/hubs` | `list_mural_acessos_hubs` |
+| POST | `/mural-acessos/hubs` | `create_mural_acessos_hub` |
+| GET | `/mural-acessos/hubs/{id}` | `get_mural_acessos_hub` |
+| GET | `/mural-acessos/hubs/{id}/links` | `list_mural_acessos_links` |
+| GET | `/public/mural-acessos/menu/{token}` | `list_public_mural_acessos_menu_by_token` |
+
+Página pública: `/p/mural-acessos/menu/{token}` (o mural inicial usa `mural`).
 
 ## Delpi Reports — `/reports`
 

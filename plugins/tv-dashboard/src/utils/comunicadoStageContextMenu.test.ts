@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 
 import { cloneBlocksForClipboard, pasteClipboardBlocks } from "./comunicadoEditorClipboard";
 import { groupBlocks } from "./comunicadoGrouping";
-import { bringForward, bringToFront, sendBackward, sendToBack } from "./comunicadoLayerOrder";
+import {
+  bringForward,
+  bringToFront,
+  reorderLayerIds,
+  sendBackward,
+  sendToBack,
+} from "./comunicadoLayerOrder";
 import {
   isContextMenuActionEnabled,
   resolveContextMenuActionState,
@@ -70,6 +76,18 @@ describe("comunicadoLayerOrder", () => {
     expect(bringForward(blocks, ["a"]).map((item) => item.id)).toEqual(["b", "a", "c"]);
     expect(sendBackward(blocks, ["c"]).map((item) => item.id)).toEqual(["a", "c", "b"]);
   });
+
+  it("arrasta o grupo inteiro e mantém membros adjacentes", () => {
+    const blocks = [block("a", 1), block("b", 2), block("c", 3)];
+    const next = reorderLayerIds(blocks, ["a", "b"], "c");
+    expect(next.map((item) => item.id)).toEqual(["c", "a", "b"]);
+    expect(next.map((item) => item.style?.zIndex)).toEqual([1, 2, 3]);
+  });
+
+  it("sobe o grupo com as setas (bringForward no conjunto)", () => {
+    const blocks = [block("a", 1), block("b", 2), block("c", 3)];
+    expect(bringForward(blocks, ["a", "b"]).map((item) => item.id)).toEqual(["c", "a", "b"]);
+  });
 });
 
 describe("comunicadoStageContextMenuActions", () => {
@@ -113,6 +131,7 @@ describe("comunicadoStageContextMenuActions", () => {
     expect(isContextMenuActionEnabled("rotateCw", single)).toBe(true);
     expect(isContextMenuActionEnabled("group", single)).toBe(false);
     expect(isContextMenuActionEnabled("align-left", single)).toBe(false);
+    expect(isContextMenuActionEnabled("same-size-both", single)).toBe(false);
     expect(isContextMenuActionEnabled("align-slide-left", single)).toBe(true);
     expect(isContextMenuActionEnabled("distribute-h", single)).toBe(false);
     expect(isContextMenuActionEnabled("editText", single)).toBe(true);
@@ -125,6 +144,7 @@ describe("comunicadoStageContextMenuActions", () => {
     });
     expect(isContextMenuActionEnabled("group", multi)).toBe(true);
     expect(isContextMenuActionEnabled("align-left", multi)).toBe(true);
+    expect(isContextMenuActionEnabled("same-size-both", multi)).toBe(true);
     expect(isContextMenuActionEnabled("distribute-h", multi)).toBe(false);
     expect(isContextMenuActionEnabled("editText", multi)).toBe(false);
 

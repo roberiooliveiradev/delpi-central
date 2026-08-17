@@ -5,7 +5,7 @@ import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceCont
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import { resolveColorTriggerPreviewMode } from "./colorUtils";
+import { resolveFillTriggerPreview, type DelpiFill, type DelpiFillKind } from "./fillTypes";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 
@@ -22,6 +22,9 @@ export type ShapeOutlineMenuProps = {
   onArrows?: () => void;
   labels?: ShapeColorLabels;
   outlineLabel?: string;
+  fill?: DelpiFill;
+  onFillChange?: (fill: DelpiFill) => void;
+  allowedFillKinds?: readonly DelpiFillKind[];
 };
 
 const WIDTH_PRESETS = [0.5, 1, 1.5, 2, 3, 4, 6, 8];
@@ -39,6 +42,9 @@ export function ShapeOutlineMenu({
   onArrows,
   labels,
   outlineLabel,
+  fill,
+  onFillChange,
+  allowedFillKinds,
 }: ShapeOutlineMenuProps) {
   const L = mergeShapeColorLabels(labels);
   const [open, setOpen] = useState(false);
@@ -52,7 +58,11 @@ export function ShapeOutlineMenu({
     setSubmenu(null);
   };
 
-  const previewMode = resolveColorTriggerPreviewMode(color, "outline");
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    fill,
+    color,
+    "outline",
+  );
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -74,11 +84,7 @@ export function ShapeOutlineMenu({
             ]
               .filter(Boolean)
               .join(" ")}
-            style={
-              previewMode === "color" && color
-                ? { borderColor: color }
-                : undefined
-            }
+            style={previewBackground ? { background: previewBackground } : undefined}
           />
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{outlineLabel ?? L.outline}</span>
@@ -96,6 +102,9 @@ export function ShapeOutlineMenu({
             variant="outline"
             value={color}
             onChange={onColorChange}
+            fill={fill}
+            onFillChange={onFillChange}
+            allowedFillKinds={allowedFillKinds}
             onNoFill={
               onNoOutline ??
               (() => {

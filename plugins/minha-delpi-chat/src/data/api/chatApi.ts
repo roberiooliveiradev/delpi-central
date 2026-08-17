@@ -35,6 +35,7 @@ import type {
   CreateChatSessionPayload,
   ChatCanvasOpenPayload,
   ChatPlaybackEvent,
+  ChatPresentationFormatId,
   ChatResponseModeId,
   ChatResponseModesResponse,
   SendChatMessagePayload,
@@ -668,7 +669,9 @@ export async function resendChatMessage(
     signal?: AbortSignal;
     context?: string;
     responseMode?: ChatResponseModeId;
+    responseFormat?: ChatPresentationFormatId;
     attachmentIds?: string[];
+    hostContext?: SendChatMessagePayload["hostContext"];
   } = {},
 ): Promise<void> {
   await openChatMessageStream(
@@ -677,7 +680,14 @@ export async function resendChatMessage(
       content,
       context: options.context,
       responseMode: options.responseMode,
+      responseFormat:
+        options.responseFormat && options.responseFormat !== "auto"
+          ? options.responseFormat
+          : undefined,
       attachmentIds: options.attachmentIds,
+      // Reenvio é o mesmo turno: sem o contexto do host o pedido de mutação
+      // no editor TV vira pergunta genérica.
+      hostContext: options.hostContext ?? undefined,
     },
     callbacks,
     options,

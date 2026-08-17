@@ -6,6 +6,7 @@ import { DataTable, type DataTableColumn } from "../components/DataTable";
 import type { Product } from "../data/delpiApi";
 import { Eye } from "lucide-react";
 import { useAppAlert } from "../components/ConfirmDialogProvider";
+import { Button } from "../ui-kit";
 
 export const ProductsPage: React.FC = () => {
   const showAlert = useAppAlert();
@@ -74,17 +75,18 @@ export const ProductsPage: React.FC = () => {
           setPage(1);
         }}
         actions={(row) => (
-          <button
-            className="datatable-action-btn"
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`Ver detalhes de ${row.code}`}
             onClick={() =>
               void showAlert({
                 title: row.description,
                 message: `Código ${row.code}`,
               })
             }
-          >
-            <Eye size={16} />
-          </button>
+            icon={<Eye size={16} />}
+          />
         )}
         emptyText="Nenhum produto encontrado."
       />

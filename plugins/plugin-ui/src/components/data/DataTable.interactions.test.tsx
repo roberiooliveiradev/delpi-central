@@ -103,15 +103,239 @@ describe("DataTable grid-preview", () => {
 
     expect(document.querySelectorAll("[data-column-resize-handle]")).toHaveLength(2);
 
-    const headerA = document.querySelector('th[data-column-key="a"]');
-    const headerB = document.querySelector('th[data-column-key="b"]');
+    const headerA = document.querySelector('th[data-column-key="a"]') as HTMLElement;
+    const headerB = document.querySelector('th[data-column-key="b"]') as HTMLElement;
     expect(headerA && headerB).toBeTruthy();
-    fireEvent.dragStart(headerB!, {
-      dataTransfer: { effectAllowed: "move", setData: vi.fn(), getData: () => "b" },
+    headerA.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        width: 100,
+        top: 0,
+        height: 32,
+        right: 100,
+        bottom: 32,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    fireEvent.pointerDown(headerB, { button: 0 });
+    expect(headerB.className).toContain("delpi-ui-table__column--dragging");
+    expect(
+      document.querySelector('td[data-column-key="b"]')?.className,
+    ).toContain("delpi-ui-table__column--dragging");
+
+    fireEvent.dragStart(headerB, {
+      dataTransfer: {
+        effectAllowed: "move",
+        setData: vi.fn(),
+        getData: () => "b",
+        setDragImage: vi.fn(),
+      },
     });
-    fireEvent.drop(headerA!, {
+    expect(document.querySelector(".delpi-ui-table__column-drag-ghost")).toBeNull();
+    fireEvent.dragOver(headerA, {
+      clientX: 20,
+      dataTransfer: { dropEffect: "move" },
+    });
+    fireEvent.drop(headerA, {
+      clientX: 20,
       dataTransfer: { getData: () => "b" },
     });
     expect(onColumnOrderChange).toHaveBeenCalledWith(["b", "a"]);
+  });
+});
+
+describe("DataTable row click × interactive", () => {
+  it("interactive padrão impede onRowClick (stop)", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            interactive: true,
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("rowClick propagate permite onRowClick mesmo com interactive", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            interactive: true,
+            rowClick: "propagate",
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("célula sem interactive dispara onRowClick", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ nome: "Acme" }]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        rowClickRole="button"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "Acme" }));
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renderiza linha de detalhe quando expandedRowKey bate com rowKey", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[
+          { id: "a", nome: "Acme" },
+          { id: "b", nome: "Beta" },
+        ]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        expandedRowKey="a"
+        renderExpandedRow={(row) => <div data-testid="detail">{`detalhe-${row.id}`}</div>}
+      />,
+    );
+
+    expect(screen.getByTestId("detail").textContent).toBe("detalhe-a");
+    expect(document.querySelector(".delpi-ui-table__row--expanded")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-table__detail-row")).toBeTruthy();
+    expect(screen.queryByText("detalhe-b")).toBeNull();
+  });
+
+  it("isRowExpandable=false omite detalhe mesmo com expandedRowKey", () => {
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ id: "a", nome: "Acme" }]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        expandedRowKey="a"
+        isRowExpandable={() => false}
+        renderExpandedRow={() => <div data-testid="detail">x</div>}
+      />,
+    );
+
+    expect(screen.queryByTestId("detail")).toBeNull();
+  });
+
+  it("clique no conteúdo expandido não dispara onRowClick", () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={[
+          {
+            key: "nome",
+            header: "Cliente",
+            render: (row: { id: string; nome: string }) => row.nome,
+          },
+        ]}
+        rows={[{ id: "a", nome: "Acme" }]}
+        rowKey={(row) => row.id}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        onRowClick={onRowClick}
+        expandedRowKey="a"
+        renderExpandedRow={() => <button type="button">Dentro</button>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Dentro" }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+});
+
+describe("DataTable loading → dados (React #310)", () => {
+  it("não quebra ao sair de loading=true para linhas (hooks estáveis)", () => {
+    const columns = [
+      {
+        key: "nome",
+        header: "Nome",
+        render: (row: { nome: string }) => row.nome,
+      },
+    ];
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        loading
+      />,
+    );
+
+    expect(screen.getByText("Carregando")).toBeTruthy();
+
+    expect(() => {
+      rerender(
+        <DataTable
+          columns={columns}
+          rows={[{ nome: "Ata 1" }]}
+          rowKey={(_, index) => String(index)}
+          classNames={dataTableBemClasses("teste")}
+          labels={labels}
+          loading={false}
+        />,
+      );
+    }).not.toThrow();
+
+    expect(screen.getByText("Ata 1")).toBeTruthy();
   });
 });

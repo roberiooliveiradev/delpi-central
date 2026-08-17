@@ -44,8 +44,11 @@ import {
   Monitor,
   RefreshCw,
   Replace,
+  RectangleHorizontal,
+  RectangleVertical,
   RotateCcw,
   RotateCw,
+  Scaling,
   Scissors,
   SendToBack,
   Sparkles,
@@ -70,6 +73,13 @@ import {
 import { resolveContextMenuIconPickerTargetId, sameSelectedIdSet } from "../utils/contextMenuSelectionGuard";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToFill,
+  styleToStrokeFill,
+} from "../utils/delpiFillAdapter";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.contextMenu;
@@ -127,6 +137,7 @@ export function ComunicadoStageContextMenu({
     ungroupSelected,
     regroupSelected,
     alignSelected,
+    sameSizeSelected,
     rotateSelected,
     flipSelectedHorizontal,
     flipSelectedVertical,
@@ -170,7 +181,7 @@ export function ComunicadoStageContextMenu({
     return [targetBlockId];
   }, [selectedIds, sessionSelectedIds, targetBlockId]);
 
-  /** Cancela tap-deselect armado pelo pointerdown; não força seleção no right-click. */
+  /** Cancela tap-deselect armado pelo pointerdown; a seleção live já veio do apply no open. */
   useEffect(() => {
     if (!open) return;
     cancelPendingTapDeselect();
@@ -375,7 +386,10 @@ export function ComunicadoStageContextMenu({
                 label={C.fill}
                 ariaLabel={C.fill}
                 value={fillValue}
-                onChange={(color) => updateSelectedStyle({ fill: color })}
+                fill={styleToFill(menuSelected.style)}
+                onChange={(color) => updateSelectedStyle(fillToFillStylePatch({ kind: "solid", color }))}
+                onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="fill"
               />
@@ -384,7 +398,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeFill}
                 label={C.fill}
                 value={fillValue}
-                onChange={(color) => updateSelectedStyle({ backgroundColor: color })}
+                fill={styleToFill(menuSelected.style)}
+                onChange={(color) => updateSelectedStyle(fillToFillStylePatch({ kind: "solid", color }))}
+                onFillChange={(next) => updateSelectedStyle(fillToFillStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="fill"
               />
@@ -394,7 +411,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
-                onChange={(color) => updateSelectedStyle({ stroke: color })}
+                fill={styleToStrokeFill(menuSelected.style)}
+                onChange={(color) => updateSelectedStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
+                onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="outline"
               />
@@ -405,7 +425,10 @@ export function ComunicadoStageContextMenu({
                 hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
-                onChange={(color) => updateSelectedStyle({ borderColor: color })}
+                fill={styleToStrokeFill(menuSelected.style)}
+                onChange={(color) => updateSelectedStyle(fillToStrokeStylePatch({ kind: "solid", color }))}
+                onFillChange={(next) => updateSelectedStyle(fillToStrokeStylePatch(next))}
+                allowedFillKinds={TV_ALLOWED_FILL_KINDS}
                 inline
                 variant="outline"
               />
@@ -687,6 +710,27 @@ export function ComunicadoStageContextMenu({
               icon={AlignVerticalJustifyEnd}
               disabled={!enabled("align-slide-bottom")}
               onSelect={() => runAlign("align-slide-bottom")}
+            />
+          </ContextMenuSub>
+
+          <ContextMenuSub label={C.sameSize} icon={Scaling}>
+            <ContextMenuItem
+              label={C.sameSizeBoth}
+              icon={Scaling}
+              disabled={!enabled("same-size-both")}
+              onSelect={() => run(() => sameSizeSelected("both"))}
+            />
+            <ContextMenuItem
+              label={C.sameSizeWidth}
+              icon={RectangleHorizontal}
+              disabled={!enabled("same-size-width")}
+              onSelect={() => run(() => sameSizeSelected("width"))}
+            />
+            <ContextMenuItem
+              label={C.sameSizeHeight}
+              icon={RectangleVertical}
+              disabled={!enabled("same-size-height")}
+              onSelect={() => run(() => sameSizeSelected("height"))}
             />
           </ContextMenuSub>
 

@@ -1,0 +1,166 @@
+/**
+ * CatalogSearchBar — busca de caminhos/funcionalidades (controlled).
+ */
+
+.delpi-ui-catalog-search-bar {
+  position: relative;
+  width: 100%;
+}
+
+.delpi-ui-catalog-search-bar__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  min-height: 44px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 4px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+.delpi-ui-catalog-search-bar__field:focus-within {
+  /* Só a borda do container — sem box-shadow/ring (evita “duas linhas” / outline no input). */
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  box-shadow: none;
+}
+
+.delpi-ui-catalog-search-bar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+  flex-shrink: 0;
+}
+
+.delpi-ui-catalog-search-bar__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 42px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.delpi-ui-catalog-search-bar__input::-webkit-search-decoration,
+.delpi-ui-catalog-search-bar__input::-webkit-search-cancel-button,
+.delpi-ui-catalog-search-bar__input::-webkit-search-results-button,
+.delpi-ui-catalog-search-bar__input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Especificidade > host MFE (ex.: `.dashboard-* input:focus-visible`). */
+.delpi-ui-catalog-search-bar .delpi-ui-catalog-search-bar__input:focus,
+.delpi-ui-catalog-search-bar .delpi-ui-catalog-search-bar__input:focus-visible,
+.delpi-ui-catalog-search-bar__input:focus,
+.delpi-ui-catalog-search-bar__input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.delpi-ui-catalog-search-bar__input::placeholder {
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-catalog-search-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+  cursor: pointer;
+}
+
+.delpi-ui-catalog-search-bar__clear:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+}
+
+.delpi-ui-catalog-search-bar__clear:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 28%, transparent)
+  );
+}
+
+.delpi-ui-catalog-search-bar__listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 4px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+}
+
+.delpi-ui-catalog-search-bar__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-catalog-search-bar__option--active,
+.delpi-ui-catalog-search-bar__option:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+}
+
+.delpi-ui-catalog-search-bar__option-group {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}
+
+.delpi-ui-catalog-search-bar__empty {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-muted, var(--muted, #666666));
+}

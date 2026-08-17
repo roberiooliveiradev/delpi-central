@@ -1,0 +1,30 @@
+/* portal/src/ui-kit/form/FormGrid.css */
+
+.portal-ui-form-grid {
+  display: grid;
+  gap: 14px 16px;
+  width: 100%;
+}
+
+.portal-ui-form-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.portal-ui-form-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.portal-ui-form-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.portal-ui-form-grid__full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .portal-ui-form-grid--2,
+  .portal-ui-form-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}

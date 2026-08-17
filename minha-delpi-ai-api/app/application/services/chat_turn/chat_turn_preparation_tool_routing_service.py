@@ -65,6 +65,29 @@ class ChatTurnPreparationToolRoutingService:
         analysis_mode: bool,
         text_task_pure: bool,
     ) -> ChatTurnPreparationOperationalGuards:
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        host_context = (
+            workspace.get("tvDashboardHostContext")
+            or workspace.get("hostContext")
+        )
+        if ChatHostSurfaceContextService.is_tv_mutation_turn(
+            message,
+            host_context if isinstance(host_context, dict) else None,
+            workspace_context=workspace,
+        ):
+            # O surface TV é dono da mutação. Não deixar heurísticas operacionais
+            # (ex.: OEE/KPI → missing_params) bloquearem o suggest-ops do BFF.
+            return ChatTurnPreparationOperationalGuards(
+                missing_product_code_answer=None,
+                ambiguous_period_answer=None,
+                missing_date_answer=None,
+                common_chat_operational_answer=None,
+            )
+
         if canvas_action or pre_capability_answer or analysis_mode or text_task_pure:
             return ChatTurnPreparationOperationalGuards(
                 missing_product_code_answer=None,
@@ -232,9 +255,19 @@ class ChatTurnPreparationToolRoutingService:
         if not ChatWorkspaceAgentActivationService.operational_tools_enabled(
             workspace_context
         ):
+            from app.domain.services.chat_host_surface_context_service import (
+                ChatHostSurfaceContextService,
+            )
+
+            # Chat comum bloqueia OpenAPI/agentic; exceções de plataforma:
+            # anexos, web_search e copiloto de surface embutido (TV Dashboard).
             skip_tools_for_inactive_agent = not (
                 request_attachment_ids
                 or ChatWebSearchIntentService.matches(message)
+                or ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+                    workspace,
+                    message=message,
+                )
             )
 
         from app.domain.services.chat_project_sources_intent_service import (
@@ -521,6 +554,8 @@ class ChatTurnPreparationToolRoutingService:
                 previous_messages=history_source,
                 max_external_action_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
+                # Workspace completo (skills + hostContext TV) — não só agent.
+                agent_context=workspace_context,
                 working_memory=workspace_context.get("workingMemory"),
             )
             tool_context = maybe_extend_tool_context(

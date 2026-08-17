@@ -69,11 +69,6 @@
   cursor: pointer;
 }
 
-.notification-preferences__item input {
-  margin-top: 3px;
-  accent-color: var(--primary);
-}
-
 .notification-preferences__label {
   display: block;
   font-size: 13px;
@@ -96,38 +91,10 @@
   gap: 10px;
 }
 
-.notification-preferences__save {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.notification-preferences__save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .notification-preferences__saved {
   font-size: 12px;
   font-weight: 600;
   color: #047857;
-}
-
-.notification-preferences__error {
-  margin: 0;
-  font-size: 12px;
-  color: #b91c1c;
-}
-
-.notification-preferences__loading {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-muted);
 }
 
 /* Variante na aba dedicada da página /notifications */

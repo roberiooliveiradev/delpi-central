@@ -14,3 +14,10 @@ export {
   type DeckSectionContextMenuAction,
   type DeckSectionContextMenuProps,
 } from "./DeckSectionContextMenu";
+export {
+  TransitionGallery,
+  TransitionGalleryPopover,
+  type TransitionGalleryOption,
+  type TransitionGalleryPopoverProps,
+  type TransitionGalleryProps,
+} from "./TransitionGallery";

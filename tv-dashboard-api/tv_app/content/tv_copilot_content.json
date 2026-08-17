@@ -1,0 +1,1647 @@
+{
+  "catalogVersion": "2026.08.05.1",
+  "sideEffectHintCatalog": [
+    "refreshFilmstrip",
+    "replaceNativeConfig",
+    "removeBlockIds"
+  ],
+  "colorVocabulary": {
+    "azul": "#2563eb",
+    "azul escuro": "#1e3a8a",
+    "azul claro": "#93c5fd",
+    "vermelho": "#dc2626",
+    "verde": "#16a34a",
+    "amarelo": "#eab308",
+    "laranja": "#ea580c",
+    "roxo": "#7c3aed",
+    "rosa": "#db2777",
+    "preto": "#0f172a",
+    "branco": "#ffffff",
+    "cinza": "#64748b",
+    "cinza claro": "#e2e8f0",
+    "cinza escuro": "#334155"
+  },
+  "nlRouteHints": {
+    "oee": "get_overall_equipment_effectiveness_pct",
+    "overall equipment effectiveness": "get_overall_equipment_effectiveness_pct",
+    "eficiencia global": "get_overall_equipment_effectiveness_pct",
+    "eficiência global": "get_overall_equipment_effectiveness_pct",
+    "otd": "get_on_time_delivery_pct",
+    "on time delivery": "get_on_time_delivery_pct",
+    "entrega no prazo": "get_on_time_delivery_pct",
+    "ppm externo": "get_ppm_external_summary",
+    "ppm interno": "get_ppm_internal_summary",
+    "ppm": "get_ppm_external_summary",
+    "estoque": "get_supplies_stock_value",
+    "valor de estoque": "get_supplies_stock_value",
+    "taxa de fechamento": "get_sales_conversion_rate",
+    "fechamento": "get_sales_conversion_rate"
+  },
+  "paramHints": {
+    "branch": {
+      "paramKey": "branch",
+      "patterns": [
+        {
+          "markers": [
+            "filial 01",
+            "filial sc",
+            "branch 01",
+            "filial para 01",
+            "para 01"
+          ],
+          "value": "01"
+        },
+        {
+          "markers": [
+            "filial 02",
+            "filial es",
+            "branch 02",
+            "filial para 02",
+            "para 02"
+          ],
+          "value": "02"
+        },
+        {
+          "markers": [
+            "filial consolidado",
+            "todas as filiais",
+            "consolidado"
+          ],
+          "value": ""
+        }
+      ]
+    }
+  },
+  "transformStepHints": [
+    {
+      "markers": [
+        "top 10",
+        "primeiras 10",
+        "manter 10",
+        "keep 10"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 10,
+        "from": "top"
+      }
+    },
+    {
+      "markers": [
+        "top 5",
+        "primeiras 5",
+        "manter 5",
+        "keep 5"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 5,
+        "from": "top"
+      }
+    },
+    {
+      "markers": [
+        "top 20",
+        "primeiras 20",
+        "manter 20"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 20,
+        "from": "top"
+      }
+    },
+    {
+      "markers": [
+        "últimas 10",
+        "ultimas 10",
+        "bottom 10"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 10,
+        "from": "bottom"
+      }
+    }
+  ],
+  "mutationActionTerms": [
+    "escreva",
+    "escrever",
+    "apague",
+    "apagar",
+    "remova",
+    "remover",
+    "exclua",
+    "excluir",
+    "altere",
+    "alterar",
+    "atualize",
+    "atualizar",
+    "ligue",
+    "ligar",
+    "vincule",
+    "vincular",
+    "defina",
+    "definir",
+    "renomeie",
+    "renomear",
+    "mova",
+    "mover",
+    "reordene",
+    "reordenar",
+    "coloque",
+    "colocar",
+    "insira",
+    "inserir",
+    "adicione",
+    "adicionar",
+    "mude",
+    "mudar",
+    "troque",
+    "trocar"
+  ],
+  "createActionTerms": [
+    "crie",
+    "criar",
+    "adicione",
+    "adicionar",
+    "novo",
+    "nova",
+    "gere",
+    "gerar",
+    "insira",
+    "inserir"
+  ],
+  "destructiveActionTerms": [
+    "apague",
+    "apagar",
+    "apaga",
+    "remova",
+    "remover",
+    "remove",
+    "exclua",
+    "excluir",
+    "exclui",
+    "delete",
+    "deletar",
+    "tire",
+    "tirar",
+    "elimine",
+    "eliminar"
+  ],
+  "messages": {
+    "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
+    "unknownOp": "Operação não suportada: {op}.",
+    "missingTarget": "Informe playlistId e slideId no target (exceto create_playlist).",
+    "missingPlaylist": "Informe playlistId no target.",
+    "missingSlide": "Informe slideId no target.",
+    "slideNotFound": "Slide não encontrado na programação.",
+    "playlistNotFound": "Programação não encontrada.",
+    "sectionNotFound": "Seção não encontrada na programação.",
+    "sectionProtected": "A seção principal não pode ser excluída.",
+    "operationNotInCatalog": "operationId «{operationId}» não está no catálogo TV allowlisted.",
+    "previewOk": "Prévia do patch gerada ({ops} operação(ões)).",
+    "applyOk": "Patch aplicado ({ops} operação(ões)).",
+    "patchUnexpectedError": "Falha interna ao aplicar o patch na programação (operações: {ops}). A alteração não foi salva.",
+    "noOps": "Nenhuma operação no patch.",
+    "blockNotFound": "Bloco «{blockId}» não encontrado no slide.",
+    "blockIdRequired": "delete_block exige blockId.",
+    "bindNeedIds": "bind_visual exige visualId e dataSourceId.",
+    "presetRequired": "add_slide_from_preset exige presetKey.",
+    "playlistNameRequired": "create_playlist exige name.",
+    "patchRequired": "patch_native_config exige um objeto patch.",
+    "patchKeysInvalid": "patch_native_config só aceita: background, dataFilters, speakerNotes, groupTransforms.",
+    "reorderItemsRequired": "reorder_slides exige items com id e sortOrder.",
+    "sectionNameRequired": "upsert_section exige name.",
+    "sectionIdRequired": "delete_section exige sectionId.",
+    "opMissingField": "Operação «{op}» exige o campo «{field}».",
+    "createPlaylistOk": "Programação «{name}» criada.",
+    "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
+    "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
+    "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
+    "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
+    "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «adicione um modelo de dados de OEE».",
+    "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
+    "suggestNeedColor": "Indique a cor do fundo (ex.: azul, #2563eb).",
+    "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide.",
+    "suggestNeedRouteSelection": "Encontrei {count} fonte(s) próximas. Selecione quais adicionar ao slide.",
+    "suggestNeedSelection": "Selecione o bloco no editor (ou informe o alvo) e repita o pedido.",
+    "suggestNeedPreset": "Informe o presetKey do catálogo de slides (ex.: production_oee_overview).",
+    "suggestNeedSection": "Informe ou selecione a seção alvo.",
+    "suggestNeedDataSource": "Selecione a fonte de dados no slide ou informe o dataSourceId.",
+    "suggestNeedQuotedTitle": "Informe o novo nome entre aspas (ex.: renomeie o slide \"Manhã\").",
+    "suggestNeedReorder": "Para reordenar, descreva a ordem desejada ou use o filmstrip; o Copiloto precisa dos ids dos slides.",
+    "suggestNeedTransformSteps": "Descreva um transform tipado suportado (ex.: «manter top 10») — o Copiloto não gera M/SQL livre.",
+    "suggestNeedBranchParam": "Informe a filial (ex.: filial 01, filial 02 ou consolidado).",
+    "suggestNeedFieldLabels": "Informe o campo e o novo rótulo (ex.: renomeie o campo \"value\" para \"OEE\").",
+    "suggestIncompleteGeneric": "Entendi o tipo de pedido, mas faltam dados para montar a operação. Reformule com mais detalhe (texto, cor, indicador, seleção).",
+    "suggestNeedSlide": "Abra ou crie um slide na programação e repita o pedido. Sem slide aberto não consigo alterar o canvas.",
+    "suggestNeedPlaylist": "Abra uma programação no editor e repita o pedido.",
+    "suggestNeedSlideOrCreate": "Não há slide aberto. Crie um slide («crie um slide») ou selecione um na coluna à esquerda e repita.",
+    "suggestLocalDraftConflict": "Há alterações locais não sincronizadas neste slide. Salve ou descarte o rascunho no editor antes de aplicar o patch do Copiloto.",
+    "planReadyDirect": "Plano pronto ({count} op(s)) — execução direta.",
+    "planReadyConfirm": "Plano pronto ({count} op(s)) — exclusão destrutiva exige confirmação.",
+    "applyDirectOk": "Alteração aplicada na programação ({ops} operação(ões)).",
+    "applyConfirmRequired": "Esta ação remove dados da programação. Confirme com «pode aplicar» ou «confirmo».",
+    "planReady": "Plano CRUD pronto ({ops} comando(s)) — execução nas rotas da programação."
+  },
+  "placeholderClarifications": {
+    "backgroundColor": "suggestNeedColor",
+    "operationId": "suggestNeedOperationId",
+    "selectedBlockId": "suggestNeedSelection",
+    "selectedVisualId": "suggestNeedSelection",
+    "presetKey": "suggestNeedPreset",
+    "sectionId": "suggestNeedSection",
+    "dataSourceId": "suggestNeedDataSource",
+    "quoted": "suggestNeedQuotedTitle",
+    "transformStepsJson": "suggestNeedTransformSteps",
+    "branchParam": "suggestNeedBranchParam",
+    "fieldLabelsJson": "suggestNeedFieldLabels",
+    "slideId": "suggestNeedSlideOrCreate",
+    "playlistId": "suggestNeedPlaylist"
+  },
+  "opFieldClarifications": {
+    "delete_block.blockId": "suggestNeedSelection",
+    "add_slide_from_preset.presetKey": "suggestNeedPreset",
+    "upsert_data_source.operationId": "suggestNeedOperationId",
+    "upsert_data_source.blockId": "suggestNeedDataSource",
+    "bind_visual.visualId": "suggestNeedSelection",
+    "bind_visual.dataSourceId": "suggestNeedDataSource",
+    "reorder_slides.items": "suggestNeedReorder",
+    "patch_native_config.background": "suggestNeedColor",
+    "update_slide.title": "suggestNeedQuotedTitle",
+    "set_data_transform.steps": "suggestNeedTransformSteps",
+    "set_data_transform.blockId": "suggestNeedDataSource"
+  },
+  "recognition": {
+    "fuzzyThreshold": 0.8,
+    "minFuzzyTokenLength": 4,
+    "actionTermSets": [
+      "create",
+      "mutation"
+    ],
+    "extraActionTerms": [
+      "exporte",
+      "exportar",
+      "duplique",
+      "duplicar",
+      "clone",
+      "clonar",
+      "publique",
+      "publicar",
+      "salve",
+      "salvar",
+      "copie",
+      "copiar",
+      "imprima",
+      "imprimir",
+      "baixe",
+      "baixar",
+      "compartilhe",
+      "compartilhar",
+      "agende",
+      "agendar",
+      "traduza",
+      "traduzir"
+    ],
+    "editorNouns": [
+      "slide",
+      "slides",
+      "tela",
+      "telas",
+      "programação",
+      "programacao",
+      "playlist",
+      "seção",
+      "secao",
+      "bloco",
+      "blocos",
+      "elemento",
+      "kpi",
+      "indicador",
+      "gráfico",
+      "grafico",
+      "chart",
+      "tabela",
+      "table",
+      "texto",
+      "título",
+      "titulo",
+      "fonte de dados",
+      "modelo de dados",
+      "fundo",
+      "background",
+      "cor",
+      "campo",
+      "filial",
+      "preset",
+      "duração",
+      "duracao"
+    ]
+  },
+  "settings": {
+    "maxOpsPerPatch": 40,
+    "maxSuggestOps": 5,
+    "fingerprintMaxBlocks": 12,
+    "telemetryWindow": 500,
+    "defaultSlideTitle": "Slide personalizado",
+    "defaultPlaylistName": "Nova programação",
+    "defaultSectionName": "Nova seção",
+    "defaultTextBlockContent": "",
+    "routeCandidateLimit": 5,
+    "routeCandidateMinScore": 4.0,
+    "routeCandidateScoreGap": 2.5,
+    "routeEvidenceMaxCandidates": 3,
+    "routeEvidenceMaxRows": 5
+  },
+  "blockDefaults": {
+    "default": {
+      "frame": {
+        "x": 20,
+        "y": 30,
+        "w": 60,
+        "h": 30
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "text": {
+      "frame": {
+        "x": 5,
+        "y": 34,
+        "w": 90,
+        "h": 14
+      },
+      "style": {
+        "fontSize": 28,
+        "color": "auto",
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "textAlign": "center",
+        "verticalAlign": "top",
+        "lineHeight": 1.15,
+        "fontWeight": "normal",
+        "fill": "transparent",
+        "backgroundColor": "transparent",
+        "zIndex": 2
+      }
+    },
+    "heading": {
+      "frame": {
+        "x": 5,
+        "y": 12,
+        "w": 90,
+        "h": 18
+      },
+      "style": {
+        "fontSize": 56,
+        "color": "auto",
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.15,
+        "fontWeight": "bold",
+        "fill": "transparent",
+        "backgroundColor": "transparent",
+        "zIndex": 2
+      }
+    },
+    "shape": {
+      "frame": {
+        "x": 35,
+        "y": 35,
+        "w": 30,
+        "h": 30
+      },
+      "style": {
+        "zIndex": 1
+      }
+    },
+    "image": {
+      "frame": {
+        "x": 10,
+        "y": 22,
+        "w": 80,
+        "h": 56
+      },
+      "style": {
+        "objectFit": "contain",
+        "zIndex": 1
+      }
+    },
+    "video": {
+      "frame": {
+        "x": 5,
+        "y": 15,
+        "w": 90,
+        "h": 70
+      },
+      "style": {
+        "objectFit": "contain",
+        "zIndex": 1
+      }
+    },
+    "data_source": {
+      "frame": {
+        "x": 8,
+        "y": 30,
+        "w": 18,
+        "h": 18
+      },
+      "style": {
+        "zIndex": 1
+      }
+    },
+    "data_kpi": {
+      "frame": {
+        "x": 5,
+        "y": 28,
+        "w": 28,
+        "h": 22
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "kpi_view": {
+      "frame": {
+        "x": 5,
+        "y": 28,
+        "w": 28,
+        "h": 22
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "data_chart": {
+      "frame": {
+        "x": 10,
+        "y": 28,
+        "w": 80,
+        "h": 45
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "chart_view": {
+      "frame": {
+        "x": 10,
+        "y": 28,
+        "w": 80,
+        "h": 45
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "data_table": {
+      "frame": {
+        "x": 5,
+        "y": 55,
+        "w": 90,
+        "h": 35
+      },
+      "style": {
+        "zIndex": 2
+      }
+    },
+    "table_view": {
+      "frame": {
+        "x": 5,
+        "y": 55,
+        "w": 90,
+        "h": 35
+      },
+      "style": {
+        "zIndex": 2
+      }
+    }
+  },
+  "operations": {
+    "upsert_data_source": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "operationId"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_data_source"
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "label": {
+            "type": "string"
+          },
+          "displayMode": {
+            "type": "string"
+          },
+          "fieldLabels": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "set_data_transform": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId",
+          "steps"
+        ],
+        "properties": {
+          "op": {
+            "const": "set_data_transform"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "upsert_block": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "block"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_block"
+          },
+          "block": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "delete_block": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "replaceNativeConfig",
+        "removeBlockIds"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_block"
+          },
+          "blockId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bind_visual": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "visualId",
+          "dataSourceId"
+        ],
+        "properties": {
+          "op": {
+            "const": "bind_visual"
+          },
+          "visualId": {
+            "type": "string"
+          },
+          "dataSourceId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "patch_native_config": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "patch"
+        ],
+        "properties": {
+          "op": {
+            "const": "patch_native_config"
+          },
+          "patch": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "add_slide_from_preset": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "presetKey"
+        ],
+        "properties": {
+          "op": {
+            "const": "add_slide_from_preset"
+          },
+          "presetKey": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "add_blank_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "add_blank_slide"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "update_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "update_slide"
+          },
+          "title": {
+            "type": "string"
+          },
+          "durationSec": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "reorder_slides": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "items"
+        ],
+        "properties": {
+          "op": {
+            "const": "reorder_slides"
+          },
+          "items": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "delete_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_slide"
+          }
+        }
+      }
+    },
+    "upsert_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "name"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_section"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sectionId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "delete_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "sectionId"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_section"
+          },
+          "sectionId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "move_slide_to_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "sectionId"
+        ],
+        "properties": {
+          "op": {
+            "const": "move_slide_to_section"
+          },
+          "sectionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "create_playlist": {
+      "requiresPlaylist": false,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "name"
+        ],
+        "properties": {
+          "op": {
+            "const": "create_playlist"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "seedPresetKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "capabilities": [
+    {
+      "key": "add_kpi_from_route",
+      "op": "upsert_data_source",
+      "isComposite": true,
+      "whenToUse": "Adicionar um KPI no slide a partir de uma rota allowlisted (fonte + kpi_view + bind).",
+      "contentMarkers": [
+        "kpi",
+        "indicador",
+        "adicione um kpi",
+        "adicionar um kpi",
+        "adicionar kpi",
+        "crie um kpi",
+        "criar um kpi"
+      ],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table",
+        "modelo de dados",
+        "fonte de dados"
+      ],
+      "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "kpi",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "kpi_view",
+            "frame": {
+              "x": 10,
+              "y": 28,
+              "w": 28,
+              "h": 22
+            },
+            "style": {
+              "zIndex": 2
+            }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ]
+    },
+    {
+      "key": "add_chart_from_route",
+      "op": "upsert_data_source",
+      "isComposite": true,
+      "whenToUse": "Adicionar um gráfico no slide a partir de uma rota allowlisted (fonte + chart_view + bind).",
+      "contentMarkers": [
+        "gráfico de",
+        "grafico de",
+        "chart de",
+        "adicione um gráfico de",
+        "adicionar gráfico de",
+        "crie um gráfico de",
+        "gráfico do",
+        "grafico do"
+      ],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "tabela",
+        "table",
+        "modelo de dados",
+        "fonte de dados",
+        "script m"
+      ],
+      "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "chart",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "chart_view",
+            "frame": {
+              "x": 10,
+              "y": 28,
+              "w": 80,
+              "h": 45
+            },
+            "style": {
+              "zIndex": 2
+            }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ]
+    },
+    {
+      "key": "add_table_from_route",
+      "op": "upsert_data_source",
+      "isComposite": true,
+      "whenToUse": "Adicionar uma tabela no slide a partir de uma rota allowlisted (fonte + table_view + bind).",
+      "contentMarkers": [
+        "tabela de",
+        "table de",
+        "adicione uma tabela de",
+        "adicionar tabela de",
+        "crie uma tabela de",
+        "tabela do"
+      ],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "chart",
+        "modelo de dados",
+        "fonte de dados",
+        "script m"
+      ],
+      "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "table",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "table_view",
+            "frame": {
+              "x": 5,
+              "y": 28,
+              "w": 90,
+              "h": 45
+            },
+            "style": {
+              "zIndex": 2
+            }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ]
+    },
+    {
+      "key": "create_data_source",
+      "op": "upsert_data_source",
+      "whenToUse": "Criar um modelo/fonte de dados (data_source) no slide a partir de uma rota allowlisted, sem visual.",
+      "contentMarkers": [
+        "modelo de dados",
+        "fonte de dados",
+        "adicione a fonte",
+        "adicionar fonte",
+        "crie uma fonte",
+        "criar fonte",
+        "adicione um modelo",
+        "criar modelo de dados",
+        "crie um modelo de dados"
+      ],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table",
+        "script m",
+        "ligar",
+        "vincular"
+      ],
+      "actionTermSet": "create",
+      "requiresFilledPlaceholders": [
+        "operationId"
+      ],
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplate": {
+        "op": "upsert_data_source",
+        "operationId": "{{operationId}}",
+        "params": {},
+        "blockId": "{{newDataSourceId}}",
+        "label": "{{routeLabel}}"
+      }
+    },
+    {
+      "key": "update_data_source",
+      "op": "upsert_data_source",
+      "whenToUse": "Atualizar a fonte/modelo de dados selecionado (rota, params ou rótulos).",
+      "contentMarkers": [
+        "troque a fonte",
+        "trocar a fonte",
+        "mude a fonte",
+        "mudar a fonte",
+        "atualize a fonte",
+        "atualizar a fonte",
+        "mude a filial",
+        "mudar a filial",
+        "filial 01",
+        "filial 02",
+        "renomeie o campo",
+        "renomear o campo",
+        "renomeie campo",
+        "field label"
+      ],
+      "excludeMarkers": [
+        "adicione um kpi",
+        "adicione um gráfico",
+        "adicione uma tabela",
+        "crie um slide"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "dataSourceId",
+        "operationId"
+      ],
+      "clarificationMessageKey": "suggestNeedDataSource",
+      "payloadTemplate": {
+        "op": "upsert_data_source",
+        "operationId": "{{operationId}}",
+        "params": {},
+        "blockId": "{{dataSourceId}}",
+        "label": "{{routeLabel}}"
+      }
+    },
+    {
+      "key": "set_data_transform",
+      "op": "set_data_transform",
+      "whenToUse": "Definir ou substituir o transform tipado de uma fonte de dados (steps allowlisted).",
+      "contentMarkers": [
+        "transform",
+        "filtrar",
+        "passos",
+        "steps",
+        "top 10",
+        "top 5",
+        "top 20",
+        "manter top",
+        "primeiras 10",
+        "primeiras 5"
+      ],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "sql"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "dataSourceId",
+        "transformStepsJson"
+      ],
+      "clarificationMessageKey": "suggestNeedTransformSteps",
+      "payloadTemplate": {
+        "op": "set_data_transform",
+        "blockId": "{{dataSourceId}}",
+        "steps": []
+      }
+    },
+    {
+      "key": "upsert_block",
+      "op": "upsert_block",
+      "whenToUse": "Criar ou atualizar um bloco visual (texto, título, forma, ícone, mídia com assetId, KPI, gráfico, tabela, filtro).",
+      "contentMarkers": [
+        "escreva um texto",
+        "escrever um texto",
+        "adicione um texto",
+        "adicionar um texto",
+        "adicionar texto",
+        "adicione texto",
+        "inserir texto",
+        "insira um texto",
+        "caixa de texto",
+        "bloco de texto",
+        "texto no slide",
+        "criar texto",
+        "crie um texto",
+        "título",
+        "titulo"
+      ],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table"
+      ],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": {
+          "id": "{{newTextBlockId}}",
+          "type": "text",
+          "content": "{{textContent}}"
+        }
+      }
+    },
+    {
+      "key": "add_chart_view",
+      "op": "upsert_block",
+      "whenToUse": "Criar um bloco de gráfico (chart_view) no slide.",
+      "contentMarkers": [
+        "gráfico",
+        "grafico",
+        "chart",
+        "adicione um gráfico",
+        "adicionar gráfico",
+        "crie um gráfico"
+      ],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "tabela",
+        "texto",
+        "modelo de dados",
+        "fonte de dados",
+        "gráfico de",
+        "grafico de"
+      ],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": {
+          "id": "{{newVisualId}}",
+          "type": "chart_view",
+          "frame": {
+            "x": 10,
+            "y": 28,
+            "w": 80,
+            "h": 45
+          },
+          "style": {
+            "zIndex": 2
+          }
+        }
+      }
+    },
+    {
+      "key": "add_table_view",
+      "op": "upsert_block",
+      "whenToUse": "Criar um bloco de tabela (table_view) no slide.",
+      "contentMarkers": [
+        "tabela",
+        "table",
+        "adicione uma tabela",
+        "adicionar tabela",
+        "crie uma tabela"
+      ],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "texto",
+        "modelo de dados",
+        "fonte de dados",
+        "tabela de"
+      ],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": {
+          "id": "{{newVisualId}}",
+          "type": "table_view",
+          "frame": {
+            "x": 5,
+            "y": 28,
+            "w": 90,
+            "h": 45
+          },
+          "style": {
+            "zIndex": 2
+          }
+        }
+      }
+    },
+    {
+      "key": "delete_block",
+      "op": "delete_block",
+      "whenToUse": "Remover um bloco do slide pelo blockId (ou seleção do host).",
+      "contentMarkers": [
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "bloco de texto",
+        "texto",
+        "título",
+        "titulo",
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "imagem",
+        "forma",
+        "ícone",
+        "icone",
+        "selecionado",
+        "selecionada",
+        "seleção",
+        "selecao",
+        "delete block"
+      ],
+      "excludeMarkers": [
+        "slide",
+        "tela",
+        "seção",
+        "secao",
+        "programação",
+        "programacao"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedBlockId"
+      ],
+      "clarificationMessageKey": "suggestNeedSelection",
+      "payloadTemplate": {
+        "op": "delete_block",
+        "blockId": "{{selectedBlockId}}"
+      }
+    },
+    {
+      "key": "bind_visual",
+      "op": "bind_visual",
+      "whenToUse": "Ligar um visual (KPI/gráfico/tabela) a uma fonte data_source; preenche projections mínimas se ausentes.",
+      "contentMarkers": [
+        "ligar",
+        "vincular",
+        "bind",
+        "fonte do kpi",
+        "ligue o",
+        "vincule",
+        "ligue à fonte",
+        "ligue a fonte",
+        "use esta fonte",
+        "usar esta fonte"
+      ],
+      "excludeMarkers": [
+        "adicione um kpi",
+        "adicionar kpi",
+        "crie um kpi",
+        "modelo de dados"
+      ],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "selectedVisualId",
+        "dataSourceId"
+      ],
+      "clarificationMessageKey": "suggestNeedDataSource",
+      "payloadTemplate": {
+        "op": "bind_visual",
+        "visualId": "{{selectedVisualId}}",
+        "dataSourceId": "{{dataSourceId}}"
+      }
+    },
+    {
+      "key": "patch_native_config",
+      "op": "patch_native_config",
+      "whenToUse": "Alterar fundo, dataFilters, speakerNotes ou groupTransforms do slide (whitelist).",
+      "contentMarkers": [
+        "fundo",
+        "background",
+        "cor do fundo",
+        "cor de fundo",
+        "mude a cor",
+        "mudar a cor",
+        "notas",
+        "filtros do slide"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "backgroundColor"
+      ],
+      "payloadTemplate": {
+        "op": "patch_native_config",
+        "patch": {
+          "background": {
+            "type": "color",
+            "value": "{{backgroundColor}}"
+          }
+        }
+      }
+    },
+    {
+      "key": "add_slide_from_preset",
+      "op": "add_slide_from_preset",
+      "whenToUse": "Adicionar um slide a partir de um preset do catálogo TV.",
+      "contentMarkers": [
+        "preset",
+        "importar tela",
+        "catálogo de slides",
+        "catalogo de slides",
+        "slide do catálogo",
+        "a partir do preset"
+      ],
+      "excludeMarkers": [
+        "slide em branco",
+        "tela vazia",
+        "blank"
+      ],
+      "actionTermSet": "create",
+      "requiresFilledPlaceholders": [
+        "presetKey"
+      ],
+      "clarificationMessageKey": "suggestNeedPreset",
+      "payloadTemplate": {
+        "op": "add_slide_from_preset",
+        "presetKey": "{{presetKey}}"
+      }
+    },
+    {
+      "key": "add_blank_slide",
+      "op": "add_blank_slide",
+      "whenToUse": "Criar um slide personalizado em branco (custom_message).",
+      "contentMarkers": [
+        "crie um slide",
+        "criar um slide",
+        "criar slide",
+        "adicione um slide",
+        "adicionar slide",
+        "novo slide",
+        "slide em branco",
+        "tela vazia",
+        "blank",
+        "slide personalizado"
+      ],
+      "excludeMarkers": [
+        "preset",
+        "programação",
+        "playlist"
+      ],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "add_blank_slide",
+        "title": "{{title}}"
+      }
+    },
+    {
+      "key": "update_slide",
+      "op": "update_slide",
+      "whenToUse": "Renomear, alterar duração ou ativar/pausar o slide alvo.",
+      "contentMarkers": [
+        "renomear",
+        "renomeie",
+        "renomeie o slide",
+        "renomear o slide",
+        "duração",
+        "pausar",
+        "ativar slide"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": [
+        "quoted"
+      ],
+      "clarificationMessageKey": "suggestNeedQuotedTitle",
+      "payloadTemplate": {
+        "op": "update_slide",
+        "title": "{{quoted}}"
+      }
+    },
+    {
+      "key": "reorder_slides",
+      "op": "reorder_slides",
+      "whenToUse": "Reordenar slides da programação (filmstrip).",
+      "contentMarkers": [
+        "reordenar",
+        "reordene",
+        "reordenar slides",
+        "reordene os slides",
+        "mover slide",
+        "ordem dos slides"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "clarificationMessageKey": "suggestNeedReorder",
+      "payloadTemplate": {
+        "op": "reorder_slides",
+        "items": []
+      }
+    },
+    {
+      "key": "delete_slide",
+      "op": "delete_slide",
+      "whenToUse": "Excluir o slide indicado em target.slideId.",
+      "contentMarkers": [
+        "slide",
+        "tela",
+        "apagar slide",
+        "apague o slide",
+        "excluir slide",
+        "excluir tela",
+        "remover slide"
+      ],
+      "excludeMarkers": [
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "seção",
+        "secao"
+      ],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "delete_slide"
+      }
+    },
+    {
+      "key": "upsert_section",
+      "op": "upsert_section",
+      "whenToUse": "Criar ou renomear uma seção da programação.",
+      "contentMarkers": [
+        "seção",
+        "grupo de slides",
+        "nova seção"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "upsert_section",
+        "name": "{{name}}"
+      }
+    },
+    {
+      "key": "delete_section",
+      "op": "delete_section",
+      "whenToUse": "Excluir uma seção (não a principal).",
+      "contentMarkers": [
+        "seção",
+        "secao",
+        "apagar seção",
+        "excluir seção"
+      ],
+      "excludeMarkers": [
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "slide",
+        "tela"
+      ],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "delete_section",
+        "sectionId": "{{sectionId}}"
+      }
+    },
+    {
+      "key": "move_slide_to_section",
+      "op": "move_slide_to_section",
+      "whenToUse": "Mover o slide alvo para outra seção (sectionId no op; null remove da seção).",
+      "contentMarkers": [
+        "mover para seção",
+        "trocar seção"
+      ],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "move_slide_to_section",
+        "sectionId": "{{sectionId}}"
+      }
+    },
+    {
+      "key": "create_playlist",
+      "op": "create_playlist",
+      "whenToUse": "Criar uma nova programação; opcionalmente semear presets.",
+      "contentMarkers": [
+        "nova programação",
+        "nova programacao",
+        "criar playlist",
+        "crie uma playlist",
+        "crie uma programação",
+        "crie uma programacao",
+        "criar programação",
+        "criar programacao",
+        "nova playlist"
+      ],
+      "excludeMarkers": [
+        "crie um slide",
+        "criar slide",
+        "slide em branco"
+      ],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "create_playlist",
+        "name": "{{name}}"
+      }
+    }
+  ]
+}

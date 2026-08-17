@@ -1,17 +1,36 @@
 import { ExternalLink, Pencil, Unlink } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+} from "react";
 
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
-import { RichTextToolbar } from "./RichTextToolbar";
+import { RichTextSourceEditor } from "./RichTextSourceEditor";
+import { RichTextToolbar, type RichTextSourceKind } from "./RichTextToolbar";
 import {
   applyRichTextLinkAtRange,
   findRichTextLinkAtSelection,
+  insertRichTextHtmlFragment,
   normalizeRichTextLinkUrl,
   unwrapRichTextLink,
 } from "./richTextCommands";
+import { tryDeleteRichTextAtEmphasisBoundary } from "./richTextDeleteBoundary";
+import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
+import {
+  clipboardHasUsefulHtml,
+  clipboardLooksLikeMarkdown,
+  markdownToRichTextHtml,
+  richTextHtmlToMarkdown,
+} from "./richTextMarkdown";
+import { normalizeRichTextPastedHtml } from "./richTextTable";
 
 export type RichTextEditorMode = "edit" | "preview";
+export type { RichTextSourceKind };
 
 export type RichTextEditorProps = {
   value: string;
@@ -36,6 +55,16 @@ type ActiveLinkState = {
   left: number;
 };
 
+const SOURCE_CHANGE_DEBOUNCE_MS = 150;
+
+function sanitizeEditorHtml(html: string): string {
+  let cleaned = stripDangerousRichTextTags(html);
+  if (/<table[\s>]/i.test(cleaned)) {
+    cleaned = normalizeRichTextPastedHtml(cleaned) || cleaned;
+  }
+  return cleaned || "<p></p>";
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -49,20 +78,37 @@ export function RichTextEditor({
   const rootRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const focusedRef = useRef(false);
+  const sourceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [sourceKind, setSourceKind] = useState<RichTextSourceKind>("visual");
+  const [sourceDraft, setSourceDraft] = useState("");
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const [activeLink, setActiveLink] = useState<ActiveLinkState | null>(null);
+  const sourceMode = sourceKind !== "visual";
   const rootClass = useMemo(
     () => ["delpi-ui-rich-text", className].filter(Boolean).join(" "),
     [className],
   );
 
+  const resolvedHtml = useMemo(() => {
+    const raw = value || "<p></p>";
+    if (!/<table[\s>]/i.test(raw)) return raw;
+    return normalizeRichTextPastedHtml(raw) || raw;
+  }, [value]);
+
   useEffect(() => {
-    if (mode !== "edit" || disabled || !ref.current || focusedRef.current) return;
-    const next = value || "<p></p>";
-    if (ref.current.innerHTML !== next) {
-      ref.current.innerHTML = next;
+    if (mode !== "edit" || disabled || sourceMode || !ref.current || focusedRef.current) {
+      return;
     }
-  }, [mode, disabled, value]);
+    if (ref.current.innerHTML !== resolvedHtml) {
+      ref.current.innerHTML = resolvedHtml;
+    }
+  }, [mode, disabled, sourceMode, resolvedHtml]);
+
+  useEffect(() => {
+    return () => {
+      if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
+    };
+  }, []);
 
   /** Badge segue o link sob o cursor/seleção (posição relativa ao root). */
   const syncActiveLink = useCallback(() => {
@@ -91,7 +137,93 @@ export function RichTextEditor({
     onChange(ref.current?.innerHTML || "");
   }, [onChange]);
 
+  const flushHtmlSourceDraft = useCallback(
+    (draft: string) => {
+      const cleaned = sanitizeEditorHtml(draft);
+      onChange(cleaned);
+      return cleaned;
+    },
+    [onChange],
+  );
+
+  const flushMarkdownSourceDraft = useCallback(
+    (draft: string) => {
+      const cleaned = sanitizeEditorHtml(markdownToRichTextHtml(draft));
+      onChange(cleaned);
+      return cleaned;
+    },
+    [onChange],
+  );
+
+  function handleSourceDraftChange(next: string) {
+    setSourceDraft(next);
+    if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
+    sourceDebounceRef.current = setTimeout(() => {
+      if (sourceKind === "markdown") flushMarkdownSourceDraft(next);
+      else flushHtmlSourceDraft(next);
+    }, SOURCE_CHANGE_DEBOUNCE_MS);
+  }
+
+  function currentEditorHtml(): string {
+    return ref.current?.innerHTML || value || "<p></p>";
+  }
+
+  function applyHtmlToVisual(cleaned: string) {
+    requestAnimationFrame(() => {
+      if (ref.current) {
+        ref.current.innerHTML = cleaned;
+      }
+    });
+  }
+
+  function handleSourceKindChange(next: RichTextSourceKind) {
+    if (disabled || next === sourceKind) return;
+    if (sourceDebounceRef.current) {
+      clearTimeout(sourceDebounceRef.current);
+      sourceDebounceRef.current = null;
+    }
+
+    focusedRef.current = false;
+    setActiveLink(null);
+    setLinkDialog(null);
+
+    if (sourceKind === "html") {
+      const cleaned = flushHtmlSourceDraft(sourceDraft);
+      if (next === "visual") {
+        setSourceKind("visual");
+        applyHtmlToVisual(cleaned);
+        return;
+      }
+      setSourceDraft(richTextHtmlToMarkdown(cleaned));
+      setSourceKind("markdown");
+      return;
+    }
+
+    if (sourceKind === "markdown") {
+      const cleaned = flushMarkdownSourceDraft(sourceDraft);
+      if (next === "visual") {
+        setSourceKind("visual");
+        applyHtmlToVisual(cleaned);
+        return;
+      }
+      setSourceDraft(prettyPrintRichTextHtml(cleaned));
+      setSourceKind("html");
+      return;
+    }
+
+    // visual → html | markdown
+    const current = currentEditorHtml();
+    if (next === "html") {
+      setSourceDraft(prettyPrintRichTextHtml(current));
+      setSourceKind("html");
+      return;
+    }
+    setSourceDraft(richTextHtmlToMarkdown(current));
+    setSourceKind("markdown");
+  }
+
   function handleRequestLink() {
+    if (sourceMode) return;
     const editorEl = ref.current;
     if (!editorEl) return;
     const anchor = findRichTextLinkAtSelection(editorEl);
@@ -131,12 +263,34 @@ export function RichTextEditor({
     emitChange();
   }
 
+  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+    if (sourceMode) return;
+    const html = event.clipboardData?.getData("text/html");
+    const plain = event.clipboardData?.getData("text/plain") ?? "";
+
+    if (html && /<table[\s>]/i.test(html)) {
+      const normalized = normalizeRichTextPastedHtml(html);
+      if (!normalized) return;
+      event.preventDefault();
+      insertRichTextHtmlFragment(ref.current, normalized);
+      emitChange();
+      return;
+    }
+
+    if (!clipboardHasUsefulHtml(html) && clipboardLooksLikeMarkdown(plain)) {
+      event.preventDefault();
+      const converted = sanitizeEditorHtml(markdownToRichTextHtml(plain));
+      insertRichTextHtmlFragment(ref.current, converted);
+      emitChange();
+    }
+  }
+
   if (mode === "preview" || disabled) {
     return (
       <div
         className={`${rootClass} delpi-ui-rich-text--preview`}
         style={{ minHeight }}
-        dangerouslySetInnerHTML={{ __html: value || "<p></p>" }}
+        dangerouslySetInnerHTML={{ __html: resolvedHtml }}
       />
     );
   }
@@ -146,18 +300,47 @@ export function RichTextEditor({
       <RichTextToolbar
         editorRef={ref}
         disabled={disabled}
+        sourceKind={sourceKind}
+        onSourceKindChange={handleSourceKindChange}
         portalScopeClassName={portalScopeClassName}
         onFormatted={emitChange}
         onRequestLink={handleRequestLink}
       />
+      {sourceKind === "html" ? (
+        <RichTextSourceEditor
+          value={sourceDraft}
+          onChange={handleSourceDraftChange}
+          minHeight={minHeight}
+          disabled={disabled}
+          assistMode="html"
+          ariaLabel={RICH_TEXT_LABELS.sourceEditor}
+          hint={RICH_TEXT_LABELS.sourceHint}
+        />
+      ) : null}
+      {sourceKind === "markdown" ? (
+        <RichTextSourceEditor
+          value={sourceDraft}
+          onChange={handleSourceDraftChange}
+          minHeight={minHeight}
+          disabled={disabled}
+          assistMode="plain"
+          ariaLabel={RICH_TEXT_LABELS.sourceMarkdownEditor}
+          hint={RICH_TEXT_LABELS.sourceMarkdownHint}
+        />
+      ) : null}
+      {/*
+        Mantém o contentEditable montado (só esconde no modo fonte) para não
+        invalidar Ranges da toolbar — remount quebrava negrito/alinhamento.
+      */}
       <div
         ref={ref}
         className="delpi-ui-rich-text__editor"
-        style={{ minHeight }}
-        contentEditable
+        style={{ minHeight, display: sourceMode ? "none" : undefined }}
+        contentEditable={!sourceMode}
         role="textbox"
         aria-multiline="true"
         aria-label={ariaLabel}
+        aria-hidden={sourceMode || undefined}
         suppressContentEditableWarning
         onFocus={() => {
           focusedRef.current = true;
@@ -170,9 +353,29 @@ export function RichTextEditor({
         onInput={emitChange}
         onMouseUp={syncActiveLink}
         onKeyUp={syncActiveLink}
+        onBeforeInput={(event) => {
+          if (sourceMode) return;
+          const inputType = event.nativeEvent.inputType;
+          if (
+            inputType !== "deleteContentBackward" &&
+            inputType !== "deleteContentForward"
+          ) {
+            return;
+          }
+          const editorEl = ref.current;
+          if (!editorEl) return;
+          const direction =
+            inputType === "deleteContentBackward" ? "backward" : "forward";
+          if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
+            event.preventDefault();
+            emitChange();
+            syncActiveLink();
+          }
+        }}
+        onPaste={handlePaste}
       />
 
-      {activeLink ? (
+      {!sourceMode && activeLink ? (
         <div
           className="delpi-ui-rich-text__link-badge"
           style={{ top: activeLink.top, left: activeLink.left }}
@@ -210,7 +413,7 @@ export function RichTextEditor({
       ) : null}
 
       <RichTextLinkDialog
-        open={linkDialog !== null}
+        open={linkDialog !== null && !sourceMode}
         editing={linkDialog?.mode === "edit"}
         initialUrl={
           linkDialog?.mode === "edit"

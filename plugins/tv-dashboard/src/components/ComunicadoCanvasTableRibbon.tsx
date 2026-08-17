@@ -21,7 +21,7 @@ export function ComunicadoCanvasTableRibbon() {
 
   return (
     <DeckRibbonGroups>
-      <SelectionTypedWithTailHost layout="ribbon" typed={["canvasTable", "appearance"]} />
+      <SelectionTypedWithTailHost layout="ribbon" typed={["canvasTable", "numberFormat", "appearance"]} />
     </DeckRibbonGroups>
   );
 }

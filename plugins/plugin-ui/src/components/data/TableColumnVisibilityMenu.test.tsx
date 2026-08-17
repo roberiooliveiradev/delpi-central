@@ -62,6 +62,34 @@ describe("TableColumnVisibilityMenu", () => {
     expect(onToggle).toHaveBeenCalledWith("pedido", true);
   });
 
+  it("dispara onReorderColumns ao soltar item arrastado", () => {
+    const onReorder = vi.fn();
+    render(
+      <TableColumnVisibilityMenu
+        columns={[
+          { key: "cliente", label: "Cliente" },
+          { key: "pedido", label: "Pedido" },
+        ]}
+        visibility={{ cliente: true, pedido: true }}
+        onToggleColumn={() => undefined}
+        onReorderColumns={onReorder}
+        onReset={() => undefined}
+        labels={LABELS}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Colunas" }));
+    const items = document.querySelectorAll(".delpi-ui-table-columns__item");
+    expect(items.length).toBe(2);
+    fireEvent.dragStart(items[0]!, {
+      dataTransfer: { setData: vi.fn(), effectAllowed: "move" },
+    });
+    fireEvent.drop(items[1]!, {
+      dataTransfer: { getData: () => "cliente" },
+    });
+    expect(onReorder).toHaveBeenCalledWith("cliente", "pedido");
+  });
+
   it("renderiza label na classe canônica do checkbox", () => {
     const { container } = render(
       <TableColumnVisibilityMenu

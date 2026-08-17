@@ -1,0 +1,45 @@
+/**
+ * ViewTransition — fade + leve slide na troca de tela/painel.
+ */
+
+.delpi-ui-view-transition {
+  min-width: 0;
+}
+
+.delpi-ui-view-transition--page {
+  animation: delpi-ui-view-fade-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.delpi-ui-view-transition--panel {
+  margin-top: var(--delpi-ui-panel-stack-gap, 16px);
+  animation: delpi-ui-panel-fade-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes delpi-ui-view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes delpi-ui-panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-view-transition--page,
+  .delpi-ui-view-transition--panel {
+    animation: none;
+  }
+}

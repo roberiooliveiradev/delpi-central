@@ -9,6 +9,10 @@ alwaysApply: true
 
 | Regra | Quando consultar |
 |-------|------------------|
+| `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
+| `application-bounded-context-decoupling.mdc` | **Sempre** — apps da Minha Delpi sem acoplamento de regra; cada bounded context é dono |
+| `mfe-own-api-no-direct-api-delpi.mdc` | **Sempre** — MFE com API própria **nunca** chama api-delpi; só via BFF/`*-api` do módulo |
+| `plan-construction.mdc` | **CreatePlan / multi-etapa** — Cursor rules, inventário, mercado, fluxos/wireframes, impacto, E*.S*, test→commit |
 | `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
@@ -59,6 +63,7 @@ Doc: `infra/README-ambiente.md`.
 
 | Regra | Escopo |
 |-------|--------|
+| `application-bounded-context-decoupling.mdc` | Apps sem acoplamento · Portal = commercial-api · PVA congelado · TOTVS puro sem membership commercial |
 | `api-delpi-openapi-route-standards.mdc` | **Rotas futuras** — operationId, locale EN/pt-BR, enums+`pattern`, labels, sync TV, smoke de cobertura |
 | `api-delpi-response-contract.mdc` | Envelope, `meta`, `route_contract_registry`, RBAC |
 | `new-api-route-checklist.mdc` | HTTP + chat + apresentação + CI (três pacotes) |
@@ -82,6 +87,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
 | `mf-federation-patch-safety.mdc` | Patch React MF — sem ReDoS; validar build `plugin-ui` |
 | `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
+| `plugin-mfe-page-excellence.mdc` | **Melhoria lista+detalhe** — P0 contratos/URL → P1 inteligência → P2 higiene; playbook em `docs/05-plugin-system/playbook-mfe-page-excellence.md` |
 | `tv-dashboard-persist-local-edits.mdc` | **TV Dashboard** — draft versionado; F5/WS nunca sobrescrevem edições locais sem merge |
 | `tv-dashboard-editor-pasteboard.mdc` | **TV Dashboard** — editor `overflow:visible` (pasteboard); TV/prévia clipam |
 | `mfe-modal-host-contained.mdc` | **Modais MFE** — nunca cobrir sidebar do portal; `HostContainedDialog` / `fill` |
@@ -91,6 +97,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 ## Fluxo por tipo de tarefa
 
 ```
+Plano multi-etapa / CreatePlan → plan-construction (checklist + E*.S* + test→commit) → test-and-commit
 Nova rota REST          → api-delpi-openapi-route-standards → api-delpi-response-contract → new-api-route-checklist → smoke Nível A + audit_route_test_coverage → playbook-22
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
 Convenção TOTVS / produto → totvs-product-patterns (usar hub) → padroes-totvs/README.md
@@ -99,11 +106,16 @@ Valoração R$ / B2_CM1 / armazém → totvs-warehouse-cost-standards → padroe
 Bug apresentação chat   → root-cause-generalized-fix → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
+Regra de negócio entre apps / ownership → application-bounded-context-decoupling (dono do contexto; HTTP só)
+MFE com API própria → api-delpi → **proibido direto** — `mfe-own-api-no-direct-api-delpi.mdc` (BFF na `*-api` do módulo)
+Regra Portal Comercial / escopo carteira → commercial-api (nunca PVA) · SCOPE-OWNERSHIP · MFE só commercial-api
+TOTVS para o Portal sem membership PVA → path `totvs-*` na api-delpi + BFF commercial-api
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
 Novo plugin / UI MFE        → novo-plugin-mfe-checklist → plugins-reusable-components → plugins-documentation → plugins-visual-design-system → plugins-frontend-build
+Melhoria página lista+detalhe MFE → plugin-mfe-page-excellence → playbook-mfe-page-excellence.md (P0→P1→P2)
 Componente UI transversal   → plugins/plugin-ui (TSX + CSS delpi-ui; zero CSS no MFE) → migration-catalog + refactoring-roadmap § 8
 Bug visual de KPI/card/tabela/loading → plugin-ui/src/styles (não index.css do MFE) → dual-class + tokens → Fase 7
 Limpeza CSS espelho nos MFEs       → refactoring-roadmap § 8 ondas 7.1–7.6 (atualizar tracking antes de implementar)

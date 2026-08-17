@@ -73,6 +73,7 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "Financial": "financial",
     "Health": "system",
     "Inspeções de Entrada": "quality",
+    "Invoice issuance": "financial",
     "Kaizen — cadastro": "quality",
     "PAC Qualidade — inteligência": "quality",
     "PAC Qualidade — padrões de solução": "quality",
@@ -104,6 +105,7 @@ PATH_SEGMENT_TO_CATEGORY: dict[str, str] = {
     "products": "products",
     "financial": "financial",
     "financeiro": "financial",
+    "invoice-issuance": "financial",
     "hr": "hr",
     "scheduling": "scheduling",
     "engineering": "engineering",
@@ -591,8 +593,12 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
     for key, value in overlay.items():
         if key not in OVERLAY_KEYS:
             continue
+        # null no overlay remove chave herdada do catálogo (ex.: fixedQueryParams legado).
+        if value is None:
+            merged.pop(key, None)
+            continue
         # bool False / 0 são válidos; só skip de vazio típico de string/coleção.
-        if value in (None, "", [], {}):
+        if value in ("", [], {}):
             continue
         if key == "paramSchema" and isinstance(value, dict):
             merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, value)

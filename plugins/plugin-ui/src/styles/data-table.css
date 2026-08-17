@@ -42,11 +42,13 @@ table.delpi-ui-table {
   min-width: 100%;
   border-collapse: collapse;
   font-size: var(--delpi-ui-table-font-size, 13px);
+  line-height: var(--delpi-ui-table-line-height, 1.35);
   color: var(--delpi-ui-text, var(--text, #111111));
-  --delpi-ui-table-cell-pad-y: 10px;
-  --delpi-ui-table-cell-pad-x: 16px;
-  --delpi-ui-table-numeric-pad-x: 20px;
+  --delpi-ui-table-cell-pad-y: 9px;
+  --delpi-ui-table-cell-pad-x: 14px;
+  --delpi-ui-table-numeric-pad-x: 18px;
   --delpi-ui-table-numeric-min-width: 6.5rem;
+  --delpi-ui-table-header-pad-y: 10px;
 }
 
 table.delpi-ui-table--section {
@@ -63,15 +65,23 @@ table.delpi-ui-table td {
 }
 
 table.delpi-ui-table th {
-  font-weight: 700;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-weight: 650;
+  font-size: var(--delpi-ui-table-header-font-size, 0.92em);
+  letter-spacing: 0.01em;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
   background: color-mix(
     in srgb,
-    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 90%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%
+  );
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 30%
   );
   white-space: nowrap;
   vertical-align: middle;
+  padding-block: var(--delpi-ui-table-header-pad-y, 10px);
 }
 
 table.delpi-ui-table--sortable th {
@@ -79,9 +89,11 @@ table.delpi-ui-table--sortable th {
 }
 
 table.delpi-ui-table--compact {
-  --delpi-ui-table-cell-pad-y: 8px;
-  --delpi-ui-table-cell-pad-x: 14px;
-  --delpi-ui-table-numeric-pad-x: 18px;
+  --delpi-ui-table-cell-pad-y: 6px;
+  --delpi-ui-table-cell-pad-x: 12px;
+  --delpi-ui-table-numeric-pad-x: 16px;
+  --delpi-ui-table-header-pad-y: 8px;
+  --delpi-ui-table-font-size: 12.5px;
 }
 
 table.delpi-ui-table--compact th,
@@ -372,6 +384,122 @@ table.delpi-ui-table--grid-preview th.delpi-ui-table__column--dragging {
   opacity: 0.55;
 }
 
+/* Reordenação de colunas — hold + coluna inteira + indicador de soltura */
+table.delpi-ui-table--column-reorder th[data-column-key] {
+  cursor: grab;
+  position: relative;
+  transition:
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+table.delpi-ui-table--column-reorder th[data-column-key]:active {
+  cursor: grabbing;
+}
+
+table.delpi-ui-table--column-reordering {
+  user-select: none;
+}
+
+table.delpi-ui-table--column-reordering th[data-column-key],
+table.delpi-ui-table--column-reordering td[data-column-key] {
+  transition:
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    opacity 160ms ease,
+    border-color 160ms ease;
+}
+
+/* Um retângulo contínuo na coluna (não borda por célula) */
+table.delpi-ui-table th.delpi-ui-table__column--dragging,
+table.delpi-ui-table td.delpi-ui-table__column--dragging {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  box-shadow:
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
+}
+
+table.delpi-ui-table th.delpi-ui-table__column--dragging {
+  box-shadow:
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset 0 2px 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
+}
+
+table.delpi-ui-table tbody tr:last-child td.delpi-ui-table__column--dragging {
+  box-shadow:
+    inset 2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset -2px 0 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%),
+    inset 0 -2px 0
+      color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 75%, white 25%);
+}
+
+table.delpi-ui-table th.delpi-ui-table__column--drop-before,
+table.delpi-ui-table td.delpi-ui-table__column--drop-before {
+  position: relative;
+}
+
+table.delpi-ui-table th.delpi-ui-table__column--drop-before::before,
+table.delpi-ui-table td.delpi-ui-table__column--drop-before::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 3px;
+  border-radius: 2px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 85%,
+    white 15%
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+
+table.delpi-ui-table th.delpi-ui-table__column--drop-after,
+table.delpi-ui-table td.delpi-ui-table__column--drop-after {
+  position: relative;
+}
+
+table.delpi-ui-table th.delpi-ui-table__column--drop-after::after,
+table.delpi-ui-table td.delpi-ui-table__column--drop-after::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -1px;
+  width: 3px;
+  border-radius: 2px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 85%,
+    white 15%
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__sort-button,
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__header-label {
   justify-content: flex-end;
@@ -407,23 +535,88 @@ table.delpi-ui-table td.delpi-ui-table__col--wrap {
   padding: 24px;
 }
 
+/* Hover/cursor só na <tr> de dados direta — nunca na detail-row nem em tabelas aninhadas
+   (seletores sem `>` pintavam o bloco expandido inteiro ao passar o mouse nas linhas filhas). */
 .delpi-ui-table__row--clickable,
-table.delpi-ui-table--clickable tbody tr,
-table.delpi-ui-table--clickable tbody tr.is-clickable {
+table.delpi-ui-table--clickable > tbody > tr:not(.delpi-ui-table__detail-row),
+table.delpi-ui-table--clickable > tbody > tr.is-clickable {
   cursor: pointer;
 }
 
 .delpi-ui-table__row--clickable:focus-visible,
-table.delpi-ui-table--clickable tbody tr.is-clickable:focus-visible {
+table.delpi-ui-table--clickable > tbody > tr.is-clickable:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: -2px;
 }
 
-.delpi-ui-table__row--clickable:hover td,
-table.delpi-ui-table--clickable tbody tr:hover td,
-table.delpi-ui-table--clickable tbody tr.is-clickable:hover,
-table.delpi-ui-table--clickable tbody tr.is-clickable:hover td {
+.delpi-ui-table__row--clickable:hover > td,
+table.delpi-ui-table--clickable > tbody > tr.is-clickable:hover > td,
+table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td {
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
+}
+
+/* Linhas de dados em tabela não-clickable (ex.: linhas do pedido aninhadas). */
+table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-table__row--clickable:hover > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.is-clickable:hover
+  > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td,
+[data-theme="dark"] .delpi-ui-table__row--clickable:hover > td,
+[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.is-clickable:hover
+  > td,
+[data-theme="dark"]
+  table.delpi-ui-table--clickable
+  > tbody
+  > tr.delpi-ui-table__row--clickable:hover
+  > td,
+:root[data-theme="dark"]
+  table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td,
+[data-theme="dark"]
+  table.delpi-ui-table:not(.delpi-ui-table--clickable)
+  > tbody
+  > tr:not(.delpi-ui-table__detail-row):hover
+  > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a))
+  );
+}
+
+:root[data-theme="dark"] table.delpi-ui-table th,
+[data-theme="dark"] table.delpi-ui-table th {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a)) 82%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%
+  );
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-text, #f5f5f5) 78%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 22%
+  );
 }
 
 table.delpi-ui-table--clickable tbody tr.is-selected {
@@ -432,6 +625,30 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
     var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
+}
+
+/* Linha pai expandida — destaque estável; detalhe aninhado não recebe hover de bloco. */
+table.delpi-ui-table > tbody > tr.delpi-ui-table__row--expanded > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 6%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table > tbody > tr.delpi-ui-table__detail-row {
+  cursor: default;
+}
+
+table.delpi-ui-table > tbody > tr.delpi-ui-table__detail-row > td {
+  background: transparent;
+}
+
+table.delpi-ui-table td.delpi-ui-table__detail-cell {
+  padding: 0.75rem 1rem 1rem;
+  vertical-align: top;
+  white-space: normal;
+  border-top: none;
 }
 
 .delpi-ui-table-section.delpi-ui-card,

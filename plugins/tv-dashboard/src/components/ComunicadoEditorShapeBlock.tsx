@@ -12,6 +12,7 @@ import {
   ComunicadoBlockView,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
+  isEfficiencyPinShapeKind,
   patchTextProjectionFromEditedDisplay,
   plainTextFromContentRuns,
   renderTextBlockEditorHtml,
@@ -45,7 +46,47 @@ function shapeEditorRuns(block: ComunicadoShapeBlock) {
   return [{ text: display.content ?? "" }];
 }
 
-export function ComunicadoEditorShapeBlock({
+export function ComunicadoEditorShapeBlock(props: Props) {
+  if (isEfficiencyPinShapeKind(props.block.shape)) {
+    return <EfficiencyPinEditorShapeBlock {...props} />;
+  }
+  return <ComunicadoEditorShapeBlockInner {...props} />;
+}
+
+function EfficiencyPinEditorShapeBlock({
+  block,
+  fontScale = 1,
+  className = "",
+  isSelected,
+}: Props) {
+  const style: CSSProperties = {
+    ...blockCssStyle(block, { fontScale }),
+    position: "relative",
+    left: undefined,
+    top: undefined,
+    width: "100%",
+    height: "100%",
+    transform: undefined,
+  };
+  const blockClass = [
+    "tdp-comunicado__block",
+    "tdp-comunicado__visual-box",
+    ...visualBoxBlockModifierClasses(block),
+    "td-composer__shape-block",
+    "td-composer__text-block--readonly",
+    isSelected ? "td-composer__text-block--selected" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <div className={blockClass} style={style}>
+      <ComunicadoBlockView block={block} fontScale={fontScale} embedded interactive />
+    </div>
+  );
+}
+
+function ComunicadoEditorShapeBlockInner({
   block,
   fontScale = 1,
   className = "",

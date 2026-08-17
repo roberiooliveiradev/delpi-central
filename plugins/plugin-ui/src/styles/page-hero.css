@@ -1,0 +1,316 @@
+/**
+ * PageHero — card de saudação/overview (linguagem visual SI IgdHero).
+ */
+
+.delpi-ui-page-hero {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 28px;
+  border-radius: 28px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 18%, var(--delpi-ui-surface, var(--surface, #ffffff))),
+    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #ffffff)) 82%, transparent)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
+      var(--delpi-ui-border, var(--border, #e6e6e6))
+    );
+  box-shadow: var(--delpi-ui-shadow, var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12)));
+  animation: delpi-ui-page-hero-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.delpi-ui-page-hero__glow {
+  position: absolute;
+  right: -90px;
+  bottom: -120px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 16%, transparent);
+  filter: blur(10px);
+  opacity: 0.62;
+}
+
+.delpi-ui-page-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.delpi-ui-page-hero__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-page-hero__headline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-page-hero__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 750;
+  line-height: 1.1;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-page-hero__description {
+  margin: 0;
+  max-width: 44rem;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.72)));
+}
+
+.delpi-ui-page-hero__badge {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-page-hero__actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.delpi-ui-page-hero__highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.delpi-ui-page-hero__highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #ffffff)) 76%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 14%, transparent);
+}
+
+.delpi-ui-page-hero__highlight-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.72)));
+}
+
+.delpi-ui-page-hero__highlight-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-page-hero__highlight--warning {
+  border-color: color-mix(in srgb, var(--delpi-ui-warning, #d97706) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #d97706) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-page-hero__highlight--warning .delpi-ui-page-hero__highlight-value {
+  color: var(--delpi-ui-warning, #d97706);
+}
+
+.delpi-ui-page-hero__highlight--danger {
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #dc2626) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #dc2626) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-page-hero__highlight--danger .delpi-ui-page-hero__highlight-value {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-ui-page-hero__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+      var(--delpi-ui-border, var(--border, #e6e6e6))
+    );
+}
+
+@media (max-width: 900px) {
+  .delpi-ui-page-hero__highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-page-hero {
+    padding: 22px;
+  }
+
+  .delpi-ui-page-hero__title {
+    font-size: clamp(1.45rem, 6vw, 1.9rem);
+  }
+}
+
+:root[data-theme="dark"] .delpi-ui-page-hero,
+.theme-dark .delpi-ui-page-hero {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 22%, #0b1220),
+    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #161b22)) 88%, transparent)
+  );
+}
+
+@keyframes delpi-ui-page-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-page-hero {
+    animation: none;
+  }
+}
+
+/* Densidade compact — listas / admin (Portal Comercial e consumidores).
+ * Tipografia = mesma do comfortable; só padding/gap/radius ficam densos. */
+.delpi-ui-page-hero--compact {
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: var(--delpi-ui-shadow-sm, 0 4px 14px rgba(0, 0, 0, 0.1));
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__content {
+  gap: 6px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__headline {
+  gap: 8px;
+  align-items: center;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__description {
+  max-width: 52rem;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 6px;
+  margin-top: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__highlight {
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__body {
+  gap: 6px;
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-page-hero__glow {
+  width: 140px;
+  height: 140px;
+  opacity: 0.35;
+}
+
+/* Controles densos dentro do body do hero compact (filtros / chips). */
+.delpi-ui-page-hero--compact .delpi-ui-scope-chip-bar {
+  gap: 4px 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-scope-chip-bar__chips {
+  gap: 6px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar:not(.delpi-ui-card) {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar.delpi-ui-card,
+.delpi-ui-page-hero--compact .delpi-ui-card.delpi-ui-filter-bar {
+  padding: 10px 12px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__header"],
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filters__header"] {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar__grid,
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__grid"],
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filters__grid"] {
+  gap: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar [class$="-field"] {
+  gap: 4px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filters-row {
+  margin-bottom: 0;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-box {
+  gap: 4px;
+}
+
+@media (max-width: 900px) {
+  .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-page-hero--compact {
+    padding: 10px 12px;
+  }
+
+  .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -56,6 +56,7 @@ export {
   ChartTypeSection,
 } from "./ChartDesignSections";
 export { ChartSeriesSection } from "./ChartSeriesSection";
+export { NumberFormatSection } from "./NumberFormatSection";
 export { KpiAppearanceSection } from "./KpiAppearanceSection";
 export { MediaSection } from "./MediaSection";
 export { ImageCropSection } from "./ImageCropSection";

@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from pathlib import Path
 
 import pytest
 
@@ -44,6 +45,9 @@ class FakeRepo:
     def list_signatures(self, _):
         return self.signatures
 
+    def get_signature(self, _minute_id, signature_id):
+        return next((s for s in self.signatures if s["id"] == signature_id), None)
+
     def replace_participants(self, minute_id, unit_code, participants, actor_user_id):
         self.participants = list(participants)
         return self.participants
@@ -80,11 +84,31 @@ class FakeRepo:
             "required_count": 1,
         }
 
+    def invalidate_open_invites(self, *, signer_id: str) -> int:
+        return 0
+
+    def create_invite(self, **kwargs):
+        return {"id": "inv1", "consumed_at": None, **kwargs}
+
+    def get_invite_by_token_hash(self, _token_hash):
+        return None
+
+    def consume_invite(self, invite_id):
+        return {"id": invite_id, "consumed_at": "now"}
+
+    def get_signer(self, signer_id):
+        return next((s for s in self.signers if s["id"] == signer_id), None)
+
 
 def test_create_send_sign_happy_path_and_invalid_finalize():
     repo = FakeRepo()
     service = MeetingMinutesService(repo)
-    service.notifications = SimpleNamespace(send=lambda **_: True)
+    service.notifications = SimpleNamespace(
+        notify_sign_pending=lambda **_: True,
+        notify_minute_signed=lambda **_: True,
+        notify_minute_refused=lambda **_: True,
+    )
+    service.sign_pending_mail = SimpleNamespace(notify_signers=lambda **_: 1)
     service.signature_storage = SimpleNamespace(save_png=lambda **_: "/tmp/signature.png")
     user = SimpleNamespace(id="u1", is_superadmin=True, permissions=[])
     created = service.create(
@@ -142,3 +166,66 @@ def test_content_hash_is_stable():
     second = ContentHashService.hash_version_payload(payload)
     assert first == second
     assert len(first) == 64
+
+
+def test_sign_only_can_pending_detail_and_signature_image(tmp_path):
+    from tm_app.application.security import transformometro_permissions as perms
+
+    repo = FakeRepo()
+    repo.minute = {
+        "id": "m1",
+        "minute_number": "2026/001",
+        "status": "awaiting_signatures",
+        "current_version_id": "v1",
+        "unit_code": "01",
+        "title": "Kickoff",
+        "meeting_type": "ordinary",
+        "meeting_date": "2026-07-28",
+    }
+    repo.version = {"id": "v1", "version_number": 1, "content_hash": "abc", "title": "Kickoff"}
+    repo.signers = [
+        {"id": "s1", "user_id": "signer-1", "status": "pending", "display_name": "Ana"},
+    ]
+    image_path = tmp_path / "sig.png"
+    image_path.write_bytes(b"\x89PNG")
+    repo.signatures = [{"id": "sig1", "image_path": str(image_path)}]
+    repo.list_minutes = lambda **_: ([{"id": "m1"}], 1)
+
+    service = MeetingMinutesService(repo)
+    service.signature_storage = SimpleNamespace(read=lambda path: Path(path).read_bytes())
+    signer = SimpleNamespace(
+        id="signer-1",
+        is_superadmin=False,
+        permissions=[perms.TRANSFORMOMETRO_ATAS_SIGN],
+    )
+
+    pending = service.pending_signatures(signer)
+    assert pending["total"] == 1
+    detail = service.get_detail(signer, "m1")
+    assert detail["viewer"]["is_signer"] is True
+    assert service.signature_image(signer, "m1", "sig1").startswith(b"\x89PNG")
+
+    with pytest.raises(PermissionError, match="consultar atas"):
+        service.list_minutes(signer, {"limit": 10, "offset": 0})
+
+
+def test_sign_only_cannot_manage():
+    from tm_app.application.security import transformometro_permissions as perms
+
+    repo = FakeRepo()
+    repo.minute = {
+        "id": "m1",
+        "minute_number": "2026/001",
+        "status": "draft",
+        "current_version_id": "v1",
+        "unit_code": "01",
+        "title": "Kickoff",
+    }
+    service = MeetingMinutesService(repo)
+    signer = SimpleNamespace(
+        id="signer-1",
+        is_superadmin=False,
+        permissions=[perms.TRANSFORMOMETRO_ATAS_SIGN],
+    )
+    with pytest.raises(PermissionError, match="Sem permissão"):
+        service.send_for_signature(signer, "m1")

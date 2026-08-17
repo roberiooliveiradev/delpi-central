@@ -45,6 +45,7 @@ class ChatIntentRouterExecutedService:
         )
 
         web_executed = ChatIntentRouterSupportService.tool_calls_include_web(tool_calls)
+        platform_tool = ChatIntentRouterSupportService.executed_platform_tool(tool_calls)
 
         best: IntentRouteResult | None = None
 
@@ -66,6 +67,11 @@ class ChatIntentRouterExecutedService:
 
             if stage == "tools" and tool_calls:
                 flags.append("tools_executed")
+                if platform_tool:
+                    intent = "platform_action"
+                    sub_intent = platform_tool
+                    priority = 4
+                    flags.append("platform_tool_executed")
 
             requires_web = web_executed or predicted.requires_web
             requires_canvas = predicted.requires_canvas or stage == "canvas"
@@ -94,8 +100,12 @@ class ChatIntentRouterExecutedService:
                 ambiguous=predicted.ambiguous,
                 candidates=predicted.candidates,
                 mixed_steps=predicted.mixed_steps,
-                decision=predicted.decision,
-                reason=predicted.reason,
+                decision="platform_action" if platform_tool and stage == "tools" else predicted.decision,
+                reason=(
+                    "platform_tool_executed"
+                    if platform_tool and stage == "tools"
+                    else predicted.reason
+                ),
             )
 
             if best is None or priority < best.priority_applied:

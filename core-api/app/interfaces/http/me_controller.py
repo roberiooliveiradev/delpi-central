@@ -513,10 +513,16 @@ def lookup_directory_users():
     if not isinstance(raw_ids, list):
         return api_error("validation_error", "ids must be an array", status=400)
 
+    app_id = (body.get("app") if isinstance(body, dict) else None) or request.args.get(
+        "app"
+    )
+    app_id = (str(app_id).strip() if app_id else "") or None
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             results = LookupDirectoryUsersUseCase(uow).execute(
                 user_ids=[str(item) for item in raw_ids if item],
+                app_id=app_id,
             )
     except Exception as exc:
         logger.exception("lookup_directory_users_failed")

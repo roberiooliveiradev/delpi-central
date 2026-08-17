@@ -1,0 +1,109 @@
+/* portal/src/ui-kit/form/Select.css
+   Trigger do Select — mesma altura/raio/anel de foco dos demais controles.
+   O painel vive em AnchoredPanel.css (renderizado no body). */
+
+.portal-ui-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.portal-ui-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  font: inherit;
+  color: var(--control-text);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.portal-ui-select--md .portal-ui-select__trigger {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.portal-ui-select--sm .portal-ui-select__trigger {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.portal-ui-select__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--control-border));
+}
+
+.portal-ui-select__trigger:focus-visible,
+.portal-ui-select--open .portal-ui-select__trigger {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-select--invalid .portal-ui-select__trigger {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, var(--control-bg));
+}
+
+.portal-ui-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portal-ui-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-ui-select__value--placeholder {
+  color: var(--control-placeholder);
+}
+
+.portal-ui-select__trigger svg {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.portal-ui-select--open .portal-ui-select__trigger svg {
+  transform: rotate(180deg);
+}
+
+.portal-ui-select__search {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--control-text);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}
+
+.portal-ui-select__search:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-select__search::-webkit-search-cancel-button {
+  display: none;
+}

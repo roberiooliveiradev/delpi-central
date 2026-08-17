@@ -42,6 +42,23 @@ describe("ChartGranularityToggle", () => {
 
     expect(screen.getByRole("button", { name: "Dia" }).getAttribute("aria-pressed")).toBe("true");
   });
+
+  it("usa size sm por default (paridade com tipo de gráfico)", () => {
+    const { container } = render(
+      <ChartGranularityToggle
+        value="day"
+        onChange={() => undefined}
+        options={OPTIONS}
+        classNames={{
+          root: bem.segmentToggle,
+          button: bem.segmentButton,
+          buttonActive: bem.segmentButtonActive,
+        }}
+        labels={labels}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-segment-toggle--sm")).toBeTruthy();
+  });
 });
 
 describe("ChartToolbar", () => {
@@ -68,5 +85,38 @@ describe("ChartToolbar", () => {
     );
 
     expect(screen.getByRole("button", { name: labels.exportSeriesAriaLabel })).toBeTruthy();
+  });
+
+  it("granularityHelp envolve o toggle (sem ícone ? separado)", () => {
+    render(
+      <ChartToolbar
+        granularity="day"
+        onGranularityChange={() => undefined}
+        options={OPTIONS}
+        granularityHelp="Escolha a agregação temporal."
+        classNames={{
+          toolbar: bem.toolbar,
+          granularity: bem.granularity,
+          granularityHelp: bem.granularityHelp,
+        }}
+        labels={labels}
+        granularityToggleClassNames={{
+          root: bem.segmentToggle,
+          button: bem.segmentButton,
+          buttonActive: bem.segmentButtonActive,
+        }}
+        granularityToggleLabels={labels}
+      />,
+    );
+
+    expect(document.querySelector(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", {
+        name: `Ajuda: ${labels.groupAriaLabel.toLowerCase()}`,
+      }),
+    ).toBeNull();
+    expect(
+      document.querySelector(".delpi-ui-help-tooltip--wrap #chart-granularity-day"),
+    ).toBeTruthy();
   });
 });

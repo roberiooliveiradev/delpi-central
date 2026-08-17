@@ -340,6 +340,23 @@ Documento canônico do plugin: [kaizometro/docs/UI-PLUGIN-UI.md](../../kaizometr
 | **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
 | **7.8** | `cipa` — botões de ação e voltar compartilhados | ✅ |
 | **7.9** | `cipa` — UI base completa (header, cards, tabela, estados, navegação e formulários) | ✅ |
+| **7.10** | `commercial` — convergência final do legado de pedidos para prefixo `cm` e kit compartilhado | ✅ |
+
+**Checkpoint Commercial (ago/2026):** `PagePath`, `DataRecordCard`, modo `tabs`
+de `UnderlineNav` e demais wrappers `Commercial*` estão consumidos. O MFE ficou
+com prefixo/root próprios, sem CSS `.delpi-ui-*`, cópias de chrome ou shells de
+detalhe sem uso. Gates: `sourceHygiene.test.mjs`, `npm test`, `npm run lint`,
+`npm run build` e auditor CSS global (Commercial sem ocorrência; resíduos
+globais são reportados separadamente pelo gate).
+
+**InlineNavLink (ago/2026):** primitivo `<a href>` + SPA (`onNavigate` só em
+left-click limpo) em `components/navigation/InlineNavLink.tsx` — sem skin visual
+própria; `title` obrigatório; factory `createDashboardInlineNavLink`. Consumo
+inicial: Portal Comercial (`CommercialEntityLink`).
+
+**ActionButton + href (ago/2026):** mesmo contrato de clique SPA; `title`
+obrigatório com `href`; CSS `a.delpi-ui-action-btn` + `:visited` em
+`action-controls.css`. CTAs de página (ex.: detalhe OP no Commercial).
 
 ### Checklist por plugin (preencher ao fechar onda)
 
@@ -366,6 +383,10 @@ Documento canônico do plugin: [kaizometro/docs/UI-PLUGIN-UI.md](../../kaizometr
 | `propostas-comerciais` | 7.6 | ✅ | StateBoxPanel dual via kit | ✅ | CSS `.pc-state-box*` removido; table-wrap dual |
 | `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
 | `cipa` | 7.9 | ✅ | ✅ `PageHeader`, `SectionCard`, `ContentCard`, `DataTable`, estados, `NavigationCard`, `IconButton`, actions/forms | ✅ | CSS local reduzido a tokens, layout de página e domínio de ata/assinatura; zero seletor `.delpi-ui-*` |
+| `commercial` | 7.10 | ✅ | ✅ wrappers/factories `Commercial*`; helpers e shells mortos removidos | ✅ | prefixo `cm`; conteúdo de ajuda sem detalhes HTTP/Protheus; gates de source, test, lint e build |
+| `commercial` Hub Início | 7.10+ | ✅ | ✅ `SectionRouteCard`, `CatalogSearchBar`, `HubChipRow`, `RouteChip`, `CommandPalette`, `leadingIcon` em AlertQueue/WorklistItem | ✅ | catálogo `pluginRouteCatalog` + `hubRouteIcons`; CSS `cm-home-stack*`; favoritos via commercial-api; pin em `create` |
+| `commercial` Pedidos+Carteira | 7.10+ | ✅ | ✅ chrome operacional → kit (`TableFontSizeControls`, `DataListToolbar`, `DataCardsGrid`, `InteractiveDataCard`, `usePersistedViewLayout`) | ✅ | storage keys `commercial:open-orders:*` / `commercial:customers:*`; CSS local de toolbar/cards removido |
+| `commercial` Pedidos Kanban | 7.10+ | ✅ | ✅ `KanbanBoard` + `createDashboardKanbanBoard` (board read-only) | ✅ | layout `board` em `commercial:open-orders:layout`; zero CSS board no MFE |
 
 ### DoD de um plugin na Fase 7
 

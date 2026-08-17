@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 
+import { Button } from "../../ui-kit";
 import {
   NOTIFICATION_VARIABLES,
   formatVariablePlaceholder,
@@ -45,9 +46,11 @@ export function NotificationVariableToolbar({
       <span className="notification-var-toolbar__label">Inserir variável:</span>
       <div className="notification-var-toolbar__chips">
         {variables.map((item) => (
-          <button
+          <Button
             key={item.key}
             type="button"
+            variant="secondary"
+            size="sm"
             className={`notification-var-toolbar__chip notification-var-toolbar__chip--${item.scope}`}
             disabled={disabled}
             title={`${item.description} — ex.: ${item.example}`}
@@ -55,7 +58,7 @@ export function NotificationVariableToolbar({
           >
             {item.label}
             <code>{formatVariablePlaceholder(item.key)}</code>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

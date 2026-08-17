@@ -11,6 +11,9 @@ class CustomerGeoRow:
     customer_store: str
     city: str | None
     state: str | None
+    contact_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +28,7 @@ class CustomerBilling12mRow:
 
 @dataclass(frozen=True, slots=True)
 class CustomerBillingMonthRow:
-    """Agregado mensal (YYYYMM Protheus) somando os clientes solicitados."""
+    """Agregado do bucket (YYYYMMDD / YYYYMM / YYYY Protheus) somando os clientes."""
 
     year_month: str
     billed_value: float
@@ -58,5 +61,6 @@ class CustomerEnrichmentRepositoryPort(ABC):
         customers: Sequence[tuple[str, str]],
         start_date: str,
         end_date: str,
+        granularity: str = "month",
     ) -> list[CustomerBillingMonthRow]:
         raise NotImplementedError

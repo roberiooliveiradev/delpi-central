@@ -81,7 +81,7 @@ describe("FloatingNoticeStack", () => {
     expect(onDismiss).toHaveBeenCalledWith("ok");
   });
 
-  it("erro/aviso ignoram autoDismissMs e só fecham no botão", () => {
+  it("erro/aviso respeitam autoDismissMs explícito (validação temporária)", () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();
     render(
@@ -96,7 +96,26 @@ describe("FloatingNoticeStack", () => {
     );
 
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(501);
+    });
+    expect(onDismiss).toHaveBeenCalledTimes(2);
+    expect(onDismiss).toHaveBeenCalledWith("err");
+    expect(onDismiss).toHaveBeenCalledWith("warn");
+  });
+
+  it("erro sem autoDismissMs permanece até fechar manual", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <FloatingNoticeStack
+        items={[{ id: "err", message: "Falhou", variant: "error" }]}
+        onDismiss={onDismiss}
+        classNames={classNames}
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(10000);
     });
     expect(onDismiss).not.toHaveBeenCalled();
 

@@ -33,6 +33,30 @@ def test_sql1_create_simple_select_mode():
     )
 
 
+def test_tv_slide_request_does_not_activate_sql_specialist():
+    tv_ctx = {
+        "skills": {"sqlAuthoring": True, "tvDashboardCopilot": True},
+        "tvDashboardHostContext": {
+            "surface": "tv-dashboard",
+            "playlistId": "pl-1",
+        },
+    }
+    assert (
+        ChatAdvancedSqlSpecialistService.should_activate(
+            "crie um slide",
+            workspace_context=tv_ctx,
+        )
+        is False
+    )
+    assert (
+        ChatAdvancedSqlSpecialistService.should_activate(
+            "monte um select de produtos",
+            workspace_context=tv_ctx,
+        )
+        is True
+    )
+
+
 def test_sql2_default_dialect_when_not_informed():
     resolved = ChatSqlDialectResolverService.resolve("monte uma consulta de vendas")
 

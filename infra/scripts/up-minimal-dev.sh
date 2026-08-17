@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Sobe stack mínimo DELPI dev (portal + api-delpi), sem plugins/MFEs pesados.
+# Sobe stack mínimo DELPI dev (portal + api-delpi + TV Dashboard), sem demais plugins/MFEs pesados.
 # Plugins sob demanda: --profile plugins up -d <nome-do-servico>
+# Ollama: --profile optional-heavy up -d ollama
 set -euo pipefail
 
 COMPOSE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -25,6 +26,10 @@ MINIMAL_SERVICES=(
   core-api
   api-delpi
   portal
+  plugin-ui
+  tv-dashboard-api
+  tv-dashboard
+  public-hub
   gateway
 )
 
@@ -63,15 +68,16 @@ if [[ "$BUILD" == true ]]; then
 fi
 "${COMPOSE[@]}" up "${UP_ARGS[@]}" "${MINIMAL_SERVICES[@]}"
 
-echo "=== Parando serviços opcionais (se subiram por dependência antiga) ==="
-docker stop delpi-searxng delpi-languagetool 2>/dev/null || true
+echo "=== Parando serviços opcionais pesados (se subiram por engano) ==="
+docker stop delpi-searxng delpi-languagetool delpi-ollama 2>/dev/null || true
 
 echo ""
 echo "Stack mínimo no ar: http://localhost"
 echo "Serviços: ${MINIMAL_SERVICES[*]}"
+echo "TV:       http://localhost/apps/tv-dashboard/"
 echo "Chat:     ${COMPOSE[*]} --profile chat up -d"
-echo "Chat RAM: ${COMPOSE[*]} --profile chat up -d  # já inclui override minimal (sem LanguageTool/SearXNG)"
+echo "Ollama:   ${COMPOSE[*]} --profile optional-heavy up -d ollama"
 echo "Plugin:   ${COMPOSE[*]} --profile plugins up -d <servico>"
-echo "Sem: dashboards, MFEs, strategic-indicators, transformometro, maintenance (profile plugins)"
+echo "Sem: demais dashboards/MFEs, strategic-indicators, transformometro, maintenance, ollama"
 echo ""
 docker ps --format 'table {{.Names}}\t{{.Status}}' | grep delpi || true

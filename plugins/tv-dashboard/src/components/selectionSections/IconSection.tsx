@@ -17,6 +17,15 @@ import { useRef, useState } from "react";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
+import {
+  TV_ALLOWED_FILL_KINDS,
+  fillToColorStylePatch,
+  fillToFillStylePatch,
+  fillToStrokeStylePatch,
+  styleToColorFill,
+  styleToFill,
+  styleToStrokeFill,
+} from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
 import { DeckRangeField } from "../deck/DeckRangeField";
@@ -95,7 +104,10 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
       variant="text"
       label="Cor do ícone"
       value={iconColor}
-      onChange={(color) => patchStyle({ color })}
+      fill={styleToColorFill(block.style)}
+      onChange={(color) => patchStyle(fillToColorStylePatch({ kind: "solid", color }))}
+      onFillChange={(next) => patchStyle(fillToColorStylePatch(next))}
+      allowedFillKinds={TV_ALLOWED_FILL_KINDS}
     />
   );
 
@@ -140,8 +152,11 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
         <ShapeFillMenu
           value={fillValue === "transparent" ? undefined : fillValue}
           fillLabel="Fundo"
-          onChange={(color) => patchStyle({ fill: color })}
-          onNoFill={() => patchStyle({ fill: "transparent" })}
+          fill={styleToFill(block.style)}
+          onChange={(color) => patchStyle(fillToFillStylePatch({ kind: "solid", color }))}
+          onFillChange={(next) => patchStyle(fillToFillStylePatch(next))}
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoFill={() => patchStyle(fillToFillStylePatch({ kind: "none" }))}
         />
       </ShapeMenuHint>
       <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno da caixa do ícone">
@@ -151,13 +166,20 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
           minWidth={0}
           maxWidth={20}
           outlineLabel="Contorno"
+          fill={styleToStrokeFill(block.style)}
           onColorChange={(color) =>
-            patchStyle({
-              stroke: color,
-              strokeWidth: Math.max(1, boxStrokeWidth || 1),
-            })
+            patchStyle(
+              fillToStrokeStylePatch(
+                { kind: "solid", color },
+                { strokeWidth: Math.max(1, boxStrokeWidth || 1) },
+              ),
+            )
           }
-          onNoOutline={() => patchStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onFillChange={(next) =>
+            patchStyle(fillToStrokeStylePatch(next, { strokeWidth: Math.max(1, boxStrokeWidth || 1) }))
+          }
+          allowedFillKinds={TV_ALLOWED_FILL_KINDS}
+          onNoOutline={() => patchStyle(fillToStrokeStylePatch({ kind: "none" }, { strokeWidth: 0 }))}
           onStrokeWidthChange={(width) => patchStyle({ strokeWidth: width })}
         />
       </ShapeMenuHint>

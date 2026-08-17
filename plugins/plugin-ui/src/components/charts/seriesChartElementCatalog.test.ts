@@ -26,6 +26,21 @@ describe("seriesChartElementCatalog", () => {
     expect(labels).toContain("Tabela de dados");
     expect(labels).toContain("Legenda");
     expect(labels).toContain("Série");
+    expect(labels).toContain("Linha de meta");
+  });
+
+  it("linha de meta em cartesianos e desligada por padrão", () => {
+    const goal = SERIES_CHART_ELEMENT_CATALOG.find((entry) => entry.id === "goalLine");
+    expect(goal).toBeTruthy();
+    expect(isSeriesChartElementApplicable(goal!, "line")).toBe(true);
+    expect(isSeriesChartElementApplicable(goal!, "bar")).toBe(true);
+    expect(isSeriesChartElementApplicable(goal!, "pie")).toBe(false);
+    expect(isSeriesChartElementEnabled("goalLine", DEFAULT_SERIES_CHART_OPTIONS)).toBe(false);
+    const on = mergeSeriesChartOptions(setSeriesChartElementEnabled("goalLine", true));
+    expect(isSeriesChartElementEnabled("goalLine", on)).toBe(true);
+    expect(on.showGoalLine).toBe(true);
+    expect(chartElementPrimaryPartRef("goalLine")).toEqual({ kind: "goalLine" });
+    expect(chartElementIdForPartRef({ kind: "goalLine" })).toBe("goalLine");
   });
 
   it("marcadores só em gráfico de linhas", () => {

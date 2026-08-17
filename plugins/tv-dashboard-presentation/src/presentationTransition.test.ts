@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveSlideTransitionStyle } from "./presentationTransition";
+import {
+  formatPresentationTransitionLabel,
+  isPresentationTransitionStyle,
+  PRESENTATION_TRANSITION_STYLES,
+  resolveSlideTransitionStyle,
+} from "./presentationTransition";
 
 describe("resolveSlideTransitionStyle", () => {
   it("usa override do slide quando definido", () => {
@@ -19,9 +24,23 @@ describe("resolveSlideTransitionStyle", () => {
     expect(resolveSlideTransitionStyle({}, { transitionStyle: "slide" })).toBe("slide");
   });
 
-  it("cai em fade para valores inválidos", () => {
+  it("aceita o catálogo sutil e cai em fade apenas para valores inválidos", () => {
+    expect(PRESENTATION_TRANSITION_STYLES).toEqual([
+      "fade",
+      "dissolve",
+      "slide",
+      "push",
+      "wipe",
+      "zoom",
+      "none",
+    ]);
+    expect(isPresentationTransitionStyle("wipe")).toBe(true);
+    expect(formatPresentationTransitionLabel("zoom")).toBe("Zoom suave");
     expect(
-      resolveSlideTransitionStyle({ transitionStyle: "zoom" }, { transitionStyle: "invalid" }),
+      resolveSlideTransitionStyle({ transitionStyle: "zoom" }, { transitionStyle: "fade" }),
+    ).toBe("zoom");
+    expect(
+      resolveSlideTransitionStyle({ transitionStyle: "origami" }, { transitionStyle: "invalid" }),
     ).toBe("fade");
   });
 });

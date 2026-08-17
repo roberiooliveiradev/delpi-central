@@ -81,6 +81,34 @@ class Settings:
         str(_get_env("TM_PORTAL_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    TM_ATA_SIGN_INVITE_TTL_DAYS: int = int(
+        _get_env("TM_ATA_SIGN_INVITE_TTL_DAYS", default="14") or "14"
+    )
+    TM_MAIL_ENABLED: bool = (
+        str(_get_env("TM_MAIL_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    TM_GRAPH_TENANT_ID: str | None = _get_env(
+        "TM_GRAPH_TENANT_ID",
+        "GRAPH_REPORTS_TENANT_ID",
+    )
+    TM_GRAPH_CLIENT_ID: str | None = _get_env(
+        "TM_GRAPH_CLIENT_ID",
+        "GRAPH_REPORTS_CLIENT_ID",
+    )
+    TM_GRAPH_CLIENT_SECRET: str | None = _get_env(
+        "TM_GRAPH_CLIENT_SECRET",
+        "GRAPH_REPORTS_CLIENT_SECRET",
+    )
+    TM_GRAPH_MAIL_SENDER: str | None = _get_env(
+        "TM_GRAPH_MAIL_SENDER",
+        "GRAPH_REPORTS_MAIL_SENDER",
+    )
+    TM_GRAPH_HTTP_TIMEOUT_SECONDS: str = _get_env(
+        "TM_GRAPH_HTTP_TIMEOUT_SECONDS",
+        "GRAPH_HTTP_TIMEOUT_SECONDS",
+        default="15",
+    )
     CORE_API_BASE_URL: str = _get_env(
         "CORE_API_BASE_URL",
         default="http://core-api:8000",

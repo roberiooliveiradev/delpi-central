@@ -35,6 +35,7 @@ export type TimelineTreeNode = {
 export type TimelineClassNames = {
   root: string;
   rootTree: string;
+  toolbar: string;
   track: string;
   trackNested: string;
   entry: string;
@@ -57,6 +58,11 @@ export type TimelineProps = {
   loadingMessage?: string;
   /** Default `linear`. Com `tree`, monta floresta via `parentId`. */
   layout?: TimelineLayout;
+  /**
+   * Slot acima da trilha (filtros com `SegmentToggle`, ações, etc.).
+   * Filtro de eventos **não** é embutido — o consumidor filtra `items` e passa o UI aqui.
+   */
+  toolbar?: ReactNode;
   className?: string;
   classNames: TimelineClassNames;
   /** Prefixo BEM local — usado nos modifiers de tom do marker. */
@@ -130,6 +136,7 @@ export function timelineBemClasses(prefix: string, block = "timeline"): Timeline
   return {
     root: pair(root, ui),
     rootTree: pair(`${root}--tree`, `${ui}--tree`),
+    toolbar: pair(`${root}__toolbar`, `${ui}__toolbar`),
     track: pair(`${root}__track`, `${ui}__track`),
     trackNested: pair(`${root}__track--nested`, `${ui}__track--nested`),
     entry: pair(`${root}__entry`, `${ui}__entry`),
@@ -260,6 +267,7 @@ export function Timeline({
   loading = false,
   loadingMessage = "Carregando…",
   layout = "linear",
+  toolbar,
   className,
   classNames,
   prefix,
@@ -274,9 +282,14 @@ export function Timeline({
     .filter(Boolean)
     .join(" ");
 
+  const toolbarNode = toolbar ? (
+    <div className={classNames.toolbar}>{toolbar}</div>
+  ) : null;
+
   if (loading && items.length === 0) {
     return (
       <div className={rootClass} aria-busy="true" aria-live="polite">
+        {toolbarNode}
         <p className={classNames.loading}>{loadingMessage}</p>
       </div>
     );
@@ -285,6 +298,7 @@ export function Timeline({
   if (items.length === 0) {
     return (
       <div className={rootClass}>
+        {toolbarNode}
         <p className={classNames.empty}>{emptyMessage}</p>
       </div>
     );
@@ -294,6 +308,7 @@ export function Timeline({
     const forest = buildTimelineForest(items);
     return (
       <div className={rootClass}>
+        {toolbarNode}
         <TimelineTreeList
           nodes={forest}
           classNames={classNames}
@@ -308,6 +323,7 @@ export function Timeline({
 
   return (
     <div className={rootClass}>
+      {toolbarNode}
       <ol className={classNames.track} aria-label={ariaLabel}>
         {items.map((item) => (
           <li

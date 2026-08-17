@@ -5,6 +5,7 @@ import { ChartAxisLines } from "./ChartAxisLines";
 import { ChartAxisX } from "./ChartAxisX";
 import { ChartAxisY } from "./ChartAxisY";
 import { ChartDataPoints } from "./ChartDataPoints";
+import { ChartGoalLine } from "./ChartGoalLine";
 import { ChartGrid } from "./ChartGrid";
 import { ChartPlotArea } from "./ChartPlotArea";
 import { ChartSeriesBar } from "./ChartSeriesBar";
@@ -32,6 +33,8 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   showAxes: boolean;
   showGrid: boolean;
   showVerticalGrid: boolean;
+  showGoalLine?: boolean;
+  goalLineValue?: number | null;
   showMarkers: boolean;
   showDataLabels: boolean;
   dataLabels?: SeriesChartDataLabelsResolved | null;
@@ -59,6 +62,8 @@ export function ChartPlotAreaGroup({
   showAxes,
   showGrid,
   showVerticalGrid,
+  showGoalLine = false,
+  goalLineValue = null,
   showMarkers,
   showDataLabels,
   dataLabels = null,
@@ -71,6 +76,10 @@ export function ChartPlotAreaGroup({
   const skipCartesian = NON_CARTESIAN.has(chartType);
   const cartesianAxes = showAxes && !skipCartesian;
   const cartesianGrid = showGrid && !skipCartesian;
+  const goalValue =
+    showGoalLine && goalLineValue != null && Number.isFinite(Number(goalLineValue))
+      ? Number(goalLineValue)
+      : null;
   const clipRawId = useId().replace(/:/g, "");
   const plotClipId = `delpi-series-plot-clip-${clipRawId}`;
 
@@ -118,6 +127,7 @@ export function ChartPlotAreaGroup({
             interaction={interaction}
             categoryColors={config.categoryColors}
             colorScale={config.colorScale}
+            goalValue={goalValue}
           />
         )
       ) : null}
@@ -139,6 +149,7 @@ export function ChartPlotAreaGroup({
             chartParts={chartParts}
             categoryColors={config.categoryColors}
             colorScale={config.colorScale}
+            goalValue={goalValue}
           />
         )
       ) : null}
@@ -202,6 +213,7 @@ export function ChartPlotAreaGroup({
           chartParts={chartParts}
           categoryColors={config.categoryColors}
           colorScale={config.colorScale}
+          goalValue={goalValue}
         />
       ) : null}
 
@@ -227,6 +239,7 @@ export function ChartPlotAreaGroup({
           innerRadiusRatio={pieInnerRadiusRatio}
           categoryColors={config.categoryColors}
           colorScale={config.colorScale}
+          goalValue={goalValue}
         />
       ) : null}
 
@@ -238,6 +251,9 @@ export function ChartPlotAreaGroup({
             seriesColor={seriesColor}
             interaction={interaction}
             seriesIndex={0}
+            categoryColors={config.categoryColors}
+            colorScale={config.colorScale}
+            goalValue={goalValue}
           />
           <ChartSeriesLine
             layout={layout}
@@ -383,6 +399,16 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
+      {!skipCartesian && goalValue != null ? (
+        <ChartGoalLine
+          layout={layout}
+          value={goalValue}
+          visible
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
+
       {!skipCartesian ? (
         <ChartAxisY
           layout={layout}
@@ -393,6 +419,8 @@ export function ChartPlotAreaGroup({
           decimalPlaces={config.decimalPlaces}
           points={points}
           categoryLabelFormat={config.categoryLabelFormat}
+          displayValueFormat={config.displayValueFormat}
+          displayCategoryFormat={config.displayCategoryFormat}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -487,6 +515,8 @@ export function ChartPlotAreaGroup({
           valueFormat={valueFormat}
           decimalPlaces={config.decimalPlaces}
           categoryLabelFormat={config.categoryLabelFormat}
+          displayValueFormat={config.displayValueFormat}
+          displayCategoryFormat={config.displayCategoryFormat}
           interaction={interaction}
           chartParts={chartParts}
         />

@@ -1,0 +1,275 @@
+/**
+ * AlertQueue / ScopeChipBar / WorklistItem — Wave G commercial + reuso.
+ */
+
+.delpi-ui-alert-queue {
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-alert-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-alert-queue__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  min-height: 44px;
+}
+
+.delpi-ui-alert-queue__item--warning {
+  border-color: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 45%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 12%, var(--delpi-ui-surface, #ffffff));
+}
+
+.delpi-ui-alert-queue__item--danger {
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 45%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 12%, var(--delpi-ui-surface, #ffffff));
+}
+
+.delpi-ui-alert-queue__item--info {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 40%, var(--delpi-ui-border, #e6e6e6));
+}
+
+.delpi-ui-alert-queue__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-alert-queue__item--warning .delpi-ui-alert-queue__icon {
+  background: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 16%, transparent);
+  color: var(--delpi-ui-warning, #f59e0b);
+}
+
+.delpi-ui-alert-queue__item--danger .delpi-ui-alert-queue__icon {
+  background: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 16%, transparent);
+  color: var(--delpi-ui-danger, #ef4444);
+}
+
+.delpi-ui-alert-queue__body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-alert-queue__title {
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-alert-queue__description {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-alert-queue__action {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--delpi-ui-control-radius, 10px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: transparent;
+  color: var(--delpi-ui-accent, #089bdb);
+  font: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-alert-queue__action:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-alert-queue__empty {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-alert-queue--compact-empty .delpi-ui-alert-queue__empty {
+  padding: 4px 0;
+}
+
+.delpi-ui-scope-chip-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.delpi-ui-scope-chip-bar__label {
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-scope-chip-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delpi-ui-scope-chip-bar__chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.delpi-ui-scope-chip-bar__chip--active {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  color: var(--delpi-ui-accent, #089bdb);
+  font-weight: 600;
+}
+
+.delpi-ui-worklist-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  min-height: 48px;
+}
+
+.delpi-ui-worklist-item--danger {
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 40%, var(--delpi-ui-border, #e6e6e6));
+}
+
+.delpi-ui-worklist-item--warning {
+  border-color: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 40%, var(--delpi-ui-border, #e6e6e6));
+}
+
+.delpi-ui-worklist-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-worklist-item--danger .delpi-ui-worklist-item__icon {
+  background: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 16%, transparent);
+  color: var(--delpi-ui-danger, #ef4444);
+}
+
+.delpi-ui-worklist-item--warning .delpi-ui-worklist-item__icon {
+  background: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 16%, transparent);
+  color: var(--delpi-ui-warning, #f59e0b);
+}
+
+.delpi-ui-worklist-item__body {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.delpi-ui-worklist-item__title {
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-worklist-item__meta {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-worklist-item__detail {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.delpi-ui-worklist-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delpi-ui-worklist-item__action {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--delpi-ui-control-radius, 10px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-worklist-item__action--primary {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 50%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+  color: var(--delpi-ui-accent, #089bdb);
+  font-weight: 600;
+}
+
+.delpi-ui-worklist-item__action--ghost:hover,
+.delpi-ui-worklist-item__action--primary:hover {
+  filter: brightness(0.97);
+}
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action,
+.theme-dark .delpi-ui-worklist-item__action {
+  border-color: color-mix(in srgb, #fff 22%, transparent);
+  color: color-mix(in srgb, #fff 92%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action--primary,
+.theme-dark .delpi-ui-worklist-item__action--primary {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 28%, transparent);
+  color: #e8f7fc;
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .delpi-ui-worklist-item__action--ghost,
+.theme-dark .delpi-ui-worklist-item__action--ghost {
+  color: color-mix(in srgb, #fff 88%, transparent);
+}

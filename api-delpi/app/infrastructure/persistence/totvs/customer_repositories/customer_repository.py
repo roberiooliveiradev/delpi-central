@@ -87,10 +87,16 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
         page: int = 1,
         page_size: int = 20,
     ) -> Page[CustomerMaster]:
+        """Busca SA1 para amarração de carteira.
+
+        Inclui clientes bloqueados (`A1_MSBLQL = '1'`): o gap «sem cobertura»
+        usa pedidos abertos e pode listar contas bloqueadas no cadastro.
+        Busca também em `A1_NREDUZ` (nome fantasia / reduzido operacional).
+        """
         paging = paginate(page, page_size)
+        # Soft-delete only — blocked customers remain linkable for portfolio coverage.
         where_clauses = [
             "SA1.D_E_L_E_T_ = ''",
-            "SA1.A1_MSBLQL <> '1'",
         ]
         where_params: list[str] = []
         term = (query or "").strip()
@@ -99,10 +105,11 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
                 "("
                 "SA1.A1_COD LIKE ? OR "
                 "SA1.A1_NOME COLLATE Latin1_General_CI_AI LIKE ? OR "
+                "SA1.A1_NREDUZ COLLATE Latin1_General_CI_AI LIKE ? OR "
                 "SA1.A1_LOJA LIKE ?"
                 ")"
             )
-            where_params.extend([f"{term}%", f"%{term}%", f"{term}%"])
+            where_params.extend([f"{term}%", f"%{term}%", f"%{term}%", f"{term}%"])
 
         where_sql = " AND ".join(where_clauses)
         count_sql = f"""
@@ -114,11 +121,18 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             SELECT
                 SA1.A1_COD AS code,
                 SA1.A1_LOJA AS store,
-                SA1.A1_NOME AS name,
+                COALESCE(
+                    NULLIF(LTRIM(RTRIM(SA1.A1_NREDUZ)), ''),
+                    LTRIM(RTRIM(SA1.A1_NOME))
+                ) AS name,
                 SA1.A1_MSBLQL AS blocked
               FROM SA1010 SA1 WITH (NOLOCK)
              WHERE {where_sql}
-             ORDER BY SA1.A1_NOME, SA1.A1_COD, SA1.A1_LOJA
+             ORDER BY
+                CASE WHEN SA1.A1_MSBLQL = '1' THEN 1 ELSE 0 END,
+                name,
+                SA1.A1_COD,
+                SA1.A1_LOJA
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 
@@ -145,4 +159,14 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             total=total,
             page=paging["page"],
             page_size=paging["page_size"],
+        )
+
+    def search_customers_by_query(self, *, query: str, limit: int = 20) -> list[dict]:
+        """Busca SA1 por código, nome, loja ou CNPJ (A1_CGC)."""
+        from app.infrastructure.persistence.totvs.invoice_issuance_repositories.totvs_invoice_issuance_lookup_repository import (
+            TotvsInvoiceIssuanceLookupRepository,
+        )
+
+        return TotvsInvoiceIssuanceLookupRepository().search_customers(
+            query=query, limit=limit
         )

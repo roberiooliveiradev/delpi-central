@@ -41,6 +41,8 @@ export type ComunicadoStageBemClassNames = {
   /** `tdp-native-screen` + dual root do comunicado. */
   root: string;
   stage: string;
+  /** Imagem de fundo em tela cheia (`object-fit: cover`). */
+  background: string;
   masterLogo: string;
   block: string;
   link: string;
@@ -56,6 +58,7 @@ export function comunicadoStageBemClasses(prefix = "tdp"): ComunicadoStageBemCla
   return {
     root: `${prefix}-native-screen ${delpiUiClass(legacyRoot, COMUNICADO_UI_PREFIX)}`,
     stage: delpiUiClass(`${legacyRoot}__stage`, `${COMUNICADO_UI_PREFIX}__stage`),
+    background: delpiUiClass(`${legacyRoot}__background`, `${COMUNICADO_UI_PREFIX}__background`),
     masterLogo: delpiUiClass(`${legacyRoot}__master-logo`, `${COMUNICADO_UI_PREFIX}__master-logo`),
     block: delpiUiClass(`${legacyRoot}__block`, `${COMUNICADO_UI_PREFIX}__block`),
     link: delpiUiClass(`${legacyRoot}__link`, `${COMUNICADO_UI_PREFIX}__link`),

@@ -15,30 +15,12 @@
   gap: 6px;
 }
 
-.notification-var-toolbar__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .notification-var-toolbar__chip--recipient {
   border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
 }
 
-.notification-var-toolbar__chip code {
+.notification-var-toolbar__chips .portal-ui-btn code {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
-}
-
-.notification-var-toolbar__chip:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }

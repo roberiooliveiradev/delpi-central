@@ -39,6 +39,8 @@ export type ChartAddElementChoiceId =
   | "grid:none"
   | "grid:horizontal"
   | "grid:vertical"
+  | "goalLine:none"
+  | "goalLine:show"
   | "legend:none"
   | "legend:right"
   | "legend:top"
@@ -70,6 +72,7 @@ export function chartAddElementChoiceRootId(
 ): SeriesChartElementId {
   const root = choiceId.split(":")[0];
   if (root === "grid") return "gridlines";
+  if (root === "goalLine") return "goalLine";
   if (root === "markers") return "markers";
   if (root === "smoothLines") return "smoothLines";
   if (root === "axes") return "axes";
@@ -191,6 +194,10 @@ export function applyChartAddElementChoice(
         ...base,
         showVerticalGrid: !Boolean(base.showVerticalGrid),
       });
+    case "goalLine:none":
+      return mergeSeriesChartOptions({ ...base, showGoalLine: false });
+    case "goalLine:show":
+      return mergeSeriesChartOptions({ ...base, showGoalLine: true });
     case "legend:none":
       return mergeSeriesChartOptions({
         ...base,
@@ -313,6 +320,10 @@ export function isChartAddElementChoiceActive(
       return base.showGrid !== false;
     case "grid:vertical":
       return Boolean(base.showVerticalGrid);
+    case "goalLine:none":
+      return !base.showGoalLine;
+    case "goalLine:show":
+      return Boolean(base.showGoalLine);
     case "legend:none":
       return base.showLegend === false || base.legendPosition === "hidden";
     case "legend:right":

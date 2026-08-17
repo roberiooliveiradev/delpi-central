@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Goal,
   Grid3x3,
   Heading,
   ListOrdered,
@@ -25,4 +26,5 @@ export const CHART_ADD_ELEMENT_ITEMS: ChartAddElementItem[] = [
   { id: "dataTable", icon: Table2, label: "Tabela de dados" },
   { id: "axes", icon: BarChart3, label: "Eixos" },
   { id: "gridlines", icon: Grid3x3, label: "Linhas de grade" },
+  { id: "goalLine", icon: Goal, label: "Linha de meta" },
 ];

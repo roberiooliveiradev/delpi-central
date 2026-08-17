@@ -169,7 +169,7 @@ export async function fetchInstanciaMatrizImpactoEsforco(
   params?: MatrizImpactoQuery
 ): Promise<InstanciaMatrizImpactoResponse> {
   return request(
-    `/instancias/${instanciaId}/matriz-impacto-esforco${buildQuery(params)}`,
+    `/instances/${instanciaId}/impact-effort-matrix${buildQuery(params)}`,
     getAccessToken
   );
 }
@@ -180,7 +180,7 @@ export async function fetchProcessoMatrizImpactoEsforco(
   params?: MatrizImpactoQuery
 ): Promise<ProcessoMatrizImpactoResponse> {
   return request(
-    `/processos/${processoId}/matriz-impacto-esforco${buildQuery(params)}`,
+    `/processes/${processoId}/impact-effort-matrix${buildQuery(params)}`,
     getAccessToken
   );
 }
@@ -191,7 +191,7 @@ export async function fetchRevisaoMatrizImpactoEsforco(
   params?: MatrizImpactoQuery
 ): Promise<RevisaoMatrizImpactoResponse> {
   return request(
-    `/revisoes/${revisaoId}/matriz-impacto-esforco${buildQuery(params)}`,
+    `/revisions/${revisaoId}/impact-effort-matrix${buildQuery(params)}`,
     getAccessToken
   );
 }
@@ -203,7 +203,7 @@ export async function saveRevisaoMatrizImpactoEsforco(
   params?: MatrizImpactoQuery
 ): Promise<RevisaoMatrizImpactoResponse> {
   return request(
-    `/revisoes/${revisaoId}/matriz-impacto-esforco${buildQuery(params)}`,
+    `/revisions/${revisaoId}/impact-effort-matrix${buildQuery(params)}`,
     getAccessToken,
     {
       method: "PUT",

@@ -36,6 +36,7 @@ from app.interface.http.routes.production_appointments import (
 from app.interface.http.routes.supplies import supplies_router
 from app.interface.http.routes.supplies import safety_stock_router
 from app.interface.http.routes.supplies import stock_balances_router
+from app.interface.http.routes.supplies import third_party_materials_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
 from app.interface.http.routes.production import production_operational_router
@@ -48,9 +49,13 @@ from app.interface.http.routes.quality import quality_labels_public_router
 from app.interface.http.routes.quality import kaizen_public_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.dashboard import dashboard_router
+from app.interface.http.routes.scheduling import scheduling_public_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
+from app.interface.http.routes.canal_denuncia import canal_denuncia_public_router
 from app.interface.http.routes.canal_denuncia import canal_denuncia_router
+from app.interface.http.routes.mural_acessos import mural_acessos_public_router
+from app.interface.http.routes.mural_acessos import mural_acessos_router
 from app.interface.http.routes.reports import reports_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_admin_router
@@ -58,11 +63,15 @@ from app.interface.http.routes.guias_procedimentos import guias_procedimentos_me
 from app.interface.http.routes.lancamento_notas_fiscais import (
     lancamento_notas_fiscais_router,
 )
+from app.interface.http.routes.invoice_issuance import invoice_issuance_router
 from app.interface.http.routes.planejamento_orcamentario import (
     planejamento_orcamentario_router,
 )
 from app.interface.http.routes.inspecoes_entrada import inspecoes_entrada_router
 from app.interface.http.routes.inspecoes_processo import inspecoes_processo_router
+from app.interface.http.routes.process_inspection_plans import (
+    process_inspection_plans_router,
+)
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
 from app.interface.http import propostas_comerciais_controller
 from app.core.responses import error_response, not_found_response
@@ -231,6 +240,7 @@ app.include_router(refugos_router.router)
 app.include_router(supplies_router.router)
 app.include_router(safety_stock_router.router)
 app.include_router(stock_balances_router.router)
+app.include_router(third_party_materials_router.router)
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)
 app.include_router(production_operational_router.router)
@@ -242,6 +252,9 @@ app.include_router(engineering_router.router)
 app.include_router(quality_router.router)
 app.include_router(quality_labels_public_router.router)
 app.include_router(kaizen_public_router.router)
+app.include_router(mural_acessos_public_router.router)
+app.include_router(canal_denuncia_public_router.router)
+app.include_router(scheduling_public_router.router)
 app.include_router(hr_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(scheduling_router.router, prefix="/scheduling", tags=["Agendamento"])
@@ -254,6 +267,11 @@ app.include_router(
     canal_denuncia_router.router,
     prefix="/canal-denuncia",
     tags=["Canal de Denúncia"],
+)
+app.include_router(
+    mural_acessos_router.router,
+    prefix="/mural-acessos",
+    tags=["Mural de Acessos"],
 )
 app.include_router(
     reports_router.router,
@@ -281,6 +299,7 @@ app.include_router(
     tags=["Guias e Procedimentos — Admin Media"],
 )
 app.include_router(lancamento_notas_fiscais_router.router)
+app.include_router(invoice_issuance_router.router)
 app.include_router(planejamento_orcamentario_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
@@ -290,8 +309,18 @@ app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
 app.include_router(inspecoes_entrada_router.router)
 app.include_router(inspecoes_processo_router.router)
+app.include_router(process_inspection_plans_router.router)
 app.include_router(pedidos_venda_abertos_router.router)
-app.include_router(propostas_comerciais_controller.router)
+app.include_router(
+    propostas_comerciais_controller.router,
+    prefix="/propostas-comerciais",
+)
+# EN: «propostas comerciais» → commercial-proposals (não proposals-comerciais)
+app.include_router(
+    propostas_comerciais_controller.router,
+    prefix="/commercial-proposals",
+    include_in_schema=False,
+)
 
 register_audit_5s_socket_handlers()
 

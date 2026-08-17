@@ -3,6 +3,7 @@ import { createBlock } from "@delpi/tv-dashboard-presentation";
 
 import {
   buildSelectionTreeRows,
+  filterCollapsedSelectionRows,
   selectionTreeRowIsActive,
 } from "./buildSelectionTreeRows";
 
@@ -34,5 +35,18 @@ describe("buildSelectionTreeRows", () => {
     const group = rows[0]!;
     expect(selectionTreeRowIsActive(group, [a.id, b.id])).toBe(true);
     expect(selectionTreeRowIsActive(group, [a.id])).toBe(false);
+  });
+
+  it("filtra filhos depth: 1 do grupo recolhido", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    const c = createBlock("text", "C");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    const rows = buildSelectionTreeRows([a, b, c]);
+    const visible = filterCollapsedSelectionRows(rows, new Set(["g1"]));
+    expect(visible.some((row) => row.kind === "block" && row.depth === 1)).toBe(false);
+    expect(visible.some((row) => row.kind === "group" && row.groupId === "g1")).toBe(true);
+    expect(visible.some((row) => row.kind === "block" && row.block.id === c.id)).toBe(true);
   });
 });

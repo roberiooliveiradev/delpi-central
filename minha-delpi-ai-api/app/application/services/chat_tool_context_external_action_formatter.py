@@ -182,6 +182,16 @@ class ChatToolContextExternalActionFormatter:
                         if not safe_metadata.get(key):
                             safe_metadata[key] = value
 
+            if tool_name == "tv_dashboard_copilot" and isinstance(data, dict):
+                # Host MFE consome sideEffects/target no metadata do toolCall.
+                safe_metadata["data"] = data
+                if isinstance(data.get("sideEffects"), dict):
+                    safe_metadata["sideEffects"] = data["sideEffects"]
+                if "target" in data:
+                    safe_metadata["target"] = data["target"]
+                if isinstance(data.get("appliedOps"), list):
+                    safe_metadata["appliedOps"] = data["appliedOps"]
+
             return safe_metadata
 
     @staticmethod

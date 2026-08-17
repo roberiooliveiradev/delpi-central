@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { __resetScopedPrintForTests } from "../../export/pdf/printOnce";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../../export/pdf/delpiDocumentPrint", () => ({
+  printDelpiDocumentHtml: vi.fn(() => true),
+}));
+
+import { printDelpiDocumentHtml } from "../../export/pdf/delpiDocumentPrint";
 import {
   DocumentFooter,
   DocumentHeader,
@@ -14,12 +22,15 @@ import {
 
 afterEach(() => {
   cleanup();
-  document.body.classList.remove("delpi-ui-document-printing");
-  __resetScopedPrintForTests();
   vi.restoreAllMocks();
+  document.body.innerHTML = "";
 });
 
 describe("DocumentReader", () => {
+  beforeEach(() => {
+    vi.mocked(printDelpiDocumentHtml).mockClear().mockReturnValue(true);
+  });
+
   it("compõe papel A4 com slots institucionais e assinatura", () => {
     render(
       <DocumentReader toolbar={<button>Baixar</button>}>
@@ -40,16 +51,38 @@ describe("DocumentReader", () => {
     expect(screen.getByText("Baixar")).toBeTruthy();
   });
 
-  it("ativa o escopo de impressão do documento uma única vez", () => {
-    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+  it("imprime via printDelpiDocumentHtml (iframe oculto no host)", () => {
+    render(
+      <DocumentReader>
+        <DocumentPage>
+          <p>Corpo da ata</p>
+        </DocumentPage>
+      </DocumentReader>,
+    );
 
-    expect(printDocumentReader()).toBe(true);
-    expect(printDocumentReader()).toBe(false);
-
-    expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(true);
-    expect(print).toHaveBeenCalledOnce();
-
-    window.dispatchEvent(new Event("afterprint"));
+    expect(printDocumentReader({ title: "Ata formal" })).toBe(true);
+    expect(printDelpiDocumentHtml).toHaveBeenCalled();
+    const html = String(vi.mocked(printDelpiDocumentHtml).mock.calls[0]?.[0] ?? "");
+    expect(html).toContain("Corpo da ata");
+    expect(html).toContain("delpi-ui-document-page");
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(false);
+  });
+
+  it("CSS de leitura mantém tabelas como grade e print multipágina sem clip", () => {
+    const css = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../../styles/document-reader.css"),
+      "utf8",
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-document-rich-content table \{[\s\S]*?display:\s*table/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-document-rich-content th,\s*\n\.delpi-ui-document-rich-content td \{[\s\S]*?display:\s*table-cell/,
+    );
+    expect(css).toMatch(/\.delpi-ui-document-page \{[\s\S]*?overflow:\s*visible/);
+    expect(css).toMatch(/@page\s*\{[\s\S]*?size:\s*A4 portrait/);
+    expect(css).toMatch(/@page\s*\{[\s\S]*?margin:\s*0/);
+    expect(css).toMatch(/text-align:\s*justify/);
+    expect(css).toMatch(/break-after:\s*avoid-page/);
   });
 });

@@ -73,3 +73,26 @@ def test_financeiro_centro_custo_export_permissions_include_export() -> None:
     assert perms.FINANCEIRO_CENTRO_CUSTO_EXPORT in (
         perms.FINANCEIRO_CENTRO_CUSTO_EXPORT_PERMISSIONS
     )
+
+
+def test_pedidos_venda_abertos_accepts_commercial_codes() -> None:
+    """Portal Comercial: access + manage; admin de carteira só manage."""
+    assert perms.COMMERCIAL_ACCESS in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert perms.COMMERCIAL_MANAGE in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS == [
+        perms.COMMERCIAL_MANAGE,
+    ]
+    assert perms.API_DELPI_ACCESS not in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert perms.API_DELPI_ACCESS not in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
+    assert perms.PEDIDOS_VENDA_ABERTOS_ADMIN not in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
+    assert perms.PEDIDOS_VENDA_ABERTOS_ACCESS in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+
+
+def test_kpi_commercial_accepts_commercial_access() -> None:
+    assert perms.COMMERCIAL_ACCESS in perms.KPI_COMMERCIAL_ACCESS
+    assert perms.DASHBOARD_COMMERCIAL_VIEW in perms.KPI_COMMERCIAL_ACCESS
+
+
+def test_propostas_comerciais_accepts_commercial_access() -> None:
+    assert perms.COMMERCIAL_ACCESS in perms.PROPOSTAS_COMERCIAIS_ACCESS
+    assert perms.PROPOSTAS_COMERCIAIS_VIEW in perms.PROPOSTAS_COMERCIAIS_ACCESS

@@ -22,8 +22,11 @@ import {
 } from "../../components/useCanvasBlockInteraction";
 import { normalizeResizeHandle } from "../../utils/resizeFrameAspect";
 import {
+  inferResizeEdges,
   peerFramesForSmartGuides,
+  resizeEdgesFromHandle,
   snapFrameToPeerBlocks,
+  snapGroupGestureToPeers,
   type SmartGuideLine,
 } from "../../utils/comunicadoSmartGuides";
 import { finalizeMultiFramesWithSnap } from "../../utils/finalizeMultiFramesWithSnap";
@@ -140,6 +143,7 @@ export function useComunicadoEditorDrag({
   getSlideAspectRatioRef.current = getSlideAspectRatio;
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const groupGestureRef = useRef<StageGroupGesture | null>(null);
+  const liveResizeHandleRef = useRef<string | null>(null);
   /** Preview DOM rígido: um container transformado; bake nos blocos só no pointerup. */
   const [activeGroupGesture, setActiveGroupGesture] =
     useState<StageGroupGesture | null>(null);
@@ -253,6 +257,9 @@ export function useComunicadoEditorDrag({
         if ("connector" in patch && patch.connector === undefined && next.type === "shape") {
           delete (next as ComunicadoShapeBlock).connector;
         }
+        if ("vertices" in patch && patch.vertices === undefined && next.type === "shape") {
+          delete (next as ComunicadoShapeBlock).vertices;
+        }
         return next;
       });
       /* Endpoint drag: não detach via reconcile — attach/detach parcial já veio no patch. */
@@ -273,19 +280,19 @@ export function useComunicadoEditorDrag({
       let workingFrame = frame;
       let guides: SmartGuideLine[] = [];
 
-      if (snapToObjectsRef.current) {
-        const peers = peerFramesForSmartGuides(configRef.current.blocks ?? [], excludeIds);
-        const mode = resolveLiveSnapMode(baseline, frame);
-        const snapped = snapFrameToPeerBlocks(workingFrame, peers, mode);
-        workingFrame = snapped.frame;
-        guides = snapped.guides;
-      }
-      setActiveSmartGuides(guides);
-
       if (gesture && gesture.localFrames.has(blockId)) {
+        if (snapToObjectsRef.current) {
+          const peers = peerFramesForSmartGuides(configRef.current.blocks ?? [], excludeIds);
+          const snapped = snapGroupGestureToPeers(gesture, frame, peers);
+          groupGestureRef.current = snapped.gesture;
+          setActiveSmartGuides(snapped.guides);
+          previewGroupGesture(snapped.gesture);
+          return;
+        }
         const startRef = gesture.interactionStartFrame;
-        const isResize =
-          workingFrame.w !== startRef.w || workingFrame.h !== startRef.h;
+        const isResize = Boolean(gesture.resizeHandle) ||
+          workingFrame.w !== startRef.w ||
+          workingFrame.h !== startRef.h;
         const next = isResize
           ? applyGroupScale(gesture, workingFrame)
           : applyGroupMove(gesture, workingFrame);
@@ -293,6 +300,20 @@ export function useComunicadoEditorDrag({
         previewGroupGesture(next);
         return;
       }
+
+      if (snapToObjectsRef.current) {
+        const peers = peerFramesForSmartGuides(configRef.current.blocks ?? [], excludeIds);
+        const mode = resolveLiveSnapMode(baseline, frame);
+        const resizeEdges =
+          mode === "resize"
+            ? resizeEdgesFromHandle(liveResizeHandleRef.current) ??
+              (baseline ? inferResizeEdges(baseline.frame, frame) : undefined)
+            : undefined;
+        const snapped = snapFrameToPeerBlocks(workingFrame, peers, mode, undefined, resizeEdges);
+        workingFrame = snapped.frame;
+        guides = snapped.guides;
+      }
+      setActiveSmartGuides(guides);
 
       const draggedIds = new Set<string>([blockId]);
       const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
@@ -327,6 +348,7 @@ export function useComunicadoEditorDrag({
     }) => {
       cancelPendingTapDeselect();
       setActiveSmartGuides([]);
+      liveResizeHandleRef.current = meta?.mode ? normalizeResizeHandle(meta.mode) : null;
       dragSnapshotRef.current = snapshotConfig(configRef.current);
       const override = multiDragSelectionOverrideRef.current;
       multiDragSelectionOverrideRef.current = null;
@@ -392,6 +414,7 @@ export function useComunicadoEditorDrag({
       mode: "move" | "resize" | "rotate" | "adjust" | "endpoint",
     ) => {
       setActiveSmartGuides([]);
+      liveResizeHandleRef.current = null;
       const before = dragSnapshotRef.current;
       dragSnapshotRef.current = null;
       const gesture = groupGestureRef.current;
@@ -411,6 +434,20 @@ export function useComunicadoEditorDrag({
        */
       if (gesture && gesture.memberIds.length > 1) {
         let finalGesture = gesture;
+        if (mode !== "rotate" && snapToObjectsRef.current) {
+          const peers = peerFramesForSmartGuides(before.blocks ?? [], new Set(gesture.memberIds));
+          const unionSnap = snapFrameToPeerBlocks(
+            gesture.group.frame,
+            peers,
+            gesture.resizeHandle ? "resize" : "move",
+            undefined,
+            gesture.resizeHandle ? resizeEdgesFromHandle(gesture.resizeHandle) : undefined,
+          );
+          finalGesture = {
+            ...gesture,
+            group: { ...gesture.group, frame: unionSnap.frame },
+          };
+        }
         if (mode !== "rotate" && snapToGridRef.current) {
           const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
           const anchor =
@@ -610,12 +647,14 @@ export function useComunicadoEditorDrag({
       deckHistory,
       pushPast,
       snapToGridRef,
+      snapToObjectsRef,
       stageGridSizePercentRef,
     ],
   );
 
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
+    liveResizeHandleRef.current = null;
     groupGestureRef.current = null;
     setActiveGroupGesture(null);
     multiDragSelectionOverrideRef.current = null;

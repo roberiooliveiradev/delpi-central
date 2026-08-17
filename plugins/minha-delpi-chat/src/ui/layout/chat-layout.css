@@ -34,6 +34,15 @@
   min-width: 0;
 }
 
+.mdc-chat-shell--embedded {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mdc-chat-shell--embedded > .mdc-chat-view-host {
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .mdc-chat-view-host.mdc-chat-page-panel,
 .mdc-chat-view-host.mdc-chat-page-panel > .mdc-chat-main {
   width: 100%;

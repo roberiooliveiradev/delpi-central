@@ -7,6 +7,7 @@ from typing import Any, Mapping, Sequence
 
 DATE_RANGE_PRESET_KEY = "dateRangePreset"
 PERIOD_DAYS_KEY = "periodDays"
+EXCLUDE_WEEKENDS_KEY = "excludeWeekends"
 
 # Pares canônicos OpenAPI (ordem = preferência ao detectar no schema).
 # Canônico HTTP api-delpi primeiro; aliases legado depois (remoção planejada 2027-01).
@@ -26,7 +27,7 @@ START_KEYS = tuple(pair[0] for pair in DATE_RANGE_KEY_PAIRS)
 END_KEYS = tuple(pair[1] for pair in DATE_RANGE_KEY_PAIRS)
 
 # Chaves internas — não devem ir na query HTTP da api-delpi.
-INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY})
+INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
 DEFAULT_DATE_RANGE_KEYS = ("start_date", "end_date")
 
@@ -102,6 +103,14 @@ def date_alias_keys(*, keep: tuple[str, str]) -> frozenset[str]:
     return frozenset(set(START_KEYS) | set(END_KEYS) | keep_set)
 
 
+def previous_business_day(day: date) -> date:
+    """Dia útil anterior (seg–sex). Segunda → sexta; domingo/sábado → sexta."""
+    candidate = day - timedelta(days=1)
+    while candidate.weekday() >= 5:  # 5=sábado, 6=domingo
+        candidate -= timedelta(days=1)
+    return candidate
+
+
 def compute_preset_range(
     preset: str,
     *,
@@ -117,12 +126,30 @@ def compute_preset_range(
     if normalized == "today":
         return day, day
 
+    # Reuniões do «dia anterior»: pula fim de semana (segunda → sexta).
+    if normalized in {"previous_day", "yesterday", "previous_business_day"}:
+        prior = previous_business_day(day)
+        return prior, prior
+
     if normalized == "this_week":
         start = day - timedelta(days=day.weekday())  # segunda
         return start, day
 
     if normalized == "this_month":
         return day.replace(day=1), day
+
+    # MTD sem o dia corrente — fim = dia útil anterior (segunda → sexta).
+    if normalized in {
+        "this_month_until_yesterday",
+        "this_month_to_yesterday",
+        "this_month_until_previous_day",
+    }:
+        start = day.replace(day=1)
+        end = previous_business_day(day)
+        if end < start:
+            # 1º dia útil do mês (ou 1º após FDS): ainda não há dia concluído no mês.
+            return start, start
+        return start, end
 
     if normalized == "this_quarter":
         quarter_start_month = ((day.month - 1) // 3) * 3 + 1

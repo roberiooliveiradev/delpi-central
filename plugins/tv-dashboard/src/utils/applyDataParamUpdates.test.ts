@@ -21,6 +21,8 @@ describe("applyDataParamRawUpdates", () => {
 
   it("parseia inteiros do schema", () => {
     expect(parseDataParamRaw("periodDays", "15", { periodDays: { type: "integer" } })).toBe(15);
+    expect(parseDataParamRaw("excludeWeekends", "true", {})).toBe(true);
+    expect(parseDataParamRaw("excludeWeekends", "", {})).toBeUndefined();
   });
 
   it("rejeita data com ano absurdo (ex.: 0026)", () => {

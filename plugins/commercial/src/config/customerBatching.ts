@@ -1,0 +1,2 @@
+export const CUSTOMER_BATCH_SIZE = 200;
+export const CUSTOMER_BATCH_CONCURRENCY = 3;

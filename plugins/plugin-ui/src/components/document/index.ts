@@ -10,4 +10,26 @@ export {
   type DocumentPageProps,
   type DocumentReaderProps,
   type DocumentSignatureBlockProps,
+  type PrintDocumentReaderOptions,
 } from "./DocumentReader";
+export {
+  DocumentPageWatermark,
+  type DocumentPageWatermarkProps,
+} from "./DocumentPageWatermark";
+export {
+  DocumentReaderToolbar,
+  type DocumentReaderToolbarProps,
+} from "./DocumentReaderToolbar";
+export {
+  buildAbntPrintFooterHtml,
+  buildAbntPrintHeaderHtml,
+  buildDocumentReaderPrintHtml,
+  collectPrintScopeClasses,
+  downloadDocumentReaderPdf,
+  ensurePrintWatermarkTileCoverage,
+  extractWatermarkInnerHtml,
+  findActiveDocumentPage,
+  parseDocumentPrintHtml,
+  prepareDocumentPagePrintClone,
+  printDocumentReaderInWindow,
+} from "./printDocumentReaderHtml";

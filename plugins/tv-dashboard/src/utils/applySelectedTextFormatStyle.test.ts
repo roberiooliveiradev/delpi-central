@@ -35,10 +35,76 @@ describe("buildSelectedTextFormatBlockPatch", () => {
     const patch = buildSelectedTextFormatBlockPatch({
       selected,
       patch: { fontSize: 18, color: "#0f172a", fontWeight: "bold" },
+      applyOptions: { fontSizeMode: "absolute" },
     });
     expect(patch?.chartParts?.title?.style?.fontSize).toBe(18);
     expect(patch?.chartParts?.legend?.style?.color).toBe("#0f172a");
     expect(patch?.chartParts?.["axis:x"]?.style?.fontWeight).toBe("bold");
+  });
+
+  it("fonte global do gráfico não apaga cor/tamanho das partes", () => {
+    const selected = {
+      id: "c1",
+      type: "chart_view",
+      chartType: "pie",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      chartParts: {
+        title: { style: { fontSize: 22, color: "#111", fontWeight: "bold" } },
+        legend: { style: { fontSize: 14, color: "#334155" } },
+        dataLabels: { style: { fontSize: 12, color: "#0f172a" } },
+      },
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      patch: { fontFamily: "Roboto, sans-serif" },
+    });
+    expect(patch?.chartParts?.title?.style).toMatchObject({
+      fontFamily: "Roboto, sans-serif",
+      fontSize: 22,
+      color: "#111",
+      fontWeight: "bold",
+    });
+    expect(patch?.chartParts?.legend?.style).toMatchObject({
+      fontFamily: "Roboto, sans-serif",
+      fontSize: 14,
+      color: "#334155",
+    });
+    expect(patch?.chartParts?.dataLabels?.style).toMatchObject({
+      fontFamily: "Roboto, sans-serif",
+      fontSize: 12,
+      color: "#0f172a",
+    });
+  });
+
+  it("delta de fontSize no gráfico escala cada parte; absolute unifica", () => {
+    const selected = {
+      id: "c1",
+      type: "chart_view",
+      chartType: "pie",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      chartParts: {
+        title: { style: { fontSize: 22 } },
+        legend: { style: { fontSize: 14 } },
+        dataLabels: { style: { fontSize: 12 } },
+      },
+    } as ComunicadoBlock;
+    const delta = buildSelectedTextFormatBlockPatch({
+      selected,
+      patch: { fontSizeAuto: false },
+      applyOptions: { fontSizeMode: "delta", fontSizeDelta: 2 },
+    });
+    expect(delta?.chartParts?.title?.style?.fontSize).toBe(24);
+    expect(delta?.chartParts?.legend?.style?.fontSize).toBe(16);
+    expect(delta?.chartParts?.dataLabels?.style?.fontSize).toBe(14);
+
+    const absolute = buildSelectedTextFormatBlockPatch({
+      selected,
+      patch: { fontSize: 16, fontSizeAuto: false },
+      applyOptions: { fontSizeMode: "absolute" },
+    });
+    expect(absolute?.chartParts?.title?.style?.fontSize).toBe(16);
+    expect(absolute?.chartParts?.legend?.style?.fontSize).toBe(16);
+    expect(absolute?.chartParts?.dataLabels?.style?.fontSize).toBe(16);
   });
 
   it("parte Eixos altera só axis:x/y e não dataLabels/título/legenda", () => {

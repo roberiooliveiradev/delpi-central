@@ -1,7 +1,4 @@
 import {
-  applyChartTextStyleToSiblingParts,
-  applyInputTextStyleToSiblingParts,
-  applyKpiPartStyleToSiblingParts,
   clampFontSize,
   getChartPartState,
   getInputPartState,
@@ -14,10 +11,17 @@ import {
   mergeTablePartsWithOptions,
   partsToChartOptions,
   partsToKpiOptions,
+  resolveChartPartFontSize,
+  resolveInputPartFontSize,
+  resolveKpiPartFontSize,
   upsertChartPartState,
   upsertInputPartState,
   upsertKpiPartState,
   upsertTablePartState,
+  CHART_PART_FONT_SIZE_DEFAULTS,
+  INPUT_TEXT_PART_KINDS,
+  KPI_TEXT_PART_KINDS,
+  type ChartTextPartKind,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartStyle,
@@ -26,6 +30,7 @@ import {
   type ComunicadoKpiPartRef,
   type ComunicadoKpiPartStyle,
   type ComunicadoTablePartRef,
+  type KpiTextPartKind,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TextFormatStyleSnapshot } from "./selectedTextFormatTarget";
@@ -36,6 +41,12 @@ import {
   isTableTextFormatPart,
   resolveSelectedTextFormatTarget,
 } from "./selectedTextFormatTarget";
+import {
+  mergeSparseStyleProperties,
+  resolveAppliedNumericProperty,
+  sparsePropertyPatch,
+  type SelectionPropertyApplyOptions,
+} from "./selectionPropertyApply";
 
 type AnyPartStyle = {
   fontFamily?: string;
@@ -77,39 +88,236 @@ function pickFontStyle(value: string | undefined): "italic" | "normal" | undefin
   return undefined;
 }
 
+/**
+ * Merge tipográfico esparso: só propriedades definidas no patch.
+ * Evita `{ fontWeight: undefined }` apagar estilo prévio no upsert do gráfico.
+ */
 function mergeTypographyStyle(
   prev: AnyPartStyle | null | undefined,
   patch: TextFormatStyleSnapshot,
   opts?: { fontSizeAuto?: boolean; nextFontSize?: number | undefined; typographyMode?: string },
 ): AnyPartStyle {
-  const nextAlign = pickTextAlign(patch.textAlign);
-  const nextVAlign = pickVerticalAlign(patch.verticalAlign);
+  const sparse = sparsePropertyPatch({
+    fontFamily: patch.fontFamily,
+    fontWeight: patch.fontWeight,
+    fontStyle: patch.fontStyle,
+    color: patch.color,
+    textDecoration: patch.textDecoration,
+    textShadow: patch.textShadow,
+    textStrokeColor: patch.textStrokeColor,
+    textStrokeWidth: patch.textStrokeWidth,
+    textReflection: patch.textReflection,
+    textAlign: pickTextAlign(patch.textAlign),
+    verticalAlign: pickVerticalAlign(patch.verticalAlign),
+  } as Record<string, unknown>) as AnyPartStyle;
+
+  let next = mergeSparseStyleProperties((prev ?? {}) as Record<string, unknown>, sparse) as AnyPartStyle;
+
+  if (opts?.fontSizeAuto) {
+    const { fontSize: _drop, ...rest } = next;
+    next = { ...rest, typographyMode: "auto" };
+  } else if (opts?.nextFontSize != null) {
+    next = {
+      ...next,
+      fontSize: opts.nextFontSize,
+      typographyMode: opts.typographyMode ?? "fixed",
+    };
+  } else if (patch.fontSize != null) {
+    next = { ...next, fontSize: patch.fontSize };
+  }
+
+  return next;
+}
+
+function resolveFontSizeForTarget(params: {
+  current: number;
+  patch: TextFormatStyleSnapshot;
+  options?: SelectionPropertyApplyOptions;
+}): number | undefined {
+  return resolveAppliedNumericProperty({
+    current: params.current,
+    value: params.patch.fontSize,
+    mode: params.options?.fontSizeMode,
+    delta: params.options?.fontSizeDelta,
+    clamp: clampFontSize,
+  });
+}
+
+function typographyPatchForChart(patch: TextFormatStyleSnapshot): TextFormatStyleSnapshot {
   return {
-    ...(prev ?? {}),
-    fontFamily: patch.fontFamily ?? prev?.fontFamily,
-    ...(opts?.fontSizeAuto
-      ? { fontSize: undefined, typographyMode: "auto" }
-      : opts?.nextFontSize != null
-        ? { fontSize: opts.nextFontSize, typographyMode: opts.typographyMode ?? "fixed" }
-        : patch.fontSize != null
-          ? { fontSize: patch.fontSize }
-          : {}),
-    fontWeight: patch.fontWeight ?? prev?.fontWeight,
-    fontStyle: patch.fontStyle ?? prev?.fontStyle,
-    color: patch.color ?? prev?.color,
-    textDecoration: patch.textDecoration ?? prev?.textDecoration,
-    textShadow: patch.textShadow ?? prev?.textShadow,
-    textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
-    textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
-    textReflection: patch.textReflection ?? prev?.textReflection,
-    ...(nextAlign ? { textAlign: nextAlign } : {}),
-    ...(nextVAlign ? { verticalAlign: nextVAlign } : {}),
+    ...patch,
+    fontWeight: pickFontWeight(patch.fontWeight) ?? patch.fontWeight,
+    fontStyle: pickFontStyle(patch.fontStyle) ?? patch.fontStyle,
   };
+}
+
+function wantsFontSizeChange(
+  patch: TextFormatStyleSnapshot,
+  options?: SelectionPropertyApplyOptions,
+): boolean {
+  if (options?.fontSizeMode === "delta") return true;
+  return patch.fontSize != null;
+}
+
+/** Tipografia global do gráfico: merge por parte + absolute/delta no tamanho. */
+function applyChartComplexGlobalTypography(
+  selected: Extract<ComunicadoBlock, { type: "chart_view" }>,
+  patch: TextFormatStyleSnapshot,
+  options?: SelectionPropertyApplyOptions,
+): Partial<ComunicadoBlock> {
+  const typographyPatch = typographyPatchForChart(patch);
+  const applySize = wantsFontSizeChange(typographyPatch, options);
+  const sizeOptions: SelectionPropertyApplyOptions | undefined = applySize
+    ? options?.fontSizeMode
+      ? options
+      : { fontSizeMode: "absolute" }
+    : undefined;
+
+  let nextParts = selected.chartParts ?? {};
+  const kinds = Object.keys(CHART_PART_FONT_SIZE_DEFAULTS) as ChartTextPartKind[];
+
+  for (const kind of kinds) {
+    if (kind === "dataLabel") continue;
+    const refs: ComunicadoChartPartRef[] =
+      kind === "axis"
+        ? [
+            { kind: "axis", axis: "x" },
+            { kind: "axis", axis: "y" },
+          ]
+        : kind === "axisTitle"
+          ? [
+              { kind: "axisTitle", axis: "x" },
+              { kind: "axisTitle", axis: "y" },
+            ]
+          : [{ kind }];
+
+    for (const ref of refs) {
+      const prev = getChartPartState(nextParts, ref)?.style;
+      const currentSize = resolveChartPartFontSize(kind, prev);
+      const nextFontSize = applySize
+        ? resolveFontSizeForTarget({
+            current: currentSize,
+            patch: typographyPatch,
+            options: sizeOptions,
+          })
+        : undefined;
+      const partPatch: TextFormatStyleSnapshot = { ...typographyPatch };
+      if (nextFontSize == null) {
+        delete partPatch.fontSize;
+      } else {
+        partPatch.fontSize = nextFontSize;
+      }
+      nextParts = upsertChartPartState(nextParts, ref, {
+        style: mergeTypographyStyle(prev, partPatch) as ComunicadoChartPartStyle,
+      });
+    }
+  }
+
+  const optionsNext = mergeComunicadoChartOptions({
+    ...selected.chartOptions,
+    ...partsToChartOptions(nextParts),
+  });
+  return {
+    chartParts: nextParts,
+    chartOptions: optionsNext,
+  } as Partial<ComunicadoBlock>;
+}
+
+function applyKpiComplexGlobalTypography(
+  selected: Extract<ComunicadoBlock, { type: "kpi_view" }>,
+  patch: TextFormatStyleSnapshot,
+  options?: SelectionPropertyApplyOptions,
+): Partial<ComunicadoBlock> {
+  const applySize = wantsFontSizeChange(patch, options);
+  const sizeOptions: SelectionPropertyApplyOptions | undefined = applySize
+    ? options?.fontSizeMode
+      ? options
+      : { fontSizeMode: "absolute" }
+    : undefined;
+
+  let nextParts = selected.kpiParts ?? {};
+  for (const kind of KPI_TEXT_PART_KINDS) {
+    const ref = { kind } as const;
+    const prev = getKpiPartState(nextParts, ref)?.style;
+    const currentSize = resolveKpiPartFontSize(kind as KpiTextPartKind, prev);
+    const nextFontSize = applySize
+      ? resolveFontSizeForTarget({
+          current: currentSize,
+          patch,
+          options: sizeOptions,
+        })
+      : undefined;
+
+    const partPatch: TextFormatStyleSnapshot = { ...patch };
+    if (nextFontSize == null) delete partPatch.fontSize;
+    else partPatch.fontSize = nextFontSize;
+
+    nextParts = upsertKpiPartState(nextParts, ref, {
+      style: mergeTypographyStyle(prev, partPatch, {
+        fontSizeAuto: patch.fontSizeAuto === true,
+        nextFontSize: patch.fontSizeAuto === true ? undefined : nextFontSize,
+        typographyMode:
+          patch.fontSizeAuto === true
+            ? "auto"
+            : nextFontSize != null
+              ? "fixed"
+              : prev?.typographyMode,
+      }) as ComunicadoKpiPartStyle,
+    });
+  }
+
+  const kpiOptions = mergeComunicadoKpiOptions({
+    ...selected.kpiOptions,
+    ...partsToKpiOptions(nextParts),
+  });
+  if (patch.color) kpiOptions.valueColor = patch.color;
+  return {
+    kpiParts: mergeKpiPartsWithOptions(nextParts, kpiOptions),
+    kpiOptions,
+  } as Partial<ComunicadoBlock>;
+}
+
+function applyInputComplexGlobalTypography(
+  selected: Extract<ComunicadoBlock, { type: "input" }>,
+  patch: TextFormatStyleSnapshot,
+  options?: SelectionPropertyApplyOptions,
+): Partial<ComunicadoBlock> {
+  const applySize = wantsFontSizeChange(patch, options);
+  const sizeOptions: SelectionPropertyApplyOptions | undefined = applySize
+    ? options?.fontSizeMode
+      ? options
+      : { fontSizeMode: "absolute" }
+    : undefined;
+
+  let nextParts = selected.inputParts ?? {};
+  for (const kind of INPUT_TEXT_PART_KINDS) {
+    const ref = { kind } as const;
+    const prev = getInputPartState(nextParts, ref)?.style;
+    const currentSize = resolveInputPartFontSize(kind, prev);
+    const nextFontSize = applySize
+      ? resolveFontSizeForTarget({
+          current: currentSize,
+          patch,
+          options: sizeOptions,
+        })
+      : undefined;
+    const partPatch: TextFormatStyleSnapshot = { ...patch };
+    if (nextFontSize == null) delete partPatch.fontSize;
+    else partPatch.fontSize = nextFontSize;
+    nextParts = upsertInputPartState(nextParts, ref, {
+      style: mergeTypographyStyle(prev, partPatch) as ComunicadoInputPartStyle,
+    });
+  }
+  return { inputParts: nextParts } as Partial<ComunicadoBlock>;
 }
 
 /**
  * Calcula o patch de bloco para tipografia da ribbon Fonte.
  * Retorna `null` quando o caller deve cair em `updateSelectedStyle` (text/shape).
+ *
+ * `applyOptions.fontSizeMode`:
+ * - `absolute` — mesmo px em todos os subitens (input / preset)
+ * - `delta` — ±passo em cada subitem (hierarquia preservada)
  */
 export function buildSelectedTextFormatBlockPatch(params: {
   selected: ComunicadoBlock;
@@ -120,6 +328,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
   /** Multi-seleção de colunas/células/linhas — tipografia aplica a todas. */
   selectedTableParts?: ComunicadoTablePartRef[] | null;
   selectedInputPart?: ComunicadoInputPartRef | null;
+  applyOptions?: SelectionPropertyApplyOptions;
 }): Partial<ComunicadoBlock> | null {
   const {
     selected,
@@ -129,6 +338,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
     selectedTablePart = null,
     selectedTableParts = null,
     selectedInputPart = null,
+    applyOptions,
   } = params;
 
   const target = resolveSelectedTextFormatTarget({
@@ -147,16 +357,25 @@ export function buildSelectedTextFormatBlockPatch(params: {
   if (target.mode === "part" && target.source === "kpi" && selected.type === "kpi_view") {
     if (!isKpiTextFormatPart(selectedKpiPart) || !selectedKpiPart) return null;
     const prev = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
+    const kind = selectedKpiPart.kind as KpiTextPartKind;
+    const currentSize = resolveKpiPartFontSize(kind, prev);
+    const stepped = resolveFontSizeForTarget({
+      current: currentSize,
+      patch,
+      options: applyOptions,
+    });
     const nextFontSize =
       patch.fontSizeAuto === true
         ? undefined
-        : patch.fontSize != null
-          ? patch.fontSize
-          : prev?.fontSize;
+        : stepped != null
+          ? stepped
+          : patch.fontSize != null
+            ? patch.fontSize
+            : prev?.fontSize;
     const nextTypographyMode =
       patch.fontSizeAuto === true
         ? ("auto" as const)
-        : patch.fontSize != null
+        : nextFontSize != null
           ? ("fixed" as const)
           : prev?.typographyMode;
     const nextParts = upsertKpiPartState(selected.kpiParts, selectedKpiPart, {
@@ -181,26 +400,44 @@ export function buildSelectedTextFormatBlockPatch(params: {
 
   if (target.mode === "part" && target.source === "chart" && selected.type === "chart_view") {
     if (!isChartTextFormatPart(selectedChartPart) || !selectedChartPart) return null;
-    const typographyPatch = {
-      ...patch,
-      fontWeight: pickFontWeight(patch.fontWeight) ?? patch.fontWeight,
-      fontStyle: pickFontStyle(patch.fontStyle) ?? patch.fontStyle,
-    };
-    /* Parte grupo «Eixos»: só axis:x e axis:y — não vaza para dataLabels/título/legenda. */
+    const typographyPatch = typographyPatchForChart(patch);
     if (selectedChartPart.kind === "axes") {
       let nextParts = selected.chartParts;
       for (const axis of ["x", "y"] as const) {
         const axisRef = { kind: "axis" as const, axis };
         const prev = getChartPartState(nextParts, axisRef)?.style;
+        const currentSize = resolveChartPartFontSize("axis", prev);
+        const nextFontSize = resolveFontSizeForTarget({
+          current: currentSize,
+          patch: typographyPatch,
+          options: applyOptions,
+        });
+        const partPatch = { ...typographyPatch };
+        if (nextFontSize == null) delete partPatch.fontSize;
+        else partPatch.fontSize = nextFontSize;
         nextParts = upsertChartPartState(nextParts, axisRef, {
-          style: mergeTypographyStyle(prev, typographyPatch) as ComunicadoChartPartStyle,
+          style: mergeTypographyStyle(prev, partPatch) as ComunicadoChartPartStyle,
         });
       }
       return { chartParts: nextParts } as Partial<ComunicadoBlock>;
     }
     const prev = getChartPartState(selected.chartParts, selectedChartPart)?.style;
+    const textKindRaw = selectedChartPart.kind;
+    const textKind: ChartTextPartKind =
+      textKindRaw in CHART_PART_FONT_SIZE_DEFAULTS
+        ? (textKindRaw as ChartTextPartKind)
+        : "title";
+    const currentSize = resolveChartPartFontSize(textKind, prev);
+    const nextFontSize = resolveFontSizeForTarget({
+      current: currentSize,
+      patch: typographyPatch,
+      options: applyOptions,
+    });
+    const partPatch = { ...typographyPatch };
+    if (nextFontSize == null) delete partPatch.fontSize;
+    else partPatch.fontSize = nextFontSize;
     const nextParts = upsertChartPartState(selected.chartParts, selectedChartPart, {
-      style: mergeTypographyStyle(prev, typographyPatch) as ComunicadoChartPartStyle,
+      style: mergeTypographyStyle(prev, partPatch) as ComunicadoChartPartStyle,
     });
     return { chartParts: nextParts } as Partial<ComunicadoBlock>;
   }
@@ -231,56 +468,33 @@ export function buildSelectedTextFormatBlockPatch(params: {
   }
 
   if (target.mode === "complexGlobal" && target.source === "kpi" && selected.type === "kpi_view") {
-    const style = mergeTypographyStyle({}, patch, {
-      fontSizeAuto: patch.fontSizeAuto === true,
-      nextFontSize: patch.fontSizeAuto === true ? undefined : patch.fontSize,
-      typographyMode: patch.fontSizeAuto === true ? "auto" : patch.fontSize != null ? "fixed" : undefined,
-    }) as ComunicadoKpiPartStyle;
-    const nextParts = applyKpiPartStyleToSiblingParts(selected.kpiParts, { kind: "title" }, style);
-    const options = mergeComunicadoKpiOptions({
-      ...selected.kpiOptions,
-      ...partsToKpiOptions(nextParts),
-    });
-    if (patch.color) options.valueColor = patch.color;
-    return {
-      kpiParts: mergeKpiPartsWithOptions(nextParts, options),
-      kpiOptions: options,
-    } as Partial<ComunicadoBlock>;
+    return applyKpiComplexGlobalTypography(selected, patch, applyOptions);
   }
 
   if (target.mode === "complexGlobal" && target.source === "chart" && selected.type === "chart_view") {
-    const style = mergeTypographyStyle(
-      {},
-      {
-        ...patch,
-        fontWeight: pickFontWeight(patch.fontWeight) ?? patch.fontWeight,
-        fontStyle: pickFontStyle(patch.fontStyle) ?? patch.fontStyle,
-      },
-    ) as ComunicadoChartPartStyle;
-    const nextParts = applyChartTextStyleToSiblingParts(selected.chartParts, style);
-    const options = mergeComunicadoChartOptions({
-      ...selected.chartOptions,
-      ...partsToChartOptions(nextParts),
-    });
-    return {
-      chartParts: nextParts,
-      chartOptions: options,
-    } as Partial<ComunicadoBlock>;
+    return applyChartComplexGlobalTypography(selected, patch, applyOptions);
   }
 
   if (target.mode === "complexGlobal" && target.source === "input" && selected.type === "input") {
-    const style = mergeTypographyStyle({}, patch) as AnyPartStyle;
-    return {
-      inputParts: applyInputTextStyleToSiblingParts(selected.inputParts, style as ComunicadoInputPartStyle),
-    } as Partial<ComunicadoBlock>;
+    return applyInputComplexGlobalTypography(selected, patch, applyOptions);
   }
 
   if (target.mode === "complexGlobal" && target.source === "table" && selected.type === "table_view") {
     const current = mergeComunicadoTableOptions(selected.tableOptions, selected.tablePreset);
+    const currentSize = current.fontSize ?? 14;
+    const nextFont = resolveFontSizeForTarget({
+      current: currentSize,
+      patch,
+      options: applyOptions?.fontSizeMode
+        ? applyOptions
+        : patch.fontSize != null
+          ? { fontSizeMode: "absolute" }
+          : undefined,
+    });
     const nextOptions = {
       ...current,
       ...(patch.fontFamily != null ? { fontFamily: patch.fontFamily } : {}),
-      ...(patch.fontSize != null ? { fontSize: clampFontSize(patch.fontSize) } : {}),
+      ...(nextFont != null ? { fontSize: nextFont } : {}),
       ...(patch.fontWeight != null ? { fontWeight: patch.fontWeight } : {}),
       ...(patch.fontStyle != null ? { fontStyle: patch.fontStyle } : {}),
       ...(patch.color != null
@@ -301,8 +515,30 @@ export function buildSelectedTextFormatBlockPatch(params: {
     target.source === "canvas_table" &&
     selected.type === "canvas_table"
   ) {
-    const nextFont =
-      patch.fontSize != null ? clampFontSize(patch.fontSize) : selected.canvasTableOptions?.fontSize;
+    const currentSize = selected.canvasTableOptions?.fontSize ?? selected.style?.fontSize ?? 14;
+    const nextFont = resolveFontSizeForTarget({
+      current: currentSize,
+      patch,
+      options: applyOptions?.fontSizeMode
+        ? applyOptions
+        : patch.fontSize != null
+          ? { fontSizeMode: "absolute" }
+          : undefined,
+    });
+    const styleSparse = sparsePropertyPatch({
+      fontFamily: patch.fontFamily,
+      fontWeight: patch.fontWeight,
+      fontStyle: patch.fontStyle,
+      color: patch.color,
+      textDecoration: patch.textDecoration,
+      textShadow: patch.textShadow,
+      textStrokeColor: patch.textStrokeColor,
+      textStrokeWidth: patch.textStrokeWidth,
+      textReflection: patch.textReflection,
+      textAlign: pickTextAlign(patch.textAlign),
+      verticalAlign: pickVerticalAlign(patch.verticalAlign),
+      ...(nextFont != null ? { fontSize: nextFont } : {}),
+    } as Record<string, unknown>);
     return {
       canvasTableOptions: {
         ...(selected.canvasTableOptions ?? {}),
@@ -310,20 +546,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
       },
       style: {
         ...(selected.style ?? {}),
-        ...(patch.fontFamily != null ? { fontFamily: patch.fontFamily } : {}),
-        ...(nextFont != null ? { fontSize: nextFont } : {}),
-        ...(patch.fontWeight != null ? { fontWeight: patch.fontWeight } : {}),
-        ...(patch.fontStyle != null ? { fontStyle: patch.fontStyle } : {}),
-        ...(patch.color != null ? { color: patch.color } : {}),
-        ...(pickTextAlign(patch.textAlign) ? { textAlign: pickTextAlign(patch.textAlign) } : {}),
-        ...(pickVerticalAlign(patch.verticalAlign)
-          ? { verticalAlign: pickVerticalAlign(patch.verticalAlign) }
-          : {}),
-        ...(patch.textDecoration != null ? { textDecoration: patch.textDecoration } : {}),
-        ...(patch.textShadow != null ? { textShadow: patch.textShadow } : {}),
-        ...(patch.textStrokeColor != null ? { textStrokeColor: patch.textStrokeColor } : {}),
-        ...(patch.textStrokeWidth != null ? { textStrokeWidth: patch.textStrokeWidth } : {}),
-        ...(patch.textReflection != null ? { textReflection: patch.textReflection } : {}),
+        ...styleSparse,
       },
     } as Partial<ComunicadoBlock>;
   }

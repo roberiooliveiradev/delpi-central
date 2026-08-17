@@ -4,19 +4,54 @@
 
 Substituir o catálogo «Fontes de dados» por um **chat de rascunho**: o usuário descreve o dado, adiciona fontes allowlistadas, ajusta filtros/colunas/joins e, ao confirmar, materializa blocos `data_source` (+ `dataTransform`) consumíveis pelos visuais existentes (KPI/gráfico/tabela).
 
-Não embute o stream do Minha Delpi Chat no editor. Inteligência de rotas/params fica no chat base via S2S; allowlist, draft, preview e persistência no slide ficam no TV BFF/MFE.
+## Deprecated — turno NL do Builder
 
-## Fluxo
+O turno NL (`POST /data/builder/sessions/{id}/turn`) **não** é mais o caminho de mutação tipada do slide.
+
+| Caminho | Status |
+|---------|--------|
+| `POST /data/copilot/suggest-ops` | **Canônico** para NL → ops tipadas (catálogo TV) |
+| `POST /data/builder/sessions/{id}/to-copilot-ops` | **Único** caminho do rascunho Builder → mesmas ops do catálogo |
+| `POST /data/builder/sessions/{id}/turn` | **Deprecated** para mutação tipada — manter só rascunho/S2S legado; não evoluir encodings de bloco aqui |
+
+Doc do copiloto: [tv-copilot.md](./tv-copilot.md).
+
+## Embed do Minha Delpi Chat — quando é permitido
+
+| Fase | Superfície | Regra |
+|------|------------|-------|
+| **A0** | Chat portal + skill `tv-dashboard-copilot` | Sem remote MF; tool chama BFF `/data/copilot/*` |
+| **A1+** | Remote `./EmbeddedChat` na aba «Copiloto IA» | Permitido **somente** como host de UI; inteligência na `minha-delpi-ai-api`; mutação só via `TvCopilotPatchV1` |
+| **Rascunho** | `DataBuilderChatPanel` (aba Rascunho) | Continua; S2S suggest; **não** reimplementa pipeline LLM |
+
+**O que permanece no BFF:** allowlist de rotas, draft/session, materialize, `suggest-ops` / `preview-patch` / `apply-patch`, `SlideDataResolutionService`, persistência + `notify_presentation_changed`.
+
+**Proibido:** MFE → LLM direto; entregar `renderPlan` do chat como modelo do slide; gravar `resolved`.
+
+## Fluxo (rascunho)
 
 ```text
-MFE (DataBuilderChatPanel)
+MFE (DataBuilderChatPanel — aba Rascunho)
   → POST /data/builder/sessions
-  → POST /data/builder/sessions/{id}/turn   (mensagem NL ou action)
+  → POST /data/builder/sessions/{id}/turn   (deprecated p/ mutação tipada; rascunho/S2S legado)
       → S2S suggest routes / suggest-params (minha-delpi-ai-api)
       → muta DataModelDraft (add/remove/params/columns/merge)
   → POST .../preview                       (opcional, sob demanda)
   → POST .../materialize
   → createDataSourceBlock / addDataSourceBlock no slide
+
+Canônico → POST .../to-copilot-ops → ops TvCopilotPatch (mesmo catálogo do Copilot)
+```
+
+## Fluxo (copiloto)
+
+```text
+Chat portal / EmbeddedChat
+  → POST /data/copilot/suggest-ops          (NL + hostContext → ops[] no BFF)
+  → tool tv_dashboard_copilot (preview|apply)
+  → POST /data/copilot/preview-patch | apply-patch
+  → SlideDataResolution (preview) | persist + notify + cache reset (apply)
+  → Present (viewer puro)
 ```
 
 ## Contrato do rascunho
@@ -42,13 +77,17 @@ No materialize, a fonte âncora leva o `dataTransform` (inclui `merge` com `sour
 
 ## APIs TV (`/data`)
 
-| Método | Path | Permissão |
-|--------|------|-----------|
-| `POST` | `/builder/sessions` | `TV_WRITE` |
-| `GET` | `/builder/sessions/{id}` | `TV_READ` |
-| `POST` | `/builder/sessions/{id}/turn` | `TV_WRITE` |
-| `POST` | `/builder/sessions/{id}/preview` | `TV_WRITE` |
-| `POST` | `/builder/sessions/{id}/materialize` | `TV_WRITE` |
+| Método | Path | Permissão | Notas |
+|--------|------|-----------|-------|
+| `POST` | `/builder/sessions` | `TV_WRITE` | |
+| `GET` | `/builder/sessions/{id}` | `TV_READ` | |
+| `POST` | `/builder/sessions/{id}/turn` | `TV_WRITE` | **Deprecated** p/ mutação tipada |
+| `POST` | `/builder/sessions/{id}/preview` | `TV_WRITE` | |
+| `POST` | `/builder/sessions/{id}/materialize` | `TV_WRITE` | |
+| `POST` | `/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | **Canônico** rascunho → ops |
+| `POST` | `/copilot/suggest-ops` | `TV_WRITE` | **Canônico** NL → ops |
+| `POST` | `/copilot/preview-patch` | `TV_WRITE` | |
+| `POST` | `/copilot/apply-patch` | `TV_WRITE` | |
 
 Body do turn: `{ "message"?: string, "action"?: { "type": "add_source"|"remove_source"|"set_params"|"set_columns"|"propose_join"|"mark_ready"|"suggest_sources", … } }`.
 
@@ -63,8 +102,9 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 
 ## Conteúdo
 
-- TV: `tv_app/content/data_builder_content.json` (+ `TvDataBuilderContentService`)
-- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`
+- TV: `tv_app/content/data_builder_content.json`, `tv_copilot_content.json`
+- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`, `tvCopilotContent.ts`
+- Chat: skill `tv-dashboard-copilot` + `assistant`/`skills` catalog
 
 ## Anti-padrões
 
@@ -73,13 +113,13 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 - Entregar `renderPlan` do chat como modelo do slide
 - Join só no visual — join no `dataTransform` da âncora
 - Auto-preview a cada tecla (só sob demanda)
+- Segundo pipeline de enrich no copiloto
 
 
 ## Modos de descoberta (MFE)
 
 | Modo | Comportamento |
 |------|----------------|
-| **Pesquisa** | Busca local no catálogo TV por label/path/`operationId` (sem IA). |
-| **Assistente IA** | Mensagem NL → `turn` → suggest S2S. |
-
-«mostre uma prévia» (ou botão **Prévia**) dispara preview do rascunho; a tabela usa `resolved.preview` / `resolved.table` / `resolved.query`.
+| Pesquisa | Catálogo local (sem IA) |
+| Assistente IA (rascunho) | Turn NL no builder + S2S |
+| Copiloto IA | EmbeddedChat / skill + TvCopilotPatch |

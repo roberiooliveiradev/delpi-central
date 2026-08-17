@@ -1,7 +1,7 @@
 // src/ui/admin/tabs/NotificationsTab.tsx
 
 import { useContext, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Bell, History, Send } from "lucide-react";
+import { Bell, Send } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -33,6 +33,19 @@ import {
 } from "../../../components/notifications/dispatchEditForm";
 import { useNotificationCatalog } from "../../../state/NotificationCatalogContext";
 import { buildNotificationCategoryOptions } from "../../../utils/notificationCatalog";
+
+import {
+  Alert,
+  Button,
+  FormField,
+  FormGrid,
+  Input,
+  Select,
+  Spinner,
+  Switch,
+  Tabs,
+  Textarea,
+} from "../../../ui-kit";
 
 import "./NotificationsTab.css";
 
@@ -448,37 +461,29 @@ export function NotificationsTab() {
         </div>
       </header>
 
-      <nav className="admin-notifications__subnav" aria-label="Seções de notificações">
-        <button
-          type="button"
-          className={
-            view === "send"
-              ? "admin-notifications__subnav-btn admin-notifications__subnav-btn--active"
-              : "admin-notifications__subnav-btn"
+      <Tabs
+        className="admin-notifications__subnav"
+        aria-label="Seções de notificações"
+        value={view}
+        onChange={(id) => {
+          if (id === "send" && editingDispatchId) {
+            cancelEditDispatch();
           }
-          onClick={() => {
-            if (editingDispatchId) {
-              cancelEditDispatch();
-            }
-            setView("send");
-          }}
-        >
-          <Send size={16} aria-hidden="true" />
-          Novo envio
-        </button>
-        <button
-          type="button"
-          className={
-            view === "history"
-              ? "admin-notifications__subnav-btn admin-notifications__subnav-btn--active"
-              : "admin-notifications__subnav-btn"
-          }
-          onClick={() => setView("history")}
-        >
-          <History size={16} aria-hidden="true" />
-          Histórico
-        </button>
-      </nav>
+          setView(id as AdminNotificationsView);
+        }}
+        items={[
+          {
+            id: "send",
+            label: "Novo envio",
+            icon: <Send size={16} />,
+          },
+          {
+            id: "history",
+            label: "Histórico",
+            icon: <Bell size={16} />,
+          },
+        ]}
+      />
 
       {view === "history" ? (
         <article className="admin-notifications__panel">
@@ -497,18 +502,19 @@ export function NotificationsTab() {
               Editando envio agendado. Alterações só entram em vigor após salvar; o envio anterior
               não foi disparado.
             </p>
-            <button
+            <Button
               type="button"
-              className="admin-notifications__edit-cancel"
+              variant="ghost"
+              size="sm"
               onClick={cancelEditDispatch}
               disabled={isSubmitting}
             >
               Cancelar edição
-            </button>
+            </Button>
           </div>
         ) : null}
         {loadingEdit ? (
-          <p className="admin-notifications__edit-loading">Carregando agendamento…</p>
+          <Spinner label="Carregando agendamento…" />
         ) : null}
         <div className="admin-notifications__shell">
           <article className="admin-notifications__panel">
@@ -525,19 +531,17 @@ export function NotificationsTab() {
               </div>
             </div>
 
-            <label className="admin-notifications__toggle admin-notifications__toggle--card">
-              <span className="admin-notifications__toggle-control">
-                <input
-                  type="checkbox"
-                  checked={broadcast}
-                  onChange={(event) => setBroadcast(event.target.checked)}
-                />
-              </span>
-              <span className="admin-notifications__toggle-text">
-                <strong>Notificação geral</strong>
-                <span>Todos os usuários ativos da plataforma</span>
-              </span>
-            </label>
+            <Switch
+              className="admin-notifications__toggle admin-notifications__toggle--card"
+              checked={broadcast}
+              onChange={(event) => setBroadcast(event.target.checked)}
+              label={
+                <span className="admin-notifications__toggle-text">
+                  <strong>Notificação geral</strong>
+                  <span>Todos os usuários ativos da plataforma</span>
+                </span>
+              }
+            />
 
             {!broadcast ? (
               <>
@@ -610,35 +614,31 @@ export function NotificationsTab() {
               }
             >
               <div className="admin-notifications__main-grid-content">
-                <div className="admin-notifications__row">
-                  <label className="admin-notifications__field">
-                    <span>Categoria</span>
-                    <select
+                <FormGrid columns={2} className="admin-notifications__row">
+                  <FormField label="Categoria" htmlFor="admin-notif-category">
+                    <Select
+                      id="admin-notif-category"
                       value={category}
-                      onChange={(event) => setCategory(event.target.value as NotificationCategory)}
-                    >
-                      {notificationCategories.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      onChange={(value) => setCategory(value as NotificationCategory)}
+                      options={notificationCategories.map((item) => ({
+                        value: item.value,
+                        label: item.label,
+                      }))}
+                    />
+                  </FormField>
 
-                  <label className="admin-notifications__field">
-                    <span>Tipo visual</span>
-                    <select
+                  <FormField label="Tipo visual" htmlFor="admin-notif-type">
+                    <Select
+                      id="admin-notif-type"
                       value={type}
-                      onChange={(event) => setType(event.target.value as NotificationType)}
-                    >
-                      {NOTIFICATION_TYPES.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
+                      onChange={(value) => setType(value as NotificationType)}
+                      options={NOTIFICATION_TYPES.map((item) => ({
+                        value: item,
+                        label: item,
+                      }))}
+                    />
+                  </FormField>
+                </FormGrid>
 
                 {presentation === "template" ? (
                   <AdminNotificationTemplateSection
@@ -656,51 +656,47 @@ export function NotificationsTab() {
 
                 <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
                   <legend>Agendamento (opcional)</legend>
-                  <label className="admin-notifications__toggle">
-                    <span className="admin-notifications__toggle-control">
-                      <input
-                        type="checkbox"
-                        checked={scheduleEnabled}
-                        onChange={(event) => setScheduleEnabled(event.target.checked)}
-                      />
-                    </span>
-                    <span className="admin-notifications__toggle-text">
-                      <strong>Agendar envio</strong>
-                      <span>Processar na data/hora indicada (cron ou botão no histórico)</span>
-                    </span>
-                  </label>
+                  <Switch
+                    className="admin-notifications__toggle"
+                    checked={scheduleEnabled}
+                    onChange={(event) => setScheduleEnabled(event.target.checked)}
+                    label={
+                      <span className="admin-notifications__toggle-text">
+                        <strong>Agendar envio</strong>
+                        <span>Processar na data/hora indicada (cron ou botão no histórico)</span>
+                      </span>
+                    }
+                  />
                   {scheduleEnabled ? (
-                    <label className="admin-notifications__field">
-                      <span>Data e hora</span>
-                      <input
+                    <FormField label="Data e hora" required htmlFor="admin-notif-scheduled-at">
+                      <Input
+                        id="admin-notif-scheduled-at"
                         type="datetime-local"
                         value={scheduledAtLocal}
                         onChange={(event) => setScheduledAtLocal(event.target.value)}
                         required
                       />
-                    </label>
+                    </FormField>
                   ) : null}
                 </fieldset>
 
                 <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
                   <legend>Validade (opcional)</legend>
-                  <label className="admin-notifications__toggle">
-                    <span className="admin-notifications__toggle-control">
-                      <input
-                        type="checkbox"
-                        checked={expiresEnabled}
-                        onChange={(event) => setExpiresEnabled(event.target.checked)}
-                      />
-                    </span>
-                    <span className="admin-notifications__toggle-text">
-                      <strong>Expirar automaticamente</strong>
-                      <span>Some do sino após o prazo (notificações lidas permanecem no histórico até expirar)</span>
-                    </span>
-                  </label>
+                  <Switch
+                    className="admin-notifications__toggle"
+                    checked={expiresEnabled}
+                    onChange={(event) => setExpiresEnabled(event.target.checked)}
+                    label={
+                      <span className="admin-notifications__toggle-text">
+                        <strong>Expirar automaticamente</strong>
+                        <span>Some do sino após o prazo (notificações lidas permanecem no histórico até expirar)</span>
+                      </span>
+                    }
+                  />
                   {expiresEnabled ? (
-                    <label className="admin-notifications__field">
-                      <span>Dias até expirar</span>
-                      <input
+                    <FormField label="Dias até expirar" htmlFor="admin-notif-expires-days">
+                      <Input
+                        id="admin-notif-expires-days"
                         type="number"
                         min={1}
                         max={365}
@@ -709,31 +705,32 @@ export function NotificationsTab() {
                           setExpiresInDays(Math.max(1, Number(event.target.value) || 1))
                         }
                       />
-                    </label>
+                    </FormField>
                   ) : null}
                 </fieldset>
 
                 {presentation === "html" ? (
-                  <label className="admin-notifications__field">
-                    <span>HTML personalizado</span>
+                  <FormField label="HTML personalizado" htmlFor="admin-notif-html">
                     <NotificationHtmlEditor
                       value={htmlContent}
                       onChange={setHtmlContent}
                       disabled={isSubmitting}
                     />
-                  </label>
+                  </FormField>
                 ) : null}
 
                 {presentation === "text" || presentation === "html" ? (
                   <>
-                    <label className="admin-notifications__field">
-                      <span>Título (opcional)</span>
-                      <input
-                        ref={titleRef}
-                        value={title}
-                        onChange={(event) => setTitle(event.target.value)}
-                        maxLength={120}
-                      />
+                    <div className="admin-notifications__field-stack">
+                      <FormField label="Título (opcional)" htmlFor="admin-notif-title">
+                        <Input
+                          id="admin-notif-title"
+                          ref={titleRef}
+                          value={title}
+                          onChange={(event) => setTitle(event.target.value)}
+                          maxLength={120}
+                        />
+                      </FormField>
                       <NotificationVariableToolbar
                         targetRef={titleRef}
                         value={title}
@@ -741,19 +738,21 @@ export function NotificationsTab() {
                         scopes={["recipient"]}
                         disabled={isSubmitting}
                       />
-                    </label>
+                    </div>
 
                     {presentation === "text" ? (
-                      <label className="admin-notifications__field">
-                        <span>Mensagem</span>
-                        <textarea
-                          ref={messageRef}
-                          value={message}
-                          onChange={(event) => setMessage(event.target.value)}
-                          rows={4}
-                          required
-                          maxLength={500}
-                        />
+                      <div className="admin-notifications__field-stack">
+                        <FormField label="Mensagem" required htmlFor="admin-notif-message">
+                          <Textarea
+                            id="admin-notif-message"
+                            ref={messageRef}
+                            value={message}
+                            onChange={(event) => setMessage(event.target.value)}
+                            rows={4}
+                            required
+                            maxLength={500}
+                          />
+                        </FormField>
                         <NotificationVariableToolbar
                           targetRef={messageRef}
                           value={message}
@@ -761,18 +760,23 @@ export function NotificationsTab() {
                           scopes={["recipient"]}
                           disabled={isSubmitting}
                         />
-                      </label>
+                      </div>
                     ) : (
-                      <label className="admin-notifications__field">
-                        <span>Mensagem (fallback em texto)</span>
-                        <textarea
-                          ref={messageRef}
-                          value={message}
-                          onChange={(event) => setMessage(event.target.value)}
-                          rows={2}
-                          maxLength={500}
-                          placeholder="Resumo exibido em clientes sem suporte a HTML"
-                        />
+                      <div className="admin-notifications__field-stack">
+                        <FormField
+                          label="Mensagem (fallback em texto)"
+                          htmlFor="admin-notif-message-fallback"
+                        >
+                          <Textarea
+                            id="admin-notif-message-fallback"
+                            ref={messageRef}
+                            value={message}
+                            onChange={(event) => setMessage(event.target.value)}
+                            rows={2}
+                            maxLength={500}
+                            placeholder="Resumo exibido em clientes sem suporte a HTML"
+                          />
+                        </FormField>
                         <NotificationVariableToolbar
                           targetRef={messageRef}
                           value={message}
@@ -780,7 +784,7 @@ export function NotificationsTab() {
                           scopes={["recipient"]}
                           disabled={isSubmitting}
                         />
-                      </label>
+                      </div>
                     )}
                   </>
                 ) : null}
@@ -788,37 +792,38 @@ export function NotificationsTab() {
                 <fieldset className="admin-notifications__fieldset">
                   <legend>Ação (opcional)</legend>
                   <div className="admin-notifications__fieldset-grid">
-                    <label className="admin-notifications__field">
-                      <span>Tipo de ação</span>
-                      <select
+                    <FormField label="Tipo de ação" htmlFor="admin-notif-action-type">
+                      <Select
+                        id="admin-notif-action-type"
                         value={actionType}
-                        onChange={(event) =>
-                          setActionType(event.target.value as NotificationActionType | "none")
+                        onChange={(value) =>
+                          setActionType(value as NotificationActionType | "none")
                         }
-                      >
-                        {ACTION_TYPES.map((item) => (
-                          <option key={item.value} value={item.value}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        options={ACTION_TYPES.map((item) => ({
+                          value: item.value,
+                          label: item.label,
+                        }))}
+                      />
+                    </FormField>
                   </div>
 
                   {actionType !== "none" ? (
-                    <div className="admin-notifications__fieldset-grid admin-notifications__fieldset-grid--action">
-                      <label className="admin-notifications__field">
-                        <span>Rótulo do botão</span>
-                        <input
+                    <FormGrid
+                      columns={2}
+                      className="admin-notifications__fieldset-grid admin-notifications__fieldset-grid--action"
+                    >
+                      <FormField label="Rótulo do botão" htmlFor="admin-notif-action-label">
+                        <Input
+                          id="admin-notif-action-label"
                           value={actionLabel}
                           onChange={(event) => setActionLabel(event.target.value)}
                           placeholder="Abrir aplicativo"
                           maxLength={80}
                         />
-                      </label>
-                      <label className="admin-notifications__field">
-                        <span>Destino</span>
-                        <input
+                      </FormField>
+                      <FormField label="Destino" htmlFor="admin-notif-action-target">
+                        <Input
+                          id="admin-notif-action-target"
                           value={actionTarget}
                           onChange={(event) => setActionTarget(event.target.value)}
                           placeholder={
@@ -826,8 +831,8 @@ export function NotificationsTab() {
                           }
                           maxLength={500}
                         />
-                      </label>
-                    </div>
+                      </FormField>
+                    </FormGrid>
                   ) : null}
                 </fieldset>
               </div>
@@ -899,25 +904,18 @@ export function NotificationsTab() {
                     ? "Modo HTML sanitizado"
                     : "Modo texto simples"}
               </span>
-              {feedback ? (
-                <p className="admin-notifications__alert admin-notifications__alert--success">
-                  {feedback}
-                </p>
-              ) : null}
-              {error ? (
-                <p className="admin-notifications__alert admin-notifications__alert--error">
-                  {error}
-                </p>
-              ) : null}
+              {feedback ? <Alert tone="success">{feedback}</Alert> : null}
+              {error ? <Alert tone="danger">{error}</Alert> : null}
             </div>
 
             <div className="admin-notifications__footer-actions">
-              <button
+              <Button
                 type="submit"
-                className="admin-notifications__submit"
+                variant="primary"
+                icon={<Send size={16} />}
+                loading={isSubmitting}
                 disabled={submitDisabled}
               >
-                <Send size={16} aria-hidden="true" />
                 {isSubmitting
                   ? editingDispatchId
                     ? "Salvando…"
@@ -927,7 +925,7 @@ export function NotificationsTab() {
                     : scheduleEnabled
                       ? "Agendar envio"
                       : "Enviar notificações"}
-              </button>
+              </Button>
             </div>
           </footer>
         </div>

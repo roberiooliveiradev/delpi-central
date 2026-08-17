@@ -23,7 +23,12 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Filiais | [filiais.md](./filiais.md) | SC/ES, RBAC por filial, não confundir com armazém |
 | Princípios SQL Protheus | [principios-sql.md](./principios-sql.md) | `D_E_L_E_T_`, NOLOCK, `*010`, bind, joins |
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
-| Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, campos SB1 recorrentes |
+| Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
+| Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
+| Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
+| Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |
+| Pedido de venda — criador | [pedido-venda-criador.md](./pedido-venda-criador.md) | SC5 sem usuário criador resolvível; `C5_MSUIDT` = UUID técnico |
+| Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
 
 ---
 
@@ -54,8 +59,11 @@ Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-conso
 | Constante / módulo | Seção |
 |--------------------|--------|
 | `app/domain/totvs/protheus_warehouses.py` | [armazem-custo.md](./armazem-custo.md) |
+| `app/domain/totvs/protheus_product_types.py` | [cadastro-produto.md](./cadastro-produto.md) · OTD PC MP |
+| `app/domain/totvs/protheus_third_party_materials.py` | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) |
 | `REFUGOS_COST_WAREHOUSE` / `refugos_scope.py` | [armazem-custo.md](./armazem-custo.md) · [cadastro-produto.md](./cadastro-produto.md) |
 | `PRIMARY_WAREHOUSE` (estoque de segurança) | [armazem-custo.md](./armazem-custo.md) (alinhar semanticamente) |
+| `production_meta_por_hora` / `production_tempo_previsto` | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) |
 
 Padrão: **novo padrão transversal** → preferir constante em `app/domain/totvs/` + seção nesta pasta + link na doc da rota.
 
@@ -78,11 +86,12 @@ Resumo:
 
 ## Backlog de padrões (ainda sem seção curta)
 
-- Apontamentos / OP (`SC2`, sufixo mãe `001`, datas `C2_DATRF`) — ver playbooks de produção
+- Apontamentos / OP (`SC2`, sufixo mãe `001`, datas `C2_DATRF`) — ver playbooks de produção; tempo padrão → [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md)
 - Compras válidas / frete MP — changelog + diretivas
 - Datas Protheus `YYYYMMDD` / `YYYYMM` e janelas closed-open
 - Motivos de refugo (`CYO` / `BC_MOTIVO`)
-- Faixas de eficiência OEE (convenção Delpi)
+- Faixas de eficiência OEE — ver [regras-faixa-eficiencia-producao.md](../regras-faixa-eficiencia-producao.md) (já documentado; não é backlog de fórmula)
+
 
 ---
 

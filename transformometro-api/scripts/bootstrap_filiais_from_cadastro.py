@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tm_app.core.catalogs import FILIAIS  # noqa: E402
-from tm_app.infrastructure.persistence.repositories.filial_repository import (  # noqa: E402
+from tm_app.infrastructure.persistence.repositories.branch_repository import (  # noqa: E402
     FilialRepository,
 )
 

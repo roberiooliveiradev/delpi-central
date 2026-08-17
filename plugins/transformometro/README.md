@@ -18,12 +18,12 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/configuracoes/departamentos` | Departamentos no workspace |
 | `/apps/transformometro/configuracoes/recursos` | Recursos compartilhados no workspace |
 | `/apps/transformometro/dados` | Export/import backup JSON |
-| `/apps/transformometro/atas` | Atas Transforma+ (lista por filial) |
-| `/apps/transformometro/atas/new` · `…/{id}/edit` | Editor: preencher ou importar DOCX + **Gerar ata com IA** (Kimi) + signatários |
-| `/apps/transformometro/atas/{id}` | Detalhe (`DocumentReader` + logo Transforma+ + faixa de marca) |
-| `/apps/transformometro/atas/{id}/sign` | Assinatura (perfil salvo ou pad) |
-| `/apps/transformometro/atas/pending` | Pendências de assinatura do usuário |
-| `/apps/transformometro/minha-assinatura` | Perfil de assinatura pessoal |
+| `/apps/transformometro/meeting-minutes` | Atas Transforma+ (lista por filial) |
+| `/apps/transformometro/meeting-minutes/new` · `…/{id}/edit` | Editor: preencher ou importar DOCX + **Gerar ata com IA** (Kimi) + signatários |
+| `/apps/transformometro/meeting-minutes/{id}` | Detalhe (`DocumentReader` + logo Transforma+ + faixa de marca) |
+| `/apps/transformometro/meeting-minutes/{id}/sign` | Assinatura (perfil salvo ou pad) |
+| `/apps/transformometro/meeting-minutes/pending` | Pendências de assinatura do usuário |
+| `/apps/transformometro/my-signature` | Perfil de assinatura pessoal |
 
 **Legado (ainda parseado):** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — redirecionam para o mesmo conteúdo em `/configuracoes/*`.
 
@@ -41,8 +41,9 @@ Módulo de atas oficiais (CRUD, assinatura eletrônica manuscrita, PDF, geraçã
 | [ATAS-TRANSFORMA-MAIS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md) | Visão de produto e fluxo |
 | [atas-kimi.md](../../transformometro-api/docs/atas-kimi.md) | API + configuração `KIMI_*` |
 
-**API base:** `/apps/transformometro-api/transformometro/atas` (JWT).  
-**Permissões:** `transformometro.atas.view` / `.manage` / `.sign`.  
+**API base:** `/apps/transformometro-api/transformometro/meeting-minutes` (JWT).  
+**Permissões:** `transformometro.meeting-minutes.view` / `.manage` / `.sign`.  
+**Escopo de filial (canônico):** `transformometro.branch.filial-01` / `filial-02` — combinar com capacidades. Legado: `view.filial-*` / `manage.filial-*`. Após mudar o manifesto: `register-manifest.sh` + re-grant nas roles.  
 **Rebuild MFE:** `./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro`
 
 ## Workspaces (jul/2026)

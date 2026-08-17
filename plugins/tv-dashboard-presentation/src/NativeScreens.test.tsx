@@ -195,4 +195,26 @@ describe("NativeScreens public payload", () => {
     expect(rich?.style.backgroundColor).toBe("rgb(255, 255, 255)");
     expect(container.querySelector(".tdp-message")).toBeNull();
   });
+
+  it("comunicado com imagem de fundo usa camada cover no palco", () => {
+    const { container } = render(
+      <NativeSlideView
+        native={{
+          screenKey: "custom_message",
+          config: {},
+          data: {
+            version: 4,
+            background: {
+              type: "image",
+              url: "/apps/tv-dashboard-api/public/present/tok/media/wall",
+            },
+            blocks: [],
+          },
+        }}
+      />,
+    );
+    const img = container.querySelector("img.tdp-comunicado__background") as HTMLImageElement | null;
+    expect(img?.getAttribute("src")).toContain("media/wall");
+    expect(container.querySelector(".tdp-message")).toBeNull();
+  });
 });

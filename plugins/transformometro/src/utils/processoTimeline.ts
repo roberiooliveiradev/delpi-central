@@ -12,7 +12,7 @@ export type ProcessoAuditLogEntry = {
   created_at: string;
 };
 
-export type ProcessoTimelineCategory =
+export type ProcessTimelineCategory =
   | "processo"
   | "instancia"
   | "revisao"
@@ -20,11 +20,11 @@ export type ProcessoTimelineCategory =
   | "investimento"
   | "vinculo";
 
-export type ProcessoTimelineFilter = "all" | ProcessoTimelineCategory;
+export type ProcessTimelineFilter = "all" | ProcessTimelineCategory;
 
-export type ProcessoTimelineEntry = {
+export type ProcessTimelineEntry = {
   id: string;
-  category: ProcessoTimelineCategory;
+  category: ProcessTimelineCategory;
   title: string;
   detail?: string;
   meta?: string;
@@ -59,7 +59,7 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export const PROCESSO_TIMELINE_FILTER_OPTIONS: Array<{
-  value: ProcessoTimelineFilter;
+  value: ProcessTimelineFilter;
   label: string;
 }> = [
   { value: "all", label: "Todos" },
@@ -71,7 +71,7 @@ export const PROCESSO_TIMELINE_FILTER_OPTIONS: Array<{
   { value: "vinculo", label: "Recursos" },
 ];
 
-function categoryForEntityType(entityType: string): ProcessoTimelineCategory {
+function categoryForEntityType(entityType: string): ProcessTimelineCategory {
   switch (entityType) {
     case "processo_instancia":
       return "instancia";
@@ -177,7 +177,7 @@ export function formatActorDisplay(
   return undefined;
 }
 
-export function buildProcessoTimeline(entries: ProcessoAuditLogEntry[]): ProcessoTimelineEntry[] {
+export function buildProcessTimeline(entries: ProcessoAuditLogEntry[]): ProcessTimelineEntry[] {
   return entries
     .map((entry) => {
       const category = categoryForEntityType(entry.entity_type);
@@ -198,10 +198,10 @@ export function buildProcessoTimeline(entries: ProcessoAuditLogEntry[]): Process
     .sort((left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt));
 }
 
-export function filterProcessoTimelineEntries(
-  entries: ProcessoTimelineEntry[],
-  filter: ProcessoTimelineFilter
-): ProcessoTimelineEntry[] {
+export function filterProcessTimelineEntries(
+  entries: ProcessTimelineEntry[],
+  filter: ProcessTimelineFilter
+): ProcessTimelineEntry[] {
   if (filter === "all") return entries;
   return entries.filter((entry) => entry.category === filter);
 }

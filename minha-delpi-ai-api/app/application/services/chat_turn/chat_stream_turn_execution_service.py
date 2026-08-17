@@ -126,6 +126,15 @@ class ChatStreamTurnExecutionService:
             supplemental_agent_ids=supplemental_agent_ids,
             supplemental_project_ids=supplemental_project_ids,
         )
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        workspace_context = ChatHostSurfaceContextService.enrich_workspace(
+            workspace_context,
+            message=message,
+            host_context=request.host_context,
+        )
         effective_provider = ChatLlmGatewayResolverService.resolve_effective_provider(
             workspace_context.get("agent"),
         )

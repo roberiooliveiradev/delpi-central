@@ -260,6 +260,31 @@ describe("beginBlockStageMoveDrag", () => {
     expect(armTapDeselect).toHaveBeenCalledWith(null);
   });
 
+  it("clique em já selecionado promove o primário e não arma tap-deselect", () => {
+    const a = fakeBlock("a");
+    const b = fakeBlock("b");
+    const selectBlocksByIds = vi.fn();
+    const armTapDeselect = vi.fn();
+    const startDrag = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent(),
+      block: a,
+      blocks: [a, b],
+      isBlockSelected: () => true,
+      selectedIds: ["a", "b"],
+      selectedId: "b",
+      selectBlock: vi.fn(),
+      selectBlocksByIds,
+      armMultiDragSelection: vi.fn(),
+      startDrag,
+      armTapDeselect,
+    });
+    expect(result).toBe(true);
+    expect(selectBlocksByIds).toHaveBeenCalledWith(["b", "a"]);
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
+    expect(startDrag).toHaveBeenCalled();
+  });
+
   it("ícone já isolado arma tap-deselect", () => {
     const a: ComunicadoBlock = {
       id: "a",

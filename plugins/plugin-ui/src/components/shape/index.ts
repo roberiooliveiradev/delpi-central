@@ -5,6 +5,7 @@ export type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 export { resolveAnchoredPanelCoords } from "./anchoredPanelCoords";
 export {
   claimExclusiveAnchoredPanel,
+  dismissActiveExclusiveAnchoredPanel,
   isAnchorNestedInExclusiveAnchoredPanel,
   releaseExclusiveAnchoredPanel,
   resetExclusiveAnchoredPanelForTests,
@@ -14,6 +15,7 @@ export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";
 export type { ColorPickerPopoverProps, ColorPickerPopoverTriggerProps, ColorPickerVariant, ShapeFillMenuProps } from "./ColorPickerPopover";
+export { FillGradientPanel } from "./FillGradientPanel";
 export { RibbonColorPicker } from "./RibbonColorPicker";
 export type { RibbonColorPickerProps } from "./RibbonColorPicker";
 export { ColorDialog } from "./ColorDialog";
@@ -80,6 +82,27 @@ export {
   resolveSelectedSwatchHex,
   resolveColorTriggerPreviewMode,
 } from "./colorUtils";
+export {
+  DEFAULT_LINEAR_GRADIENT_PRESETS,
+  MAX_GRADIENT_STOPS,
+  MIN_GRADIENT_STOPS,
+  fillToCssBackground,
+  normalizeFillAngle,
+  normalizeGradientStops,
+  resolveFillKindTabChange,
+  resolveFillTriggerPreview,
+  solidFromFill,
+  stopsFromLegacyFromTo,
+} from "./fillTypes";
+export type {
+  DelpiFill,
+  DelpiFillGradient,
+  DelpiFillKind,
+  DelpiFillNone,
+  DelpiFillSolid,
+  DelpiGradientStop,
+  FillTriggerPreview,
+} from "./fillTypes";
 export { applyTextEffectStyleToCss } from "./textEffectStyle";
 export type { TextEffectStyleFields } from "./textEffectStyle";
 export { DEFAULT_SHAPE_COLOR_LABELS, mergeShapeColorLabels } from "./shapeLabels";

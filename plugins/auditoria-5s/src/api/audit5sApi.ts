@@ -177,9 +177,9 @@ export async function fetchAudit(auditId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+/** @deprecated Preferir `fetchAudit`. O join HTTP não altera auditores; mantido por compat. */
 export async function joinAudit(auditId: string) {
-  const res = await httpPost<ApiEnvelope<AuditDetail>>(`${API_BASE}/audits/${auditId}/join`, {});
-  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+  return fetchAudit(auditId);
 }
 
 export async function deleteAudit(auditId: string) {

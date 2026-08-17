@@ -8,88 +8,83 @@
   background: var(--delpi-ui-surface, #fff);
 }
 
+/* Toolbar linear (padrão Notion / Google Docs / Linear) — clusters + separadores. */
 .delpi-ui-rich-text-ribbon {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  align-items: center;
+  gap: 4px 2px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--delpi-ui-border, #e5e7eb);
-  /* raio próprio: o root perdeu overflow:hidden para o badge de link não ser cortado */
   border-radius: 11px 11px 0 0;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-accent, #089bdb) 8%);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, #fff) 94%,
+    var(--delpi-ui-accent, #089bdb) 6%
+  );
 }
 
-.delpi-ui-rich-text-ribbon__group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  min-width: min(100%, 280px);
-  flex: 1 1 280px;
-  border-right: 1px solid var(--delpi-ui-border, #e5e7eb);
-}
-
-.delpi-ui-rich-text-ribbon__group:last-child {
-  border-right: none;
-}
-
-.delpi-ui-rich-text-ribbon__legend {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--delpi-ui-muted, #64748b);
-}
-
-.delpi-ui-rich-text-ribbon__rows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.delpi-ui-rich-text-ribbon__row {
-  display: flex;
+.delpi-ui-rich-text-ribbon__cluster {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-}
-
-.delpi-ui-rich-text-ribbon__row--icons {
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 }
 
 .delpi-ui-rich-text-ribbon__font-select {
-  min-width: 140px;
-  flex: 1 1 140px;
+  min-width: 120px;
+  width: 148px;
+  flex: 0 1 148px;
 }
 
 .delpi-ui-rich-text-ribbon__size {
-  width: 88px;
+  width: auto;
   flex-shrink: 0;
+  /* Paridade com botões de ícone da toolbar (30px). */
+  --delpi-ui-stepper-height: 30px;
+}
+
+.delpi-ui-rich-text-ribbon__dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.delpi-ui-rich-text-ribbon__table-portal {
+  z-index: 80;
 }
 
 .delpi-ui-rich-text-ribbon__icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border-radius: 8px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  background: var(--delpi-ui-surface, #fff);
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--delpi-ui-text, #111);
   cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .delpi-ui-rich-text-ribbon__icon-btn:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 45%, var(--delpi-ui-border, #e5e7eb));
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, var(--delpi-ui-surface, #fff));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-rich-text-ribbon__color--disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .delpi-ui-rich-text-ribbon__icon-btn.is-active {
-  border-color: var(--delpi-ui-accent, #089bdb);
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, var(--delpi-ui-surface, #fff));
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 40%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, transparent);
   color: var(--delpi-ui-accent, #089bdb);
 }
 
@@ -100,40 +95,197 @@
 
 .delpi-ui-rich-text-ribbon__sep {
   width: 1px;
-  height: 24px;
-  margin: 0 2px;
-  background: var(--delpi-ui-border, #e5e7eb);
+  height: 22px;
+  margin: 0 4px;
+  background: color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 85%, transparent);
   flex-shrink: 0;
+  align-self: center;
 }
 
-/* Seletores de cor alinhados aos botões de ícone (32px). */
+/* Seletores de cor alinhados aos botões de ícone. */
 .delpi-ui-rich-text-ribbon .delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__button {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  background: var(--delpi-ui-surface, #fff);
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.delpi-ui-rich-text-ribbon .delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__button:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
 }
 
 .delpi-ui-rich-text-ribbon .delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__preview {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 4px;
 }
 
 .delpi-ui-rich-text__editor,
 .delpi-ui-rich-text--preview {
   min-height: 160px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   color: var(--delpi-ui-text, #111);
   line-height: 1.55;
+  font-size: 14px;
 }
 
 .delpi-ui-rich-text__editor:focus {
   outline: 2px solid var(--delpi-ui-accent, #089bdb);
   outline-offset: -2px;
+}
+
+.delpi-ui-rich-text__source-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.delpi-ui-rich-text__source-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--delpi-ui-text, #111) 58%, transparent));
+}
+
+.delpi-ui-rich-text__source {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 160px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 8px;
+  resize: vertical;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-text, #111) 8%);
+  color: var(--delpi-ui-text, #111);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.delpi-ui-rich-text__source:focus {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 0;
+}
+
+.delpi-ui-rich-text__source:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.delpi-ui-rich-text__source-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.delpi-ui-rich-text__source-suggest {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 6px);
+  left: 10px;
+  right: 10px;
+  max-height: 220px;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface, #fff);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+}
+
+.delpi-ui-rich-text__source-suggest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delpi-ui-text, #111);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-rich-text__source-suggest-item:hover,
+.delpi-ui-rich-text__source-suggest-item.is-active {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+}
+
+.delpi-ui-rich-text__source-suggest-tag {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-rich-text__source-suggest-meta {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--delpi-ui-text, #111) 55%, transparent));
+}
+
+@media (prefers-color-scheme: dark) {
+  .delpi-ui-rich-text__source {
+    background: color-mix(in srgb, var(--delpi-ui-surface, #111) 88%, #fff 12%);
+  }
+
+  .delpi-ui-rich-text__source-suggest {
+    background: var(--delpi-ui-surface, #1a1a1a);
+  }
+}
+
+/* Garante contraste visual de ênfase (hosts podem herdar font-weight neutro). */
+.delpi-ui-rich-text__editor b,
+.delpi-ui-rich-text__editor strong,
+.delpi-ui-rich-text--preview b,
+.delpi-ui-rich-text--preview strong,
+.delpi-ui-document-rich-content b,
+.delpi-ui-document-rich-content strong {
+  font-weight: 700;
+}
+
+.delpi-ui-rich-text__editor i,
+.delpi-ui-rich-text__editor em,
+.delpi-ui-rich-text--preview i,
+.delpi-ui-rich-text--preview em,
+.delpi-ui-document-rich-content i,
+.delpi-ui-document-rich-content em {
+  font-style: italic;
+}
+
+.delpi-ui-rich-text__editor u,
+.delpi-ui-rich-text--preview u,
+.delpi-ui-document-rich-content u {
+  text-decoration: underline;
+}
+
+.delpi-ui-rich-text__editor s,
+.delpi-ui-rich-text__editor strike,
+.delpi-ui-rich-text__editor del,
+.delpi-ui-rich-text--preview s,
+.delpi-ui-rich-text--preview strike,
+.delpi-ui-rich-text--preview del,
+.delpi-ui-document-rich-content s,
+.delpi-ui-document-rich-content strike,
+.delpi-ui-document-rich-content del {
+  text-decoration: line-through;
 }
 
 .delpi-ui-rich-text__editor h2 {
@@ -165,6 +317,78 @@
   color: var(--delpi-ui-accent, #089bdb);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* Tabelas WYSIWYG — editor, preview e leitura/apresentação (DocumentReader). */
+.delpi-ui-rich-text__editor table.delpi-ui-rich-text-table,
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table,
+.delpi-ui-rich-text__editor table,
+.delpi-ui-rich-text--preview table,
+.delpi-ui-document-rich-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  table-layout: fixed;
+  font-size: inherit;
+  display: table;
+}
+
+.delpi-ui-rich-text__editor table th,
+.delpi-ui-rich-text__editor table td,
+.delpi-ui-rich-text--preview table th,
+.delpi-ui-rich-text--preview table td,
+.delpi-ui-document-rich-content table th,
+.delpi-ui-document-rich-content table td {
+  display: table-cell;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, var(--delpi-ui-text, #111));
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.delpi-ui-rich-text__editor table th,
+.delpi-ui-rich-text--preview table th,
+.delpi-ui-document-rich-content table th {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #fff));
+  text-align: left;
+}
+
+.delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal td,
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal td,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal td {
+  border-color: color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 70%, transparent);
+}
+
+.delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal th {
+  background: transparent;
+}
+
+.delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td,
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 6%, var(--delpi-ui-surface, #fff));
+}
+
+.delpi-ui-rich-text__editor table thead,
+.delpi-ui-rich-text--preview table thead,
+.delpi-ui-document-rich-content table thead,
+.delpi-ui-rich-text__editor table tbody,
+.delpi-ui-rich-text--preview table tbody,
+.delpi-ui-document-rich-content table tbody {
+  display: table-row-group;
+}
+
+.delpi-ui-rich-text__editor table tr,
+.delpi-ui-rich-text--preview table tr,
+.delpi-ui-document-rich-content table tr {
+  display: table-row;
 }
 
 /* Badge flutuante do link ativo (URL clicável + editar + remover) */
@@ -230,13 +454,17 @@
 }
 
 @media (max-width: 768px) {
-  .delpi-ui-rich-text-ribbon__group {
-    flex-basis: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--delpi-ui-border, #e5e7eb);
+  .delpi-ui-rich-text-ribbon {
+    padding: 8px;
+    gap: 6px 0;
   }
 
-  .delpi-ui-rich-text-ribbon__group:last-child {
-    border-bottom: none;
+  .delpi-ui-rich-text-ribbon__font-select {
+    flex: 1 1 140px;
+    width: auto;
+  }
+
+  .delpi-ui-rich-text-ribbon__sep {
+    display: none;
   }
 }

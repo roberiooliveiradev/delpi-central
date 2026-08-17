@@ -57,6 +57,30 @@ class OpenApiPresentationProfileDeriverService(ChatAssistantVocabularyService):
         shape_profile = dict(shape_defaults.get(shape_token) or {})
 
         merged = dict(cls.node("defaults") or {})
+
+        # Herda viewOrder/stack do perfil JSON equivalente ao shape (ex.: playbook_report
+        # → tabela primeiro). Sem isso, defaults.text-first oculta evidência tabular.
+        equivalent_key = cls.json_profile_equivalent_for_shape(shape_token)
+
+        if equivalent_key and equivalent_key != "generic":
+            from app.domain.services.chat_presentation_profile_service import (
+                ChatPresentationProfileService,
+            )
+
+            equivalent = ChatPresentationProfileService.profile(equivalent_key)
+
+            if isinstance(equivalent, dict):
+                for field in (
+                    "viewOrder",
+                    "stackPlan",
+                    "flags",
+                    "stackTailPolicy",
+                    "stackLayoutPolicy",
+                    "visualBundlePolicy",
+                ):
+                    if field not in shape_profile and equivalent.get(field) is not None:
+                        merged[field] = equivalent[field]
+
         merged.update(shape_profile)
         merged["presentationStrategy"] = "as_delivered"
         merged["openapiDerived"] = True

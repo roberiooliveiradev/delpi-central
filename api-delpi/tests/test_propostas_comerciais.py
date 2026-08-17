@@ -691,6 +691,36 @@ def test_proposta_comercial_pdf_renderer_includes_prospect_cliente() -> None:
     assert b"OV003590" in pdf_bytes
 
 
+def test_proposta_comercial_pdf_renderer_contact_card_includes_telefone() -> None:
+    """Card Contato do PDF inclui Telefone (E7.S3) — assert estrutural no renderer."""
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "app"
+        / "infrastructure"
+        / "pdf"
+        / "propostas_comerciais"
+        / "proposta_comercial_pdf_renderer.py"
+    ).read_text(encoding="utf-8")
+    contact_block = source.split("contact_card = _build_labeled_card", 1)[1].split(
+        "row = Table", 1
+    )[0]
+    assert '("Telefone", _display(contato.get("telefone")))' in contact_block
+    assert '("E-mail", _display(contato.get("email")))' in contact_block
+
+
+def test_pdf_export_overrides_service_applies_contato_telefone() -> None:
+    detail = _sample_detail()
+    merged = PropostaComercialPdfExportOverridesService.apply(
+        detail,
+        {"contato": {"telefone": "(47) 99999-0000", "departamento": "Vendas"}},
+    )
+    assert merged["contato"]["telefone"] == "(47) 99999-0000"
+    assert merged["contato"]["departamento"] == "Vendas"
+    assert merged["contato"]["nome"] == detail["contato"]["nome"]
+
+
 def test_proposta_comercial_pdf_renderer_returns_pdf_bytes() -> None:
     renderer = PropostaComercialPdfRenderer()
     pdf_bytes = renderer.render(_sample_detail())

@@ -1,6 +1,7 @@
 // src/ui/admin/tabs/AppsTab.tsx
 
-import { useContext, useMemo, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Code2,
   Edit,
@@ -12,17 +13,16 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient, HttpError } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
+import { HttpError } from "../../../data/apiClient";
 import type { AdminApp } from "../../../data/adminApi";
 
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
-import { ManifestRegisterModal } from "../modals/ManifestRegisterModal";
 import { resolveIcon } from "../../../utils/iconResolver";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
+import { Button, Input } from "../../../ui-kit";
 
 type AppSortField =
   | "name"
@@ -135,19 +135,13 @@ const hasActiveDateFilters = (filters: AppDateFilters) =>
   );
 
 export const AppsTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
+  const navigate = useNavigate();
   const showAlert = useAppAlert();
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
-
-  const [manifestModal, setManifestModal] = useState<{
-    open: boolean;
-    mode: "register" | "edit";
-    initialManifest?: any;
-  }>({ open: false, mode: "register" });
 
   const [sortState, setSortState] = useState<{
     sort: AppSortField;
@@ -160,9 +154,7 @@ export const AppsTab = () => {
   const [dateFilters, setDateFilters] =
     useState<AppDateFilters>(EMPTY_DATE_FILTERS);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const appsResource = usePaginatedResource<AdminApp>(
     ({ page, pageSize }) =>
@@ -198,17 +190,10 @@ export const AppsTab = () => {
   const activeCount = apps.filter((app) => app.active !== false).length;
   const inactiveCount = apps.filter((app) => app.active === false).length;
 
-  const openRegister = () =>
-    setManifestModal({ open: true, mode: "register" });
+  const openRegister = () => navigate("/admin/apps/manifest/new");
 
-  const openEdit = async (app: AdminApp) => {
-    const manifest = await api.getPluginManifest(app.id);
-
-    setManifestModal({
-      open: true,
-      mode: "edit",
-      initialManifest: manifest,
-    });
+  const openEdit = (app: AdminApp) => {
+    navigate(`/admin/apps/${app.id}/manifest`);
   };
 
   const handleSearchChange = (value: string) => {
@@ -386,12 +371,8 @@ export const AppsTab = () => {
             onClick: () => toggleSort(field),
           })),
           {
-            label: (
-              <>
-                <PackagePlus size={15} />
-                Adicionar Plugin
-              </>
-            ),
+            label: "Adicionar Plugin",
+            icon: <PackagePlus size={15} />,
             primary: true,
             onClick: openRegister,
           },
@@ -400,8 +381,10 @@ export const AppsTab = () => {
           <>
             <div className="admin-entity-filters__group">
               <span className="admin-entity-filters__label">Criado em:</span>
-              <input
+              <Input
                 type="date"
+                size="sm"
+                className="portal-ui-control--date"
                 value={dateFilters.createdFrom}
                 onChange={(event) =>
                   applyDateFilters({ createdFrom: event.target.value })
@@ -409,8 +392,10 @@ export const AppsTab = () => {
                 aria-label="Data inicial de criação"
               />
               <span className="admin-entity-filters__range-separator">até</span>
-              <input
+              <Input
                 type="date"
+                size="sm"
+                className="portal-ui-control--date"
                 value={dateFilters.createdTo}
                 onChange={(event) =>
                   applyDateFilters({ createdTo: event.target.value })
@@ -420,8 +405,10 @@ export const AppsTab = () => {
             </div>
             <div className="admin-entity-filters__group">
               <span className="admin-entity-filters__label">Atualizado em:</span>
-              <input
+              <Input
                 type="date"
+                size="sm"
+                className="portal-ui-control--date"
                 value={dateFilters.updatedFrom}
                 onChange={(event) =>
                   applyDateFilters({ updatedFrom: event.target.value })
@@ -429,8 +416,10 @@ export const AppsTab = () => {
                 aria-label="Data inicial de atualização"
               />
               <span className="admin-entity-filters__range-separator">até</span>
-              <input
+              <Input
                 type="date"
+                size="sm"
+                className="portal-ui-control--date"
                 value={dateFilters.updatedTo}
                 onChange={(event) =>
                   applyDateFilters({ updatedTo: event.target.value })
@@ -439,11 +428,9 @@ export const AppsTab = () => {
               />
             </div>
             {hasActiveDateFilters(dateFilters) ? (
-              <div className="admin-entity-filters__group">
-                <button type="button" onClick={clearDateFilters}>
-                  Limpar filtros de data
-                </button>
-              </div>
+              <Button variant="ghost" size="sm" onClick={clearDateFilters}>
+                Limpar filtros de data
+              </Button>
             ) : null}
           </>
         }
@@ -460,30 +447,18 @@ export const AppsTab = () => {
         onClearSelection={clearSelection}
         bulkActions={[
           {
-            label: (
-              <>
-                <Power size={14} />
-                Ativar
-              </>
-            ),
+            label: "Ativar",
+            icon: <Power size={14} />,
             onClick: handleBulkActivate,
           },
           {
-            label: (
-              <>
-                <PowerOff size={14} />
-                Desativar
-              </>
-            ),
+            label: "Desativar",
+            icon: <PowerOff size={14} />,
             onClick: handleBulkDeactivate,
           },
           {
-            label: (
-              <>
-                <Trash2 size={14} />
-                Excluir
-              </>
-            ),
+            label: "Excluir",
+            icon: <Trash2 size={14} />,
             danger: true,
             onClick: () => setConfirmBulkDelete(true),
           },
@@ -530,43 +505,17 @@ export const AppsTab = () => {
         ]}
         renderActions={(app) => [
           {
-            label: (
-              <>
-                <Edit size={14} />
-                Editar
-              </>
-            ),
+            label: "Editar manifesto",
+            icon: <Edit size={14} />,
             onClick: () => openEdit(app),
           },
           {
-            label: (
-              <>
-                <Trash2 size={14} />
-                Excluir
-              </>
-            ),
+            label: "Excluir",
+            icon: <Trash2 size={14} />,
             danger: true,
             onClick: () => setDeleteOneId(app.id),
           },
         ]}
-      />
-
-      <ManifestRegisterModal
-        open={manifestModal.open}
-        mode={manifestModal.mode}
-        initialManifest={manifestModal.initialManifest}
-        onClose={() =>
-          setManifestModal({ open: false, mode: "register" })
-        }
-        onSubmit={async (manifest) => {
-          if (manifestModal.mode === "edit") {
-            await api.updatePluginManifest(manifest.id, manifest);
-          } else {
-            await api.registerManifest(manifest);
-          }
-
-          appsResource.refetch();
-        }}
       />
 
       <ConfirmDialog

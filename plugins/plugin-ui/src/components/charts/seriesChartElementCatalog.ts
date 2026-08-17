@@ -17,6 +17,7 @@ export type SeriesChartElementId =
   | "dataLabels"
   | "dataTable"
   | "gridlines"
+  | "goalLine"
   | "legend"
   | "markers"
   | "smoothLines"
@@ -87,6 +88,23 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     ],
   },
   {
+    id: "goalLine",
+    label: "Linha de meta",
+    hint: "Linha de referência no valor da meta (informe o valor no inspetor).",
+    chartTypes: [
+      "line",
+      "bar",
+      "horizontal_bar",
+      "area",
+      "combo",
+      "stacked_bar",
+      "histogram",
+      "scatter",
+      "bubble",
+      "waterfall",
+    ],
+  },
+  {
     id: "markers",
     label: "Marcadores",
     hint: "Pontos sobre a linha do gráfico.",
@@ -130,6 +148,8 @@ export function isSeriesChartElementEnabled(
       return Boolean(options.showDataTable);
     case "gridlines":
       return options.showGrid !== false || Boolean(options.showVerticalGrid);
+    case "goalLine":
+      return Boolean(options.showGoalLine);
     case "legend":
       return options.showLegend !== false && options.legendPosition !== "hidden";
     case "markers":
@@ -179,6 +199,8 @@ export function setSeriesChartElementEnabled(
       return enabled
         ? { showGrid: true }
         : { showGrid: false, showVerticalGrid: false };
+    case "goalLine":
+      return { showGoalLine: enabled };
     case "legend": {
       if (!enabled) {
         /* Não gravar legendPosition:"hidden" — apagaria left/right/top ao religar. */
@@ -229,6 +251,8 @@ export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPart
       ];
     case "gridlines":
       return [{ kind: "grid" }];
+    case "goalLine":
+      return [{ kind: "goalLine" }];
     case "dataTable":
       return [{ kind: "dataTable" }];
     case "markers":
@@ -283,6 +307,8 @@ export function chartElementIdForPartRef(ref: ChartPartRef): SeriesChartElementI
       return "axisTitles";
     case "grid":
       return "gridlines";
+    case "goalLine":
+      return "goalLine";
     case "dataTable":
       return "dataTable";
     case "marker":

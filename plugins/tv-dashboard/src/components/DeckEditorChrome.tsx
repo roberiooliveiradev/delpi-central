@@ -8,12 +8,15 @@ import {
   isSelectionPanelTab,
   normalizeSelectionRibbonTab,
 } from "../utils/normalizeSelectionRibbonTab";
+import { resolveSlideBatchRibbonTab } from "../utils/resolveSlideBatchRibbonTab";
 import { DECK_TAB_KEYTIPS } from "../utils/deckKeyTips";
+import { useOptionalTvCopilotDock } from "../context/tvCopilotDockContext";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckKeyTip } from "./DeckKeyTip";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
+import type { SlideBatchInput } from "../utils/applySlideBatchPatch";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideCurrentRibbon } from "./SlideCurrentRibbon";
@@ -36,9 +39,9 @@ type SlideDeckProps = {
   selectedSlide: Slide | null;
   onAdd: () => void;
   onSelect: (slideId: string) => void;
-  onDuplicate?: (slide: Slide) => void;
-  onToggleActive?: (slide: Slide) => void;
-  onRemove?: (slide: Slide) => void;
+  onDuplicate?: (targets: Slide[]) => void;
+  onToggleActive?: (targets: Slide[]) => void;
+  onRemove?: (targets: Slide[]) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
   onExportPptx?: () => void;
@@ -57,6 +60,9 @@ type Props = {
   adminLabels?: Record<string, string>;
   slideTabExtra?: ReactNode;
   slideDeck: SlideDeckProps;
+  /** Telas do filmstrip com seleção múltipla; 1 = primária apenas. */
+  selectedSlideCount?: number;
+  selectedSlides?: Slide[];
   onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) => void;
   onSaveSlide: (
     slide: Slide,
@@ -68,6 +74,7 @@ type Props = {
       transitionStyle?: string | null;
     },
   ) => void;
+  onSaveSlides?: (slides: Slide[], patch: SlideBatchInput) => void;
   /** Template: sem aba Programação / multi-página. */
   variant?: "playlist" | "template";
 };
@@ -122,11 +129,15 @@ export function DeckEditorChrome({
   adminLabels = {},
   slideTabExtra,
   slideDeck,
+  selectedSlideCount = 1,
+  selectedSlides,
   onSavePlaylistSettings,
   onSaveSlide,
+  onSaveSlides,
   variant = "playlist",
 }: Props) {
   const editor = useOptionalComunicadoEditor();
+  const copilotDock = useOptionalTvCopilotDock();
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
   const isTableSelection = editor?.selected?.type === "table_view";
   const hasDataBoundSelection = Boolean(
@@ -179,6 +190,13 @@ export function DeckEditorChrome({
     }
   }, [activeTab, tabs, isCustomSlide]);
 
+  /** Se o dock do Copiloto foi fechado enquanto a aba estava ativa, volta ao ribbon padrão. */
+  useEffect(() => {
+    if (activeTab === "copilot" && copilotDock && !copilotDock.visible) {
+      setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
+    }
+  }, [activeTab, copilotDock, copilotDock?.visible, tabs, isCustomSlide]);
+
   useEffect(() => {
     if (!hasSelection || !isCustomSlide) return;
     if (isTableSelection) {
@@ -217,6 +235,14 @@ export function DeckEditorChrome({
     }
   }, [activeTab, slide, tabs, isCustomSlide]);
 
+  useEffect(() => {
+    const nextTab = resolveSlideBatchRibbonTab({
+      selectedSlideCount,
+      currentTab: activeTab,
+    });
+    if (nextTab) setActiveTab(nextTab);
+  }, [selectedSlideCount, activeTab]);
+
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
       editor?.openLayersPanel();
@@ -224,6 +250,11 @@ export function DeckEditorChrome({
       if (!isRibbonContentTab(activeTab)) {
         setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
       }
+      return;
+    }
+    if (tab === "copilot") {
+      copilotDock?.openDock();
+      setActiveTab("copilot");
       return;
     }
     setActiveTab(tab);
@@ -314,6 +345,7 @@ export function DeckEditorChrome({
                   {activeTab === "slide" ? (
                     <SlideCurrentRibbon
                       selectedSlide={slideDeck.selectedSlide}
+                      selectedSlides={selectedSlides}
                       onDuplicate={slideDeck.onDuplicate}
                       onToggleActive={slideDeck.onToggleActive}
                       onRemove={slideDeck.onRemove}
@@ -324,19 +356,24 @@ export function DeckEditorChrome({
                     />
                   ) : null}
                   {activeTab === "slide" && isCustomSlide ? (
-                    <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+                    <ComunicadoSlideBackgroundRibbon
+                      labels={adminLabels}
+                      selectedSlides={selectedSlides}
+                    />
                   ) : null}
                   <DeckSettingsPanel
                     activeTab={activeTab}
                     playlist={playlist}
                     slide={slide}
                     slides={slides ?? slideDeck.slides}
+                    selectedSlides={selectedSlides}
                     sections={sections}
                     catalog={catalog}
                     branchScope={branchScope}
                     slideTabExtra={slideTabExtra}
                     onSavePlaylistSettings={onSavePlaylistSettings}
                     onSaveSlide={onSaveSlide}
+                    onSaveSlides={onSaveSlides}
                   />
                 </DeckRibbonGroups>
               ) : null}

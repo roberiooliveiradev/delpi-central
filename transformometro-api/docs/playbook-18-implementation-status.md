@@ -117,17 +117,23 @@ Exemplo de redução validada em dev: 49 processos / 49 instâncias → **25 pro
 
 ## RBAC por filial (S10)
 
-Permissões escopadas (manifesto `transformometro.manifest.json`):
+Modelo **capacidade × escopo**:
 
 | Permissão | Efeito |
 |-----------|--------|
-| `transformometro.view.filial-01` / `filial-02` | Leitura server-side filtrada à filial |
+| `transformometro.branch.filial-01` / `filial-02` | **Segregador** — limita dados/operações à filial (combinar com capacidades) |
+| Capacidades (`processes.manage`, `meeting-minutes.*`, …) | O que o usuário pode fazer **dentro** do escopo (ou unrestricted se sem branch) |
 | `transformometro.view.consolidated` | Visão consolidada do dashboard (com escopo filial ativo) |
-| `transformometro.manage.filial-01` / `filial-02` | CRUD de instâncias/processos na filial |
+| `transformometro.view.filial-*` (legado) | Alias de escopo (= `branch.filial-*` para leitura) |
+| `transformometro.manage.filial-*` (legado) | Alias: escopo + manage naquela filial |
 
-**Compatibilidade:** usuários só com permissões globais legadas (`transformometro.view`, `transformometro.processes.manage`, …) permanecem **sem restrição de filial** até receberem permissões escopadas nas **roles/grupos da Core API** (RBAC do portal — não Keycloak).
+**Exemplo:** `branch.filial-01` + `processes.manage` → CRUD de processos só na 01.
 
-Módulo canônico: `tm_app/application/services/filial_access_scope_service.py` · helpers HTTP em `tm_app/interface/http/filial_access_http.py`.
+**Compatibilidade:** usuários só com permissões globais legadas (`transformometro.view`, `transformometro.processes.manage`, …) permanecem **sem restrição de filial** até receberem `branch.filial-*` (ou aliases) nas **roles/grupos da Core API**.
+
+**Ops:** após alterar o manifesto, `register-manifest.sh` e re-grant das roles com `branch.filial-*` + capacidades (não só `view`/`manage` duplicados por filial).
+
+Módulo canônico: `tm_app/application/services/branch_access_scope_service.py` · helpers HTTP em `tm_app/interface/http/filial_access_http.py`.
 
 Rotas S2S (`/integrations/engineering/transforma-mais/*`) e service token **não** aplicam RBAC filial.
 

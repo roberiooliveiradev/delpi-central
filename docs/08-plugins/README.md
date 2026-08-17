@@ -68,19 +68,24 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | plugin | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | plugin | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
+| `plugins/commercial` | `commercial` | microfrontend | plugin | `/apps/commercial` | `delpi-commercial` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/kaizometro` | `kaizometro` | microfrontend | plugin | `/apps/kaizometro` | `delpi-kaizometro` |
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/lancamento-notas-fiscais` | `lancamento-notas-fiscais` | microfrontend | plugin | `/apps/lancamento-notas-fiscais` | `delpi-lancamento-notas-fiscais` |
+| `plugins/invoice-issuance` | `invoice-issuance` | microfrontend | plugin | `/apps/invoice-issuance` | `delpi-invoice-issuance` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
 | `plugins/comite-etica-conduta` | `comite-etica-conduta` | microfrontend | plugin | `/apps/comite-etica-conduta` | `delpi-comite-etica-conduta` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
+| `plugins/materiais-terceiros` | `materiais-terceiros` | microfrontend | plugin | `/apps/materiais-terceiros` | `delpi-materiais-terceiros` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
+| `plugins/codigo-etica` | `codigo-etica` | microfrontend | plugin | `/apps/codigo-etica` | `delpi-codigo-etica` |
+| `plugins/mural-acessos` | `mural-acessos` | microfrontend | plugin | `/apps/mural-acessos` | `delpi-mural-acessos` |
 | `plugins/reports` | `reports` | microfrontend | plugin | `/apps/reports` | `delpi-reports` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -119,9 +124,12 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Kaizômetro | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação Sheets; sugestão pública `POST /public/kaizen/suggestions` + form `/p/kaizen/sugestao/aberto` |
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
 | Lançamento de Notas Fiscais | `/apps/api-delpi/lancamento-notas-fiscais/*` (Postgres plugins + SF1/SA2) |
+| Emissão de Notas Fiscais | `/apps/api-delpi/invoice-issuance/*` (Postgres plugins + SA1/SA2/SB1/SB2) |
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4/SD3; UI: monitoramento + `/analise-consumo`) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
+| Materiais de Terceiros | `/apps/api-delpi/supplies/third-party-materials/*` (TOTVS SB6 / VW_PD3_BENEF_RETORNOS) — [README](../../plugins/materiais-terceiros/README.md) · [API](../../api-delpi/docs/api/materiais-terceiros.md) |
+| Portal Comercial | `/apps/commercial-api/*` + `/apps/api-delpi/pedidos-venda-abertos/*`, `/commercial/*`, `/commercial-proposals/*`, `/products/*` e `/production/*` — [README](../../plugins/commercial/README.md) · [wireframes](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
@@ -131,6 +139,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
 | CIPA | `/apps/cipa-api/*` (atas, membros, SIPAT); público `/p/cipa/sipat/{token}` — [README](../../plugins/cipa/README.md) · [API](../../cipa-api/README.md) · [playbook](../12-roadmap-e-evolucao/cipa/PLAYBOOK.md) |
+| Mural de Acessos | `/apps/api-delpi/mural-acessos/*` + público `/public/mural-acessos/*` — [README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) |
 
 ---
 
@@ -175,13 +184,17 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | kaizometro | `kaizometro` |
 | inspecoes-entrada | `inspecoes-entrada` |
 | lancamento-notas-fiscais | `lancamento-notas-fiscais` |
+| invoice-issuance | `invoice-issuance` |
 | inspecoes-processo | `inspecoes-processo` |
 | controle-retrabalhos | `controle-retrabalhos` |
 | scrap-monitoring | `scrap-monitoring` |
 | estoque-seguranca | `estoque-seguranca` |
+| materiais-terceiros | `materiais-terceiros` |
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
+| mural-acessos | `mural-acessos` |
 | reports | `reports` |
+| commercial | `commercial` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -200,12 +213,15 @@ Declaradas no manifesto e persistidas na Core API:
 | central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc`, `central-agendamento.approve.filial-es|sc` |
 | inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
 | lancamento-notas-fiscais | `lancamento-notas-fiscais.access`, `.create`, `.view`, `.process`, `.manage` |
+| invoice-issuance | `invoice-issuance.access`, `.create`, `.view`, `.view.filial-01/02`, `.process`, `.manage` |
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
+| materiais-terceiros | `materiais-terceiros.access`, `.view.filial-sc`, `.view.filial-es`, `.export` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
+| mural-acessos | `mural-acessos.access`, `mural-acessos.manage` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 
@@ -226,12 +242,16 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Kaizômetro | [Plugin README](../../plugins/kaizometro/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/kaizometro/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/kaizometro/docs/DOCUMENTACAO.md) |
 | Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
 | Lançamento de Notas Fiscais | [Plugin README](../../plugins/lancamento-notas-fiscais/README.md) · [Playbook](../12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md) · [Roadmap](../12-roadmap-e-evolucao/lancamento-notas-fiscais/ROADMAP.md) · [API](../../api-delpi/docs/api/lancamento-notas-fiscais.md) |
+| Emissão de Notas Fiscais | [Plugin README](../../plugins/invoice-issuance/README.md) · [Playbook](../12-roadmap-e-evolucao/invoice-issuance/PLAYBOOK.md) · [Roadmap](../12-roadmap-e-evolucao/invoice-issuance/ROADMAP.md) · [API](../../api-delpi/docs/api/invoice-issuance.md) |
 | Inspeções de Processo | [Plugin README](../../plugins/inspecoes-processo/README.md) · [Auditoria](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md) · [API](../../api-delpi/docs/api/inspecoes-processo.md) |
 | Controle de Retrabalhos | [Plugin README](../../plugins/controle-retrabalhos/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/controle-retrabalhos/README.md) · [API](../../api-delpi/docs/api/controle-retrabalhos.md) |
 | Acompanhamento de Refugos | [Plugin README](../../plugins/scrap-monitoring/README.md) · [API](../../api-delpi/docs/api/scrap-monitoring.md) |
 | Apontamento de Produção | [Plugin README](../../plugins/production-appointments/README.md) · [API](../../api-delpi/docs/api/production-appointments.md) |
-| Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) |
+| Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) · [API](../../api-delpi/docs/api/canal-denuncia.md) · [público `/p/canal-denuncia/denuncia/aberto`](../../plugins/public-hub/README.md) |
+| Código de Ética | [Plugin README](../../plugins/codigo-etica/README.md) · [público `/p/codigo-etica/codigo/aberto`](../../plugins/public-hub/README.md) |
+| Mural de Acessos | [Plugin README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) · [público `/p/mural-acessos/menu/{token}`](../../plugins/public-hub/README.md) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
+| Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 
 ---
 

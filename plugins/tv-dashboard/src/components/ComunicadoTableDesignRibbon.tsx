@@ -41,7 +41,7 @@ export function ComunicadoTableDesignRibbon() {
     <DeckRibbonGroups>
       <SelectionTypedWithTailHost
         layout="ribbon"
-        typed={["tableStyleOptions", "tableStyles", "tableTypography", "tableBorders"]}
+        typed={["tableStyleOptions", "tableStyles", "tableTypography", "tableBorders", "numberFormat"]}
       />
     </DeckRibbonGroups>
   );

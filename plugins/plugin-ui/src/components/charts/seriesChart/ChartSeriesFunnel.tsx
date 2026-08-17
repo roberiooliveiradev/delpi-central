@@ -19,6 +19,7 @@ export type ChartSeriesFunnelProps = Pick<SeriesChartSharedProps, "layout" | "po
   chartParts?: ChartPartsMap | null;
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  goalValue?: number | null;
 };
 
 /** Funil: trapézios horizontais com largura ∝ valor (estágios de cima para baixo). */
@@ -31,6 +32,7 @@ export function ChartSeriesFunnel({
   chartParts,
   categoryColors,
   colorScale,
+  goalValue = null,
 }: ChartSeriesFunnelProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH, plotInset } = layout;
@@ -85,6 +87,7 @@ export function ChartSeriesFunnel({
           seriesColor: seriesColor || OFFICE_CHART_SERIES_COLOR,
           categoryColors,
           colorScale,
+          goalValue,
           parts: chartParts,
           parentSeriesIndex: seriesIndex,
         });

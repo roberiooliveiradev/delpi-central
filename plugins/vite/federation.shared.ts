@@ -103,6 +103,8 @@ export function pluginUiTestAliases(pluginDir: string) {
       replacement: logoRawStub,
     },
     { find: "@delpi/plugin-ui/index", replacement: indexTs },
+    { find: "@delpi/plugin-ui/signature", replacement: path.join(uiRoot, "components/signature/index.ts") },
+    { find: "@delpi/plugin-ui/screen-loading", replacement: path.join(uiRoot, "exposes/screenLoading.ts") },
     { find: "@delpi/plugin-ui/styles", replacement: stylesCss },
     { find: "@delpi/plugin-ui", replacement: indexTs },
   ];

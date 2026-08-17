@@ -601,12 +601,13 @@ PRODUCTION_OTD = agent_route(
 )
 
 PRODUCTION_OEE = agent_route(
-    summary="OEE produção — resumo e apontamentos (view fabril)",
+    summary="OEE produção — resumo e apontamentos",
     description=(
         "Painel de eficiência de produção alinhado à eficiência fabril: mesma view "
         "(vw_Apontamentos_Eficiencia), STATUS_REGISTRO=OK, CTs excluídos e faixa 0–199%. "
-        "Resumo e listagem usam EFICIENCIA_PERCENTUAL (tempo previsto ÷ tempo real); "
-        "detalhe SH6010 calcula a mesma métrica a partir de roteiro e horários. "
+        "Resumo e listagem usam o % canônico (setup + HY_TEMPAD × qtd_apontada) ÷ tempo real — "
+        "mesma expressão da eficiência fabril; não o EFICIENCIA_PERCENTUAL cru da view. "
+        "Detalhe SH6010 calcula a mesma métrica a partir de roteiro e horários. "
         "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "status=valid|outlier filtra apontamentos dentro ou fora da faixa 0–199%. "
         "efficiency_bands=ok,low,verify (csv) filtra por faixa: na faixa (≥50%), eficiência baixa (<50%) "
@@ -614,6 +615,7 @@ PRODUCTION_OEE = agent_route(
         "product_type=PA|PI filtra pelo tipo do produto (SB1010.B1_TIPO). "
         "Para detalhe (roteiro SG2, estrutura BOM, tempos), use GET /production/oee/appointments/{appointment_id}. "
         "Para série temporal, use GET /production/oee/series. "
+        "KPI escalar (SI/dashboard home): GET /production/overall_equipment_effectiveness_pct. "
         "Listagem dedicada MOD/gráficos: GET /production/eficiencia-fabril/*."
     ),
     operation_id="get_production_oee",
@@ -643,8 +645,8 @@ PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD = agent_route(
         "de apontamentos (view vw_Apontamentos_Eficiencia; `appointment_id` via SH6010). "
         "Use para eficiência fabril, resultado MOD, dashboard gerencial de apontamentos ou análise por CT/operador. "
         "Parâmetros: date_start, date_end (obrigatórios), branch, op, employee, work_center, page, page_size. "
-        "Não confundir com GET /production/oee (painel OEE com mesma view, foco SH6010) nem com "
-        "GET /production/overall_equipment_effectiveness_pct (percentual agregado). "
+        "Não confundir com GET /production/oee (painel OEE com a mesma métrica canônica HY_TEMPAD) nem com "
+        "GET /production/overall_equipment_effectiveness_pct (percentual agregado / SI). "
         "Detalhe de um apontamento: GET /production/oee/appointments/{appointment_id}."
     ),
     operation_id="get_eficiencia_fabril_dashboard",
@@ -655,9 +657,24 @@ PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS = agent_route(
     description=(
         "Lista completa de apontamentos de eficiência fabril no período (sem paginação server-side). "
         "Use para volume total de apontamentos no intervalo ou integrações que recalculam localmente. "
-        "Para KPIs, gráficos e paginação, prefira GET /production/eficiencia-fabril/dashboard."
+        "Para KPIs, gráficos e paginação, prefira GET /production/eficiencia-fabril/dashboard. "
+        "Para média de eficiência por CT (TV/gráfico), use "
+        "GET /production/eficiencia-fabril/efficiency-by-work-center."
     ),
     operation_id="list_eficiencia_fabril_appointments",
+)
+
+PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_BY_WORK_CENTER = agent_route(
+    summary="Eficiência fabril — média % por centro de trabalho",
+    description=(
+        "Eficiência média (%) por centro de trabalho (CT), mesma regra do plugin eficiência-fabril: "
+        "apontamentos STATUS_REGISTRO=OK na faixa 0–199%. "
+        "Retorna uma linha por CT (`work_center`, `efficiency_pct`, `appointment_count`). "
+        "Use para gráfico de barras de eficiência por CT no TV Dashboard. "
+        "Parâmetros: start_date/end_date (ou aliases), branch, op, employee, work_center, shift (1|2|3). "
+        "Não confundir com a lista bulk de apontamentos nem com hours_by_work_center do dashboard."
+    ),
+    operation_id="get_eficiencia_fabril_efficiency_by_work_center",
 )
 
 SUPPLIES_INVENTORY_TURNOVER = agent_route(

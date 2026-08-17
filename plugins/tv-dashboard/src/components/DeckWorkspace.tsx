@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 
 import type { PlaylistMasterConfig, PlaylistSection, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
+import type { ListDropEdge } from "../utils/listReorderDrag";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 
 type Props = {
@@ -17,13 +18,19 @@ type Props = {
   inactiveLabel: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
+  /** Duração padrão da programação — filmstrip resolve o badge efetivo. */
+  defaultDurationSec?: number;
+  /** Transição padrão da programação — tooltip do badge. */
+  defaultTransitionStyle?: string | null;
   publicToken?: string | null;
   onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
   onLongPressSelect?: (slideId: string) => void;
   onClearMultiSelection?: () => void;
   onDragStart: (index: number) => void;
-  onDrop: (index: number) => void;
+  onDrop: (index: number, edge?: ListDropEdge) => void;
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
@@ -44,6 +51,8 @@ type Props = {
   onDropOnUnsectioned?: () => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
+  /** Sidebar do Copiloto IA (coluna à direita do palco). */
+  copilotPanel?: ReactNode;
   /** Editor de template / compositor sem páginas — oculta filmstrip e seções. */
   hideFilmstrip?: boolean;
 };
@@ -61,7 +70,11 @@ export function DeckWorkspace({
   inactiveLabel,
   canPasteSlide,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
+  defaultDurationSec,
+  defaultTransitionStyle,
   publicToken,
   onSelect,
   onLongPressSelect,
@@ -88,10 +101,18 @@ export function DeckWorkspace({
   onDropOnUnsectioned,
   stage,
   rightPanel,
+  copilotPanel,
   hideFilmstrip = false,
 }: Props) {
   return (
-    <div className={["td-deck__workspace", hideFilmstrip ? "td-deck__workspace--no-filmstrip" : null].filter(Boolean).join(" ")}>
+    <div
+      className={[
+        "td-deck__workspace",
+        hideFilmstrip ? "td-deck__workspace--no-filmstrip" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {hideFilmstrip ? null : (
       <SlideFilmstrip
         slides={slides}
@@ -106,7 +127,11 @@ export function DeckWorkspace({
         inactiveLabel={inactiveLabel}
         canPasteSlide={canPasteSlide}
         viewportProfile={viewportProfile}
+        viewportWidth={viewportWidth}
+        viewportHeight={viewportHeight}
         masterConfig={masterConfig}
+        defaultDurationSec={defaultDurationSec}
+        defaultTransitionStyle={defaultTransitionStyle}
         publicToken={publicToken}
         onSelect={onSelect}
         onLongPressSelect={onLongPressSelect}
@@ -141,6 +166,11 @@ export function DeckWorkspace({
           ) : null}
         </div>
       </main>
+      {copilotPanel !== undefined ? (
+        <div className="td-deck-copilot-slot" aria-label="Copiloto IA">
+          {copilotPanel}
+        </div>
+      ) : null}
     </div>
   );
 }

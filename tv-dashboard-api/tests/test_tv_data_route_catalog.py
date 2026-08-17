@@ -1,4 +1,8 @@
-from tv_app.application.services.comunicado_data_params_service import merge_data_params, param_inherited_from_slide
+from tv_app.application.services.comunicado_data_params_service import (
+    merge_data_params,
+    param_inherited_from_slide,
+    project_branch_params_onto_route_schema,
+)
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
 
@@ -194,3 +198,22 @@ def test_param_inherited_from_slide():
         slide_filters={"branch": "01"},
         block_params={"branch": "02"},
     )
+
+
+def test_project_branch_params_playlist_branch_onto_refugo_filial():
+    projected = project_branch_params_onto_route_schema(
+        {"branch": "01", "dateRangePreset": "today"},
+        {"filial": {"type": "string", "optional": True}},
+    )
+    assert projected.get("filial") == "01"
+    assert "branch" not in projected
+    assert projected.get("dateRangePreset") == "today"
+
+
+def test_project_branch_params_filial_onto_branch_schema():
+    projected = project_branch_params_onto_route_schema(
+        {"filial": "02"},
+        {"branch": {"type": "string", "optional": True}},
+    )
+    assert projected.get("branch") == "02"
+    assert "filial" not in projected

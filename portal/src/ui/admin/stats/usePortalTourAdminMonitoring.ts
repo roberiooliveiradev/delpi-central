@@ -1,11 +1,9 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
+import { useCallback, useEffect, useState } from "react";
 import type {
   PortalTourExplorersResponse,
   PortalTourTopExplorersResponse,
 } from "../../../data/coreApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { PORTAL_TOUR_VERSION } from "../../../tour/portalTourStorage";
 import { STATS_AUTO_REFRESH_MS } from "./statsTheme";
 import type { PortalTourStatusFilter } from "./portalTourAdminLabels";
@@ -45,7 +43,6 @@ export type PortalTourMonitoringSummary = {
 };
 
 export function usePortalTourAdminMonitoring() {
-  const { getAccessToken, refreshToken } = useContext(AuthContext);
   const [statusFilter, setStatusFilter] = useState<PortalTourStatusFilter>("all");
   const [periodDays, setPeriodDays] = useState(7);
   const [page, setPage] = useState(0);
@@ -57,18 +54,7 @@ export function usePortalTourAdminMonitoring() {
   const [topError, setTopError] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
-  const adminApi = useMemo(
-    () =>
-      new AdminApi(
-        new ApiClient("", getAccessToken, {
-          refreshToken: async () => {
-            await refreshToken();
-            return Boolean(getAccessToken());
-          },
-        }),
-      ),
-    [getAccessToken, refreshToken],
-  );
+  const adminApi = useAdminApi();
 
   const load = useCallback(async () => {
     setLoading(true);

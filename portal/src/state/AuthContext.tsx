@@ -12,6 +12,7 @@ import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import { useSocket } from "../hooks/useSocket";
 import { resetAppLauncherAppearanceRegistry } from "../components/appLauncherAppearance";
+import { resolveLoginRedirectUri } from "../utils/loginRedirectUri";
 
 import type {
   MeResponse,
@@ -59,6 +60,38 @@ const DEFAULT_FRONT_CHANNEL_LOGOUT_URLS = [
 ];
 
 const FRONT_CHANNEL_LOGOUT_TIMEOUT_MS = 900;
+
+/**
+ * Um 401 recorrente não pode virar redirect infinito para o Keycloak: quando o
+ * login já foi tentado há pouco, cai para o estado deslogado e mostra a tela de
+ * entrada em vez de recarregar a página de novo.
+ */
+const LOGIN_REDIRECT_GUARD_KEY = "delpi-portal-login-redirect";
+const LOGIN_REDIRECT_GUARD_MS = 30000;
+
+function canRedirectToLogin(): boolean {
+  try {
+    const last = Number(window.sessionStorage.getItem(LOGIN_REDIRECT_GUARD_KEY));
+
+    if (Number.isFinite(last) && last > 0 && Date.now() - last < LOGIN_REDIRECT_GUARD_MS) {
+      return false;
+    }
+
+    window.sessionStorage.setItem(LOGIN_REDIRECT_GUARD_KEY, String(Date.now()));
+  } catch {
+    // sessionStorage indisponível: mantém o comportamento padrão de redirecionar.
+  }
+
+  return true;
+}
+
+function clearLoginRedirectGuard(): void {
+  try {
+    window.sessionStorage.removeItem(LOGIN_REDIRECT_GUARD_KEY);
+  } catch {
+    // noop
+  }
+}
 
 /**
  * Permite evoluir o logout global sem alterar código a cada novo app.
@@ -137,37 +170,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const bootstrapPhaseRef = useRef(true);
 
   const getCurrentRedirectUri = () => {
-    const configured = import.meta.env.VITE_KC_REDIRECT_URI as string | undefined;
-
-    if (configured?.trim()) {
-      return configured.trim();
-    }
-
-    return `${window.location.origin}/`;
+    const { origin, pathname, search } = window.location;
+    return resolveLoginRedirectUri({
+      origin,
+      pathname,
+      search,
+      configuredFallback: import.meta.env.VITE_KC_REDIRECT_URI as string | undefined,
+    });
   };
 
   const getAccessToken = useCallback(() => tokenRef.current, []);
 
-  const clearSessionState = useCallback(() => {
-    setIsAuthenticated(false);
-    setCoreLoaded(false);
+  const clearSessionState = useCallback(
+    (options?: { clearKeycloakToken?: boolean }) => {
+      const clearKeycloakToken = options?.clearKeycloakToken !== false;
 
-    tokenRef.current = undefined;
+      setIsAuthenticated(false);
+      setCoreLoaded(false);
 
-    setUser(undefined);
-    setApps([]);
-    setRoutes([]);
-    setDashboard(undefined);
-    setNotifications([]);
-    setFavorites([]);
+      tokenRef.current = undefined;
+      // Mantém Keycloak e o portal alinhados: senão o polling admin pode
+      // disparar request sem Bearer enquanto o adapter ainda tem sessão.
+      // No fluxo de Sair, NÃO limpar aqui: keycloak.logout() precisa do
+      // idToken para enviar id_token_hint e pular a tela de confirmação.
+      if (clearKeycloakToken) {
+        try {
+          keycloak.clearToken();
+        } catch {
+          // noop
+        }
+      }
 
-    resetAppLauncherAppearanceRegistry();
+      setUser(undefined);
+      setApps([]);
+      setRoutes([]);
+      setDashboard(undefined);
+      setNotifications([]);
+      setFavorites([]);
 
-    identityLoadInFlightRef.current = false;
-    dashboardLoadInFlightRef.current = false;
-    notificationsLoadInFlightRef.current = false;
-    favoritesLoadInFlightRef.current = false;
-  }, []);
+      resetAppLauncherAppearanceRegistry();
+
+      identityLoadInFlightRef.current = false;
+      dashboardLoadInFlightRef.current = false;
+      notificationsLoadInFlightRef.current = false;
+      favoritesLoadInFlightRef.current = false;
+    },
+    []
+  );
 
   const stopTokenRefresh = useCallback(() => {
     if (refreshIntervalRef.current) {
@@ -228,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     stopTokenRefresh();
 
-    if (bootstrapPhaseRef.current) {
+    if (bootstrapPhaseRef.current || !canRedirectToLogin()) {
       clearSessionState();
       unauthorizedHandledRef.current = false;
       return;
@@ -248,15 +297,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     refreshPromiseRef.current = (async () => {
       try {
-        const currentToken = tokenRef.current;
-        const refreshed = await keycloak.updateToken(60);
+        await keycloak.updateToken(60);
         const nextToken = keycloak.token;
 
-        if (nextToken && nextToken !== currentToken) {
+        // Re-sincroniza sempre: cobre tokenRef vazio com sessão Keycloak viva.
+        if (nextToken) {
           tokenRef.current = nextToken;
         }
 
-        return refreshed || !!nextToken;
+        return Boolean(tokenRef.current);
       } catch {
         return false;
       } finally {
@@ -548,6 +597,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             await loadCoreData();
             startTokenRefresh();
+            clearLoginRedirectGuard();
           } catch {
             clearSessionState();
           }
@@ -588,7 +638,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     stopTokenRefresh();
 
     window.setTimeout(() => {
-      clearSessionState();
+      // Preserva idToken no adapter até keycloak.logout() montar a URL
+      // com id_token_hint (sem isso o Keycloak exibe "Do you want to log out?").
+      clearSessionState({ clearKeycloakToken: false });
 
       void runGlobalFrontChannelLogout().finally(() => {
         void keycloak.logout({ redirectUri: window.location.origin + "/" });

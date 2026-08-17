@@ -195,7 +195,11 @@ export function ComunicadoElementInspector({
               "chartSeries",
             ]}
           />
-          {!selectedChartPart ? <ChartViewOptionsInspector pane={pane} omitSeries /> : null}
+          {/*
+            Sempre montar: com parte selecionada o ChartPartInspector (valor da meta,
+            grade, etc.) precisa permanecer visível — espelho do padrão tabela.
+          */}
+          <ChartViewOptionsInspector pane={pane} omitSeries />
         </>
       ) : null}
 

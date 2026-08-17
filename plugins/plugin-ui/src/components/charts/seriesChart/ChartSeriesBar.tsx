@@ -2,6 +2,7 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   resolveSeriesCategoryColor,
   resolveValueScaleColor,
+  resolveGoalThresholdColor,
   seriesValueExtent,
   type SeriesChartColorScale,
 } from "../seriesChartOptions";
@@ -21,12 +22,14 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
   /** Paleta por categoria / rampa semântica (série única). */
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  /** Valor da linha de meta (`by_goal`). */
+  goalValue?: number | null;
 };
 
 /**
  * Colunas (vertical) ou barras (horizontal) cartesianas.
  * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped).
- * Com `colorScale.mode === "by_value"` (ou `categoryColors` na série única), cada barra tem cor própria.
+ * Com `colorScale.mode === "by_value"` / `"by_goal"` (ou `categoryColors` na série única), cada barra tem cor própria.
  */
 export function ChartSeriesBar({
   layout,
@@ -37,6 +40,7 @@ export function ChartSeriesBar({
   seriesCount = 1,
   categoryColors,
   colorScale,
+  goalValue = null,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, toY, axisMin, axisMax, orientation, toValueX } = layout;
@@ -48,9 +52,12 @@ export function ChartSeriesBar({
   const categoryCount = Math.max(points.length, 1);
   const horizontal = orientation === "horizontal";
   const extent = seriesValueExtent(points.map((p) => p.value));
+  const goalOk = goalValue != null && Number.isFinite(Number(goalValue));
   const usePerBarColor =
     seriesCount <= 1 &&
-    (colorScale?.mode === "by_value" || Boolean(categoryColors && categoryColors.length > 0));
+    (colorScale?.mode === "by_value" ||
+      (colorScale?.mode === "by_goal" && goalOk) ||
+      Boolean(categoryColors && categoryColors.length > 0));
 
   const resolveFill = (point: (typeof points)[number], index: number): string => {
     if (!usePerBarColor) return seriesColor;
@@ -58,9 +65,18 @@ export function ChartSeriesBar({
       typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
         ? point.sourceIndex
         : index;
+    const value = Number(point.value) || 0;
+    if (colorScale?.mode === "by_goal" && goalOk) {
+      return resolveGoalThresholdColor({
+        value,
+        goal: Number(goalValue),
+        polarity: colorScale.polarity ?? "high_is_good",
+        fallbackColor: seriesColor,
+      });
+    }
     if (colorScale?.mode === "by_value" && categoryColors && categoryColors.length > 0) {
       return resolveValueScaleColor({
-        value: Number(point.value) || 0,
+        value,
         min: extent.min,
         max: extent.max,
         colors: categoryColors,

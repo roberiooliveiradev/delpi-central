@@ -410,6 +410,51 @@ def test_filter_query_drops_path_params_marked_in_schema():
     assert filtered == {"branch": "01"}
 
 
+def test_build_query_params_projects_playlist_branch_onto_refugo_filial():
+    """Programação grava branch; /refugos/* só aceita filial — projeção no gateway."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "direct",
+            "operationId": "get_refugos_resumo",
+            "paramSchema": {
+                "filial": {
+                    "type": "string",
+                    "optional": True,
+                    "enum": ["all", "01", "02"],
+                },
+                "date_start": {"type": "string", "optional": True},
+                "date_end": {"type": "string", "optional": True},
+            },
+        },
+        {
+            # Como dataDefaults da programação (OEE/KPI mistos usam `branch`).
+            "branch": "01",
+            "date_start": "2026-08-06",
+            "date_end": "2026-08-06",
+        },
+    )
+    assert query.get("filial") == "01"
+    assert "branch" not in query
+
+
+def test_build_query_params_date_range_projects_branch_to_filial():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "filial": {"type": "string", "optional": True},
+                "start_date": {"type": "string", "optional": True},
+                "end_date": {"type": "string", "optional": True},
+            },
+        },
+        {"branch": "02"},
+    )
+    assert query.get("filial") == "02"
+    assert "branch" not in query
+
+
 def test_build_query_params_normalizes_legacy_todas_to_all():
     """Playlists com branch=Todas não podem ir à api-delpi (pattern all|01|02)."""
     query = _build_query_params(
@@ -450,6 +495,45 @@ def test_build_query_params_normalizes_legacy_todas_to_all():
     )
     assert query_pt["branch"] == "all"
     assert query_pt["filial_id"] == "all"
+
+
+def test_build_query_params_strips_exclude_weekends_visual_filter():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "branch": {"type": "string"},
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "granularity": {"type": "string"},
+            },
+        },
+        {
+            "branch": "01",
+            "start_date": "2026-08-01",
+            "end_date": "2026-08-10",
+            "granularity": "day",
+            "excludeWeekends": True,
+            "dateRangePreset": "custom",
+        },
+    )
+    assert query["granularity"] == "day"
+    assert query["branch"] == "01"
+    assert "excludeWeekends" not in query
+    assert "dateRangePreset" not in query
+
+    direct = _build_query_params(
+        {
+            "paramStrategy": "direct",
+            "paramSchema": {
+                "branch": {"type": "string"},
+                "granularity": {"type": "string"},
+            },
+        },
+        {"branch": "01", "granularity": "day", "excludeWeekends": True},
+    )
+    assert direct == {"branch": "01", "granularity": "day"}
 
 
 def test_resolve_route_path_normalizes_branch_path_param():

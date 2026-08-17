@@ -24,13 +24,14 @@ class TotvsInvoicePostingSc7Repository(BaseRepository):
         if not (branch and supplier and store):
             return []
 
-        sql = open_purchase_orders_sql(
+        sql, params = open_purchase_orders_sql(
+            branch=branch,
             product_param=None,
             supplier_code_param="?",
             supplier_store_param="?",
         )
         with self as repo:
-            rows = repo.execute_query(sql, [branch, supplier, store])
+            rows = repo.execute_query(sql, list(params) + [supplier, store])
         return [self._map_row(row) for row in rows]
 
     @classmethod

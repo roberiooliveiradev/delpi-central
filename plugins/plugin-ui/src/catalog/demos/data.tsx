@@ -9,6 +9,12 @@ import {
   ConfigurableTableClassesProvider,
   createDashboardPaginationKit,
   DataRouteCatalogPanel,
+  DataRecordCard,
+  dataRecordCardBemClasses,
+  InteractiveDataCard,
+  interactiveDataCardBemClasses,
+  KanbanBoard,
+  kanbanBoardBemClasses,
   DataTable,
   dataTableBemClasses,
   DataTableSection,
@@ -24,6 +30,8 @@ import {
   TablePaginationNav,
   tablePaginationNavBemClasses,
   TreeGuideRails,
+  HorizontalTimeline,
+  horizontalTimelineBemClasses,
   type DataTableColumn,
 } from "../../components/data";
 import { createDashboardLoadingActivityCard } from "../../components/feedback";
@@ -42,6 +50,9 @@ const MOCK_ROWS: DemoRow[] = [
 ];
 
 const tableCn = dataTableBemClasses(PUC_PREFIX);
+const recordCardCn = dataRecordCardBemClasses(PUC_PREFIX);
+const interactiveCardCn = interactiveDataCardBemClasses(PUC_PREFIX);
+const kanbanCn = kanbanBoardBemClasses(PUC_PREFIX);
 const sectionCn = dataTableSectionBemClasses(PUC_PREFIX);
 const paginationKit = paginationBemClasses(PUC_PREFIX);
 const compactCn = compactPaginationBemClasses(PUC_PREFIX, { ghostBtn: "puc-ghost-btn" });
@@ -134,6 +145,132 @@ function useTrackedSingleFetchProgress(_active: boolean): RequestProgress {
 }
 
 export const dataCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "data.DataRecordCard",
+    family: "data",
+    exportName: "DataRecordCard",
+    title: "DataRecordCard",
+    description: "Registro responsivo com semântica dl e navegação opcional por anchor.",
+    docAnchor: "datarecordcard",
+    propsSummary: ["leading", "title", "subtitle", "status", "fields", "context", "href"],
+    demos: [
+      {
+        id: "link",
+        label: "Registro navegável",
+        render: () => (
+          <div style={{ width: "100%", maxWidth: 620 }}>
+            <DataRecordCard
+              classNames={recordCardCn}
+              leading={<strong>PV</strong>}
+              title="Pedido 12345"
+              subtitle="Cliente ACME"
+              status={<span className="puc-chip puc-chip--active">Em análise</span>}
+              fields={[
+                { id: "value", label: "Valor", value: "R$ 18.450,00" },
+                { id: "date", label: "Entrega", value: "14/08/2026" },
+                { id: "branch", label: "Filial", value: "01" },
+              ]}
+              context="Atualizado há 5 minutos"
+              href="#pedido-12345"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "data.InteractiveDataCard",
+    family: "data",
+    exportName: "InteractiveDataCard",
+    title: "InteractiveDataCard",
+    description: "Card operacional interativo para listas em modo cards.",
+    docAnchor: "interactivedatacard",
+    propsSummary: ["fields", "onActivate", "openHint", "valueTone"],
+    demos: [
+      {
+        id: "interactive",
+        label: "Ativável",
+        render: () => (
+          <div style={{ width: "100%", maxWidth: 320 }}>
+            <InteractiveDataCard
+              classNames={interactiveCardCn}
+              ariaLabel="Abrir pedido demo"
+              onActivate={() => undefined}
+              openHint="Abrir"
+              fields={[
+                { id: "cliente", label: "Cliente", value: "ACME Ltda", valueTone: "title" },
+                { id: "valor", label: "Em aberto", value: "R$ 12.340,00", valueTone: "value" },
+                { id: "entrega", label: "Entrega", value: "20/08/2026", valueTone: "meta" },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "data.KanbanBoard",
+    family: "data",
+    exportName: "KanbanBoard",
+    title: "KanbanBoard",
+    description: "Board Kanban somente leitura (colunas + slots de card).",
+    docAnchor: "kanbanboard",
+    propsSummary: ["columns", "ariaLabel"],
+    demos: [
+      {
+        id: "readonly",
+        label: "Quatro colunas",
+        render: () => (
+          <KanbanBoard
+            classNames={kanbanCn}
+            ariaLabel="Demo Kanban"
+            columns={[
+              {
+                id: "upcoming",
+                title: "Upcoming",
+                count: 1,
+                empty: "Empty",
+              },
+              {
+                id: "in_progress",
+                title: "In progress",
+                count: 1,
+                children: (
+                  <div className={kanbanCn.card}>
+                    <InteractiveDataCard
+                      classNames={interactiveCardCn}
+                      ariaLabel="Card demo"
+                      onActivate={() => undefined}
+                      fields={[
+                        {
+                          id: "pedido",
+                          label: "Order",
+                          value: "100 / 01",
+                          valueTone: "title",
+                        },
+                      ]}
+                    />
+                  </div>
+                ),
+              },
+              {
+                id: "ready_to_invoice",
+                title: "Ready",
+                count: 0,
+                empty: "Empty",
+              },
+              {
+                id: "completed",
+                title: "Completed",
+                count: 0,
+                empty: "Empty",
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+  },
   {
     id: "data.DataTable",
     family: "data",
@@ -384,7 +521,76 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
       },
     ],
   },
+  {
+    id: "data.HorizontalTimeline",
+    family: "data",
+    exportName: "HorizontalTimeline",
+    title: "HorizontalTimeline",
+    description:
+      "Timeline OTD: eixo proporcional às datas; «Agora» (bandeira) acima do trilho. Use createDashboardHorizontalTimeline no MFE.",
+    propsSummary: ["points", "labels", "aria-label"],
+    demos: [
+      {
+        id: "default",
+        label: "OP / OTD (mesmo dia)",
+        render: () => <HorizontalTimelineDemo />,
+      },
+    ],
+  },
 ];
+
+function HorizontalTimelineDemo() {
+  const classNames = horizontalTimelineBemClasses(PUC_PREFIX);
+  return (
+    <HorizontalTimeline
+      classNames={classNames}
+      aria-label="Demo linha do tempo OTD"
+      points={[
+        {
+          id: "1",
+          label: "Emissão da OP",
+          dateIso: "2026-08-04",
+          dateLabel: "04/08/2026",
+          tone: "neutral",
+          kind: "event",
+        },
+        {
+          id: "2",
+          label: "Início previsto",
+          dateIso: "2026-08-06",
+          dateLabel: "06/08/2026",
+          tone: "info",
+          kind: "event",
+        },
+        {
+          id: "3",
+          label: "Entrega do pedido",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "neutral",
+          kind: "event",
+        },
+        {
+          id: "4",
+          label: "Fim previsto da OP",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "success",
+          kind: "event",
+          isCurrent: true,
+        },
+        {
+          id: "today",
+          label: "Hoje",
+          dateIso: "2026-08-07",
+          dateLabel: "07/08/2026",
+          tone: "info",
+          kind: "today",
+        },
+      ]}
+    />
+  );
+}
 
 function TreeGuideRailsDemo() {
   const rows: Array<{ label: string; depth: number; path: boolean[] }> = [

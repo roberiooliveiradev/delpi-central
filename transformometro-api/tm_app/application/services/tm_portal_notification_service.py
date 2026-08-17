@@ -7,37 +7,169 @@ import httpx
 
 from tm_app.config import settings
 
-logger = logging.getLogger("transformometro.atas.notifications")
+logger = logging.getLogger("transformometro.meeting_minutes.notifications")
+
+_SOURCE_APP = "transformometro"
+_CATEGORY = "transformometro"
+_APP_BASE = "/apps/transformometro"
+
+
+EVENT_SIGN_PENDING = "tm_minute_sign_pending"
+EVENT_MINUTE_SIGNED = "tm_minute_signed"
+EVENT_MINUTE_REFUSED = "tm_minute_refused"
 
 
 class TmPortalNotificationService:
     def __init__(
-        self, *, core_api_url: str | None = None, service_token: str | None = None,
+        self,
+        *,
+        core_api_url: str | None = None,
+        service_token: str | None = None,
         enabled: bool | None = None,
     ) -> None:
         self.core_api_url = (core_api_url or settings.CORE_API_BASE_URL).rstrip("/")
-        self.service_token = service_token if service_token is not None else settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
-        self.enabled = settings.TM_PORTAL_NOTIFICATIONS_ENABLED if enabled is None else enabled
+        self.service_token = (
+            service_token
+            if service_token is not None
+            else settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
+        )
+        self.enabled = (
+            settings.TM_PORTAL_NOTIFICATIONS_ENABLED if enabled is None else enabled
+        )
+
+    def minute_sign_route(self, minute_id: str) -> str:
+        return f"{_APP_BASE}/meeting-minutes/{minute_id}/sign"
+
+    def minute_detail_route(self, minute_id: str) -> str:
+        return f"{_APP_BASE}/meeting-minutes/{minute_id}"
 
     def send(
-        self, *, user_id: str, title: str, message: str, notification_type: str = "info",
+        self,
+        *,
+        user_id: str,
+        title: str,
+        message: str,
+        notification_type: str = "info",
+        action_label: str = "Abrir ata",
+        action_target: str,
+        dedupe_key: str,
+        event_type: str,
+        metadata: dict[str, Any] | None = None,
+        # Compat legado (ignora)
         portal_route: str | None = None,
     ) -> bool:
-        if not self.enabled or not self.service_token:
+        _ = portal_route
+        if not self.enabled:
             return False
-        payload: dict[str, Any] = {"userId": user_id, "title": title, "message": message, "type": notification_type}
-        if portal_route:
-            payload["portalRoute"] = portal_route
+        if not self.service_token:
+            logger.warning("tm_notification_skipped_no_token")
+            return False
+        recipient = str(user_id or "").strip()
+        if not recipient or recipient == "unknown":
+            return False
+
+        payload: dict[str, Any] = {
+            "userIds": [recipient],
+            "title": title,
+            "message": message,
+            "type": notification_type,
+            "category": _CATEGORY,
+            "sourceApp": _SOURCE_APP,
+            "action": {
+                "type": "portal_route",
+                "label": action_label,
+                "target": action_target,
+            },
+            "metadata": {
+                "source": _SOURCE_APP,
+                "event": event_type,
+                "dedupeKey": dedupe_key,
+                **(metadata or {}),
+            },
+        }
         try:
             response = httpx.post(
                 f"{self.core_api_url}/integrations/notifications",
-                headers={"Authorization": f"Bearer {self.service_token}", "Content-Type": "application/json"},
-                json=payload, timeout=10.0,
+                headers={
+                    "Authorization": f"Bearer {self.service_token}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+                timeout=10.0,
             )
             if response.status_code >= 400:
-                logger.warning("tm_ata_notification_rejected status=%s", response.status_code)
+                logger.warning(
+                    "tm_ata_notification_rejected status=%s body=%s",
+                    response.status_code,
+                    response.text[:300],
+                )
                 return False
             return True
         except Exception:
-            logger.exception("tm_ata_notification_failed user=%s", user_id)
+            logger.exception("tm_ata_notification_failed user=%s", recipient)
             return False
+
+    def notify_sign_pending(
+        self,
+        *,
+        user_id: str,
+        minute_id: str,
+        minute_number: str,
+        title: str,
+    ) -> bool:
+        return self.send(
+            user_id=user_id,
+            title="Assinatura de ata Transforma+ pendente",
+            message=f"A ata {minute_number} — {title} — aguarda sua assinatura.",
+            notification_type="warning",
+            action_label="Assinar ata",
+            action_target=self.minute_sign_route(minute_id),
+            dedupe_key=f"tm:sign_pending:{minute_id}:{user_id}",
+            event_type=EVENT_SIGN_PENDING,
+            metadata={"minuteId": minute_id, "minuteNumber": minute_number},
+        )
+
+    def notify_minute_signed(
+        self,
+        *,
+        user_id: str,
+        minute_id: str,
+        minute_number: str,
+        title: str,
+    ) -> bool:
+        return self.send(
+            user_id=user_id,
+            title="Ata Transforma+ assinada",
+            message=f"A ata {minute_number} — {title} — foi assinada por todos os signatários.",
+            notification_type="success",
+            action_label="Abrir ata",
+            action_target=self.minute_detail_route(minute_id),
+            dedupe_key=f"tm:signed:{minute_id}:{user_id}",
+            event_type=EVENT_MINUTE_SIGNED,
+            metadata={"minuteId": minute_id, "minuteNumber": minute_number},
+        )
+
+    def notify_minute_refused(
+        self,
+        *,
+        user_id: str,
+        minute_id: str,
+        minute_number: str,
+        title: str,
+        actor_name: str,
+        reason: str,
+    ) -> bool:
+        return self.send(
+            user_id=user_id,
+            title="Assinatura de ata recusada",
+            message=(
+                f"{actor_name} recusou assinar a ata {minute_number} — {title}. "
+                f"Motivo: {reason}"
+            ),
+            notification_type="warning",
+            action_label="Abrir ata",
+            action_target=self.minute_detail_route(minute_id),
+            dedupe_key=f"tm:refused:{minute_id}:{user_id}",
+            event_type=EVENT_MINUTE_REFUSED,
+            metadata={"minuteId": minute_id, "minuteNumber": minute_number},
+        )

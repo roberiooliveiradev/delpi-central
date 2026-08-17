@@ -68,13 +68,23 @@ export function getShiftForStartTime(
   return null;
 }
 
+function isFactoryShiftId(value: string | null | undefined): value is EficienciaFabrilShift {
+  return value === "1" || value === "2" || value === "3";
+}
+
+/**
+ * Filtra por turno. Preferência: `turno` da API; fallback: classificar `hora_inicio` localmente.
+ */
 export function matchesShiftFilter(
   horaInicio: string | null | undefined,
-  shifts: EficienciaFabrilShift[] | undefined
+  shifts: EficienciaFabrilShift[] | undefined,
+  turno?: string | null
 ): boolean {
   if (!shifts || shifts.length === 0) return true;
 
-  const itemShift = getShiftForStartTime(horaInicio);
+  const itemShift = isFactoryShiftId(turno)
+    ? turno
+    : getShiftForStartTime(horaInicio);
   if (!itemShift) return false;
 
   return shifts.includes(itemShift);

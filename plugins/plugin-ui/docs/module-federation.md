@@ -41,14 +41,26 @@ Gateway nginx
 | Expose | Arquivo | Import no consumidor |
 |--------|---------|----------------------|
 | `./index` | `src/index.ts` | `import { KpiCard } from "@delpi/plugin-ui/index"` |
+| `./signature` | `src/components/signature/index.ts` | `import { SignatureCapturePanel } from "@delpi/plugin-ui/signature"` — **public-hub `/sign`** (sem TipTap) |
+| `./screen-loading` | `src/exposes/screenLoading.ts` | `import { ScreenLoading } from "@delpi/plugin-ui/screen-loading"` — splash do hub |
 | `./styles` | `src/styles-entry.ts` | `await import("@delpi/plugin-ui/styles")` |
 | `./App` | `src/app/bootstrap.tsx` | Portal AppHost — catálogo visual (`plugin-ui.manifest.json`) |
+
+**Public-hub:** não importar `./index` nas rotas de assinatura/splash — o Index puxa TipTap/recharts (`ContextMenuToolbarButton-*.js`) e dispara `useMemo is not a function` se o share React estiver incompleto.
 
 **Shared singletons:** `react`, `react-dom`, `lucide-react`. O remote consome React do MFE pai via `importShared` — o MFE **deve** chamar `preparePluginUiRemote()` antes de carregar chunks do remote.
 
 ### React 19 — patch obrigatório no build (`federationReactProxyFixPlugin`)
 
 O `@originjs/vite-plugin-federation@1.4.1` usa `Object.assign` em `flattenModule` (`__federation_fn_import*.js`), congelando `__CLIENT_INTERNALS.H` (dispatcher de hooks). Sintomas: **#321**, **`useRef` null** em recharts/zustand/dashboards, tela preta até F5.
+
+**Init fora do render (ago/2026 — kaizometro):** o dispatcher `H` só existe *durante* o render. O shim CJS / fallback do consumer **não** pode exigir `internals.H` — chunks TipTap/recharts (`ContextMenuToolbarButton-*.js`) resolvem React no *module init*; com o check de H o global era rejeitado → React bundled paralelo → `Cannot access property "useRef", f.H is null`.
+
+**React incompleto no global (ago/2026 — public-hub `/sign`):** exigir só `useRef` aceitava um `__DELPI_MF_REACT__` parcial; o chunk rich-text faz `const {useMemo:BA}=await O("react")` → `BA is not a function`. Guard canônico: `typeof useRef` **e** `useMemo` **e** `useState` == `"function"`. Bump `DELPI_MF_PATCH_VERSION` quando o guard mudar.
+
+**Shared react-dom ≠ React (ago/2026 — HelpTooltip `/sign`):** o consumer patch redirecionava `__federation_shared_react-dom*` para `__DELPI_MF_REACT__` → `createPortal` sumia → `X is not a function`. Nunca patchar esse interop (`getDefaultExportFromCjs(bridge())`). Detector de interop exige wrapper minúsculo (1 bridge, sem `importShared` / federation runtime) — App/expose também importam `_commonjsHelpers` + `export default` e **não** podem ser classificados como shared react-dom (senão o fallback some → `verify-federation-react-patch` FAIL).
+
+**Portal DEV × MFE prod (`getOwner` — ago/2026):** AppHost (Vite DEV) semeia React + react-dom de desenvolvimento. O MFE **não** pode sobrescrever só o `react-dom` com o bundle de produção: `DefaultAsyncDispatcher` de prod não tem `getOwner`, e o React DEV chama `SharedInternals.A.getOwner()` → `dispatcher.getOwner is not a function` / tela em branco. Canônico: `ensureMfeFederationShareScopeReady` preserva o **par** portal (`preservePortalPair` em react **e** react-dom); portal também publica `__DELPI_MF_REACT_DOM__`.
 
 **React #527 (versões divergentes):** portal e MFEs devem usar a **mesma versão exata** de `react` e `react-dom` (`plugins/vite/reactPinnedVersion.ts` → `19.2.7`). Portal em 19.2.4 + MFE em 19.2.6 quebra o par react/react-dom no share scope. Sincronizar: `node plugins/vite/sync-react-pinned-version.mjs` + rebuild portal e MFEs.
 

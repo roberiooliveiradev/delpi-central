@@ -2,7 +2,9 @@
 
 Consulta operacional read-only de pedidos de venda em aberto para vendedores, consumindo a view TOTVS `dbo.VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES` via **api-delpi**.
 
-**Status:** Fase 3 concluída (2026-06-09) — dashboard operacional MVP; **pronto para Fase 4**.
+**Status:** Fase 3 concluída (2026-06-09) — dashboard operacional MVP.
+
+> **Sucessor / cutover F2c:** [Portal Comercial](../commercial/README.md) (`commercial`) é a entrada canônica. Este plugin está **depreciado** (menu oculto); URLs antigas redirecionam — [runbook](../commercial/F2C-CUTOVER-RUNBOOK.md) · [ADR-002](../commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
 ---
 

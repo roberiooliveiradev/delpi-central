@@ -124,6 +124,10 @@ class Settings:
         "GUIAS_PROCEDIMENTOS_UPLOAD_DIR",
         default="/app/data/guias-procedimentos",
     )
+    MURAL_ACESSOS_UPLOAD_DIR: str = _get_env(
+        "MURAL_ACESSOS_UPLOAD_DIR",
+        default="/app/data/mural-acessos",
+    )
     PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR: str = _get_env(
         "PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR",
         default="/app/data/planejamento-orcamentario",
@@ -190,6 +194,14 @@ class Settings:
     )
 
     # ==========================
+    # Materiais de terceiros (SB6 / VW_PD3_BENEF_RETORNOS)
+    # ==========================
+    THIRD_PARTY_MATERIALS_IGNORED_PRODUCTS: str = _get_env(
+        "THIRD_PARTY_MATERIALS_IGNORED_PRODUCTS",
+        default="99999999",
+    )
+
+    # ==========================
     # Cache compartilhado (LMP / estoque)
     # ==========================
     QUERY_CACHE_BACKEND: str = _get_env("QUERY_CACHE_BACKEND", default="memory")
@@ -253,6 +265,13 @@ class Settings:
     # ==========================
     LNF_NOTIFICATIONS_ENABLED: bool = (
         _get_env("LNF_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+    INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+    INVOICE_ISSUANCE_UPLOAD_DIR: str = _get_env(
+        "INVOICE_ISSUANCE_UPLOAD_DIR",
+        default="/app/data/invoice-issuance",
     )
 
     # ==========================

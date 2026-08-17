@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 from app.domain.ports.pedidos_venda_abertos.pedidos_venda_abertos_query_repository_port import (
     PedidosVendaAbertosQueryRepositoryPort,
 )
@@ -65,3 +67,146 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
             )
 
         return items, summary_row or {}
+
+    def list_open_orders_for_customer(
+        self,
+        customer_code: str,
+        customer_store: str,
+    ) -> tuple[list[dict], dict]:
+        """Pedidos em aberto de um par código/loja (Conta 360 — sem dump global)."""
+        code = str(customer_code or "").strip()
+        store = str(customer_store or "").strip()
+        if not code or not store:
+            return [], {
+                "total_linhas": 0,
+                "valor_total_aberto": 0,
+                "saldo_total": 0,
+                "itens_com_estoque": 0,
+                "itens_estoque_parcial": 0,
+                "itens_sem_estoque": 0,
+            }
+
+        customer_where = """
+            WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ?
+              AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?
+        """
+        params = (code, store)
+
+        with self:
+            summary_row = self.execute_one(
+                f"""
+                SELECT
+                    COUNT(*) AS total_linhas,
+                    ISNULL(SUM(v.valor_aberto), 0) AS valor_total_aberto,
+                    ISNULL(SUM(v.saldo), 0) AS saldo_total,
+                    SUM(CASE WHEN v.no_estoque >= v.saldo THEN 1 ELSE 0 END) AS itens_com_estoque,
+                    SUM(
+                        CASE WHEN v.no_estoque > 0 AND v.no_estoque < v.saldo THEN 1 ELSE 0 END
+                    ) AS itens_estoque_parcial,
+                    SUM(CASE WHEN v.no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
+                {_ITEMS_FROM}
+                {customer_where}
+                """,
+                params,
+            )
+            items = self.execute_query(
+                f"""
+                SELECT {_ITEMS_SELECT}
+                {_ITEMS_FROM}
+                {customer_where}
+                ORDER BY v.data_entrega DESC
+                """,
+                params,
+            )
+
+        return items, summary_row or {}
+
+    def aggregate_customer_open_order_metrics(
+        self,
+        customer_keys: Sequence[tuple[str, str]] | None = None,
+    ) -> list[dict]:
+        """Agrega valor aberto e atraso por cliente da **tabela SA1**.
+
+        Só retorna pares que existem em `SA1010` (cadastro). Pedidos com
+        `C5_CLIENTE` órfão (ex.: código sem SA1) não entram no gap/load-summary.
+        Loja numérica `1`/`01` casa por valor inteiro. Nome preferencial: `A1_NREDUZ`.
+
+        Overdue = data_entrega < hoje e saldo > 0 (mesma regra do MFE commercial).
+        """
+        params: list = []
+        filter_sql = ""
+        if customer_keys:
+            pairs = [
+                (str(code or "").strip(), str(store or "").strip())
+                for code, store in customer_keys
+                if str(code or "").strip() and str(store or "").strip()
+            ]
+            if pairs:
+                clauses = []
+                for code, store in pairs:
+                    clauses.append(
+                        "("
+                        "NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') = ? "
+                        "AND ("
+                        "NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') = ? "
+                        "OR ("
+                        "TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) IS NOT NULL "
+                        "AND TRY_CAST(? AS INT) IS NOT NULL "
+                        "AND TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) "
+                        "= TRY_CAST(? AS INT)"
+                        ")"
+                        ")"
+                        ")"
+                    )
+                    params.extend([code, store, store, store])
+                filter_sql = "AND (" + " OR ".join(clauses) + ")"
+
+        sql = f"""
+            SELECT
+                NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') AS customer_code,
+                NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS customer_store,
+                MAX(
+                    COALESCE(
+                        NULLIF(LTRIM(RTRIM(SA1.A1_NREDUZ)), ''),
+                        NULLIF(LTRIM(RTRIM(SA1.A1_NOME)), ''),
+                        NULLIF(LTRIM(RTRIM(v.nome_cliente)), '')
+                    )
+                ) AS customer_name,
+                ISNULL(SUM(v.valor_aberto), 0) AS open_value,
+                CASE
+                    WHEN SUM(
+                        CASE
+                            WHEN v.data_entrega IS NOT NULL
+                             AND CAST(v.data_entrega AS date) < CAST(GETDATE() AS date)
+                             AND ISNULL(v.saldo, 0) > 0
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) > 0 THEN 1
+                    ELSE 0
+                END AS has_overdue
+            {_ITEMS_FROM}
+            INNER JOIN SA1010 SA1 WITH (NOLOCK)
+              ON SA1.D_E_L_E_T_ = ''
+             AND NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '')
+               = NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '')
+             AND (
+                   NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '')
+                     = NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '')
+                OR (
+                       TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT) IS NOT NULL
+                   AND TRY_CAST(NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS INT) IS NOT NULL
+                   AND TRY_CAST(NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') AS INT)
+                     = TRY_CAST(NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS INT)
+                   )
+                 )
+            WHERE NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') IS NOT NULL
+              AND NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') IS NOT NULL
+              {filter_sql}
+            GROUP BY
+                NULLIF(LTRIM(RTRIM(SA1.A1_COD)), ''),
+                NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '')
+            ORDER BY open_value DESC
+        """
+        with self:
+            return self.execute_query(sql, tuple(params))

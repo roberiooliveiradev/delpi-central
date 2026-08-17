@@ -1,0 +1,36 @@
+/* portal/src/ui-kit/form/SearchInput.css */
+
+.portal-ui-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.portal-ui-search__icon {
+  position: absolute;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.portal-ui-search .portal-ui-search__input {
+  padding-left: 32px;
+  padding-right: 34px;
+}
+
+.portal-ui-search .portal-ui-search__clear {
+  position: absolute;
+  right: 4px;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+}
+
+.portal-ui-search input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}

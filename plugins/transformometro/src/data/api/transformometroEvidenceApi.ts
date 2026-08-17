@@ -12,7 +12,7 @@ export async function fetchRevisaoEvidencias(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ): Promise<RevisaoEvidence[]> {
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/evidencias`, {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/revisions/${revisaoId}/evidences`, {
     headers: buildAuthHeaders(getAccessToken),
   });
   const data = await parseEnvelope<RevisaoEvidenceList>(response);
@@ -35,7 +35,7 @@ export async function uploadRevisaoEvidence(
   if (params.urlExterna) form.set("url_externa", params.urlExterna);
   if (params.file) form.append("file", params.file);
 
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/evidencias`, {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/revisions/${revisaoId}/evidences`, {
     method: "POST",
     headers: buildAuthHeaders(getAccessToken),
     body: form,
@@ -49,7 +49,7 @@ export async function deleteRevisaoEvidence(
   getAccessToken?: () => string | undefined
 ): Promise<void> {
   const response = await fetch(
-    `${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/evidencias/${evidenciaId}`,
+    `${TRANSFORMOMETRO_API_BASE}/revisions/${revisaoId}/evidences/${evidenciaId}`,
     {
       method: "DELETE",
       headers: buildAuthHeaders(getAccessToken),
@@ -59,7 +59,7 @@ export async function deleteRevisaoEvidence(
 }
 
 export function revisaoEvidenceFileUrl(revisaoId: string, evidenciaId: string): string {
-  return `${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/evidencias/${evidenciaId}/arquivo`;
+  return `${TRANSFORMOMETRO_API_BASE}/revisions/${revisaoId}/evidences/${evidenciaId}/file`;
 }
 
 export async function fetchRevisaoEvidenceObjectUrl(

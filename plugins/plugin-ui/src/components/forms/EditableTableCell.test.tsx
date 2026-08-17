@@ -59,7 +59,9 @@ describe("NativeSelectControl", () => {
     );
 
     const select = screen.getByLabelText("Membro");
-    expect(select).toHaveProperty("className", "pac-field__control");
+    expect(select.className).toContain("pac-field__control");
+    expect(select.className).toContain("delpi-ui-native-control");
+    expect(select.className).toContain("delpi-ui-native-control--select");
     fireEvent.change(select, { target: { value: "u1" } });
     expect(onChange).toHaveBeenCalledWith("u1");
   });

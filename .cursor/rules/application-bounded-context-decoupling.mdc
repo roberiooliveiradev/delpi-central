@@ -1,0 +1,55 @@
+---
+description: Bounded contexts — todas as apps da Minha Delpi sem acoplamento de regra de negócio
+alwaysApply: true
+---
+
+# Minha Delpi — aplicações sem acoplamento
+
+## Princípio
+
+Toda API, plugin `*-api`, MFE e serviço da **Minha Delpi** é um **bounded context** com dono claro da regra de negócio.
+
+**Proibido** compartilhar entre apps: regra de domínio, membership/escopo de usuário, use case, “helper” de negócio ou import de `domain`/`application` de outro pacote de app.
+
+**Proibido (HTTP):** MFE que possui API própria chamar `api-delpi` direto — ver `mfe-own-api-no-direct-api-delpi.mdc`.
+
+**Permitido:** contrato HTTP estável (envelope, `operationId`, payload); libs **neutras** em `shared/` (`delpi_auth`, authz, utilidades sem regra de produto); Compose/gateway só como infraestrutura.
+
+```
+App A ──HTTP contrato──▶ App B
+     ✗ domain / use case / membership compartilhado
+```
+
+## Onde vive a regra
+
+| Necessidade | Onde implementar |
+|-------------|------------------|
+| Regra do produto/app | No **dono** do bounded context (sua `*-api` + content JSON) |
+| Dado de outro sistema (TOTVS, core, outro plugin) | Consumir via **gateway HTTP**; filtrar/escopar **no app dono** |
+| Código transversal sem regra de produto | `shared/` — nunca carteira, KPI de módulo, workflow de plugin |
+
+## O que NÃO fazer (todas as apps)
+
+- Alterar app B “para alinhar” com regra nova do app A (acoplamento regressivo).
+- Duplicar a mesma semântica de negócio em dois apps (manter uma fonte; o outro só consome HTTP).
+- MFE chamar API de outro contexto bypassando o BFF/API dona.
+- MFE com `*-api` própria chamar `/apps/api-delpi` direto (`mfe-own-api-no-direct-api-delpi.mdc`).
+- Pedir patch no legado/vizinho em vez de evoluir o contexto canônico.
+
+## O que fazer
+
+1. Identificar o **dono** da regra (doc de ownership / ADR / playbook do módulo).
+2. Evoluir só nesse app; dependências = HTTP + contrato versionável.
+3. Se faltar dado em outro app → rota/contrato **puro** lá (sem regra do consumidor) + gateway no dono.
+4. Avisar **⚠ Desvio de clean architecture** se o pedido acoplar apps ou mexer no contexto errado.
+
+## Exemplos (não exaustivo)
+
+| Contexto dono | Não acoplar em |
+|---------------|----------------|
+| `commercial-api` (Portal Comercial) | PVA / membership em rotas api-delpi do Portal; MFE só via commercial-api |
+| `transformometro-api` | api-delpi ou outro plugin para regra do Transformômetro; MFE só via transformometro-api |
+| `minha-delpi-ai-api` (chat) | Prompt/regra só em agente quando a regra é transversal do chat base |
+| `maintenance-api`, `tv-dashboard-api`, demais `*-api` | Domínio irmão via import ou dual-write de regra; MFE do módulo não chama api-delpi direto |
+
+Caso Portal × PVA (congelar PVA; regras novas só em commercial-api): `docs/12-roadmap-e-evolucao/commercial/SCOPE-OWNERSHIP.md`.

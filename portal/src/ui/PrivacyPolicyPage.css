@@ -9,21 +9,8 @@
 }
 
 .privacy-policy-page__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.25rem 0;
   margin-bottom: 1rem;
-  transition: color 0.15s;
-}
-
-.privacy-policy-page__back:hover {
-  color: var(--primary);
+  color: var(--text-muted);
 }
 
 .privacy-policy-page__title-row {

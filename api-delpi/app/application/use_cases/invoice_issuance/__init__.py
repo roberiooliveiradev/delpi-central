@@ -1,0 +1,1 @@
+"""Use cases — invoice issuance."""

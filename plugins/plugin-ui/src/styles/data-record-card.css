@@ -1,0 +1,161 @@
+.delpi-ui-data-record-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--delpi-ui-grid-gap, 0.875rem);
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--delpi-ui-card-padding, 1rem);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  border-radius: var(--delpi-ui-card-radius, 14px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  text-decoration: none;
+}
+
+a.delpi-ui-data-record-card {
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+a.delpi-ui-data-record-card:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 42%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+  box-shadow: var(
+    --delpi-ui-shadow-sm,
+    0 6px 18px color-mix(in srgb, #000 10%, transparent)
+  );
+}
+
+a.delpi-ui-data-record-card:active {
+  transform: translateY(1px);
+}
+
+a.delpi-ui-data-record-card:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-data-record-card__leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 11%,
+    transparent
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-data-record-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.delpi-ui-data-record-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.delpi-ui-data-record-card__title,
+.delpi-ui-data-record-card__subtitle {
+  display: block;
+}
+
+.delpi-ui-data-record-card__title {
+  overflow-wrap: anywhere;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.delpi-ui-data-record-card__subtitle,
+.delpi-ui-data-record-card__context,
+.delpi-ui-data-record-card__field-label {
+  color: var(--delpi-ui-text-muted, var(--text-muted, #6b7280));
+}
+
+.delpi-ui-data-record-card__subtitle {
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.delpi-ui-data-record-card__status {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-data-record-card__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.55rem 1rem;
+  margin: 0;
+}
+
+.delpi-ui-data-record-card__field {
+  min-width: 0;
+}
+
+.delpi-ui-data-record-card__field-label,
+.delpi-ui-data-record-card__field-value {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.delpi-ui-data-record-card__field-label {
+  margin-bottom: 0.1rem;
+  font-weight: 550;
+}
+
+.delpi-ui-data-record-card__field-value {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font-weight: 650;
+}
+
+.delpi-ui-data-record-card__context {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 639px) {
+  .delpi-ui-data-record-card {
+    padding: 0.875rem;
+  }
+
+  .delpi-ui-data-record-card__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .delpi-ui-data-record-card__status {
+    align-self: flex-start;
+  }
+
+  .delpi-ui-data-record-card__fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.delpi-ui-data-record-card {
+    transition: none;
+  }
+}

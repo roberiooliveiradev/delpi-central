@@ -1,7 +1,8 @@
 # Comercial — taxa de conversão, status e estágios do funil (TOTVS)
 
-**Última atualização:** jun/2026  
+**Última atualização:** ago/2026  
 **Rota analisada:** `GET /commercial/closing-rate` (`operationId`: `get_sales_conversion_rate`)  
+**Série temporal:** `GET /commercial/closing-rate/series` (`operationId`: `get_sales_conversion_rate_series`) — mesma fórmula por bucket (Dia/Semana/Mês/Ano), linhas SC (`01`) e ES (`02`).  
 **Caso de referência:** dashboard comercial com filtro `start_date=2026-05-01` e `end_date=2026-05-31` (maio/2026, todas as filiais).
 
 ---

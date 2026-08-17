@@ -35,7 +35,7 @@ export function ChatSidebarSessionList({
   isLoading,
   searchTerm,
   selectedProjectName,
-  onSelectSession: _onSelectSession,
+  onSelectSession,
   onRenameSession,
   onDeleteSessionRequest,
   onPinSession,
@@ -198,6 +198,7 @@ export function ChatSidebarSessionList({
               active={session.id === activeSessionId}
               isProcessing={isSessionProcessing?.(session.id) ?? false}
               href={buildChatSessionHrefForSession(session)}
+              onClick={() => onSelectSession(session)}
               onContextMenu={() => setOpenMenuSessionId(session.id)}
               draggable={enableSessionDrag && !isEditing}
               onDragStart={

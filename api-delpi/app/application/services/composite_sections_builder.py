@@ -19,6 +19,7 @@ SECTION_LABELS: dict[str, str] = {
     "price_history": "Histórico de preço",
     "price_variation": "Variação de preço",
     "open_purchase_orders": "Pedidos de compra em aberto",
+    "open_purchase_requests": "Solicitações de compra em aberto",
     "open_commitments": "Empenhos em aberto",
     "stock_projection": "Extrato projetado de saldo",
     "linked_suppliers": "Fornecedores vinculados",

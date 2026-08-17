@@ -1,0 +1,50 @@
+/* portal/src/ui-kit/form/FormField.css */
+
+.portal-ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.portal-ui-field__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.portal-ui-field__label {
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+.portal-ui-field__required {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+}
+
+.portal-ui-field__hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.portal-ui-field__error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--danger);
+}

@@ -33,6 +33,8 @@ export type CalendarEvent = {
   bookedByName: string;
   notes: string | null;
   bookedByUserId: string;
+  requesterEmail?: string | null;
+  requesterPhone?: string | null;
   status: BookingStatus;
   decidedByName?: string | null;
   decisionReason?: string | null;

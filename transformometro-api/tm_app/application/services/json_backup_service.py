@@ -10,8 +10,8 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.core.catalogs import FILIAIS
 from tm_app.core.serialize import rows_to_json
 from tm_app.domain.raw_data import TransformometroRawData
-from tm_app.domain.services.setor_catalog_service import normalize_codigo_setor
-from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+from tm_app.domain.services.department_catalog_service import normalize_codigo_setor
+from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
 )
 from tm_app.infrastructure.persistence.json_backup_repository import (

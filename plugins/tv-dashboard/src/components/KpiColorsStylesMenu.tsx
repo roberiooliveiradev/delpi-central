@@ -20,27 +20,8 @@ const TONE_OPTIONS: Array<{ value: NonNullable<ComunicadoKpiOptions["tone"]>; la
   { value: "warning", label: "Tom atenção" },
 ];
 
-const FORMAT_CYCLE: Array<NonNullable<ComunicadoKpiOptions["valueFormat"]>> = [
-  "number",
-  "percent",
-  "currency",
-  "compact",
-  "raw",
-];
-
-/** Painel pincel do KPI — tons, presets e atalho a regras de cor. */
+/** Painel pincel do KPI — tons e presets (formato fica no grupo Número). */
 export function KpiColorsStylesMenu({ options, onApplyOptions, footer }: Props) {
-  const formatLabel =
-    options.valueFormat === "percent"
-      ? "Percentual"
-      : options.valueFormat === "currency"
-        ? "Moeda"
-        : options.valueFormat === "number"
-          ? "Número"
-          : options.valueFormat === "compact"
-            ? "Compacto"
-            : "Como veio";
-
   return (
     <div className="td-chart-style-menu" role="menu" aria-label="Cores e estilos do KPI">
       <section className="td-chart-style-menu__section">
@@ -90,22 +71,6 @@ export function KpiColorsStylesMenu({ options, onApplyOptions, footer }: Props) 
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="td-chart-style-menu__section">
-        <h4>Formato do valor</h4>
-        <button
-          type="button"
-          className="td-chart-style-menu__style"
-          onClick={() => {
-            const current = options.valueFormat ?? "number";
-            const idx = FORMAT_CYCLE.indexOf(current);
-            const next = FORMAT_CYCLE[(idx + 1) % FORMAT_CYCLE.length] ?? "number";
-            onApplyOptions({ ...options, valueFormat: next });
-          }}
-        >
-          Formato: {formatLabel}
-        </button>
       </section>
 
       {footer}

@@ -249,32 +249,38 @@ class OperationalRouteRegistryGeneratorService:
             for marker in (route_spec.get("operationIdMarkers") or [])
             if str(marker).strip()
         ]
-
-        for marker in operation_markers:
-            if marker in operation_id:
-                return True
-
         path_markers = [
             str(marker).lower()
             for marker in (route_spec.get("pathMarkers") or [])
             if str(marker).strip()
         ]
-
-        if path_markers:
-            if not all(marker in path for marker in path_markers):
-                return False
-
-            return True
-
         path_suffix = str(route_spec.get("pathSuffix") or "").strip().lower()
-
-        if path_suffix and path.rstrip("/").endswith(path_suffix.rstrip("/")):
-            return True
-
         path_exact_end = str(route_spec.get("pathExactEnd") or "").strip().lower()
 
-        if path_exact_end and path.rstrip("/").endswith(path_exact_end.rstrip("/")):
-            return True
+        has_path_constraint = bool(path_markers or path_suffix or path_exact_end)
+        path_ok = True
+
+        if path_markers:
+            path_ok = all(marker in path for marker in path_markers)
+
+        if path_suffix:
+            path_ok = path_ok and path.rstrip("/").endswith(path_suffix.rstrip("/"))
+
+        if path_exact_end:
+            path_ok = path_ok and path.rstrip("/").endswith(path_exact_end.rstrip("/"))
+
+        operation_ok = any(marker in operation_id for marker in operation_markers)
+
+        # Path + operationId markers juntos exigem os dois — evita falso positivo
+        # (ex.: marker «inspection» em get_process_inspection_plans_*).
+        if has_path_constraint and operation_markers:
+            return path_ok and operation_ok
+
+        if has_path_constraint:
+            return path_ok
+
+        if operation_markers:
+            return operation_ok
 
         return False
 

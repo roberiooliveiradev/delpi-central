@@ -4,6 +4,8 @@ import { createBlock } from "@delpi/tv-dashboard-presentation";
 import {
   expandSelectionWithGroups,
   groupBlocks,
+  renameGroupBlocks,
+  resolveGroupDisplayName,
   isIsolatedGroupChildSelection,
   partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
@@ -33,6 +35,21 @@ describe("comunicadoGrouping", () => {
     expect(selectedHasGroup(grouped, [a.id])).toBe(true);
     const ungrouped = ungroupBlocks(grouped, [a.id, b.id]);
     expect(ungrouped.every((block) => !block.groupId)).toBe(true);
+  });
+
+  it("renomeia o grupo em todos os membros e remove o nome vazio", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    const named = renameGroupBlocks([a, b], "g1", "  KPI  ");
+    expect(named.every((block) => block.groupName === "KPI")).toBe(true);
+    expect(resolveGroupDisplayName(named)).toBe("KPI");
+    const cleared = renameGroupBlocks(named, "g1", "   ");
+    expect(cleared.every((block) => block.groupName == null)).toBe(true);
+    expect(resolveGroupDisplayName(cleared)).toBe("Grupo");
+    const ungrouped = ungroupBlocks(named, [a.id, b.id]);
+    expect(ungrouped.every((block) => !block.groupName && !block.groupId)).toBe(true);
   });
 
   it("detecta seleção pai fechada do grupo", () => {
@@ -104,6 +121,20 @@ describe("comunicadoGrouping", () => {
     expect(units).toHaveLength(2);
     expect(units.map((unit) => unit.key).sort()).toEqual(["g1", "g2"]);
     expect(units.find((unit) => unit.key === "g1")?.frame).toEqual({ x: 0, y: 0, w: 20, h: 20 });
+  });
+
+  it("expande grupo fechado em uma unidade por membro", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    a.frame = { x: 0, y: 0, w: 10, h: 10 };
+    b.frame = { x: 10, y: 10, w: 10, h: 10 };
+    const units = partitionSelectionIntoLayoutUnits([a, b], [a.id, b.id], {
+      expandClosedGroups: true,
+    });
+    expect(units.map((unit) => unit.key).sort()).toEqual([a.id, b.id].sort());
+    expect(units.every((unit) => unit.memberIds.length === 1)).toBe(true);
   });
 
   it("filho isolado permanece unidade própria", () => {

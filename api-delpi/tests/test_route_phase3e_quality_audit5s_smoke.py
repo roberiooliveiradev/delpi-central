@@ -179,10 +179,12 @@ def test_join_audit_5s_audit_returns_meta(mock_build, _user) -> None:
     from app.interface.http.routes.quality.audit_5s_operational_router import join_audit
 
     repo = _audit_repo()
-    repo.ensure_auditor.return_value = None
     mock_build.return_value = repo
     response = join_audit(_AUDIT_ID)
     assert_envelope_meta(body_json(response), operation_id="join_audit_5s_audit")
+    # Join/visualização não pode mutar auditores do cabeçalho (presença ≠ auditor).
+    repo.ensure_auditor.assert_not_called()
+    repo.get_audit.assert_called_once_with(_AUDIT_ID)
 
 
 @patch(f"{_AUDIT}.build_audit_5s_repository")

@@ -1,0 +1,328 @@
+import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft, Trash2 } from "lucide-react";
+
+import type { AppProps } from "../../App";
+import { BranchReadView } from "../../components/branch/BranchReadView";
+import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
+import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
+import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
+import { PageHeader } from "../../components/PageHeader";
+import { InlineErrorState } from "../../components/ErrorStateBox";
+import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
+import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  createFilial,
+  deleteFilial,
+  fetchFilial,
+  fetchOptions,
+  updateFilial,
+  type Filial,
+  type OptionsData,
+} from "../../data/api/transformometroApi";
+import { buildFilialPath } from "../../utils/routeParser";
+import { valuesEqual } from "@delpi/plugin-ui/index";
+import { FilialFormFields } from "../branches/FilialFormFields";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import {
+  emptyFilialForm,
+  filialFormFromEntity,
+  payloadFromFilialForm,
+  type FilialFormState,
+} from "../branches/filialCatalogForm";
+
+type Props = Pick<AppProps, "getAccessToken"> & {
+  filialId: string;
+  pathname?: string;
+  onNavigate: (path: string) => void;
+  onBack: () => void;
+  embedded?: boolean;
+};
+
+export function BranchDetailPage({
+  getAccessToken,
+  filialId,
+  pathname,
+  onNavigate,
+  onBack,
+  embedded = false,
+}: Props) {
+  const confirm = useConfirm();
+  const isCreate = isCatalogCreateId("filial", filialId);
+  const [filial, setFilial] = useState<Filial | null>(null);
+  const [options, setOptions] = useState<OptionsData | null>(null);
+  const [form, setForm] = useState<FilialFormState>(() => emptyFilialForm());
+  const [formBaseline, setFormBaseline] = useState<FilialFormState>(() => emptyFilialForm());
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!isCreate);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    if (isCreate) {
+      const opts = await fetchOptions(getAccessToken);
+      setOptions(opts);
+      const empty = emptyFilialForm();
+      setForm(empty);
+      setFormBaseline(empty);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [row, opts] = await Promise.all([
+        fetchFilial(filialId, getAccessToken),
+        fetchOptions(getAccessToken),
+      ]);
+      setFilial(row);
+      setOptions(opts);
+      const next = filialFormFromEntity(row);
+      setForm(next);
+      setFormBaseline(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar unidade");
+    } finally {
+      setLoading(false);
+    }
+  }, [filialId, getAccessToken, isCreate]);
+
+  const sectionEdit = useCollaborativeSectionEdit({
+    entityType: "filial",
+    entityId: filialId,
+    getAccessToken,
+    enabled: !isCreate,
+    onResync: () => void load(),
+  });
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const editingFilial = sectionEdit.isEditing("filial");
+
+  useEffect(() => {
+    if (isCreate) {
+      sectionEdit.startEdit("filial");
+    }
+  }, [isCreate, sectionEdit.startEdit]);
+
+  useEffect(() => {
+    if (!filial || editingFilial) return;
+    const next = filialFormFromEntity(filial);
+    setForm(next);
+    setFormBaseline(next);
+  }, [filial, editingFilial]);
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    const payload = payloadFromFilialForm(form, !isCreate);
+    try {
+      if (isCreate) {
+        const created = await createFilial(
+          {
+            codigo_filial: form.codigo_filial.trim(),
+            nome_filial: payload.nome_filial,
+            status_filial: payload.status_filial,
+          },
+          getAccessToken
+        );
+        onNavigate(buildFilialPath(created.filial_id));
+        return;
+      }
+      const updated = await updateFilial(filialId, payload, getAccessToken);
+      setFilial(updated);
+      const saved = filialFormFromEntity(updated);
+      setForm(saved);
+      setFormBaseline(saved);
+      sectionEdit.stopEdit("filial");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!filial) return;
+    const label = `${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}`;
+    const confirmed = await confirm({
+      title: "Excluir unidade",
+      message: `Excluir unidade ${label}?`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    setError(null);
+    try {
+      await deleteFilial(filial.filial_id, getAccessToken);
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir unidade");
+    }
+  }
+
+  function cancelEdit() {
+    if (isCreate) {
+      onBack();
+      return;
+    }
+    setForm(formBaseline);
+    sectionEdit.cancelEdit("filial");
+  }
+
+  useUnsavedChangesGuard({
+    id: `filial:${filialId}`,
+    editing: isCreate || sectionEdit.isEditing("filial"),
+    dirty: !valuesEqual(form, formBaseline),
+    onSave: handleSave,
+    onDiscard: cancelEdit,
+  });
+
+  const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !filial);
+  const loadingProgress = useLoadingProgress(loading && !isCreate && !filial, fetchProgress);
+
+  if (loading && !isCreate && !filial) {
+    const loader = (
+      <LoadingActivityCard
+        title="Carregando unidade"
+        description="Dados da unidade operacional."
+        progressPercent={loadingProgress}
+      />
+    );
+    if (embedded) return loader;
+    return <TransformometroShell>{loader}</TransformometroShell>;
+  }
+
+  if (!isCreate && !filial && !loading) {
+    const errorView = (
+      <InlineErrorState
+        title={error ? "Não foi possível carregar a unidade" : "Unidade não encontrada"}
+        message={
+          error ??
+          "Esta unidade pode ter sido excluída ou você não tem acesso."
+        }
+        actionLabel="Voltar à lista"
+        onAction={onBack}
+      />
+    );
+    if (embedded) return errorView;
+    return <TransformometroShell>{errorView}</TransformometroShell>;
+  }
+
+  const title = isCreate
+    ? "Nova unidade"
+    : `${filial?.codigo_filial ?? filialId} — ${filial?.nome_filial ?? ""}`;
+
+  const pageBody = (
+    <>
+      {!embedded ? null : (
+        <div className="tm-cadastro-detail-toolbar">
+          <div>
+            <h2 className="ds-section-title">{title}</h2>
+            {!isCreate ? (
+              <p className="ds-hint">Status: {filial?.status_filial ?? "ativo"}</p>
+            ) : (
+              <p className="ds-hint">Cadastre uma unidade para instâncias, departamentos e escopo do dashboard</p>
+            )}
+          </div>
+          {!isCreate ? (
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+              <Trash2 size={16} />
+              Excluir
+            </button>
+          ) : null}
+        </div>
+      )}
+
+      <StatusAlerts
+        error={error}
+        loading={false}
+        hasData
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
+      />
+
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+      />
+
+      {options ? (
+        <EditableSectionCard
+          title="Dados da unidade"
+          hint={TM_HELP_TOOLTIPS.filiais.nome}
+          description="Código TOTVS, nome e status usados em departamentos e processos."
+          isEditing={isCreate || sectionEdit.isEditing("filial")}
+          onEdit={() => void sectionEdit.startEdit("filial")}
+          onCancel={cancelEdit}
+          onSave={() => void handleSave()}
+          saving={saving}
+          dirty={!valuesEqual(form, formBaseline)}
+          editable={!isCreate}
+          readContent={filial ? <BranchReadView filial={filial} /> : null}
+          editContent={
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSave();
+              }}
+            >
+              <FilialFormFields
+                form={form}
+                options={options}
+                editing={!isCreate}
+                onChange={setForm}
+              />
+            </form>
+          }
+        />
+      ) : null}
+    </>
+  );
+
+  if (embedded) return pageBody;
+
+  return (
+    <TransformometroShell>
+      <PageHeader
+        title={title}
+        subtitle={
+          isCreate
+            ? "Cadastre uma unidade para instâncias, departamentos e escopo do dashboard"
+            : `Status: ${filial?.status_filial ?? "ativo"}`
+        }
+        currentPath={pathname ?? (isCreate ? buildFilialPath(CATALOG_CREATE.filial) : buildFilialPath(filialId))}
+        onNavigate={onNavigate}
+        actions={
+          <>
+            <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+              <ArrowLeft size={16} />
+              Lista
+            </button>
+            {!isCreate ? (
+              <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </>
+        }
+      />
+      {pageBody}
+    </TransformometroShell>
+  );
+}

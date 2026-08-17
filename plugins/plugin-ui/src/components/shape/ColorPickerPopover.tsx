@@ -6,7 +6,15 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor, resolveColorTriggerPreviewMode } from "./colorUtils";
+import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor } from "./colorUtils";
+import { FillGradientPanel } from "./FillGradientPanel";
+import {
+  normalizeGradientStops,
+  resolveFillKindTabChange,
+  resolveFillTriggerPreview,
+  type DelpiFill,
+  type DelpiFillKind,
+} from "./fillTypes";
 import { isEyedropperSupported, pickColorWithEyedropper } from "./pickColorWithEyedropper";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
@@ -41,6 +49,10 @@ export type ColorPickerPopoverProps = {
   standardColors?: readonly string[];
   /** Cores usadas recentemente (histórico de sessão do host). */
   recentColors?: readonly string[];
+  /** Preenchimento rico. Sem `onFillChange` o popover fica só hex (hosts RichText etc.). */
+  fill?: DelpiFill;
+  onFillChange?: (fill: DelpiFill) => void;
+  allowedFillKinds?: readonly DelpiFillKind[];
   className?: string;
 };
 
@@ -76,9 +88,16 @@ export function ColorPickerPopover({
   themeRows = DELPI_THEME_COLOR_GRID,
   standardColors = DELPI_STANDARD_COLORS,
   recentColors,
+  fill,
+  onFillChange,
+  allowedFillKinds = ["solid"],
   className,
 }: ColorPickerPopoverProps) {
   const L = mergeShapeColorLabels(labels);
+  const showGradient = Boolean(onFillChange) && allowedFillKinds.includes("gradient");
+  const [mode, setMode] = useState<DelpiFillKind>(
+    showGradient && fill?.kind === "gradient" ? "gradient" : "solid",
+  );
   const [moreOpen, setMoreOpen] = useState(false);
   const [eyedropperBusy, setEyedropperBusy] = useState(false);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
@@ -95,6 +114,7 @@ export function ColorPickerPopover({
     ) ?? [];
 
   const handleNoFill = () => {
+    onFillChange?.({ kind: "none" });
     if (onNoFill) {
       onNoFill();
       return;
@@ -115,6 +135,15 @@ export function ColorPickerPopover({
 
   const handleSelect = (color: string) => {
     onChange(color);
+    onFillChange?.({ kind: "solid", color });
+  };
+
+  const switchMode = (next: DelpiFillKind) => {
+    setMode(next);
+    if (!onFillChange) return;
+    const nextFill = resolveFillKindTabChange(next, fill, value);
+    if (!nextFill) return;
+    onFillChange(nextFill);
   };
 
   const handleEyedropper = async () => {
@@ -134,6 +163,62 @@ export function ColorPickerPopover({
 
   return (
     <div className={["delpi-ui-color-picker", className].filter(Boolean).join(" ")}>
+      {showGradient ? (
+        <div className="delpi-ui-fill-mode" role="tablist" aria-label={L.fill}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "solid"}
+            className={[
+              "delpi-ui-fill-mode__btn",
+              mode === "solid" ? "delpi-ui-fill-mode__btn--active" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => switchMode("solid")}
+          >
+            {L.fillSolid}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "gradient"}
+            className={[
+              "delpi-ui-fill-mode__btn",
+              mode === "gradient" ? "delpi-ui-fill-mode__btn--active" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => switchMode("gradient")}
+          >
+            {L.fillGradient}
+          </button>
+        </div>
+      ) : null}
+
+      {showGradient && mode === "gradient" ? (
+        <FillGradientPanel
+          value={
+            fill?.kind === "gradient"
+              ? fill
+              : {
+                  kind: "gradient",
+                  angle: 180,
+                  stops: normalizeGradientStops([
+                    { color: value && value !== "transparent" ? value : "#0f172a", position: 0 },
+                    { color: "#1e3a5f", position: 100 },
+                  ]),
+                }
+          }
+          onChange={(next) => onFillChange?.(next)}
+          labels={labels}
+          themeRows={themeRows}
+          standardColors={standardColors}
+        />
+      ) : null}
+
+      {!showGradient || mode === "solid" ? (
+        <>
       {automaticEnabled || noFillEnabled ? (
         <ul className="delpi-ui-color-picker__actions delpi-ui-color-picker__actions--leading">
           {automaticEnabled ? (
@@ -265,6 +350,8 @@ export function ColorPickerPopover({
           />
         </AnchoredPanelPortal>
       ) : null}
+        </>
+      ) : null}
     </div>
   );
 }
@@ -301,7 +388,11 @@ export function ColorPickerPopoverTrigger({
     onClose?.();
   };
 
-  const previewMode = resolveColorTriggerPreviewMode(value, variant);
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    popoverProps.fill,
+    value,
+    variant,
+  );
 
   return (
     <div
@@ -325,7 +416,7 @@ export function ColorPickerPopoverTrigger({
           ]
             .filter(Boolean)
             .join(" ")}
-          style={previewMode === "color" && value ? { background: value } : undefined}
+          style={previewBackground ? { background: previewBackground } : undefined}
           aria-hidden="true"
         />
         <span className="delpi-ui-color-picker-trigger__label">{triggerLabel}</span>
@@ -366,6 +457,9 @@ export type ShapeFillMenuProps = {
   onEyedropper?: () => void;
   labels?: ShapeColorLabels;
   fillLabel?: string;
+  fill?: DelpiFill;
+  onFillChange?: (fill: DelpiFill) => void;
+  allowedFillKinds?: readonly DelpiFillKind[];
 };
 
 export function ShapeFillMenu({
@@ -378,6 +472,9 @@ export function ShapeFillMenu({
   onEyedropper,
   labels,
   fillLabel,
+  fill,
+  onFillChange,
+  allowedFillKinds,
 }: ShapeFillMenuProps) {
   const L = mergeShapeColorLabels(labels);
   const [open, setOpen] = useState(false);
@@ -385,7 +482,11 @@ export function ShapeFillMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const previewMode = resolveColorTriggerPreviewMode(value, "fill");
+  const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
+    fill,
+    value,
+    "fill",
+  );
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -406,7 +507,7 @@ export function ShapeFillMenu({
             ]
               .filter(Boolean)
               .join(" ")}
-            style={previewMode === "color" && value ? { background: value } : undefined}
+            style={previewBackground ? { background: previewBackground } : undefined}
           />
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{fillLabel ?? L.fill}</span>
@@ -426,6 +527,9 @@ export function ShapeFillMenu({
             onChange={(color) => {
               onChange(color);
             }}
+            fill={fill}
+            onFillChange={onFillChange}
+            allowedFillKinds={allowedFillKinds}
             onNoFill={
               onNoFill ??
               (() => {

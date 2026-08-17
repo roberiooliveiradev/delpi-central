@@ -136,6 +136,15 @@ Execução SQL no chat comum **não** é permitida via external actions.
 - **Metadata legado:** `qualityActionPlans` em `resolve_runtime_flags` / prompt.
 - **Modo só consulta (Onda 5.7):** provider `api-delpi` com `allowWrite: false` expõe só actions `sensitivity: read` (GET). Runtime define `qualityActionPlansReadOnly: true` e injeta policy adicional — indicadores e listagens sem gravação.
 
+### Skill `tv-dashboard-copilot`
+
+- **Comportamento:** patches tipados no TV Dashboard (`TvCopilotPatchV1`) via tool `tv_dashboard_copilot` → BFF `/data/copilot/preview-patch` | `apply-patch`.
+- **Escritas:** `mode=apply` exige confirmação (`ChatWriteConfirmationService`); `preview` é dry-run.
+- **Não faz:** Power Query M, `resolved` no `native_config`, `renderPlan` como modelo de slide.
+- **Host:** remote MF `./EmbeddedChat` no editor TV (aba Copiloto) ou chat portal com skill ativa.
+- **Env:** `TV_DASHBOARD_API_BASE_URL` (default `http://delpi-tv-dashboard-api:8000`).
+- **Doc:** `tv-dashboard-api/docs/tv-copilot.md`.
+
 ### Skill `company-knowledge`
 
 - **Comportamento:** prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais), injeta policy no prompt e controla `include_global` no escopo RAG.

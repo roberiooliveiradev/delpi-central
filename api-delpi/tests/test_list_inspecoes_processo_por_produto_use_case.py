@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -99,3 +99,29 @@ def test_list_inspecoes_processo_por_produto_rejects_invalid_branch(
         use_case.execute(branch=branch, limit=10)
 
     repository.list_por_produto_by_branch.assert_not_called()
+
+
+@patch(
+    "app.domain.quality.inspecoes_processo.inspecoes_processo_period.lookback_floor",
+    return_value="2025-08-01",
+)
+def test_list_inspecoes_processo_por_produto_forwards_period(
+    _mock_floor,
+) -> None:
+    repository = MagicMock()
+    repository.list_por_produto_by_branch.return_value = []
+
+    use_case = ListInspecoesProcessoPorProdutoUseCase(repository)
+    use_case.execute(
+        branch="02",
+        limit=10,
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+    )
+
+    repository.list_por_produto_by_branch.assert_called_once_with(
+        "02",
+        limit=10,
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+    )

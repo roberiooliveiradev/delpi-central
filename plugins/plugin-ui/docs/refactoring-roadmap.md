@@ -395,6 +395,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `financeiro-inadimplencia` | secondary SimpleKpi; hero domínio `fi-kpi-hero` → ✅ **7.4** | **7.4** ✅ |
 | `inspecoes-processo` | Pagination/EmptyState → kit wrappers → ✅ **7.5** | **7.5** ✅ |
 | `strategic-indicators` | DataTable thin `dataTableBemClasses("si")` → ✅ **7.5** | **7.5** ✅ |
+| `commercial` | prefixo/root legado, wrappers e shells sem uso, conteúdo de ajuda técnico → ✅ **7.10** | **7.10** ✅ |
 
 #### P2 — família dashboard + parciais
 
@@ -422,6 +423,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.7** | Gate CI (`audit_mfe_plugin_ui_css.py` — seletores `.delpi-ui-*` em CSS de MFE) | Falha CI se reintroduzir | ✅ ligado em `build-tv-dashboard.sh` |
 | **7.8** | `cipa` — botões de ação e navegação voltar | `ActionButton` / `BackLink` no kit; sem `.cipa-btn` / `.cipa-link` | ✅ |
 | **7.9** | `cipa` — migração completa da UI base | `PageHeader`, cards, `DataTable`, estados, `NavigationCard`, `IconButton` e formulários no kit; CSS local só layout/domínio | ✅ |
+| **7.10** | `commercial` — concluir convergência do antigo fluxo de pedidos | Prefixo `cm`; 0 CSS `.delpi-ui-*`; 0 shell/helper morto; helps sem HTTP/Protheus | ✅ `sourceHygiene.test.mjs` + test/lint/build; auditor global sem ocorrência em `commercial` |
 
 ### 8.4 Ordem operacional por PR
 
@@ -437,6 +439,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | UI 100% domínio (fishbone PAC, presentation SI PanZoom, …) | CSS no MFE **ok** se **não** for export/dual-class do kit |
 | `@media print` hide de help-tooltip | Utilitário no kit (ondas 7.1/7.4); MFE commercial sem seletor `.delpi-ui-*` (onda 7.6) |
 | Admin chat se permanecer domínio | Renomear classes para **não** parecer shell KPI/filter do kit |
+| Checkpoint P-1 commercial (ago/2026) | Kit ganhou `PagePath`, `DataRecordCard` e tabs no `UnderlineNav`; wrappers criados, sem migração de consumidores |
 
 ---
 

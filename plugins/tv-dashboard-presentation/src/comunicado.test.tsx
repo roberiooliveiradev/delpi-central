@@ -63,6 +63,72 @@ describe("comunicadoHelpers", () => {
     });
   });
 
+  it("persiste hidden=true no round-trip e omite hidden falso", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [
+        {
+          id: "h1",
+          type: "heading",
+          content: "Oculto",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          hidden: true,
+        },
+        {
+          id: "t1",
+          type: "text",
+          content: "Visível",
+          frame: { x: 0, y: 12, w: 20, h: 10 },
+          hidden: false,
+        },
+      ],
+    });
+    expect(parsed.blocks?.[0]?.hidden).toBe(true);
+    expect(parsed.blocks?.[1]?.hidden).toBeUndefined();
+
+    const serialized = serializeComunicadoConfig(parsed) as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(serialized.blocks[0]?.hidden).toBe(true);
+    expect(serialized.blocks[1]?.hidden).toBeUndefined();
+
+    const roundtrip = parseComunicadoConfig(serialized);
+    expect(roundtrip.blocks?.[0]?.hidden).toBe(true);
+    expect(roundtrip.blocks?.[1]?.hidden).toBeUndefined();
+  });
+
+  it("persiste groupName no round-trip e omite vazio", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [
+        {
+          id: "g1",
+          type: "shape",
+          shape: "rectangle",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          groupId: "grp_a",
+          groupName: "  Cabeçalho  ",
+        },
+        {
+          id: "g2",
+          type: "shape",
+          shape: "rectangle",
+          frame: { x: 0, y: 12, w: 20, h: 10 },
+          groupId: "grp_a",
+          groupName: "   ",
+        },
+      ],
+    });
+    expect(parsed.blocks?.[0]?.groupName).toBe("Cabeçalho");
+    expect(parsed.blocks?.[1]?.groupName).toBeUndefined();
+
+    const serialized = serializeComunicadoConfig(parsed) as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(serialized.blocks[0]?.groupName).toBe("Cabeçalho");
+    expect(serialized.blocks[1]?.groupName).toBeUndefined();
+  });
+
   it("mescla estilo padrão quando bloco vem com style vazio", () => {
     const parsed = parseComunicadoConfig({
       version: 2,
@@ -200,6 +266,14 @@ describe("comunicadoHelpers", () => {
     expect(css.border).toBeUndefined();
     expect(css.backgroundColor).toBeUndefined();
     expect(css.borderRadius).toBeUndefined();
+  });
+
+  it("gráfico novo nasce com data abreviada no eixo (decks antigos ficam raw no default)", () => {
+    const block = createChartViewBlock("line");
+    expect(block.type).toBe("chart_view");
+    if (block.type !== "chart_view") throw new Error("chart");
+    expect(block.chartOptions?.categoryLabelFormat).toBe("day");
+    expect(block.chartOptions?.displayCategoryFormat?.presetId).toBe("date-short");
   });
 
   it("promove boxShadow de kpi/chart/tabela/filtro para --tdp-block-box-shadow na moldura", () => {

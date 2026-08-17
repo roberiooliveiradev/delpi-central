@@ -1,0 +1,69 @@
+import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
+import { compareDeliveryDates } from "./dates";
+import { roundQuantity } from "./quantityMath";
+
+export function buildStockGroupKey(item: OpenOrdersTotvsItem): string {
+  return `${item.filial}::${item.produto}`;
+}
+
+export function buildLineKey(item: OpenOrdersTotvsItem): string {
+  return `${item.filial}::${item.pedido}::${item.linha}::${item.produto}`;
+}
+
+export function getAllocatedStock(item: OpenOrdersTotvsItem): number {
+  return item.estoque_alocado ?? 0;
+}
+
+function compareLinesForStockAllocation(
+  a: OpenOrdersTotvsItem,
+  b: OpenOrdersTotvsItem,
+): number {
+  const byDelivery = compareDeliveryDates(a.data_entrega, b.data_entrega);
+  if (byDelivery !== 0) return byDelivery;
+
+  const byPedido = (a.pedido ?? "").localeCompare(b.pedido ?? "", "pt-BR");
+  if (byPedido !== 0) return byPedido;
+
+  return (a.linha ?? "").localeCompare(b.linha ?? "", "pt-BR", { numeric: true });
+}
+
+function resolvePhysicalStock(items: OpenOrdersTotvsItem[]): number {
+  return roundQuantity(Math.max(0, ...items.map((item) => item.no_estoque ?? 0)));
+}
+
+/**
+ * Distribui o estoque físico repetido por produto/filial entre as linhas em aberto,
+ * priorizando pedidos com data de entrega mais antiga (FIFO operacional).
+ */
+export function allocateStockToOrders(
+  items: OpenOrdersTotvsItem[],
+): OpenOrdersTotvsItem[] {
+  if (items.length === 0) return [];
+
+  const groups = new Map<string, OpenOrdersTotvsItem[]>();
+  for (const item of items) {
+    const key = buildStockGroupKey(item);
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(item);
+    else groups.set(key, [item]);
+  }
+
+  const allocatedByLine = new Map<string, number>();
+
+  for (const groupItems of groups.values()) {
+    let remaining = resolvePhysicalStock(groupItems);
+    const sorted = [...groupItems].sort(compareLinesForStockAllocation);
+
+    for (const item of sorted) {
+      const saldo = roundQuantity(Math.max(0, item.saldo ?? 0));
+      const allocated = roundQuantity(Math.min(remaining, saldo));
+      allocatedByLine.set(buildLineKey(item), allocated);
+      remaining = roundQuantity(remaining - allocated);
+    }
+  }
+
+  return items.map((item) => ({
+    ...item,
+    estoque_alocado: allocatedByLine.get(buildLineKey(item)) ?? 0,
+  }));
+}

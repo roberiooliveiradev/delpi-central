@@ -1,0 +1,112 @@
+/* portal/src/ui-kit/data/DenseTable.css */
+
+.portal-ui-dense {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.portal-ui-dense__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.portal-ui-dense__scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.portal-ui-dense__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.portal-ui-dense__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.portal-ui-dense__table tbody td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.portal-ui-dense__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.portal-ui-dense__table tbody tr:hover td {
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+}
+
+/* Linha de detalhe: continuação da linha acima, não um novo registro. */
+.portal-ui-dense__table tbody tr.portal-ui-dense__row--expanded > td {
+  border-bottom-color: transparent;
+}
+
+.portal-ui-dense__table tbody tr.portal-ui-dense__detail > td,
+.portal-ui-dense__table tbody tr.portal-ui-dense__detail:hover > td {
+  padding: 4px 12px 12px 18px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.portal-ui-dense__detail-inner {
+  max-width: 720px;
+}
+
+.portal-ui-dense__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.portal-ui-dense__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .portal-ui-dense__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  /* A tabela rola na horizontal; as ações ficam lado a lado para a linha não
+     virar uma coluna de botões com o dobro da altura. */
+  .portal-ui-dense__actions {
+    flex-wrap: nowrap;
+  }
+
+  .portal-ui-dense__table tbody td {
+    padding: 6px;
+  }
+
+  .portal-ui-dense__table tbody tr.portal-ui-dense__detail > td,
+  .portal-ui-dense__table tbody tr.portal-ui-dense__detail:hover > td {
+    padding: 4px 10px 10px 12px;
+  }
+}

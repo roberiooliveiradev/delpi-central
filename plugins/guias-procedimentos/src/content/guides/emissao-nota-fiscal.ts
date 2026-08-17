@@ -11,7 +11,7 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     departmentId: "faturamento",
     title: "Informações necessárias para solicitação de emissão de nota fiscal",
     summary:
-      "O que reunir antes de solicitar a emissão: destinatário, itens, tipo de NF, transporte e pedido de compra.",
+      "O que reunir antes de solicitar a emissão: destinatário, itens, tipo de NF, transporte e observação.",
     tags: [
       "nota fiscal",
       "faturamento",
@@ -27,7 +27,6 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
       "amostra",
       "remessa",
       "conserto",
-      "pedido de compra",
     ],
     responsibleArea: "Faturamento",
     updatedAtLabel: "A confirmar",
@@ -35,7 +34,7 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     status: "published",
   },
   introduction:
-    "Antes de solicitar a emissão de uma nota fiscal, reúna e confira todas as informações necessárias. Isso reduz correções, atrasos e devoluções da solicitação.",
+    "Antes de solicitar a emissão de uma nota fiscal, reúna e confira todas as informações necessárias. Isso reduz correções, atrasos e devoluções da solicitação. O cadastro guiado está em /apps/invoice-issuance.",
   sections: [
     {
       id: "destinatario",
@@ -57,6 +56,10 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
       title: "Dados dos produtos ou serviços",
       items: [
         { id: "prod-codigo", text: "Código do item." },
+        {
+          id: "prod-pv",
+          text: "Se o destinatário for cliente, os itens podem vir das linhas em aberto do pedido de venda (quantidade até o saldo).",
+        },
         { id: "prod-qtd", text: "Quantidade." },
         { id: "prod-valor", text: "Valor unitário." },
         {
@@ -100,9 +103,8 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
       title: "Informações adicionais",
       items: [
         {
-          id: "add-pedido",
-          text: "Pedido de compra, quando existir.",
-          emphasis: true,
+          id: "add-obs",
+          text: "Observação complementar para o Faturamento, quando houver.",
         },
       ],
     },
@@ -115,11 +117,7 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     { id: "chk-tipo-nf", label: "Tipo de nota fiscal selecionado." },
     { id: "chk-modalidade", label: "Modalidade de transporte informada." },
     { id: "chk-peso", label: "Peso e volumes informados." },
-    {
-      id: "chk-pedido",
-      label: "Pedido de compra anexado ou informado, quando existir.",
-    },
   ],
   footerNotice:
-    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação.",
+    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação. Use o plugin Emissão de Notas Fiscais em /apps/invoice-issuance.",
 };

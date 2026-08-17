@@ -61,7 +61,7 @@ export async function fetchProcessoDiagrama(
   processoId: string,
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoDiagramResponse> {
-  return request(`/processos/${processoId}/diagrama`, getAccessToken);
+  return request(`/processes/${processoId}/diagram`, getAccessToken);
 }
 
 export async function fetchProcessoDiagramaComposed(
@@ -73,7 +73,7 @@ export async function fetchProcessoDiagramaComposed(
   if (params?.at) qs.set("at", params.at);
   if (params?.instancia_id) qs.set("instancia_id", params.instancia_id);
   const suffix = qs.toString() ? `?${qs}` : "";
-  return request(`/processos/${processoId}/diagrama/composed${suffix}`, getAccessToken);
+  return request(`/processes/${processoId}/diagram/composed${suffix}`, getAccessToken);
 }
 
 export async function saveProcessoDiagrama(
@@ -81,7 +81,7 @@ export async function saveProcessoDiagrama(
   conteudo: FlowchartV1,
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoDiagramResponse> {
-  return request(`/processos/${processoId}/diagrama`, getAccessToken, {
+  return request(`/processes/${processoId}/diagram`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify({ conteudo }),
   });
@@ -92,7 +92,7 @@ export async function validateProcessoDiagrama(
   conteudo: FlowchartV1,
   getAccessToken?: () => string | undefined
 ): Promise<DiagramValidationReport> {
-  return request(`/processos/${processoId}/diagrama/validacao`, getAccessToken, {
+  return request(`/processes/${processoId}/diagram/validacao`, getAccessToken, {
     method: "POST",
     body: JSON.stringify({ conteudo }),
   });
@@ -103,7 +103,7 @@ export async function fetchProcessoDiagramBpmnXml(
   getAccessToken?: () => string | undefined
 ): Promise<string> {
   const data = await request<{ xml: string }>(
-    `/processos/${processoId}/diagrama/bpmn.xml`,
+    `/processes/${processoId}/diagram/bpmn.xml`,
     getAccessToken
   );
   return data.xml;
@@ -114,7 +114,7 @@ export async function importProcessoDiagramBpmnXml(
   xml: string,
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoDiagramResponse> {
-  return request(`/processos/${processoId}/diagrama/bpmn.xml`, getAccessToken, {
+  return request(`/processes/${processoId}/diagram/bpmn.xml`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify({ xml }),
   });
@@ -124,7 +124,7 @@ export async function fetchInstanciaDiagramEscopo(
   instanciaId: string,
   getAccessToken?: () => string | undefined
 ): Promise<FlowchartEscopo & { instancia_id: string; empty?: boolean }> {
-  return request(`/instancias/${instanciaId}/diagrama-escopo`, getAccessToken);
+  return request(`/instances/${instanciaId}/scope-diagram`, getAccessToken);
 }
 
 export async function saveInstanciaDiagramEscopo(
@@ -132,7 +132,7 @@ export async function saveInstanciaDiagramEscopo(
   escopo: FlowchartEscopo,
   getAccessToken?: () => string | undefined
 ) {
-  return request(`/instancias/${instanciaId}/diagrama-escopo`, getAccessToken, {
+  return request(`/instances/${instanciaId}/scope-diagram`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(escopo),
   });
@@ -142,7 +142,7 @@ export async function fetchRevisaoDiagramMerged(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ): Promise<MergedRevisaoDiagram> {
-  return request(`/revisoes/${revisaoId}/diagrama`, getAccessToken);
+  return request(`/revisions/${revisaoId}/diagram`, getAccessToken);
 }
 
 export async function fetchRevisaoDiagramOverlay(
@@ -150,7 +150,7 @@ export async function fetchRevisaoDiagramOverlay(
   getAccessToken?: () => string | undefined
 ) {
   return request<{ revisao_id: string; conteudo: FlowchartOverlayV1; mermaid?: string | null }>(
-    `/revisoes/${revisaoId}/diagrama/overlay`,
+    `/revisions/${revisaoId}/diagram/overlay`,
     getAccessToken
   );
 }
@@ -160,7 +160,7 @@ export async function saveRevisaoDiagramOverlay(
   conteudo: FlowchartOverlayV1,
   getAccessToken?: () => string | undefined
 ) {
-  return request(`/revisoes/${revisaoId}/diagrama/overlay`, getAccessToken, {
+  return request(`/revisions/${revisaoId}/diagram/overlay`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify({ conteudo }),
   });
@@ -171,7 +171,7 @@ export async function fetchRevisaoDiagramMermaid(
   getAccessToken?: () => string | undefined
 ): Promise<string> {
   const data = await request<{ mermaid: string }>(
-    `/revisoes/${revisaoId}/diagrama/mermaid`,
+    `/revisions/${revisaoId}/diagram/mermaid`,
     getAccessToken
   );
   return data.mermaid;

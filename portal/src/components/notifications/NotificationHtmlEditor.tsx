@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 
+import { Checkbox, Textarea } from "../../ui-kit";
 import { NotificationVariableToolbar } from "./NotificationVariableToolbar";
 import { substituteNotificationVariables } from "./notificationHtmlPreview";
 
@@ -36,15 +37,13 @@ export function NotificationHtmlEditor({
 
       <div className="notification-html-editor__toolbar">
         <span className="notification-html-editor__toolbar-label">Editor HTML</span>
-        <label className="notification-html-editor__preview-toggle">
-          <input
-            type="checkbox"
-            checked={showPreview}
-            onChange={(event) => setShowPreview(event.target.checked)}
-            disabled={disabled}
-          />
-          Mostrar pré-visualização
-        </label>
+        <Checkbox
+          checked={showPreview}
+          onChange={(event) => setShowPreview(event.target.checked)}
+          disabled={disabled}
+          label="Mostrar pré-visualização"
+          className="notification-html-editor__preview-toggle"
+        />
       </div>
 
       <div
@@ -54,9 +53,10 @@ export function NotificationHtmlEditor({
             : "notification-html-editor__split notification-html-editor__split--editor-only"
         }
       >
-        <textarea
+        <Textarea
           ref={textareaRef}
           className="notification-html-editor__area"
+          mono
           value={value}
           onChange={(event) => onChange(event.target.value)}
           rows={rows}

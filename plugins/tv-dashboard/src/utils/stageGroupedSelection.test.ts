@@ -124,6 +124,28 @@ describe("resolveStageSelectionHierarchy", () => {
 });
 
 describe("resolveBlockWrapChromeFlags", () => {
+  it("grupo fechado mostra outline por membro, sem handles (moldura do grupo)", () => {
+    const hierarchy = resolveStageSelectionHierarchy({
+      blocks: [block("a", { groupId: "g1" }), block("b", { groupId: "g1" })],
+      selectedIds: ["a", "b"],
+    });
+    expect(
+      resolveBlockWrapChromeFlags({
+        hierarchy,
+        blockId: "a",
+        blockType: "shape",
+        isSelected: true,
+        closedGroupActive: true,
+        selectedPart: null,
+      }),
+    ).toEqual({
+      showOutline: true,
+      showHandles: false,
+      mutedAsGroupMember: true,
+      partChildrenActive: false,
+    });
+  });
+
   it("desativa outline/handles do pai com filho complexo ativo", () => {
     const hierarchy = resolveStageSelectionHierarchy({
       blocks: [block("k", { type: "kpi_view" })],

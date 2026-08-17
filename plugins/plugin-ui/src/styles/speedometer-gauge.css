@@ -1,0 +1,175 @@
+/**
+ * SpeedometerGauge — tokens `--delpi-ui-*`.
+ * Dual-class: `{prefix}-speedometer-gauge*` + `.delpi-ui-speedometer-gauge*`.
+ */
+
+.delpi-ui-speedometer-gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem 0.55rem;
+  border-radius: 14px;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  outline: none;
+  cursor: default;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.delpi-ui-speedometer-gauge:hover,
+.delpi-ui-speedometer-gauge:focus-visible {
+  background: color-mix(in srgb, var(--delpi-ui-border, #334155) 28%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--delpi-ui-border, #334155) 70%, transparent);
+}
+
+.delpi-ui-speedometer-gauge:focus-visible {
+  box-shadow: 0 0 0 2px var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-speedometer-gauge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem 3rem;
+  width: 100%;
+  padding: 0.75rem 0 0.35rem;
+}
+
+.delpi-ui-speedometer-gauge__svg {
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+  height: auto;
+}
+
+.delpi-ui-speedometer-gauge__track {
+  stroke: var(--delpi-ui-border, var(--border, #334155));
+}
+
+.delpi-ui-speedometer-gauge__zone--danger {
+  stroke: #dc2626;
+}
+
+.delpi-ui-speedometer-gauge__zone--warning {
+  stroke: #d97706;
+}
+
+.delpi-ui-speedometer-gauge__zone--success {
+  stroke: #16a34a;
+}
+
+.delpi-ui-speedometer-gauge__fill {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, currentColor 35%, transparent));
+}
+
+.delpi-ui-speedometer-gauge__needle {
+  stroke: var(--delpi-ui-title, var(--delpi-ui-text, #e2e8f0));
+}
+
+.delpi-ui-speedometer-gauge__hub {
+  fill: var(--delpi-ui-title, var(--delpi-ui-text, #e2e8f0));
+}
+
+.delpi-ui-speedometer-gauge__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  fill: var(--delpi-ui-title, var(--delpi-ui-text, #f8fafc));
+}
+
+.delpi-ui-speedometer-gauge__unit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  fill: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+}
+
+.delpi-ui-speedometer-gauge__label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  text-align: center;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, #f8fafc));
+  max-width: 16rem;
+  line-height: 1.3;
+}
+
+.delpi-ui-speedometer-gauge__goal {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--delpi-ui-accent, #089bdb);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+.delpi-ui-speedometer-gauge__goal-marker {
+  pointer-events: none;
+}
+
+.delpi-ui-speedometer-gauge__goal-tick {
+  stroke: var(--delpi-ui-accent, #089bdb);
+  fill: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-speedometer-gauge__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.65rem;
+}
+
+.delpi-ui-speedometer-gauge__legend-item {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--delpi-ui-muted, var(--text-muted, #94a3b8));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.delpi-ui-speedometer-gauge__legend-item::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.delpi-ui-speedometer-gauge__legend-item[data-tone="danger"] {
+  color: #dc2626;
+}
+
+.delpi-ui-speedometer-gauge__legend-item[data-tone="warning"] {
+  color: #d97706;
+}
+
+.delpi-ui-speedometer-gauge__legend-item[data-tone="success"] {
+  color: #16a34a;
+}
+
+.delpi-ui-speedometer-gauge__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 0.15rem);
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 16rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--delpi-ui-title, #f8fafc);
+  background: color-mix(in srgb, var(--delpi-ui-surface, #0f172a) 92%, #000);
+  border: 1px solid var(--delpi-ui-border, #334155);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  white-space: normal;
+}

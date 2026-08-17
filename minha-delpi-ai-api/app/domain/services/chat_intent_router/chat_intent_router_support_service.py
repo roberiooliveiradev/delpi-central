@@ -19,6 +19,7 @@ class ChatIntentRouterSupportService:
         "operational_parameter": ("clarification", "missing_params", 2),
         "intent_disambiguation": ("operational_query", "scope_clarification", 6),
         "tools": ("operational_query", None, 6),
+        "platform_direct_answer": ("platform_action", "tv_dashboard_copilot", 4),
         "capabilities": ("self_help", "capabilities_catalog", 9),
         "small_talk": ("small_talk", None, 9),
         "utility_direct": ("utility", None, 9),
@@ -87,3 +88,14 @@ class ChatIntentRouterSupportService:
                 return True
 
         return False
+
+    @staticmethod
+    def executed_platform_tool(tool_calls: list | None) -> str | None:
+        """Retorna a tool dona de uma mutação na superfície do host."""
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+            name = str(call.get("name") or call.get("tool") or "").strip().lower()
+            if name.endswith("_copilot"):
+                return name
+        return None

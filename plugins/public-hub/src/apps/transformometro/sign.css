@@ -1,0 +1,171 @@
+.tm-sign {
+  width: min(44rem, 100%);
+  margin: 0 auto;
+  padding: 0.5rem 0.25rem 2.5rem;
+  color: var(--pub-text-body);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tm-sign--done {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  box-shadow: var(--pub-card-shadow);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  align-items: center;
+}
+
+.tm-sign__done-badge {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pub-on-brand);
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+}
+
+.tm-sign__header {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--pub-card-shadow);
+}
+
+.tm-sign__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pub-text-muted);
+}
+
+.tm-sign__header h1,
+.tm-sign--done h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--pub-text);
+}
+
+.tm-sign__subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--pub-text-muted);
+}
+
+.tm-sign__section {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.tm-sign__section h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  color: var(--pub-text);
+}
+
+.tm-sign__html {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.tm-sign__html p {
+  margin: 0 0 0.65rem;
+}
+
+.tm-sign__form,
+.tm-sign__refuse {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.tm-sign__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pub-text);
+}
+
+.tm-sign__input {
+  border: 1px solid var(--pub-input-border, var(--pub-card-border));
+  border-radius: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: var(--pub-input-text, var(--pub-text-body));
+  background: var(--pub-input-bg, var(--pub-card-bg, #fff));
+}
+
+.tm-sign__input::placeholder {
+  color: var(--pub-placeholder, var(--pub-text-faint));
+}
+
+.tm-sign__textarea {
+  resize: vertical;
+}
+
+.tm-sign__check {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tm-sign__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.tm-sign__primary,
+.tm-sign__secondary,
+.tm-sign__link-btn {
+  font: inherit;
+  border-radius: 0.55rem;
+  padding: 0.75rem 1.35rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+}
+
+.tm-sign__primary {
+  border: none;
+  background: var(--pub-primary);
+  color: var(--pub-on-brand);
+  font-weight: 700;
+}
+
+.tm-sign__secondary,
+.tm-sign__link-btn {
+  border: 1px solid var(--pub-card-border);
+  background: transparent;
+  color: var(--pub-text-body);
+}
+
+.tm-sign__primary:disabled,
+.tm-sign__secondary:disabled,
+.tm-sign__link-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tm-sign__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.9rem;
+}

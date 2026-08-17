@@ -1,6 +1,8 @@
 export {
   SegmentToggle,
+  createDashboardSegmentToggle,
   segmentToggleBemClasses,
+  type DashboardSegmentToggleProps,
   type SegmentToggleClassNames,
   type SegmentToggleOption,
   type SegmentToggleProps,
@@ -44,6 +46,27 @@ export {
   type FileDropzoneLabels,
   type FileDropzoneProps,
 } from "./FileDropzone";
+export {
+  AttachmentFileList,
+  attachmentFileListBemClasses,
+  createDashboardAttachmentFileList,
+  type AttachmentFileListClassNames,
+  type AttachmentFileListItem,
+  type AttachmentFileListLabels,
+  type AttachmentFileListProps,
+  type DashboardAttachmentFileListProps,
+} from "./AttachmentFileList";
+export {
+  AttachmentPreviewStrip,
+  attachmentPreviewStripBemClasses,
+  createDashboardAttachmentPreviewStrip,
+  type AttachmentPreviewStripClassNames,
+  type AttachmentPreviewStripItem,
+  type AttachmentPreviewStripLabels,
+  type AttachmentPreviewStripMode,
+  type AttachmentPreviewStripProps,
+  type DashboardAttachmentPreviewStripProps,
+} from "./AttachmentPreviewStrip";
 
 export {
   SelectControl,
@@ -79,6 +102,7 @@ export {
   dateFieldBemClasses,
   type DashboardDateFieldProps,
   type DateFieldClassNames,
+  type DateFieldInputType,
   type DateFieldProps,
 } from "./DateField";
 

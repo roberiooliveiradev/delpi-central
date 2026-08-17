@@ -1135,6 +1135,28 @@
         }
       }
     },
+    "freight_mode": {
+      "locale": {
+        "en": {
+          "label": "Freight mode",
+          "description": "Shipping terms: CIF or FOB."
+        },
+        "pt-BR": {
+          "label": "Modalidade de transporte",
+          "description": "CIF ou FOB."
+        }
+      },
+      "enumLabels": {
+        "cif": {
+          "en": { "label": "CIF" },
+          "pt-BR": { "label": "CIF" }
+        },
+        "fob": {
+          "en": { "label": "FOB" },
+          "pt-BR": { "label": "FOB" }
+        }
+      }
+    },
     "from": {
       "locale": {
         "en": {
@@ -1490,6 +1512,40 @@
         }
       }
     },
+    "invoice_type": {
+      "locale": {
+        "en": {
+          "label": "Invoice type",
+          "description": "Invoice type: sale, return, sample, repair_shipment or other."
+        },
+        "pt-BR": {
+          "label": "Tipo de NF",
+          "description": "Tipo da nota: venda, devolução, amostra, remessa de conserto ou outros."
+        }
+      },
+      "enumLabels": {
+        "sale": {
+          "en": { "label": "Sale" },
+          "pt-BR": { "label": "Venda" }
+        },
+        "return": {
+          "en": { "label": "Return" },
+          "pt-BR": { "label": "Devolução" }
+        },
+        "sample": {
+          "en": { "label": "Sample" },
+          "pt-BR": { "label": "Amostra" }
+        },
+        "repair_shipment": {
+          "en": { "label": "Repair shipment" },
+          "pt-BR": { "label": "Remessa ou retorno de conserto" }
+        },
+        "other": {
+          "en": { "label": "Other" },
+          "pt-BR": { "label": "Outros" }
+        }
+      }
+    },
     "issue_date_end": {
       "locale": {
         "en": {
@@ -1773,6 +1829,18 @@
         "pt-BR": {
           "label": "Profundidade máxima",
           "description": "Profundidade máxima da hierarquia/estrutura retornada."
+        }
+      }
+    },
+    "include_bom": {
+      "locale": {
+        "en": {
+          "label": "Include BOM",
+          "description": "When true, expand the product BOM when loading the process inspection plan."
+        },
+        "pt-BR": {
+          "label": "Incluir estrutura (BOM)",
+          "description": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo."
         }
       }
     },
@@ -2200,6 +2268,52 @@
         }
       }
     },
+    "party_code": {
+      "locale": {
+        "en": {
+          "label": "Party code",
+          "description": "TOTVS customer or supplier code (SA1/SA2)."
+        },
+        "pt-BR": {
+          "label": "Código do destinatário",
+          "description": "Código TOTVS do cliente ou fornecedor (SA1/SA2)."
+        }
+      }
+    },
+    "party_store": {
+      "locale": {
+        "en": {
+          "label": "Party store",
+          "description": "TOTVS store (loja) of the customer or supplier."
+        },
+        "pt-BR": {
+          "label": "Loja do destinatário",
+          "description": "Loja TOTVS do cliente ou fornecedor."
+        }
+      }
+    },
+    "party_type": {
+      "locale": {
+        "en": {
+          "label": "Party type",
+          "description": "Recipient kind: customer (SA1) or supplier (SA2)."
+        },
+        "pt-BR": {
+          "label": "Tipo de destinatário",
+          "description": "Cliente (SA1) ou fornecedor (SA2)."
+        }
+      },
+      "enumLabels": {
+        "customer": {
+          "en": { "label": "Customer" },
+          "pt-BR": { "label": "Cliente" }
+        },
+        "supplier": {
+          "en": { "label": "Supplier" },
+          "pt-BR": { "label": "Fornecedor" }
+        }
+      }
+    },
     "pending_only": {
       "locale": {
         "en": {
@@ -2464,6 +2578,18 @@
         }
       }
     },
+    "query": {
+      "locale": {
+        "en": {
+          "label": "Query",
+          "description": "Free-text search (code, name or tax ID)."
+        },
+        "pt-BR": {
+          "label": "Busca",
+          "description": "Busca livre (código, nome ou CNPJ)."
+        }
+      }
+    },
     "rank_by": {
       "locale": {
         "en": {
@@ -2631,11 +2757,11 @@
       "locale": {
         "en": {
           "label": "Result",
-          "description": "Result query parameter."
+          "description": "Inspection result filter. Inbound history uses APROVADA/REJEITADA; process inspection uses A/R/T."
         },
         "pt-BR": {
           "label": "Resultado",
-          "description": "Resultado da inspeção ou avaliação."
+          "description": "Filtro de resultado da inspeção. Histórico de entrada: APROVADA/REJEITADA; inspeção de processo: A/R/T."
         }
       },
       "enumLabels": {
@@ -2661,6 +2787,22 @@
           },
           "pt-BR": {
             "label": "Pendente (T)"
+          }
+        },
+        "APROVADA": {
+          "en": {
+            "label": "Approved"
+          },
+          "pt-BR": {
+            "label": "Aprovada"
+          }
+        },
+        "REJEITADA": {
+          "en": {
+            "label": "Rejected"
+          },
+          "pt-BR": {
+            "label": "Rejeitada"
           }
         }
       }
@@ -2939,14 +3081,38 @@
       "locale": {
         "en": {
           "label": "Shift",
-          "description": "Shift query parameter."
+          "description": "Shift filter. 5S uses TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; factory efficiency uses 1|2|3 (or CSV)."
         },
         "pt-BR": {
           "label": "Turno",
-          "description": "Turno de produção."
+          "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV)."
         }
       },
       "enumLabels": {
+        "1": {
+          "en": {
+            "label": "1st shift"
+          },
+          "pt-BR": {
+            "label": "1º Turno"
+          }
+        },
+        "2": {
+          "en": {
+            "label": "2nd shift"
+          },
+          "pt-BR": {
+            "label": "2º Turno"
+          }
+        },
+        "3": {
+          "en": {
+            "label": "3rd shift"
+          },
+          "pt-BR": {
+            "label": "3º Turno"
+          }
+        },
         "ADMINISTRATIVO": {
           "en": {
             "label": "Administrative"
@@ -3662,6 +3828,14 @@
             "label": "Em andamento"
           }
         },
+        "issued": {
+          "en": {
+            "label": "Issued"
+          },
+          "pt-BR": {
+            "label": "Emitida"
+          }
+        },
         "late": {
           "en": {
             "label": "Late"
@@ -3702,6 +3876,14 @@
             "label": "Fora da faixa"
           }
         },
+        "pending": {
+          "en": {
+            "label": "Pending"
+          },
+          "pt-BR": {
+            "label": "Pendente"
+          }
+        },
         "published": {
           "en": {
             "label": "Published"
@@ -3716,6 +3898,14 @@
           },
           "pt-BR": {
             "label": "Recebido"
+          }
+        },
+        "returned": {
+          "en": {
+            "label": "Returned"
+          },
+          "pt-BR": {
+            "label": "Devolvida"
           }
         },
         "root_cause_analysis": {
@@ -3764,6 +3954,22 @@
           },
           "pt-BR": {
             "label": "Ganha"
+          }
+        },
+        "partial": {
+          "en": {
+            "label": "Partial"
+          },
+          "pt-BR": {
+            "label": "Parcial"
+          }
+        },
+        "no_return": {
+          "en": {
+            "label": "No return"
+          },
+          "pt-BR": {
+            "label": "Sem retorno"
           }
         }
       }
@@ -4290,6 +4496,166 @@
         "pt-BR": {
           "label": "Somente atrasadas",
           "description": "Quando verdadeiro, retorna apenas OPs atrasadas."
+        }
+      }
+    },
+    "inspecao_status": {
+      "locale": {
+        "en": {
+          "label": "Inspection status",
+          "description": "Filter production appointments by inspection status in process audit."
+        },
+        "pt-BR": {
+          "label": "Status da inspeção",
+          "description": "Filtra apontamentos pelo status de inspeção na auditoria de processo."
+        }
+      },
+      "enumLabels": {
+        "all": {
+          "en": {
+            "label": "All"
+          },
+          "pt-BR": {
+            "label": "Todos"
+          }
+        },
+        "nao_inspecionou": {
+          "en": {
+            "label": "Did not inspect"
+          },
+          "pt-BR": {
+            "label": "Não inspecionou"
+          }
+        },
+        "inspecionou": {
+          "en": {
+            "label": "Inspected"
+          },
+          "pt-BR": {
+            "label": "Inspecionou"
+          }
+        },
+        "sem_cadastro": {
+          "en": {
+            "label": "No inspection registered"
+          },
+          "pt-BR": {
+            "label": "Não possui inspeção cadastrada"
+          }
+        }
+      }
+    },
+    "export_format": {
+      "locale": {
+        "en": {
+          "label": "Export format",
+          "description": "File format: csv or xlsx."
+        },
+        "pt-BR": {
+          "label": "Formato de exportação",
+          "description": "Formato do arquivo: csv ou xlsx."
+        }
+      },
+      "enumLabels": {
+        "csv": {
+          "en": {
+            "label": "CSV"
+          },
+          "pt-BR": {
+            "label": "CSV"
+          }
+        },
+        "xlsx": {
+          "en": {
+            "label": "Excel"
+          },
+          "pt-BR": {
+            "label": "Excel"
+          }
+        }
+      }
+    },
+    "issued_from": {
+      "locale": {
+        "en": {
+          "label": "Issued from",
+          "description": "Issue date from (inclusive, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        }
+      }
+    },
+    "issued_to": {
+      "locale": {
+        "en": {
+          "label": "Issued to",
+          "description": "Issue date to (inclusive, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emitida até",
+          "description": "Data de emissão final (inclusiva, AAAA-MM-DD)."
+        }
+      }
+    },
+    "only_with_balance": {
+      "locale": {
+        "en": {
+          "label": "Only with balance",
+          "description": "When true, only shipments still pending delivery."
+        },
+        "pt-BR": {
+          "label": "Somente com saldo",
+          "description": "Quando verdadeiro, apenas remessas ainda pendentes."
+        }
+      }
+    },
+    "partner_code": {
+      "locale": {
+        "en": {
+          "label": "Partner code",
+          "description": "Customer code (SA1)."
+        },
+        "pt-BR": {
+          "label": "Código do cliente",
+          "description": "Código do cliente (SA1)."
+        }
+      }
+    },
+    "partner_store": {
+      "locale": {
+        "en": {
+          "label": "Partner store",
+          "description": "Customer store / loja (SA1)."
+        },
+        "pt-BR": {
+          "label": "Loja do cliente",
+          "description": "Loja do cliente (SA1)."
+        }
+      }
+    },
+    "receipt_number": {
+      "locale": {
+        "en": {
+          "label": "Receipt invoice",
+          "description": "Inbound receipt invoice number."
+        },
+        "pt-BR": {
+          "label": "NF de recebimento",
+          "description": "Número da nota fiscal de entrada."
+        }
+      }
+    },
+    "return_number": {
+      "locale": {
+        "en": {
+          "label": "Return invoice",
+          "description": "Return invoice number."
+        },
+        "pt-BR": {
+          "label": "NF de retorno",
+          "description": "Número da nota fiscal de retorno."
         }
       }
     }

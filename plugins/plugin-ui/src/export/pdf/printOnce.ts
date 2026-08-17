@@ -16,6 +16,15 @@ export type ScopedWindowPrintOptions = {
   deferFrames?: boolean;
 };
 
+export type ScheduleTargetWindowPrintOptions = {
+  /** Chamado após `afterprint` (ou timeout de emergência), não logo após `print()`. */
+  onPrinted?: () => void;
+  /** Fecha a janela alvo após o print (popup legado). */
+  closeTargetAfterPrint?: boolean;
+  /** Timeout de emergência se o navegador não emitir `afterprint` (ms). */
+  emergencyTimeoutMs?: number;
+};
+
 /**
  * Imprime a janela atual no máximo uma vez até `afterprint` (ou timeout).
  * Usado por DocumentReader e botões "Imprimir" de página.
@@ -74,8 +83,13 @@ export function printScopedWindow(options: ScopedWindowPrintOptions = {}): boole
 /** Agenda um único `print()` no target (janela/iframe de documento HTML). */
 export function scheduleTargetWindowPrint(
   targetWindow: Window,
-  onPrinted?: () => void,
+  onPrintedOrOptions?: (() => void) | ScheduleTargetWindowPrintOptions,
 ): void {
+  const options: ScheduleTargetWindowPrintOptions =
+    typeof onPrintedOrOptions === "function"
+      ? { onPrinted: onPrintedOrOptions }
+      : onPrintedOrOptions ?? {};
+
   let started = false;
   let scheduleTimer: number | undefined;
 
@@ -88,7 +102,7 @@ export function scheduleTargetWindowPrint(
     if (started || targetWindow.closed) return;
     started = true;
     clearSchedule();
-    waitForImagesThenPrintOnce(targetWindow, onPrinted);
+    waitForImagesThenPrintOnce(targetWindow, options);
   };
 
   targetWindow.addEventListener("load", trigger, { once: true });
@@ -97,12 +111,14 @@ export function scheduleTargetWindowPrint(
 
 function waitForImagesThenPrintOnce(
   targetWindow: Window,
-  onPrinted?: () => void,
+  options: ScheduleTargetWindowPrintOptions,
 ): void {
   const images = Array.from(targetWindow.document.images);
   let printed = false;
   let readyTimer: number | undefined;
   let fallbackTimer: number | undefined;
+  let afterPrintTimer: number | undefined;
+  let finished = false;
 
   const clearTimers = () => {
     if (readyTimer !== undefined) window.clearTimeout(readyTimer);
@@ -111,14 +127,46 @@ function waitForImagesThenPrintOnce(
     fallbackTimer = undefined;
   };
 
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimers();
+    if (afterPrintTimer !== undefined) window.clearTimeout(afterPrintTimer);
+    afterPrintTimer = undefined;
+    try {
+      targetWindow.removeEventListener("afterprint", finish);
+    } catch {
+      /* ignore */
+    }
+    if (options.closeTargetAfterPrint) {
+      try {
+        targetWindow.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    options.onPrinted?.();
+  };
+
   const runPrint = () => {
-    if (printed || targetWindow.closed) return;
+    if (printed || targetWindow.closed) {
+      finish();
+      return;
+    }
     printed = true;
     clearTimers();
-    targetWindow.focus();
-    targetWindow.scrollTo(0, 0);
-    targetWindow.print();
-    onPrinted?.();
+
+    const emergencyMs = options.emergencyTimeoutMs ?? 60_000;
+    targetWindow.addEventListener("afterprint", finish);
+    afterPrintTimer = window.setTimeout(finish, emergencyMs) as unknown as number;
+
+    try {
+      targetWindow.focus();
+      targetWindow.scrollTo(0, 0);
+      targetWindow.print();
+    } catch {
+      finish();
+    }
   };
 
   if (images.length === 0) {

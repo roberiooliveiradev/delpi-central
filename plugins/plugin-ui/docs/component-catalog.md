@@ -13,12 +13,12 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
-| feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress… |
+| feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
-| **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
+| data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
 | export | TabularExportButtons, DocumentExportActions… |
 | charts | ConfigurableSeriesChart, ImpactEffortMatrix, ChartTypeCatalogPanel… |
-| preview / bpmn / shape / menu | prévias + stubs onde falta fixture |
+| preview / bpmn / org / shape / menu | prévias + organograma membership + stubs onde falta fixture |
 
 Tabela estilo **dashboard LMPS**: use a entrada `DataTable` / `DataTableSection` (não a ConfigurablePresentationTable do TV/deck).
 
@@ -78,15 +78,233 @@ Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
 
 ---
 
+## `SectionRouteCard`
+
+Card de seção (1º nível) com lista de aplicações/sub-rotas (2º nível). Badges e pin
+de favorito são opcionais; atalhos `kind: "create"` não exibem pin.
+
+```tsx
+const CommercialSectionRouteCard = createDashboardSectionRouteCard({
+  classNames: sectionRouteCardBemClasses("cm"),
+});
+
+<CommercialSectionRouteCard
+  title="Operação"
+  description="Fila do dia, pedidos e carteira."
+  icon={<ClipboardList size={20} />}
+  routes={[
+    { id: "tasks", label: "Minhas tarefas", onClick: openTasks, badge: 3 },
+    {
+      id: "late",
+      label: "Em atraso",
+      onClick: openLate,
+      pinned: true,
+      onPinClick: togglePin,
+      pinLabel: "Adicionar aos favoritos",
+      unpinLabel: "Remover dos favoritos",
+    },
+  ]}
+/>
+```
+
+Props principais: `title`, `icon`, `badge`, `description`, `routes`, `classNames`.
+Em `routes[]`: `id`, `label`, `onClick`, `badge`, `pinned`, `onPinClick`, `kind`.
+
+CSS: `styles/section-route-card.css` (tokens `--delpi-ui-*` apenas).
+
+---
+
+## `CatalogSearchBar`
+
+Campo de busca de catálogo com listbox de hits (grupo + label), limpar, Esc e
+seleção por teclado. O consumidor filtra e monta `hits`; o kit só renderiza.
+
+```tsx
+const CommercialCatalogSearchBar = createDashboardCatalogSearchBar({
+  classNames: catalogSearchBarBemClasses("cm"),
+});
+
+<CommercialCatalogSearchBar
+  value={query}
+  onChange={setQuery}
+  hits={[{ id: "proposals", label: "Propostas comerciais", groupLabel: "Documentos" }]}
+  onSelectHit={openRoute}
+  placeholder="Buscar caminhos…"
+  emptyHitsLabel="Nenhum caminho encontrado"
+  clearLabel="Limpar busca"
+/>
+```
+
+Props principais: `value`, `onChange`, `hits`, `onSelectHit`, `placeholder`,
+`emptyHitsLabel`, `clearLabel`, `aria-label`, `classNames`.
+
+CSS: `styles/catalog-search-bar.css`.
+
+---
+
+## `RouteChip` / `HubChipRow`
+
+Chips de navegação do hub (Favoritos pinned + Recentes) e faixa rotulada.
+
+```tsx
+const CommercialHubChipRow = createDashboardHubChipRow({ prefix: "cm" });
+const CommercialRouteChip = createDashboardRouteChip({ prefix: "cm" });
+
+<CommercialHubChipRow label="Favoritos" aria-label="Favoritos">
+  <CommercialRouteChip
+    tone="pinned"
+    label="Minhas tarefas"
+    onNavigate={open}
+    onRemove={unpin}
+    removeLabel="Remover dos favoritos"
+  />
+</CommercialHubChipRow>
+
+<CommercialHubChipRow label="Últimos acessos">
+  <CommercialRouteChip
+    tone="recent"
+    label="Oportunidades"
+    leadingIcon={<Target size={14} />}
+    onNavigate={open}
+  />
+</CommercialHubChipRow>
+```
+
+- `tone="pinned"`: Star fill + botão remove opcional (`stopPropagation`)
+- `tone="recent"`: `leadingIcon` opcional
+- CSS: `styles/hub-route-chips.css`
+
+`AlertQueue` / `WorklistItem` aceitam `leadingIcon?: ReactNode` (tile 36×36).
+
+---
+
+## `CommandPalette`
+
+Modal de busca global (Ctrl/Cmd+K no shell do MFE). Preferir
+`createDashboardCommandPalette` com `createHostContainedModalShell` para não
+cobrir a sidebar do portal.
+
+```tsx
+const CommercialCommandPalette = createDashboardCommandPalette({
+  prefix: "cm",
+  portalScopeClassName: "dashboard-commercial",
+});
+
+<CommercialCommandPalette
+  open={open}
+  onClose={close}
+  title="Buscar no Portal Comercial"
+  value={query}
+  onChange={setQuery}
+  hits={hits}
+  onSelectHit={openRoute}
+  placeholder="Ir para caminho…"
+  emptyHitsLabel="Nenhum resultado"
+/>
+```
+
+Props principais: `open`, `onClose`, `title`, `value`, `onChange`, `hits`,
+`onSelectHit`, `placeholder`, `emptyHitsLabel`, `closeAriaLabel`.
+
+CSS: `styles/command-palette.css`.
+
+---
+
+## `PagePath`
+
+Breadcrumb semântico (`nav` + `ol`) para páginas internas. `back` e `current` são
+sempre preservados; ancestrais excedentes entram em painel ancorado com Escape,
+click outside e foco. O limite responsivo é 4 itens a partir de 640 px e 2 abaixo.
+`maxVisibleItems` reduz esse teto. Hrefs perigosos (`javascript:`, `data:` etc.) são
+rejeitados.
+
+```tsx
+const CommercialPagePath = createDashboardPagePath({
+  prefix: "cm",
+  portalScopeClassName: "dashboard-commercial",
+});
+
+<CommercialPagePath
+  back={{ label: "Pedidos", href: "/pedidos" }}
+  items={[{ id: "cliente", label: "Cliente ACME", href: "/clientes/42" }]}
+  current="Pedido 12345"
+/>
+```
+
+Props principais: `back`, `items`, `current`, `maxVisibleItems`, `size` (`sm`/`md`),
+`ariaLabel` e `className`.
+
+---
+
+## `UnderlineNav`
+
+No modo padrão `navigation`, preserva `nav`, botões e `aria-current="page"`. Em
+`mode="tabs"`, expõe `tablist`/`tab`, `aria-selected`, `aria-controls` (via
+`item.controlId`), roving `tabIndex` e teclado Setas/Home/End.
+
+---
+
+## `DataRecordCard`
+
+Card neutro de domínio para listas responsivas. Usa `dl`/`dt`/`dd`; a raiz é
+`article` sem `href` e anchor real quando `href` é informado.
+
+```tsx
+const CommercialDataRecordCard = createDashboardDataRecordCard({ prefix: "cm" });
+
+<CommercialDataRecordCard
+  title="Pedido 12345"
+  subtitle="Cliente ACME"
+  fields={[{ id: "value", label: "Valor", value: "R$ 1.250,00" }]}
+  href="/pedidos/12345"
+/>
+```
+
+Props principais: `leading`, `title`, `subtitle`, `status`, `fields`, `context`,
+`href`, `onNavigate`, `ariaLabel` e `className`. `fields[].present === false`
+omite o campo.
+
+---
+
+## `KanbanBoard`
+
+Board Kanban **somente leitura** (colunas + slots de card). Sem drag-and-drop e
+sem strings de domínio — o consumidor informa `title` / `empty` / children.
+
+```tsx
+const CommercialKanbanBoard = createDashboardKanbanBoard({ prefix: "cm" });
+
+<CommercialKanbanBoard
+  ariaLabel="Pedidos por etapa"
+  columns={[
+    { id: "upcoming", title: "Próximos", count: 3, empty: "Nenhum" },
+    { id: "ready_to_invoice", title: "Pronto", count: 1, children: <Card /> },
+  ]}
+/>
+```
+
+Props: `columns[]` (`id`, `title`, `count?`, `summary?`, `children?`, `empty?`),
+`ariaLabel`, `className`. Factory: `createDashboardKanbanBoard` /
+`kanbanBoardBemClasses`.
+
+---
+
 ## `DocumentReader`
 
 Composição canônica para leitura e impressão de documentos formais em papel A4:
 `DocumentReader` (viewport/toolbar), `DocumentPage` (header/watermark/footer),
 `DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
 
-O kit controla papel, responsividade e `@media print`; cabeçalho institucional,
-textos e regras do documento continuam no plugin consumidor. Use
-`printDocumentReader()` para imprimir apenas a superfície documental.
+O kit controla papel A4 e margens ABNT (NBR 14724) numa única camada:
+`@page { margin: 0 }` + padding em `thead`/`tbody`/`tfoot` (3 cm / 2 cm /
+2 cm / 3 cm). Cabeçalho/rodapé repetem via `table-*-group`; numeração em
+`@page @top-right`. Marca d'água (`DocumentPage` `watermark`): tiles A4 no
+fluxo do papel (prévia e PDF) — **não** `position:fixed` (Chromium só pinta
+na última página). Use `printDocumentReader()` / «Baixar PDF» (mesmo HTML).
+
+Impressão/PDF vai por `printDelpiDocumentHtml`: **iframe oculto** no host
+(`pointer-events: none`, sem `window.open` nem overlay fullscreen), com cleanup
+em `afterprint` — evita bloquear o hotspot da sidebar do portal após o diálogo.
 
 ---
 
@@ -325,7 +543,7 @@ Consumidores: `strategic-indicators`, `estoque-seguranca`, `pedidos-venda-aberto
 
 ### `InitialsAvatar`
 
-Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `colorKey` / `name`. Tamanhos: `sm` | `md` | `lg`.
+Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `colorKey` / `name`. Tamanhos: `sm` | `md` | `lg`. Com `src`, clique amplia a foto via `ImageLightboxModal` (host-contained) — desligar com `previewable={false}` (ex.: botão «trocar foto»).
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
@@ -333,11 +551,19 @@ Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `col
 | `colorKey` | `string?` | Chave estável para hue (ex.: `codigo\|loja`) |
 | `src` | `string \| null?` | URL da imagem; sem src → iniciais |
 | `size` | `"sm" \| "md" \| "lg"?` | Default `md` |
+| `previewable` | `boolean?` | Default `true` com `src`; `false` desliga lightbox |
+| `previewTitle` / `previewAriaLabel` | `string?` | Título / aria do modal |
+| `portalScopeClassName` | `string?` | Escopo MFE do portal (ex.: `dashboard-commercial`) |
+| `previewHeaderActions` / `previewFooter` | `ReactNode?` | Ações no modal |
 | `classNames` | `InitialsAvatarClassNames` | Dual-class BEM |
 
 Helpers: `initialsAvatarBemClasses(prefix)`, `createInitialsAvatar(prefix)`, `initialsFromName`, `hueFromKey`.
 
-CSS: `initials-avatar.css` — `.delpi-ui-avatar*`. Consumidor piloto: `pedidos-venda-abertos` (`CustomerAvatar` resolve blob e passa `src`).
+CSS: `initials-avatar.css` — `.delpi-ui-avatar*`, `.delpi-ui-avatar--previewable`. Consumidores: `CustomerAvatar` (commercial / PVA), perfil / TopBar commercial.
+
+### `ImageLightboxModal`
+
+Wrapper fino de `FilePreviewModal` para URL de imagem (avatar ampliado). Props: `open`, `src`, `title`, `onClose`, `portalScopeClassName`, `headerActions`, `footer`.
 
 ---
 
@@ -381,7 +607,38 @@ Ref: `FlowchartEditorHandle` (`fitView`, `exportPng`, etc.).
 
 Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` (`delpi-ui-bpmn-editor`). Escopo: `.delpi-ui-flowchart-shell` + `shellClassName` do host. Tokens: `--delpi-ui-bpmn-*` (aliases `--tm-diagram-*` temporários).
 
-### Padrão de integração no plugin
+---
+
+## Família `org` — organograma membership (carteira/grupo ↔ pessoa)
+
+Canvas **read-only** com `@xyflow/react` para relações bipartidas (não reutiliza o editor BPMN). Layout hierárquico local (`layoutOrgMembershipForest`).
+
+Código: `src/components/org/`. CSS: `styles/org-membership-flow.css` (classes `delpi-ui-org-flow*`).
+
+### `OrgMembershipFlow`
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `nodes` / `edges` | model | Nós `{ id, kind: portfolio\|person\|group, entityId, title, subtitle?, tone? }` e arestas `{ id, source, target }` |
+| `classNames` | BEM dual-class | Via `orgMembershipFlowBemClasses(prefix)` ou factory |
+| `emptyMessage` | `string?` | Empty state no kit |
+| `onNodeClick` | `(payload) => void` | Clique tipado por `kind` + `entityId` |
+| `colorMode` | `"light" \| "dark"?` | Força tema; default segue `data-theme` Delpi |
+| `fullscreen` | `boolean?` | Botão + modal tela cheia (`DiagramFullscreenFrame`). Default `true` |
+| `fullscreenTitle` / `fullscreenSubtitle` | `string?` | Título do modal |
+| `portalScopeClassName` | `string?` | Escopo MFE (ex.: `dashboard-commercial`) |
+
+Interação: pan (arrastar), zoom (scroll/pinch/controles), fit-view, minimapa. Factory MFE: `createDashboardOrgMembershipFlow({ prefix })`. Nó `group` usa ícone de equipe e BEM `__node--group`.
+
+```tsx
+import { createDashboardOrgMembershipFlow } from "@delpi/plugin-ui/index";
+
+const OrgFlow = createDashboardOrgMembershipFlow({ prefix: "cm" });
+```
+
+---
+
+### Padrão de integração no plugin (BPMN)
 
 Wrapper fino injeta labels, confirm e tema:
 
@@ -556,20 +813,26 @@ coluna `#` sticky, zebra suave e seleção de coluna/linha/célula (Ctrl/Cmd tog
 Shift range). Cabeçalhos e células interativos suportam Enter/Espaço, foco visível
 e `aria-selected`.
 
-`DataCellValue` e `resolveDataCellSemantics` são a fonte canônica para células
-de dados operacionais. A taxonomia diferencia `value`, `null`, `empty`,
-`missing` e `error`; erros no formato `{ error: { code, message, ... } }`
-recebem tooltip e rótulo acessível. `selectionToTsv` usa a mesma semântica:
-`null`, `ausente` e `#ERROR:<code>` não são reduzidos a campos em branco,
-enquanto string vazia continua sendo copiada como vazia. Consumidores devem
-informar `present={false}` quando a propriedade não existe na linha.
+**Expand de detalhe (controlado):** uma linha expandida por vez via `expandedRowKey` +
+`onExpandedRowKeyChange` + `renderExpandedRow`. Opcional `isRowExpandable`. A row de
+detalhe (`delpi-ui-table__detail-row` / `__detail-cell`) não dispara `onRowClick`
+(stopPropagation no conteúdo) e **não** recebe hover de bloco — o CSS usa
+`tbody > tr` / `> td` para destacar só a linha de dados sob o cursor (inclusive
+tabelas aninhadas). O toggle (ex.: chevron) fica no consumidor com
+`column.interactive` / `rowClick: "stop"`. Wrappers de dashboard (`DashboardDataTableProps`,
+`CommercialDataTable`) herdam as props sem redeclaração.
 
 Props relevantes de `DataTableSection`:
 
 | Prop | Descrição |
 |------|-----------|
 | `columnPreferencesKey` | Chave `localStorage` — ativa menu “Colunas” e filtra a tabela |
+| `fontSizePreferencesKey` | Chave `localStorage` — ativa controles nativos de fonte |
+| `viewLayoutPreferencesKey` + `renderCard` | Toggle Tabela/Cards nativo (ambos necessários) |
+| `excelExport` | `{ onExport, disabled?, exporting? }` — botão Excel nativo |
 | `onVisibleColumnKeysChange` | Callback com as keys visíveis (ex.: export Excel) |
+
+Defaults: **off** (opt-in). Consumidores que usam só `DataTable` bare continuam sem chrome.
 
 Hook: `useTableColumnVisibility` (mesmo motor do menu; MFEs com tabela própria também podem usar).
 
@@ -602,6 +865,23 @@ Trilhos pontilhados suaves para árvores hierárquicas (estilo explorador de arq
 ```
 
 CSS: `styles/tree-guides.css`. Consumidores: `transformometro` (WBS), `minha-delpi-chat` (árvore de apresentação).
+
+### `HorizontalTimeline`
+
+Linha do tempo **horizontal** de marcos (rótulo + data + tom). Marco `kind: "today"` usa ícone de bandeira e tag «Agora». Diferente do `Timeline` (atividade vertical).
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `points` | `HorizontalTimelinePoint[]` | Marcos (`id`, `label`, `dateIso`, `dateLabel`, `tone`, `kind?`, `isCurrent?`) |
+| `labels` | parcial | `currentTag`, `todayTag`, `emptyMessage`, `todayMarkerTitle` |
+| `aria-label` | `string?` | Acessibilidade do `<ol>` |
+
+```tsx
+const Timeline = createDashboardHorizontalTimeline({ prefix: "cm" });
+<Timeline points={points} labels={{ emptyMessage: "Sem marcos." }} />
+```
+
+CSS: `styles/horizontal-timeline.css`. Consumidor: `commercial` (detalhe OP / Pedidos em aberto).
 
 ### `DetailFieldGrid`
 
@@ -829,6 +1109,18 @@ import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 
 Scatter SVG headless para priorização de revisões (Playbook 21 Transformômetro). **Cálculo na API** — o MFE só passa pontos já normalizados.
 
+### `SpeedometerGauge`
+
+Velocímetro semicircular (SVG) para KPIs percentuais (ex.: OTD por unidade). Faixas de alerta no arco (&lt;90% danger · &lt;95% warning · demais success), tooltip no hover/foco, tamanho default 260. CSS em `styles/speedometer-gauge.css`.
+
+### `HorizontalValueBars`
+
+Barras horizontais leves para rankings / top N. Preferir `ConfigurableSeriesChart` / `horizontal_bar` com `colorScale` quando o caso for dashboard.
+
+### `ConfigurableSeriesChart` (`horizontal_bar`)
+
+Barras interativas do pacote de séries; use `colorScale: { mode: "by_value", polarity: "high_is_bad" }` + `categoryColors` verde→âmbar→vermelho para alertas.
+
 ### `ImpactEffortMatrix`
 
 | Prop | Tipo | Default | Descrição |
@@ -969,7 +1261,8 @@ Paleta estilo PowerPoint: grade tema 10×6, cores padrão, diálogo RGB/hex/tran
 |--------|-----------|
 | `ColorThemeGrid` | Grade configurável de cores do tema |
 | `ColorStandardRow` | Linha de cores padrão |
-| `ColorPickerPopover` | Popover com paleta + «Mais cores» (popover aninhado) + conta-gotas |
+| `ColorPickerPopover` | Popover com paleta + «Mais cores» + conta-gotas; com `onFillChange` + `allowedFillKinds` inclui Cor \| Gradiente |
+| `FillGradientPanel` | Painel de gradiente linear (presets, ângulo, stops) — usado no modo Gradiente |
 | `ColorDialog` | Modal legado (catálogo); editor usa popover «Mais cores» |
 | `ShapeFillMenu` | Dropdown de preenchimento |
 | `ShapeOutlineMenu` | Dropdown de contorno + espessura |
@@ -1038,10 +1331,12 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 
 | Export | Uso |
 |--------|-----|
-| `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
-| `RichTextEditor` | WYSIWYG com ribbon Fonte/Parágrafo (paridade tv-dashboard) + preview; link via `RichTextLinkDialog` (ModalShell) + badge flutuante clicável/editável |
+| `SignaturePad` | Canvas de assinatura manuscrita (PNG) com undo/redo, espessura e DPI |
+| `SignatureCapturePanel` | Painel Desenhar / Digitar / Upload + prévia nome+traço |
+| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; modos **Visual / HTML / Markdown** (fonte monoespaçada); paste Markdown→HTML (GFM); sugestão de tags/`style` CSS no modo HTML; paste de tabelas normalizado; link via `RichTextLinkDialog`. Storage do consumidor continua HTML. Round-trip MD cobre GFM básico (títulos, listas, ênfase, links, tabelas simples) — HTML com estilos/tabelas ricas pode simplificar no modo Markdown. |
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
-| `RichTextToolbar` | Faixa de formatação reutilizável (fonte, parágrafo, cores, listas) |
+| `RichTextSourceEditor` | Textarea da fonte (`assistMode: html \| plain`); autocomplete de tags/CSS só no modo HTML |
+| `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`, botões Visual/HTML/Markdown) |
 | `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

@@ -43,6 +43,7 @@ class ChatNativeToolCallingService:
         allowed_tool_names: list[str] | None,
         tools_registry: dict[str, InternalToolPort],
         agent_context: dict | None = None,
+        access_token: str | None = None,
     ) -> dict:
         pilot_enabled = ChatAgentIntelligencePolicyService.native_tool_calling_pilot_enabled(
             agent_context
@@ -56,9 +57,23 @@ class ChatNativeToolCallingService:
         if not self.is_enabled(agent_context=agent_context) or not meta["providerSupports"]:
             return {"selections": [], "meta": meta}
 
+        tv_catalog = None
+        if access_token and allowed_tool_names and "tv_dashboard_copilot" in {
+            str(n).strip() for n in allowed_tool_names
+        }:
+            try:
+                from app.application.services.chat_tv_dashboard_catalog_service import (
+                    ChatTvDashboardCatalogService,
+                )
+
+                tv_catalog = ChatTvDashboardCatalogService.get_catalog(access_token)
+            except Exception:  # noqa: BLE001 — native segue com schema base
+                tv_catalog = None
+
         schemas = self.schema_service.build_openai_tools(
             allowed_tool_names=allowed_tool_names,
             tools_registry=tools_registry,
+            tv_capability_catalog=tv_catalog if isinstance(tv_catalog, dict) else None,
         )
 
         if not schemas:

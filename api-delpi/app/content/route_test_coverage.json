@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04",
-  "baselineOperationCount": 523,
-  "operationCount": 523,
-  "coveredCount": 521,
-  "gapCount": 1,
+  "generatedAt": "2026-08-14",
+  "baselineOperationCount": 657,
+  "operationCount": 657,
+  "coveredCount": 584,
+  "gapCount": 72,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 19,
-      "covered": 19,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     },
@@ -91,21 +91,45 @@
       "gap": 0,
       "exempt": 0
     },
+    "invoice-issuance": {
+      "total": 13,
+      "covered": 12,
+      "gap": 1,
+      "exempt": 0
+    },
     "lancamento-notas-fiscais": {
       "total": 15,
       "covered": 15,
       "gap": 0,
       "exempt": 0
     },
+    "mural-acessos": {
+      "total": 14,
+      "covered": 14,
+      "gap": 0,
+      "exempt": 0
+    },
     "pedidos-venda-abertos": {
-      "total": 19,
-      "covered": 19,
+      "total": 24,
+      "covered": 24,
+      "gap": 0,
+      "exempt": 0
+    },
+    "planejamento-orcamentario": {
+      "total": 81,
+      "covered": 11,
+      "gap": 70,
+      "exempt": 0
+    },
+    "process-inspection-plans": {
+      "total": 5,
+      "covered": 5,
       "gap": 0,
       "exempt": 0
     },
     "production": {
-      "total": 42,
-      "covered": 42,
+      "total": 43,
+      "covered": 43,
       "gap": 0,
       "exempt": 0
     },
@@ -122,8 +146,8 @@
       "exempt": 0
     },
     "public": {
-      "total": 2,
-      "covered": 2,
+      "total": 9,
+      "covered": 9,
       "gap": 0,
       "exempt": 0
     },
@@ -170,8 +194,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 16,
-      "covered": 16,
+      "total": 23,
+      "covered": 23,
       "gap": 0,
       "exempt": 0
     },
@@ -225,6 +249,15 @@
       "path": "/commercial/closing-rate",
       "module": "commercial",
       "entity": "sales_conversion_rate",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_conversion_rate_series",
+      "method": "GET",
+      "path": "/commercial/closing-rate/series",
+      "module": "commercial",
+      "entity": "sales_conversion_rate_series",
       "shape": "scalar",
       "status": "covered"
     },
@@ -1859,6 +1892,123 @@
       "status": "covered"
     },
     {
+      "operationId": "search_invoice_issuance_parties",
+      "method": "GET",
+      "path": "/invoice-issuance/parties",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_party",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_invoice_issuance_products",
+      "method": "GET",
+      "path": "/invoice-issuance/products",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_product",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_invoice_issuance_warehouse_01_balance",
+      "method": "GET",
+      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_stock_balance",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_invoice_issuance_requests",
+      "method": "GET",
+      "path": "/invoice-issuance/requests",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_invoice_issuance_request",
+      "method": "GET",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_invoice_issuance_request",
+      "method": "PATCH",
+      "path": "/invoice-issuance/requests/{request_id}",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "add_invoice_issuance_attachment",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/attachments",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "cancel_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/cancel",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "issue_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/issue",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "resubmit_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/resubmit",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "return_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/return",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "start_invoice_issuance_request",
+      "method": "POST",
+      "path": "/invoice-issuance/requests/{request_id}/start",
+      "module": "invoice-issuance",
+      "entity": "invoice_issuance_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
@@ -1994,6 +2144,132 @@
       "status": "covered"
     },
     {
+      "operationId": "list_mural_acessos_hubs",
+      "method": "GET",
+      "path": "/mural-acessos/hubs",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_mural_acessos_hub",
+      "method": "POST",
+      "path": "/mural-acessos/hubs",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_hub",
+      "method": "DELETE",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_hub",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_mural_acessos_hub",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_mural_acessos_links",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_mural_acessos_link",
+      "method": "POST",
+      "path": "/mural-acessos/hubs/{hub_id}/links",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "reorder_mural_acessos_links",
+      "method": "PUT",
+      "path": "/mural-acessos/hubs/{hub_id}/links/reorder",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_hub_qr",
+      "method": "GET",
+      "path": "/mural-acessos/hubs/{hub_id}/qr.png",
+      "module": "mural-acessos",
+      "entity": "mural_access_hub_qr",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_link",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_mural_acessos_link",
+      "method": "PUT",
+      "path": "/mural-acessos/links/{link_id}",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_mural_acessos_link_image",
+      "method": "DELETE",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upload_mural_acessos_link_image",
+      "method": "POST",
+      "path": "/mural-acessos/links/{link_id}/image",
+      "module": "mural-acessos",
+      "entity": "mural_access_link",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_pedidos_venda_abertos",
       "method": "GET",
       "path": "/pedidos-venda-abertos/",
@@ -2026,6 +2302,15 @@
       "path": "/pedidos-venda-abertos/customers/enrichment",
       "module": "pedidos-venda-abertos",
       "entity": "customers",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_customer_open_order_metrics",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/open-order-metrics",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_open_order_metrics",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -2161,6 +2446,816 @@
       "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
       "module": "pedidos-venda-abertos",
       "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_open_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "module": "pedidos-venda-abertos",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_open_orders_by_customer",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "module": "pedidos-venda-abertos",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_totvs_outbound_invoice",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_totvs_outbound_invoices",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}/deactivate",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "reactivate_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/budget-responsibilities/{responsibility_id}/reactivate",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_capex_categories",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/capex/categories",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_capex_category",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/deactivate",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "reactivate_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/capex/categories/{category_id}/reactivate",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_document",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/documents/{document_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_admin_document",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/documents/{document_id}/archive",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_exercises",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_exercise",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_exercise",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_exercise",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_exercise",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_exercise",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_exercise",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_exercise",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_admin_guidance",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_guidance_draft",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "transition_planejamento_orcamentario_admin_exercise",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/transitions",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_exercise",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_guidance",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_documents",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/documents",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_admin_document",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/documents",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "publish_planejamento_orcamentario_admin_guidance",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/guidance/{guidance_id}/publish",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "upsert_planejamento_orcamentario_admin_cost_center",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_org_cost_center",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_cost_center_from_erp",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/org/cost-centers/from-erp",
+      "module": "planejamento-orcamentario",
+      "entity": "planejamento_orcamentario_admin_cost_center_from_erp",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_admin_scopes",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/admin/scopes",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_user_org_scope",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_admin_scope",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/scopes",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_user_org_scope",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_admin_scope",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/admin/scopes/{scope_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_user_org_scope",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "deactivate_planejamento_orcamentario_admin_scope",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/admin/scopes/{scope_id}/deactivate",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_user_org_scope",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_capex_attachment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/attachments/{attachment_id}/archive",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment_attachment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_capex_attachment",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/attachments/{attachment_id}/download",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment_attachment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_categories",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/categories",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_category",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_area",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-area",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_category",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-category",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-cost-center",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_month",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-month",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_origin",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-origin",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_plan_status",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-plan-status",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_priority",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-priority",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_unit",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-unit",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_details",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/details",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_planejamento_orcamentario_capex_consolidation_xlsx",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/export.xlsx",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_consolidation_summary",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/summary",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_consolidation",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investments",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_investment",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_capex_investment",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_capex_investment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/archive",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_investment_attachments",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/attachments",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment_attachment",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "upload_planejamento_orcamentario_capex_investment_attachment",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/investments/{investment_id}/attachments",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_investment_attachment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_my_responsibilities",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/my-responsibilities",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_responsibility",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plans",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "resolve_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/plans/resolve",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_plan",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_plan_history",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}/history",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan_history",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "submit_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/plans/{plan_id}/submit",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_review_queue",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/review-queue",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_capex_review",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/approve",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/reject",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "request_changes_planejamento_orcamentario_capex_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/capex/review/{plan_id}/request-changes",
+      "module": "planejamento-orcamentario",
+      "entity": "capex_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_context",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/context",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_planning_context",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "download_planejamento_orcamentario_document",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/documents/{document_id}/download",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_guidance_current",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/guidance/current",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "acknowledge_planejamento_orcamentario_guidance",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/guidance/current/acknowledge",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_guidance_acknowledgement",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_guidance_documents",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/guidance/current/documents",
+      "module": "planejamento-orcamentario",
+      "entity": "budget_support_document",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/org/erp-cost-centers",
+      "module": "planejamento-orcamentario",
+      "entity": "planejamento_orcamentario_org_erp_cost_centers",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "update_planejamento_orcamentario_personnel_plan_line",
+      "method": "PUT",
+      "path": "/planejamento-orcamentario/personnel/lines/{line_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan_line",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "archive_planejamento_orcamentario_personnel_plan_line",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/lines/{line_id}/archive",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan_line",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plans",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "resolve_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/resolve",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_plan",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_plan_history",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/history",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan_history",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "create_planejamento_orcamentario_personnel_plan_line",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/lines",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan_line",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "submit_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/plans/{plan_id}/submit",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_personnel_review_queue",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/review-queue",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "paged_list",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_planejamento_orcamentario_personnel_review",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "approve_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/approve",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "reject_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/reject",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "request_changes_planejamento_orcamentario_personnel_plan",
+      "method": "POST",
+      "path": "/planejamento-orcamentario/personnel/review/{plan_id}/request-changes",
+      "module": "planejamento-orcamentario",
+      "entity": "personnel_plan",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_process_inspection_plans_orders_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/orders-without-plan",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_orders_without_plan",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products",
+      "method": "GET",
+      "path": "/process-inspection-plans/products",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_products",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/products-without-plan",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_products_without_plan",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "method": "GET",
+      "path": "/process-inspection-plans/products/{code}",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_product",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_summary",
+      "method": "GET",
+      "path": "/process-inspection-plans/summary",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_summary",
       "shape": "scalar",
       "status": "covered"
     },
@@ -2315,6 +3410,15 @@
       "module": "production",
       "entity": "eficiencia_fabril_dashboard",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_eficiencia_fabril_efficiency_by_work_center",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/efficiency-by-work-center",
+      "module": "production",
+      "entity": "eficiencia_fabril_efficiency_by_work_center",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -2894,6 +3998,15 @@
       "status": "covered"
     },
     {
+      "operationId": "create_public_canal_denuncia",
+      "method": "POST",
+      "path": "/public/canal-denuncia/denuncias",
+      "module": "public",
+      "entity": "canal_denuncia",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "create_public_kaizen_suggestion",
       "method": "POST",
       "path": "/public/kaizen/suggestions",
@@ -2903,11 +4016,65 @@
       "status": "covered"
     },
     {
+      "operationId": "get_public_mural_acessos_link_image",
+      "method": "GET",
+      "path": "/public/mural-acessos/links/{link_id}/image",
+      "module": "public",
+      "entity": "mural_access_link_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu",
+      "module": "public",
+      "entity": "mural_access_menu",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_public_mural_acessos_menu_by_token",
+      "method": "GET",
+      "path": "/public/mural-acessos/menu/{public_token}",
+      "module": "public",
+      "entity": "mural_access_menu",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_public_quality_label_inspection",
       "method": "GET",
       "path": "/public/quality-labels/inspection/{token}",
       "module": "public",
       "entity": "quality_label_public_inspection",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_scheduling_resource",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}",
+      "module": "public",
+      "entity": "scheduling_resource",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_scheduling_availability",
+      "method": "GET",
+      "path": "/public/scheduling/resources/{public_token}/availability",
+      "module": "public",
+      "entity": "scheduling_booking",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_public_scheduling_booking",
+      "method": "POST",
+      "path": "/public/scheduling/resources/{public_token}/bookings",
+      "module": "public",
+      "entity": "scheduling_booking",
       "shape": "scalar",
       "status": "covered"
     },
@@ -4613,6 +5780,33 @@
       "status": "covered"
     },
     {
+      "operationId": "get_supplies_purchase_order_otd",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/panel",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd_panel",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/series",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
       "method": "GET",
       "path": "/supplies/safety-stock/consumption-analysis/items",
@@ -4717,6 +5911,42 @@
       "path": "/supplies/stock-value",
       "module": "supplies",
       "entity": "supplies_stock_value",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_supplies_third_party_materials_returns",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/returns/export",
+      "module": "supplies",
+      "entity": "third_party_material_return_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipments",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments",
+      "module": "supplies",
+      "entity": "third_party_material_shipment",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "module": "supplies",
+      "entity": "third_party_material_shipment",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_summary",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/summary",
+      "module": "supplies",
+      "entity": "third_party_material_summary",
       "shape": "scalar",
       "status": "covered"
     },

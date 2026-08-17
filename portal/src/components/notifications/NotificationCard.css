@@ -23,42 +23,6 @@
   place-items: center;
   align-self: start;
   margin-top: 2px;
-  cursor: pointer;
-}
-
-.notification-card__select-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.notification-card__select-box {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border);
-  border-radius: 5px;
-  background: var(--surface);
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-
-.notification-card__select-input:focus-visible + .notification-card__select-box {
-  outline: 2px solid color-mix(in srgb, var(--primary) 50%, transparent);
-  outline-offset: 2px;
-}
-
-.notification-card__select-input:checked + .notification-card__select-box {
-  border-color: var(--primary);
-  background: var(--primary);
-  box-shadow: inset 0 0 0 3px var(--surface);
 }
 
 .notification-card--unread {
@@ -214,20 +178,6 @@
 
 .notification-card__cta {
   margin-top: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.notification-card__cta--ghost {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border));
 }
 
 /* —— Página /notifications —— */
@@ -317,44 +267,10 @@
   gap: 6px;
 }
 
-.notification-card__icon-btn {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.notification-card__icon-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
-}
-
-.notification-card__icon-btn--active {
+.notification-card__icon-btn--active.portal-ui-btn {
   border-color: color-mix(in srgb, #b45309 50%, var(--border));
   color: #b45309;
   background: color-mix(in srgb, #b45309 12%, var(--surface));
-}
-
-.notification-card__icon-btn--active:hover {
-  border-color: #b45309;
-  color: #92400e;
-}
-
-.notification-card__icon-btn--danger:hover {
-  border-color: #b91c1c;
-  color: #b91c1c;
-  background: color-mix(in srgb, #b91c1c 8%, var(--surface));
 }
 
 .notification-card__read-badge {
@@ -392,6 +308,4 @@
 
 .notification-card--page .notification-card__cta {
   margin-top: 0;
-  padding: 8px 16px;
-  font-size: 13px;
 }

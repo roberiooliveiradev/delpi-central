@@ -33,7 +33,7 @@ function resolveSingleBlockSections(
     const part = ctx.selectedChartPart;
     const seriesColorPart =
       part.kind === "series" || part.kind === "legend" || part.kind === "marker";
-    const head: SelectionSectionId[] = ["partFormat", "typography"];
+    const head: SelectionSectionId[] = ["partFormat", "typography", "numberFormat"];
     if (seriesColorPart) {
       head.push("chartSeries", "chartLayout", "chartStyles", "chartType", "chartLabels", "chartAxes");
       return withCommonTail(head, "light");
@@ -46,7 +46,7 @@ function resolveSingleBlockSections(
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
     if (ctx.selectedKpiPart.kind === "metricCard") {
-      return withCommonTail(["kpiAppearance"]);
+      return withCommonTail(["kpiAppearance", "numberFormat"]);
     }
     const head: SelectionSectionId[] = ["shapeChrome", "typography"];
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
@@ -56,7 +56,7 @@ function resolveSingleBlockSections(
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
-    return withCommonTail(["partFormat", "typography"], "light");
+    return withCommonTail(["partFormat", "typography", "numberFormat"], "light");
   }
 
   if (selected.type === "input" && ctx.selectedInputPart) {
@@ -78,7 +78,7 @@ function resolveSingleBlockSections(
     case "text":
     case "heading":
     case "shape":
-      return withCommonTail(["visualBox"]);
+      return withCommonTail(["visualBox", "numberFormat"]);
     case "icon":
       return withCommonTail(["iconEditor"]);
     case "image":
@@ -86,11 +86,11 @@ function resolveSingleBlockSections(
     case "video":
       return withCommonTail(["media", "appearance"]);
     case "canvas_table":
-      return withCommonTail(["typography", "canvasTable"]);
+      return withCommonTail(["typography", "canvasTable", "numberFormat"]);
     case "input":
       return withCommonTail(["typography", "shapeChrome", "inputBinding"]);
     case "kpi_view":
-      return withCommonTail(["typography", "kpiAppearance", "appearance"]);
+      return withCommonTail(["typography", "kpiAppearance", "numberFormat", "appearance"]);
     case "chart_view":
       return withCommonTail([
         "typography",
@@ -99,6 +99,7 @@ function resolveSingleBlockSections(
         "chartType",
         "chartLabels",
         "chartAxes",
+        "numberFormat",
         "chartSeries",
         "appearance",
       ]);
@@ -111,6 +112,7 @@ function resolveSingleBlockSections(
         "tableLayoutData",
         "tableLayoutSize",
         "tableLayoutAlign",
+        "numberFormat",
       ]);
     default:
       if (isFetchableDataBlockType(selected.type) || selected.type === "data_source") {
@@ -208,6 +210,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "chartType",
   "chartLabels",
   "chartAxes",
+  "numberFormat",
   "chartSeries",
   "kpiAppearance",
   "media",

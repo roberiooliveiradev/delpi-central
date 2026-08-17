@@ -234,18 +234,53 @@ def _block_style(
     return style
 
 
-def html_to_paragraphs(
-    raw_html: str | None,
+_HTML_TABLE_RE = re.compile(r"<table\b[^>]*>(.*?)</table\s*>", re.IGNORECASE | re.DOTALL)
+_HTML_TR_RE = re.compile(r"<tr\b[^>]*>(.*?)</tr\s*>", re.IGNORECASE | re.DOTALL)
+_HTML_CELL_RE = re.compile(r"<(t[dh])\b[^>]*>(.*?)</\1\s*>", re.IGNORECASE | re.DOTALL)
+
+
+def _html_table_to_flowable(table_html: str, body_style: ParagraphStyle) -> Flowable:
+    """Converte `<table>` do rich text em Table ReportLab."""
+    rows: list[list[Paragraph]] = []
+    for tr_match in _HTML_TR_RE.finditer(table_html):
+        cells: list[Paragraph] = []
+        for cell_match in _HTML_CELL_RE.finditer(tr_match.group(1)):
+            cleaned = _safe_inline_html(cell_match.group(2).strip())
+            cells.append(Paragraph(cleaned or " ", body_style))
+        if cells:
+            rows.append(cells)
+    if not rows:
+        return Spacer(1, 1)
+    max_cols = max(len(row) for row in rows)
+    for row in rows:
+        while len(row) < max_cols:
+            row.append(Paragraph(" ", body_style))
+    table = Table(rows, hAlign="LEFT")
+    table.setStyle(
+        TableStyle(
+            [
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.Color(0.55, 0.58, 0.62)),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.93, 0.95, 0.97)),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]
+        )
+    )
+    return table
+
+
+def _html_blocks_to_paragraphs(
+    raw: str,
     body_style: ParagraphStyle,
     bullet_style: ParagraphStyle,
 ) -> list[Flowable]:
-    """Converte RichTextEditor HTML em blocos ReportLab preservando formatação."""
-    # Atas gravadas antes da normalização podem carregar runs de &nbsp; do Word.
-    raw = CecHtmlSanitizer.collapse_nbsp_runs(raw_html)
+    """Blocos estruturais (p/h/li) — sem tabelas."""
     raw = re.sub(r"<\s*br\s*/?\s*>", "<br/>", raw, flags=re.IGNORECASE)
     raw = _convert_rich_inline(raw)
 
-    # Anota cada <li> com o tipo da lista pai para preservar listas mistas.
     def annotate_list(match: re.Match[str]) -> str:
         kind = match.group(1).lower()
         content = re.sub(
@@ -263,8 +298,6 @@ def html_to_paragraphs(
         flags=re.IGNORECASE | re.DOTALL,
     )
     blocks: list[Flowable] = []
-
-    # Cada bloco estrutural recebe seu próprio estilo (heading/alinhamento/recuo).
     block_re = re.compile(
         r"<(p|div|h[1-6]|blockquote|li)\b([^>]*)>(.*?)</\1\s*>",
         re.IGNORECASE | re.DOTALL,
@@ -294,6 +327,31 @@ def html_to_paragraphs(
                 bulletText=bullet_text if is_bullet else None,
             )
         )
+    return blocks
+
+
+def html_to_paragraphs(
+    raw_html: str | None,
+    body_style: ParagraphStyle,
+    bullet_style: ParagraphStyle,
+) -> list[Flowable]:
+    """Converte RichTextEditor HTML em blocos ReportLab preservando formatação e tabelas."""
+    raw = CecHtmlSanitizer.collapse_nbsp_runs(raw_html)
+    if not (raw or "").strip():
+        return []
+
+    blocks: list[Flowable] = []
+    last = 0
+    for match in _HTML_TABLE_RE.finditer(raw):
+        prefix = raw[last : match.start()]
+        if prefix.strip():
+            blocks.extend(_html_blocks_to_paragraphs(prefix, body_style, bullet_style))
+        blocks.append(_html_table_to_flowable(match.group(0), body_style))
+        blocks.append(Spacer(1, 3 * mm))
+        last = match.end()
+    suffix = raw[last:]
+    if suffix.strip():
+        blocks.extend(_html_blocks_to_paragraphs(suffix, body_style, bullet_style))
     return blocks
 
 

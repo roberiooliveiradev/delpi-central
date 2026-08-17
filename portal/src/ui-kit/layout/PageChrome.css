@@ -1,0 +1,153 @@
+/* portal/src/ui-kit/layout/PageChrome.css */
+
+.portal-ui-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  color: var(--text);
+}
+
+.portal-ui-page__header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--text) 40%, transparent);
+}
+
+.portal-ui-page__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.portal-ui-page__identity {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.portal-ui-page__leading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.portal-ui-page__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.portal-ui-page__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.portal-ui-page__subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-ui-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.portal-ui-page__tabs {
+  margin-top: 4px;
+}
+
+.portal-ui-page__body {
+  /* Cresce para ocupar a página, mas nunca encolhe abaixo do próprio conteúdo:
+     é o que mantém o rodapé sticky colado na base, e não sobre o formulário. */
+  flex: 1 0 auto;
+  min-height: 0;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.portal-ui-page__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 16px -14px color-mix(in srgb, var(--text) 40%, transparent);
+}
+
+/* Telas estreitas: um cabeçalho com título, ações e abas fixo no topo consome
+   metade da viewport. Ele rola junto com a página e as ações viram uma faixa
+   horizontal única em vez de três linhas empilhadas. */
+@media (max-width: 720px) {
+  .portal-ui-page__header {
+    position: static;
+    gap: 10px;
+    padding: 12px 14px 0;
+    box-shadow: none;
+  }
+
+  .portal-ui-page__title-row {
+    gap: 10px;
+  }
+
+  .portal-ui-page__title {
+    font-size: 16px;
+  }
+
+  .portal-ui-page__actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .portal-ui-page__actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .portal-ui-page__actions > * {
+    flex: 0 0 auto;
+  }
+
+  .portal-ui-page__body {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .portal-ui-page__footer {
+    padding: 10px 14px;
+  }
+}

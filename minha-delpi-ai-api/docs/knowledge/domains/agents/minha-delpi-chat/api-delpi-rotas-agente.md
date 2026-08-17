@@ -102,7 +102,7 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 
 **`GET /production/otd`:** `branch`, `start_date`, `end_date`, `status` (`on_time` / `late`), `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `orders` (SC2010).
 
-**`GET /production/oee`:** `branch`, `start_date`, `end_date`, `status` (`valid` / `outlier`), `product_type` (`PA` / `PI`), `work_center`, `production_order`, `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `appointments` (view fabril, `oee_pct` = eficiência por tempos, `appointment_id`). Não confundir com `/production/eficiencia-fabril/*` (dashboard MOD/gráficos).
+**`GET /production/oee`:** `branch`, `start_date`, `end_date`, `status` (`valid` / `outlier`), `product_type` (`PA` / `PI`), `work_center`, `production_order`, `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `appointments` (`oee_pct` = eficiência canônica `HY_TEMPAD × qtd`, mesma da eficiência fabril e do KPI `/overall_equipment_effectiveness_pct`, `appointment_id`). Não confundir com `/production/eficiencia-fabril/*` (dashboard MOD/gráficos — mesma métrica de %, foco MOD).
 
 **`GET /production/oee/appointments/{appointment_id}`:** `appointment_id` (path), `branch` opcional. Resposta composta: `appointment`, `time_analysis` (previsto/real/eficiência, `findings`), `routing_operations` (SG2), `structure` (BOM em árvore). Usada pelo OEE e pela eficiência fabril.
 

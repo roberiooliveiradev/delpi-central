@@ -34,6 +34,10 @@ export type SimpleKpiCardProps = {
   layout?: SimpleKpiCardLayout;
   classNames: SimpleKpiCardClassNames;
   className?: string;
+  /** Torna o card acionável (deep link / drill-down). */
+  onClick?: () => void;
+  /** Rótulo acessível quando `onClick` está definido. */
+  "aria-label"?: string;
 };
 
 export function simpleKpiCardBemClasses(
@@ -200,8 +204,17 @@ export function SimpleKpiCard({
   layout = "iconStart",
   classNames,
   className,
+  onClick,
+  "aria-label": ariaLabel,
 }: SimpleKpiCardProps) {
-  const articleClass = [classNames.article, className].filter(Boolean).join(" ");
+  const interactive = typeof onClick === "function";
+  const articleClass = [
+    classNames.article,
+    interactive ? "delpi-ui-kpi-card--interactive" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const iconWrapperClass = [classNames.icon, iconClassName].filter(Boolean).join(" ");
   const ValueTag = valueTag;
   const valueClassName =
@@ -228,27 +241,44 @@ export function SimpleKpiCard({
     </>
   );
 
-  if (layout === "iconEnd" && classNames.header) {
-    return (
-      <article className={articleClass}>
-        <div className={classNames.header}>
-          {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
-          <div className={iconWrapperClass} aria-hidden="true">
-            {icon}
-          </div>
+  const body =
+    layout === "iconEnd" && classNames.header ? (
+      <div className={classNames.header}>
+        {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
+        <div className={iconWrapperClass} aria-hidden="true">
+          {icon}
         </div>
+      </div>
+    ) : (
+      <>
+        <div className={iconWrapperClass} aria-hidden="true">
+          {icon}
+        </div>
+        {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
+      </>
+    );
+
+  if (interactive) {
+    return (
+      <article
+        role="button"
+        tabIndex={0}
+        className={articleClass}
+        onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick();
+          }
+        }}
+        aria-label={ariaLabel ?? `Abrir detalhes: ${title}`}
+      >
+        {body}
       </article>
     );
   }
 
-  return (
-    <article className={articleClass}>
-      <div className={iconWrapperClass} aria-hidden="true">
-        {icon}
-      </div>
-      {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
-    </article>
-  );
+  return <article className={articleClass}>{body}</article>;
 }
 
 export type DashboardSimpleKpiCardProps = Omit<

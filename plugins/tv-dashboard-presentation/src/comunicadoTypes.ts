@@ -1,4 +1,4 @@
-import { buildLucideIconOptions, DECK_QUICK_LUCIDE_ICON_NAMES } from "@delpi/plugin-ui/index";
+import { buildLucideIconOptions, DECK_QUICK_LUCIDE_ICON_NAMES, type DelpiFill } from "@delpi/plugin-ui/index";
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartPartsMap } from "./comunicadoChartParts";
@@ -29,6 +29,8 @@ export type ComunicadoNamedTextStyle = "title1" | "subtitle" | "body";
 
 export type ComunicadoShapeKind =
   | "point"
+  /** Pin de CT na planta — radar colorido pela eficiência (fonte efficiency-by-work-center). */
+  | "efficiency-pin"
   | "rectangle"
   | "rounded-rect"
   | "snip-rect"
@@ -149,6 +151,10 @@ export type ComunicadoTextDataRef = {
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
   /**
+   * Spec canônico de exibição — na leitura ganha de `format`/`decimalPlaces`.
+   */
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec;
+  /**
    * Casas decimais (0–6) para `number` / `percent` / `currency`.
    * A exibição arredonda (half-up via `Intl`).
    */
@@ -163,6 +169,8 @@ export type ComunicadoTextProjection = {
   field: string;
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
+  /** Spec canônico de exibição — na leitura ganha de `format`/`decimalPlaces`. */
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec;
   /** Ver `ComunicadoTextDataRef.decimalPlaces`. */
   decimalPlaces?: number;
   prefix?: string;
@@ -213,6 +221,12 @@ export type ComunicadoBlockStyle = {
   zIndex?: number;
   fill?: string;
   stroke?: string;
+  /** Preenchimento rico; o renderer usa `fillPaint ?? fill`. */
+  fillPaint?: DelpiFill;
+  /** Cor de texto rica (`background-clip: text` no presentation). */
+  colorPaint?: DelpiFill;
+  /** Contorno rico; se o motor não pintar gradiente, cai no primeiro stop. */
+  strokePaint?: DelpiFill;
   strokeWidth?: number;
   /**
    * Espessura do traço Lucide (glifo) — distinta de `strokeWidth` (contorno da caixa).
@@ -249,6 +263,8 @@ export type ComunicadoBlockBase = {
   frame: ComunicadoFrame;
   style?: ComunicadoBlockStyle;
   groupId?: string;
+  /** Nome exibido no painel Seleção (compartilhado pelos membros). */
+  groupName?: string;
   /** Oculto no palco pelo usuário (Painel de Seleção). */
   hidden?: boolean;
   /** Animações do bloco (4E.2) — entrada na TV. */
@@ -298,6 +314,50 @@ export type ComunicadoShapeConnector = {
   routing?: ComunicadoConnectorRouting;
 };
 
+/** Faixas % do radar de eficiência no pin da planta. */
+export type ComunicadoEfficiencyPinBands = {
+  /** ≥ este valor → bom (verde). Default 95. */
+  goodMinPct?: number;
+  /** ≥ este e &lt; good → atenção (amarelo). Default 50. */
+  warnMinPct?: number;
+  /** Acima deste valor → fora da faixa / verificar. Default 199. */
+  validMaxPct?: number;
+};
+
+/**
+ * Binding do pin `efficiency-pin`: escolhe a linha do CT na fonte ligada
+ * (`get_eficiencia_fabril_efficiency_by_work_center`).
+ */
+export type ComunicadoEfficiencyPinInfoMode = "attached" | "detached" | "hidden";
+
+export type ComunicadoEfficiencyPinRole = "pin" | "info";
+
+export type ComunicadoEfficiencyPinBinding = {
+  /** Código/nome do centro de trabalho (match em `matchField`). */
+  workCenter?: string;
+  /** Campo da linha para match — default `work_center`. */
+  matchField?: string;
+  /** Campo do % — default `efficiency_pct`. */
+  valueField?: string;
+  /**
+   * @deprecated Preferir `infoMode`.
+   * Exibe o código do CT sob o radar. Default true.
+   */
+  showLabel?: boolean;
+  /**
+   * Onde fica CT/%:
+   * - `attached` — sob o radar no mesmo bloco (default)
+   * - `detached` — só radar; use um bloco `role: info` separado
+   * - `hidden` — só radar, sem texto
+   */
+  infoMode?: ComunicadoEfficiencyPinInfoMode;
+  /** `pin` = radar (+ rótulo se attached); `info` = só cartão de texto. Default `pin`. */
+  role?: ComunicadoEfficiencyPinRole;
+  /** Par ligado (pin ↔ info) quando a informação está separada. */
+  linkedBlockId?: string;
+  bands?: ComunicadoEfficiencyPinBands;
+};
+
 export type ComunicadoShapeBlock = ComunicadoBlockBase &
   ComunicadoTextDataBoundFields & {
   type: "shape";
@@ -309,6 +369,8 @@ export type ComunicadoShapeBlock = ComunicadoBlockBase &
    * Só faz sentido em kinds de linha (`line`, `line-arrow-*`).
    */
   connector?: ComunicadoShapeConnector;
+  /** Só `efficiency-pin` — CT + faixas do radar. */
+  efficiencyPin?: ComunicadoEfficiencyPinBinding;
   content?: string;
   /** Rich text opcional (formas com dados ou formatação). */
   contentRuns?: ComunicadoContentRun[];
@@ -371,6 +433,11 @@ export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
    * Cascata: projeção do visual > fieldLabels > catálogo/resolved > key.
    */
   fieldLabels?: import("./fieldLabelRegistry").FieldLabelsMap;
+  /**
+   * Faixas do radar dos pins CT ligados a esta fonte (canônico do mapa).
+   * Espelhado nos `efficiencyPin.bands` dos pins para a TV/render.
+   */
+  efficiencyPinBands?: ComunicadoEfficiencyPinBands;
   resolved?: ComunicadoDataResolved;
 };
 
@@ -542,6 +609,11 @@ export type ComunicadoDataResolved = {
    * Chart/table: cliente **reaplica** encoding visual a partir de `table.rows` +
    * projeção do bloco (`chartDataPolicy`) — o bake do servidor não é autoridade do gráfico.
    */
+  /**
+   * Params de apresentação mesclados no enrichment (playlist → slide → fonte).
+   * Ex.: excludeWeekends + granularity — o cliente aplica no applyViewProjection.
+   */
+  viewFilterParams?: Record<string, unknown>;
   serverProjectionApplied?: boolean;
   /** Enrichment aplicou dataTransform.steps antes da View. */
   serverTransformApplied?: boolean;
@@ -652,7 +724,13 @@ export type ComunicadoScreenData = {
 export type ComunicadoBackground =
   | { type: "color"; value: string }
   | { type: "image"; assetId?: string; url?: string; value?: string }
-  | { type: "gradient"; from: string; to: string; angle?: number };
+  | {
+      type: "gradient";
+      from: string;
+      to: string;
+      angle?: number;
+      stops?: Array<{ color: string; position: number; opacity?: number }>;
+    };
 
 export const COMUNICADO_FONT_FAMILIES = [
   "Inter, system-ui, sans-serif",

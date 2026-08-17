@@ -12,9 +12,9 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Processos (workspace) | `/apps/transformometro/processos` → árvore lateral + subpastas de revisão |
 | Configurações | `/apps/transformometro/configuracoes/unidades` (unidades, departamentos, recursos) |
 | Exportar / Importar JSON | `/apps/transformometro/dados` |
-| Atas Transforma+ | `/apps/transformometro/atas` |
-| Pendências de assinatura | `/apps/transformometro/atas/pending` |
-| Minha assinatura | `/apps/transformometro/minha-assinatura` |
+| Atas Transforma+ | `/apps/transformometro/meeting-minutes` |
+| Pendências de assinatura | `/apps/transformometro/meeting-minutes/pending` |
+| Minha assinatura | `/apps/transformometro/my-signature` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
 ## Rotina diária
@@ -81,7 +81,7 @@ Atribuir às roles/grupos de engenharia/gestão, no mínimo:
 - `transformometro.dashboard.recalculate`
 - `transformometro.shared-resources.manage` (catálogo Recursos)
 - `transformometro.data.transfer` (exportar / importar JSON em `/dados`)
-- Atas: `transformometro.atas.view`, `transformometro.atas.manage`, `transformometro.atas.sign`
+- Atas: `transformometro.meeting-minutes.view`, `transformometro.meeting-minutes.manage`, `transformometro.meeting-minutes.sign`
 - Opcional RBAC filial: `transformometro.view.filial-01`, `transformometro.manage.filial-01`, `transformometro.view.consolidated`, …
 
 ### Kimi (geração de atas)

@@ -120,3 +120,29 @@ def test_inspecoes_processo_resumo_rejects_invalid_branch(
         f"/inspecoes-processo/resumo?branch={branch}"
     )
     assert response.status_code == 422
+
+
+def test_inspecoes_processo_resumo_forwards_period_dates(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    with patch(
+        "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.branch_access_error",
+        return_value=None,
+    ), patch(
+        "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.build_get_inspecoes_processo_resumo_use_case",
+    ) as mock_build:
+        mock_result = MagicMock()
+        mock_result.to_dict.return_value = {"filial": "02"}
+        mock_uc = MagicMock()
+        mock_uc.execute.return_value = mock_result
+        mock_build.return_value = mock_uc
+        response = inspecoes_processo_client.get(
+            "/inspecoes-processo/resumo"
+            "?branch=02&start_date=2026-08-01&end_date=2026-08-14"
+        )
+    assert response.status_code == 200
+    mock_uc.execute.assert_called_once_with(
+        branch="02",
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+    )

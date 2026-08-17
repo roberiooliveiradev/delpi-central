@@ -1,0 +1,200 @@
+"""GET /data/copilot/capabilities — catálogo versionado."""
+
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
+    TvCopilotSuggestOpsService,
+)
+from tv_app.main import app
+
+
+async def _bypass_auth_middleware(request, call_next):
+    return await call_next(request)
+
+
+@pytest.fixture(autouse=True)
+def _skip_ai_route_rank_in_unit_tests():
+    with patch.object(
+        TvCopilotSuggestOpsService,
+        "_rank_via_ai_suggest",
+        return_value=[],
+    ):
+        yield
+
+
+def test_copilot_capabilities_requires_tv_write_and_returns_catalog():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.get("/data/copilot/capabilities")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    data = body["data"]
+    assert data["catalogVersion"]
+    assert isinstance(data["capabilities"], list) and data["capabilities"]
+    assert "delete_block" in data["allowedOps"]
+    assert any(cap.get("op") == "add_blank_slide" for cap in data["capabilities"])
+
+
+def test_copilot_capabilities_forbidden_without_user():
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=None,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.get("/data/copilot/capabilities")
+
+    assert response.status_code == 403
+    assert response.json()["success"] is False
+
+
+def test_copilot_suggest_ops_returns_direct_plan_for_create_slide():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/suggest-ops",
+            json={
+                "message": "crie um slide",
+                "hostContext": {"playlistId": "pl-1"},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "ready"
+    assert data["confirmationPolicy"] == "direct"
+    assert data["ops"][0]["op"] == "add_blank_slide"
+
+
+def test_copilot_suggest_ops_ready_when_slide_is_open():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/suggest-ops",
+            json={
+                "message": "adicione o modelo de dados oee",
+                "hostContext": {"playlistId": "pl-1", "slideId": "sl-1"},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "ready"
+    assert data["confirmationPolicy"] == "direct"
+    assert data["ops"]
+
+
+def test_copilot_suggest_ops_clarifies_missing_slide_without_invalid_ops():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/suggest-ops",
+            json={
+                "message": "adicione o modelo de dados oee",
+                "hostContext": {"playlistId": "pl-1"},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "clarification"
+    assert data["clarificationKey"] == "suggestNeedSlideOrCreate"
+    assert data["ops"] == []
+
+
+def test_copilot_apply_patch_unexpected_error_returns_reason_not_opaque_500():
+    """Falha não prevista no apply devolve motivo do catálogo, não «Internal server error»."""
+    user = SimpleNamespace(is_superadmin=True, permissions=[], id="u1", email="u@d")
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+        patch(
+            "tv_app.application.services.data.tv_copilot_patch_service.TvCopilotPatchService.apply",
+            side_effect=AttributeError("boom"),
+        ),
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.require_playlist_access",
+            return_value=(user, SimpleNamespace(can_edit=True, can_manage=True)),
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/apply-patch",
+            json={
+                "target": {
+                    "playlistId": "8b43ae88-4c66-4eca-8965-1cbb3fb923d9",
+                    "slideId": "c8ff6fd6-49de-4f52-ac2f-3cb8a65b5c5e",
+                },
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {"id": "txt-1", "type": "text", "content": "Olá"},
+                    }
+                ],
+            },
+        )
+
+    assert response.status_code == 500
+    body = response.json()
+    assert body["success"] is False
+    assert "upsert_block" in body["message"]
+    assert "Internal server error" not in body["message"]

@@ -13,6 +13,8 @@ type Props = {
   previewSlide?: PresentationPayload["slides"][number];
   /** Viewport da playlist — miniaturiza o slide canônico (print exato). */
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   /** Token público — mídia do filmstrip via `/public/present/...` (sem JWT). */
   publicToken?: string | null;
@@ -27,6 +29,8 @@ export function SlideCardThumbnail({
   playlistId,
   previewSlide,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   publicToken,
   fillContainer = false,
@@ -71,7 +75,10 @@ export function SlideCardThumbnail({
     );
   }
 
-  const { width, height } = resolveViewportPixelSize(viewportProfile);
+  const { width, height } = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
 
   return (
     <div

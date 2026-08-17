@@ -37,6 +37,20 @@ describe("ChartTypeCatalogPanel", () => {
     expect(screen.getByTitle("Linhas").getAttribute("aria-current")).toBe("true");
     expect(screen.getByTitle("Colunas").getAttribute("aria-current")).toBeNull();
   });
+
+  it("filtra por allowedTypes", () => {
+    render(
+      <ChartTypeCatalogPanel
+        allowedTypes={["line", "area", "bar"]}
+        onSelect={() => {}}
+      />,
+    );
+    expect(screen.getByTitle("Linhas")).toBeTruthy();
+    expect(screen.getByTitle("Área")).toBeTruthy();
+    expect(screen.getByTitle("Colunas")).toBeTruthy();
+    expect(screen.queryByTitle("Pizza")).toBeNull();
+    expect(screen.queryByTitle("Funil")).toBeNull();
+  });
 });
 
 describe("TableInsertCatalogPanel", () => {

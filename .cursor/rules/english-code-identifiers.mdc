@@ -1,0 +1,56 @@
+---
+description: Inglês inegociável em identificadores de código (paths, arquivos, permissões, operationId)
+alwaysApply: true
+---
+
+# Identificadores de código em inglês
+
+## Princípio
+
+Em **todo** o monorepo (`plugins/*`, `*-api`, `api-delpi`, `public-hub`, infra de rotas), identificadores de **código e contrato** são em **inglês**. Português fica em UI, locale, docs de negócio e mensagens de commit.
+
+Generaliza o que `api-delpi-openapi-route-standards.mdc` e `new-api-route-checklist.mdc` já exigem para a api-delpi — vale para **qualquer** pacote.
+
+## Obrigatório em inglês
+
+| Superfície | Convenção |
+|------------|-----------|
+| Paths HTTP / rotas MFE | kebab-case (`/meeting-minutes`, `/my-signature`) |
+| `operationId` / `meta.entity` / campos de contrato | snake_case / camelCase conforme o pacote |
+| Códigos de permissão e `manifest.routes[].path` | inglês (`plugin.meeting-minutes.view`) |
+| Nomes de arquivo e pasta de código | inglês (`MeetingMinutesPage.tsx`, `meeting_minutes_routes.py`) |
+| Constantes de rota, módulos, loggers de domínio | inglês |
+
+## Permitido em português
+
+- Labels de UI, copy ao usuário, `locale.pt-BR`
+- Docs de negócio / roadmap narrativo
+- Mensagens de commit (ver `test-and-commit.mdc`)
+- Conteúdo em `content/pt-BR/` (catálogos de texto)
+
+## Exceções estreitas (não expandir)
+
+- `filial-01` / `filial-02` — convenção TOTVS/Delpi multi-filial já adotada (não virar `branch-01` sem plano RBAC)
+- Marca de produto na UI (ex.: «Transformômetro», «Transforma+»)
+- Migrations SQL já aplicadas — imutáveis (`migrations-immutable-checksum.mdc`); não renomear tabela «só por idioma»
+- Volumes host já provisionados com segmento legado (ex.: `…/transformometro/atas/signatures`) — não migrar disco sem plano; HTTP/código seguem EN
+
+## Legado PT
+
+- Pode permanecer com **alias dual** (path/permissão antiga + canônico EN) até depreciação documentada
+- Código **novo** ou extensão de superfície = **só inglês**
+- Copiar legado PT como modelo de rota/arquivo novo = desvio
+
+## Agente / revisão
+
+Se o pedido do usuário pedir path, arquivo, pasta, permissão ou `operationId` **novo** em português:
+
+1. Corrigir para inglês (ou recusar o PT) **antes** de implementar
+2. Avisar com «⚠ Desvio de clean architecture» se insistirem no PT
+3. Não aceitar «só desta vez»
+
+## Checklist rápido
+
+- [ ] Path / permission / arquivo novos estão em inglês?
+- [ ] PT novo só em UI/locale/docs?
+- [ ] Legado PT, se mantido, tem alias EN canônico?

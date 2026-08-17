@@ -703,6 +703,23 @@ services:
     networks:
       - delpi-network
 
+  commercial:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: commercial/Dockerfile
+      target: production
+
+    container_name: delpi-commercial
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   propostas-comerciais:
     depends_on:
       - plugin-ui
@@ -950,6 +967,22 @@ services:
     networks:
       - delpi-network
 
+  materiais-terceiros:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: materiais-terceiros/Dockerfile
+
+    container_name: delpi-materiais-terceiros
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     depends_on:
       - plugin-ui
@@ -974,6 +1007,22 @@ services:
       dockerfile: canal-denuncia/Dockerfile
 
     container_name: delpi-canal-denuncia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  mural-acessos:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: mural-acessos/Dockerfile
+
+    container_name: delpi-mural-acessos
     restart: unless-stopped
 
     environment:
@@ -1086,6 +1135,22 @@ services:
       dockerfile: lancamento-notas-fiscais/Dockerfile
 
     container_name: delpi-lancamento-notas-fiscais
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  invoice-issuance:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: invoice-issuance/Dockerfile
+
+    container_name: delpi-invoice-issuance
     restart: unless-stopped
 
     environment:
@@ -1240,10 +1305,13 @@ services:
       PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: ${PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR:-/app/data/pedidos-venda-abertos/avatars}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
+      MURAL_ACESSOS_UPLOAD_DIR: ${MURAL_ACESSOS_UPLOAD_DIR:-/app/data/mural-acessos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1291,10 +1359,12 @@ services:
     volumes:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/invoice-issuance:/app/data/invoice-issuance
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/guias-procedimentos:/app/data/guias-procedimentos
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/mural-acessos:/app/data/mural-acessos
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/qr:/app/data/quality-labels/qr
@@ -1407,6 +1477,13 @@ services:
       TM_ATA_SIGNATURE_UPLOAD_DIR: ${TM_ATA_SIGNATURE_UPLOAD_DIR:-/app/data/transformometro/atas/signatures}
       TM_ATA_PDF_UPLOAD_DIR: ${TM_ATA_PDF_UPLOAD_DIR:-/app/data/transformometro/atas/pdfs}
       TM_PORTAL_NOTIFICATIONS_ENABLED: ${TM_PORTAL_NOTIFICATIONS_ENABLED:-true}
+      TM_MAIL_ENABLED: ${TM_MAIL_ENABLED:-true}
+      TM_ATA_SIGN_INVITE_TTL_DAYS: ${TM_ATA_SIGN_INVITE_TTL_DAYS:-14}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
       CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
 
@@ -1474,6 +1551,78 @@ services:
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_healthy
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  commercial-api:
+    build:
+      context: ..
+      dockerfile: commercial-api/Dockerfile
+
+    container_name: delpi-commercial-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      COMMERCIAL_API_ROOT_PATH: /apps/commercial-api
+      COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: ${COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP:-true}
+      COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-commercial}
+      COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
+      COMMERCIAL_ATTACHMENT_UPLOAD_DIR: /app/data/commercial-attachments
+      COMMERCIAL_USER_AVATAR_UPLOAD_DIR: /app/data/commercial-user-avatars
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_API_URL: http://delpi-api-delpi:8000
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
+      DELPI_API_CALLER_APP: commercial-api
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/commercial-avatars:/app/data/commercial-avatars
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/commercial-attachments:/app/data/commercial-attachments
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/commercial-user-avatars:/app/data/commercial-user-avatars
 
     depends_on:
       keycloak:
@@ -1801,8 +1950,10 @@ services:
       - controle-retrabalhos
       - scrap-monitoring
       - estoque-seguranca
+      - materiais-terceiros
       - production-appointments
       - canal-denuncia
+      - mural-acessos
       - reports
       - planejamento-orcamentario
       - dashboard-supplies
@@ -1810,6 +1961,7 @@ services:
       - financeiro-centro-custo
       - financeiro-inadimplencia
       - lancamento-notas-fiscais
+      - invoice-issuance
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

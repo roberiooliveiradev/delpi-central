@@ -7,6 +7,7 @@ import {
   PresentationPlaybackProvider,
   NativeSlideView,
   DesignViewportStage,
+  presentationStageEntranceClass,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
   applyRuntimeInputValue,
@@ -19,7 +20,10 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
-import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
+import {
+  resolvePublicMediaToken,
+  rewriteAdminMediaUrlsForBrowser,
+} from "../api/browserSafeMediaUrl";
 import { getAccessToken } from "../api/httpClient";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
 import "./presentation.css";
@@ -41,7 +45,9 @@ function blocksFromNativeData(data: Record<string, unknown> | undefined): Comuni
 }
 
 function forBrowserDisplay(payload: PresentationPayload): PresentationPayload {
-  return rewriteAdminMediaUrlsForBrowser(payload);
+  const publicToken =
+    resolvePublicMediaToken(payload.playlist.publicToken ?? payload.playlist.publicUrl) ?? null;
+  return rewriteAdminMediaUrlsForBrowser(payload, publicToken);
 }
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
@@ -170,6 +176,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       className={[
         "tdp-stage",
         "tdp-stage--preview-shell",
+        presentationStageEntranceClass("preview"),
         presenterMode ? "tdp-stage--presenter" : null,
         booting ? "tdp-stage--boot" : null,
       ]
@@ -190,6 +197,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       </div>
       <DesignViewportStage
         viewportProfile={viewport}
+        viewportWidth={payload.playlist.viewportWidth}
+        viewportHeight={payload.playlist.viewportHeight}
         className="tdp-stage__design"
         surface="preview"
         fit="auto"

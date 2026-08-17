@@ -25,7 +25,6 @@ import {
   normalizeCanvasTableCells,
   type CanvasTableCell,
   type CanvasTableCellKind,
-  type CanvasTableNumberFormat,
   type CanvasTableStylePresetId,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -70,14 +69,6 @@ const KIND_OPTIONS: { value: CanvasTableCellKind; label: string }[] = [
   { value: "text", label: "Texto" },
   { value: "number", label: "Número" },
   { value: "sparkline", label: "Sparkline" },
-];
-
-const FORMAT_OPTIONS: { value: CanvasTableNumberFormat; label: string }[] = [
-  { value: "plain", label: "Simples" },
-  { value: "integer", label: "Inteiro" },
-  { value: "decimal", label: "Decimal" },
-  { value: "percent", label: "Percentual" },
-  { value: "currency", label: "Moeda" },
 ];
 
 const FONT_SIZE_PRESETS = [10, 12, 14, 16, 18, 20, 24, 28, 32] as const;
@@ -383,28 +374,6 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
               options={KIND_OPTIONS}
             />
           </label>
-          {(selectedCell.kind === "number" || selectedCell.kind === "sparkline") && (
-            <label className="td-deck-ribbon__frame-field">
-              <span className="td-deck-ribbon__field-label">Formato</span>
-              <TdRibbonSelect
-                id="td-canvas-table-cell-format"
-                value={selectedCell.format ?? "decimal"}
-                aria-label="Formato numérico"
-                onChange={(value) => {
-                  if (
-                    value === "plain" ||
-                    value === "integer" ||
-                    value === "decimal" ||
-                    value === "percent" ||
-                    value === "currency"
-                  ) {
-                    patchSelectedCell({ ...selectedCell, format: value });
-                  }
-                }}
-                options={FORMAT_OPTIONS}
-              />
-            </label>
-          )}
         </div>
         {selectedCell.kind === "sparkline" ? (
           <label className="td-deck-ribbon__frame-field">

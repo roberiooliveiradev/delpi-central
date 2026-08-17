@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -24,6 +25,12 @@ import {
   type DataTableColumnWidths,
 } from "./dataTableColumnResize";
 import {
+  applyTransparentColumnDragImage,
+  reorderColumnKeysWithEdge,
+  resolveColumnDropEdge,
+  type ColumnDropEdge,
+} from "./dataTableColumnReorder";
+import {
   isCellSelected,
   isColumnSelected,
   isRowSelected,
@@ -46,8 +53,19 @@ export type DataTableColumn<T> = {
   render: (row: T) => ReactNode;
   className?: string;
   align?: "left" | "right" | "center";
-  /** Impede propagação do clique da linha (ex.: coluna de ações). */
+  /**
+   * Cell hosts its own pointer target (link/button/control).
+   * Default: stops `onRowClick` (`rowClick: "stop"`).
+   * Use only when the cell destination differs from the row detail,
+   * or set `rowClick: "propagate"` when the cell intentionally shares the row action.
+   * Never set `interactive: true` without a real handler (orphans cancel row navigation).
+   */
   interactive?: boolean;
+  /**
+   * Whether cell click stops the row click.
+   * Defaults to `"stop"` when `interactive` is true; `"propagate"` keeps row navigation.
+   */
+  rowClick?: "stop" | "propagate";
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   mobileLabel?: string;
@@ -95,6 +113,10 @@ export type DataTableClassNames = {
   sub?: string;
   /** Linha em modo edição inline. */
   rowEditing?: string;
+  /** Linha de detalhe expandida (`renderExpandedRow`). */
+  detailRow?: string;
+  /** Célula que envolve o conteúdo expandido. */
+  detailCell?: string;
 };
 
 export type DataTableLabels = {
@@ -153,6 +175,13 @@ export type DataTableProps<T> = {
   enableCopySelection?: boolean;
   /** Coluna visual de índice; não altera o shape das linhas. */
   indexColumn?: { header?: string; ariaLabel?: string; startAt?: number };
+  /** Chave da linha expandida (controlado; tipicamente uma por vez). */
+  expandedRowKey?: string | null;
+  onExpandedRowKeyChange?: (key: string | null) => void;
+  /** Conteúdo da linha de detalhe sob a row expandida. */
+  renderExpandedRow?: (row: T, index: number) => ReactNode;
+  /** Default: true quando `renderExpandedRow` existe. */
+  isRowExpandable?: (row: T) => boolean;
   classNames: DataTableClassNames;
   labels: DataTableLabels;
 };
@@ -182,6 +211,8 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
     actions: delpiUiClass(`${table}__actions`, `${ui}__actions`),
     sub: delpiUiClass(`${table}__sub`, `${ui}__sub`),
     rowEditing: delpiUiClass(`${table}__row--editing`, `${ui}__row--editing`),
+    detailRow: delpiUiClass(`${table}__detail-row`, `${ui}__detail-row`),
+    detailCell: delpiUiClass(`${table}__detail-cell`, `${ui}__detail-cell`),
     empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
     headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
     headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),
@@ -263,17 +294,27 @@ function renderColumnHeader<T>(
   classNames: DataTableClassNames,
   labels: DataTableLabels,
 ) {
+  const headerText =
+    column.headerHint != null && column.headerHint !== "" ? (
+      <HelpTooltip
+        content={column.headerHint}
+        ariaLabel={labels.headerHelpAriaLabel(column.header)}
+        wrap
+        placement="bottom"
+        className={classNames.headerHelp}
+      >
+        <span className={`${classNames.headerText} delpi-ui-section-hint-label`}>
+          {column.header}
+        </span>
+      </HelpTooltip>
+    ) : (
+      <span className={classNames.headerText}>{column.header}</span>
+    );
+
   return (
     <span className={classNames.headerLabel}>
-      {column.headerPrefix}
-      <span className={classNames.headerText}>{column.header}</span>
-      {column.headerHint ? (
-        <HelpTooltip
-          content={column.headerHint}
-          ariaLabel={labels.headerHelpAriaLabel(column.header)}
-          className={classNames.headerHelp}
-        />
-      ) : null}
+      {column.headerPrefix ? <span>{column.headerPrefix}</span> : null}
+      {headerText}
     </span>
   );
 }
@@ -287,17 +328,6 @@ function modifiersFromMouseEvent(event: {
     toggle: event.ctrlKey || event.metaKey,
     range: event.shiftKey,
   };
-}
-
-function reorderColumnKeys(keys: string[], fromKey: string, toKey: string): string[] {
-  if (fromKey === toKey) return keys;
-  const from = keys.indexOf(fromKey);
-  const to = keys.indexOf(toKey);
-  if (from < 0 || to < 0) return keys;
-  const next = [...keys];
-  const [moved] = next.splice(from, 1);
-  next.splice(to, 0, moved!);
-  return next;
 }
 
 export function DataTable<T>({
@@ -331,11 +361,18 @@ export function DataTable<T>({
   onColumnOrderChange,
   enableCopySelection = false,
   indexColumn,
+  expandedRowKey = null,
+  onExpandedRowKeyChange: _onExpandedRowKeyChange,
+  renderExpandedRow,
+  isRowExpandable,
   classNames,
   labels,
 }: DataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
   const [dragColumnKey, setDragColumnKey] = useState<string | null>(null);
+  const [holdColumnKey, setHoldColumnKey] = useState<string | null>(null);
+  const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+  const [dropEdge, setDropEdge] = useState<ColumnDropEdge>("before");
   const [localWidths, setLocalWidths] = useState<DataTableColumnWidths>({});
   const wrapText = wrapTextProp ?? mode === "grid-preview";
   const columnWidths = columnWidthsProp ?? localWidths;
@@ -346,15 +383,21 @@ export function DataTable<T>({
 
   const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
   const resolvedEmptyMessage = emptyMessage ?? labels.emptyMessage;
-  const tableClassName = buildTableClassName(
-    classNames,
-    layout,
-    isSortable,
-    Boolean(onRowClick),
-    mode,
-    wrapText,
-    hasFixedWidths,
-  );
+  const tableClassName = [
+    buildTableClassName(
+      classNames,
+      layout,
+      isSortable,
+      Boolean(onRowClick),
+      mode,
+      wrapText,
+      hasFixedWidths,
+    ),
+    enableColumnReorder && onColumnOrderChange ? "delpi-ui-table--column-reorder" : "",
+    dragColumnKey ? "delpi-ui-table--column-reordering" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const columnKeys = useMemo(() => columns.map((column) => column.key), [columns]);
 
   const commitSelection = useCallback(
@@ -431,6 +474,13 @@ export function DataTable<T>({
     return () => document.removeEventListener("copy", onCopy);
   }, [columnKeys, enableCopySelection, resolvedSelection, rows]);
 
+  // Antes dos early returns — useCallback aqui gerava React #310 ao sair de loading/vazio.
+  const clearColumnDragState = useCallback(() => {
+    setDragColumnKey(null);
+    setHoldColumnKey(null);
+    setDropTargetKey(null);
+  }, []);
+
   if (loading) {
     return wrapTableMarkup(
       classNames,
@@ -473,19 +523,47 @@ export function DataTable<T>({
 
   const onHeaderDragStart = (event: DragEvent<HTMLElement>, columnKey: string) => {
     if (!enableColumnReorder || !onColumnOrderChange) return;
+    if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
+      event.preventDefault();
+      return;
+    }
+    setHoldColumnKey(null);
     setDragColumnKey(columnKey);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", columnKey);
+    applyTransparentColumnDragImage(event.dataTransfer);
+  };
+
+  const onHeaderDragOver = (event: DragEvent<HTMLElement>, targetKey: string) => {
+    if (!enableColumnReorder || !onColumnOrderChange || !dragColumnKey) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (targetKey === dragColumnKey) {
+      setDropTargetKey(null);
+      return;
+    }
+    const edge = resolveColumnDropEdge(
+      event.clientX,
+      event.currentTarget.getBoundingClientRect(),
+    );
+    setDropTargetKey(targetKey);
+    setDropEdge(edge);
   };
 
   const onHeaderDrop = (event: DragEvent<HTMLElement>, targetKey: string) => {
     if (!enableColumnReorder || !onColumnOrderChange) return;
     event.preventDefault();
     const fromKey = dragColumnKey || event.dataTransfer.getData("text/plain");
-    setDragColumnKey(null);
+    const edge = resolveColumnDropEdge(
+      event.clientX,
+      event.currentTarget.getBoundingClientRect(),
+    );
+    clearColumnDragState();
     if (!fromKey) return;
-    onColumnOrderChange(reorderColumnKeys(columnKeys, fromKey, targetKey));
+    onColumnOrderChange(reorderColumnKeysWithEdge(columnKeys, fromKey, targetKey, edge));
   };
+
+  const activeColumnKey = dragColumnKey ?? holdColumnKey;
 
   return wrapTableMarkup(
     classNames,
@@ -526,12 +604,20 @@ export function DataTable<T>({
             const isSorted = sortKey === column.key;
             const columnSelected = isColumnSelected(resolvedSelection, column.key);
             const columnClass = resolveDataTableColumnClassName(column.className);
+            const isActiveColumn = activeColumnKey === column.key;
+            const isDropTarget = dropTargetKey === column.key && dragColumnKey !== column.key;
             const headerClass = [
               columnClass,
               getHeaderClassName?.(column),
               column.sortable && classNames.sortableColumn ? classNames.sortableColumn : "",
               columnSelected ? "delpi-ui-table__column--selected" : "",
-              dragColumnKey === column.key ? "delpi-ui-table__column--dragging" : "",
+              isActiveColumn ? "delpi-ui-table__column--dragging" : "",
+              isDropTarget && dropEdge === "before"
+                ? "delpi-ui-table__column--drop-before"
+                : "",
+              isDropTarget && dropEdge === "after"
+                ? "delpi-ui-table__column--drop-after"
+                : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -544,14 +630,30 @@ export function DataTable<T>({
                 data-align={column.align}
                 data-column-key={column.key}
                 aria-selected={columnSelected || undefined}
+                aria-grabbed={dragColumnKey === column.key || undefined}
                 tabIndex={onHeaderClick || onSelectionChange ? 0 : undefined}
                 draggable={enableColumnReorder && Boolean(onColumnOrderChange)}
+                onPointerDown={(event) => {
+                  if (!enableColumnReorder || !onColumnOrderChange) return;
+                  if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
+                    return;
+                  }
+                  if (event.button !== 0) return;
+                  setHoldColumnKey(column.key);
+                }}
+                onPointerUp={() => {
+                  if (!dragColumnKey) setHoldColumnKey(null);
+                }}
+                onPointerCancel={() => {
+                  if (!dragColumnKey) setHoldColumnKey(null);
+                }}
                 onDragStart={(event) => onHeaderDragStart(event, column.key)}
-                onDragOver={(event) => {
-                  if (enableColumnReorder && onColumnOrderChange) event.preventDefault();
+                onDragOver={(event) => onHeaderDragOver(event, column.key)}
+                onDragLeave={() => {
+                  if (dropTargetKey === column.key) setDropTargetKey(null);
                 }}
                 onDrop={(event) => onHeaderDrop(event, column.key)}
-                onDragEnd={() => setDragColumnKey(null)}
+                onDragEnd={() => clearColumnDragState()}
                 onClick={(event) => {
                   if ((event.target as HTMLElement).closest("[data-column-resize-handle]")) {
                     return;
@@ -632,111 +734,115 @@ export function DataTable<T>({
       </thead>
       <tbody>
         {rows.map((row, index) => {
+          const key = rowKey(row, index);
           const rowSelected = isRowSelected(resolvedSelection, index);
+          const expandable =
+            Boolean(renderExpandedRow) && (isRowExpandable ? isRowExpandable(row) : true);
+          const isExpanded = expandable && expandedRowKey != null && expandedRowKey === key;
+          const colSpan = columns.length + (indexColumn ? 1 : 0);
           const rowClass = [
             getRowClassName?.(row),
             onRowClick ? classNames.rowClickable : "",
             rowSelected ? "delpi-ui-table__row--selected" : "",
+            isExpanded ? "delpi-ui-table__row--expanded" : "",
           ]
             .filter(Boolean)
             .join(" ");
 
           return (
-            <tr
-              key={rowKey(row, index)}
-              className={rowClass || undefined}
-              aria-selected={rowSelected || undefined}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              tabIndex={onRowClick ? 0 : undefined}
-              role={onRowClick && rowClickRole === "button" ? "button" : undefined}
-              onKeyDown={
-                onRowClick
-                  ? (event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onRowClick(row);
+            <Fragment key={key}>
+              <tr
+                className={rowClass || undefined}
+                aria-selected={rowSelected || undefined}
+                aria-expanded={expandable ? isExpanded : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick && rowClickRole === "button" ? "button" : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
                       }
-                    }
-                  : undefined
-              }
-            >
-              {indexColumn ? (
-                <td
-                  className="delpi-ui-table__index-col"
-                  data-label={indexColumn.ariaLabel ?? "Índice"}
-                  tabIndex={onSelectionChange ? 0 : undefined}
-                  aria-selected={
-                    resolvedSelection?.kind === "row" &&
-                    resolvedSelection.indices.includes(index)
-                      ? true
-                      : undefined
-                  }
-                  onClick={
-                    onSelectionChange
-                      ? (event) => {
-                          event.stopPropagation();
-                          handleRowSelect(index, modifiersFromMouseEvent(event));
-                        }
-                      : undefined
-                  }
-                  onKeyDown={
-                    onSelectionChange
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            handleRowSelect(index, modifiersFromMouseEvent(event));
-                          }
-                        }
-                      : undefined
-                  }
-                >
-                  {(indexColumn.startAt ?? 1) + index}
-                </td>
-              ) : null}
-              {columns.map((column) => {
-                const cellSelected = isCellSelected(resolvedSelection, index, column.key);
-                return (
+                    : undefined
+                }
+              >
+                {indexColumn ? (
                   <td
-                    key={column.key}
-                    className={[
-                      resolveDataTableColumnClassName(column.className),
-                      getCellClassName?.(row, column, index),
-                      cellSelected ? "delpi-ui-table__cell--selected" : "",
-                      isColumnSelected(resolvedSelection, column.key)
-                        ? "delpi-ui-table__column--selected"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || undefined}
-                    data-label={column.mobileLabel ?? column.header}
-                    data-align={column.align}
-                    data-column-key={column.key}
-                    data-interactive={column.interactive ? "true" : undefined}
-                    aria-selected={cellSelected || undefined}
-                    tabIndex={onCellClick || onSelectionChange ? 0 : undefined}
-                    onClick={
-                      column.interactive || onCellClick || onSelectionChange
-                        ? (event) => {
-                            if (column.interactive) event.stopPropagation();
-                            handleCellSelect(
-                              row,
-                              column,
-                              index,
-                              modifiersFromMouseEvent(event),
-                            );
-                          }
+                    className="delpi-ui-table__index-col"
+                    data-label={indexColumn.ariaLabel ?? "Índice"}
+                    tabIndex={onSelectionChange ? 0 : undefined}
+                    aria-selected={
+                      resolvedSelection?.kind === "row" &&
+                      resolvedSelection.indices.includes(index)
+                        ? true
                         : undefined
                     }
-                    onContextMenu={
-                      onCellContextMenu
-                        ? (event) => onCellContextMenu(event, row, column, index)
+                    onClick={
+                      onSelectionChange
+                        ? (event) => {
+                            event.stopPropagation();
+                            handleRowSelect(index, modifiersFromMouseEvent(event));
+                          }
                         : undefined
                     }
                     onKeyDown={
-                      onCellClick || onSelectionChange
+                      onSelectionChange
                         ? (event) => {
                             if (event.key === "Enter" || event.key === " ") {
                               event.preventDefault();
+                              handleRowSelect(index, modifiersFromMouseEvent(event));
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {(indexColumn.startAt ?? 1) + index}
+                  </td>
+                ) : null}
+                {columns.map((column) => {
+                  const cellSelected = isCellSelected(resolvedSelection, index, column.key);
+                  const isActiveColumn = activeColumnKey === column.key;
+                  const isDropTarget =
+                    dropTargetKey === column.key && dragColumnKey !== column.key;
+                  return (
+                    <td
+                      key={column.key}
+                      className={[
+                        resolveDataTableColumnClassName(column.className),
+                        getCellClassName?.(row, column, index),
+                        cellSelected ? "delpi-ui-table__cell--selected" : "",
+                        isColumnSelected(resolvedSelection, column.key)
+                          ? "delpi-ui-table__column--selected"
+                          : "",
+                        isActiveColumn ? "delpi-ui-table__column--dragging" : "",
+                        isDropTarget && dropEdge === "before"
+                          ? "delpi-ui-table__column--drop-before"
+                          : "",
+                        isDropTarget && dropEdge === "after"
+                          ? "delpi-ui-table__column--drop-after"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || undefined}
+                      data-label={column.mobileLabel ?? column.header}
+                      data-align={column.align}
+                      data-column-key={column.key}
+                      data-interactive={column.interactive ? "true" : undefined}
+                      aria-selected={cellSelected || undefined}
+                      tabIndex={onCellClick || onSelectionChange ? 0 : undefined}
+                      onClick={
+                        column.interactive ||
+                        column.rowClick === "stop" ||
+                        onCellClick ||
+                        onSelectionChange
+                          ? (event) => {
+                              const stopRowClick =
+                                column.rowClick === "stop" ||
+                                (Boolean(column.interactive) && column.rowClick !== "propagate");
+                              if (stopRowClick) event.stopPropagation();
                               handleCellSelect(
                                 row,
                                 column,
@@ -744,23 +850,54 @@ export function DataTable<T>({
                                 modifiersFromMouseEvent(event),
                               );
                             }
-                          }
-                        : undefined
-                    }
-                    style={
-                      columnWidths[column.key] != null
-                        ? {
-                            width: columnWidths[column.key],
-                            minWidth: columnWidths[column.key],
-                          }
-                        : undefined
-                    }
+                          : undefined
+                      }
+                      onContextMenu={
+                        onCellContextMenu
+                          ? (event) => onCellContextMenu(event, row, column, index)
+                          : undefined
+                      }
+                      onKeyDown={
+                        onCellClick || onSelectionChange
+                          ? (event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handleCellSelect(
+                                  row,
+                                  column,
+                                  index,
+                                  modifiersFromMouseEvent(event),
+                                );
+                              }
+                            }
+                          : undefined
+                      }
+                      style={
+                        columnWidths[column.key] != null
+                          ? {
+                              width: columnWidths[column.key],
+                              minWidth: columnWidths[column.key],
+                            }
+                          : undefined
+                      }
+                    >
+                      {column.render(row)}
+                    </td>
+                  );
+                })}
+              </tr>
+              {isExpanded && renderExpandedRow ? (
+                <tr className={classNames.detailRow ?? "delpi-ui-table__detail-row"}>
+                  <td
+                    className={classNames.detailCell ?? "delpi-ui-table__detail-cell"}
+                    colSpan={colSpan}
+                    onClick={(event) => event.stopPropagation()}
                   >
-                    {column.render(row)}
+                    {renderExpandedRow(row, index)}
                   </td>
-                );
-              })}
-            </tr>
+                </tr>
+              ) : null}
+            </Fragment>
           );
         })}
       </tbody>

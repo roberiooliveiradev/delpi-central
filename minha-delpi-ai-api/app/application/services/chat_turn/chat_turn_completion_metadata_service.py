@@ -99,6 +99,16 @@ class ChatTurnCompletionMetadataService:
             pipeline_stages=turn.pipeline_stages,
         )
 
+        from app.application.services.chat_catalog_selection_pending_service import (
+            ChatCatalogSelectionPendingService,
+        )
+
+        ChatCatalogSelectionPendingService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+            tool_calls=tool_calls,
+        )
+
         from app.domain.services.chat_active_query_session_service import (
             ChatActiveQuerySessionService,
         )

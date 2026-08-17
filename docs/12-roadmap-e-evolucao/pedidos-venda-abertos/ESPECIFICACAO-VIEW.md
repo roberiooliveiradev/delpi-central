@@ -42,6 +42,13 @@ Todos os campos abaixo devem ser selecionados **explicitamente** no repository (
 | `preco_venda` | number | Preço unitário de venda | BRL na UI |
 | `valor_aberto` | number | Valor financeiro em aberto | BRL na UI |
 
+### Campos intencionalmente **ausentes**
+
+| Campo | Motivo |
+|-------|--------|
+| `created_by` | SC5 sem usuário criador resolvível — [pedido-venda-criador.md](../../../api-delpi/docs/api/padroes-totvs/pedido-venda-criador.md) |
+| `C5_MSUIDT` | UUID técnico (SX3 «Campo UUID»); não expor como criador |
+
 ---
 
 ## 3. Agregados do summary (SQL)

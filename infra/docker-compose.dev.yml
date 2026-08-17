@@ -1,7 +1,9 @@
 # Compose dev — perfis:
-#   (padrão)  postgres, keycloak, core-api, portal, gateway, postgres-plugins, api-delpi
-#   chat      ollama, minha-delpi-ai-api, minha-delpi-chat, searxng, languagetool
-#   plugins   microfrontends e APIs de plugin (dashboards, MFEs, etc.)
+#   (padrão)  postgres, keycloak, core-api, portal, gateway, postgres-plugins, api-delpi,
+#             plugin-ui, tv-dashboard, tv-dashboard-api, public-hub
+#   chat      minha-delpi-ai-api, minha-delpi-chat (sem Ollama — pesado demais no WSL)
+#   plugins   demais microfrontends e APIs de plugin
+#   optional-heavy  ollama, searxng, languagetool (só sob demanda)
 #
 # ⚠ NÃO misture com docker-compose.yml (prod) no mesmo comando — isso sobe ~40+ containers
 #   e estoura RAM em máquinas dev (~8 GB). Use SOMENTE este arquivo no local.
@@ -10,7 +12,8 @@
 #   docker compose -f infra/docker-compose.dev.yml up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
-#   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + override de RAM
+#   docker compose -f infra/docker-compose.dev.yml --profile optional-heavy up -d ollama
+#   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + TV + override de RAM
 #   ./infra/scripts/build-plugins-shared-base.sh   # imagem build tv-dashboard-presentation (bundled)
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
 
@@ -95,11 +98,13 @@ services:
       KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
 
       KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-}
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
       KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS}
 
-      KC_PROXY: ${KC_PROXY}
-      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS}
+      # Dev é HTTP em localhost. Não usar KC_PROXY=edge nem KC_PROXY_HEADERS:
+      # o Keycloak marca cookies Secure e o browser descarta → OAuth 400.
+      # Produção (nginx.conf + HTTPS) continua com proxy headers no compose de prod.
 
       TZ: ${TZ}
 
@@ -177,7 +182,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     profiles:
-      - chat
+      - optional-heavy
     container_name: delpi-ollama
     restart: unless-stopped
 
@@ -430,10 +435,10 @@ services:
         condition: service_started
       postgres-plugins:
         condition: service_healthy
-      ollama:
-        condition: service_started
+      # Ollama/SearXNG são optional-heavy — chat sobe sem eles (LLM externo via .env).
       searxng:
         condition: service_started
+        required: false
     networks:
       - delpi-network
 
@@ -667,7 +672,9 @@ services:
       - delpi-network
 
   tv-dashboard:
-    <<: *plugin-ui-federated
+    # Stack TV no padrão local (sem --profile plugins).
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: tv-dashboard/Dockerfile
@@ -689,6 +696,22 @@ services:
       target: production
 
     container_name: delpi-pedidos-venda-abertos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  commercial:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: commercial/Dockerfile
+      target: production
+
+    container_name: delpi-commercial
     restart: unless-stopped
 
     environment:
@@ -810,7 +833,9 @@ services:
       - delpi-network
 
   public-hub:
-    <<: *plugin-ui-federated
+    # Apresentação pública do TV Dashboard — padrão local com o MFE admin.
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
@@ -842,7 +867,7 @@ services:
       - delpi-network
 
   plugin-ui:
-    <<: *plugin-profile
+    # Remote MF no padrão local (TV Dashboard e demais MFEs federados).
     build:
       context: ../plugins
       dockerfile: plugin-ui/Dockerfile
@@ -934,6 +959,22 @@ services:
     networks:
       - delpi-network
 
+  materiais-terceiros:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: materiais-terceiros/Dockerfile
+      target: production
+
+    container_name: delpi-materiais-terceiros
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     <<: *plugin-ui-federated
     build:
@@ -958,6 +999,22 @@ services:
       target: production
 
     container_name: delpi-canal-denuncia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  mural-acessos:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: mural-acessos/Dockerfile
+      target: production
+
+    container_name: delpi-mural-acessos
     restart: unless-stopped
 
     environment:
@@ -1068,6 +1125,22 @@ services:
       target: production
 
     container_name: delpi-lancamento-notas-fiscais
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  invoice-issuance:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: invoice-issuance/Dockerfile
+      target: production
+
+    container_name: delpi-invoice-issuance
     restart: unless-stopped
 
     environment:
@@ -1210,10 +1283,13 @@ services:
       PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: ${PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR:-/app/data/pedidos-venda-abertos/avatars}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
+      MURAL_ACESSOS_UPLOAD_DIR: ${MURAL_ACESSOS_UPLOAD_DIR:-/app/data/mural-acessos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
+      INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1260,10 +1336,12 @@ services:
       - ${DRAWING_PDF_FILESERVER_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/invoice-issuance:/app/data/invoice-issuance
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/guias-procedimentos:/app/data/guias-procedimentos
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/mural-acessos:/app/data/mural-acessos
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr
@@ -1385,6 +1463,13 @@ services:
       TM_ATA_SIGNATURE_UPLOAD_DIR: ${TM_ATA_SIGNATURE_UPLOAD_DIR:-/app/data/transformometro/atas/signatures}
       TM_ATA_PDF_UPLOAD_DIR: ${TM_ATA_PDF_UPLOAD_DIR:-/app/data/transformometro/atas/pdfs}
       TM_PORTAL_NOTIFICATIONS_ENABLED: ${TM_PORTAL_NOTIFICATIONS_ENABLED:-true}
+      TM_MAIL_ENABLED: ${TM_MAIL_ENABLED:-true}
+      TM_ATA_SIGN_INVITE_TTL_DAYS: ${TM_ATA_SIGN_INVITE_TTL_DAYS:-14}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
       CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
 
@@ -1453,6 +1538,69 @@ services:
     depends_on:
       - keycloak
       - postgres-plugins
+
+    networks:
+      - delpi-network
+
+  commercial-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: commercial-api/Dockerfile
+
+    container_name: delpi-commercial-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      COMMERCIAL_API_ROOT_PATH: /apps/commercial-api
+      COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: ${COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP:-true}
+      COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-commercial}
+      COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
+      COMMERCIAL_ATTACHMENT_UPLOAD_DIR: /app/data/commercial-attachments
+      COMMERCIAL_USER_AVATAR_UPLOAD_DIR: /app/data/commercial-user-avatars
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: commercial-api
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ../commercial-api:/app
+      - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-avatars:/app/data/commercial-avatars
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-attachments:/app/data/commercial-attachments
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-user-avatars:/app/data/commercial-user-avatars
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - api-delpi
+      - core-api
 
     networks:
       - delpi-network
@@ -1642,7 +1790,7 @@ services:
       - delpi-network
 
   tv-dashboard-api:
-    <<: *plugin-profile
+    # API do TV no padrão local (SI é opcional — URL via env).
     build:
       context: ..
       dockerfile: tv-dashboard-api/Dockerfile
@@ -1699,7 +1847,6 @@ services:
       - keycloak
       - postgres-plugins
       - api-delpi
-      - strategic-indicators-api
       - core-api
 
     networks:
@@ -1743,10 +1890,12 @@ services:
     restart: unless-stopped
 
     ports:
-      - "80:80"
+      # Cursor no Windows costuma ocupar 80/8080 do localhost — use GATEWAY_HOST_PORT no .env
+      - "${GATEWAY_HOST_PORT:-80}:80"
 
     volumes:
       - ../gateway/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ../gateway/snippets:/etc/nginx/snippets:ro
 
     # Nginx resolve plugins sob demanda (delpi-{id}). Evita rebuild de todos os MFEs ao subir o gateway.
     depends_on:

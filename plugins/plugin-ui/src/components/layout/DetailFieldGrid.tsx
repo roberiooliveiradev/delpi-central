@@ -61,19 +61,21 @@ function renderFieldLabel(
   labels: DetailFieldGridLabels,
   wrapLabels: boolean,
 ): ReactNode {
-  const labelContent = (
-    <>
-      {field.label}
-      {field.hint ? (
-        <HelpTooltip
-          content={field.hint}
-          ariaLabel={labels.fieldHelpAriaLabel(field.label)}
-        />
-      ) : null}
-    </>
+  const hasHint = field.hint != null && field.hint !== "";
+  const labelContent = hasHint ? (
+    <HelpTooltip
+      content={field.hint!}
+      ariaLabel={labels.fieldHelpAriaLabel(field.label)}
+      wrap
+      placement="bottom"
+    >
+      <span className="delpi-ui-section-hint-label">{field.label}</span>
+    </HelpTooltip>
+  ) : (
+    field.label
   );
 
-  if (field.hint || wrapLabels) {
+  if (hasHint || wrapLabels) {
     return (
       <dt>
         <span className={classNames.label}>{labelContent}</span>

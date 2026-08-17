@@ -1,0 +1,32 @@
+/* Grid de cards + barra de ordenação */
+
+.delpi-ui-data-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  font-size: var(--delpi-ui-table-font-size, 13px);
+}
+
+.delpi-ui-data-cards-grid__empty {
+  margin: 12px 0 0;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+
+.delpi-ui-data-cards-sort-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-data-cards-sort-bar__dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

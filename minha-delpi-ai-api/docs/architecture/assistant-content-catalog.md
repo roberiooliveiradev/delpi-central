@@ -29,7 +29,7 @@ Wrappers especializados (mantêm API estável):
 
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
-| `external_action_responses.json` | **`domainPredicates`** + **`systemPredicates`** + **`productSearchPredicates`** + `actionSelection` (incl. **`manifestText`**, **`siblingDisambiguation`**) + `selectionReasons` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService`, `ExternalActionManifestTextService`, `ExternalActionCandidatePrioritizationService` |
+| `external_action_responses.json` | **`domainPredicates`** + **`systemPredicates`** + **`productSearchPredicates`** + `actionSelection` (incl. **`manifestText`**, **`siblingDisambiguation`**) + `selectionReasons` + `security.confirmMarkers` / `writeIntentMarkers` / `confirmPattern` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService`, `ExternalActionManifestTextService`, `ExternalActionCandidatePrioritizationService`, `ChatWriteConfirmationService` |
 | `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, **`sqlReadiness`**, ~78 rotas manuais + **`autoTierCRoutes`** geradas do OpenAPI, `match.productionOperationalKind` PB15, predicados, intent binding) | `OperationalRouteRegistryService`, `OperationalRouteRegistryGeneratorService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
 | `product_query_intent.json` | Marcadores de intenção operacional; **`intentProbes`** declarativos + pipeline detect/refine; **`routePredicates`**, **`playbookPredicates`**, **`subIntentPredicates`**, **`intentDetectPipeline`**, **`intentRefinementPipeline`**, **`singleScopeIntentMap`**; **`router.operationalSubIntentPipeline`**, **`router.operationalAmbiguityExclusionPredicates`** (DOCIE Fase 11–17) | `ChatProductQueryIntentService`, `ChatProductQueryIntentDetectionService`, `ChatProductRoutePredicateService`, `ChatOperationalSubIntentService`, `ChatOperationalAmbiguityService`, `OperationalRouteMatcherService` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
@@ -71,6 +71,7 @@ Wrappers especializados (mantêm API estável):
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
 | `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
+| `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending` (multi-candidatos) | `ChatCatalogSelectionPendingService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
@@ -84,6 +85,7 @@ Wrappers especializados (mantêm API estável):
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom, feedback, **`drawingFollowUpChips`** / **`drawingFollowUpQueries`** (incl. «Reextrair BOM do PDF», 15.8.5) | `ChatPersonalityContentService`, `ChatDrawingFollowUpService` |
 | `sql_intent_vocabulary.json` | Marcadores SQL (intenção, refinamento, produção, analisador) — seção **`shared`** para termos reutilizados | `ChatSqlIntentVocabularyService` → vários `ChatSql*` |
+| `tv_dashboard_copilot_intent.json` | Surface/confirmação do Copiloto TV (`surfaceTokens`, frases leves, `hostPrompt`, `selectionReason` / `applySelectionReason`, `catalogUnavailable`, `directAnswer`) — **sem** catálogo de ops (vem do BFF) | `ChatTvDashboardCopilotIntentService`, `ChatHostSurfaceContextService`, `ChatTvDashboardPlatformToolSelectionService`, `ChatPlatformToolDirectAnswerService` |
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |

@@ -20,6 +20,24 @@ def test_document_formatters_are_locale_independent():
     assert role_label("vice_president") == "Vice-presidente da CIPA"
 
 
+def test_html_to_paragraphs_renders_tables():
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    styles = getSampleStyleSheet()
+    blocks = html_to_paragraphs(
+        "<p>Antes</p>"
+        "<table><tr><th>Col A</th><th>Col B</th></tr>"
+        "<tr><td>1</td><td>2</td></tr></table>"
+        "<p>Depois</p>",
+        styles["BodyText"],
+        styles["BodyText"],
+    )
+    tables = [block for block in blocks if isinstance(block, Table)]
+    assert len(tables) == 1
+    assert len(tables[0]._cellvalues) == 2
+    assert len(tables[0]._cellvalues[0]) == 2
+
+
 def test_renderer_builds_formal_pdf_with_participants_and_signers():
     renderer = MinutePdfRenderer()
     raw = renderer.render(

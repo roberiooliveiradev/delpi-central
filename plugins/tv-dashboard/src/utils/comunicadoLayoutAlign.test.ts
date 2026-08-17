@@ -54,7 +54,7 @@ describe("alignComunicadoBlocks", () => {
     expect(xs[1] - xs[0]).toBeCloseTo(xs[2] - xs[1], 1);
   });
 
-  it("alinha dois grupos pelo bounding box sem colapsar filhos", () => {
+  it("alinha membros do grupo como multi-seleção, não como uma bbox", () => {
     const a = createBlock("text", "A");
     const b = createBlock("text", "B");
     const c = createBlock("text", "C");
@@ -78,12 +78,14 @@ describe("alignComunicadoBlocks", () => {
     const nc = next.find((block) => block.id === c.id)!;
     const nd = next.find((block) => block.id === d.id)!;
 
-    expect(nb.frame.x - na.frame.x).toBe(10);
-    expect(nb.frame.y - na.frame.y).toBe(10);
-    expect(nd.frame.x - nc.frame.x).toBe(10);
-    expect(nd.frame.y - nc.frame.y).toBe(10);
     expect(na.frame.y).toBe(0);
+    expect(nb.frame.y).toBe(0);
     expect(nc.frame.y).toBe(0);
+    expect(nd.frame.y).toBe(0);
+    expect(na.frame.x).toBe(0);
+    expect(nb.frame.x).toBe(10);
+    expect(nc.frame.x).toBe(40);
+    expect(nd.frame.x).toBe(50);
   });
 
   it("alinha ao slide com um bloco", () => {

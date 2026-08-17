@@ -18,6 +18,7 @@ const LABELS = {
 /* FilterBar já estruturado — root sem pva-filter-box para não aninhar cards. */
 export const MultiSelectField = createDashboardMultiSelectField({
   labels: LABELS,
+  portalScopeClassName: "dashboard-pedidos-venda-abertos",
   classNames: {
     ...multiSelectBemClasses("pva"),
     root: "pva-field pva-field--clients",

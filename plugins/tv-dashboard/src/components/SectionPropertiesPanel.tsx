@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
-import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  NativeCheckboxControl,
+  NativeTextControl,
+  TransitionGallery,
+} from "@delpi/plugin-ui/index";
+import {
+  formatPresentationTransitionLabel,
+  PRESENTATION_TRANSITION_STYLES,
+  type PresentationTransitionStyle,
+} from "@delpi/tv-dashboard-presentation";
 
 import type { PlaylistSection } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DeckField } from "./deck/DeckField";
 import { TdNativeTextField } from "./tdFormFields";
-import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { HostContainedDialog } from "./ui/Modal";
 
@@ -15,12 +24,20 @@ type Props = {
   onSave: (patch: Partial<PlaylistSection>) => void;
 };
 
+const F = TV_DASHBOARD_HELP_TOOLTIPS.fields;
 const SECTION_TRANSITION_OPTIONS = [
-  { value: "", label: "Herdar playlist" },
-  { value: "fade", label: "Fade" },
-  { value: "slide", label: "Deslizar" },
-  { value: "none", label: "Sem transição" },
-] as const;
+  {
+    id: "",
+    label: F.transitionSectionInheritLabel,
+    description: F.transitionInheritDescription,
+    previewStyle: "fade",
+  },
+  ...PRESENTATION_TRANSITION_STYLES.map((id) => ({
+    id,
+    label: formatPresentationTransitionLabel(id),
+    description: F.transitionDescriptions[id as PresentationTransitionStyle],
+  })),
+];
 
 /** Propriedades da seção — controles do plugin-ui (sem select/input crus). */
 export function SectionPropertiesPanel({ section, open, onClose, onSave }: Props) {
@@ -86,9 +103,8 @@ export function SectionPropertiesPanel({ section, open, onClose, onSave }: Props
           />
         </DeckField>
         <DeckField id="td-section-transition" label="Transição">
-          <TdRibbonSelect
-            id="td-section-transition"
-            aria-label="Transição da seção"
+          <TransitionGallery
+            ariaLabel="Transição da seção"
             value={section.transitionStyle ?? ""}
             options={SECTION_TRANSITION_OPTIONS}
             onChange={(value) => onSave({ transitionStyle: value ? value : null })}

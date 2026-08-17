@@ -1,0 +1,50 @@
+/* portal/src/ui-kit/alert/Alert.css */
+
+.portal-ui-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.portal-ui-alert__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.portal-ui-alert__body {
+  margin: 0;
+  color: inherit;
+}
+
+.portal-ui-alert__body ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.portal-ui-alert--info {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.portal-ui-alert--success {
+  border-color: var(--alert-success-border);
+  background: var(--alert-success-bg);
+}
+
+.portal-ui-alert--warning {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.portal-ui-alert--danger {
+  border-color: var(--alert-danger-border);
+  background: var(--alert-danger-bg);
+}

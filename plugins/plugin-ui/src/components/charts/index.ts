@@ -55,6 +55,22 @@ export {
   type ComparativeAreaChartSeries,
 } from "./ComparativeAreaChart";
 export {
+  SpeedometerGauge,
+  SPEEDOMETER_TONE_COLORS,
+  resolveSpeedometerZoneThresholds,
+  speedometerGaugeBemClasses,
+  type SpeedometerGaugeClassNames,
+  type SpeedometerGaugeProps,
+  type SpeedometerGaugeTone,
+} from "./SpeedometerGauge";
+export {
+  HorizontalValueBars,
+  horizontalValueBarsBemClasses,
+  type HorizontalValueBarItem,
+  type HorizontalValueBarsClassNames,
+  type HorizontalValueBarsProps,
+} from "./HorizontalValueBars";
+export {
   ChartSeriesViewport,
   chartSeriesViewportBemClasses,
   type ChartSeriesViewportClassNames,
@@ -88,6 +104,9 @@ export {
   SERIES_CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   formatSeriesChartValue,
   formatSeriesChartCategoryLabel,
+  resolveSeriesChartValueDisplaySpec,
+  resolveSeriesChartCategoryDisplaySpec,
+  localizeEnglishMonthTokensInLabel,
   parseSeriesChartCategoryDate,
   truncateSeriesChartCategoryLabel,
   mergeSeriesChartOptions,
@@ -99,6 +118,9 @@ export {
   resolveSeriesChartValueDomain,
   resolveSeriesCategoryColor,
   resolveValueScaleColor,
+  resolveGoalThresholdColor,
+  GOAL_SCALE_BAND_RATIO,
+  GOAL_SCALE_COLORS,
   seriesValueExtent,
   seriesChartThemeStyle,
   usableSeriesChartPoints,
@@ -259,3 +281,56 @@ export {
   seriesChartPointsAttr,
   type SeriesChartCurvePoint,
 } from "./seriesChartCurve";
+
+export {
+  TIME_MULTI_SERIES_TYPES,
+  PERIOD_COMPARE_TYPES,
+  RANKING_TYPES,
+  COMPOSITION_TYPES,
+  CATEGORICAL_TYPES,
+  CHART_TYPE_LABELS_PT,
+  chartTypesForFamily,
+  defaultChartTypeForFamily,
+  familySupportsChartTypeSwitch,
+  type ChartDataFamily,
+} from "./chartDataFamilies";
+
+export {
+  ChartTypeSegmentToggle,
+  type ChartTypeSegmentToggleProps,
+} from "./ChartTypeSegmentToggle";
+
+export {
+  ChartOverlayOptionsPopover,
+  summarizeChartOverlayOptions,
+  type ChartOverlayOption,
+  type ChartOverlayOptionsPopoverProps,
+} from "./ChartOverlayOptionsPopover";
+
+export {
+  MAX_COMPARE_YEARS,
+  buildCompareYearsOverlayOptions,
+  clampCompareYears,
+  compareYearOffsets,
+  type CompareYearsCount,
+  type CompareYearsOverlayLabels,
+} from "./compareYearsOverlay";
+
+export {
+  delpiChartTypeToPersisted,
+  persistedChartTypeToDelpi,
+  persistedChartTypesToDelpi,
+} from "./chartTypeBridge";
+
+export {
+  MultiTypeSeriesChart,
+  type MultiTypeSeriesChartProps,
+  type MultiTypeSeriesSpec,
+} from "./MultiTypeSeriesChart";
+
+export {
+  ChartViewShell,
+  chartViewShellBemClasses,
+  type ChartViewShellClassNames,
+  type ChartViewShellProps,
+} from "./ChartViewShell";

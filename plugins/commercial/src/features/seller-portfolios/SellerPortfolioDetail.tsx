@@ -1,0 +1,720 @@
+import { Plus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  NativeCheckboxControl,
+  UserDirectoryPicker,
+  type DirectoryUserOption,
+} from "@delpi/plugin-ui/index";
+
+import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
+import {
+  CommercialActionButton,
+  CommercialDataListToolbar,
+  CommercialDataTable,
+  CommercialEmptyState,
+  CommercialSectionCard,
+  CommercialStateBanner,
+  CommercialStatusBadge,
+  CommercialTextField,
+  CommercialViewTransition,
+  type DataTableColumn,
+} from "../../app/commercialUi";
+import { CM_HELP } from "../../content/helpTooltips";
+import { PORTFOLIO_COVERAGE_CONTENT } from "../../content/portfolioCoverageContent";
+import {
+  PORTFOLIO_CUSTOMERS_CONTENT,
+  PORTFOLIO_MEMBERS_CONTENT,
+} from "../../content/portfolioMembersContent";
+import { customerKey } from "../../shared/format";
+import type {
+  SellerCustomer,
+  SellerPortfolio,
+  SellerPortfolioMember,
+} from "../../types/portfolio";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../hooks/useCustomerAvatarPresence";
+import { CustomerAvatar } from "../customers/components/CustomerAvatar";
+import {
+  CustomerSearchPicker,
+  type CustomerSearchSelection,
+} from "../customers/components/CustomerSearchPicker";
+import { TaskUserChipAvatar } from "../my-day/TaskUserChipAvatar";
+
+type SellerPortfolioDetailProps = {
+  portfolio: SellerPortfolio;
+  busyCustomerKey: string | null;
+  linkingCustomers?: boolean;
+  busyMemberUserId: string | null;
+  addingMembers?: boolean;
+  overlappingCustomerKeys?: ReadonlySet<string>;
+  otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
+  directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string;
+  onAddCustomers: (items: CustomerSearchSelection[]) => void;
+  onRemoveCustomer: (code: string, store: string) => void;
+  onRemoveCustomers: (items: Array<{ code: string; store: string }>) => void;
+  unlinkingCustomers?: boolean;
+  onAddMembers: (userIds: string[]) => void;
+  onRemoveMember: (userId: string) => void;
+  onSetOwner: (userId: string) => void;
+};
+
+function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
+  const members = portfolio.members ?? [];
+  if (members.length > 0) return members;
+  const owner = (portfolio.owner_user_id ?? portfolio.user_id ?? "").trim();
+  return owner ? [{ user_id: owner, role: "owner" }] : [];
+}
+
+function linkedCustomerMatchesFilter(row: SellerCustomer, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const haystack = [
+    row.customer_code,
+    row.customer_store,
+    row.customer_name ?? "",
+    `${row.customer_code}/${row.customer_store}`,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(needle);
+}
+
+export function SellerPortfolioDetail({
+  portfolio,
+  busyCustomerKey,
+  linkingCustomers = false,
+  unlinkingCustomers = false,
+  busyMemberUserId,
+  addingMembers = false,
+  overlappingCustomerKeys,
+  otherPortfolioLabelsFor,
+  directoryLabelFor,
+  onAddCustomers,
+  onRemoveCustomer,
+  onRemoveCustomers,
+  onAddMembers,
+  onRemoveMember,
+  onSetOwner,
+}: SellerPortfolioDetailProps) {
+  const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
+  const [customerPicker, setCustomerPicker] = useState<CustomerSearchSelection[]>([]);
+  const [selectedLinkedKeys, setSelectedLinkedKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [linkedFilter, setLinkedFilter] = useState("");
+  const [memberSearchOpen, setMemberSearchOpen] = useState(
+    () => resolveMembers(portfolio).length === 0,
+  );
+  const [customerSearchOpen, setCustomerSearchOpen] = useState(
+    () => (portfolio.customers ?? []).length === 0,
+  );
+
+  useEffect(() => {
+    setMemberPicker([]);
+    setCustomerPicker([]);
+    setSelectedLinkedKeys(new Set());
+    setLinkedFilter("");
+    setMemberSearchOpen(resolveMembers(portfolio).length === 0);
+    setCustomerSearchOpen((portfolio.customers ?? []).length === 0);
+  }, [portfolio.id]);
+
+  const linked = portfolio.customers ?? [];
+  const linkedKeys = useMemo(
+    () =>
+      new Set(
+        linked.map((customer) =>
+          customerKey(customer.customer_code, customer.customer_store),
+        ),
+      ),
+    [linked],
+  );
+  const avatarPairs = useMemo(
+    () =>
+      linked.map((customer) => ({
+        customer_code: customer.customer_code,
+        customer_store: customer.customer_store,
+      })),
+    [linked],
+  );
+  const avatarByKey = useCustomerAvatarPresence(avatarPairs);
+
+  useEffect(() => {
+    setCustomerPicker((prev) =>
+      prev.filter((item) => !linkedKeys.has(customerKey(item.code, item.store))),
+    );
+  }, [linkedKeys]);
+
+  useEffect(() => {
+    setSelectedLinkedKeys((prev) => {
+      const next = new Set([...prev].filter((key) => linkedKeys.has(key)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [linkedKeys]);
+
+  const members = resolveMembers(portfolio);
+  const isOrphan = members.length === 0;
+  const showMemberSearch = memberSearchOpen || isOrphan;
+  const showCustomerSearch = customerSearchOpen || linked.length === 0;
+  const memberIds = useMemo(
+    () => new Set(members.map((member) => member.user_id)),
+    [members],
+  );
+
+  useEffect(() => {
+    setMemberPicker((prev) => prev.filter((user) => !memberIds.has(user.id)));
+  }, [memberIds]);
+
+  const searchMemberCandidates = useCallback(
+    async (query: string, limit?: number, signal?: AbortSignal) => {
+      const hits = await searchDirectoryUsers(query, limit, signal);
+      return hits.filter((hit) => !memberIds.has(hit.id));
+    },
+    [memberIds],
+  );
+
+  const filteredLinked = useMemo(
+    () => linked.filter((row) => linkedCustomerMatchesFilter(row, linkedFilter)),
+    [linked, linkedFilter],
+  );
+
+  const filteredLinkedKeys = useMemo(
+    () =>
+      filteredLinked.map((row) =>
+        customerKey(row.customer_code, row.customer_store),
+      ),
+    [filteredLinked],
+  );
+
+  const allFilteredSelected =
+    filteredLinkedKeys.length > 0 &&
+    filteredLinkedKeys.every((key) => selectedLinkedKeys.has(key));
+
+  const linkedColumns = useMemo<DataTableColumn<SellerCustomer>[]>(
+    () => [
+      {
+        key: "select",
+        header: "Sel.",
+        render: (row) => {
+          const key = customerKey(row.customer_code, row.customer_store);
+          return (
+            <NativeCheckboxControl
+              id={`portfolio-linked-${portfolio.id}-${key}`}
+              checked={selectedLinkedKeys.has(key)}
+              onChange={(checked) => {
+                setSelectedLinkedKeys((prev) => {
+                  const next = new Set(prev);
+                  if (checked) next.add(key);
+                  else next.delete(key);
+                  return next;
+                });
+              }}
+              aria-label={`Selecionar ${row.customer_name ?? key}`}
+              disabled={unlinkingCustomers}
+            />
+          );
+        },
+      },
+      {
+        key: "code",
+        header: "Código/loja",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerCode,
+        render: (row) => `${row.customer_code}/${row.customer_store}`,
+      },
+      {
+        key: "name",
+        header: "Nome",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerName,
+        render: (row) => {
+          const name = row.customer_name?.trim() || row.customer_code;
+          const hasAvatar =
+            avatarByKey.get(
+              customerAvatarKey(row.customer_code, row.customer_store),
+            ) === true;
+          return (
+            <div className="cm-row-actions">
+              <CustomerAvatar
+                code={row.customer_code}
+                store={row.customer_store}
+                name={name}
+                hasAvatar={hasAvatar}
+                size="sm"
+              />
+              <span>{row.customer_name?.trim() || "—"}</span>
+            </div>
+          );
+        },
+      },
+      {
+        key: "coverage",
+        header: "Cobertura",
+        headerHint: CM_HELP.sellerPortfolios.overlappingCustomer,
+        render: (row) => {
+          const key = customerKey(row.customer_code, row.customer_store);
+          if (!overlappingCustomerKeys?.has(key)) return "—";
+          const others = otherPortfolioLabelsFor?.(row.customer_code, row.customer_store) ?? [];
+          return (
+            <span className="cm-row-actions">
+              <CommercialStatusBadge
+                label={PORTFOLIO_COVERAGE_CONTENT.overlappingBadge}
+                variant="warning"
+              />
+              {others.length > 0 ? (
+                <span>
+                  {PORTFOLIO_COVERAGE_CONTENT.overlappingAlsoIn}: {others.join(", ")}
+                </span>
+              ) : null}
+            </span>
+          );
+        },
+      },
+      {
+        key: "action",
+        header: "Ação",
+        render: (row) => {
+          const key = customerKey(row.customer_code, row.customer_store);
+          return (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={
+                busyCustomerKey === key || linkingCustomers || unlinkingCustomers
+              }
+              onClick={() => onRemoveCustomer(row.customer_code, row.customer_store)}
+              aria-label={`Remover ${row.customer_name ?? row.customer_code}`}
+            >
+              {busyCustomerKey === key ? "Removendo…" : "Remover"}
+            </CommercialActionButton>
+          );
+        },
+      },
+    ],
+    [
+      avatarByKey,
+      busyCustomerKey,
+      linkingCustomers,
+      onRemoveCustomer,
+      otherPortfolioLabelsFor,
+      overlappingCustomerKeys,
+      portfolio.id,
+      selectedLinkedKeys,
+      unlinkingCustomers,
+    ],
+  );
+
+  const memberColumns = useMemo<DataTableColumn<SellerPortfolioMember>[]>(
+    () => [
+      {
+        key: "user",
+        header: "Usuário",
+        headerHint: CM_HELP.sellerPortfolios.colMemberUser,
+        render: (row) => {
+          const name = directoryLabelFor(row.user_id);
+          return (
+            <div className="cm-row-actions">
+              <TaskUserChipAvatar userId={row.user_id} name={name} />
+              <span>{name}</span>
+              {row.has_portal_access === false ? (
+                <span title={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessHint}>
+                  <CommercialStatusBadge
+                    label={PORTFOLIO_MEMBERS_CONTENT.noPortalAccessBadge}
+                    variant="warning"
+                  />
+                </span>
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
+        key: "role",
+        header: "Papel",
+        headerHint: CM_HELP.sellerPortfolios.colMemberRole,
+        render: (row) => (
+          <CommercialStatusBadge
+            label={
+              row.role === "owner"
+                ? PORTFOLIO_MEMBERS_CONTENT.roleOwner
+                : PORTFOLIO_MEMBERS_CONTENT.roleMember
+            }
+            variant={row.role === "owner" ? "info" : "neutral"}
+          />
+        ),
+      },
+      {
+        key: "action",
+        header: "Ação",
+        render: (row) => {
+          const busy = busyMemberUserId === row.user_id;
+          return (
+            <div className="cm-row-actions">
+              {row.role !== "owner" ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={busy || addingMembers}
+                  onClick={() => onSetOwner(row.user_id)}
+                  aria-label={CM_HELP.sellerPortfolios.setOwner}
+                >
+                  {busy ? "Atualizando…" : "Tornar responsável"}
+                </CommercialActionButton>
+              ) : null}
+              {row.role !== "owner" || members.length > 1 ? (
+                <CommercialActionButton
+                  variant="ghost"
+                  disabled={
+                    busy ||
+                    addingMembers ||
+                    (row.role === "owner" && members.length <= 1)
+                  }
+                  onClick={() => onRemoveMember(row.user_id)}
+                  aria-label={CM_HELP.sellerPortfolios.removeMember}
+                >
+                  {busy ? "Removendo…" : "Remover"}
+                </CommercialActionButton>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [addingMembers, busyMemberUserId, directoryLabelFor, members.length, onRemoveMember, onSetOwner],
+  );
+
+  return (
+    <div className="cm-portfolios-detail-stack">
+      {isOrphan ? (
+        <CommercialStateBanner>{PORTFOLIO_MEMBERS_CONTENT.orphanBanner}</CommercialStateBanner>
+      ) : null}
+
+      <CommercialSectionCard
+        title={`Usuários (${members.length.toLocaleString("pt-BR")})`}
+        subtitle={
+          isOrphan
+            ? PORTFOLIO_MEMBERS_CONTENT.sectionSubtitleOrphan
+            : PORTFOLIO_MEMBERS_CONTENT.sectionSubtitleWithOwner
+        }
+        hint={CM_HELP.sellerPortfolios.members}
+        actions={
+          isOrphan ? undefined : showMemberSearch ? (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={addingMembers}
+              onClick={() => {
+                setMemberPicker([]);
+                setMemberSearchOpen(false);
+              }}
+            >
+              {PORTFOLIO_MEMBERS_CONTENT.closeMemberSearch}
+            </CommercialActionButton>
+          ) : (
+            <CommercialActionButton
+              variant="primary"
+              disabled={addingMembers}
+              onClick={() => setMemberSearchOpen(true)}
+              aria-label={CM_HELP.sellerPortfolios.membersAdd}
+            >
+              <Plus size={16} aria-hidden />
+              {PORTFOLIO_MEMBERS_CONTENT.addMoreMembers}
+            </CommercialActionButton>
+          )
+        }
+      >
+        <div className="cm-portfolios-detail-block">
+          {showMemberSearch ? (
+            <>
+              <UserDirectoryPicker
+                value={memberPicker}
+                onChange={(users) => {
+                  setMemberPicker(users.filter((user) => !memberIds.has(user.id)));
+                }}
+                searchUsers={searchMemberCandidates}
+                maxSelected={10}
+                disabled={addingMembers}
+                labels={{
+                  title: isOrphan
+                    ? "Adicionar responsável"
+                    : "Usuário com acesso ao Portal Comercial",
+                  hint: CM_HELP.sellerPortfolios.membersAdd,
+                  placeholder: isOrphan
+                    ? "Buscar responsável…"
+                    : "Buscar para adicionar…",
+                }}
+                renderOptionLeading={(user) => (
+                  <TaskUserChipAvatar
+                    userId={user.id}
+                    name={(user.name || "").trim() || user.email}
+                  />
+                )}
+                renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <TaskUserChipAvatar
+                      userId={user.id}
+                      name={(user.name || "").trim() || user.email}
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled || addingMembers}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
+              />
+              <div className="cm-portfolios-form__actions">
+                <CommercialActionButton
+                  variant="primary"
+                  disabled={addingMembers || memberPicker.length === 0}
+                  onClick={() => onAddMembers(memberPicker.map((user) => user.id))}
+                  title={CM_HELP.sellerPortfolios.addSelectedMembers}
+                >
+                  {addingMembers
+                    ? "Adicionando…"
+                    : memberPicker.length <= 1
+                      ? "Adicionar selecionado"
+                      : `Adicionar selecionados (${memberPicker.length})`}
+                </CommercialActionButton>
+              </div>
+            </>
+          ) : null}
+
+          <CommercialViewTransition
+            transitionKey={`members-${portfolio.id}-${members.length}`}
+            tone="panel"
+          >
+            {isOrphan ? (
+              <CommercialEmptyState
+                title={PORTFOLIO_MEMBERS_CONTENT.emptyTitle}
+                message={PORTFOLIO_MEMBERS_CONTENT.emptyMessage}
+              >
+                <p className="cm-muted">{PORTFOLIO_MEMBERS_CONTENT.emptyCta}</p>
+              </CommercialEmptyState>
+            ) : (
+              <CommercialDataTable
+                rows={members}
+                columns={memberColumns}
+                rowKey={(row) => row.user_id}
+                layout="embedded"
+              />
+            )}
+          </CommercialViewTransition>
+        </div>
+      </CommercialSectionCard>
+
+      <CommercialSectionCard
+        title="Clientes"
+        subtitle="Vincule contas TOTVS a esta carteira"
+        hint={CM_HELP.sellerPortfolios.customers}
+        actions={
+          linked.length === 0 ? undefined : showCustomerSearch ? (
+            <CommercialActionButton
+              variant="ghost"
+              disabled={linkingCustomers}
+              onClick={() => {
+                setCustomerPicker([]);
+                setCustomerSearchOpen(false);
+              }}
+            >
+              {PORTFOLIO_CUSTOMERS_CONTENT.closeCustomerSearch}
+            </CommercialActionButton>
+          ) : (
+            <CommercialActionButton
+              variant="primary"
+              disabled={linkingCustomers}
+              onClick={() => setCustomerSearchOpen(true)}
+              aria-label={CM_HELP.sellerPortfolios.searchCustomers}
+            >
+              <Plus size={16} aria-hidden />
+              {PORTFOLIO_CUSTOMERS_CONTENT.addMoreCustomers}
+            </CommercialActionButton>
+          )
+        }
+      >
+        <div className="cm-portfolios-detail-stack">
+          {showCustomerSearch ? (
+            <section
+              className="cm-portfolios-detail-block"
+              aria-label={PORTFOLIO_CUSTOMERS_CONTENT.searchSectionLabel}
+            >
+              <h3 className="cm-section-subtitle">
+                {PORTFOLIO_CUSTOMERS_CONTENT.searchSectionLabel}
+              </h3>
+              <CustomerSearchPicker
+                value={customerPicker}
+                onChange={(next) => {
+                  setCustomerPicker(
+                    next.filter(
+                      (item) => !linkedKeys.has(customerKey(item.code, item.store)),
+                    ),
+                  );
+                }}
+                excludeKeys={linkedKeys}
+                maxSelected={20}
+                disabled={linkingCustomers}
+                labels={{
+                  title: "Buscar no cadastro",
+                  hint: CM_HELP.sellerPortfolios.searchCustomers,
+                  placeholder: "Código ou nome do cliente",
+                }}
+                renderOptionLeading={(hit) => (
+                  <CustomerAvatar
+                    code={hit.code}
+                    store={hit.store}
+                    name={(hit.name || "").trim() || hit.code}
+                    size="sm"
+                  />
+                )}
+                renderSelectedChip={({ item, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    <CustomerAvatar
+                      code={item.code}
+                      store={item.store}
+                      name={(item.name || "").trim() || item.code}
+                      size="sm"
+                    />
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled || linkingCustomers}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
+              />
+              <div className="cm-portfolios-form__actions">
+                <CommercialActionButton
+                  variant="primary"
+                  disabled={linkingCustomers || customerPicker.length === 0}
+                  onClick={() => onAddCustomers(customerPicker)}
+                  title={CM_HELP.sellerPortfolios.linkSelectedCustomers}
+                >
+                  {linkingCustomers
+                    ? "Vinculando…"
+                    : customerPicker.length <= 1
+                      ? "Vincular selecionado"
+                      : `Vincular selecionados (${customerPicker.length})`}
+                </CommercialActionButton>
+              </div>
+            </section>
+          ) : null}
+
+          <section className="cm-portfolios-detail-block" aria-label="Clientes vinculados">
+            <h3 className="cm-section-subtitle">
+              Na carteira ({linked.length.toLocaleString("pt-BR")}
+              {linkedFilter.trim()
+                ? ` · ${filteredLinked.length.toLocaleString("pt-BR")} filtrado(s)`
+                : ""}
+              )
+            </h3>
+            {linked.length > 0 ? (
+              <CommercialDataListToolbar
+                leading={
+                  <div className="cm-row-actions">
+                    <CommercialTextField
+                      label="Filtrar vinculados"
+                      hint={CM_HELP.sellerPortfolios.filterLinkedCustomers}
+                      value={linkedFilter}
+                      onChange={setLinkedFilter}
+                      placeholder="Código, loja ou nome"
+                    />
+                    <NativeCheckboxControl
+                      id={`portfolio-linked-select-filtered-${portfolio.id}`}
+                      checked={allFilteredSelected}
+                      onChange={(checked) => {
+                        setSelectedLinkedKeys((prev) => {
+                          const next = new Set(prev);
+                          for (const key of filteredLinkedKeys) {
+                            if (checked) next.add(key);
+                            else next.delete(key);
+                          }
+                          return next;
+                        });
+                      }}
+                      label={
+                        linkedFilter.trim()
+                          ? "Selecionar todos filtrados"
+                          : "Selecionar todos"
+                      }
+                      disabled={unlinkingCustomers || filteredLinkedKeys.length === 0}
+                    />
+                  </div>
+                }
+                actions={
+                  <div className="cm-row-actions">
+                    {selectedLinkedKeys.size > 0 ? (
+                      <span className="cm-muted">
+                        {selectedLinkedKeys.size.toLocaleString("pt-BR")} selecionado(s)
+                      </span>
+                    ) : null}
+                    {selectedLinkedKeys.size > 0 ? (
+                      <CommercialActionButton
+                        variant="ghost"
+                        disabled={unlinkingCustomers}
+                        onClick={() => setSelectedLinkedKeys(new Set())}
+                      >
+                        Limpar seleção
+                      </CommercialActionButton>
+                    ) : null}
+                    <CommercialActionButton
+                      variant="ghost"
+                      disabled={unlinkingCustomers || selectedLinkedKeys.size === 0}
+                      onClick={() => {
+                        const items = linked
+                          .filter((row) =>
+                            selectedLinkedKeys.has(
+                              customerKey(row.customer_code, row.customer_store),
+                            ),
+                          )
+                          .map((row) => ({
+                            code: row.customer_code,
+                            store: row.customer_store,
+                          }));
+                        onRemoveCustomers(items);
+                      }}
+                    >
+                      {unlinkingCustomers
+                        ? "Desvinculando…"
+                        : "Desvincular selecionados"}
+                    </CommercialActionButton>
+                  </div>
+                }
+              />
+            ) : null}
+            <CommercialViewTransition
+              transitionKey={`linked-${portfolio.id}-${filteredLinked.length}-${linkedFilter}`}
+              tone="panel"
+            >
+              {linked.length === 0 ? (
+                <CommercialEmptyState
+                  title="Carteira vazia"
+                  message="Use a busca acima para vincular o primeiro cliente."
+                />
+              ) : filteredLinked.length === 0 ? (
+                <CommercialEmptyState
+                  title="Nenhum cliente no filtro"
+                  message="Ajuste a busca ou limpe o filtro para ver os vinculados."
+                />
+              ) : (
+                <CommercialDataTable
+                  rows={filteredLinked}
+                  columns={linkedColumns}
+                  rowKey={(row, index) =>
+                    customerKey(row.customer_code, row.customer_store) || `linked-${index}`
+                  }
+                  layout="embedded"
+                />
+              )}
+            </CommercialViewTransition>
+          </section>
+        </div>
+      </CommercialSectionCard>
+    </div>
+  );
+}

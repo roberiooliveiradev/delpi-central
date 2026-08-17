@@ -565,38 +565,36 @@ O Portal deve recarregar a visão autorizada da Core API.
 
 ## 18. Efeito do rollback no RBAC
 
-Rollback remove e recria permissões do módulo.
+Rollback usa o mesmo **sync por `code`** do register de nova versão.
 
-Isso pode impactar roles existentes.
-
-Exemplo:
-
-```text
-Versão 1.1.0 adicionou dash-lmps.details.
-Role Analista recebeu dash-lmps.details.
-Rollback para 1.0.0 remove essa permissão do cadastro.
-```
+- Codes que permanecem no snapshot restaurado: **UUID e grants preservados**.
+- Codes só na versão vigente e ausentes no snapshot: DELETE → CASCADE remove só esses grants (intencional).
+- Codes novos no snapshot (que não existiam na vigente): INSERT sem grants até RBAC manual.
 
 Pontos de atenção:
 
-- roles podem perder vínculo com permissões removidas;
-- rotas podem deixar de exigir permissões novas;
-- usuários podem perder acesso a funcionalidades;
-- deve-se validar impacto antes do rollback.
+- remover um `code` do manifesto (ou restaurar versão sem ele) remove grants daquele code;
+- renomear `code` = delete + insert (grants do nome antigo somem);
+- validar o diff na página Admin › Versões antes do rollback.
 
 ---
 
 ## 19. Ordem de remoção e recriação
 
-Tanto no registro de nova versão quanto no rollback, a ordem é importante.
+Tanto no registro de nova versão quanto no rollback:
 
 ```text
 1. Remover rotas atuais
-2. Remover permissões atuais por module
-3. Criar permissões do manifesto alvo
-4. Criar rotas do manifesto alvo
+2. Sync de permissões por module+code (keep/update/insert/delete)
+3. Criar rotas do manifesto alvo
 ```
 
+O Portal Admin oferece:
+
+- `/admin/apps/:id/manifest` — editor (Form/JSON, aba Acesso RBAC)
+- `/admin/apps/:id/versions` — listar, comparar e restaurar
+- `GET /admin/apps/:id/versions/:version` — manifesto histórico
+- `GET /admin/apps/:id/access` — usuários efetivos + caminho papel/grupo
 Motivo:
 
 - rotas referenciam permissões;

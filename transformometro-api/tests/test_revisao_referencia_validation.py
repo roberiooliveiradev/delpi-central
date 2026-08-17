@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
+from tm_app.infrastructure.persistence.repositories.revision_repository import RevisaoRepository
 
 
 class _FakeConnection:

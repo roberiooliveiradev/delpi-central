@@ -192,6 +192,72 @@ PRODUCTION_OPERATIONAL_SELECTION_CASES: list[dict[str, Any]] = [
         summary="Produtos mais comprados no período",
         extra_actions=[_PRODUCT_PURCHASES_DECOY],
     ),
+    _operational_route_case(
+        "PO_PIP01",
+        "produtos sem plano de inspeção de processo",
+        action_id="process-inspection-plans-products-without-plan",
+        path="/process-inspection-plans/products-without-plan",
+        operation_id="get_process_inspection_plans_products_without_plan",
+        summary="Produtos sem plano de inspeção de processo",
+        parameters=["branch", "page", "page_size"],
+        extra_actions=[
+            {
+                "actionId": "process-inspection-plans-orders-without-plan",
+                "method": "GET",
+                "path": "/process-inspection-plans/orders-without-plan",
+                "operationId": "get_process_inspection_plans_orders_without_plan",
+                "summary": "OPs abertas sem plano de inspeção de processo",
+                "parametersSchema": [
+                    {"name": "branch"},
+                    {"name": "page"},
+                    {"name": "page_size"},
+                ],
+            },
+            {
+                "actionId": "inspection",
+                "method": "GET",
+                "path": "/products/{code}/inspection",
+                "operationId": "get_product_inspection",
+                "summary": "Inspeção do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+    ),
+    _operational_route_case(
+        "PO_PIP02",
+        "OPs sem cadastro de inspeção de processo",
+        action_id="process-inspection-plans-orders-without-plan",
+        path="/process-inspection-plans/orders-without-plan",
+        operation_id="get_process_inspection_plans_orders_without_plan",
+        summary="OPs abertas sem cadastro de inspeção de processo",
+        parameters=["branch", "page", "page_size"],
+        extra_actions=[
+            {
+                "actionId": "process-inspection-plans-products-without-plan",
+                "method": "GET",
+                "path": "/process-inspection-plans/products-without-plan",
+                "operationId": "get_process_inspection_plans_products_without_plan",
+                "summary": "Produtos sem plano de inspeção de processo",
+                "parametersSchema": [
+                    {"name": "branch"},
+                    {"name": "page"},
+                    {"name": "page_size"},
+                ],
+            },
+            {
+                "actionId": "production-orders-open",
+                "method": "GET",
+                "path": "/production/orders/open",
+                "operationId": "get_production_orders_open",
+                "summary": "OPs em aberto na data",
+                "parametersSchema": [
+                    {"name": "reference_date"},
+                    {"name": "branch"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+    ),
 ]
 
 _PLAYBOOK_PRODUCT_HISTORY = [

@@ -135,6 +135,27 @@ Legenda de permissões:
 
 † `create`: somente própria em `pending`.
 
+### Emissão de Notas Fiscais (`/invoice-issuance`)
+
+> Permissões do plugin `invoice-issuance.*` — ver [invoice-issuance.md](./invoice-issuance.md).
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/invoice-issuance/parties` | create |
+| GET | `/invoice-issuance/products` | create |
+| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | create |
+| GET | `/invoice-issuance/open-sales-orders` | create |
+| GET | `/invoice-issuance/carriers` | create |
+| POST | `/invoice-issuance/requests` | create |
+| GET | `/invoice-issuance/requests` | II read |
+| GET | `/invoice-issuance/requests/{id}` | II read |
+| PATCH | `/invoice-issuance/requests/{id}` | criador + returned |
+| POST | `/invoice-issuance/requests/{id}/resubmit` | criador + returned |
+| POST | `/invoice-issuance/requests/{id}/start` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/return` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/issue` | process/manage |
+| POST | `/invoice-issuance/requests/{id}/cancel` | create† / process / manage |
+
 ---
 
 ## Comercial (`/commercial`)
@@ -223,6 +244,9 @@ Legenda de permissões:
 |---|---|---|
 | GET | `/supplies/cpv` | A |
 | GET | `/supplies/otd` | A |
+| GET | `/supplies/purchase-order-otd` | A |
+| GET | `/supplies/purchase-order-otd/series` | A |
+| GET | `/supplies/purchase-order-otd/panel` | A |
 | GET | `/supplies/stock-value` | A |
 | GET | `/supplies/inventory-turnover` | A |
 | GET | `/supplies/negotiation-savings/summary` | A |
@@ -235,6 +259,10 @@ Legenda de permissões:
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | A |
 | GET | `/supplies/safety-stock/consumption-analysis/items` | A |
 | GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | A |
+| GET | `/supplies/third-party-materials/shipments` | A |
+| GET | `/supplies/third-party-materials/shipments/{shipment_recno}` | A |
+| GET | `/supplies/third-party-materials/summary` | A |
+| GET | `/supplies/third-party-materials/returns/export` | A |
 
 ---
 
@@ -332,6 +360,18 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 
 ---
 
+## Process inspection plans (`/process-inspection-plans`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/process-inspection-plans/summary` | IP |
+| GET | `/process-inspection-plans/orders-without-plan` | IP |
+| GET | `/process-inspection-plans/products-without-plan` | IP |
+| GET | `/process-inspection-plans/products` | IP |
+| GET | `/process-inspection-plans/products/{code}` | IP |
+
+---
+
 ## Controle de Retrabalhos (`/retrabalhos`)
 
 | Método | Endpoint | Perm. |
@@ -369,6 +409,19 @@ Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02
 | Método | Endpoint | Perm. |
 |---|---|---|
 | GET | `/pedidos-venda-abertos/` | A ou `pedidos-venda-abertos.access` |
+| POST | `/pedidos-venda-abertos/customers/enrichment` | A ou `pedidos-venda-abertos.access` |
+| POST | `/pedidos-venda-abertos/customers/billing-series` | A ou `pedidos-venda-abertos.access` |
+
+A lista base retorna a carteira completa de pedidos em aberto, sem paginação na
+origem. `customers/enrichment` e `customers/billing-series` aceitam no máximo
+200 clientes por requisição (`customers.max_length=200`). `billing-series`
+aceita `start_date`/`end_date` (`YYYY-MM-DD`) e `granularity`
+(`day|week|month|year`); `months` permanece o fallback quando o intervalo
+não vem no body. Consumidores com carteiras maiores devem dividir em lotes
+de até 200 e preservar a semântica de cobertura parcial: falha de um lote
+não transforma campos ausentes em zero nem invalida os dados cobertos pelos
+demais lotes. O MFE `commercial` chama billing diretamente na `api-delpi`;
+não existe schema de billing duplicado no gateway `commercial-api`.
 
 ## Delpi Reports (`/reports`)
 
@@ -382,6 +435,27 @@ Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02
 | GET | `/reports/providers` | read |
 
 Doc: [delpi-reports.md](./delpi-reports.md)
+
+## Canal de Denúncia — `/canal-denuncia`
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| POST | `/canal-denuncia/denuncias` | `canal-denuncia.access` |
+| POST | `/public/canal-denuncia/denuncias` | público |
+
+Doc: [canal-denuncia.md](./canal-denuncia.md)
+
+## Mural de Acessos — `/mural-acessos`
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/mural-acessos/hubs` | `mural-acessos.access` |
+| POST | `/mural-acessos/hubs` | `mural-acessos.manage` |
+| GET | `/mural-acessos/hubs/{id}/links` | access |
+| POST | `/mural-acessos/hubs/{id}/links` | manage |
+| GET | `/public/mural-acessos/menu/{token}` | público |
+
+Doc: [mural-acessos.md](./mural-acessos.md)
 
 ## Indicadores Estratégicos
 

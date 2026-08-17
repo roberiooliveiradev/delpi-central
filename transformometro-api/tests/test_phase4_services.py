@@ -6,7 +6,7 @@ from tm_app.application.services.dashboard_alerts_service import DashboardAlerts
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
-from tm_app.application.services.revisao_rateio_diagnostic_service import (
+from tm_app.application.services.revision_allocation_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
 from tm_app.domain.raw_data import TransformometroRawData
@@ -81,8 +81,8 @@ def test_revision_compare_returns_items(mock_data, mock_rev, mock_proc):
     assert "investimento_total_mes" in melhoria["totais"]
 
 
-@patch("tm_app.application.services.revisao_rateio_diagnostic_service.RevisaoRepository")
-@patch("tm_app.application.services.revisao_rateio_diagnostic_service.DashboardDataRepository")
+@patch("tm_app.application.services.revision_allocation_diagnostic_service.RevisaoRepository")
+@patch("tm_app.application.services.revision_allocation_diagnostic_service.DashboardDataRepository")
 def test_rateio_diagnostic_ok_when_savings_positive(mock_data, mock_rev):
     raw = _load_fixture("golden_baseline_melhoria.json")
     mock_rev.return_value.get.return_value = raw.revisoes[1]

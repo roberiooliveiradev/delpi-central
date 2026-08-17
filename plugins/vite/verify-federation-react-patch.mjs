@@ -34,8 +34,19 @@ for (const file of fs.readdirSync(distDir)) {
   }
 
   if (/(?:^|\/)App-/.test(file) && code.includes('import{r as ') && code.includes('from"./index-')) {
-    if (!code.includes("__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE")) {
-      console.error(`FAIL ${file}: App chunk sem validação dispatcher H no bridge React`);
+    if (!code.includes("__DELPI_MF_REACT__")) {
+      console.error(`FAIL ${file}: App chunk sem fallback __DELPI_MF_REACT__ no bridge React`);
+      failed = true;
+    }
+  }
+
+  if (
+    file.startsWith("ContextMenuToolbarButton-") &&
+    code.includes('import{r as ') &&
+    code.includes('from"./index-')
+  ) {
+    if (!code.includes("__DELPI_MF_REACT__")) {
+      console.error(`FAIL ${file}: chunk rich-text/menu sem fallback __DELPI_MF_REACT__`);
       failed = true;
     }
   }
@@ -47,6 +58,19 @@ for (const file of fs.readdirSync(distDir)) {
   ) {
     if (!code.includes("__DELPI_MF_REACT__")) {
       console.error(`FAIL ${file}: shim React bundled sem redirect global`);
+      failed = true;
+    }
+    if (code.includes("__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE?.H")) {
+      console.error(`FAIL ${file}: shim ainda exige dispatcher H (quebra init fora do render)`);
+      failed = true;
+    }
+  }
+
+  if (file.includes("__federation_shared_react-dom")) {
+    if (code.includes("__DELPI_MF_REACT__")) {
+      console.error(
+        `FAIL ${file}: shared react-dom redirecionado para React (createPortal some → HelpTooltip «X is not a function»)`,
+      );
       failed = true;
     }
   }

@@ -22,6 +22,7 @@ import { StatsAppsPage } from "../stats/pages/StatsAppsPage";
 import { StatsAccessPage } from "../stats/pages/StatsAccessPage";
 import { StatsNotificationsPage } from "../stats/pages/StatsNotificationsPage";
 import { StatsTourPage } from "../stats/pages/StatsTourPage";
+import { Button } from "../../../ui-kit";
 
 import "./StatsTab.css";
 
@@ -58,9 +59,9 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
     return (
       <div className="admin-stats">
         <div className="admin-stats__state admin-stats__state--error">{error}</div>
-        <button type="button" className="admin-stats__refresh" onClick={() => void load()}>
+        <Button variant="primary" onClick={() => void load()}>
           Tentar novamente
-        </button>
+        </Button>
       </div>
     );
   }

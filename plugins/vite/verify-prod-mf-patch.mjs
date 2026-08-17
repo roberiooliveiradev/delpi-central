@@ -74,11 +74,11 @@ async function main() {
     console.log(`OK  ${fnImport}: guard presente (${fnCode.length} bytes)`);
   }
 
-  if (!appCode.includes("__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE")) {
-    console.error(`FAIL ${appChunk}: fallback dispatcher H ausente`);
+  if (!appCode.includes("__DELPI_MF_REACT__")) {
+    console.error(`FAIL ${appChunk}: fallback __DELPI_MF_REACT__ ausente`);
     failed = true;
   } else {
-    console.log(`OK  ${appChunk}: fallback H presente (${appCode.length} bytes)`);
+    console.log(`OK  ${appChunk}: fallback global presente (${appCode.length} bytes)`);
   }
 
   if (exposeCode.includes(`?v=${DELPI_MF_PATCH_VERSION}`)) {

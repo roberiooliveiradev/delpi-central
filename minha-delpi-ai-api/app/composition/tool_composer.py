@@ -17,6 +17,7 @@ from app.infrastructure.tools.get_allowed_apps_tool import GetAllowedAppsTool
 from app.infrastructure.tools.get_allowed_routes_tool import GetAllowedRoutesTool
 from app.infrastructure.tools.get_current_user_tool import GetCurrentUserTool
 from app.infrastructure.tools.search_knowledge_base_tool import SearchKnowledgeBaseTool
+from app.infrastructure.tools.tv_dashboard_copilot_tool import TvDashboardCopilotTool
 from app.infrastructure.tools.web_search_tool import WebSearchTool
 
 
@@ -42,6 +43,7 @@ def make_execute_tool_use_case() -> ExecuteToolUseCase:
         "search_knowledge_base": SearchKnowledgeBaseTool(search_knowledge_use_case),
         "web_search": WebSearchTool(),
         "execute_external_action": ExecuteExternalActionTool(execute_external_action_use_case),
+        "tv_dashboard_copilot": TvDashboardCopilotTool(),
     }
 
     return ExecuteToolUseCase(

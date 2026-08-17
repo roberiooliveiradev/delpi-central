@@ -29,3 +29,13 @@ def format_person_name(value: str | None, *, default: str = "Usuário") -> str:
         )
 
     return " ".join(formatted_tokens)
+
+
+def first_given_name(value: str | None, *, default: str = "—") -> str:
+    formatted = format_person_name(value, default="")
+    if not formatted:
+        return default
+    for token in formatted.split():
+        if token.lower() not in _LOWERCASE_PARTICLES:
+            return token
+    return default

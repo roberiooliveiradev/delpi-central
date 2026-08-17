@@ -17,6 +17,9 @@ describe("slide ribbon layout contract", () => {
     expect(panel).toContain('label="Duração"');
     expect(panel).toContain('label="Transição"');
     expect(panel).toContain("Herdar duração");
+    expect(panel).toContain("buildSparseSlidePatch");
+    expect(panel).toContain("onSaveSlides");
+    expect(panel).toContain("titleMixed");
     expect(panel).not.toContain("td-deck-ribbon__prop-cols");
     expect(panel).not.toContain("td-deck-settings-chip");
   });
@@ -26,9 +29,15 @@ describe("slide ribbon layout contract", () => {
     const background = readFileSync(join(here, "deck/ComunicadoSlideBackgroundRibbon.tsx"), "utf8");
     expect(accordion).toContain("DeckRibbonTile");
     expect(accordion).not.toContain("td-deck-settings-accordion__summary");
-    expect(background).toContain('label="Início"');
-    expect(background).toContain('label="Fim"');
+    expect(background).toContain('label="Cor"');
+    expect(background).toContain("onFillChange");
+    expect(background).toContain("TV_ALLOWED_FILL_KINDS");
+    expect(background).not.toContain('label="Início"');
+    expect(background).not.toContain('label="Fim"');
+    expect(background).not.toContain("slide-presets");
     expect(background).toContain("td-deck-ribbon__tiles");
+    expect(background).toContain("selectedSlides");
+    expect(background).toContain("backgroundSlides");
   });
 
   it("popovers da aba Tela usam chrome canônico do kit", () => {
@@ -46,5 +55,17 @@ describe("slide ribbon layout contract", () => {
     expect(css).not.toMatch(
       /\.td-deck-settings-accordion__body\{[^}]*box-shadow:\s*0 8px 24px/s,
     );
+  });
+
+  it("fan-out de fundo/filtros fica na página, sem API no hook do editor", () => {
+    const page = readFileSync(join(here, "../pages/PlaylistEditorPage.tsx"), "utf8");
+    const hook = readFileSync(
+      join(here, "../hooks/comunicadoEditor/useComunicadoEditorBlocks.ts"),
+      "utf8",
+    );
+    expect(page).toContain("pickSharedCustomSlideConfig");
+    expect(page).toContain("persistSharedCustomFanOut");
+    expect(hook).not.toContain("updateSlide(");
+    expect(hook).not.toContain("applySlideBatchPatch");
   });
 });

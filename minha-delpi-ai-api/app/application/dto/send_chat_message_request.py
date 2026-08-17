@@ -26,3 +26,5 @@ class SendChatMessageRequest:
     admin_debug: bool = False
     # Metadata opcional quando o usuário aceita sugestão de digitação no composer (P14).
     typing_correction: dict | None = None
+    # Host embutido (ex.: TV Dashboard Copiloto): surface + playlistId/slideId.
+    host_context: dict | None = None

@@ -7,7 +7,12 @@ import {
   resolveParamFieldHint,
   resolveParamFieldLabel,
 } from "../content/dataParamCatalog";
-import { enumOptionLabel, resolveParamSelectOptions, visibleParamSchema } from "./DataParamFields";
+import {
+  enumOptionLabel,
+  resolveParamSelectOptions,
+  visibleParamSchema,
+  withExcludeWeekendsSchemaField,
+} from "./DataParamFields";
 
 describe("resolveParamFieldLabel", () => {
   it("traduz date_start / work_center mesmo com label EN do schema", () => {
@@ -130,7 +135,7 @@ describe("resolveParamSelectOptions horas improdutivas", () => {
 });
 
 describe("visibleParamSchema", () => {
-  it("remove parâmetros fixos do catálogo", () => {
+  it("remove parâmetros fixos do catálogo e oferece ocultar fins de semana no dia fixo", () => {
     expect(
       visibleParamSchema(
         {
@@ -139,7 +144,22 @@ describe("visibleParamSchema", () => {
         },
         { granularity: "day" },
       ),
-    ).toEqual({ periodDays: { type: "integer" } });
+    ).toEqual({
+      periodDays: { type: "integer" },
+      excludeWeekends: { type: "boolean", optional: true, enum: [true, false] },
+    });
+  });
+
+  it("injeta excludeWeekends quando a rota admite granularidade diária", () => {
+    const schema = withExcludeWeekendsSchemaField({
+      granularity: { type: "string", enum: ["day", "week", "month"] },
+    });
+    expect(schema.excludeWeekends?.type).toBe("boolean");
+    expect(
+      withExcludeWeekendsSchemaField({
+        granularity: { type: "string", enum: ["week", "month"] },
+      }).excludeWeekends,
+    ).toBeUndefined();
   });
 });
 
@@ -172,10 +192,10 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/DIVERGED_FILTER_SELECT_VALUE|dataParamFilterUi/);
   });
 
-  it("camada agregada usa filterUnsetUsesSource / filterValuesDiffer", () => {
+  it("camada agregada usa filterUnsetHere / filterValuesDiffer", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
-    expect(source).toMatch(/filterUnsetUsesSource/);
+    expect(source).toMatch(/filterUnsetHere/);
     expect(source).toMatch(/filterValuesDiffer/);
     expect(source).toMatch(/divergedKeys/);
     expect(source).toMatch(/emptyChoiceLabel/);
@@ -183,9 +203,10 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/resolveFilterClearLabel/);
   });
 
-  it("expõe Limpar filtro em selects, Período e inputs (dados/tela/programação)", () => {
+  it("expõe Não definido aqui em selects, Período e inputs (dados/tela/programação)", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/filterUnsetHere/);
     expect(source).toMatch(/filterClear/);
     expect(source).toMatch(/ClearableControl/);
     expect(source).toMatch(/td-data-param-clearable/);

@@ -108,14 +108,19 @@ export function ChartCard({
 
   const titleNode = (
     <TitleTag id={titleId} className={classNames.title}>
-      {title}
       {titleHint ? (
         <HelpTooltip
           content={titleHint}
           ariaLabel={`Ajuda: ${title}`}
+          wrap
+          placement="bottom"
           className={classNames.titleHelp}
-        />
-      ) : null}
+        >
+          <span className="delpi-ui-section-hint-label">{title}</span>
+        </HelpTooltip>
+      ) : (
+        title
+      )}
     </TitleTag>
   );
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
 from tv_app.application.services.presentation_sync_service import build_presentation_content_revision
@@ -23,6 +24,7 @@ from tv_app.application.services.tv_deck_package_service import (
     TvDeckPackageError,
     TvDeckPackageService,
 )
+from tv_app.application.services.viewport_profile_service import normalize_playlist_viewport_update
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_ADMIN, TV_READ, TV_WRITE, assert_permission, can
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -49,7 +51,9 @@ class UpdatePlaylistBody(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = None
     viewportProfile: str | None = None
-    transitionStyle: str | None = None
+    viewportWidth: int | None = Field(default=None, ge=64, le=7680)
+    viewportHeight: int | None = Field(default=None, ge=64, le=7680)
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
     globalRefreshSec: int | None = Field(default=None, ge=30, le=3600)
     dataDefaults: dict[str, Any] | None = None
@@ -241,6 +245,17 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    fields_set = body.model_fields_set if hasattr(body, "model_fields_set") else set()
+    try:
+        profile, width, height, clear_dims = normalize_playlist_viewport_update(
+            viewport_profile=body.viewportProfile,
+            viewport_width=body.viewportWidth,
+            viewport_height=body.viewportHeight,
+            profile_provided="viewportProfile" in fields_set,
+            dims_provided="viewportWidth" in fields_set or "viewportHeight" in fields_set,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
     try:
         playlist = _repo.update(
             playlist_id,
@@ -248,7 +263,10 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             reason="playlist_updated",
             name=body.name,
             description=body.description,
-            viewport_profile=body.viewportProfile,
+            viewport_profile=profile if profile is not None else body.viewportProfile,
+            viewport_width=width,
+            viewport_height=height,
+            clear_viewport_dims=clear_dims,
             transition_style=body.transitionStyle,
             default_duration_sec=body.defaultDurationSec,
             global_refresh_sec=body.globalRefreshSec,

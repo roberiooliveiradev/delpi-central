@@ -1,5 +1,19 @@
 """Domínio transversal — convenções TOTVS/Protheus da Delpi."""
 
+from app.domain.totvs.protheus_product_types import (
+    PRODUCT_TYPE_FINISHED_GOOD,
+    PRODUCT_TYPE_INTERMEDIATE,
+    PRODUCT_TYPE_LABELS_PT,
+    PRODUCT_TYPE_RAW_MATERIAL,
+)
+from app.domain.totvs.protheus_third_party_materials import (
+    DEFAULT_IGNORED_TEST_PRODUCTS,
+    SB6_PODER3_REMESSA,
+    SB6_PODER3_RETORNO,
+    SB6_SHIPMENT_KEY_FIELDS,
+    SB6_TIPO_TERCEIRO_NA_EMPRESA,
+    VIEW_NAME as THIRD_PARTY_MATERIALS_VIEW,
+)
 from app.domain.totvs.protheus_warehouses import (
     AVAILABLE_BALANCE_WAREHOUSES,
     COST_UNIT_WAREHOUSE,
@@ -12,6 +26,16 @@ from app.domain.totvs.protheus_warehouses import (
 __all__ = [
     "AVAILABLE_BALANCE_WAREHOUSES",
     "COST_UNIT_WAREHOUSE",
+    "DEFAULT_IGNORED_TEST_PRODUCTS",
+    "PRODUCT_TYPE_FINISHED_GOOD",
+    "PRODUCT_TYPE_INTERMEDIATE",
+    "PRODUCT_TYPE_LABELS_PT",
+    "PRODUCT_TYPE_RAW_MATERIAL",
+    "SB6_PODER3_REMESSA",
+    "SB6_PODER3_RETORNO",
+    "SB6_SHIPMENT_KEY_FIELDS",
+    "SB6_TIPO_TERCEIRO_NA_EMPRESA",
+    "THIRD_PARTY_MATERIALS_VIEW",
     "WAREHOUSE_ALMOXARIFADO",
     "WAREHOUSE_FABRICA",
     "WAREHOUSE_LABELS_PT",

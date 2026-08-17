@@ -1,10 +1,9 @@
 // src/ui/admin/stats/useAdminStats.ts
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi, type AdminStatistics } from "../../../data/adminApi";
+import type { AdminStatistics } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import type { ChartSegment } from "./StatsCharts";
 import { STATS_AUTO_REFRESH_MS, STATS_CHART_COLORS } from "./statsTheme";
 import { getTrackableActiveApps } from "./StatsShared";
@@ -20,15 +19,12 @@ type LoadOptions = {
 };
 
 export function useAdminStats() {
-  const { getAccessToken } = useContext(AuthContext);
   const [stats, setStats] = useState<AdminStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasStatsRef = useRef(false);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const load = useCallback(async (options?: LoadOptions) => {
     const silent = Boolean(options?.silent && hasStatsRef.current);

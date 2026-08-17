@@ -23,6 +23,7 @@ Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **C
 
 | # | Entrega | Onde |
 |---|---------|------|
+| 0 | Path / `operationId` / entity / query params em **inglês** (PT só em locale/UI) | router + contrato — anti-padrão: path PT em rota nova |
 | 1 | `api_delpi_success(..., operation_id=...)` | router |
 | 2 | `route_contract_registry.py` — `entity` + `shape` | application |
 | 3 | `operation_id` = OpenAPI = meta | **decorator** + envelope + registry (mesmo id) |
@@ -165,6 +166,7 @@ Ver **`plugins-documentation.mdc`**: README do plugin, doc API, índices `06-mod
 
 ## O que NÃO fazer
 
+- Path / `operationId` / query / `meta.entity` em português em rota **nova** (legado `/inspecoes-*` não é modelo a copiar).
 - Endpoint sem contrato `meta.entity` / `meta.fields` quando o chat precisa apresentar dados.
 - Presenter Python por rota, `visualBuilders`, `tableAssembly` ou stack rico no pipeline.
 - Tabela vs gráfico no MFE, prompt de agente ou `Send*`/`Stream*` duplicado.

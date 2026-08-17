@@ -335,11 +335,13 @@ class ChatPresentationDecisionEnrichmentService:
             entity=entity,
             explicit_format=effective_preference,
             user_message=user_message,
+            metadata=metadata,
         ):
             latent = ChatPresentationTextFirstPolicyService.latent_available_views(
                 path=path,
                 entity=entity,
                 has_text=bool(metadata.get("textPresentation")),
+                metadata=metadata,
             )
             merged_views = ChatPresentationDecisionBuilderService.merge_views(
                 metadata.get("availableFormats"),

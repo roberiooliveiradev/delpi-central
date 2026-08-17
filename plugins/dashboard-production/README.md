@@ -17,6 +17,16 @@ Microfrontend com indicadores de produção via **api-delpi** (`/production`).
 
 Rotas no Portal: `/apps/dashboard-production/oee`, `/apps/dashboard-production/otd`, etc.
 
+## OTD — detalhe da OP e link ao Comercial
+
+Rota: `/apps/dashboard-production/otd/op/{op}` (query `branch`, `product_type` quando aplicável).
+
+Quando o payload by-op trouxer `sales_order` (pedido de venda `C2_PEDIDO`, e opcionalmente `sales_order_item`), a página exibe o CTA **Ver pedido no comercial**, que navega para:
+
+`/apps/commercial/open-orders?pedido=&linha=&filial=`
+
+Helper: [`src/utils/commercialOpenOrderLink.ts`](./src/utils/commercialOpenOrderLink.ts). Só uma fração das OPs tem pedido preenchido — o CTA fica oculto se `sales_order` estiver ausente. Contrato UX no Portal Comercial: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) § WF-02R-D.
+
 ## OEE — listagem de apontamentos
 
 Layout alinhado ao plugin [eficiência fabril](../eficiencia-fabril/README.md):

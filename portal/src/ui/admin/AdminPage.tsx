@@ -1,6 +1,7 @@
 // src/ui/admin/AdminPage.tsx
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Users,
   LayoutGrid,
@@ -19,6 +20,7 @@ import { PermissionsTab } from "./tabs/PermissionsTab";
 import { AppsTab } from "./tabs/AppsTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
 import { StatsTab } from "./tabs/StatsTab";
+import { Tabs } from "../../ui-kit";
 
 export type AdminTab =
   | "stats"
@@ -29,9 +31,44 @@ export type AdminTab =
   | "permissions"
   | "notifications";
 
+const ADMIN_TABS: AdminTab[] = [
+  "stats",
+  "apps",
+  "users",
+  "roles",
+  "groups",
+  "permissions",
+  "notifications",
+];
+
+const isAdminTab = (value: string | null): value is AdminTab =>
+  !!value && (ADMIN_TABS as string[]).includes(value);
+
 export const AdminPage = () => {
-  const [tab, setTab] = useState<AdminTab>("stats");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [tab, setTab] = useState<AdminTab>(
+    isAdminTab(tabFromUrl) ? tabFromUrl : "stats"
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAdminTab(tabFromUrl) && tabFromUrl !== tab) {
+      setTab(tabFromUrl);
+    }
+  }, [tab, tabFromUrl]);
+
+  const selectTab = (next: AdminTab) => {
+    setTab(next);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("tab", next);
+        return params;
+      },
+      { replace: true }
+    );
+  };
 
   const items = useMemo(
     () => [
@@ -53,26 +90,20 @@ export const AdminPage = () => {
     <div className="admin-page" data-tour="admin-page">
       {/* DESKTOP / TABLET NAV */}
       <nav className="admin-navbar" aria-label="Navegação de administração">
-        <div className="admin-navbar-inner">
-          {items.map((item) => {
+        <Tabs
+          className="admin-navbar-tabs"
+          value={tab}
+          onChange={(next) => selectTab(next as AdminTab)}
+          items={items.map((item) => {
             const Icon = item.icon;
-            const isActive = item.key === tab;
-
-            return (
-              <button
-                key={item.key}
-                type="button"
-                data-tour={`admin-nav-${item.key}`}
-                className={`admin-nav-item ${isActive ? "active" : ""}`}
-                onClick={() => setTab(item.key)}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </button>
-            );
+            return {
+              id: item.key,
+              label: item.label,
+              icon: <Icon size={16} />,
+              dataTour: `admin-nav-${item.key}`,
+            };
           })}
-        </div>
+        />
 
         {/* MOBILE DROPDOWN */}
         <div className="admin-mobile-select">
@@ -97,7 +128,7 @@ export const AdminPage = () => {
                     type="button"
                     data-tour={`admin-nav-${item.key}`}
                     onClick={() => {
-                      setTab(item.key);
+                      selectTab(item.key);
                       setMobileOpen(false);
                     }}
                   >
@@ -113,7 +144,7 @@ export const AdminPage = () => {
 
       <div className="admin-content">
         <div key={tab} className="admin-tab-panel">
-          {tab === "stats" && <StatsTab onNavigateTab={setTab} />}
+          {tab === "stats" && <StatsTab onNavigateTab={selectTab} />}
           {tab === "users" && <RbacTab />}
           {tab === "apps" && <AppsTab />}
           {tab === "roles" && <RolesTab />}

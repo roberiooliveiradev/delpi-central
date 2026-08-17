@@ -864,6 +864,21 @@
 }.ca-checkbox small{
   font-weight: 400;
   color: var(--ca-muted);
+}.ca-public-link{
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--ca-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ca-accent) 6%, var(--ca-surface));
+}.ca-public-link__url{
+  display: block;
+  word-break: break-all;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--ca-surface);
+  border: 1px solid var(--ca-border);
 }.ca-badge-count{
   display: inline-flex;
   align-items: center;

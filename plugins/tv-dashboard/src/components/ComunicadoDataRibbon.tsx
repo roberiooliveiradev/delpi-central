@@ -18,12 +18,15 @@ export function ComunicadoDataRibbon() {
     openDataCatalog,
   } = useComunicadoEditor();
 
+  const selectedId = selected?.id ?? "";
+  const selectedType = selected?.type;
   useEffect(() => {
     setSelectionPanelTab("data");
     setDataPanelOpen(true);
-    const preferCatalog = !selected || !isDataBoundEditorBlockType(selected.type);
+    const preferCatalog = !selectedType || !isDataBoundEditorBlockType(selectedType);
     setDataPanelIntent(preferCatalog ? "catalog" : "binding");
-  }, [selected, setDataPanelIntent, setDataPanelOpen, setSelectionPanelTab]);
+    // selected object identity muda a cada preview/hydrate — só id/tipo importam.
+  }, [selectedId, selectedType, setDataPanelIntent, setDataPanelOpen, setSelectionPanelTab]);
 
   return (
     <DeckRibbonGroups className="td-deck-ribbon__groups--inspector" overflowEnabled={false}>

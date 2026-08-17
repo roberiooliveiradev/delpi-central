@@ -1,0 +1,80 @@
+/* Read-only Kanban board (columns + card slots) */
+
+.delpi-ui-kanban-board {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: safe center;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  font-size: var(--delpi-ui-table-font-size, 13px);
+}
+
+.delpi-ui-kanban-board__column {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(
+    --delpi-ui-surface-muted,
+    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 92%, var(--delpi-ui-text, #111) 8%)
+  );
+  border: 1px solid
+    var(
+      --delpi-ui-border,
+      color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 12%, transparent)
+    );
+  border-radius: var(--delpi-ui-radius-md, 8px);
+  padding: 10px;
+  min-height: 160px;
+}
+
+.delpi-ui-kanban-board__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+
+.delpi-ui-kanban-board__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-kanban-board__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+}
+
+.delpi-ui-kanban-board__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-kanban-board__empty {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(
+    --delpi-ui-muted,
+    var(--delpi-ui-text-muted, color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent))
+  );
+}
+
+.delpi-ui-kanban-board__card {
+  /* Slot wrapper — consumer usually renders InteractiveDataCard as child */
+  display: block;
+}

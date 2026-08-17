@@ -3,6 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { ComunicadoShapeGraphic } from "./comunicadoShapeGraphic";
 import { resolveShapeGeometry } from "./comunicadoShapeGeometry";
 import { ComunicadoTextSurface } from "./ComunicadoTextSurface";
+import { EfficiencyPinView } from "./EfficiencyPinView";
+import { isEfficiencyPinShapeKind } from "./efficiencyPin";
 import { comunicadoTextInnerStyle } from "./comunicadoHelpers";
 import type { ComunicadoVisualBoxBlock } from "./comunicadoVisualBox";
 import {
@@ -58,6 +60,10 @@ export function ComunicadoVisualBoxView({
   innerStyleOverride,
   editorInteractive = false,
 }: Props) {
+  if (block.type === "shape" && isEfficiencyPinShapeKind(block.shape)) {
+    return <EfficiencyPinView block={block} resolved={block.resolved} fontScale={fontScale} />;
+  }
+
   const chrome = resolveVisualBoxChrome(block);
   const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, {
     fontScale,

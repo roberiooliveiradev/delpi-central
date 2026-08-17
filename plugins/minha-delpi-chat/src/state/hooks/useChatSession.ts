@@ -56,6 +56,8 @@ import {
   shouldPatchStreamStatusForSources,
   shouldPatchStreamStatusForToolCalls,
 } from "../chatStreamStatusGuards";
+import { notifyHostOfTvCopilotToolCalls } from "../../hostSurfaceContext";
+import type { ChatHostContext } from "../../hostSurfaceContext";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
@@ -93,6 +95,10 @@ type UseChatSessionOptions = {
   getResponseMode?: () => ChatResponseModeId;
   /** Formato de apresentação (automático / tabela / texto / …) escolhido no composer. */
   getPresentationFormat?: () => ChatPresentationFormatId;
+  /** Contexto ambient do host embutido (surface + playlist/slide). */
+  getHostContext?: () => ChatHostContext | null | undefined;
+  /** Persiste drafts do host antes de o turno poder planejar uma mutação. */
+  beforeHostMutation?: () => Promise<void>;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -1257,6 +1263,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           markStreamProgress();
+          notifyHostOfTvCopilotToolCalls(toolCalls);
           const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
           if (shouldPatchStreamStatusForToolCalls(toolCalls)) {
             const status = hasRichPresentation
@@ -1391,6 +1398,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           const finalAnswer = response.answer ?? "";
           const finalToolCalls = response.toolCalls ?? [];
+          notifyHostOfTvCopilotToolCalls(finalToolCalls);
           const turnHandoff: AssistantTurnHandoff = {
             messageId: response.messageId,
             sessionId,
@@ -1618,6 +1626,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    await options.beforeHostMutation?.();
+
     setLastSentUserText(message);
     const optimisticId = `optimistic-${Date.now()}`;
     let sessionForMessage = params.session ?? activeSession;
@@ -1824,6 +1834,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         responseMode: getResponseModeRef.current?.() ?? "normal",
         responseFormat: getPresentationFormatRef.current?.() ?? "auto",
         typingCorrection: params.typingCorrection,
+        hostContext: options.getHostContext?.() ?? undefined,
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
     } catch (err) {
@@ -1860,8 +1871,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     markSessionPending,
     options.agentId,
     options.agentIds,
+    options.beforeHostMutation,
     options.chatMode,
     options.getAccessToken,
+    options.getHostContext,
     options.projectId,
     options.projectIds,
     resetStreamingUi,
@@ -1962,6 +1975,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           context: activeSession.context ?? "geral",
           attachmentIds: attachmentIds?.filter(Boolean),
           responseMode: getResponseModeRef.current?.() ?? "normal",
+          responseFormat: getPresentationFormatRef.current?.() ?? "auto",
+          hostContext: options.getHostContext?.() ?? undefined,
           ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
         });
 
@@ -2008,6 +2023,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       loadMessages,
       markSessionPending,
       messages,
+      options.getHostContext,
       resendMessage,
       resetStreamingUi,
       sendMessage,

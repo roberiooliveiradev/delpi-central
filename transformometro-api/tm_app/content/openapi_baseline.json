@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24",
-  "operation_count": 123,
+  "generatedAt": "2026-08-14",
+  "operation_count": 149,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -740,6 +740,162 @@
       "method": "GET",
       "path": "/transformometro/integrations/engineering/transforma-mais/processes/summary",
       "module": "integrations"
+    },
+    {
+      "operationId": "list_meeting_minutes",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "create_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "generate_meeting_minute_from_transcript",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/generate-from-transcript",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "list_meeting_minutes_pending_signatures",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/pending-signatures",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "delete_meeting_minute",
+      "method": "DELETE",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_meeting_minute",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "update_meeting_minute",
+      "method": "PATCH",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_meeting_minute_audit",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}/audit",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "cancel_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/cancel",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "export_meeting_minute_pdf",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}/export.pdf",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "finalize_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/finalize",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "replace_meeting_minute_participants",
+      "method": "PUT",
+      "path": "/transformometro/meeting-minutes/{minute_id}/participants",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "send_meeting_minute_for_signature",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/send-for-signature",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_meeting_minute_sign_context",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}/sign-context",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "sign_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signatures",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "refuse_meeting_minute_signature",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signatures/refuse",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_meeting_minute_signature_image",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signatures/{signature_id}/image",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "replace_meeting_minute_signers",
+      "method": "PUT",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signers",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "create_meeting_minute_version",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/versions",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_my_signature_profile",
+      "method": "GET",
+      "path": "/transformometro/signatures/me",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "update_my_signature_profile",
+      "method": "PUT",
+      "path": "/transformometro/signatures/me",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_my_signature_image",
+      "method": "GET",
+      "path": "/transformometro/signatures/me/image",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "upload_my_signature_image",
+      "method": "POST",
+      "path": "/transformometro/signatures/me/image",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_public_meeting_minute_sign_invite",
+      "method": "GET",
+      "path": "/public/meeting-minutes/sign-invites/{token}",
+      "module": "meeting_minutes_public"
+    },
+    {
+      "operationId": "refuse_public_meeting_minute_invite",
+      "method": "POST",
+      "path": "/public/meeting-minutes/sign-invites/{token}/refuse",
+      "module": "meeting_minutes_public"
+    },
+    {
+      "operationId": "sign_public_meeting_minute_invite",
+      "method": "POST",
+      "path": "/public/meeting-minutes/sign-invites/{token}/sign",
+      "module": "meeting_minutes_public"
     }
   ]
 }

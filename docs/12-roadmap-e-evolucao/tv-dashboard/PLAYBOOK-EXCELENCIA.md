@@ -684,6 +684,8 @@ sequenceDiagram
 
 **Contrato ago/2026 — apresentação = viewer puro:** o `public-hub` / `PresentationView` **não** decide agregação nem encoding. Dados vêm de `SlideDataResolutionService` (mesmo caminho do `preview-block` do editor). Projeção KPI/chart no cliente via `applyViewProjection`. Índice do filmstrip «Ordem na TV» = `is_slide_visible_in_presentation`. Save invalida cache de dados (`notify_presentation_changed`). Regra: `.cursor/rules/tv-dashboard-presentation-parity.mdc`.
 
+**Copiloto IA (ago/2026):** patches tipados `TvCopilotPatchV1` (`/data/copilot/preview-patch` | `apply-patch`); skill `tv-dashboard-copilot` + tool no chat base; embed `./EmbeddedChat` na aba Copiloto do editor (A1). Sem M livre; apply com confirmação de escrita; flush/cache igual ao save do editor. Docs: `tv-dashboard-api/docs/tv-copilot.md`.
+
 ---
 
 ## 16. Próximo passo imediato

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Any
 
@@ -10,6 +11,7 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 
 def invalidate_external_action_response_cache() -> None:
     _responses_content.cache_clear()
+    ExternalActionResponseContentService.confirm_pattern.cache_clear()
 
 
 @lru_cache(maxsize=1)
@@ -108,6 +110,16 @@ class ExternalActionResponseContentService:
             node = node.get(key)
 
         return node
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def confirm_pattern(cls) -> re.Pattern[str]:
+        raw = cls.get(
+            "security",
+            "confirmPattern",
+            default=r"\bconfirm(o|a|ar|ado)\b",
+        )
+        return re.compile(raw)
 
     @classmethod
     def weekday_label(cls, weekday: int) -> str:

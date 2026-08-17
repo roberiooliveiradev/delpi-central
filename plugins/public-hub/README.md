@@ -37,6 +37,13 @@ O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /
         │
         ▼
   page.load(ctx) → page.render(data, ctx)   (a view do app)
+
+**Assinatura pública (`/p/transformometro/sign/…`):** o painel vem de `@delpi/signature-kit`
+(source do `plugin-ui` **bundled** no hub). Não usa o remote MF `./signature` — evita
+crash de `createPortal`/HelpTooltip no share `react-dom`.
+
+No Docker, o `Dockerfile` copia só `plugin-ui/src/components/signature` + `overlayLayers.ts`
+(contexto `plugins/`). Não é `COPY plugin-ui` completo.
 ```
 
 - **Shell (transversal)** — `src/shell/`. Cuida de tudo que é comum: fundo/branding (`pub-*` no `shell.css`), spinner, estados de erro/página-não-encontrada, `document.title`, `noindex`. **Não** conhece nenhum app específico.
@@ -181,10 +188,57 @@ Páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
 |---|---|---|
 | Agradecimento | `/p/customer-experience/thanks/{token}` (alias `/welcome/{token}`) | `GET /apps/customer-experience-api/public/participants/{token}` |
 | Formulário | `/p/customer-experience/form/{token}` | `GET /apps/customer-experience-api/public/forms/{token}` |
+| Assinatura de ata Transforma+ | `/p/transformometro/sign/{token}` | `GET/POST /apps/transformometro-api/public/meeting-minutes/sign-invites/{token}` |
 
 O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), páginas com fundo/ilustração, barra de progresso, layout centralizado, fundo em viewport e modo escuro. Ver `FormPage.tsx` + `form.css`.
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
+
+### Código de Ética (`codigo-etica`)
+
+Leitura do PDF institucional (token estático `aberto`) para quem **não tem conta** no Minha DELPI:
+
+| Página | Rota | Conteúdo |
+|---|---|---|
+| Código | `/p/codigo-etica/codigo/aberto` | PDF `/apps/codigo-etica/documents/codigo-de-etica.pdf` |
+
+Sem API e sem login. O link também aparece no MFE autenticado `codigo-etica` para copiar.
+
+Ver `src/apps/codigo-etica/` · doc: [plugins/codigo-etica/README.md](../codigo-etica/README.md).
+
+### Canal de Denúncia (`canal-denuncia`)
+
+Formulário aberto (token estático `aberto`) para quem **não tem conta** no Minha DELPI:
+
+| Página | Rota | `load` / submit |
+|---|---|---|
+| Denúncia | `/p/canal-denuncia/denuncia/aberto` | `POST /apps/api-delpi/public/canal-denuncia/denuncias` |
+
+O relato continua anônimo. O link também aparece no MFE autenticado `canal-denuncia` para copiar.
+
+Ver `src/apps/canal-denuncia/` · doc: [plugins/canal-denuncia/README.md](../canal-denuncia/README.md).
+
+### Central de Agendamento (`central-agendamento`)
+
+| Página | URL | API |
+|--------|-----|-----|
+| Solicitar reserva | `/p/central-agendamento/book/{token}` | `GET/POST /apps/api-delpi/public/scheduling/resources/{token}…` |
+
+Token opaco por recurso (`public_booking_enabled`). Sem login. O admin do MFE gera/copia o link.
+
+Ver `src/apps/central-agendamento/` · doc: [api-delpi/docs/api/central-agendamento.md](../../api-delpi/docs/api/central-agendamento.md).
+
+### Mural de Acessos (`mural-acessos`)
+
+Menu estilo smartphone por mural (token na URL):
+
+| Página | Rota | `load` |
+|---|---|---|
+| Menu | `/p/mural-acessos/menu/{token}` | `GET /apps/api-delpi/public/mural-acessos/menu/{token}` |
+
+O mural inicial usa o token `mural`. Cadastro, novos murais e QR imprimível ficam no MFE autenticado `mural-acessos`.
+
+Ver `src/apps/mural-acessos/` · doc: [plugins/mural-acessos/README.md](../mural-acessos/README.md).
 
 ### Kaizen — sugestão pública (`kaizen`)
 

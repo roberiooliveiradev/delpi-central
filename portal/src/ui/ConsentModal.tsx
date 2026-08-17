@@ -4,6 +4,7 @@ import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import type { ConsentItem, PrivacyInfo } from "../data/coreApi";
 import { FileText, ShieldCheck, ChevronRight } from "lucide-react";
+import { Button, Checkbox } from "../ui-kit";
 import "./ConsentModal.css";
 
 const REQUIRED_PURPOSE = "data_processing";
@@ -293,14 +294,15 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
                   ? "Você leu a política. Prossiga para os consentimentos."
                   : "Role até o final do documento para continuar."}
               </span>
-              <button
-                className="btn-primary consent-btn"
+              <Button
+                variant="primary"
+                className="consent-btn"
                 disabled={!policyRead}
                 onClick={() => setStep("consents")}
               >
                 Prosseguir
                 <ChevronRight size={16} />
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -324,8 +326,7 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
 
                 return (
                   <label key={purpose} className={`consent-item ${isRequired ? "consent-item--required" : ""}`}>
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={checked}
                       disabled={isRequired}
                       onChange={() => toggle(purpose)}
@@ -348,13 +349,15 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
               <span className="consent-hint">
                 Você pode alterar suas preferências a qualquer momento em <strong>Privacidade de Dados</strong>.
               </span>
-              <button
-                className="btn-primary consent-btn"
-                disabled={!canAccept || saving}
+              <Button
+                variant="primary"
+                className="consent-btn"
+                disabled={!canAccept}
+                loading={saving}
                 onClick={() => void handleAccept()}
               >
                 {saving ? "Salvando..." : "Aceitar e continuar"}
-              </button>
+              </Button>
             </div>
           </>
         )}

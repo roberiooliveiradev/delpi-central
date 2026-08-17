@@ -1,0 +1,23 @@
+from dataclasses import dataclass
+from typing import Optional
+
+ALLOWED_SALES_CONVERSION_RATE_SERIES_GRANULARITIES = frozenset(
+    {"day", "week", "month", "year"}
+)
+
+
+@dataclass
+class SalesConversionRateSeriesRequest:
+    granularity: str
+    date_start: Optional[str] = None
+    date_end: Optional[str] = None
+    customer_segment: Optional[str] = None
+    customer_codes: Optional[list[str]] = None
+
+    def validate(self) -> None:
+        normalized = (self.granularity or "").strip().lower()
+        if normalized not in ALLOWED_SALES_CONVERSION_RATE_SERIES_GRANULARITIES:
+            raise ValueError(
+                "granularity inválida. Use day, week, month ou year."
+            )
+        self.granularity = normalized

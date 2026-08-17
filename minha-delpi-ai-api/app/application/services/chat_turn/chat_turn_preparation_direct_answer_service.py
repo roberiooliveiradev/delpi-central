@@ -110,6 +110,13 @@ class ChatTurnPreparationDirectAnswerService:
             max_chars=fast_path_max_chars,
             attachment_ids=attachment_ids,
             previous_messages=history_source,
+            workspace_context=workspace_context,
+            host_context=(
+                workspace_context.get("tvDashboardHostContext")
+                or workspace_context.get("hostContext")
+                if isinstance(workspace_context, dict)
+                else None
+            ),
         )
 
         if canvas_action:

@@ -25,9 +25,11 @@ import {
   deleteChartPart,
   deleteKpiPart,
   deleteTablePart,
+  findSharedEfficiencyPinDataSourceId,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isEfficiencyPinShapeKind,
   kpiPartAllowsDelete,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
@@ -63,6 +65,7 @@ import {
   resolveBlockPasteDataPolicy,
   staticLabelFromTextBoundBlock,
   translateLineEndpoints,
+  type ComunicadoBackground,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -93,12 +96,17 @@ import type {
   OpenDataCatalogOptions,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
+import {
+  resizeComunicadoBlocksSameSize,
+  type SameSizeAxis,
+} from "../../utils/comunicadoSameSize";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
 import { DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM } from "../../utils/dateRangePresets";
 import { renameKpiMetricFieldLabel } from "../../utils/renameKpiMetricFieldLabel";
 import {
   bringForward,
   bringToFront,
+  reorderLayerIds,
   sendBackward,
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
@@ -113,6 +121,12 @@ import {
 import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 import type { TextFormatStyleSnapshot } from "../../utils/selectedTextFormatTarget";
 import { buildSelectedTextFormatBlockPatch } from "../../utils/applySelectedTextFormatStyle";
+import {
+  resolveAppliedNumericProperty,
+  sparsePropertyPatch,
+  type SelectionPropertyApplyOptions,
+} from "../../utils/selectionPropertyApply";
+import { clampFontSize } from "@delpi/tv-dashboard-presentation";
 
 type Options = {
   canvasRef?: RefObject<HTMLElement | null>;
@@ -562,6 +576,13 @@ export function useComunicadoEditorBlocks({
     (shape: ComunicadoShapeKind) => {
       let block = createShapeBlock(shape);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      /* Pin CT: reutiliza a fonte de eficiência já no slide (só o CT muda por pin). */
+      if (block.type === "shape" && isEfficiencyPinShapeKind(shape)) {
+        const sharedId = findSharedEfficiencyPinDataSourceId(configRef.current.blocks ?? []);
+        if (sharedId) {
+          block = { ...block, dataSourceId: sharedId };
+        }
+      }
       block = placeInserted(block);
       setShapeMenuOpen(false);
       setRibbonTabRequest("element");
@@ -860,17 +881,40 @@ export function useComunicadoEditorBlocks({
   );
 
   const updateSelectedStyle = useCallback(
-    (patch: NonNullable<ComunicadoBlock["style"]>) => {
+    (
+      patch: NonNullable<ComunicadoBlock["style"]>,
+      applyOptions?: SelectionPropertyApplyOptions,
+    ) => {
       const targets = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
       if (targets.length === 0) return;
       const idSet = new Set(targets.map((block) => block.id));
-      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-        idSet.has(block.id)
-          ? applyComunicadoBlockStylePatch(block, patch, {
-              selectedInputPart: block.type === "input" ? selectedInputPart : null,
-            })
-          : block,
-      );
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        if (!idSet.has(block.id)) return block;
+        const currentSize =
+          typeof block.style?.fontSize === "number" && block.style.fontSize > 0
+            ? block.style.fontSize
+            : block.type === "heading"
+              ? 56
+              : 28;
+        const nextFontSize = resolveAppliedNumericProperty({
+          current: currentSize,
+          value: typeof patch.fontSize === "number" ? patch.fontSize : undefined,
+          mode: applyOptions?.fontSizeMode,
+          delta: applyOptions?.fontSizeDelta,
+          clamp: clampFontSize,
+        });
+        const effective = sparsePropertyPatch({
+          ...(patch as Record<string, unknown>),
+          ...(nextFontSize != null
+            ? { fontSize: nextFontSize }
+            : applyOptions?.fontSizeMode === "delta"
+              ? { fontSize: undefined }
+              : {}),
+        }) as NonNullable<ComunicadoBlock["style"]>;
+        return applyComunicadoBlockStylePatch(block, effective, {
+          selectedInputPart: block.type === "input" ? selectedInputPart : null,
+        });
+      });
       updateBlocks(nextBlocks);
     },
     [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
@@ -878,7 +922,7 @@ export function useComunicadoEditorBlocks({
 
   /** Tipografia da ribbon Formatar — bloco text/heading/shape ou tipografia de complexo/parte. */
   const updateSelectedTextFormatStyle = useCallback(
-    (patch: TextFormatStyleSnapshot) => {
+    (patch: TextFormatStyleSnapshot, applyOptions?: SelectionPropertyApplyOptions) => {
       if (!selected) return;
 
       const complexPatch = buildSelectedTextFormatBlockPatch({
@@ -889,13 +933,14 @@ export function useComunicadoEditorBlocks({
         selectedTablePart,
         selectedTableParts,
         selectedInputPart,
+        applyOptions,
       });
       if (complexPatch) {
         updateSelected(complexPatch);
         return;
       }
 
-      updateSelectedStyle(patch as NonNullable<ComunicadoBlock["style"]>);
+      updateSelectedStyle(patch as NonNullable<ComunicadoBlock["style"]>, applyOptions);
     },
     [
       selected,
@@ -1147,18 +1192,9 @@ export function useComunicadoEditorBlocks({
   }, [applyLayerOrder]);
 
   const reorderBlockLayer = useCallback(
-    (blockId: string, targetIndex: number) => {
-      const sorted = sortBlocksByZIndex(configRef.current.blocks ?? []);
-      const fromIndex = sorted.findIndex((block) => block.id === blockId);
-      if (fromIndex < 0 || fromIndex === targetIndex) return;
-      const reordered = [...sorted];
-      const [moved] = reordered.splice(fromIndex, 1);
-      reordered.splice(targetIndex, 0, moved);
-      const nextBlocks = reordered.map((block, index) => ({
-        ...block,
-        style: { ...block.style, zIndex: index + 1 },
-      }));
-      updateBlocks(nextBlocks);
+    (movedIds: string[], targetId: string, edge?: "before" | "after") => {
+      const next = reorderLayerIds(configRef.current.blocks ?? [], movedIds, targetId, edge);
+      updateBlocks(next);
     },
     [configRef, updateBlocks],
   );
@@ -1221,6 +1257,33 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef, selectBlocksByIds],
   );
 
+  /** Draft do Copiloto: aplica nativeConfig do BFF sem remintar ids. */
+  const replaceSlideNativeConfig = useCallback(
+    (nativeConfig: Record<string, unknown>) => {
+      const parsed = parseComunicadoConfig(nativeConfig);
+      const nextBlocks = parsed.blocks ?? [];
+      const prevSelected = getActionSelectedIds();
+      commitWithHistory({
+        ...configRef.current,
+        version: Math.max(parsed.version ?? configRef.current.version ?? 4, 4),
+        headline: parsed.headline ?? configRef.current.headline,
+        subtitle: parsed.subtitle ?? configRef.current.subtitle,
+        background: parsed.background ?? configRef.current.background,
+        dataFilters: parsed.dataFilters ?? configRef.current.dataFilters,
+        groupTransforms: parsed.groupTransforms ?? configRef.current.groupTransforms,
+        speakerNotes:
+          parsed.speakerNotes !== undefined
+            ? parsed.speakerNotes
+            : configRef.current.speakerNotes,
+        customFonts: parsed.customFonts ?? configRef.current.customFonts,
+        blocks: nextBlocks,
+      });
+      const keep = prevSelected.filter((id) => nextBlocks.some((b) => b.id === id));
+      selectBlocksByIds(keep);
+    },
+    [commitWithHistory, configRef, getActionSelectedIds, selectBlocksByIds],
+  );
+
   const applySlideTheme = useCallback(
     (theme: ComunicadoSlideTheme) => {
       commitWithHistory(applyComunicadoSlideTheme(configRef.current, theme));
@@ -1234,6 +1297,16 @@ export function useComunicadoEditorBlocks({
       if (ids.length === 0) return;
       const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], ids, command);
       updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(ids)));
+    },
+    [configRef, getActionSelectedIds, updateBlocks],
+  );
+
+  const sameSizeSelected = useCallback(
+    (axis: SameSizeAxis) => {
+      const ids = getActionSelectedIds();
+      if (ids.length === 0) return;
+      const resized = resizeComunicadoBlocksSameSize(configRef.current.blocks ?? [], ids, axis);
+      updateBlocks(reconcileConnectorsAfterDrag(resized, new Set(ids)));
     },
     [configRef, getActionSelectedIds, updateBlocks],
   );
@@ -1376,21 +1449,25 @@ export function useComunicadoEditorBlocks({
     });
   }, [requestRibbonTab, setRibbonTabRequest]);
 
-  const setBackgroundColor = useCallback(
-    (color: string) => {
-      commitWithHistory({ ...configRef.current, background: { type: "color", value: color } });
+  const setBackground = useCallback(
+    (background: ComunicadoBackground) => {
+      commitWithHistory({ ...configRef.current, background });
     },
     [commitWithHistory, configRef],
   );
 
+  const setBackgroundColor = useCallback(
+    (color: string) => {
+      setBackground({ type: "color", value: color });
+    },
+    [setBackground],
+  );
+
   const setBackgroundGradient = useCallback(
     (from: string, to: string, angle = 180) => {
-      commitWithHistory({
-        ...configRef.current,
-        background: { type: "gradient", from, to, angle },
-      });
+      setBackground({ type: "gradient", from, to, angle });
     },
-    [commitWithHistory, configRef],
+    [setBackground],
   );
 
   const bindSelectedVisualBoxToData = useCallback(() => {
@@ -1493,8 +1570,10 @@ export function useComunicadoEditorBlocks({
     reorderBlockLayer,
     nudgeSelected,
     applySlideTemplate,
+    replaceSlideNativeConfig,
     applySlideTheme,
     alignSelected,
+    sameSizeSelected,
     rotateSelected,
     flipSelectedHorizontal,
     flipSelectedVertical,
@@ -1505,6 +1584,7 @@ export function useComunicadoEditorBlocks({
     focusFrameRotationField,
     setBackgroundColor,
     setBackgroundGradient,
+    setBackground,
     bindSelectedVisualBoxToData,
     insertTextDataFieldBlock,
   };

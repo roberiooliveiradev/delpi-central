@@ -130,6 +130,30 @@ def test_sales_order_otd_series_returns_meta(mock_build) -> None:
     )
 
 
+@patch(f"{_COMMERCIAL}.build_get_sales_conversion_rate_series_use_case")
+def test_sales_conversion_rate_series_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.commercial.commercial_router import (
+        get_sales_conversion_rate_series,
+    )
+
+    result = MagicMock()
+    result.to_dict.return_value = {"points": [], "granularity": "month", "truncated": False}
+    mock_build.return_value = MagicMock(execute=MagicMock(return_value=result))
+
+    response = get_sales_conversion_rate_series(
+        granularity="month",
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+        customer_codes=None,
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="get_sales_conversion_rate_series",
+        shape="scalar",
+    )
+
+
 @patch(f"{_COMMERCIAL}.build_engineering_get_lmp_history_events_use_case")
 def test_commercial_proposal_history_events_returns_meta(mock_build) -> None:
     from app.interface.http.routes.commercial.commercial_router import (

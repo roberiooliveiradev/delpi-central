@@ -8,6 +8,7 @@ import type {
   NotificationTemplateDefinition,
   NotificationType,
 } from "../../data/coreApi";
+import { Alert, Button, Checkbox, FormField, FormGrid, Input, Select, Textarea } from "../../ui-kit";
 import { NotificationVariableToolbar } from "./NotificationVariableToolbar";
 
 import "./CustomTemplateModal.css";
@@ -93,96 +94,110 @@ export function CustomTemplateModal({
       >
         <header className="custom-template-modal__header">
           <h3 id="custom-template-title">Novo template personalizado</h3>
-          <button type="button" className="custom-template-modal__close" onClick={onClose}>
-            <X size={18} />
-          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Fechar"
+            onClick={onClose}
+            icon={<X size={18} />}
+          />
         </header>
 
         <form className="custom-template-modal__form" onSubmit={(event) => void handleSubmit(event)}>
-          <label className="custom-template-modal__field">
-            <span>Nome do template *</span>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={120} />
-          </label>
-
-          <div className="custom-template-modal__row">
-            <label className="custom-template-modal__field">
-              <span>Categoria</span>
-              <select value={category} onChange={(e) => setCategory(e.target.value as NotificationCategory)}>
-                {CATEGORIES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="custom-template-modal__field">
-              <span>Tipo visual</span>
-              <select value={defaultType} onChange={(e) => setDefaultType(e.target.value as NotificationType)}>
-                {TYPES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <label className="custom-template-modal__field">
-            <span>Título *</span>
-            <input
-              ref={titleRef}
-              value={defaultTitle}
-              onChange={(e) => setDefaultTitle(e.target.value)}
+          <FormField label="Nome do template" required htmlFor="custom-template-label">
+            <Input
+              id="custom-template-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
               maxLength={120}
             />
+          </FormField>
+
+          <FormGrid columns={2}>
+            <FormField label="Categoria" htmlFor="custom-template-category">
+              <Select
+                id="custom-template-category"
+                value={category}
+                onChange={(value) => setCategory(value as NotificationCategory)}
+                options={CATEGORIES.map((item) => ({ value: item, label: item }))}
+              />
+            </FormField>
+            <FormField label="Tipo visual" htmlFor="custom-template-type">
+              <Select
+                id="custom-template-type"
+                value={defaultType}
+                onChange={(value) => setDefaultType(value as NotificationType)}
+                options={TYPES.map((item) => ({ value: item, label: item }))}
+              />
+            </FormField>
+          </FormGrid>
+
+          <div className="custom-template-modal__field-stack">
+            <FormField label="Título" required htmlFor="custom-template-default-title">
+              <Input
+                id="custom-template-default-title"
+                ref={titleRef}
+                value={defaultTitle}
+                onChange={(e) => setDefaultTitle(e.target.value)}
+                maxLength={120}
+              />
+            </FormField>
             <NotificationVariableToolbar
               targetRef={titleRef}
               value={defaultTitle}
               onChange={setDefaultTitle}
               disabled={isSaving}
             />
-          </label>
+          </div>
 
-          <label className="custom-template-modal__field">
-            <span>Mensagem *</span>
-            <textarea
-              ref={messageRef}
-              value={defaultMessage}
-              onChange={(e) => setDefaultMessage(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
+          <div className="custom-template-modal__field-stack">
+            <FormField label="Mensagem" required htmlFor="custom-template-default-message">
+              <Textarea
+                id="custom-template-default-message"
+                ref={messageRef}
+                value={defaultMessage}
+                onChange={(e) => setDefaultMessage(e.target.value)}
+                rows={3}
+                maxLength={500}
+              />
+            </FormField>
             <NotificationVariableToolbar
               targetRef={messageRef}
               value={defaultMessage}
               onChange={setDefaultMessage}
               disabled={isSaving}
             />
-          </label>
+          </div>
 
-          <label className="custom-template-modal__field">
-            <span>Texto auxiliar (opcional)</span>
-            <input value={hint} onChange={(e) => setHint(e.target.value)} maxLength={200} />
-          </label>
-
-          <label className="custom-template-modal__checkbox">
-            <input
-              type="checkbox"
-              checked={useUserName}
-              onChange={(e) => setUseUserName(e.target.checked)}
+          <FormField label="Texto auxiliar (opcional)" htmlFor="custom-template-hint">
+            <Input
+              id="custom-template-hint"
+              value={hint}
+              onChange={(e) => setHint(e.target.value)}
+              maxLength={200}
             />
-            Usar nome do destinatário automaticamente ({`{userName}`})
-          </label>
+          </FormField>
 
-          {error ? <p className="custom-template-modal__error">{error}</p> : null}
+          <Checkbox
+            checked={useUserName}
+            onChange={(e) => setUseUserName(e.target.checked)}
+            label={
+              <>
+                Usar nome do destinatário automaticamente ({`{userName}`})
+              </>
+            }
+          />
+
+          {error ? <Alert tone="danger">{error}</Alert> : null}
 
           <footer className="custom-template-modal__footer">
-            <button type="button" className="custom-template-modal__ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
-            <button type="submit" className="custom-template-modal__submit" disabled={isSaving}>
+            </Button>
+            <Button type="submit" variant="primary" loading={isSaving} disabled={isSaving}>
               {isSaving ? "Salvando..." : "Criar template"}
-            </button>
+            </Button>
           </footer>
         </form>
       </div>

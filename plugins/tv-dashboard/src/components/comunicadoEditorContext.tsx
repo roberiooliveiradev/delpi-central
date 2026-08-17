@@ -10,10 +10,13 @@ import {
 import {
   applyFieldLabelsToResolved,
   collectCanvasTableSourceIds,
+  defaultFrame,
+  ensureEfficiencyPinResizableFrame,
   isComunicadoVisualBoxBlock,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isEfficiencyPinBlock,
   isFetchableDataBlockType,
   parseComunicadoConfig,
   serializeComunicadoConfig,
@@ -23,6 +26,7 @@ import {
   type ComunicadoDataDisplayMode,
   type ComunicadoDataSourceBlock,
   type PresentationSelectionUpdateEvent,
+  type ComunicadoShapeBlock,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -31,11 +35,12 @@ import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
 import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicadoEditorDrag";
-import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import { useComunicadoEditorHistory, snapshotConfig } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
   shouldForceAcceptRemoteComunicadoValue,
+  shouldStackRemoteComunicadoUndo,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
 import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
@@ -68,10 +73,14 @@ export {
 
 type ProviderProps = {
   playlistId: string;
+  /** Token público — stream de vídeo/imagem no palco sem JWT na query. */
+  publicToken?: string | null;
   slideId?: string;
   globalRefreshSec?: number;
-  /** Dimensão canônica do slide (720p / 1080p / 4k / portrait). */
+  /** Dimensão canônica do slide (720p / 1080p / 4k / portrait / custom). */
   viewportProfile?: string;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   masterConfig?: PlaylistMasterConfig;
   /** Filtros globais da programação (live) — disparam refresh do preview. */
   playlistDefaults?: Record<string, unknown> | null;
@@ -160,9 +169,12 @@ function ComunicadoEditorKeyboardBridge() {
 
 export function ComunicadoEditorProvider({
   playlistId,
+  publicToken = null,
   slideId,
   globalRefreshSec = 300,
   viewportProfile = "1080p",
+  viewportWidth = null,
+  viewportHeight = null,
   masterConfig,
   playlistDefaults = null,
   value,
@@ -349,8 +361,13 @@ export function ComunicadoEditorProvider({
   }
 
   const stage = useComunicadoEditorStage();
-  const designSizeRef = useRef(resolveViewportPixelSize(viewportProfile));
-  designSizeRef.current = resolveViewportPixelSize(viewportProfile);
+  const designSizeRef = useRef(
+    resolveViewportPixelSize(viewportProfile, { width: viewportWidth, height: viewportHeight }),
+  );
+  designSizeRef.current = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
 
   const applyConfig = useCallback(
     (next: ComunicadoConfig, options?: { persist?: boolean }) => {
@@ -369,6 +386,28 @@ export function ComunicadoEditorProvider({
     },
     [deckHistory, onChange, playlistId],
   );
+
+  /* Pins CT legados (w/h≈0): persiste frame redimensionável no modelo — chrome sozinho não basta. */
+  useEffect(() => {
+    const blocks = config.blocks ?? [];
+    const defaultPin = defaultFrame("shape", "efficiency-pin");
+    let changed = false;
+    const nextBlocks = blocks.map((block) => {
+      if (!isEfficiencyPinBlock(block)) return block;
+      const fixed = ensureEfficiencyPinResizableFrame(block as ComunicadoShapeBlock, defaultPin);
+      if (
+        fixed.frame.w !== block.frame.w ||
+        fixed.frame.h !== block.frame.h ||
+        fixed.vertices !== block.vertices
+      ) {
+        changed = true;
+        return fixed;
+      }
+      return block;
+    });
+    if (!changed) return;
+    applyConfig({ ...configRef.current, blocks: nextBlocks });
+  }, [applyConfig, config.blocks]);
 
   const {
     pushPast,
@@ -452,6 +491,18 @@ export function ComunicadoEditorProvider({
       return;
     }
 
+    if (
+      shouldStackRemoteComunicadoUndo({
+        identityChanged,
+        remoteRevisionChanged,
+        fromHistoryRestore: forceAcceptFromHistory,
+        incomingFingerprint: incomingFp,
+        currentFingerprint: currentFp,
+      })
+    ) {
+      pushPast(snapshotConfig(configRef.current));
+    }
+
     setConfig(enriched);
     lastEmittedFingerprintRef.current = incomingFp;
     if (identityChanged) {
@@ -463,6 +514,7 @@ export function ComunicadoEditorProvider({
     playlistId,
     slideId,
     remoteRevision,
+    pushPast,
     resetLocalHistory,
     clearDragSnapshot,
     deckHistory?.historyEpoch,
@@ -642,6 +694,8 @@ export function ComunicadoEditorProvider({
   const ctxValue: ComunicadoEditorContextValue = {
     config,
     viewportProfile: viewportProfile || "1080p",
+    viewportWidth: viewportWidth ?? null,
+    viewportHeight: viewportHeight ?? null,
     appliedSlideId,
     blocks,
     selectedIds: selection.selectedIds,
@@ -795,6 +849,7 @@ export function ComunicadoEditorProvider({
     canUndo,
     canRedo,
     playlistId,
+    publicToken: publicToken?.trim() || null,
     playlistDefaults: playlistDefaults ?? null,
     masterLogo,
     mediaLibraryOpen: media.mediaLibraryOpen,
@@ -807,11 +862,14 @@ export function ComunicadoEditorProvider({
     replaceSelectedMediaFromClipboard: media.replaceSelectedMediaFromClipboard,
     setBackgroundColor: blockActions.setBackgroundColor,
     setBackgroundGradient: blockActions.setBackgroundGradient,
+    setBackground: blockActions.setBackground,
     bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,
     insertTextDataFieldBlock: blockActions.insertTextDataFieldBlock,
     applySlideTemplate: blockActions.applySlideTemplate,
+    replaceSlideNativeConfig: blockActions.replaceSlideNativeConfig,
     applySlideTheme: blockActions.applySlideTheme,
     alignSelected: blockActions.alignSelected,
+    sameSizeSelected: blockActions.sameSizeSelected,
     rotateSelected: blockActions.rotateSelected,
     flipSelectedHorizontal: blockActions.flipSelectedHorizontal,
     flipSelectedVertical: blockActions.flipSelectedVertical,

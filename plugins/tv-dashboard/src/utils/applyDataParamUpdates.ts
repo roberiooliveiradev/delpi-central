@@ -1,3 +1,5 @@
+import { EXCLUDE_WEEKENDS_PARAM } from "@delpi/tv-dashboard-presentation";
+
 import type { DataParamSchema } from "../components/DataParamFields";
 import { findDateRangeKeys, isDateRangePairKey } from "./dateRangePresets";
 
@@ -32,7 +34,7 @@ export function parseDataParamRaw(
     return raw.trim().slice(0, 10);
   }
   if (fieldType === "integer" || fieldType === "number") return Number(raw);
-  if (fieldType === "boolean") return raw === "true";
+  if (fieldType === "boolean" || key === EXCLUDE_WEEKENDS_PARAM) return raw === "true";
   return raw.trim();
 }
 

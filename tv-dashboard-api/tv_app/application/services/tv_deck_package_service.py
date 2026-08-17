@@ -184,6 +184,8 @@ class TvDeckPackageService:
             "name": playlist["name"],
             "description": playlist.get("description"),
             "viewportProfile": playlist["viewportProfile"],
+            "viewportWidth": playlist.get("viewportWidth"),
+            "viewportHeight": playlist.get("viewportHeight"),
             "transitionStyle": playlist["transitionStyle"],
             "defaultDurationSec": playlist["defaultDurationSec"],
             "globalRefreshSec": playlist["globalRefreshSec"],
@@ -612,6 +614,12 @@ class TvDeckPackageService:
             actor_user_id=created_by,
             reason="playlist_imported",
             viewport_profile=playlist_payload.get("viewportProfile"),
+            viewport_width=playlist_payload.get("viewportWidth"),
+            viewport_height=playlist_payload.get("viewportHeight"),
+            clear_viewport_dims=(
+                playlist_payload.get("viewportProfile") != "custom"
+                and playlist_payload.get("viewportProfile") is not None
+            ),
             transition_style=playlist_payload.get("transitionStyle"),
             default_duration_sec=playlist_payload.get("defaultDurationSec"),
             global_refresh_sec=playlist_payload.get("globalRefreshSec"),

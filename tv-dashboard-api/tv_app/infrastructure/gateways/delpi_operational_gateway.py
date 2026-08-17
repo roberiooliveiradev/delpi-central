@@ -10,6 +10,8 @@ from delpi_auth.service_token import internal_service_authorization
 from tv_app.application.services.comunicado_data_params_service import (
     BRANCH_PARAM_KEYS,
     canonical_branch_wire_value,
+    project_branch_params_onto_route_schema,
+    schema_branch_param_keys,
 )
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
@@ -27,12 +29,16 @@ from tv_app.application.services.series_points_extractor import (
 )
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
+    EXCLUDE_WEEKENDS_KEY,
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
     date_alias_keys,
     read_date_range_values,
     resolve_output_date_range_keys,
 )
+
+# dateRangePreset / excludeWeekends nunca vão na query; periodDays só se estiver no schema.
+_VISUAL_ONLY_QUERY_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
 _PATH_PARAM_RE = re.compile(r"\{([^{}]+)\}")
 
@@ -107,6 +113,8 @@ def _build_query_params(
         date_range_keys=date_range_keys,
         strategy=strategy,
     )
+    # Filial: qualquer alias (branch/filial/…) → chave(s) do schema da rota.
+    merged = project_branch_params_onto_route_schema(merged, schema)
     query: dict[str, str] = {}
 
     fixed = route.get("fixedQueryParams")
@@ -114,6 +122,8 @@ def _build_query_params(
         for key, value in fixed.items():
             if value is not None and value != "":
                 query[str(key)] = str(value)
+
+    schema_branch_keys = set(schema_branch_param_keys(schema))
 
     if strategy == "date_range":
         # Nomes HTTP só do schema/catálogo — nunca dos valores do usuário (evita date_start em rota start_date).
@@ -165,12 +175,9 @@ def _build_query_params(
         elif not omit_date_range:
             query[start_key] = str(start)
             query[end_key] = str(end)
-        branch = canonical_branch_wire_value(merged.get("branch"))
-        if branch:
-            query["branch"] = branch
         drop_aliases = date_alias_keys(keep=(start_key, end_key))
         for key, value in merged.items():
-            if key in {PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY, "branch"} | drop_aliases:
+            if key in {PERIOD_DAYS_KEY} | _VISUAL_ONLY_QUERY_KEYS | drop_aliases:
                 continue
             if value is None or value == "":
                 continue
@@ -181,7 +188,8 @@ def _build_query_params(
                     query[key_str] = canon
                 continue
             query[key_str] = str(value)
-        always_allow = {start_key, end_key, "branch"} if not omit_date_range else {"branch"}
+        always_allow = {start_key, end_key} if not omit_date_range else set()
+        always_allow |= schema_branch_keys
         return _filter_query_to_route_schema(
             query, schema=schema, fixed=fixed, always_allow=always_allow
         )
@@ -193,7 +201,7 @@ def _build_query_params(
         strategy=None,
     )
     drop_aliases: set[str] = set()
-    always_allow: set[str] = set()
+    always_allow: set[str] = set(schema_branch_keys)
     if pair:
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
@@ -202,10 +210,12 @@ def _build_query_params(
         if end:
             merged[end_key] = end
         drop_aliases = set(date_alias_keys(keep=(start_key, end_key))) - {start_key, end_key}
-        always_allow = {start_key, end_key}
+        always_allow |= {start_key, end_key}
 
     for key, value in merged.items():
         if key == PERIOD_DAYS_KEY and key not in schema:
+            continue
+        if key in _VISUAL_ONLY_QUERY_KEYS:
             continue
         if key in drop_aliases:
             continue

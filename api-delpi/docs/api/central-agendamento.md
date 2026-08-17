@@ -22,7 +22,22 @@ Aprovadores devem em geral ter também `view` da filial para abrir o app no port
 | POST | `/resources` | manage |
 | PATCH | `/resources/{id}` | manage |
 
-Campo novo: `requires_approval` (boolean). Quando `true`, `POST /bookings` cria status `pending`.
+Campo: `requires_approval` (boolean). Quando `true`, `POST /bookings` cria status `pending`.
+
+Campos públicos (V005): `public_booking_enabled`, `public_token` (opaco). Com o flag ligado, o
+admin copia o link `/p/central-agendamento/book/{token}` no public-hub.
+
+## Público (sem JWT)
+
+Base: `/public/scheduling` (gateway: `/apps/api-delpi/public/scheduling`)
+
+| Método | Path | Uso |
+|--------|------|-----|
+| GET | `/resources/{token}` | Metadados do recurso (sem PII de outras reservas) |
+| GET | `/resources/{token}/availability?from=&to=` | Faixas ocupadas (`confirmed`/`pending`) |
+| POST | `/resources/{token}/bookings` | Solicitação — sempre `pending`; honeypot `website` |
+
+Body da solicitação: `requester_name`, `requester_email`, `requester_phone?`, `title`, `notes?`, `start_at`, `end_at`.
 
 ## Reservas
 
@@ -60,4 +75,4 @@ Categoria catálogo: `central_agendamento`.
 python scripts/run_plugins_migrations.py up --plugin scheduling
 ```
 
-Relevante: `V004__booking_approval_workflow.sql`.
+Relevante: `V004__booking_approval_workflow.sql`, `V005__public_booking.sql`.

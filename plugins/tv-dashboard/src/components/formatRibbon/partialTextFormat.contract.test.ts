@@ -24,10 +24,12 @@ describe("partial text format (ribbon → contentRuns)", () => {
     expect(typography).toContain("applyEditingTextRunStylePatch");
     expect(typography).toContain("applyTextFormatStyle");
     expect(typography).toContain("partialTextSelectionActive");
-    expect(typography).toMatch(/applyTextFormatStyle\(\{\s*fontFamily/);
-    expect(typography).toMatch(/applyTextFormatStyle\(\{\s*fontSize/);
+    expect(typography).toMatch(/applyTextFormatStyle\(\s*\{\s*fontFamily/);
+    expect(typography).toMatch(/applyTextFormatStyle\(\s*\{\s*fontSize/);
     expect(typography).toMatch(/applyTextFormatStyle\(\{\s*color/);
     expect(typography).toMatch(/applyTextFormatStyle\(\{\s*textHighlight/);
+    expect(typography).toContain("fillToColorStylePatch");
+    expect(typography).toContain("onFillChange");
   });
 
   it("texto e forma registram applyPartialStylePatch no bridge", () => {

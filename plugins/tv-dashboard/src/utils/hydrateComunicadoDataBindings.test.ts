@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
+  buildHydrateBindingsInputFingerprint,
   buildLabelCatalogFromRoutes,
+  collectHydrateDataBindingPatches,
+  commitHydrateBindingsApplyPlan,
   hydrateComunicadoDataBindings,
+  planHydrateBindingsApply,
+  projectBranchParamsOntoRouteSchema,
+  resetHydrateBindingsSessionFingerprintForTests,
 } from "./hydrateComunicadoDataBindings";
 
 const ppmRoute: TvDataRouteCatalogItem = {
@@ -61,6 +67,34 @@ describe("hydrateComunicadoDataBindings", () => {
     expect(result.strippedParamKeys).toContain("obsolete");
   });
 
+  it("preserva excludeWeekends e dateRangePreset (params internos de UI)", () => {
+    const result = hydrateComunicadoDataBindings(
+      {
+        version: 4,
+        blocks: [
+          sourceBlock("get_ppm_internal_summary", {
+            params: {
+              start_date: "2026-08-01",
+              end_date: "2026-08-10",
+              dateRangePreset: "custom",
+              excludeWeekends: true,
+              granularity: "day",
+            },
+          }),
+        ],
+      },
+      [ppmRoute],
+    );
+    const binding =
+      result.config.blocks?.[0] && "dataBinding" in result.config.blocks[0]
+        ? result.config.blocks[0].dataBinding
+        : null;
+    expect(binding?.params?.excludeWeekends).toBe(true);
+    expect(binding?.params?.dateRangePreset).toBe("custom");
+    expect(binding?.params).not.toHaveProperty("granularity");
+    expect(result.strippedParamKeys).toContain("granularity");
+  });
+
   it("preserva rótulo customizado", () => {
     const result = hydrateComunicadoDataBindings(
       {
@@ -93,5 +127,109 @@ describe("buildLabelCatalogFromRoutes", () => {
       label: "PPM Interno — realizado",
       labelAliases: ["Qualidade — PPM interno"],
     });
+  });
+});
+
+const transformaRoute: TvDataRouteCatalogItem = {
+  operationId: "get_transforma_mais_summary",
+  label: "Resumo Transforma Mais",
+  category: "engineering",
+  paramSchema: {
+    filial_id: { type: "string", optional: true },
+    start_date: { type: "string" },
+    end_date: { type: "string" },
+  },
+};
+
+describe("projectBranchParamsOntoRouteSchema", () => {
+  it("projeta branch → filial_id do schema", () => {
+    const projected = projectBranchParamsOntoRouteSchema(
+      { branch: "01", start_date: "2026-01-01" },
+      new Set(["filial_id", "start_date", "end_date"]),
+    );
+    expect(projected.filial_id).toBe("01");
+    expect(projected).not.toHaveProperty("branch");
+    expect(projected.start_date).toBe("2026-01-01");
+  });
+});
+
+describe("hydrateComunicadoDataBindings idempotência", () => {
+  it("projeta branch e fica estável na segunda passagem (sem loop)", () => {
+    const config = {
+      version: 4 as const,
+      blocks: [
+        sourceBlock("get_transforma_mais_summary", {
+          params: { branch: "01", start_date: "2026-01-01" },
+        }),
+      ],
+    };
+    const first = hydrateComunicadoDataBindings(config, [transformaRoute]);
+    expect(first.changed).toBe(true);
+    const binding =
+      first.config.blocks?.[0] && "dataBinding" in first.config.blocks[0]
+        ? first.config.blocks[0].dataBinding
+        : null;
+    expect(binding?.params?.filial_id).toBe("01");
+    expect(binding?.params).not.toHaveProperty("branch");
+
+    const second = hydrateComunicadoDataBindings(first.config, [transformaRoute]);
+    expect(second.changed).toBe(false);
+    expect(collectHydrateDataBindingPatches(first.config, second.config)).toEqual([]);
+  });
+
+  it("planHydrateBindingsApply não reaplica o mesmo input (ribbon + painel)", () => {
+    resetHydrateBindingsSessionFingerprintForTests();
+    const config = {
+      version: 4 as const,
+      blocks: [
+        sourceBlock("get_transforma_mais_summary", {
+          label: "Resumo Transforma Mais",
+          params: { branch: "02" },
+        }),
+      ],
+    };
+    const plan = planHydrateBindingsApply(config, [transformaRoute]);
+    expect(plan).not.toBeNull();
+    expect(plan?.patches).toHaveLength(1);
+    commitHydrateBindingsApplyPlan(plan!);
+
+    const again = planHydrateBindingsApply(plan!.result.config, [transformaRoute]);
+    expect(again).toBeNull();
+
+    // Segunda montagem com o mesmo input pré-hydrate também é no-op após commit do output.
+    const twinMount = planHydrateBindingsApply(config, [transformaRoute]);
+    expect(twinMount).toBeNull();
+  });
+
+  it("fingerprint de input ignora ordem de chaves em params", () => {
+    const a = {
+      version: 4 as const,
+      blocks: [sourceBlock("get_ppm_internal_summary", { params: { branch: "01", start_date: "a" } })],
+    };
+    const b = {
+      version: 4 as const,
+      blocks: [sourceBlock("get_ppm_internal_summary", { params: { start_date: "a", branch: "01" } })],
+    };
+    expect(buildHydrateBindingsInputFingerprint(a, [ppmRoute])).toBe(
+      buildHydrateBindingsInputFingerprint(b, [ppmRoute]),
+    );
+  });
+});
+
+describe("reset session", () => {
+  beforeEach(() => {
+    resetHydrateBindingsSessionFingerprintForTests();
+  });
+
+  it("permite novo plan após reset", () => {
+    const config = {
+      version: 4 as const,
+      blocks: [sourceBlock("get_transforma_mais_summary", { params: { branch: "01" } })],
+    };
+    const plan = planHydrateBindingsApply(config, [transformaRoute]);
+    expect(plan).not.toBeNull();
+    commitHydrateBindingsApplyPlan(plan!);
+    resetHydrateBindingsSessionFingerprintForTests();
+    expect(planHydrateBindingsApply(config, [transformaRoute])).not.toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import {
   Activity,
   Bell,
+  Briefcase,
   Cake,
   Calendar,
   ClipboardCheck,
@@ -104,6 +105,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       pluginId: "lancamento-notas-fiscais",
     },
     {
+      id: "invoice_issuance",
+      label: "Emissão de Notas Fiscais",
+      icon: "file-text",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["invoice-issuance"],
+      pluginId: "invoice-issuance",
+    },
+    {
       id: "tv_dashboard",
       label: "Painéis TV",
       icon: "tv",
@@ -111,6 +121,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       kind: "app",
       sourceApps: ["tv-dashboard"],
       pluginId: "tv-dashboard",
+    },
+    {
+      id: "commercial",
+      label: "Portal Comercial",
+      icon: "briefcase",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["commercial"],
+      pluginId: "commercial",
     },
   ],
   legacyCategoryAliases: {
@@ -131,6 +150,7 @@ const ICON_BY_NAME: Record<string, LucideIcon> = {
   "clipboard-list": ClipboardList,
   "clipboard-check": ClipboardCheck,
   "file-text": FileText,
+  briefcase: Briefcase,
 };
 
 export function resolveNotificationCategoryId(

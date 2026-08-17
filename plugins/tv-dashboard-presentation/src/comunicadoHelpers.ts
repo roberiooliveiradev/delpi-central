@@ -11,6 +11,7 @@ import {
   DECK_TABLE_DEFAULTS,
   isAutomaticTextColor,
   resolvePaintTextColor,
+  specFromCategoryLabelFormat,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -35,6 +36,13 @@ import {
   isPointShapeKind,
   resolveShapePrimitive,
 } from "./comunicadoVisualPrimitive";
+import {
+  ensureEfficiencyPinResizableFrame,
+  isEfficiencyPinShapeKind,
+  normalizeEfficiencyPinBinding,
+  resolveEfficiencyPinBands,
+  syncEfficiencyPinBandsAcrossSources,
+} from "./efficiencyPin";
 import { normalizeShapeConnector } from "./comunicadoConnectors";
 import {
   serializeContentRuns,
@@ -42,6 +50,7 @@ import {
   syncTextBlockFields,
 } from "./comunicadoContentRuns";
 import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
+import { applyColorPaintToCss } from "./comunicadoFillPaint";
 import { normalizeComunicadoImageCrop } from "./comunicadoImageCrop";
 import {
   normalizeBlockAnimations,
@@ -135,6 +144,7 @@ import type {
   ComunicadoDataBlockType,
   ComunicadoDataFilters,
   ComunicadoDataResolved,
+  ComunicadoEfficiencyPinBands,
   ComunicadoChartType,
   ComunicadoInputBlock,
   ComunicadoTablePreset,
@@ -190,6 +200,7 @@ export {
 export {
   filterBlocksVisibleOnStage,
   filterStageSelectableIds,
+  listStageSelectableIds,
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,
@@ -297,7 +308,11 @@ export function createDataSourceBlock(
 }
 
 export function createChartViewBlock(chartType: ComunicadoChartType): ComunicadoBlock {
-  const chartOptions = { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
+  const chartOptions = {
+    ...DEFAULT_COMUNICADO_CHART_OPTIONS,
+    categoryLabelFormat: "day" as const,
+    displayCategoryFormat: specFromCategoryLabelFormat("day"),
+  };
   return {
     id: newBlockId(),
     type: "chart_view",
@@ -485,6 +500,10 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
   if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 0, h: 0 };
+  /* Pin CT: quadrado redimensionável (handles de bbox). */
+  if (shape && isEfficiencyPinShapeKind(shape)) {
+    return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX * 0.45, { x: 40, y: 35 });
+  }
   /* Linha permanece alongada — não é caixa quadrada. */
   if (shape && isLineShapeKind(shape)) return { x: 10, y: 48, w: 80, h: 4 };
   if (
@@ -570,7 +589,19 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       fontWeight: "normal" as const,
     };
     if (shape && isPointShapeKind(shape)) {
-      return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };
+      return {
+        ...base,
+        markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT,
+      };
+    }
+    if (shape && isEfficiencyPinShapeKind(shape)) {
+      return {
+        ...base,
+        fill: "transparent",
+        stroke: "transparent",
+        strokeWidth: 0,
+        opacity: 1,
+      };
     }
     if (shape === "rounded-rect" || shape === "callout-rect" || shape === "callout-rounded") {
       return { ...base, borderRadius: 16 };
@@ -655,7 +686,15 @@ export function createBlock(
   }
   if (type === "shape") {
     const kind = shape ?? "rectangle";
-    let shapeBlock = { ...base, type, shape: kind, content: content || "" } as ComunicadoBlock;
+    let shapeBlock = {
+      ...base,
+      type,
+      shape: kind,
+      content: content || "",
+      ...(isEfficiencyPinShapeKind(kind)
+        ? { efficiencyPin: { role: "pin" as const, infoMode: "attached" as const } }
+        : {}),
+    } as ComunicadoBlock;
     if (shapeBlock.type === "shape" && isLineShapeKind(kind)) {
       const vertices = lineEndpointsFromFrame(shapeBlock.frame);
       shapeBlock = {
@@ -686,7 +725,11 @@ export function createBlock(
 }
 
 export function createShapeBlock(shape: ComunicadoShapeKind): ComunicadoBlock {
-  return createBlock("shape", "", shape);
+  const block = createBlock("shape", "", shape);
+  if (block.type === "shape" && isEfficiencyPinShapeKind(shape)) {
+    return ensureEfficiencyPinResizableFrame(block, defaultFrame("shape", "efficiency-pin"));
+  }
+  return block;
 }
 
 export function createIconBlock(iconName: string): ComunicadoBlock {
@@ -729,12 +772,13 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
   // Array explícito (inclusive vazio) — não remigrar headline em blocos padrão.
   if (Array.isArray(cfg.blocks)) {
     const blocks = cfg.blocks as ComunicadoBlock[];
+    const normalized = syncEfficiencyPinBandsAcrossSources(blocks.map(normalizeBlock));
     return {
-      version: Number(cfg.version) || (blocks.length > 0 ? detectConfigVersion(blocks) : 2),
+      version: Number(cfg.version) || (normalized.length > 0 ? detectConfigVersion(normalized) : 2),
       headline: String(cfg.headline ?? ""),
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
-      blocks: blocks.map(normalizeBlock),
+      blocks: normalized,
       groupTransforms: normalizeGroupTransforms(cfg.groupTransforms),
       dataFilters: normalizeDataFilters(cfg.dataFilters),
       customFonts: normalizeCustomFonts(cfg.customFonts),
@@ -798,6 +842,9 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
             from: background.from,
             to: background.to,
             angle: background.angle ?? 180,
+            ...(background.stops && background.stops.length >= 2
+              ? { stops: background.stops }
+              : {}),
           }
         : { type: "color", value: background.value || "#ffffff" };
   const blocks = (config.blocks ?? []).map(serializeBlock);
@@ -840,6 +887,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     style,
   };
   if (block.groupId) base.groupId = block.groupId;
+  if (block.groupName?.trim()) base.groupName = block.groupName.trim();
+  if (block.hidden === true) base.hidden = true;
   const serializedAnimations = serializeBlockAnimations(block.animations);
   if (serializedAnimations) base.animations = serializedAnimations;
   if (block.type === "heading" || block.type === "text") {
@@ -861,6 +910,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (serializedRuns) base.contentRuns = serializedRuns;
     if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
     if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
+    if (block.efficiencyPin) base.efficiencyPin = { ...block.efficiencyPin, ...(block.efficiencyPin.bands ? { bands: { ...block.efficiencyPin.bands } } : {}) };
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
     if (block.vertices && block.vertices.length > 0) {
@@ -912,6 +962,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     }
     const fieldLabels = normalizeFieldLabels(block.fieldLabels);
     if (fieldLabels) base.fieldLabels = fieldLabels;
+    if (block.efficiencyPinBands) {
+      base.efficiencyPinBands = { ...resolveEfficiencyPinBands(block.efficiencyPinBands) };
+    }
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -1031,7 +1084,31 @@ function normalizeBackground(value: unknown): ComunicadoBackground {
     const from = typeof bg.from === "string" && bg.from.trim() ? bg.from : "#0f172a";
     const to = typeof bg.to === "string" && bg.to.trim() ? bg.to : "#1e3a5f";
     const angle = typeof bg.angle === "number" ? bg.angle : 180;
-    return { type: "gradient", from, to, angle };
+    const rawStops = Array.isArray(bg.stops) ? bg.stops : [];
+    const parsedStops = rawStops.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const stop = item as Record<string, unknown>;
+      if (typeof stop.color !== "string" || !stop.color.trim()) return [];
+      const position = Number(stop.position);
+      return [
+        {
+          color: stop.color.trim(),
+          position: Number.isFinite(position) ? position : 0,
+          ...(typeof stop.opacity === "number" ? { opacity: stop.opacity } : {}),
+        },
+      ];
+    });
+    const stops = parsedStops.length >= 2 ? parsedStops : [
+      { color: from, position: 0 },
+      { color: to, position: 100 },
+    ];
+    return {
+      type: "gradient",
+      from: stops[0]?.color ?? from,
+      to: stops[stops.length - 1]?.color ?? to,
+      angle,
+      stops,
+    };
   }
   const color = typeof bg.value === "string" && bg.value.trim() ? bg.value : "#ffffff";
   return { type: "color", value: color };
@@ -1042,7 +1119,11 @@ function attachBlockAnimations<T extends ComunicadoBlock>(
   raw: Record<string, unknown>,
 ): T {
   const animations = normalizeBlockAnimations(raw.animations);
-  return animations?.length ? { ...block, animations } : block;
+  let next = animations?.length ? { ...block, animations } : block;
+  if (raw.hidden === true) next = { ...next, hidden: true };
+  const groupName = typeof raw.groupName === "string" ? raw.groupName.trim() : "";
+  if (groupName) next = { ...next, groupName };
+  return next;
 }
 
 function normalizeBlock(value: unknown): ComunicadoBlock {
@@ -1087,35 +1168,46 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const kind = shape && isComunicadoShapeKind(shape) ? shape : "rectangle";
     const vertices = normalizeVertices(block.vertices);
     const connector = normalizeShapeConnector(block.connector);
+    const efficiencyPin = isEfficiencyPinShapeKind(kind)
+      ? normalizeEfficiencyPinBinding(block.efficiencyPin) ?? {
+          role: "pin" as const,
+          infoMode: "attached" as const,
+        }
+      : undefined;
     const shapeTextFields = syncTextBlockFields(
       typeof block.content === "string" ? block.content : "",
       block.contentRuns,
     );
     const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
     const textProjection = normalizeTextProjection(block.textProjection);
-    return attachBlockAnimations(
-      {
-        id,
-        type,
-        frame,
-        style: { ...defaultStyle("shape", kind), ...style },
-        shape: kind,
-        groupId,
-        content: shapeTextFields.content,
-        ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
-        ...(dataSourceId ? { dataSourceId } : {}),
-        ...(textProjection ? { textProjection } : {}),
-        href: links.href,
-        linkTarget: links.linkTarget,
-        ...(vertices ? { vertices } : {}),
-        ...(connector ? { connector } : {}),
-        resolved:
-          block.resolved && typeof block.resolved === "object"
-            ? (block.resolved as ComunicadoDataResolved)
-            : undefined,
-      },
-      block,
-    );
+    let shapeNorm = {
+      id,
+      type: "shape" as const,
+      frame,
+      style: { ...defaultStyle("shape", kind), ...style },
+      shape: kind,
+      groupId,
+      content: shapeTextFields.content,
+      ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
+      ...(dataSourceId ? { dataSourceId } : {}),
+      ...(textProjection ? { textProjection } : {}),
+      ...(efficiencyPin ? { efficiencyPin } : {}),
+      href: links.href,
+      linkTarget: links.linkTarget,
+      ...(vertices ? { vertices } : {}),
+      ...(connector ? { connector } : {}),
+      resolved:
+        block.resolved && typeof block.resolved === "object"
+          ? (block.resolved as ComunicadoDataResolved)
+          : undefined,
+    };
+    if (isEfficiencyPinShapeKind(kind)) {
+      shapeNorm = ensureEfficiencyPinResizableFrame(
+        shapeNorm,
+        defaultFrame("shape", "efficiency-pin"),
+      );
+    }
+    return attachBlockAnimations(shapeNorm, block);
   }
   if (type === "icon") {
     const iconName =
@@ -1190,6 +1282,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       bindingRaw && typeof bindingRaw === "object"
         ? (bindingRaw as ComunicadoDataBinding)
         : { operationId: "" };
+    const bandsRaw = block.efficiencyPinBands;
+    const efficiencyPinBands =
+      bandsRaw && typeof bandsRaw === "object"
+        ? resolveEfficiencyPinBands(bandsRaw as ComunicadoEfficiencyPinBands)
+        : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -1209,6 +1306,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         },
         dataTransform: normalizeDataTransform(block.dataTransform),
         fieldLabels: normalizeFieldLabels(block.fieldLabels),
+        ...(efficiencyPinBands ? { efficiencyPinBands } : {}),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)
@@ -1543,11 +1641,13 @@ export function comunicadoTextInnerStyle(
   if (style.textHighlight) css.backgroundColor = style.textHighlight;
   if (style.textDecoration) css.textDecoration = style.textDecoration;
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-  const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
-    unsetIsAutomatic: false,
-  });
-  if (paintColor) css.color = paintColor;
-  else if (style.color && style.color !== "auto") css.color = style.color;
+  if (!applyColorPaintToCss(css, style.colorPaint)) {
+    const paintColor = resolvePaintTextColor(style.color, style.backgroundColor ?? style.fill ?? "#ffffff", {
+      unsetIsAutomatic: false,
+    });
+    if (paintColor) css.color = paintColor;
+    else if (style.color && style.color !== "auto") css.color = style.color;
+  }
   if (style.fontFamily) css.fontFamily = style.fontFamily;
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -1657,13 +1757,15 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
-      const textPaint = resolvePaintTextColor(
-        style.color,
-        style.backgroundColor ?? style.fill ?? "#ffffff",
-        { unsetIsAutomatic: false },
-      );
-      if (textPaint) css.color = textPaint;
-      else if (style.color && style.color !== "auto") css.color = style.color;
+      if (!applyColorPaintToCss(css, style.colorPaint)) {
+        const textPaint = resolvePaintTextColor(
+          style.color,
+          style.backgroundColor ?? style.fill ?? "#ffffff",
+          { unsetIsAutomatic: false },
+        );
+        if (textPaint) css.color = textPaint;
+        else if (style.color && style.color !== "auto") css.color = style.color;
+      }
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
@@ -1675,7 +1777,9 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
       const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;
-      css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
+      if (!applyColorPaintToCss(css, style.colorPaint)) {
+        css.color = resolvePaintTextColor(style.color, shapeFill) ?? DECK_COLOR_TEXT_STRONG;
+      }
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.textAlign) css.textAlign = style.textAlign;
       if (style.fontWeight) css.fontWeight = style.fontWeight;

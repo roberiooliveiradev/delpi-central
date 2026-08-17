@@ -8,10 +8,17 @@ from app.application.dto.commercial.get_commercial_proposal_request import (
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
+from app.domain.services.commercial_customer_codes_filter_service import (
+    CommercialCustomerCodesFilterService,
+)
 
 
 def parse_customer_segment(value: Optional[str]) -> Optional[str]:
     return CommercialCustomerSegmentService.normalize_customer_segment(value)
+
+
+def parse_customer_codes(value: Optional[str]) -> Optional[list[str]]:
+    return CommercialCustomerCodesFilterService.normalize(value)
 
 
 def build_get_commercial_proposal_request(

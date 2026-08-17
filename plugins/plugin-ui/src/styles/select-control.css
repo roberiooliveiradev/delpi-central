@@ -16,8 +16,8 @@
   );
   --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   --delpi-ui-select-radius: 10px;
-  --delpi-ui-select-min-height: 36px;
-  --delpi-ui-select-font-size: 13px;
+  --delpi-ui-select-min-height: var(--delpi-ui-control-height, 42px);
+  --delpi-ui-select-font-size: var(--delpi-ui-control-font-size, 14px);
 
   position: relative;
   width: 100%;
@@ -98,7 +98,7 @@
   );
   --delpi-ui-select-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   --delpi-ui-select-radius: var(--delpi-ui-popover-radius, 12px);
-  --delpi-ui-select-font-size: 13px;
+  --delpi-ui-select-font-size: var(--delpi-ui-control-font-size, 14px);
 
   position: absolute;
   z-index: 40;
@@ -119,11 +119,14 @@
   left: auto;
   min-width: 12rem;
   width: max-content;
-  max-width: min(360px, calc(100vw - 16px));
+  max-width: min(480px, calc(100vw - 16px));
+  /* Painel portaled: cresce com o conteúdo até o teto (matchAnchorWidth no JS). */
+  max-height: min(70vh, 480px);
+  overflow: auto;
 }
 
 .delpi-ui-select__search {
-  min-height: var(--delpi-ui-select-min-height, 36px);
+  min-height: var(--delpi-ui-select-min-height, var(--delpi-ui-control-height, 42px));
   box-sizing: border-box;
   padding: 8px 12px;
   border: 1px solid var(--delpi-ui-select-border);
@@ -143,7 +146,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 220px;
+  /* Caber listas médias (presets de resolução, etc.) sem scroll precoce. */
+  max-height: min(60vh, 420px);
   overflow: auto;
   display: grid;
   gap: 2px;
@@ -161,7 +165,7 @@
   background: transparent;
   color: var(--delpi-ui-select-text, var(--delpi-ui-text, var(--td-text, inherit)));
   font: inherit;
-  font-size: var(--delpi-ui-select-font-size, 13px);
+  font-size: var(--delpi-ui-select-font-size, 14px);
   text-align: left;
   padding: 7px 8px;
   cursor: pointer;

@@ -1,3 +1,5 @@
+import { formatDisplayValue } from "@delpi/plugin-ui/index";
+
 /** Casas decimais permitidas na formatação de número / percentual / moeda. */
 export const DECIMAL_PLACES_MIN = 0;
 export const DECIMAL_PLACES_MAX = 6;
@@ -32,46 +34,24 @@ export function defaultDecimalPlacesForFormat(
   return 2;
 }
 
-function resolveFractionDigits(
-  format: DecimalPlacesFormat,
-  decimalPlaces?: number | null,
-): { min: number; max: number } {
-  const explicit = normalizeDecimalPlaces(decimalPlaces ?? undefined);
-  if (explicit != null) {
-    return { min: explicit, max: explicit };
-  }
-  if (format === "percent") return { min: 1, max: 1 };
-  if (format === "currency") return { min: 2, max: 2 };
-  // number histórico: até 2 casas, sem forçar zeros à direita
-  return { min: 0, max: 2 };
-}
-
 export function formatPct(
   value: number | string | null | undefined,
   decimalPlaces?: number | null,
 ) {
-  if (value === null || value === undefined || value === "") return "—";
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) return String(value);
-  const { min, max } = resolveFractionDigits("percent", decimalPlaces);
-  return `${num.toLocaleString("pt-BR", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  })}%`;
+  return formatDisplayValue(value, {
+    category: "percent",
+    decimalPlaces: decimalPlaces ?? 1,
+  });
 }
 
 export function formatNumber(
   value: number | string | null | undefined,
   decimalPlaces?: number | null,
 ) {
-  if (value === null || value === undefined || value === "") return "—";
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) return String(value);
-  const { min, max } = resolveFractionDigits("number", decimalPlaces);
-  return num.toLocaleString("pt-BR", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  });
+  if (decimalPlaces == null) {
+    return formatDisplayValue(value, { category: "number" });
+  }
+  return formatDisplayValue(value, { category: "number", decimalPlaces });
 }
 
 /** Moeda BRL (pt-BR): R$ 1.234,56 — arredonda conforme casas decimais. */
@@ -79,14 +59,9 @@ export function formatCurrency(
   value: number | string | null | undefined,
   decimalPlaces?: number | null,
 ) {
-  if (value === null || value === undefined || value === "") return "—";
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) return String(value);
-  const { min, max } = resolveFractionDigits("currency", decimalPlaces);
-  return num.toLocaleString("pt-BR", {
-    style: "currency",
+  return formatDisplayValue(value, {
+    category: "currency",
     currency: "BRL",
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
+    decimalPlaces: decimalPlaces ?? 2,
   });
 }

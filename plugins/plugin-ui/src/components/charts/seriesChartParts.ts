@@ -17,6 +17,7 @@ import {
   OFFICE_CHART_SERIES_COLOR,
   SERIES_CHART_CATEGORY_PALETTE,
   resolveValueScaleColor,
+  resolveGoalThresholdColor,
   type SeriesChartColorScale,
   type SeriesChartKind,
 } from "./seriesChartOptions";
@@ -72,6 +73,7 @@ export function chartPartVisualPrimitive(
     case "marker":
       return chartType === "pie" || chartType === "funnel" ? "area" : "point";
     case "grid":
+    case "goalLine":
     case "axes":
     case "axis":
       return "line";
@@ -112,6 +114,7 @@ export type ChartPartRef =
   | { kind: "axis"; axis: "x" | "y" }
   | { kind: "axisTitle"; axis: "x" | "y" }
   | { kind: "grid" }
+  | { kind: "goalLine" }
   | { kind: "dataTable" };
 
 /** Subconjunto de estilo herdável de forma/texto — sem reinventar no chart. */
@@ -230,6 +233,8 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
       return "legend";
     case "grid":
       return "grid";
+    case "goalLine":
+      return "goalLine";
     case "dataTable":
       return "dataTable";
     case "series":
@@ -261,6 +266,7 @@ export function parseChartPartRef(raw: string | null | undefined): ChartPartRef 
   if (value === "title") return { kind: "title" };
   if (value === "legend") return { kind: "legend" };
   if (value === "grid") return { kind: "grid" };
+  if (value === "goalLine") return { kind: "goalLine" };
   if (value === "dataTable") return { kind: "dataTable" };
   if (value === "dataLabels") return { kind: "dataLabels" };
   if (value === "axes") return { kind: "axes" };
@@ -344,6 +350,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
   grid: { movable: false, editable: false, deletable: true, resizable: false },
+  goalLine: { movable: false, editable: false, deletable: true, resizable: false },
   dataTable: { movable: false, editable: false, deletable: true, resizable: false },
 };
 
@@ -532,6 +539,7 @@ export function resolveChartPartFontSize(
 
 /**
  * Replica tipografia em todas as partes textuais do gráfico (Excel: Format Chart → Font).
+ * Merge **por parte** (preserva cor/peso/tamanho locais quando o patch é esparso).
  * `dataLabel` individual herda de `dataLabels`; eixos/axisTitle cobrem X e Y.
  */
 export function applyChartTextStyleToSiblingParts(
@@ -542,16 +550,24 @@ export function applyChartTextStyleToSiblingParts(
   for (const kind of Object.keys(CHART_PART_FONT_SIZE_DEFAULTS) as ChartTextPartKind[]) {
     if (kind === "dataLabel") continue;
     if (kind === "axis") {
-      next = upsertChartPartState(next, { kind: "axis", axis: "x" }, { style });
-      next = upsertChartPartState(next, { kind: "axis", axis: "y" }, { style });
+      for (const axis of ["x", "y"] as const) {
+        const ref = { kind: "axis" as const, axis };
+        const prev = getChartPartState(next, ref)?.style;
+        next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
+      }
       continue;
     }
     if (kind === "axisTitle") {
-      next = upsertChartPartState(next, { kind: "axisTitle", axis: "x" }, { style });
-      next = upsertChartPartState(next, { kind: "axisTitle", axis: "y" }, { style });
+      for (const axis of ["x", "y"] as const) {
+        const ref = { kind: "axisTitle" as const, axis };
+        const prev = getChartPartState(next, ref)?.style;
+        next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
+      }
       continue;
     }
-    next = upsertChartPartState(next, { kind }, { style });
+    const ref = { kind } as ChartPartRef;
+    const prev = getChartPartState(next, ref)?.style;
+    next = upsertChartPartState(next, ref, { style: mergeChartPartStyle(prev, style) });
   }
   return next;
 }
@@ -630,10 +646,24 @@ export function upsertChartPartState(
     [key]: {
       ...prev,
       ...restPatch,
-      style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      style: patch.style ? mergeChartPartStyle(prev.style, patch.style) : prev.style,
       frame: nextFrame,
     },
   };
+}
+
+/** Merge esparso: `undefined` no patch não apaga propriedades existentes. */
+export function mergeChartPartStyle(
+  prev: ChartPartStyle | null | undefined,
+  patch: ChartPartStyle,
+): ChartPartStyle {
+  const merged: ChartPartStyle = { ...(prev ?? {}), ...patch };
+  for (const key of Object.keys(merged) as Array<keyof ChartPartStyle>) {
+    if (merged[key] === undefined) {
+      delete merged[key];
+    }
+  }
+  return merged;
 }
 
 /** Projeta options flat → partes (visibilidade + conteúdo + cor da série). */
@@ -704,6 +734,9 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   };
   parts[serializeChartPartRef({ kind: "grid" })] = {
     visible: config.showGrid !== false || Boolean(config.showVerticalGrid),
+  };
+  parts[serializeChartPartRef({ kind: "goalLine" })] = {
+    visible: Boolean(config.showGoalLine),
   };
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
@@ -822,6 +855,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const axisTitleX = getChartPartState(parts, { kind: "axisTitle", axis: "x" });
   const axisTitleY = getChartPartState(parts, { kind: "axisTitle", axis: "y" });
   const grid = getChartPartState(parts, { kind: "grid" });
+  const goalLine = getChartPartState(parts, { kind: "goalLine" });
   const dataTable = getChartPartState(parts, { kind: "dataTable" });
 
   const patch: Partial<SeriesChartOptions> = {};
@@ -874,6 +908,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
     patch.showGrid = false;
     patch.showVerticalGrid = false;
   }
+  if (goalLine?.visible !== undefined) patch.showGoalLine = goalLine.visible;
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
   const anyMarkerHidden = Object.keys(parts).some((key) => {
@@ -990,6 +1025,8 @@ export function resolveCategorySlicePaintColor(args: {
   seriesColor: string;
   categoryColors?: string[] | null;
   colorScale?: SeriesChartColorScale | null;
+  /** Valor da linha de meta (`by_goal`). */
+  goalValue?: number | null;
   parts?: ChartPartsMap | null;
   parentSeriesIndex?: number;
 }): string {
@@ -1002,6 +1039,21 @@ export function resolveCategorySlicePaintColor(args: {
   if (markerFill) return markerFill;
 
   const scale = args.colorScale;
+  const value = Number(args.value) || 0;
+  const goal = args.goalValue;
+  if (
+    scale?.mode === "by_goal" &&
+    goal != null &&
+    Number.isFinite(Number(goal))
+  ) {
+    return resolveGoalThresholdColor({
+      value,
+      goal: Number(goal),
+      polarity: scale.polarity ?? "high_is_good",
+      fallbackColor: args.seriesColor,
+    });
+  }
+
   const ramp = args.categoryColors?.filter((c) => c?.trim()) ?? [];
   if (
     scale?.mode === "by_value" &&
@@ -1010,7 +1062,7 @@ export function resolveCategorySlicePaintColor(args: {
     args.valueMax != null
   ) {
     return resolveValueScaleColor({
-      value: Number(args.value) || 0,
+      value,
       min: args.valueMin,
       max: args.valueMax,
       colors: ramp,

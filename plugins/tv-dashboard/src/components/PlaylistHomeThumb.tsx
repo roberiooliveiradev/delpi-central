@@ -6,7 +6,13 @@ import { SlideCardThumbnail } from "./SlideCardThumbnail";
 type Props = {
   playlist: Pick<
     Playlist,
-    "id" | "viewportProfile" | "masterConfig" | "publicToken" | "coverSlide"
+    | "id"
+    | "viewportProfile"
+    | "viewportWidth"
+    | "viewportHeight"
+    | "masterConfig"
+    | "publicToken"
+    | "coverSlide"
   >;
 };
 
@@ -26,6 +32,8 @@ export function PlaylistHomeThumb({ playlist }: Props) {
       slide={cover}
       playlistId={playlist.id}
       viewportProfile={playlist.viewportProfile || "1080p"}
+      viewportWidth={playlist.viewportWidth}
+      viewportHeight={playlist.viewportHeight}
       masterConfig={playlist.masterConfig}
       publicToken={playlist.publicToken}
       fillContainer

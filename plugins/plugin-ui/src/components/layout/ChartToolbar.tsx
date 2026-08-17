@@ -5,8 +5,10 @@ import { HelpTooltip } from "../help/HelpTooltip";
 import { FieldLabel } from "../help/FieldLabel";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
+  SegmentToggle,
   segmentToggleBemClasses,
   type SegmentToggleClassNames,
+  type SegmentToggleSize,
 } from "../forms/SegmentToggle";
 
 export type ChartGranularityOption<T extends string = string> = {
@@ -27,6 +29,8 @@ export type ChartGranularityToggleProps<T extends string = string> = {
   idPrefix?: string;
   classNames: ChartGranularityToggleClassNames;
   labels: ChartGranularityToggleLabels;
+  /** Default `sm` — mesma densidade do ChartTypeSegmentToggle. */
+  size?: SegmentToggleSize;
 };
 
 export type ChartToolbarClassNames = {
@@ -104,25 +108,22 @@ export function ChartGranularityToggle<T extends string>({
   idPrefix = "chart",
   classNames,
   labels,
+  size = "sm",
 }: ChartGranularityToggleProps<T>) {
   return (
-    <div className={classNames.root} role="group" aria-label={labels.groupAriaLabel}>
-      {options.map((option) => {
-        const isActive = value === option.value;
-        return (
-          <button
-            key={option.value}
-            id={`${idPrefix}-granularity-${option.value}`}
-            type="button"
-            className={isActive ? classNames.buttonActive : classNames.button}
-            onClick={() => onChange(option.value)}
-            aria-pressed={isActive}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentToggle
+      ariaLabel={labels.groupAriaLabel}
+      idPrefix={`${idPrefix}-granularity`}
+      size={size}
+      value={value}
+      onChange={onChange}
+      options={options}
+      classNames={{
+        root: classNames.root,
+        button: classNames.button,
+        buttonActive: classNames.buttonActive,
+      }}
+    />
   );
 }
 
@@ -165,12 +166,15 @@ export function ChartToolbar<T extends string>({
     </div>
   ) : granularityHelp && classNames.granularity ? (
     <div className={classNames.granularity}>
-      {toggle}
       <HelpTooltip
         content={granularityHelp}
         ariaLabel={`Ajuda: ${granularityToggleLabels.groupAriaLabel.toLowerCase()}`}
+        wrap
+        placement="bottom"
         className={classNames.granularityHelp}
-      />
+      >
+        {toggle}
+      </HelpTooltip>
     </div>
   ) : (
     toggle

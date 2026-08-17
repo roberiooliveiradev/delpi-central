@@ -53,6 +53,9 @@ export type Playlist = {
   name: string;
   description?: string | null;
   viewportProfile: string;
+  /** Dimensões custom em px (quando viewportProfile === "custom"). */
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
   transitionStyle: string;
   defaultDurationSec: number;
   globalRefreshSec: number;
@@ -180,9 +183,13 @@ export type PresentationPayload = {
     name: string;
     description?: string | null;
     viewportProfile: string;
+    viewportWidth?: number | null;
+    viewportHeight?: number | null;
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;
+    /** Token capability — mídia browser-safe via `/public/present/...`. */
+    publicToken?: string;
     publicUrl?: string;
     masterConfig?: PlaylistMasterConfig;
   };
@@ -455,6 +462,8 @@ export async function updatePlaylist(
     name: string;
     description: string;
     viewportProfile: string;
+    viewportWidth: number | null;
+    viewportHeight: number | null;
     transitionStyle: string;
     defaultDurationSec: number;
     globalRefreshSec: number;
@@ -1046,7 +1055,7 @@ export async function addSlide(
   body: {
     slideType: "native" | "external";
     title: string;
-    durationSec?: number;
+    durationSec?: number | null;
     nativeScreenKey?: string;
     nativeConfig?: Record<string, unknown>;
     externalUrl?: string;
@@ -1204,4 +1213,49 @@ export function qrDownloadUrl(playlistId: string) {
 
 export async function downloadQrPng(playlistId: string) {
   return httpGetBlob(qrDownloadUrl(playlistId));
+}
+
+/** Envelope TvCopilotPatchV1 — preview (dry-run, sem persistir). */
+export type TvCopilotPatchEnvelope = {
+  target?: { playlistId?: string; slideId?: string };
+  ops: Array<Record<string, unknown>>;
+  includeFingerprint?: boolean;
+};
+
+export type TvCopilotPatchResult = {
+  ok?: boolean;
+  version?: string;
+  appliedOps?: string[];
+  target?: { playlistId?: string | null; slideId?: string | null };
+  nativeConfig?: Record<string, unknown>;
+  diff?: Record<string, unknown>;
+  fingerprint?: unknown;
+  persisted?: boolean;
+  message?: string;
+  sideEffects?: Record<string, unknown>;
+};
+
+export async function previewCopilotPatch(body: TvCopilotPatchEnvelope) {
+  return unwrap(
+    httpPost<ApiEnvelope<TvCopilotPatchResult>>(`${API_BASE}/data/copilot/preview-patch`, body),
+  );
+}
+
+export async function applyCopilotPatch(body: Omit<TvCopilotPatchEnvelope, "includeFingerprint">) {
+  return unwrap(
+    httpPost<ApiEnvelope<TvCopilotPatchResult>>(`${API_BASE}/data/copilot/apply-patch`, body),
+  );
+}
+
+export async function builderSessionToCopilotOps(sessionId: string) {
+  return unwrap(
+    httpPost<
+      ApiEnvelope<{
+        ok: boolean;
+        ops: Array<Record<string, unknown>>;
+        primaryLocalId?: string;
+        preferredView?: string;
+      }>
+    >(`${API_BASE}/data/builder/sessions/${sessionId}/to-copilot-ops`, {}),
+  );
 }

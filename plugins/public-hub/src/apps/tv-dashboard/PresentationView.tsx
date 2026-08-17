@@ -14,6 +14,7 @@ import {
   buildPublicPresentationWsUrl,
   resolveSlideTransitionStyle,
   presentationSurfaceFromViewMode,
+  presentationStageEntranceClass,
   type ComunicadoBlock,
   type InputFilterContributions,
   type PresentationRealtimeEvent,
@@ -137,8 +138,14 @@ export function PresentationView({
     [slides, index, reloadPayload, setPayload],
   );
 
-  const stageClass =
-    mode === "public" ? "tdp-stage tdp-stage--kiosk" : "tdp-stage";
+  const surface = presentationSurfaceFromViewMode(mode);
+  const stageClass = [
+    "tdp-stage",
+    surface === "kiosk" ? "tdp-stage--kiosk" : null,
+    presentationStageEntranceClass(surface),
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (!slides.length) {
     return (
@@ -165,6 +172,8 @@ export function PresentationView({
       ) : null}
       <DesignViewportStage
         viewportProfile={viewport}
+        viewportWidth={payload.playlist.viewportWidth}
+        viewportHeight={payload.playlist.viewportHeight}
         className="tdp-stage__design"
         surface={presentationSurfaceFromViewMode(mode)}
         fit="auto"

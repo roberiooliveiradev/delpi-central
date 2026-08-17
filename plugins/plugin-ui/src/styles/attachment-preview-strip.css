@@ -1,0 +1,136 @@
+/**
+ * AttachmentPreviewStrip — prévia visual de anexos (.delpi-ui-attachment-preview-strip*)
+ */
+
+.delpi-ui-attachment-preview-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-attachment-preview-strip__label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111111);
+}
+
+.delpi-ui-attachment-preview-strip__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, var(--delpi-ui-text-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-attachment-preview-strip__track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.delpi-ui-attachment-preview-strip__item-frame {
+  position: relative;
+  width: 112px;
+  flex: 0 0 auto;
+}
+
+.delpi-ui-attachment-preview-strip__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e6e6e6) 85%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #ffffff) 90%, var(--delpi-ui-muted, #f6f8fa));
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  overflow: hidden;
+}
+
+.delpi-ui-attachment-preview-strip__item:hover:not(:disabled) {
+  border-color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-attachment-preview-strip__item:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-ui-attachment-preview-strip__item:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.delpi-ui-attachment-preview-strip__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, var(--delpi-ui-surface, #ffffff));
+  color: var(--delpi-ui-accent, #089bdb);
+  overflow: hidden;
+}
+
+.delpi-ui-attachment-preview-strip__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.delpi-ui-attachment-preview-strip__caption {
+  margin: 0;
+  padding: 0 8px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111111);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-attachment-preview-strip__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e6e6e6) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #ffffff) 92%, #000);
+  color: var(--delpi-ui-text, #111111);
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 18%, transparent);
+}
+
+.delpi-ui-attachment-preview-strip__remove:hover:not(:disabled) {
+  border-color: var(--delpi-ui-danger, #c62828);
+  color: var(--delpi-ui-danger, #c62828);
+  background: var(--delpi-ui-surface, #ffffff);
+}
+
+.delpi-ui-attachment-preview-strip__remove:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.delpi-ui-attachment-preview-strip__remove:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+:root[data-theme="dark"] .delpi-ui-attachment-preview-strip__remove,
+[data-theme="dark"] .delpi-ui-attachment-preview-strip__remove {
+  background: color-mix(in srgb, var(--delpi-ui-surface, #1a1a1a) 88%, #fff);
+  border-color: color-mix(in srgb, var(--delpi-ui-border, #444) 80%, transparent);
+  color: var(--delpi-ui-text, #f5f5f5);
+}

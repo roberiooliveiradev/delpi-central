@@ -35,6 +35,44 @@ class FakeSalesOrderOtdRepository:
             page_size=request.page_size,
         )
 
+    def get_sales_order_otd_late_days_stats(self, request):
+        return {
+            "avg_late_days": 4.5,
+            "p50_late_days": 3.0,
+            "p90_late_days": 9.0,
+        }
+
+    def get_sales_order_otd_panel_insights(self, request):
+        return {
+            "recurringCustomers": [
+                {
+                    "customer_code": "000100",
+                    "customer_store": "01",
+                    "customer_name": "ACME",
+                    "late_count": 2,
+                    "total_late_days": 8,
+                }
+            ],
+            "worstDelays": [
+                {
+                    "branch": "02",
+                    "order_number": "000002",
+                    "line_item": "01",
+                    "days_diff": 12,
+                    "status": "late",
+                }
+            ],
+            "upcomingPromises": [
+                {
+                    "branch": "02",
+                    "order_number": "000003",
+                    "line_item": "01",
+                    "promised_date": "20260820",
+                    "is_invoiced": 0,
+                }
+            ],
+        }
+
     def get_sales_order_otd_line_detail(self, request):
         return None
 
@@ -55,5 +93,12 @@ def test_get_sales_order_otd_panel_use_case_returns_summary_and_lines() -> None:
     assert result["summary"]["total_lines"] == 10
     assert result["summary"]["on_time_lines"] == 8
     assert result["summary"]["late_lines"] == 2
+    assert result["summary"]["late_percentage"] == 20.0
+    assert result["summary"]["avg_late_days"] == 4.5
+    assert result["summary"]["p50_late_days"] == 3.0
+    assert result["summary"]["p90_late_days"] == 9.0
+    assert result["insights"]["recurringCustomers"][0]["late_count"] == 2
+    assert result["insights"]["worstDelays"][0]["days_diff"] == 12
+    assert result["insights"]["upcomingPromises"][0]["order_number"] == "000003"
     assert result["lines"]["total"] == 1
     assert result["lines"]["items"][0]["order_number"] == "000001"

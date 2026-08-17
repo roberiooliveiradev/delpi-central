@@ -7,6 +7,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     prevSlide: "Volta para a tela anterior na ordem de exibição.",
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
+    currentSlides: "Ações sobre as {count} telas selecionadas no filmstrip.",
+    slideBatchSaved: "{count} telas atualizadas.",
+    slideBatchDuplicated: "{count} telas duplicadas.",
+    mixedValue: "Misto",
     playlistChrome:
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
     playlistFilters:
@@ -18,7 +22,23 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insert:
       "Adiciona elementos ao slide personalizado: textos, mídias e formas. Clique no palco para selecionar e editar.",
     background:
-      "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
+      "Define a cor, o gradiente ou a imagem de fundo do slide. A imagem preenche toda a tela (cobertura, sem repetir).",
+    backgroundSlides: "Fundo das {count} telas livres selecionadas.",
+    backgroundSlidesHint:
+      "Cor, gradiente ou imagem aplicados às {count} telas personalizadas. O layout de cada tela permanece independente.",
+    exportPng: "Exportar a tela atual como PNG.",
+    exportPngMany: "Exportar as {count} telas selecionadas como PNG (um arquivo por tela).",
+    exportPdf: "Abrir diálogo para exportar PDF (programação ou slide atual).",
+    exportPdfMany:
+      "Abrir diálogo para exportar PDF das {count} telas selecionadas ou da programação.",
+    exportPptx: "Exportar a tela atual como arquivo PPTX editável.",
+    exportPptxMany: "Exportar as telas livres selecionadas como um PPTX.",
+    exportSelectedScope: "Telas selecionadas ({count})",
+    exportSkipped:
+      "{exported} arquivo(s) gerado(s); {skipped} tela(s) ignorada(s) (externa ou sem visual).",
+    exportPptxCustomOnly:
+      "A exportação PPTX MVP está disponível para telas personalizadas.",
+    exportPptxSkipped: "PPTX gerado só com telas livres; {skipped} tela(s) ignorada(s).",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
     textEffects: "Sombra, contorno e reflexo tipográfico no texto selecionado.",
     textStroke: "Cor e espessura do contorno ao redor das letras.",
@@ -52,6 +72,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Camadas, alinhamento, agrupamento e rotação — mesmo padrão Organizar do Excel.",
+    closedGroupSelection:
+      "Grupo fechado: a ribbon vale para todos os membros. Arrastar a moldura move o conjunto; clique num membro define a referência.",
     selectionPane:
       "Abre o painel Seleção com a lista de elementos, visibilidade e ordem de camadas.",
     rotateMenu: "Girar 90°, inverter ou abrir o campo de rotação em Tamanho e posição.",
@@ -97,9 +119,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     alignBottom: "Alinha o texto à base da caixa.",
     fontFamily: "Família tipográfica do bloco de texto.",
     uploadFont: "Envia uma fonte WOFF2, TTF ou OTF para esta playlist.",
-    fontSizeDown: "Diminuir tamanho da fonte.",
-    fontSizeUp: "Aumentar tamanho da fonte.",
-    fontSize: "Escolha um tamanho da lista ou digite o valor em pixels (mínimo 12).",
+    fontSizeDown: "Diminui o tamanho em cada texto da seleção (mantém a proporção entre título, legenda e rótulos).",
+    fontSizeUp: "Aumenta o tamanho em cada texto da seleção (mantém a proporção entre título, legenda e rótulos).",
+    fontSize: "Digite ou escolha um tamanho em pixels — o mesmo valor é aplicado a todos os textos da seleção (mínimo 12).",
     mediaLibrary: "Escolher arquivo já enviado à playlist.",
     duplicateBlock: "Duplicar elemento selecionado (Ctrl+D).",
     cropImage: "Abrir painel de recorte da imagem no inspetor lateral.",
@@ -113,6 +135,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     boxShadow:
       "Sombra: presets (inclui Elevada com 2 camadas e Interna), externa/interna, camadas e ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
+    sameSize: "Mesmo tamanho",
+    sameSizeHint:
+      "Copia largura e altura do elemento de referência (último selecionado) para os demais. Linhas ficam de fora.",
+    sameSizeBoth: "Largura e altura",
+    sameSizeBothHint: "Iguala largura e altura ao elemento de referência.",
+    sameSizeWidth: "Mesma largura",
+    sameSizeWidthHint: "Iguala só a largura ao elemento de referência.",
+    sameSizeHeight: "Mesma altura",
+    sameSizeHeightHint: "Iguala só a altura ao elemento de referência.",
     frameX: "Posição horizontal do canto esquerdo, em pixels de design da página (origem inferior esquerda; não muda com o zoom).",
     frameY: "Posição vertical do canto inferior do elemento, em pixels de design desde a base da página (não muda com o zoom).",
     frameW: "Largura do elemento em pixels de design do palco.",
@@ -173,7 +204,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableFrameChrome: "Preenchimento e contorno da moldura da tabela.",
     openDataPanel: "Abre o painel de fontes de dados.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
-    chartAxes: "Eixos e linhas de grade.",
+    chartAxes: "Eixos, grade, meta e ordenação A→Z das categorias (centros de trabalho).",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
     chartSeriesColor: "Cor principal da série de dados do gráfico.",
     canvasTable:
@@ -189,6 +220,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Configurações da tela atual: título exibido no filmstrip, tempo na rotação e filtros operacionais (quando aplicável).",
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
+    copilot:
+      "Sidebar do Copiloto IA: chat para montar e alterar a programação com patches tipados.",
     data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
     layers:
       "Painel de Seleção: ordem de aparição na TV, pilha visual e visibilidade dos elementos.",
@@ -206,11 +239,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Aplica animação em cascata: cada elemento entra com atraso crescente (aparecer um a um).",
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
-    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Filhos do grupo ficam indentados à direita do pai. Clique no filho seleciona só ele; no nó do grupo seleciona todos. No palco: clique duplo isola o subitem; 2º toque sem arrastar limpa; Esc sobe a hierarquia. Shift+clique multi-seleciona.",
+    buildNoAnimation: "sem animação",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar — a linha azul indica o ponto de soltura. O chevron recolhe os filhos do grupo; duplo clique ou F2 no nome do grupo renomeia. Clique no filho seleciona só ele; no nó do grupo seleciona todos. No palco: clique duplo isola o subitem; 2º toque sem arrastar limpa; Esc sobe a hierarquia. Shift+clique multi-seleciona.",
+    focusPrimary: "Focar a referência (último selecionado)",
   },
   ribbonTabs: {
     home: "Lista de programações (hub): criar, abrir e filtrar. No editor, use Programação e Tela.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
+    copilot:
+      "Abre a sidebar do Copiloto IA (chat Minha Delpi). Crie telas, fontes e layouts por conversa; pode recolher ou fechar o painel.",
     format: "Formate o elemento nas abas contextuais Elemento, Dados e Camadas.",
     element:
       "Mesmos controles do painel lateral Elemento: tipografia, preenchimento, contorno, posição e organização.",
@@ -263,16 +300,33 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   fields: {
     slideTitle: "Nome curto para identificar a tela no filmstrip e nos relatórios internos.",
+    mixedValue: "Misto",
     slideDuration:
       "Tempo em segundos nesta tela. Marque «Herdar» para usar o padrão da seção ou da programação (5–600 s).",
     slideUrl: "Endereço HTTPS exibido em tela cheia nesta slide (página externa ou dashboard embutido).",
     slideBranch: "Filtra os dados operacionais desta tela para uma filial. Vazio = consolidado.",
     slidePeriod: "Janela de dias usada nas consultas de KPIs e indicadores desta tela.",
     viewport:
-      "Resolução de referência para o layout. Escolha o perfil mais próximo do monitor da TV.",
-    transition: "Efeito visual ao trocar de tela na exibição (fade, deslizar ou corte direto).",
+      "Resolução de referência do canvas (presets ou Personalizado). Deve aproximar o monitor da TV.",
+    viewportUnit:
+      "Unidade dos campos L×A (px, cm, mm, in, pt, pc). Conversão CSS a 96 dpi; o canvas grava sempre em pixels.",
+    viewportCustomHint:
+      "Valores físicos usam referência CSS 96 dpi (1 in = 96 px). Limites: 64–7680 px por eixo.",
+    transition: "Efeito visual ao trocar de tela na exibição. Passe o mouse nas opções para pré-visualizar.",
     slideTransition:
       "Substitui a transição padrão só nesta tela. «Herdar» usa a seção (se houver) ou a programação.",
+    transitionInheritLabel: "Herdar (seção / programação)",
+    transitionSectionInheritLabel: "Herdar programação",
+    transitionInheritDescription: "Usa a transição definida na seção ou na programação.",
+    transitionDescriptions: {
+      fade: "Entrada suave por opacidade.",
+      dissolve: "Mistura leve com desfoque.",
+      slide: "A nova tela desliza pela lateral.",
+      push: "Deslocamento lateral curto.",
+      wipe: "Revelação progressiva da esquerda.",
+      zoom: "Aproximação sutil.",
+      none: "Troca imediata, sem movimento.",
+    },
     defaultDuration:
       "Duração padrão da programação: vale para telas que herdam (sem tempo individual).",
     refreshInterval:
@@ -303,9 +357,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     testRoute:
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
-      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
+      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. «Dia anterior» e «Este mês (até ontem)» usam o último dia útil (segunda → sexta). Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
+    filterUnsetHere:
+      "Não definido aqui",
+    /** @deprecated Preferir `filterUnsetHere` — mantido como alias de migração. */
     filterUnsetUsesSource:
-      "Não definido (usa a fonte)",
+      "Não definido aqui",
     filterClear:
       "Limpar filtro",
     filterAllBranches:
@@ -323,17 +380,19 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     dateRangeFixedOpenEnded:
       "Datas opcionais (AAAA-MM-DD). Vazias = histórico completo. Só início = a partir dessa data até hoje; só fim = do início do histórico até essa data.",
     lastNDays: "Quantidade de dias corridos até hoje (inclusivo). Ex.: 15 = de 15 dias atrás até hoje.",
+    excludeWeekends:
+      "Quando a granularidade é diária, oculta sábado e domingo no gráfico. Não altera a consulta à API — só a apresentação.",
     paramGranularity:
       "Como agrupar os pontos da série no tempo: dia, semana, mês ou ano. Em algumas rotas o valor já vem fixo (ex.: dia).",
     paramPeriodDays:
       "Quantos dias para trás entram no cálculo (ex.: 30 = do dia de hoje menos 30 dias).",
     paramBranch:
-      "Filial 01/02 ou Todas as filiais (consolidado), quando a rota permitir omitir o parâmetro.",
+      "Filial 01/02 ou Todas as filiais (consolidado), quando a rota permitir omitir o parâmetro. «Não definido aqui» = sem filtro nesta camada.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
     multiSelectFilters:
-      "Campos em comum das fontes selecionadas (sem repetir). «Valores diferentes» = status; use Limpar filtro para zerar em todas, ou escolha um valor para unificar.",
+      "Campos em comum das fontes selecionadas (sem repetir). «Valores diferentes» = status; use «Não definido aqui» para zerar em todas, ou escolha um valor para unificar.",
     multiSelectFiltersSummary:
       "{count} fontes na seleção — alterar um filtro aplica nas fontes que aceitam esse parâmetro.",
     multiSelectNoSources:
@@ -521,6 +580,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     group: "Agrupar",
     ungroup: "Desagrupar",
     regroup: "Reagrupar",
+    sameSize: "Mesmo tamanho",
+    sameSizeBoth: "Largura e altura",
+    sameSizeWidth: "Mesma largura",
+    sameSizeHeight: "Mesma altura",
     align: "Alinhar",
     alignLeft: "Alinhar à esquerda",
     alignCenterH: "Centralizar",
@@ -598,6 +661,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     entranceDuration: "Duração da animação de entrada em milissegundos.",
     uploadMedia: "Substitui a imagem ou vídeo do elemento pelo arquivo enviado.",
     backgroundColor: "Cor sólida de fundo do slide personalizado.",
-    uploadBackground: "Imagem de fundo em tela cheia. Substitui a cor quando definida.",
+    uploadBackground:
+      "Escolha um arquivo ou a biblioteca. A imagem preenche toda a tela (cobertura, centro), no editor e na TV.",
+    clearBackground: "Remove a imagem de fundo e volta para a cor sólida branca.",
   },
 } as const;

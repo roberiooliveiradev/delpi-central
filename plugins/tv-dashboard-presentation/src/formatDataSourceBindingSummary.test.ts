@@ -31,6 +31,15 @@ describe("formatDataSourceFilterLines", () => {
     expect(lines).toContain("Filial: 01");
   });
 
+  it("rótulo de ocultar fins de semana", () => {
+    const lines = formatDataSourceFilterLines({
+      params: { granularity: "day", excludeWeekends: true },
+    });
+    expect(lines.some((line) => line.includes("Ocultar fins de semana") && line.includes("Sim"))).toBe(
+      true,
+    );
+  });
+
   it("marca filtros herdados do slide", () => {
     const lines = formatDataSourceFilterLines(
       { params: { work_center: "CT01" } },

@@ -292,6 +292,132 @@ class CustomerOutboundInvoicesRepository(
             total_pages=total_pages,
         )
 
+    def get_outbound_invoice(
+        self,
+        *,
+        branch: str,
+        invoice_number: str,
+        invoice_series: str,
+    ) -> Optional[CustomerOutboundInvoice]:
+        branch_key = _trim(branch)
+        number_key = _trim(invoice_number)
+        series_key = _trim(invoice_series)
+        if not branch_key or not number_key or not series_key:
+            return None
+
+        header_sql = """
+            SELECT
+                D2.D2_FILIAL AS branch,
+                D2.D2_DOC AS invoice_number,
+                D2.D2_SERIE AS invoice_series,
+                MAX(D2.D2_EMISSAO) AS issue_date_raw,
+                MAX(D2.D2_CLIENTE) AS customer_code,
+                MAX(D2.D2_LOJA) AS customer_store,
+                MAX(ISNULL(F2.F2_TIPO, D2.D2_TIPO)) AS doc_type,
+                MAX(CONVERT(FLOAT, ISNULL(F2.F2_VALBRUT, 0))) AS header_total,
+                SUM(CONVERT(FLOAT, ISNULL(D2.D2_TOTAL, 0))) AS lines_total,
+                COUNT(*) AS item_count,
+                MAX(RTRIM(ISNULL(D2.D2_PEDIDO, ''))) AS sales_order_sample,
+                MAX(RTRIM(ISNULL(C5.C5_PEDCLI, ''))) AS customer_order_sample,
+                MAX(RTRIM(ISNULL(SA1.A1_NREDUZ, ISNULL(SA1.A1_NOME, '')))) AS customer_name,
+                MAX(RTRIM(ISNULL(F2.F2_CHVNFE, ''))) AS access_key,
+                MAX(RTRIM(ISNULL(F2.F2_TRANSP, ''))) AS carrier
+            FROM SD2010 D2 WITH (NOLOCK)
+            INNER JOIN SF2010 F2 WITH (NOLOCK)
+                ON F2.F2_FILIAL = D2.D2_FILIAL
+                AND F2.F2_DOC = D2.D2_DOC
+                AND F2.F2_SERIE = D2.D2_SERIE
+                AND F2.D_E_L_E_T_ = ''
+            LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+                ON SA1.A1_COD = D2.D2_CLIENTE
+                AND SA1.A1_LOJA = D2.D2_LOJA
+                AND SA1.D_E_L_E_T_ = ''
+            LEFT JOIN SC5010 C5 WITH (NOLOCK)
+                ON C5.C5_FILIAL = D2.D2_FILIAL
+                AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(D2.D2_PEDIDO))
+                AND C5.D_E_L_E_T_ = ''
+            WHERE D2.D_E_L_E_T_ = ''
+                AND D2.D2_FILIAL = ?
+                AND D2.D2_DOC = ?
+                AND D2.D2_SERIE = ?
+            GROUP BY D2.D2_FILIAL, D2.D2_DOC, D2.D2_SERIE
+        """
+
+        items_sql = """
+            SELECT
+                D2.D2_FILIAL AS branch,
+                D2.D2_DOC AS invoice_number,
+                D2.D2_SERIE AS invoice_series,
+                D2.D2_ITEM AS item,
+                D2.D2_COD AS product_code,
+                RTRIM(ISNULL(SB1.B1_DESC, '')) AS product_description,
+                CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0)) AS quantity,
+                RTRIM(ISNULL(SB1.B1_UM, '')) AS unit,
+                CONVERT(FLOAT, ISNULL(D2.D2_PRCVEN, 0)) AS unit_price,
+                CONVERT(FLOAT, ISNULL(D2.D2_TOTAL, 0)) AS total_value,
+                RTRIM(ISNULL(D2.D2_PEDIDO, '')) AS sales_order,
+                RTRIM(ISNULL(D2.D2_ITEMPV, '')) AS sales_order_item,
+                RTRIM(ISNULL(C5.C5_PEDCLI, '')) AS customer_order
+            FROM SD2010 D2 WITH (NOLOCK)
+            LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+                ON SB1.B1_COD = D2.D2_COD
+                AND SB1.D_E_L_E_T_ = ''
+            LEFT JOIN SC5010 C5 WITH (NOLOCK)
+                ON C5.C5_FILIAL = D2.D2_FILIAL
+                AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(D2.D2_PEDIDO))
+                AND C5.D_E_L_E_T_ = ''
+            WHERE D2.D_E_L_E_T_ = ''
+                AND D2.D2_FILIAL = ?
+                AND D2.D2_DOC = ?
+                AND D2.D2_SERIE = ?
+            ORDER BY D2.D2_ITEM
+        """
+
+        params = (branch_key, number_key, series_key)
+        with self as repo:
+            row = repo.execute_one(header_sql, params)
+            if not row:
+                return None
+            item_rows = repo.execute_query(items_sql, params)
+
+        items = tuple(
+            CustomerOutboundInvoiceItem(
+                item=_trim(item_row.get("item")),
+                product_code=_trim(item_row.get("product_code")),
+                product_description=_trim(item_row.get("product_description")),
+                quantity=_to_float(item_row.get("quantity")),
+                unit=_trim(item_row.get("unit")),
+                unit_price=_to_float(item_row.get("unit_price")),
+                total_value=_to_float(item_row.get("total_value")),
+                sales_order=_trim(item_row.get("sales_order")),
+                sales_order_item=_trim(item_row.get("sales_order_item")),
+                customer_order=_trim(item_row.get("customer_order")),
+            )
+            for item_row in item_rows
+        )
+        header_total = _to_float(row.get("header_total"))
+        lines_total = _to_float(row.get("lines_total"))
+        total_value = header_total if header_total > 0 else lines_total
+        key = f"{branch_key}|{number_key}|{series_key}"
+        return CustomerOutboundInvoice(
+            key=key,
+            branch=branch_key,
+            invoice_number=number_key,
+            invoice_series=series_key,
+            issue_date=_iso_date(row.get("issue_date_raw")),
+            customer_code=_trim(row.get("customer_code")),
+            customer_store=_trim(row.get("customer_store")),
+            customer_name=_trim(row.get("customer_name")),
+            total_value=total_value,
+            situation=map_situation(_trim(row.get("doc_type"))),
+            sales_order=_trim(row.get("sales_order_sample")),
+            customer_order=_trim(row.get("customer_order_sample")),
+            item_count=int(row.get("item_count") or len(items)),
+            access_key=_trim(row.get("access_key")) or None,
+            carrier=_trim(row.get("carrier")) or None,
+            items=items,
+        )
+
     def _load_items(
         self,
         repo: BaseRepository,

@@ -78,6 +78,14 @@ describe("applyChartAddElementChoice", () => {
     expect(off.showGrid).toBe(true);
   });
 
+  it("goalLine:show liga linha de meta", () => {
+    const next = applyChartAddElementChoice("goalLine:show", { showGoalLine: false });
+    expect(next.showGoalLine).toBe(true);
+    expect(isChartAddElementChoiceActive("goalLine:show", next)).toBe(true);
+    const off = applyChartAddElementChoice("goalLine:none", next);
+    expect(off.showGoalLine).toBe(false);
+  });
+
   it("dataLabels:none desliga rótulos", () => {
     const next = applyChartAddElementChoice("dataLabels:none", { showDataLabels: true });
     expect(next.showDataLabels).toBe(false);

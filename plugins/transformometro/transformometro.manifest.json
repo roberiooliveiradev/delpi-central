@@ -4,7 +4,7 @@
   "name": "Transformômetro",
   "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
   "icon": "gauge",
-  "version": "0.3.1",
+  "version": "0.5.0",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -58,27 +58,39 @@
       "module": "transformometro"
     },
     {
+      "code": "transformometro.branch.filial-01",
+      "name": "Escopo Filial 01",
+      "description": "Segrega o acesso à filial 01. Combinar com capacidades (view/manage/sign/features).",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.branch.filial-02",
+      "name": "Escopo Filial 02",
+      "description": "Segrega o acesso à filial 02. Combinar com capacidades (view/manage/sign/features).",
+      "module": "transformometro"
+    },
+    {
       "code": "transformometro.view.filial-01",
-      "name": "Visualizar Transformômetro — Filial 01",
-      "description": "Acesso de leitura aos dados operacionais da filial 01.",
+      "name": "Visualizar Transformômetro — Filial 01 (legado)",
+      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-01 para leitura.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.view.filial-02",
-      "name": "Visualizar Transformômetro — Filial 02",
-      "description": "Acesso de leitura aos dados operacionais da filial 02.",
+      "name": "Visualizar Transformômetro — Filial 02 (legado)",
+      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-02 para leitura.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.manage.filial-01",
-      "name": "Gerenciar Transformômetro — Filial 01",
-      "description": "Criar e editar processos/instâncias/revisões da filial 01.",
+      "name": "Gerenciar Transformômetro — Filial 01 (legado)",
+      "description": "Alias legado: escopo filial 01 + manage naquela filial. Preferir branch.filial-01 + *.manage.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.manage.filial-02",
-      "name": "Gerenciar Transformômetro — Filial 02",
-      "description": "Criar e editar processos/instâncias/revisões da filial 02.",
+      "name": "Gerenciar Transformômetro — Filial 02 (legado)",
+      "description": "Alias legado: escopo filial 02 + manage naquela filial. Preferir branch.filial-02 + *.manage.",
       "module": "transformometro"
     },
     {
@@ -88,21 +100,39 @@
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.view",
+      "code": "transformometro.meeting-minutes.view",
       "name": "Consultar atas Transforma+",
-      "description": "Permite listar e visualizar atas de reunião do Transforma+.",
+      "description": "Permite listar e visualizar atas de reunião do Transforma+ e gerenciar a assinatura pessoal.",
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.manage",
+      "code": "transformometro.meeting-minutes.manage",
       "name": "Gerenciar atas Transforma+",
       "description": "Permite criar, editar, enviar e finalizar atas de reunião.",
       "module": "transformometro"
     },
     {
-      "code": "transformometro.atas.sign",
+      "code": "transformometro.meeting-minutes.sign",
       "name": "Assinar atas Transforma+",
-      "description": "Permite assinar ou recusar atas e gerenciar a assinatura pessoal.",
+      "description": "Permite assinar ou recusar atas autenticadas.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.view",
+      "name": "Consultar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.view.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.manage",
+      "name": "Gerenciar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.manage.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.sign",
+      "name": "Assinar atas Transforma+ (legado)",
+      "description": "Alias legado de transformometro.meeting-minutes.sign.",
       "module": "transformometro"
     }
   ],
@@ -117,7 +147,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/processos",
+      "path": "/apps/transformometro/processes",
       "label": "Processos",
       "permission": "transformometro.processes.manage",
       "icon": "list",
@@ -126,7 +156,7 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/configuracoes/unidades",
+      "path": "/apps/transformometro/settings/units",
       "label": "Configurações",
       "permission": "transformometro.processes.manage",
       "icon": "folder-tree",
@@ -135,16 +165,25 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/atas",
+      "path": "/apps/transformometro/meeting-minutes",
       "label": "Atas",
-      "permission": "transformometro.atas.view",
+      "permission": "transformometro.meeting-minutes.view",
       "icon": "file-text",
       "entry": null,
       "order": 24,
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/dados",
+      "path": "/apps/transformometro/my-signature",
+      "label": "Minha assinatura",
+      "permission": "transformometro.meeting-minutes.view",
+      "icon": "pen-line",
+      "entry": null,
+      "order": 25,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/data",
       "label": "Exportar / Importar",
       "permission": "transformometro.data.transfer",
       "icon": "arrow-down-up",

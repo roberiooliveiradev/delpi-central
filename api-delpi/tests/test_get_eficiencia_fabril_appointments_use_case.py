@@ -18,6 +18,9 @@ def _sample_item() -> EficienciaFabrilDashboardItem:
         op="10312301005",
         nome_operador="Operador A",
         data_producao="2026-05-27",
+        hora_inicio="10:00",
+        turno="1",
+        turno_label="1º Turno",
         eficiencia_percentual=51.36,
         status_registro="OK",
     )
@@ -42,6 +45,7 @@ def test_execute_caches_appointments_without_second_repository_call() -> None:
     )
 
     assert first[0]["appointment_id"] == 123
+    assert first[0]["turno"] == "1"
     assert second == first
     repository.get_appointments.assert_called_once()
 
@@ -50,7 +54,7 @@ def test_execute_returns_cached_response_without_repository_call() -> None:
     repository = MagicMock()
     use_case = GetEficienciaFabrilAppointmentsUseCase(repository)
 
-    cached = [{"appointment_id": 99, "filial": "01", "op": "1"}]
+    cached = [{"appointment_id": 99, "filial": "01", "op": "1", "hora_inicio": "10:00", "turno": "1"}]
 
     with patch(
         "app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_appointments_use_case.get_cached_eficiencia_fabril_appointments",
@@ -63,6 +67,40 @@ def test_execute_returns_cached_response_without_repository_call() -> None:
 
     assert result == cached
     repository.get_appointments.assert_not_called()
+
+
+def test_execute_filters_by_shift_without_bypassing_cache() -> None:
+    reset_query_cache_for_tests()
+    repository = MagicMock()
+    morning = EficienciaFabrilDashboardItem(
+        appointment_id=1,
+        hora_inicio="10:00",
+        turno="1",
+        turno_label="1º Turno",
+    )
+    evening = EficienciaFabrilDashboardItem(
+        appointment_id=2,
+        hora_inicio="18:00",
+        turno="2",
+        turno_label="2º Turno",
+    )
+    repository.get_appointments.return_value = [morning, evening]
+    use_case = GetEficienciaFabrilAppointmentsUseCase(repository)
+
+    first = use_case.execute(
+        date_start="2026-05-01",
+        date_end="2026-05-31",
+        shift="2",
+    )
+    second = use_case.execute(
+        date_start="2026-05-01",
+        date_end="2026-05-31",
+        shift="1,2",
+    )
+
+    assert [row["appointment_id"] for row in first] == [2]
+    assert [row["appointment_id"] for row in second] == [1, 2]
+    repository.get_appointments.assert_called_once()
 
 
 def test_execute_requires_date_range() -> None:

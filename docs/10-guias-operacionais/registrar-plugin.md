@@ -40,6 +40,9 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 | Auditoria 5S | `plugins/auditoria-5s/auditoria-5s.manifest.json` |
 | Central de Agendamento | `plugins/central-agendamento/central-agendamento.manifest.json` |
 | Cultura DELPI | `plugins/cultura-delpi/cultura-delpi.manifest.json` |
+| Mural de Acessos | `plugins/mural-acessos/mural-acessos.manifest.json` |
+| Materiais de Terceiros | `plugins/materiais-terceiros/materiais-terceiros.manifest.json` |
+| Emissão de Notas Fiscais | `plugins/invoice-issuance/invoice-issuance.manifest.json` |
 | API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
 
 Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  

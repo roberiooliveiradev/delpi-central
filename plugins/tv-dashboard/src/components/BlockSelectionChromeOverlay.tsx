@@ -1,7 +1,12 @@
 import type { PointerEvent as ReactPointerEvent, CSSProperties } from "react";
 import {
+  EFFICIENCY_PIN_HIT_SIZE_PCT,
+  ensureEfficiencyPinResizableFrame,
+  isEfficiencyPinBlock,
+  resolveBlockHitFrame,
   shapeBlockAllowsResize,
   type ComunicadoBlock,
+  type ComunicadoShapeBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { buildBlockTransformCss } from "../utils/comunicadoTransform";
@@ -16,6 +21,8 @@ type Props = {
   designHeight: number;
   stageZoom?: number;
   isPrimarySelection: boolean;
+  /** N≥2: primário ganha handles preenchidos; secundários usam `--multi`. */
+  isMultiSelection?: boolean;
   onPointerDown: (
     event: ReactPointerEvent<HTMLElement>,
     block: ComunicadoBlock,
@@ -38,21 +45,32 @@ export function BlockSelectionChromeOverlay({
   designHeight,
   stageZoom = 1,
   isPrimarySelection,
+  isMultiSelection = false,
   onPointerDown,
   onResizeHandleDoubleClick,
 }: Props) {
-  const wrapTransform = buildBlockTransformCss(block.style);
-  const frameW = Math.max(1, (block.frame.w / 100) * designWidth);
-  const frameH = Math.max(1, (block.frame.h / 100) * designHeight);
+  /* Pin CT legado (w/h≈0): frame migrado no chrome E no startFrame do drag. */
+  const chromeBlock: ComunicadoBlock = isEfficiencyPinBlock(block)
+    ? ensureEfficiencyPinResizableFrame(block as ComunicadoShapeBlock, {
+        x: block.frame.x,
+        y: block.frame.y,
+        w: EFFICIENCY_PIN_HIT_SIZE_PCT,
+        h: EFFICIENCY_PIN_HIT_SIZE_PCT,
+      })
+    : block;
+  const hitFrame = resolveBlockHitFrame(chromeBlock);
+  const wrapTransform = buildBlockTransformCss(chromeBlock.style);
+  const frameW = Math.max(1, (hitFrame.w / 100) * designWidth);
+  const frameH = Math.max(1, (hitFrame.h / 100) * designHeight);
   const metrics = resolveSelectionChromeMetrics(stageZoom);
   const style: CSSProperties = {
-    left: `${block.frame.x}%`,
-    top: `${block.frame.y}%`,
-    width: `${block.frame.w}%`,
-    height: `${block.frame.h}%`,
+    left: `${hitFrame.x}%`,
+    top: `${hitFrame.y}%`,
+    width: `${hitFrame.w}%`,
+    height: `${hitFrame.h}%`,
     zIndex: resolveSelectionChromeOverlayZIndex({
       isPrimarySelection,
-      modelZIndex: block.style?.zIndex,
+      modelZIndex: chromeBlock.style?.zIndex,
     }),
     ...(wrapTransform
       ? { transform: wrapTransform, transformOrigin: "center center" }
@@ -64,6 +82,7 @@ export function BlockSelectionChromeOverlay({
       className={[
         "td-composer__block-chrome",
         isPrimarySelection ? "" : "td-composer__block-chrome--multi",
+        isPrimarySelection && isMultiSelection ? "td-composer__block-chrome--primary" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -73,16 +92,18 @@ export function BlockSelectionChromeOverlay({
       aria-hidden="true"
     >
       <BlockSelectionChrome
-        block={block}
+        block={chromeBlock}
         designShortSidePx={Math.min(frameW, frameH)}
         designWidthPx={frameW}
         designHeightPx={frameH}
         handleSizePx={metrics.handleSize}
         adjustSizePx={metrics.adjustSize}
         rotateStemPx={metrics.rotateStem}
-        allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
+        allowResize={chromeBlock.type === "shape" ? shapeBlockAllowsResize(chromeBlock) : true}
         onPointerDown={onPointerDown}
-        onResizeHandleDoubleClick={onResizeHandleDoubleClick}
+        onResizeHandleDoubleClick={
+          isEfficiencyPinBlock(chromeBlock) ? undefined : onResizeHandleDoubleClick
+        }
       />
     </div>
   );

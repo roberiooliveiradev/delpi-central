@@ -1,0 +1,24 @@
+{
+  "settings": {
+    "maxCandidates": 5,
+    "maxEvidenceCandidates": 3,
+    "evidenceMaxRows": 5,
+    "scoreGapThreshold": 0.08,
+    "minLocalRouteScore": 4.0
+  },
+  "kinds": {
+    "catalog_route": {
+      "multiSelectDefault": true,
+      "promptKey": "promptCatalogRoute",
+      "confirmLabelKey": "confirmSelected",
+      "cancelLabelKey": "cancelSelection"
+    }
+  },
+  "messages": {
+    "promptCatalogRoute": "Encontrei {count} fonte(s) próximas. Selecione quais adicionar ao slide:",
+    "confirmSelected": "Adicionar selecionadas",
+    "cancelSelection": "Cancelar",
+    "evidenceUnavailable": "Prévia indisponível para esta fonte.",
+    "resumePrefix": "adicione no slide as fontes:"
+  }
+}

@@ -47,10 +47,64 @@
   animation: tdp-fade-in 0.8s ease;
 }
 
+.tdp-slide--dissolve {
+  filter: blur(10px);
+  transform: scale(1.01);
+  transition:
+    opacity 0.65s ease,
+    filter 0.65s ease,
+    transform 0.65s ease,
+    visibility 0.65s ease;
+}
+
+.tdp-slide--dissolve.tdp-slide--active {
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.tdp-slide--push {
+  transform: translateX(8%);
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.65s ease,
+    visibility 0.65s ease;
+}
+
+.tdp-slide--push.tdp-slide--active {
+  transform: translateX(0);
+}
+
+.tdp-slide--wipe {
+  clip-path: inset(0 100% 0 0);
+  transition:
+    clip-path 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease,
+    visibility 0.7s ease;
+}
+
+.tdp-slide--wipe.tdp-slide--active {
+  clip-path: inset(0);
+}
+
+.tdp-slide--zoom {
+  transform: scale(0.96);
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.65s ease,
+    visibility 0.65s ease;
+}
+
+.tdp-slide--zoom.tdp-slide--active {
+  transform: scale(1);
+}
+
 /* Admin preview: primeiro paint sem fade/entrada (evita flash ao abrir). */
-.tdp-stage--boot .tdp-slide--fade.tdp-slide--active {
+.tdp-stage--boot .tdp-slide.tdp-slide--active {
   animation: none;
   opacity: 1;
+  filter: none;
+  transform: none;
+  clip-path: inset(0);
 }
 
 
@@ -274,6 +328,18 @@
 
 .tdp-slide--none.tdp-slide--active {
   transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdp-slide,
+  .tdp-slide--dissolve,
+  .tdp-slide--slide,
+  .tdp-slide--push,
+  .tdp-slide--wipe,
+  .tdp-slide--zoom {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .tdp-oee__grid--single {

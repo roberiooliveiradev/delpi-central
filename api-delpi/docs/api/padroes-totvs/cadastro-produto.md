@@ -13,6 +13,35 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 | `B1_UM` | Unidade de medida | Ver [unidades-medida.md](./unidades-medida.md) |
 | `B1_CUSTD` | Custo padrão | Fallback de valoração quando `B2_CM1` do almoxarifado falta — [armazem-custo.md](./armazem-custo.md) |
 | `B1_TPMAT` | Produto de terceiro (SX3) | `1` = Não · `2` = Sim |
+| `B1_TIPO` | Tipo de produto | `MP` matéria-prima · `PA` acabado · `PI` intermediário — constante `PRODUCT_TYPE_RAW_MATERIAL` em `protheus_product_types.py` |
+| `B1_REFEREN` | Ref. Cliente | Código do produto no cliente (`customer_reference` na API). Não confundir com SA1. Filtro: prefixo `LIKE` + `Latin1_General_CI_AI` |
+
+---
+
+## Tipo de produto (`B1_TIPO`)
+
+Filtros de estoque de segurança e **OTD de pedidos de compra MP** usam `B1_TIPO = 'MP'` (ou `TIPO_PRODUTO` nas views de pontualidade).
+
+Constante: `PRODUCT_TYPE_RAW_MATERIAL = "MP"` em `app/domain/totvs/protheus_product_types.py`.
+
+Doc da rota: [supplies-purchase-order-otd.md](../supplies-purchase-order-otd.md).
+
+---
+
+## Universo OTD compras (`GET /supplies/otd`)
+
+KPI de pontualidade do dashboard de suprimentos / SI (`supplies_otd`). Fonte: `VW_PONTUALIDADE_FORNECEDORES`.
+
+Linha elegível se **qualquer** condição for verdadeira:
+
+| Regra | Campo | Valor |
+|-------|--------|--------|
+| Tipo MP | `TIPO_PRODUTO` | `MP` (`PRODUCT_TYPE_RAW_MATERIAL`) |
+| Família de código | `PRODUTO` | prefixo `3019` (`SUPPLIES_OTD_PRODUCT_CODE_PREFIX`) |
+
+Constantes em `app/domain/totvs/protheus_product_types.py`.
+
+Não confundir com `GET /supplies/purchase-order-otd` (somente `MP`, sem a família `3019`).
 
 ---
 
@@ -41,3 +70,4 @@ Constante de domínio (refugos): `THIRD_PARTY_PRODUCT_TPMAT = "2"` em `refugos_s
 - Refugos: [scrap-monitoring.md](../scrap-monitoring.md)
 - Custo: [armazem-custo.md](./armazem-custo.md)
 - Produtos (API geral): [02-produtos.md](../02-produtos.md)
+- Poder de terceiros na `SB6` (beneficiamento, **não** é `B1_TPMAT`): [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md)

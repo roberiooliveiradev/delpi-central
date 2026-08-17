@@ -71,6 +71,7 @@ describe("canvas_table", () => {
     );
     expect(cells[0]?.[0]?.kind).toBe("number");
     expect(formatCanvasTableNumber(1400, "integer")).toBe("1.400");
+    expect(formatCanvasTableNumber(41.7, "percent")).toBe("41,7%");
   });
 
   it("infere number e sparkline a partir do texto", () => {

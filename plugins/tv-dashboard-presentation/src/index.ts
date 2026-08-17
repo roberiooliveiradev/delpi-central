@@ -40,12 +40,14 @@ export {
   DESIGN_VIEWPORT_BLEED_RATIO,
 } from "./DesignViewportStage";
 export { RichComunicadoStage } from "./RichComunicadoStage";
+export { RichComunicadoBackground } from "./RichComunicadoBackground";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
   resolvePresentationFitMode,
   measurePresentationViewportSize,
   presentationSurfaceFromViewMode,
+  presentationStageEntranceClass,
   resolvePresentationScaleMethod,
   isHostFitMeasurementSafe,
   hostFitPaintedSize,
@@ -57,9 +59,33 @@ export {
 } from "./presentationFitPolicy";
 export { usePresentationViewportPin } from "./usePresentationViewportPin";
 export {
+  isCustomViewportProfile,
+  isNamedViewportProfile,
+  listViewportProfileSelectOptions,
   resolveViewportPixelSize,
+  VIEWPORT_CUSTOM_PROFILE,
+  VIEWPORT_PROFILE_PRESETS,
+  type ResolveViewportPixelSizeOptions,
   type ViewportPixelSize,
+  type ViewportProfileOption,
 } from "./viewportPixelSize";
+export {
+  clampDesignPx,
+  cssPxToMm,
+  formatViewportDimensionFromPx,
+  isViewportLengthUnit,
+  parseViewportDimensionToPx,
+  pxFromUnit,
+  readStoredViewportLengthUnit,
+  unitFromPx,
+  VIEWPORT_DESIGN_PX_MAX,
+  VIEWPORT_DESIGN_PX_MIN,
+  VIEWPORT_LENGTH_UNIT_LABELS,
+  VIEWPORT_LENGTH_UNIT_STORAGE_KEY,
+  VIEWPORT_LENGTH_UNITS,
+  writeStoredViewportLengthUnit,
+  type ViewportLengthUnit,
+} from "./viewportLengthUnits";
 export {
   clampFramePositionPercent,
   clampFrameSizePercent,
@@ -144,6 +170,8 @@ export type {
 } from "./types";
 export type { UsePresentationEngineOptions } from "./usePresentationEngine";
 export {
+  formatPresentationTransitionLabel,
+  PRESENTATION_TRANSITION_LABELS,
   PRESENTATION_TRANSITION_STYLES,
   isPresentationTransitionStyle,
   resolveSlideTransitionStyle,
@@ -181,6 +209,10 @@ export type {
   ComunicadoShapeConnector,
   ComunicadoConnectorRouting,
   ComunicadoGeometryVertex,
+  ComunicadoEfficiencyPinBands,
+  ComunicadoEfficiencyPinBinding,
+  ComunicadoEfficiencyPinInfoMode,
+  ComunicadoEfficiencyPinRole,
   ComunicadoTextBlock,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
@@ -225,6 +257,42 @@ export {
   shapeSupportsStroke,
   type ComunicadoVisualPrimitive,
 } from "./comunicadoVisualPrimitive";
+export {
+  EFFICIENCY_PIN_DEFAULT_GOOD_MIN_PCT,
+  EFFICIENCY_PIN_DEFAULT_MATCH_FIELD,
+  EFFICIENCY_PIN_DEFAULT_VALID_MAX_PCT,
+  EFFICIENCY_PIN_DEFAULT_VALUE_FIELD,
+  EFFICIENCY_PIN_DEFAULT_WARN_MIN_PCT,
+  EFFICIENCY_PIN_HIT_SIZE_PCT,
+  EFFICIENCY_PIN_MARKER_RADIUS_DEFAULT,
+  EFFICIENCY_PIN_MIN_FRAME_PCT,
+  EFFICIENCY_PIN_OPERATION_ID,
+  EFFICIENCY_PIN_STATUS_COLORS,
+  buildEfficiencyPinInfoBlock,
+  classifyEfficiencyPinPct,
+  colorForEfficiencyPinStatus,
+  ensureEfficiencyPinResizableFrame,
+  findSharedEfficiencyPinDataSourceId,
+  findSharedEfficiencyPinBands,
+  applySharedDataSourceToUnlinkedEfficiencyPins,
+  applyEfficiencyPinBandsToSharedPins,
+  applyEfficiencyPinBandsToSourceAndPins,
+  syncEfficiencyPinBandsAcrossSources,
+  isEfficiencyPinBlock,
+  isEfficiencyPinInfoRole,
+  isEfficiencyPinShapeKind,
+  listWorkCentersFromResolved,
+  migrateEfficiencyPinBlocks,
+  normalizeEfficiencyPinBinding,
+  resolveEfficiencyPinBands,
+  resolveEfficiencyPinBandsForBlock,
+  resolveEfficiencyPinInfoMode,
+  resolveEfficiencyPinRole,
+  resolveEfficiencyPinState,
+  type EfficiencyPinResolvedState,
+  type EfficiencyPinStatus,
+} from "./efficiencyPin";
+export { EfficiencyPinGraphic, EfficiencyPinView } from "./EfficiencyPinView";
 export {
   COMUNICADO_LINE_VISUAL_PAD_PCT,
   COMUNICADO_MARKER_RADIUS_DEFAULT,
@@ -359,7 +427,21 @@ export {
   useComunicadoCustomFonts,
   type ComunicadoLoadedCustomFont,
 } from "./comunicadoCustomFonts";
-export { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
+export {
+  comunicadoBackgroundCssProperties,
+  comunicadoBackgroundImageUrl,
+  comunicadoBackgroundRootStyle,
+} from "./comunicadoBackgroundStyle";
+export {
+  applyColorPaintToCss,
+  applyCssShapePaints,
+  applyFillPaintBackground,
+  cssAngleToSvgGradientLine,
+  createSvgLinearGradientDef,
+  resolveStyleFillCss,
+  resolveStyleStrokeCss,
+  resolveSvgPaintRef,
+} from "./comunicadoFillPaint";
 export {
   blockTypeForDisplayMode,
   defaultDisplayModeForInsert,
@@ -368,6 +450,20 @@ export {
   listDataPresentationOptions,
   UNIVERSAL_DISPLAY_MODES,
 } from "./comunicadoDataPresentation";
+export {
+  EXCLUDE_WEEKENDS_PARAM,
+  applyExcludeWeekendsToChart,
+  filterSeriesPointsExcludingWeekends,
+  isDailyGranularityValue,
+  isEffectiveDailyGranularity,
+  isTruthyParam,
+  lookupLinkedDataSourceParams,
+  mergeChartViewFilterParams,
+  omitVisualOnlyDataParams,
+  parseCategoryPointDate,
+  routeSupportsDailyGranularity,
+  shouldApplyExcludeWeekends,
+} from "./chartWeekendFilter";
 export {
   buildDataPreviewFingerprint,
   DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
@@ -438,6 +534,7 @@ export {
   shouldHideDataSourceOnStage,
   filterBlocksVisibleOnStage,
   filterStageSelectableIds,
+  listStageSelectableIds,
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,
@@ -552,6 +649,8 @@ export {
   contentRunInlineStyleProperties,
   contentRunsFromEditableRoot,
   expandRangeToDataRefAtoms,
+  findContentRunAtOffset,
+  findDataRefRunIndexInRange,
   getEditableTextSelectionOffsets,
   hasPersistableContentRuns,
   insertLineBreakAtOffset,
@@ -1073,6 +1172,7 @@ export {
 } from "./fieldKeyHumanize";
 export {
   distributeTableProjectionColumnWidths,
+  formatTableProjectionColumns,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,

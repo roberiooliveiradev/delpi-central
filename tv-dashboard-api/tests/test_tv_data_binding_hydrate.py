@@ -51,6 +51,34 @@ def test_hydrate_clears_catalog_like_label_and_remaps_dates():
     assert "legacy_junk" in diag["strippedParams"]
 
 
+def test_hydrate_keeps_exclude_weekends_internal_param():
+    route = {
+        "operationId": "get_ppm_internal_summary",
+        "label": "PPM Interno",
+        "paramSchema": {
+            "start_date": {"type": "string"},
+            "end_date": {"type": "string"},
+        },
+    }
+    binding, diag = hydrate_data_binding(
+        {
+            "operationId": "get_ppm_internal_summary",
+            "params": {
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-10",
+                "dateRangePreset": "custom",
+                "excludeWeekends": True,
+                "granularity": "day",
+            },
+        },
+        route,
+    )
+    assert binding["params"]["excludeWeekends"] is True
+    assert binding["params"]["dateRangePreset"] == "custom"
+    assert "granularity" not in binding["params"]
+    assert "granularity" in diag["strippedParams"]
+
+
 def test_validate_params_strips_unknown_instead_of_raising():
     schema = {"branch": {"type": "string", "optional": True}}
     out = validate_params_against_schema(

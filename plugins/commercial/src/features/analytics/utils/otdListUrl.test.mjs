@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+
+import { parseOtdListUrlState } from "./otdListUrl.ts";
+
+const src = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+
+describe("otdListUrl", () => {
+  it("parseia busca status sort e página", () => {
+    const state = parseOtdListUrlState(
+      "?otd_q=WEG&otd_status=late&otd_sort=days_diff&otd_dir=desc&otd_page=3",
+    );
+    assert.equal(state.search, "WEG");
+    assert.equal(state.status, "late");
+    assert.equal(state.sortBy, "days_diff");
+    assert.equal(state.sortDir, "desc");
+    assert.equal(state.page, 3);
+  });
+
+  it("ignora status e sort inválidos", () => {
+    const state = parseOtdListUrlState("?otd_status=foo&otd_sort=hack");
+    assert.equal(state.status, "");
+    assert.equal(state.sortBy, null);
+  });
+});
+
+describe("AnalyticsOtdPage estrutural", () => {
+  it("usa lista server-side com busca status sort e paginação", () => {
+    const page = readFileSync(
+      join(src, "features/analytics/AnalyticsOtdPage.tsx"),
+      "utf8",
+    );
+    assert.match(page, /parseOtdListUrlState/);
+    assert.match(page, /writeOtdListUrlState/);
+    assert.match(page, /onSortChange/);
+    assert.match(page, /CommercialPagination/);
+    assert.match(page, /otdLinesSearch/);
+    assert.match(page, /sort_by: listState\.sortBy/);
+    assert.match(page, /daysDiff/);
+    assert.match(page, /insightsRecurrence/);
+    assert.match(page, /avg_late_days/);
+    assert.match(page, /worstDelays/);
+    assert.match(page, /CommercialSpeedometerGauge/);
+    assert.match(page, /AnalyticsOtdInsightBarChart/);
+    assert.match(page, /OtdCustomerIdentityCell/);
+    assert.match(page, /cm-otd-series-grid/);
+    assert.match(page, /otdGoalByBranch/);
+    assert.match(page, /goal=\{otdGoalByBranch/);
+    assert.match(page, /OPERATIONAL_UNIT_COLUMN_LABEL/);
+    assert.match(page, /customer_store/);
+    assert.match(page, /upcomingPromises/);
+    assert.match(page, /latestSeriesPoint/);
+  });
+});
+
+describe("AnalyticsOtdInsightBarChart estrutural", () => {
+  it("mantém cores por severidade e avatares em Horiz. Barras e Pizza", () => {
+    const chart = readFileSync(
+      join(src, "features/analytics/components/AnalyticsOtdInsightBarChart.tsx"),
+      "utf8",
+    );
+    assert.match(chart, /chartType === "horizontal_bar"/);
+    assert.match(chart, /chartType === "bar"/);
+    assert.match(chart, /chartType === "pie"/);
+    assert.match(chart, /alertFill/);
+    assert.match(chart, /fill: alertFill/);
+    assert.match(chart, /InsightCustomerAvatar/);
+    assert.match(chart, /InsightPieLegend/);
+    assert.match(chart, /<Cell/);
+    assert.doesNotMatch(chart, /MultiTypeSeriesChart/);
+  });
+});

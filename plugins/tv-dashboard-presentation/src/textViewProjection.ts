@@ -1,9 +1,12 @@
 import {
+  formatDisplayValue,
+  isDisplayFormatSpec,
   parseKpiNumericValue,
   resolveDelpiKpiTone,
+  resolveDisplayFormatSpec,
+  specFromTextProjectionFormat,
 } from "@delpi/plugin-ui/index";
-
-import { formatCurrency, formatNumber, formatPct, normalizeDecimalPlaces } from "./nativeFormat";
+import { normalizeDecimalPlaces } from "./nativeFormat";
 import type {
   ComunicadoBlock,
   ComunicadoContentRun,
@@ -47,6 +50,7 @@ export function normalizeTextProjection(raw: unknown): ComunicadoTextProjection 
   const projection: ComunicadoTextProjection = { field };
   if (item.aggregation) projection.aggregation = item.aggregation;
   if (item.format) projection.format = item.format;
+  if (isDisplayFormatSpec(item.displayFormat)) projection.displayFormat = item.displayFormat;
   const decimalPlaces = normalizeDecimalPlaces(item.decimalPlaces);
   if (decimalPlaces != null) projection.decimalPlaces = decimalPlaces;
   if (typeof item.prefix === "string" && item.prefix) projection.prefix = item.prefix;
@@ -66,6 +70,7 @@ export function normalizeTextDataRef(raw: unknown): ComunicadoTextDataRef | unde
   const ref: ComunicadoTextDataRef = { field };
   if (item.aggregation) ref.aggregation = item.aggregation;
   if (item.format) ref.format = item.format;
+  if (isDisplayFormatSpec(item.displayFormat)) ref.displayFormat = item.displayFormat;
   const decimalPlaces = normalizeDecimalPlaces(item.decimalPlaces);
   if (decimalPlaces != null) ref.decimalPlaces = decimalPlaces;
   if (typeof item.label === "string" && item.label.trim()) ref.label = item.label.trim();
@@ -77,6 +82,7 @@ export function normalizeTextDataRef(raw: unknown): ComunicadoTextDataRef | unde
 
 export type FormatTextProjectionOptions = {
   decimalPlaces?: number | null;
+  displayFormat?: import("@delpi/plugin-ui/index").DisplayFormatSpec | null;
 };
 
 export function formatTextProjectionValue(
@@ -85,25 +91,11 @@ export function formatTextProjectionValue(
   options?: FormatTextProjectionOptions,
 ): string {
   if (value == null || value === "") return "—";
-  if (format === "raw" || format == null) return String(value);
-  if (format === "date") {
-    const text = String(value).trim();
-    if (!text) return "—";
-    const parsed = Date.parse(text);
-    if (!Number.isNaN(parsed)) {
-      return new Date(parsed).toLocaleDateString("pt-BR");
-    }
-    return text;
-  }
-  const numeric = parseProjectionNumber(value);
-  if (numeric == null) return String(value);
-  const places = options?.decimalPlaces;
-  if (format === "percent") return formatPct(numeric, places);
-  if (format === "currency") return formatCurrency(numeric, places);
-  if (format === "compact") {
-    return numeric.toLocaleString("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
-  }
-  return formatNumber(numeric, places);
+  const spec = resolveDisplayFormatSpec(
+    options?.displayFormat,
+    specFromTextProjectionFormat(format, options?.decimalPlaces),
+  );
+  return formatDisplayValue(value, spec);
 }
 
 export function resolveTextDataRefValue(
@@ -117,7 +109,10 @@ export function resolveTextDataRefValue(
   }
   if (projected.kind === "list") {
     const parts = projected.values.map((value) =>
-      formatTextProjectionValue(value, ref.format, { decimalPlaces: ref.decimalPlaces }),
+      formatTextProjectionValue(value, ref.format, {
+        decimalPlaces: ref.decimalPlaces,
+        displayFormat: ref.displayFormat,
+      }),
     );
     const text = parts.join(FIELD_LIST_JOIN);
     const numeric = parseKpiNumericValue(projected.values[0]);
@@ -130,6 +125,7 @@ export function resolveTextDataRefValue(
   }
   const text = formatTextProjectionValue(raw, ref.format, {
     decimalPlaces: ref.decimalPlaces,
+    displayFormat: ref.displayFormat,
   });
   const numeric = parseKpiNumericValue(raw);
   const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
@@ -148,6 +144,7 @@ export function resolveTextDisplayValue(
       field: projection.field,
       aggregation: projection.aggregation,
       format: projection.format,
+      displayFormat: projection.displayFormat,
       decimalPlaces: projection.decimalPlaces,
       colorRules: projection.colorRules,
     },
@@ -199,6 +196,7 @@ export function patchTextProjectionFromEditedDisplay(
       field: projection.field,
       aggregation: projection.aggregation,
       format: projection.format,
+      displayFormat: projection.displayFormat,
       decimalPlaces: projection.decimalPlaces,
       colorRules: projection.colorRules,
     },
@@ -224,7 +222,8 @@ export function suggestDefaultTextProjection(
   return {
     field,
     aggregation: suggestDefaultAggregationForField(resolved, field),
-    format: "number",
+    displayFormat: { category: "general", presetId: "general" },
+    format: "raw",
   };
 }
 

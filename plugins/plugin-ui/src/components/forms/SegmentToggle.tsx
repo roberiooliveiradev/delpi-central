@@ -45,6 +45,20 @@ export function segmentToggleBemClasses(prefix: string): SegmentToggleClassNames
   };
 }
 
+export type DashboardSegmentToggleProps<T extends string = string> = Omit<
+  SegmentToggleProps<T>,
+  "prefix" | "classNames"
+>;
+
+/** Factory dual-class `{prefix}-segment-toggle*` para MFEs (Portal Comercial, etc.). */
+export function createDashboardSegmentToggle(prefix: string) {
+  return function DashboardSegmentToggle<T extends string>(
+    props: DashboardSegmentToggleProps<T>,
+  ) {
+    return <SegmentToggle {...props} prefix={prefix} />;
+  };
+}
+
 /**
  * Toggle segmentado canônico (trilha + pill accent / texto branco — DNA PPM Qualidade).
  * Canônico em `@delpi/plugin-ui` — MFEs não devem reimplementar o chrome.

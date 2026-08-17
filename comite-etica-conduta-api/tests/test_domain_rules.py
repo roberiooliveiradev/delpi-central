@@ -97,6 +97,32 @@ def test_html_sanitizer_removes_unsafe_css():
     assert "position:" not in cleaned
 
 
+def test_html_sanitizer_preserves_tables():
+    cleaned = CecHtmlSanitizer.sanitize(
+        '<table class="delpi-ui-rich-text-table delpi-ui-rich-text-table--grid">'
+        '<thead><tr><th colspan="2">Cabeçalho</th></tr></thead>'
+        "<tbody><tr><td>A</td><td>B</td></tr></tbody>"
+        "</table>"
+    )
+    assert "<table" in cleaned
+    assert "<th" in cleaned
+    assert 'colspan="2"' in cleaned
+    assert "delpi-ui-rich-text-table" in cleaned
+    assert "Cabeçalho" in cleaned
+    assert "<td>A</td>" in cleaned
+
+
+def test_html_sanitizer_broken_style_does_not_swallow_table():
+    cleaned = CecHtmlSanitizer.sanitize(
+        '<p style="color:red><b>Antes</b></p>'
+        "<table><tbody><tr><th>Grupo</th><th>Info</th></tr>"
+        "<tr><td>A</td><td>B</td></tr></tbody></table>"
+    )
+    assert "<table" in cleaned
+    assert "<th>Grupo</th>" in cleaned
+    assert "GrupoInfo" not in cleaned.replace(" ", "").replace("\n", "")
+
+
 def test_permission_codes():
     assert perms.normalize_unit_code("01") == "00"
     assert perms.normalize_unit_code(None) == "00"

@@ -133,9 +133,7 @@
     },
     "get_production_oee_series": {
       "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "fixedQueryParams": null,
       "tvConstraints": {
         "requiresBranchPermission": true
       },
@@ -152,9 +150,12 @@
         "oee_filial_02": "number"
       },
       "label": "OEE — série temporal",
-      "description": "Evolução diária do OEE ao longo do período.",
-      "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
+      "description": "Evolução do OEE por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de tendência do OEE na TV. Escolha granularidade mês para visão mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "default": "day"
+        },
         "periodDays": {
           "type": "integer",
           "label": "Período (dias)",
@@ -222,14 +223,12 @@
     },
     "get_production_otd_series": {
       "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "fixedQueryParams": null,
       "tvConstraints": {
         "requiresBranchPermission": true
       },
       "valueFieldTypes": {
-        "periodo": "date",
+        "periodo": "string",
         "sort_key": "string",
         "start_date": "date",
         "end_date": "date",
@@ -237,9 +236,12 @@
         "otd_filial_02": "number"
       },
       "label": "OTD — série temporal",
-      "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
-      "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV.",
+      "description": "Evolução do OTD (entregas no prazo) por dia, semana, mês ou ano.",
+      "whenToUse": "Use para gráfico de pontualidade na TV. Escolha granularidade mês para tendência mensal; day permanece o padrão dos painéis existentes.",
       "paramSchema": {
+        "granularity": {
+          "default": "day"
+        },
         "periodDays": {
           "type": "integer",
           "label": "Período (dias)",
@@ -354,8 +356,7 @@
         "branch": {
           "type": "string",
           "optional": true,
-          "label": "Filial",
-          "enum": ["01", "02"]
+          "label": "Filial"
         },
         "warehouse": {
           "type": "string",
@@ -755,6 +756,111 @@
           "description": "Fim do período do resumo (AAAA-MM-DD).",
           "optional": true
         }
+      }
+    },
+    "list_eficiencia_fabril_appointments": {
+      "label": "Eficiência fabril — apontamentos (carga bulk)",
+      "description": "Apontamentos do período para tabela/gráfico. Agregações (média por CT) exigem a lista completa — maxRows alto evita média distorcida.",
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
+      "valueFields": [
+        "eficiencia_percentual",
+        "resultado_mod",
+        "tempo_real_horas",
+        "tempo_previsto_horas"
+      ],
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
+      }
+    },
+    "get_eficiencia_fabril_efficiency_by_work_center": {
+      "label": "Eficiência fabril — média % por CT",
+      "description": "Uma linha por centro de trabalho com efficiency_pct (média OK 0–199%), igual ao plugin.",
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ],
+      "valueFieldTypes": {
+        "efficiency_pct": "number",
+        "appointment_count": "number"
+      },
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
+      },
+      "allowedDisplayModes": [
+        "table",
+        "bar_chart",
+        "auto"
+      ]
+    },
+    "get_sales_order_otd_panel": {
+      "label": "Pedidos de venda — painel OTD (linhas)",
+      "description": "Linhas de pedido com status no prazo/atrasado. Payload em lines.items. Sem Data início/fim retorna todo o histórico elegível (útil para «todos os atrasados»).",
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "tableFields": "lines",
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date"
+      }
+    },
+    "get_supplies_purchase_order_otd_panel": {
+      "label": "Pedidos de compra MP — painel OTD (linhas)",
+      "description": "Linhas de PC MP com status no prazo/atrasado. Inclui supplier_short_name (A2_NREDUZ). Payload em lines.items.",
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
+      "tableFields": "lines",
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "valueFieldTypes": {
+        "purchase_order_otd_pct": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "expected_delivery_date": "date",
+        "receipt_entry_date": "date",
+        "invoice_issue_date": "date",
+        "purchase_order_issue_date": "date"
       }
     }
   }

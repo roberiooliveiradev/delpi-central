@@ -137,6 +137,57 @@ def test_inspecoes_entrada_historico_rejects_page_size_above_max(
     assert response.status_code == 422
 
 
+@pytest.mark.parametrize("result", ["APROVADA", "REJEITADA"])
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
+)
+def test_inspecoes_entrada_historico_accepts_textual_result_filter(
+    mock_build,
+    _access,
+    inspecoes_entrada_client: TestClient,
+    result: str,
+) -> None:
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "02",
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "page_size": 20,
+            "total": 0,
+            "total_pages": 1,
+            "is_complete": True,
+        },
+        "filters": {"result": result},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = inspecoes_entrada_client.get(
+        f"/inspecoes-entrada/historico?branch=02&page=1&page_size=20&result={result}"
+        "&date_from=2025-01-01&date_to=2026-08-05"
+    )
+    assert response.status_code == 200
+    mock_use_case.execute.assert_called_once()
+    assert mock_use_case.execute.call_args.kwargs["result"] == result
+
+
+@pytest.mark.parametrize("result", ["A", "R", "T", "aprovada", "INVALIDO"])
+def test_inspecoes_entrada_historico_rejects_process_style_result_via_openapi(
+    inspecoes_entrada_client: TestClient,
+    result: str,
+) -> None:
+    response = inspecoes_entrada_client.get(
+        f"/inspecoes-entrada/historico?branch=02&result={result}"
+    )
+    assert response.status_code == 422
+
+
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
     return_value=None,

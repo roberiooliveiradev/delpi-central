@@ -1,8 +1,8 @@
 """Sanitização HTML allowlist para conteúdo de atas CIPA.
 
 Preserva a formatação de rich text (negrito, itálico, sublinhado, tachado,
-cor, realce, tamanho e família de fonte, alinhamento, listas e links) sem
-depender de `tinycss2`/`bleach[css]`: os estilos inline são filtrados por um
+cor, realce, tamanho e família de fonte, alinhamento, listas, links e tabelas)
+sem depender de `tinycss2`/`bleach[css]`: os estilos inline são filtrados por um
 allowlist próprio e transportados por um atributo `data-dsty` (base64) através
 do bleach, sendo restaurados como `style` logo em seguida.
 """
@@ -43,6 +43,16 @@ ALLOWED_HTML_TAGS: list[str] = [
     "div",
     "span",
     "font",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "th",
+    "td",
+    "caption",
+    "colgroup",
+    "col",
 ]
 
 ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {
@@ -51,6 +61,11 @@ ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {
     "font": ["color", "face", "size", "data-dsty"],
     "ol": ["start", "type", "class", "data-dsty"],
     "li": ["value", "class", "data-dsty"],
+    "table": ["class", "data-dsty"],
+    "th": ["colspan", "rowspan", "scope", "class", "data-dsty"],
+    "td": ["colspan", "rowspan", "class", "data-dsty"],
+    "col": ["span", "class", "data-dsty"],
+    "colgroup": ["span", "class", "data-dsty"],
 }
 
 ALLOWED_HTML_PROTOCOLS: list[str] = ["http", "https", "mailto"]
@@ -68,6 +83,11 @@ _ALLOWED_CSS_PROPERTIES: dict[str, re.Pattern[str]] = {
     "font-style": re.compile(r"^(normal|italic|oblique)$", re.IGNORECASE),
     "text-decoration": re.compile(r"^[a-zA-Z\s\-]+$"),
     "text-decoration-line": re.compile(r"^[a-zA-Z\s\-]+$"),
+    "border-collapse": re.compile(r"^(collapse|separate)$", re.IGNORECASE),
+    "border": re.compile(r"^[\w\s.#%,()]+$"),
+    "width": re.compile(r"^\d{1,3}(\.\d+)?(px|pt|em|rem|%)$", re.IGNORECASE),
+    "padding": re.compile(r"^[\d\s.pxemrem%]+$", re.IGNORECASE),
+    "vertical-align": re.compile(r"^(top|middle|bottom|baseline)$", re.IGNORECASE),
 }
 _DANGEROUS_TOKENS = ("url(", "expression", "javascript:", "/*", "*/", "<", ">", "{", "}", "@")
 
@@ -79,11 +99,38 @@ _DANGEROUS_SELF_CLOSING_RE = re.compile(
     r"<(script|style|iframe|object|embed|form)\b[^>]*/?>",
     re.IGNORECASE,
 )
-_STYLE_ATTR_RE = re.compile(r"""\sstyle\s*=\s*(["'])(.*?)\1""", re.IGNORECASE | re.DOTALL)
+# Sem DOTALL e sem atravessar `>` / aspas cruzadas: `style="...` sem fechar
+# (HTML quebrado do Word) engolia o markup seguinte (ex.: <table>) e o bleach
+# colapsava o texto das células numa única string.
+_STYLE_ATTR_RE = re.compile(
+    r"""\sstyle\s*=\s*(?:\"([^\"<>]*)\"|'([^'<>]*)')""",
+    re.IGNORECASE,
+)
 _DSTY_ATTR_RE = re.compile(r'\sdata-dsty\s*=\s*"([A-Za-z0-9+/=]*)"')
+_HTML_TAG_FRAGMENT_RE = re.compile(r"<[^>]*>")
+_UNCLOSED_STYLE_IN_TAG_RE = re.compile(
+    r"""\sstyle\s*=\s*(["'])(?:(?!\1).)*$""",
+    re.IGNORECASE,
+)
 # Run de 2+ espaços não separáveis (artefato de colagem do Word entre o número
 # da lista e o texto) — colapsa para um espaço comum.
 _NBSP_RUN_RE = re.compile(r"[ \t]*(?:(?:&nbsp;|&#0*160;|\u00a0)[ \t]*){2,}", re.IGNORECASE)
+
+
+def _repair_unbalanced_style_attrs(html: str) -> str:
+    """Remove `style` com aspas não fechadas dentro do fragmento da tag.
+
+    HTML quebrado do tipo ``<p style="color:red><table>...`` faz o parser do
+    bleach tratar o ``<table>`` como valor do atributo e descartar a grade.
+    """
+
+    def _fix_tag(match: re.Match[str]) -> str:
+        tag = match.group(0)
+        if tag.count('"') % 2 == 0 and tag.count("'") % 2 == 0:
+            return tag
+        return _UNCLOSED_STYLE_IN_TAG_RE.sub("", tag)
+
+    return _HTML_TAG_FRAGMENT_RE.sub(_fix_tag, html)
 
 
 def _filter_css(raw_style: str) -> str:
@@ -111,7 +158,8 @@ def _encode_styles(html: str) -> str:
     """Substitui `style` filtrado por `data-dsty` (base64) para atravessar o bleach."""
 
     def _repl(match: re.Match[str]) -> str:
-        filtered = _filter_css(match.group(2))
+        raw_style = match.group(1) if match.group(1) is not None else match.group(2) or ""
+        filtered = _filter_css(raw_style)
         if not filtered:
             return ""
         token = base64.b64encode(filtered.encode("utf-8")).decode("ascii")
@@ -147,6 +195,7 @@ class CipaHtmlSanitizer:
         text = cls.collapse_nbsp_runs(raw_html)
         text = _DANGEROUS_BLOCK_RE.sub("", text)
         text = _DANGEROUS_SELF_CLOSING_RE.sub("", text)
+        text = _repair_unbalanced_style_attrs(text)
         text = _encode_styles(text)
         cleaned = bleach.clean(
             text,

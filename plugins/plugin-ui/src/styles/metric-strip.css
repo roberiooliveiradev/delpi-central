@@ -1,0 +1,82 @@
+.delpi-ui-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.delpi-ui-metric-strip__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--delpi-border, #d0d7de) 85%, transparent);
+  background: color-mix(in srgb, var(--delpi-surface, #fff) 92%, var(--delpi-muted, #f6f8fa));
+}
+
+.delpi-ui-metric-strip__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--delpi-text-muted, #656d76);
+  line-height: 1.2;
+}
+
+.delpi-ui-metric-strip__value {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--delpi-text, #1f2328);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.delpi-ui-metric-strip__item--warning {
+  border-color: color-mix(in srgb, var(--delpi-warning, #bf8700) 35%, transparent);
+  background: color-mix(in srgb, var(--delpi-warning, #bf8700) 8%, var(--delpi-surface, #fff));
+}
+
+.delpi-ui-metric-strip__item--warning .delpi-ui-metric-strip__value {
+  color: var(--delpi-warning-strong, #9a6700);
+}
+
+.delpi-ui-metric-strip__item--danger {
+  border-color: color-mix(in srgb, var(--delpi-danger, #cf222e) 35%, transparent);
+  background: color-mix(in srgb, var(--delpi-danger, #cf222e) 8%, var(--delpi-surface, #fff));
+}
+
+.delpi-ui-metric-strip__item--danger .delpi-ui-metric-strip__value {
+  color: var(--delpi-danger, #cf222e);
+}
+
+.delpi-ui-metric-strip--compact {
+  gap: 8px;
+}
+
+.delpi-ui-metric-strip--compact .delpi-ui-metric-strip__item {
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.delpi-ui-metric-strip--compact .delpi-ui-metric-strip__label {
+  font-size: 10px;
+}
+
+.delpi-ui-metric-strip--compact .delpi-ui-metric-strip__value {
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .delpi-ui-metric-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

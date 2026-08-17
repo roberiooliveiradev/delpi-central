@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "mural-acessos",
+  "name": "Mural de Acessos",
+  "description": "Menu único de links e QR Codes para colaboradores — um QR na parede, vários acessos gerenciáveis.",
+  "icon": "layout-grid",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/mural-acessos",
+  "entry": "/apps/mural-acessos/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "mural-acessos.access",
+      "name": "Acessar Mural de Acessos",
+      "description": "Permite abrir o mural, ver o QR único e consultar os acessos cadastrados.",
+      "module": "mural-acessos"
+    },
+    {
+      "code": "mural-acessos.manage",
+      "name": "Gerenciar Mural de Acessos",
+      "description": "Permite cadastrar, editar, ordenar e anexar imagens dos acessos do mural.",
+      "module": "mural-acessos"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/mural-acessos",
+      "label": "Mural de Acessos",
+      "permission": "mural-acessos.access",
+      "icon": "layout-grid",
+      "order": 88,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

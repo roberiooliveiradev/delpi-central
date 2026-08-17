@@ -9,9 +9,7 @@ import {
   CHART_LEGEND_POSITION_OPTIONS,
   CHART_LEGEND_LAYOUT_OPTIONS,
   CHART_LEGEND_SORT_OPTIONS,
-  CHART_VALUE_FORMAT_OPTIONS,
   CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
-  CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
@@ -72,11 +70,16 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     beginEditChartPart,
     updateSelected,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
   } = useComunicadoEditor();
 
   if (!selectedChartPart) return null;
 
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
@@ -417,16 +420,15 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               }))}
             />
           </DeckField>
-          <DeckField id="td-chart-part-legend-sort" label="Ordenação">
+          <DeckField id="td-chart-part-legend-sort" label="Ordenação (categorias / eixo)">
             <FormSelectControl
               id="td-chart-part-legend-sort"
-              ariaLabel="Ordenação da legenda"
+              ariaLabel="Ordenação das categorias do gráfico"
               value={options.legendSort ?? "auto"}
               onChange={(value) =>
                 persistOptions({
                   ...options,
                   legendSort: value as ComunicadoChartOptions["legendSort"],
-                  showLegend: true,
                 })
               }
               options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
@@ -526,44 +528,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                   }))}
                 />
               </DeckField>
-              <DeckField id="td-chart-part-axis-cat-format" label="Formato">
-                <FormSelectControl
-                  id="td-chart-part-axis-cat-format"
-                  ariaLabel="Formato da categoria"
-                  value={options.categoryLabelFormat ?? "raw"}
-                  onChange={(value) =>
-                    persistOptions({
-                      ...options,
-                      categoryLabelFormat:
-                        value as ComunicadoChartOptions["categoryLabelFormat"],
-                    })
-                  }
-                  options={CHART_CATEGORY_LABEL_FORMAT_OPTIONS.map((entry) => ({
-                    value: entry.value,
-                    label: entry.label,
-                  }))}
-                />
-              </DeckField>
             </>
-          ) : (
-            <DeckField id="td-chart-part-axis-value-format" label="Formato dos valores">
-              <FormSelectControl
-                id="td-chart-part-axis-value-format"
-                ariaLabel="Formato dos valores"
-                value={options.valueFormat ?? "auto"}
-                onChange={(value) =>
-                  persistOptions({
-                    ...options,
-                    valueFormat: value as ComunicadoChartOptions["valueFormat"],
-                  })
-                }
-                options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
-                  value: entry.value,
-                  label: entry.label,
-                }))}
-              />
-            </DeckField>
-          )}
+          ) : null}
         </>
       ) : null}
 
@@ -583,6 +549,41 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               checked={Boolean(options.showVerticalGrid)}
               label="Linhas verticais"
               onChange={(checked) => persistOptions({ ...options, showVerticalGrid: checked })}
+            />
+          </DeckField>
+        </>
+      ) : null}
+
+      {selectedChartPart.kind === "goalLine" ? (
+        <>
+          <p className="td-deck-inspector__hint">
+            Informe o valor numérico da meta. A linha só aparece no gráfico depois que o valor for
+            definido.
+          </p>
+          <DeckField id="td-chart-part-goal-value" label="Valor da meta">
+            <NativeTextControl
+              id="td-chart-part-goal-value"
+              type="number"
+              step="any"
+              placeholder="Ex.: 95"
+              value={
+                options.goalLineValue == null || Number.isNaN(Number(options.goalLineValue))
+                  ? ""
+                  : String(options.goalLineValue)
+              }
+              onChange={(value) => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                  persistOptions({ ...options, showGoalLine: true, goalLineValue: null });
+                  return;
+                }
+                const parsed = Number(trimmed);
+                persistOptions({
+                  ...options,
+                  showGoalLine: true,
+                  goalLineValue: Number.isFinite(parsed) ? parsed : null,
+                });
+              }}
             />
           </DeckField>
         </>

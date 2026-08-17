@@ -125,17 +125,19 @@ describe("useClickOutside", () => {
     expect(onOutside).not.toHaveBeenCalled();
   });
 
-  it("fecha popover ao clicar no modal PAI (aria-modal aberto antes do painel)", () => {
-    // Bug jul/2026: menus do workbench M (dentro de ModalShell) nunca fechavam
-    // com clique fora, porque todo o modal casava com o seletor de overlay aninhado.
+  it("fecha popover ao clicar no modal PAI que contém o âncora", () => {
+    // Workbench MFE: ModalShell contém o gatilho; o painel escapa para o body.
     const parentModal = document.createElement("div");
     parentModal.setAttribute("role", "dialog");
     parentModal.setAttribute("aria-modal", "true");
-    parentModal.innerHTML = '<button type="button" data-testid="modal-area">área do modal</button>';
-    document.body.prepend(parentModal);
+    parentModal.innerHTML =
+      '<button type="button" data-testid="modal-area">área do modal</button><div data-testid="host"></div>';
+    document.body.appendChild(parentModal);
 
     const onOutside = vi.fn();
-    render(<Probe onOutside={onOutside} />);
+    render(<Probe onOutside={onOutside} />, {
+      container: parentModal.querySelector('[data-testid="host"]')!,
+    });
 
     document
       .querySelector('[data-testid="modal-area"]')!
@@ -145,11 +147,33 @@ describe("useClickOutside", () => {
     parentModal.remove();
   });
 
+  it("não fecha ao clicar em modal host-contained (antes do painel no DOM)", () => {
+    // Formatar: portal no root do MFE (antes) + popover Número no body (depois).
+    const host = document.createElement("div");
+    host.className = "dashboard-tv-dashboard";
+    document.body.appendChild(host);
+
+    const onOutside = vi.fn();
+    render(<Probe onOutside={onOutside} />);
+
+    const nested = document.createElement("div");
+    nested.setAttribute("role", "dialog");
+    nested.setAttribute("aria-modal", "true");
+    nested.innerHTML = '<button type="button" data-testid="format-modal">Número</button>';
+    host.appendChild(nested);
+
+    document
+      .querySelector('[data-testid="format-modal"]')!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(onOutside).not.toHaveBeenCalled();
+    host.remove();
+  });
+
   it("não fecha ao clicar em overlay aninhado aberto DEPOIS do painel", () => {
     const onOutside = vi.fn();
     render(<Probe onOutside={onOutside} />);
 
-    // Simula diálogo (cor/select) portalado após o popover — filho lógico.
     const nested = document.createElement("div");
     nested.setAttribute("role", "dialog");
     nested.setAttribute("aria-modal", "true");

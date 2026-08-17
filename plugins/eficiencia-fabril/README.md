@@ -27,7 +27,9 @@ GET /apps/api-delpi/production/eficiencia-fabril/appointments
 GET /apps/api-delpi/production/eficiencia-fabril/dashboard
 ```
 
-Parâmetros principais: `date_start`, `date_end`, `branch` (fixo pela rota SC/ES), `op`, `employee`, `work_center`.
+Parâmetros principais: `date_start`, `date_end`, `branch` (fixo pela rota SC/ES), `op`, `employee`, `work_center`, `shift` (opcional `1|2|3` ou CSV).
+
+Cada item traz `turno` / `turno_label` (classificação canônica na API por `hora_inicio`). O plugin filtra preferindo `turno` da API.
 
 Rotas no Portal:
 

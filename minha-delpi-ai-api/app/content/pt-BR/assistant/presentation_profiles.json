@@ -110,6 +110,7 @@
     "quality_action_plan_action": "table_list",
     "quality_action_plan_evidence": "table_list",
     "quality_action_plan_export": "table_list",
+    "process_inspection_plans_product": "composite_detail",
     "lmp_dashboard": "kpi_dashboard",
     "lmp_dashboard_charts": "kpi_dashboard",
     "sql_result": "sql",
@@ -527,6 +528,26 @@
     }
   },
   "pathRules": [
+    {
+      "contains": "/process-inspection-plans/summary",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/process-inspection-plans/orders-without-plan",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/process-inspection-plans/products-without-plan",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/process-inspection-plans/products/",
+      "profile": "composite_detail"
+    },
+    {
+      "contains": "/process-inspection-plans/products",
+      "profile": "table_list"
+    },
     {
       "contains": "/supplies/stock-balances/summary",
       "profile": "playbook_report"
@@ -1321,6 +1342,13 @@
       "chartPolicy": "skip",
       "humanizedNarrative": "skip",
       "commentaryProfileKey": "generic_list"
+    },
+    "composite_detail": {
+      "defaultViewPolicy": "text_when_available",
+      "chartPolicy": "skip",
+      "stackLayoutPolicy": "on_demand",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     }
   },
   "stackPlans": {
@@ -2136,6 +2164,11 @@
     "inspecoes_entrada_rejeitadas_produto": "/inspecoes-entrada/rejeitadas-produto",
     "inspecoes_entrada_historico": "/inspecoes-entrada/historico",
     "inspecoes_entrada_historico_detalhe": "/inspecoes-entrada/historico/detalhe",
+    "process_inspection_plans_summary": "/process-inspection-plans/summary",
+    "process_inspection_plans_orders_without_plan": "/process-inspection-plans/orders-without-plan",
+    "process_inspection_plans_products_without_plan": "/process-inspection-plans/products-without-plan",
+    "process_inspection_plans_products": "/process-inspection-plans/products",
+    "process_inspection_plans_product": "/process-inspection-plans/products/0",
     "product_drawing_catalog": "/products/drawings",
     "product_drawing": "/products/0/drawing",
     "product_drawing_pdf": "/products/0/drawing/pdf"

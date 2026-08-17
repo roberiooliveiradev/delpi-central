@@ -163,8 +163,37 @@ export function ungroupBlocks(blocks: ComunicadoBlock[], selectedIds: string[]):
   const idSet = new Set(selectedIds);
   return blocks.map((block) => {
     if (!idSet.has(block.id) || !block.groupId) return block;
-    const { groupId: _omit, ...rest } = block;
+    const { groupId: _omit, groupName: _name, ...rest } = block;
     return rest as ComunicadoBlock;
+  });
+}
+
+export function resolveGroupDisplayName(
+  members: readonly ComunicadoBlock[],
+  fallback = "Grupo",
+): string {
+  for (const member of members) {
+    const name = member.groupName?.trim();
+    if (name) return name;
+  }
+  return fallback;
+}
+
+export function renameGroupBlocks(
+  blocks: ComunicadoBlock[],
+  groupId: string,
+  name: string,
+): ComunicadoBlock[] {
+  if (!groupId) return blocks;
+  const trimmed = name.trim();
+  return blocks.map((block) => {
+    if (block.groupId !== groupId) return block;
+    if (!trimmed) {
+      if (!block.groupName) return block;
+      const { groupName: _omit, ...rest } = block;
+      return rest as ComunicadoBlock;
+    }
+    return { ...block, groupName: trimmed };
   });
 }
 
@@ -181,12 +210,13 @@ export type ComunicadoLayoutUnit = {
 
 /**
  * Particiona a seleção em unidades para align/distribute/move em lote.
- * Grupo com todos os membros selecionados → 1 unidade (bounding box).
- * Filho isolado ou bloco sem grupo → 1 unidade cada.
+ * Default: grupo fechado → 1 unidade (bbox) — move/resize da moldura.
+ * `expandClosedGroups`: cada membro é unidade (align / mesmo tamanho).
  */
 export function partitionSelectionIntoLayoutUnits(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: { expandClosedGroups?: boolean },
 ): ComunicadoLayoutUnit[] {
   const idSet = new Set(selectedIds);
   const selected = blocks.filter((block) => idSet.has(block.id));
@@ -199,6 +229,7 @@ export function partitionSelectionIntoLayoutUnits(
     selected.map((block) => block.groupId).filter((id): id is string => Boolean(id)),
   );
   for (const groupId of groupIds) {
+    if (options?.expandClosedGroups) continue;
     const members = membersOfGroup(blocks, groupId);
     if (members.length < 2) continue;
     if (!members.every((member) => idSet.has(member.id))) continue;

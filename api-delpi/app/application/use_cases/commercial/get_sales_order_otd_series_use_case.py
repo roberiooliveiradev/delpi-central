@@ -51,6 +51,7 @@ class GetSalesOrderOtdSeriesUseCase:
                 start_date=bucket.start_date,
                 end_date=bucket.end_date,
                 customer_segment=request.customer_segment,
+                customer_codes=request.customer_codes,
                 include=request.branch in (None, FILIAL_01),
             )
             otd_02 = self._fetch_otd_pct(
@@ -58,6 +59,7 @@ class GetSalesOrderOtdSeriesUseCase:
                 start_date=bucket.start_date,
                 end_date=bucket.end_date,
                 customer_segment=request.customer_segment,
+                customer_codes=request.customer_codes,
                 include=request.branch in (None, FILIAL_02),
             )
 
@@ -100,6 +102,7 @@ class GetSalesOrderOtdSeriesUseCase:
         start_date: str,
         end_date: str,
         customer_segment: str | None,
+        customer_codes: list[str] | None,
         include: bool,
     ) -> float | None:
         if not include:
@@ -111,6 +114,7 @@ class GetSalesOrderOtdSeriesUseCase:
                 start_date=start_date,
                 end_date=end_date,
                 customer_segment=customer_segment,
+                customer_codes=customer_codes,
             )
         )
 

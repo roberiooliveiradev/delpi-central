@@ -177,6 +177,7 @@ export type KpiCardFlatOptions = {
   valueColor?: string;
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
+  displayValueFormat?: import("../../displayFormat/types").DisplayFormatSpec;
   /** Meta numérica para comparação / progresso. */
   target?: number;
   /** Comparação: meta, período anterior (série) ou desligada. */
@@ -815,7 +816,9 @@ export function applyKpiPartStyleToSiblingParts(
   }
   let next = parts ?? {};
   for (const kind of KPI_TEXT_PART_KINDS) {
-    next = upsertKpiPartState(next, { kind }, { style });
+    const ref = { kind } as const;
+    const prev = getKpiPartState(next, ref)?.style;
+    next = upsertKpiPartState(next, ref, { style: mergeKpiPartStyle(prev, style) });
   }
   return next;
 }

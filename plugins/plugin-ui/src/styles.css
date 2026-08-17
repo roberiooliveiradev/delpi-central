@@ -1,17 +1,22 @@
 /* @delpi/plugin-ui — importar uma vez no CSS do plugin MFE */
 @import "./file-preview.css";
 @import "./styles/bpmn/index.css";
+@import "./styles/org-membership-flow.css";
 @import "./styles/shape.css";
 @import "./styles/menu.css";
 @import "./styles/chart-catalog.css";
 @import "./styles/series-chart.css";
 @import "./styles/comparative-area-chart.css";
+@import "./styles/speedometer-gauge.css";
+@import "./styles/horizontal-value-bars.css";
 @import "./styles/configurable-table.css";
 @import "./styles/centered-scaled-preview.css";
 @import "./styles/comunicado-stage.css";
 @import "./styles/deck-section.css";
+@import "./styles/transition-gallery.css";
 @import "./styles/data-route-catalog.css";
 @import "./styles/format-pane.css";
+@import "./styles/display-format.css";
 @import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
 @import "./styles/select-control.css";
@@ -23,9 +28,12 @@
 @import "./styles/kpi-card.css";
 @import "./styles/card-shell.css";
 @import "./styles/section-card.css";
-@import "./styles/departmental-kpi.css";
-@import "./styles/analytics-kpi.css";
+@import "./styles/file-dropzone.css";
+@import "./styles/attachment-file-list.css";
+@import "./styles/attachment-preview-strip.css";
+@import "./styles/departmental-kpi.css";@import "./styles/analytics-kpi.css";
 @import "./styles/chart-card.css";
+@import "./styles/chart-view-shell.css";
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";
 @import "./styles/inline-loading-progress.css";
@@ -38,6 +46,10 @@
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";
 @import "./styles/data-table.css";
+@import "./styles/inline-meter.css";
+@import "./styles/compare-sparkline.css";
+@import "./styles/trend-delta.css";
+@import "./styles/horizontal-timeline.css";
 @import "./styles/pagination.css";
 @import "./styles/detail-card.css";
 @import "./styles/drawer.css";
@@ -49,14 +61,33 @@
 @import "./styles/lucide-icon-picker.css";
 @import "./styles/series-chart.css";
 @import "./styles/timeline.css";
+@import "./styles/worklist-surface.css";
+@import "./styles/underline-nav.css";
+@import "./styles/page-path.css";
+@import "./styles/inline-nav-link.css";
+@import "./styles/top-bar.css";
+@import "./styles/page-hero.css";
+@import "./styles/metric-strip.css";
+@import "./styles/view-transition.css";
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
 @import "./styles/action-controls.css";
 @import "./styles/page-header.css";
 @import "./styles/navigation-card.css";
+@import "./styles/section-route-card.css";
+@import "./styles/catalog-search-bar.css";
+@import "./styles/hub-route-chips.css";
+@import "./styles/command-palette.css";
+@import "./styles/data-record-card.css";
+@import "./styles/table-font-size.css";
+@import "./styles/data-list-toolbar.css";
+@import "./styles/data-cards-grid.css";
+@import "./styles/kanban-board.css";
+@import "./styles/interactive-data-card.css";
 @import "./styles/preview-detail-card.css";
 @import "./styles/status-badge.css";
 @import "./styles/initials-avatar.css";
+@import "./styles/avatar-stack.css";
 @import "./styles/content-card.css";
 @import "./styles/state-banner.css";
 @import "./styles/floating-notice.css";
@@ -209,7 +240,9 @@
 }
 
 .delpi-ui-field-label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
   color: var(--delpi-ui-text, var(--text, #111111));
@@ -217,18 +250,10 @@
 
 .delpi-ui-field-label__text {
   cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 3px;
 }
 
 .delpi-ui-section-hint-label {
   cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 3px;
 }
 
 .delpi-ui-tab-cell {

@@ -1,8 +1,14 @@
 // src/ui/admin/modals/IconPickerModal.tsx
 import { useMemo, useState } from "react";
 import { Modal } from "../../../components/Modal";
+import { Button, SearchInput } from "../../../ui-kit";
 import "./IconPickerModal.css"
 import * as LucideIcons from "lucide-react";
+import {
+  iconExportNameToKebab,
+  resolveIcon,
+  resolveIconExportName,
+} from "../../../utils/iconResolver";
 
 type Props = {
   open: boolean;
@@ -16,29 +22,7 @@ function isPascalCaseComponentExport(name: string) {
   return /^[A-Z][A-Za-z0-9]*$/.test(name);
 }
 
-function toKebabCase(name: string) {
-  return name
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/_/g, "-")
-    .toLowerCase();
-}
-
-function toPascalCaseFromKebab(kebab: string) {
-  return (kebab || "")
-    .split("-")
-    .filter(Boolean)
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join("");
-}
-
-function resolveIconComponent(iconValue: string | null | undefined) {
-  const v = (iconValue || "").trim();
-  if (!v) return null;
-
-  const pascal = v.includes("-") ? toPascalCaseFromKebab(v) : v;
-  const Comp = (LucideIcons as any)[pascal] as React.ComponentType<any> | undefined;
-  return Comp || null;
-}
+const toKebabCase = iconExportNameToKebab;
 
 type IconCardProps = {
   name: string; // PascalCase export name
@@ -76,15 +60,12 @@ export const IconPickerModal = ({ open, value, onClose, onPick }: Props) => {
       .sort();
   }, []);
 
-  const normalizedSelectedPascal = useMemo(() => {
-    const v = (value || "").trim();
-    if (!v) return "";
-    return v.includes("-") ? toPascalCaseFromKebab(v) : v;
-  }, [value]);
+  const normalizedSelectedPascal = useMemo(
+    () => resolveIconExportName(value) ?? "",
+    [value],
+  );
 
-  const SelectedIcon = useMemo(() => {
-    return resolveIconComponent(value ?? null);
-  }, [value]);
+  const SelectedIcon = useMemo(() => resolveIcon(value ?? null), [value]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -104,18 +85,21 @@ export const IconPickerModal = ({ open, value, onClose, onPick }: Props) => {
       size="lg"
       footer={
         <>
-          <button className="btn-secondary" onClick={() => onPick(null)}>
+          <Button variant="danger-soft" onClick={() => onPick(null)}>
             Remover ícone
-          </button>
-          <button onClick={onClose}>Fechar</button>
+          </Button>
+          <Button variant="primary" onClick={onClose}>
+            Fechar
+          </Button>
         </>
       }
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <input
+        <SearchInput
           placeholder="Buscar ícone (ex: book, user, bell...)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onClear={() => setQ("")}
         />
 
         <div className="row between" style={{ marginTop: 4 }}>

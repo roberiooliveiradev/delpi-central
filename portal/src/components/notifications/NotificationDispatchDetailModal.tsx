@@ -13,6 +13,7 @@ import type {
 import { canDeleteDispatch, singleDeleteConfirmMessage } from "./dispatchHistoryHelpers";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import { getNotificationCategoryLabel } from "../../utils/notificationCatalog";
+import { Alert, Button, Spinner } from "../../ui-kit";
 
 import "./NotificationDispatchDetailModal.css";
 
@@ -200,28 +201,29 @@ export function NotificationDispatchDetailModal({
       footer={
         <div className="dispatch-detail-modal__footer">
           {detail && canDeleteDispatch(detail) ? (
-            <button
+            <Button
               type="button"
-              className="dispatch-detail-modal__delete-btn"
+              variant="danger"
               disabled={deleting}
+              loading={deleting}
+              icon={<Trash2 size={16} />}
               onClick={() => void handleDelete()}
             >
-              <Trash2 size={16} aria-hidden="true" />
               {deleting ? "Excluindo…" : "Excluir para todos"}
-            </button>
+            </Button>
           ) : detail?.revokedAt ? (
             <span className="dispatch-detail-modal__revoked">
               Removido em {formatDateTime(detail.revokedAt)}
             </span>
           ) : null}
-          <button type="button" className="dispatch-detail-modal__close-btn" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Fechar
-          </button>
+          </Button>
         </div>
       }
     >
-      {loading ? <p className="dispatch-detail-modal__loading">Carregando detalhes…</p> : null}
-      {error ? <p className="dispatch-detail-modal__error">{error}</p> : null}
+      {loading ? <Spinner label="Carregando detalhes…" /> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
 
       {!loading && !error && detail ? (
         <div className="dispatch-detail-modal">
@@ -296,7 +298,7 @@ export function NotificationDispatchDetailModal({
               ) : null}
             </dl>
             {detail.errorMessage ? (
-              <p className="dispatch-detail-modal__error">{detail.errorMessage}</p>
+              <Alert tone="danger">{detail.errorMessage}</Alert>
             ) : null}
             {messagePreview ? (
               <div className="dispatch-detail-modal__message">

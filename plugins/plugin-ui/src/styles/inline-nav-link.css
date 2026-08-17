@@ -1,0 +1,10 @@
+/* Reset mínimo de UA — visual vem do className do consumidor (ex.: cm-link-button). */
+.delpi-ui-inline-nav-link {
+  color: inherit;
+  text-decoration: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-inline-nav-link:visited {
+  color: inherit;
+}

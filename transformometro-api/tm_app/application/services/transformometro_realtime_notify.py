@@ -112,7 +112,7 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
 def _lookup_revisao_scope(revisao_id: str) -> tuple[str | None, str | None]:
     """processo_id, instancia_id a partir da revisão (best-effort)."""
     try:
-        from tm_app.infrastructure.persistence.repositories.revisao_repository import (
+        from tm_app.infrastructure.persistence.repositories.revision_repository import (
             RevisaoRepository,
         )
 
@@ -131,7 +131,7 @@ def _lookup_revisao_scope(revisao_id: str) -> tuple[str | None, str | None]:
 
 def _lookup_instancia_processo_id(instancia_id: str) -> str | None:
     try:
-        from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+        from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
             ProcessoInstanciaRepository,
         )
 
@@ -149,7 +149,7 @@ def _lookup_recurso_vinculo_scopes(
 ) -> list[tuple[str, str | None, str | None]]:
     """(revisao_id, processo_id, instancia_id) das revisões que usam o recurso."""
     try:
-        from tm_app.infrastructure.persistence.repositories.recurso_repository import (
+        from tm_app.infrastructure.persistence.repositories.shared_resource_repository import (
             RecursoRepository,
         )
 

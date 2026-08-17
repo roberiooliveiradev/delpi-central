@@ -6,7 +6,7 @@ import {
   buildViewDataLinkPatch,
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
-  comunicadoBackgroundCssProperties,
+  comunicadoBackgroundRootStyle,
   hugFrameToContentSizePx,
   isClickPathDrawTool,
   isComunicadoVisualBoxBlock,
@@ -21,6 +21,7 @@ import {
   resolveViewportPixelSize,
   isLineShapeKind,
   resolveBlockPlacementStyle,
+  RichComunicadoBackground,
   RichComunicadoMasterLogo,
   staticLabelFromTextBoundBlock,
   useComunicadoGoogleFonts,
@@ -45,7 +46,10 @@ import { BlockSelectionChromeOverlay } from "./BlockSelectionChromeOverlay";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
-import { resolveContextMenuSessionSelectedIds } from "../utils/contextMenuSelectionGuard";
+import {
+  resolveContextMenuSelectionApply,
+  resolveContextMenuSessionSelectedIds,
+} from "../utils/contextMenuSelectionGuard";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   measureVisualBoxContentSizePx,
@@ -94,6 +98,7 @@ import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionCon
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { GroupTransformLayer } from "./GroupTransformLayer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { resolveEditorMediaUrl } from "./slideCardPreview";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import { ComplexViewFloatToolbarOverlay } from "./ComplexViewFloatToolbarOverlay";
 import { shouldShowComplexViewFloatToolbar } from "./ComplexViewFloatToolbar";
@@ -125,15 +130,16 @@ function resolveComposerBlockDataLoading(
   return !hasResolved && dataPreviewLoading;
 }
 
-function useCanvasBackgroundStyle() {
-  const { background } = useComunicadoEditor();
-  const imageApiUrl = background?.type === "image" ? background.url : undefined;
+function useCanvasBackgroundPaint(): { style: CSSProperties; imageSrc?: string } {
+  const { background, playlistId } = useComunicadoEditor();
+  const imageApiUrl =
+    background?.type === "image"
+      ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
+      : undefined;
   const { src: imageBlobUrl } = useAuthenticatedBlobUrl(imageApiUrl);
 
-  return useMemo(
-    () => comunicadoBackgroundCssProperties(background, imageBlobUrl),
-    [background, imageBlobUrl],
-  );
+  const style = useMemo(() => comunicadoBackgroundRootStyle(background), [background]);
+  return { style, imageSrc: imageBlobUrl };
 }
 
 function MasterLogoOverlay() {
@@ -195,6 +201,8 @@ export function ComunicadoComposerCanvas() {
     stageGridSizePercent,
     updateBlock,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
     stageZoom,
     stagePanMode,
     stageDrawTool,
@@ -206,10 +214,14 @@ export function ComunicadoComposerCanvas() {
   } = useComunicadoEditor();
   useComunicadoGoogleFonts(config);
   useAuthenticatedComunicadoCustomFonts(config.customFonts);
-  const canvasStyle = useCanvasBackgroundStyle();
+  const { style: canvasStyle, imageSrc: backgroundImageSrc } = useCanvasBackgroundPaint();
   const designSize = useMemo(
-    () => resolveViewportPixelSize(viewportProfile),
-    [viewportProfile],
+    () =>
+      resolveViewportPixelSize(viewportProfile, {
+        width: viewportWidth,
+        height: viewportHeight,
+      }),
+    [viewportProfile, viewportWidth, viewportHeight],
   );
   const selectionChromeStyle = useMemo(
     () => ({
@@ -636,18 +648,28 @@ export function ComunicadoComposerCanvas() {
         eventTarget: event.target,
       });
       /*
-       * Botão direito só abre opções — não altera a seleção (só o esquerdo seleciona).
-       * O alvo do menu vai em targetBlockId; ações do menu aplicam seleção sob demanda.
+       * Mercado (Figma/PPT/Canva): direito em objeto fora da seleção substitui
+       * a seleção (grupo do alvo) e abre o menu com chrome visível. Direito em
+       * item já selecionado preserva o conjunto. Fundo = menu de canvas, sem apply.
        */
       cancelPendingTapDeselect();
       if (hit.type === "block") {
         event.stopPropagation();
+        const apply = resolveContextMenuSelectionApply({
+          selectedIds,
+          targetBlockId: hit.blockId,
+          blocks,
+        });
+        if (apply.nextSelectedIds) {
+          selectBlocksByIds(apply.nextSelectedIds);
+        }
+        const liveIds = apply.nextSelectedIds ?? selectedIds;
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
           targetBlockId: hit.blockId,
           sessionSelectedIds: resolveContextMenuSessionSelectedIds({
-            selectedIds,
+            selectedIds: liveIds,
             targetBlockId: hit.blockId,
             blocks,
           }),
@@ -671,6 +693,7 @@ export function ComunicadoComposerCanvas() {
       editingTextId,
       lastPartialTextEditSelection,
       openTextFormatContextMenu,
+      selectBlocksByIds,
       selectedIds,
     ],
   );
@@ -1084,6 +1107,7 @@ export function ComunicadoComposerCanvas() {
           }}
           onContextMenu={handleCanvasContextMenu}
         >
+          <RichComunicadoBackground url={backgroundImageSrc} />
           {/*
            * Mesma árvore da TV (`ComunicadoStageFrame`): root + __stage.
            * Blocos/logo posicionam no stage — paridade de containing block.
@@ -1353,6 +1377,7 @@ export function ComunicadoComposerCanvas() {
                 designHeight={designSize.height}
                 stageZoom={stageZoom}
                 isPrimarySelection={block.id === primarySelected}
+                isMultiSelection={selectedIds.length > 1}
                 onPointerDown={startDragRespectingPan}
                 onResizeHandleDoubleClick={
                   isComunicadoVisualBoxBlock(block) ? hugSelectedVisualBoxToText : undefined

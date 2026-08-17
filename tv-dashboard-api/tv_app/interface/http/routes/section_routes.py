@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     MainSectionProtectedError,
@@ -16,6 +17,12 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     SectionNotFoundError,
 )
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_revision_http import (
+    assert_playlist_revision_or_conflict,
+    parse_if_match_revision,
+    revision_response_headers,
+    with_revision,
+)
 
 router = APIRouter(prefix="/playlists/{playlist_id}/sections", tags=["Sections"])
 _repo = PlaylistRepository()
@@ -29,7 +36,7 @@ class CreateSectionBody(BaseModel):
     isActive: bool | None = None
     isMain: bool | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     masterConfig: dict[str, Any] | None = None
 
 
@@ -39,7 +46,7 @@ class UpdateSectionBody(BaseModel):
     isCollapsed: bool | None = None
     isActive: bool | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
-    transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     masterConfig: dict[str, Any] | None = None
 
 
@@ -54,6 +61,23 @@ class ReorderBody(BaseModel):
 
 def _actor_id(user: Any) -> str | None:
     return _access.actor_id(user)
+
+
+def _ok_with_revision(data: Any, *, playlist_id: UUID, message: str = "OK", status_code: int = 200):
+    revision = _repo.get_revision(playlist_id)
+    response = ok(with_revision(data, revision), message=message, status_code=status_code)
+    for key, value in revision_response_headers(revision).items():
+        response.headers[key] = value
+    return response
+
+
+def _guard_revision(request: Request, playlist_id: UUID):
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
+    return None
 
 
 @router.get("")
@@ -74,6 +98,9 @@ def ensure_main_section(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    blocked = _guard_revision(request, playlist_id)
+    if blocked is not None:
+        return blocked
     try:
         section = _repo.ensure_main_section(
             playlist_id,
@@ -85,7 +112,7 @@ def ensure_main_section(request: Request, playlist_id: UUID):
         playlist_id=str(playlist_id),
         reason="section_main_ensured",
     )
-    return ok(section)
+    return _ok_with_revision(section, playlist_id=playlist_id)
 
 
 @router.post("")
@@ -94,6 +121,9 @@ def create_section(request: Request, playlist_id: UUID, body: CreateSectionBody)
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    blocked = _guard_revision(request, playlist_id)
+    if blocked is not None:
+        return blocked
     payload = body.model_dump(exclude_none=True)
     try:
         section = _repo.add_section(
@@ -107,7 +137,7 @@ def create_section(request: Request, playlist_id: UUID, body: CreateSectionBody)
         playlist_id=str(playlist_id),
         reason="section_created",
     )
-    return ok(section, status_code=201)
+    return _ok_with_revision(section, playlist_id=playlist_id, status_code=201)
 
 
 @router.patch("/{section_id}")
@@ -121,6 +151,9 @@ def update_section(
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    blocked = _guard_revision(request, playlist_id)
+    if blocked is not None:
+        return blocked
     payload = body.model_dump(exclude_unset=True)
     try:
         section = _repo.update_section(
@@ -137,7 +170,7 @@ def update_section(
         playlist_id=str(playlist_id),
         reason="section_updated",
     )
-    return ok(section)
+    return _ok_with_revision(section, playlist_id=playlist_id)
 
 
 @router.delete("/{section_id}")
@@ -151,6 +184,9 @@ def delete_section(
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    blocked = _guard_revision(request, playlist_id)
+    if blocked is not None:
+        return blocked
     try:
         _repo.delete_section(
             playlist_id,
@@ -168,7 +204,7 @@ def delete_section(
         playlist_id=str(playlist_id),
         reason="section_deleted",
     )
-    return ok({"deleted": True})
+    return _ok_with_revision({"deleted": True}, playlist_id=playlist_id)
 
 
 @router.post("/reorder")
@@ -177,6 +213,9 @@ def reorder_sections(request: Request, playlist_id: UUID, body: ReorderBody):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    blocked = _guard_revision(request, playlist_id)
+    if blocked is not None:
+        return blocked
     items = [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items]
     try:
         sections = _repo.reorder_sections(
@@ -190,4 +229,4 @@ def reorder_sections(request: Request, playlist_id: UUID, body: ReorderBody):
         playlist_id=str(playlist_id),
         reason="sections_reordered",
     )
-    return ok({"items": sections})
+    return _ok_with_revision({"items": sections}, playlist_id=playlist_id)

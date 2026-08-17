@@ -1,6 +1,13 @@
 # Faixa válida de eficiência na produção (0–199%)
 
-Regra única para **OEE** e **Eficiência Fabril** — eficiência calculada como **(tempo previsto ÷ tempo real) × 100** (`EFICIENCIA_PERCENTUAL` na view `vw_Apontamentos_Eficiencia`; no detalhe SH6010, via roteiro e horários do apontamento).
+Regra única para **OEE** e **Eficiência Fabril**. A eficiência é **(tempo previsto ÷ tempo real) × 100**, com previsto canônico:
+
+```text
+tempo_previsto = setup + HY_TEMPAD × qtd_apontada
+```
+
+(fonte SQL: `production_fabril_efficiency_sql.py`; domínio: `production_tempo_previsto.py`).  
+A view `vw_Apontamentos_Eficiencia` ainda expõe `EFICIENCIA_PERCENTUAL` legado (`HY_TEMPOM` parcial) — **KPIs e listagens da API recalculam** e não usam esse valor cru. Detalhe SH6010: mesma lógica via roteiro e horários.
 
 ## Objetivo
 
@@ -22,7 +29,7 @@ A faixa **não** vem de documentação formal do Protheus — é convenção ope
 | Mai/2026 | Eficiência Fabril MVP usava teto **250%** (`max_efficiency_indicator_pct`). |
 | Jun/2026 | Faixa unificada em **0–199%** para OEE e Eficiência Fabril; constante compartilhada na API. |
 | Jun/2026 | Eficiência passa a ser **só por tempos** (fim de `H6_ZEFICI`); fórmulas legíveis em `time_analysis`; auto-refresh 5 min nos dashboards — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md). |
-
+| Ago/2026 | KPI/listagem/série OEE e SI alinhados ao % canônico `HY_TEMPAD` (mesma expressão da eficiência fabril); SQL centralizado em `production_fabril_efficiency_sql.py` + `production_fabril_standard_time_sql.py`. |
 ## Constantes (fonte de verdade)
 
 ### API (`api-delpi`)
@@ -41,9 +48,10 @@ Consumidores:
 |--------|-----|
 | `production_fabril_appointment_scope.py` | View, CTs excluídos, `STATUS_REGISTRO_OK` |
 | `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
-| `production_fabril_efficiency_sql.py` | `status` valid/outlier em `EFICIENCIA_PERCENTUAL` |
-| `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010) |
-| `production_fabril_oee_kpi_sql.py` | KPI agregado OEE (`NOLOCK`, `TRY_CAST`) — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7 |
+| `production_fabril_efficiency_sql.py` | %/previsto/meta canônicos (`HY_TEMPAD`) + `status` valid/outlier |
+| `production_fabril_standard_time_sql.py` | CTEs/joins SHY+SG2 compartilhados |
+| `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010 + % canônico) |
+| `production_fabril_oee_kpi_sql.py` | KPI agregado OEE (`NOLOCK`, % canônico TEMPAD) — ver [apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) |
 | `production_fabril_ef_items_sql.py` | Listagem eficiência fabril com `appointment_id` |
 | `production_fabril_sh6010_apply.py` | `OUTER APPLY` view → SH6010 (compartilhado OEE + EF) |
 | `production_appointment_time_analysis.py` | Diagnóstico `time_analysis.findings` no detalhe do apontamento |
@@ -73,17 +81,18 @@ Consumidores:
 ### OEE — `GET /production/oee`
 
 - **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
-- **Métrica do painel:** `EFICIENCIA_PERCENTUAL` — média simples na faixa 0–199% (tempo previsto ÷ tempo real).
+- **Métrica do painel:** % canônico (`setup + HY_TEMPAD × qtd` ÷ tempo real) — mesma expressão da eficiência fabril; média simples na faixa 0–199%.
 - Detalhe: `GET /production/oee/appointments/{id}` — SH6010 com roteiro, tempos e eficiência calculada pelos mesmos critérios.
 - Campos `time_analysis.formula_*`: textos em linguagem operacional (sem códigos Protheus) — ver changelog jun/2026.
-
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 
 - Listagem inclui `appointment_id` (vínculo SH6010 via `production_fabril_sh6010_apply`) para abrir detalhe.
 - Detalhe na UI: `GET /production/oee/appointments/{appointment_id}` (roteiro SG2, estrutura BOM, tempos, `findings` de alertas).
 
 - **Dashboard** (`/dashboard`): summary e charts aplicam cap 0–199 via repositório.
-- **Appointments** (`/appointments`): retorna todos os registros do período; o MFE filtra localmente para KPIs.
+- **Appointments** (`/appointments`): retorna todos os registros do período (com `turno`/`turno_label` classificados por `hora_inicio`); o MFE filtra localmente para KPIs. Filtro opcional `shift=1|2|3` (CSV) na API para consumidores externos.
+- **Eficiência por CT** (`/efficiency-by-work-center`): média % por centro de trabalho — mesma regra do plugin (OK + faixa 0–199%); use no TV em vez da lista bulk.
+- **Turnos de fábrica (canônico na API):** `app/domain/production/factory_shifts.py` — 1º `04:34–14:17`, 2º `14:18–23:49`, 3º `23:50–04:33`. O plugin espelha as faixas em `constants/shifts.ts` e prefere `item.turno` quando a API envia.
 - Tabela: linha vermelha + badge **Verificar** se `isProductionEfficiencyOutlier(eficiencia_percentual)`.
 - Tabela: linha âmbar + badge **Eficiência baixa** se eficiência na faixa válida e `< 50%` (`isProductionEfficiencyLow`).
 - Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{id}`; API de detalhe: `GET /production/oee/appointments/{id}` com `time_analysis.findings` (inclui `low_efficiency_reported` e diagnóstico de motivo).
@@ -99,7 +108,8 @@ pytest tests/test_get_eficiencia_fabril_dashboard_use_case.py -q
 ## Documentação relacionada
 
 - [06-modulos-departamentais.md](./06-modulos-departamentais.md) — rotas `/production/oee` e eficiência fabril
-- [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh
+- [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md) — fórmula `HY_TEMPAD` (único ponto de verdade)
+- [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh, alinhamento OEE/SI
 - [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../../docs/12-roadmap-e-evolucao/eficiencia-fabril/)
 - `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md` — filtro `status` do OEE
 

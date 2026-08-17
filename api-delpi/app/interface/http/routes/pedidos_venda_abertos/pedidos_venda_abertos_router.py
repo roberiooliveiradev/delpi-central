@@ -16,6 +16,12 @@ from app.application.use_cases.pedidos_venda_abertos.enrich_portfolio_customers_
 from app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case import (
     ListCustomerBillingSeriesRequest,
 )
+from app.application.use_cases.pedidos_venda_abertos.list_customer_open_order_metrics_use_case import (
+    ListCustomerOpenOrderMetricsRequest,
+)
+from app.application.use_cases.pedidos_venda_abertos.get_outbound_invoice_use_case import (
+    GetOutboundInvoiceRequest,
+)
 from app.application.use_cases.pedidos_venda_abertos.list_customer_outbound_invoices_use_case import (
     ListCustomerOutboundInvoicesRequest,
 )
@@ -29,7 +35,9 @@ from app.application.use_cases.pedidos_venda_abertos.search_active_customers_use
 )
 from app.composition.pedidos_venda_abertos_composer import (
     build_enrich_portfolio_customers_use_case,
+    build_get_outbound_invoice_use_case,
     build_list_customer_billing_series_use_case,
+    build_list_customer_open_order_metrics_use_case,
     build_list_customer_outbound_invoices_use_case,
     build_list_ops_abertas_use_case,
     build_list_pedidos_venda_abertos_use_case,
@@ -45,6 +53,7 @@ from app.domain.entities.pedidos_venda_abertos.seller_portfolio import (
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.pedidos_venda_abertos.portfolio_access import (
+    can_filter_by_seller_id,
     current_user_id,
     is_portfolio_admin,
     is_portfolio_unrestricted,
@@ -55,6 +64,13 @@ router = APIRouter(
     prefix="/pedidos-venda-abertos",
     tags=["Pedidos de Venda em Aberto"],
 )
+
+# Rotas /sellers* e /customers/*/avatar (CRUD Delpi do PVA) usam somente o schema
+# `pedidos_venda_abertos.*` — **sem** dual-read / escrita no Portal Comercial.
+# Canônico do Portal: commercial-api (`/apps/commercial-api/seller-portfolios*`).
+# Reads TOTVS (listagens, search, enrichment, billing, NF) permanecem nesta api-delpi
+# como SQL parametrizado. Escopo de carteira do **Portal** = commercial-api BFF
+# (SCOPE-OWNERSHIP). `ResolvePortfolioScope` / `_resolve_scope` abaixo é **só PVA**.
 
 
 class SellerCustomerBody(BaseModel):
@@ -90,18 +106,50 @@ class EnrichCustomerRefBody(BaseModel):
 
 class EnrichCustomersBody(BaseModel):
     customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=200)
+    window_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=365,
+        description="Billing trend window in days (recent vs prior of same length). Presets 7/30/90; default 30.",
+    )
+
+
+class OpenOrderMetricsBody(BaseModel):
+    """Optional customer keys; empty/omitted = full open-orders universe."""
+
+    customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=500)
 
 
 class BillingSeriesBody(BaseModel):
     customers: list[EnrichCustomerRefBody] = Field(default_factory=list, max_length=200)
     months: int = Field(default=12, ge=1, le=24)
+    start_date: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Inclusive start date (YYYY-MM-DD). Requires end_date.",
+    )
+    end_date: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Inclusive end date (YYYY-MM-DD). Requires start_date.",
+    )
+    granularity: Optional[str] = Field(
+        default=None,
+        pattern=r"^(day|week|month|year)$",
+        description="Series bucket size: day, week, month or year.",
+    )
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
+    """Escopo PVA (membership JWT). Portal Comercial NÃO usa esta rota para listagem TOTVS."""
+    can_filter = can_filter_by_seller_id()
+    seller_filter = (seller_id or "").strip() or None
+    # team.view pode filtrar uma carteira; manage sem filtro vê consolidado.
+    unrestricted = is_portfolio_unrestricted() or (can_filter and bool(seller_filter))
     return build_resolve_portfolio_scope_use_case().execute(
         user_id=current_user_id(),
-        is_unrestricted=is_portfolio_unrestricted(),
-        seller_id_filter=seller_id if is_portfolio_unrestricted() else None,
+        is_unrestricted=unrestricted,
+        seller_id_filter=seller_filter if can_filter else None,
     )
 
 
@@ -116,16 +164,18 @@ def _resolve_scope(seller_id: Optional[str] = None):
 def list_pedidos_venda_abertos_route(
     seller_id: Optional[str] = Query(
         None,
-        description="Filtro de carteira (somente admin/gerente).",
+        description="Filtro de carteira (team.view, admin/gerente).",
     ),
 ):
     try:
-        if seller_id and not is_portfolio_unrestricted():
+        if seller_id and not can_filter_by_seller_id():
             return error_response(
-                "Filtro por vendedor disponível apenas para gerentes.",
+                "Filtro por vendedor disponível apenas para equipe ou gerentes.",
                 status_code=403,
             )
-        scope = _resolve_scope(seller_id)
+        # Só nesta listagem: sem vínculo de carteira → consolidado.
+        # NF e demais rotas PVA mantêm membership clássico.
+        scope = _resolve_scope(seller_id).for_open_orders()
         use_case = build_list_pedidos_venda_abertos_use_case()
         result = use_case.execute(scope)
 
@@ -145,6 +195,109 @@ def list_pedidos_venda_abertos_route(
         log_error(f"Erro ao listar pedidos de venda em aberto: {exc}")
         return error_response(
             "Erro interno ao carregar pedidos de venda em aberto.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-open-orders",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_open_orders",
+        path="/pedidos-venda-abertos/totvs-open-orders",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_open_orders_route():
+    """
+    Leitura TOTVS pura (sem membership/carteira) — consumo BFF commercial-api.
+    Reusa ListPedidosVendaAbertosUseCase com scope=None. Não altera regras da rota `/`.
+    """
+    try:
+        use_case = build_list_pedidos_venda_abertos_use_case()
+        result = use_case.execute(scope=None)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_totvs_open_orders",
+            message="Pedidos de venda em aberto (TOTVS) carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar pedidos TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos de venda em aberto (TOTVS).",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-recently-closed-orders",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_recently_closed_orders",
+        path="/pedidos-venda-abertos/totvs-recently-closed-orders",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_recently_closed_orders_route(
+    days: int = Query(
+        default=30,
+        ge=1,
+        le=90,
+        description="Lookback window in days for fully delivered sales-order lines.",
+    ),
+):
+    """Fully delivered SC6 lines in the lookback window (TOTVS pure — commercial BFF scopes)."""
+    try:
+        from app.application.use_cases.pedidos_venda_abertos.list_recently_closed_orders_use_case import (
+            ListRecentlyClosedOrdersUseCase,
+        )
+
+        result = ListRecentlyClosedOrdersUseCase().execute(days=days)
+        return api_delpi_success(
+            result,
+            operation_id="list_totvs_recently_closed_orders",
+            message="Recently closed sales-order lines loaded.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error listing recently closed orders: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error listing recently closed orders: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos recentemente encerrados.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-open-orders/{customer_code}/{customer_store}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_open_orders_by_customer",
+        path="/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_open_orders_by_customer_route(
+    customer_code: str = Path(..., min_length=1),
+    customer_store: str = Path(..., min_length=1),
+):
+    """Pedidos em aberto de um cliente (TOTVS puro) — Conta 360 via BFF commercial-api."""
+    try:
+        use_case = build_list_pedidos_venda_abertos_use_case()
+        result = use_case.execute_for_customer(customer_code, customer_store)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_totvs_open_orders_by_customer",
+            message="Pedidos em aberto do cliente (TOTVS) carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar pedidos do cliente TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos do cliente TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar pedidos em aberto do cliente (TOTVS).",
             status_code=500,
         )
 
@@ -187,7 +340,7 @@ def list_ops_abertas_route():
         path="/pedidos-venda-abertos/customers/search",
     ),
 )
-@require_any_permission(PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def search_active_customers_for_portfolio_route(
     q: Optional[str] = Query(
         None,
@@ -196,7 +349,12 @@ def search_active_customers_for_portfolio_route(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    """Clientes ativos no TOTVS (SA1) para amarração na carteira do vendedor."""
+    """
+    Clientes ativos no TOTVS (SA1).
+
+    Usado pelo BFF commercial-api para Conta 360 (accounts.view) e para
+    amarração de carteira (manage). Escopo/membership fica no commercial-api.
+    """
     try:
         result = build_search_active_customers_use_case().execute(
             SearchActiveCustomersRequest(query=q, page=page, page_size=page_size)
@@ -232,7 +390,7 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
         items = build_enrich_portfolio_customers_use_case().execute(
-            EnrichCustomersRequest(customers=pairs)
+            EnrichCustomersRequest(customers=pairs, window_days=body.window_days)
         )
         return api_delpi_success(
             {"items": [item.to_dict() for item in items]},
@@ -247,6 +405,40 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
 
 
 @router.post(
+    "/customers/open-order-metrics",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_customer_open_order_metrics",
+        path="/pedidos-venda-abertos/customers/open-order-metrics",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_customer_open_order_metrics_route(
+    body: OpenOrderMetricsBody = Body(default_factory=OpenOrderMetricsBody),
+):
+    """Agrega valor aberto e flag de atraso por cliente (pedidos em aberto)."""
+    try:
+        pairs = tuple(
+            (item.customer_code, item.customer_store) for item in (body.customers or [])
+        )
+        items = build_list_customer_open_order_metrics_use_case().execute(
+            ListCustomerOpenOrderMetricsRequest(customers=pairs)
+        )
+        return api_delpi_success(
+            {"items": [item.to_dict() for item in items]},
+            operation_id="list_customer_open_order_metrics",
+            message="Métricas de pedidos em aberto por cliente carregadas.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao agregar métricas de pedidos em aberto: {exc}")
+        return error_response(
+            "Erro interno ao agregar métricas de pedidos em aberto.",
+            status_code=500,
+        )
+
+
+@router.post(
     "/customers/billing-series",
     **OpenApiAgentMetadataBuilder.from_contract(
         "list_customer_billing_series",
@@ -255,13 +447,19 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
 )
 @require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
-    """Série mensal de faturamento (últimos N meses) para clientes da carteira."""
+    """Série de faturamento da carteira (período, granularidade e fallback months)."""
     try:
         pairs = [
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
         result = build_list_customer_billing_series_use_case().execute(
-            ListCustomerBillingSeriesRequest(customers=pairs, months=body.months)
+            ListCustomerBillingSeriesRequest(
+                customers=pairs,
+                months=body.months,
+                start_date=body.start_date,
+                end_date=body.end_date,
+                granularity=body.granularity,
+            )
         )
         return api_delpi_success(
             result.to_dict(),
@@ -690,6 +888,149 @@ def remove_seller_customer_route(
         return error_response("Erro interno ao remover cliente.", status_code=500)
 
 
+def _execute_outbound_invoices(
+    *,
+    customer_code: str,
+    customer_store: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    page: int,
+    page_size: int,
+    situation: Optional[str],
+    search: Optional[str],
+    operation_id: str,
+):
+    use_case = build_list_customer_outbound_invoices_use_case()
+    result = use_case.execute(
+        ListCustomerOutboundInvoicesRequest(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
+        )
+    )
+    return api_delpi_success(
+        result.to_dict(),
+        operation_id=operation_id,
+        message="Notas fiscais de saída do cliente carregadas com sucesso.",
+    )
+
+
+@router.get(
+    "/totvs-outbound-invoices/{customer_code}/{customer_store}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_totvs_outbound_invoices",
+        path="/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def list_totvs_outbound_invoices_route(
+    customer_code: str = Path(
+        ...,
+        min_length=1,
+        description="Customer code (A1_COD / D2_CLIENTE)",
+    ),
+    customer_store: str = Path(
+        ...,
+        min_length=1,
+        description="Customer store (A1_LOJA / D2_LOJA)",
+    ),
+    start_date: Optional[str] = Query(
+        None,
+        description="Period start (YYYY-MM-DD). Default: last 90 days.",
+    ),
+    end_date: Optional[str] = Query(
+        None,
+        description="Period end (YYYY-MM-DD). Default: today.",
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    situation: Optional[str] = Query(
+        "all",
+        description="all | emitted | return. Soft-deleted cancelled invoices omitted.",
+    ),
+    search: Optional[str] = Query(
+        None,
+        description="Search by NF number, series, sales order, customer PO or product.",
+    ),
+):
+    """
+    Leitura TOTVS pura (sem membership PVA) — consumo BFF commercial-api.
+    Reusa ListCustomerOutboundInvoicesUseCase. Não altera regras da rota legada NF.
+    """
+    try:
+        return _execute_outbound_invoices(
+            customer_code=customer_code,
+            customer_store=customer_store,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
+            operation_id="list_totvs_outbound_invoices",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar NF TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar NF TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar notas fiscais de saída do cliente (TOTVS).",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_totvs_outbound_invoice",
+        path="/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+    ),
+)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
+def get_totvs_outbound_invoice_route(
+    branch: str = Path(..., min_length=1, description="Branch / F2_FILIAL / D2_FILIAL"),
+    invoice_number: str = Path(..., min_length=1, description="Invoice number (F2_DOC / D2_DOC)"),
+    invoice_series: str = Path(..., min_length=1, description="Invoice series (F2_SERIE / D2_SERIE)"),
+):
+    """
+    Detalhe TOTVS puro de uma NF de saída (SF2/SD2) por unidade + número + série.
+    Consumo BFF commercial-api — sem membership PVA.
+    """
+    try:
+        invoice = build_get_outbound_invoice_use_case().execute(
+            GetOutboundInvoiceRequest(
+                branch=branch,
+                invoice_number=invoice_number,
+                invoice_series=invoice_series,
+            )
+        )
+        if invoice is None:
+            return error_response(
+                "Nota fiscal de saída não encontrada.",
+                status_code=404,
+            )
+        return api_delpi_success(
+            invoice.to_dict(),
+            operation_id="get_totvs_outbound_invoice",
+            message="Nota fiscal de saída carregada com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao obter NF TOTVS: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao obter NF TOTVS: {exc}")
+        return error_response(
+            "Erro interno ao carregar a nota fiscal de saída (TOTVS).",
+            status_code=500,
+        )
+
+
 @router.get(
     "/clientes/{codigo}/{loja}/notas-fiscais",
     **OpenApiAgentMetadataBuilder.from_contract(
@@ -732,23 +1073,16 @@ def list_cliente_notas_fiscais_saida_route(
                 "Cliente fora da sua carteira.",
                 status_code=404,
             )
-        use_case = build_list_customer_outbound_invoices_use_case()
-        result = use_case.execute(
-            ListCustomerOutboundInvoicesRequest(
-                customer_code=codigo,
-                customer_store=loja,
-                start_date=start_date,
-                end_date=end_date,
-                page=page,
-                page_size=page_size,
-                situation=situation,
-                search=search,
-            )
-        )
-        return api_delpi_success(
-            result.to_dict(),
+        return _execute_outbound_invoices(
+            customer_code=codigo,
+            customer_store=loja,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size,
+            situation=situation,
+            search=search,
             operation_id="list_cliente_notas_fiscais_saida",
-            message="Notas fiscais de saída do cliente carregadas com sucesso.",
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao listar NF saída do cliente: {exc}")

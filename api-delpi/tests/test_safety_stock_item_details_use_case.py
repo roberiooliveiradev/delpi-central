@@ -90,6 +90,28 @@ def test_details_use_case_aggregates_coverage_commitments_and_projection() -> No
             "product_description": "Parafuso",
         }
     ]
+    repository.fetch_open_purchase_requests.return_value = [
+        {
+            "request_number": "SC001",
+            "request_item": "01",
+            "warehouse": "01",
+            "unit": "PC",
+            "open_quantity": 12.0,
+            "requested_quantity": 12.0,
+            "ordered_quantity": 0.0,
+            "required_date": "2026-08-05",
+            "issue_date": "2026-07-10",
+            "supplier_code": "F1",
+            "supplier_store": "01",
+            "supplier_name": "Fornecedor",
+            "purchase_order_number": "",
+            "unit_price": 1.0,
+            "total_value": 12.0,
+            "branch": "01",
+            "product_code": "10010005",
+            "product_description": "Parafuso",
+        }
+    ]
     repository.fetch_open_commitments.return_value = [
         {
             "branch": "01",
@@ -138,7 +160,14 @@ def test_details_use_case_aggregates_coverage_commitments_and_projection() -> No
     assert result["open_purchase_orders"]["total"] == 1
     assert result["open_purchase_orders"]["items"][0]["coverage_eligible"] is True
     assert result["open_purchase_orders"]["items"][0]["pre_invoice_quantity"] == 5.0
+    assert result["open_purchase_requests"]["total"] == 1
+    assert result["open_purchase_requests"]["items"][0]["request_number"] == "SC001"
+    assert result["open_purchase_requests"]["items"][0]["open_quantity_primary_unit"] == 12.0
     assert result["open_commitments"]["total"] == 1
+    repository.fetch_open_purchase_requests.assert_called_once_with(
+        branch="01",
+        product_code="10010005",
+    )
     assert result["open_commitments"]["items"][0]["projection_eligible"] is True
     assert result["open_commitments"]["summary"]["eligible_open_quantity"] == 20.0
     assert result["stock_projection"]["total"] >= 2

@@ -1,0 +1,61 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from app.application.security.api_delpi_permissions import (
+    THIRD_PARTY_MATERIALS_ACCESS,
+    THIRD_PARTY_MATERIALS_VIEW_FILIAL_SC,
+)
+from app.interface.http.routes.supplies.third_party_materials_branch_access import (
+    branch_access_error,
+    branch_view_allowed,
+    list_viewable_branches,
+)
+
+
+def test_branch_view_allowed_with_global_access() -> None:
+    user = SimpleNamespace(is_superadmin=False, permissions=[THIRD_PARTY_MATERIALS_ACCESS])
+    with patch(
+        "app.interface.http.branch_access_gate.get_current_user",
+        return_value=user,
+    ), patch(
+        "app.interface.http.branch_access_gate.has_permission",
+        side_effect=lambda current_user, perm: perm in user.permissions,
+    ):
+        assert branch_view_allowed("01") is True
+        assert branch_view_allowed("02") is True
+
+
+def test_branch_view_allowed_with_filial_sc_only() -> None:
+    user = SimpleNamespace(
+        is_superadmin=False,
+        permissions=[THIRD_PARTY_MATERIALS_VIEW_FILIAL_SC],
+    )
+    with patch(
+        "app.interface.http.branch_access_gate.get_current_user",
+        return_value=user,
+    ), patch(
+        "app.interface.http.branch_access_gate.has_permission",
+        side_effect=lambda current_user, perm: perm in user.permissions,
+    ):
+        assert branch_view_allowed("01") is True
+        assert branch_view_allowed("02") is False
+
+
+def test_branch_access_error_returns_403_for_denied_branch() -> None:
+    with patch(
+        "app.interface.http.routes.supplies.third_party_materials_branch_access._GATE.branch_view_allowed",
+        return_value=False,
+    ):
+        response = branch_access_error("02")
+        assert response is not None
+        assert response.status_code == 403
+
+
+def test_list_viewable_branches_filters_by_permission() -> None:
+    with patch(
+        "app.interface.http.routes.supplies.third_party_materials_branch_access.branch_view_allowed",
+        side_effect=lambda branch: branch == "01",
+    ):
+        assert list_viewable_branches() == ["01"]

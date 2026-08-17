@@ -1,0 +1,303 @@
+/**
+ * HorizontalTimeline (OTD) — grupos por dia espaçados + «Agora» acima do trilho.
+ * Caption em fluxo (não absolute) + legenda única com pre-line.
+ */
+
+.delpi-ui-htimeline {
+  --delpi-ui-htimeline-marker: 14px;
+  --delpi-ui-htimeline-flag: 22px;
+  --delpi-ui-htimeline-rail-y: 56px;
+  --delpi-ui-htimeline-caption-rows: 1;
+  --delpi-ui-htimeline-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.delpi-ui-htimeline__track {
+  position: relative;
+  width: 100%;
+  min-height: calc(
+    var(--delpi-ui-htimeline-rail-y) + 88px +
+      (var(--delpi-ui-htimeline-caption-rows) - 1) * 1.2rem
+  );
+  padding: 4px 0 12px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.delpi-ui-htimeline__axis {
+  position: relative;
+  width: auto;
+  min-height: inherit;
+  margin: 0 12px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-htimeline__rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--delpi-ui-htimeline-rail-y);
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
+    var(--delpi-ui-muted, var(--text-muted, #64748b))
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-htimeline__milestones {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-htimeline__item {
+  position: absolute;
+  top: var(--delpi-ui-htimeline-rail-y);
+  /* Dot centrado no trilho; caption flui abaixo (sem absolute). */
+  transform: translate(-50%, calc(var(--delpi-ui-htimeline-marker) / -2));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 9rem;
+  pointer-events: none;
+}
+
+.delpi-ui-htimeline__dot {
+  box-sizing: border-box;
+  width: var(--delpi-ui-htimeline-marker);
+  height: var(--delpi-ui-htimeline-marker);
+  border-radius: 999px;
+  border: 2px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #fff));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 85%, transparent);
+  flex-shrink: 0;
+}
+
+.delpi-ui-htimeline__item--neutral .delpi-ui-htimeline__dot,
+.delpi-ui-htimeline__item--default .delpi-ui-htimeline__dot {
+  border-color: var(--delpi-ui-border, var(--border, #e6e6e6));
+}
+
+.delpi-ui-htimeline__item--info .delpi-ui-htimeline__dot {
+  border-color: var(--delpi-ui-htimeline-accent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-htimeline-accent) 35%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-htimeline__item--warning .delpi-ui-htimeline__dot {
+  border-color: #d97706;
+  background: color-mix(
+    in srgb,
+    #d97706 40%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-htimeline__item--danger .delpi-ui-htimeline__dot {
+  border-color: #dc2626;
+  background: color-mix(
+    in srgb,
+    #dc2626 40%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-htimeline__item--success .delpi-ui-htimeline__dot {
+  border-color: #16a34a;
+  background: color-mix(
+    in srgb,
+    #16a34a 40%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-htimeline__item--current .delpi-ui-htimeline__dot {
+  transform: scale(1.15);
+  border-width: 3px;
+  box-shadow:
+    0 0 0 3px
+      color-mix(in srgb, var(--delpi-ui-surface, var(--surface, #fff)) 85%, transparent),
+    0 0 0 6px color-mix(in srgb, #16a34a 22%, transparent);
+}
+
+.delpi-ui-htimeline__caption {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  width: max-content;
+  max-width: 9rem;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.delpi-ui-htimeline__label {
+  display: block;
+  position: static;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: pre-line;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-htimeline__item--stacked .delpi-ui-htimeline__label {
+  font-weight: 600;
+}
+
+.delpi-ui-htimeline__date {
+  display: block;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-htimeline__current-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--delpi-ui-success, #166534);
+  background: color-mix(
+    in srgb,
+    #16a34a 22%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+}
+
+.delpi-ui-htimeline__now {
+  position: absolute;
+  top: 0;
+  height: calc(var(--delpi-ui-htimeline-rail-y) + 5px);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 5.5rem;
+  pointer-events: none;
+}
+
+/* Coincide com marco: só bandeira + haste (sem pin no trilho). */
+.delpi-ui-htimeline__now--coincident {
+  height: calc(var(--delpi-ui-htimeline-rail-y) - 2px);
+}
+
+.delpi-ui-htimeline__now--coincident .delpi-ui-htimeline__stem {
+  opacity: 0.75;
+}
+
+.delpi-ui-htimeline__today-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #075985;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-htimeline-accent) 22%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 35%, transparent);
+}
+
+.delpi-ui-htimeline__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--delpi-ui-htimeline-flag);
+  height: var(--delpi-ui-htimeline-flag);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--delpi-ui-htimeline-accent);
+  border: 2px solid
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 55%, #fff);
+  box-shadow:
+    0 0 0 3px
+      color-mix(in srgb, var(--delpi-ui-htimeline-accent) 22%, transparent),
+    0 2px 8px color-mix(in srgb, var(--delpi-ui-htimeline-accent) 30%, transparent);
+}
+
+.delpi-ui-htimeline__stem {
+  flex: 1 1 auto;
+  width: 2px;
+  min-height: 8px;
+  margin-top: 2px;
+  background: var(--delpi-ui-htimeline-accent);
+  border-radius: 999px;
+  opacity: 0.9;
+}
+
+.delpi-ui-htimeline__pin {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: -1px;
+  border-radius: 999px;
+  background: var(--delpi-ui-htimeline-accent);
+  border: 2px solid var(--delpi-ui-surface, var(--surface, #fff));
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--delpi-ui-htimeline-accent) 40%, transparent);
+}
+
+.delpi-ui-htimeline__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.delpi-ui-htimeline__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+:root[data-theme="dark"] .delpi-ui-htimeline__current-tag,
+[data-theme="dark"] .delpi-ui-htimeline__current-tag {
+  color: #bbf7d0;
+}
+
+:root[data-theme="dark"] .delpi-ui-htimeline__today-tag,
+[data-theme="dark"] .delpi-ui-htimeline__today-tag {
+  color: #bae6fd;
+}

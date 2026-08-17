@@ -41,8 +41,9 @@ Regras obrigatórias:
    - decisions_html
    - pending_html
    - observations_html
-3. Use HTML simples adequado a um editor rich-text: <p>, <ul>, <ol>, <li>, <strong>, <em>, <br>.
-   Não use scripts, estilos inline complexos, tabelas nem imagens.
+3. Use HTML simples adequado a um editor rich-text: <p>, <ul>, <ol>, <li>, <strong>, <em>, <br>
+   e, quando a transcrição trouxer grades/listagens tabulares, <table>/<thead>/<tbody>/<tr>/<th>/<td>
+   (sem scripts, sem <style> global e sem imagens).
 4. agenda_html: pauta / assuntos tratados.
 5. body_html: narrativa do andamento da reunião (discussão).
 6. decisions_html: decisões tomadas.
@@ -90,11 +91,13 @@ def _html_to_plain_text(transcript_html: str) -> str:
             self.parts: list[str] = []
 
         def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-            if tag in {"br", "p", "div", "li", "tr", "h1", "h2", "h3", "h4", "blockquote"}:
+            if tag in {"br", "p", "div", "li", "tr", "h1", "h2", "h3", "h4", "blockquote", "table"}:
                 self.parts.append("\n")
+            elif tag in {"td", "th"}:
+                self.parts.append(" | ")
 
         def handle_endtag(self, tag: str) -> None:
-            if tag in {"p", "div", "li", "tr", "h1", "h2", "h3", "h4", "blockquote"}:
+            if tag in {"p", "div", "li", "tr", "h1", "h2", "h3", "h4", "blockquote", "table"}:
                 self.parts.append("\n")
 
         def handle_data(self, data: str) -> None:

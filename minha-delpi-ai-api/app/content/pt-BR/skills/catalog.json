@@ -151,6 +151,29 @@
         "submeter eficácia do plano PAC"
       ],
       "sortOrder": 35
+    },
+    {
+      "key": "tv-dashboard-copilot",
+      "label": "Copiloto TV Dashboard",
+      "description": "Aplica patches tipados em programações e slides do TV Dashboard via catálogo do BFF. Não gera Power Query M. Preview livre; apply só com confirmação.",
+      "policyFile": "tv-dashboard-copilot-skill.md",
+      "metadataFlag": "enabled",
+      "legacyMetadataFlag": "tvDashboardCopilot",
+      "executionPathHint": "tv_dashboard_copilot",
+      "aliases": [
+        "tv copilot",
+        "copiloto tv",
+        "tv dashboard",
+        "assistente tv",
+        "patch tipado tv"
+      ],
+      "examplePrompts": [
+        "crie um slide nesta programação",
+        "escreva um texto neste slide",
+        "apague o bloco selecionado",
+        "pode aplicar"
+      ],
+      "sortOrder": 40
     }
   ]
 }

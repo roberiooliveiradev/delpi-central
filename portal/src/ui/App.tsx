@@ -1,6 +1,15 @@
 // src/ui/App.tsx
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Link, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
 import { PortalMobileNavBar } from "../layout/PortalMobileNavBar";
@@ -9,7 +18,6 @@ import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
-import { AdminPage } from "./admin/AdminPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
@@ -26,6 +34,37 @@ import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 import { ConfirmDialogProvider } from "../components/ConfirmDialogProvider";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
+
+const AdminPage = lazy(() =>
+  import("./admin/AdminPage").then((module) => ({
+    default: module.AdminPage,
+  })),
+);
+const ManifestEditorPage = lazy(() =>
+  import("./admin/manifest/ManifestEditorPage").then((module) => ({
+    default: module.ManifestEditorPage,
+  })),
+);
+const PluginVersionsPage = lazy(() =>
+  import("./admin/versions/PluginVersionsPage").then((module) => ({
+    default: module.PluginVersionsPage,
+  })),
+);
+const RoleEditPage = lazy(() =>
+  import("./admin/rbac/RoleEditPage").then((module) => ({
+    default: module.RoleEditPage,
+  })),
+);
+const GroupEditPage = lazy(() =>
+  import("./admin/rbac/GroupEditPage").then((module) => ({
+    default: module.GroupEditPage,
+  })),
+);
+const UserEditPage = lazy(() =>
+  import("./admin/rbac/UserEditPage").then((module) => ({
+    default: module.UserEditPage,
+  })),
+);
 
 
 
@@ -139,7 +178,8 @@ function AppShell() {
 
       <div className="main-area">
         <div className="content">
-          <Routes>
+          <Suspense fallback={<Loader />}>
+            <Routes>
             <Route path="/delpi/products" element={<ProductsPage />} />
             <Route path="/delpi/health" element={<DelpiHealthPage />} />
             <Route path="/" element={<HomePage />} />
@@ -161,6 +201,75 @@ function AppShell() {
               element={
                 <ProtectedRoute permission="rbac.manage">
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/apps/manifest/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <ManifestEditorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/apps/:appId/manifest"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <ManifestEditorPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/apps/:appId/versions"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <PluginVersionsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/roles/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <RoleEditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles/:roleId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <RoleEditPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/groups/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <GroupEditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/groups/:groupId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <GroupEditPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <UserEditPage />
                 </ProtectedRoute>
               }
             />
@@ -203,9 +312,32 @@ function AppShell() {
               />
             ))}
 
-            {/* fallback */}
+            {/*
+              Deep links /apps/* sem app autorizado: não mandar para a home
+              (F5 + redirect legado PVA→commercial sem commercial.access).
+            */}
+            <Route
+              path="/apps/*"
+              element={
+                <AnimatedWrapper>
+                  <div className="app-not-found" style={{ padding: 24 }}>
+                    <h2>Aplicação indisponível</h2>
+                    <p>
+                      Esta rota não está disponível na sua conta ou o plugin
+                      ainda não foi liberado. Volte à home e abra pelo menu.
+                    </p>
+                    <p>
+                      <Link to="/">Ir para a home</Link>
+                    </p>
+                  </div>
+                </AnimatedWrapper>
+              }
+            />
+
+            {/* fallback de rotas do shell (não /apps) */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </div>
       </div>
 

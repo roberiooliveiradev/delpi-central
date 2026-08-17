@@ -343,9 +343,14 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
     setStagePanMode,
     persistStageViewPosition,
     viewportProfile,
+    viewportWidth,
+    viewportHeight,
     insertDroppedMediaFiles,
   } = useComunicadoEditor();
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const slideDesign = resolveViewportPixelSize(viewportProfile, {
+    width: viewportWidth,
+    height: viewportHeight,
+  });
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
   const [ctrlPanHeld, setCtrlPanHeld] = useState(false);
   const [fileDropActive, setFileDropActive] = useState(false);

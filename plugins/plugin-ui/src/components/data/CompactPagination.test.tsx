@@ -53,7 +53,7 @@ describe("CompactPagination", () => {
 
     expect(screen.getByText("Página 2 de 4 · 100 registro(s)")).toBeTruthy();
     expect(screen.getByText("Itens por página")).toBeTruthy();
-    expect(screen.getByRole("combobox")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Itens por página" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Anterior" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Próxima" })).toBeTruthy();
   });
@@ -77,7 +77,7 @@ describe("CompactPagination", () => {
       />,
     );
 
-    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Itens por página" })).toBeNull();
     expect(screen.getByText("Página 1 de 3 · 50 registro(s)")).toBeTruthy();
   });
 

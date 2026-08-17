@@ -31,6 +31,8 @@ export type PublicPresentationPayload = {
     name: string;
     description?: string | null;
     viewportProfile: string;
+    viewportWidth?: number | null;
+    viewportHeight?: number | null;
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;

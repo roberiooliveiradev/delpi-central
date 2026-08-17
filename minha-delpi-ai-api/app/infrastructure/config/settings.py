@@ -21,6 +21,14 @@ class Settings:
     CORE_API_BASE_URL = os.getenv("CORE_API_BASE_URL", "http://core-api:8000")
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))
 
+    TV_DASHBOARD_API_BASE_URL = os.getenv(
+        "TV_DASHBOARD_API_BASE_URL",
+        "http://delpi-tv-dashboard-api:8000",
+    )
+    TV_DASHBOARD_API_TIMEOUT_SECONDS = float(
+        os.getenv("TV_DASHBOARD_API_TIMEOUT_SECONDS", "60")
+    )
+
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
     LLM_TEXT_BASE_URL = os.getenv("LLM_TEXT_BASE_URL", "").strip()
     LLM_TEXT_MODEL = os.getenv("LLM_TEXT_MODEL", "").strip()

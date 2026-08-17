@@ -36,6 +36,17 @@ class ChatPlatformToolDirectAnswerService:
         if tool_name == "get_current_user":
             return cls._format_current_user(data)
 
+        if tool_name == "tv_dashboard_copilot":
+            from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+                ChatTvDashboardCopilotIntentService,
+            )
+
+            payload = data if isinstance(data, dict) else None
+            return ChatTvDashboardCopilotIntentService.format_direct_answer(
+                data=payload,
+                metadata=metadata if isinstance(metadata, dict) else None,
+            )
+
         return None
 
     @classmethod

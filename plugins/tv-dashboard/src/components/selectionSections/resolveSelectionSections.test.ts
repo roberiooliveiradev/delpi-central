@@ -18,7 +18,7 @@ function ctx(
 }
 
 describe("resolveSelectionSections", () => {
-  it("texto e título: visualBox (tipografia→forma) → exibição → organizar", () => {
+  it("texto e título: visualBox (tipografia→forma) → número → exibição → organizar", () => {
     const text = resolveSelectionSections(
       ctx({
         selected: {
@@ -30,9 +30,10 @@ describe("resolveSelectionSections", () => {
       }),
     );
     expect(text).toEqual(
-      expect.arrayContaining(["visualBox", "display", "organize", "actions"]),
+      expect.arrayContaining(["visualBox", "numberFormat", "display", "organize", "actions"]),
     );
-    expect(text.indexOf("visualBox")).toBeLessThan(text.indexOf("display"));
+    expect(text.indexOf("visualBox")).toBeLessThan(text.indexOf("numberFormat"));
+    expect(text.indexOf("numberFormat")).toBeLessThan(text.indexOf("display"));
     expect(text.indexOf("display")).toBeLessThan(text.indexOf("organize"));
     expect(text.indexOf("organize")).toBeLessThan(text.indexOf("actions"));
     expect(text).not.toContain("frame");
@@ -103,7 +104,7 @@ describe("resolveSelectionSections", () => {
         selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
       }),
     ).toEqual(
-      expect.arrayContaining(["visualBox", "display", "organize", "actions"]),
+      expect.arrayContaining(["visualBox", "numberFormat", "display", "organize", "actions"]),
     );
     expect(
       resolveSelectionSections({
@@ -160,6 +161,32 @@ describe("resolveSelectionSections", () => {
     expect(sections).toContain("organize");
     expect(sections).toContain("actions");
     expect(sections).toContain("display");
+  });
+
+  it("grupo fechado de dois textos: mesmas seções da multi-seleção (visualBox)", () => {
+    const a = {
+      id: "a",
+      type: "text" as const,
+      content: "A",
+      groupId: "g1",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+    };
+    const b = {
+      id: "b",
+      type: "text" as const,
+      content: "B",
+      groupId: "g1",
+      frame: { x: 10, y: 0, w: 10, h: 10 },
+    };
+    expect(
+      resolveSelectionSections({
+        selected: b as SelectionSectionContext["selected"],
+        selectedIds: ["a", "b"],
+        selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
+      }),
+    ).toEqual(
+      expect.arrayContaining(["visualBox", "numberFormat", "display", "organize", "actions"]),
+    );
   });
 
   it("parte de gráfico prioriza partFormat + tipografia", () => {
@@ -289,7 +316,7 @@ describe("resolveSelectionSections", () => {
     ).toContain("typography");
   });
 
-  it("forma tipada: mesma ordem visualBox (tipografia→forma) + display", () => {
+  it("forma tipada: mesma ordem visualBox (tipografia→forma) + número + display", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -303,6 +330,7 @@ describe("resolveSelectionSections", () => {
       ),
     ).toEqual([
       "visualBox",
+      "numberFormat",
       "display",
       "organize",
       "animation",
@@ -329,6 +357,7 @@ describe("resolveSelectionSections", () => {
       "tableLayoutData",
       "tableLayoutSize",
       "tableLayoutAlign",
+      "numberFormat",
       "display",
       "organize",
       "animation",
@@ -356,6 +385,7 @@ describe("resolveSelectionSections", () => {
       "chartType",
       "chartLabels",
       "chartAxes",
+      "numberFormat",
       "chartSeries",
       "kpiAppearance",
       "media",
