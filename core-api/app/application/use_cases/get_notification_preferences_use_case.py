@@ -11,12 +11,16 @@ from app.application.services.notification_catalog_icon_service import (
 )
 from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
-from app.domain.notifications.notification_preference_policy import normalize_muted_categories
+from app.domain.notifications.notification_preference_policy import (
+    normalize_preference_categories,
+    reconcile_mute_and_important,
+)
 
 
 @dataclass
 class NotificationPreferencesResult:
     muted_categories: list[str]
+    important_categories: list[str]
     mutable_categories: list[str]
     categories: list[dict[str, object]]
 
@@ -34,10 +38,15 @@ class GetNotificationPreferencesUseCase:
             catalog=catalog,
         )
 
-        muted = normalize_muted_categories(
+        muted = normalize_preference_categories(
             self.uow.notification_preferences.get_muted_categories(user_id),
             mutable_categories=visible_mutable,
         )
+        important = normalize_preference_categories(
+            self.uow.notification_preferences.get_important_categories(user_id),
+            mutable_categories=visible_mutable,
+        )
+        muted, important = reconcile_mute_and_important(muted, important)
 
         categories = [
             item
@@ -47,6 +56,7 @@ class GetNotificationPreferencesUseCase:
 
         return NotificationPreferencesResult(
             muted_categories=muted,
+            important_categories=important,
             mutable_categories=sorted(visible_mutable),
             categories=categories,
         )

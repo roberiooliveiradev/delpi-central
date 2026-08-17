@@ -37,6 +37,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
             icon=notification.icon,
             notification_metadata=notification.metadata,
             expires_at=notification.expires_at,
+            is_important=bool(notification.is_important),
         )
 
         self.session.add(model)
@@ -152,6 +153,28 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         row = self.session.get(Notification, notification_id)
         if row and row.deleted_at is None:
             row.is_important = is_important
+
+    def mark_unread_important_for_category(
+        self,
+        user_id: str,
+        category: str,
+        *,
+        is_important: bool = True,
+    ) -> int:
+        normalized = (category or "").strip().lower()
+        if not normalized:
+            return 0
+        updated = (
+            self.session.query(Notification)
+            .filter(
+                Notification.user_id == UUID(user_id),
+                Notification.category == normalized,
+                Notification.read_at.is_(None),
+                Notification.deleted_at.is_(None),
+            )
+            .update({"is_important": bool(is_important)}, synchronize_session=False)
+        )
+        return int(updated)
 
     def mark_read(self, notification_id: UUID) -> None:
         row = self.session.get(Notification, notification_id)

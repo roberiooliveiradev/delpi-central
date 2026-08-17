@@ -22,6 +22,7 @@ def uow():
     unit.notification_preferences.filter_user_ids_accepting_category.side_effect = (
         lambda user_ids, _category: user_ids
     )
+    unit.notification_preferences.is_category_important.return_value = False
     return unit
 
 
@@ -88,9 +89,11 @@ def test_dispatch_requires_recipients_when_not_broadcast(uow):
                 metadata=None,
                 expires_at=None,
                 broadcast=False,
-                user_ids=[],
-                emails=[],
-            )
+                    user_ids=[],
+                    emails=[],
+                    role_ids=[],
+                    group_ids=[],
+                )
         )
 
 
@@ -161,6 +164,10 @@ def test_dispatch_controle_mp_skips_user_without_app_access(uow):
         return None
 
     uow.users.get_by_id.side_effect = get_user
+    uow.users.get_by_email.side_effect = lambda email: {
+        allowed.email: allowed,
+        denied.email: denied,
+    }.get(email)
 
     with patch(
         "app.application.use_cases.dispatch_notifications_use_case.filter_user_ids_with_app_access"
@@ -226,3 +233,38 @@ def test_dispatch_welcome_template_uses_recipient_name(uow):
     created = uow.notifications.create.call_args[0][0]
     assert "Usuaria" in created.message
     assert created.metadata["vars"]["userName"] == "Usuaria"
+
+
+def test_dispatch_marks_important_from_user_preference(uow):
+    user = _user()
+    uow.users.get_by_id.return_value = user
+    uow.notification_preferences.is_category_important.return_value = True
+
+    DispatchNotificationsUseCase(uow).execute(
+        DispatchNotificationsRequest(
+            title="Alerta",
+            message="Importante",
+            type="info",
+            category="commercial",
+            presentation="text",
+            html_content=None,
+            action_type=None,
+            action_label=None,
+            action_target=None,
+            icon=None,
+            metadata=None,
+            expires_at=None,
+            broadcast=False,
+            user_ids=[str(user.id)],
+            emails=[],
+            role_ids=[],
+            group_ids=[],
+        )
+    )
+
+    created = uow.notifications.create.call_args[0][0]
+    assert created.is_important is True
+    uow.notification_preferences.is_category_important.assert_called_with(
+        str(user.id),
+        "commercial",
+    )

@@ -14,4 +14,5 @@ class UserNotificationPreference(db.Model):
         primary_key=True,
     )
     muted_categories = db.Column(db.JSON, nullable=False, default=list)
+    important_categories = db.Column(db.JSON, nullable=False, default=list)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

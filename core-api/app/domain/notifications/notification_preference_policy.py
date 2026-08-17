@@ -1,7 +1,7 @@
 # app/domain/notifications/notification_preference_policy.py
 
 
-def normalize_muted_categories(
+def normalize_preference_categories(
     raw: list[str] | None,
     *,
     mutable_categories: frozenset[str],
@@ -22,3 +22,21 @@ def normalize_muted_categories(
         normalized.append(category)
 
     return sorted(normalized)
+
+
+def normalize_muted_categories(
+    raw: list[str] | None,
+    *,
+    mutable_categories: frozenset[str],
+) -> list[str]:
+    return normalize_preference_categories(raw, mutable_categories=mutable_categories)
+
+
+def reconcile_mute_and_important(
+    muted_categories: list[str],
+    important_categories: list[str],
+) -> tuple[list[str], list[str]]:
+    """Importante prevalece: remove categorias importantes da lista de mute."""
+    important = set(important_categories)
+    muted = sorted(set(muted_categories) - important)
+    return muted, sorted(important)

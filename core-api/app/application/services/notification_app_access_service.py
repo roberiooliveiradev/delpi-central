@@ -124,16 +124,31 @@ def merge_muted_categories_preserving_hidden(
     Ao salvar preferências, não apaga silêncios de apps sem acesso
     (categorias ocultas na UI).
     """
+    return merge_preference_categories_preserving_hidden(
+        previous_muted,
+        next_muted,
+        visible_mutable=visible_mutable,
+        all_mutable=all_mutable,
+    )
+
+
+def merge_preference_categories_preserving_hidden(
+    previous: list[str],
+    next_values: list[str],
+    *,
+    visible_mutable: frozenset[str],
+    all_mutable: frozenset[str],
+) -> list[str]:
     preserved = [
         category
         for category in normalize_muted_categories(
-            previous_muted,
+            previous,
             mutable_categories=all_mutable,
         )
         if category not in visible_mutable
     ]
     updated = normalize_muted_categories(
-        next_muted,
+        next_values,
         mutable_categories=visible_mutable,
     )
     return sorted(set(preserved) | set(updated))

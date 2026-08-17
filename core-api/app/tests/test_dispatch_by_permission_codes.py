@@ -16,6 +16,7 @@ def test_dispatch_resolves_permission_codes_and_exclusions():
     uow.notification_preferences.filter_user_ids_accepting_category.side_effect = (
         lambda user_ids, _category: user_ids
     )
+    uow.notification_preferences.is_category_important.return_value = False
     uow.rbac_queries.list_user_ids_by_permission_code.return_value = [
         approver_id,
         requester_id,

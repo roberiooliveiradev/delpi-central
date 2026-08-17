@@ -63,6 +63,15 @@ class NotificationRepository(Protocol):
     def set_important(self, notification_id: UUID, *, is_important: bool) -> None:
         ...
 
+    def mark_unread_important_for_category(
+        self,
+        user_id: str,
+        category: str,
+        *,
+        is_important: bool = True,
+    ) -> int:
+        ...
+
     def mark_read(self, notification_id: UUID) -> None:
         ...
 

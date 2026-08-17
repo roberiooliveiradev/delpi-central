@@ -21,10 +21,23 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
             return []
         return list(row.muted_categories)
 
-    def set_muted_categories(self, user_id: str, muted_categories: list[str]) -> None:
+    def get_important_categories(self, user_id: str) -> list[str]:
+        row = self._get_row(user_id)
+        if not row or not getattr(row, "important_categories", None):
+            return []
+        return list(row.important_categories or [])
+
+    def set_preferences(
+        self,
+        user_id: str,
+        *,
+        muted_categories: list[str],
+        important_categories: list[str],
+    ) -> None:
         row = self._get_row(user_id)
         if row:
             row.muted_categories = muted_categories
+            row.important_categories = important_categories
             row.updated_at = datetime.utcnow()
             return
 
@@ -32,7 +45,16 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
             UserNotificationPreference(
                 user_id=UUID(user_id),
                 muted_categories=muted_categories,
+                important_categories=important_categories,
             )
+        )
+
+    def set_muted_categories(self, user_id: str, muted_categories: list[str]) -> None:
+        important = self.get_important_categories(user_id)
+        self.set_preferences(
+            user_id,
+            muted_categories=muted_categories,
+            important_categories=important,
         )
 
     def is_category_muted(self, user_id: str, category: str) -> bool:
@@ -40,6 +62,12 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
         if normalized not in NotificationCatalogService.get().mutable_categories:
             return False
         return normalized in self.get_muted_categories(user_id)
+
+    def is_category_important(self, user_id: str, category: str) -> bool:
+        normalized = (category or "").strip().lower()
+        if normalized not in NotificationCatalogService.get().mutable_categories:
+            return False
+        return normalized in self.get_important_categories(user_id)
 
     def filter_user_ids_accepting_category(self, user_ids: list[str], category: str) -> list[str]:
         normalized_category = (category or "").strip().lower()

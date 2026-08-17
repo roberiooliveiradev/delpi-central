@@ -328,6 +328,10 @@ class RbacNotificationEventHandler:
         action_target: str,
         vars: dict[str, str],
     ) -> None:
+        is_important = self.uow.notification_preferences.is_category_important(
+            str(user.id),
+            template_spec.category,
+        )
         notification_id = self.uow.notifications.create(
             NotificationDTO(
                 user_id=str(user.id),
@@ -347,6 +351,7 @@ class RbacNotificationEventHandler:
                 },
                 expires_at=None,
                 read=False,
+                is_important=is_important,
             )
         )
 

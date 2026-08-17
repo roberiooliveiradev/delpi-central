@@ -46,6 +46,7 @@ def test_resolve_icon_for_category_prefers_published():
 def test_get_preferences_enriches_icons_from_admin_apps(_mock_plugins):
     uow = MagicMock()
     uow.notification_preferences.get_muted_categories.return_value = []
+    uow.notification_preferences.get_important_categories.return_value = []
     uow.admin_apps.get.side_effect = lambda app_id: (
         SimpleNamespace(icon="briefcase-business")
         if app_id == "commercial"

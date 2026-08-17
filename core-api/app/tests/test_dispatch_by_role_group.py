@@ -19,6 +19,7 @@ def test_dispatch_resolves_role_and_group_ids():
     uow.notification_preferences.filter_user_ids_accepting_category.side_effect = (
         lambda user_ids, _category: user_ids
     )
+    uow.notification_preferences.is_category_important.return_value = False
     uow.rbac_queries.list_user_ids_by_role.return_value = [user_from_role]
     uow.rbac_queries.list_user_ids_by_group_role.return_value = []
     uow.rbac_queries.list_user_ids_by_group.return_value = [user_from_group]

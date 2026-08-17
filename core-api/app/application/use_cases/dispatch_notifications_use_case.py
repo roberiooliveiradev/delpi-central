@@ -138,6 +138,11 @@ class DispatchNotificationsUseCase:
             else:
                 prepared = prepared_shared
 
+            is_important = self.uow.notification_preferences.is_category_important(
+                user_id,
+                prepared.category,
+            )
+
             notification_id = self.uow.notifications.create(
                 NotificationDTO(
                     user_id=user_id,
@@ -154,6 +159,7 @@ class DispatchNotificationsUseCase:
                     metadata=prepared.metadata,
                     expires_at=prepared.expires_at,
                     read=False,
+                    is_important=is_important,
                 )
             )
 
