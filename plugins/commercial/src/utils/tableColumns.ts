@@ -59,7 +59,7 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
   { key: "data_despacho", label: "Despacho", sortable: true },
   { key: "valor_aberto", label: "Valor aberto", sortable: true },
-  { key: "status", label: "Status estoque" },
+  { key: "status", label: "Status estoque", sortable: true },
   { key: "atraso_dias", label: "Atraso (dias)", sortable: true },
 ];
 

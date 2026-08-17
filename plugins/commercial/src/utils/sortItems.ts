@@ -2,6 +2,7 @@ import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { compareDeliveryDates, getDeliveryOverdueDays } from "./dates";
 import { getLineOpForecast } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
+import { getLineStatusSortRank } from "./statusBadges";
 
 export type SortKey =
   | "nome_cliente"
@@ -16,7 +17,8 @@ export type SortKey =
   | "cobertura"
   | "valor_aberto"
   | "previsao_entrega_op"
-  | "atraso_dias";
+  | "atraso_dias"
+  | "status";
 
 export type SortDirection = "asc" | "desc";
 
@@ -92,6 +94,13 @@ export function sortPedidosItems(
         const left = getDeliveryOverdueDays(a.data_entrega) ?? 0;
         const right = getDeliveryOverdueDays(b.data_entrega) ?? 0;
         result = left - right;
+        break;
+      }
+      case "status": {
+        result = getLineStatusSortRank(a) - getLineStatusSortRank(b);
+        if (result === 0) {
+          result = compareStrings(a.pedido, b.pedido) || compareStrings(a.linha, b.linha);
+        }
         break;
       }
       default:

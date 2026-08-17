@@ -134,3 +134,20 @@ export function isFaturavelStatus(kind: LineStatusKind): boolean {
 export function isParcialStatus(kind: LineStatusKind): boolean {
   return PARCIAL_KINDS.includes(kind);
 }
+
+/**
+ * Rank operacional para ordenação (menor = mais urgente).
+ * Asc: atrasados/sem estoque primeiro; desc: pode faturar primeiro.
+ */
+export const LINE_STATUS_SORT_RANK: Record<LineStatusKind, number> = {
+  atrasado_sem_estoque: 0,
+  atrasado_parcial: 1,
+  atrasado_com_estoque: 2,
+  sem_estoque: 3,
+  estoque_parcial: 4,
+  pode_faturar: 5,
+};
+
+export function getLineStatusSortRank(item: OpenOrdersTotvsItem): number {
+  return LINE_STATUS_SORT_RANK[getLineStatus(item).kind] ?? 99;
+}

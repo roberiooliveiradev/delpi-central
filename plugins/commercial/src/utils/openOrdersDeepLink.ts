@@ -34,6 +34,7 @@ const SORT_QUERY_VALUES = new Set<SortKey>([
   "valor_aberto",
   "previsao_entrega_op",
   "atraso_dias",
+  "status",
 ]);
 
 export type OpenOrdersSellerAccess = {
