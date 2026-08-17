@@ -46,6 +46,7 @@ Documentação oficial: `api-delpi/docs/api/06-modulos-departamentais.md` (seç�
 | `listQualityBranches` | GET | `/quality/branches` | `date_start`, `date_end` |
 | `getPpmSeries` | GET | `/quality/ppm/{type}/series` | `granularity`, `branch`, `date_start`, `date_end` |
 | `getNonconformitySeries` | GET | `/quality/nonconformities/series` | `type`, `granularity`, `branch`, `date_start`, `date_end`, filtros NC |
+| `getNonconformityStreak` (TV/chat) | GET | `/quality/nonconformities/streak` | `type` (default `customer`), `branch`, `product_prefix` (`9048`/`9026`) — **não** usado neste MFE |
 
 ---
 

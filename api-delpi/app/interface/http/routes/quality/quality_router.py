@@ -46,6 +46,7 @@ from app.composition.quality_composer import (
     build_get_kaizen_by_id_use_case,
     build_get_kaizen_summary_use_case,
     build_get_nonconformity_series_use_case,
+    build_get_nonconformity_streak_use_case,
     build_list_nonconformity_use_case,
     build_list_quality_branches_use_case,
 )
@@ -53,11 +54,13 @@ from app.interface.http.kpi_field_labels import (
     QUALITY_AUDIT_5S_FIELD_LABELS,
     QUALITY_KAIZEN_FIELD_LABELS,
     QUALITY_KAIZEN_DETAIL_FIELD_LABELS,
+    QUALITY_NONCONFORMITY_STREAK_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.openapi_agent_metadata import (
     QUALITY_KAIZEN_BY_ID,
     QUALITY_KAIZEN_SUMMARY,
+    QUALITY_NONCONFORMITY_STREAK,
 )
 from app.interface.http.routes.quality.action_plans_read_router import (
     router as action_plans_read_router,
@@ -178,6 +181,45 @@ def get_nonconformity_series(
         log_error(f"Erro ao buscar série de NC: {exc}")
         return error_response(
             "Erro interno ao buscar série de não conformidades.",
+            status_code=500,
+        )
+
+
+@router.get("/nonconformities/streak", **QUALITY_NONCONFORMITY_STREAK)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_nonconformity_streak(
+    type: str = NONCONFORMITY_TYPE_QUERY(default="customer"),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    product_prefix: Optional[str] = Query(
+        None,
+        description=(
+            "Finished-product code prefix (QI2_ITEM). Use 9048 for plugs, "
+            "9026 for components. Digits only; empty = all products."
+        ),
+    ),
+):
+    try:
+        use_case = build_get_nonconformity_streak_use_case()
+        result = use_case.execute(
+            filter_type=type,
+            branch=branch,
+            product_prefix=product_prefix,
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_nonconformity_streak",
+            fields=kpi_fields(QUALITY_NONCONFORMITY_STREAK_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao calcular streak de NC: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao calcular streak de NC: {exc}")
+        return error_response(
+            "Erro interno ao calcular dias sem não conformidades.",
             status_code=500,
         )
 

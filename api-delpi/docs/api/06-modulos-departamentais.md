@@ -386,6 +386,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/branches` | Filiais disponíveis para filtros. |
 | GET | `/quality/nonconformities` | Lista NC do Protheus. |
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
+| GET | `/quality/nonconformities/streak` | Dias corridos sem NC (mesmo filtro `type` do dashboard; default `customer`). `product_prefix` opcional (`9048` plugues, `9026` componentes). |
 | GET | `/quality/kaizens/summary` | Resumo analítico: `total_savings`, `total_hours_saved`. |
 | GET | `/quality/kaizens/{kaizen_id}` | Detalhe analítico de um kaizen (PostgreSQL; `{kaizen_id:path}`). |
 | GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |

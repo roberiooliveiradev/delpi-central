@@ -19218,6 +19218,81 @@
       ]
     },
     {
+      "operationId": "get_nonconformity_streak",
+      "httpMethod": "GET",
+      "label": "Dias sem NC de cliente",
+      "category": "quality",
+      "path": "/quality/nonconformities/streak",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Dias corridos desde a última não conformidade TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente. Prefixo 9048 = plugues, 9026 = componentes.",
+      "whenToUse": "Use em card KPI na TV quando precisar do placar de dias sem NC de cliente (ou outro tipo via parâmetro type).",
+      "paramSchema": {
+        "type": {
+          "type": "string",
+          "optional": true,
+          "label": "Tipo",
+          "default": "customer",
+          "enum": [
+            "internal",
+            "customer",
+            "supplier",
+            "external",
+            "all"
+          ],
+          "description": "Tipo do registro a filtrar."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "product_prefix": {
+          "type": "string",
+          "optional": true,
+          "label": "Prefixo do produto",
+          "description": "9048 = plugues, 9026 = componentes. Vazio = todos."
+        }
+      },
+      "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "current_days_without_nc"
+      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "current_days_without_nc": "number",
+        "record_days_without_nc": "number",
+        "nc_count": "number"
+      },
+      "valueFieldLabels": {
+        "value": "Dias sem NC",
+        "current_days_without_nc": "Dias atuais sem NC",
+        "record_days_without_nc": "Recorde de dias sem NC",
+        "last_nc_date": "Data da última NC"
+      },
+      "labelAliases": [
+        "Qualidade — dias sem NC no cliente",
+        "Dias sem defeitos no cliente"
+      ],
+      "defaultParams": {
+        "type": "customer"
+      }
+    },
+    {
       "operationId": "list_ppm_external",
       "httpMethod": "GET",
       "label": "PPM externo — listagem",

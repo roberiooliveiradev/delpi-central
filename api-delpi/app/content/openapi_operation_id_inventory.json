@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 531,
-  "stableCount": 531,
+  "operationCount": 533,
+  "stableCount": 533,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -3070,6 +3070,13 @@
       "operationId": "get_nonconformity_series",
       "method": "GET",
       "path": "/quality/nonconformities/series",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_nonconformity_streak",
+      "method": "GET",
+      "path": "/quality/nonconformities/streak",
       "tag": "Qualidade",
       "stable": true
     },

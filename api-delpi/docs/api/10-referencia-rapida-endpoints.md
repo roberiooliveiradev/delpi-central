@@ -289,6 +289,7 @@ Legenda de permissões:
 | GET | `/quality/branches` | Q |
 | GET | `/quality/nonconformities` | Q |
 | GET | `/quality/nonconformities/series` | Q |
+| GET | `/quality/nonconformities/streak` | Q |
 | GET | `/quality/kaizens/summary` | Q |
 | GET | `/quality/kaizens/{kaizen_id}` | Q |
 | GET | `/quality/kaizens/records` | KZ-R |

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-08-14",
-  "baselineOperationCount": 657,
-  "operationCount": 657,
-  "coveredCount": 584,
+  "baselineOperationCount": 658,
+  "operationCount": 658,
+  "coveredCount": 585,
   "gapCount": 72,
   "exemptCount": 1,
   "byModule": {
@@ -158,8 +158,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 139,
-      "covered": 139,
+      "total": 140,
+      "covered": 140,
       "gap": 0,
       "exempt": 0
     },
@@ -5236,6 +5236,15 @@
       "path": "/quality/nonconformities/series",
       "module": "quality",
       "entity": "nonconformity_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_nonconformity_streak",
+      "method": "GET",
+      "path": "/quality/nonconformities/streak",
+      "module": "quality",
+      "entity": "nonconformity_streak",
       "shape": "scalar",
       "status": "covered"
     },

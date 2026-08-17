@@ -246,6 +246,19 @@ PRODUCTION_APPOINTMENTS_SERIES_FIELD_LABELS: dict[str, str] = {
     "granularity": "Granularidade",
 }
 
+QUALITY_NONCONFORMITY_STREAK_FIELD_LABELS: dict[str, str] = {
+    "value": "Dias sem NC",
+    "current_days_without_nc": "Dias atuais sem NC",
+    "record_days_without_nc": "Recorde de dias sem NC",
+    "last_nc_date": "Data da última NC",
+    "reference_start_date": "Data âncora quando não há NC",
+    "as_of_date": "Data de referência do cálculo",
+    "nc_count": "Dias com NC registrada",
+    "type": "Tipo de NC",
+    "branch": "Filial",
+    "product_prefix": "Prefixo de produto",
+}
+
 QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
     "qty_returned_un": "Quantidade devolvida (un.)",
     "nc_count": "Quantidade de NCs",

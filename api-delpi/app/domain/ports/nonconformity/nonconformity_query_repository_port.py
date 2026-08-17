@@ -1,6 +1,7 @@
 # app/domain/ports/nonconformity/nonconformity_query_repository_port.py
 
 from abc import ABC, abstractmethod
+from datetime import date
 
 from app.application.dto.nonconformity.list_nonconformity_request import (
     ListNonconformityRequest,
@@ -24,4 +25,14 @@ class NonconformityQueryRepositoryPort(ABC):
         occurrence_date_start: str | None = None,
         occurrence_date_end: str | None = None,
     ) -> tuple[float, int]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_occurrence_dates(
+        self,
+        *,
+        filter_type: str,
+        branch: str | None = None,
+        product_prefix: str | None = None,
+    ) -> list[date]:
         raise NotImplementedError

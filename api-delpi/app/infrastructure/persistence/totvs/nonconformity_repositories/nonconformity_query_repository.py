@@ -1,5 +1,7 @@
 # app/infrastructure/persistence/totvs/nonconformity_repositories/nonconformity_query_repository.py
 
+from datetime import date
+
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
@@ -16,6 +18,12 @@ from app.domain.services.quality.nonconformity_display_service import (
 )
 from app.domain.services.quality.nonconformity_query_filter_service import (
     qi2_tipo_codes_for_filter,
+)
+from app.domain.services.calendar_occurrence_streak_service import (
+    coerce_occurrence_date,
+)
+from app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_occurrence_sql import (
+    build_occurrence_dates_query,
 )
 from app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_query_filters import (
     apply_nonconformity_text_filters,
@@ -233,3 +241,25 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
             float(row.get("total_returned") or 0),
             int(row.get("registros") or 0),
         )
+
+    def list_occurrence_dates(
+        self,
+        *,
+        filter_type: str,
+        branch: str | None = None,
+        product_prefix: str | None = None,
+    ) -> list[date]:
+        sql, params = build_occurrence_dates_query(
+            filter_type=filter_type,
+            branch=branch,
+            product_prefix=product_prefix,
+        )
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        dates: list[date] = []
+        for row in rows:
+            parsed = coerce_occurrence_date(row.get("occurrence_date"))
+            if parsed is not None:
+                dates.append(parsed)
+        return dates

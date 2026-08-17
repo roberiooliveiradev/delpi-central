@@ -34,6 +34,29 @@ def test_get_nonconformity_series_returns_meta(mock_build) -> None:
     assert_envelope_meta(body_json(response), operation_id="get_nonconformity_series")
 
 
+@patch(f"{_Q}.build_get_nonconformity_streak_use_case")
+def test_get_nonconformity_streak_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.quality_router import get_nonconformity_streak
+
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "value": 12,
+                "current_days_without_nc": 12,
+                "record_days_without_nc": 40,
+                "last_nc_date": "2026-08-05",
+                "type": "customer",
+                "branch": "all",
+            }
+        )
+    )
+    response = get_nonconformity_streak(type="customer", branch=None, product_prefix=None)
+    body = body_json(response)
+    assert_envelope_meta(body, operation_id="get_nonconformity_streak")
+    assert body["data"]["value"] == 12
+    assert body["meta"]["entity"] == "nonconformity_streak"
+
+
 @patch(f"{_PPM}.build_list_ppm_use_case")
 def test_list_ppm_internal_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import list_internal_ppm

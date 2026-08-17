@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 657,
+  "operation_count": 658,
   "operations": [
     {
       "method": "POST",
@@ -74359,6 +74359,200 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Nonconformity series."
+    },
+    {
+      "method": "GET",
+      "path": "/quality/nonconformities/streak",
+      "operationId": "get_nonconformity_streak",
+      "summary": "Days without quality nonconformity",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "description": "Nonconformity type filter: internal (QI2_TIPO=1), customer (2), supplier (3), external (2+3 legacy), or all.",
+          "type": "string",
+          "default": "customer",
+          "enum": [
+            "internal",
+            "customer",
+            "supplier",
+            "external",
+            "all"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "product_prefix",
+          "in": "query",
+          "required": false,
+          "description": "Finished-product code prefix (QI2_ITEM). Use 9048 for plugs, 9026 for components. Digits only; empty = all products.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "nonconformity_streak",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Days without quality nonconformity",
+            "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). No period: history until today.",
+            "whenToUse": "Use as a TV KPI card for days without customer nonconformity (or another type via the type parameter).",
+            "label": "Days without customer NC"
+          },
+          "pt-BR": {
+            "summary": "Dias sem não conformidade de qualidade",
+            "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Sem período: histórico até hoje.",
+            "whenToUse": "Use em card KPI na TV para o placar de dias sem NC de cliente (ou outro tipo via parâmetro type).",
+            "label": "Dias sem NC de cliente"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "type": {
+            "locale": {
+              "en": {
+                "description": "Type query parameter.",
+                "label": "Type"
+              },
+              "pt-BR": {
+                "description": "Tipo do registro a filtrar.",
+                "label": "Tipo"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
+              "external": {
+                "en": {
+                  "label": "External"
+                },
+                "pt-BR": {
+                  "label": "Externo"
+                }
+              },
+              "internal": {
+                "en": {
+                  "label": "Internal"
+                },
+                "pt-BR": {
+                  "label": "Interno"
+                }
+              },
+              "supplier": {
+                "en": {
+                  "label": "Supplier"
+                },
+                "pt-BR": {
+                  "label": "Fornecedor"
+                }
+              }
+            }
+          },
+          "product_prefix": {
+            "locale": {
+              "en": {
+                "description": "Finished-product family prefix (QI2_ITEM). 9048 = plugs, 9026 = components.",
+                "label": "Product prefix"
+              },
+              "pt-BR": {
+                "description": "Prefixo da família do produto (QI2_ITEM). 9048 = plugues, 9026 = componentes.",
+                "label": "Prefixo do produto"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use em card KPI na TV para o placar de dias sem NC de cliente (ou outro tipo via parâmetro type).",
+          "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Sem período: histórico até hoje.",
+          "label": "Dias sem NC de cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). No period: history until today."
     },
     {
       "method": "GET",
