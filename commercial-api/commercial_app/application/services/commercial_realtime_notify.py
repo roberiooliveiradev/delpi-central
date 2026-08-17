@@ -21,6 +21,8 @@ WorklistChangeReason = Literal[
     "task.deferred",
     "task.reassigned",
     "task.deleted",
+    "task.due_soon",
+    "task.overdue",
     "attachment.changed",
 ]
 
@@ -64,6 +66,16 @@ _NOTIFICATION_BY_REASON: dict[WorklistChangeReason, dict[Audience, tuple[str, st
         "assignee": ("Tarefa excluída", "{actor} excluiu: {title}", "warning"),
         "previous": ("Tarefa excluída", "{actor} excluiu: {title}", "warning"),
         "team": ("Tarefa excluída", "{actor} excluiu: {title}", "warning"),
+    },
+    "task.due_soon": {
+        "assignee": ("Tarefa vence em breve", "{title}", "warning"),
+        "previous": ("Tarefa vence em breve", "{title}", "warning"),
+        "team": ("Tarefa vence em breve", "{title}", "warning"),
+    },
+    "task.overdue": {
+        "assignee": ("Tarefa atrasada", "{title}", "error"),
+        "previous": ("Tarefa atrasada", "{title}", "error"),
+        "team": ("Tarefa atrasada", "{title}", "error"),
     },
     "attachment.changed": {
         "assignee": ("Anexo na tarefa", "{actor} alterou anexo em: {title}", "info"),
@@ -211,6 +223,15 @@ def build_account_notification(
     }
 
 
+def portal_task_event_to_worklist_reason(event_type: str) -> WorklistChangeReason | None:
+    """Map commercial.task.* portal events that need WS toast when online."""
+    mapping: dict[str, WorklistChangeReason] = {
+        "commercial.task.due_soon": "task.due_soon",
+        "commercial.task.overdue": "task.overdue",
+    }
+    return mapping.get(event_type)
+
+
 def notify_worklist_changed(
     *,
     reason: WorklistChangeReason,
@@ -221,6 +242,7 @@ def notify_worklist_changed(
     actor_display_name: str | None = None,
     assignee_display_name: str | None = None,
     task_title: str | None = None,
+    notification_override: dict[str, str] | None = None,
 ) -> None:
     """
     Um payload por broadcast (team + user rooms).
@@ -238,7 +260,7 @@ def notify_worklist_changed(
         _safe_label(assignee_display_name)
         or resolve_user_display_name(current_assignee_id)
     )
-    notification = build_worklist_notification(
+    notification = notification_override or build_worklist_notification(
         reason=reason,
         task_title=task_title,
         actor_display_name=actor_label,
@@ -260,6 +282,63 @@ def notify_worklist_changed(
     rooms: set[str] = {TEAM_ROOM}
     for uid in assignees:
         rooms.add(user_room(uid))
+    for room in rooms:
+        commercial_realtime_hub.schedule_broadcast(room, payload)
+
+
+def notify_ready_to_invoice_changed(
+    *,
+    user_ids: Sequence[str],
+    line_key: str,
+    pedido: str,
+    linha: str,
+    cliente: str,
+    action_target: str | None = None,
+    filial: str = "",
+) -> None:
+    """Toast for users online in Commercial when a line becomes ready_to_invoice."""
+    from commercial_app.domain.services.ready_to_invoice_notification_content_service import (
+        ReadyToInvoiceNotificationContentService,
+    )
+
+    recipients = [uid.strip() for uid in user_ids if uid and str(uid).strip()]
+    if not recipients:
+        return
+    content = ReadyToInvoiceNotificationContentService
+    block = content.notification_block()
+    title = str(block.get("title") or "Pedido pronto para faturar").strip()
+    message = content.format_message(
+        pedido=pedido, linha=linha, cliente=cliente or "—"
+    )
+    notification_type = str(block.get("type") or "info").strip() or "info"
+    variant = (
+        notification_type
+        if notification_type in {"info", "success", "warning", "error"}
+        else "info"
+    )
+    target = (action_target or "").strip() or content.build_deep_link_path(
+        pedido=pedido,
+        linha=linha,
+        filial=filial,
+    )
+    target = content.without_forced_view(target)
+    payload = {
+        "type": "orders.ready_to_invoice",
+        "lineKey": (line_key or "").strip() or None,
+        "pedido": (pedido or "").strip() or None,
+        "linha": (linha or "").strip() or None,
+        "cliente": (cliente or "").strip() or None,
+        "filial": (filial or "").strip() or None,
+        "actionTarget": target,
+        "userIds": recipients,
+        "notification": {
+            "title": title,
+            "message": message,
+            "variant": variant,
+        },
+    }
+    rooms = {user_room(uid) for uid in recipients}
+    rooms.add(TEAM_ROOM)
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, payload)
 

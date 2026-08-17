@@ -190,12 +190,19 @@ def test_publish_acks_when_all_user_ids_online_and_no_permissions(monkeypatch) -
     from commercial_app.application.services import (
         task_portal_notification_delivery_policy as policy_mod,
     )
+    from commercial_app.application.services import commercial_realtime_notify as notify_mod
 
     class _Hub:
         def is_user_online(self, user_id: str | None) -> bool:
             return True
 
     monkeypatch.setattr(policy_mod, "commercial_realtime_hub", _Hub())
+    ws_calls: list[dict] = []
+
+    def _capture_r2i(**kwargs):
+        ws_calls.append(kwargs)
+
+    monkeypatch.setattr(notify_mod, "notify_ready_to_invoice_changed", _capture_r2i)
     outbox = _OutboxMemory()
     outbox.enqueue(
         event_type="commercial.order.ready_to_invoice",
@@ -228,6 +235,60 @@ def test_publish_acks_when_all_user_ids_online_and_no_permissions(monkeypatch) -
     ).execute()
     assert result.published == 1
     assert calls == []
+    assert len(ws_calls) == 1
+    assert ws_calls[0]["user_ids"] == ["online-user"]
+
+
+def test_publish_due_soon_toasts_online_and_portals_offline(monkeypatch) -> None:
+    from commercial_app.application.services import (
+        task_portal_notification_delivery_policy as policy_mod,
+    )
+    from commercial_app.application.services import commercial_realtime_notify as notify_mod
+
+    class _Hub:
+        def is_user_online(self, user_id: str | None) -> bool:
+            return str(user_id or "") == "online-user"
+
+    monkeypatch.setattr(policy_mod, "commercial_realtime_hub", _Hub())
+    ws_calls: list[dict] = []
+
+    def _capture_wl(**kwargs):
+        ws_calls.append(kwargs)
+
+    monkeypatch.setattr(notify_mod, "notify_worklist_changed", _capture_wl)
+    outbox = _OutboxMemory()
+    outbox.enqueue(
+        event_type="commercial.task.due_soon",
+        aggregate_type="commercial_task",
+        aggregate_id="task-1",
+        payload={
+            "taskId": "task-1",
+            "title": "Ligar ACME",
+            "dueAt": "2026-08-18T12:00:00+00:00",
+            "userIds": ["online-user", "offline-user"],
+            "actionTarget": "/apps/commercial/my-tasks",
+            "dedupeKey": "commercial:task:due_soon:task-1",
+            "bucket": "today",
+        },
+    )
+    portal_calls: list[dict] = []
+
+    class _Notifier(CommercialPortalNotificationService):
+        def __init__(self) -> None:
+            super().__init__(enabled=True, service_token="tok")
+
+        def notify_task_event(self, **kwargs):  # type: ignore[override]
+            portal_calls.append(kwargs)
+            return True
+
+    result = PublishIntegrationOutboxUseCase(
+        outbox=outbox,
+        notifier=_Notifier(),
+    ).execute()
+    assert result.published == 1
+    assert ws_calls[0]["reason"] == "task.due_soon"
+    assert ws_calls[0]["assignee_user_ids"] == ["online-user"]
+    assert portal_calls[0]["user_ids"] == ["offline-user"]
 
 
 def test_portal_notification_payload_shape(monkeypatch) -> None:

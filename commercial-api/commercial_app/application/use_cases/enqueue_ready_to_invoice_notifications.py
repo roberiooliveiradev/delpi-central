@@ -95,25 +95,39 @@ class PublishIntegrationOutboxUseCase:
         self._content = content or ReadyToInvoiceNotificationContentService
 
     def _publish_row(self, row) -> bool:
+        from commercial_app.application.services.commercial_realtime_notify import (
+            notify_ready_to_invoice_changed,
+            notify_worklist_changed,
+            portal_task_event_to_worklist_reason,
+        )
+        from commercial_app.application.services.task_portal_notification_delivery_policy import (
+            TaskPortalNotificationDeliveryPolicy,
+        )
         from commercial_app.domain.services.task_portal_notification_content_service import (
             TASK_PORTAL_EVENT_TYPES,
+            TaskPortalNotificationContentService,
         )
 
         payload = row.payload if isinstance(row.payload, dict) else {}
         if not self._notifier.enabled:
             return True
 
-        from commercial_app.application.services.task_portal_notification_delivery_policy import (
-            TaskPortalNotificationDeliveryPolicy,
-        )
-
         delivery = TaskPortalNotificationDeliveryPolicy()
         ready_event = self._content.event_type()
         if row.event_type == ready_event:
             all_user_ids = list(payload.get("userIds") or [])
             permission_codes = list(payload.get("permissionCodes") or [])
-            offline = delivery.filter_portal_recipients(ready_event, all_user_ids)
-            # Permission-broadcast recipients stay on portal (no per-user presence).
+            online, offline = delivery.split_online_offline(ready_event, all_user_ids)
+            if online:
+                notify_ready_to_invoice_changed(
+                    user_ids=online,
+                    line_key=str(payload.get("lineKey") or row.aggregate_id),
+                    pedido=str(payload.get("pedido") or ""),
+                    linha=str(payload.get("linha") or ""),
+                    cliente=str(payload.get("cliente") or ""),
+                    filial=str(payload.get("filial") or ""),
+                    action_target=str(payload.get("actionTarget") or "") or None,
+                )
             if not offline and not permission_codes:
                 return True
             return self._notifier.notify_ready_to_invoice(
@@ -128,15 +142,43 @@ class PublishIntegrationOutboxUseCase:
             )
 
         if row.event_type in TASK_PORTAL_EVENT_TYPES:
-            recipients = delivery.filter_portal_recipients(
-                row.event_type,
-                list(payload.get("userIds") or []),
+            all_user_ids = list(payload.get("userIds") or [])
+            online, offline = delivery.split_online_offline(
+                row.event_type, all_user_ids
             )
-            if not recipients:
+            ws_reason = portal_task_event_to_worklist_reason(row.event_type)
+            if online and ws_reason is not None:
+                title = str(payload.get("title") or "Tarefa")
+                due_at = str(payload.get("dueAt") or "") or None
+                message = TaskPortalNotificationContentService.format_message(
+                    row.event_type, title=title, due_at_iso=due_at
+                )
+                notif_type = TaskPortalNotificationContentService.notification_type_for(
+                    row.event_type
+                )
+                variant = (
+                    notif_type
+                    if notif_type in {"info", "success", "warning", "error"}
+                    else "info"
+                )
+                notify_worklist_changed(
+                    reason=ws_reason,
+                    task_id=str(payload.get("taskId") or row.aggregate_id),
+                    assignee_user_ids=online,
+                    task_title=title,
+                    notification_override={
+                        "title": TaskPortalNotificationContentService.title_for(
+                            row.event_type
+                        ),
+                        "message": message,
+                        "variant": variant,
+                    },
+                )
+            if not offline:
                 return True
             return self._notifier.notify_task_event(
                 event_type=row.event_type,
-                user_ids=recipients,
+                user_ids=offline,
                 task_id=str(payload.get("taskId") or row.aggregate_id),
                 title=str(payload.get("title") or "Tarefa"),
                 due_at=str(payload.get("dueAt") or "") or None,

@@ -58,7 +58,7 @@ conjunto de usuários online muda, e como **snapshot** ao entrar na sala `team`.
 }
 ```
 
-Valores de `reason`: `task.created`, `task.updated`, `task.completed`, `task.deferred`, `task.reassigned`, `attachment.changed`.
+Valores de `reason`: `task.created`, `task.updated`, `task.completed`, `task.deferred`, `task.reassigned`, `task.deleted`, `task.due_soon`, `task.overdue`, `attachment.changed`.
 
 `actorDisplayName` vem do usuário autenticado (RBAC `name` / `preferred_username` / e-mail via `bind_request_actor`); se ausente → «Alguém da equipe» (o MFE tenta resolver pelo diretório com `actorUserId`). Não usar o `display_name` da carteira como nome da pessoa. `assigneeDisplayName` é o responsável atual.
 
@@ -71,6 +71,34 @@ O payload `notification` no fio é genérico (audiência `team`). O MFE personal
 | Gestor / equipe | `{actor} atribuiu: {title}` / `{actor} reatribuiu…` |
 
 Assim gestores em `user:` + `team` não recebem toast duplicado.
+
+Lembretes `task.due_soon` / `task.overdue` saem do job de due scan: se o destinatário está **online** no Comercial, o publish da outbox emite toast WS (em vez do sino Minha Delpi).
+
+### `orders.ready_to_invoice`
+
+Emitido no publish da outbox quando uma linha entra em Pronto para faturar e o destinatário está **online** no Comercial (WS). Offline continua no sino Minha Delpi (categoria `commercial`).
+
+```json
+{
+  "type": "orders.ready_to_invoice",
+  "lineKey": "01|102655|05",
+  "pedido": "102655",
+  "linha": "05",
+  "cliente": "WEG MOTORES",
+  "filial": "01",
+  "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice&q=102655&branch=01",
+  "userIds": ["seller-a"],
+  "notification": {
+    "title": "Pedido pronto para faturar",
+    "message": "A linha 102655/05 do cliente WEG MOTORES entrou em Pronto para faturar.",
+    "variant": "info"
+  }
+}
+```
+
+### Portal vs toast (presença)
+
+`TaskPortalNotificationDeliveryPolicy` consulta `CommercialRealtimeHub.is_user_online`. Online → toast WS; offline → Core `/integrations/notifications`. Cobre eventos de tarefa (`commercial.task.*`) e `commercial.order.ready_to_invoice`.
 
 ### `portfolio.changed`
 
