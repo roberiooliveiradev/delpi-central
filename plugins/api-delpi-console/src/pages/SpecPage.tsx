@@ -13,6 +13,18 @@ type OpenApiDiffPayload = {
   changed: Array<{ method: string; path: string; changes: Record<string, unknown> }>;
 };
 
+type EnvelopeContractsPayload = {
+  version?: string;
+  description?: string;
+  routes: Array<{
+    method: string;
+    path: string;
+    operationId: string;
+    entity: string;
+    shape: string;
+  }>;
+};
+
 type Props = {
   onNavigate: (path: string) => void;
 };
@@ -30,15 +42,21 @@ export function SpecPage({ onNavigate }: Props) {
   const [tagFilter, setTagFilter] = useState("");
   const [diff, setDiff] = useState<OpenApiDiffPayload | null>(null);
   const [diffError, setDiffError] = useState<string | null>(null);
+  const [envelopes, setEnvelopes] = useState<EnvelopeContractsPayload | null>(null);
+  const [envelopeError, setEnvelopeError] = useState<string | null>(null);
+  const [envelopeLoading, setEnvelopeLoading] = useState(false);
 
   const loadSpec = useCallback(async () => {
     setLoading(true);
     setError(null);
     setDiffError(null);
+    setEnvelopeError(null);
+    setEnvelopeLoading(true);
     try {
-      const [data, diffResponse] = await Promise.all([
+      const [data, diffResponse, envelopeResponse] = await Promise.all([
         fetchOpenApiSpec(),
         apiFetch("/system/openapi-diff"),
+        apiFetch("/system/envelope-contracts"),
       ]);
       setSpec(data);
       if (diffResponse.ok) {
@@ -47,12 +65,20 @@ export function SpecPage({ onNavigate }: Props) {
         setDiff(null);
         setDiffError(`Diff indisponível (HTTP ${diffResponse.status})`);
       }
+      if (envelopeResponse.ok) {
+        setEnvelopes(unwrapEnvelope<EnvelopeContractsPayload>(envelopeResponse.data));
+      } else {
+        setEnvelopes(null);
+        setEnvelopeError(`Envelopes indisponíveis (HTTP ${envelopeResponse.status})`);
+      }
     } catch (e) {
       setSpec(null);
       setDiff(null);
+      setEnvelopes(null);
       setError(e instanceof Error ? e.message : "Erro ao carregar especificação");
     } finally {
       setLoading(false);
+      setEnvelopeLoading(false);
     }
   }, []);
 
@@ -162,6 +188,56 @@ export function SpecPage({ onNavigate }: Props) {
             </section>
           ) : null}
           {diffError ? <p className="adc-muted">{diffError}</p> : null}
+
+          <section className="adc-panel">
+            <h2 className="adc-section-title">Contratos de envelope</h2>
+            {envelopeLoading ? (
+              <p className="adc-muted">Carregando golden de envelopes…</p>
+            ) : envelopeError ? (
+              <p className="adc-error">{envelopeError}</p>
+            ) : envelopes ? (
+              <>
+                <p className="adc-muted">
+                  {envelopes.description || "Contratos meta.operationId / entity / shape."}
+                  {envelopes.version ? ` · versão ${envelopes.version}` : ""}
+                </p>
+                <div className="adc-table-wrap">
+                  <table className="adc-table">
+                    <thead>
+                      <tr>
+                        <th>Método</th>
+                        <th>Path</th>
+                        <th>operationId</th>
+                        <th>entity</th>
+                        <th>shape</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {envelopes.routes.map((route) => (
+                        <tr key={`${route.method}-${route.path}-${route.operationId}`}>
+                          <td>
+                            <span className={`adc-method adc-method--${route.method.toLowerCase()}`}>
+                              {route.method}
+                            </span>
+                          </td>
+                          <td>
+                            <code>{route.path}</code>
+                          </td>
+                          <td>
+                            <code>{route.operationId}</code>
+                          </td>
+                          <td>{route.entity}</td>
+                          <td>{route.shape}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <p className="adc-muted">Nenhum contrato de envelope disponível.</p>
+            )}
+          </section>
 
           <section className="adc-metrics adc-metrics--grid">
             <div className="adc-stat">
