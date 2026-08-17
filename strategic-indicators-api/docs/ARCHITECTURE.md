@@ -159,6 +159,7 @@ Implementação:
 
 - `StrategicIndicatorsSnapshotService.get_current_and_previous_snapshot` força o cômputo/leitura no escopo global (`_compute_comparative_snapshot(department_id=None)`) e, se um `department_id` foi pedido, aplica `_filter_comparative_to_department` (restringe `calculated_departments`, `calculated_indicators` e `measurement_errors`; **IGD/classificação permanecem globais**, pois são da empresa). Cobre: detalhes do departamento, resumo executivo, lista de departamentos, indicadores e alertas.
 - `GetStrategicIndicatorsTrendsRealUseCase` segue a mesma regra: lê a série no escopo global e filtra o departamento solicitado (`_filter_response_to_department`).
+- Integração `get_dashboard_department_snapshot` (IDD no header de dashboards): cache hit no global; em miss, `force_compute` também no **global** (nunca linha só-departamento).
 
 Consequência operacional — a materialização **por departamento** deixou de ser lida. Por isso `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` passa a ter **default `false`** (evita trabalho/IO desnecessário no job de refresh) e fica apenas como flag de diagnóstico. Apenas o escopo global (e os `scope_branch` configurados) é materializado e lido.
 
