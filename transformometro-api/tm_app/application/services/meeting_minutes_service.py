@@ -270,9 +270,52 @@ class MeetingMinutesService:
         signers=self.repo.list_signers(minute_id)
         if not signers: raise ValueError("Configure ao menos um signatário antes de enviar.")
         updated=self.repo.set_status(minute_id=minute_id,status="awaiting_signatures",actor_user_id=self._user_id(user),action="send_for_signature")
+        dispatched = self._dispatch_sign_invites(
+            updated,
+            signers,
+            mail_template_key="signPending",
+        )
+        return {"minute": updated, "signers": signers, "resent_count": dispatched["resent_count"]}
+
+    def resend_sign_invites(self, user: Any, minute_id: str) -> dict[str, Any]:
+        minute = self._load(user, "manage", minute_id)
+        if minute.get("status") not in {"awaiting_signatures", "partially_signed"}:
+            raise ValueError(
+                "Reenvio só é permitido enquanto a ata aguarda assinaturas. "
+                "Se a ata estiver em revisão, use «Enviar para assinatura»."
+            )
+        signers = self.repo.list_signers(minute_id)
+        targets = [
+            signer
+            for signer in signers
+            if str(signer.get("status") or "") in {"pending", "viewed"}
+        ]
+        if not targets:
+            raise ValueError("Não há signatários pendentes para reenviar.")
+        dispatched = self._dispatch_sign_invites(
+            minute,
+            targets,
+            mail_template_key="signPendingReminder",
+        )
+        return {
+            "minute": minute,
+            "signers": targets,
+            "resent_count": dispatched["resent_count"],
+            "mail_sent": dispatched["mail_sent"],
+        }
+
+    def _dispatch_sign_invites(
+        self,
+        minute: dict[str, Any],
+        signers: list[dict[str, Any]],
+        *,
+        mail_template_key: str,
+    ) -> dict[str, Any]:
         mail_signers: list[dict[str, Any]] = []
         for signer in signers:
-            issued = self.sign_invites.issue(signer=signer, minute=updated)
+            issued = self.sign_invites.issue(signer=signer, minute=minute)
+            invite = issued.get("invite") or {}
+            invite_id = str(invite.get("id") or "").strip()
             payload = {
                 **signer,
                 "sign_url": issued["sign_url"],
@@ -281,18 +324,25 @@ class MeetingMinutesService:
             mail_signers.append(payload)
             user_id = str(signer.get("user_id") or "").strip()
             if user_id:
+                dedupe = (
+                    f"tm:sign_pending:{minute['id']}:{user_id}:{invite_id}"
+                    if invite_id
+                    else None
+                )
                 self.notifications.notify_sign_pending(
                     user_id=user_id,
-                    minute_id=str(updated["id"]),
-                    minute_number=str(updated["minute_number"]),
-                    title=str(updated.get("title") or ""),
+                    minute_id=str(minute["id"]),
+                    minute_number=str(minute.get("minute_number") or ""),
+                    title=str(minute.get("title") or ""),
+                    dedupe_key=dedupe,
                 )
-        self.sign_pending_mail.notify_signers(
+        mail_sent = self.sign_pending_mail.notify_signers(
             signers=mail_signers,
-            minute_number=str(updated["minute_number"]),
-            title=str(updated.get("title") or ""),
+            minute_number=str(minute.get("minute_number") or ""),
+            title=str(minute.get("title") or ""),
+            template_key=mail_template_key,
         )
-        return {"minute":updated,"signers":signers}
+        return {"resent_count": len(mail_signers), "mail_sent": mail_sent}
 
     def sign_context(self,user: Any,minute_id: str) -> dict[str,Any]:
         minute=self._load(user,"sign",minute_id); signer=self.repo.get_signer_for_user(minute_id,self._user_id(user))

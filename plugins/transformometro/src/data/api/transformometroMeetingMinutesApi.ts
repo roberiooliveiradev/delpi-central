@@ -149,6 +149,14 @@ export function sendAta(id: string, getAccessToken?: () => string | undefined) {
   return request<Record<string, unknown>>(`/meeting-minutes/${id}/send-for-signature`, getAccessToken, { method: "POST" });
 }
 
+export function resendAtaSignInvites(id: string, getAccessToken?: () => string | undefined) {
+  return request<Record<string, unknown>>(
+    `/meeting-minutes/${id}/resend-sign-invites`,
+    getAccessToken,
+    { method: "POST" },
+  );
+}
+
 export function finalizeAta(id: string, getAccessToken?: () => string | undefined) {
   return request<Record<string, unknown>>(`/meeting-minutes/${id}/finalize`, getAccessToken, { method: "POST" });
 }

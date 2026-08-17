@@ -30,6 +30,7 @@ OPERATION_IDS = (
     "refuse_public_meeting_minute_invite",
     "replace_meeting_minute_participants",
     "replace_meeting_minute_signers",
+    "resend_meeting_minute_sign_invites",
     "send_meeting_minute_for_signature",
     "sign_meeting_minute",
     "sign_public_meeting_minute_invite",

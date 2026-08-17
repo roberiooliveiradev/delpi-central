@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-14",
-  "baselineOperationCount": 149,
-  "operationCount": 149,
-  "coveredCount": 149,
+  "generatedAt": "2026-08-17",
+  "baselineOperationCount": 150,
+  "operationCount": 150,
+  "coveredCount": 150,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "meeting_minutes": {
-      "total": 23,
-      "covered": 23,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -999,6 +999,13 @@
       "operationId": "replace_meeting_minute_participants",
       "method": "PUT",
       "path": "/transformometro/meeting-minutes/{minute_id}/participants",
+      "module": "meeting_minutes",
+      "status": "covered"
+    },
+    {
+      "operationId": "resend_meeting_minute_sign_invites",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/resend-sign-invites",
       "module": "meeting_minutes",
       "status": "covered"
     },

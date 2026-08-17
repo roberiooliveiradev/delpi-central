@@ -116,7 +116,9 @@ class TmPortalNotificationService:
         minute_id: str,
         minute_number: str,
         title: str,
+        dedupe_key: str | None = None,
     ) -> bool:
+        key = (dedupe_key or "").strip() or f"tm:sign_pending:{minute_id}:{user_id}"
         return self.send(
             user_id=user_id,
             title="Assinatura de ata Transforma+ pendente",
@@ -124,7 +126,7 @@ class TmPortalNotificationService:
             notification_type="warning",
             action_label="Assinar ata",
             action_target=self.minute_sign_route(minute_id),
-            dedupe_key=f"tm:sign_pending:{minute_id}:{user_id}",
+            dedupe_key=key,
             event_type=EVENT_SIGN_PENDING,
             metadata={"minuteId": minute_id, "minuteNumber": minute_number},
         )

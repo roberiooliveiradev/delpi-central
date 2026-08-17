@@ -194,10 +194,10 @@ class TmMeetingMinuteSignInviteService:
             if remapped and remapped.get("status") in _ELIGIBLE_SIGNER_STATUSES:
                 signer = remapped
             else:
-                if minute.get("status") not in _AWAITING_MINUTE_STATUSES:
-                    raise ValueError(_MSG_MINUTE_NOT_AWAITING)
                 if stale_version or status == "invalidated":
                     raise ValueError(_MSG_REVISED)
+                if minute.get("status") not in _AWAITING_MINUTE_STATUSES:
+                    raise ValueError(_MSG_MINUTE_NOT_AWAITING)
                 raise ValueError(self._message_for_ineligible_signer(status))
 
         if minute.get("status") not in _AWAITING_MINUTE_STATUSES:

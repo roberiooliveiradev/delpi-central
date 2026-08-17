@@ -168,7 +168,7 @@ def test_resolve_invalidated_without_match_says_revised():
     repo.signers["s1"]["status"] = "invalidated"
     repo.minutes["m1"]["status"] = "in_review"
     repo.minutes["m1"]["current_version_id"] = "v2"
-    with pytest.raises(ValueError, match="não está aguardando"):
+    with pytest.raises(ValueError, match="foi revisada"):
         service.resolve(issued["raw_token"])
 
 

@@ -223,6 +223,17 @@ def send(request: Request, minute_id: str):
         return _handle(exc)
 
 
+@router.post(
+    "/{minute_id}/resend-sign-invites",
+    operation_id="resend_meeting_minute_sign_invites",
+)
+def resend_sign_invites(request: Request, minute_id: str):
+    try:
+        return ok(service.resend_sign_invites(request.state.user, minute_id))
+    except Exception as exc:
+        return _handle(exc)
+
+
 @router.get("/{minute_id}/sign-context", operation_id="get_meeting_minute_sign_context")
 def sign_context(request: Request, minute_id: str):
     try:

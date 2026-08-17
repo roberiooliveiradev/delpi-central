@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-14",
-  "operation_count": 149,
+  "generatedAt": "2026-08-17",
+  "operation_count": 150,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -811,6 +811,12 @@
       "operationId": "replace_meeting_minute_participants",
       "method": "PUT",
       "path": "/transformometro/meeting-minutes/{minute_id}/participants",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "resend_meeting_minute_sign_invites",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/resend-sign-invites",
       "module": "meeting_minutes"
     },
     {

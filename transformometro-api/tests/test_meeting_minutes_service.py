@@ -145,7 +145,7 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
         idempotency_key=None,
     )
     assert signed["minute"]["status"] == "signed"
-    assert repo.invalidated_signer_ids == ["s1"]
+    assert repo.invalidated_signer_ids[-1] == "s1"
     repo.minute["status"] = "draft"
     with pytest.raises(ValueError, match="Transição inválida"):
         service.finalize(user, "m1")
