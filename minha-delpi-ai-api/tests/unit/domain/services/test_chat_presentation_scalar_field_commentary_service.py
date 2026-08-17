@@ -181,3 +181,34 @@ def test_insight_department_indicators_not_empty_list():
     assert any(
         isinstance(item, dict) and str(item.get("value")) == "2" for item in derived
     )
+
+
+def test_si_goal_fields_appear_in_scalar_commentary_highlights():
+    """goal_value / comparable_goal / reference_goal não ficam em skipFieldKeys."""
+    metadata = {
+        "path": "/dashboard/si-indicator-meta",
+        "apiDelpiResponseMeta": {
+            "entity": "dashboard_si_indicator_meta",
+            "shape": "scalar",
+            "fields": {
+                "value": "Realizado",
+                "comparable_goal": "Meta do período",
+                "goal_value": "Meta cadastrada",
+                "reference_goal": "Meta mês (referência)",
+            },
+        },
+    }
+    data = {
+        "value": 52.1,
+        "comparable_goal": 52.1,
+        "goal_value": 95.0,
+        "reference_goal": 95.0,
+    }
+
+    commentary = ChatPresentationScalarFieldCommentaryService.build(metadata, data)
+
+    assert commentary is not None
+    joined = "\n".join(commentary.get("highlights") or [])
+    assert "Meta cadastrada" in joined
+    assert "Meta do período" in joined
+    assert "Meta mês (referência)" in joined

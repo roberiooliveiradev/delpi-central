@@ -277,3 +277,16 @@ def test_fixed_table_columns_removed_from_presenter_bundle():
     assert presenter.get("fixedTableColumnsDeprecated")
     assert "tableProfiles" in _column_labels_content()
     assert "lmpList" in (_column_labels_content().get("tableProfiles") or {})
+
+
+def test_label_for_si_goal_triad_uses_canonical_pt_labels():
+    from app.domain.services.external_actions.external_action_column_label_service import (
+        invalidate_column_label_cache,
+    )
+
+    invalidate_column_label_cache()
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("goal_value") == "Meta cadastrada"
+    assert service.label_for("comparable_goal") == "Meta do período"
+    assert service.label_for("reference_goal") == "Meta mês (referência)"
