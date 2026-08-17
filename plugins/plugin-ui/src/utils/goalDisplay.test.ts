@@ -73,6 +73,7 @@ describe("goalDisplay", () => {
     expect(presentation.goalLabel).toBeNull();
     expect(presentation.monthlyGoalLabel).toBeNull();
     expect(presentation.goalScopeHint).toMatch(/Selecione uma unidade/i);
+    expect(formatKpiGoalExportFragments(presentation)).toEqual([]);
   });
 
   it("formata fragmentos de export com Meta mês", () => {

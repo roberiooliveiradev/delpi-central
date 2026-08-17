@@ -74,6 +74,26 @@ describe("KpiCard", () => {
     expect(screen.getByLabelText("Ajuda: Meta mês")).toBeTruthy();
   });
 
+  it("mostra goalScopeHint sem Meta mês numérica (matriz D)", () => {
+    render(
+      <KpiCard
+        title="ROL"
+        value="—"
+        goalLabel={null}
+        monthlyGoalLabel={null}
+        goalScopeHint="Metas cadastradas apenas por unidade. Selecione uma unidade no filtro."
+        icon={<span />}
+        classNames={kpiCardBemClasses("dc")}
+        labels={LABELS}
+      />,
+    );
+    expect(
+      screen.getByText(/Selecione uma unidade/i),
+    ).toBeTruthy();
+    expect(screen.queryByText("Meta mês")).toBeNull();
+    expect(screen.queryByText("Goal")).toBeNull();
+  });
+
   it("mostra placeholder quando loading", () => {
     render(
       <KpiCard
