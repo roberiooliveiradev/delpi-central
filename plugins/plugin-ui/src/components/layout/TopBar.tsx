@@ -12,6 +12,7 @@ export type TopBarClassNames = {
   root: string;
   row: string;
   nav: string;
+  secondary: string;
   actions: string;
 };
 
@@ -20,6 +21,8 @@ export type TopBarProps = {
   activeId: string;
   classNames: TopBarClassNames;
   navClassNames: UnderlineNavClassNames;
+  /** Slot entre nav e actions (ex.: favoritos). */
+  secondary?: ReactNode;
   /** Slot à direita (escopo, ações). */
   actions?: ReactNode;
   /** Extensão lateral alinhada ao padding da página (padrão admin). */
@@ -36,6 +39,7 @@ export function topBarBemClasses(prefix: string): TopBarClassNames {
     root: delpiUiClass(`${prefix}-topbar`, "delpi-ui-topbar"),
     row: delpiUiClass(`${prefix}-topbar__row`, "delpi-ui-topbar__row"),
     nav: delpiUiClass(`${prefix}-topbar__nav`, "delpi-ui-topbar__nav"),
+    secondary: delpiUiClass(`${prefix}-topbar__secondary`, "delpi-ui-topbar__secondary"),
     actions: delpiUiClass(`${prefix}-topbar__actions`, "delpi-ui-topbar__actions"),
   };
 }
@@ -45,6 +49,7 @@ export function TopBar({
   activeId,
   classNames,
   navClassNames,
+  secondary,
   actions,
   bleed = true,
   sticky = true,
@@ -73,6 +78,7 @@ export function TopBar({
             aria-label={ariaLabel}
           />
         </div>
+        {secondary ? <div className={classNames.secondary}>{secondary}</div> : null}
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
     </div>

@@ -330,12 +330,11 @@ export function PluginShell({
               navigatePluginView(item.id, { basePath });
             },
           }))}
+          secondary={<ShellFavoritesStrip basePath={basePath} />}
           actions={
             <ShellUserPortfolioMenu basePath={basePath} displayName={userDisplayName} />
           }
         />
-
-        <ShellFavoritesStrip basePath={basePath} />
 
         {showGreeting ? (
           <CommercialViewTransition transitionKey="home-hero" tone="page">

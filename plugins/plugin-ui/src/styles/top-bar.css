@@ -48,6 +48,19 @@
   width: 100%;
 }
 
+.delpi-ui-topbar__secondary {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(42vw, 28rem);
+  flex: 0 1 auto;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
 .delpi-ui-topbar__actions {
   display: flex;
   flex-wrap: wrap;

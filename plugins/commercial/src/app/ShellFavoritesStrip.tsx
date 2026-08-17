@@ -18,7 +18,7 @@ type ShellFavoritesStripProps = {
 };
 
 /**
- * Strip de favoritos em todas as rotas do shell (Home mantém pin no catálogo).
+ * Favoritos do shell — renderizados no slot `secondary` da TopBar.
  */
 export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
   const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
@@ -74,7 +74,7 @@ export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
   }
 
   return (
-    <div className="cm-shell-favorites">
+    <>
       {error ? (
         <p className="cm-home-inline-error" role="status">
           {error}
@@ -102,6 +102,6 @@ export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
           );
         })}
       </CommercialHubChipRow>
-    </div>
+    </>
   );
 }

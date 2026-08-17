@@ -32,6 +32,23 @@ describe("TopBar", () => {
     expect(onSelect).toHaveBeenCalled();
   });
 
+  it("renderiza slot secondary entre nav e actions", () => {
+    render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        items={[{ id: "home", label: "Início", onSelect: vi.fn() }]}
+        secondary={<span>Favoritos</span>}
+        actions={<span>Usuário</span>}
+      />,
+    );
+    expect(screen.getByText("Favoritos")).toBeTruthy();
+    expect(screen.getByText("Usuário")).toBeTruthy();
+    const cn = topBarBemClasses("cm");
+    expect(cn.secondary).toContain("delpi-ui-topbar__secondary");
+  });
+
   it("aplica modifier surface sob demanda", () => {
     const { container } = render(
       <TopBar
