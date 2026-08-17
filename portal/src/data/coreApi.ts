@@ -520,6 +520,7 @@ export class CoreApi {
     status?: NotificationHistoryStatus;
     category?: NotificationCategory | "";
     importantOnly?: boolean;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<NotificationHistoryResponse> {
@@ -532,6 +533,10 @@ export class CoreApi {
     }
     if (params?.importantOnly) {
       search.set("important", "true");
+    }
+    const searchTerm = (params?.search || "").trim();
+    if (searchTerm) {
+      search.set("search", searchTerm);
     }
     if (params?.limit != null) {
       search.set("limit", String(params.limit));

@@ -278,6 +278,7 @@ def list_notifications_history():
 
     important_param = request.args.get("important", "").strip().lower()
     important_only = important_param in ("1", "true", "yes")
+    search = (request.args.get("search") or request.args.get("q") or "").strip() or None
 
     with SqlAlchemyUnitOfWork() as uow:
         result = ListNotificationsUseCase(uow).execute(
@@ -285,6 +286,7 @@ def list_notifications_history():
             status=status,
             category=category or None,
             important_only=important_only,
+            search=search,
             limit=limit,
             offset=offset,
         )

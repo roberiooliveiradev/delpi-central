@@ -48,6 +48,7 @@ class NotificationRepository(Protocol):
         status: Literal["all", "unread", "read"] = "all",
         category: str | None = None,
         important_only: bool = False,
+        search: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> Tuple[List[NotificationDTO], int]:

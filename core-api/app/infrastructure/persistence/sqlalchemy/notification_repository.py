@@ -79,6 +79,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         status: Literal["all", "unread", "read"] = "all",
         category: str | None = None,
         important_only: bool = False,
+        search: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> Tuple[List[NotificationDTO], int]:
@@ -102,6 +103,16 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
 
         if important_only:
             query = query.filter(Notification.is_important.is_(True))
+
+        term = (search or "").strip()
+        if term:
+            like = f"%{term}%"
+            query = query.filter(
+                or_(
+                    Notification.title.ilike(like),
+                    Notification.message.ilike(like),
+                )
+            )
 
         total = query.count()
 

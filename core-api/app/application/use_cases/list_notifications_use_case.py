@@ -29,17 +29,20 @@ class ListNotificationsUseCase:
         status: NotificationListStatus = "all",
         category: str | None = None,
         important_only: bool = False,
+        search: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> ListNotificationsResult:
         safe_limit = max(1, min(limit, 100))
         safe_offset = max(0, offset)
+        safe_search = (search or "").strip()[:80] or None
 
         items, total = self.uow.notifications.list_for_user(
             user_id,
             status=status,
             category=category,
             important_only=important_only,
+            search=safe_search,
             limit=safe_limit,
             offset=safe_offset,
         )

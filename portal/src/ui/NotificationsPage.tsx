@@ -32,6 +32,7 @@ import {
   Alert,
   Button,
   FormField,
+  SearchInput,
   SegmentedControl,
   Select,
   Spinner,
@@ -88,6 +89,8 @@ export function NotificationsPage() {
   const [status, setStatus] = useState<NotificationHistoryStatus>("all");
   const [category, setCategory] = useState<NotificationCategory | "">("");
   const [importantOnly, setImportantOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -97,6 +100,13 @@ export function NotificationsPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearchTerm(searchQuery.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -108,6 +118,7 @@ export function NotificationsPage() {
         status,
         category: category || undefined,
         importantOnly,
+        search: searchTerm || undefined,
         limit: PAGE_SIZE,
         offset,
       });
@@ -120,7 +131,7 @@ export function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, coreApi, importantOnly, page, status]);
+  }, [category, coreApi, importantOnly, page, searchTerm, status]);
 
   useEffect(() => {
     if (section !== "inbox") {
@@ -131,11 +142,11 @@ export function NotificationsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [status, category, importantOnly]);
+  }, [status, category, importantOnly, searchTerm]);
 
   useEffect(() => {
     setSelectedIds([]);
-  }, [page, status, category, importantOnly, section]);
+  }, [page, status, category, importantOnly, searchTerm, section]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const selectedCount = selectedIds.length;
@@ -308,6 +319,15 @@ export function NotificationsPage() {
             <div className="notifications-page__controls-divider" aria-hidden="true" />
 
             <div className="notifications-page__filters">
+              <SearchInput
+                className="notifications-page__search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onClear={() => setSearchQuery("")}
+                placeholder="Buscar por título ou mensagem…"
+                aria-label="Buscar no histórico de notificações"
+              />
+
               <FormField
                 label="Categoria"
                 htmlFor="notifications-page-category"
@@ -349,6 +369,7 @@ export function NotificationsPage() {
               {!loading && category
                 ? ` · ${getNotificationCategoryLabel(category, catalog)}`
                 : null}
+              {!loading && searchTerm ? ` · busca: «${searchTerm}»` : null}
             </p>
 
             {!loading && items.length > 0 ? (
@@ -420,7 +441,11 @@ export function NotificationsPage() {
             ) : items.length === 0 ? (
               <div className="notifications-page__empty">
                 <Bell size={32} aria-hidden="true" strokeWidth={1.5} />
-                <p>Nenhuma notificação neste filtro.</p>
+                <p>
+                  {searchTerm
+                    ? `Nenhuma notificação encontrada para «${searchTerm}».`
+                    : "Nenhuma notificação neste filtro."}
+                </p>
               </div>
             ) : (
               <ul className="notifications-page__list" data-tour="notifications-list">

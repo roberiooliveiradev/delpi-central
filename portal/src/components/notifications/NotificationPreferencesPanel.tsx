@@ -9,7 +9,7 @@ import {
   resolveNotificationPreferenceDisplay,
 } from "../../utils/notificationCatalog";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
-import { Alert, Button, Checkbox, Spinner } from "../../ui-kit";
+import { Alert, SearchInput, Spinner, Switch } from "../../ui-kit";
 
 import "./NotificationPreferencesPanel.css";
 
@@ -47,9 +47,9 @@ export function NotificationPreferencesPanel({
     catalog.categories,
   );
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingCategory, setSavingCategory] = useState<NotificationCategory | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const loadPreferences = useCallback(async () => {
     setLoading(true);
@@ -72,32 +72,35 @@ export function NotificationPreferencesPanel({
     void loadPreferences();
   }, [loadPreferences]);
 
-  function toggleCategory(category: NotificationCategory) {
-    setSaved(false);
-    setMutedCategories((current) =>
-      current.includes(category)
-        ? current.filter((item) => item !== category)
-        : [...current, category],
-    );
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-    setSaved(false);
-    try {
-      const data = await coreApi.updateNotificationPreferences(mutedCategories);
-      setMutedCategories(data.mutedCategories);
-      if (data.categories.length > 0) {
-        setCatalogCategories(data.categories);
+  const persistMuted = useCallback(
+    async (nextMuted: NotificationCategory[], category: NotificationCategory) => {
+      const previous = mutedCategories;
+      setMutedCategories(nextMuted);
+      setSavingCategory(category);
+      setError(null);
+      try {
+        const data = await coreApi.updateNotificationPreferences(nextMuted);
+        setMutedCategories(data.mutedCategories);
+        if (data.categories.length > 0) {
+          setCatalogCategories(data.categories);
+        }
+        onSaved?.();
+      } catch (err) {
+        setMutedCategories(previous);
+        setError(err instanceof Error ? err.message : "Falha ao salvar preferências");
+      } finally {
+        setSavingCategory(null);
       }
-      setSaved(true);
-      onSaved?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao salvar preferências");
-    } finally {
-      setSaving(false);
-    }
+    },
+    [coreApi, mutedCategories, onSaved],
+  );
+
+  function handleToggle(category: NotificationCategory, currentlyMuted: boolean) {
+    if (savingCategory) return;
+    const nextMuted = currentlyMuted
+      ? mutedCategories.filter((item) => item !== category)
+      : [...mutedCategories, category];
+    void persistMuted(nextMuted, category);
   }
 
   const catalogForLabels = useMemo(
@@ -113,6 +116,27 @@ export function NotificationPreferencesPanel({
     [apps],
   );
 
+  const filteredCategories = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase("pt-BR");
+    if (!query) return mutableCategories;
+
+    return mutableCategories.filter((category) => {
+      const display = resolveNotificationPreferenceDisplay(
+        category,
+        catalogForLabels,
+        appRefs,
+      );
+      const haystack = [
+        display.notificationName,
+        display.applicationName,
+        category,
+      ]
+        .join(" ")
+        .toLocaleLowerCase("pt-BR");
+      return haystack.includes(query);
+    });
+  }, [mutableCategories, searchQuery, catalogForLabels, appRefs]);
+
   const rootClassName =
     variant === "page"
       ? "notification-preferences notification-preferences--page"
@@ -125,7 +149,7 @@ export function NotificationPreferencesPanel({
           <Settings2 size={18} aria-hidden="true" />
           <div>
             <h2 id="notification-preferences-title">Preferências</h2>
-            <p>Escolha quais tipos de mensagem você não deseja receber.</p>
+            <p>Use o interruptor para silenciar ou voltar a receber cada tipo.</p>
           </div>
         </header>
       ) : (
@@ -134,8 +158,8 @@ export function NotificationPreferencesPanel({
             Preferências de notificação
           </h2>
           <p className="notification-preferences__intro">
-            Marque as categorias que deseja <strong>silenciar</strong>. Você deixa de receber novos
-            envios desses tipos; o histórico anterior permanece disponível na aba Histórico.
+            Ative o interruptor para <strong>silenciar</strong> um tipo. A alteração é salva na
+            hora; o histórico anterior permanece na aba Histórico.
           </p>
         </>
       )}
@@ -149,22 +173,33 @@ export function NotificationPreferencesPanel({
       {error ? <Alert tone="danger">{error}</Alert> : null}
 
       {!loading ? (
-        <ul className="notification-preferences__list">
-          {mutableCategories.map((category) => {
-            const isMuted = mutedCategories.includes(category);
-            const display = resolveNotificationPreferenceDisplay(
-              category,
-              catalogForLabels,
-              appRefs,
-            );
-            const AppIcon = resolveNotificationCategoryIconComponent(display.iconName);
-            return (
-              <li key={category}>
-                <Checkbox
-                  className="notification-preferences__item"
-                  checked={isMuted}
-                  onChange={() => toggleCategory(category)}
-                  label={
+        <>
+          <SearchInput
+            className="notification-preferences__search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onClear={() => setSearchQuery("")}
+            placeholder="Buscar por notificação ou aplicativo…"
+            aria-label="Buscar preferências de notificação"
+          />
+
+          {filteredCategories.length === 0 ? (
+            <p className="notification-preferences__empty" role="status">
+              Nenhuma preferência encontrada para «{searchQuery.trim()}».
+            </p>
+          ) : (
+            <ul className="notification-preferences__list">
+              {filteredCategories.map((category) => {
+                const isMuted = mutedCategories.includes(category);
+                const isSaving = savingCategory === category;
+                const display = resolveNotificationPreferenceDisplay(
+                  category,
+                  catalogForLabels,
+                  appRefs,
+                );
+                const AppIcon = resolveNotificationCategoryIconComponent(display.iconName);
+                return (
+                  <li key={category} className="notification-preferences__item">
                     <span className="notification-preferences__body">
                       <span className="notification-preferences__app-icon" aria-hidden="true">
                         <AppIcon size={18} />
@@ -177,30 +212,32 @@ export function NotificationPreferencesPanel({
                           {display.applicationName}
                         </span>
                         <span className="notification-preferences__hint">
-                          {isMuted ? "Silenciada" : "Recebendo"}
+                          {isSaving ? "Salvando…" : isMuted ? "Silenciada" : "Recebendo"}
                         </span>
                       </span>
                     </span>
-                  }
-                />
-              </li>
-            );
-          })}
-        </ul>
+                    {isSaving ? (
+                      <Spinner size={18} label={`Salvando ${display.notificationName}`} />
+                    ) : (
+                      <Switch
+                        className="notification-preferences__switch"
+                        checked={isMuted}
+                        disabled={Boolean(savingCategory)}
+                        onChange={() => handleToggle(category, isMuted)}
+                        aria-label={
+                          isMuted
+                            ? `Voltar a receber: ${display.notificationName}`
+                            : `Silenciar: ${display.notificationName}`
+                        }
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       ) : null}
-
-      <footer className="notification-preferences__footer">
-        {saved ? <span className="notification-preferences__saved">Preferências salvas.</span> : null}
-        <Button
-          type="button"
-          variant="primary"
-          disabled={loading || saving}
-          loading={saving}
-          onClick={() => void handleSave()}
-        >
-          {saving ? "Salvando…" : "Salvar preferências"}
-        </Button>
-      </footer>
     </section>
   );
 }

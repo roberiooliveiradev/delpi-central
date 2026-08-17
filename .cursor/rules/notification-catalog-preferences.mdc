@@ -14,7 +14,7 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 {notificationLabel}     ← nome da notificação (o que o usuário silencia)
 {appName}               ← app de origem (plugin registrado ou «Minha Delpi»)
 {Recebendo|Silenciada}  ← status
-[+ ícone do manifesto publicado]
+[+ ícone do manifesto] [switch]  ← silenciar salva na hora (sem botão Salvar)
 ```
 
 **Ícone (`kind=app`):** sempre de `apps.icon` (sincronizado do manifesto no register/update) — Core enriquece o catálogo API via `NotificationCatalogIconService`; Portal prioriza `GET /me/apps`. **Não** hardcodar ícone de plugin no JSON do catálogo como fonte de verdade.
@@ -26,7 +26,7 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 | Catálogo | `core-api/app/content/notification_catalog.json` (labels / pluginId — **não** ícone do app) |
 | Ícone app | manifesto → `apps.icon` → `NotificationCatalogIconService` / AuthContext `apps` |
 | Loader | `notification_catalog_loader.py` + `NotificationCatalogService` |
-| Preferências UI | `resolveNotificationPreferenceDisplay` + `NotificationPreferencesPanel` |
+| Preferências UI | `Switch` auto-save + `resolveNotificationPreferenceDisplay` + `NotificationPreferencesPanel` |
 | Espelho offline | `portal/src/utils/notificationCatalog.ts` → `FALLBACK_NOTIFICATION_CATALOG` |
 
 Doc: `docs/04-core-api/notification-catalog.md`.

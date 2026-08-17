@@ -62,7 +62,7 @@ Todo card de silêncio segue **somente** este layout (não reinventar no MFE):
 {notificationLabel}     ← o que o usuário silencia
 {nome do app}           ← plugin via pluginId ou «Minha Delpi» (platform)
 {Recebendo|Silenciada}
-[+ ícone]
+[+ ícone] [switch]      ← silenciar / receber salva na hora
 ```
 
 Ícone de plugin: **manifesto publicado** (`apps.icon`), nunca hardcode no catálogo como fonte de verdade.

@@ -43,6 +43,7 @@ def test_list_notifications_use_case_returns_pagination():
         status="unread",
         category=None,
         important_only=False,
+        search=None,
         limit=10,
         offset=0,
     )
@@ -65,6 +66,24 @@ def test_list_notifications_use_case_passes_category_and_important_filters():
         status="all",
         category="announcement",
         important_only=True,
+        search=None,
+        limit=20,
+        offset=0,
+    )
+
+
+def test_list_notifications_use_case_passes_search():
+    uow = MagicMock()
+    uow.notifications.list_for_user.return_value = ([], 0)
+
+    ListNotificationsUseCase(uow).execute("user-1", search="  faturar  ", limit=20, offset=0)
+
+    uow.notifications.list_for_user.assert_called_once_with(
+        "user-1",
+        status="all",
+        category=None,
+        important_only=False,
+        search="faturar",
         limit=20,
         offset=0,
     )

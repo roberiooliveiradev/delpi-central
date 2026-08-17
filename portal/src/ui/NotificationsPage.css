@@ -135,6 +135,13 @@
   gap: 12px 16px;
 }
 
+.notifications-page__search {
+  width: 100%;
+  min-width: min(100%, 240px);
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
 .notifications-page__filter-label {
   min-width: min(100%, 220px);
   flex: 1;
