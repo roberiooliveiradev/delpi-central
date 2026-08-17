@@ -7,6 +7,10 @@ from uuid import UUID
 from app.application.services.app_authorization_service import AppAuthorizationService
 from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
+from app.domain.notifications.notification_catalog_types import NotificationCatalog
+from app.domain.notifications.notification_preference_policy import (
+    normalize_muted_categories,
+)
 from app.domain.services.permission_resolver import PermissionResolver
 
 
@@ -58,6 +62,81 @@ def resolve_notification_app_id(
                 return app.id
 
     return None
+
+
+def list_accessible_plugin_ids_for_user(uow: UnitOfWork, user_id: str) -> frozenset[str]:
+    """Plugin IDs que o usuário pode abrir (mesma regra de GET /me/apps)."""
+    try:
+        user_uuid = UUID(str(user_id).strip())
+    except (TypeError, ValueError):
+        return frozenset()
+
+    user = uow.users.get_by_id(user_uuid)
+    if not user or not user.active:
+        return frozenset()
+
+    apps = uow.app_queries.list_active_apps_with_routes()
+    if not apps:
+        return frozenset()
+
+    resolver = PermissionResolver(uow.permission_queries, uow.cache)
+    permissions = resolver.resolve(user.id, bool(user.is_superadmin))
+    authorized = AppAuthorizationService().filter_app_ids(
+        apps,
+        permissions,
+        bool(user.is_superadmin),
+    )
+    return frozenset(authorized)
+
+
+def filter_mutable_categories_for_user(
+    accessible_plugin_ids: frozenset[str],
+    *,
+    catalog: NotificationCatalog | None = None,
+) -> frozenset[str]:
+    """
+    Preferências silenciáveis visíveis ao usuário:
+    - kind=platform → sempre
+    - kind=app → só se pluginId estiver nos apps autorizados
+    """
+    source = catalog or NotificationCatalogService.get()
+    visible: set[str] = set()
+    for category_id, spec in source.categories.items():
+        if not spec.mutable:
+            continue
+        if (spec.kind or "platform").strip().lower() != "app":
+            visible.add(category_id)
+            continue
+        plugin_id = (spec.plugin_id or "").strip()
+        if plugin_id and plugin_id in accessible_plugin_ids:
+            visible.add(category_id)
+    return frozenset(visible)
+
+
+def merge_muted_categories_preserving_hidden(
+    previous_muted: list[str],
+    next_muted: list[str],
+    *,
+    visible_mutable: frozenset[str],
+    all_mutable: frozenset[str],
+) -> list[str]:
+    """
+    Ao salvar preferências, não apaga silêncios de apps sem acesso
+    (categorias ocultas na UI).
+    """
+    preserved = [
+        category
+        for category in normalize_muted_categories(
+            previous_muted,
+            mutable_categories=all_mutable,
+        )
+        if category not in visible_mutable
+    ]
+    updated = normalize_muted_categories(
+        next_muted,
+        mutable_categories=visible_mutable,
+    )
+    return sorted(set(preserved) | set(updated))
 
 
 def filter_user_ids_with_app_access(

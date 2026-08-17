@@ -62,12 +62,14 @@ Todo card de silêncio segue **somente** este layout (não reinventar no MFE):
 {notificationLabel}     ← o que o usuário silencia
 {nome do app}           ← plugin via pluginId ou «Minha Delpi» (platform)
 {Recebendo|Silenciada}
-[+ ícone] [switch]      ← silenciar / receber salva na hora
+[+ ícone] [sino|silêncio]  ← toque no sino para silenciar / receber (salva na hora)
 ```
 
 Ícone de plugin: **manifesto publicado** (`apps.icon`), nunca hardcode no catálogo como fonte de verdade.
 
-Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `NotificationPreferencesPanel`.  
+Visibilidade: categorias `kind=app` só entram nas preferências se o usuário tiver o `pluginId` em `GET /me/apps` (mesma regra de autorização do launcher). Platform permanece sempre.
+
+Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `filter_mutable_categories_for_user` + `NotificationPreferencesPanel`.  
 Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 
 ### Aliases legados

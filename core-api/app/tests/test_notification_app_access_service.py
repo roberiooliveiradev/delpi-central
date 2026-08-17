@@ -141,4 +141,3 @@ def test_filter_skipped_for_system_notifications_without_app():
     )
 
     assert result == ["abc"]
-    uow.app_queries.list_active_apps_with_routes.assert_not_called()

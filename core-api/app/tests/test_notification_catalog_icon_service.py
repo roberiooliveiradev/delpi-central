@@ -1,7 +1,7 @@
 # app/tests/test_notification_catalog_icon_service.py
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from app.application.services.notification_catalog_icon_service import (
     NotificationCatalogIconService,
@@ -39,7 +39,11 @@ def test_resolve_icon_for_category_prefers_published():
     assert icon == "briefcase-business"
 
 
-def test_get_preferences_enriches_icons_from_admin_apps():
+@patch(
+    "app.application.use_cases.get_notification_preferences_use_case.list_accessible_plugin_ids_for_user",
+    return_value=frozenset({"commercial"}),
+)
+def test_get_preferences_enriches_icons_from_admin_apps(_mock_plugins):
     uow = MagicMock()
     uow.notification_preferences.get_muted_categories.return_value = []
     uow.admin_apps.get.side_effect = lambda app_id: (

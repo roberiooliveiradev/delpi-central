@@ -14,7 +14,7 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 {notificationLabel}     ← nome da notificação (o que o usuário silencia)
 {appName}               ← app de origem (plugin registrado ou «Minha Delpi»)
 {Recebendo|Silenciada}  ← status
-[+ ícone do manifesto] [switch]  ← silenciar salva na hora (sem botão Salvar)
+[+ ícone do manifesto] [sino|silêncio]  ← silenciar salva na hora (sem botão Salvar)
 ```
 
 **Ícone (`kind=app`):** sempre de `apps.icon` (sincronizado do manifesto no register/update) — Core enriquece o catálogo API via `NotificationCatalogIconService`; Portal prioriza `GET /me/apps`. **Não** hardcodar ícone de plugin no JSON do catálogo como fonte de verdade.
@@ -44,6 +44,7 @@ Doc: `docs/04-core-api/notification-catalog.md`.
 ## O que NÃO fazer
 
 - Card de preferência com só o nome do plugin (sem `notificationLabel` distinto).
+- Preferência `kind=app` para plugin que o usuário **não** tem em `GET /me/apps`.
 - Linhas «Tipo:» / «Origem: /apps/…» no card — origem = segunda linha (nome do app).
 - Patch de label/ícone só no MFE ou só no catálogo quando o manifesto já define o ícone.
 - Categoria `kind=app` sem `sourceApps` / sem espelho no FALLBACK do portal.

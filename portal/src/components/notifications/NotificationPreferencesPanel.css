@@ -131,8 +131,68 @@
   color: var(--text-muted);
 }
 
-.notification-preferences__switch {
+.notification-preferences__mute {
   flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  transition:
+    color 0.22s ease,
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.18s ease;
+}
+
+.notification-preferences__mute:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.notification-preferences__mute:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.notification-preferences__mute--receiving {
+  color: var(--primary);
+}
+
+.notification-preferences__mute--silenced {
+  color: color-mix(in srgb, #b45309 70%, var(--text));
+}
+
+.notification-preferences__mute-icons {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+
+.notification-preferences__mute-icon {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.notification-preferences__mute-icon--bell {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.notification-preferences__mute-icon--off {
+  opacity: 0;
+  transform: scale(0.72) rotate(-12deg);
+}
+
+.notification-preferences__mute-icons[data-muted="true"] .notification-preferences__mute-icon--bell {
+  opacity: 0;
+  transform: scale(0.72) rotate(12deg);
+}
+
+.notification-preferences__mute-icons[data-muted="true"] .notification-preferences__mute-icon--off {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
 }
 
 /* Variante na aba dedicada da página /notifications */
