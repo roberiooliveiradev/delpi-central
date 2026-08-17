@@ -4,9 +4,22 @@ Microfrontend federado do domínio comercial. Reúne, no próprio Portal Comerci
 as bancadas e fichas de Minha carteira, Conta 360, pedidos, OP, oportunidades OV,
 propostas, Visão geral e Administração.
 
-> Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md) · Ata × inventário: [ATA-MAPA-NECESSIDADES.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-MAPA-NECESSIDADES.md)
+> Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md) · Ata × inventário: [ATA-MAPA-NECESSIDADES.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-MAPA-NECESSIDADES.md) · **Ata alinhamento 2:** [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md)
 
 Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-comerciais`) **coexistem** no menu. O `commercial` não usa iframe, remote, componente, URL nem fallback de interface de outro MFE: suas páginas são nativas e consomem apenas contratos HTTP.
+
+### Gaps P0 (ata alinhamento 2)
+
+Código ainda **não** nesta onda de docs — ver ondas em [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md):
+
+| ID | Entrega |
+|----|---------|
+| P0-META | Meta acumulada = soma proporcional por dia (SI + Overview) |
+| P0-LABEL | Chip/label MTD·YTD nos cards Overview |
+| P0-RENAME | Timeline/ficha OP: «data de faturamento» |
+| P0-OPP | Filtros Conta: status, período, OV, produto/família |
+
+**GR de Vendas** = [tv-dashboard](../tv-dashboard/README.md) (não feature deste MFE).
 
 ```text
 Portal Minha DELPI

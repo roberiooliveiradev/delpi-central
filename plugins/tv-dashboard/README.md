@@ -10,6 +10,10 @@ Políticas de dados por tipo de gráfico (pizza, série, scatter…): [PLAYBOOK-
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 **Exportação MDD (padrão de slides/programação):** [MDD — Minha Delpi Deck](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
 
+### GR de Vendas (backlog Comercial → TV)
+
+**GR de Vendas** (Manual do Líder Nível 02) é prioridade ago/2026 do alinhamento Comercial, mas a **implementação de slides/playlists** vive neste app (**tv-dashboard** + `tv-dashboard-api`), não no MFE `commercial`. Fonte de indicadores: painéis/rotas já expostos pelo Portal Comercial e pela **api-delpi** (quando o contrato existir). Checklist de conteúdo quando Junior/Laércio fecharem o modelo — ver [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md) §4 / §35.
+
 Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. O piloto funcional está ativo com telemetria segura; profiling, explain e caches continuam desligados.
 
 ---
