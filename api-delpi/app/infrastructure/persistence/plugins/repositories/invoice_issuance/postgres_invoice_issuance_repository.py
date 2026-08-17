@@ -129,55 +129,57 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
         history_fields: dict[str, Any],
     ) -> dict[str, Any]:
         try:
-            row = self.execute_returning_one(
-                f"""
-                INSERT INTO {SCHEMA}.invoice_issuance_requests (
-                    branch_code, party_type, party_code, party_store, party_name, tax_id,
-                    invoice_type, invoice_type_other, freight_mode, carrier_code, carrier_name,
-                    carrier_legal_name, carrier_tax_id, carrier_address, carrier_phone,
-                    weight_kg, volume_count, purchase_order_number, observation,
-                    status, checklist, created_by_user_id, created_by_name
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s
+            # Lease único: sem ele o pool dá rollback entre INSERT e itens/histórico.
+            with self.db():
+                row = self.execute_returning_one(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_issuance_requests (
+                        branch_code, party_type, party_code, party_store, party_name, tax_id,
+                        invoice_type, invoice_type_other, freight_mode, carrier_code, carrier_name,
+                        carrier_legal_name, carrier_tax_id, carrier_address, carrier_phone,
+                        weight_kg, volume_count, purchase_order_number, observation,
+                        status, checklist, created_by_user_id, created_by_name
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s
+                    )
+                    RETURNING {_REQUEST_COLUMNS}
+                    """,
+                    (
+                        request_fields["branch_code"],
+                        request_fields["party_type"],
+                        request_fields["party_code"],
+                        request_fields["party_store"],
+                        request_fields["party_name"],
+                        request_fields.get("tax_id"),
+                        request_fields["invoice_type"],
+                        request_fields.get("invoice_type_other"),
+                        request_fields["freight_mode"],
+                        request_fields.get("carrier_code"),
+                        request_fields.get("carrier_name"),
+                        request_fields.get("carrier_legal_name"),
+                        request_fields.get("carrier_tax_id"),
+                        request_fields.get("carrier_address"),
+                        request_fields.get("carrier_phone"),
+                        request_fields["weight_kg"],
+                        request_fields["volume_count"],
+                        request_fields.get("purchase_order_number"),
+                        request_fields.get("observation"),
+                        request_fields["status"],
+                        Jsonb(request_fields["checklist"]),
+                        request_fields["created_by_user_id"],
+                        request_fields["created_by_name"],
+                    ),
+                    auto_commit=False,
                 )
-                RETURNING {_REQUEST_COLUMNS}
-                """,
-                (
-                    request_fields["branch_code"],
-                    request_fields["party_type"],
-                    request_fields["party_code"],
-                    request_fields["party_store"],
-                    request_fields["party_name"],
-                    request_fields.get("tax_id"),
-                    request_fields["invoice_type"],
-                    request_fields.get("invoice_type_other"),
-                    request_fields["freight_mode"],
-                    request_fields.get("carrier_code"),
-                    request_fields.get("carrier_name"),
-                    request_fields.get("carrier_legal_name"),
-                    request_fields.get("carrier_tax_id"),
-                    request_fields.get("carrier_address"),
-                    request_fields.get("carrier_phone"),
-                    request_fields["weight_kg"],
-                    request_fields["volume_count"],
-                    request_fields.get("purchase_order_number"),
-                    request_fields.get("observation"),
-                    request_fields["status"],
-                    Jsonb(request_fields["checklist"]),
-                    request_fields["created_by_user_id"],
-                    request_fields["created_by_name"],
-                ),
-                auto_commit=False,
-            )
-            assert row is not None
-            request_id = str(row["id"])
-            self._replace_items(request_id, items, auto_commit=False)
-            self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
-            self.commit()
+                assert row is not None
+                request_id = str(row["id"])
+                self._replace_items(request_id, items, auto_commit=False)
+                self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
+                self.commit()
             return self.get_request(request_id) or _serialize_request(row)
         except Exception:
             self.rollback()
@@ -330,59 +332,60 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
         history_fields: dict[str, Any],
     ) -> dict[str, Any]:
         try:
-            self.execute(
-                f"""
-                UPDATE {SCHEMA}.invoice_issuance_requests
-                   SET party_type = %s,
-                       party_code = %s,
-                       party_store = %s,
-                       party_name = %s,
-                       tax_id = %s,
-                       invoice_type = %s,
-                       invoice_type_other = %s,
-                       freight_mode = %s,
-                       carrier_code = %s,
-                       carrier_name = %s,
-                       carrier_legal_name = %s,
-                       carrier_tax_id = %s,
-                       carrier_address = %s,
-                       carrier_phone = %s,
-                       weight_kg = %s,
-                       volume_count = %s,
-                       purchase_order_number = %s,
-                       observation = %s,
-                       checklist = %s,
-                       return_reason = NULL,
-                       updated_at = NOW()
-                 WHERE id = %s::uuid
-                """,
-                (
-                    request_fields["party_type"],
-                    request_fields["party_code"],
-                    request_fields["party_store"],
-                    request_fields["party_name"],
-                    request_fields.get("tax_id"),
-                    request_fields["invoice_type"],
-                    request_fields.get("invoice_type_other"),
-                    request_fields["freight_mode"],
-                    request_fields.get("carrier_code"),
-                    request_fields.get("carrier_name"),
-                    request_fields.get("carrier_legal_name"),
-                    request_fields.get("carrier_tax_id"),
-                    request_fields.get("carrier_address"),
-                    request_fields.get("carrier_phone"),
-                    request_fields["weight_kg"],
-                    request_fields["volume_count"],
-                    request_fields.get("purchase_order_number"),
-                    request_fields.get("observation"),
-                    Jsonb(request_fields["checklist"]),
-                    request_id,
-                ),
-                auto_commit=False,
-            )
-            self._replace_items(request_id, items, auto_commit=False)
-            self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
-            self.commit()
+            with self.db():
+                self.execute(
+                    f"""
+                    UPDATE {SCHEMA}.invoice_issuance_requests
+                       SET party_type = %s,
+                           party_code = %s,
+                           party_store = %s,
+                           party_name = %s,
+                           tax_id = %s,
+                           invoice_type = %s,
+                           invoice_type_other = %s,
+                           freight_mode = %s,
+                           carrier_code = %s,
+                           carrier_name = %s,
+                           carrier_legal_name = %s,
+                           carrier_tax_id = %s,
+                           carrier_address = %s,
+                           carrier_phone = %s,
+                           weight_kg = %s,
+                           volume_count = %s,
+                           purchase_order_number = %s,
+                           observation = %s,
+                           checklist = %s,
+                           return_reason = NULL,
+                           updated_at = NOW()
+                     WHERE id = %s::uuid
+                    """,
+                    (
+                        request_fields["party_type"],
+                        request_fields["party_code"],
+                        request_fields["party_store"],
+                        request_fields["party_name"],
+                        request_fields.get("tax_id"),
+                        request_fields["invoice_type"],
+                        request_fields.get("invoice_type_other"),
+                        request_fields["freight_mode"],
+                        request_fields.get("carrier_code"),
+                        request_fields.get("carrier_name"),
+                        request_fields.get("carrier_legal_name"),
+                        request_fields.get("carrier_tax_id"),
+                        request_fields.get("carrier_address"),
+                        request_fields.get("carrier_phone"),
+                        request_fields["weight_kg"],
+                        request_fields["volume_count"],
+                        request_fields.get("purchase_order_number"),
+                        request_fields.get("observation"),
+                        Jsonb(request_fields["checklist"]),
+                        request_id,
+                    ),
+                    auto_commit=False,
+                )
+                self._replace_items(request_id, items, auto_commit=False)
+                self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
+                self.commit()
             return self.get_request(request_id) or {}
         except Exception:
             self.rollback()
@@ -421,26 +424,27 @@ class PostgresInvoiceIssuanceRepository(PluginBaseRepository):
                     request_id,
                 ]
             )
-            self.execute(
-                f"""
-                UPDATE {SCHEMA}.invoice_issuance_requests
-                   SET status = %s,
-                       return_reason = {return_reason_sql},
-                       assignee_user_id = COALESCE(%s, assignee_user_id),
-                       assignee_name = COALESCE(%s, assignee_name),
-                       cancelled_at = COALESCE(%s, cancelled_at),
-                       cancelled_by_user_id = COALESCE(%s, cancelled_by_user_id),
-                       cancelled_by_name = COALESCE(%s, cancelled_by_name),
-                       cancel_justification = COALESCE(%s, cancel_justification),
-                       issued_at = COALESCE(%s, issued_at),
-                       updated_at = NOW()
-                 WHERE id = %s::uuid
-                """,
-                tuple(params),
-                auto_commit=False,
-            )
-            self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
-            self.commit()
+            with self.db():
+                self.execute(
+                    f"""
+                    UPDATE {SCHEMA}.invoice_issuance_requests
+                       SET status = %s,
+                           return_reason = {return_reason_sql},
+                           assignee_user_id = COALESCE(%s, assignee_user_id),
+                           assignee_name = COALESCE(%s, assignee_name),
+                           cancelled_at = COALESCE(%s, cancelled_at),
+                           cancelled_by_user_id = COALESCE(%s, cancelled_by_user_id),
+                           cancelled_by_name = COALESCE(%s, cancelled_by_name),
+                           cancel_justification = COALESCE(%s, cancel_justification),
+                           issued_at = COALESCE(%s, issued_at),
+                           updated_at = NOW()
+                     WHERE id = %s::uuid
+                    """,
+                    tuple(params),
+                    auto_commit=False,
+                )
+                self._insert_history({**history_fields, "request_id": request_id}, auto_commit=False)
+                self.commit()
             return self.get_request(request_id) or {}
         except Exception:
             self.rollback()
