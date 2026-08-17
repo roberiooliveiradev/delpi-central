@@ -108,4 +108,11 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(app, /AnalyticsTeamRedirect/);
     assert.doesNotMatch(app, /AnalyticsTeamPage/);
   });
+
+  it("UserProfilePage desestrutura canManageFollowups e canViewWorklistTeam", () => {
+    const source = readFileSync(join(src, "features/users/UserProfilePage.tsx"), "utf8");
+    assert.match(source, /canManageFollowups,/);
+    assert.match(source, /canViewWorklistTeam,/);
+    assert.match(source, /canAssignTaskToProfile/);
+  });
 });
