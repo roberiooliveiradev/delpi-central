@@ -172,3 +172,65 @@ def test_concurrent_acquire_does_not_exceed_max(_reset_pool):
         t.join(timeout=5)
     assert all(not t.is_alive() for t in threads)
     assert len(created) <= 2
+
+
+def test_plugins_pool_stats_reflects_in_use_and_timeouts(_reset_pool):
+    created = _reset_pool
+    pool = mod.get_plugins_connection_pool()
+    stats0 = pool.stats()
+    assert stats0["max_size"] == 2
+    assert stats0["created"] == 0
+    assert stats0["available"] == 0
+    assert stats0["in_use"] == 0
+    assert stats0["acquire_timeouts_total"] == 0
+    assert "application_name" in stats0
+
+    barrier = threading.Barrier(2)
+    release_gate = threading.Event()
+
+    def _hold() -> None:
+        conn = mod.acquire_plugins_connection(timeout_seconds=1.0)
+        barrier.wait(timeout=2)
+        release_gate.wait(timeout=2)
+        mod.release_plugins_connection(conn)
+
+    t1 = threading.Thread(target=_hold)
+    t2 = threading.Thread(target=_hold)
+    t1.start()
+    t2.start()
+    deadline = time.time() + 2
+    while time.time() < deadline and pool.stats()["created"] < 2:
+        time.sleep(0.01)
+    stats_busy = pool.stats()
+    assert stats_busy["created"] == 2
+    assert stats_busy["available"] == 0
+    assert stats_busy["in_use"] == 2
+
+    with pytest.raises(mod.PluginsDatabaseConnectionError):
+        mod.acquire_plugins_connection(timeout_seconds=0.05)
+    assert pool.stats()["acquire_timeouts_total"] >= 1
+
+    release_gate.set()
+    t1.join(timeout=2)
+    t2.join(timeout=2)
+    stats_idle = pool.stats()
+    assert stats_idle["available"] == 2
+    assert stats_idle["in_use"] == 0
+    assert len(created) == 2
+
+
+def test_plugins_pool_discard_increments_counter(monkeypatch, _reset_pool):
+    created = _reset_pool
+
+    def _open_bad() -> _FakeConn:
+        conn = _FakeConn(fail_ping=True)
+        created.append(conn)
+        return conn  # type: ignore[return-value]
+
+    monkeypatch.setattr(mod, "_open_plugins_connection", _open_bad)
+    mod.reset_plugins_connection_pool_for_tests()
+    pool = mod.get_plugins_connection_pool()
+
+    conn = mod.acquire_plugins_connection()
+    mod.release_plugins_connection(conn, discard=False)
+    assert pool.stats()["discards_total"] >= 1

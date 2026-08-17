@@ -175,6 +175,16 @@ Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |
 
+### Connection pools (api-delpi)
+
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Pools inspector** | `GET /system/connection-pools` (`get_connection_pool_stats`) — ocupação Plugins Postgres + TOTVS | [x] |
+| **Snapshot** | `connection_pools` em `GET /system/observability-snapshot` | [x] |
+| **UI Console** | Card na aba Cache (em uso/máx., available, timeouts, discards, `application_name`) | [x] |
+
+Escopo: métricas **em memória do processo api-delpi**. Pools de commercial/TM/SI/maintenance não aparecem neste console.
+
 ### Fase 4 — Contrato e regressão (MVP concluído)
 
 | Item | Detalhe | Status |

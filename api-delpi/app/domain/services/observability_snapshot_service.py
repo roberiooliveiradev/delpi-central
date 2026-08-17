@@ -11,6 +11,9 @@ from app.composition.query_cache_composer import (
 )
 from app.config import settings
 from app.domain.services.caller_request_stats_service import get_caller_stats_summary
+from app.domain.services.connection_pool_stats_service import (
+    get_connection_pool_stats_summary,
+)
 from app.domain.services.query_cache_stats_service import build_query_cache_stats_payload
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
@@ -29,4 +32,5 @@ def build_observability_snapshot(*, limit: int = 25) -> dict[str, Any]:
         ),
         "caller_stats": get_caller_stats_summary(limit=limit),
         "sql_health": get_sql_health_summary(limit=limit),
+        "connection_pools": get_connection_pool_stats_summary(),
     }

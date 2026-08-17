@@ -22,6 +22,7 @@ TOTVS_CONNECT_TIMEOUT = int(os.getenv("TOTVS_CONNECT_TIMEOUT", "10"))
 TOTVS_QUERY_TIMEOUT = int(os.getenv("TOTVS_QUERY_TIMEOUT", "120"))
 TOTVS_POOL_ENABLED = os.getenv("TOTVS_POOL_ENABLED", "true").lower() in ("1", "true", "yes")
 TOTVS_POOL_MAX_SIZE = int(os.getenv("TOTVS_POOL_MAX_SIZE", "10"))
+TOTVS_POOL_ACQUIRE_TIMEOUT = float(os.getenv("TOTVS_POOL_ACQUIRE_TIMEOUT", "60") or "60")
 
 _pool: TotvsConnectionPool | None = None
 _pool_lock = threading.Lock()
@@ -64,9 +65,40 @@ class TotvsConnectionPool:
         self._max_size = max(1, max_size)
         self._available: queue.Queue[pyodbc.Connection] = queue.Queue()
         self._created = 0
+        self._acquire_timeouts = 0
+        self._discards = 0
         self._lock = threading.Lock()
 
-    def acquire(self, *, timeout_seconds: float = 60.0) -> pyodbc.Connection:
+    @property
+    def max_size(self) -> int:
+        return self._max_size
+
+    @property
+    def created(self) -> int:
+        with self._lock:
+            return self._created
+
+    def stats(self) -> dict:
+        with self._lock:
+            created = self._created
+            timeouts = self._acquire_timeouts
+            discards = self._discards
+        available = self._available.qsize()
+        in_use = max(0, created - available)
+        return {
+            "enabled": True,
+            "max_size": self._max_size,
+            "created": created,
+            "available": available,
+            "in_use": in_use,
+            "acquire_timeout_seconds": TOTVS_POOL_ACQUIRE_TIMEOUT,
+            "acquire_timeouts_total": timeouts,
+            "discards_total": discards,
+        }
+
+    def acquire(
+        self, *, timeout_seconds: float = TOTVS_POOL_ACQUIRE_TIMEOUT,
+    ) -> pyodbc.Connection:
         started = time.perf_counter()
 
         while True:
@@ -94,6 +126,8 @@ class TotvsConnectionPool:
 
             remaining = timeout_seconds - (time.perf_counter() - started)
             if remaining <= 0:
+                with self._lock:
+                    self._acquire_timeouts += 1
                 logger.warning(
                     "totvs_pool TIMEOUT created=%d max=%d waited=%.0fs",
                     self._created, self._max_size, timeout_seconds,
@@ -138,6 +172,7 @@ class TotvsConnectionPool:
 
         with self._lock:
             self._created = max(0, self._created - 1)
+            self._discards += 1
 
         logger.debug("totvs_pool discarded remaining=%d", self._created)
 

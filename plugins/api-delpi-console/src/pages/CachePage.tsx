@@ -9,6 +9,7 @@ import {
   loadStoredSnapshots,
   parseObservabilitySnapshot,
   saveSnapshot,
+  type ConnectionPoolsPayload,
   type ObservabilitySnapshot,
   type SnapshotDiffRow,
 } from "../lib/observabilitySnapshot";
@@ -26,11 +27,80 @@ function unwrapEnvelope<T>(data: unknown): T | null {
   return envelope.data ?? (data as T);
 }
 
+function PoolStatBlock({
+  title,
+  pool,
+}: {
+  title: string;
+  pool: ConnectionPoolsPayload["plugins_postgres"] | null | undefined;
+}) {
+  if (!pool) {
+    return (
+      <div className="adc-panel">
+        <h3 className="adc-section-title">{title}</h3>
+        <p className="adc-muted">Indisponível neste processo.</p>
+      </div>
+    );
+  }
+  const disabled = pool.enabled === false;
+  const occupancy =
+    pool.max_size > 0 ? Math.round((pool.in_use / pool.max_size) * 100) : 0;
+  return (
+    <div className="adc-panel">
+      <h3 className="adc-section-title">{title}</h3>
+      {disabled ? (
+        <p className="adc-muted">Pool desabilitado (TOTVS_POOL_ENABLED=false).</p>
+      ) : null}
+      <div className="adc-metrics adc-metrics--grid adc-metrics--compact">
+        <div className="adc-stat">
+          <span className="adc-stat__label">Em uso / máx.</span>
+          <strong>
+            {pool.in_use}/{pool.max_size}
+          </strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Ocupação</span>
+          <strong>{occupancy}%</strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Disponíveis</span>
+          <strong>{pool.available}</strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Criadas</span>
+          <strong>{pool.created}</strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Timeouts acquire</span>
+          <strong>{pool.acquire_timeouts_total}</strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Discards</span>
+          <strong>{pool.discards_total}</strong>
+        </div>
+        <div className="adc-stat">
+          <span className="adc-stat__label">Acquire timeout (s)</span>
+          <strong>{pool.acquire_timeout_seconds}</strong>
+        </div>
+        {pool.application_name ? (
+          <div className="adc-stat">
+            <span className="adc-stat__label">application_name</span>
+            <strong>
+              <code className="adc-mono-sm">{pool.application_name}</code>
+            </strong>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function CachePage({ onNavigate }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState<QueryCachePayload | null>(null);
   const [callerStats, setCallerStats] = useState<CallerStatsPayload | null>(null);
+  const [poolStats, setPoolStats] = useState<ConnectionPoolsPayload | null>(null);
   const [stored, setStored] = useState(loadStoredSnapshots());
   const [diffRows, setDiffRows] = useState<SnapshotDiffRow[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -41,9 +111,10 @@ export function CachePage({ onNavigate }: Props) {
     }
     setError(null);
     try {
-      const [cacheResponse, callerResponse] = await Promise.all([
+      const [cacheResponse, callerResponse, poolsResponse] = await Promise.all([
         apiFetch("/system/query-cache/stats"),
         apiFetch("/system/caller-stats?limit=30"),
+        apiFetch("/system/connection-pools"),
       ]);
 
       if (!cacheResponse.ok) {
@@ -52,19 +123,25 @@ export function CachePage({ onNavigate }: Props) {
       if (!callerResponse.ok) {
         throw new Error(`Caller stats HTTP ${callerResponse.status}`);
       }
+      if (!poolsResponse.ok) {
+        throw new Error(`Connection pools HTTP ${poolsResponse.status}`);
+      }
 
       const cachePayload = unwrapEnvelope<QueryCachePayload>(cacheResponse.data);
       const callerPayload = unwrapEnvelope<CallerStatsPayload>(callerResponse.data);
-      if (!cachePayload || !callerPayload) {
+      const poolsPayload = unwrapEnvelope<ConnectionPoolsPayload>(poolsResponse.data);
+      if (!cachePayload || !callerPayload || !poolsPayload) {
         throw new Error("Resposta inválida de observabilidade");
       }
 
       setCacheStats(cachePayload);
       setCallerStats(callerPayload);
+      setPoolStats(poolsPayload);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar observabilidade");
       setCacheStats(null);
       setCallerStats(null);
+      setPoolStats(null);
     } finally {
       if (!options?.silent) {
         setLoading(false);
@@ -107,9 +184,10 @@ export function CachePage({ onNavigate }: Props) {
           <button type="button" className="adc-link" onClick={() => onNavigate("")}>
             ← Início
           </button>
-          <h1>Cache e callers</h1>
+          <h1>Cache, callers e pools</h1>
           <p className="adc-subtitle">
-            Hits/miss do cache LMP e estoque, breakdown por caller app e comparador de deploy.
+            Hits/miss do cache LMP e estoque, breakdown por caller app, connection pools
+            (Plugins/TOTVS) e comparador de deploy.
           </p>
         </div>
         <div className="adc-header__actions">
@@ -134,6 +212,20 @@ export function CachePage({ onNavigate }: Props) {
       </header>
 
       {error ? <div className="adc-panel adc-panel--danger">{error}</div> : null}
+
+      {poolStats ? (
+        <section>
+          <h2 className="adc-section-title">Connection pools (api-delpi)</h2>
+          <p className="adc-muted">
+            Métricas em memória deste processo. Pools de commercial/TM/SI/maintenance não
+            aparecem aqui.
+          </p>
+          <div className="adc-metrics adc-metrics--grid">
+            <PoolStatBlock title="Plugins Postgres" pool={poolStats.plugins_postgres} />
+            <PoolStatBlock title="TOTVS (SQL Server)" pool={poolStats.totvs} />
+          </div>
+        </section>
+      ) : null}
 
       {cacheStats ? (
         <div className="adc-metrics adc-metrics--grid adc-metrics--compact">

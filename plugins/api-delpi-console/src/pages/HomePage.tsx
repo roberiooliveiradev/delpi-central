@@ -128,8 +128,8 @@ export function HomePage({ onNavigate }: Props) {
           <div className="adc-card__icon">
             <Database size={22} />
           </div>
-          <h2>Cache e callers</h2>
-          <p>Hits/miss LMP e estoque, breakdown por caller e comparador de deploy.</p>
+          <h2>Cache, callers e pools</h2>
+          <p>Hits/miss LMP e estoque, callers, connection pools e comparador de deploy.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>

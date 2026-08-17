@@ -40,6 +40,9 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.query_cache_composer import get_query_cache_backend_name, get_query_cache_storage
 from app.config import settings
 from app.domain.services.caller_request_stats_service import get_caller_stats_summary
+from app.domain.services.connection_pool_stats_service import (
+    get_connection_pool_stats_summary,
+)
 from app.domain.services.console_alerts_service import (
     build_console_health_summary,
     list_console_alert_history,
@@ -341,6 +344,28 @@ def get_query_cache_stats():
     except Exception as e:
         log_error(f"Erro ao carregar estatísticas de cache: {e}")
         return error_response("Erro ao carregar estatísticas de cache.", status_code=500)
+
+
+@router.get(
+    "/connection-pools",
+    summary="Ocupação dos pools Plugins Postgres e TOTVS",
+    operation_id="get_connection_pool_stats",
+)
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_connection_pool_stats():
+    try:
+        payload = get_connection_pool_stats_summary()
+        return api_delpi_success(
+            payload,
+            operation_id="get_connection_pool_stats",
+            message="Estatísticas de connection pools carregadas com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar estatísticas de connection pools: {e}")
+        return error_response(
+            "Erro ao carregar estatísticas de connection pools.",
+            status_code=500,
+        )
 
 
 @router.get("/caller-stats", summary="Breakdown de requests por X-Delpi-Caller-App", operation_id="get_caller_stats")

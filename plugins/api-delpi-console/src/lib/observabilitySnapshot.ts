@@ -8,6 +8,24 @@ export type QueryCacheNamespace = {
   active_keys: number;
 };
 
+export type ConnectionPoolStats = {
+  enabled?: boolean;
+  max_size: number;
+  created: number;
+  available: number;
+  in_use: number;
+  acquire_timeout_seconds: number;
+  acquire_timeouts_total: number;
+  discards_total: number;
+  application_name?: string;
+};
+
+export type ConnectionPoolsPayload = {
+  captured_at: string;
+  plugins_postgres: ConnectionPoolStats;
+  totvs: ConnectionPoolStats | null;
+};
+
 export type ObservabilitySnapshot = {
   captured_at: string;
   label?: string;
@@ -38,6 +56,7 @@ export type ObservabilitySnapshot = {
     total_samples: number;
     storage_backend?: string;
   };
+  connection_pools?: ConnectionPoolsPayload;
 };
 
 export type SnapshotDiffRow = {
@@ -157,6 +176,40 @@ export function compareSnapshots(
     after: String(after.sql_health.total_samples),
     delta: formatDelta(before.sql_health.total_samples, after.sql_health.total_samples),
   });
+
+  const beforePlugins = before.connection_pools?.plugins_postgres;
+  const afterPlugins = after.connection_pools?.plugins_postgres;
+  if (beforePlugins || afterPlugins) {
+    rows.push({
+      section: "pools",
+      key: "plugins.in_use",
+      before: String(beforePlugins?.in_use ?? 0),
+      after: String(afterPlugins?.in_use ?? 0),
+      delta: formatDelta(beforePlugins?.in_use ?? 0, afterPlugins?.in_use ?? 0),
+    });
+    rows.push({
+      section: "pools",
+      key: "plugins.acquire_timeouts_total",
+      before: String(beforePlugins?.acquire_timeouts_total ?? 0),
+      after: String(afterPlugins?.acquire_timeouts_total ?? 0),
+      delta: formatDelta(
+        beforePlugins?.acquire_timeouts_total ?? 0,
+        afterPlugins?.acquire_timeouts_total ?? 0,
+      ),
+    });
+  }
+
+  const beforeTotvs = before.connection_pools?.totvs;
+  const afterTotvs = after.connection_pools?.totvs;
+  if (beforeTotvs || afterTotvs) {
+    rows.push({
+      section: "pools",
+      key: "totvs.in_use",
+      before: String(beforeTotvs?.in_use ?? 0),
+      after: String(afterTotvs?.in_use ?? 0),
+      delta: formatDelta(beforeTotvs?.in_use ?? 0, afterTotvs?.in_use ?? 0),
+    });
+  }
 
   return rows;
 }

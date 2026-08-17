@@ -1002,6 +1002,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_observability_snapshot": RouteContract("observability_snapshot", "scalar"),
     "get_openapi_diff": RouteContract("openapi_diff", "scalar"),
     "get_query_cache_stats": RouteContract("query_cache_stats", "scalar"),
+    "get_connection_pool_stats": RouteContract("connection_pool_stats", "scalar"),
     "get_smoke_definitions": RouteContract("smoke_definitions", "scalar"),
     "get_sql_health": RouteContract("sql_health", "scalar"),
     # Lançamento de notas fiscais
