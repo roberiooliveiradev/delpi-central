@@ -1158,7 +1158,7 @@ def create_departments_tree_load_job(
     competence: str | None = Body(None),
     start_date: str | None = Body(None),
     end_date: str | None = Body(None),
-    months: int = Body(3, ge=2, le=12),
+    months: int = Body(6, ge=2, le=12),
 ):
     """
     Cria job assíncrono para carregar árvore (snapshot → trends) com progresso.

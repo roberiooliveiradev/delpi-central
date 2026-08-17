@@ -2,7 +2,7 @@
 
 Documento de referência para otimização (refresh `period_scores`, leituras do painel e timeout 524 no gateway).
 
-**Evidência:** log de `refresh_period_scores.py --competence 2026-05` com `trends_months=3`, `per_department=false` (2026-05-28, produção).
+**Evidência (histórica):** log de `refresh_period_scores.py --competence 2026-05` com `trends_months=3`, `per_department=false` (2026-05-28, produção). Default atual: `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6` (alinhado a `/trends` e UI).
 
 **Marco crítico no log:**
 
@@ -128,14 +128,14 @@ Engenharia LMP + Transformômetro (~100–300 ms), vários `financial/rol` quand
 
 ---
 
-## 4. Por que o refresh com `trends_months=3` ainda leva ~15–25 min
+## 4. Por que o refresh com `trends_months` (ex.: 3–6) ainda leva ~15–25 min
 
 Multiplicadores atuais (config padrão produção após ajuste):
 
 | Fator | Valor | Efeito |
 |-------|-------|--------|
 | Filiais materializadas | 3 (`consolidado`, `01`, `02`) | ×3 no trabalho de medições |
-| Meses por filial | 3 (mar–mai/2026) | ×3 períodos na série |
+| Meses por filial | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` (default **6**; exemplo histórico 3) | ×N períodos na série |
 | Departamentos na medição | 7 em paralelo por escopo | Cada um dispara seu pacote de rotas |
 | Suprimentos por mês | **4** HTTP sequenciais (`cpv` → `inventory-turnover` → `otd` → `stock-value`) | Pior departamento |
 | `force_compute` + invalidate | sempre no script padrão | Zera `period_scores`; nada reaproveitado |

@@ -142,15 +142,15 @@ Refresh mais rápido (sem apagar cache e menos escopos):
 
 ```bash
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
-  --competence 2026-05 --trends-months 3 --no-per-department --no-invalidate
+  --competence 2026-05 --trends-months 6 --no-per-department --no-invalidate
 ```
 
-Após alterar `.env`, recrie o container para o scheduler usar os novos valores:
+Após alterar `.env`, recrie o container para o scheduler usar os novos valores (preferir script sequencial em stack completa):
 
 ```bash
 docker compose up -d --force-recreate strategic-indicators-api
 docker exec delpi-strategic-indicators-api printenv SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
-```
+# esperado: 6
 ```
 
 Confirme `period_scores` para a competência (via container da API, sem depender de `.env` no shell):
