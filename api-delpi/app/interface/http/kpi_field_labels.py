@@ -54,6 +54,8 @@ SI_GOAL_FIELD_LABELS: dict[str, str] = {
     "value_prefix": "Prefixo do valor",
     "value_suffix": "Sufixo do valor",
     "value_decimals": "Casas decimais",
+    "start_date": "Data inicial do período da meta",
+    "end_date": "Data final do período da meta",
 }
 
 FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {

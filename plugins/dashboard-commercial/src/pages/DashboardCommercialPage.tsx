@@ -194,6 +194,11 @@ export function DashboardCommercialPage({
     customerSegment
   );
 
+  const rolDateOpts = useMemo(
+    () => ({ dateStart, dateEnd }),
+    [dateStart, dateEnd],
+  );
+
   const rolKpi = useMemo(
     () =>
       buildRolPerUnitKpiView(
@@ -202,8 +207,9 @@ export function DashboardCommercialPage({
         rolContextLabel,
         formatCurrency,
         activeApiBranch,
+        rolDateOpts,
       ),
-    [activeApiBranch, branchRol, headOfficeRol, rolContextLabel],
+    [activeApiBranch, branchRol, headOfficeRol, rolContextLabel, rolDateOpts],
   );
 
   const wegRolContextLabel = appendCustomerSegmentToLabel(
@@ -228,11 +234,13 @@ export function DashboardCommercialPage({
         wegRolContextLabel,
         formatCurrency,
         activeApiBranch,
+        rolDateOpts,
       ),
     [
       activeApiBranch,
       branchWegRol,
       headOfficeWegRol,
+      rolDateOpts,
       wegRolContextLabel,
     ],
   );
@@ -245,12 +253,14 @@ export function DashboardCommercialPage({
         newBusinessRolContextLabel,
         formatCurrency,
         activeApiBranch,
+        rolDateOpts,
       ),
     [
       activeApiBranch,
       branchNewBusinessRol,
       headOfficeNewBusinessRol,
       newBusinessRolContextLabel,
+      rolDateOpts,
     ],
   );
 
@@ -632,6 +642,7 @@ export function DashboardCommercialPage({
           goalVariant={rolKpi.valueVariant}
           contextLabel={rolKpi.contextLabel}
           goalLabel={rolKpi.goalLabel}
+          goalPrefix={rolKpi.goalPrefix}
           goalScopeBadge={rolKpi.goalScopeBadge}
           goalScopeHint={rolKpi.goalScopeHint}
           goalPerformanceBadge={rolKpi.goalPerformanceBadge}
@@ -648,6 +659,7 @@ export function DashboardCommercialPage({
           goalVariant={wegRolKpi.valueVariant}
           contextLabel={wegRolKpi.contextLabel}
           goalLabel={wegRolKpi.goalLabel}
+          goalPrefix={wegRolKpi.goalPrefix}
           goalScopeBadge={wegRolKpi.goalScopeBadge}
           goalScopeHint={wegRolKpi.goalScopeHint}
           goalPerformanceBadge={wegRolKpi.goalPerformanceBadge}
@@ -664,6 +676,7 @@ export function DashboardCommercialPage({
           goalVariant={segmentNewBusinessRolKpi.valueVariant}
           contextLabel={segmentNewBusinessRolKpi.contextLabel}
           goalLabel={segmentNewBusinessRolKpi.goalLabel}
+          goalPrefix={segmentNewBusinessRolKpi.goalPrefix}
           goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
           goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
           goalPerformanceBadge={segmentNewBusinessRolKpi.goalPerformanceBadge}
@@ -688,6 +701,8 @@ export function DashboardCommercialPage({
               realizedValue: salesOrderOtd?.sales_order_otd_pct,
               activeBranch: activeApiBranch,
               branches: salesOrderOtdBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<PackageCheck size={22} />}
@@ -707,6 +722,8 @@ export function DashboardCommercialPage({
               realizedValue: closingRate?.sales_conversion_rate_pct,
               activeBranch: activeApiBranch,
               branches: closingRateBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Percent size={22} />}
@@ -726,6 +743,8 @@ export function DashboardCommercialPage({
               realizedValue: newBusinessRol?.new_business_rol_pct,
               activeBranch: activeApiBranch,
               branches: newBusinessRolBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<TrendingUp size={22} />}

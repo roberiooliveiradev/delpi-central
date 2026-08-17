@@ -344,7 +344,11 @@ export function SalesOrderOtdPage({ pathname }: SalesOrderOtdPageProps) {
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.sales_order_otd_pct }
+            {
+              realizedValue: data?.summary.sales_order_otd_pct,
+              dateStart,
+              dateEnd,
+            }
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy}

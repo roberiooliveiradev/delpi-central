@@ -102,37 +102,27 @@ describe("goalDisplay", () => {
     ).toBe("Meta");
   });
 
-  it("deriva kind por datas quando flags ausentes", () => {
+  it("deriva kind por start_date/end_date do goal (enrich api-delpi)", () => {
     expect(
-      resolveGoalPeriodPartial(null, {
-        dateStart: "2026-05-01",
-        dateEnd: "2026-05-15",
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 100,
+        start_date: "2026-08-01",
+        end_date: "2026-08-17",
       }),
-    ).toBe(true);
+    ).toBe("Meta parcial");
     expect(
-      resolveAccumulatedGoalPrefix(null, {
-        dateStart: "2026-05-01",
-        dateEnd: "2026-05-31",
-      }),
-    ).toBe("Meta");
-    expect(
-      resolveGoalPeriodPartial(null, {
-        dateStart: "2026-05-01",
-        dateEnd: "2026-05-31",
-      }),
-    ).toBe(false);
-    // YTD com mês final incompleto → acumulada (não parcial)
-    expect(
-      resolveAccumulatedGoalPrefix(null, {
-        dateStart: "2026-01-01",
-        dateEnd: "2026-08-15",
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 100,
+        start_date: "2026-01-01",
+        end_date: "2026-08-17",
       }),
     ).toBe("Meta acumulada");
     expect(
-      resolveGoalPeriodPartial(null, {
-        dateStart: "2026-01-01",
-        dateEnd: "2026-08-15",
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 100,
+        start_date: "2026-07-01",
+        end_date: "2026-07-31",
       }),
-    ).toBe(false);
+    ).toBe("Meta");
   });
 });

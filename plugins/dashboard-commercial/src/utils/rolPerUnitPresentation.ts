@@ -3,6 +3,7 @@ import type { GoalPerformanceBadge, KpiGoalPresentation } from "./goalDisplay";
 import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
+  resolveAccumulatedGoalPrefix,
   resolveConsolidatedIddScoreLabel,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
@@ -75,19 +76,44 @@ function resolvePerUnitPerformanceBadges(
     .filter((badge): badge is GoalPerformanceBadge => badge != null);
 }
 
+function pickGoalForPrefix(
+  filial01: RolTargetData | null,
+  filial02: RolTargetData | null,
+  activeBranch?: string,
+): RolTargetData | null {
+  const branch = (activeBranch ?? "").trim();
+  if (branch === "01") return filial01;
+  if (branch === "02") return filial02;
+  return filial01 ?? filial02;
+}
+
 export function buildRolPerUnitKpiView(
   filial01: RolTargetData | null,
   filial02: RolTargetData | null,
   contextLabel: string,
   formatCurrency: (value: number) => string,
   activeBranch?: string,
+  options?: {
+    dateStart?: string | null;
+    dateEnd?: string | null;
+  },
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
+  const dateOpts = {
+    dateStart: options?.dateStart,
+    dateEnd: options?.dateEnd,
+  };
+  const goalForPrefix = pickGoalForPrefix(filial01, filial02, activeBranch);
+  const goalPrefix = goalForPrefix
+    ? resolveAccumulatedGoalPrefix(goalForPrefix, dateOpts)
+    : null;
 
   if (branch === "01" || branch === "02") {
     const data = branch === "01" ? filial01 : filial02;
     const single = buildKpiGoalPresentation(contextLabel, data, undefined, {
       realizedValue: data?.rol,
+      dateStart: options?.dateStart,
+      dateEnd: options?.dateEnd,
     });
     return {
       ...single,
@@ -111,6 +137,7 @@ export function buildRolPerUnitKpiView(
       consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
     valueVariant: "default",
     goalLabel: null,
+    goalPrefix,
     goalScopeBadge: null,
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,

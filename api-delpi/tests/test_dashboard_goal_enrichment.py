@@ -39,6 +39,8 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
         result = enrich_dashboard_metric(
             {"otd_percentage": 88.0},
             source_key="supplies_otd",
+            start_date="2026-08-01",
+            end_date="2026-08-17",
         )
 
     assert result["goal_label"] == "≥ 95%"
@@ -51,6 +53,8 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
     assert result["goal_scope_label"] == "Meta consolidada"
     assert result["performance_direction"] == "higher_is_better"
     assert result["otd_percentage"] == 88.0
+    assert result["start_date"] == "2026-08-01"
+    assert result["end_date"] == "2026-08-17"
 
 
 def test_enrich_dashboard_metric_preserves_partial_kind_under_summary() -> None:

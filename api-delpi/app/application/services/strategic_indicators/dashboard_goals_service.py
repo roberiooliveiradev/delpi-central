@@ -66,6 +66,12 @@ class DashboardGoalsService:
             and not goal_fields.get("goal_scope_hint")
         ):
             return payload
+        # Period used for SI resolution — MFE uses these for Meta/parcial/acumulada
+        # when goal_period_kind is absent (fallback in resolveGoalPeriodKind).
+        if start_date:
+            goal_fields["start_date"] = start_date
+        if end_date:
+            goal_fields["end_date"] = end_date
         target_block = payload
 
         if summary_key and isinstance(payload.get(summary_key), dict):
@@ -141,7 +147,13 @@ class DashboardGoalsService:
         goals_by_metric: dict[str, dict[str, Any] | None] = {}
         for field, source_key in field_source_keys.items():
             goal = goals_map.get(source_key)
-            goals_by_metric[field] = self._flatten_goal(goal) if goal else None
+            flattened = self._flatten_goal(goal) if goal else None
+            if flattened is not None:
+                if start_date:
+                    flattened["start_date"] = start_date
+                if end_date:
+                    flattened["end_date"] = end_date
+            goals_by_metric[field] = flattened
 
         return {**payload, "goals_by_metric": goals_by_metric}
 
@@ -223,6 +235,8 @@ class DashboardGoalsService:
                 "value_prefix": None,
                 "value_suffix": None,
                 "value_decimals": None,
+                "start_date": None,
+                "end_date": None,
                 "has_goal": False,
             }
 
@@ -249,6 +263,8 @@ class DashboardGoalsService:
             "value_prefix": goal.get("value_prefix"),
             "value_suffix": goal.get("value_suffix"),
             "value_decimals": goal.get("value_decimals"),
+            "start_date": goal.get("start_date"),
+            "end_date": goal.get("end_date"),
             "has_goal": bool(goal.get("has_goal")),
         }
 
