@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from si_app.application.services.supplies.supplies_metrics_helpers import (
@@ -12,6 +13,7 @@ from si_app.application.services.supplies.supplies_metrics_helpers import (
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.infrastructure.concurrency.context_thread import submit_in_request_context
 from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.infrastructure.gateways.delpi_supplies_gateway import DelpiSuppliesGateway
 from si_app.shared.branch_filter import effective_query_branch
@@ -99,28 +101,50 @@ class SuppliesMetricsSnapshotService:
         end_date: str | None,
         branch: str | None,
     ) -> SuppliesMetricsSnapshot:
-        cpv_raw = self._supplies_gateway.fetch_cpv_raw(
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
-        rol_data = self._financial_gateway.get_rol(
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_cpv = submit_in_request_context(
+                executor,
+                lambda: self._supplies_gateway.fetch_cpv_raw(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+            )
+            future_rol = submit_in_request_context(
+                executor,
+                lambda: self._financial_gateway.get_rol(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+            )
+            future_stock = submit_in_request_context(
+                executor,
+                lambda: self._supplies_gateway.fetch_stock_value_raw(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+            )
+            future_otd = submit_in_request_context(
+                executor,
+                lambda: self._supplies_gateway.fetch_otd_raw(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+            )
+            cpv_raw = future_cpv.result()
+            rol_data = future_rol.result()
+            stock_raw = future_stock.result()
+            otd_raw = future_otd.result()
+
         cpv_result = build_cpv_payload(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
             cpv_raw=cpv_raw,
             rol_data=rol_data,
-        )
-
-        stock_raw = self._supplies_gateway.fetch_stock_value_raw(
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
         )
         turnover_raw = build_turnover_raw_from_cpv(
             cpv_raw=cpv_raw,
@@ -136,19 +160,12 @@ class SuppliesMetricsSnapshotService:
             stock_raw=stock_raw,
             strict_idd_period=False,
         )
-
-        otd_raw = self._supplies_gateway.fetch_otd_raw(
-            branch=branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
         otd_result = build_otd_payload(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
             otd_raw=otd_raw,
         )
-
         stock_value_result = build_stock_value_payload(
             branch=branch,
             start_date=start_date,
