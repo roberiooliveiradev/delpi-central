@@ -2318,11 +2318,11 @@
       "locale": {
         "en": {
           "label": "Pending only",
-          "description": "Return only pending items when true."
+          "description": "When true, return open NCs: awaiting registration plus open and in_progress plans."
         },
         "pt-BR": {
           "label": "Somente pendentes",
-          "description": "Retorna apenas itens pendentes quando verdadeiro."
+          "description": "Retorna NCs em aberto: aguardando registro, plano em registro e aguardando evidências."
         }
       }
     },

@@ -48,6 +48,17 @@ def test_nc_board_filter_pending_and_responsible_user() -> None:
     assert "user-42" in params
 
 
+def test_nc_board_includes_candidates_for_em_aberto_pending_only() -> None:
+    """«Em aberto» (pending_only) inclui aguardando registro + open/in_progress."""
+    included = _FilterProbe()._nc_board_includes_candidates(
+        ListAudit5sNcBoardRequest(
+            branch_code="01",
+            pending_only=True,
+        ),
+    )
+    assert included is True
+
+
 def test_nc_board_excludes_candidates_for_my_pending_scope() -> None:
     included = _FilterProbe()._nc_board_includes_candidates(
         ListAudit5sNcBoardRequest(

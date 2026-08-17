@@ -274,7 +274,7 @@ export const NC_STATUS_OPTIONS = [
 
 /**
  * Filtro do board de NCs.
- * «Em aberto» (`pending`) = open + in_progress (plano em registro e aguardando evidências).
+ * «Em aberto» (`pending`) = candidatos (aguardando registro) + open + in_progress.
  */
 export const NC_BOARD_STATUS_FILTER_OPTIONS = [
   { value: "", label: "Todos os status" },

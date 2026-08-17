@@ -13,7 +13,7 @@ export type NcBoardFilterState = {
   dateStart: string;
   dateEnd: string;
   areaId: string;
-  /** Status canônico (`open`…) ou `pending` (abertas: open + in_progress). */
+  /** Status canônico (`open`…) ou `pending` (abertas: candidatos + open + in_progress). */
   status: string;
   responsible: string;
   responsibleUserId: string;

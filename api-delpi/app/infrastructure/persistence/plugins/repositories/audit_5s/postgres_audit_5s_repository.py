@@ -2848,7 +2848,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
     @staticmethod
     def _nc_board_includes_candidates(request: ListAudit5sNcBoardRequest) -> bool:
-        if request.overdue_only or request.pending_only:
+        """Candidatos (aguardando registro) entram em «Em aberto» / listagem ampla.
+
+        Exclui quando o filtro exige plano já registrado (atraso, prioridade,
+        responsável / my-pending) ou status terminal / só em tratamento.
+        """
+        if request.overdue_only:
             return False
         if request.priority or request.responsible or request.responsible_user_id:
             return False

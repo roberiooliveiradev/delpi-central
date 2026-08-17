@@ -1,6 +1,6 @@
 /**
  * Regressão: filtro de status do board de NCs.
- * Em aberto = open + in_progress; sem opções isoladas; default = pending.
+ * Em aberto = candidatos + open + in_progress; sem opções isoladas; default = pending.
  * Uso: node --experimental-strip-types scripts/check-nc-board-status-filter.ts
  */
 import assert from "node:assert/strict";
