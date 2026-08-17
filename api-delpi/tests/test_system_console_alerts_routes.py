@@ -49,6 +49,12 @@ def test_get_console_health_route() -> None:
     assert "max_occupancy_pct" in payload["pools"]
     assert "occupancy_pct" in payload["pools"]["plugins_postgres"]
     assert "pool_occupancy_pct" in payload["metrics"]
+    assert payload["slo"]["availability_pct"] == 99.0
+    assert payload["slo"]["p95_ms"] == 3000.0
+    assert payload["sli"]["total_requests"] == 2
+    assert payload["sli"]["availability_pct"] == 50.0
+    assert payload["sli"]["error_budget_remaining_pct"] == 0.0
+    assert payload["sli_meta"]["window_scope"] == "in_memory_sample"
 
 
 def test_post_console_alerts_smoke_route() -> None:

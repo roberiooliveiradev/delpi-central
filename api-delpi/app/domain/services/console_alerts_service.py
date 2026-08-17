@@ -278,6 +278,57 @@ def process_console_alerts(
     }
 
 
+def _build_sli_slo_payload(
+    *,
+    traffic: dict[str, Any],
+    p95_ms: float,
+) -> dict[str, Any]:
+    """SLI/SLO over the in-memory telemetry window (not a 30-day rolling SLO)."""
+    slo = ConsoleAlertContentService.slo_targets()
+    availability_target = float(slo["availability_pct"])
+    p95_target = float(slo["p95_ms"])
+    total = int(traffic.get("total_requests") or 0)
+    server_error_rate = float(traffic.get("server_error_rate_pct") or 0.0)
+
+    if total <= 0:
+        availability_pct = None
+        error_budget_remaining_pct = None
+        p95_within_slo = None
+    else:
+        availability_pct = round(100.0 - server_error_rate, 2)
+        allowed_error_pct = max(0.0, 100.0 - availability_target)
+        if allowed_error_pct <= 0:
+            error_budget_remaining_pct = 100.0 if server_error_rate <= 0 else 0.0
+        else:
+            consumed = min(1.0, server_error_rate / allowed_error_pct)
+            error_budget_remaining_pct = round(100.0 * (1.0 - consumed), 2)
+        p95_within_slo = p95_ms <= p95_target
+
+    return {
+        "window_scope": "in_memory_sample",
+        "note": "SLI/SLO da janela amostrada em memória — não equivale a SLO de 30 dias.",
+        "slo": {
+            "availability_pct": availability_target,
+            "p95_ms": p95_target,
+        },
+        "sli": {
+            "availability_pct": availability_pct,
+            "p95_ms": p95_ms if total > 0 else None,
+            "total_requests": total,
+            "server_error_rate_pct": server_error_rate if total > 0 else None,
+            "p95_within_slo": p95_within_slo,
+            "error_budget_remaining_pct": error_budget_remaining_pct,
+        },
+        "labels": {
+            "availability_pct": ConsoleAlertContentService.sli_label("availability_pct"),
+            "p95_ms": ConsoleAlertContentService.sli_label("p95_ms"),
+            "error_budget_remaining_pct": ConsoleAlertContentService.sli_label(
+                "error_budget_remaining_pct"
+            ),
+        },
+    }
+
+
 def build_console_health_summary() -> dict[str, Any]:
     snapshot = build_observability_snapshot(limit=15)
     caller_stats = get_caller_stats_summary(limit=10)
@@ -287,6 +338,7 @@ def build_console_health_summary() -> dict[str, Any]:
     recent = list(_alert_history)[:10]
     open_count = len(current_alerts)
     p95_ms = get_caller_duration_percentile(0.95)
+    sli_slo = _build_sli_slo_payload(traffic=traffic, p95_ms=p95_ms)
 
     return {
         "captured_at": _now_iso(),
@@ -306,6 +358,13 @@ def build_console_health_summary() -> dict[str, Any]:
         },
         "traffic": traffic,
         "pools": pools,
+        "slo": sli_slo["slo"],
+        "sli": sli_slo["sli"],
+        "sli_meta": {
+            "window_scope": sli_slo["window_scope"],
+            "note": sli_slo["note"],
+            "labels": sli_slo["labels"],
+        },
         "metrics": {
             "p95_ms": p95_ms,
             "error_rate_pct": traffic.get("error_rate_pct", 0.0),
