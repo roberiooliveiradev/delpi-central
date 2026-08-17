@@ -130,6 +130,9 @@ export function buildRolPerUnitKpiView(
   }
 
   const consolidatedRol = resolveConsolidatedRolValue(filial01, filial02);
+  const prefixPresentation = goalForPrefix
+    ? buildKpiGoalPresentation(contextLabel, goalForPrefix, undefined, dateOpts)
+    : null;
 
   return {
     contextLabel,
@@ -138,6 +141,10 @@ export function buildRolPerUnitKpiView(
     valueVariant: "default",
     goalLabel: null,
     goalPrefix,
+    goalHint: prefixPresentation?.goalHint ?? null,
+    monthlyGoalLabel: prefixPresentation?.monthlyGoalLabel ?? null,
+    monthlyGoalPrefix: prefixPresentation?.monthlyGoalPrefix ?? null,
+    monthlyGoalHint: prefixPresentation?.monthlyGoalHint ?? null,
     goalScopeBadge: null,
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,

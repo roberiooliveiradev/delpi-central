@@ -643,6 +643,10 @@ export function DashboardCommercialPage({
           contextLabel={rolKpi.contextLabel}
           goalLabel={rolKpi.goalLabel}
           goalPrefix={rolKpi.goalPrefix}
+          goalHint={rolKpi.goalHint}
+          monthlyGoalLabel={rolKpi.monthlyGoalLabel}
+          monthlyGoalPrefix={rolKpi.monthlyGoalPrefix}
+          monthlyGoalHint={rolKpi.monthlyGoalHint}
           goalScopeBadge={rolKpi.goalScopeBadge}
           goalScopeHint={rolKpi.goalScopeHint}
           goalPerformanceBadge={rolKpi.goalPerformanceBadge}
@@ -660,6 +664,10 @@ export function DashboardCommercialPage({
           contextLabel={wegRolKpi.contextLabel}
           goalLabel={wegRolKpi.goalLabel}
           goalPrefix={wegRolKpi.goalPrefix}
+          goalHint={wegRolKpi.goalHint}
+          monthlyGoalLabel={wegRolKpi.monthlyGoalLabel}
+          monthlyGoalPrefix={wegRolKpi.monthlyGoalPrefix}
+          monthlyGoalHint={wegRolKpi.monthlyGoalHint}
           goalScopeBadge={wegRolKpi.goalScopeBadge}
           goalScopeHint={wegRolKpi.goalScopeHint}
           goalPerformanceBadge={wegRolKpi.goalPerformanceBadge}
@@ -677,6 +685,10 @@ export function DashboardCommercialPage({
           contextLabel={segmentNewBusinessRolKpi.contextLabel}
           goalLabel={segmentNewBusinessRolKpi.goalLabel}
           goalPrefix={segmentNewBusinessRolKpi.goalPrefix}
+          goalHint={segmentNewBusinessRolKpi.goalHint}
+          monthlyGoalLabel={segmentNewBusinessRolKpi.monthlyGoalLabel}
+          monthlyGoalPrefix={segmentNewBusinessRolKpi.monthlyGoalPrefix}
+          monthlyGoalHint={segmentNewBusinessRolKpi.monthlyGoalHint}
           goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
           goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
           goalPerformanceBadge={segmentNewBusinessRolKpi.goalPerformanceBadge}

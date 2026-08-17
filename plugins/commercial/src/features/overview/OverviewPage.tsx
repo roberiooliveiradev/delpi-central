@@ -244,6 +244,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               contextLabel={rolKpi.contextLabel}
               goalLabel={rolKpi.goalLabel}
               goalPrefix={rolKpi.goalPrefix}
+              goalHint={rolKpi.goalHint}
+              monthlyGoalLabel={rolKpi.monthlyGoalLabel}
+              monthlyGoalPrefix={rolKpi.monthlyGoalPrefix}
+              monthlyGoalHint={rolKpi.monthlyGoalHint}
               periodKindBadge={rolKpi.periodKindBadge}
               goalScopeBadge={rolKpi.goalScopeBadge}
               goalScopeHint={rolKpi.goalScopeHint}
@@ -262,6 +266,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               contextLabel={wegRolKpi.contextLabel}
               goalLabel={wegRolKpi.goalLabel}
               goalPrefix={wegRolKpi.goalPrefix}
+              goalHint={wegRolKpi.goalHint}
+              monthlyGoalLabel={wegRolKpi.monthlyGoalLabel}
+              monthlyGoalPrefix={wegRolKpi.monthlyGoalPrefix}
+              monthlyGoalHint={wegRolKpi.monthlyGoalHint}
               periodKindBadge={wegRolKpi.periodKindBadge}
               goalScopeBadge={wegRolKpi.goalScopeBadge}
               goalScopeHint={wegRolKpi.goalScopeHint}
@@ -280,6 +288,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               contextLabel={segmentNewBusinessRolKpi.contextLabel}
               goalLabel={segmentNewBusinessRolKpi.goalLabel}
               goalPrefix={segmentNewBusinessRolKpi.goalPrefix}
+              goalHint={segmentNewBusinessRolKpi.goalHint}
+              monthlyGoalLabel={segmentNewBusinessRolKpi.monthlyGoalLabel}
+              monthlyGoalPrefix={segmentNewBusinessRolKpi.monthlyGoalPrefix}
+              monthlyGoalHint={segmentNewBusinessRolKpi.monthlyGoalHint}
               periodKindBadge={segmentNewBusinessRolKpi.periodKindBadge}
               goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
               goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
