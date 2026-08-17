@@ -31,7 +31,6 @@ import {
   getFilterViewScopeLabel,
   resolveStrategicIndicatorsBranch,
   formatComparisonMonthsLabel,
-  sliceTrendPoints,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
 import { getScopeTypeLabel } from "../presentation/labels";
@@ -195,7 +194,7 @@ function TreeIgdCard({
           {model.igdSeries.length > 0 ? (
             <TreeSparkline
               key={`igd-series-${monthsToCompare}`}
-              points={sliceTrendPoints(model.igdSeries, monthsToCompare)}
+              points={model.igdSeries}
               direction="stable"
               height={64}
               label={`Evolução · ${formatComparisonMonthsLabel(monthsToCompare)}`}
@@ -309,7 +308,7 @@ function IndicatorTreeCard({
   const badgeVariant = indicator.hasValue
     ? mapScoreToBadgeVariant(indicator.score ?? 0)
     : "neutral";
-  const visibleSeries = sliceTrendPoints(series, monthsToCompare);
+  const visibleSeries = series;
   const sparklineDirection = resolveIndicatorSparklineDirection(
     visibleSeries,
     indicator.trend,
@@ -496,7 +495,7 @@ function DepartmentTreeCard({
             </span>
             <TreeSparkline
               key={`dept-series-${department.id}-${monthsToCompare}`}
-              points={sliceTrendPoints(node.series, monthsToCompare)}
+              points={node.series}
               direction={department.variation.direction}
               height={52}
               label={`IDD · ${formatComparisonMonthsLabel(monthsToCompare)}`}

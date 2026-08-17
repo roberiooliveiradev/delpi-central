@@ -882,7 +882,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       );
     }
 
-    const igdSeries = trend.igdSeries.slice(-monthsToCompare);
+    const igdSeries = trend.igdSeries;
 
     const strongestMomentumDepartment = [...trend.departments].sort(
       (a, b) => b.netVariation - a.netVariation,
