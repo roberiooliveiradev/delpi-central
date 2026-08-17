@@ -9,7 +9,7 @@ import { NcBoardViewModal } from "../components/NcBoardViewModal";
 import { NcManagementFilters } from "../components/NcManagementFilters";
 import { NcManagementKpis } from "../components/NcManagementKpis";
 import { NcManagementTable } from "../components/NcManagementTable";
-import { ncBoardScopeFromLocation } from "../constants/audit5s";
+import { ncBoardScopeFromLocation, isNcBoardViewOnly } from "../constants/audit5s";
 import { useAudit5sAdminPermission } from "../hooks/useAudit5sAdminPermission";
 import { useAudit5sNcBoard } from "../hooks/useAudit5sNcBoard";
 import { useAudit5sNcBoardFilters } from "../hooks/useAudit5sNcBoardFilters";
@@ -144,8 +144,18 @@ export function NcManagementPage({
               canAdmin={canAdmin}
               onPageChange={filters.setPage}
               onView={(item) => setModalState({ mode: "view", item })}
-              onEdit={(item) => setModalState({ mode: "edit", item })}
-              onNotes={(item) => setModalState({ mode: "notes", item })}
+              onEdit={(item) =>
+                setModalState({
+                  mode: isNcBoardViewOnly(item.status) ? "view" : "edit",
+                  item,
+                })
+              }
+              onNotes={(item) =>
+                setModalState({
+                  mode: isNcBoardViewOnly(item.status) ? "view" : "notes",
+                  item,
+                })
+              }
               onReopen={(item) => {
                 setActionError(null);
                 setPendingReopen(item);

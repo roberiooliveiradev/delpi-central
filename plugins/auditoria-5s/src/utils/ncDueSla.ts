@@ -3,6 +3,7 @@ import type { NcBoardItem, NcDueSlaLevel } from "../types/ncManagement";
 export type NcBoardRowStatusTone =
   | "pending"
   | "closed"
+  | "cancelled"
   | "overdue"
   | "on-track"
   | "ok";
@@ -19,6 +20,9 @@ export function resolveNcBoardRowStatus(item: NcBoardItem): NcBoardRowStatus {
   }
   if (item.status === "closed") {
     return { label: "Concluída", tone: "closed" };
+  }
+  if (item.status === "cancelled") {
+    return { label: "Cancelada", tone: "cancelled" };
   }
   if (item.due_sla_level === "overdue") {
     return {

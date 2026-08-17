@@ -305,7 +305,7 @@ export type Nonconformity = {
 };
 
 export type NcPriority = "high" | "medium" | "low";
-export type NcStatus = "open" | "in_progress" | "closed";
+export type NcStatus = "open" | "in_progress" | "closed" | "cancelled";
 
 export type NcAttachmentType = "before" | "after";
 

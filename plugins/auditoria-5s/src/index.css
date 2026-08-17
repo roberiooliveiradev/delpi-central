@@ -2692,6 +2692,8 @@ button.a5s-criterion-photo__thumb:focus-visible{
   color: var(--a5s-warning);
 }.a5s-nc-board-row-status--closed{
   color: var(--a5s-muted);
+}.a5s-nc-board-row-status--cancelled{
+  color: var(--a5s-muted);
 }.a5s-nc-board-row-status--overdue{
   color: var(--a5s-danger);
 }.a5s-nc-board-row-status--on-track{

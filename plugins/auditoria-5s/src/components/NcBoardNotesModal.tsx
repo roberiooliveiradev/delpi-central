@@ -4,7 +4,7 @@ import { MessageSquarePlus } from "lucide-react";
 import { addNcAction } from "../api/audit5sApi";
 import { searchDirectoryUsers, type DirectoryUser } from "../api/directoryApi";
 import type { NcBoardItem } from "../types/ncManagement";
-import { shiftLabel } from "../constants/audit5s";
+import { shiftLabel, canAddNcBoardNotes, isNcBoardViewOnly } from "../constants/audit5s";
 import { formatDisplayDate } from "../utils/dates";
 import { formatPersonName } from "../utils/formatPersonName";
 import {
@@ -53,7 +53,8 @@ export function NcBoardNotesModal({ item, open, onClose, onSaved }: Props) {
   const [mentionIndex, setMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const canAddNote = Boolean(item?.is_registered);
+  const canAddNote = canAddNcBoardNotes(item?.status ?? "", Boolean(item?.is_registered));
+  const viewOnly = isNcBoardViewOnly(item?.status ?? "");
   const trimmedNote = note.trim();
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function NcBoardNotesModal({ item, open, onClose, onSaved }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!item?.is_registered || trimmedNote.length < 3) return;
+    if (!canAddNote || trimmedNote.length < 3) return;
 
     setSaving(true);
     setSubmitError(null);
@@ -175,25 +176,31 @@ export function NcBoardNotesModal({ item, open, onClose, onSaved }: Props) {
       onClose={onClose}
       dialogClassName="a5s-nc-board-treat-dialog--notes"
       footer={
-        <>
+        viewOnly ? (
           <button type="button" className="a5s-btn a5s-btn--ghost" onClick={onClose}>
             Fechar
           </button>
-          <button
-            type="button"
-            className="a5s-btn"
-            disabled={!canAddNote || saving || trimmedNote.length < 3}
-            onClick={() => {
-              void handleSubmit();
-            }}
-          >
-            {saving ? "Salvando…" : "Registrar nota"}
-          </button>
-        </>
+        ) : (
+          <>
+            <button type="button" className="a5s-btn a5s-btn--ghost" onClick={onClose}>
+              Fechar
+            </button>
+            <button
+              type="button"
+              className="a5s-btn"
+              disabled={!canAddNote || saving || trimmedNote.length < 3}
+              onClick={() => {
+                void handleSubmit();
+              }}
+            >
+              {saving ? "Salvando…" : "Registrar nota"}
+            </button>
+          </>
+        )
       }
     >
       <div className="a5s-nc-board-treat-dialog__body">
-        {!canAddNote ? (
+        {!canAddNote && !viewOnly ? (
           <div className="a5s-alert a5s-alert--warning">
             Registre o plano de ação em <strong>Atualizar</strong> antes de incluir observações no
             histórico.
@@ -203,6 +210,7 @@ export function NcBoardNotesModal({ item, open, onClose, onSaved }: Props) {
         {error ? <div className="a5s-alert a5s-alert--error">{error}</div> : null}
         {submitError ? <div className="a5s-alert a5s-alert--error">{submitError}</div> : null}
 
+        {!viewOnly ? (
         <label className="a5s-nc-notes__composer">
           <span className="a5s-nc-notes__composer-label">Nova observação</span>
           <span className="a5s-nc-notes__composer-hint">
@@ -303,6 +311,7 @@ export function NcBoardNotesModal({ item, open, onClose, onSaved }: Props) {
             </ul>
           ) : null}
         </label>
+        ) : null}
 
         <section className="a5s-nc-notes__history">
           <h3>Histórico</h3>

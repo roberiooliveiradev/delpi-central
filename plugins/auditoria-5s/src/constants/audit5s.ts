@@ -185,6 +185,19 @@ export function ncStatusLabel(value: string): string {
   return NC_STATUS_LABELS[value] ?? value;
 }
 
+/** Cancelada: ficha e board só visualizam — sem atualizar, notas ou reabrir. */
+export function isNcBoardViewOnly(status: string): boolean {
+  return status === "cancelled";
+}
+
+export function canUpdateNcBoardItem(status: string): boolean {
+  return !isNcBoardViewOnly(status);
+}
+
+export function canAddNcBoardNotes(status: string, isRegistered = true): boolean {
+  return isRegistered && !isNcBoardViewOnly(status);
+}
+
 export function ncBoardStatusVariant(
   status: string,
   isRegistered = true,
