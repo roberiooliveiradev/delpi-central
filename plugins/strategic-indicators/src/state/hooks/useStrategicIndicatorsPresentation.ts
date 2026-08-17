@@ -16,6 +16,7 @@ import {
   type RequestProgress,
 } from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 
 type UseStrategicIndicatorsPresentationParams = {
   competence?: string;
@@ -31,7 +32,7 @@ export function useStrategicIndicatorsPresentation({
   branch,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
 }: UseStrategicIndicatorsPresentationParams) {
   const [payload, setPayload] =

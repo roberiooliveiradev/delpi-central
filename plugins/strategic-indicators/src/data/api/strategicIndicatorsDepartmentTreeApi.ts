@@ -7,6 +7,7 @@ import type {
 } from "../types/departmentTreeBundle";
 import { buildStrategicIndicatorsApiError } from "./strategicIndicatorsApiErrors";
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 
 const BASE_URL = STRATEGIC_INDICATORS_API_BASE;
 
@@ -59,7 +60,7 @@ export async function fetchStrategicIndicatorsDepartmentTree({
   competence,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
   signal,
 }: FetchStrategicIndicatorsDepartmentTreeParams): Promise<StrategicIndicatorsDepartmentTreeResponse> {
@@ -138,7 +139,7 @@ export async function fetchDepartmentTreeTrends({
   competence,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
   signal,
 }: FetchTreeTrendsParams): Promise<StrategicIndicatorsTreeTrendsResponse> {
@@ -177,7 +178,7 @@ export async function createDepartmentTreeLoadJob({
   competence,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
   signal,
 }: CreateTreeLoadJobParams): Promise<StrategicIndicatorsTreeLoadJobCreateResponse> {

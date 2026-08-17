@@ -1,3 +1,4 @@
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 import { adaptDepartmentsToView } from "./departmentsAdapter";
 import { adaptIndicatorsToView } from "./indicatorsAdapter";
 import {
@@ -56,7 +57,7 @@ export function adaptDepartmentTreeBundleToModel(
   return enrichDepartmentTreeWithTrends(
     baseModel,
     trendsByScope,
-    Math.max(2, response.months ?? 6),
+    Math.max(2, response.months ?? SI_DEFAULT_SERIES_MONTHS),
   );
 }
 
@@ -107,6 +108,6 @@ export function mergeTreeTrendsIntoModel(
   return enrichDepartmentTreeWithTrends(
     baseModel,
     trendsByScope,
-    Math.max(2, response.months ?? 6),
+    Math.max(2, response.months ?? SI_DEFAULT_SERIES_MONTHS),
   );
 }

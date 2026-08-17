@@ -9,6 +9,7 @@ import {
 } from "../../data/departmentTreeScopes";
 import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
+import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { StrategicIndicatorsErrorModal } from "../components/StrategicIndicatorsErrorModal";
@@ -150,7 +151,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         <RefreshSnapshotButton
           getAccessToken={getAccessToken}
           competence={referenceMonth}
-          trendsMonths={Math.max(monthsToCompare, 6)}
+          trendsMonths={Math.max(monthsToCompare, SI_DEFAULT_SERIES_MONTHS)}
           onRefreshed={() => void reload()}
           disabled={loading || refreshing}
         />
@@ -284,7 +285,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
               <RefreshSnapshotButton
                 getAccessToken={getAccessToken}
                 competence={referenceMonth}
-                trendsMonths={Math.max(monthsToCompare, 6)}
+                trendsMonths={Math.max(monthsToCompare, SI_DEFAULT_SERIES_MONTHS)}
                 onRefreshed={() => void reload()}
                 disabled={loading || refreshing}
               />

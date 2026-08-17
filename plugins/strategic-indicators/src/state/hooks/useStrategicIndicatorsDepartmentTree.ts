@@ -25,6 +25,7 @@ import { tryBuildDepartmentTreeFromReadCache } from "../../data/builders/departm
 import type { DepartmentTreeModel } from "../../data/types/departmentTree";
 import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { StrategicIndicatorsViewMode } from "../../ui/shared/strategicIndicatorsFilters";
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 import {
   buildStrategicIndicatorsCacheKey,
   getStrategicIndicatorsCachedValue,
@@ -148,7 +149,7 @@ export function useStrategicIndicatorsDepartmentTree({
   competence,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
 }: UseStrategicIndicatorsDepartmentTreeParams) {
   const [model, setModel] = useState<DepartmentTreeModel | null>(null);

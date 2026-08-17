@@ -66,10 +66,18 @@ export function isStrategicIndicatorsDepartmentsRoute(
   return pathname.includes("/strategic-indicators/departments");
 }
 
+/** Janela canônica de materialização / série (alinhada à API SI). */
+export const SI_DEFAULT_SERIES_MONTHS = 6;
+
+/** Janela de exibição default só na árvore de departamentos. */
+export const SI_DEPARTMENTS_DISPLAY_MONTHS = 3;
+
 export function getDefaultMonthsToCompare(
   pathname = typeof window !== "undefined" ? window.location.pathname : "",
 ): number {
-  return isStrategicIndicatorsDepartmentsRoute(pathname) ? 3 : 6;
+  return isStrategicIndicatorsDepartmentsRoute(pathname)
+    ? SI_DEPARTMENTS_DISPLAY_MONTHS
+    : SI_DEFAULT_SERIES_MONTHS;
 }
 
 export function formatComparisonMonthsLabel(months: number): string {

@@ -16,6 +16,7 @@ import {
   type RequestProgress,
 } from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 
 type UseStrategicIndicatorsTrendsParams = {
   departmentId?: string;
@@ -33,7 +34,7 @@ export function useStrategicIndicatorsTrends({
   competence,
   startDate,
   endDate,
-  months = 3,
+  months = SI_DEFAULT_SERIES_MONTHS,
   getAccessToken,
 }: UseStrategicIndicatorsTrendsParams) {
   const [data, setData] = useState<TrendsDashboardViewData | null>(null);

@@ -1,6 +1,7 @@
 import { DEPARTMENT_TREE_SCOPE_OPTIONS } from "../../data/departmentTreeScopes";
 import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import {
+  SI_DEFAULT_SERIES_MONTHS,
   STRATEGIC_INDICATORS_BRANCH_OPTIONS,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
@@ -43,7 +44,7 @@ export function StrategicIndicatorsReferenceFilters({
   referenceMonth,
   viewMode,
   branch,
-  monthsToCompare = 3,
+  monthsToCompare = SI_DEFAULT_SERIES_MONTHS,
   showMonthsToCompare = false,
   viewPickerVariant = "default",
   treeScope = "consolidated",

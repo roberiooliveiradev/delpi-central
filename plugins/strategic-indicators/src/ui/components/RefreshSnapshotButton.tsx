@@ -4,6 +4,7 @@ import {
   waitForStrategicIndicatorsRefresh,
 } from "../../data/api/strategicIndicatorsCacheApi";
 import { clearAllStrategicIndicatorsCache } from "../../data/cache/strategicIndicatorsReadCache";
+import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
 import "./RefreshSnapshotButton.css";
 
 type RefreshSnapshotButtonProps = {
@@ -24,7 +25,7 @@ export function RefreshSnapshotButton({
   getAccessToken,
   disabled = false,
   competence,
-  trendsMonths = 6,
+  trendsMonths = SI_DEFAULT_SERIES_MONTHS,
 }: RefreshSnapshotButtonProps) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<"success" | "error" | "background" | null>(
