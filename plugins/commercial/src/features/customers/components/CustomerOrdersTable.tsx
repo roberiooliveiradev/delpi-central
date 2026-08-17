@@ -324,7 +324,6 @@ export function CustomerOrdersTable({
 
       <CommercialFilterBarShell
         embedded
-        layout="inline"
         ariaLabel={CUSTOMER_ORDERS_CONTENT.searchLabel}
       >
         <CommercialTextField

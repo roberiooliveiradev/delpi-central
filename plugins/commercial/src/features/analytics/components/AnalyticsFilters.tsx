@@ -64,7 +64,6 @@ export function AnalyticsFilters({
       {onPeriodPreset ? (
         <CommercialFilterBarShell
           embedded
-          layout="inline"
           ariaLabel={ANALYTICS_CONTENT.filters.periodPreset}
           leading={
             <div>

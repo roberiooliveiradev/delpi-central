@@ -99,13 +99,14 @@ export function createFilterBarShell(config: {
   return function DashboardFilterBarShell({
     ariaLabel,
     embedded,
+    layout,
     ...props
   }: DashboardFilterBarShellProps) {
     return (
       <FilterBarShell
         classNames={classNames}
         ariaLabel={ariaLabel ?? config.defaultAriaLabel}
-        layout={config.withGrid ? "grid" : "inline"}
+        layout={layout ?? (config.withGrid ? "grid" : "inline")}
         embedded={embedded ?? config.embeddedByDefault ?? false}
         {...props}
       />

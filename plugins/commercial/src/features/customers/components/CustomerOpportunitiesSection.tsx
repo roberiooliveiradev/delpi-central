@@ -238,7 +238,6 @@ export function CustomerOpportunitiesSection({
           />
           <CommercialFilterBarShell
             embedded
-            layout="inline"
             ariaLabel={copy.accountFiltersAriaLabel}
           >
             <CommercialDateField
