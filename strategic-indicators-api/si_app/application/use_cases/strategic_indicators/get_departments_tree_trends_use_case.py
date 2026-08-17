@@ -92,7 +92,14 @@ class GetDepartmentsTreeTrendsUseCase:
             months=months,
         )
         snapshots = self._trends.load_period_snapshots(trends_request)
-        trends = self._trends.build_response_from_snapshots(snapshots)
+        months_requested, competences_requested = self._trends.requested_window(
+            trends_request
+        )
+        trends = self._trends.build_response_from_snapshots(
+            snapshots,
+            months_requested=months_requested,
+            competences_requested=competences_requested,
+        )
 
         return {
             "scope_key": scope.scope_key,

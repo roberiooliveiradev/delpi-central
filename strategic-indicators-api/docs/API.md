@@ -197,7 +197,19 @@ Alertas derivados de metas e desempenho (usa snapshot comparativo).
 |-------|---------|-----------|
 | `months` | `6` | Histórico em meses (`2`–`12`) |
 
-Série temporal. Usa `get_series_snapshot_optimized` e, quando habilitado, cache `period_scores` no Postgres.
+Série temporal. Usa `get_series_snapshot_optimized` com **`prefer_materialized_only=True`**: só competências já em `period_scores` entram em `igd_series` (meses faltantes **não** são recalculados no GET).
+
+Campos de cobertura (sempre presentes na resposta):
+
+| Campo | Descrição |
+|--------|-----------|
+| `months_requested` | Janela pedida (`months`, clamp 2–12) |
+| `competences_requested` | Competências esperadas na janela |
+| `competences_returned` | Competências presentes em `igd_series` |
+| `missing_competences` | Pedidas e ausentes em `period_scores` |
+| `partial_success` | `true` se há erros de medição, série &lt; 2 pontos **ou** janela incompleta |
+
+Default de materialização do job/refresh: `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6` (alinhado a este endpoint). Body do botão Atualizar: `{ "competence", "trends_months" }`.
 
 ---
 
@@ -211,6 +223,8 @@ Payload agregado para tela de apresentação.
 |-------|---------|-----------|
 | `months` | `6` | Meses para tendências embutidas |
 | `include` | (todas) | Seções separadas por vírgula |
+
+A seção `trends` usa o **mesmo** modo mat-only e os mesmos campos de cobertura que `GET /trends` (parity de série).
 
 Valores de `include`:
 

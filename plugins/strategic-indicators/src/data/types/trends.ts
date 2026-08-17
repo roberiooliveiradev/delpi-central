@@ -73,6 +73,10 @@ export type TrendsDashboardViewData = {
   indicatorSeriesByDepartmentId: Record<string, IndicatorTrendSeriesItem[]>;
   partialSuccess: boolean;
   errors: TrendFetchErrorViewItem[];
+  monthsRequested: number | null;
+  competencesRequested: string[];
+  competencesReturned: string[];
+  missingCompetences: string[];
 };
 
 export type StrategicIndicatorsTrendsResponse = {
@@ -139,4 +143,8 @@ export type StrategicIndicatorsTrendsResponse = {
     message: string;
   }>;
   partial_success?: boolean;
+  months_requested?: number;
+  competences_requested?: string[];
+  competences_returned?: string[];
+  missing_competences?: string[];
 };

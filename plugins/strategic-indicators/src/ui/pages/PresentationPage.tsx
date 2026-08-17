@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
 import { PresentationAlertsBoard } from "../components/PresentationAlertsBoard";
 import { PresentationClosingPanel } from "../components/PresentationClosingPanel";
 import { PresentationDepartmentBoard } from "../components/PresentationDepartmentBoard";
@@ -881,7 +882,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       );
     }
 
-    const igdSeries = trend.igdSeries.slice(-monthsToCompare);
+    const igdSeries = trend.igdSeries;
 
     const strongestMomentumDepartment = [...trend.departments].sort(
       (a, b) => b.netVariation - a.netVariation,
@@ -1257,6 +1258,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             <RefreshSnapshotButton
               getAccessToken={getAccessToken}
               competence={referenceMonth}
+              trendsMonths={Math.max(monthsToCompare, SI_DEFAULT_SERIES_MONTHS)}
               onRefreshed={() => void presentation.reload()}
               disabled={presentation.loading || presentation.refreshing}
             />

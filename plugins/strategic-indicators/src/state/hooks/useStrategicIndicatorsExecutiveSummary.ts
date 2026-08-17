@@ -20,6 +20,7 @@ import {
   prefetchStrategicIndicatorsDepartments,
   prefetchStrategicIndicatorsTrends,
 } from "./strategicIndicatorsPrefetch";
+import { SI_DEFAULT_SERIES_MONTHS } from "../../ui/shared/strategicIndicatorsFilters";
 
 type UseStrategicIndicatorsExecutiveSummaryParams = {
   departmentId?: string;
@@ -119,7 +120,7 @@ export function useStrategicIndicatorsExecutiveSummary({
           branch,
           startDate,
           endDate,
-          months: 3,
+          months: SI_DEFAULT_SERIES_MONTHS,
           getAccessToken: getAccessTokenRef.current,
         });
       } catch (err) {

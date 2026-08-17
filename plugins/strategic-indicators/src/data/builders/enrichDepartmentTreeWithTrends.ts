@@ -9,6 +9,7 @@ function trimSeries(
   points: DepartmentTreeSparkPoint[],
   months: number,
 ): DepartmentTreeSparkPoint[] {
+  // Único ponto de corte da árvore: UI não re-trim após enrich.
   if (months <= 0 || points.length <= months) {
     return points;
   }

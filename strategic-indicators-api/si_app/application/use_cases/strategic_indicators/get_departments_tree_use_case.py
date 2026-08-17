@@ -139,7 +139,14 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
             months=months,
         )
         snapshots = self._trends_use_case.load_period_snapshots(trends_request)
-        trends = self._trends_use_case.build_response_from_snapshots(snapshots)
+        months_requested, competences_requested = self._trends_use_case.requested_window(
+            trends_request
+        )
+        trends = self._trends_use_case.build_response_from_snapshots(
+            snapshots,
+            months_requested=months_requested,
+            competences_requested=competences_requested,
+        )
 
         current_snapshot = snapshots[-1] if snapshots else None
         previous_snapshot = (

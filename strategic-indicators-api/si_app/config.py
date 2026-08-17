@@ -55,8 +55,9 @@ class Settings:
     SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS: int = int(
         _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="3600") or "3600"
     )
+    # Alinhado ao default das rotas de série (/trends, tree, presentation): 6.
     SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int = int(
-        _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="3") or "3"
+        _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="6") or "6"
     )
     # Desligado por padrão: a leitura para exibição agora usa SEMPRE a base
     # global (scope_department_id="") e filtra o departamento em memória, então

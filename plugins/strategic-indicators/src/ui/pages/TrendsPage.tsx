@@ -1,5 +1,6 @@
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
+import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
 import { InfoState } from "../components/InfoState";
@@ -17,6 +18,7 @@ import { TrendMonthComparison } from "../components/TrendMonthComparison";
 import { TrendPriorityList } from "../components/TrendPriorityList";
 import { TrendSummaryCards } from "../components/TrendSummaryCards";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
+import { SeriesCoverageNotice } from "../components/SeriesCoverageNotice";
 import { useStrategicIndicatorsTrends } from "../../state/hooks/useStrategicIndicatorsTrends";
 import "./TrendsPage.css";
 
@@ -52,6 +54,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     <RefreshSnapshotButton
       getAccessToken={getAccessToken}
       competence={referenceMonth}
+      trendsMonths={Math.max(monthsToCompare, SI_DEFAULT_SERIES_MONTHS)}
       onRefreshed={() => void reload()}
       disabled={loading || refreshing}
     />
@@ -187,6 +190,11 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           onAction={() => void reload()}
         />
       ) : null}
+
+      <SeriesCoverageNotice
+        trends={data}
+        onRefresh={() => void reload()}
+      />
 
       <SectionBlock
         title="Tendência consolidada do IGD"

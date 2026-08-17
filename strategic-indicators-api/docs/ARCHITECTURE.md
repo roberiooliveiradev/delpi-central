@@ -1,6 +1,6 @@
 # Arquitetura — Strategic Indicators
 
-**Última atualização:** 2026-05-25
+**Última atualização:** 2026-08-17
 
 ## Visão geral
 
@@ -10,9 +10,7 @@ Portal (shell)
         └── GET /apps/strategic-indicators-api/strategic-indicators/*
               └── strategic-indicators-api (FastAPI, si_app)
                     ├── Postgres plugins (catálogo, metas, settings, period_scores)
-                    ├── api-delpi via HTTP (medições operacionais TOTVS)
-                    ├── Google Sheets (Transforma+, etc.)
-                    └── api-delpi `/hr/*` (Portal RH só na api-delpi)
+                    └── api-delpi via HTTP (medições TOTVS, HR, Transforma+, etc.)
 ```
 
 A **api-delpi** não monta mais o router `/strategic-indicators`. Toda leitura e admin do módulo passam pelo serviço dedicado.
@@ -113,7 +111,7 @@ Implementação principal:
 
 **Produção:** medições sem valor na fonte permanecem `null` no provider (não são convertidas para `0.0` antes do cálculo).
 
-**Pendente de alinhamento nas fontes:** Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
+**Qualidade (PPM):** alinhado — providers sem `default_value=0.0`; ver [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md) e [DATA_SOURCES.md](./DATA_SOURCES.md).
 
 ## Filtro por filial (`branch`) vs. escopo do indicador
 
@@ -161,6 +159,7 @@ Implementação:
 
 - `StrategicIndicatorsSnapshotService.get_current_and_previous_snapshot` força o cômputo/leitura no escopo global (`_compute_comparative_snapshot(department_id=None)`) e, se um `department_id` foi pedido, aplica `_filter_comparative_to_department` (restringe `calculated_departments`, `calculated_indicators` e `measurement_errors`; **IGD/classificação permanecem globais**, pois são da empresa). Cobre: detalhes do departamento, resumo executivo, lista de departamentos, indicadores e alertas.
 - `GetStrategicIndicatorsTrendsRealUseCase` segue a mesma regra: lê a série no escopo global e filtra o departamento solicitado (`_filter_response_to_department`).
+- Integração `get_dashboard_department_snapshot` (IDD no header de dashboards): cache hit no global; em miss, `force_compute` também no **global** (nunca linha só-departamento).
 
 Consequência operacional — a materialização **por departamento** deixou de ser lida. Por isso `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` passa a ter **default `false`** (evita trabalho/IO desnecessário no job de refresh) e fica apenas como flag de diagnóstico. Apenas o escopo global (e os `scope_branch` configurados) é materializado e lido.
 

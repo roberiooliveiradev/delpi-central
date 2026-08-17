@@ -7,5 +7,5 @@ class GetStrategicIndicatorsPresentationRequest:
     start_date: str | None = None
     end_date: str | None = None
     competence: str | None = None
-    months: int = 3
+    months: int = 6
     include: frozenset[str] | None = None

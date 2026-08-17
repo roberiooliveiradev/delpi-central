@@ -31,21 +31,37 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         self,
         request: GetStrategicIndicatorsTrendsRealRequest,
     ) -> dict:
+        months, competences_requested = self.requested_window(request)
         snapshots = self.load_period_snapshots(request)
-        response = self.build_response_from_snapshots(snapshots)
+        response = self.build_response_from_snapshots(
+            snapshots,
+            months_requested=months,
+            competences_requested=competences_requested,
+        )
         if request.department_id:
             response = self._filter_response_to_department(
                 response, request.department_id
             )
         return response
 
+    def requested_window(
+        self,
+        request: GetStrategicIndicatorsTrendsRealRequest,
+    ) -> tuple[int, list[str]]:
+        months = max(2, min(request.months, 12))
+        reference = self._parse_competence(request.competence)
+        periods = self._build_periods(reference, months)
+        return months, [period.competence for period in periods]
+
     def load_period_snapshots(
         self,
         request: GetStrategicIndicatorsTrendsRealRequest,
     ) -> list[StrategicIndicatorsPeriodSnapshot]:
-        months = max(2, min(request.months, 12))
-        reference = self._parse_competence(request.competence)
-        periods = self._build_periods(reference, months)
+        months, _competences = self.requested_window(request)
+        periods = self._build_periods(
+            self._parse_competence(request.competence),
+            months,
+        )
 
         # Regra única: a série também lê a base global e filtra o departamento
         # solicitado, alinhando com a árvore/dashboard e evitando divergência
@@ -89,8 +105,23 @@ class GetStrategicIndicatorsTrendsRealUseCase:
     def build_response_from_snapshots(
         self,
         snapshots: list[StrategicIndicatorsPeriodSnapshot],
+        *,
+        months_requested: int | None = None,
+        competences_requested: list[str] | None = None,
     ) -> dict:
+        requested = list(competences_requested or [])
+        months = (
+            months_requested
+            if months_requested is not None
+            else (len(requested) if requested else 0)
+        )
+
         if not snapshots:
+            coverage = self._series_coverage(
+                months_requested=months,
+                competences_requested=requested,
+                competences_returned=[],
+            )
             return {
                 "competence": "",
                 "current_igd": 0.0,
@@ -111,6 +142,7 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                     }
                 ],
                 "partial_success": True,
+                **coverage,
             }
 
         monthly_points: list[dict] = []
@@ -209,6 +241,16 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             snapshots
         )
 
+        competences_returned = [point["period"] for point in monthly_points]
+        coverage = self._series_coverage(
+            months_requested=months,
+            competences_requested=requested,
+            competences_returned=competences_returned,
+        )
+        incomplete_window = bool(coverage["missing_competences"]) or (
+            months > 0 and len(competences_returned) < months
+        )
+
         return {
             "competence": current_point["period"],
             "current_igd": self._safe_float(current_point["value"]),
@@ -218,7 +260,30 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             "departments": departments,
             "indicator_series_by_department_id": indicator_series_by_department_id,
             "errors": errors,
-            "partial_success": len(errors) > 0 or len(snapshots) < 2,
+            "partial_success": len(errors) > 0
+            or len(snapshots) < 2
+            or incomplete_window,
+            **coverage,
+        }
+
+    @staticmethod
+    def _series_coverage(
+        *,
+        months_requested: int,
+        competences_requested: list[str],
+        competences_returned: list[str],
+    ) -> dict:
+        returned_set = set(competences_returned)
+        missing = [
+            competence
+            for competence in competences_requested
+            if competence not in returned_set
+        ]
+        return {
+            "months_requested": months_requested,
+            "competences_requested": list(competences_requested),
+            "competences_returned": list(competences_returned),
+            "missing_competences": missing,
         }
 
     def _build_indicator_series_by_department_id(
