@@ -2163,34 +2163,45 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "encerradas sem tratar as não conformidades."
             )
 
+        # Lease único: execute(auto_commit=False) sem lease externo devolve a
+        # conexão com rollback — o UPDATE de status/NCs era descartado e a API
+        # devolvia a auditoria ainda em evaluation_complete / nc_in_progress.
         try:
-            self.execute(
-                """
-                UPDATE quality.audit_5s_nonconformities
-                   SET status = 'cancelled', updated_at = NOW()
-                 WHERE audit_id = %s
-                   AND status IN ('open', 'in_progress')
-                """,
-                (audit_id,),
-                auto_commit=False,
-            )
-            self.execute(
-                """
-                UPDATE quality.audit_5s_audits
-                   SET status = %s, updated_at = NOW()
-                 WHERE id = %s
-                """,
-                (AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT, audit_id),
-                auto_commit=False,
-            )
-            self.commit()
+            with self.db():
+                self.execute(
+                    """
+                    UPDATE quality.audit_5s_nonconformities
+                       SET status = 'cancelled', updated_at = NOW()
+                     WHERE audit_id = %s
+                       AND status IN ('open', 'in_progress')
+                    """,
+                    (audit_id,),
+                    auto_commit=False,
+                )
+                self.execute(
+                    """
+                    UPDATE quality.audit_5s_audits
+                       SET status = %s, updated_at = NOW()
+                     WHERE id = %s
+                    """,
+                    (AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT, audit_id),
+                    auto_commit=False,
+                )
+                self.commit()
         except Exception:
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception:
+                pass
             raise
 
         refreshed = self.get_audit(audit_id)
         if not refreshed:
             raise PluginsRepositoryError("Falha ao encerrar auditoria sem tratar NCs.")
+        if refreshed.get("status") != AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT:
+            raise PluginsRepositoryError(
+                "Falha ao persistir o encerramento sem tratar NCs."
+            )
         return refreshed
 
     def get_audit_delete_target(self, audit_id: str) -> dict[str, Any] | None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Iterator
 
 import pytest
 
@@ -29,6 +30,10 @@ class CloseWithoutNcProbeRepo(PostgresAudit5sRepository):
         object.__setattr__(self, "executed", [])
         object.__setattr__(self, "committed", False)
         object.__setattr__(self, "rolled_back", False)
+
+    @contextmanager
+    def db(self) -> Iterator[object]:
+        yield object()
 
     def get_audit(self, audit_id: str) -> dict[str, Any] | None:
         if not self._exists:
@@ -76,6 +81,7 @@ def test_close_without_nc_treatment_cancels_open_ncs_and_sets_status(status: str
         params and params[0] == AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT
         for _, params, _ in repo.executed
     )
+    assert all(auto_commit is False for _q, _p, auto_commit in repo.executed)
 
 
 @pytest.mark.parametrize("status", ["draft", "closed", "closed_without_nc_treatment"])
@@ -90,6 +96,23 @@ def test_close_without_nc_treatment_not_found() -> None:
     repo = CloseWithoutNcProbeRepo(exists=False)
     with pytest.raises(PluginsRepositoryError, match="não encontrada"):
         repo.close_audit_without_nc_treatment("missing")
+
+
+def test_close_without_nc_treatment_raises_if_status_not_persisted() -> None:
+    class StickyStatusRepo(CloseWithoutNcProbeRepo):
+        def execute(
+            self,
+            query: str,
+            params: tuple[Any, ...] | None = None,
+            *,
+            auto_commit: bool = True,
+        ) -> None:
+            self.executed.append((query, params, auto_commit))
+            # Simula o bug antigo: UPDATE sem efeito persistido.
+
+    repo = StickyStatusRepo(status="nc_in_progress")
+    with pytest.raises(PluginsRepositoryError, match="persistir o encerramento"):
+        repo.close_audit_without_nc_treatment("audit-1")
 
 
 def test_admin_permission_constant_and_list() -> None:
