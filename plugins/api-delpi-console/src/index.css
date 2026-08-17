@@ -200,6 +200,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--adc-grid-gap);
+}.api-delpi-console .adc-glance-slo{
+  margin-top: var(--adc-grid-gap);
+}.api-delpi-console .adc-glance-slo__note{
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
 }.api-delpi-console .adc-card-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

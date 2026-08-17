@@ -55,6 +55,22 @@ declare module "@delpi/plugin-ui/index" {
     labels: SectionCardLabels;
   }): ComponentType<DashboardSectionCardProps>;
 
+  export type InlineMeterTone = "neutral" | "success" | "warning" | "danger";
+
+  export type DashboardInlineMeterProps = {
+    value?: number;
+    max?: number;
+    tone?: InlineMeterTone;
+    label?: ReactNode;
+    size?: "sm" | "md";
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardInlineMeter(config: {
+    prefix: string;
+  }): ComponentType<DashboardInlineMeterProps>;
+
   export type CreateModalShellConfig = {
     prefix: string;
     portalScopeClassName: string;

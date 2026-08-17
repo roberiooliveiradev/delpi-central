@@ -11,7 +11,7 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
-import { ConsoleMetricKpiCard, ConsoleSectionCard } from "../app/consoleUi";
+import { ConsoleInlineMeter, ConsoleMetricKpiCard, ConsoleSectionCard } from "../app/consoleUi";
 import { MONITOR_REFRESH_MS } from "../constants/monitoring";
 import { fetchConsoleHealth, type ConsoleHealthPayload } from "../lib/consoleAlerts";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
@@ -59,6 +59,15 @@ function alertTone(health: ConsoleHealthPayload): MetricKpiCardTone {
   return "positive";
 }
 
+function errorBudgetTone(
+  remainingPct: number | null | undefined,
+): "neutral" | "success" | "warning" | "danger" {
+  if (remainingPct == null) return "neutral";
+  if (remainingPct <= 0) return "danger";
+  if (remainingPct < 50) return "warning";
+  return "success";
+}
+
 function ConsoleHealthGlance({
   health,
   onNavigate,
@@ -68,6 +77,11 @@ function ConsoleHealthGlance({
 }) {
   const requests = health.traffic?.total_requests ?? health.metrics.caller_requests ?? 0;
   const emptyWindow = requests <= 0;
+  const budgetRemaining = health.sli?.error_budget_remaining_pct;
+  const availabilityLabel =
+    health.sli_meta?.labels.availability_pct ?? "Disponibilidade (janela)";
+  const budgetLabel =
+    health.sli_meta?.labels.error_budget_remaining_pct ?? "Error budget restante (janela)";
 
   return (
     <ConsoleSectionCard
@@ -121,6 +135,25 @@ function ConsoleHealthGlance({
           value={String(health.open_alerts_count ?? health.open_alert_count)}
           hint={health.status}
           tone={alertTone(health)}
+        />
+      </div>
+
+      <div className="adc-glance-slo">
+        <p className="adc-muted adc-glance-slo__note">
+          {health.sli_meta?.note ??
+            "SLI/SLO da janela amostrada em memória — não equivale a SLO de 30 dias."}
+        </p>
+        <ConsoleInlineMeter
+          value={budgetRemaining ?? 0}
+          max={100}
+          tone={errorBudgetTone(budgetRemaining)}
+          size="md"
+          label={
+            emptyWindow || budgetRemaining == null
+              ? `${budgetLabel}: — · target ${formatPct(health.slo?.availability_pct)}`
+              : `${budgetLabel}: ${formatPct(budgetRemaining)} · ${availabilityLabel} ${formatPct(health.sli?.availability_pct ?? undefined)} / target ${formatPct(health.slo?.availability_pct)}`
+          }
+          aria-label={budgetLabel}
         />
       </div>
     </ConsoleSectionCard>

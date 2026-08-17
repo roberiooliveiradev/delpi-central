@@ -48,6 +48,23 @@ export type ConsoleHealthPayload = {
     sql_samples: number;
     cache_hit_rate_pct: number;
   };
+  slo?: {
+    availability_pct: number;
+    p95_ms: number;
+  };
+  sli?: {
+    availability_pct: number | null;
+    p95_ms: number | null;
+    total_requests: number;
+    server_error_rate_pct: number | null;
+    p95_within_slo: boolean | null;
+    error_budget_remaining_pct: number | null;
+  };
+  sli_meta?: {
+    window_scope: string;
+    note: string;
+    labels: Record<string, string>;
+  };
   thresholds: {
     p95_ms: number;
     slow_sql_ms: number;

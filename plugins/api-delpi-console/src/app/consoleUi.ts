@@ -1,4 +1,5 @@
 import {
+  createDashboardInlineMeter,
   createDashboardSectionCard,
   createMetricKpiCard,
   sectionCardPacBemClasses,
@@ -8,6 +9,8 @@ import {
 export const UI_PREFIX = "adc";
 
 export const ConsoleMetricKpiCard = createMetricKpiCard(UI_PREFIX);
+
+export const ConsoleInlineMeter = createDashboardInlineMeter({ prefix: UI_PREFIX });
 
 export const consoleSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
