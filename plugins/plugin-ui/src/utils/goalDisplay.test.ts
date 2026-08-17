@@ -44,22 +44,41 @@ describe("goalDisplay", () => {
     expect(formatFilterViewScopeLabel("branch", "01")).toBe("Santa Catarina");
   });
 
-  it("resolve prefixo Meta acumulada / parcial via flags", () => {
+  it("resolve prefixo Meta / parcial / acumulada via kind e flags", () => {
     expect(
       resolveAccumulatedGoalPrefix({
         comparable_goal: 10,
-        goal_period_partial: false,
+        goal_period_kind: "exact",
+      }),
+    ).toBe("Meta");
+    expect(
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 10,
+        goal_period_kind: "partial",
+      }),
+    ).toBe("Meta parcial");
+    expect(
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 10,
+        goal_period_kind: "accumulated",
       }),
     ).toBe("Meta acumulada");
+    // partial boolean true → parcial; false sem datas → Meta (mês fechado)
     expect(
       resolveAccumulatedGoalPrefix({
         comparable_goal: 10,
         goal_period_partial: true,
       }),
     ).toBe("Meta parcial");
+    expect(
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 10,
+        goal_period_partial: false,
+      }),
+    ).toBe("Meta");
   });
 
-  it("deriva parcial por datas quando flags ausentes", () => {
+  it("deriva kind por datas quando flags ausentes", () => {
     expect(
       resolveGoalPeriodPartial(null, {
         dateStart: "2026-05-01",
@@ -67,12 +86,24 @@ describe("goalDisplay", () => {
       }),
     ).toBe(true);
     expect(
+      resolveAccumulatedGoalPrefix(null, {
+        dateStart: "2026-05-01",
+        dateEnd: "2026-05-31",
+      }),
+    ).toBe("Meta");
+    expect(
       resolveGoalPeriodPartial(null, {
         dateStart: "2026-05-01",
         dateEnd: "2026-05-31",
       }),
     ).toBe(false);
     // YTD com mês final incompleto → acumulada (não parcial)
+    expect(
+      resolveAccumulatedGoalPrefix(null, {
+        dateStart: "2026-01-01",
+        dateEnd: "2026-08-15",
+      }),
+    ).toBe("Meta acumulada");
     expect(
       resolveGoalPeriodPartial(null, {
         dateStart: "2026-01-01",

@@ -23,6 +23,8 @@ export type DashboardGoalFields = {
   target?: number | null;
   has_goal?: boolean;
   goal_aggregation?: string | null;
+  /** exact = one closed calendar month; partial = incomplete month; accumulated = multi-month. */
+  goal_period_kind?: "exact" | "partial" | "accumulated" | string | null;
   goal_period_partial?: boolean | null;
   goal_scope_branch?: string | null;
   goal_scope_label?: string | null;
@@ -396,32 +398,50 @@ export function resolveGoalLabel(
 }
 
 /**
- * Prefixo do KPI: «Meta parcial» se intervalo < 1 mês completo;
- * «Meta acumulada» se multi-mês (ou mês fechado). Prefer flags da API.
+ * Prefixo do KPI: «Meta» (1 mês fechado), «Meta parcial» (< 1 mês),
+ * «Meta acumulada» (multi-mês). Prefer `goal_period_kind` da API.
  */
 export function resolveAccumulatedGoalPrefix(
   goal?: DashboardGoalFields | null,
   options?: { dateStart?: string | null; dateEnd?: string | null },
 ): string {
-  const partial = resolveGoalPeriodPartial(goal, options);
-  return partial ? "Meta parcial" : "Meta acumulada";
+  const kind = resolveGoalPeriodKind(goal, options);
+  if (kind === "partial") return "Meta parcial";
+  if (kind === "exact") return "Meta";
+  return "Meta acumulada";
+}
+
+export function resolveGoalPeriodKind(
+  goal?: DashboardGoalFields | null,
+  options?: { dateStart?: string | null; dateEnd?: string | null },
+): "exact" | "partial" | "accumulated" {
+  const raw = (goal?.goal_period_kind ?? "").toString().trim().toLowerCase();
+  if (raw === "exact" || raw === "partial" || raw === "accumulated") {
+    return raw;
+  }
+
+  if (typeof goal?.goal_period_partial === "boolean" && goal.goal_period_partial) {
+    return "partial";
+  }
+
+  const start = (goal?.start_date ?? options?.dateStart ?? "").trim();
+  const end = (goal?.end_date ?? options?.dateEnd ?? "").trim();
+  if (!start || !end) {
+    // Sem datas e sem kind: se partial explícito false, assume mês fechado (Meta).
+    if (goal?.goal_period_partial === false) {
+      return "exact";
+    }
+    return "accumulated";
+  }
+
+  return resolveCalendarPeriodKind(start, end);
 }
 
 export function resolveGoalPeriodPartial(
   goal?: DashboardGoalFields | null,
   options?: { dateStart?: string | null; dateEnd?: string | null },
 ): boolean {
-  if (typeof goal?.goal_period_partial === "boolean") {
-    return goal.goal_period_partial;
-  }
-
-  const start = (goal?.start_date ?? options?.dateStart ?? "").trim();
-  const end = (goal?.end_date ?? options?.dateEnd ?? "").trim();
-  if (!start || !end) {
-    return false;
-  }
-
-  return isSingleIncompleteCalendarMonth(start, end);
+  return resolveGoalPeriodKind(goal, options) === "partial";
 }
 
 function parseFlexibleDateParts(value: string): { y: number; m: number; d: number } | null {
@@ -440,20 +460,26 @@ function daysInMonth(y: number, m: number): number {
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
-/** Alinhado ao SI: parcial só com exatamente um mês e dias incompletos. */
-function isSingleIncompleteCalendarMonth(start: string, end: string): boolean {
+/** Alinhado ao SI: exact / partial / accumulated por overlap de meses civis. */
+function resolveCalendarPeriodKind(
+  start: string,
+  end: string,
+): "exact" | "partial" | "accumulated" {
   const a = parseFlexibleDateParts(start);
   const b = parseFlexibleDateParts(end);
   if (!a || !b) {
-    return false;
+    return "accumulated";
   }
 
   if (a.y !== b.y || a.m !== b.m) {
-    return false;
+    return "accumulated";
   }
 
   const dim = daysInMonth(a.y, a.m);
-  return a.d !== 1 || b.d !== dim;
+  if (a.d === 1 && b.d === dim) {
+    return "exact";
+  }
+  return "partial";
 }
 
 export function buildKpiGoalPresentation(
