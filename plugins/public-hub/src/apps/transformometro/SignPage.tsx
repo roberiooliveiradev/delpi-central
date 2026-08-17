@@ -26,13 +26,26 @@ function Section({ title, html }: { title: string; html?: string }) {
   );
 }
 
+function AtaBody({ context }: { context: PublicSignContext }) {
+  return (
+    <>
+      <Section title="Pauta" html={context.version.agenda_html} />
+      <Section title="Desenvolvimento" html={context.version.body_html} />
+      <Section title="Decisões" html={context.version.decisions_html} />
+      <Section title="Pendências" html={context.version.pending_html} />
+      <Section title="Observações" html={context.version.observations_html} />
+    </>
+  );
+}
+
 export function SignPage({ context, token }: Props) {
+  const alreadySigned = context.outcome === "already_signed";
   const [name, setName] = useState(context.signer.display_name || "");
   const [accepted, setAccepted] = useState(false);
   const [png, setPng] = useState<Blob | null>(null);
   const [reason, setReason] = useState("");
   const [showRefuse, setShowRefuse] = useState(false);
-  const [phase, setPhase] = useState<Phase>("form");
+  const [phase, setPhase] = useState<Phase>(alreadySigned ? "done" : "form");
   const [error, setError] = useState<string | null>(null);
 
   const subtitle = useMemo(() => {
@@ -78,18 +91,44 @@ export function SignPage({ context, token }: Props) {
     setPhase("refused");
   }
 
-  if (phase === "done" || phase === "refused") {
+  if (phase === "refused") {
     return (
       <div className="tm-sign tm-sign--done">
         <div className="tm-sign__done-badge" aria-hidden>
-          {phase === "done" ? "✓" : "!"}
+          !
         </div>
-        <h1>{phase === "done" ? "Assinatura registrada" : "Recusa registrada"}</h1>
-        <p>
-          {phase === "done"
-            ? "Obrigado. Sua assinatura da ata Transforma+ foi recebida."
-            : "A recusa foi enviada aos responsáveis pela ata."}
-        </p>
+        <h1>Recusa registrada</h1>
+        <p>A recusa foi enviada aos responsáveis pela ata.</p>
+      </div>
+    );
+  }
+
+  if (phase === "done" || alreadySigned) {
+    return (
+      <div className="tm-sign">
+        <div className="tm-sign__banner tm-sign__banner--success" role="status">
+          <div className="tm-sign__done-badge" aria-hidden>
+            ✓
+          </div>
+          <div>
+            <h1>
+              {alreadySigned ? "Ata já assinada" : "Assinatura registrada"}
+            </h1>
+            <p>
+              {alreadySigned
+                ? "Sua assinatura já consta nesta ata. Você pode consultar o conteúdo abaixo."
+                : "Obrigado. Sua assinatura da ata Transforma+ foi recebida. Conteúdo da ata abaixo."}
+            </p>
+          </div>
+        </div>
+
+        <header className="tm-sign__header">
+          <p className="tm-sign__eyebrow">Transformômetro · Transforma+</p>
+          <h1>Ata assinada</h1>
+          <p className="tm-sign__subtitle">{subtitle}</p>
+        </header>
+
+        <AtaBody context={context} />
       </div>
     );
   }
@@ -102,11 +141,7 @@ export function SignPage({ context, token }: Props) {
         <p className="tm-sign__subtitle">{subtitle}</p>
       </header>
 
-      <Section title="Pauta" html={context.version.agenda_html} />
-      <Section title="Desenvolvimento" html={context.version.body_html} />
-      <Section title="Decisões" html={context.version.decisions_html} />
-      <Section title="Pendências" html={context.version.pending_html} />
-      <Section title="Observações" html={context.version.observations_html} />
+      <AtaBody context={context} />
 
       <form className="tm-sign__form" onSubmit={onSign}>
         <label className="tm-sign__label">

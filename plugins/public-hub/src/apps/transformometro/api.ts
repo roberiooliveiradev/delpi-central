@@ -7,6 +7,7 @@ type ApiEnvelope<T> = {
 };
 
 export type PublicSignContext = {
+  outcome?: "ready" | "already_signed" | string | null;
   minute: {
     id: string;
     title?: string | null;

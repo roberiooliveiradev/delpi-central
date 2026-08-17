@@ -152,13 +152,15 @@ def test_resolve_unknown_token():
         service.resolve("token-inexistente")
 
 
-def test_resolve_signed_signer_clear_message():
+def test_resolve_signed_signer_returns_already_signed_outcome():
     repo = _FakeInviteRepo()
     service = TmMeetingMinuteSignInviteService(repo, ttl_days=7)
     issued = service.issue(signer=repo.signers["s1"], minute=repo.minutes["m1"])
     repo.signers["s1"]["status"] = "signed"
-    with pytest.raises(ValueError, match="já foi registrada"):
-        service.resolve(issued["raw_token"])
+    repo.minutes["m1"]["status"] = "signed"
+    resolved = service.resolve(issued["raw_token"])
+    assert resolved["outcome"] == "already_signed"
+    assert resolved["signer"]["id"] == "s1"
 
 
 def test_resolve_invalidated_without_match_says_revised():

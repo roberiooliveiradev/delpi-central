@@ -162,13 +162,6 @@ class TmMeetingMinuteSignInviteService:
         invite = self.repo.get_invite_by_token_hash(hash_token(token))
         if not invite:
             raise LookupError(_MSG_NOT_FOUND)
-        if invite.get("consumed_at"):
-            raise ValueError(_MSG_CONSUMED)
-        expires_at = invite.get("expires_at")
-        if isinstance(expires_at, datetime):
-            exp = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
-            if exp < datetime.now(timezone.utc):
-                raise ValueError(_MSG_EXPIRED)
 
         minute = self.repo.get_minute(str(invite["minute_id"]))
         if not minute or minute.get("deleted_at"):
@@ -178,6 +171,24 @@ class TmMeetingMinuteSignInviteService:
         if not signer:
             raise LookupError(_MSG_SIGNER_MISSING)
 
+        status = str(signer.get("status") or "")
+        if status == "signed":
+            return {
+                "invite": invite,
+                "signer": signer,
+                "minute": minute,
+                "outcome": "already_signed",
+            }
+
+        if invite.get("consumed_at"):
+            raise ValueError(_MSG_CONSUMED)
+
+        expires_at = invite.get("expires_at")
+        if isinstance(expires_at, datetime):
+            exp = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+            if exp < datetime.now(timezone.utc):
+                raise ValueError(_MSG_EXPIRED)
+
         current_version_id = str(minute.get("current_version_id") or "")
         signer_version_id = str(signer.get("version_id") or "")
         stale_version = bool(
@@ -185,7 +196,6 @@ class TmMeetingMinuteSignInviteService:
             and signer_version_id
             and current_version_id != signer_version_id
         )
-        status = str(signer.get("status") or "")
 
         if status not in _ELIGIBLE_SIGNER_STATUSES or stale_version:
             remapped = self._try_remap_stale_signer(
@@ -194,6 +204,8 @@ class TmMeetingMinuteSignInviteService:
             if remapped and remapped.get("status") in _ELIGIBLE_SIGNER_STATUSES:
                 signer = remapped
             else:
+                if status == "refused":
+                    raise ValueError(_MSG_REFUSED)
                 if stale_version or status == "invalidated":
                     raise ValueError(_MSG_REVISED)
                 if minute.get("status") not in _AWAITING_MINUTE_STATUSES:

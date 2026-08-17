@@ -354,10 +354,20 @@ class MeetingMinutesService:
         resolved = self.sign_invites.resolve(raw_token)
         minute = resolved["minute"]
         signer = resolved["signer"]
-        if signer["status"] in {"pending", "viewed"}:
+        outcome = str(resolved.get("outcome") or "ready")
+        if outcome != "already_signed" and signer.get("status") in {"pending", "viewed"}:
             signer = self.repo.mark_signer_viewed(str(signer["id"])) or signer
-        version = self.repo.get_version(str(minute["id"]))
+        # Já assinado: conteúdo da versão que o signatário assinou; senão, versão atual.
+        version_id = (
+            str(signer.get("version_id") or "").strip() or None
+            if outcome == "already_signed"
+            else None
+        )
+        version = self.repo.get_version(str(minute["id"]), version_id=version_id)
+        if outcome == "already_signed" and not version:
+            version = self.repo.get_version(str(minute["id"]))
         return {
+            "outcome": outcome,
             "minute": {
                 "id": minute["id"],
                 "title": minute.get("title"),
@@ -451,6 +461,8 @@ class MeetingMinutesService:
         idempotency_key: str | None,
     ) -> dict[str, Any]:
         resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]
@@ -518,6 +530,8 @@ class MeetingMinutesService:
         if not reason.strip():
             raise ValueError("Informe a justificativa da recusa.")
         resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]

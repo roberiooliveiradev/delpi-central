@@ -210,9 +210,55 @@ def test_public_sign_context_and_refuse():
 
     ctx = svc.public_sign_context("tok")
     assert ctx["signer"]["display_name"] == "Ana"
+    assert ctx.get("outcome") == "ready"
     assert "body_html" in ctx["version"]
 
     refused = svc.public_refuse("tok", "Ausente")
     assert refused["minute"]["id"] == "m1"
     invites.consume.assert_called_once_with("inv1")
     assert notifications.notify_minute_refused.call_count == 2
+
+
+def test_public_sign_context_already_signed_includes_version_content():
+    repo = MagicMock()
+    invites = MagicMock()
+    invites.resolve.return_value = {
+        "outcome": "already_signed",
+        "invite": {"id": "inv1"},
+        "signer": {
+            "id": "s1",
+            "display_name": "Ana",
+            "status": "signed",
+            "user_id": None,
+            "version_id": "v1",
+        },
+        "minute": {
+            "id": "m1",
+            "title": "Kickoff",
+            "minute_number": "TM-9",
+            "meeting_date": "2026-01-01",
+            "status": "signed",
+            "unit_code": "01",
+        },
+    }
+    repo.get_version.return_value = {
+        "id": "v1",
+        "title": "Kickoff",
+        "agenda_html": "<p>Pauta</p>",
+        "body_html": "<p>Conteúdo assinado</p>",
+        "decisions_html": "",
+        "pending_html": "",
+        "observations_html": "",
+        "content_hash": "h",
+    }
+    svc = MeetingMinutesService(
+        repo,
+        notifications=MagicMock(),
+        sign_invites=invites,
+        sign_pending_mail=MagicMock(),
+    )
+    ctx = svc.public_sign_context("tok")
+    assert ctx["outcome"] == "already_signed"
+    assert ctx["version"]["body_html"] == "<p>Conteúdo assinado</p>"
+    repo.get_version.assert_called_with("m1", version_id="v1")
+    repo.mark_signer_viewed.assert_not_called()
