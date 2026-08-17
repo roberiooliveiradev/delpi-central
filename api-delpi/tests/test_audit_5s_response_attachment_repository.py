@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,10 @@ class FakeAudit5sRepo(PostgresAudit5sRepository):
         self._events: list[tuple[Any, ...]] = []
         self._commits = 0
         self._executed: list[tuple[str, tuple[Any, ...] | None]] = []
+
+    @contextmanager
+    def db(self):
+        yield object()
 
     def fetch_one(self, query: str, params: tuple[Any, ...] | None = None) -> dict[str, Any] | None:
         return None
@@ -218,6 +223,72 @@ def test_upsert_response_attachment_allows_bom_score(
 
     assert result["criterion_id"] == "crit-1"
     assert result["response_id"] == "resp-1"
+    assert repo._commits == 1
+
+
+def test_upsert_response_attachment_uses_single_db_lease(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regressão: writes sem lease externo sofriam rollback no release do pool."""
+    repo = FakeAudit5sRepo()
+    lease_depth: list[int] = []
+    depth = {"n": 0}
+
+    @contextmanager
+    def tracking_db():
+        depth["n"] += 1
+        lease_depth.append(depth["n"])
+        try:
+            yield object()
+        finally:
+            depth["n"] -= 1
+
+    def fake_fetch_one(query: str, params: tuple[Any, ...] | None = None):
+        if "audit_5s_audits" in query:
+            return {"id": "audit-1", "status": "draft"}
+        if "audit_5s_responses" in query:
+            return {"id": "resp-1", "score": 3, "is_not_applicable": False}
+        return None
+
+    def fake_execute_returning_one(
+        query: str,
+        params: tuple[Any, ...] | None = None,
+        *,
+        auto_commit: bool = True,
+    ) -> dict[str, Any] | None:
+        assert depth["n"] >= 1, "INSERT deve rodar dentro de with self.db()"
+        assert auto_commit is False
+        return {
+            "id": "att-1",
+            "response_id": "resp-1",
+            "file_name": "criterion_x.jpg",
+            "original_name": "a.jpg",
+            "mime_type": "image/jpeg",
+            "size_bytes": 10,
+            "storage_path": "resp-1/criterion_x.jpg",
+            "uploaded_by_user_id": "user-1",
+            "uploaded_at": "2026-07-10T12:00:00Z",
+        }
+
+    repo.db = tracking_db  # type: ignore[method-assign]
+    repo.fetch_one = fake_fetch_one  # type: ignore[method-assign]
+    repo.execute_returning_one = fake_execute_returning_one  # type: ignore[method-assign]
+    repo.get_response_attachment_by_response_id = lambda _rid: None  # type: ignore[method-assign]
+
+    result = repo.upsert_response_attachment(
+        audit_id="audit-1",
+        criterion_id="crit-1",
+        original_name="a.jpg",
+        file_name="criterion_x.jpg",
+        storage_path="resp-1/criterion_x.jpg",
+        mime_type="image/jpeg",
+        size_bytes=10,
+        uploaded_by_user_id="user-1",
+    )
+
+    assert result["id"] == "att-1"
+    assert lease_depth == [1]
+    assert repo._commits == 1
 
 
 def test_upsert_response_attachment_rejects_not_applicable(

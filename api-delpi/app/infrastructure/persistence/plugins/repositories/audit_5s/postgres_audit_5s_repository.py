@@ -933,55 +933,61 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
         response_id = str(response["id"])
         existing = self.get_response_attachment_by_response_id(response_id)
-        if existing:
-            try:
-                Audit5sResponseAttachmentStorage().delete_file(
-                    response_id=response_id,
-                    file_name=str(existing["file_name"]),
+
+        # Lease único: execute(auto_commit=False) sem lease externo devolve a
+        # conexão ao pool com rollback — o INSERT some e o GET/DELETE da foto
+        # falha com «Foto do critério não encontrada».
+        with self.db():
+            if existing:
+                try:
+                    Audit5sResponseAttachmentStorage().delete_file(
+                        response_id=response_id,
+                        file_name=str(existing["file_name"]),
+                    )
+                except Exception:
+                    pass
+                self.execute(
+                    "DELETE FROM quality.audit_5s_response_attachments WHERE response_id = %s",
+                    (response_id,),
+                    auto_commit=False,
                 )
-            except Exception:
-                pass
-            self.execute(
-                "DELETE FROM quality.audit_5s_response_attachments WHERE response_id = %s",
-                (response_id,),
+
+            row = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_response_attachments (
+                    response_id,
+                    file_name,
+                    original_name,
+                    mime_type,
+                    size_bytes,
+                    storage_path,
+                    uploaded_by_user_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id,
+                          response_id,
+                          file_name,
+                          original_name,
+                          mime_type,
+                          size_bytes,
+                          storage_path,
+                          uploaded_by_user_id,
+                          uploaded_at
+                """,
+                (
+                    response_id,
+                    file_name,
+                    original_name,
+                    mime_type,
+                    size_bytes,
+                    storage_path,
+                    uploaded_by_user_id,
+                ),
                 auto_commit=False,
             )
+            if not row:
+                raise PluginsRepositoryError("Falha ao salvar foto do critério.")
+            self.commit()
 
-        row = self.execute_returning_one(
-            """
-            INSERT INTO quality.audit_5s_response_attachments (
-                response_id,
-                file_name,
-                original_name,
-                mime_type,
-                size_bytes,
-                storage_path,
-                uploaded_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id,
-                      response_id,
-                      file_name,
-                      original_name,
-                      mime_type,
-                      size_bytes,
-                      storage_path,
-                      uploaded_by_user_id,
-                      uploaded_at
-            """,
-            (
-                response_id,
-                file_name,
-                original_name,
-                mime_type,
-                size_bytes,
-                storage_path,
-                uploaded_by_user_id,
-            ),
-            auto_commit=False,
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao salvar foto do critério.")
-        self.commit()
         return {**row, "criterion_id": criterion_id}
 
     def delete_response_attachment(
