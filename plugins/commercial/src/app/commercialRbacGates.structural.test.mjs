@@ -40,8 +40,8 @@ describe("commercial RBAC gates (sem aliases)", () => {
     ]) {
       assert.match(nav, new RegExp(`id: "${id}", label: "${label}"`), id);
     }
-    // Gestão, Propostas e Carteiras saíram do topo (launcher ou drill da Visão geral).
-    assert.doesNotMatch(nav, /"Gestão"|"Propostas"|"Carteiras"/);
+    // Gestão / Propostas / Carteiras (admin) não são itens do topo.
+    assert.doesNotMatch(nav, /id: "[^"]+", label: "(Gestão|Propostas|Carteiras)"/);
     assert.doesNotMatch(nav, /seller_portfolios|my_day/);
 
     const shell = readFileSync(join(src, "app/PluginShell.tsx"), "utf8");
@@ -84,13 +84,16 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.doesNotMatch(source, /cm-open-orders-page__scope/);
   });
 
-  it("manifest sem texto de alias legado e team route canônica", () => {
+  it("manifest condensado: access/manage e team sob manage", () => {
     const manifest = readFileSync(join(root, "commercial.manifest.json"), "utf8");
     assert.doesNotMatch(manifest, /Alias legado|Alias:/);
-    assert.match(manifest, /"path": "\/apps\/commercial\/analytics\/team"/);
+    assert.match(manifest, /"code": "commercial\.access"/);
+    assert.match(manifest, /"code": "commercial\.manage"/);
+    assert.match(manifest, /"code": "commercial\.billing\.notify"/);
+    assert.doesNotMatch(manifest, /commercial\.accounts\.view|commercial\.analytics\.view|seller-portfolios\.manage/);
     assert.match(
       manifest,
-      /"path": "\/apps\/commercial\/analytics\/team"[\s\S]*?"permission": "commercial\.accounts\.team\.view"/,
+      /"path": "\/apps\/commercial\/analytics\/team"[\s\S]*?"permission": "commercial\.manage"/,
     );
     assert.match(manifest, /"path": "\/apps\/commercial\/administration"/);
     assert.match(manifest, /"path": "\/apps\/commercial\/administration\/seller-portfolios"/);

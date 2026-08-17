@@ -56,7 +56,7 @@ def test_recently_closed_bff_filters_via_scope() -> None:
     scope_svc.execute.return_value = scope
 
     request = _request()
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(

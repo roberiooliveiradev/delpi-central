@@ -1,6 +1,6 @@
 # Gestão à vista — Portal Comercial (consolidação nativa)
 
-> **Status:** IA hub 2026 — top nav + Visão geral BI + Início launcher · zero hosteamento · `commercial.analytics.view` para BI  
+> **Status:** IA hub 2026 — top nav + Visão geral BI + Início launcher · zero hosteamento · RBAC condensado `commercial.access` (BI/produto) — ver [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)  
 > **Produto:** `plugins/commercial` · `/apps/commercial`  
 > **Plano:** refino visual + IA de informação (Equipe→Admin; Opp Conta+Início; OTD Início; filtro carteira analytics)
 

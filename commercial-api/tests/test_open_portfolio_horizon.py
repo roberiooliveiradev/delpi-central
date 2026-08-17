@@ -114,7 +114,7 @@ def test_horizon_route_ok() -> None:
     }
     scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
     request = _request()
-    request.state.user = _User(["commercial.analytics.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(

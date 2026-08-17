@@ -78,7 +78,7 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
                 recipients=ReadyToInvoiceRecipients(
                     seller_user_ids=frozenset({"u1"}),
                     billing_user_ids=frozenset(),
-                    billing_permission_codes=("commercial.accounts.manage",),
+                    billing_permission_codes=("commercial.billing.notify",),
                 ),
             ),
         ),
@@ -92,7 +92,7 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
     assert len(outbox.rows) == 1
     payload = outbox.rows[0].payload
     assert payload["userIds"] == ["u1"]
-    assert payload["permissionCodes"] == ["commercial.accounts.manage"]
+    assert payload["permissionCodes"] == ["commercial.billing.notify"]
     assert payload["actionTarget"].endswith("stage=ready_to_invoice")
     assert "view=board" in payload["actionTarget"]
 
@@ -156,7 +156,7 @@ def test_portal_notification_payload_shape(monkeypatch) -> None:
     )
     assert svc.notify_ready_to_invoice(
         user_ids=["u1"],
-        permission_codes=["commercial.accounts.manage"],
+        permission_codes=["commercial.billing.notify"],
         line_key="01|1|01",
         pedido="1",
         linha="01",
@@ -169,5 +169,5 @@ def test_portal_notification_payload_shape(monkeypatch) -> None:
     assert body["action"]["type"] == "portal_route"
     assert "stage=ready_to_invoice" in body["action"]["target"]
     assert body["userIds"] == ["u1"]
-    assert body["permissionCodes"] == ["commercial.accounts.manage"]
+    assert body["permissionCodes"] == ["commercial.billing.notify"]
     assert body["metadata"]["dedupeKey"] == "commercial:ready_to_invoice:01|1|01"

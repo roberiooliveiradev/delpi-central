@@ -34,15 +34,9 @@ export type SellerPortfolio = {
 };
 
 export type CommercialCapabilities = {
-  worklist_view: boolean;
-  followups_manage: boolean;
-  seller_portfolios_manage: boolean;
-  analytics_view: boolean;
-  proposals_view: boolean;
-  proposals_export: boolean;
-  accounts_team_view: boolean;
-  worklist_team_view: boolean;
-  team_scope: boolean;
+  access: boolean;
+  manage: boolean;
+  billing_notify: boolean;
 };
 
 export type SellerPortfolioMeResponse = {

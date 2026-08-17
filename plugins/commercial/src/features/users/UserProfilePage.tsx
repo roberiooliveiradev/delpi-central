@@ -109,14 +109,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     currentUserId,
     canManagePortfolios,
     canViewWorklist,
-    canManageFollowups,
     canViewAnalytics,
     canViewProposals,
-    canExportProposals,
     canUseTeamScope,
-    canViewAccountsTeam,
-    canViewWorklistTeam,
     canAccessMyPortfolio,
+    canBillingNotify,
     isAdmin,
     setSellerIdFilter,
   } = usePortfolioScope();
@@ -229,27 +226,18 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     () =>
       isSelf
         ? listGrantedCapabilities({
-            worklist_view: canViewWorklist,
-            followups_manage: canManageFollowups,
-            seller_portfolios_manage: canManagePortfolios,
-            analytics_view: canViewAnalytics,
-            proposals_view: canViewProposals,
-            proposals_export: canExportProposals,
-            accounts_team_view: canViewAccountsTeam,
-            worklist_team_view: canViewWorklistTeam,
-            team_scope: canUseTeamScope,
+            access: canViewWorklist || canViewAnalytics || canViewProposals,
+            manage: canManagePortfolios || canUseTeamScope,
+            billing_notify: canBillingNotify,
           })
         : [],
     [
-      canExportProposals,
-      canManageFollowups,
+      canBillingNotify,
       canManagePortfolios,
       canUseTeamScope,
-      canViewAccountsTeam,
       canViewAnalytics,
       canViewProposals,
       canViewWorklist,
-      canViewWorklistTeam,
       isSelf,
     ],
   );

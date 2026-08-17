@@ -51,10 +51,10 @@ def test_search_active_customers_for_portfolio_operation_id_in_router() -> None:
     assert "PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS" not in search_block
 
 
-def test_search_route_accepts_commercial_accounts_view_alias() -> None:
+def test_search_route_accepts_commercial_access() -> None:
     from app.application.security.api_delpi_permissions import (
-        COMMERCIAL_ACCOUNTS_VIEW,
+        COMMERCIAL_ACCESS,
         PEDIDOS_VENDA_ABERTOS_PERMISSIONS,
     )
 
-    assert COMMERCIAL_ACCOUNTS_VIEW in PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert COMMERCIAL_ACCESS in PEDIDOS_VENDA_ABERTOS_PERMISSIONS

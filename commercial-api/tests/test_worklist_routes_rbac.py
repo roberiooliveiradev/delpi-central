@@ -57,24 +57,24 @@ def _sample_task() -> CommercialTask:
     )
 
 
-def test_get_my_worklist_403_without_worklist_view():
+def test_get_my_worklist_403_without_access():
     request = _request("/me/worklist")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.billing.notify"])
     response = worklist_routes.get_my_worklist(request)
     assert response.status_code == 403
     assert b"permiss" in response.body.lower()
 
 
-def test_list_tasks_403_without_worklist_view():
+def test_list_tasks_403_without_access():
     request = _request("/tasks")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User([])
     response = worklist_routes.list_tasks(request)
     assert response.status_code == 403
 
 
-def test_create_task_403_without_followups_manage():
+def test_create_task_403_without_access():
     request = _request("/tasks", method="POST")
-    request.state.user = _User(["commercial.worklist.view"])
+    request.state.user = _User(["commercial.manage"])
     body = SimpleNamespace(
         title="Teste",
         description=None,
@@ -92,18 +92,18 @@ def test_create_task_403_without_followups_manage():
     assert response.status_code == 403
 
 
-def test_complete_task_403_without_followups_manage():
+def test_complete_task_403_without_access():
     request = _request("/tasks/x/complete", method="POST")
-    request.state.user = _User(["commercial.worklist.view"])
+    request.state.user = _User([])
     response = worklist_routes.complete_task(
         request, task_id=UUID("00000000-0000-0000-0000-000000000001")
     )
     assert response.status_code == 403
 
 
-def test_defer_task_403_without_followups_manage():
+def test_defer_task_403_without_access():
     request = _request("/tasks/x/defer", method="POST")
-    request.state.user = _User(["commercial.worklist.view"])
+    request.state.user = _User(["commercial.billing.notify"])
     body = SimpleNamespace(due_at=datetime.now(timezone.utc))
     response = worklist_routes.defer_task(
         request,
@@ -113,9 +113,9 @@ def test_defer_task_403_without_followups_manage():
     assert response.status_code == 403
 
 
-def test_get_my_worklist_200_with_worklist_view(monkeypatch: pytest.MonkeyPatch):
+def test_get_my_worklist_200_with_access(monkeypatch: pytest.MonkeyPatch):
     request = _request("/me/worklist")
-    request.state.user = _User(["commercial.worklist.view"])
+    request.state.user = _User(["commercial.access"])
 
     fake_uc = MagicMock()
     fake_uc.get_worklist.return_value = {
@@ -136,9 +136,9 @@ def test_get_my_worklist_200_with_worklist_view(monkeypatch: pytest.MonkeyPatch)
     fake_uc.get_worklist.assert_called_once()
 
 
-def test_create_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
+def test_create_task_200_with_access(monkeypatch: pytest.MonkeyPatch):
     request = _request("/tasks", method="POST")
-    request.state.user = _User(["commercial.followups.manage"])
+    request.state.user = _User(["commercial.access"])
 
     fake_uc = MagicMock()
     fake_uc.create_task.return_value = _sample_task()
@@ -163,9 +163,9 @@ def test_create_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
     fake_uc.create_task.assert_called_once()
 
 
-def test_reassign_task_403_without_followups_manage():
+def test_reassign_task_403_without_access():
     request = _request("/tasks/x/reassign", method="POST")
-    request.state.user = _User(["commercial.worklist.view"])
+    request.state.user = _User([])
     body = SimpleNamespace(
         assignee_user_id="other",
         assignee_user_ids=None,
@@ -179,10 +179,10 @@ def test_reassign_task_403_without_followups_manage():
     assert response.status_code == 403
 
 
-def test_reassign_task_200_with_followups_manage(monkeypatch: pytest.MonkeyPatch):
+def test_reassign_task_200_with_access_and_manage(monkeypatch: pytest.MonkeyPatch):
     request = _request("/tasks/x/reassign", method="POST")
     request.state.user = _User(
-        ["commercial.followups.manage", "commercial.seller-portfolios.manage"]
+        ["commercial.access", "commercial.manage"]
     )
 
     fake_uc = MagicMock()

@@ -13,15 +13,9 @@ import {
 } from "../utils/billingSeriesPeriod";
 
 export function canViewPortfolioBillingShare(capabilities: {
-  canViewAnalytics: boolean;
-  canViewAccountsTeam: boolean;
   canManagePortfolios: boolean;
 }): boolean {
-  return (
-    capabilities.canViewAnalytics ||
-    capabilities.canViewAccountsTeam ||
-    capabilities.canManagePortfolios
-  );
+  return capabilities.canManagePortfolios;
 }
 
 export function formatSharePct(sharePct: number | null | undefined): string {
@@ -52,11 +46,8 @@ export function usePortfolioBillingShare(
   options: UsePortfolioBillingShareOptions = {},
 ): UsePortfolioBillingShareResult {
   const { sellerId, startDate, endDate, branch } = options;
-  const { canViewAnalytics, canViewAccountsTeam, canManagePortfolios } =
-    usePortfolioScope();
+  const { canManagePortfolios } = usePortfolioScope();
   const allowed = canViewPortfolioBillingShare({
-    canViewAnalytics,
-    canViewAccountsTeam,
     canManagePortfolios,
   });
 

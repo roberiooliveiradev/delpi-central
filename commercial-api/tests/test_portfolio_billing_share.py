@@ -150,7 +150,7 @@ def test_portfolio_billing_share_route_ok() -> None:
         allowed_customers=frozenset({("100", "01")}),
     )
     request = _request()
-    request.state.user = _User(["commercial.analytics.view"])
+    request.state.user = _User(["commercial.manage"])
 
     with (
         patch.object(
@@ -183,12 +183,12 @@ def test_portfolio_billing_share_route_ok() -> None:
     assert body["data"]["sharePct"] == 25.0
 
 
-def test_portfolio_billing_share_route_accepts_team_permission() -> None:
+def test_portfolio_billing_share_route_accepts_manage_permission() -> None:
     gateway = MagicMock()
     gateway.get_commercial_analytics.return_value = {"data": {"rol": 10}}
     scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
     request = _request()
-    request.state.user = _User(["commercial.accounts.team.view"])
+    request.state.user = _User(["commercial.manage"])
 
     with (
         patch.object(
@@ -213,9 +213,9 @@ def test_portfolio_billing_share_route_accepts_team_permission() -> None:
     assert body["data"]["sharePct"] == 100.0
 
 
-def test_portfolio_billing_share_route_forbids_accounts_view_only() -> None:
+def test_portfolio_billing_share_route_forbids_access_only() -> None:
     request = _request()
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
     response = analytics_routes.bff_portfolio_billing_share(
         request,
         start_date="2026-01-01",

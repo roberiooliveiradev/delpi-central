@@ -755,9 +755,10 @@ def test_permissions_helpers():
             self.permissions = permissions
             self.is_superadmin = False
 
-    assert can_view_worklist(User(["commercial.worklist.view"]))
-    assert can_manage_followups(User(["commercial.followups.manage"]))
-    assert not can_manage_followups(User(["commercial.accounts.view"]))
+    assert can_view_worklist(User(["commercial.access"]))
+    assert can_manage_followups(User(["commercial.access"]))
+    assert not can_manage_followups(User(["commercial.manage"]))
+    assert not can_manage_followups(User([]))
 
 
 def test_multi_assignees_and_customers_visible_and_any_completes():

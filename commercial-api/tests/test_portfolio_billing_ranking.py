@@ -250,7 +250,7 @@ def test_portfolio_billing_ranking_route_ok_for_accounts_view() -> None:
         allowed_customers=frozenset({("100", "01")}),
     )
     request = _request()
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(
@@ -282,7 +282,7 @@ def test_portfolio_billing_ranking_route_ok_for_accounts_view() -> None:
 
 def test_portfolio_billing_ranking_route_seller_forbidden_without_team() -> None:
     request = _request()
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
     response = analytics_routes.bff_portfolio_billing_ranking(
         request,
         start_date="2026-01-01",

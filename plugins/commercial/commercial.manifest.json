@@ -3,70 +3,28 @@
   "id": "commercial",
   "name": "Portal Comercial",
   "description": "Portal comercial nativo: início, visão geral, minhas tarefas, pedidos, carteira e administração de carteiras.",
-  "icon": "briefcase",
-  "version": "0.3.1",
+  "icon": "briefcase-business",
+  "version": "0.4.0",
   "type": "microfrontend",
   "basePath": "/apps/commercial",
   "entry": "/apps/commercial/assets/remoteEntry.js",
   "permissions": [
     {
-      "code": "commercial.accounts.view",
+      "code": "commercial.access",
       "name": "Acessar Portal Comercial",
-      "description": "Acesso ao Portal (pedidos, conta). Minha Carteira exige membership ou team/manage.",
+      "description": "Acesso às funcionalidades do produto (pedidos, tarefas, visão geral, propostas). Minha Carteira exige membership ou commercial.manage.",
       "module": "commercial"
     },
     {
-      "code": "commercial.worklist.view",
-      "name": "Ver Minhas tarefas / worklist",
-      "description": "Acessar Minhas tarefas, worklist e listagem de tarefas do vendedor.",
+      "code": "commercial.manage",
+      "name": "Administrar Portal Comercial",
+      "description": "Administração (CRUD carteiras/equipe/grupos), escopo irrestrito e visão de todas as carteiras.",
       "module": "commercial"
     },
     {
-      "code": "commercial.followups.manage",
-      "name": "Gerir follow-ups próprios",
-      "description": "Criar e concluir tarefas e registrar atividades comerciais próprias.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.seller-portfolios.manage",
-      "name": "Administrar carteiras comerciais",
-      "description": "CRUD de carteiras, transferências e escopo irrestrito de pedidos/carteira.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.audit.view",
-      "name": "Ver auditoria comercial",
-      "description": "Consultar trilha de auditoria do módulo quando exposta.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.analytics.view",
-      "name": "Ver Visão geral",
-      "description": "Acesso à Visão geral e às análises de OTD e oportunidades OV.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.proposals.view",
-      "name": "Ver propostas documento",
-      "description": "Listar e abrir propostas ADY.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.proposals.export",
-      "name": "Exportar PDF de proposta",
-      "description": "Gerar PDF revisável de proposta ADY com overrides.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.accounts.team.view",
-      "name": "Ver carteira da equipe",
-      "description": "Filtrar pedidos/carteira por vendedor e ver Gestão Equipe.",
-      "module": "commercial"
-    },
-    {
-      "code": "commercial.worklist.team.view",
-      "name": "Ver worklist da equipe",
-      "description": "Minhas tarefas com escopo equipe (scope=team).",
+      "code": "commercial.billing.notify",
+      "name": "Receber notificação de faturamento",
+      "description": "Receber notificação quando pedido entra em Pronto para faturar. Não libera telas admin nem escopo de carteiras.",
       "module": "commercial"
     }
   ],
@@ -74,15 +32,15 @@
     {
       "path": "/apps/commercial",
       "label": "Portal Comercial",
-      "permission": "commercial.accounts.view",
-      "icon": "briefcase",
+      "permission": "commercial.access",
+      "icon": "briefcase-business",
       "order": 13,
       "showInMenu": true
     },
     {
       "path": "/apps/commercial/overview",
       "label": "Visão geral",
-      "permission": "commercial.analytics.view",
+      "permission": "commercial.access",
       "icon": "bar-chart-2",
       "order": 14,
       "showInMenu": false
@@ -90,23 +48,15 @@
     {
       "path": "/apps/commercial/my-tasks",
       "label": "Minhas tarefas",
-      "permission": "commercial.worklist.view",
+      "permission": "commercial.access",
       "icon": "calendar-check",
       "order": 15,
       "showInMenu": false
     },
     {
-      "path": "/apps/commercial/users/:userId",
-      "label": "Perfil de usuário",
-      "permission": "commercial.accounts.view",
-      "icon": "user",
-      "order": 17,
-      "showInMenu": false
-    },
-    {
       "path": "/apps/commercial/my-day",
       "label": "Minhas tarefas",
-      "permission": "commercial.worklist.view",
+      "permission": "commercial.access",
       "icon": "calendar-check",
       "order": 16,
       "showInMenu": false
@@ -114,7 +64,7 @@
     {
       "path": "/apps/commercial/open-orders",
       "label": "Meus pedidos",
-      "permission": "commercial.accounts.view",
+      "permission": "commercial.access",
       "icon": "clipboard-list",
       "order": 17,
       "showInMenu": false
@@ -122,7 +72,7 @@
     {
       "path": "/apps/commercial/customers",
       "label": "Minha Carteira",
-      "permission": "commercial.accounts.view",
+      "permission": "commercial.access",
       "icon": "users",
       "order": 18,
       "showInMenu": false
@@ -130,7 +80,7 @@
     {
       "path": "/apps/commercial/proposals",
       "label": "Propostas",
-      "permission": "commercial.proposals.view",
+      "permission": "commercial.access",
       "icon": "file-text",
       "order": 19,
       "showInMenu": false
@@ -138,7 +88,7 @@
     {
       "path": "/apps/commercial/analytics",
       "label": "Visão geral",
-      "permission": "commercial.analytics.view",
+      "permission": "commercial.access",
       "icon": "bar-chart-2",
       "order": 20,
       "showInMenu": false
@@ -146,7 +96,7 @@
     {
       "path": "/apps/commercial/analytics/otd",
       "label": "Pontualidade (OTD)",
-      "permission": "commercial.analytics.view",
+      "permission": "commercial.access",
       "icon": "clock",
       "order": 21,
       "showInMenu": false
@@ -154,7 +104,7 @@
     {
       "path": "/apps/commercial/analytics/team",
       "label": "Equipe",
-      "permission": "commercial.accounts.team.view",
+      "permission": "commercial.manage",
       "icon": "users",
       "order": 22,
       "showInMenu": false
@@ -162,7 +112,7 @@
     {
       "path": "/apps/commercial/analytics/opportunities",
       "label": "Oportunidades",
-      "permission": "commercial.analytics.view",
+      "permission": "commercial.access",
       "icon": "target",
       "order": 23,
       "showInMenu": false
@@ -170,7 +120,7 @@
     {
       "path": "/apps/commercial/administration",
       "label": "Administração",
-      "permission": "commercial.seller-portfolios.manage",
+      "permission": "commercial.manage",
       "icon": "settings",
       "order": 24,
       "showInMenu": false
@@ -178,7 +128,7 @@
     {
       "path": "/apps/commercial/administration/seller-portfolios",
       "label": "Carteiras",
-      "permission": "commercial.seller-portfolios.manage",
+      "permission": "commercial.manage",
       "icon": "settings",
       "order": 25,
       "showInMenu": false
@@ -186,7 +136,7 @@
     {
       "path": "/apps/commercial/administration/team",
       "label": "Equipe",
-      "permission": "commercial.seller-portfolios.manage",
+      "permission": "commercial.manage",
       "icon": "users",
       "order": 26,
       "showInMenu": false
@@ -194,7 +144,7 @@
     {
       "path": "/apps/commercial/administration/groups",
       "label": "Grupos",
-      "permission": "commercial.seller-portfolios.manage",
+      "permission": "commercial.manage",
       "icon": "users",
       "order": 27,
       "showInMenu": false
@@ -202,7 +152,7 @@
     {
       "path": "/apps/commercial/seller-portfolios",
       "label": "Carteiras",
-      "permission": "commercial.seller-portfolios.manage",
+      "permission": "commercial.manage",
       "icon": "settings",
       "order": 28,
       "showInMenu": false

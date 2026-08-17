@@ -1,58 +1,29 @@
-"""Códigos RBAC do módulo Comercial — somente codes canônicos `commercial.*`."""
+"""Códigos RBAC do módulo Comercial — catálogo condensado (3 codes)."""
 
 from __future__ import annotations
 
 from typing import Any, Iterable
 
-COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
-COMMERCIAL_WORKLIST_VIEW = "commercial.worklist.view"
-COMMERCIAL_FOLLOWUPS_MANAGE = "commercial.followups.manage"
-COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
-COMMERCIAL_AUDIT_VIEW = "commercial.audit.view"
-COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
-COMMERCIAL_PROPOSALS_VIEW = "commercial.proposals.view"
-COMMERCIAL_PROPOSALS_EXPORT = "commercial.proposals.export"
-COMMERCIAL_ACCOUNTS_TEAM_VIEW = "commercial.accounts.team.view"
-COMMERCIAL_WORKLIST_TEAM_VIEW = "commercial.worklist.team.view"
+COMMERCIAL_ACCESS = "commercial.access"
+COMMERCIAL_MANAGE = "commercial.manage"
+COMMERCIAL_BILLING_NOTIFY = "commercial.billing.notify"
 
-COMMERCIAL_READ_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ACCOUNTS_VIEW,)
+COMMERCIAL_ACCESS_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ACCESS,)
+COMMERCIAL_MANAGE_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_MANAGE,)
+COMMERCIAL_BILLING_NOTIFY_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_BILLING_NOTIFY,)
 
-COMMERCIAL_WORKLIST_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_WORKLIST_VIEW,)
-
-COMMERCIAL_FOLLOWUPS_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_FOLLOWUPS_MANAGE,)
-
-COMMERCIAL_MANAGE_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,)
-
-COMMERCIAL_AUDIT_PERMISSIONS: tuple[str, ...] = (
-    COMMERCIAL_AUDIT_VIEW,
-    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
-)
-
-COMMERCIAL_ANALYTICS_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ANALYTICS_VIEW,)
-
-# Share carteira÷empresa (KPI-PORTFOLIO-SHARE): denominador empresa só para
-# analytics / visão de equipe / gestão de carteiras — não para accounts.view puro.
-COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS: tuple[str, ...] = (
-    COMMERCIAL_ANALYTICS_VIEW,
-    COMMERCIAL_ACCOUNTS_TEAM_VIEW,
-    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
-)
-
-COMMERCIAL_PROPOSALS_VIEW_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_PROPOSALS_VIEW,)
-
-COMMERCIAL_PROPOSALS_EXPORT_PERMISSIONS: tuple[str, ...] = (
-    COMMERCIAL_PROPOSALS_EXPORT,
-    COMMERCIAL_PROPOSALS_VIEW,
-)
-
-COMMERCIAL_ACCOUNTS_TEAM_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_ACCOUNTS_TEAM_VIEW,)
-
-COMMERCIAL_WORKLIST_TEAM_PERMISSIONS: tuple[str, ...] = (COMMERCIAL_WORKLIST_TEAM_VIEW,)
-
-COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS: tuple[str, ...] = (
-    COMMERCIAL_ACCOUNTS_TEAM_VIEW,
-    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
-)
+# Aliases de decorator (mesmo conteúdo — sem codes legados).
+COMMERCIAL_READ_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_WORKLIST_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_FOLLOWUPS_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_ANALYTICS_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_PROPOSALS_VIEW_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_PROPOSALS_EXPORT_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_AUDIT_PERMISSIONS = COMMERCIAL_ACCESS_PERMISSIONS
+COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS = COMMERCIAL_MANAGE_PERMISSIONS
+COMMERCIAL_ACCOUNTS_TEAM_PERMISSIONS = COMMERCIAL_MANAGE_PERMISSIONS
+COMMERCIAL_WORKLIST_TEAM_PERMISSIONS = COMMERCIAL_MANAGE_PERMISSIONS
+COMMERCIAL_LIST_PORTFOLIOS_PERMISSIONS = COMMERCIAL_MANAGE_PERMISSIONS
 
 
 def _effective_codes(user: Any | None) -> set[str]:
@@ -86,51 +57,69 @@ def has_any_permission(user: Any | None, permission_codes: Iterable[str]) -> boo
     return any(code in effective for code in permission_codes)
 
 
-def can_read_commercial(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_READ_PERMISSIONS)
+def has_access(user: Any | None) -> bool:
+    """Funcionalidades do produto (portal)."""
+    return has_any_permission(user, COMMERCIAL_ACCESS_PERMISSIONS)
 
 
-def can_view_worklist(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_WORKLIST_PERMISSIONS)
-
-
-def can_manage_followups(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_FOLLOWUPS_PERMISSIONS)
-
-
-def can_manage_portfolios(user: Any | None) -> bool:
+def has_manage(user: Any | None) -> bool:
+    """Administração + escopo irrestrito (todas as carteiras)."""
     return has_any_permission(user, COMMERCIAL_MANAGE_PERMISSIONS)
 
 
+def has_billing_notify(user: Any | None) -> bool:
+    """Destinatário da notificação «Pronto para faturar»."""
+    return has_any_permission(user, COMMERCIAL_BILLING_NOTIFY_PERMISSIONS)
+
+
+# --- Helpers de rota (derivados dos 3 codes; nomes estáveis para callers) ---
+
+
+def can_read_commercial(user: Any | None) -> bool:
+    return has_access(user)
+
+
+def can_view_worklist(user: Any | None) -> bool:
+    return has_access(user)
+
+
+def can_manage_followups(user: Any | None) -> bool:
+    return has_access(user)
+
+
+def can_manage_portfolios(user: Any | None) -> bool:
+    return has_manage(user)
+
+
 def can_view_audit(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_AUDIT_PERMISSIONS)
+    return has_access(user) or has_manage(user)
 
 
 def can_view_analytics(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_ANALYTICS_PERMISSIONS)
+    return has_access(user)
 
 
 def can_view_portfolio_billing_share(user: Any | None) -> bool:
-    """Card/% share empresa — analytics, team ou manage de carteiras."""
-    return has_any_permission(user, COMMERCIAL_PORTFOLIO_BILLING_SHARE_PERMISSIONS)
+    """Share empresa / ranking consolidado — só manage (vê todas as carteiras)."""
+    return has_manage(user)
 
 
 def can_view_proposals(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_PROPOSALS_VIEW_PERMISSIONS)
+    return has_access(user)
 
 
 def can_export_proposals(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_PROPOSALS_EXPORT_PERMISSIONS)
+    return has_access(user)
 
 
 def can_view_accounts_team(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_ACCOUNTS_TEAM_PERMISSIONS)
+    return has_manage(user)
 
 
 def can_view_worklist_team(user: Any | None) -> bool:
-    return has_any_permission(user, COMMERCIAL_WORKLIST_TEAM_PERMISSIONS)
+    return has_manage(user)
 
 
 def can_use_team_scope(user: Any | None) -> bool:
-    """Filtro multi-vendedor / Gestão Equipe: team.view OU manage."""
-    return can_view_accounts_team(user) or can_manage_portfolios(user)
+    """Filtro multi-vendedor / todas as carteiras = manage."""
+    return has_manage(user)

@@ -72,7 +72,7 @@ def test_create_seller_portfolio_route_name_only() -> None:
         "user_id": None,
     }
     request = _request()
-    request.state.user = _User(["commercial.seller-portfolios.manage"])
+    request.state.user = _User(["commercial.manage"])
     body = CreatePortfolioBody(display_name="Nova")
 
     with patch.object(routes, "_use_case", return_value=uc):

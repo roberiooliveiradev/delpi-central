@@ -8,8 +8,7 @@ from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import _rbac_from_claims, load_user_rbac
 
 from commercial_app.application.security.commercial_permissions import (
-    COMMERCIAL_READ_PERMISSIONS,
-    COMMERCIAL_WORKLIST_PERMISSIONS,
+    COMMERCIAL_ACCESS_PERMISSIONS,
     can_manage_portfolios,
     has_any_permission,
 )
@@ -61,10 +60,7 @@ async def resolve_websocket_user(token: str) -> SimpleNamespace:
     if not user_id:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
-    if not (
-        has_any_permission(user, COMMERCIAL_WORKLIST_PERMISSIONS)
-        or has_any_permission(user, COMMERCIAL_READ_PERMISSIONS)
-    ):
+    if not has_any_permission(user, COMMERCIAL_ACCESS_PERMISSIONS):
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
     user.id = user_id

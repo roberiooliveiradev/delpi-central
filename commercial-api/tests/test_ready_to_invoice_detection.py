@@ -68,7 +68,7 @@ def test_delta_detects_new_ready_keys_only() -> None:
 def test_recipient_resolver_uses_portfolio_membership() -> None:
     resolver = ReadyToInvoiceRecipientResolverService(
         billing_user_ids=["bill-1"],
-        billing_permission_codes=["commercial.accounts.manage"],
+        billing_permission_codes=["commercial.billing.notify"],
     )
     portfolios = [
         SellerPortfolio(
@@ -92,7 +92,7 @@ def test_recipient_resolver_uses_portfolio_membership() -> None:
     )
     assert recipients.seller_user_ids == frozenset({"owner-1", "seller-2"})
     assert recipients.billing_user_ids == frozenset({"bill-1"})
-    assert recipients.billing_permission_codes == ("commercial.accounts.manage",)
+    assert recipients.billing_permission_codes == ("commercial.billing.notify",)
     assert "bill-1" in recipients.all_user_ids
 
 

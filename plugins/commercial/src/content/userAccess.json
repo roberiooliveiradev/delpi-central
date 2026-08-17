@@ -1,26 +1,13 @@
 {
   "permissionLabels": {
-    "commercial.accounts.view": "Acessar Portal Comercial",
-    "commercial.worklist.view": "Ver Minhas tarefas",
-    "commercial.followups.manage": "Gerir follow-ups",
-    "commercial.seller-portfolios.manage": "Administrar carteiras",
-    "commercial.audit.view": "Ver auditoria",
-    "commercial.analytics.view": "Ver Visão geral e analytics",
-    "commercial.proposals.view": "Ver propostas",
-    "commercial.proposals.export": "Exportar PDF de proposta",
-    "commercial.accounts.team.view": "Ver carteira da equipe",
-    "commercial.worklist.team.view": "Ver tarefas da equipe"
+    "commercial.access": "Acessar Portal Comercial",
+    "commercial.manage": "Administrar Portal Comercial",
+    "commercial.billing.notify": "Receber notificação de faturamento"
   },
   "capabilityLabels": {
-    "worklist_view": "Fila de tarefas",
-    "followups_manage": "Criar e concluir follow-ups",
-    "seller_portfolios_manage": "Administração de carteiras",
-    "analytics_view": "Visão geral / OTD / OV",
-    "proposals_view": "Propostas documento",
-    "proposals_export": "Exportar propostas",
-    "accounts_team_view": "Escopo de equipe (carteiras)",
-    "worklist_team_view": "Escopo de equipe (tarefas)",
-    "team_scope": "Filtro consolidado de equipe"
+    "access": "Acesso ao Portal",
+    "manage": "Administração e todas as carteiras",
+    "billing_notify": "Notificação pronto para faturar"
   },
   "copy": {
     "accessTitle": "Acesso na plataforma",

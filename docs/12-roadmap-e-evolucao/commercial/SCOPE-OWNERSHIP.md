@@ -1,6 +1,7 @@
 # Portal Comercial — dono do escopo de clientes
 
 > **Status:** canônico (ago/2026) · ADRs [ADR-001](./adr/ADR-001-commercial-api.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)  
+> **RBAC:** [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) — `commercial.access` / `commercial.manage` / `commercial.billing.notify`  
 > **Diretriz Cursor:** `.cursor/rules/application-bounded-context-decoupling.mdc` + `.cursor/rules/mfe-own-api-no-direct-api-delpi.mdc` — MFE do Portal **nunca** chama api-delpi; regra/membership só em `commercial-api`.
 
 ## Princípio

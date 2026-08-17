@@ -69,7 +69,7 @@ def test_open_orders_bff_filters_via_scope() -> None:
     scope_svc.execute.return_value = scope
 
     request = _request("/open-orders/")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(
@@ -122,7 +122,7 @@ def test_billing_series_bff_filters_pairs() -> None:
     scope_svc.filter_pairs.return_value = [("100", "01")]
 
     request = _request("/customers/billing-series", method="POST")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
     body = BillingSeriesBody.model_validate(
         {
             "customers": [
@@ -174,7 +174,7 @@ def test_billing_series_multi_select_dedupes_allowed_pairs() -> None:
     ]
 
     request = _request("/customers/billing-series", method="POST")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
     body = BillingSeriesBody.model_validate(
         {
             "customers": [
@@ -227,7 +227,7 @@ def test_billing_series_single_pair_skips_membership_filter() -> None:
     scope_svc.execute.return_value = scope
 
     request = _request("/customers/billing-series", method="POST")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
     body = BillingSeriesBody.model_validate(
         {
             "customers": [{"customer_code": "999", "customer_store": "01"}],
@@ -264,7 +264,7 @@ def test_outbound_invoices_bff_allows_outside_portfolio() -> None:
     }
 
     request = _request("/customers/999/01/outbound-invoices")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with patch.object(
         customer_routes,
@@ -296,7 +296,7 @@ def test_get_outbound_invoice_bff_returns_invoice() -> None:
     }
 
     request = _request("/customers/999/01/outbound-invoices/01/000123/1")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with patch.object(
         customer_routes,
@@ -330,7 +330,7 @@ def test_get_outbound_invoice_bff_rejects_customer_mismatch() -> None:
         }
     }
     request = _request("/customers/999/01/outbound-invoices/01/000123/1")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with patch.object(
         customer_routes,
@@ -357,7 +357,7 @@ def test_customer_open_orders_bff_allows_outside_portfolio() -> None:
     }
 
     request = _request("/customers/000001/06/open-orders")
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.access"])
 
     with patch.object(
         customer_routes,

@@ -314,7 +314,7 @@ function AppShell() {
 
             {/*
               Deep links /apps/* sem app autorizado: não mandar para a home
-              (F5 + redirect legado PVA→commercial sem commercial.accounts.view).
+              (F5 + redirect legado PVA→commercial sem commercial.access).
             */}
             <Route
               path="/apps/*"

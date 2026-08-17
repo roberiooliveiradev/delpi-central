@@ -23,7 +23,7 @@ def test_resolve_websocket_user_loads_rbac_permissions(monkeypatch):
                 "name": "Ana",
                 "roles": [],
                 "groups": [],
-                "permissions": ["commercial.worklist.view", "commercial.seller-portfolios.manage"],
+                "permissions": ["commercial.access", "commercial.manage"],
                 "is_superadmin": False,
             }
         ),
@@ -31,7 +31,7 @@ def test_resolve_websocket_user_loads_rbac_permissions(monkeypatch):
 
     user = asyncio.run(resolve_websocket_user("fake-token"))
     assert user.id == "user-1"
-    assert "commercial.worklist.view" in user.permissions
+    assert "commercial.access" in user.permissions
 
 
 def test_resolve_websocket_user_accepts_accounts_view_without_worklist(monkeypatch):
@@ -45,7 +45,7 @@ def test_resolve_websocket_user_accepts_accounts_view_without_worklist(monkeypat
             return_value={
                 "id": "user-1",
                 "email": "a@b.c",
-                "permissions": ["commercial.accounts.view"],
+                "permissions": ["commercial.access"],
                 "roles": [],
                 "groups": [],
                 "is_superadmin": False,
@@ -55,7 +55,7 @@ def test_resolve_websocket_user_accepts_accounts_view_without_worklist(monkeypat
 
     user = asyncio.run(resolve_websocket_user("fake-token"))
     assert user.id == "user-1"
-    assert "commercial.accounts.view" in user.permissions
+    assert "commercial.access" in user.permissions
 
 
 def test_resolve_websocket_user_rejects_without_commercial_read_or_worklist(monkeypatch):

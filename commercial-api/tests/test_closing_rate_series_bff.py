@@ -66,7 +66,7 @@ def test_closing_rate_series_proxies_to_api_delpi() -> None:
     )
 
     req = _request()
-    req.state.user = _User(["commercial.analytics.view"])
+    req.state.user = _User(["commercial.access"])
 
     with (
         patch.object(

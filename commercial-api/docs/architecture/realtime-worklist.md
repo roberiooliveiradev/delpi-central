@@ -9,8 +9,8 @@ Atualização live da fila de tarefas (Meu dia / Início) **e** mutações de ca
 wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={uuid}
 ```
 
-- **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.accounts.view` **ou** `commercial.worklist.view` (somente canônicos). O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
-- **Salas:** `user:{sub}` sempre; `team` se gestor (`commercial.seller-portfolios.manage`).
+- **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.access`. O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
+- **Salas:** `user:{sub}` sempre; `team` se gestor (`commercial.manage`).
 - **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
 - **Middleware HTTP:** path `/commercial/realtime/ws` é público no JWT middleware (token na query; auth no handler).
 
@@ -18,7 +18,7 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 
 ### `presence.updated`
 
-Emitido para a sala `team` (gestores com `seller-portfolios.manage`) quando o
+Emitido para a sala `team` (gestores com `commercial.manage`) quando o
 conjunto de usuários online muda, e como **snapshot** ao entrar na sala `team`.
 
 ```json

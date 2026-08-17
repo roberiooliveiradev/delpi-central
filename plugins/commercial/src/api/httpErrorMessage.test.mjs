@@ -32,8 +32,8 @@ describe("httpErrorMessage", () => {
 
   it("keeps business JSON messages on 4xx", () => {
     assert.equal(
-      resolveHttpErrorMessage(403, "Sem permissão commercial.analytics.view"),
-      "Sem permissão commercial.analytics.view",
+      resolveHttpErrorMessage(403, "Sem permissão commercial.access"),
+      "Sem permissão commercial.access",
     );
   });
 

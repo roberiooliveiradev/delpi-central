@@ -16,16 +16,19 @@ type PortfolioScopeValue = {
   error: string | null;
   isAdmin: boolean;
   canManagePortfolios: boolean;
+  /** Derivado de commercial.access — produto (tarefas, analytics, propostas). */
   canViewWorklist: boolean;
   canManageFollowups: boolean;
   canViewAnalytics: boolean;
   canViewProposals: boolean;
   canExportProposals: boolean;
+  /** Derivado de commercial.manage — todas as carteiras. */
   canUseTeamScope: boolean;
   canViewAccountsTeam: boolean;
   canViewWorklistTeam: boolean;
-  /** Minha Carteira: membership, team.view ou manage. */
+  /** Minha Carteira: membership ou manage. */
   canAccessMyPortfolio: boolean;
+  canBillingNotify: boolean;
   /** Id do usuário autenticado (JWT), mesmo sem carteira própria. */
   currentUserId: string | null;
   /** Compat single-portfolio: primeira carteira de `myPortfolios`. */
@@ -34,11 +37,11 @@ type PortfolioScopeValue = {
   myPortfolios: SellerPortfolio[];
   sellers: SellerPortfolio[];
   /**
-   * Pode escolher carteira: team/manage (universo equipe) ou
+   * Pode escolher carteira: manage (universo equipe) ou
    * mais de uma carteira própria.
    */
   canFilterPortfolios: boolean;
-  /** Universo do seletor de carteira: equipe → todas; senão → carteiras próprias. */
+  /** Universo do seletor de carteira: manage → todas; senão → carteiras próprias. */
   filterablePortfolios: SellerPortfolio[];
   sellerIdFilter: string | null;
   setSellerIdFilter: (sellerId: string | null) => void;
@@ -49,35 +52,20 @@ type PortfolioScopeValue = {
 const PortfolioScopeContext = createContext<PortfolioScopeValue | null>(null);
 
 const EMPTY_CAPABILITIES: CommercialCapabilities = {
-  worklist_view: false,
-  followups_manage: false,
-  seller_portfolios_manage: false,
-  analytics_view: false,
-  proposals_view: false,
-  proposals_export: false,
-  accounts_team_view: false,
-  worklist_team_view: false,
-  team_scope: false,
+  access: false,
+  manage: false,
+  billing_notify: false,
 };
 
-/** Confia no payload da API — não inventa team.view a partir de admin. */
 function resolveCapabilities(
-  raw: SellerPortfolioMeCapabilities | undefined,
+  raw: CommercialCapabilities | undefined,
 ): CommercialCapabilities {
   return {
-    worklist_view: Boolean(raw?.worklist_view),
-    followups_manage: Boolean(raw?.followups_manage),
-    seller_portfolios_manage: Boolean(raw?.seller_portfolios_manage),
-    analytics_view: Boolean(raw?.analytics_view),
-    proposals_view: Boolean(raw?.proposals_view),
-    proposals_export: Boolean(raw?.proposals_export ?? raw?.proposals_view),
-    accounts_team_view: Boolean(raw?.accounts_team_view),
-    worklist_team_view: Boolean(raw?.worklist_team_view),
-    team_scope: Boolean(raw?.team_scope),
+    access: Boolean(raw?.access),
+    manage: Boolean(raw?.manage),
+    billing_notify: Boolean(raw?.billing_notify),
   };
 }
-
-type SellerPortfolioMeCapabilities = CommercialCapabilities;
 
 export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -120,10 +108,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         const nextCapabilities = resolveCapabilities(response.capabilities);
         setCapabilities(nextCapabilities);
 
-        const canListAll =
-          nextCapabilities.team_scope ||
-          nextCapabilities.seller_portfolios_manage ||
-          admin;
+        const canListAll = nextCapabilities.manage || admin;
         if (canListAll) {
           const portfolios = await listSellerPortfolios({
             activeOnly: true,
@@ -143,7 +128,6 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
               .map((portfolio) => portfolio.id)
               .filter(Boolean),
           );
-          // Multi-própria: manter filtro se ainda for carteira do usuário.
           setSellerIdFilterState((current) =>
             current && mineIds.has(current) ? current : null,
           );
@@ -166,32 +150,31 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   }, [reloadToken]);
 
   const value = useMemo(() => {
-    const canManagePortfolios =
-      capabilities.seller_portfolios_manage || isAdmin;
-    const canUseTeamScope = Boolean(capabilities.team_scope);
-    const canViewAccountsTeam = Boolean(capabilities.accounts_team_view);
-    const filterablePortfolios = canUseTeamScope ? sellers : myPortfolios;
+    const canManagePortfolios = capabilities.manage || isAdmin;
+    const hasAccess = Boolean(capabilities.access);
+    const filterablePortfolios = canManagePortfolios ? sellers : myPortfolios;
     const canAccessMyPortfolio =
-      myPortfolios.length > 0 || canUseTeamScope || canManagePortfolios;
+      myPortfolios.length > 0 || canManagePortfolios;
     return {
       loading,
       error,
       isAdmin: canManagePortfolios,
       canManagePortfolios,
-      canViewWorklist: capabilities.worklist_view,
-      canManageFollowups: capabilities.followups_manage,
-      canViewAnalytics: capabilities.analytics_view,
-      canViewProposals: capabilities.proposals_view,
-      canExportProposals: capabilities.proposals_export,
-      canUseTeamScope,
-      canViewAccountsTeam,
-      canViewWorklistTeam: capabilities.worklist_team_view,
+      canViewWorklist: hasAccess,
+      canManageFollowups: hasAccess,
+      canViewAnalytics: hasAccess,
+      canViewProposals: hasAccess,
+      canExportProposals: hasAccess,
+      canUseTeamScope: canManagePortfolios,
+      canViewAccountsTeam: canManagePortfolios,
+      canViewWorklistTeam: canManagePortfolios,
       canAccessMyPortfolio,
+      canBillingNotify: Boolean(capabilities.billing_notify),
       currentUserId,
       myPortfolio: myPortfolios[0] ?? null,
       myPortfolios,
       sellers,
-      canFilterPortfolios: canUseTeamScope || myPortfolios.length > 1,
+      canFilterPortfolios: canManagePortfolios || myPortfolios.length > 1,
       filterablePortfolios,
       sellerIdFilter,
       setSellerIdFilter,

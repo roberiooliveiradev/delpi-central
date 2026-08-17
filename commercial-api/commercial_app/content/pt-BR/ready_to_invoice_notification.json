@@ -4,7 +4,7 @@
   "eventType": "commercial.order.ready_to_invoice",
   "aggregateType": "open_order_line",
   "billingUserIds": [],
-  "billingPermissionCodes": [],
+  "billingPermissionCodes": ["commercial.billing.notify"],
   "notification": {
     "title": "Pedido pronto para faturar",
     "messageTemplate": "A linha {pedido}/{linha} do cliente {cliente} entrou em Pronto para faturar.",

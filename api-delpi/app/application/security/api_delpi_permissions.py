@@ -122,16 +122,11 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 
-# Aliases Portal Comercial (cutover / consolidação nativa): commercial.* + legado.
-COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
-COMMERCIAL_ACCOUNTS_TEAM_VIEW = "commercial.accounts.team.view"
-COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
-COMMERCIAL_ANALYTICS_VIEW = "commercial.analytics.view"
-COMMERCIAL_PROPOSALS_VIEW = "commercial.proposals.view"
-COMMERCIAL_PROPOSALS_EXPORT = "commercial.proposals.export"
-# Alias PT (manifest pré-rename) — manter no OR até cleanup
-COMMERCIAL_PROPOSTAS_VIEW = "commercial.propostas.view"
-COMMERCIAL_PROPOSTAS_EXPORT = "commercial.propostas.export"
+# Portal Comercial — catálogo condensado (3 codes). Plugins irmãos PVA / dashboard
+# mantêm os próprios codes nas OR-lists abaixo.
+COMMERCIAL_ACCESS = "commercial.access"
+COMMERCIAL_MANAGE = "commercial.manage"
+COMMERCIAL_BILLING_NOTIFY = "commercial.billing.notify"
 
 # --- financeiro — despesas por centro de custo ---
 FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
@@ -201,7 +196,7 @@ KPI_FINANCIAL_ACCESS = [API_DELPI_ACCESS, DASHBOARD_FINANCIAL_VIEW]
 KPI_COMMERCIAL_ACCESS = [
     API_DELPI_ACCESS,
     DASHBOARD_COMMERCIAL_VIEW,
-    COMMERCIAL_ANALYTICS_VIEW,
+    COMMERCIAL_ACCESS,
 ]
 KPI_PRODUCTION_ACCESS = [API_DELPI_ACCESS, DASHBOARD_PRODUCTION_VIEW]
 KPI_SUPPLIES_ACCESS = [API_DELPI_ACCESS, DASHBOARD_SUPPLIES_VIEW]
@@ -354,18 +349,18 @@ EFICIENCIA_FABRIL_ACCESS = [
     DASHBOARD_PRODUCTION_VIEW,
 ]
 
-# Portal Comercial: accounts.view | manage. Plugin irmão PVA: .access | .admin.
+# Portal Comercial: access | manage. Plugin irmão PVA: .access | .admin.
 # api-delpi.access NÃO concede acesso a pedidos/carteira (evita unrestricted indevido).
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     PEDIDOS_VENDA_ABERTOS_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
-    COMMERCIAL_ACCOUNTS_VIEW,
-    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
+    COMMERCIAL_ACCESS,
+    COMMERCIAL_MANAGE,
 ]
 
-# Admin de carteira / escopo irrestrito: somente manage canônico.
+# Admin de carteira / escopo irrestrito: somente commercial.manage.
 PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS = [
-    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
+    COMMERCIAL_MANAGE,
 ]
 
 FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS = [
@@ -616,10 +611,7 @@ PROPOSTAS_COMERCIAIS_ACCESS = [
     API_DELPI_ACCESS,
     PROPOSTAS_COMERCIAIS_VIEW,
     DASHBOARD_COMMERCIAL_VIEW,
-    COMMERCIAL_PROPOSALS_VIEW,
-    COMMERCIAL_PROPOSALS_EXPORT,
-    COMMERCIAL_PROPOSTAS_VIEW,
-    COMMERCIAL_PROPOSTAS_EXPORT,
+    COMMERCIAL_ACCESS,
 ]
 
 PLANEJAMENTO_ORCAMENTARIO_ACCESS_PERMISSIONS = [

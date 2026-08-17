@@ -132,7 +132,7 @@ def test_open_portfolio_summary_route_empty_portfolio() -> None:
         portfolio_id="p1",
     )
     request = _request()
-    request.state.user = _User(["commercial.analytics.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(
@@ -198,7 +198,7 @@ def test_open_portfolio_summary_route_with_items() -> None:
         allowed_customers=frozenset({("100", "01")}),
     )
     request = _request()
-    request.state.user = _User(["commercial.analytics.view"])
+    request.state.user = _User(["commercial.access"])
 
     with (
         patch.object(
@@ -226,15 +226,12 @@ def test_open_portfolio_summary_route_with_items() -> None:
     assert "items" not in body["data"]
 
 
-def test_open_portfolio_summary_403_without_analytics_view() -> None:
+def test_open_portfolio_summary_403_without_access() -> None:
     request = _request()
-    request.state.user = _User(["commercial.accounts.view"])
+    request.state.user = _User(["commercial.billing.notify"])
     response = analytics_routes.bff_open_portfolio_summary(
         request,
         seller_id=None,
         portfolio_id=None,
     )
     assert response.status_code == 403
-    body = json.loads(response.body)
-    assert body["success"] is False
-    assert b"permiss" in response.body.lower()

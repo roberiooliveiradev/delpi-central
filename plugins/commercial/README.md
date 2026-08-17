@@ -17,33 +17,35 @@ Portal Minha DELPI
 
 ## Rotas UI
 
+Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — **não** entram no manifesto Core (`PATH_RE` = `^/[-a-z0-9/]*$`).
+
 | Rota | Descrição | Permissão |
 |------|-----------|-----------|
-| `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `accounts.view` |
-| `/apps/commercial/overview` | Visão geral — KPIs (incl. carteira aberta), filtros/período, ROL + YoY, funil, série hit rate + YoY | `analytics.view` |
-| `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `worklist.view` |
-| `/apps/commercial/users/:userId` | Perfil de usuário (foto, cargo, carteiras) | `accounts.view` |
-| `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `accounts.view` |
-| `/apps/commercial/open-orders/:filial/:pedido/:linha` | Ficha nativa da linha do pedido | `accounts.view` |
-| `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `accounts.view` |
-| `/apps/commercial/customers` | Carteira de clientes | `accounts.view` |
-| `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `accounts.view` |
-| `/apps/commercial/proposals` | Propostas documento (ADY) | `proposals.view` |
-| `/apps/commercial/proposals/:id` | Detalhe + PDF revisável | `proposals.view` |
-| `/apps/commercial/analytics` (legado) | Redireciona para a Visão geral | `analytics.view` |
-| `/apps/commercial/analytics/otd` | Pontualidade (OTD) — drill da Visão geral | `analytics.view` |
-| `/apps/commercial/analytics/team` | Equipe — drill da Visão geral | `analytics.view` (+ team) |
-| `/apps/commercial/analytics/opportunities` | Oportunidades OV | `analytics.view` |
-| `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `analytics.view` |
-| `/apps/commercial/administration` | Administração — Painel | `seller-portfolios.manage` |
-| `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `seller-portfolios.manage` |
-| `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `seller-portfolios.manage` |
-| `/apps/commercial/administration/team` | Administração — Equipe (presença online via WS) | `seller-portfolios.manage` |
-| `/apps/commercial/administration/groups` | Administração — Grupos operacionais | `seller-portfolios.manage` |
-| `/apps/commercial/seller-portfolios` (legado) | Alias → Carteiras do hub | `seller-portfolios.manage` |
+| `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `commercial.access` |
+| `/apps/commercial/overview` | Visão geral — KPIs (incl. carteira aberta), filtros/período, ROL + YoY, funil, série hit rate + YoY | `commercial.access` |
+| `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `commercial.access` |
+| `/apps/commercial/users/:userId` | Perfil de usuário (SPA; não declarado no manifesto) | `commercial.access` |
+| `/apps/commercial/open-orders` | Pedidos em aberto (TOTVS) | `commercial.access` |
+| `/apps/commercial/open-orders/:filial/:pedido/:linha` | Ficha nativa da linha do pedido | `commercial.access` |
+| `/apps/commercial/open-orders/:filial/:pedido/:linha/op/:op` | Ficha nativa da OP vinculada à linha | `commercial.access` |
+| `/apps/commercial/customers` | Carteira de clientes | `commercial.access` |
+| `/apps/commercial/customers/:codigo/:loja` | Conta 360 híbrida | `commercial.access` |
+| `/apps/commercial/proposals` | Propostas documento (ADY) | `commercial.access` |
+| `/apps/commercial/proposals/:id` | Detalhe + PDF revisável | `commercial.access` |
+| `/apps/commercial/analytics` (legado) | Redireciona para a Visão geral | `commercial.access` |
+| `/apps/commercial/analytics/otd` | Pontualidade (OTD) — drill da Visão geral | `commercial.access` |
+| `/apps/commercial/analytics/team` | Equipe — redireciona Administração | `commercial.manage` |
+| `/apps/commercial/analytics/opportunities` | Oportunidades OV | `commercial.access` |
+| `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `commercial.access` |
+| `/apps/commercial/administration` | Administração — Painel | `commercial.manage` |
+| `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `commercial.manage` |
+| `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `commercial.manage` |
+| `/apps/commercial/administration/team` | Administração — Equipe (presença online via WS) | `commercial.manage` |
+| `/apps/commercial/administration/groups` | Administração — Grupos operacionais | `commercial.manage` |
+| `/apps/commercial/seller-portfolios` (legado) | Alias → Carteiras do hub | `commercial.manage` |
 
 Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
-(† `analytics.view` · ‡ `worklist.view` · ° `seller-portfolios.manage`). Propostas, OTD, Oportunidades
+(†‡ `commercial.access` · ° `commercial.manage`). Propostas, OTD, Oportunidades
 e Equipe analytics saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
 Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:id` permanece válido.
 
@@ -154,7 +156,7 @@ quando nenhum fato está disponível. Identidade, KPIs e próxima ação ficam n
 `PageHero` da conta — sem rail sticky nem faixa de KPI duplicada. Pedidos e
 previews abrem a página nativa da primeira
 linha com chaves completas; o CTA `Ver OV n` só aparece com
-`proposal_number` recebido no payload e `commercial.analytics.view`, sem probe
+`proposal_number` recebido no payload e `commercial.access`, sem probe
 adicional e sem modal.
 
 ### Páginas da linha e da OP (WF-02R-D)
@@ -236,30 +238,17 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## RBAC (capacidades)
 
-Somente codes canônicos `commercial.*` (aliases PVA / `api-delpi.access` / `commercial.propostas.*` **removidos** dos gates). Detalhe: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md).
+Catálogo condensado — **3 codes**. Detalhe e política para features novas: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md).
 
 | Permissão | Escopo |
 |-----------|--------|
-| `commercial.accounts.view` | Portal / pedidos / conta |
-| `commercial.worklist.view` / `followups.manage` | Minhas tarefas |
-| `commercial.seller-portfolios.manage` | Administração / CRUD Carteiras (`is_admin`) + escopo irrestrito |
-| `commercial.audit.view` | Auditoria |
-| `commercial.analytics.view` | Visão geral (KPIs, OTD, OV) |
-| `commercial.proposals.view` / `.export` | ADY + PDF (`/proposals/*`) |
-| `commercial.accounts.team.view` | Filtro multi-vendedor / drill Equipe |
-| `commercial.worklist.team.view` | Minhas tarefas `scope=team` |
+| `commercial.access` | Funcionalidades do produto (pedidos, tarefas, visão geral, propostas, …) |
+| `commercial.manage` | Administração + vê **todas** as carteiras (escopo irrestrito) |
+| `commercial.billing.notify` | Destinatário da notificação «Pronto para faturar» (não libera telas) |
 
-Filtro de equipe no MFE: `accounts.team.view || seller-portfolios.manage`. Minha Carteira exige membership **ou** team/manage.
+Minha Carteira na topbar: membership **ou** `manage`. Pedidos sem membership: consolidado (todos os clientes).
 
-Aplicação nas páginas deste fluxo:
-
-- Meus pedidos / Conta / OP: `commercial.accounts.view`;
-- Minha Carteira: `accounts.view` + (membership \| team \| manage);
-- `seller_id` equipe: `commercial.accounts.team.view` (ou manage);
-- OV e CTA Oportunidades: `commercial.analytics.view`;
-- atividades: `commercial.worklist.view`;
-- criar follow-up: `commercial.worklist.view` + `commercial.followups.manage`;
-- Propostas ADY: `commercial.proposals.view`.
+Antes de criar permission nova: preferir `access` ou `manage`; code específico só para efeito estreito (ver PERFIS).
 
 ## Componentes compartilhados e composições
 

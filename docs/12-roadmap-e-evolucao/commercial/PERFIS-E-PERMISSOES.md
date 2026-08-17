@@ -1,10 +1,8 @@
 # Perfis e permissões — Portal Comercial
 
-> **Objetivo:** permission codes = **capacidades** (`view` / `manage` / `export`) — **sem** códigos de cargo. Papéis Minha Delpi agrupam codes (você decide quem recebe o quê).  
+> **Objetivo:** catálogo condensado — 3 permission codes. Papéis Minha Delpi agrupam codes (você decide quem recebe o quê).  
 > **Modelo:** [permission-resolver.md](../../03-autenticacao-autorizacao/permission-resolver.md)  
-> **Manifest:** [commercial.manifest.json](../../../plugins/commercial/commercial.manifest.json)  
-> **Consolidação:** [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)  
-> **Multi-membro (E5.1):** [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [DATA-MODEL.md](./DATA-MODEL.md) § 3.1b · [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
+> **Manifest:** [commercial.manifest.json](../../../plugins/commercial/commercial.manifest.json)
 
 ## Princípio
 
@@ -14,100 +12,83 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 
 | É | Não é |
 |---|--------|
-| `commercial.analytics.view` | `commercial.supervisor` / `commercial.vendedor` |
-| Papel que **agrupa** codes | Permission com nome de persona |
+| `commercial.access` / `commercial.manage` / `commercial.billing.notify` | `commercial.vendedor` / permission por cargo |
+| Papel que **agrupa** codes | Fragmentar catálogo com `commercial.<feature>.view` sem justificativa |
 
 ## Catálogo (manifest + commercial-api)
 
 | Código | Nome UI | Onde vale |
 |--------|---------|-----------|
-| `commercial.accounts.view` | Acessar Portal Comercial | Início, Meus pedidos, conta; Minha Carteira só com membership ou team/manage |
-| `commercial.worklist.view` | Ver Minhas tarefas | `/my-tasks` (alias `/my-day`), worklist |
-| `commercial.followups.manage` | Gerir follow-ups | criar/concluir tarefas |
-| `commercial.seller-portfolios.manage` | Administração | CRUD `/administration/*` (Painel · Carteiras · Equipe · Grupos); `is_admin`; escopo irrestrito; presença online na Equipe |
-| `commercial.audit.view` | Ver auditoria | quando exposta |
-| `commercial.analytics.view` | Ver Visão geral / OTD / OV | `/overview`, `/analytics/otd`, `/analytics/opportunities` (**não** Equipe sozinha) |
-| `commercial.proposals.view` | Ver propostas documento | `/proposals` via launcher (não top nav) |
-| `commercial.proposals.export` | Exportar PDF proposta | POST PDF com overrides |
-| `commercial.accounts.team.view` | Ver carteira da equipe | filtro equipe + **escopo consolidado**; Equipe analítica — **sem** CRUD |
-| `commercial.worklist.team.view` | Ver worklist da equipe | Minhas tarefas `scope=team` |
+| `commercial.access` | Acessar Portal Comercial | Início, Meus pedidos, Minhas tarefas, follow-ups, Visão geral / OTD / OV, Propostas + PDF, auditoria quando exposta; Minha Carteira só com **membership** ou `manage` |
+| `commercial.manage` | Administrar Portal Comercial | **Vê tudo** (todas as carteiras/clientes), Administração (CRUD), filtro «Todas as carteiras», worklist `scope=team`, jobs ops |
+| `commercial.billing.notify` | Receber notificação de faturamento | Destinatário da notificação «Pronto para faturar» — **não** libera telas admin nem escopo |
 
-**Home** usa `accounts.view`. **Não** existem `otd.view` / `opportunities.view` separados — cobertos por `analytics.view`.
+**Home** e rotas de produto usam `commercial.access`. Administração e `/analytics/team` usam `commercial.manage`.
 
-## Breaking change — aliases removidos (ago/2026)
+## Equipe, membership e Pedidos
 
-Gates da **commercial-api** e escopo irrestrito na **api-delpi** aceitam **somente** `commercial.*` canônicos.
+| Situação | Pedidos em aberto | Topbar «Minha Carteira» | Minha Carteira / Conta |
+|----------|-------------------|-------------------------|------------------------|
+| Só `access`, **sem** membership | Acessa; vê **todos** os clientes | Oculta | Sem entrada |
+| `access` **com** membership | Filtra à(s) carteira(s) | Visível | Só carteiras próprias |
+| `manage` (+ tipicamente `access`) | Todas as carteiras | Visível | Todas + CRUD Administração |
 
-| Antes (OR legado) | Agora |
-|-------------------|--------|
-| `accounts.view` \| PVA.access \| `api-delpi.access` | só `commercial.accounts.view` |
-| `seller-portfolios.manage` \| PVA.admin \| `api-delpi.access` | só `commercial.seller-portfolios.manage` |
-| `analytics.view` \| dashboard-commercial \| `api-delpi.access` | só `commercial.analytics.view` |
-| proposals + aliases PT/irmão/`api-delpi` | só `commercial.proposals.view` / `.export` |
+- `is_admin` / escopo irrestrito = **somente** `commercial.manage`.
+- Grupos operacionais (`commercial_groups`) ≠ RBAC; gestão só com `manage`.
+- Membership (`seller_portfolio_members`) continua fora do RBAC.
 
-**Ops:** re-grant papéis que ainda tinham só `api-delpi.access`, `pedidos-venda-abertos.*`, `dashboard-commercial.view` ou `propostas-comerciais.view` / `commercial.propostas.*`. `api-delpi.access` **não** eleva mais manage nem «vê todas as carteiras».
+## Novas funcionalidades — access vs manage vs code específico
 
-## Equipe e carteiras multi-membro (G4 + E5.1)
+Antes de criar permission code:
 
-- Universo de filtro = carteiras **ativas** na commercial-api (membership via `seller_portfolio_members`).
-- Filtro MFE (Pedidos / Minha Carteira): `accounts.team.view || seller-portfolios.manage` (rótulo «Todas as carteiras»); multi-própria sem team → «Todas as minhas carteiras».
-- `is_admin` no `/seller-portfolios/me` = **apenas** `commercial.seller-portfolios.manage`.
-- **Admin (`seller-portfolios.manage`):** Administração (Painel, Carteiras, Equipe, Grupos, detalhe, org, clientes, transferir).
-- **Gestor (`accounts.team.view` sem `manage`):** vê **todas** as carteiras ativas nos filtros das bancadas; **não** acessa Administração (nav oculta / 404).
-- **Grupos operacionais** (`commercial_groups`): M:N usuário↔grupo; **≠** RBAC Keycloak e **≠** carteira. Gestão só com `manage`. Perfil expõe `groups[]` somente leitura.
-- **Operacional sem membership:** **Pedidos em aberto** vê consolidado (todos os clientes); **Minha Carteira** / Conta detalhe ainda exigem vínculo ou team/manage para gates de NF/avatar.
-- **Operacional com membership:** só a(s) sua(s) carteira(s); chip Escopo = identidade.
-- **Directory picker (criar carteira / adicionar membro):** só usuários com acesso ao portal (`app=commercial` no diretório).
+```text
+1. Capacidade transversal do produto (uso no dia a dia)?
+   → Preferir commercial.access (não criar code novo).
 
-## Papéis sugeridos (exemplos — criar na Minha Delpi)
+2. Administração / escopo «vê todas as carteiras» / CRUD estrutural?
+   → Preferir commercial.manage.
 
-| Papel | Codes (exemplo) |
-|-------|-----------------|
-| Comercial — Operacional | accounts.view + worklist.view + followups.manage (+ membership) |
-| Comercial — Vê gestão | operacional + **analytics.view** |
-| Comercial — Vê equipe | + accounts.team.view + worklist.team.view |
-| Comercial — Emite PDF | + proposals.view + proposals.export |
-| Comercial — Admin carteiras | + seller-portfolios.manage |
-| Comercial — Auditor | accounts.view + audit.view |
-| Comercial — Faturamento (notif) | accounts.view + (opcional) codes em `billingPermissionCodes` do JSON de notificação — **sem** permission `commercial.faturamento` |
+3. Destinatário ou efeito estreito (notificação, job, integração)
+   que NÃO libera telas nem escopo amplo?
+   → Avaliar permission específica (ex.: commercial.billing.notify).
+   Justificar no PR + atualizar este doc e o manifest.
+```
+
+**Proibido:** criar `commercial.<feature>.view` por padrão; fragmentar o catálogo sem justificativa aqui.
+
+Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notificação pronto para faturar → `billing.notify`.
+
+## Papéis sugeridos (criar na Minha Delpi)
+
+| Papel | Codes |
+|-------|--------|
+| Comercial — Operacional | `commercial.access` (+ membership) |
+| Comercial — Admin | `commercial.access` + `commercial.manage` |
+| Comercial — Faturamento | `commercial.access` + `commercial.billing.notify` |
+| Comercial — Auditor | `commercial.access` |
 
 ## Notificação «pronto para faturar»
 
 | Peça | Onde |
 |------|------|
-| Gatilho | `OpenOrderKanbanStageService` → estágio `ready_to_invoice` (estoque ≥ saldo) |
-| Delta | Checkpoint `commercial.open_orders.ready_to_invoice` (`integration_checkpoints`) |
-| Destinatários vendedor | Membros das carteiras que contêm o cliente da linha |
-| Destinatários faturamento | `billingUserIds` / `billingPermissionCodes` em `commercial_app/content/pt-BR/ready_to_invoice_notification.json` — **somente** equipe da aplicação altera |
-| Canal | Outbox → Core `POST /integrations/notifications` · categoria `commercial` |
-| Deep link | `/apps/commercial/open-orders?view=board&stage=ready_to_invoice` |
-| Job ops | `POST /apps/commercial-api/integrations/jobs/ready-to-invoice-scan` (exige `seller-portfolios.manage`) |
-
-**Política:** grants de `manage` e listas `billing*` ficam com admin da aplicação; não expor toggles de destinatário ao gestor de campo.
+| Destinatários vendedor | Membros das carteiras do cliente |
+| Destinatários faturamento | `billingPermissionCodes: ["commercial.billing.notify"]` em `ready_to_invoice_notification.json` |
+| Job ops | Exige `commercial.manage` |
 
 ## O que NÃO fazer
 
 - Permission com nome de cargo/persona.
-- Exigir `seller-portfolios.manage` para ver Gestão ou equipe.
-- Dar CRUD de carteiras a quem só tem `team.view`.
+- Dual-read / aliases dos codes antigos (`accounts.view`, `analytics.view`, `seller-portfolios.manage`, `commercial.propostas.*`, etc.).
 - Usar o MFE como única barreira — API revalida codes.
-- Reintroduzir aliases (`api-delpi.access`, PVA, `commercial.propostas.*`) nos OR-lists comerciais.
-- Vincular usuário sem acesso ao app `commercial` via picker (API/directory gate).
+- Dar `manage` só para «ver equipe sem CRUD» — quem precisa ver todas as carteiras recebe `manage` (e CRUD).
 
 ## Checklist homologação RBAC
 
-- [ ] Sem `analytics.view` → nav Visão geral oculta / 404 em `/overview`
-- [ ] Sem `seller-portfolios.manage` → sem nav Administração / sem unrestricted
-- [ ] Sem membership e sem team/manage → sem Minha Carteira
-- [ ] Só `accounts.view` + membership → só a(s) carteira(s) próprias
-- [ ] `accounts.team.view` sem manage → filtro equipe; sem CRUD Administração
-- [ ] Sem `proposals.view` → card Propostas omitido no launcher / 404 em `/proposals`
-- [ ] Sem `worklist.view` → sem Minhas tarefas na top
-- [ ] `manage` → Administração (Painel + Carteiras + Equipe + Grupos) + filtro equipe
-- [ ] Usuário em 2+ carteiras → `/me` lista `portfolios[]`; chip Escopo «N carteiras»; filtro «Todas as minhas» união dedupe
-- [ ] Membro secundário (não owner) vê clientes da carteira compartilhada
-- [ ] Directory picker: usuário sem `app=commercial` não aparece; com acesso aparece
-- [ ] Re-grant pós-deploy concluído nos papéis afetados
-- [ ] Migration `V005` aplicada (`up` só — nunca `reset`) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
-- [ ] Refino visual: Início sem Equipe; Visão geral sem Aprofundar; `/analytics/team` → Admin
-- [ ] Clique Minha Carteira (linha + Cliente) abre Conta; Opp Conta lista real
+- [ ] Sem `access` → sem app / menu Portal
+- [ ] Só `access` sem membership → Pedidos consolidado; sem Minha Carteira na topbar
+- [ ] `access` + membership → Minha Carteira própria
+- [ ] Sem `manage` → sem Administração / sem «todas as carteiras»
+- [ ] `manage` → vê tudo + CRUD Administração
+- [ ] Notificação faturamento só com `billing.notify` (+ membros da carteira)
+- [ ] Re-grant no Core **antes** do deploy que remove codes antigos do manifest
+- [ ] Deploy na mesma janela: commercial-api + MFE commercial + api-delpi

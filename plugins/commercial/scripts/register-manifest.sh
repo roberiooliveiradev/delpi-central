@@ -22,5 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua codes canônicos commercial.* no RBAC (sem aliases)."
-echo "[OK] Admin de carteiras: commercial.seller-portfolios.manage. Equipe: commercial.accounts.team.view."
+echo "[OK] Atribua codes: commercial.access (+ membership), commercial.manage (admin), commercial.billing.notify (faturamento)."
