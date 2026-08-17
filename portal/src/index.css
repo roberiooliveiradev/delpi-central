@@ -389,6 +389,7 @@ body:has(.app-shell) {
 }
 
 .main-area {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;

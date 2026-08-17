@@ -22,6 +22,7 @@ import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
 import { PortalTour } from "../tour/PortalTour";
+import { ImportantNotificationAttention } from "../components/notifications/ImportantNotificationAttention";
 
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
@@ -177,6 +178,7 @@ function AppShell() {
       <PortalTour />
 
       <div className="main-area">
+        <ImportantNotificationAttention />
         <div className="content">
           <Suspense fallback={<Loader />}>
             <Routes>

@@ -33,6 +33,10 @@ import {
 
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
+import { hasActiveImportantNotificationAttention } from "../components/notifications/ImportantNotificationAttention";
+import {
+  isImportantNotificationSnoozed,
+} from "../utils/importantNotificationSnooze";
 import {
   DELPI_CLOSE_APP_LAUNCHER_EVENT,
   DELPI_OPEN_APP_LAUNCHER_EVENT,
@@ -551,6 +555,19 @@ export const Sidebar = () => {
   =============================== */
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const [importantAttentionTick, setImportantAttentionTick] = useState(0);
+  const hasImportantAttention = useMemo(() => {
+    void importantAttentionTick;
+    return hasActiveImportantNotificationAttention(notifications);
+  }, [notifications, importantAttentionTick]);
+
+  useEffect(() => {
+    if (!hasImportantAttention && !isImportantNotificationSnoozed()) return;
+    const timer = window.setInterval(() => {
+      setImportantAttentionTick((value) => value + 1);
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [hasImportantAttention]);
 
   const initials = (() => {
     if (!user?.name) return "?";
@@ -700,6 +717,7 @@ export const Sidebar = () => {
                   open: notifOpen,
                 })}
                 data-tour="sidebar-notifications"
+                data-important-attention={hasImportantAttention ? "true" : "false"}
                 ref={notifTriggerRef}
                 onClick={() => {
                   setNotifOpen((open) => {
@@ -708,7 +726,14 @@ export const Sidebar = () => {
                   });
                 }}
               >
-                <Bell size={18} />
+                <Bell
+                  size={18}
+                  className={
+                    hasImportantAttention
+                      ? "sidebar-notifications__bell sidebar-notifications__bell--important"
+                      : "sidebar-notifications__bell"
+                  }
+                />
                 <span>Notificações</span>
                 {unreadCount > 0 && (
                   <span className="notif-badge">{unreadCount}</span>
