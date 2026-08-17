@@ -30,7 +30,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-RENAME | «Data de faturamento» + FOB/CIF | E3 | **Existe** | MFE + help | ATA-2 §14–15 |
 | P-OPP | Filtros Conta: período, produto, família | E4 | **Existe** | api-delpi + BFF + MFE | ATA-2 §21 |
 | P-OTD-COPY | Help OTD = DatFat × entrega prometida | E5 | **Existe** | MFE help | ATA-2 §16 |
-| P-FAV | Favoritos no PluginShell | E6 | **W0-pendente** | MFE shell | ATA-2 §39 |
+| P-FAV | Favoritos no PluginShell | E6 | **Existe** | MFE shell | ATA-2 §39 |
 
 ---
 

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 
-import { getHomeFavorites, putHomeFavorites, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
+import { getHomeFavorites, putHomeFavorites, homeFavoriteKey, type HomeFavoriteItem } from "../../api/homeFavoritesApi";
 import { getOpenOrders } from "../../api/openOrdersApi";
 import { useHomeHeroMetrics } from "../../app/HomeHeroMetricsContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -99,10 +99,6 @@ function summaryFromOpenOrders(data: OpenOrdersData): HomeOrdersSummary {
     valorAberto: summary?.valor_total_aberto ?? 0,
     atrasos: summary?.linhas_em_atraso ?? lateFromItems,
   };
-}
-
-function favoriteKey(item: { viewId: string; search?: string }): string {
-  return `${item.viewId}::${item.search ?? ""}`;
 }
 
 export function HomePage({
@@ -439,7 +435,7 @@ export function HomePage({
   );
 
   const favoriteKeys = useMemo(
-    () => new Set(favorites.map((item) => favoriteKey(item))),
+    () => new Set(favorites.map((item) => homeFavoriteKey(item))),
     [favorites],
   );
 
@@ -449,10 +445,10 @@ export function HomePage({
         viewId: route.viewId,
         search: route.search,
       };
-      const key = favoriteKey(item);
+      const key = homeFavoriteKey(item);
       const previous = favorites;
       const next = favoriteKeys.has(key)
-        ? favorites.filter((entry) => favoriteKey(entry) !== key)
+        ? favorites.filter((entry) => homeFavoriteKey(entry) !== key)
         : [...favorites, item].slice(0, 20);
       setFavorites(next);
       try {
@@ -474,7 +470,7 @@ export function HomePage({
         label: route.label,
         kind: route.kind,
         badge: badgeFor(route),
-        pinned: favoriteKeys.has(favoriteKey(route)),
+        pinned: favoriteKeys.has(homeFavoriteKey(route)),
         pinLabel: FEATURES.pinLabel,
         unpinLabel: FEATURES.unpinLabel,
         onPinClick: () => {
@@ -622,7 +618,7 @@ export function HomePage({
                     hubRouteLabelByView(item.viewId, item.search) ?? item.viewId;
                   return (
                     <CommercialRouteChip
-                      key={favoriteKey(item)}
+                      key={homeFavoriteKey(item)}
                       tone="pinned"
                       label={label}
                       onNavigate={() =>
@@ -649,7 +645,7 @@ export function HomePage({
               >
                 {visibleRecents.map((item) => (
                   <CommercialRouteChip
-                    key={`${favoriteKey(item)}-${item.at}`}
+                    key={`${homeFavoriteKey(item)}-${item.at}`}
                     tone="recent"
                     label={item.label}
                     leadingIcon={resolveHubRouteIcon(item.viewId)}

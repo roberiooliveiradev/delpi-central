@@ -10,14 +10,16 @@ Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-com
 
 ### Gaps P0 (ata alinhamento 2)
 
-Código ainda **não** nesta onda de docs — ver ondas em [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md):
+W0 entregue — detalhe em [PARCIAL-INVENTARIO.md](../../docs/12-roadmap-e-evolucao/commercial/PARCIAL-INVENTARIO.md):
 
 | ID | Entrega |
 |----|---------|
-| P0-META | Meta acumulada = soma proporcional por dia (SI + Overview) |
-| P0-LABEL | Chip/label MTD·YTD nos cards Overview |
+| P0-META | Meta acumulada = soma proporcional por dia (SI) |
+| P0-LABEL | Chip/label MTD·YTD + Meta acumulada/parcial |
 | P0-RENAME | Timeline/ficha OP: «data de faturamento» |
 | P0-OPP | Filtros Conta: status, período, OV, produto/família |
+| P0-OTD-COPY | Help OTD = DatFat × prometida |
+| P0-FAV | Favoritos no `PluginShell` (strip em todas as rotas) |
 
 **GR de Vendas** = [tv-dashboard](../tv-dashboard/README.md) (não feature deste MFE).
 

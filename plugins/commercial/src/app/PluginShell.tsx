@@ -39,6 +39,7 @@ import {
   CommercialViewTransition,
 } from "./commercialUi";
 import { ShellUserPortfolioMenu } from "./ShellUserPortfolioMenu";
+import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 
 type PluginShellProps = {
   view: PluginView;
@@ -333,6 +334,8 @@ export function PluginShell({
             <ShellUserPortfolioMenu basePath={basePath} displayName={userDisplayName} />
           }
         />
+
+        <ShellFavoritesStrip basePath={basePath} />
 
         {showGreeting ? (
           <CommercialViewTransition transitionKey="home-hero" tone="page">

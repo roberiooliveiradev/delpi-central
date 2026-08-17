@@ -7,6 +7,10 @@ export type HomeFavoriteItem = {
   search?: string;
 };
 
+export function homeFavoriteKey(item: { viewId: string; search?: string }): string {
+  return `${item.viewId}::${item.search ?? ""}`;
+}
+
 export async function getHomeFavorites(signal?: AbortSignal): Promise<HomeFavoriteItem[]> {
   const response = await httpGet<ApiSuccessResponse<{ items: HomeFavoriteItem[] }>>(
     commercialApiUrl("/me/home-favorites"),
