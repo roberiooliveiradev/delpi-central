@@ -118,9 +118,9 @@ function weekdayInTimeZone(now: Date, timeZone: string): number {
 
 /**
  * Resolve date range for a preset.
- * - today / this_week / this_month / this_quarter / this_year → até hoje
+ * - today / this_week / this_month / this_year / last_12_months → até hoje
+ * - this_quarter → trimestre civil completo (1º dia do 1º mês → último dia do 3º mês)
  * - last_month → mês civil anterior completo
- * - last_12_months → 1º dia do mês há 11 meses → hoje
  * - custom → null (caller keeps current dates)
  */
 export function resolvePeriodPreset(
@@ -165,10 +165,11 @@ export function resolvePeriodPreset(
   }
 
   if (preset === "this_quarter") {
-    const qm = Math.floor((m - 1) / 3) * 3 + 1;
+    const quarterStartMonth = Math.floor((m - 1) / 3) * 3 + 1;
+    const quarterEndMonth = quarterStartMonth + 2;
     return {
-      dateStart: formatYmd(y, qm, 1),
-      dateEnd: today,
+      dateStart: formatYmd(y, quarterStartMonth, 1),
+      dateEnd: formatYmd(y, quarterEndMonth, daysInMonth(y, quarterEndMonth)),
       competence: "",
     };
   }

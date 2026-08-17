@@ -28,7 +28,7 @@ describe("billingSeriesPeriod", () => {
     });
     expect(periodRangeFromBillingPreset("this_quarter", TODAY)).toEqual({
       startDate: "2026-07-01",
-      endDate: "2026-08-11",
+      endDate: "2026-09-30",
     });
     expect(periodRangeFromBillingPreset("this_year", TODAY)).toEqual({
       startDate: "2026-01-01",

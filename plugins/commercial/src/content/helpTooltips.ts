@@ -528,7 +528,7 @@ export const CM_HELP = {
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterPeriodPreset:
-      "Atalhos de período (hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses) no fuso America/Sao_Paulo. Personalizado mantém as datas que você informar.",
+      "Atalhos de período no fuso America/Sao_Paulo. Hoje/semana/mês/ano e últimos 12 meses vão até hoje; «Este trimestre» cobre o trimestre civil completo (ex.: jul–set). «Mês passado» é o mês civil anterior. Personalizado mantém as datas que você informar.",
     filterCompetence:
       "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Vazio = só as datas informadas.",
     filterBranch:

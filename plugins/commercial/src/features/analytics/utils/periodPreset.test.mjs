@@ -44,11 +44,20 @@ describe("periodPreset", () => {
     assert.equal(range.competence, "2026-07");
   });
 
-  it("resolvePeriodPreset this_quarter starts at quarter begin", () => {
+  it("resolvePeriodPreset this_quarter is full civil quarter", () => {
     const range = resolvePeriodPreset("this_quarter", now);
     assert.ok(range);
     assert.equal(range.dateStart, "2026-07-01");
-    assert.equal(range.dateEnd, today);
+    assert.equal(range.dateEnd, "2026-09-30");
+    assert.equal(range.competence, "");
+  });
+
+  it("resolvePeriodPreset this_quarter Q1 ends in March", () => {
+    const feb = new Date("2026-02-10T18:00:00.000Z");
+    const range = resolvePeriodPreset("this_quarter", feb);
+    assert.ok(range);
+    assert.equal(range.dateStart, "2026-01-01");
+    assert.equal(range.dateEnd, "2026-03-31");
   });
 
   it("resolvePeriodPreset this_year uses Jan 1 through today", () => {
