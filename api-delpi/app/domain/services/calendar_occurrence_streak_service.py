@@ -37,17 +37,20 @@ def compute_occurrence_streak(
     - ``record_days_without_nc``: maior intervalo entre ocorrências consecutivas
       (diferença em dias) ou o streak atual, o que for maior.
 
+    Datas **posteriores** a ``as_of`` são ignoradas (cadastro futuro / digitação
+    errada não zera o indicador «dias sem NC»).
+
     Sem ocorrências: usa ``reference_start_date`` como âncora; se também ausente,
     ambos ficam 0.
     """
+    as_of_date = as_of
     unique = sorted(
         {
             parsed
             for parsed in (coerce_occurrence_date(item) for item in occurrence_dates)
-            if parsed is not None
+            if parsed is not None and parsed <= as_of_date
         }
     )
-    as_of_date = as_of
     reference = (
         reference_start_date
         if isinstance(reference_start_date, date)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from app.domain.ports.nonconformity.nonconformity_query_repository_port import (
@@ -17,7 +17,10 @@ from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch
 
 
 class GetNonconformityStreakUseCase:
-    """Dias corridos sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard."""
+    """Dias corridos sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard.
+
+    O indicador fecha no **dia anterior** (não inclui NC com ``QI2_OCORRE`` = hoje).
+    """
 
     def __init__(self, repository: NonconformityQueryRepositoryPort) -> None:
         self._repository = repository
@@ -36,7 +39,8 @@ class GetNonconformityStreakUseCase:
             normalized_branch = normalize_branch_scope(branch)
         normalized_prefix = normalize_ppm_product_prefix(product_prefix)
 
-        as_of_date = as_of or date.today()
+        # Até o dia anterior: NC de hoje não entra no streak (TV / KPI diário).
+        as_of_date = (as_of or date.today()) - timedelta(days=1)
         occurrence_dates = self._repository.list_occurrence_dates(
             filter_type=normalized_type,
             branch=normalized_branch,
