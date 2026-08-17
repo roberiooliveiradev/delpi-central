@@ -20,7 +20,9 @@ from app.config import settings
 from app.domain.services.caller_request_stats_service import (
     get_caller_duration_percentile,
     get_caller_stats_summary,
+    get_caller_traffic_summary,
 )
+from app.domain.services.connection_pool_stats_service import get_connection_pools_glance
 from app.domain.services.observability_snapshot_service import build_observability_snapshot
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
@@ -231,8 +233,12 @@ def process_console_alerts(
 def build_console_health_summary() -> dict[str, Any]:
     snapshot = build_observability_snapshot(limit=15)
     caller_stats = get_caller_stats_summary(limit=10)
+    traffic = get_caller_traffic_summary()
+    pools = get_connection_pools_glance()
     current_alerts = evaluate_console_alerts()
     recent = list(_alert_history)[:10]
+    open_count = len(current_alerts)
+    p95_ms = get_caller_duration_percentile(0.95)
 
     return {
         "captured_at": _now_iso(),
@@ -241,15 +247,20 @@ def build_console_health_summary() -> dict[str, Any]:
         else "warning"
         if current_alerts
         else "ok",
-        "open_alert_count": len(current_alerts),
+        "open_alert_count": open_count,
+        "open_alerts_count": open_count,
         "open_alerts": [asdict(alert) for alert in current_alerts],
         "recent_alerts": recent,
         "thresholds": {
             "p95_ms": _p95_threshold_ms(),
             "slow_sql_ms": _slow_sql_threshold_ms(),
         },
+        "traffic": traffic,
+        "pools": pools,
         "metrics": {
-            "p95_ms": get_caller_duration_percentile(0.95),
+            "p95_ms": p95_ms,
+            "error_rate_pct": traffic.get("error_rate_pct", 0.0),
+            "pool_occupancy_pct": pools.get("max_occupancy_pct", 0.0),
             "caller_requests": caller_stats.get("total_requests", 0),
             "sql_samples": snapshot.get("sql_health", {}).get("total_samples", 0),
             "cache_hit_rate_pct": snapshot.get("query_cache", {})

@@ -16,7 +16,23 @@ def setup_function() -> None:
 
 
 def test_get_console_health_route() -> None:
+    from app.domain.services.caller_request_stats_service import record_caller_request
     from app.interface.http.routes.system_routes import get_console_health
+
+    record_caller_request(
+        caller_app="test-app",
+        route_path="/system/console-health",
+        operation_id="get_console_health",
+        status_code=200,
+        duration_ms=12.5,
+    )
+    record_caller_request(
+        caller_app="test-app",
+        route_path="/system/console-health",
+        operation_id="get_console_health",
+        status_code=500,
+        duration_ms=80.0,
+    )
 
     response = get_console_health()
     payload = _body(response)["data"]
@@ -24,6 +40,15 @@ def test_get_console_health_route() -> None:
     assert payload["status"] in {"ok", "warning", "critical"}
     assert "metrics" in payload
     assert "thresholds" in payload
+    assert payload["open_alerts_count"] == payload["open_alert_count"]
+    assert payload["traffic"]["total_requests"] == 2
+    assert payload["traffic"]["error_count"] == 1
+    assert payload["traffic"]["error_rate_pct"] == 50.0
+    assert payload["metrics"]["error_rate_pct"] == 50.0
+    assert "pools" in payload
+    assert "max_occupancy_pct" in payload["pools"]
+    assert "occupancy_pct" in payload["pools"]["plugins_postgres"]
+    assert "pool_occupancy_pct" in payload["metrics"]
 
 
 def test_post_console_alerts_smoke_route() -> None:
