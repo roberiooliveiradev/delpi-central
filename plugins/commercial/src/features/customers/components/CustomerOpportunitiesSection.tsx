@@ -30,6 +30,17 @@ type CustomerOpportunitiesSectionProps = {
 
 type StatusFilter = "all" | CommercialProposalStatusCategory;
 
+const TEXT_FILTER_DEBOUNCE_MS = 300;
+
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timeoutId);
+  }, [delayMs, value]);
+  return debounced;
+}
+
 /**
  * Lista real de OVs do cliente (mesmo contrato da página global, filtrada por código).
  */
@@ -49,11 +60,15 @@ export function CustomerOpportunitiesSection({
   const [dateEnd, setDateEnd] = useState("");
   const [productCode, setProductCode] = useState("");
   const [productGroup, setProductGroup] = useState("");
+  const debouncedSearch = useDebouncedValue(search, TEXT_FILTER_DEBOUNCE_MS);
+  const debouncedProductCode = useDebouncedValue(productCode, TEXT_FILTER_DEBOUNCE_MS);
+  const debouncedProductGroup = useDebouncedValue(productGroup, TEXT_FILTER_DEBOUNCE_MS);
   const code = customerCode.trim();
   const detailSearch = code
     ? `?${new URLSearchParams({ search: code }).toString()}`
     : undefined;
   const copy = ANALYTICS_CONTENT.oportunidades;
+  const showInitialLoader = loading && items.length === 0;
 
   useEffect(() => {
     if (!canViewAnalytics || !code) {
@@ -68,9 +83,9 @@ export function CustomerOpportunitiesSection({
 
     const apiStatus =
       statusFilter === "open" || statusFilter === "won" ? statusFilter : undefined;
-    const ovSearch = search.trim();
-    const product = productCode.trim();
-    const group = productGroup.trim();
+    const ovSearch = debouncedSearch.trim();
+    const product = debouncedProductCode.trim();
+    const group = debouncedProductGroup.trim();
 
     void getCommercialProposals(
       {
@@ -112,9 +127,9 @@ export function CustomerOpportunitiesSection({
     statusFilter,
     dateStart,
     dateEnd,
-    productCode,
-    productGroup,
-    search,
+    debouncedProductCode,
+    debouncedProductGroup,
+    debouncedSearch,
   ]);
 
   const statusCounts = useMemo(() => {
@@ -182,98 +197,96 @@ export function CustomerOpportunitiesSection({
         </CommercialActionButton>
       }
     >
-      {loading ? <CommercialLoadingCard title="Carregando oportunidades…" variant="panel" /> : null}
-      {error ? (
-        <CommercialEmptyState defaultMessage={error} />
+      <CommercialScopeChipBar
+        aria-label={copy.statusFilterAriaLabel}
+        label={
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {copy.statusFilterLabel}
+            <HelpTooltip
+              content={CM_HELP.customerDetail.opportunitiesStatusFilter}
+              ariaLabel="Ajuda: filtro de status"
+            />
+          </span>
+        }
+        chips={[
+          {
+            id: "all",
+            label: `${copy.statusAll}${
+              statusFilter === "all"
+                ? ` (${statusCounts.all.toLocaleString("pt-BR")})`
+                : ""
+            }`,
+            active: statusFilter === "all",
+            onSelect: () => setStatusFilter("all"),
+          },
+          {
+            id: "open",
+            label: copy.statusOpen,
+            active: statusFilter === "open",
+            onSelect: () => setStatusFilter("open"),
+          },
+          {
+            id: "won",
+            label: copy.statusWon,
+            active: statusFilter === "won",
+            onSelect: () => setStatusFilter("won"),
+          },
+          {
+            id: "lost",
+            label: copy.statusLost,
+            active: statusFilter === "lost",
+            onSelect: () => setStatusFilter("lost"),
+          },
+          {
+            id: "other",
+            label: copy.statusOther,
+            active: statusFilter === "other",
+            onSelect: () => setStatusFilter("other"),
+          },
+        ]}
+      />
+      <CommercialFilterBarShell embedded ariaLabel={copy.accountFiltersAriaLabel}>
+        <CommercialDateField
+          label={copy.dateStartLabel}
+          hint={CM_HELP.customerDetail.opportunitiesDateStart}
+          value={dateStart}
+          onChange={setDateStart}
+        />
+        <CommercialDateField
+          label={copy.dateEndLabel}
+          hint={CM_HELP.customerDetail.opportunitiesDateEnd}
+          value={dateEnd}
+          onChange={setDateEnd}
+        />
+        <CommercialTextField
+          label={copy.searchLabel}
+          hint={CM_HELP.customerDetail.opportunitiesSearch}
+          placeholder={copy.searchPlaceholder}
+          value={search}
+          onChange={setSearch}
+        />
+        <CommercialTextField
+          label={copy.productCodeLabel}
+          hint={CM_HELP.customerDetail.opportunitiesProductCode}
+          placeholder={copy.productCodePlaceholder}
+          value={productCode}
+          onChange={setProductCode}
+        />
+        <CommercialTextField
+          label={copy.productGroupLabel}
+          hint={CM_HELP.customerDetail.opportunitiesProductGroup}
+          placeholder={copy.productGroupPlaceholder}
+          value={productGroup}
+          onChange={setProductGroup}
+        />
+      </CommercialFilterBarShell>
+
+      {showInitialLoader ? (
+        <CommercialLoadingCard title="Carregando oportunidades…" variant="panel" />
       ) : null}
-      {!loading && !error ? (
-        <>
-          <CommercialScopeChipBar
-            aria-label={copy.statusFilterAriaLabel}
-            label={
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                {copy.statusFilterLabel}
-                <HelpTooltip
-                  content={CM_HELP.customerDetail.opportunitiesStatusFilter}
-                  ariaLabel="Ajuda: filtro de status"
-                />
-              </span>
-            }
-            chips={[
-              {
-                id: "all",
-                label: `${copy.statusAll}${
-                  statusFilter === "all"
-                    ? ` (${statusCounts.all.toLocaleString("pt-BR")})`
-                    : ""
-                }`,
-                active: statusFilter === "all",
-                onSelect: () => setStatusFilter("all"),
-              },
-              {
-                id: "open",
-                label: copy.statusOpen,
-                active: statusFilter === "open",
-                onSelect: () => setStatusFilter("open"),
-              },
-              {
-                id: "won",
-                label: copy.statusWon,
-                active: statusFilter === "won",
-                onSelect: () => setStatusFilter("won"),
-              },
-              {
-                id: "lost",
-                label: copy.statusLost,
-                active: statusFilter === "lost",
-                onSelect: () => setStatusFilter("lost"),
-              },
-              {
-                id: "other",
-                label: copy.statusOther,
-                active: statusFilter === "other",
-                onSelect: () => setStatusFilter("other"),
-              },
-            ]}
-          />
-          <CommercialFilterBarShell
-            embedded
-            ariaLabel={copy.accountFiltersAriaLabel}
-          >
-            <CommercialDateField
-              label={copy.dateStartLabel}
-              hint={CM_HELP.customerDetail.opportunitiesDateStart}
-              value={dateStart}
-              onChange={setDateStart}
-            />
-            <CommercialDateField
-              label={copy.dateEndLabel}
-              hint={CM_HELP.customerDetail.opportunitiesDateEnd}
-              value={dateEnd}
-              onChange={setDateEnd}
-            />
-            <CommercialTextField
-              label={copy.searchLabel}
-              hint={CM_HELP.customerDetail.opportunitiesSearch}
-              placeholder={copy.searchPlaceholder}
-              value={search}
-              onChange={setSearch}
-            />
-            <CommercialTextField
-              label={copy.productCodeLabel}
-              hint={CM_HELP.customerDetail.opportunitiesProductCode}
-              placeholder={copy.productCodePlaceholder}
-              value={productCode}
-              onChange={setProductCode}
-            />
-            <CommercialTextField
-              label={copy.productGroupLabel}
-              hint={CM_HELP.customerDetail.opportunitiesProductGroup}
-              placeholder={copy.productGroupPlaceholder}
-              value={productGroup}
-              onChange={setProductGroup}
-            />
-          </CommercialFilterBarShell>
+      {error ? <CommercialEmptyState defaultMessage={error} /> : null}
+      {!showInitialLoader && !error ? (
+        <div aria-busy={loading || undefined}>
           {items.length === 0 ? (
             <CommercialEmptyState
               defaultTitle="Nenhuma OV neste filtro"
@@ -292,7 +305,7 @@ export function CustomerOpportunitiesSection({
               showOpenProposal={canViewProposals}
             />
           ) : null}
-        </>
+        </div>
       ) : null}
     </CommercialSectionCard>
   );
