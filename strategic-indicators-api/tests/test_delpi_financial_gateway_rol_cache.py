@@ -51,3 +51,30 @@ def test_list_rol_by_branch_reuses_cached_branches(monkeypatch) -> None:
     assert first == {"01": {"rol": 100.0}, "02": {"rol": 200.0}}
     assert second == first
     assert client.get_rol.call_count == 2
+
+
+def test_warm_rol_allows_get_rol_cache_hit_across_gateways() -> None:
+    snapshot_shared_cache._rol_cache.invalidate_all()
+    client = MagicMock()
+    client.get_rol.side_effect = [
+        {"rol": 10.0},
+        {"rol": 20.0},
+    ]
+    warmer = DelpiFinancialGateway(client)
+    warmer.list_rol_by_branch(
+        branches=["01", "02"],
+        start_date="01-06-2026",
+        end_date="30-06-2026",
+    )
+    reader = DelpiFinancialGateway(client)
+    assert reader.get_rol(
+        branch="01",
+        start_date="01-06-2026",
+        end_date="30-06-2026",
+    ) == {"rol": 10.0}
+    assert reader.get_rol(
+        branch="02",
+        start_date="01-06-2026",
+        end_date="30-06-2026",
+    ) == {"rol": 20.0}
+    assert client.get_rol.call_count == 2

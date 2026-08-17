@@ -596,6 +596,30 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
         return collectors
 
+    def _warm_shared_rol_cache(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> None:
+        """Pré-aquece ROL 01/02 no cache TTL compartilhado antes dos 7 coletores."""
+        if not start_date or not end_date:
+            return
+        try:
+            from delpi_api_client import DelpiApiClient
+            from si_app.infrastructure.gateways.delpi_financial_gateway import (
+                DelpiFinancialGateway,
+            )
+            from si_app.shared.goal_scope import BRANCH_UNIT_CODES
+
+            DelpiFinancialGateway(DelpiApiClient()).list_rol_by_branch(
+                branches=list(BRANCH_UNIT_CODES),
+                start_date=start_date,
+                end_date=end_date,
+            )
+        except Exception:
+            return
+
     def _collect_measurements_from_collectors(
         self,
         collectors: list[tuple[str, Callable[[], dict]]],
@@ -606,6 +630,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         start_date: str | None,
         end_date: str | None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
+        self._warm_shared_rol_cache(start_date=start_date, end_date=end_date)
         raw_results = self._collect_parallel(collectors)
 
         items: list[StrategicIndicatorMeasuredValue] = []
