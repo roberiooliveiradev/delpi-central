@@ -189,7 +189,7 @@ Multiplicadores **atuais** (Compose + código pós plano performance ago/2026):
 | 5b | SI | Warm `list_rol_by_branch` no provider | Cache hit commercial/supplies | **feito** (E4.S1) |
 | 6 | SI | Suprimentos: paralelizar CPV∥ROL∥stock∥OTD; turnover local | −wall-clock/mês | **feito** (E2.S1) |
 | 7 | api-delpi + SI | PPM series + scrap/rework series | Menos GET YTD | **feito** (E3.S1–S3) |
-| 7b | SI | Kaizen + audit-5s via series no `get_snapshot_series` | Sem N× summary | ver E5.S3 |
+| 7b | SI | Kaizen + audit-5s via series no `get_snapshot_series` | Sem N× summary | **feito** (E5.S3) |
 | 8 | SI | Leitura `period_scores` mat-only | GET painel em ms | **feito** |
 | 9 | MFE | Job assíncrono em 524 | UX Cloudflare | **feito** |
 | 10 | SI | Helper único `build_series_coverage` | Paridade trends/presentation/tree | **feito** (E5.S1) |
@@ -209,6 +209,23 @@ Método: testes instrumentados em `tests/test_http_call_baseline_e1s4.py` (conta
 | Refresh horário | Branches | `consolidated` (Compose) |
 
 Atualizar em **E5.S3** com a mesma suíte após otimizações.
+
+## Resultado E5.S3 (2026-08 — pós E2–E5)
+
+Método: `tests/test_quality_series_ytd_call_counts.py` + `tests/test_http_call_baseline_e1s4.py` (mesma contagem instrumentada).
+
+| Escopo | Métrica | Baseline E1.S4 | Resultado E5.S3 |
+|--------|---------|----------------|-----------------|
+| Qualidade, 1 mês, branch=None | Calls gateway (summary path) | **32** | **32** (inalterado; path single-month) |
+| Qualidade, série 6 meses YTD | Calls gateway quality | **192** (32×6) | **30** (series; não escala ×meses) |
+| — PPM series | | N× summary | **18** fixas/janela |
+| — scrap+rework series | | N× summary | **6** (None+01+02) |
+| — kaizen+5s series | | N× summary | **4** (01+02) |
+| Suprimentos, 1 mês | Fetches core | **4** sequenciais | **4** em **paralelo** (+ turnover local) |
+| Refresh horário | Branches | `consolidated` | `consolidated` (Compose) |
+| Trends GET | mat-only | `prefer_materialized_only=True` | confirmado em `get_trends_real_use_case` + testes cobertura |
+
+Smoke mat-only: `tests/test_trends_series_coverage.py` — gaps viram `missing_competences`, sem recompute no GET.
 
 ### 7.1 Contagem por refresh
 

@@ -1,4 +1,4 @@
-"""Baseline E1.S4 — contagem esperada de chamadas HTTP por mês (código atual)."""
+"""Baseline E1.S4 — contagem HTTP histórica + asserts estáveis pós-otimização."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from si_app.application.services.supplies.supplies_metrics_snapshot_service impo
     SuppliesMetricsSnapshotService,
 )
 
-# Contagens travadas em E1.S4 (antes de E2/E3). Atualizar em E5.S3 após otimizações.
+# Contagens travadas em E1.S4 (antes de E2/E3). Série YTD: ver E5.S3.
 BASELINE_QUALITY_GATEWAY_CALLS_PER_MONTH_CONSOLIDATED = 32
 BASELINE_SUPPLIES_CORE_FETCHES_PER_MONTH = 4  # cpv, rol, stock, otd (sem negotiation)
 BASELINE_YTD_MONTHS_EXAMPLE = 6
@@ -39,10 +39,32 @@ def _counting_quality_gateway() -> tuple[MagicMock, list[str]]:
                         for m in range(1, 13)
                     ]
                 }
+            if name.endswith("_series"):
+                metric_key = {
+                    "get_scrap_cost_pct_series": "scrap_cost_pct",
+                    "get_rework_cost_pct_series": "rework_cost_pct",
+                    "get_kaizen_summary_series": None,
+                    "get_audit_5s_summary_series": "average_score",
+                }.get(name)
+                points = []
+                for m in range(1, 13):
+                    if name == "get_kaizen_summary_series":
+                        metrics = {"total_kaizens": 0, "total_savings": 0}
+                    elif metric_key:
+                        metrics = {metric_key: 1.0}
+                    else:
+                        metrics = {}
+                    points.append(
+                        {
+                            "sort_key": f"2026-{str(m).zfill(2)}",
+                            "metrics": metrics,
+                        }
+                    )
+                return {"points": points}
             if "ppm" in name:
                 return {"ppm": 1.0}
             if "cost" in name:
-                return {"percentage": 1.0}
+                return {"scrap_cost_pct": 1.0, "rework_cost_pct": 1.0}
             if "kaizen" in name:
                 return {"total_kaizens": 0, "total_savings": 0, "list_kaizen": []}
             if "audit" in name:
@@ -56,8 +78,20 @@ def _counting_quality_gateway() -> tuple[MagicMock, list[str]]:
     gateway.get_ppm_series.side_effect = track("get_ppm_series")
     gateway.get_scrap_cost_pct.side_effect = track("get_scrap_cost_pct")
     gateway.get_rework_cost_pct.side_effect = track("get_rework_cost_pct")
+    gateway.get_scrap_cost_pct_series.side_effect = track(
+        "get_scrap_cost_pct_series"
+    )
+    gateway.get_rework_cost_pct_series.side_effect = track(
+        "get_rework_cost_pct_series"
+    )
     gateway.get_kaizen_summary.side_effect = track("get_kaizen_summary")
+    gateway.get_kaizen_summary_series.side_effect = track(
+        "get_kaizen_summary_series"
+    )
     gateway.get_audit_5s_summary.side_effect = track("get_audit_5s_summary")
+    gateway.get_audit_5s_summary_series.side_effect = track(
+        "get_audit_5s_summary_series"
+    )
     return gateway, calls
 
 
@@ -74,7 +108,7 @@ def test_baseline_quality_calls_per_month_consolidated() -> None:
 
 
 def test_baseline_quality_series_uses_ppm_series_once_per_scope() -> None:
-    """Após E3.S1: PPM não escala ×meses; series = 18 calls fixas na janela."""
+    """Após E3/E5: series endpoints; não escala ×meses com summary."""
     gateway, calls = _counting_quality_gateway()
     service = QualityMetricsSnapshotService(quality_gateway=gateway)
     periods = [
@@ -88,6 +122,10 @@ def test_baseline_quality_series_uses_ppm_series_once_per_scope() -> None:
     service.get_snapshot_series(periods=periods, branch=None)
     assert calls.count("get_ppm_series") == 18
     assert calls.count("get_ppm_summary") == 0
+    assert calls.count("get_kaizen_summary") == 0
+    assert calls.count("get_audit_5s_summary") == 0
+    assert gateway.get_kaizen_summary.call_count == 0
+    assert gateway.get_audit_5s_summary.call_count == 0
 
 
 def test_baseline_supplies_core_fetches_per_month() -> None:

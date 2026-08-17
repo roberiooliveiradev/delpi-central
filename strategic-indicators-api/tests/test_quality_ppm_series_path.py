@@ -33,16 +33,32 @@ def test_snapshot_series_uses_ppm_series_not_n_summaries() -> None:
         competences=["2026-01", "2026-02"],
         ppm=7.5,
     )
-    gateway.get_scrap_cost_pct.return_value = {"scrap_cost_pct": 0.1}
-    gateway.get_rework_cost_pct.return_value = {"rework_cost_pct": 0.2}
-    gateway.get_kaizen_summary.return_value = {
-        "total_kaizens": 0,
-        "total_savings": 0,
-        "list_kaizen": [],
+    gateway.get_scrap_cost_pct_series.return_value = {
+        "points": [
+            {"sort_key": c, "metrics": {"scrap_cost_pct": 0.1}}
+            for c in ("2026-01", "2026-02")
+        ]
     }
-    gateway.get_audit_5s_summary.return_value = {
-        "average_score": 8.0,
-        "list_audits": [],
+    gateway.get_rework_cost_pct_series.return_value = {
+        "points": [
+            {"sort_key": c, "metrics": {"rework_cost_pct": 0.2}}
+            for c in ("2026-01", "2026-02")
+        ]
+    }
+    gateway.get_kaizen_summary_series.return_value = {
+        "points": [
+            {
+                "sort_key": c,
+                "metrics": {"total_kaizens": 0, "total_savings": 0},
+            }
+            for c in ("2026-01", "2026-02")
+        ]
+    }
+    gateway.get_audit_5s_summary_series.return_value = {
+        "points": [
+            {"sort_key": c, "metrics": {"average_score": 8.0}}
+            for c in ("2026-01", "2026-02")
+        ]
     }
 
     service = QualityMetricsSnapshotService(quality_gateway=gateway)
@@ -61,6 +77,8 @@ def test_snapshot_series_uses_ppm_series_not_n_summaries() -> None:
     result = service.get_snapshot_series(periods=periods, branch=None)
 
     assert gateway.get_ppm_summary.call_count == 0
+    assert gateway.get_kaizen_summary.call_count == 0
+    assert gateway.get_audit_5s_summary.call_count == 0
     # 2 types × 3 prefixes × (consolidated + 01 + 02) = 18
     assert gateway.get_ppm_series.call_count == 18
     assert len(result) == 2

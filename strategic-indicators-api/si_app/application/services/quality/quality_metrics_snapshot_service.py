@@ -63,6 +63,14 @@ class QualityMetricsSnapshotService:
             tuple[str, str | None, str],
             float | None,
         ] | None = None
+        self._kaizen_series_lookup: dict[
+            tuple[str | None, str],
+            dict[str, float | int | None],
+        ] | None = None
+        self._audit_series_lookup: dict[
+            tuple[str | None, str],
+            float | None,
+        ] | None = None
 
     def get_snapshot(
         self,
@@ -100,7 +108,9 @@ class QualityMetricsSnapshotService:
         if branch:
             branch_codes = [branch]
         else:
-            branch_codes = self._resolve_branches(
+            # Só PPM branches — evita 1× kaizen/5s summary só para descobrir filiais
+            # (series já cobrem essas métricas na janela).
+            branch_codes = self._resolve_branches_from_ppm(
                 start_date=overall_start,
                 end_date=overall_end,
             ) or ["01", "02"]
@@ -112,6 +122,18 @@ class QualityMetricsSnapshotService:
             branch_codes=branch_codes,
         )
         self._cost_series_lookup = self._prefetch_cost_series(
+            start_date=overall_start,
+            end_date=overall_end,
+            query_branch=branch,
+            branch_codes=branch_codes,
+        )
+        self._kaizen_series_lookup = self._prefetch_kaizen_series(
+            start_date=overall_start,
+            end_date=overall_end,
+            query_branch=branch,
+            branch_codes=branch_codes,
+        )
+        self._audit_series_lookup = self._prefetch_audit_series(
             start_date=overall_start,
             end_date=overall_end,
             query_branch=branch,
@@ -136,6 +158,8 @@ class QualityMetricsSnapshotService:
         finally:
             self._ppm_series_lookup = None
             self._cost_series_lookup = None
+            self._kaizen_series_lookup = None
+            self._audit_series_lookup = None
 
         return result
 
@@ -226,6 +250,74 @@ class QualityMetricsSnapshotService:
                 metrics = point.get("metrics") or {}
                 raw = metrics.get("rework_cost_pct")
                 lookup[("rework", scope, competence)] = (
+                    float(raw) if raw is not None else None
+                )
+        return lookup
+
+    def _branch_series_scopes(
+        self,
+        *,
+        query_branch: str | None,
+        branch_codes: list[str],
+    ) -> list[str | None]:
+        if query_branch:
+            return [query_branch]
+        return list(branch_codes)
+
+    def _prefetch_kaizen_series(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        query_branch: str | None,
+        branch_codes: list[str],
+    ) -> dict[tuple[str | None, str], dict[str, float | int | None]]:
+        lookup: dict[tuple[str | None, str], dict[str, float | int | None]] = {}
+        for scope in self._branch_series_scopes(
+            query_branch=query_branch,
+            branch_codes=branch_codes,
+        ):
+            payload = self._quality_gateway.get_kaizen_summary_series(
+                branch=scope,
+                date_start=start_date,
+                date_end=end_date,
+            )
+            for point in self._iter_ppm_series_points(payload):
+                competence = self._competence_from_ppm_point(point)
+                if not competence:
+                    continue
+                metrics = point.get("metrics") or {}
+                lookup[(scope, competence)] = {
+                    "total_kaizens": metrics.get("total_kaizens"),
+                    "total_savings": metrics.get("total_savings"),
+                }
+        return lookup
+
+    def _prefetch_audit_series(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        query_branch: str | None,
+        branch_codes: list[str],
+    ) -> dict[tuple[str | None, str], float | None]:
+        lookup: dict[tuple[str | None, str], float | None] = {}
+        for scope in self._branch_series_scopes(
+            query_branch=query_branch,
+            branch_codes=branch_codes,
+        ):
+            payload = self._quality_gateway.get_audit_5s_summary_series(
+                branch=scope,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            for point in self._iter_ppm_series_points(payload):
+                competence = self._competence_from_ppm_point(point)
+                if not competence:
+                    continue
+                metrics = point.get("metrics") or {}
+                raw = metrics.get("average_score")
+                lookup[(scope, competence)] = (
                     float(raw) if raw is not None else None
                 )
         return lookup
@@ -422,13 +514,12 @@ class QualityMetricsSnapshotService:
                 end_date=end_date,
             )
 
-            kaizen_summary = self._quality_gateway.get_kaizen_summary(
+            kaizen_summary = self._resolve_kaizen_summary(
                 branch=branch_code,
-                date_start=start_date,
-                date_end=end_date,
+                start_date=start_date,
+                end_date=end_date,
             )
-
-            audit_summary = self._quality_gateway.get_audit_5s_summary(
+            audit_score = self._resolve_audit_score(
                 branch=branch_code,
                 start_date=start_date,
                 end_date=end_date,
@@ -457,7 +548,7 @@ class QualityMetricsSnapshotService:
                         2,
                     ),
                     audit_5s_score=round(
-                        float(audit_summary.get("average_score") or 0),
+                        float(audit_score or 0),
                         2,
                     ),
                     ppm_internal_plugs=(
@@ -621,14 +712,61 @@ class QualityMetricsSnapshotService:
 
         return self._extract_named_number(result, field)
 
-    def _resolve_branches(
+    def _resolve_kaizen_summary(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, float | int | None]:
+        if self._kaizen_series_lookup is not None:
+            competence = self._competence_for_period_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if competence:
+                key = (branch, competence)
+                if key in self._kaizen_series_lookup:
+                    return dict(self._kaizen_series_lookup[key])
+
+        return self._quality_gateway.get_kaizen_summary(
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+        )
+
+    def _resolve_audit_score(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> float | None:
+        if self._audit_series_lookup is not None:
+            competence = self._competence_for_period_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if competence:
+                key = (branch, competence)
+                if key in self._audit_series_lookup:
+                    return self._audit_series_lookup[key]
+
+        audit_summary = self._quality_gateway.get_audit_5s_summary(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        raw = audit_summary.get("average_score")
+        return float(raw) if raw is not None else None
+
+    def _resolve_branches_from_ppm(
         self,
         *,
         start_date: str | None,
         end_date: str | None,
     ) -> list[str]:
         branches: set[str] = set()
-
         for ppm_type in ("internal", "external"):
             try:
                 ppm_branches = self._quality_gateway.list_branches(
@@ -643,6 +781,20 @@ class QualityMetricsSnapshotService:
                 )
             except Exception:
                 pass
+        return sorted(branches)
+
+    def _resolve_branches(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> list[str]:
+        branches: set[str] = set(
+            self._resolve_branches_from_ppm(
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
 
         try:
             kaizen_summary = self._quality_gateway.get_kaizen_summary(
