@@ -97,5 +97,12 @@ export function adaptTrendsToView(
       source: item.source,
       message: item.message,
     })),
+    monthsRequested:
+      typeof response.months_requested === "number"
+        ? response.months_requested
+        : null,
+    competencesRequested: [...(response.competences_requested ?? [])],
+    competencesReturned: [...(response.competences_returned ?? [])],
+    missingCompetences: [...(response.missing_competences ?? [])],
   };
 }

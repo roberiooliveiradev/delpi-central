@@ -18,6 +18,7 @@ import { TrendMonthComparison } from "../components/TrendMonthComparison";
 import { TrendPriorityList } from "../components/TrendPriorityList";
 import { TrendSummaryCards } from "../components/TrendSummaryCards";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
+import { SeriesCoverageNotice } from "../components/SeriesCoverageNotice";
 import { useStrategicIndicatorsTrends } from "../../state/hooks/useStrategicIndicatorsTrends";
 import "./TrendsPage.css";
 
@@ -189,6 +190,11 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           onAction={() => void reload()}
         />
       ) : null}
+
+      <SeriesCoverageNotice
+        trends={data}
+        onRefresh={() => void reload()}
+      />
 
       <SectionBlock
         title="Tendência consolidada do IGD"
