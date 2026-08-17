@@ -44,7 +44,7 @@ export type KpiCardProps = {
   valueVariant?: "default" | "per-unit";
   contextLabel?: string;
   goalLabel?: string | null;
-  /** Sobrescreve `labels.goalPrefix` (ex.: Meta acumulada · parcial). */
+  /** Sobrescreve `labels.goalPrefix` (ex.: Meta parcial / Meta acumulada). */
   goalPrefix?: string | null;
   /** Chip de natureza do período (MTD / YTD). */
   periodKindBadge?: string | null;

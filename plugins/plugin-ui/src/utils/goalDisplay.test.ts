@@ -56,7 +56,7 @@ describe("goalDisplay", () => {
         comparable_goal: 10,
         goal_period_partial: true,
       }),
-    ).toBe("Meta acumulada · parcial");
+    ).toBe("Meta parcial");
   });
 
   it("deriva parcial por datas quando flags ausentes", () => {
@@ -70,6 +70,13 @@ describe("goalDisplay", () => {
       resolveGoalPeriodPartial(null, {
         dateStart: "2026-05-01",
         dateEnd: "2026-05-31",
+      }),
+    ).toBe(false);
+    // YTD com mês final incompleto → acumulada (não parcial)
+    expect(
+      resolveGoalPeriodPartial(null, {
+        dateStart: "2026-01-01",
+        dateEnd: "2026-08-15",
       }),
     ).toBe(false);
   });

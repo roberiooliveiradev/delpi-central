@@ -396,15 +396,15 @@ export function resolveGoalLabel(
 }
 
 /**
- * Prefixo do KPI: meta acumulada no intervalo; «· parcial» quando o período
- * não cobre mês(es) civil(is) completo(s). Prefer flags da API; fallback por datas.
+ * Prefixo do KPI: «Meta parcial» se intervalo < 1 mês completo;
+ * «Meta acumulada» se multi-mês (ou mês fechado). Prefer flags da API.
  */
 export function resolveAccumulatedGoalPrefix(
   goal?: DashboardGoalFields | null,
   options?: { dateStart?: string | null; dateEnd?: string | null },
 ): string {
   const partial = resolveGoalPeriodPartial(goal, options);
-  return partial ? "Meta acumulada · parcial" : "Meta acumulada";
+  return partial ? "Meta parcial" : "Meta acumulada";
 }
 
 export function resolveGoalPeriodPartial(
@@ -421,7 +421,7 @@ export function resolveGoalPeriodPartial(
     return false;
   }
 
-  return !isInclusiveCalendarMonthSpanComplete(start, end);
+  return isSingleIncompleteCalendarMonth(start, end);
 }
 
 function parseFlexibleDateParts(value: string): { y: number; m: number; d: number } | null {
@@ -440,32 +440,20 @@ function daysInMonth(y: number, m: number): number {
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
-function isInclusiveCalendarMonthSpanComplete(start: string, end: string): boolean {
+/** Alinhado ao SI: parcial só com exatamente um mês e dias incompletos. */
+function isSingleIncompleteCalendarMonth(start: string, end: string): boolean {
   const a = parseFlexibleDateParts(start);
   const b = parseFlexibleDateParts(end);
   if (!a || !b) {
-    return true;
+    return false;
   }
 
-  let y = a.y;
-  let m = a.m;
-  while (y < b.y || (y === b.y && m <= b.m)) {
-    const dim = daysInMonth(y, m);
-    const monthStartDay = y === a.y && m === a.m ? a.d : 1;
-    const monthEndDay = y === b.y && m === b.m ? b.d : dim;
-    if (monthStartDay !== 1 || monthEndDay !== dim) {
-      return false;
-    }
-    if (y === b.y && m === b.m) {
-      break;
-    }
-    m += 1;
-    if (m > 12) {
-      m = 1;
-      y += 1;
-    }
+  if (a.y !== b.y || a.m !== b.m) {
+    return false;
   }
-  return true;
+
+  const dim = daysInMonth(a.y, a.m);
+  return a.d !== 1 || b.d !== dim;
 }
 
 export function buildKpiGoalPresentation(
