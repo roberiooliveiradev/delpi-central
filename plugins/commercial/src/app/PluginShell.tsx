@@ -11,6 +11,7 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
+import { getOpenOrdersTotvs } from "../api/openOrdersTotvsApi";
 import { CM_HELP } from "../content/helpTooltips";
 import {
   collectSearchHits,
@@ -23,8 +24,12 @@ import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigateCustomerDetail, navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
-import { useCommercialWorklistSync } from "./CommercialRealtimeProvider";
+import {
+  useCommercialReadyToInvoiceSync,
+  useCommercialWorklistSync,
+} from "./CommercialRealtimeProvider";
 import { resolveMyTasksNavBadgeCount } from "./myTasksNavBadge";
+import { resolveReadyToInvoiceBadgeCount } from "./myOrdersNavBadge";
 import {
   CommercialActionButton,
   CommercialCommandPalette,
@@ -97,6 +102,7 @@ export function PluginShell({
   children,
 }: PluginShellProps) {
   const [myTasksBadge, setMyTasksBadge] = useState(0);
+  const [myOrdersBadge, setMyOrdersBadge] = useState(0);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -119,6 +125,18 @@ export function PluginShell({
     return () => controller.abort();
   }, [showWorklist, view]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void getOpenOrdersTotvs(controller.signal)
+      .then((data) => {
+        setMyOrdersBadge(resolveReadyToInvoiceBadgeCount(data.kanbanStageCounts));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setMyOrdersBadge(0);
+      });
+    return () => controller.abort();
+  }, [view]);
+
   const refreshMyTasksBadge = useCallback(() => {
     if (!showWorklist) {
       setMyTasksBadge(0);
@@ -133,7 +151,18 @@ export function PluginShell({
       });
   }, [showWorklist]);
 
+  const refreshMyOrdersBadge = useCallback(() => {
+    void getOpenOrdersTotvs()
+      .then((data) => {
+        setMyOrdersBadge(resolveReadyToInvoiceBadgeCount(data.kanbanStageCounts));
+      })
+      .catch(() => {
+        /* keep last known badge */
+      });
+  }, []);
+
   useCommercialWorklistSync(refreshMyTasksBadge, showWorklist);
+  useCommercialReadyToInvoiceSync(refreshMyOrdersBadge, true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -172,7 +201,12 @@ export function PluginShell({
     admin: showAdmin,
   }).map((item) => ({
     ...item,
-    count: item.id === "my_tasks" ? myTasksBadge || undefined : undefined,
+    count:
+      item.id === "my_tasks"
+        ? myTasksBadge || undefined
+        : item.id === "open_orders"
+          ? myOrdersBadge || undefined
+          : undefined,
   }));
 
   if (ephemeralClientNav) {
