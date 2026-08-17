@@ -33,6 +33,8 @@ Variável opcional: `VITE_STRATEGIC_INDICATORS_API_BASE`.
 
 Páginas analíticas usam o card **`StrategicIndicatorsPageError`** (causas, sugestões, detalhe técnico, “Tentar novamente”). Implementação em `src/data/errors/strategicIndicatorsError.ts` e `src/ui/components/StrategicIndicatorsPageError.tsx`. Ver [MFE.md](../../strategic-indicators-api/docs/MFE.md) e [OPERATIONS.md](../../strategic-indicators-api/docs/OPERATIONS.md).
 
+Na página **Tendências**, `SeriesCoverageNotice` avisa quando `missing_competences` / janela incompleta vem da API (`months_requested` vs série retornada). O botão **Atualizar** envia `trends_months` alinhado ao filtro (mín. 6).
+
 ## Filtro consolidado vs filial
 
 - Rótulos de visão: `getFilterViewScopeLabel` → **Consolidado** ou **Filial 01/02** (tabela de indicadores, detalhe rápido, `realized`/`gaps`).
