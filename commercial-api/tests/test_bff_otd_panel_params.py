@@ -32,3 +32,22 @@ def test_common_filters_includes_otd_list_keys() -> None:
     assert params["sort_by"] == "days_diff"
     assert params["sort_dir"] == "desc"
     assert params["search"] == "WEG"
+
+
+def test_bff_list_proposals_accepts_product_filters() -> None:
+    names = set(inspect.signature(analytics_routes.bff_list_proposals).parameters)
+    assert "product_code" in names
+    assert "product_group" in names
+
+
+def test_common_filters_includes_product_keys() -> None:
+    params = analytics_routes._common_filters(
+        start_date="2026-08-01",
+        end_date="2026-08-13",
+        branch="01",
+        customer_segment=None,
+        product_code="90AAAA01",
+        product_group="1234",
+    )
+    assert params["product_code"] == "90AAAA01"
+    assert params["product_group"] == "1234"

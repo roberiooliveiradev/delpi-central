@@ -525,6 +525,17 @@ def list_commercial_proposals(
             "status, cliente, loja e estágio."
         ),
     ),
+    product_code: Optional[str] = Query(
+        None,
+        max_length=30,
+        description="Filter proposals that include this product code (ADJ.ADJ_PROD).",
+    ),
+    product_group: Optional[str] = Query(
+        None,
+        min_length=4,
+        max_length=4,
+        description="Filter proposals that include a product in this Protheus group (SB1.B1_GRUPO).",
+    ),
 ):
     try:
         use_case = build_list_commercial_proposals_use_case()
@@ -541,6 +552,8 @@ def list_commercial_proposals(
             sort_by=sort_by,
             sort_dir=sort_dir,
             search=search,
+            product_code=product_code,
+            product_group=product_group,
         )
 
         result = use_case.execute(request)

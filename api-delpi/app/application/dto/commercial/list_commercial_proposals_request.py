@@ -15,3 +15,5 @@ class ListCommercialProposalsRequest:
     sort_by: Optional[str] = None
     sort_dir: str = "asc"
     search: Optional[str] = None
+    product_code: Optional[str] = None
+    product_group: Optional[str] = None

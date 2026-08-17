@@ -75,6 +75,48 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             ORDER BY proposal_date DESC, proposal_number DESC, revision DESC
         """
 
+    @staticmethod
+    def _apply_product_filters(
+        qb: QueryBuilder,
+        request: ListCommercialProposalsRequest,
+    ) -> None:
+        product_code = (request.product_code or "").strip()
+        product_group = (request.product_group or "").strip()
+        if not product_code and not product_group:
+            return
+
+        conditions: list[str] = [
+            "ADJ.D_E_L_E_T_ = ''",
+            "ADJ.ADJ_FILIAL = AD1.AD1_FILIAL",
+            "ADJ.ADJ_NROPOR = AD1.AD1_NROPOR",
+            "ADJ.ADJ_REVISA = AD1.AD1_REVISA",
+        ]
+        params: list[str] = []
+
+        if product_code:
+            conditions.append("RTRIM(LTRIM(ADJ.ADJ_PROD)) = ?")
+            params.append(product_code)
+
+        join_sb1 = ""
+        if product_group:
+            join_sb1 = """
+                INNER JOIN SB1010 SB1
+                    ON SB1.D_E_L_E_T_ = ''
+                   AND SB1.B1_COD = ADJ.ADJ_PROD
+            """
+            conditions.append("RTRIM(LTRIM(SB1.B1_GRUPO)) = ?")
+            params.append(product_group)
+
+        exists_sql = f"""
+            EXISTS (
+                SELECT 1
+                FROM ADJ010 ADJ
+                {join_sb1}
+                WHERE {' AND '.join(conditions)}
+            )
+        """
+        qb.raw(exists_sql, *params)
+
     def list_proposals(
         self,
         request: ListCommercialProposalsRequest,
@@ -114,6 +156,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             "AD1.AD1_CODCLI",
             request.customer_codes,
         )
+        self._apply_product_filters(qb, request)
 
         where_clause, where_params = qb.build()
         search_clause, search_params = CommercialProposalListSearchService.clause_for_latest_row(

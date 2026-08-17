@@ -92,6 +92,8 @@ def _common_filters(
     sort_by: str | None = None,
     sort_dir: str | None = None,
     search: str | None = None,
+    product_code: str | None = None,
+    product_group: str | None = None,
 ) -> dict[str, Any]:
     return {
         "start_date": start_date,
@@ -105,6 +107,8 @@ def _common_filters(
         "sort_by": sort_by,
         "sort_dir": sort_dir,
         "search": search,
+        "product_code": product_code,
+        "product_group": product_group,
     }
 
 
@@ -675,6 +679,8 @@ def bff_list_proposals(
     sort_by: str | None = None,
     sort_dir: str | None = None,
     search: str | None = None,
+    product_code: str | None = Query(default=None),
+    product_group: str | None = Query(default=None),
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
     account_customer_code: str | None = Query(
@@ -700,6 +706,8 @@ def bff_list_proposals(
             sort_by=sort_by,
             sort_dir=sort_dir,
             search=search,
+            product_code=product_code,
+            product_group=product_group,
         ),
         message="Oportunidades carregadas.",
     )

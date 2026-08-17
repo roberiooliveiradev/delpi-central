@@ -133,10 +133,12 @@ class QueryBuilder:
     # RAW SQL
     # --------------------------------------------------
 
-    def raw(self, condition: str):
+    def raw(self, condition: str, *params):
 
         if condition:
             self._filters.append(condition)
+            if params:
+                self._params.extend(params)
 
     # --------------------------------------------------
     # CONDICIONAL

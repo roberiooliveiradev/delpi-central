@@ -20,6 +20,10 @@ export type AnalyticsFilterParams = {
   sort_by?: string;
   sort_dir?: "asc" | "desc";
   search?: string;
+  /** Código de produto (ADJ) — listagem de OVs. */
+  product_code?: string;
+  /** Família/grupo Protheus (B1_GRUPO) — listagem de OVs. */
+  product_group?: string;
 };
 
 export type RolTargetData = DashboardGoalFields & {

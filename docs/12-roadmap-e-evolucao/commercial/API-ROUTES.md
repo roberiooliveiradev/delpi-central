@@ -382,7 +382,7 @@ Leituras TOTVS **via gateway commercial-api** para o Portal (escopo na commercia
 | `get_*_rol_target_pct` (6) | `/commercial/*_rol_target_pct` | Home gestão / dashboard |
 | `get_commercial_rol_series` | `/commercial/rol/series` | Séries |
 | `get_commercial_rol_by_customer` | `/commercial/rol/by-customer` | Conta / ranking |
-| `list_commercial_proposals` / `get_commercial_proposal` / history | `/commercial/proposals*` | OV |
+| `list_commercial_proposals` / `get_commercial_proposal` / history | `/commercial/proposals*` | OV; list aceita `product_code` / `product_group` (EXISTS ADJ/SB1) |
 | `get_sales_conversion_rate` | `/commercial/closing-rate` | Hit rate |
 | `get_sales_conversion_rate_series` | `/commercial/closing-rate/series` | Série hit rate (SC/ES) |
 | `get_new_clients_*` / `get_new_business_rol_pct` | `/commercial/new-*` | Novos negócios |

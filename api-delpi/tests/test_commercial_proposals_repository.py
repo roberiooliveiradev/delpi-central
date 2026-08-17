@@ -140,7 +140,67 @@ def test_list_proposals_applies_search_on_latest_rows() -> None:
     assert "%weg%" in captured["list_params"]
 
 
-def test_get_proposal_loads_header_with_customer_and_stage_labels() -> None:
+def test_list_proposals_applies_product_code_and_group_exists() -> None:
+    repository = CommercialProposalsRepository()
+    request = ListCommercialProposalsRequest(
+        start_date="2026-01-01",
+        end_date="2026-06-30",
+        page=1,
+        page_size=20,
+        product_code="90AAAA01",
+        product_group="1234",
+    )
+    captured: dict[str, str] = {}
+
+    def _execute_query(sql: str, params: tuple) -> list:
+        captured["list_sql"] = sql
+        captured["list_params"] = str(params)
+        return []
+
+    def _execute_one(sql: str, params: tuple) -> dict:
+        return {"total": 0}
+
+    with patch.object(CommercialProposalsRepository, "__enter__", return_value=repository):
+        with patch.object(CommercialProposalsRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_query", side_effect=_execute_query):
+                with patch.object(repository, "execute_one", side_effect=_execute_one):
+                    repository.list_proposals(request)
+
+    sql = captured["list_sql"]
+    assert "EXISTS" in sql
+    assert "ADJ010 ADJ" in sql
+    assert "SB1010 SB1" in sql
+    assert "ADJ.ADJ_PROD" in sql
+    assert "B1_GRUPO" in sql
+    assert "90AAAA01" in captured["list_params"]
+    assert "1234" in captured["list_params"]
+
+
+def test_list_proposals_without_product_filters_omits_exists() -> None:
+    repository = CommercialProposalsRepository()
+    request = ListCommercialProposalsRequest(
+        start_date="2026-01-01",
+        end_date="2026-06-30",
+        page=1,
+        page_size=20,
+    )
+    captured: dict[str, str] = {}
+
+    def _execute_query(sql: str, params: tuple) -> list:
+        captured["list_sql"] = sql
+        return []
+
+    def _execute_one(sql: str, params: tuple) -> dict:
+        return {"total": 0}
+
+    with patch.object(CommercialProposalsRepository, "__enter__", return_value=repository):
+        with patch.object(CommercialProposalsRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_query", side_effect=_execute_query):
+                with patch.object(repository, "execute_one", side_effect=_execute_one):
+                    repository.list_proposals(request)
+
+    assert "ADJ010" not in captured["list_sql"]
+
     repository = CommercialProposalsRepository()
     request = GetCommercialProposalRequest(
         branch="01",
