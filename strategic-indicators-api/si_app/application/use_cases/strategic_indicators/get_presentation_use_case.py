@@ -769,6 +769,7 @@ class GetStrategicIndicatorsPresentationUseCase:
             periods=periods,
             department_id=None,
             branch=branch,
+            prefer_materialized_only=True,
         )
 
         monthly_points: list[dict] = []
