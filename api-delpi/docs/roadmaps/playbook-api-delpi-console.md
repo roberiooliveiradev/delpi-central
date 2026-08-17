@@ -259,14 +259,15 @@ Alinhado a `.cursor/rules` (`plugins-reusable-components`, `mfe-modal-host-conta
 cd plugins/api-delpi-console
 npm install && npm run dev
 
-# Docker (stack completa)
-cd infra
-docker compose -f docker-compose.dev.yml up -d --build api-delpi-console api-delpi gateway
+# Stack — preferir scripts sequenciais (RAM / ordem MF)
+./infra/scripts/up-dev-sequential.sh --fase mfe --build api-delpi-console
 ```
 
 Documentação do plugin: `plugins/api-delpi-console/README.md`.
 
 **Telemetria SQL persistente:** defina `REDIS_URL` e `SQL_TELEMETRY_BACKEND=redis` no `.env` da stack. Sem Redis, o ring buffer permanece em memória (por processo).
+
+**Diretrizes Cursor:** UI nova via `@delpi/plugin-ui`; textos PT de alerta em `console_alerts.json`; regras de negócio no domínio api-delpi (MFE render-only do `console-health`).
 
 ---
 
