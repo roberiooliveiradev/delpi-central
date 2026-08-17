@@ -191,7 +191,18 @@ Multiplicadores atuais (config padrão produção após ajuste):
 
 ---
 
-## 7. Como medir na próxima iteração
+## Baseline E1.S4 (2026-08 — código pré E2/E3)
+
+Método: testes instrumentados em `tests/test_http_call_baseline_e1s4.py` (contagem de calls no gateway, sem TOTVS).
+
+| Escopo | Métrica | Valor |
+|--------|---------|-------|
+| Qualidade, 1 mês, branch=None (2 filiais) | Calls gateway quality | **32** |
+| Qualidade, série 6 meses (YTD exemplo) | Calls gateway quality | **192** (32×6) |
+| Suprimentos, 1 mês | Fetches core (CPV+ROL+stock+OTD) | **4** (sequenciais) |
+| Refresh horário | Branches | `consolidated` (Compose) |
+
+Atualizar em **E5.S3** com a mesma suíte após otimizações.
 
 ### 7.1 Contagem por refresh
 
