@@ -528,6 +528,18 @@ No `send-for-signature`:
 | `GRAPH_REPORTS_*` | — | Mesmas credenciais do Delpi Reports / CEC |
 | `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | S2S Core (notificações + directory) |
 
+### Core — e-mail de notificações (Graph)
+
+Dispatch do Core (`POST /integrations/notifications`) envia e-mail quando a categoria está em `importantCategories` ou `emailCategories` (e não muted). Falha de Graph **não** derruba o dispatch in-app.
+
+| Variável | Default | Notas |
+|----------|---------|-------|
+| `CORE_NOTIFICATION_MAIL_ENABLED` | `false` | Liga o canal e-mail no Core |
+| `CORE_NOTIFICATION_PORTAL_BASE_URL` | (dev) `http://localhost` | Link «Abrir na Minha DELPI» no HTML |
+| `GRAPH_REPORTS_*` | — | Mesmas credenciais do Delpi Reports / CEC |
+| `GRAPH_REPORTS_MAIL_SENDER` | `minhadelpi@delpi.com.br` | Remetente Graph |
+
+
 Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/meeting-minutes/sign-invites/{token}`.
 
 ### Kimi / OpenRouter (geração de ata)

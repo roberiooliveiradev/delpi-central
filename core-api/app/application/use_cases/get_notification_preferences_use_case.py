@@ -13,7 +13,7 @@ from app.application.services.notification_catalog_service import NotificationCa
 from app.application.unit_of_work import UnitOfWork
 from app.domain.notifications.notification_preference_policy import (
     normalize_preference_categories,
-    reconcile_mute_and_important,
+    reconcile_mute_important_and_email,
 )
 
 
@@ -21,6 +21,7 @@ from app.domain.notifications.notification_preference_policy import (
 class NotificationPreferencesResult:
     muted_categories: list[str]
     important_categories: list[str]
+    email_categories: list[str]
     mutable_categories: list[str]
     categories: list[dict[str, object]]
 
@@ -46,7 +47,11 @@ class GetNotificationPreferencesUseCase:
             self.uow.notification_preferences.get_important_categories(user_id),
             mutable_categories=visible_mutable,
         )
-        muted, important = reconcile_mute_and_important(muted, important)
+        email = normalize_preference_categories(
+            self.uow.notification_preferences.get_email_categories(user_id),
+            mutable_categories=visible_mutable,
+        )
+        muted, important, email = reconcile_mute_important_and_email(muted, important, email)
 
         categories = [
             item
@@ -57,6 +62,7 @@ class GetNotificationPreferencesUseCase:
         return NotificationPreferencesResult(
             muted_categories=muted,
             important_categories=important,
+            email_categories=email,
             mutable_categories=sorted(visible_mutable),
             categories=categories,
         )

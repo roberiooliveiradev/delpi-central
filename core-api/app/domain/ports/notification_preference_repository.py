@@ -9,6 +9,7 @@ class NotificationPreferenceDTO:
     user_id: str
     muted_categories: list[str]
     important_categories: list[str]
+    email_categories: list[str]
 
 
 class NotificationPreferenceRepository(Protocol):
@@ -19,12 +20,16 @@ class NotificationPreferenceRepository(Protocol):
     def get_important_categories(self, user_id: str) -> list[str]:
         ...
 
+    def get_email_categories(self, user_id: str) -> list[str]:
+        ...
+
     def set_preferences(
         self,
         user_id: str,
         *,
         muted_categories: list[str],
         important_categories: list[str],
+        email_categories: list[str],
     ) -> None:
         ...
 
@@ -35,6 +40,9 @@ class NotificationPreferenceRepository(Protocol):
         ...
 
     def is_category_important(self, user_id: str, category: str) -> bool:
+        ...
+
+    def is_category_email_enabled(self, user_id: str, category: str) -> bool:
         ...
 
     def filter_user_ids_accepting_category(self, user_ids: list[str], category: str) -> list[str]:

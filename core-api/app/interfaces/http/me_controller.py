@@ -421,6 +421,7 @@ def get_notification_preferences():
         {
             "mutedCategories": result.muted_categories,
             "importantCategories": result.important_categories,
+            "emailCategories": result.email_categories,
             "mutableCategories": result.mutable_categories,
             "categories": result.categories,
         }
@@ -464,17 +465,29 @@ def update_notification_preferences():
             status=400,
         )
 
+    email = body.get("emailCategories", body.get("email_categories"))
+    if email is not None and (
+        not isinstance(email, list) or not all(isinstance(item, str) for item in email)
+    ):
+        return api_error(
+            "validation_error",
+            "emailCategories must be an array of strings",
+            status=400,
+        )
+
     with SqlAlchemyUnitOfWork() as uow:
         result = UpdateNotificationPreferencesUseCase(uow).execute(
             str(user.id),
             muted_categories=muted,
             important_categories=important,
+            email_categories=email,
         )
 
     return jsonify(
         {
             "mutedCategories": result.muted_categories,
             "importantCategories": result.important_categories,
+            "emailCategories": result.email_categories,
             "mutableCategories": result.mutable_categories,
             "categories": result.categories,
         }

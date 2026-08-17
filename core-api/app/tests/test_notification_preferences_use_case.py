@@ -20,6 +20,7 @@ from app.application.use_cases.update_notification_preferences_use_case import (
 from app.domain.notifications.notification_preference_policy import (
     normalize_muted_categories,
     reconcile_mute_and_important,
+    reconcile_mute_important_and_email,
 )
 
 
@@ -40,6 +41,17 @@ def test_reconcile_mute_and_important_prefers_important():
     )
     assert muted == ["announcement"]
     assert important == ["birthday", "welcome"]
+
+
+def test_reconcile_mute_strips_email_and_important_strips_mute():
+    muted, important, email = reconcile_mute_important_and_email(
+        ["announcement", "welcome"],
+        ["welcome"],
+        ["announcement", "birthday", "welcome"],
+    )
+    assert muted == ["announcement"]
+    assert important == ["welcome"]
+    assert email == ["birthday"]
 
 
 def test_filter_mutable_hides_app_without_access():
@@ -70,18 +82,21 @@ def test_update_notification_preferences_persists_muted(_mock_plugins):
     uow = MagicMock()
     uow.notification_preferences.get_muted_categories.return_value = ["birthday"]
     uow.notification_preferences.get_important_categories.return_value = []
+    uow.notification_preferences.get_email_categories.return_value = []
     uow.admin_apps.get.return_value = None
 
     result = UpdateNotificationPreferencesUseCase(uow).execute(
         "user-1",
         muted_categories=["birthday", "welcome"],
         important_categories=[],
+        email_categories=[],
     )
 
     uow.notification_preferences.set_preferences.assert_called_once_with(
         "user-1",
         muted_categories=["birthday", "welcome"],
         important_categories=[],
+        email_categories=[],
     )
     assert "birthday" in result.muted_categories
 
@@ -94,12 +109,14 @@ def test_update_marks_unread_when_category_becomes_important(_mock_plugins):
     uow = MagicMock()
     uow.notification_preferences.get_muted_categories.return_value = []
     uow.notification_preferences.get_important_categories.return_value = []
+    uow.notification_preferences.get_email_categories.return_value = []
     uow.admin_apps.get.return_value = None
 
     UpdateNotificationPreferencesUseCase(uow).execute(
         "user-1",
         muted_categories=[],
         important_categories=["commercial"],
+        email_categories=[],
     )
 
     uow.notifications.mark_unread_important_for_category.assert_called_once_with(
@@ -120,6 +137,7 @@ def test_get_preferences_only_lists_accessible_app_categories(_mock_plugins):
         "kaizometro",
     ]
     uow.notification_preferences.get_important_categories.return_value = ["commercial"]
+    uow.notification_preferences.get_email_categories.return_value = []
     uow.admin_apps.get.return_value = None
 
     result = GetNotificationPreferencesUseCase(uow).execute("user-1")
@@ -129,6 +147,7 @@ def test_get_preferences_only_lists_accessible_app_categories(_mock_plugins):
     assert "announcement" in result.mutable_categories
     assert result.muted_categories == []
     assert result.important_categories == ["commercial"]
+    assert result.email_categories == []
     assert all(item["id"] in result.mutable_categories for item in result.categories)
 
 

@@ -40,3 +40,35 @@ def reconcile_mute_and_important(
     important = set(important_categories)
     muted = sorted(set(muted_categories) - important)
     return muted, sorted(important)
+
+
+def reconcile_mute_important_and_email(
+    muted_categories: list[str],
+    important_categories: list[str],
+    email_categories: list[str],
+) -> tuple[list[str], list[str], list[str]]:
+    """
+    Mute remove important e email.
+    Important remove mute (prevalece sobre silêncio).
+    Email remove mute quando ativado; important não precisa estar em email_categories.
+    """
+    muted, important = reconcile_mute_and_important(muted_categories, important_categories)
+    muted_set = set(muted)
+    important_set = set(important)
+    email = sorted((set(email_categories) - muted_set) | set())
+    # Silêncio remove e-mail opt-in; importante não precisa duplicar no array email
+    email = sorted(set(email) - muted_set - important_set)
+    return muted, sorted(important_set), email
+
+
+def is_email_channel_enabled(
+    category: str,
+    *,
+    muted_categories: list[str],
+    important_categories: list[str],
+    email_categories: list[str],
+) -> bool:
+    normalized = (category or "").strip().lower()
+    if not normalized or normalized in muted_categories:
+        return False
+    return normalized in important_categories or normalized in email_categories

@@ -114,6 +114,7 @@ export interface NotificationAction {
 export interface NotificationPreferencesResponse {
   mutedCategories: NotificationCategory[];
   importantCategories: NotificationCategory[];
+  emailCategories: NotificationCategory[];
   mutableCategories: NotificationCategory[];
   categories: NotificationCatalogCategoryItem[];
 }
@@ -587,6 +588,7 @@ export class CoreApi {
     return this.client.get<NotificationPreferencesResponse>("/core-api/me/notifications/preferences").then((data) => ({
       mutedCategories: data.mutedCategories ?? [],
       importantCategories: data.importantCategories ?? [],
+      emailCategories: data.emailCategories ?? [],
       mutableCategories: data.mutableCategories ?? [],
       categories: data.categories ?? [],
     }));
@@ -595,15 +597,18 @@ export class CoreApi {
   updateNotificationPreferences(
     mutedCategories: NotificationCategory[],
     importantCategories?: NotificationCategory[],
+    emailCategories?: NotificationCategory[],
   ) {
     return this.client
       .patch<NotificationPreferencesResponse>("/core-api/me/notifications/preferences", {
         mutedCategories,
         ...(importantCategories !== undefined ? { importantCategories } : {}),
+        ...(emailCategories !== undefined ? { emailCategories } : {}),
       })
       .then((data) => ({
         mutedCategories: data.mutedCategories ?? [],
         importantCategories: data.importantCategories ?? [],
+        emailCategories: data.emailCategories ?? [],
         mutableCategories: data.mutableCategories ?? [],
         categories: data.categories ?? [],
       }));

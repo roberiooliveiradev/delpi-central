@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.application.services.notification_catalog_service import NotificationCatalogService
+from app.domain.notifications.notification_preference_policy import is_email_channel_enabled
 from app.domain.ports.notification_preference_repository import NotificationPreferenceRepository
 from app.infrastructure.db.models.user_notification_preference import UserNotificationPreference
 
@@ -27,17 +28,25 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
             return []
         return list(row.important_categories or [])
 
+    def get_email_categories(self, user_id: str) -> list[str]:
+        row = self._get_row(user_id)
+        if not row or not getattr(row, "email_categories", None):
+            return []
+        return list(row.email_categories or [])
+
     def set_preferences(
         self,
         user_id: str,
         *,
         muted_categories: list[str],
         important_categories: list[str],
+        email_categories: list[str],
     ) -> None:
         row = self._get_row(user_id)
         if row:
             row.muted_categories = muted_categories
             row.important_categories = important_categories
+            row.email_categories = email_categories
             row.updated_at = datetime.utcnow()
             return
 
@@ -46,15 +55,18 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
                 user_id=UUID(user_id),
                 muted_categories=muted_categories,
                 important_categories=important_categories,
+                email_categories=email_categories,
             )
         )
 
     def set_muted_categories(self, user_id: str, muted_categories: list[str]) -> None:
         important = self.get_important_categories(user_id)
+        email = self.get_email_categories(user_id)
         self.set_preferences(
             user_id,
             muted_categories=muted_categories,
             important_categories=important,
+            email_categories=email,
         )
 
     def is_category_muted(self, user_id: str, category: str) -> bool:
@@ -68,6 +80,17 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
         if normalized not in NotificationCatalogService.get().mutable_categories:
             return False
         return normalized in self.get_important_categories(user_id)
+
+    def is_category_email_enabled(self, user_id: str, category: str) -> bool:
+        normalized = (category or "").strip().lower()
+        if normalized not in NotificationCatalogService.get().mutable_categories:
+            return False
+        return is_email_channel_enabled(
+            normalized,
+            muted_categories=self.get_muted_categories(user_id),
+            important_categories=self.get_important_categories(user_id),
+            email_categories=self.get_email_categories(user_id),
+        )
 
     def filter_user_ids_accepting_category(self, user_ids: list[str], category: str) -> list[str]:
         normalized_category = (category or "").strip().lower()

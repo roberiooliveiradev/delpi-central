@@ -24,9 +24,20 @@
 | Aba | Conteúdo |
 |-----|----------|
 | **Histórico** | Filtros de status (Todas / Não lidas / Lidas), categoria, toggle “Importantes”, lista paginada (`PAGE_SIZE=12`), ações no card, **seleção múltipla** (marcar lidas / excluir em lote na página atual) |
-| **Preferências** | Silenciar categorias mutáveis (`mutedCategories`); categoria `system` não pode ser desativada |
+| **Preferências** | Estrela (`importantCategories`), sino (`mutedCategories`), envelope (`emailCategories`) + bloco Alertas do sistema (toast SO); `system` não silencia |
 
 O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências, o sino recarrega via `reloadNotifications()` do `AuthContext`.
+
+### Canais (Preferências)
+
+| Controle | Efeito |
+|----------|--------|
+| Estrela | Importante → painel + chime + e-mail |
+| Sino | Silencia in-app, toast SO e e-mail |
+| Envelope | E-mail opt-in (além do in-app) |
+| Alertas do sistema | `desktopNotificationToast.ts` — Web Notification API |
+
+O tour Conheça o portal apenas destaca `data-tour` nesses controles; as preferências continuam só em `/notifications`.
 
 ### Layout
 
@@ -55,7 +66,7 @@ O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências
 | `deleteNotification(id)` | DELETE `/me/notifications/:id` | Soft delete no backend |
 | `setNotificationImportant(id, flag)` | PATCH `/me/notifications/:id/important` | Body `{ isImportant }` |
 | `getNotificationPreferences()` | GET `/me/notifications/preferences` | |
-| `updateNotificationPreferences(muted)` | PATCH `/me/notifications/preferences` | Body `{ mutedCategories }` |
+| `updateNotificationPreferences(muted, important?, email?)` | PATCH `/me/notifications/preferences` | Body `{ mutedCategories, importantCategories?, emailCategories? }` |
 
 ---
 

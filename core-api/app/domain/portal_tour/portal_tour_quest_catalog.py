@@ -11,7 +11,7 @@ Ao lançar uma funcionalidade nova:
 from dataclasses import dataclass
 
 
-CURRENT_PORTAL_TOUR_VERSION = "2026-06-portal-v6-explore"
+CURRENT_PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels"
 
 ADMIN_PERMISSION = "rbac.manage"
 
@@ -170,7 +170,28 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
         _quest(
             id="page-notifications-preferences",
             title="Preferências de notificação",
-            hint="Escolha o que deseja receber.",
+            hint="Configure canais: importante, e-mail e silêncio.",
+            category="notifications",
+            scope="notifications",
+        ),
+        _quest(
+            id="page-notifications-important",
+            title="Marcar como importante",
+            hint="Importantes abrem painel na tela e enviam e-mail.",
+            category="notifications",
+            scope="notifications",
+        ),
+        _quest(
+            id="page-notifications-email",
+            title="Receber por e-mail",
+            hint="Envelope = e-mail; importante já manda e-mail sozinho.",
+            category="notifications",
+            scope="notifications",
+        ),
+        _quest(
+            id="page-notifications-desktop-toast",
+            title="Alertas do sistema",
+            hint="Toasts do Windows/macOS com o portal aberto.",
             category="notifications",
             scope="notifications",
         ),

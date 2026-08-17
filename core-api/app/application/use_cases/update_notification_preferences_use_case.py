@@ -13,7 +13,7 @@ from app.application.use_cases.get_notification_preferences_use_case import (
 )
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.notifications.notification_preference_policy import (
-    reconcile_mute_and_important,
+    reconcile_mute_important_and_email,
 )
 
 
@@ -28,6 +28,7 @@ class UpdateNotificationPreferencesUseCase:
         *,
         muted_categories: list[str],
         important_categories: list[str] | None = None,
+        email_categories: list[str] | None = None,
     ) -> NotificationPreferencesResult:
         catalog = NotificationCatalogService.get()
         accessible_plugins = list_accessible_plugin_ids_for_user(self.uow, user_id)
@@ -37,10 +38,12 @@ class UpdateNotificationPreferencesUseCase:
         )
         previous_muted = self.uow.notification_preferences.get_muted_categories(user_id)
         previous_important = self.uow.notification_preferences.get_important_categories(user_id)
+        previous_email = self.uow.notification_preferences.get_email_categories(user_id)
 
         next_important = (
             previous_important if important_categories is None else important_categories
         )
+        next_email = previous_email if email_categories is None else email_categories
 
         safe_muted = merge_preference_categories_preserving_hidden(
             previous_muted,
@@ -54,7 +57,17 @@ class UpdateNotificationPreferencesUseCase:
             visible_mutable=visible_mutable,
             all_mutable=catalog.mutable_categories,
         )
-        safe_muted, safe_important = reconcile_mute_and_important(safe_muted, safe_important)
+        safe_email = merge_preference_categories_preserving_hidden(
+            previous_email,
+            next_email,
+            visible_mutable=visible_mutable,
+            all_mutable=catalog.mutable_categories,
+        )
+        safe_muted, safe_important, safe_email = reconcile_mute_important_and_email(
+            safe_muted,
+            safe_important,
+            safe_email,
+        )
 
         newly_important = set(safe_important) - set(previous_important)
         for category in newly_important:
@@ -68,6 +81,7 @@ class UpdateNotificationPreferencesUseCase:
             user_id,
             muted_categories=safe_muted,
             important_categories=safe_important,
+            email_categories=safe_email,
         )
 
         self.uow.collect_event(
@@ -77,6 +91,7 @@ class UpdateNotificationPreferencesUseCase:
                 payload={
                     "mutedCategories": safe_muted,
                     "importantCategories": safe_important,
+                    "emailCategories": safe_email,
                 },
                 target_user_id=user_id,
             )
