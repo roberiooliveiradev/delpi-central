@@ -2721,39 +2721,23 @@ button.a5s-criterion-photo__thumb:focus-visible{
 }.a5s-nc-board-sla--none{
   background: color-mix(in srgb, var(--a5s-title) 6%, var(--a5s-surface));
   color: var(--a5s-muted);
-}.a5s-nc-board-workflow{
-  display: inline-flex;
+}.a5s-nc-board-progress{
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  border-radius: 12px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  white-space: nowrap;
-}.a5s-nc-board-workflow__step{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 700;
-}.a5s-nc-board-workflow--idle{
-  background: color-mix(in srgb, var(--a5s-title) 6%, var(--a5s-surface));
-  color: var(--a5s-muted);
-}.a5s-nc-board-workflow--idle .a5s-nc-board-workflow__step{
-  background: var(--a5s-border);
-}.a5s-nc-board-workflow--active{
-  background: color-mix(in srgb, var(--a5s-accent) 10%, var(--a5s-surface));
-  color: var(--a5s-accent);
-}.a5s-nc-board-workflow--active .a5s-nc-board-workflow__step{
-  background: color-mix(in srgb, var(--a5s-accent) 18%, var(--a5s-surface));
-}.a5s-nc-board-workflow--done{
-  background: color-mix(in srgb, var(--a5s-success) 10%, var(--a5s-surface));
-  color: var(--a5s-success);
-}.a5s-nc-board-workflow--done .a5s-nc-board-workflow__step{
-  background: color-mix(in srgb, var(--a5s-success) 16%, var(--a5s-surface));
+  min-width: 8.5rem;
+  max-width: 11rem;
+}.a5s-nc-board-progress .a5s-progress__track{
+  flex: 1 1 auto;
+  min-width: 4.5rem;
+  height: 8px;
+}.a5s-nc-board-progress__pct{
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--a5s-text);
+  letter-spacing: 0.01em;
 }@media (max-width: 1100px){.a5s-nc-board-kpis{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -12,8 +12,10 @@
     "check:reopen-edit": "node --experimental-strip-types scripts/check-audit-reopen-edit.ts",
     "check:force-close-untreated": "node --experimental-strip-types scripts/check-audit-force-close-untreated.ts",
     "check:audit-list-search": "node --experimental-strip-types scripts/check-audit-list-search.ts",
+    "check:nc-board-status-filter": "node --experimental-strip-types scripts/check-nc-board-status-filter.ts",
     "check:nc-board-my-pending": "node --experimental-strip-types scripts/check-nc-board-my-pending-scope.ts",
     "check:nc-board-row-status": "node --experimental-strip-types scripts/check-nc-board-row-status.ts",
+    "check:nc-board-progress": "node --experimental-strip-types scripts/check-nc-board-progress.ts",
     "preview": "vite preview"
   },
   "dependencies": {

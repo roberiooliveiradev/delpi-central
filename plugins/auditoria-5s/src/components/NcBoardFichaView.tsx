@@ -16,8 +16,8 @@ import { formatDisplayDate } from "../utils/dates";
 import { resolveNcBoardRowStatus } from "../utils/ncDueSla";
 import { formatPersonName } from "../utils/formatPersonName";
 import { NcAttachmentPreview } from "./NcAttachmentPreview";
+import { NcBoardProgressBar } from "./NcBoardProgressBar";
 import { NcNoteMentionText } from "./NcNoteMentionText";
-import { NcWorkflowPill } from "./NcWorkflowPill";
 import { ResponseAttachmentPreview } from "./ResponseAttachmentPreview";
 
 type Props = {
@@ -84,13 +84,7 @@ export function NcBoardFichaView({ item, treatmentItem, attachmentsByNcId, actio
           <FichaField label="Nota do critério" value={formatNcScore(score)} />
           <FichaField
             label="Progresso"
-            value={
-              <NcWorkflowPill
-                planStarted={item.plan_started}
-                workflowStep={item.workflow_step}
-                status={item.status}
-              />
-            }
+            value={<NcBoardProgressBar item={item} />}
           />
         </div>
       </section>
