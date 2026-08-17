@@ -15,20 +15,20 @@ Este documento responde, para cada ponto da ata: **já temos?** · **o que falta
 
 | Dimensão | Situação no Portal |
 |----------|-------------------|
-| Meta acumulada (proporcional diária) | **Parcial** — hoje meses civis × meta SI; corrigir P0 |
-| Labels MTD/YTD nos cards | **Parcial** — presets existem; falta rótulo explícito |
+| Meta acumulada (proporcional diária) | **Existe** — SI prorata + flags; Overview «Meta acumulada» |
+| Labels MTD/YTD nos cards | **Existe** — chip MTD/YTD no Overview |
 | Faturamento histórico Protheus | **Existe** |
 | Aviso de cobertura CRM no funil | **Falta** |
 | Confirmação de pedidos (Apoio→PCP→cliente) | **Falta** (epico F7 / ORD-*) |
 | Sala de interação / passagem de bastão | **Falta** (evolução Meu Dia) |
-| Rename entrega → faturamento (timeline) | **Falta** (P0 labels) |
-| OTD fluxo completo (entrada→faturamento) | **Parcial** |
-| Filtros avançados de oportunidades (Conta) | **Parcial** |
+| Rename entrega → faturamento (timeline) | **Existe** |
+| OTD fluxo completo (entrada→faturamento) | **Parcial** — OTD DatFat×prometida Existe; fluxo completo = W4 |
+| Filtros avançados de oportunidades (Conta) | **Existe** (período/produto/família) |
 | MyVEG | **Falta** (estudo) |
 | Reunião Diretoria | **Falta** (aguardar modelo Junior/Laércio) |
 | GR de Vendas | **Registrar no TV Dashboard** — não build no Comercial |
 | Create carteira / telefone / ranking / Kanban próximos / Contatos | **Existe** |
-| Favoritos na topbar | **Parcial** (só Início) — Baixa |
+| Favoritos na topbar | **Existe** (strip no PluginShell) |
 
 **Acordo da ata:** Comercial continua hub Minha DELPI; reutilizar apps/dados existentes; correções Alta em ondas P0; GR = TV.
 
@@ -52,8 +52,8 @@ Este documento responde, para cada ponto da ata: **já temos?** · **o que falta
 
 | Necessidade | Status | Evidência | Próximo passo |
 |-------------|--------|-----------|---------------|
-| Meta = **soma** proporcional **por dia** no intervalo (não média mensal) | **Parcial** | SI `_calculate_standard_period_goal` / meses civis; ROL% via api-delpi enrich | **P0-META** — `strategic-indicators-api` + testes período parcial/YTD |
-| Evidenciar YTD/MTD nos cards | **Parcial** | Presets Overview; label = intervalo datas | **P0-LABEL** — chip/rótulo no card |
+| Meta = **soma** proporcional **por dia** no intervalo (não média mensal) | **Existe** | SI `_calculate_standard_period_goal` / curva + flags | Manter |
+| Evidenciar YTD/MTD nos cards | **Existe** | Chip MTD/YTD + Meta acumulada/parcial | Manter |
 
 Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mês × dias_sobrepostos`; somar. Suporta mês parcial, YTD, custom.
 
@@ -106,8 +106,8 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 
 | Necessidade | Status | Evidência | Próximo passo |
 |-------------|--------|-----------|---------------|
-| Conta: status / abertas / ganhas / andamento | **Parcial** | `CustomerOpportunitiesSection` | Ampliar |
-| Período, OV, produto/família | **Parcial** / **Falta** | Global Opp tem período; Conta sem família | **P0-OPP** |
+| Conta: status / abertas / ganhas / andamento | **Existe** | `CustomerOpportunitiesSection` | Manter |
+| Período, OV, produto/família | **Existe** | Conta + `product_code`/`product_group` API | Manter |
 
 ### §33 — MyVEG
 
@@ -131,18 +131,18 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 
 | Ajuste | Prioridade ata | Status código | Ação |
 |--------|----------------|---------------|------|
-| Corrigir meta acumulada | Alta | Parcial | P0-META |
-| Evidenciar YTD/MTD | Alta | Parcial | P0-LABEL |
+| Corrigir meta acumulada | Alta | **Existe** | Manter |
+| Evidenciar YTD/MTD | Alta | **Existe** | Manter |
 | Gráficos históricos | Média | Parcial | Homologar |
-| Filtros opp | Alta | Parcial | P0-OPP |
-| Rename faturamento | Alta | Falta | P0-RENAME |
-| OTD fluxo completo | Alta | Parcial | Roadmap |
+| Filtros opp | Alta | **Existe** | Manter |
+| Rename faturamento | Alta | **Existe** | Manter |
+| OTD fluxo completo | Alta | Parcial | W4 backlog |
 | Confirmação pedidos | Alta | Falta | P2 |
 | Erro criação carteira | Alta | **Existe** (name-first) | Só reabrir se bug novo |
 | MyVEG | Alta | Falta | Estudo |
 | Reunião Diretoria | Alta | Falta | Após modelo |
 | Indicadores GR Vendas | Alta | TV-GR | TV Dashboard |
-| Favoritos topbar | Baixa | Parcial | Backlog |
+| Favoritos topbar | Baixa | **Existe** | Manter |
 | Telefone perfil | Baixa | **Existe** | — |
 | Ranking crescimento/queda | Média | **Existe** | Homologar |
 | Revisar Kanban «próximos» | Média | **Existe** | Homologar regra |

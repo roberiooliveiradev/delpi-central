@@ -1,7 +1,7 @@
 # Inventário Parcial — Portal Comercial
 
 > **Status:** canônico · sincronizado com ATA-2 / ATA-MAPA / Follow-up / Playbook  
-> **Atualização W0:** em curso (código) — marcar Existe ao fechar cada etapa  
+> **Atualização W0:** **fechada** (E0–E7) — itens W0 = Existe; W1–W5 = backlog  
 > **Não substitui:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)
 
 Inventário **deduplicado** de itens com status **Parcial** (e afins) na documentação commercial. Classes: `W0` (implementação imediata) · `W1`…`W5` (backlog) · `HOMOLOG` · `DOC` · `FORA`.
