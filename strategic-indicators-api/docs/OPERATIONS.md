@@ -151,14 +151,24 @@ docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py sta
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 ```
 
-**Correção:** após `up` e deploy da API corrigida:
+**Correção:** após `up` e deploy da API corrigida (caminho feliz = incremental):
 
 ```bash
 docker compose -f infra/docker-compose.yml restart strategic-indicators-api
-docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
-docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py --competence 2026-04
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --no-invalidate --no-per-department
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence 2026-04 --no-invalidate --no-per-department
 ```
 
+Wipe total só via `POST /cache/invalidate` (admin) ou CLI **sem** `--no-invalidate` em incidente estrutural — não use wipe no pós-deploy rotineiro.
+
+### Rotina incremental vs wipe
+
+| Situação | Comando |
+|----------|---------|
+| Rotina / pós-deploy / Fase A ou B | sempre `--no-invalidate` |
+| Mudança estrutural de catálogo / admin | `POST /cache/invalidate` (dispara refresh) |
 ### Pós-deploy — alinhar série de Tendências (YTD)
 
 Após subir código com default **YTD**, remova override fixo do `.env` se houver (`SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=3` ou `=6`) e materialize do início do ano até a competência:

@@ -51,7 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-invalidate",
         action="store_true",
-        help="Não apaga period_scores antes (mais rápido; só preenche/atualiza)",
+        help=(
+            "Caminho feliz: não apaga period_scores antes (incremental). "
+            "Wipe total: POST /cache/invalidate (admin), não este script sem a flag."
+        ),
     )
     parser.add_argument(
         "--log-level",

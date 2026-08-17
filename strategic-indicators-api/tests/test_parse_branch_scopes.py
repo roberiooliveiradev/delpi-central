@@ -38,5 +38,18 @@ def test_cli_parser_exposes_branches_flag() -> None:
     args = parser.parse_args(["--branches", "01,02", "--no-invalidate"])
     assert args.branches == "01,02"
     assert args.no_invalidate is True
-    assert "--branches" in parser.format_help()
+    help_text = parser.format_help()
+    assert "--branches" in help_text
+    assert "Caminho feliz" in help_text or "incremental" in help_text.lower()
     assert parse_branch_scopes(args.branches) == ["01", "02"]
+
+
+def test_operations_docs_prefer_no_invalidate() -> None:
+    from pathlib import Path
+
+    operations = (
+        Path(__file__).resolve().parents[1] / "docs" / "OPERATIONS.md"
+    ).read_text(encoding="utf-8")
+    assert "--no-invalidate" in operations
+    assert "Rotina incremental vs wipe" in operations
+    assert "Wipe total só via" in operations or "POST /cache/invalidate" in operations
