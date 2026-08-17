@@ -55,7 +55,7 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "saldo", label: "Saldo", sortable: true },
   { key: "no_estoque", label: "Est. alocado" },
   { key: "cobertura", label: "Cobertura", sortable: true },
-  { key: "data_entrega", label: "Entrega pedido", sortable: true },
+  { key: "data_entrega", label: "Data de faturamento", sortable: true },
   { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
   { key: "data_despacho", label: "Despacho", sortable: true },
   { key: "valor_aberto", label: "Valor aberto", sortable: true },

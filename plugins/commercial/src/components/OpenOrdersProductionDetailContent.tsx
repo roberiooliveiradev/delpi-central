@@ -332,7 +332,7 @@ export function OpenOrdersProductionDetailContent({
             ].join(" ")}
           >
             <SectionHintLabel
-              label="Entrega pedido"
+              label="Data de faturamento"
               hint={DETAIL.entregaPedido}
               className="cm-open-orders-detail__snapshot-label"
             />
@@ -569,7 +569,7 @@ export function OpenOrdersProductionDetailContent({
             <div className="cm-open-orders-detail__prazo-cards">
               <div className="cm-open-orders-detail__prazo-card">
                 <SectionHintLabel
-                  label="Entrega pedido"
+                  label="Data de faturamento"
                   hint={DETAIL.entregaPedido}
                   className="cm-open-orders-detail__snapshot-label"
                 />

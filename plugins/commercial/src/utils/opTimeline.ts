@@ -35,7 +35,7 @@ export type OpTimelineLabels = {
 export const DEFAULT_OP_TIMELINE_LABELS: OpTimelineLabels = {
   emission: "Emissão da OP",
   plannedStart: "Início previsto",
-  orderDelivery: "Entrega do pedido",
+  orderDelivery: "Data de faturamento",
   plannedEnd: "Fim previsto da OP",
   appointment: "Apontamento",
   appointmentsMany: (count) => `${count} apontamentos`,

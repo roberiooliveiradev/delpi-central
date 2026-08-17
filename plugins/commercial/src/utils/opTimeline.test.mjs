@@ -94,7 +94,7 @@ describe("buildOpTimelineEvents", () => {
     const titles = items.map((item) => item.title);
     assert.ok(titles.includes("Emissão da OP"));
     assert.ok(!titles.includes("Início previsto"));
-    assert.ok(titles.includes("Entrega do pedido"));
+    assert.ok(titles.includes("Data de faturamento"));
     assert.ok(titles.includes("Fim previsto da OP"));
   });
 

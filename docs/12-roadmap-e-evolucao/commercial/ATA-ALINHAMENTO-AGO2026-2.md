@@ -85,8 +85,8 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 
 | Necessidade | Status | Evidência | Próximo passo |
 |-------------|--------|-----------|---------------|
-| Timeline: «data de entrega do pedido» → **«data de faturamento»** | **Falta** | Coluna/help «Entrega pedido»; OTD já usa faturamento em outra superfície | **P0-RENAME** |
-| Não afirmar chegada ao cliente sem registro (FOB/CIF) | **Parcial** (conceito) | — | Copy/help alinhados no rename |
+| Timeline: «data de entrega do pedido» → **«data de faturamento»** | **Existe** | Coluna/timeline/help; campo API permanece `data_entrega` | Manter |
+| Não afirmar chegada ao cliente sem registro (FOB/CIF) | **Existe** (help) | Copy em `helpTooltips` + ficha | Manter |
 
 ### §16 — OTD comercial fluxo completo
 
