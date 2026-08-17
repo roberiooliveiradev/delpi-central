@@ -137,6 +137,33 @@ docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 docker compose -f infra/docker-compose.yml restart strategic-indicators-api
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py --competence 2026-04
+```
+
+### Pós-deploy — alinhar série de Tendências (6 meses)
+
+Após subir código com `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6`, materialize a janela pedida pela UI (senão `/trends` mat-only continua curto):
+
+```bash
+# Preferir scripts sequenciais (RAM / ordem MF)
+./infra/scripts/up-dev-sequential.sh --fase api --build strategic-indicators-api
+# prod: ./infra/scripts/up-prod-sequential.sh --fase api --build strategic-indicators-api
+
+docker exec delpi-strategic-indicators-api printenv SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
+# esperado: 6
+
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence 2026-06 --trends-months 6 --no-per-department --no-invalidate
+```
+
+Smoke:
+
+```bash
+# JWT omitido — ajustar Authorization
+curl -sS "$BASE/trends?competence=2026-06&months=6" \
+  | jq '{months_requested, missing_competences, returned: [.igd_series[].period]}'
+```
+
+Esperado: até 6 competências em `igd_series`, ou `missing_competences` explícito se a fonte ainda não tiver o mês.
 
 Refresh mais rápido (sem apagar cache e menos escopos):
 
