@@ -272,6 +272,7 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "goal_mode": goal.get("goal_mode") if goal else None,
             "comparable_goal": comparable_goal,
             "goal_aggregation": goal_flags["goal_aggregation"],
+            "goal_period_kind": goal_flags["goal_period_kind"],
             "goal_period_partial": goal_flags["goal_period_partial"],
             "has_goal": has_resolved_goal,
             "monthly_targets": goal.get("monthly_targets") if goal else [],

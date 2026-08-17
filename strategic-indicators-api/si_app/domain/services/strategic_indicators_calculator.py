@@ -477,9 +477,15 @@ class StrategicIndicatorsCalculator:
         value_unit: str | None = None,
         indicator_id: str | None = None,
     ) -> float:
-        aggregation = resolve_consolidated_value_aggregation(
+        base_aggregation = resolve_consolidated_value_aggregation(
             indicator_id=(indicator_id or "").strip(),
             value_unit=value_unit,
+        )
+        aggregation = self._effective_goal_aggregation(
+            aggregation=base_aggregation,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
         )
         normalized_goal_mode = (goal_mode or "standard").strip().lower()
 
@@ -511,19 +517,47 @@ class StrategicIndicatorsCalculator:
         value_unit: str | None = None,
         indicator_id: str | None = None,
     ) -> dict[str, str | bool]:
-        """Flags: goal_aggregation sum|average; partial só se intervalo < 1 unidade (mês)."""
-        aggregation = resolve_consolidated_value_aggregation(
+        """Flags: goal_aggregation efetiva; kind exact|partial|accumulated."""
+        base_aggregation = resolve_consolidated_value_aggregation(
             indicator_id=(indicator_id or "").strip(),
             value_unit=value_unit,
         )
+        kind = self._resolve_goal_period_kind(
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        aggregation = self._effective_goal_aggregation(
+            aggregation=base_aggregation,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
         return {
             "goal_aggregation": aggregation,
-            "goal_period_partial": self._is_goal_period_partial(
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-            ),
+            "goal_period_kind": kind,
+            "goal_period_partial": kind == "partial",
         }
+
+    def _effective_goal_aggregation(
+        self,
+        *,
+        aggregation: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> str:
+        """Average-unit (ex. %): sum de parcelas diárias se mês incompleto; average em multi-mês."""
+        if aggregation != "average":
+            return aggregation
+        kind = self._resolve_goal_period_kind(
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        if kind == "partial":
+            return "sum"
+        return aggregation
 
     def _calculate_standard_period_goal(
         self,
@@ -657,19 +691,19 @@ class StrategicIndicatorsCalculator:
                 cursor_month = 1
                 cursor_year += 1
 
-    def _is_goal_period_partial(
+    def _resolve_goal_period_kind(
         self,
         *,
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
-    ) -> bool:
-        """True só se o intervalo cabe em uma unidade (mês) incompleta — não em multi-mês."""
-        del competence  # datas explícitas mandam; competência sozinha = mês cheio
+    ) -> str:
+        """exact = 1 mês civil fechado; partial = 1 mês incompleto; accumulated = multi-mês."""
+        del competence  # datas explícitas mandam; competência sozinha = mês cheio (exact)
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
         if start is None or end is None:
-            return False
+            return "exact"
 
         months_with_overlap = [
             (days_in_month, overlapped)
@@ -680,9 +714,30 @@ class StrategicIndicatorsCalculator:
             if overlapped > 0
         ]
         if len(months_with_overlap) != 1:
-            return False
+            return "accumulated"
         days_in_month, overlapped = months_with_overlap[0]
-        return 0 < overlapped < days_in_month
+        if overlapped <= 0:
+            return "exact"
+        if overlapped < days_in_month:
+            return "partial"
+        return "exact"
+
+    def _is_goal_period_partial(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> bool:
+        """True só se o intervalo cabe em uma unidade (mês) incompleta — não em multi-mês."""
+        return (
+            self._resolve_goal_period_kind(
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            == "partial"
+        )
 
     def _guard_positive_rounded_goal(self, raw: float) -> float:
         rounded = round(raw, 2)

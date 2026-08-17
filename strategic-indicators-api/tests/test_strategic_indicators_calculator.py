@@ -148,6 +148,7 @@ def test_standard_closed_month_goal_unchanged() -> None:
     )
     assert flags["goal_aggregation"] == "sum"
     assert flags["goal_period_partial"] is False
+    assert flags["goal_period_kind"] == "exact"
 
 
 def test_standard_mtd_day_15_prorata() -> None:
@@ -168,6 +169,7 @@ def test_standard_mtd_day_15_prorata() -> None:
         value_unit="currency",
     )
     assert flags["goal_period_partial"] is True
+    assert flags["goal_period_kind"] == "partial"
     assert flags["goal_aggregation"] == "sum"
 
 
@@ -190,6 +192,7 @@ def test_standard_ytd_partial_last_month() -> None:
     )
     # Multi-mês: acumulada, sem parcial no rótulo
     assert flags["goal_period_partial"] is False
+    assert flags["goal_period_kind"] == "accumulated"
 
 
 def test_percent_ytd_average_not_sum() -> None:
@@ -211,9 +214,10 @@ def test_percent_ytd_average_not_sum() -> None:
     )
     assert flags["goal_aggregation"] == "average"
     assert flags["goal_period_partial"] is False
+    assert flags["goal_period_kind"] == "accumulated"
 
 
-def test_percent_mtd_partial_keeps_level() -> None:
+def test_percent_mtd_partial_sums_daily_parcels() -> None:
     calculator = StrategicIndicatorsCalculator()
     comparable = calculator.calculate_comparable_goal(
         goal_value=10.0,
@@ -222,15 +226,38 @@ def test_percent_mtd_partial_keeps_level() -> None:
         end_date="15-04-2026",
         value_unit="percent",
     )
-    assert comparable == 10.0
+    # Abril 30 dias → 10 × 15/30
+    assert comparable == 5.0
     flags = calculator.resolve_goal_period_flags(
         start_date="01-04-2026",
         end_date="15-04-2026",
         value_unit="percent",
     )
-    assert flags["goal_aggregation"] == "average"
+    assert flags["goal_aggregation"] == "sum"
     assert flags["goal_period_partial"] is True
+    assert flags["goal_period_kind"] == "partial"
 
+
+def test_percent_closed_month_exact_kind() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    comparable = calculator.calculate_comparable_goal(
+        goal_value=95.0,
+        goal_periodicity="monthly",
+        start_date="01-07-2026",
+        end_date="31-07-2026",
+        value_unit="percent",
+        indicator_id="commercial-sales-order-otd",
+    )
+    assert comparable == 95.0
+    flags = calculator.resolve_goal_period_flags(
+        start_date="01-07-2026",
+        end_date="31-07-2026",
+        value_unit="percent",
+        indicator_id="commercial-sales-order-otd",
+    )
+    assert flags["goal_period_kind"] == "exact"
+    assert flags["goal_period_partial"] is False
+    assert flags["goal_aggregation"] == "average"
 
 def test_standard_annual_periodicity_prorata() -> None:
     calculator = StrategicIndicatorsCalculator()

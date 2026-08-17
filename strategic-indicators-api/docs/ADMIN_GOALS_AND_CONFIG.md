@@ -43,7 +43,7 @@ Regras:
 - Na API, `monthly_targets[].month_number` é o **índice do ponto** (1 … N), não necessariamente mês civil quando N ≠ 12.
 - `goal_value` em metas `monthly_curve` **não** entra no cálculo; só os `target_value` dos pontos.
 - Meta comparável do período = **soma proporcional por dia** dos pontos/metas que caem no intervalo (`meta_mês / dias_do_mês × dias_sobrepostos`). Em curva, mês civil fechado mantém o ponto cheio; mês aberto aplica fração só no ponto parcial.
-- Flags no contrato `dashboard-goals`: `goal_aggregation: "sum" | "average"`, `goal_period_partial: bool` (true só se o intervalo cabe em **um** mês incompleto; YTD multi-mês = false).
+- Flags no contrato `dashboard-goals`: `goal_aggregation: "sum" | "average"`, `goal_period_kind: "exact" | "partial" | "accumulated"`, `goal_period_partial: bool` (`true` só se `kind=partial`). Percentual em mês incompleto usa **sum** de parcelas diárias; multi-mês YTD percentual usa **average**.
 - Sem pontos válidos na curva → meta comparável **0** (nota sem meta).
 - Persistência admin (`indicator_goals` + curva mensal) **não muda**: continua meta mensal; a prorata é só no cálculo de `comparable_goal`.
 

@@ -439,7 +439,7 @@ Query `branch=01|02` exige coluna `goal_scope_branch` (V016+) e API com ordem co
 | GET | `/strategic-indicators/integrations/dashboard-department-indicators?department_id=...` | token interno ou JWT |
 | GET | `/strategic-indicators/integrations/dashboard-departments-indicators` | token interno ou JWT |
 
-**dashboard-goals** — parâmetros: `source_keys` (vírgula), `start_date`, `end_date`, `branch`, `competence`, `department_id`. Retorna metas resolvidas por `department_indicators.source_key`. `comparable_goal` no intervalo: **sum** (prorata diária) para `currency`/`count`; **average** (média ponderada por dias) para `percent` e demais unidades de nível. Campos: `goal_aggregation` (`sum` \| `average`) e `goal_period_partial` (true só se o intervalo está em um único mês incompleto — multi-mês YTD não marca parcial). Mês civil fechado permanece a meta cheia do mês.
+**dashboard-goals** — parâmetros: `source_keys` (vírgula), `start_date`, `end_date`, `branch`, `competence`, `department_id`. Retorna metas resolvidas por `department_indicators.source_key`. `comparable_goal` no intervalo: **sum** (prorata diária) para `currency`/`count`; para `percent` e unidades de nível, **sum** de parcelas diárias se o intervalo for **um mês incompleto**, e **average** ponderada por dias em multi-mês (YTD). Campos: `goal_aggregation` (`sum` \| `average`), `goal_period_kind` (`exact` \| `partial` \| `accumulated`) e `goal_period_partial` (true só se `kind=partial`). Mês civil fechado = meta cheia + `kind=exact`.
 
 **dashboard-department-score** — nota IDD (`score`) de um departamento.
 
