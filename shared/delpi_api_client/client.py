@@ -238,6 +238,18 @@ class DelpiApiClient:
     ) -> dict[str, Any]:
         return self._get("/quality/kaizens/summary", params=params, authorization=authorization)
 
+    def get_kaizen_summary_series(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/kaizens/summary/series",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_audit_5s_summary(
         self,
         *,
@@ -245,6 +257,18 @@ class DelpiApiClient:
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get("/quality/audit-5s/summary", params=params, authorization=authorization)
+
+    def get_audit_5s_summary_series(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/audit-5s/summary/series",
+            params=params,
+            authorization=authorization,
+        )
 
     def get_quality_scrap_cost_pct(
         self,
@@ -258,6 +282,18 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def get_quality_scrap_cost_pct_series(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/scrap-cost-pct/series",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_quality_rework_cost_pct(
         self,
         *,
@@ -266,6 +302,18 @@ class DelpiApiClient:
     ) -> dict[str, Any]:
         return self._get(
             "/quality/rework-cost-pct",
+            params=params,
+            authorization=authorization,
+        )
+
+    def get_quality_rework_cost_pct_series(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/rework-cost-pct/series",
             params=params,
             authorization=authorization,
         )

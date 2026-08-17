@@ -59,6 +59,10 @@ class QualityMetricsSnapshotService:
             tuple[str, str | None, str | None, str],
             float | None,
         ] | None = None
+        self._cost_series_lookup: dict[
+            tuple[str, str | None, str],
+            float | None,
+        ] | None = None
 
     def get_snapshot(
         self,
@@ -107,6 +111,12 @@ class QualityMetricsSnapshotService:
             query_branch=branch,
             branch_codes=branch_codes,
         )
+        self._cost_series_lookup = self._prefetch_cost_series(
+            start_date=overall_start,
+            end_date=overall_end,
+            query_branch=branch,
+            branch_codes=branch_codes,
+        )
         try:
             for period in periods:
                 key = (period.start_date, period.end_date, branch)
@@ -125,6 +135,7 @@ class QualityMetricsSnapshotService:
                 result[period.competence] = snapshot
         finally:
             self._ppm_series_lookup = None
+            self._cost_series_lookup = None
 
         return result
 
@@ -169,6 +180,54 @@ class QualityMetricsSnapshotService:
                         lookup[
                             (ppm_type, product_prefix, scope, competence)
                         ] = self._ppm_value_from_point(point)
+        return lookup
+
+    def _prefetch_cost_series(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        query_branch: str | None,
+        branch_codes: list[str],
+    ) -> dict[tuple[str, str | None, str], float | None]:
+        lookup: dict[tuple[str, str | None, str], float | None] = {}
+        scopes: list[str | None] = [query_branch]
+        if query_branch is None:
+            scopes.extend(branch_codes)
+        seen: list[str | None] = []
+        for scope in scopes:
+            if scope not in seen:
+                seen.append(scope)
+
+        for scope in seen:
+            scrap = self._quality_gateway.get_scrap_cost_pct_series(
+                branch=scope,
+                date_start=start_date,
+                date_end=end_date,
+            )
+            rework = self._quality_gateway.get_rework_cost_pct_series(
+                branch=scope,
+                date_start=start_date,
+                date_end=end_date,
+            )
+            for point in self._iter_ppm_series_points(scrap):
+                competence = self._competence_from_ppm_point(point)
+                if not competence:
+                    continue
+                metrics = point.get("metrics") or {}
+                raw = metrics.get("scrap_cost_pct")
+                lookup[("scrap", scope, competence)] = (
+                    float(raw) if raw is not None else None
+                )
+            for point in self._iter_ppm_series_points(rework):
+                competence = self._competence_from_ppm_point(point)
+                if not competence:
+                    continue
+                metrics = point.get("metrics") or {}
+                raw = metrics.get("rework_cost_pct")
+                lookup[("rework", scope, competence)] = (
+                    float(raw) if raw is not None else None
+                )
         return lookup
 
     def _iter_ppm_series_points(self, payload: object) -> list[dict]:
@@ -533,6 +592,16 @@ class QualityMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> float | None:
+        if self._cost_series_lookup is not None:
+            competence = self._competence_for_period_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if competence:
+                key = (kind, branch, competence)
+                if key in self._cost_series_lookup:
+                    return self._cost_series_lookup[key]
+
         if kind == "scrap":
             result = self._quality_gateway.get_scrap_cost_pct(
                 branch=branch,

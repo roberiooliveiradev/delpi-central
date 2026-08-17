@@ -22,6 +22,7 @@ from app.application.security.api_delpi_permissions import KPI_QUALITY_ACCESS
 
 from app.core.responses import error_response, not_found_response
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.utils.logger import log_error
 
 from app.application.dto.auditoria_5s.audit_5s_summary_request import (
@@ -422,6 +423,122 @@ def get_audit_5s_summary(
         log_error(f"Erro ao gerar resumo das auditorias 5S: {exc}")
         return error_response(
             "Erro interno ao gerar resumo das auditorias 5S.",
+            status_code=500,
+        )
+
+@router.get(
+    "/kaizens/summary/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_kaizen_summary_series",
+        path="/quality/kaizens/summary/series",
+    ),
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_kaizen_summary_series(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+):
+    from app.application.use_cases.quality.get_quality_scalar_series_use_case import (
+        GetQualityScalarSeriesUseCase,
+    )
+
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+    def fetch_metrics(scope_branch, bucket_start, bucket_end):
+        summary = build_get_kaizen_summary_use_case().execute(
+            KaizenSummaryRequest(
+                title=None,
+                status=None,
+                branch=scope_branch,
+                date_start=bucket_start,
+                date_end=bucket_end,
+            )
+        ).to_dict()
+        return {
+            "total_kaizens": summary.get("total_kaizens"),
+            "total_savings": summary.get("total_savings"),
+        }
+
+    try:
+        result = GetQualityScalarSeriesUseCase(
+            metric="kaizen_summary",
+            fetch_metrics=fetch_metrics,
+        ).execute(
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_kaizen_summary_series",
+            message="Kaizen summary series loaded.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar série kaizen: {exc}")
+        return error_response("Erro interno ao carregar série kaizen.", status_code=500)
+
+
+@router.get(
+    "/audit-5s/summary/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_audit_5s_summary_series",
+        path="/quality/audit-5s/summary/series",
+    ),
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_audit_5s_summary_series(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+):
+    from app.application.use_cases.quality.get_quality_scalar_series_use_case import (
+        GetQualityScalarSeriesUseCase,
+    )
+
+    def fetch_metrics(scope_branch, bucket_start, bucket_end):
+        summary = build_get_audit_5s_summary_use_case().execute(
+            Audit5SSummaryRequest(
+                start_date=bucket_start,
+                end_date=bucket_end,
+                branch=scope_branch,
+            )
+        ).to_dict()
+        return {"average_score": summary.get("average_score")}
+
+    try:
+        result = GetQualityScalarSeriesUseCase(
+            metric="audit_5s_summary",
+            fetch_metrics=fetch_metrics,
+        ).execute(
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_audit_5s_summary_series",
+            message="Audit 5S summary series loaded.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar série audit-5s: {exc}")
+        return error_response(
+            "Erro interno ao carregar série audit-5s.",
             status_code=500,
         )
 

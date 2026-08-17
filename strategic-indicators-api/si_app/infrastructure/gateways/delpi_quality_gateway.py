@@ -172,6 +172,27 @@ class DelpiQualityGateway:
             ),
         )
 
+    def get_scrap_cost_pct_series(
+        self,
+        *,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("scrap-cost-pct-series", branch, date_start, date_end)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_quality_scrap_cost_pct_series(
+                params={
+                    "branch": branch,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                    "granularity": "month",
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
     def get_rework_cost_pct(
         self,
         *,
@@ -187,6 +208,69 @@ class DelpiQualityGateway:
                     "branch": branch,
                     "date_start": date_start,
                     "date_end": date_end,
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_rework_cost_pct_series(
+        self,
+        *,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("rework-cost-pct-series", branch, date_start, date_end)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_quality_rework_cost_pct_series(
+                params={
+                    "branch": branch,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                    "granularity": "month",
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_kaizen_summary_series(
+        self,
+        *,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("kaizen-series", branch, date_start, date_end)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_kaizen_summary_series(
+                params={
+                    "branch": branch,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                    "granularity": "month",
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_audit_5s_summary_series(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("audit-5s-series", branch, start_date, end_date)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_audit_5s_summary_series(
+                params={
+                    "branch": branch,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "granularity": "month",
                 },
                 authorization=bearer_authorization_from_context(),
             ),

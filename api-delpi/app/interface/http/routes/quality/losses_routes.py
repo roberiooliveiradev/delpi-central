@@ -28,7 +28,10 @@ from app.interface.http.period_query_params import (
     START_DATE_QUERY,
     resolve_period_dates,
 )
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
+from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL, GRANULARITY_QUERY_MONTH
+from app.application.use_cases.quality.get_quality_scalar_series_use_case import (
+    GetQualityScalarSeriesUseCase,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.refugos.refugos_route_helpers import (
     build_refugos_query_request,
@@ -164,3 +167,133 @@ def get_quality_rework_cost_pct(
             "Erro interno ao carregar custo de retrabalho / ROL.",
             status_code=500,
         )
+
+
+def _run_loss_series(
+    *,
+    metric: str,
+    operation_id: str,
+    branch: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+    date_start: Optional[str],
+    date_end: Optional[str],
+    granularity: str,
+    fetch_metrics,
+):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    try:
+        use_case = GetQualityScalarSeriesUseCase(
+            metric=metric,
+            fetch_metrics=fetch_metrics,
+        )
+        result = use_case.execute(
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id=operation_id,
+            message=f"{metric} series loaded.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar série {metric}: {exc}")
+        return error_response(
+            f"Erro interno ao carregar série {metric}.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/scrap-cost-pct/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_quality_scrap_cost_pct_series",
+        path="/quality/scrap-cost-pct/series",
+    ),
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_quality_scrap_cost_pct_series(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+):
+    def fetch_metrics(scope_branch, bucket_start, bucket_end):
+        request = build_refugos_query_request(
+            filial=scope_branch,
+            data_inicio=bucket_start,
+            data_fim=bucket_end,
+            require_filial=False,
+        )
+        result = build_get_refugos_scrap_cost_pct_use_case().execute(request)
+        return {
+            "scrap_cost_pct": result.get("scrap_cost_pct")
+            if isinstance(result, dict)
+            else getattr(result, "scrap_cost_pct", None),
+        }
+
+    return _run_loss_series(
+        metric="scrap_cost_pct",
+        operation_id="get_quality_scrap_cost_pct_series",
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+        granularity=granularity,
+        fetch_metrics=fetch_metrics,
+    )
+
+
+@router.get(
+    "/rework-cost-pct/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_quality_rework_cost_pct_series",
+        path="/quality/rework-cost-pct/series",
+    ),
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_quality_rework_cost_pct_series(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+):
+    def fetch_metrics(scope_branch, bucket_start, bucket_end):
+        request = build_retrabalho_query_request(
+            filial=scope_branch,
+            data_inicio=bucket_start,
+            data_fim=bucket_end,
+            require_filial=False,
+        )
+        result = build_get_retrabalho_rework_cost_pct_use_case().execute(request)
+        return {
+            "rework_cost_pct": result.get("rework_cost_pct")
+            if isinstance(result, dict)
+            else getattr(result, "rework_cost_pct", None),
+        }
+
+    return _run_loss_series(
+        metric="rework_cost_pct",
+        operation_id="get_quality_rework_cost_pct_series",
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+        granularity=granularity,
+        fetch_metrics=fetch_metrics,
+    )

@@ -599,12 +599,19 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     # Qualidade (métricas)
     "get_quality_scrap_cost_pct": RouteContract("quality_scrap_cost_pct", "scalar"),
+    "get_quality_scrap_cost_pct_series": RouteContract(
+        "quality_scrap_cost_pct_series", "scalar"
+    ),
     "get_quality_rework_cost_pct": RouteContract("quality_rework_cost_pct", "scalar"),
+    "get_quality_rework_cost_pct_series": RouteContract(
+        "quality_rework_cost_pct_series", "scalar"
+    ),
     "list_quality_branches": RouteContract("quality_branch", "scalar"),
     "get_nonconformity_streak": RouteContract("nonconformity_streak", "scalar"),
     "get_nonconformity_series": RouteContract("nonconformity_series", "scalar"),
     "list_nonconformities": RouteContract("nonconformity", "paged_list"),
     "get_kaizen_summary": RouteContract("kaizen_summary", "scalar"),
+    "get_kaizen_summary_series": RouteContract("kaizen_summary_series", "scalar"),
     "get_kaizen_by_id": RouteContract("kaizen", "scalar"),
     "get_kaizen_records_summary": RouteContract("kaizen_records_summary", "scalar"),
     "get_kaizen_savings_investment_series": RouteContract(
@@ -732,6 +739,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "quality_solution_pattern", "scalar"
     ),
     "get_audit_5s_summary": RouteContract("audit_5s_summary", "scalar"),
+    "get_audit_5s_summary_series": RouteContract("audit_5s_summary_series", "scalar"),
     "get_ppm_internal_summary": RouteContract("ppm_internal_summary", "scalar"),
     "get_ppm_external_summary": RouteContract("ppm_external_summary", "scalar"),
     "get_ppm_internal_series": RouteContract("ppm_internal_series", "scalar"),
