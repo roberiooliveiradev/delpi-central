@@ -483,18 +483,20 @@ const classNames = chartCardBemClasses("dp", { withHeading: false, withActions: 
 
 ### `KpiCard`
 
-Cartão KPI departamental com valor, meta, badges IDD e ícone. Textos fixos (`Meta`, `Nota IDD`, aria de badges) vêm do plugin via `labels`.
+Cartão KPI departamental com valor, meta do período, opcional **Meta mês** (`reference_goal`), HelpTooltip nas linhas de meta, badges IDD e ícone. Textos fixos (`Meta`, `Nota IDD`, aria de badges) vêm do plugin via `labels`; apresentação via `buildKpiGoalPresentation` (`goalPrefix` / `goalHint` / `monthlyGoal*`).
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
 | `title` / `titleHint` | `string` | Rótulo e balão |
 | `value` | `string` | Valor principal |
 | `valueVariant` | `"default" \| "per-unit"` | Modificador CSS do valor |
-| `goalLabel` / badges | ver tipos `KpiScopeBadge`, `KpiPerformanceBadge` | Metas e IDD |
+| `goalLabel` / `goalPrefix` / `goalHint` | meta do período + ajuda | Linha 1 |
+| `monthlyGoalLabel` / `monthlyGoalPrefix` / `monthlyGoalHint` | Meta mês (parcial/acumulado) | Linha 2 |
+| badges / `iddScoreLabel` | ver tipos `KpiScopeBadge`, `KpiPerformanceBadge` | Escopo e IDD |
 | `icon` | `ReactNode` | Ícone à direita |
 | `footer` | `ReactNode?` | Slot inferior |
 | `loading` | `boolean?` | Placeholder `…` |
-| `classNames` | `KpiCardClassNames` | BEM do plugin |
+| `classNames` | `KpiCardClassNames` | BEM do plugin (incl. `goalHelp` / `goalMonthly`) |
 | `labels` | `KpiCardLabels` | Textos PT do plugin |
 
 Helpers: `kpiCardBemClasses(prefix)` e `createDashboardKpiCard({ prefix, labels })` para wrapper de uma linha nos dashboards.
