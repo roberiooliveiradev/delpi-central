@@ -40,7 +40,8 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | Meta % no YTD | `average` ponderada por dias (não soma de meses) | **Existe** |
 | Meta % mês incompleto | `sum` das parcelas diárias (`meta_mês × dias/dias_mês`) | **Existe** |
 | Meta R$/count | `sum` prorata diária | **Existe** |
-| Rótulo | 1 mês fechado → «Meta»; &lt; 1 mês → «Meta parcial»; multi-mês → «Meta acumulada» (`goal_period_kind`) | **Existe** |
+| Rótulo | 1 mês fechado → «Meta»; &lt; 1 mês → «Meta parcial»; multi-mês → «Meta acumulada» (`goal_period_kind` + presentation) | **Existe** |
+| Preset «Esta semana» | URL `period_preset` preserva intenção na segunda (range = Hoje) | **Existe** |
 | Favoritos | Na topbar (`secondary`), sem faixa abaixo da nav | **Existe** |
 | Opp Conta | Filtros em linha; inputs estáveis no refetch | **Existe** |
 
