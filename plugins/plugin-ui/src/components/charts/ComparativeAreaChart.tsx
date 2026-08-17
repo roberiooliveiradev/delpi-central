@@ -3,7 +3,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -11,6 +10,7 @@ import {
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useDelpiDarkMode } from "../bpmn/hooks/useDelpiDarkMode";
+import { StableResponsiveContainer } from "./StableResponsiveContainer";
 
 export type ComparativeAreaChartSeries = {
   dataKey: string;
@@ -154,7 +154,7 @@ export function ComparativeAreaChart({
   return (
     <div className={rootClass} data-theme={isDark ? "dark" : "light"}>
       <div className={cn.canvas} style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <StableResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               {gradients.map((g) => (
@@ -200,7 +200,7 @@ export function ComparativeAreaChart({
               />
             ))}
           </AreaChart>
-        </ResponsiveContainer>
+        </StableResponsiveContainer>
       </div>
     </div>
   );

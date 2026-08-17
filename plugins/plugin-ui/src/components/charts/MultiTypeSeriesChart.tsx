@@ -11,7 +11,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -19,6 +18,7 @@ import {
 
 import type { PersistedChartType } from "../../hooks/usePersistedChartPreferences";
 import { withLinearTrendField } from "../../utils/linearTrendSeries";
+import { StableResponsiveContainer } from "./StableResponsiveContainer";
 
 export type MultiTypeSeriesSpec = {
   dataKey: string;
@@ -150,7 +150,7 @@ export function MultiTypeSeriesChart({
       fill: resolveCategoryFill(row, categoryFillKey, primary.fill),
     }));
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Tooltip
             formatter={(value) =>
@@ -184,13 +184,13 @@ export function MultiTypeSeriesChart({
             ))}
           </Pie>
         </PieChart>
-      </ResponsiveContainer>
+      </StableResponsiveContainer>
     );
   }
 
   if (chartType === "horizontal_bar") {
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} layout="vertical" margin={margin}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
           <XAxis
@@ -230,13 +230,13 @@ export function MultiTypeSeriesChart({
             </Bar>
           ))}
         </BarChart>
-      </ResponsiveContainer>
+      </StableResponsiveContainer>
     );
   }
 
   if (chartType === "line") {
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer width="100%" height={height}>
         <LineChart data={chartData} margin={margin}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -268,13 +268,13 @@ export function MultiTypeSeriesChart({
           ))}
           {trendLines}
         </LineChart>
-      </ResponsiveContainer>
+      </StableResponsiveContainer>
     );
   }
 
   if (chartType === "area") {
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer width="100%" height={height}>
         <ComposedChart data={chartData} margin={margin}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
@@ -309,14 +309,14 @@ export function MultiTypeSeriesChart({
           ))}
           {trendLines}
         </ComposedChart>
-      </ResponsiveContainer>
+      </StableResponsiveContainer>
     );
   }
 
   // column | bar | stacked_bar
   const stackId = chartType === "stacked_bar" ? "stack" : undefined;
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <StableResponsiveContainer width="100%" height={height}>
       <ComposedChart data={chartData} margin={margin}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
@@ -361,6 +361,6 @@ export function MultiTypeSeriesChart({
         ))}
         {trendLines}
       </ComposedChart>
-    </ResponsiveContainer>
+    </StableResponsiveContainer>
   );
 }

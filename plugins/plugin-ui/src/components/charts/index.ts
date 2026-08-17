@@ -55,6 +55,14 @@ export {
   type ComparativeAreaChartSeries,
 } from "./ComparativeAreaChart";
 export {
+  StableResponsiveContainer,
+  type StableResponsiveContainerProps,
+} from "./StableResponsiveContainer";
+export {
+  shouldAcceptMeasuredSize,
+  STABLE_CHART_MIN_SIZE_PX,
+} from "./stableChartSize";
+export {
   SpeedometerGauge,
   SPEEDOMETER_TONE_COLORS,
   resolveSpeedometerZoneThresholds,
