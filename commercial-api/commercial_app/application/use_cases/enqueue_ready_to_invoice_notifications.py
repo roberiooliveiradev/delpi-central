@@ -103,11 +103,22 @@ class PublishIntegrationOutboxUseCase:
         if not self._notifier.enabled:
             return True
 
+        from commercial_app.application.services.task_portal_notification_delivery_policy import (
+            TaskPortalNotificationDeliveryPolicy,
+        )
+
+        delivery = TaskPortalNotificationDeliveryPolicy()
         ready_event = self._content.event_type()
         if row.event_type == ready_event:
+            all_user_ids = list(payload.get("userIds") or [])
+            permission_codes = list(payload.get("permissionCodes") or [])
+            offline = delivery.filter_portal_recipients(ready_event, all_user_ids)
+            # Permission-broadcast recipients stay on portal (no per-user presence).
+            if not offline and not permission_codes:
+                return True
             return self._notifier.notify_ready_to_invoice(
-                user_ids=list(payload.get("userIds") or []),
-                permission_codes=list(payload.get("permissionCodes") or []),
+                user_ids=offline,
+                permission_codes=permission_codes,
                 line_key=str(payload.get("lineKey") or row.aggregate_id),
                 pedido=str(payload.get("pedido") or ""),
                 linha=str(payload.get("linha") or ""),
@@ -117,11 +128,7 @@ class PublishIntegrationOutboxUseCase:
             )
 
         if row.event_type in TASK_PORTAL_EVENT_TYPES:
-            from commercial_app.application.services.task_portal_notification_delivery_policy import (
-                TaskPortalNotificationDeliveryPolicy,
-            )
-
-            recipients = TaskPortalNotificationDeliveryPolicy().filter_portal_recipients(
+            recipients = delivery.filter_portal_recipients(
                 row.event_type,
                 list(payload.get("userIds") or []),
             )

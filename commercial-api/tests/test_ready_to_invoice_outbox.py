@@ -133,8 +133,101 @@ def test_publish_calls_portal_notifier(monkeypatch) -> None:
     assert result.published == 1
     assert outbox.published == ["ob-1"]
     assert calls[0]["line_key"] == "01|10|01"
+    assert calls[0]["user_ids"] == ["u1"]
     assert "ready_to_invoice" in calls[0]["action_target"]
     assert "view=board" not in calls[0]["action_target"]
+
+
+def test_publish_skips_portal_for_online_user_ids(monkeypatch) -> None:
+    from commercial_app.application.services import (
+        task_portal_notification_delivery_policy as policy_mod,
+    )
+
+    class _Hub:
+        def is_user_online(self, user_id: str | None) -> bool:
+            return str(user_id or "") == "online-user"
+
+    monkeypatch.setattr(
+        policy_mod,
+        "commercial_realtime_hub",
+        _Hub(),
+    )
+    outbox = _OutboxMemory()
+    outbox.enqueue(
+        event_type="commercial.order.ready_to_invoice",
+        aggregate_type="open_order_line",
+        aggregate_id="01|10|01",
+        payload={
+            "lineKey": "01|10|01",
+            "userIds": ["online-user", "offline-user"],
+            "permissionCodes": [],
+            "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice",
+            "pedido": "10",
+            "linha": "01",
+            "cliente": "ACME",
+            "filial": "01",
+        },
+    )
+    calls: list[dict] = []
+
+    class _Notifier(CommercialPortalNotificationService):
+        def __init__(self) -> None:
+            super().__init__(enabled=True, service_token="tok")
+
+        def notify_ready_to_invoice(self, **kwargs):  # type: ignore[override]
+            calls.append(kwargs)
+            return True
+
+    result = PublishIntegrationOutboxUseCase(
+        outbox=outbox,
+        notifier=_Notifier(),
+    ).execute()
+    assert result.published == 1
+    assert calls[0]["user_ids"] == ["offline-user"]
+
+
+def test_publish_acks_when_all_user_ids_online_and_no_permissions(monkeypatch) -> None:
+    from commercial_app.application.services import (
+        task_portal_notification_delivery_policy as policy_mod,
+    )
+
+    class _Hub:
+        def is_user_online(self, user_id: str | None) -> bool:
+            return True
+
+    monkeypatch.setattr(policy_mod, "commercial_realtime_hub", _Hub())
+    outbox = _OutboxMemory()
+    outbox.enqueue(
+        event_type="commercial.order.ready_to_invoice",
+        aggregate_type="open_order_line",
+        aggregate_id="01|10|01",
+        payload={
+            "lineKey": "01|10|01",
+            "userIds": ["online-user"],
+            "permissionCodes": [],
+            "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice",
+            "pedido": "10",
+            "linha": "01",
+            "cliente": "ACME",
+            "filial": "01",
+        },
+    )
+    calls: list[dict] = []
+
+    class _Notifier(CommercialPortalNotificationService):
+        def __init__(self) -> None:
+            super().__init__(enabled=True, service_token="tok")
+
+        def notify_ready_to_invoice(self, **kwargs):  # type: ignore[override]
+            calls.append(kwargs)
+            return True
+
+    result = PublishIntegrationOutboxUseCase(
+        outbox=outbox,
+        notifier=_Notifier(),
+    ).execute()
+    assert result.published == 1
+    assert calls == []
 
 
 def test_portal_notification_payload_shape(monkeypatch) -> None:

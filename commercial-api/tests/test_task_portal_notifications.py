@@ -364,15 +364,26 @@ def test_skip_portal_when_recipient_online_for_assign() -> None:
     assert outbox.rows[0].payload["userIds"] == ["offline-user"]
 
 
-def test_delivery_policy_keeps_due_recipients_even_if_online() -> None:
+def test_delivery_policy_suppresses_all_task_events_when_online() -> None:
     from commercial_app.application.services.task_portal_notification_delivery_policy import (
         TaskPortalNotificationDeliveryPolicy,
+    )
+    from commercial_app.domain.services.ready_to_invoice_notification_content_service import (
+        ReadyToInvoiceNotificationContentService,
     )
 
     class _Hub:
         def is_user_online(self, user_id: str | None) -> bool:
-            return True
+            return str(user_id or "") == "online-user"
 
     policy = TaskPortalNotificationDeliveryPolicy(hub=_Hub())  # type: ignore[arg-type]
-    assert policy.filter_portal_recipients(EVENT_DUE_SOON, ["u1", "u2"]) == ["u1", "u2"]
-    assert policy.filter_portal_recipients(EVENT_ASSIGNED, ["u1"]) == []
+    assert policy.filter_portal_recipients(EVENT_DUE_SOON, ["online-user", "offline"]) == [
+        "offline"
+    ]
+    assert policy.filter_portal_recipients(EVENT_OVERDUE, ["online-user"]) == []
+    assert policy.filter_portal_recipients(EVENT_ASSIGNED, ["online-user"]) == []
+    r2i = ReadyToInvoiceNotificationContentService.event_type()
+    assert policy.filter_portal_recipients(r2i, ["online-user", "offline"]) == ["offline"]
+    online, offline = policy.split_online_offline(r2i, ["online-user", "offline"])
+    assert online == ["online-user"]
+    assert offline == ["offline"]
