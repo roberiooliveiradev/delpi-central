@@ -9,8 +9,8 @@ from app.application.services.notification_email_service import (
 from app.domain.notifications.notification_preference_policy import is_email_channel_enabled
 
 
-def test_is_email_channel_enabled_important_or_opt_in():
-    assert is_email_channel_enabled(
+def test_is_email_channel_enabled_only_email_categories():
+    assert not is_email_channel_enabled(
         "commercial",
         muted_categories=[],
         important_categories=["commercial"],
@@ -20,6 +20,12 @@ def test_is_email_channel_enabled_important_or_opt_in():
         "commercial",
         muted_categories=[],
         important_categories=[],
+        email_categories=["commercial"],
+    )
+    assert is_email_channel_enabled(
+        "commercial",
+        muted_categories=[],
+        important_categories=["commercial"],
         email_categories=["commercial"],
     )
     assert not is_email_channel_enabled(

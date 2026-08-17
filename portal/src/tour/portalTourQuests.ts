@@ -313,7 +313,7 @@ export function getPortalTourQuests({
     {
       id: "page-notifications-important",
       title: "Marcar como importante",
-      hint: "Importantes abrem painel na tela e enviam e-mail.",
+      hint: "Importantes abrem painel na tela (e-mail é o envelope).",
       steps: [
         "Abra Preferências na página Notificações.",
         "Clique na estrela do tipo desejado.",
@@ -331,11 +331,11 @@ export function getPortalTourQuests({
     {
       id: "page-notifications-email",
       title: "Receber por e-mail",
-      hint: "Envelope = e-mail; importante já manda e-mail sozinho.",
+      hint: "Envelope liga o e-mail; estrela é só o painel importante.",
       steps: [
         "Abra Preferências na página Notificações.",
         "Clique no envelope do tipo desejado.",
-        "Se o tipo já for Importante, o e-mail já está ativo.",
+        "O status pode mostrar E-mail (ou Importante · E-mail se a estrela também estiver ligada).",
       ],
       unlockHint: "Abra Notificações → Preferências.",
       scope: "notifications",

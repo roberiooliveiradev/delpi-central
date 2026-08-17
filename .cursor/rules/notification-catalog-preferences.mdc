@@ -17,9 +17,9 @@ Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara
 [+ ícone do manifesto] [estrela] [sino|BellOff] [envelope]  ← auto-save (sem botão Salvar)
 ```
 
-- **Estrela** → `importantCategories` — dispatch cria com `isImportant=true`; painel `ImportantNotificationAttention`; **e-mail sempre** (Graph) se mail habilitado.
+- **Estrela** → `importantCategories` — dispatch cria com `isImportant=true`; painel `ImportantNotificationAttention` (não liga e-mail).
 - **Sino** → `mutedCategories` — deixa de receber in-app, toast SO e e-mail; remove importante/e-mail da categoria.
-- **Envelope** → `emailCategories` — e-mail opt-in; importante não precisa do envelope.
+- **Envelope** → `emailCategories` — canal e-mail independente da estrela.
 - Mute × importante: **mutuamente exclusivos** (UI e `notification_preference_policy`).
 - **Toast SO** → `desktopNotificationToast.ts` (Web Notification API); preferência local + permission; qualquer não muted com portal aberto.
 - Severidade: `type` EN (`info|warning|error|success`) + aliases PT no Core (`normalize_notification_type`); UI via `notificationSeverityTone.ts`.

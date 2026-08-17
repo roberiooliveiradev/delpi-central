@@ -47,11 +47,35 @@ def test_reconcile_mute_strips_email_and_important_strips_mute():
     muted, important, email = reconcile_mute_important_and_email(
         ["announcement", "welcome"],
         ["welcome"],
-        ["announcement", "birthday", "welcome"],
+        ["birthday", "welcome"],
     )
+    # welcome importante remove mute; announcement silenciado (sem e-mail) permanece;
+    # welcome pode ficar em email (canais independentes).
     assert muted == ["announcement"]
     assert important == ["welcome"]
+    assert email == ["birthday", "welcome"]
+
+
+def test_reconcile_email_clears_mute_without_forcing_important():
+    muted, important, email = reconcile_mute_important_and_email(
+        ["birthday"],
+        [],
+        ["birthday"],
+    )
+    assert muted == []
+    assert important == []
     assert email == ["birthday"]
+
+
+def test_reconcile_mute_clears_email_when_only_mute():
+    muted, important, email = reconcile_mute_important_and_email(
+        ["birthday"],
+        [],
+        [],
+    )
+    assert muted == ["birthday"]
+    assert important == []
+    assert email == []
 
 
 def test_filter_mutable_hides_app_without_access():

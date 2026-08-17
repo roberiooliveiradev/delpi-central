@@ -46,7 +46,7 @@ def build_notification_email_html(
   <p style="margin:0 0 16px">{safe_message}</p>
   <p style="margin:0 0 20px;color:#555;font-size:13px">Origem: {safe_app}</p>
   <p><a href="{html.escape(link)}" style="display:inline-block;padding:10px 14px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px">Abrir na Minha DELPI</a></p>
-  <p style="margin-top:24px;font-size:12px;color:#777">Você recebeu este e-mail porque marcou a categoria como importante ou ativou receber por e-mail. Preferências: {html.escape(link)}</p>
+  <p style="margin-top:24px;font-size:12px;color:#777">Você recebeu este e-mail porque ativou receber por e-mail nesta categoria. Preferências: {html.escape(link)}</p>
 </body></html>"""
     return subject, body
 

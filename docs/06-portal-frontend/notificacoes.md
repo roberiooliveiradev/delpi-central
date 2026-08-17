@@ -32,9 +32,9 @@ O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências
 
 | Controle | Efeito |
 |----------|--------|
-| Estrela | Importante → painel + chime + e-mail |
+| Estrela | Importante → painel + chime (sem ligar e-mail) |
 | Sino | Silencia in-app, toast SO e e-mail |
-| Envelope | E-mail opt-in (além do in-app) |
+| Envelope | Canal e-mail (independente da estrela) |
 | Alertas do sistema | `desktopNotificationToast.ts` — Web Notification API |
 
 O tour Conheça o portal apenas destaca `data-tour` nesses controles; as preferências continuam só em `/notifications`.

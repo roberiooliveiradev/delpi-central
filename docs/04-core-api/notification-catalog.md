@@ -72,11 +72,11 @@ Todo card de preferência segue **somente** este layout (não reinventar no MFE)
 | **In-app** (sino + histórico) | Sempre, se categoria não muted |
 | **Painel importante + chime** | Categoria em `importantCategories` e unread |
 | **Toast do SO** | Web Notification API; preferência local + permission; qualquer não muted (aba aberta) |
-| **E-mail (Graph)** | `importantCategories` **sempre** (se não muted) **ou** opt-in `emailCategories` |
+| **E-mail (Graph)** | Opt-in `emailCategories` (independente de importante); mute zera e-mail |
 
-- **Estrela:** `importantCategories` — `isImportant=true`, painel + e-mail automático.
+- **Estrela:** `importantCategories` — `isImportant=true`, painel + chime (não liga e-mail).
 - **Sino:** `mutedCategories` — zera in-app, toast e e-mail; remove importante/e-mail da categoria.
-- **Envelope:** `emailCategories` — e-mail opt-in (importante não precisa do envelope).
+- **Envelope:** `emailCategories` — canal e-mail (independente da estrela).
 - Mute × importante × e-mail: reconciliados em `notification_preference_policy` (`reconcile_mute_important_and_email`).
 - Tour «Conheça o portal»: quests `page-notifications-important`, `page-notifications-email`, `page-notifications-desktop-toast` **guiam** até Preferências — não duplicam a UI.
 

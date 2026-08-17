@@ -35,6 +35,7 @@ function preferenceStatusLabel(
 ): string {
   if (isSaving) return "Salvando…";
   if (isMuted) return "Silenciada";
+  if (isImportant && isEmail) return "Importante · E-mail";
   if (isImportant) return "Importante";
   if (isEmail) return "E-mail";
   return "Recebendo";
@@ -211,7 +212,7 @@ export function NotificationPreferencesPanel({
     void persistPreferences(
       mutedCategories.filter((item) => item !== category),
       [...importantCategories.filter((item) => item !== category), category],
-      emailCategories.filter((item) => item !== category),
+      emailCategories,
       category,
     );
   }
@@ -328,9 +329,9 @@ export function NotificationPreferencesPanel({
             Preferências de notificação
           </h2>
           <p className="notification-preferences__intro">
-            Use a <strong>estrela</strong> para alertas na tela e e-mail automático, o{" "}
-            <strong>envelope</strong> para e-mail opt-in e o <strong>sino</strong> para silenciar.
-            Silêncio remove os demais canais daquele tipo; a alteração é salva na hora.
+            Use a <strong>estrela</strong> para alertas na tela, o <strong>envelope</strong> para
+            receber por e-mail e o <strong>sino</strong> para silenciar. Importante e e-mail são
+            independentes; silêncio remove os demais canais daquele tipo. A alteração é salva na hora.
           </p>
         </>
       )}
@@ -396,7 +397,7 @@ export function NotificationPreferencesPanel({
               {filteredCategories.map((category) => {
                 const isMuted = mutedCategories.includes(category);
                 const isImportant = importantCategories.includes(category);
-                const isEmail = emailCategories.includes(category) || isImportant;
+                const isEmail = emailCategories.includes(category);
                 const isSaving = savingCategory === category;
                 const display = resolveNotificationPreferenceDisplay(
                   category,
@@ -421,7 +422,7 @@ export function NotificationPreferencesPanel({
                           {preferenceStatusLabel(
                             isImportant,
                             isMuted,
-                            emailCategories.includes(category),
+                            isEmail,
                             isSaving,
                           )}
                         </span>
@@ -512,19 +513,17 @@ export function NotificationPreferencesPanel({
                           pressed={isEmail}
                           disabled={Boolean(savingCategory) || isMuted}
                           onClick={() =>
-                            handleToggleEmail(category, emailCategories.includes(category))
+                            handleToggleEmail(category, isEmail)
                           }
                           aria-label={
-                            emailCategories.includes(category) || isImportant
-                              ? `E-mail ativo: ${display.notificationName}`
+                            isEmail
+                              ? `Desativar e-mail: ${display.notificationName}`
                               : `Receber por e-mail: ${display.notificationName}`
                           }
                           title={
-                            isImportant
-                              ? `Importante já envia e-mail — ${display.notificationName}.`
-                              : emailCategories.includes(category)
-                                ? `E-mail opt-in — ${display.notificationName}. Clique para remover.`
-                                : `Receber por e-mail — ${display.notificationName}.`
+                            isEmail
+                              ? `E-mail ativo — ${display.notificationName}. Clique para desativar.`
+                              : `Receber por e-mail — ${display.notificationName}.`
                           }
                           icon={<Mail size={18} />}
                         />

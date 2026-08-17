@@ -177,14 +177,14 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
         _quest(
             id="page-notifications-important",
             title="Marcar como importante",
-            hint="Importantes abrem painel na tela e enviam e-mail.",
+            hint="Importantes abrem painel na tela (e-mail é o envelope).",
             category="notifications",
             scope="notifications",
         ),
         _quest(
             id="page-notifications-email",
             title="Receber por e-mail",
-            hint="Envelope = e-mail; importante já manda e-mail sozinho.",
+            hint="Envelope liga o e-mail; estrela é só o painel importante.",
             category="notifications",
             scope="notifications",
         ),
