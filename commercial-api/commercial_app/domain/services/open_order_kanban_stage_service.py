@@ -6,6 +6,10 @@ Stages (mutually exclusive for open lines):
 - upcoming: remaining open lines
 
 ``completed`` is fed by a separate recently-closed list, not this service.
+
+Callers that build ``kanbanStageCounts`` for the portal badge must run
+``OpenOrderStockAllocationService`` first (via ``EnrichOpenOrdersKanbanService``)
+so ``estoque_alocado`` reflects FIFO across lines that share physical stock.
 """
 
 from __future__ import annotations

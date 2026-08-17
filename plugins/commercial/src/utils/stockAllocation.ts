@@ -34,6 +34,9 @@ function resolvePhysicalStock(items: OpenOrdersTotvsItem[]): number {
 /**
  * Distribui o estoque físico repetido por produto/filial entre as linhas em aberto,
  * priorizando pedidos com data de entrega mais antiga (FIFO operacional).
+ *
+ * Paridade obrigatória com commercial-api
+ * `OpenOrderStockAllocationService` (fonte do badge Meus pedidos / kanbanStageCounts).
  */
 export function allocateStockToOrders(
   items: OpenOrdersTotvsItem[],

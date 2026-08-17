@@ -13,14 +13,11 @@ from commercial_app.application.security.commercial_permissions import (
     can_manage_portfolios,
     can_use_team_scope,
 )
+from commercial_app.application.services.enrich_open_orders_kanban_service import (
+    EnrichOpenOrdersKanbanService,
+)
 from commercial_app.application.services.filter_open_orders_by_scope_service import (
     FilterOpenOrdersByScopeService,
-)
-from commercial_app.domain.services.open_orders_horizon_bucket_service import (
-    OpenOrdersHorizonBucketService,
-)
-from commercial_app.domain.services.open_order_kanban_stage_service import (
-    OpenOrderKanbanStageService,
 )
 from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
@@ -78,13 +75,9 @@ def list_commercial_open_orders(
                 if isinstance(items_raw, list)
                 else []
             )
-            stage_svc = OpenOrderKanbanStageService()
-            enriched = stage_svc.enrich_items(items)
             data = {
                 **data,
-                "items": enriched,
-                "deliveryHorizon": OpenOrdersHorizonBucketService().bucketize(enriched),
-                "kanbanStageCounts": stage_svc.count_by_stage(enriched),
+                **EnrichOpenOrdersKanbanService().build_payload_fields(items),
             }
         return ok(data, message="Pedidos de venda em aberto carregados.")
     except PermissionError as exc:

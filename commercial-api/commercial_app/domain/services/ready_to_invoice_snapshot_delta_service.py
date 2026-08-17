@@ -9,6 +9,9 @@ from commercial_app.domain.services.open_order_kanban_stage_service import (
     STAGE_READY_TO_INVOICE,
     OpenOrderKanbanStageService,
 )
+from commercial_app.domain.services.open_order_stock_allocation_service import (
+    OpenOrderStockAllocationService,
+)
 
 
 def open_order_line_key(item: Mapping[str, Any]) -> str:
@@ -29,16 +32,20 @@ class ReadyToInvoiceDelta:
 class ReadyToInvoiceSnapshotDeltaService:
     """Compare current ready_to_invoice keys vs previous snapshot (pure)."""
 
-    def __init__(self, stage_service: OpenOrderKanbanStageService | None = None) -> None:
+    def __init__(
+        self,
+        stage_service: OpenOrderKanbanStageService | None = None,
+        allocation_service: OpenOrderStockAllocationService | None = None,
+    ) -> None:
         self._stages = stage_service or OpenOrderKanbanStageService()
+        self._allocation = allocation_service or OpenOrderStockAllocationService()
 
     def current_ready_items(
         self,
         items: Sequence[Mapping[str, Any]] | None,
     ) -> list[dict[str, Any]]:
         ready: list[dict[str, Any]] = []
-        for raw in items or ():
-            item = dict(raw)
+        for item in self._allocation.allocate(items):
             stage = self._stages.resolve_stage(item)
             if stage != STAGE_READY_TO_INVOICE:
                 continue

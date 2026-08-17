@@ -31,14 +31,17 @@ def test_delta_detects_new_ready_keys_only() -> None:
     items = [
         {
             "filial": "01",
+            "produto": "PA",
             "pedido": "A",
             "linha": "01",
             "saldo": 2,
             "no_estoque": 2,
             "valor_aberto": 10,
+            "data_entrega": "2026-09-01",
         },
         {
             "filial": "01",
+            "produto": "PB",
             "pedido": "B",
             "linha": "01",
             "saldo": 2,
@@ -48,11 +51,13 @@ def test_delta_detects_new_ready_keys_only() -> None:
         },
         {
             "filial": "01",
+            "produto": "PC",
             "pedido": "C",
             "linha": "01",
             "saldo": 1,
-            "estoque_alocado": 1,
+            "no_estoque": 1,
             "valor_aberto": 5,
+            "data_entrega": "2026-09-01",
         },
     ]
     delta = service.compute_delta(
@@ -63,6 +68,36 @@ def test_delta_detects_new_ready_keys_only() -> None:
     assert delta.entered_keys == frozenset({"01|C|01"})
     assert len(delta.entered_items) == 1
     assert delta.entered_items[0]["pedido"] == "C"
+
+
+def test_delta_applies_fifo_before_ready_classification() -> None:
+    """Shared physical stock must not mark both competing lines as ready."""
+    service = ReadyToInvoiceSnapshotDeltaService()
+    items = [
+        {
+            "filial": "01",
+            "produto": "P1",
+            "pedido": "LATE",
+            "linha": "01",
+            "saldo": 10,
+            "no_estoque": 10,
+            "data_entrega": "2026-10-01",
+            "valor_aberto": 100,
+        },
+        {
+            "filial": "01",
+            "produto": "P1",
+            "pedido": "EARLY",
+            "linha": "01",
+            "saldo": 10,
+            "no_estoque": 10,
+            "data_entrega": "2026-09-01",
+            "valor_aberto": 100,
+        },
+    ]
+    delta = service.compute_delta(items=items, previous_keys=[])
+    assert delta.current_keys == frozenset({"01|EARLY|01"})
+    assert delta.entered_keys == frozenset({"01|EARLY|01"})
 
 
 def test_recipient_resolver_uses_portfolio_membership() -> None:
