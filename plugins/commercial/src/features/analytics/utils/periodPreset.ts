@@ -208,6 +208,36 @@ export function detectPeriodPreset(
   return "custom";
 }
 
+/**
+ * Prefer explicit stored preset when dates still match it (ex.: Monday this_week == today).
+ * Otherwise fall back to detectPeriodPreset.
+ */
+export function resolveEffectivePeriodPreset(
+  dateStart: string,
+  dateEnd: string,
+  stored: PeriodPresetId | null | undefined,
+  now: Date = new Date(),
+  timeZone = "America/Sao_Paulo",
+): PeriodPresetId {
+  if (stored && stored !== "custom") {
+    const range = resolvePeriodPreset(stored, now, timeZone);
+    if (range && dateStart === range.dateStart && dateEnd === range.dateEnd) {
+      return stored;
+    }
+  }
+  return detectPeriodPreset(dateStart, dateEnd, now, timeZone);
+}
+
+export function parsePeriodPresetId(
+  value: string | null | undefined,
+): PeriodPresetId | null {
+  const raw = (value ?? "").trim();
+  if (!raw || raw === "custom") return null;
+  return (PERIOD_PRESET_IDS as readonly string[]).includes(raw)
+    ? (raw as PeriodPresetId)
+    : null;
+}
+
 /** Chip curto MTD/YTD para cards Overview (ata §5). */
 export type PeriodKindChip = "MTD" | "YTD";
 

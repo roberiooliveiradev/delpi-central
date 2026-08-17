@@ -10,7 +10,7 @@ import {
   type LinkedDateFilters,
 } from "../utils/competenceFilters";
 import {
-  detectPeriodPreset,
+  resolveEffectivePeriodPreset,
   resolvePeriodPreset,
   type PeriodPresetId,
 } from "../utils/periodPreset";
@@ -111,30 +111,38 @@ export function useAnalyticsFilters() {
   const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
   const [sellerIds, setSellerIdsState] = useState(initial.sellerIds);
+  const [storedPeriodPreset, setStoredPeriodPreset] = useState<PeriodPresetId | null>(
+    initial.periodPreset,
+  );
   const [forceCustomPreset, setForceCustomPreset] = useState(false);
+
+  const clearStoredPreset = useCallback(() => {
+    setForceCustomPreset(false);
+    setStoredPeriodPreset(null);
+  }, []);
 
   const setDateStart = useCallback(
     (value: string) => {
-      setForceCustomPreset(false);
+      clearStoredPreset();
       setDateStartLinked(value);
     },
-    [setDateStartLinked],
+    [clearStoredPreset, setDateStartLinked],
   );
 
   const setDateEnd = useCallback(
     (value: string) => {
-      setForceCustomPreset(false);
+      clearStoredPreset();
       setDateEndLinked(value);
     },
-    [setDateEndLinked],
+    [clearStoredPreset, setDateEndLinked],
   );
 
   const setCompetence = useCallback(
     (value: string) => {
-      setForceCustomPreset(false);
+      clearStoredPreset();
       setCompetenceLinked(value);
     },
-    [setCompetenceLinked],
+    [clearStoredPreset, setCompetenceLinked],
   );
 
   const sellerAccess = usePortfolioSellerAccess();
@@ -167,6 +175,10 @@ export function useAnalyticsFilters() {
     }
   }, [canFilterPortfolios, effectiveSellerIds, sellerIdFilter, setSellerIdFilter]);
 
+  const periodPreset: PeriodPresetId = forceCustomPreset
+    ? "custom"
+    : resolveEffectivePeriodPreset(dateStart, dateEnd, storedPeriodPreset);
+
   useEffect(() => {
     writeAnalyticsFiltersToUrl({
       dateStart,
@@ -175,8 +187,18 @@ export function useAnalyticsFilters() {
       branches,
       customerSegment,
       sellerIds: effectiveSellerIds,
+      periodPreset: forceCustomPreset ? null : storedPeriodPreset,
     });
-  }, [dateStart, dateEnd, competence, branches, customerSegment, effectiveSellerIds]);
+  }, [
+    dateStart,
+    dateEnd,
+    competence,
+    branches,
+    customerSegment,
+    effectiveSellerIds,
+    storedPeriodPreset,
+    forceCustomPreset,
+  ]);
 
   useEffect(() => {
     return subscribeAnalyticsFilterRouteSync(() => {
@@ -185,6 +207,8 @@ export function useAnalyticsFilters() {
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
       setSellerIdsState(sanitizeSellerIds(next.sellerIds, sellerAccess));
+      setStoredPeriodPreset(next.periodPreset);
+      setForceCustomPreset(false);
     });
   }, [replaceAll, sellerAccess]);
 
@@ -203,21 +227,20 @@ export function useAnalyticsFilters() {
     branches,
     customerSegment,
     sellerIds: effectiveSellerIds,
+    periodPreset: forceCustomPreset ? null : storedPeriodPreset,
   };
-
-  const detectedPreset = detectPeriodPreset(dateStart, dateEnd);
-  const periodPreset: PeriodPresetId =
-    forceCustomPreset || detectedPreset === "custom" ? "custom" : detectedPreset;
 
   const setPeriodPreset = useCallback(
     (preset: PeriodPresetId) => {
       if (preset === "custom") {
         setForceCustomPreset(true);
+        setStoredPeriodPreset(null);
         return;
       }
       const range = resolvePeriodPreset(preset);
       if (!range) return;
       setForceCustomPreset(false);
+      setStoredPeriodPreset(preset);
       replaceAll(range);
     },
     [replaceAll],

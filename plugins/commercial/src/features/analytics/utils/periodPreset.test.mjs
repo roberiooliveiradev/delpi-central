@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   detectPeriodPreset,
+  resolveEffectivePeriodPreset,
   resolvePeriodPreset,
   todayIsoInTimeZone,
 } from "./periodPreset.ts";
@@ -84,5 +85,28 @@ describe("periodPreset", () => {
       assert.equal(detectPeriodPreset(range.dateStart, range.dateEnd, now), id);
     }
     assert.equal(detectPeriodPreset("2026-01-01", "2026-02-01", now), "custom");
+  });
+
+  it("resolveEffectivePeriodPreset keeps this_week on Monday when stored", () => {
+    // 2026-08-17 Monday SP (UTC afternoon)
+    const monday = new Date("2026-08-17T18:00:00.000Z");
+    const week = resolvePeriodPreset("this_week", monday);
+    const day = resolvePeriodPreset("today", monday);
+    assert.ok(week);
+    assert.ok(day);
+    assert.equal(week.dateStart, day.dateStart);
+    assert.equal(week.dateEnd, day.dateEnd);
+    assert.equal(
+      resolveEffectivePeriodPreset(week.dateStart, week.dateEnd, "this_week", monday),
+      "this_week",
+    );
+    assert.equal(
+      resolveEffectivePeriodPreset(day.dateStart, day.dateEnd, "today", monday),
+      "today",
+    );
+    assert.equal(
+      detectPeriodPreset(week.dateStart, week.dateEnd, monday),
+      "today",
+    );
   });
 });

@@ -30,7 +30,35 @@ describe("analyticsFilterUrl — sellerIds multi", () => {
       "?start_date=2026-01-01&end_date=2026-01-31&seller_id=p1,p2",
     );
     expect(state.sellerIds).toEqual(["p1", "p2"]);
+    expect(state.periodPreset).toBeNull();
     const params = buildAnalyticsFilterSearchParams(state);
     expect(params).toContain("seller_id=p1%2Cp2");
+  });
+});
+
+describe("analyticsFilterUrl — period_preset", () => {
+  it("persiste e lê period_preset na URL", () => {
+    const state = readAnalyticsFilters(
+      "?start_date=2026-08-17&end_date=2026-08-17&period_preset=this_week",
+    );
+    expect(state.periodPreset).toBe("this_week");
+    const params = buildAnalyticsFilterSearchParams({
+      ...state,
+      periodPreset: "this_week",
+    });
+    expect(params).toContain("period_preset=this_week");
+  });
+
+  it("omite period_preset quando null ou custom", () => {
+    const params = buildAnalyticsFilterSearchParams({
+      dateStart: "2026-08-17",
+      dateEnd: "2026-08-17",
+      competence: "",
+      branches: [],
+      customerSegment: "",
+      sellerIds: [],
+      periodPreset: null,
+    });
+    expect(params).not.toContain("period_preset");
   });
 });

@@ -8,12 +8,18 @@ import {
   parseAnalyticsBranchCsv,
   serializeAnalyticsBranchCsv,
 } from "./analyticsBranchFilters";
+import {
+  parsePeriodPresetId,
+  type PeriodPresetId,
+} from "./periodPreset";
 
 export type AnalyticsFilterUrlState = LinkedDateFilters & {
   branches: string[];
   customerSegment: "" | "weg" | "new_business";
   /** Carteiras selecionadas (ids commercial-api); vazio = «Não filtrar» (global TOTVS). */
   sellerIds: string[];
+  /** Preset explícito na URL (`period_preset`); null = inferir / custom. */
+  periodPreset: PeriodPresetId | null;
 };
 
 const SESSION_STORAGE_KEY = "delpi.commercial.analytics.filters";
@@ -24,6 +30,7 @@ const ANALYTICS_OPPORTUNITY_BACK_KEYS = [
   "branch",
   "customer_segment",
   "seller_id",
+  "period_preset",
   "search",
 ] as const;
 
@@ -47,6 +54,7 @@ function defaultFilterState(): AnalyticsFilterUrlState {
     branches: [],
     customerSegment: "",
     sellerIds: [],
+    periodPreset: null,
   };
 }
 
@@ -108,13 +116,15 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
   const branchParam = params.get("branch") ?? "";
   const customerSegmentParam = params.get("customer_segment") ?? "";
   const sellerIdParam = (params.get("seller_id") ?? "").trim();
+  const periodPresetParam = params.get("period_preset") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
     isValidCompetence(competenceParam) ||
     branchParam.length > 0 ||
     customerSegmentParam.length > 0 ||
-    sellerIdParam.length > 0;
+    sellerIdParam.length > 0 ||
+    periodPresetParam.length > 0;
 
   if (!hasAny) return null;
 
@@ -132,6 +142,7 @@ function parseFilterParams(params: URLSearchParams): AnalyticsFilterUrlState | n
     branches: parseAnalyticsBranchCsv(branchParam),
     customerSegment: parseCustomerSegment(customerSegmentParam),
     sellerIds: parseSellerIdsCsv(sellerIdParam),
+    periodPreset: parsePeriodPresetId(periodPresetParam),
   };
 }
 
@@ -170,6 +181,9 @@ export function readAnalyticsFilters(
             typeof data.customerSegment === "string" ? data.customerSegment : null,
           ),
           sellerIds: parseStoredSellerIds(data),
+          periodPreset: parsePeriodPresetId(
+            typeof data.periodPreset === "string" ? data.periodPreset : null,
+          ),
         };
       }
     } catch {
@@ -190,6 +204,9 @@ export function buildAnalyticsFilterSearchParams(state: AnalyticsFilterUrlState)
   if (state.customerSegment) params.set("customer_segment", state.customerSegment);
   const sellerIds = serializeSellerIdsCsv(state.sellerIds);
   if (sellerIds) params.set("seller_id", sellerIds);
+  if (state.periodPreset && state.periodPreset !== "custom") {
+    params.set("period_preset", state.periodPreset);
+  }
   const query = params.toString();
   return query ? `?${query}` : "";
 }
