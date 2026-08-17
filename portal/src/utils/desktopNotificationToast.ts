@@ -119,7 +119,6 @@ export function showDesktopNotificationToast(
     const toast = new Notification(title, {
       body,
       tag: notification.id,
-      renotify: false,
     });
     markToasted(notification.id);
     toast.onclick = () => {
