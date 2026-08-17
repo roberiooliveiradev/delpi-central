@@ -303,8 +303,8 @@ class StrategicIndicatorsSnapshotService:
 
         1. Tenta ``period_scores`` global (``scope_department_id=""``) e filtra o
            departamento — mesmo contrato das telas do SI, sem recalcular tudo.
-        2. Em cache miss ou período não padrão, calcula só o departamento pedido
-           (medições + nota em tempo real).
+        2. Em cache miss, recalcula a base **global** e filtra o departamento
+           (nunca força linha só-departamento, que diverge da UI SI).
         """
         normalized_id = department_id.strip()
         if not normalized_id:
@@ -360,7 +360,7 @@ class StrategicIndicatorsSnapshotService:
             competence=period.competence,
             start_date=period.start_date,
             end_date=period.end_date,
-            department_id=normalized_id,
+            department_id=None,
             branch=branch,
             force_compute=True,
         )
@@ -370,7 +370,7 @@ class StrategicIndicatorsSnapshotService:
                 for item in snapshot.calculated_departments
                 if item.department_id == normalized_id
             ),
-            snapshot.calculated_departments[0] if snapshot.calculated_departments else None,
+            None,
         )
         return match, list(snapshot.measurement_errors)
 
