@@ -55,6 +55,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Job periódico de materialização |
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `3600` (1 h) | Intervalo do job (segundos) |
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | *(vazio)* | Override opcional (1–12). Vazio = **YTD** (início do ano até a competência) |
+| `SI_PERIOD_SCORES_REFRESH_BRANCHES` | `consolidated` (Compose) | Fase A horário = só consolidado. Vazio no código = `None+01+02`. Fase B: CLI `--branches 01,02` |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_RUN_MIGRATIONS_ON_STARTUP` | `true` (Compose prod/dev) | Migrations no boot |
 | `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Medições TOTVS via HTTP (não há pool ODBC no SI) |
@@ -109,11 +110,19 @@ Versões esperadas até **V020** (metas por filial, RH, Qualidade `average_of_un
 ## Após deploy (metas por filial / MFE)
 
 1. Reiniciar API e MFE (`strategic-indicators-api`, `strategic-indicators`).
-2. Materializar scores por escopo (consolidado + filiais `01`/`02`):
+2. Materializar scores (**caminho feliz = incremental**; sem wipe):
 
 ```bash
-docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
+# Fase A (consolidado) — mesmo escopo do job horário / botão Atualizar
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence YYYY-MM --no-invalidate --no-per-department
+
+# Fase B (filiais) — opcional no mesmo deploy
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence YYYY-MM --branches 01,02 --no-invalidate --no-per-department
 ```
+
+Wipe completo só via `POST /cache/invalidate` (admin) quando necessário — ver [OPERATIONS.md](./OPERATIONS.md).
 
 3. Validar catálogo por filial (deve imprimir `OK N` sem traceback):
 

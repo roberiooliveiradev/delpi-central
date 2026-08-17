@@ -99,10 +99,10 @@ Legenda de prioridade:
 
 | Rota api-delpi | Dept SI | Chamadas SI por mês/filial* | Observação no log |
 |----------------|---------|----------------------------|-------------------|
-| `GET /supplies/stock-value` | supplies | 1 direta + possível via turnover | Picos **12–44 s** entre linhas httpx; repetida para mesmas datas |
-| `GET /supplies/inventory-turnover` | supplies | 1 (sequencial após CPV no snapshot) | **6–17 s**; doc interno: pode reutilizar lógica de stock-value |
-| `GET /supplies/otd` | supplies | 1 | **11–20 s** em alguns meses |
-| `GET /financial/rol` | financial | 1 série + **N extras** por indicador `per_unit` | Muitas linhas repetidas (`branch=01`, `02`, consolidado); gaps **15–21 s** |
+| `GET /supplies/stock-value` | supplies | 1 (paralela com CPV/ROL/OTD) | Picos **12–44 s** entre linhas httpx; turnover **não** chama de novo (cálculo local a partir de CPV+stock) |
+| `GET /supplies/inventory-turnover` | supplies | **0 HTTP** (local) | Derivado de CPV + stock-value no SI — ver `supplies_metrics_helpers` |
+| `GET /supplies/otd` | supplies | 1 (paralela) | **11–20 s** em alguns meses |
+| `GET /financial/rol` | financial | warm `list_rol_by_branch` + cache | Warm no início do período; hits no commercial/supplies |
 
 \*Por mês = por `(start_date, end_date)` no `_build_snapshot` de suprimentos/financeiro.
 
@@ -128,21 +128,25 @@ Engenharia LMP + Transformômetro (~100–300 ms), vários `financial/rol` quand
 
 ---
 
-## 4. Por que o refresh com `trends_months` (ex.: 3–6) ainda leva ~15–25 min
+## 4. Por que o refresh YTD ainda é caro (e o que já mudou)
 
-Multiplicadores atuais (config padrão produção após ajuste):
+Multiplicadores **atuais** (Compose + código pós plano performance ago/2026):
 
 | Fator | Valor | Efeito |
 |-------|-------|--------|
-| Filiais materializadas | 3 (`consolidado`, `01`, `02`) | ×3 no trabalho de medições |
-| Meses por filial | YTD (ou override `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` / `--trends-months`) | ×N períodos na série |
+| Job horário (Fase A) | só `consolidated` (`SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated`) | Painel consolidado fresco a cada 1 h |
+| Filiais `01`/`02` | Fase B noturna (`--branches 01,02 --no-invalidate`) | Fora do burst horário |
+| Meses por escopo | **YTD** (ou override `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` / `--trends-months`) | ×N competências no ano |
 | Departamentos na medição | 7 em paralelo por escopo | Cada um dispara seu pacote de rotas |
-| Suprimentos por mês | **4** HTTP sequenciais (`cpv` → `inventory-turnover` → `otd` → `stock-value`) | Pior departamento |
-| `force_compute` + invalidate | sempre no script padrão | Zera `period_scores`; nada reaproveitado |
-| Duplicação `financial/rol` | metas `per_unit` + filial | Dezenas de GETs extras por escopo |
+| Suprimentos por mês | **4** HTTP **em paralelo** (CPV ∥ ROL ∥ stock-value ∥ OTD); turnover **local** | Wall-clock ≈ max(latências), não soma |
+| Rotina incremental | `--no-invalidate` (caminho feliz) | Wipe só via `POST /cache/invalidate` admin |
+| Qualidade multi-mês | PPM + scrap/rework via **series** (não N× summary) | Kaizen/5s: series na api-delpi; consumo SI no path série (ver §6) |
+| ROL | warm `list_rol_by_branch(["01","02"])` no provider | Evita N× `get_rol` frio |
 
-**Ordem de grandeza:**  
-3 filiais × (3 meses × ~30–80 HTTP úteis + duplicatas) ≈ **centenas** de chamadas api-delpi por refresh completo.
+**Env vazio vs Compose:** sem env, `parse_branch_scopes()` → `DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES` = `(None, "01", "02")`. Compose/env example forçam `consolidated` no horário.
+
+**Ordem de grandeza (histórica, pré-fases):**  
+3 filiais × (3 meses × ~30–80 HTTP) ≈ centenas de calls. Fase A corta o ×3 no job horário.
 
 ---
 
@@ -154,40 +158,42 @@ Multiplicadores atuais (config padrão produção após ajuste):
 - **Sintoma no log:** `financial/rol?branch=01&...` repetido para mar/abr/mai no mesmo minuto.
 - **Direção:** uma chamada `get_snapshot_series` por período com cache de linhas ROL; derivar `01`/`02` no SI sem novo HTTP por indicador.
 
-### 5.2 `supplies/stock-value` — mesmas datas repetidas
+### 5.2 `supplies/stock-value` / turnover
 
-- **Causa:** `_build_snapshot` chama turnover depois de stock-value, mas turnover consulta estoque de novo; cache do `SuppliesMetricsSnapshotService` é por processo e é perdido no invalidate global; refresh processa 3 filiais × 3 meses sem compartilhar entre escopos.
-- **Sintoma:** mesma URL `stock-value?start_date=01-03-2026` aparece minutos depois de novo.
-- **Direção:** cache TTL compartilhado (Redis ou `snapshot_shared_cache`) para respostas api-delpi; turnover reutilizar snapshot de stock-value já carregado.
-- **SQL (jun/2026):** api-delpi passou a usar CTE único + `summary_only` sem `#Delpi_StockItems` e filtro em intervalo em SD3010 — reduz tempo por execução, mas não elimina chamadas duplicadas SI↔turnover. Ver `api-delpi/docs/api/supplies-estoque-historico.md`.
+- **Status (ago/2026):** turnover é **local** (`build_turnover_raw_from_cpv` + stock já buscado). CPV ∥ ROL ∥ stock ∥ OTD em paralelo.
+- **Residual:** mesma URL `stock-value` ainda pode repetir entre escopos/filiais se não houver cache compartilhado entre processos (Redis fora deste ciclo).
+- **SQL (jun/2026):** CTE + `summary_only` na api-delpi — ver `api-delpi/docs/api/supplies-estoque-historico.md`.
 
-### 5.3 Três filiais = três passes quase completos
+### 5.3 Filiais em fases (não mais 3× no horário)
 
-- **Causa:** `DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES = (None, "01", "02")`.
-- **Direção:** materializar primeiro **consolidado** (destrava painel); filiais em job noturno ou `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` até otimizar.
+- **Código default** (env vazio): `(None, "01", "02")` em `goal_scope.DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES`.
+- **Compose / job horário:** `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` (Fase A).
+- **Fase B:** `python -u scripts/refresh_period_scores.py --branches 01,02 --no-invalidate` — ver [OPERATIONS.md](./OPERATIONS.md).
 
-### 5.4 Qualidade — PPM consolidado + por filial
+### 5.4 Qualidade — series + dedupe
 
-- **Causa:** após série consolidada, indicadores por filial pedem `quality/ppm/...?branch=01`.
-- **Direção:** endpoint série em api-delpi com breakdown por filial (uma ida).
+- **PPM / scrap / rework:** path multi-mês usa series (`get_snapshot_series`); filial explícita não duplica bloco consolidado (`fetch_consolidated_block`).
+- **Kaizen / 5S:** rotas series na api-delpi; SI deve preferir series no YTD (ver backlog #7b / Resultado E5.S3).
 
 ---
 
 ## 6. Backlog de otimização (priorizado)
 
-| # | Área | Ação | Impacto esperado | Onde mexer |
-|---|------|------|------------------|------------|
-| 1 | Operação | `refresh` com `--no-invalidate` após primeira carga | Evita rebuild total | `scripts/refresh_period_scores.py` |
-| 2 | Operação | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` até filial rápida | ÷3 no refresh | `.env` |
-| 3 | api-delpi | ~~Otimizar `/supplies/stock-value` (CTE único, summary_only sem temp table, range SD3010)~~ **feito jun/2026** | Ver `api-delpi/docs/api/supplies-estoque-historico.md` § performance | `stock_value_historical_sql.py` |
-| 3b | api-delpi | Turnover reutilizar stock já calculado + índices DBA SB9/SD3 | −duplicata P0 | `api-delpi` supplies, DBA |
-| 4 | SI | ~~Cache TTL medições (7 dept., zero erros)~~ **feito** | Menos duplicata parcial | `measurements_cache_policy.py` |
-| 4b | SI | ~~Versões de snapshot (até 3, serve limpa)~~ **feito** | Não substituir boa coleta por falha | `measurement_snapshot_versions.py`, `versioned_measurements_cache.py` |
-| 5 | SI | ~~Financial: ROL por escopo de filial + cache TTL `get_rol`~~ **feito** | Menos P1 | `financial_indicators_snapshot_provider`, `delpi_financial_gateway` |
-| 6 | SI | Suprimentos: paralelizar 4 use cases dentro do mês | −latência por mês | `supplies_metrics_snapshot_service._build_snapshot` |
-| 7 | api-delpi | Endpoints “série” com `branch` opcional (quality ppm, commercial) | Menos GET por filial | respectivos módulos api-delpi |
-| 8 | SI | Já feito: leitura `period_scores` sem reconcile | GET painel em ms | `strategic_indicators_snapshot_service` |
-| 9 | MFE | Job assíncrono em 524 (feito) | UX sob Cloudflare | `useStrategicIndicatorsDepartmentTree` |
+| # | Área | Ação | Impacto esperado | Status |
+|---|------|------|------------------|--------|
+| 1 | Operação | `refresh` com `--no-invalidate` após primeira carga | Evita rebuild total | **feito** (caminho feliz documentado) |
+| 2 | Operação | Job horário `BRANCHES=consolidated`; filiais Fase B | ÷3 no horário | **feito** (Compose + CLI `--branches`) |
+| 3 | api-delpi | Otimizar `/supplies/stock-value` | SQL | **feito** jun/2026 |
+| 3b | api-delpi | Índices DBA SB9/SD3 (opcional) | −latência P0 | aberto |
+| 4–5 | SI | Cache TTL / versões / ROL cache | Menos duplicata | **feito** |
+| 5b | SI | Warm `list_rol_by_branch` no provider | Cache hit commercial/supplies | **feito** (E4.S1) |
+| 6 | SI | Suprimentos: paralelizar CPV∥ROL∥stock∥OTD; turnover local | −wall-clock/mês | **feito** (E2.S1) |
+| 7 | api-delpi + SI | PPM series + scrap/rework series | Menos GET YTD | **feito** (E3.S1–S3) |
+| 7b | SI | Kaizen + audit-5s via series no `get_snapshot_series` | Sem N× summary | ver E5.S3 |
+| 8 | SI | Leitura `period_scores` mat-only | GET painel em ms | **feito** |
+| 9 | MFE | Job assíncrono em 524 | UX Cloudflare | **feito** |
+| 10 | SI | Helper único `build_series_coverage` | Paridade trends/presentation/tree | **feito** (E5.S1) |
+| — | Fora | Redis multi-réplica; séries commercial | — | fora do plano |
 
 ---
 
@@ -240,9 +246,10 @@ Medir p95 de cada rota P0 com `curl` ou OpenAPI direto no `delpi-api-delpi` (sem
 | Operação refresh | `docs/OPERATIONS.md` |
 | Medições | `si_app/infrastructure/providers/strategic_indicators/real_indicator_measurements_provider.py` |
 | Refresh materializado | `si_app/application/services/strategic_indicators/period_scores_refresh_service.py` |
-| Suprimentos (4 calls/mês) | `si_app/application/services/supplies/supplies_metrics_snapshot_service.py` |
+| Suprimentos (4 HTTP // + turnover local) | `si_app/application/services/supplies/supplies_metrics_snapshot_service.py` |
+| Cobertura série | `si_app/application/services/strategic_indicators/series_coverage.py` |
 | Financeiro ROL | `si_app/application/services/financial/financial_metrics_snapshot_service.py` |
 
 ---
 
-**Próximo passo sugerido:** workshop rápido **SI + api-delpi** focado em **P0 supplies** e **deduplicação financial/rol** — são os que explicam a maior parte dos ~6 min por bloco de `si_measurements_loaded` no log analisado.
+**Status (ago/2026):** Fase A/B, supplies paralelo, PPM+cost series, warm ROL e `build_series_coverage` entregues. Métricas finais em **Resultado E5.S3** (abaixo / após verify).

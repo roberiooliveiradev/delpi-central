@@ -177,7 +177,7 @@ PROIBIDO:
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | *(vazio)* | Override opcional (1–12). Vazio = **YTD** (início do ano até a competência) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS` | `true` | Garante comparativo mês anterior |
-| `SI_PERIOD_SCORES_REFRESH_BRANCHES` | vazio | Filiais extras (CSV); vazio = consolidado |
+| `SI_PERIOD_SCORES_REFRESH_BRANCHES` | `consolidated` no Compose | CSV de escopos. `consolidated` / `all` = só consolidado. **Vazio no código** (sem Compose) = `None+01+02`. Job horário = `consolidated`; Fase B = `01,02` via CLI `--branches` |
 
 ---
 
@@ -205,7 +205,7 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | Metas por ano (2025, etc.) | Baixa | Admin `duplicate-year`; hoje há fallback automático |
 | Paginação admin extra | Baixa | Ex.: histórico de metas se volume crescer |
 | Unificar migrations | Housekeeping | Remover duplicata legada em `api-delpi/migrations/plugins/strategic-indicators/` |
-| Refresh por filial | Baixa | `SI_PERIOD_SCORES_REFRESH_BRANCHES` com códigos TOTVS |
+| Refresh por filial (Fase B) | Operação | CLI `--branches 01,02 --no-invalidate` — [OPERATIONS.md](./OPERATIONS.md) |
 
 ---
 
