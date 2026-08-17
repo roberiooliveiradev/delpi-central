@@ -188,7 +188,7 @@ class SmokeDouble:
                 return True if name == "delete" else None
             if name == "export_pdf":
                 return (b"%PDF-1.4 smoke", "ata-smoke.pdf")
-            if name in {"signature_image", "read_image"}:
+            if name in {"signature_image", "read_image", "public_signature_image"}:
                 return b"\x89PNG\r\n\x1a\nsmoke"
             if name == "generate_from_transcript":
                 return {

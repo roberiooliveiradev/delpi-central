@@ -12,6 +12,13 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY tv-dashboard-presentation ./tv-dashboard-presentation
 
+COPY transformometro-meeting-minutes-presentation/package*.json ./transformometro-meeting-minutes-presentation/
+COPY transformometro-meeting-minutes-presentation/.npmrc ./transformometro-meeting-minutes-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd transformometro-meeting-minutes-presentation && npm install --omit=peer
+
+COPY transformometro-meeting-minutes-presentation ./transformometro-meeting-minutes-presentation
+
 COPY public-hub/package*.json ./public-hub/
 RUN --mount=type=cache,target=/root/.npm \
     cd public-hub && npm install

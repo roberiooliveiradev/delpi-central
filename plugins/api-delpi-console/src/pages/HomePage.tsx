@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import type { MetricKpiCardTone } from "@delpi/plugin-ui/index";
 import {
   Activity,
   Bell,
@@ -10,6 +11,7 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
+import { ConsoleInlineMeter, ConsoleMetricKpiCard, ConsoleSectionCard } from "../app/consoleUi";
 import { MONITOR_REFRESH_MS } from "../constants/monitoring";
 import { fetchConsoleHealth, type ConsoleHealthPayload } from "../lib/consoleAlerts";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
@@ -23,6 +25,138 @@ function statusClass(status: ConsoleHealthPayload["status"] | undefined): string
   if (status === "critical") return "adc-health__err";
   if (status === "warning") return "adc-health__warn";
   return "adc-health__ok";
+}
+
+function formatPct(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toFixed(value >= 10 ? 0 : 1)}%`;
+}
+
+function formatMs(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${Math.round(value)} ms`;
+}
+
+function p95Tone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  const p95 = health.metrics.p95_ms;
+  const threshold = health.thresholds.p95_ms;
+  if (!threshold || !health.traffic?.total_requests) return "default";
+  if (p95 >= threshold) return "negative";
+  return "positive";
+}
+
+function poolTone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  const occupancy = health.metrics.pool_occupancy_pct ?? health.pools?.max_occupancy_pct ?? 0;
+  const threshold = health.thresholds.pool_saturation_pct;
+  if (threshold == null) return "default";
+  if (occupancy >= threshold) return "negative";
+  return "default";
+}
+
+function alertTone(health: ConsoleHealthPayload): MetricKpiCardTone {
+  if (health.status === "critical") return "negative";
+  if (health.status === "warning" || health.open_alert_count > 0) return "warning";
+  return "positive";
+}
+
+function errorBudgetTone(
+  remainingPct: number | null | undefined,
+): "neutral" | "success" | "warning" | "danger" {
+  if (remainingPct == null) return "neutral";
+  if (remainingPct <= 0) return "danger";
+  return "success";
+}
+
+function ConsoleHealthGlance({
+  health,
+  onNavigate,
+}: {
+  health: ConsoleHealthPayload;
+  onNavigate: Props["onNavigate"];
+}) {
+  const requests = health.traffic?.total_requests ?? health.metrics.caller_requests ?? 0;
+  const emptyWindow = requests <= 0;
+  const budgetRemaining = health.sli?.error_budget_remaining_pct;
+  const availabilityLabel =
+    health.sli_meta?.labels.availability_pct ?? "Disponibilidade (janela)";
+  const budgetLabel =
+    health.sli_meta?.labels.error_budget_remaining_pct ?? "Error budget restante (janela)";
+
+  return (
+    <ConsoleSectionCard
+      title="Glance operacional"
+      subtitle="RED da janela amostrada (polling 30 s) — saturação e alertas vêm do contrato da API."
+      actions={
+        <button type="button" className="adc-link" onClick={() => onNavigate("alertas")}>
+          Ver alertas
+        </button>
+      }
+    >
+      {emptyWindow ? (
+        <p className="adc-muted">Sem tráfego na janela.</p>
+      ) : null}
+      <div className="adc-glance-kpis" role="group" aria-label="Métricas RED do console">
+        <ConsoleMetricKpiCard
+          label="Requisições"
+          value={emptyWindow ? "—" : String(requests)}
+          hint="Janela em memória"
+          tone="default"
+        />
+        <ConsoleMetricKpiCard
+          label="Erros"
+          value={emptyWindow ? "—" : formatPct(health.traffic?.error_rate_pct ?? health.metrics.error_rate_pct)}
+          hint={
+            emptyWindow
+              ? "Sem amostras"
+              : `${health.traffic?.error_count ?? 0} com status ≥ 400`
+          }
+          tone="default"
+        />
+        <ConsoleMetricKpiCard
+          label="p95"
+          value={emptyWindow ? "—" : formatMs(health.metrics.p95_ms)}
+          hint={emptyWindow ? "Sem amostras" : `Limiar ${formatMs(health.thresholds.p95_ms)}`}
+          tone={p95Tone(health)}
+        />
+        <ConsoleMetricKpiCard
+          label="Pool"
+          value={formatPct(health.metrics.pool_occupancy_pct ?? health.pools?.max_occupancy_pct)}
+          hint={
+            health.thresholds.pool_saturation_pct != null
+              ? `Limiar ${formatPct(health.thresholds.pool_saturation_pct)}`
+              : "Máx. ocupação Plugins/TOTVS"
+          }
+          tone={poolTone(health)}
+          titleHint="Detalhe dos pools na aba Cache"
+        />
+        <ConsoleMetricKpiCard
+          label="Alertas"
+          value={String(health.open_alerts_count ?? health.open_alert_count)}
+          hint={health.status}
+          tone={alertTone(health)}
+        />
+      </div>
+
+      <div className="adc-glance-slo">
+        <p className="adc-muted adc-glance-slo__note">
+          {health.sli_meta?.note ??
+            "SLI/SLO da janela amostrada em memória — não equivale a SLO de 30 dias."}
+        </p>
+        <ConsoleInlineMeter
+          value={budgetRemaining ?? 0}
+          max={100}
+          tone={errorBudgetTone(budgetRemaining)}
+          size="md"
+          label={
+            emptyWindow || budgetRemaining == null
+              ? `${budgetLabel}: — · target ${formatPct(health.slo?.availability_pct)}`
+              : `${budgetLabel}: ${formatPct(budgetRemaining)} · ${availabilityLabel} ${formatPct(health.sli?.availability_pct ?? undefined)} / target ${formatPct(health.slo?.availability_pct)}`
+          }
+          aria-label={budgetLabel}
+        />
+      </div>
+    </ConsoleSectionCard>
+  );
 }
 
 export function HomePage({ onNavigate }: Props) {
@@ -56,6 +190,14 @@ export function HomePage({ onNavigate }: Props) {
           </p>
         </div>
       </header>
+
+      {consoleHealth ? (
+        <div className="adc-glance">
+          <ConsoleHealthGlance health={consoleHealth} onNavigate={onNavigate} />
+        </div>
+      ) : loading ? (
+        <p className="adc-muted">Carregando glance operacional…</p>
+      ) : null}
 
       <section className="adc-card-grid">
         <article className="adc-card">
@@ -128,8 +270,8 @@ export function HomePage({ onNavigate }: Props) {
           <div className="adc-card__icon">
             <Database size={22} />
           </div>
-          <h2>Cache e callers</h2>
-          <p>Hits/miss LMP e estoque, breakdown por caller e comparador de deploy.</p>
+          <h2>Cache, callers e pools</h2>
+          <p>Hits/miss LMP e estoque, callers, connection pools e comparador de deploy.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>

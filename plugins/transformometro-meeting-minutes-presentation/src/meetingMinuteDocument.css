@@ -1,0 +1,246 @@
+/* Prévia/leitura de ata Transforma+ — folha sempre clara (papel oficial). */
+
+.tm-ata-reader {
+  width: 100%;
+}
+
+.tm-ata-document {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: #151515;
+}
+
+.tm-ata-document__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.62);
+}
+
+.tm-ata-document__title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.tm-ata-document__lede {
+  margin: 6px 0 0;
+  color: rgba(21, 21, 21, 0.62);
+  font-size: 0.95rem;
+}
+
+.tm-ata-document__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 10px 16px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.tm-ata-document__facts dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.62);
+}
+
+.tm-ata-document__facts dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+}
+
+.tm-ata-document__body h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.tm-ata-document__participants h2,
+.tm-ata-document__signatures h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.tm-ata-document__signature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 12px;
+}
+
+.tm-ata-document__empty {
+  margin: 0;
+  color: rgba(21, 21, 21, 0.62);
+  font-size: 0.9rem;
+}
+
+.tm-ata-document__logo {
+  display: block;
+  height: auto;
+  max-width: 42mm;
+  max-height: 18mm;
+  object-fit: contain;
+}
+
+.tm-ata-document-brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.tm-ata-paper.delpi-ui-document-page,
+.tm-ata-paper {
+  padding-bottom: 0;
+  color-scheme: light;
+  background: #ffffff;
+  color: #151515;
+  --ds-title: #151515;
+  --ds-text: #151515;
+  --ds-text-muted: rgba(21, 21, 21, 0.62);
+  --ds-card-bg: #ffffff;
+  --ds-card-border: #e6e6e6;
+  --ds-border-subtle: #e8e8e8;
+  --ds-surface-raised: #f7f7f7;
+  --ds-surface-muted: #f3f4f6;
+  --ds-surface-inset: #f1f5f9;
+  --ds-accent: #089bdb;
+  --ds-danger-fg: #b91c1c;
+  --delpi-ui-text: #151515;
+  --delpi-ui-surface: #ffffff;
+  --delpi-ui-muted: rgba(21, 21, 21, 0.62);
+  --delpi-ui-border: #e6e6e6;
+  --delpi-ui-accent: #089bdb;
+  --text: #151515;
+  --text-muted: rgba(21, 21, 21, 0.62);
+  --surface: #ffffff;
+  --border: #e6e6e6;
+  --background: #ffffff;
+  --secundary: #013866;
+  --primary: #089bdb;
+}
+
+.tm-ata-paper .tm-ata-document__participants li {
+  background: color-mix(in srgb, #151515 4%, #ffffff);
+}
+
+.tm-ata-paper .tm-ata-watermark {
+  color: color-mix(in srgb, #64748b 28%, transparent);
+}
+
+.tm-ata-paper .tm-ata-watermark--danger {
+  color: color-mix(in srgb, #b91c1c 32%, transparent);
+}
+
+.tm-ata-paper > .delpi-ui-document-page__footer {
+  margin-top: auto;
+  margin-left: -21mm;
+  margin-right: -21mm;
+  width: calc(100% + 42mm);
+  max-width: none;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.tm-ata-document-footer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tm-ata-document-footer > .delpi-ui-document-footer {
+  margin: 0;
+  padding: 2mm 21mm 3mm;
+  box-sizing: border-box;
+}
+
+.tm-ata-brand-bar {
+  display: flex;
+  height: 4px;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tm-ata-brand-bar span {
+  flex: 1;
+}
+
+.tm-ata-brand-bar span:nth-child(1) {
+  background: var(--tm-brand-blue-900, #012a4a);
+}
+
+.tm-ata-brand-bar span:nth-child(2) {
+  background: var(--tm-brand-blue-700, #013866);
+}
+
+.tm-ata-brand-bar span:nth-child(3) {
+  background: var(--tm-brand-blue-500, #01497c);
+}
+
+.tm-ata-brand-bar span:nth-child(4) {
+  background: var(--tm-brand-blue-accent, #089bdb);
+}
+
+.tm-ata-watermark {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, #64748b 28%, transparent);
+  text-transform: uppercase;
+}
+
+.tm-ata-watermark--danger {
+  color: color-mix(in srgb, #b91c1c 32%, transparent);
+}
+
+.tm-ata-document__participants {
+  margin-top: 0.5rem;
+}
+
+.tm-ata-document__participants ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 8px 14px;
+}
+
+.tm-ata-document__participants li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.tm-ata-document__participants strong {
+  font-size: 0.9rem;
+}
+
+.tm-ata-document__participants span {
+  font-size: 0.75rem;
+  color: rgba(21, 21, 21, 0.62);
+}
+
+@media print {
+  .tm-ata-document__logo,
+  .tm-ata-document-brand .tm-ata-document__logo {
+    max-width: 40mm;
+    max-height: 16mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tm-ata-brand-bar span {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

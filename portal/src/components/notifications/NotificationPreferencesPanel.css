@@ -138,8 +138,45 @@
   flex: 0 0 auto;
 }
 
+.notification-preferences__desktop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--primary) 8%);
+}
+
+.notification-preferences__desktop-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notification-preferences__desktop-status {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.notification-preferences__desktop-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 42rem;
+}
+
+.notification-preferences__desktop-actions {
+  flex: 0 0 auto;
+}
+
 .notification-preferences__important,
-.notification-preferences__mute {
+.notification-preferences__mute,
+.notification-preferences__email {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
@@ -182,6 +219,22 @@
 
 .notification-preferences__mute--silenced {
   color: color-mix(in srgb, #b45309 70%, var(--text));
+}
+
+.notification-preferences__email:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.notification-preferences__email:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.notification-preferences__email--on {
+  color: color-mix(in srgb, #2563eb 80%, var(--text));
+}
+
+.notification-preferences__email--off {
+  color: var(--text-muted);
 }
 
 .notification-preferences__mute-icons {

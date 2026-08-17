@@ -294,11 +294,11 @@ export function getPortalTourQuests({
     {
       id: "page-notifications-preferences",
       title: "Preferências de notificação",
-      hint: "Escolha o que deseja receber.",
+      hint: "Configure canais: importante, e-mail e silêncio.",
       steps: [
         'Na página Notificações, abra a aba "Preferências".',
-        "Ative ou desative tipos de mensagem.",
-        "As escolhas valem para este navegador/conta.",
+        "Veja estrela, sino e envelope em cada tipo.",
+        "As escolhas salvam na hora na sua conta.",
       ],
       unlockHint: "Abra a página Notificações e troque para Preferências.",
       scope: "notifications",
@@ -309,6 +309,61 @@ export function getPortalTourQuests({
       isAvailable: () =>
         isNotificationsRoute() &&
         hasVisibleTarget("#notifications-section-preferences"),
+    },
+    {
+      id: "page-notifications-important",
+      title: "Marcar como importante",
+      hint: "Importantes abrem painel na tela (e-mail é o envelope).",
+      steps: [
+        "Abra Preferências na página Notificações.",
+        "Clique na estrela do tipo desejado.",
+        'O status passa a "Importante" (salva na hora).',
+      ],
+      unlockHint: "Abra Notificações → Preferências.",
+      scope: "notifications",
+      category: "notifications",
+      actionSelector: '[data-tour="notification-pref-important"]',
+      highlightSelector: '[data-tour="notification-pref-important"]',
+      isAvailable: () =>
+        isNotificationsRoute() &&
+        hasVisibleTarget('[data-tour="notification-pref-important"]'),
+    },
+    {
+      id: "page-notifications-email",
+      title: "Receber por e-mail",
+      hint: "Envelope liga o e-mail; estrela é só o painel importante.",
+      steps: [
+        "Abra Preferências na página Notificações.",
+        "Clique no envelope do tipo desejado.",
+        "O status pode mostrar E-mail (ou Importante · E-mail se a estrela também estiver ligada).",
+      ],
+      unlockHint: "Abra Notificações → Preferências.",
+      scope: "notifications",
+      category: "notifications",
+      actionSelector: '[data-tour="notification-pref-email"]',
+      highlightSelector: '[data-tour="notification-pref-email"]',
+      isAvailable: () =>
+        isNotificationsRoute() &&
+        hasVisibleTarget('[data-tour="notification-pref-email"]'),
+    },
+    {
+      id: "page-notifications-desktop-toast",
+      title: "Alertas do sistema",
+      hint: "Toasts do Windows/macOS com o portal aberto.",
+      steps: [
+        "No topo das Preferências, use Ativar alertas do sistema.",
+        "Aceite a permissão do navegador.",
+        "Novas notificações passam a aparecer como toast do SO.",
+      ],
+      unlockHint: "Abra Notificações → Preferências.",
+      scope: "notifications",
+      category: "notifications",
+      actionSelector:
+        '[data-tour="notification-pref-desktop-toasts"] button, [data-tour="notification-pref-desktop-toasts"]',
+      highlightSelector: '[data-tour="notification-pref-desktop-toasts"]',
+      isAvailable: () =>
+        isNotificationsRoute() &&
+        hasVisibleTarget('[data-tour="notification-pref-desktop-toasts"]'),
     },
 
     // —— Perfil & RBAC ——

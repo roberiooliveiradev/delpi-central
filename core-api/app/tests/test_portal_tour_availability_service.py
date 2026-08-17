@@ -59,9 +59,14 @@ def test_resolve_new_quest_ids_for_current_version():
 
     new_ids = resolve_new_quest_ids(
         available,
-        completed_quest_ids={"open-apps"},
+        completed_quest_ids={"open-apps", "page-notifications-inbox"},
         tour_version=CURRENT_PORTAL_TOUR_VERSION,
     )
 
+    # Legado (v6) não entra como "novo"; só desafios introduced_in=CURRENT.
     assert "open-apps" not in new_ids
-    assert "pin-app" in new_ids
+    assert "pin-app" not in new_ids
+    assert "page-notifications-inbox" not in new_ids
+    assert "page-notifications-important" in new_ids
+    assert "page-notifications-email" in new_ids
+    assert "page-notifications-desktop-toast" in new_ids

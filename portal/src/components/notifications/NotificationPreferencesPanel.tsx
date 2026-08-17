@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Bell, BellOff, Settings2, Star } from "lucide-react";
+import { Bell, BellOff, Mail, Settings2, Star } from "lucide-react";
 
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient } from "../../data/apiClient";
@@ -10,6 +10,14 @@ import {
 } from "../../utils/notificationCatalog";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import { Alert, Button, SearchInput, Spinner } from "../../ui-kit";
+import {
+  DESKTOP_TOASTS_ENABLED_KEY,
+  getDesktopNotificationPermission,
+  isDesktopNotificationSupported,
+  isDesktopToastsEnabled,
+  requestDesktopNotificationPermission,
+  setDesktopToastsEnabled,
+} from "../../utils/desktopNotificationToast";
 
 import "./NotificationPreferencesPanel.css";
 
@@ -22,12 +30,27 @@ type Props = {
 function preferenceStatusLabel(
   isImportant: boolean,
   isMuted: boolean,
+  isEmail: boolean,
   isSaving: boolean,
 ): string {
   if (isSaving) return "Salvando…";
-  if (isImportant) return "Importante";
   if (isMuted) return "Silenciada";
+  if (isImportant && isEmail) return "Importante · E-mail";
+  if (isImportant) return "Importante";
+  if (isEmail) return "E-mail";
   return "Recebendo";
+}
+
+function desktopToastStatusLabel(
+  supported: boolean,
+  enabled: boolean,
+  permission: NotificationPermission | "unsupported",
+): string {
+  if (!supported || permission === "unsupported") return "Não suportados neste navegador";
+  if (permission === "denied") return "Bloqueados pelo navegador";
+  if (permission === "granted" && enabled) return "Ativados";
+  if (permission === "granted") return "Permissão concedida (toasts desativados)";
+  return "Não solicitados";
 }
 
 export function NotificationPreferencesPanel({
@@ -55,6 +78,7 @@ export function NotificationPreferencesPanel({
   const [mutableCategories, setMutableCategories] = useState<NotificationCategory[]>([]);
   const [mutedCategories, setMutedCategories] = useState<NotificationCategory[]>([]);
   const [importantCategories, setImportantCategories] = useState<NotificationCategory[]>([]);
+  const [emailCategories, setEmailCategories] = useState<NotificationCategory[]>([]);
   const [catalogCategories, setCatalogCategories] = useState<NotificationCatalogCategoryItem[]>(
     catalog.categories,
   );
@@ -62,15 +86,22 @@ export function NotificationPreferencesPanel({
   const [savingCategory, setSavingCategory] = useState<NotificationCategory | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [desktopSupported] = useState(() => isDesktopNotificationSupported());
+  const [desktopEnabled, setDesktopEnabled] = useState(() => isDesktopToastsEnabled());
+  const [desktopPermission, setDesktopPermission] = useState<NotificationPermission | "unsupported">(
+    () => getDesktopNotificationPermission(),
+  );
 
   const applyPreferencesResponse = useCallback(
     (data: {
       mutedCategories: NotificationCategory[];
       importantCategories: NotificationCategory[];
+      emailCategories: NotificationCategory[];
       categories: NotificationCatalogCategoryItem[];
     }) => {
       setMutedCategories(data.mutedCategories);
       setImportantCategories(data.importantCategories);
+      setEmailCategories(data.emailCategories);
       if (data.categories.length > 0) {
         setCatalogCategories(data.categories);
       }
@@ -96,31 +127,56 @@ export function NotificationPreferencesPanel({
     void loadPreferences();
   }, [loadPreferences]);
 
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === DESKTOP_TOASTS_ENABLED_KEY) {
+        setDesktopEnabled(isDesktopToastsEnabled());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const persistPreferences = useCallback(
     async (
       nextMuted: NotificationCategory[],
       nextImportant: NotificationCategory[],
+      nextEmail: NotificationCategory[],
       category: NotificationCategory,
     ) => {
       const previousMuted = mutedCategories;
       const previousImportant = importantCategories;
+      const previousEmail = emailCategories;
       setMutedCategories(nextMuted);
       setImportantCategories(nextImportant);
+      setEmailCategories(nextEmail);
       setSavingCategory(category);
       setError(null);
       try {
-        const data = await coreApi.updateNotificationPreferences(nextMuted, nextImportant);
+        const data = await coreApi.updateNotificationPreferences(
+          nextMuted,
+          nextImportant,
+          nextEmail,
+        );
         applyPreferencesResponse(data);
         onSaved?.();
       } catch (err) {
         setMutedCategories(previousMuted);
         setImportantCategories(previousImportant);
+        setEmailCategories(previousEmail);
         setError(err instanceof Error ? err.message : "Falha ao salvar preferências");
       } finally {
         setSavingCategory(null);
       }
     },
-    [applyPreferencesResponse, coreApi, importantCategories, mutedCategories, onSaved],
+    [
+      applyPreferencesResponse,
+      coreApi,
+      emailCategories,
+      importantCategories,
+      mutedCategories,
+      onSaved,
+    ],
   );
 
   function handleToggleMute(category: NotificationCategory, currentlyMuted: boolean) {
@@ -129,6 +185,7 @@ export function NotificationPreferencesPanel({
       void persistPreferences(
         mutedCategories.filter((item) => item !== category),
         importantCategories,
+        emailCategories,
         category,
       );
       return;
@@ -136,6 +193,7 @@ export function NotificationPreferencesPanel({
     void persistPreferences(
       [...mutedCategories.filter((item) => item !== category), category],
       importantCategories.filter((item) => item !== category),
+      emailCategories.filter((item) => item !== category),
       category,
     );
   }
@@ -146,6 +204,7 @@ export function NotificationPreferencesPanel({
       void persistPreferences(
         mutedCategories,
         importantCategories.filter((item) => item !== category),
+        emailCategories,
         category,
       );
       return;
@@ -153,8 +212,53 @@ export function NotificationPreferencesPanel({
     void persistPreferences(
       mutedCategories.filter((item) => item !== category),
       [...importantCategories.filter((item) => item !== category), category],
+      emailCategories,
       category,
     );
+  }
+
+  function handleToggleEmail(category: NotificationCategory, currentlyEmail: boolean) {
+    if (savingCategory) return;
+    if (currentlyEmail) {
+      void persistPreferences(
+        mutedCategories,
+        importantCategories,
+        emailCategories.filter((item) => item !== category),
+        category,
+      );
+      return;
+    }
+    void persistPreferences(
+      mutedCategories.filter((item) => item !== category),
+      importantCategories,
+      [...emailCategories.filter((item) => item !== category), category],
+      category,
+    );
+  }
+
+  async function handleEnableDesktopToasts() {
+    setError(null);
+    const permission = await requestDesktopNotificationPermission();
+    setDesktopPermission(permission);
+    if (permission === "granted") {
+      setDesktopToastsEnabled(true);
+      setDesktopEnabled(true);
+      return;
+    }
+    if (permission === "denied") {
+      setDesktopToastsEnabled(false);
+      setDesktopEnabled(false);
+      setError(
+        "O navegador bloqueou alertas do sistema. Libere a permissão nas configurações do site.",
+      );
+      return;
+    }
+    setError("Não foi possível ativar os alertas do sistema neste navegador.");
+  }
+
+  function handleDisableDesktopToasts() {
+    setDesktopToastsEnabled(false);
+    setDesktopEnabled(false);
   }
 
   const catalogForLabels = useMemo(
@@ -204,6 +308,8 @@ export function NotificationPreferencesPanel({
       ? "notification-preferences notification-preferences--page"
       : "notification-preferences";
 
+  const toastStatus = desktopToastStatusLabel(desktopSupported, desktopEnabled, desktopPermission);
+
   return (
     <section className={rootClassName} aria-labelledby="notification-preferences-title">
       {variant === "embedded" ? (
@@ -212,7 +318,8 @@ export function NotificationPreferencesPanel({
           <div>
             <h2 id="notification-preferences-title">Preferências</h2>
             <p>
-              Estrela marca como importante; sino silencia. A alteração é salva na hora.
+              Estrela (importante), sino (silêncio) e envelope (e-mail). A alteração é salva na
+              hora.
             </p>
           </div>
         </header>
@@ -222,12 +329,45 @@ export function NotificationPreferencesPanel({
             Preferências de notificação
           </h2>
           <p className="notification-preferences__intro">
-            Use a <strong>estrela</strong> para alertas persistentes na tela e o{" "}
-            <strong>sino</strong> para silenciar. Importante e silêncio não se combinam; a
-            alteração é salva na hora. O histórico anterior permanece na aba Histórico.
+            Use a <strong>estrela</strong> para alertas na tela, o <strong>envelope</strong> para
+            receber por e-mail e o <strong>sino</strong> para silenciar. Importante e e-mail são
+            independentes; silêncio remove os demais canais daquele tipo. A alteração é salva na hora.
           </p>
         </>
       )}
+
+      <div
+        className="notification-preferences__desktop"
+        data-tour="notification-pref-desktop-toasts"
+      >
+        <div className="notification-preferences__desktop-copy">
+          <h3 className="notification-preferences__desktop-title">
+            Alertas do sistema (Windows / macOS / Linux)
+          </h3>
+          <p className="notification-preferences__desktop-status">Status: {toastStatus}</p>
+          <p className="notification-preferences__desktop-hint">
+            Com a Minha DELPI aberta, novas notificações também aparecem como toast do sistema
+            operacional.
+          </p>
+        </div>
+        <div className="notification-preferences__desktop-actions">
+          {desktopSupported && desktopPermission === "granted" && desktopEnabled ? (
+            <Button type="button" variant="ghost" size="sm" onClick={handleDisableDesktopToasts}>
+              Desativar toasts
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={!desktopSupported || desktopPermission === "denied"}
+              onClick={() => void handleEnableDesktopToasts()}
+            >
+              Ativar alertas do sistema
+            </Button>
+          )}
+        </div>
+      </div>
 
       <p className="notification-preferences__note">
         Notificações de <strong>sistema</strong> não podem ser desativadas (segurança e avisos
@@ -257,6 +397,7 @@ export function NotificationPreferencesPanel({
               {filteredCategories.map((category) => {
                 const isMuted = mutedCategories.includes(category);
                 const isImportant = importantCategories.includes(category);
+                const isEmail = emailCategories.includes(category);
                 const isSaving = savingCategory === category;
                 const display = resolveNotificationPreferenceDisplay(
                   category,
@@ -278,7 +419,12 @@ export function NotificationPreferencesPanel({
                           {display.applicationName}
                         </span>
                         <span className="notification-preferences__hint">
-                          {preferenceStatusLabel(isImportant, isMuted, isSaving)}
+                          {preferenceStatusLabel(
+                            isImportant,
+                            isMuted,
+                            isEmail,
+                            isSaving,
+                          )}
                         </span>
                       </span>
                     </span>
@@ -296,6 +442,7 @@ export function NotificationPreferencesPanel({
                               ? "notification-preferences__important--on"
                               : "notification-preferences__important--off",
                           ].join(" ")}
+                          data-tour="notification-pref-important"
                           pressed={isImportant}
                           disabled={Boolean(savingCategory)}
                           onClick={() => handleToggleImportant(category, isImportant)}
@@ -321,6 +468,7 @@ export function NotificationPreferencesPanel({
                               ? "notification-preferences__mute--silenced"
                               : "notification-preferences__mute--receiving",
                           ].join(" ")}
+                          data-tour="notification-pref-mute"
                           pressed={isMuted}
                           disabled={Boolean(savingCategory)}
                           onClick={() => handleToggleMute(category, isMuted)}
@@ -350,6 +498,34 @@ export function NotificationPreferencesPanel({
                               />
                             </span>
                           }
+                        />
+                        <Button
+                          type="button"
+                          variant={isEmail ? "primary" : "ghost"}
+                          size="sm"
+                          className={[
+                            "notification-preferences__email",
+                            isEmail
+                              ? "notification-preferences__email--on"
+                              : "notification-preferences__email--off",
+                          ].join(" ")}
+                          data-tour="notification-pref-email"
+                          pressed={isEmail}
+                          disabled={Boolean(savingCategory) || isMuted}
+                          onClick={() =>
+                            handleToggleEmail(category, isEmail)
+                          }
+                          aria-label={
+                            isEmail
+                              ? `Desativar e-mail: ${display.notificationName}`
+                              : `Receber por e-mail: ${display.notificationName}`
+                          }
+                          title={
+                            isEmail
+                              ? `E-mail ativo — ${display.notificationName}. Clique para desativar.`
+                              : `Receber por e-mail — ${display.notificationName}.`
+                          }
+                          icon={<Mail size={18} />}
                         />
                       </span>
                     )}

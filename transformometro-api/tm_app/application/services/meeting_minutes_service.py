@@ -270,9 +270,52 @@ class MeetingMinutesService:
         signers=self.repo.list_signers(minute_id)
         if not signers: raise ValueError("Configure ao menos um signatário antes de enviar.")
         updated=self.repo.set_status(minute_id=minute_id,status="awaiting_signatures",actor_user_id=self._user_id(user),action="send_for_signature")
+        dispatched = self._dispatch_sign_invites(
+            updated,
+            signers,
+            mail_template_key="signPending",
+        )
+        return {"minute": updated, "signers": signers, "resent_count": dispatched["resent_count"]}
+
+    def resend_sign_invites(self, user: Any, minute_id: str) -> dict[str, Any]:
+        minute = self._load(user, "manage", minute_id)
+        if minute.get("status") not in {"awaiting_signatures", "partially_signed"}:
+            raise ValueError(
+                "Reenvio só é permitido enquanto a ata aguarda assinaturas. "
+                "Se a ata estiver em revisão, use «Enviar para assinatura»."
+            )
+        signers = self.repo.list_signers(minute_id)
+        targets = [
+            signer
+            for signer in signers
+            if str(signer.get("status") or "") in {"pending", "viewed"}
+        ]
+        if not targets:
+            raise ValueError("Não há signatários pendentes para reenviar.")
+        dispatched = self._dispatch_sign_invites(
+            minute,
+            targets,
+            mail_template_key="signPendingReminder",
+        )
+        return {
+            "minute": minute,
+            "signers": targets,
+            "resent_count": dispatched["resent_count"],
+            "mail_sent": dispatched["mail_sent"],
+        }
+
+    def _dispatch_sign_invites(
+        self,
+        minute: dict[str, Any],
+        signers: list[dict[str, Any]],
+        *,
+        mail_template_key: str,
+    ) -> dict[str, Any]:
         mail_signers: list[dict[str, Any]] = []
         for signer in signers:
-            issued = self.sign_invites.issue(signer=signer, minute=updated)
+            issued = self.sign_invites.issue(signer=signer, minute=minute)
+            invite = issued.get("invite") or {}
+            invite_id = str(invite.get("id") or "").strip()
             payload = {
                 **signer,
                 "sign_url": issued["sign_url"],
@@ -281,18 +324,25 @@ class MeetingMinutesService:
             mail_signers.append(payload)
             user_id = str(signer.get("user_id") or "").strip()
             if user_id:
+                dedupe = (
+                    f"tm:sign_pending:{minute['id']}:{user_id}:{invite_id}"
+                    if invite_id
+                    else None
+                )
                 self.notifications.notify_sign_pending(
                     user_id=user_id,
-                    minute_id=str(updated["id"]),
-                    minute_number=str(updated["minute_number"]),
-                    title=str(updated.get("title") or ""),
+                    minute_id=str(minute["id"]),
+                    minute_number=str(minute.get("minute_number") or ""),
+                    title=str(minute.get("title") or ""),
+                    dedupe_key=dedupe,
                 )
-        self.sign_pending_mail.notify_signers(
+        mail_sent = self.sign_pending_mail.notify_signers(
             signers=mail_signers,
-            minute_number=str(updated["minute_number"]),
-            title=str(updated.get("title") or ""),
+            minute_number=str(minute.get("minute_number") or ""),
+            title=str(minute.get("title") or ""),
+            template_key=mail_template_key,
         )
-        return {"minute":updated,"signers":signers}
+        return {"resent_count": len(mail_signers), "mail_sent": mail_sent}
 
     def sign_context(self,user: Any,minute_id: str) -> dict[str,Any]:
         minute=self._load(user,"sign",minute_id); signer=self.repo.get_signer_for_user(minute_id,self._user_id(user))
@@ -304,15 +354,59 @@ class MeetingMinutesService:
         resolved = self.sign_invites.resolve(raw_token)
         minute = resolved["minute"]
         signer = resolved["signer"]
-        if signer["status"] in {"pending", "viewed"}:
+        outcome = str(resolved.get("outcome") or "ready")
+        if outcome != "already_signed" and signer.get("status") in {"pending", "viewed"}:
             signer = self.repo.mark_signer_viewed(str(signer["id"])) or signer
-        version = self.repo.get_version(str(minute["id"]))
+        # Já assinado: conteúdo da versão que o signatário assinou; senão, versão atual.
+        version_id = (
+            str(signer.get("version_id") or "").strip() or None
+            if outcome == "already_signed"
+            else None
+        )
+        version = self.repo.get_version(str(minute["id"]), version_id=version_id)
+        if outcome == "already_signed" and not version:
+            version = self.repo.get_version(str(minute["id"]))
+        minute_id = str(minute["id"])
+        participants = [
+            {
+                "user_id": item.get("user_id"),
+                "display_name": item.get("display_name"),
+                "role_in_meeting": item.get("role_in_meeting"),
+                "is_external": bool(item.get("is_external")),
+            }
+            for item in self.repo.list_participants(minute_id)
+        ]
+        signers = [
+            {
+                "id": item.get("id"),
+                "user_id": item.get("user_id"),
+                "display_name": item.get("display_name"),
+                "status": item.get("status"),
+            }
+            for item in self.repo.list_signers(minute_id)
+        ]
+        preview_version_id = str(version.get("id") or "").strip() or None if version else None
+        signatures = [
+            {
+                "id": item.get("id"),
+                "signer_id": item.get("signer_id"),
+                "user_id": item.get("user_id"),
+                "display_name_confirmed": item.get("display_name_confirmed"),
+                "has_image": bool(str(item.get("image_path") or "").strip()),
+            }
+            for item in self.repo.list_signatures(minute_id, version_id=preview_version_id)
+        ]
         return {
+            "outcome": outcome,
             "minute": {
                 "id": minute["id"],
                 "title": minute.get("title"),
                 "minute_number": minute.get("minute_number"),
                 "meeting_date": minute.get("meeting_date"),
+                "meeting_type": minute.get("meeting_type"),
+                "location": minute.get("location"),
+                "start_time": minute.get("start_time"),
+                "end_time": minute.get("end_time"),
                 "status": minute.get("status"),
                 "unit_code": minute.get("unit_code"),
             },
@@ -331,8 +425,19 @@ class MeetingMinutesService:
                 "display_name": signer.get("display_name"),
                 "status": signer.get("status"),
             },
+            "participants": participants,
+            "signers": signers,
+            "signatures": signatures,
             "terms": _TERMS,
         }
+
+    def public_signature_image(self, raw_token: str, signature_id: str) -> bytes:
+        resolved = self.sign_invites.resolve(raw_token)
+        minute = resolved["minute"]
+        signature = self.repo.get_signature(str(minute["id"]), signature_id)
+        if not signature or not str(signature.get("image_path") or "").strip():
+            raise LookupError("Imagem de assinatura não encontrada.")
+        return self.signature_storage.read(str(signature["image_path"]))
 
     def _notify_managers_signed(self, minute: dict[str, Any]) -> None:
         for user_id in {
@@ -380,6 +485,7 @@ class MeetingMinutesService:
         version=self.repo.get_version(minute_id)
         if not version: raise LookupError("Versão não encontrada.")
         result=self.repo.register_signature(minute_id=minute_id,version_id=str(version["id"]),signer_id=str(signer["id"]),unit_code=str(minute["unit_code"]),user_id=self._user_id(user),display_name_confirmed=display_name_confirmed.strip(),content_hash=str(version["content_hash"]),image_path=self.signature_storage.save_png(unit_code=str(minute["unit_code"]),minute_id=minute_id,raw=png_bytes),terms_accepted=True,client_ip=client_ip,user_agent=user_agent,session_id=session_id,idempotency_key=idempotency_key,actor_user_id=self._user_id(user))
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         if result.get("duplicate"): return {"signature":result["signature"],"minute":minute,"duplicate":True}
         new_status=MinuteStatusTransitionService.status_after_signature_progress(signed_count=result["signed_count"],required_count=result["required_count"])
         if new_status != minute["status"]: minute=self.repo.set_status(minute_id=minute_id,status=new_status,actor_user_id=self._user_id(user),action="signature_progress")
@@ -400,6 +506,8 @@ class MeetingMinutesService:
         idempotency_key: str | None,
     ) -> dict[str, Any]:
         resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]
@@ -454,6 +562,7 @@ class MeetingMinutesService:
         signer=self.repo.get_signer_for_user(minute_id,self._user_id(user))
         if not signer: raise PermissionError("Você não é signatário desta ata.")
         self.repo.refuse_signature(minute_id=minute_id,signer_id=str(signer["id"]),reason=reason.strip(),actor_user_id=self._user_id(user),unit_code=str(minute["unit_code"]))
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         updated=self.repo.set_status(minute_id=minute_id,status="in_review",actor_user_id=self._user_id(user),action="signature_refused")
         self._notify_managers_refused(
             updated,
@@ -466,6 +575,8 @@ class MeetingMinutesService:
         if not reason.strip():
             raise ValueError("Informe a justificativa da recusa.")
         resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]

@@ -148,6 +148,7 @@ class FakeDirectory:
             "u2": {"id": "u2", "name": "Bruno", "email": "bruno@delpi.com"},
             "u3": {"id": "u3", "name": "Carla", "email": "carla@delpi.com"},
             "u4": {"id": "u4", "name": "Diego", "email": "diego@delpi.com"},
+            "u5": {"id": "u5", "name": "Elena", "email": "elena@delpi.com"},
         }
 
     def lookup_directory_users(self, user_ids):
@@ -157,9 +158,9 @@ class FakeDirectory:
             if uid in self._users
         }
 
-    def search_directory_users(self, *, query=None, limit=20, browse=False):
-        _ = query, limit, browse
-        return [self._users["u4"]]
+    def list_directory_users_with_app_access(self):
+        # Simula usuários com acesso ao app além de grupo/carteira (u4, u5).
+        return [self._users["u4"], self._users["u5"]]
 
 
 def _use_case() -> ManageTeamRosterUseCase:
@@ -175,7 +176,7 @@ def _use_case() -> ManageTeamRosterUseCase:
 def test_list_roster_combines_groups_portfolios_and_directory() -> None:
     items = _use_case().list_roster()
     by_id = {item["user_id"]: item for item in items}
-    assert set(by_id) == {"u1", "u2", "u3", "u4"}
+    assert set(by_id) == {"u1", "u2", "u3", "u4", "u5"}
     assert by_id["u1"]["name"] == "Ana"
     assert by_id["u1"]["groups"][0]["kind"] == "sellers"
     assert by_id["u1"]["portfolios"][0]["id"] == "p1"
@@ -183,6 +184,7 @@ def test_list_roster_combines_groups_portfolios_and_directory() -> None:
     assert by_id["u3"]["groups"] == []
     assert by_id["u4"]["groups"] == []
     assert by_id["u4"]["portfolios"] == []
+    assert by_id["u5"]["name"] == "Elena"
 
 
 def test_list_roster_filters_by_group_id() -> None:

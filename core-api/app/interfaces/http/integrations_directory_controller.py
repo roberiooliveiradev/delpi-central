@@ -9,6 +9,9 @@ from flask import Blueprint, jsonify, request
 from app.application.use_cases.lookup_directory_users_use_case import (
     LookupDirectoryUsersUseCase,
 )
+from app.application.use_cases.list_directory_users_by_app_use_case import (
+    ListDirectoryUsersByAppUseCase,
+)
 from app.application.use_cases.search_directory_users_use_case import (
     SearchDirectoryUsersUseCase,
 )
@@ -61,6 +64,39 @@ def search_integration_directory_users():
         )
 
     return jsonify({"items": results}), 200
+
+
+@integrations_directory_bp.route("/users/by-app", methods=["GET"])
+@require_service_token()
+@integration_rate_limit()
+def list_integration_directory_users_by_app():
+    """Lista paginada completa de usuários com acesso ao app (S2S roster — não typeahead)."""
+    app_id = (request.args.get("app") or "").strip()
+    if not app_id:
+        return api_error("validation_error", "app is required", status=400)
+
+    page = request.args.get("page", 1)
+    page_size = request.args.get("pageSize", request.args.get("page_size", 100))
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            payload = ListDirectoryUsersByAppUseCase(uow).execute(
+                app_id=app_id,
+                page=int(page),
+                page_size=int(page_size),
+                mask_email=False,
+            )
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception:
+        logger.exception("list_integration_directory_users_by_app_failed")
+        return api_error(
+            "list_integration_directory_users_by_app_failed",
+            "Erro ao listar usuários do app.",
+            status=500,
+        )
+
+    return jsonify(payload), 200
 
 
 @integrations_directory_bp.route("/users/lookup", methods=["POST"])

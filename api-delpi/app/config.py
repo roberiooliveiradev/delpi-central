@@ -235,6 +235,10 @@ class Settings:
         "CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS",
         default="2500",
     )
+    CONSOLE_ALERT_POOL_SATURATION_PCT: str = _get_env(
+        "CONSOLE_ALERT_POOL_SATURATION_PCT",
+        default="90",
+    )
     CONSOLE_ALERT_PORTAL_ENABLED: bool = (
         _get_env("CONSOLE_ALERT_PORTAL_ENABLED", default="true").lower() == "true"
     )

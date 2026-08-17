@@ -20,7 +20,10 @@ from app.config import settings
 from app.domain.services.caller_request_stats_service import (
     get_caller_duration_percentile,
     get_caller_stats_summary,
+    get_caller_traffic_summary,
 )
+from app.domain.services.connection_pool_stats_service import get_connection_pools_glance
+from app.domain.services.console_alert_content_service import ConsoleAlertContentService
 from app.domain.services.observability_snapshot_service import build_observability_snapshot
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
@@ -54,6 +57,29 @@ def _slow_sql_threshold_ms() -> float:
     return float(settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS or 2500)
 
 
+def _pool_saturation_threshold_pct() -> float:
+    raw = (settings.CONSOLE_ALERT_POOL_SATURATION_PCT or "").strip()
+    if raw:
+        return float(raw)
+    return ConsoleAlertContentService.pool_saturation_pct_default()
+
+
+def _alert_from_content(
+    code: str,
+    *,
+    fields: dict[str, Any],
+    details: dict[str, Any],
+    severity: str | None = None,
+) -> ConsoleAlert:
+    guidance = ConsoleAlertContentService.alert_guidance(code)
+    return ConsoleAlert(
+        code=code,
+        severity=severity or ConsoleAlertContentService.alert_severity(code),
+        message=ConsoleAlertContentService.format_alert_message(code, **fields),
+        details={**details, "guidance": guidance} if guidance else details,
+    )
+
+
 def _webhook_enabled() -> bool:
     return bool((settings.CONSOLE_ALERT_WEBHOOK_URL or "").strip())
 
@@ -68,10 +94,9 @@ def evaluate_console_alerts(
         failed = int(smoke_result.get("failed") or 0)
         if failed > 0:
             alerts.append(
-                ConsoleAlert(
-                    code="smoke_failure",
-                    severity="critical",
-                    message=f"Smoke suite falhou: {failed} caso(s).",
+                _alert_from_content(
+                    "smoke_failure",
+                    fields={"failed": failed},
                     details={
                         "suite_id": smoke_result.get("suiteId"),
                         "passed": smoke_result.get("passed"),
@@ -94,10 +119,9 @@ def evaluate_console_alerts(
     p95_limit = _p95_threshold_ms()
     if p95_ms > p95_limit:
         alerts.append(
-            ConsoleAlert(
-                code="p95_latency",
-                severity="warning",
-                message=f"p95 de latência ({p95_ms} ms) acima do limiar ({p95_limit} ms).",
+            _alert_from_content(
+                "p95_latency",
+                fields={"p95_ms": p95_ms, "threshold_ms": p95_limit},
                 details={"p95_ms": p95_ms, "threshold_ms": p95_limit},
             )
         )
@@ -107,10 +131,9 @@ def evaluate_console_alerts(
         max_ms = float(row.get("max_ms") or 0)
         if max_ms >= _slow_sql_threshold_ms():
             alerts.append(
-                ConsoleAlert(
-                    code="slow_sql",
-                    severity="warning",
-                    message=f"Query lenta detectada ({max_ms} ms).",
+                _alert_from_content(
+                    "slow_sql",
+                    fields={"max_ms": max_ms},
                     details={
                         "query_hash": row.get("query_hash"),
                         "preview": row.get("preview"),
@@ -122,6 +145,33 @@ def evaluate_console_alerts(
                 )
             )
             break
+
+    pool_limit = _pool_saturation_threshold_pct()
+    pools = get_connection_pools_glance()
+    for pool_name in ("plugins_postgres", "totvs"):
+        pool = pools.get(pool_name) or {}
+        if not pool.get("enabled"):
+            continue
+        occupancy_pct = float(pool.get("occupancy_pct") or 0.0)
+        if occupancy_pct >= pool_limit:
+            alerts.append(
+                _alert_from_content(
+                    "pool_saturation",
+                    fields={
+                        "pool_name": pool_name,
+                        "occupancy_pct": occupancy_pct,
+                        "threshold_pct": pool_limit,
+                    },
+                    details={
+                        "pool_name": pool_name,
+                        "occupancy_pct": occupancy_pct,
+                        "threshold_pct": pool_limit,
+                        "in_use": pool.get("in_use"),
+                        "max_size": pool.get("max_size"),
+                        "runbook_segment": "cache",
+                    },
+                )
+            )
 
     return alerts
 
@@ -228,11 +278,67 @@ def process_console_alerts(
     }
 
 
+def _build_sli_slo_payload(
+    *,
+    traffic: dict[str, Any],
+    p95_ms: float,
+) -> dict[str, Any]:
+    """SLI/SLO over the in-memory telemetry window (not a 30-day rolling SLO)."""
+    slo = ConsoleAlertContentService.slo_targets()
+    availability_target = float(slo["availability_pct"])
+    p95_target = float(slo["p95_ms"])
+    total = int(traffic.get("total_requests") or 0)
+    server_error_rate = float(traffic.get("server_error_rate_pct") or 0.0)
+
+    if total <= 0:
+        availability_pct = None
+        error_budget_remaining_pct = None
+        p95_within_slo = None
+    else:
+        availability_pct = round(100.0 - server_error_rate, 2)
+        allowed_error_pct = max(0.0, 100.0 - availability_target)
+        if allowed_error_pct <= 0:
+            error_budget_remaining_pct = 100.0 if server_error_rate <= 0 else 0.0
+        else:
+            consumed = min(1.0, server_error_rate / allowed_error_pct)
+            error_budget_remaining_pct = round(100.0 * (1.0 - consumed), 2)
+        p95_within_slo = p95_ms <= p95_target
+
+    return {
+        "window_scope": "in_memory_sample",
+        "note": "SLI/SLO da janela amostrada em memória — não equivale a SLO de 30 dias.",
+        "slo": {
+            "availability_pct": availability_target,
+            "p95_ms": p95_target,
+        },
+        "sli": {
+            "availability_pct": availability_pct,
+            "p95_ms": p95_ms if total > 0 else None,
+            "total_requests": total,
+            "server_error_rate_pct": server_error_rate if total > 0 else None,
+            "p95_within_slo": p95_within_slo,
+            "error_budget_remaining_pct": error_budget_remaining_pct,
+        },
+        "labels": {
+            "availability_pct": ConsoleAlertContentService.sli_label("availability_pct"),
+            "p95_ms": ConsoleAlertContentService.sli_label("p95_ms"),
+            "error_budget_remaining_pct": ConsoleAlertContentService.sli_label(
+                "error_budget_remaining_pct"
+            ),
+        },
+    }
+
+
 def build_console_health_summary() -> dict[str, Any]:
     snapshot = build_observability_snapshot(limit=15)
     caller_stats = get_caller_stats_summary(limit=10)
+    traffic = get_caller_traffic_summary()
+    pools = get_connection_pools_glance()
     current_alerts = evaluate_console_alerts()
     recent = list(_alert_history)[:10]
+    open_count = len(current_alerts)
+    p95_ms = get_caller_duration_percentile(0.95)
+    sli_slo = _build_sli_slo_payload(traffic=traffic, p95_ms=p95_ms)
 
     return {
         "captured_at": _now_iso(),
@@ -241,15 +347,28 @@ def build_console_health_summary() -> dict[str, Any]:
         else "warning"
         if current_alerts
         else "ok",
-        "open_alert_count": len(current_alerts),
+        "open_alert_count": open_count,
+        "open_alerts_count": open_count,
         "open_alerts": [asdict(alert) for alert in current_alerts],
         "recent_alerts": recent,
         "thresholds": {
             "p95_ms": _p95_threshold_ms(),
             "slow_sql_ms": _slow_sql_threshold_ms(),
+            "pool_saturation_pct": _pool_saturation_threshold_pct(),
+        },
+        "traffic": traffic,
+        "pools": pools,
+        "slo": sli_slo["slo"],
+        "sli": sli_slo["sli"],
+        "sli_meta": {
+            "window_scope": sli_slo["window_scope"],
+            "note": sli_slo["note"],
+            "labels": sli_slo["labels"],
         },
         "metrics": {
-            "p95_ms": get_caller_duration_percentile(0.95),
+            "p95_ms": p95_ms,
+            "error_rate_pct": traffic.get("error_rate_pct", 0.0),
+            "pool_occupancy_pct": pools.get("max_occupancy_pct", 0.0),
             "caller_requests": caller_stats.get("total_requests", 0),
             "sql_samples": snapshot.get("sql_health", {}).get("total_samples", 0),
             "cache_hit_rate_pct": snapshot.get("query_cache", {})
@@ -277,6 +396,7 @@ def list_console_alert_history(*, limit: int = 25) -> dict[str, Any]:
         "thresholds": {
             "p95_ms": _p95_threshold_ms(),
             "slow_sql_ms": _slow_sql_threshold_ms(),
+            "pool_saturation_pct": _pool_saturation_threshold_pct(),
         },
     }
 

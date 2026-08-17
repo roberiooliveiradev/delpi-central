@@ -739,17 +739,57 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   background: color-mix(in srgb, var(--surface-2) 55%, transparent);
   transition:
     border-color 180ms ease,
-    background 180ms ease;
+    background 180ms ease,
+    opacity 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.portal-tour-quest-item.is-available {
-  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
-  background: color-mix(in srgb, var(--primary) 6%, var(--surface-2));
+.portal-tour-quest-item.is-pending {
+  border-color: color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  opacity: 1;
+}
+
+.portal-tour-quest-item.is-pending .portal-tour-quest-title {
+  color: var(--text);
+}
+
+.portal-tour-quest-item.is-near {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+  background: color-mix(in srgb, var(--success) 12%, var(--surface-2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent);
+  opacity: 1;
+}
+
+.portal-tour-quest-item.is-near .portal-tour-quest-title {
+  color: var(--text);
+}
+
+.portal-tour-quest-item.is-near .portal-tour-quest-hint {
+  color: color-mix(in srgb, var(--success) 55%, var(--text-muted));
+}
+
+.portal-tour-quest-item.is-near .portal-tour-quest-check {
+  border-color: color-mix(in srgb, var(--success) 55%, var(--border));
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
 }
 
 .portal-tour-quest-item.is-done {
-  opacity: 0.72;
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  opacity: 0.48;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface-2) 40%, transparent);
+  box-shadow: none;
+}
+
+.portal-tour-quest-item.is-done .portal-tour-quest-title {
+  color: var(--text-muted);
+  font-weight: 550;
+}
+
+.portal-tour-quest-item.is-locked {
+  opacity: 0.58;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
 }
 
 .portal-tour-quest-item.is-unavailable {
@@ -765,13 +805,14 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   border: 1.5px solid color-mix(in srgb, var(--text-muted) 40%, var(--border));
   display: grid;
   place-items: center;
-  color: var(--primary);
+  color: var(--text-muted);
   background: var(--surface);
 }
 
 .portal-tour-quest-item.is-done .portal-tour-quest-check {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--surface));
+  color: var(--text-muted);
 }
 
 .portal-tour-quest-copy {
@@ -803,7 +844,16 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #059669;
+  color: var(--success);
+}
+
+.portal-tour-quest-near-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--success);
 }
 
 .portal-tour-quest-hint {
@@ -813,7 +863,7 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-done .portal-tour-quest-hint {
-  color: color-mix(in srgb, var(--primary) 70%, var(--text-muted));
+  color: var(--text-muted);
 }
 
 .portal-tour-quest-footer {
@@ -1005,8 +1055,8 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-focused {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .portal-tour-quest-steps {
@@ -1252,7 +1302,57 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-just-done {
-  animation: portal-tour-quest-pop 520ms ease;
+  animation: portal-tour-quest-complete 720ms ease;
+  opacity: 1;
+}
+
+.portal-tour-quest-item.is-just-done.is-done {
+  opacity: 1;
+}
+
+.portal-tour-quest-item.is-just-done .portal-tour-quest-check {
+  animation: portal-tour-quest-check-pop 720ms ease;
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 22%, var(--surface));
+  color: var(--success);
+}
+
+@keyframes portal-tour-quest-complete {
+  0% {
+    transform: scale(1);
+    border-color: color-mix(in srgb, var(--success) 55%, var(--border));
+    background: color-mix(in srgb, var(--success) 22%, var(--surface-2));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 28%, transparent);
+    opacity: 1;
+  }
+
+  40% {
+    transform: scale(1.025);
+    background: color-mix(in srgb, var(--success) 16%, var(--surface-2));
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.48;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--surface-2) 40%, transparent);
+    box-shadow: none;
+  }
+}
+
+@keyframes portal-tour-quest-check-pop {
+  0% {
+    transform: scale(0.7);
+  }
+
+  45% {
+    transform: scale(1.18);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes portal-tour-quest-pop {
@@ -1656,6 +1756,7 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 @media (prefers-reduced-motion: reduce) {
   .portal-tour-xp-bar-fill.is-bump,
   .portal-tour-quest-item.is-just-done,
+  .portal-tour-quest-item.is-just-done .portal-tour-quest-check,
   .portal-tour-banner,
   .portal-tour-banner.is-level-up svg,
   .portal-tour-level-badge.is-celebrating,

@@ -61,6 +61,25 @@ def get_caller_duration_percentile(percentile: float) -> float:
     return round(values[index], 2)
 
 
+def get_caller_traffic_summary() -> dict[str, Any]:
+    """RED traffic slice for console-health (rate / errors over the in-memory window)."""
+    entries = get_caller_request_entries()
+    total = len(entries)
+    error_count = sum(1 for item in entries if item.status_code >= 400)
+    server_error_count = sum(1 for item in entries if item.status_code >= 500)
+    error_rate_pct = round((100.0 * error_count / total), 2) if total else 0.0
+    server_error_rate_pct = (
+        round((100.0 * server_error_count / total), 2) if total else 0.0
+    )
+    return {
+        "total_requests": total,
+        "error_count": error_count,
+        "error_rate_pct": error_rate_pct,
+        "server_error_count": server_error_count,
+        "server_error_rate_pct": server_error_rate_pct,
+    }
+
+
 def get_caller_stats_summary(*, limit: int = 25) -> dict[str, Any]:
     with _lock:
         entries = list(_buffer)

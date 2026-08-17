@@ -23,6 +23,7 @@ import {
   hydratePortalTourSessionFromRemote,
   loadPortalTourProgress,
   markPortalTourCompletedEverywhere,
+  repairLocalCompletedWhenRemoteIncomplete,
   resolveShouldShowPortalTour,
   shouldSkipPortalTourSyncOnOpen,
   syncPortalTourCompleted,
@@ -34,7 +35,6 @@ import {
 import {
   getPortalTourQuests,
   groupQuestsByCategory,
-  isQuestAvailable,
   PORTAL_TOUR_CATEGORY_LABELS,
   PORTAL_TOUR_CATEGORY_ORDER,
 } from "./portalTourQuests";
@@ -50,6 +50,13 @@ import {
   getTourContextLabel,
   resolveQuestGuide,
 } from "./portalTourQuestGuide";
+import {
+  orderCategoriesPendingFirst,
+  questListVisualClassName,
+  resolveQuestListHint,
+  resolveQuestListVisualState,
+  sortQuestsForCompanionList,
+} from "./portalTourQuestListVisual";
 import { setPortalTourSidebarPanel } from "./portalTourSidebar";
 import { clearPortalTourTimers, schedulePortalTourTimer } from "./portalTourTimers";
 import { closeAppLauncher } from "../utils/appLauncher";
@@ -443,6 +450,7 @@ export function PortalTour() {
       coreApi.getPortalTourCatalog().catch(() => null),
     ]).then(([remote, remoteCatalog]) => {
       if (cancelled) return;
+      repairLocalCompletedWhenRemoteIncomplete(user.id, remote, remoteCatalog);
       remoteProgressRef.current = remote;
       if (remoteCatalog) setCatalog(remoteCatalog);
       setRemoteReady(true);
@@ -470,24 +478,25 @@ export function PortalTour() {
     autoStartCheckedRef.current = true;
 
     const remote = remoteProgressRef.current;
-    if (canReopenPortalTourPanel(remote)) {
-      setCompletedIds(hydratePortalTourSessionFromRemote(remote));
+    const currentCatalog = catalog;
+    if (canReopenPortalTourPanel(remote, currentCatalog)) {
+      setCompletedIds(hydratePortalTourSessionFromRemote(remote, currentCatalog));
     }
 
-    if (!resolveShouldShowPortalTour(user.id, remote)) return;
+    if (!resolveShouldShowPortalTour(user.id, remote, currentCatalog)) return;
 
     const timer = window.setTimeout(() => {
       setActive(true);
-      setPanelOpen(shouldAutoOpenPortalTourPanel(remote));
+      setPanelOpen(shouldAutoOpenPortalTourPanel(remote, currentCatalog));
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [remoteReady, coreLoaded, user?.id]);
+  }, [remoteReady, coreLoaded, user?.id, catalog]);
 
   useEffect(() => {
     if (!active) return;
-    if (shouldSkipPortalTourSyncOnOpen(remoteProgressRef.current)) return;
+    if (shouldSkipPortalTourSyncOnOpen(remoteProgressRef.current, catalog)) return;
     syncPortalTourStarted(coreApi, Array.from(completedRef.current));
-  }, [active, coreApi]);
+  }, [active, coreApi, catalog]);
 
   useEffect(() => {
     const tourUiActive = active && panelOpen && !showCompletionModal;
@@ -722,8 +731,8 @@ export function PortalTour() {
           <div className="portal-tour-quest-body">
             <p className="portal-tour-quest-intro">
               Explore a Minha DELPI no seu ritmo — ordem livre, por área do
-              portal. Siga o destaque azul ou toque em <strong>Dica</strong> em
-              cada desafio.
+              portal. Na área certa o desafio fica verde («Perto»); ou toque em{" "}
+              <strong>Dica</strong> em cada desafio.
               {contextLabel ? (
                 <span className="portal-tour-quest-context">{contextLabel}</span>
               ) : null}
@@ -747,9 +756,19 @@ export function PortalTour() {
             </p>
 
             <ul className="portal-tour-quest-list">
-              {PORTAL_TOUR_CATEGORY_ORDER.map((category) => {
+              {orderCategoriesPendingFirst(
+                PORTAL_TOUR_CATEGORY_ORDER,
+                questsByCategory,
+                completedIds,
+              ).map((category) => {
                 const categoryQuests = questsByCategory.get(category);
                 if (!categoryQuests?.length) return null;
+                // location.pathname: reavalia near/pending (e a ordem) ao navegar
+                void location.pathname;
+                const sortedQuests = sortQuestsForCompanionList(
+                  categoryQuests,
+                  completedIds,
+                );
 
                 return (
                   <li key={category} className="portal-tour-quest-group">
@@ -757,16 +776,29 @@ export function PortalTour() {
                       {PORTAL_TOUR_CATEGORY_LABELS[category]}
                     </p>
                     <ul className="portal-tour-quest-group-list">
-                      {categoryQuests.map((quest) => {
+                      {sortedQuests.map((quest) => {
                         const done = completedIds.has(quest.id);
-                        const available = isQuestAvailable(quest);
+                        const visualState = resolveQuestListVisualState(
+                          quest,
+                          done,
+                        );
                         const guide = resolveQuestGuide(quest, done);
                         const hintOpen = hintQuestId === quest.id;
+                        const visualClass = questListVisualClassName(visualState);
 
                         return (
                           <li
                             key={quest.id}
-                            className={`portal-tour-quest-item${done ? " is-done" : ""}${!done && available ? " is-available" : ""}${!available && !done ? " is-unavailable" : ""}${hintOpen ? " is-hint-open" : ""}${justCompletedQuestId === quest.id ? " is-just-done" : ""}`}
+                            className={[
+                              "portal-tour-quest-item",
+                              visualClass,
+                              hintOpen ? "is-hint-open" : "",
+                              justCompletedQuestId === quest.id
+                                ? "is-just-done"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                           >
                             <span className="portal-tour-quest-check" aria-hidden>
                               {done ? <Check size={14} strokeWidth={3} /> : null}
@@ -774,6 +806,11 @@ export function PortalTour() {
                             <div className="portal-tour-quest-copy">
                               <span className="portal-tour-quest-title">
                                 {quest.title}
+                                {visualState === "near" ? (
+                                  <span className="portal-tour-quest-near-badge">
+                                    Perto
+                                  </span>
+                                ) : null}
                                 {isQuestMarkedNew(catalog, quest.id) ? (
                                   <span className="portal-tour-quest-new">
                                     novidade
@@ -786,11 +823,11 @@ export function PortalTour() {
                                 ) : null}
                               </span>
                               <span className="portal-tour-quest-hint">
-                                {done
-                                  ? "Concluído — parabéns!"
-                                  : available
-                                    ? quest.hint
-                                    : guide?.steps[0] ?? "Disponível em breve."}
+                                {resolveQuestListHint(
+                                  quest,
+                                  visualState,
+                                  guide?.steps[0] ?? null,
+                                )}
                               </span>
                               {!done && guide ? (
                                 <>

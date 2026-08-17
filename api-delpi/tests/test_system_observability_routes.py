@@ -109,8 +109,31 @@ def test_get_observability_snapshot_unifies_phase2_and_phase3() -> None:
     assert "query_cache" in payload
     assert "caller_stats" in payload
     assert "sql_health" in payload
+    assert "connection_pools" in payload
+    assert payload["connection_pools"]["plugins_postgres"]["max_size"] >= 1
     assert payload["sql_health"]["total_samples"] >= 1
     assert payload["caller_stats"]["total_requests"] >= 1
+
+
+def test_get_connection_pool_stats_returns_plugins_and_totvs() -> None:
+    from app.interface.http.routes.system_routes import get_connection_pool_stats
+
+    response = get_connection_pool_stats()
+    payload = _body(response)["data"]
+
+    assert payload["captured_at"]
+    plugins = payload["plugins_postgres"]
+    assert plugins["max_size"] >= 1
+    assert "created" in plugins
+    assert "available" in plugins
+    assert "in_use" in plugins
+    assert "acquire_timeouts_total" in plugins
+    assert "discards_total" in plugins
+    assert "application_name" in plugins
+    totvs = payload["totvs"]
+    assert totvs is not None
+    assert "enabled" in totvs
+    assert "max_size" in totvs
 
 
 def test_get_openapi_diff_matches_baseline_when_unchanged() -> None:

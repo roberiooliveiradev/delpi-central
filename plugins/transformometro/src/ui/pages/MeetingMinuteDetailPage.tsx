@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Circle,
   Download,
+  Mail,
   MapPin,
   Pencil,
   Send,
@@ -24,6 +25,7 @@ import { buildAtaEditPath, buildAtaSignPath, TRANSFORMOMETRO_ROUTES } from "../.
 import {
   finalizeAta,
   getAta,
+  resendAtaSignInvites,
   sendAta,
   type AtaDetail,
 } from "../../data/api/transformometroMeetingMinutesApi";
@@ -85,6 +87,15 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
   const status = String(minute?.status ?? "");
   const editable = status === "draft" || status === "in_review";
   const canSend = editable;
+  const canResend = useMemo(() => {
+    if (status !== "awaiting_signatures" && status !== "partially_signed") {
+      return false;
+    }
+    return (detail?.signers ?? []).some((signer) => {
+      const sig = String(signer.status ?? "");
+      return sig === "pending" || sig === "viewed";
+    });
+  }, [detail?.signers, status]);
   const canFinalize = status === "signed";
   const canSign = Boolean(detail?.viewer?.can_sign_now);
   const title = String(minute?.title ?? (loading ? "Carregando…" : "Ata"));
@@ -150,6 +161,15 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
               >
                 <Send size={16} aria-hidden />
                 Enviar para assinatura
+              </ActionButton>
+            ) : null}
+            {canResend ? (
+              <ActionButton
+                onClick={() => void run(() => resendAtaSignInvites(ataId, getAccessToken))}
+                disabled={busy}
+              >
+                <Mail size={16} aria-hidden />
+                Reenviar convites
               </ActionButton>
             ) : null}
             {canFinalize ? (

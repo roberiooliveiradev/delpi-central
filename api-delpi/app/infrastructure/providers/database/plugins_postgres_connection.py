@@ -140,6 +140,8 @@ class PluginsConnectionPool:
         self._max_size = max(1, max_size)
         self._available: queue.Queue[Connection[dict[str, Any]]] = queue.Queue()
         self._created = 0
+        self._acquire_timeouts = 0
+        self._discards = 0
         self._lock = threading.Lock()
 
     @property
@@ -150,6 +152,25 @@ class PluginsConnectionPool:
     def created(self) -> int:
         with self._lock:
             return self._created
+
+    def stats(self) -> dict[str, Any]:
+        with self._lock:
+            created = self._created
+            timeouts = self._acquire_timeouts
+            discards = self._discards
+        available = self._available.qsize()
+        in_use = max(0, created - available)
+        return {
+            "enabled": True,
+            "max_size": self._max_size,
+            "created": created,
+            "available": available,
+            "in_use": in_use,
+            "acquire_timeout_seconds": PLUGINS_DB_POOL_ACQUIRE_TIMEOUT,
+            "acquire_timeouts_total": timeouts,
+            "discards_total": discards,
+            "application_name": PLUGINS_DB_APPLICATION_NAME,
+        }
 
     def acquire(
         self, *, timeout_seconds: float = PLUGINS_DB_POOL_ACQUIRE_TIMEOUT
@@ -181,6 +202,8 @@ class PluginsConnectionPool:
 
             remaining = timeout_seconds - (time.perf_counter() - started)
             if remaining <= 0:
+                with self._lock:
+                    self._acquire_timeouts += 1
                 logger.warning(
                     "plugins_pool TIMEOUT created=%d max=%d waited=%.0fs",
                     self._created,
@@ -253,6 +276,7 @@ class PluginsConnectionPool:
 
         with self._lock:
             self._created = max(0, self._created - 1)
+            self._discards += 1
 
         logger.debug("plugins_pool discarded remaining=%d", self._created)
 

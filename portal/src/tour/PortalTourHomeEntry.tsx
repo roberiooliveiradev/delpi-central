@@ -11,6 +11,7 @@ import {
   usePortalTourSession,
 } from "./portalTourSession";
 import { resolvePortalTourHomeEntryState } from "./portalTourHomeEntry";
+import { repairLocalCompletedWhenRemoteIncomplete } from "./portalTourPersistence";
 import { shouldShowPortalTour } from "./portalTourStorage";
 
 const HOME_ENTRY_CACHE_KEY = "delpi.portal.tourHomeEntry.v1";
@@ -92,6 +93,11 @@ export function PortalTourHomeEntry() {
       api.getPortalTourCatalog().catch(() => null),
     ]).then(([remoteProgress, remoteCatalog]) => {
       if (cancelled) return;
+      repairLocalCompletedWhenRemoteIncomplete(
+        user.id,
+        remoteProgress,
+        remoteCatalog,
+      );
       setProgress(remoteProgress);
       if (remoteCatalog) setCatalog(remoteCatalog);
       setDataReady(true);
@@ -137,8 +143,15 @@ export function PortalTourHomeEntry() {
         explorerLevel: "Explorador",
       };
 
+  // Enquanto carrega: mostra se a versão local não está “concluída” ou se o
+  // cache da sessão ainda tinha progresso incompleto (novidades pós-conclusão).
   const tourLikelyVisible = Boolean(
-    user?.id && coreLoaded && shouldShowPortalTour(user.id),
+    user?.id &&
+      coreLoaded &&
+      (shouldShowPortalTour(user.id) ||
+        (cachedDisplay != null &&
+          (cachedDisplay.progressPercent < 100 ||
+            cachedDisplay.requiredDone < cachedDisplay.requiredTotal))),
   );
 
   if (!user?.id || !coreLoaded) return null;

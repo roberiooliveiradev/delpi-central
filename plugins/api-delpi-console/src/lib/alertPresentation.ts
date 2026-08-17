@@ -63,6 +63,20 @@ export function alertDetailRows(alert: ConsoleAlert): Array<{ label: string; val
     }
   }
 
+  if (alert.code === "pool_saturation") {
+    const poolName = asString(details.pool_name);
+    const occupancy = asNumber(details.occupancy_pct);
+    const threshold = asNumber(details.threshold_pct);
+    const inUse = asNumber(details.in_use);
+    const maxSize = asNumber(details.max_size);
+    if (poolName) rows.push({ label: "Pool", value: poolName });
+    if (occupancy != null) rows.push({ label: "Ocupação", value: `${occupancy}%` });
+    if (threshold != null) rows.push({ label: "Limiar", value: `${threshold}%` });
+    if (inUse != null && maxSize != null) {
+      rows.push({ label: "Uso", value: `${inUse} / ${maxSize}` });
+    }
+  }
+
   return rows;
 }
 
@@ -90,10 +104,17 @@ export function alertSuggestedAction(alert: ConsoleAlert): AlertAction | null {
     return { label: "Abrir verificações", segment: "verificacoes" };
   }
 
+  if (alert.code === "pool_saturation") {
+    return { label: "Ver connection pools", segment: "cache" };
+  }
+
   return null;
 }
 
 export function alertGuidance(alert: ConsoleAlert): string {
+  const fromApi = asString(alert.details?.guidance);
+  if (fromApi) return fromApi;
+
   if (alert.code === "slow_sql") {
     return "Abra SQL para ver o preview completo, o operation id e quantas vezes a query repetiu. Se for LMP/estoque, confira também o hit rate na aba Cache.";
   }
@@ -102,6 +123,9 @@ export function alertGuidance(alert: ConsoleAlert): string {
   }
   if (alert.code === "smoke_failure") {
     return "Uma ou mais rotas críticas falharam no smoke. Reexecute a suite em Verificações e confira operation id e status HTTP de cada caso.";
+  }
+  if (alert.code === "pool_saturation") {
+    return "Abra Cache → connection pools para ver ocupação Plugins Postgres e TOTVS.";
   }
   return "Monitore as métricas nas abas SQL, Cache e Verificações.";
 }

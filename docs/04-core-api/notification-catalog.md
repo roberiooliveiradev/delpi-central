@@ -59,15 +59,26 @@ Antes deste catálogo, categorias e rótulos ficavam espalhados em Python (`noti
 Todo card de preferência segue **somente** este layout (não reinventar no MFE):
 
 ```text
-{notificationLabel}     ← o que o usuário silencia / marca importante
+{notificationLabel}     ← o que o usuário silencia / marca importante / e-mail
 {nome do app}           ← plugin via pluginId ou «Minha Delpi» (platform)
-{Recebendo|Silenciada|Importante}
-[+ ícone] [estrela] [sino|silêncio]  ← auto-save; importante e silêncio são mutuamente exclusivos
+{Silenciada|Importante|E-mail|Recebendo}
+[+ ícone] [estrela] [sino] [envelope]  ← auto-save
 ```
 
-- **Estrela:** categoria em `importantCategories` — novas notificações nascem com `isImportant=true` e disparam o painel de atenção no Portal.
-- **Sino:** categoria em `mutedCategories` — deixa de receber.
-- Mute e importante não coexistem na mesma categoria (API e UI reconciliam).
+### Canais
+
+| Canal | Quando |
+|-------|--------|
+| **In-app** (sino + histórico) | Sempre, se categoria não muted |
+| **Painel importante + chime** | Categoria em `importantCategories` e unread |
+| **Toast do SO** | Web Notification API; preferência local + permission; qualquer não muted (aba aberta) |
+| **E-mail (Graph)** | Opt-in `emailCategories` (independente de importante); mute zera e-mail |
+
+- **Estrela:** `importantCategories` — `isImportant=true`, painel + chime (não liga e-mail).
+- **Sino:** `mutedCategories` — zera in-app, toast e e-mail; remove importante/e-mail da categoria.
+- **Envelope:** `emailCategories` — canal e-mail (independente da estrela).
+- Mute × importante × e-mail: reconciliados em `notification_preference_policy` (`reconcile_mute_important_and_email`).
+- Tour «Conheça o portal»: quests `page-notifications-important`, `page-notifications-email`, `page-notifications-desktop-toast` **guiam** até Preferências — não duplicam a UI.
 
 Ícone de plugin: **manifesto publicado** (`apps.icon`), nunca hardcode no catálogo como fonte de verdade.
 
@@ -100,8 +111,8 @@ Persistido sempre o valor EN. O painel de atenção importante e os cards usam o
 | Método | Path | Descrição |
 |--------|------|-----------|
 | GET | `/me/notifications/catalog` | Catálogo completo (autenticado) |
-| GET | `/me/notifications/preferences` | Preferências (`mutedCategories`, `importantCategories`) + `categories` |
-| PATCH | `/me/notifications/preferences` | Body: `mutedCategories` (obrigatório) + `importantCategories` (opcional); resposta espelha GET |
+| GET | `/me/notifications/preferences` | Preferências (`mutedCategories`, `importantCategories`, `emailCategories`) + `categories` |
+| PATCH | `/me/notifications/preferences` | Body: `mutedCategories` (obrigatório) + `importantCategories` / `emailCategories` (opcionais); resposta espelha GET |
 
 Exemplo `GET /me/notifications/catalog`:
 

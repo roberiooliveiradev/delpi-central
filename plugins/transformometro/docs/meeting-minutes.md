@@ -33,6 +33,8 @@ Nav: item **Atas** em `TransformometroNav`.
 - Convidados externos: nome + e-mail + **Assina** → `invite_email` na API; recebem magic link no e-mail Graph
 
 No envio para assinatura: notificação portal (se `user_id`) + e-mail com link público.
+
+Com a ata em **aguardando assinaturas** ou **parcialmente assinada**, o detalhe oferece **Reenviar convites** — gera novos magic links só para signatários `pending`/`viewed` (e-mail de lembrete). Quem já assinou não recebe. Se a ata voltou para **revisão**, use de novo **Enviar para assinatura** (o link antigo deixa de valer).
 ---
 
 ## Estrutura de código

@@ -18,6 +18,7 @@ from app.application.services.notification_content_service import (
     NotificationContentService,
     NotificationContentValidationError,
 )
+from app.application.services.notification_email_service import NotificationEmailService
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.notifications.notification_recipient_vars import build_recipient_template_vars
@@ -164,6 +165,20 @@ class DispatchNotificationsUseCase:
             )
 
             notification_ids.append(str(notification_id))
+
+            if self.uow.notification_preferences.is_category_email_enabled(
+                user_id,
+                prepared.category,
+            ):
+                user = self.uow.users.get_by_id(UUID(user_id))
+                to_email = getattr(user, "email", None) if user else None
+                NotificationEmailService().send_if_enabled(
+                    to_email=to_email,
+                    title=prepared.title,
+                    message=prepared.message,
+                    notification_type=prepared.type,
+                    application_name=request.source_app,
+                )
 
             event_payload = {
                 "notificationId": str(notification_id),

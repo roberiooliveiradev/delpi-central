@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-14",
-  "operation_count": 149,
+  "generatedAt": "2026-08-17",
+  "operation_count": 151,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -814,6 +814,12 @@
       "module": "meeting_minutes"
     },
     {
+      "operationId": "resend_meeting_minute_sign_invites",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/resend-sign-invites",
+      "module": "meeting_minutes"
+    },
+    {
       "operationId": "send_meeting_minute_for_signature",
       "method": "POST",
       "path": "/transformometro/meeting-minutes/{minute_id}/send-for-signature",
@@ -895,6 +901,12 @@
       "operationId": "sign_public_meeting_minute_invite",
       "method": "POST",
       "path": "/public/meeting-minutes/sign-invites/{token}/sign",
+      "module": "meeting_minutes_public"
+    },
+    {
+      "operationId": "get_public_meeting_minute_signature_image",
+      "method": "GET",
+      "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
       "module": "meeting_minutes_public"
     }
   ]

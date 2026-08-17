@@ -5,6 +5,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+COPY transformometro-meeting-minutes-presentation/package*.json ./transformometro-meeting-minutes-presentation/
+COPY transformometro-meeting-minutes-presentation/.npmrc ./transformometro-meeting-minutes-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd transformometro-meeting-minutes-presentation && npm install --omit=peer
+
+COPY transformometro-meeting-minutes-presentation ./transformometro-meeting-minutes-presentation
+
 COPY transformometro/package*.json ./transformometro/
 RUN --mount=type=cache,target=/root/.npm \
     cd transformometro && npm install

@@ -33,6 +33,10 @@ export default defineConfig({
         __dirname,
         "../tv-dashboard-presentation/src/index.ts",
       ),
+      "@delpi/transformometro-meeting-minutes-presentation": path.resolve(
+        __dirname,
+        "../transformometro-meeting-minutes-presentation/src/index.ts",
+      ),
     },
     dedupe: ["react", "react-dom", "lucide-react"],
   },

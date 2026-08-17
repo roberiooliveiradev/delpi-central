@@ -3,7 +3,7 @@
 > **Plugin:** `plugins/api-delpi-console`  
 > **Manifesto:** `api-delpi-console.manifest.json`  
 > **Público:** engenharia, ops, suporte avançado  
-> **Status:** Fase 0 concluída · Fase 1 iniciada (verificações + tema portal)
+> **Status:** Fases 0–5 entregues · onda mercado P0/P1 (glance RED, `pool_saturation`, SLI janela, DX Spec/Explorer) · P2 no backlog abaixo
 
 ---
 
@@ -175,13 +175,23 @@ Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |
 
+### Connection pools (api-delpi)
+
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Pools inspector** | `GET /system/connection-pools` (`get_connection_pool_stats`) — ocupação Plugins Postgres + TOTVS | [x] |
+| **Snapshot** | `connection_pools` em `GET /system/observability-snapshot` | [x] |
+| **UI Console** | Card na aba Cache (em uso/máx., available, timeouts, discards, `application_name`) | [x] |
+
+Escopo: métricas **em memória do processo api-delpi**. Pools de commercial/TM/SI/maintenance não aparecem neste console.
+
 ### Fase 4 — Contrato e regressão (MVP concluído)
 
 | Item | Detalhe | Status |
 |------|---------|--------|
 | **Diff OpenAPI** | `GET /system/openapi-diff` vs `app/content/openapi_baseline.json` | [x] |
 | **Snapshot envelope** | `envelope_contract_golden.json` + `GET /system/envelope-contracts` | [x] |
-| **UI Console** | Painel de diff na aba OpenAPI | [x] |
+| **UI Console** | Diff + **painel de contratos de envelope** na aba Spec | [x] |
 | **Baseline sync** | `python scripts/sync_openapi_baseline.py` | [x] |
 | **Integração CI** | `.github/workflows/api-delpi-console.yml` (pytest + build MFE) | [x] |
 
@@ -191,17 +201,33 @@ Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-re
 
 | Item | Detalhe | Status |
 |------|---------|--------|
-| **Avaliação** | `evaluate_console_alerts` — smoke, p95 caller e SQL lento | [x] |
+| **Avaliação** | `evaluate_console_alerts` — smoke, p95, SQL lento, **`pool_saturation`** | [x] |
+| **Content** | Textos/guidance/SLO em `app/content/console_alerts.json` (`ConsoleAlertContentService`) | [x] |
 | **Webhook** | `POST` opcional com debounce 5 min (`CONSOLE_ALERT_WEBHOOK_URL`) | [x] |
-| **Endpoints** | `GET /system/console-health`, `GET /system/console-alerts`, `POST /system/console-alerts/evaluate`, `POST /system/console-alerts/smoke` | [x] |
-| **UI Console** | Aba «Alertas» com detalhes acionáveis + link para SQL | [x] |
+| **Endpoints** | `GET /system/console-health` (RED + pools + `sli`/`slo` da janela), `GET /system/console-alerts`, `POST …/evaluate`, `POST …/smoke` | [x] |
+| **UI Console** | Aba «Alertas» + glance na Home (`@delpi/plugin-ui`) | [x] |
 | **Admin Stats** | Card «Console API DELPI» na visão geral do portal | [x] |
-| **Sino Minha DELPI** | `POST /integrations/notifications` (`CONSOLE_ALERT_PORTAL_ENABLED`) | [x] |
+| **Sino Minha DELPI** | `POST /integrations/notifications` (`CONSOLE_ALERT_PORTAL_ENABLED`); catálogo `api_console` | [x] |
 | **Monitoramento** | Polling 30 s (SQL, Cache, Alertas, Início) com aba visível | [x] |
 
-**DoD:** falha na suite smoke dispara alerta crítico; p95 acima do limiar gera warning; card no Admin Stats reflete status em tempo real.
+**DoD:** falha na suite smoke dispara alerta crítico; p95 acima do limiar gera warning; saturação de pool ≥ limiar (`CONSOLE_ALERT_POOL_SATURATION_PCT`, default 90) gera warning com guidance para Cache; card no Admin Stats reflete status em tempo real.
 
 **Monitoramento:** não é WebSocket — telemetria alimentada pelo tráfego HTTP/SQL real; o console atualiza a cada 30 s enquanto a aba está aberta. Reavaliação automática de alertas a cada 5 min na aba Alertas.
+
+### Onda mercado — P0 / P1 / P2
+
+Alinhado a `.cursor/rules` (`plugins-reusable-components`, `mfe-modal-host-contained`, content JSON, `centralized-rules-first`).
+
+| Prioridade | Entrega | Status |
+|------------|---------|--------|
+| **P0** | Glance RED + ocupação de pool no `console-health` / Home (KPI kit) | [x] |
+| **P0** | Alerta `pool_saturation` + limiar env/content + teste de regressão | [x] |
+| **P1** | SLI/SLO da **janela amostrada** (≠ 30d) + barra error budget na Home | [x] |
+| **P1** | Spec: envelopes; Explorer: confirmação de write com `HostContainedDialog` | [x] |
+| **P2** | Prometheus / OpenTelemetry / Grafana | [ ] fora — não no console |
+| **P2** | Pools commercial/TM/SI/maintenance no mesmo console | [ ] fora (bounded context) |
+| **P2** | Aba Tabelas `/system/tables*` | [ ] backlog |
+| **P2** | Migração total `adc-*` → plugin-ui | [ ] backlog (só superfícies novas nesta onda) |
 
 ---
 
@@ -214,13 +240,12 @@ Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-re
 | Suprimentos | `GET /supplies/stock-value` | Alto — bundle histórico |
 | Qualidade | `GET /quality/ppm/*` | Médio |
 | Produção | `GET /production/eficiencia-fabril/*` | Médio |
-| Sistema | `GET /health`, futuro `/system/sql-health` | Baixo |
-
+| Sistema | `GET /health`, `GET /system/sql-health`, `GET /system/console-health`, `GET /system/connection-pools` | Baixo / observabilidade |
 ---
 
 ## 6. Permissões e segurança
 
-- Console é ferramenta **interna**; não expor rotas de escrita destrutiva sem confirmação (Fase 1+).
+- Console é ferramenta **interna**; rotas de escrita no Explorador exigem **confirmação** (`HostContainedDialog` — não cobre a sidebar).
 - JWT do portal repassado automaticamente (`Authorization: Bearer`).
 - Logs de uso rastreiam `api-delpi-console` via `X-Delpi-Caller-App`.
 - Endpoints `/system/*` devem exigir role superadmin na api-delpi.
@@ -234,14 +259,15 @@ Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-re
 cd plugins/api-delpi-console
 npm install && npm run dev
 
-# Docker (stack completa)
-cd infra
-docker compose -f docker-compose.dev.yml up -d --build api-delpi-console api-delpi gateway
+# Stack — preferir scripts sequenciais (RAM / ordem MF)
+./infra/scripts/up-dev-sequential.sh --fase mfe --build api-delpi-console
 ```
 
 Documentação do plugin: `plugins/api-delpi-console/README.md`.
 
 **Telemetria SQL persistente:** defina `REDIS_URL` e `SQL_TELEMETRY_BACKEND=redis` no `.env` da stack. Sem Redis, o ring buffer permanece em memória (por processo).
+
+**Diretrizes Cursor:** UI nova via `@delpi/plugin-ui`; textos PT de alerta em `console_alerts.json`; regras de negócio no domínio api-delpi (MFE render-only do `console-health`).
 
 ---
 

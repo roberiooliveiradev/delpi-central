@@ -1,5 +1,6 @@
 import type { PortalTourCatalogResponse, PortalTourProgressResponse } from "../data/coreApi";
 import {
+  hasPendingNewPortalTourQuests,
   isPortalTourFullyCompleted,
 } from "./portalTourPersistence";
 
@@ -30,9 +31,11 @@ export function resolvePortalTourHomeEntryState(
     return empty;
   }
 
-  const tourCompleted = isPortalTourFullyCompleted(userId, progress);
+  const pendingNew = hasPendingNewPortalTourQuests(progress, catalog);
+  const tourCompleted = isPortalTourFullyCompleted(userId, progress, catalog);
 
-  if (tourCompleted) {
+  // Tour 100% na versão atual e sem novidades → esconde o card.
+  if (tourCompleted && !pendingNew) {
     return { ...empty, ready: true };
   }
 
@@ -52,11 +55,7 @@ export function resolvePortalTourHomeEntryState(
     };
   }
 
-  const completedIds = new Set(
-    normalizedProgress?.tourVersion === catalog.tourVersion
-      ? normalizedProgress.completedQuestIds
-      : [],
-  );
+  const completedIds = new Set(normalizedProgress?.completedQuestIds ?? []);
 
   const requiredTotal = catalog.requiredQuestIds.length;
   const requiredDone = catalog.requiredQuestIds.filter((id) =>
@@ -65,8 +64,8 @@ export function resolvePortalTourHomeEntryState(
   const progressPercent =
     requiredTotal > 0 ? Math.round((requiredDone / requiredTotal) * 100) : 0;
 
-  const visible =
-    !tourCompleted && progressPercent < 100 && requiredTotal > 0;
+  // Card na home enquanto houver desafio obrigatório pendente (inclui novidades pós-conclusão).
+  const visible = requiredTotal > 0 && (progressPercent < 100 || pendingNew);
 
   return {
     ready: true,

@@ -29,6 +29,9 @@ const HIGHLIGHT_PRIORITY: Record<string, number> = {
   "page-notifications-inbox": 84,
   "page-notifications-filter": 83,
   "page-notifications-preferences": 82,
+  "page-notifications-important": 81,
+  "page-notifications-email": 80,
+  "page-notifications-desktop-toast": 79,
   "page-profile-info": 81,
   "page-profile-rbac": 80,
   "page-admin-users": 79,
@@ -134,7 +137,8 @@ function isQuestAvailable(quest: PortalTourQuest) {
   return quest.isAvailable ? quest.isAvailable() : true;
 }
 
-function scopeMatchesRoute(scope: PortalTourQuest["scope"]) {
+/** Página/área de referência do desafio (home, notificações, sidebar shell, etc.). */
+export function scopeMatchesRoute(scope: PortalTourQuest["scope"]) {
   switch (scope) {
     case "home":
       return isHomeRoute();

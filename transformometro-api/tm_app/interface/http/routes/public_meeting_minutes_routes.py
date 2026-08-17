@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, Header, Request, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
@@ -30,6 +31,20 @@ def _handle(exc: Exception):
 def public_sign_context(token: str):
     try:
         return ok(service.public_sign_context(token))
+    except Exception as exc:
+        return _handle(exc)
+
+
+@public_router.get(
+    "/{token}/signatures/{signature_id}/image",
+    operation_id="get_public_meeting_minute_signature_image",
+)
+def public_signature_image(token: str, signature_id: str):
+    try:
+        return Response(
+            service.public_signature_image(token, signature_id),
+            media_type="image/png",
+        )
     except Exception as exc:
         return _handle(exc)
 

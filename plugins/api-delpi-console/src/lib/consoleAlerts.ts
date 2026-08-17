@@ -8,9 +8,17 @@ export type ConsoleAlert = {
   details?: Record<string, unknown>;
 };
 
+export type ConsolePoolOccupancy = {
+  enabled?: boolean;
+  max_size?: number;
+  in_use?: number;
+  occupancy_pct?: number;
+};
+
 export type ConsoleHealthPayload = {
   status: "ok" | "warning" | "critical";
   open_alert_count: number;
+  open_alerts_count?: number;
   open_alerts: ConsoleAlert[];
   recent_alerts: Array<
     ConsoleAlert & {
@@ -19,15 +27,48 @@ export type ConsoleHealthPayload = {
       portal_notified?: boolean;
     }
   >;
+  traffic?: {
+    total_requests: number;
+    error_count: number;
+    error_rate_pct: number;
+    server_error_count?: number;
+    server_error_rate_pct?: number;
+  };
+  pools?: {
+    captured_at?: string;
+    plugins_postgres?: ConsolePoolOccupancy;
+    totvs?: ConsolePoolOccupancy;
+    max_occupancy_pct?: number;
+  };
   metrics: {
     p95_ms: number;
+    error_rate_pct?: number;
+    pool_occupancy_pct?: number;
     caller_requests: number;
     sql_samples: number;
     cache_hit_rate_pct: number;
   };
+  slo?: {
+    availability_pct: number;
+    p95_ms: number;
+  };
+  sli?: {
+    availability_pct: number | null;
+    p95_ms: number | null;
+    total_requests: number;
+    server_error_rate_pct: number | null;
+    p95_within_slo: boolean | null;
+    error_budget_remaining_pct: number | null;
+  };
+  sli_meta?: {
+    window_scope: string;
+    note: string;
+    labels: Record<string, string>;
+  };
   thresholds: {
     p95_ms: number;
     slow_sql_ms: number;
+    pool_saturation_pct?: number;
   };
   webhook_configured: boolean;
   portal_notifications_configured?: boolean;

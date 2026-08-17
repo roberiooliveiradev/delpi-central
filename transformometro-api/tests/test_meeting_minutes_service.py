@@ -14,6 +14,7 @@ class FakeRepo:
         self.signers = []
         self.signatures = []
         self.participants = []
+        self.invalidated_signer_ids: list[str] = []
 
     def create_minute(self, **data):
         self.minute = {
@@ -85,7 +86,8 @@ class FakeRepo:
         }
 
     def invalidate_open_invites(self, *, signer_id: str) -> int:
-        return 0
+        self.invalidated_signer_ids.append(signer_id)
+        return 1
 
     def create_invite(self, **kwargs):
         return {"id": "inv1", "consumed_at": None, **kwargs}
@@ -143,6 +145,7 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
         idempotency_key=None,
     )
     assert signed["minute"]["status"] == "signed"
+    assert repo.invalidated_signer_ids[-1] == "s1"
     repo.minute["status"] = "draft"
     with pytest.raises(ValueError, match="Transição inválida"):
         service.finalize(user, "m1")

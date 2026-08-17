@@ -1,5 +1,6 @@
 # Imagem de BUILD — bibliotecas bundled em plugins/ (não sobe em runtime).
-# Fase 3: apenas tv-dashboard-presentation (@delpi/plugin-ui = remote MF).
+# Fase 3+: tv-dashboard-presentation + transformometro-meeting-minutes-presentation
+# (@delpi/plugin-ui = remote MF).
 #
 # Build:
 #   docker compose -f infra/docker-compose.dev.yml --profile build-base build plugins-shared-builder
@@ -15,5 +16,12 @@ RUN --mount=type=cache,target=/root/.npm \
     cd tv-dashboard-presentation && npm install --omit=peer
 
 COPY tv-dashboard-presentation ./tv-dashboard-presentation
+
+COPY transformometro-meeting-minutes-presentation/package*.json ./transformometro-meeting-minutes-presentation/
+COPY transformometro-meeting-minutes-presentation/.npmrc ./transformometro-meeting-minutes-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd transformometro-meeting-minutes-presentation && npm install --omit=peer
+
+COPY transformometro-meeting-minutes-presentation ./transformometro-meeting-minutes-presentation
 
 LABEL org.delpi.role="plugins-shared-builder"

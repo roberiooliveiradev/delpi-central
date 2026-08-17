@@ -1,17 +1,14 @@
-const API_BASE = "/apps/transformometro-api";
-
-type ApiEnvelope<T> = {
-  success: boolean;
-  message?: string;
-  data: T;
-};
-
 export type PublicSignContext = {
+  outcome?: "ready" | "already_signed" | string | null;
   minute: {
     id: string;
     title?: string | null;
     minute_number?: string | null;
     meeting_date?: string | null;
+    meeting_type?: string | null;
+    location?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
     status?: string | null;
     unit_code?: string | null;
   };
@@ -30,7 +27,34 @@ export type PublicSignContext = {
     display_name?: string | null;
     status?: string | null;
   };
+  participants?: Array<{
+    user_id?: string | null;
+    display_name?: string | null;
+    role_in_meeting?: string | null;
+    is_external?: boolean;
+  }>;
+  signers?: Array<{
+    id?: string | null;
+    user_id?: string | null;
+    display_name?: string | null;
+    status?: string | null;
+  }>;
+  signatures?: Array<{
+    id?: string | null;
+    signer_id?: string | null;
+    user_id?: string | null;
+    display_name_confirmed?: string | null;
+    has_image?: boolean | null;
+  }>;
   terms: string;
+};
+
+const API_BASE = "/apps/transformometro-api";
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  message?: string;
+  data: T;
 };
 
 export type PublicActionResult = { ok: true } | { ok: false; status: number; message: string };
@@ -57,6 +81,20 @@ export async function fetchPublicSignContext(token: string): Promise<PublicSignC
   const envelope = (await response.json()) as ApiEnvelope<PublicSignContext>;
   if (envelope.success === false) return null;
   return envelope.data;
+}
+
+export async function fetchPublicSignatureImageBlob(
+  token: string,
+  signatureId: string,
+): Promise<Blob> {
+  const response = await fetch(
+    `${API_BASE}/public/meeting-minutes/sign-invites/${encodeURIComponent(token)}/signatures/${encodeURIComponent(signatureId)}/image`,
+    { headers: { Accept: "image/png" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Não foi possível carregar a assinatura."));
+  }
+  return response.blob();
 }
 
 export async function submitPublicSign(

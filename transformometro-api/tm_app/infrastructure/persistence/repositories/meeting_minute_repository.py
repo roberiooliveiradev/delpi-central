@@ -125,6 +125,13 @@ class MeetingMinuteRepository(PluginBaseRepository):
                 minute=dict(cur.fetchone() or {})
                 if not minute: raise LookupError("Ata não encontrada.")
                 cur.execute(f"UPDATE {_S}.tm_meeting_minute_signers SET status='invalidated',updated_at=NOW() WHERE minute_id=%s AND version_id=%s AND status IN ('pending','viewed','signed')",(minute["id"],minute["current_version_id"]))
+                # Consome convites abertos da ata — links antigos não devem parecer "elegíveis".
+                cur.execute(
+                    f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+                    SET consumed_at=COALESCE(consumed_at,NOW())
+                    WHERE minute_id=%s::uuid AND consumed_at IS NULL""",
+                    (minute["id"],),
+                )
                 cur.execute(f"""INSERT INTO {_S}.tm_meeting_minute_versions
                     (minute_id,unit_code,version_number,title,meeting_type,meeting_date,start_time,end_time,location,agenda_html,body_html,decisions_html,pending_html,observations_html,content_hash,change_reason,created_by_user_id)
                     SELECT %s,unit_code,COALESCE(MAX(version_number),0)+1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::uuid
@@ -225,6 +232,55 @@ class MeetingMinuteRepository(PluginBaseRepository):
             (invite_id,),
         )
 
+    def rebind_invite_signer(self, *, invite_id: str, signer_id: str) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+            SET signer_id=%s::uuid
+            WHERE id=%s::uuid AND consumed_at IS NULL
+            RETURNING *""",
+            (signer_id, invite_id),
+        )
+
+    def find_eligible_signer_match(
+        self,
+        *,
+        minute_id: str,
+        user_id: str | None,
+        invite_email: str | None,
+    ) -> dict[str, Any] | None:
+        """Signatário elegível na versão atual (mesmo user_id ou e-mail do convite)."""
+        uid = str(user_id or "").strip() or None
+        email = str(invite_email or "").strip().lower() or None
+        if not uid and not email:
+            return None
+        if uid:
+            row = self.fetch_one(
+                f"""SELECT s.* FROM {_S}.tm_meeting_minute_signers s
+                JOIN {_S}.tm_meeting_minutes m ON m.id=s.minute_id
+                WHERE s.minute_id=%s::uuid
+                  AND s.version_id=m.current_version_id
+                  AND s.status IN ('pending','viewed')
+                  AND s.user_id=%s::uuid
+                ORDER BY s.sign_order
+                LIMIT 1""",
+                (minute_id, uid),
+            )
+            if row:
+                return row
+        if email:
+            return self.fetch_one(
+                f"""SELECT s.* FROM {_S}.tm_meeting_minute_signers s
+                JOIN {_S}.tm_meeting_minutes m ON m.id=s.minute_id
+                WHERE s.minute_id=%s::uuid
+                  AND s.version_id=m.current_version_id
+                  AND s.status IN ('pending','viewed')
+                  AND LOWER(TRIM(COALESCE(s.invite_email,'')))=%s
+                ORDER BY s.sign_order
+                LIMIT 1""",
+                (minute_id, email),
+            )
+        return None
+
     def get_signer(self, signer_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             f"SELECT * FROM {_S}.tm_meeting_minute_signers WHERE id=%s::uuid",
@@ -282,9 +338,21 @@ class MeetingMinuteRepository(PluginBaseRepository):
             conn.commit(); return {"signature":signature,"duplicate":False,"signed_count":int(progress["signed_count"]),"required_count":int(progress["required_count"])}
         except Exception: conn.rollback(); raise
 
-    def list_signatures(self, minute_id: str) -> list[dict[str, Any]]:
-        return self.fetch_all(f"""SELECT sig.* FROM {_S}.tm_meeting_minute_signatures sig JOIN {_S}.tm_meeting_minutes m ON m.id=sig.minute_id
-            WHERE sig.minute_id=%s::uuid AND sig.version_id=m.current_version_id ORDER BY sig.created_at""",(minute_id,))
+    def list_signatures(self, minute_id: str, version_id: str | None = None) -> list[dict[str, Any]]:
+        if version_id:
+            return self.fetch_all(
+                f"""SELECT * FROM {_S}.tm_meeting_minute_signatures
+                WHERE minute_id=%s::uuid AND version_id=%s::uuid
+                ORDER BY created_at""",
+                (minute_id, version_id),
+            )
+        return self.fetch_all(
+            f"""SELECT sig.* FROM {_S}.tm_meeting_minute_signatures sig
+            JOIN {_S}.tm_meeting_minutes m ON m.id=sig.minute_id
+            WHERE sig.minute_id=%s::uuid AND sig.version_id=m.current_version_id
+            ORDER BY sig.created_at""",
+            (minute_id,),
+        )
     def get_signature(self, minute_id: str, signature_id: str) -> dict[str, Any] | None:
         return self.fetch_one(f"SELECT * FROM {_S}.tm_meeting_minute_signatures WHERE id=%s::uuid AND minute_id=%s::uuid",(signature_id,minute_id))
     def refuse_signature(self, *, minute_id: str, signer_id: str, reason: str, actor_user_id: str, unit_code: str) -> dict[str, Any]:

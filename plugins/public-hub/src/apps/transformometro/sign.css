@@ -1,11 +1,15 @@
 .tm-sign {
-  width: min(44rem, 100%);
+  width: min(52rem, 100%);
   margin: 0 auto;
   padding: 0.5rem 0.25rem 2.5rem;
   color: var(--pub-text-body);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.tm-sign--preview {
+  width: min(56rem, 100%);
 }
 
 .tm-sign--done {
@@ -16,6 +20,40 @@
   padding: 2rem 1.5rem;
   text-align: center;
   align-items: center;
+}
+
+.tm-sign__banner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  box-shadow: var(--pub-card-shadow);
+  padding: 1.15rem 1.25rem;
+}
+
+.tm-sign__banner--success .tm-sign__done-badge {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.tm-sign__banner h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--pub-text);
+}
+
+.tm-sign__banner p {
+  margin: 0.35rem 0 0;
+  color: var(--pub-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.tm-sign__banner-meta {
+  font-weight: 600;
+  color: var(--pub-text) !important;
 }
 
 .tm-sign__done-badge {
@@ -57,28 +95,6 @@
 .tm-sign__subtitle {
   margin: 0.4rem 0 0;
   color: var(--pub-text-muted);
-}
-
-.tm-sign__section {
-  background: var(--pub-card-bg);
-  border: 1px solid var(--pub-card-border);
-  border-radius: 1rem;
-  padding: 1rem 1.15rem;
-}
-
-.tm-sign__section h2 {
-  margin: 0 0 0.65rem;
-  font-size: 1rem;
-  color: var(--pub-text);
-}
-
-.tm-sign__html {
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-.tm-sign__html p {
-  margin: 0 0 0.65rem;
 }
 
 .tm-sign__form,

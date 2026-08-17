@@ -62,8 +62,13 @@ class TmSignPendingMailService:
         self.directory = directory or TmCoreDirectoryService()
         self.enabled = settings.TM_MAIL_ENABLED if enabled is None else enabled
 
-    def build_subject(self, *, minute_number: str) -> str:
-        tpl = str((_mail_content().get("signPending") or {}).get("subject") or "")
+    def _template_block(self, template_key: str) -> dict[str, Any]:
+        content = _mail_content()
+        block = content.get(template_key) or content.get("signPending") or {}
+        return block if isinstance(block, dict) else {}
+
+    def build_subject(self, *, minute_number: str, template_key: str = "signPending") -> str:
+        tpl = str(self._template_block(template_key).get("subject") or "")
         return _format_template(tpl, minuteNumber=minute_number)
 
     def build_html(
@@ -73,8 +78,9 @@ class TmSignPendingMailService:
         minute_number: str,
         title: str,
         sign_url: str,
+        template_key: str = "signPending",
     ) -> str:
-        block = _mail_content().get("signPending") or {}
+        block = self._template_block(template_key)
         greeting = _format_template(
             str(block.get("greeting") or ""),
             displayName=display_name or "colegado",
@@ -118,6 +124,7 @@ class TmSignPendingMailService:
         signers: list[dict[str, Any]],
         minute_number: str,
         title: str,
+        template_key: str = "signPending",
     ) -> int:
         """Envia e-mail com CTA = magic link (`sign_url` por signer). Retorna qtd enviada."""
         if not self.enabled:
@@ -137,7 +144,9 @@ class TmSignPendingMailService:
             self.directory.lookup_emails_by_user_ids(user_ids) if user_ids else {}
         )
 
-        subject = self.build_subject(minute_number=minute_number)
+        subject = self.build_subject(
+            minute_number=minute_number, template_key=template_key
+        )
         sent = 0
         for signer in signers:
             user_id = str(signer.get("user_id") or "").strip()
@@ -165,6 +174,7 @@ class TmSignPendingMailService:
                 minute_number=minute_number,
                 title=title,
                 sign_url=sign_url,
+                template_key=template_key,
             )
             try:
                 self.mail.send_mail_to(

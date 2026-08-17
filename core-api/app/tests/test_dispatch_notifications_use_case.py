@@ -23,6 +23,7 @@ def uow():
         lambda user_ids, _category: user_ids
     )
     unit.notification_preferences.is_category_important.return_value = False
+    unit.notification_preferences.is_category_email_enabled.return_value = False
     return unit
 
 
@@ -268,3 +269,39 @@ def test_dispatch_marks_important_from_user_preference(uow):
         str(user.id),
         "commercial",
     )
+
+
+@patch(
+    "app.application.use_cases.dispatch_notifications_use_case.NotificationEmailService"
+)
+def test_dispatch_sends_email_when_category_email_enabled(mock_mail_cls, uow):
+    user = _user()
+    uow.users.get_by_id.return_value = user
+    uow.notification_preferences.is_category_email_enabled.return_value = True
+    mail = MagicMock()
+    mock_mail_cls.return_value = mail
+
+    DispatchNotificationsUseCase(uow).execute(
+        DispatchNotificationsRequest(
+            title="Olá",
+            message="Mensagem",
+            type="info",
+            category="welcome",
+            presentation="text",
+            html_content=None,
+            action_type=None,
+            action_label=None,
+            action_target=None,
+            icon=None,
+            metadata=None,
+            expires_at=None,
+            broadcast=False,
+            user_ids=[str(user.id)],
+            emails=[],
+            role_ids=[],
+            group_ids=[],
+        )
+    )
+
+    mail.send_if_enabled.assert_called_once()
+    assert mail.send_if_enabled.call_args.kwargs["to_email"] == user.email

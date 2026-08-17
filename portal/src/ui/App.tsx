@@ -24,6 +24,11 @@ import { ConsentModal } from "./ConsentModal";
 import { PortalTour } from "../tour/PortalTour";
 import { ImportantNotificationAttention } from "../components/notifications/ImportantNotificationAttention";
 import { installImportantNotificationAudioUnlock } from "../utils/importantNotificationChime";
+import {
+  seedDesktopToastSeenIds,
+  showDesktopToastsForNewNotifications,
+} from "../utils/desktopNotificationToast";
+import { executeNotificationAction } from "../utils/notificationNavigation";
 
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
@@ -87,11 +92,43 @@ function normalizeAppBasePath(basePath: string) {
 }
 
 function AppShell() {
-  const { routes, apps } = useContext(AuthContext);
+  const { routes, apps, notifications } = useContext(AuthContext);
+  const desktopToastSeededRef = useRef(false);
 
   useEffect(() => {
     installImportantNotificationAudioUnlock();
   }, []);
+
+  useEffect(() => {
+    if (!notifications.length) return;
+
+    const appBasePaths = apps.map((app) => normalizeAppBasePath(app.basePath));
+    const payload = notifications.map((item) => ({
+      id: item.id,
+      title: item.title,
+      message: item.message,
+      category: item.category,
+      actionType: item.action?.type ?? null,
+      actionTarget: item.action?.target ?? null,
+    }));
+
+    if (!desktopToastSeededRef.current) {
+      seedDesktopToastSeenIds(payload);
+      desktopToastSeededRef.current = true;
+      return;
+    }
+
+    showDesktopToastsForNewNotifications(payload, {
+      onActivate: (item) => {
+        const full = notifications.find((n) => n.id === item.id);
+        if (full?.action) {
+          executeNotificationAction(full.action, full.metadata, { appBasePaths });
+          return;
+        }
+        window.location.assign("/notifications");
+      },
+    });
+  }, [apps, notifications]);
 
   const federatedAppHosts = useMemo(() => {
     return apps
