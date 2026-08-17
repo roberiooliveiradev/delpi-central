@@ -54,6 +54,8 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         name: str,
         description: Optional[str],
         icon: Optional[str],
+        app_type: Optional[str] = None,
+        base_path: Optional[str] = None,
         actor_user_id: str | None = None,
         actor_name: str | None = None,
     ) -> None:
@@ -64,6 +66,10 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         row.name = name
         row.description = description
         row.icon = icon
+        if app_type is not None:
+            row.type = app_type
+        if base_path is not None:
+            row.base_path = base_path
         apply_app_audit(row, user_id=actor_user_id, name=actor_name)
 
     def delete(self, plugin_id: str) -> None:

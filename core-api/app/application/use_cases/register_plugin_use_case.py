@@ -7,6 +7,10 @@ import json
 
 from app.application.unit_of_work import UnitOfWork
 from app.application.validators.manifest_validator import ManifestValidator
+from app.application.services.plugin_app_identity_sync import (
+    build_app_create_payload,
+    sync_app_row_from_manifest,
+)
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.services.plugin_permission_sync_service import PluginPermissionSyncService
 
@@ -89,16 +93,11 @@ class RegisterPluginUseCase:
         if not plugin:
 
             self._uow.plugins.create(
-                {
-                    "id": plugin_id,
-                    "name": manifest["name"],
-                    "description": manifest.get("description"),
-                    "base_path": base_path,
-                    "icon": manifest.get("icon"),
-                    "type": manifest.get("type"),
-                    "version": version,
-                    "active": True,
-                },
+                build_app_create_payload(
+                    manifest,
+                    plugin_id=plugin_id,
+                    version=version,
+                ),
                 actor_user_id=actor_user_id,
                 actor_name=actor_name,
             )
@@ -140,9 +139,14 @@ class RegisterPluginUseCase:
                     }],
                 )
 
-            self._uow.plugins.update_version(
+            existing_name = str(getattr(plugin, "name", "") or "")
+            sync_app_row_from_manifest(
+                self._uow.plugins,
                 plugin_id,
-                version,
+                manifest,
+                existing_name=existing_name,
+                version=version,
+                mode="full",
                 actor_user_id=actor_user_id,
                 actor_name=actor_name,
             )

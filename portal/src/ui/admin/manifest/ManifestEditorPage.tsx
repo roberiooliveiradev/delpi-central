@@ -850,8 +850,8 @@ export function ManifestEditorPage() {
 
       {isEdit && !isStructuralEdit && isDirty && (
         <Alert tone="info">
-          Alterações cosméticas (nome, descrição, rótulos): serão aplicadas na
-          versão atual sem publicar nova versão.
+          Alterações cosméticas (nome, descrição, ícone, rótulos de rotas): serão
+          aplicadas na versão atual sem publicar nova versão.
         </Alert>
       )}
 

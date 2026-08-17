@@ -670,9 +670,11 @@ Durante update de manifesto:
 
 | Tabela | Operação |
 |---|---|
-| `apps` | update de `name`, `description`, `icon` |
+| `apps` | update de `name`, `description`, `icon` via `sync_app_row_from_manifest` (`mode=cosmetic`) |
 | `app_manifests` | update de `manifest`, `checksum` |
 | `app_routes` | update de `label`, `icon`, `order`, `show_in_menu` |
+
+Register / rollback de nova versão usam o **mesmo** helper com `mode=full` (também `type` e `base_path`). Create inicial usa `build_app_create_payload` da mesma fonte.
 
 Tabelas não alteradas estruturalmente:
 

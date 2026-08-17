@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, List
 
 from app.application.unit_of_work import UnitOfWork
+from app.application.services.plugin_app_identity_sync import sync_app_row_from_manifest
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.services.plugin_permission_sync_service import PluginPermissionSyncService
 
@@ -63,10 +64,15 @@ class RollbackPluginVersionUseCase:
                 }],
             )
 
-        # atualizar versão ativa
-        self._uow.plugins.update_version(
+        # atualizar versão ativa + identidade (ícone/nome/basePath para sidebar)
+        existing_name = str(getattr(plugin, "name", "") or "")
+        sync_app_row_from_manifest(
+            self._uow.plugins,
             plugin_id,
-            target_version,
+            manifest,
+            existing_name=existing_name,
+            version=target_version,
+            mode="full",
             actor_user_id=actor_user_id,
             actor_name=actor_name,
         )

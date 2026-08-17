@@ -19,15 +19,22 @@ class FakePlugins:
     def __init__(self, exists=False):
         self._exists = exists
         self.created = False
+        self.last_create = None
+        self.last_update_version = None
+        self.last_update_metadata = None
 
     def get_by_id(self, pid):
-        return {"id": pid} if self._exists else None
+        return SimpleNamespace(id=pid, name="CRM antigo") if self._exists else None
 
     def create(self, data, **kwargs):
         self.created = True
+        self.last_create = data
 
     def update_version(self, plugin_id, version, **kwargs):
-        pass
+        self.last_update_version = {"plugin_id": plugin_id, "version": version, **kwargs}
+
+    def update_metadata(self, plugin_id, **kwargs):
+        self.last_update_metadata = {"plugin_id": plugin_id, **kwargs}
 
 
 class FakePluginRoutes:
@@ -132,10 +139,24 @@ def test_register_success():
     uow = FakeUoW(exists=False)
     use_case = RegisterPluginUseCase(uow, FakeValidator(True))
 
-    result = use_case.execute(base_manifest())
+    result = use_case.execute({
+        **base_manifest(),
+        "icon": "layout-dashboard",
+        "description": "desc",
+    })
 
     assert result.success
     assert uow.plugins.created
+    assert uow.plugins.last_create == {
+        "id": "crm",
+        "name": "CRM",
+        "description": "desc",
+        "base_path": "/apps/crm",
+        "icon": "layout-dashboard",
+        "type": "microfrontend",
+        "version": "1.0.0",
+        "active": True,
+    }
 
 
 def test_register_already_exists():
@@ -249,6 +270,46 @@ def test_register_new_version_preserves_permission_ids_for_same_codes():
     # edit was deleted; view kept same id
     assert old_edit_id not in {
         p["id"] for p in uow.plugin_permissions.by_module["crm"].values()
+    }
+
+
+def test_register_new_version_syncs_app_icon_and_identity():
+    """Gap: register só atualizava version — sidebar lia apps.icon antigo."""
+    uow = FakeUoW(exists=True)
+    use_case = RegisterPluginUseCase(uow, FakeValidator(True))
+
+    manifest = {
+        **base_manifest(),
+        "version": "1.1.0",
+        "name": "CRM Novo",
+        "description": "Desc nova",
+        "icon": "briefcase-business",
+        "type": "microfrontend",
+        "basePath": "/apps/crm",
+        "routes": [
+            {
+                "path": "/apps/crm",
+                "label": "CRM",
+                "permission": "crm.view",
+                "icon": "layout-dashboard",
+                "order": 1,
+            },
+        ],
+    }
+
+    result = use_case.execute(manifest)
+
+    assert result.success
+    assert uow.plugins.last_update_version["version"] == "1.1.0"
+    assert uow.plugins.last_update_metadata == {
+        "plugin_id": "crm",
+        "name": "CRM Novo",
+        "description": "Desc nova",
+        "icon": "briefcase-business",
+        "app_type": "microfrontend",
+        "base_path": "/apps/crm",
+        "actor_user_id": None,
+        "actor_name": None,
     }
 
 

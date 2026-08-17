@@ -52,8 +52,9 @@ class FakeUoW:
             "",
             (),
             {
-                "get_by_id": lambda s, pid: {"id": pid} if plugin else None,
+                "get_by_id": lambda s, pid: {"id": pid, "name": "CRM"} if plugin else None,
                 "update_version": lambda *a, **k: None,
+                "update_metadata": lambda *a, **k: None,
             },
         )()
 

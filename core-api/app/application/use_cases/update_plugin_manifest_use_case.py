@@ -7,6 +7,7 @@ import json
 
 from app.application.unit_of_work import UnitOfWork
 from app.application.validators.manifest_validator import ManifestValidator
+from app.application.services.plugin_app_identity_sync import sync_app_row_from_manifest
 from app.domain.events.admin_events import AdminChangedEvent
 
 
@@ -178,14 +179,16 @@ class UpdatePluginManifestUseCase:
             )
 
         # ==========================================================
-        # 6️⃣ Atualiza metadata do plugin
+        # 6️⃣ Atualiza identidade do plugin (apps.*) — fonte única
         # ==========================================================
 
-        self._uow.plugins.update_metadata(
+        existing_name = str(getattr(plugin, "name", "") or "")
+        sync_app_row_from_manifest(
+            self._uow.plugins,
             plugin_id,
-            name=str(manifest.get("name") or plugin.name or ""),
-            description=manifest.get("description"),
-            icon=manifest.get("icon"),
+            manifest,
+            existing_name=existing_name,
+            mode="cosmetic",
             actor_user_id=actor_user_id,
             actor_name=actor_name,
         )
