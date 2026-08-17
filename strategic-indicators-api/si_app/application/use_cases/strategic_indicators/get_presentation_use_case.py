@@ -5,6 +5,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 
+from si_app.application.services.strategic_indicators.series_coverage import (
+    build_series_coverage,
+)
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
     StrategicIndicatorCalculatedValue,
@@ -778,7 +781,7 @@ class GetStrategicIndicatorsPresentationUseCase:
         )
 
         if not snapshots:
-            coverage = GetStrategicIndicatorsTrendsRealUseCase._series_coverage(
+            coverage = build_series_coverage(
                 months_requested=months_requested,
                 competences_requested=competences_requested,
                 competences_returned=[],
@@ -900,7 +903,7 @@ class GetStrategicIndicatorsPresentationUseCase:
         )
 
         competences_returned = [point["period"] for point in monthly_points]
-        coverage = GetStrategicIndicatorsTrendsRealUseCase._series_coverage(
+        coverage = build_series_coverage(
             months_requested=months_requested,
             competences_requested=competences_requested,
             competences_returned=competences_returned,

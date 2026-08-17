@@ -17,6 +17,9 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.application.services.strategic_indicators.series_coverage import (
+    build_series_coverage,
+)
 
 
 class GetStrategicIndicatorsTrendsRealUseCase:
@@ -273,18 +276,11 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         competences_requested: list[str],
         competences_returned: list[str],
     ) -> dict:
-        returned_set = set(competences_returned)
-        missing = [
-            competence
-            for competence in competences_requested
-            if competence not in returned_set
-        ]
-        return {
-            "months_requested": months_requested,
-            "competences_requested": list(competences_requested),
-            "competences_returned": list(competences_returned),
-            "missing_competences": missing,
-        }
+        return build_series_coverage(
+            months_requested=months_requested,
+            competences_requested=competences_requested,
+            competences_returned=competences_returned,
+        )
 
     def _build_indicator_series_by_department_id(
         self,
