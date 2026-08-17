@@ -2148,3 +2148,77 @@ def test_enrich_sales_order_otd_panel_unwraps_lines_items_page():
     assert resolved["table"]["rows"], "esperado lines.items desembrulhado"
     assert resolved["table"]["rows"][0]["order_number"] == "000123"
     assert resolved["table"]["rows"][0]["status"] == "late"
+
+
+@pytest.mark.parametrize(
+    "operation_id",
+    [
+        "get_si_indicator_quality_ppm_external_meta",
+        "get_si_indicator_quality_kaizen_ideas_meta",
+        "get_si_indicator_commercial_rol_meta",
+        "get_si_indicator_engineering_transforma_plus_meta",
+        "get_si_indicator_supplies_otd_meta",
+    ],
+)
+def test_enrich_si_meta_partial_keeps_registered_goal_metric(operation_id: str):
+    """Meta cadastrada binds goal_value (8), not prorata value (4.39) — matrix G."""
+    from tests.fixtures.si_goal_contract_cases import (
+        PARTIAL_DISTINCT_META_DATA,
+        SI_GOAL_FIELD_LABELS_PT,
+    )
+
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": operation_id,
+            "shape": "scalar",
+            "entity": "dashboard_si_indicator_meta",
+        },
+        "data": {
+            "indicator_id": operation_id.replace("get_si_indicator_", "").replace(
+                "_meta", ""
+            ),
+            "name": operation_id,
+            **PARTIAL_DISTINCT_META_DATA,
+        },
+        "route": {
+            "label": f"{operation_id} — meta",
+            "metaShape": "scalar",
+            "valueFields": [
+                "value",
+                "comparable_goal",
+                "goal_value",
+                "reference_goal",
+            ],
+            "valueFieldLabels": {
+                "value": "Valor",
+                **SI_GOAL_FIELD_LABELS_PT,
+            },
+            "tvConstraints": {"maxRows": 1},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "si-partial",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": operation_id,
+                    "params": {"dateRangePreset": "this_month"},
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = enriched[0]["resolved"]["kpiMetrics"]
+    by_field = {metric["field"]: metric["value"] for metric in metrics}
+    assert by_field.get("goal_value") == 8.0
+    assert by_field.get("value") == 4.39
+    assert by_field["goal_value"] != by_field["value"]

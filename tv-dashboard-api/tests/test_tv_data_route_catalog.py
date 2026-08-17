@@ -58,6 +58,47 @@ def test_catalog_lmp_summary_exposes_meta_for_si_goal_picker():
     assert labels.get("reference_goal") == "Meta mês (referência)"
 
 
+def test_catalog_all_exposes_si_goal_hubs_have_triad_labels():
+    import json
+    from pathlib import Path
+
+    from tests.fixtures.si_goal_contract_cases import SI_GOAL_FIELD_LABELS_PT
+
+    overlays_path = (
+        Path(__file__).resolve().parents[1]
+        / "tv_app"
+        / "content"
+        / "tv_data_route_overlays.json"
+    )
+    doc = json.loads(overlays_path.read_text(encoding="utf-8"))
+    hub_ids = [
+        key
+        for key, overlay in (doc.get("overlays") or {}).items()
+        if isinstance(overlay, dict) and overlay.get("exposesSiGoal")
+    ]
+    assert hub_ids, "expected at least one exposesSiGoal hub"
+    catalog = TvDataRouteCatalogService()
+    for operation_id in hub_ids:
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        fields = route.get("valueFields") or []
+        labels = route.get("valueFieldLabels") or {}
+        for key, label in SI_GOAL_FIELD_LABELS_PT.items():
+            assert key in fields, (operation_id, key)
+            assert labels.get(key) == label, (operation_id, key, labels.get(key))
+
+
+def test_catalog_si_meta_routes_list_value_field():
+    from tests.fixtures.si_goal_contract_cases import SI_META_OPERATION_IDS_SAMPLE
+
+    catalog = TvDataRouteCatalogService()
+    for operation_id in SI_META_OPERATION_IDS_SAMPLE:
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        fields = route.get("valueFields") or []
+        assert "value" in fields, operation_id
+
+
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():
     merged = merge_data_params(
         playlist_defaults={"branch": "01", "periodDays": 30},
