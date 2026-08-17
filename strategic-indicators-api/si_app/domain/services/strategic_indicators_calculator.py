@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
+from calendar import monthrange
+from datetime import date, datetime
 from types import SimpleNamespace
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
@@ -491,6 +492,23 @@ class StrategicIndicatorsCalculator:
             competence=competence,
         )
 
+    def resolve_goal_period_flags(
+        self,
+        *,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+    ) -> dict[str, str | bool]:
+        """Flags de apresentação: meta acumulada no intervalo (com ou sem mês parcial)."""
+        return {
+            "goal_aggregation": "accumulated",
+            "goal_period_partial": self._is_goal_period_partial(
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            ),
+        }
+
     def _calculate_standard_period_goal(
         self,
         *,
@@ -504,25 +522,119 @@ class StrategicIndicatorsCalculator:
             return 0.0
 
         periodicity = (goal_periodicity or "monthly").strip().lower()
+        monthly_base = self._monthly_equivalent_goal(
+            goal_value=goal_value,
+            goal_periodicity=periodicity,
+        )
+        if monthly_base is None:
+            return round(float(goal_value), 2)
+
+        start = self._parse_date(start_date)
+        end = self._parse_date(end_date)
+        if start is not None and end is not None:
+            return self._guard_positive_rounded_goal(
+                self._sum_constant_monthly_prorata(
+                    monthly_base=monthly_base,
+                    start=start.date(),
+                    end=end.date(),
+                )
+            )
+
         months = self._resolve_period_months(
             start_date=start_date,
             end_date=end_date,
             competence=competence,
         )
+        return round(monthly_base * months, 2)
 
+    def _monthly_equivalent_goal(
+        self,
+        *,
+        goal_value: float,
+        goal_periodicity: str,
+    ) -> float | None:
+        periodicity = (goal_periodicity or "monthly").strip().lower()
         if periodicity == "monthly":
-            return round(goal_value * months, 2)
-
+            return float(goal_value)
         if periodicity == "annual":
-            return round((goal_value / 12.0) * months, 2)
-
+            return float(goal_value) / 12.0
         if periodicity == "quarterly":
-            return round((goal_value / 3.0) * months, 2)
-
+            return float(goal_value) / 3.0
         if periodicity == "semiannual":
-            return round((goal_value / 6.0) * months, 2)
+            return float(goal_value) / 6.0
+        return None
 
-        return round(goal_value, 2)
+    def _sum_constant_monthly_prorata(
+        self,
+        *,
+        monthly_base: float,
+        start: date,
+        end: date,
+    ) -> float:
+        total = 0.0
+        for _year, _month, days_in_month, overlapped in self._iter_month_day_overlaps(
+            start, end
+        ):
+            if days_in_month <= 0 or overlapped <= 0:
+                continue
+            total += monthly_base * (overlapped / days_in_month)
+        return total
+
+    def _iter_month_day_overlaps(
+        self,
+        start: date,
+        end: date,
+    ):
+        if start > end:
+            start, end = end, start
+
+        cursor_year = start.year
+        cursor_month = start.month
+        while True:
+            days_in_month = monthrange(cursor_year, cursor_month)[1]
+            month_start = date(cursor_year, cursor_month, 1)
+            month_end = date(cursor_year, cursor_month, days_in_month)
+            overlap_start = start if start > month_start else month_start
+            overlap_end = end if end < month_end else month_end
+            overlapped = (overlap_end - overlap_start).days + 1
+            if overlapped < 0:
+                overlapped = 0
+            yield cursor_year, cursor_month, days_in_month, overlapped
+
+            if cursor_year == end.year and cursor_month == end.month:
+                break
+
+            cursor_month += 1
+            if cursor_month > 12:
+                cursor_month = 1
+                cursor_year += 1
+
+    def _is_goal_period_partial(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> bool:
+        del competence  # datas explícitas mandam; competência sozinha = mês cheio
+        start = self._parse_date(start_date)
+        end = self._parse_date(end_date)
+        if start is None or end is None:
+            return False
+
+        for _year, _month, days_in_month, overlapped in self._iter_month_day_overlaps(
+            start.date(),
+            end.date(),
+        ):
+            if 0 < overlapped < days_in_month:
+                return True
+        return False
+
+    def _guard_positive_rounded_goal(self, raw: float) -> float:
+        rounded = round(raw, 2)
+        if rounded <= 0 and raw > 0:
+            return 0.01
+        return rounded
 
     def calculate_indicator_score(
         self,
@@ -1427,7 +1539,7 @@ class StrategicIndicatorsCalculator:
             return 0.0
 
         from si_app.application.services.strategic_indicators.goal_value_policy import (
-            curve_point_indices_for_calendar_months,
+            calendar_month_to_curve_point,
             expected_monthly_curve_points,
             parse_year_from_competence,
         )
@@ -1440,27 +1552,92 @@ class StrategicIndicatorsCalculator:
                 continue
             targets_by_point[point_number] = float(item.get("target_value") or 0)
 
+        start = self._parse_date(start_date)
+        end = self._parse_date(end_date)
+        year = parse_year_from_competence(competence)
+        if year is None and start is not None:
+            year = start.year
+        resolved_year = year or 2026
+
+        if start is not None and end is not None:
+            return self._guard_positive_rounded_goal(
+                self._sum_curve_prorata(
+                    targets_by_point=targets_by_point,
+                    goal_periodicity=goal_periodicity,
+                    start=start.date(),
+                    end=end.date(),
+                    year=resolved_year,
+                )
+            )
+
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            curve_point_indices_for_calendar_months,
+        )
+
         calendar_months = self._resolve_period_month_numbers(
             start_date=start_date,
             end_date=end_date,
             competence=competence,
         )
-        year = parse_year_from_competence(competence)
-        if year is None and start_date:
-            parsed_start = self._parse_date(start_date)
-            if parsed_start is not None:
-                year = parsed_start.year
-
         point_indices = curve_point_indices_for_calendar_months(
             goal_periodicity,
             calendar_months,
-            year=year or 2026,
+            year=resolved_year,
         )
-
         comparable_goal = sum(
             targets_by_point.get(point_number, 0.0) for point_number in point_indices
         )
         return round(comparable_goal, 2)
+
+    def _sum_curve_prorata(
+        self,
+        *,
+        targets_by_point: dict[int, float],
+        goal_periodicity: str,
+        start: date,
+        end: date,
+        year: int,
+    ) -> float:
+        from collections import defaultdict
+
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            calendar_month_to_curve_point,
+        )
+
+        spans_by_point: dict[int, list[tuple[int, int]]] = defaultdict(list)
+        for cursor_year, cursor_month, days_in_month, overlapped in self._iter_month_day_overlaps(
+            start, end
+        ):
+            if overlapped <= 0:
+                continue
+            point = calendar_month_to_curve_point(
+                goal_periodicity,
+                cursor_month,
+                year=cursor_year or year,
+            )
+            spans_by_point[point].append((days_in_month, overlapped))
+
+        total = 0.0
+        for point, spans in spans_by_point.items():
+            target = float(targets_by_point.get(point, 0.0) or 0.0)
+            if target <= 0:
+                continue
+
+            complete = [(dim, overlapped) for dim, overlapped in spans if overlapped == dim]
+            partial = [(dim, overlapped) for dim, overlapped in spans if overlapped < dim]
+
+            if complete and not partial:
+                total += target
+            elif partial and not complete:
+                sum_days = sum(dim for dim, _overlapped in partial)
+                sum_overlapped = sum(overlapped for _dim, overlapped in partial)
+                if sum_days > 0:
+                    total += target * (sum_overlapped / sum_days)
+            else:
+                # Ponto já coberto por mês(es) fechado(s): meta cheia uma vez.
+                total += target
+
+        return total
 
     def _resolve_period_month_numbers(
         self,

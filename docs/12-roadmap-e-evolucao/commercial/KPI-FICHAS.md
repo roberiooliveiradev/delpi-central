@@ -43,13 +43,13 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | **Meta no período (decisão ata alinhamento 2)** | **Soma** das metas **proporcionais por dia** no intervalo selecionado: para cada mês civil sobreposto, `(meta_mês / dias_do_mês) × dias_no_intervalo`; somar. **Não** usar média de metas mensais. Inclui mês parcial, YTD e intervalos custom. Implementação alvo: `strategic-indicators-api` (P0-META) — ver [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §5 |
 | Analogia de mercado | **Billings / receita faturada** no período (não é backlog; não é book-to-bill) |
 | Numerador | Valor líquido de vendas (− impostos listados) menos devoluções no período |
-| Denominador (meta) | Meta SI `comparable_goal` quando presente; **comportamento atual no código** ainda pode agregar por meses civis (a corrigir para proporcional diária); composer pode injetar placeholder `1.0` antes do enrich |
+| Denominador (meta) | Meta SI `comparable_goal` com **proporcional diária** (`Σ meta_mês/dias_mês × dias_sobrepostos`); flags `goal_aggregation` / `goal_period_partial` via enrich api-delpi |
 | Inclusões / exclusões (SQL) | Inclui TES com `F4_DUPLIC='S'` (padrão); exclui `D2_TIPO='D'`; CF `5911`/`6151` com exceções; remessa especial `5927` conforme regras SF4. Segmento WEG = cliente `000001`; novos negócios = não-WEG |
 | Fonte | api-delpi `get_financial_rol`, `get_*_rol_target_pct`, `get_commercial_rol_series`; BFF commercial-api `/analytics/*`; SQL: `api-delpi/app/infrastructure/persistence/totvs/financial_repositories/financial_repository.py` |
 | Freshness | Conforme cache/query TOTVS do período filtrado |
 | Filtros válidos | `branch` / unidade, `start_date`, `end_date`, `customer_segment`, escopo carteira (via BFF) |
 | Escopo | branch / all (+ membership no Portal) |
-| Versão da regra | v0 — baseline código; **v1 (ata)** = proporcional diária (pendente P0-META) |
+| Versão da regra | **v1** — proporcional diária no SI (`StrategicIndicatorsCalculator`) |
 | Owner | Comercial — a confirmar (homologação) |
 | Status | **em_validacao** |
 
@@ -60,7 +60,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 - [ ] Confirmar tratamento de devoluções e CFs especiais  
 - [ ] Confirmar se IPI deve ser separado no futuro (`ipi_separated`)  
 - [ ] Confirmar fonte e curva da meta SI  
-- [ ] Homologar meta acumulada **proporcional diária** (ata alinhamento 2) vs média/meses inteiros  
+- [x] Homologar meta acumulada **proporcional diária** (ata alinhamento 2) vs média/meses inteiros  
 
 ---
 

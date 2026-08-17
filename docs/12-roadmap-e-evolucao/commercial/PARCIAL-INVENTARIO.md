@@ -24,7 +24,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Etapa | Status | Pacotes | Fontes |
 |----|------|-------|--------|---------|--------|
-| P-META | Meta proporcional diária + flags + parity notas | E1 | **W0-pendente** | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
+| P-META | Meta proporcional diária + flags + parity notas | E1 | **Existe** (SI) | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
 | P-META-LABEL | «Meta acumulada» / «· parcial» na UI | E2 | **W0-pendente** | `plugins/commercial` | ATA-2 §5 |
 | P-LABEL | Chip MTD/YTD nos cards Overview | E2 | **W0-pendente** | `plugins/commercial` | ATA-2 §5 |
 | P-RENAME | «Data de faturamento» + FOB/CIF | E3 | **W0-pendente** | MFE + help | ATA-2 §14–15 |

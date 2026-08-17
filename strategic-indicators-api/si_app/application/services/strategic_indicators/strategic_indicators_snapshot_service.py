@@ -260,6 +260,7 @@ class StrategicIndicatorsSnapshotService:
 
         snapshot = self._build_period_snapshot(
             period=period,
+            scoring_period=measurement_period,
             catalog=catalog,
             measurements=measurements,
             measurement_errors=measurement_errors,
@@ -684,13 +685,16 @@ class StrategicIndicatorsSnapshotService:
         measurement_errors: list[dict],
         department_id: str | None,
         branch: str | None = None,
+        scoring_period: ResolvedPeriod | None = None,
     ) -> StrategicIndicatorsPeriodSnapshot:
+        # Meta e nota usam o mesmo intervalo elapsed do realizado (parity MTD).
+        goal_period = scoring_period or period
         calculated_indicators = self._calculator.calculate_indicators(
             indicators_catalog=catalog.indicators_catalog,
             measurements=measurements,
             department_id=department_id,
-            start_date=period.start_date,
-            end_date=period.end_date,
+            start_date=goal_period.start_date,
+            end_date=goal_period.end_date,
             competence=period.competence,
             scope_branch=branch,
         )
@@ -699,8 +703,8 @@ class StrategicIndicatorsSnapshotService:
             departments_catalog=catalog.departments_catalog,
             indicators_catalog=catalog.indicators_catalog,
             measurements=measurements,
-            start_date=period.start_date,
-            end_date=period.end_date,
+            start_date=goal_period.start_date,
+            end_date=goal_period.end_date,
             competence=period.competence,
             scope_branch=branch,
             precalculated_indicators=calculated_indicators,
@@ -711,8 +715,8 @@ class StrategicIndicatorsSnapshotService:
             calculated_indicators=calculated_indicators,
             indicators_catalog=catalog.indicators_catalog,
             measurements=measurements,
-            start_date=period.start_date,
-            end_date=period.end_date,
+            start_date=goal_period.start_date,
+            end_date=goal_period.end_date,
             competence=period.competence,
             scope_branch=branch,
         )
@@ -906,8 +910,12 @@ class StrategicIndicatorsSnapshotService:
                 ([], []),
             )
 
+            measurement_period, _entirely_future = clamp_resolved_period_to_elapsed(
+                period
+            )
             snapshot = self._build_period_snapshot(
                 period=period,
+                scoring_period=measurement_period,
                 catalog=catalog,
                 measurements=measurements,
                 measurement_errors=measurement_errors,
@@ -1183,15 +1191,17 @@ class StrategicIndicatorsSnapshotService:
             department_id=department_id,
             branch=branch,
         )
+        measurement_period, _entirely_future = clamp_resolved_period_to_elapsed(period)
         measurements, measurement_errors = self._get_measurements(
-            start_date=period.start_date,
-            end_date=period.end_date,
+            start_date=measurement_period.start_date,
+            end_date=measurement_period.end_date,
             competence=period.competence,
             department_id=department_id,
             branch=branch,
         )
         snapshot = self._build_period_snapshot(
             period=period,
+            scoring_period=measurement_period,
             catalog=catalog,
             measurements=measurements,
             measurement_errors=measurement_errors,

@@ -219,6 +219,11 @@ class GetDashboardGoalsBySourceKeysUseCase:
     ) -> dict:
         goal_value = float(goal["goal_value"]) if goal and goal.get("goal_value") is not None else None
         comparable_goal = None
+        goal_flags = self._calculator.resolve_goal_period_flags(
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
+        )
         if goal and goal_value is not None:
             comparable_goal = self._calculator.calculate_comparable_goal(
                 goal_value=goal_value,
@@ -262,6 +267,8 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "goal_periodicity": goal.get("goal_periodicity") if goal else None,
             "goal_mode": goal.get("goal_mode") if goal else None,
             "comparable_goal": comparable_goal,
+            "goal_aggregation": goal_flags["goal_aggregation"],
+            "goal_period_partial": goal_flags["goal_period_partial"],
             "has_goal": has_resolved_goal,
             "monthly_targets": goal.get("monthly_targets") if goal else [],
         }
