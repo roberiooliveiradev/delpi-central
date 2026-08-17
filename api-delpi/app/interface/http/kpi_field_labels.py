@@ -34,13 +34,14 @@ COMMON_SCALAR_FIELD_LABELS: dict[str, str] = {
 
 SI_GOAL_FIELD_LABELS: dict[str, str] = {
     "goal_label": "Meta",
-    "goal_value": "Valor da meta",
+    "goal_value": "Meta cadastrada",
     "goal_periodicity": "Periodicidade da meta",
     "goal_mode": "Modo da meta",
     "goal_scope_branch": "Filial da meta",
     "goal_scope_label": "Escopo da meta",
     "goal_scope_hint": "Observação da meta",
-    "comparable_goal": "Meta comparável",
+    "comparable_goal": "Meta do período",
+    "reference_goal": "Meta mês (referência)",
     "goal_aggregation": "Agregação da meta",
     "goal_period_kind": "Tipo de período da meta",
     "goal_period_partial": "Meta parcial no período",

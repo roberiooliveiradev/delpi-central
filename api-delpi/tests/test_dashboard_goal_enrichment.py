@@ -14,7 +14,10 @@ def _sample_goal() -> dict:
     return {
         "source_key": "supplies_otd",
         "goal_label": "≥ 95%",
+        "goal_value": 95.0,
         "comparable_goal": 95.0,
+        "reference_goal": 95.0,
+        "goal_mode": "standard",
         "has_goal": True,
         "goal_aggregation": "average",
         "goal_period_kind": "exact",
@@ -45,6 +48,8 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
 
     assert result["goal_label"] == "≥ 95%"
     assert result["comparable_goal"] == 95.0
+    assert result["goal_value"] == 95.0
+    assert result["reference_goal"] == 95.0
     assert result["has_goal"] is True
     assert result["goal_aggregation"] == "average"
     assert result["goal_period_kind"] == "exact"
