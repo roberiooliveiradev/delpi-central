@@ -56,6 +56,7 @@ class CommercialPortalNotificationService:
         action_target: str,
         dedupe_key: str,
         event_type: str,
+        category: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         if not self.enabled:
@@ -79,7 +80,7 @@ class CommercialPortalNotificationService:
             "title": title,
             "message": message,
             "type": notification_type,
-            "category": _CATEGORY,
+            "category": (category or _CATEGORY).strip() or _CATEGORY,
             "sourceApp": _SOURCE_APP,
             "action": {
                 "type": "portal_route",
@@ -162,5 +163,51 @@ class CommercialPortalNotificationService:
                 "pedido": pedido,
                 "linha": linha,
                 "filial": filial,
+            },
+        )
+
+    def notify_task_event(
+        self,
+        *,
+        event_type: str,
+        user_ids: Sequence[str],
+        task_id: str,
+        title: str,
+        due_at: str | None = None,
+        action_target: str | None = None,
+        dedupe_key: str | None = None,
+        bucket: str | None = None,
+    ) -> bool:
+        from commercial_app.domain.services.task_portal_notification_content_service import (
+            TASK_PORTAL_EVENT_TYPES,
+            TaskPortalNotificationContentService as Content,
+        )
+
+        if event_type not in TASK_PORTAL_EVENT_TYPES:
+            return False
+        action_label = Content.action_label()
+        notification_type = Content.notification_type_for(event_type)
+        message = Content.format_message(
+            event_type, title=title, due_at_iso=due_at
+        )
+        target = (action_target or "").strip() or Content.build_deep_link_path(
+            bucket=bucket or Content.bucket_for(event_type),
+            search=title,
+        )
+        return self.send(
+            user_ids=user_ids,
+            permission_codes=[],
+            title=Content.title_for(event_type),
+            message=message,
+            notification_type=notification_type,
+            action_label=action_label,
+            action_target=target,
+            dedupe_key=dedupe_key
+            or f"commercial:task:{event_type}:{task_id}",
+            event_type=event_type,
+            category=Content.category(),
+            metadata={
+                "taskId": task_id,
+                "bucket": bucket or Content.bucket_for(event_type),
             },
         )

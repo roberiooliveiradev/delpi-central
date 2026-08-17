@@ -366,3 +366,39 @@ def build_scan_ready_to_invoice_notifications_use_case():
         enqueue=build_enqueue_ready_to_invoice_notifications_use_case(),
         publish=build_publish_integration_outbox_use_case(),
     )
+
+
+def build_enqueue_task_portal_notifications_service():
+    from commercial_app.application.use_cases.enqueue_task_portal_notifications import (
+        EnqueueTaskPortalNotificationsService,
+    )
+
+    return EnqueueTaskPortalNotificationsService(
+        outbox=build_integration_outbox_repository(),
+        groups=build_commercial_group_repository(),
+        publish=build_publish_integration_outbox_use_case(),
+    )
+
+
+def build_detect_task_due_notifications_use_case():
+    from commercial_app.application.use_cases.enqueue_task_portal_notifications import (
+        DetectTaskDueNotificationsUseCase,
+    )
+
+    return DetectTaskDueNotificationsUseCase(
+        tasks=build_task_repository(),
+        outbox=build_integration_outbox_repository(),
+        checkpoints=build_integration_checkpoint_repository(),
+        groups=build_commercial_group_repository(),
+    )
+
+
+def build_scan_task_due_notifications_use_case():
+    from commercial_app.application.use_cases.enqueue_task_portal_notifications import (
+        ScanTaskDueNotificationsUseCase,
+    )
+
+    return ScanTaskDueNotificationsUseCase(
+        detect=build_detect_task_due_notifications_use_case(),
+        publish=build_publish_integration_outbox_use_case(),
+    )

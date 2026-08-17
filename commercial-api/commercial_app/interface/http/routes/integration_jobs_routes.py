@@ -12,6 +12,7 @@ from commercial_app.application.security.commercial_permissions import (
 )
 from commercial_app.composition.commercial_composer import (
     build_scan_ready_to_invoice_notifications_use_case,
+    build_scan_task_due_notifications_use_case,
 )
 from commercial_app.core.responses import fail, ok
 
@@ -41,4 +42,28 @@ def scan_ready_to_invoice_notifications(_request: Request):
             "Erro interno na varredura de pronto para faturar.",
             500,
             operation_id="scan_commercial_ready_to_invoice_notifications",
+        )
+
+
+@router.post(
+    "/task-due-scan",
+    operation_id="scan_commercial_task_due_notifications",
+)
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def scan_task_due_notifications(_request: Request):
+    try:
+        result = build_scan_task_due_notifications_use_case().execute()
+        return ok(result, message="Varredura de prazos de tarefas concluída.")
+    except RuntimeError as exc:
+        return fail(
+            str(exc),
+            502,
+            operation_id="scan_commercial_task_due_notifications",
+        )
+    except Exception:
+        logger.exception("scan_task_due_notifications_failed")
+        return fail(
+            "Erro interno na varredura de prazos de tarefas.",
+            500,
+            operation_id="scan_commercial_task_due_notifications",
         )

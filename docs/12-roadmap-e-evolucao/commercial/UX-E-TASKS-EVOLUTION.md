@@ -126,7 +126,7 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 
 | Item | Referência mercado | Nota Delpi |
 |------|-------------------|------------|
-| Reminder (e-mail/push antes do due) | HubSpot | Depende de outbox/notificação |
+| Reminder (e-mail/push antes do due) | HubSpot | **Entregue** — outbox + categoria `commercial_tasks` + job `task-due-scan` |
 | Checklist / subtarefas | HubSpot (pedido frequente) | `task_dependencies` |
 | Recorrência | HubSpot | Nova regra + job |
 | Meeting: local, guests, busy/free | Pipedrive | Só se calendário entrar no escopo |
@@ -148,6 +148,24 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 | UI Meu dia | Chip **Concluídas**; cards somente leitura (Abrir conta + anexos em prévia) |
 
 Deep link: `?bucket=done`. Filtro por período (hoje / 7 dias) permanece backlog opcional.
+
+### 3.2 Notificações Portal (sino Minha Delpi) — entregue
+
+Canal **Portal** (preferências / importante / e-mail) complementar ao toast WS do MFE.
+
+| Evento | Gatilho | Destinatários (exceto ator) |
+|--------|---------|------------------------------|
+| `commercial.task.assigned` | create / reassign / update com novos user assignees | novos assignees |
+| `commercial.task.group_assigned` | create / update com novos grupos | membros do grupo |
+| `commercial.task.completed` | complete | criador ∪ assignees ∪ membros de grupos |
+| `commercial.task.due_soon` / `overdue` | job `POST /integrations/jobs/task-due-scan` | assignees ∪ grupos ∪ criador |
+
+- Categoria catálogo: `commercial_tasks` («Tarefas comerciais») — distinta de `commercial` (faturar).
+- Content: `task_portal_notification.json` + outbox genérico (mesmo publisher de ready_to_invoice).
+- Deep link: `/apps/commercial/my-tasks` com filtros; sem forçar `view=`.
+- **Online no MFE (WS):** assign / group / complete **não** disparam sino Portal — só toast realtime (evita duplicar).
+- Topbar **Minhas tarefas:** badge com quantidade de tarefas abertas (`counts.open`), atualizado via WS.
+- **Fora do P0:** menções/comentários tipados; broadcast por `commercial.access`.
 
 ---
 

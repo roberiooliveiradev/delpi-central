@@ -19,6 +19,7 @@ from commercial_app.application.use_cases.manage_worklist import (
     UpdateTaskInput,
 )
 from commercial_app.composition.commercial_composer import (
+    build_enqueue_task_portal_notifications_service,
     build_manage_worklist_use_case,
     build_task_repository,
 )
@@ -85,6 +86,17 @@ def _user_id(request: Request) -> str | None:
 
 def _use_case():
     return build_manage_worklist_use_case()
+
+
+def _portal_task_notifications():
+    return build_enqueue_task_portal_notifications_service()
+
+
+def _safe_portal_task_notify(callback) -> None:
+    try:
+        callback()
+    except Exception:
+        logger.exception("task_portal_notification_hook_failed")
 
 
 def _notify_task_change(
@@ -245,6 +257,11 @@ def create_task(request: Request, body: CreateTaskBody):
             assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
         )
+        _safe_portal_task_notify(
+            lambda: _portal_task_notifications().on_task_created(
+                task=task, actor_user_id=user_id
+            )
+        )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="create_task")
@@ -289,6 +306,20 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
             assignee_user_ids=_notify_assignees(existing, task),
             task_title=task.title,
         )
+        if existing is not None:
+            prev_users = list(existing.resolved_assignee_user_ids())
+            prev_groups = list(existing.resolved_assignee_group_ids())
+            curr_users = list(task.resolved_assignee_user_ids())
+            curr_groups = list(task.resolved_assignee_group_ids())
+            if set(prev_users) != set(curr_users) or set(prev_groups) != set(curr_groups):
+                _safe_portal_task_notify(
+                    lambda: _portal_task_notifications().on_task_assignees_changed(
+                        task=task,
+                        actor_user_id=user_id,
+                        previous_user_ids=prev_users,
+                        previous_group_ids=prev_groups,
+                    )
+                )
         return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="update_task")
@@ -319,6 +350,11 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
             task_id=str(task.id),
             assignee_user_ids=_notify_assignees(task),
             task_title=task.title,
+        )
+        _safe_portal_task_notify(
+            lambda: _portal_task_notifications().on_task_completed(
+                task=task, actor_user_id=user_id
+            )
         )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
     except PermissionError as exc:
@@ -384,6 +420,16 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
             task_id=str(task.id),
             assignee_user_ids=_notify_assignees(existing, task),
             task_title=task.title,
+        )
+        prev_users = list(existing.resolved_assignee_user_ids()) if existing else []
+        prev_groups = list(existing.resolved_assignee_group_ids()) if existing else []
+        _safe_portal_task_notify(
+            lambda: _portal_task_notifications().on_task_assignees_changed(
+                task=task,
+                actor_user_id=user_id,
+                previous_user_ids=prev_users,
+                previous_group_ids=prev_groups,
+            )
         )
         return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")
     except PermissionError as exc:

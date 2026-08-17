@@ -58,6 +58,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "comite_etica_conduta", label: "Comitê de Ética e Conduta", notificationLabel: "Atualizações do comitê", icon: "clipboard-check", mutable: true, kind: "app", sourceApps: ["comite-etica-conduta"], pluginId: "comite-etica-conduta" },
     { id: "tv_dashboard", label: "Painéis TV", notificationLabel: "Avisos dos painéis TV", icon: "tv", mutable: true, kind: "app", sourceApps: ["tv-dashboard"], pluginId: "tv-dashboard" },
     { id: "commercial", label: "Portal Comercial", notificationLabel: "Faturar notas fiscais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
+    { id: "commercial_tasks", label: "Tarefas", notificationLabel: "Tarefas comerciais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",

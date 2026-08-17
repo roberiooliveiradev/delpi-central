@@ -153,6 +153,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | Home **gestor** = equipe + carteiras + pedidos + indicadores | Reforçar bloco Gestão/Equipe + deep links Overview; ranking produtividade se faltar |
 | Perfis **orçamentista** e **faturamento** | Novos **papéis** Minha Delpi (agrupando codes existentes + futuros `*.view` se necessário); telas/atalhos: OV/propostas vs. «pronto a faturar» |
 | Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | **Entregue** — `OpenOrderKanbanStageService` + checkpoint `integration_checkpoints` + outbox + `POST /integrations/jobs/ready-to-invoice-scan` → Core `/integrations/notifications` (deep link board). Destinatários: membership da carteira do cliente + `billingUserIds` / `billingPermissionCodes` em `ready_to_invoice_notification.json` (só ops/admin app). Catálogo: categoria `commercial`. |
+| Notificar envolvidos em **tarefas** (atribuída / grupo / concluída / prazo) | **Entregue** — hooks worklist + outbox + `POST /integrations/jobs/task-due-scan` → Core (`category=commercial_tasks`). Destinatários = `userIds` envolvidos (sem permission code novo). Preferências: «Tarefas comerciais». |
 | Permissões sensíveis só equipe da aplicação | Política ops: grants de `manage` / auditoria só internos; documentar no PERFIS |
 
 **Não fazer:** permission codes nomeados `commercial.vendedor` / `commercial.gestor` — manter modelo por capacidade.
@@ -201,7 +202,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | T6 | Notificação «pronto para faturar» | outbox + plataforma notif + papéis | **Feito** | Configurar `billing*` no JSON; cron/ops no job |
 | T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
 | T8 | Visita Meu Dia → reserva veículo | commercial + Central de Agendamento | P1 | Contrato HTTP scheduling |
-| T9 | Lembretes tarefa (e-mail/push) | commercial-api outbox + plataforma | P2 | Canal notificação global |
+| T9 | Lembretes / notif de tarefa (sino Portal) | commercial-api outbox + catálogo `commercial_tasks` | **Feito** | Job `task-due-scan`; WS toast MFE permanece |
 | T10 | Área de colaboração (feed + menções + vínculos) | commercial-api + MFE | P2 épico | Design + Graph |
 | T11 | Colaboração → Outlook/Teams (busy + invite) | plataforma / Graph | P2–P3 | T10 + scopes |
 

@@ -23,6 +23,8 @@ import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigateCustomerDetail, navigatePluginView } from "./pluginNavigation";
 import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
+import { useCommercialWorklistSync } from "./CommercialRealtimeProvider";
+import { resolveMyTasksNavBadgeCount } from "./myTasksNavBadge";
 import {
   CommercialActionButton,
   CommercialCommandPalette,
@@ -109,13 +111,29 @@ export function PluginShell({
     const controller = new AbortController();
     void getMyWorklist({ signal: controller.signal })
       .then((wl) => {
-        setMyTasksBadge((wl.counts.overdue ?? 0) + (wl.counts.today ?? 0));
+        setMyTasksBadge(resolveMyTasksNavBadgeCount(wl.counts));
       })
       .catch(() => {
         if (!controller.signal.aborted) setMyTasksBadge(0);
       });
     return () => controller.abort();
   }, [showWorklist, view]);
+
+  const refreshMyTasksBadge = useCallback(() => {
+    if (!showWorklist) {
+      setMyTasksBadge(0);
+      return;
+    }
+    void getMyWorklist()
+      .then((wl) => {
+        setMyTasksBadge(resolveMyTasksNavBadgeCount(wl.counts));
+      })
+      .catch(() => {
+        /* keep last known badge */
+      });
+  }, [showWorklist]);
+
+  useCommercialWorklistSync(refreshMyTasksBadge, showWorklist);
 
   useEffect(() => {
     const controller = new AbortController();

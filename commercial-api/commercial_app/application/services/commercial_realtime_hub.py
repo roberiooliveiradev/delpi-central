@@ -65,6 +65,12 @@ class CommercialRealtimeHub:
             if count > 0 and user_id
         )
 
+    def is_user_online(self, user_id: str | None) -> bool:
+        uid = str(user_id or "").strip()
+        if not uid:
+            return False
+        return self._user_socket_counts.get(uid, 0) > 0
+
     def presence_payload(self) -> dict[str, Any]:
         return presence_updated_payload(self.online_user_ids())
 

@@ -148,6 +148,15 @@
       "kind": "app",
       "sourceApps": ["commercial"],
       "pluginId": "commercial"
+    },
+    "commercial_tasks": {
+      "label": "Tarefas",
+      "notificationLabel": "Tarefas comerciais",
+      "icon": "briefcase",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["commercial"],
+      "pluginId": "commercial"
     }
   },
   "legacyCategoryAliases": {

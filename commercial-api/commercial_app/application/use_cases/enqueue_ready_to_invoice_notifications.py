@@ -81,7 +81,7 @@ class EnqueueReadyToInvoiceNotificationsUseCase:
 
 
 class PublishIntegrationOutboxUseCase:
-    """Flush pending outbox rows to Minha Delpi notifications."""
+    """Flush pending outbox rows to Minha Delpi notifications (multi-event)."""
 
     def __init__(
         self,
@@ -94,26 +94,18 @@ class PublishIntegrationOutboxUseCase:
         self._notifier = notifier or CommercialPortalNotificationService()
         self._content = content or ReadyToInvoiceNotificationContentService
 
-    def execute(self, *, limit: int = 50) -> PublishOutboxResult:
+    def _publish_row(self, row) -> bool:
+        from commercial_app.domain.services.task_portal_notification_content_service import (
+            TASK_PORTAL_EVENT_TYPES,
+        )
+
+        payload = row.payload if isinstance(row.payload, dict) else {}
+        if not self._notifier.enabled:
+            return True
+
         ready_event = self._content.event_type()
-        pending = self._outbox.list_pending(limit=limit)
-        processed = 0
-        published = 0
-        failed = 0
-        for row in pending:
-            processed += 1
-            if row.event_type != ready_event:
-                self._outbox.mark_failed(
-                    row.id, error=f"unsupported_event_type:{row.event_type}"
-                )
-                failed += 1
-                continue
-            payload = row.payload if isinstance(row.payload, dict) else {}
-            if not self._notifier.enabled:
-                self._outbox.mark_published(row.id)
-                published += 1
-                continue
-            ok = self._notifier.notify_ready_to_invoice(
+        if row.event_type == ready_event:
+            return self._notifier.notify_ready_to_invoice(
                 user_ids=list(payload.get("userIds") or []),
                 permission_codes=list(payload.get("permissionCodes") or []),
                 line_key=str(payload.get("lineKey") or row.aggregate_id),
@@ -123,6 +115,51 @@ class PublishIntegrationOutboxUseCase:
                 filial=str(payload.get("filial") or ""),
                 action_target=str(payload.get("actionTarget") or "") or None,
             )
+
+        if row.event_type in TASK_PORTAL_EVENT_TYPES:
+            from commercial_app.application.services.task_portal_notification_delivery_policy import (
+                TaskPortalNotificationDeliveryPolicy,
+            )
+
+            recipients = TaskPortalNotificationDeliveryPolicy().filter_portal_recipients(
+                row.event_type,
+                list(payload.get("userIds") or []),
+            )
+            if not recipients:
+                return True
+            return self._notifier.notify_task_event(
+                event_type=row.event_type,
+                user_ids=recipients,
+                task_id=str(payload.get("taskId") or row.aggregate_id),
+                title=str(payload.get("title") or "Tarefa"),
+                due_at=str(payload.get("dueAt") or "") or None,
+                action_target=str(payload.get("actionTarget") or "") or None,
+                dedupe_key=str(payload.get("dedupeKey") or "") or None,
+                bucket=str(payload.get("bucket") or "") or None,
+            )
+
+        return False
+
+    def execute(self, *, limit: int = 50) -> PublishOutboxResult:
+        from commercial_app.domain.services.task_portal_notification_content_service import (
+            TASK_PORTAL_EVENT_TYPES,
+        )
+
+        ready_event = self._content.event_type()
+        supported = {ready_event, *TASK_PORTAL_EVENT_TYPES}
+        pending = self._outbox.list_pending(limit=limit)
+        processed = 0
+        published = 0
+        failed = 0
+        for row in pending:
+            processed += 1
+            if row.event_type not in supported:
+                self._outbox.mark_failed(
+                    row.id, error=f"unsupported_event_type:{row.event_type}"
+                )
+                failed += 1
+                continue
+            ok = self._publish_row(row)
             if ok:
                 self._outbox.mark_published(row.id)
                 published += 1

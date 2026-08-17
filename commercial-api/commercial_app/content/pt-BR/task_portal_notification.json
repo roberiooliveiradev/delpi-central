@@ -1,0 +1,41 @@
+{
+  "category": "commercial_tasks",
+  "sourceApp": "commercial",
+  "deepLinkPath": "/apps/commercial/my-tasks",
+  "aggregateType": "commercial_task",
+  "dueSoonHours": 24,
+  "dueCheckpointSourceKey": "commercial.tasks.due_notifications",
+  "actionLabel": "Abrir tarefas",
+  "events": {
+    "commercial.task.assigned": {
+      "title": "Nova tarefa atribuída a você",
+      "messageTemplate": "{title} — prazo {due}",
+      "type": "info",
+      "bucket": "today"
+    },
+    "commercial.task.group_assigned": {
+      "title": "Tarefa atribuída ao seu grupo",
+      "messageTemplate": "{title} — prazo {due}",
+      "type": "info",
+      "bucket": "today"
+    },
+    "commercial.task.completed": {
+      "title": "Tarefa concluída",
+      "messageTemplate": "{title} foi concluída.",
+      "type": "success",
+      "bucket": "today"
+    },
+    "commercial.task.due_soon": {
+      "title": "Tarefa vence em breve",
+      "messageTemplate": "{title} — prazo {due}",
+      "type": "warning",
+      "bucket": "today"
+    },
+    "commercial.task.overdue": {
+      "title": "Tarefa atrasada",
+      "messageTemplate": "{title} — prazo {due}",
+      "type": "error",
+      "bucket": "overdue"
+    }
+  }
+}

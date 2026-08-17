@@ -170,7 +170,8 @@ Exemplo `GET /me/notifications/catalog`:
 | `invoice_issuance` | Emissão de Notas Fiscais | `invoice-issuance` | `invoice-issuance` |
 | `controle_mp` | Controle MP | `controle_mp` | `controle-mp` |
 | `tv_dashboard` | Painéis TV | `tv-dashboard` | `tv-dashboard` |
-| `commercial` | Portal Comercial | `commercial` | `commercial` |
+| `commercial` | Faturar notas fiscais | `commercial` | `commercial` |
+| `commercial_tasks` | Tarefas comerciais | `commercial` | `commercial` |
 
 Categorias `platform` (boas-vindas, aniversário, comunicado, …) não têm `sourceApp` — são disparadas pela Core API ou Admin.
 

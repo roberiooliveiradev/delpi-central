@@ -246,6 +246,8 @@ Catálogo condensado — **3 codes**. Detalhe e política para features novas: [
 | `commercial.manage` | Administração + vê **todas** as carteiras (escopo irrestrito) |
 | `commercial.billing.notify` | Destinatário da notificação «Pronto para faturar» (não libera telas) |
 
+Notificações de **tarefas** usam só envolvidos (`userIds`) + categoria catálogo `commercial_tasks` («Tarefas comerciais») — **sem** permission code novo. Job: `POST /integrations/jobs/task-due-scan` (`manage`). Faturar permanece em categoria `commercial`.
+
 Minha Carteira na topbar: membership **ou** `manage`. Pedidos sem membership: consolidado (todos os clientes).
 
 Antes de criar permission nova: preferir `access` ou `manage`; code específico só para efeito estreito (ver PERFIS).

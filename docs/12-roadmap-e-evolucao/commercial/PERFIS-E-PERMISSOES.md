@@ -56,7 +56,7 @@ Antes de criar permission code:
 
 **Proibido:** criar `commercial.<feature>.view` por padrão; fragmentar o catálogo sem justificativa aqui.
 
-Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notificação pronto para faturar → `billing.notify`.
+Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notificação pronto para faturar → `billing.notify`; notificações de tarefas → só envolvidos + `access` (sem code novo).
 
 ## Papéis sugeridos (criar na Minha Delpi)
 
@@ -74,6 +74,20 @@ Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notifica�
 | Destinatários vendedor | Membros das carteiras do cliente |
 | Destinatários faturamento | `billingPermissionCodes: ["commercial.billing.notify"]` em `ready_to_invoice_notification.json` |
 | Job ops | Exige `commercial.manage` |
+| Categoria catálogo | `commercial` · Preferências: «Faturar notas fiscais» |
+
+## Notificação de tarefas (Portal)
+
+| Peça | Onde |
+|------|------|
+| Destinatários | `userIds` envolvidos (assignees, membros de grupo assignee, criador) — **sem** permission code novo |
+| Exclusão | Nunca notifica o ator da mutação |
+| Emissor | commercial-api → outbox → Core `category=commercial_tasks` |
+| Job prazos | `POST /integrations/jobs/task-due-scan` (`commercial.manage`) — `due_soon` / `overdue` |
+| Categoria catálogo | `commercial_tasks` · Preferências: «Tarefas comerciais» (separado de faturar) |
+| Deep link | `/apps/commercial/my-tasks` + `bucket` / `q` — **sem** forçar `view=` |
+
+**Não** usar `permissionCodes: ["commercial.access"]` no dispatch (broadcast). Quem não tem o app Comercial não vê a preferência (`kind=app` + `pluginId=commercial`).
 
 ## O que NÃO fazer
 
